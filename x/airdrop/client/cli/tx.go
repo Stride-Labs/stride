@@ -23,7 +23,9 @@ const (
 	FlagClawbackDate          = "clawback-date"
 	FlagClaimTypeDeadlineDate = "claim-type-deadline-date"
 	FlagEarlyClaimPenalty     = "early-claim-penalty"
-	FlagDistributionAddress   = "distribution-address"
+	FlagDistributorAddress    = "distributor-address"
+	FlagAllocatorAddress      = "allocator-address"
+	FlagLinkerAddress         = "linker-address"
 
 	FlagRewardDenom    = "reward-denom"
 	DefaultRewardDenom = "ustrd"
@@ -183,9 +185,17 @@ Example:
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early claim penalty address")
 			}
-			distributionAddress, err := cmd.Flags().GetString(FlagDistributionAddress)
+			distributorAddress, err := cmd.Flags().GetString(FlagDistributorAddress)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse distribution address")
+			}
+			allocatorAddress, err := cmd.Flags().GetString(FlagAllocatorAddress)
+			if err != nil {
+				return errorsmod.Wrapf(err, "unable to parse allocator address")
+			}
+			linkerAddress, err := cmd.Flags().GetString(FlagLinkerAddress)
+			if err != nil {
+				return errorsmod.Wrapf(err, "unable to parse linker address")
 			}
 
 			distributionStartDate, err := time.Parse(DateLayout, distributionStartDateString)
@@ -224,7 +234,9 @@ Example:
 				&clawbackDate,
 				&deadlineDate,
 				earlyClaimPenalty,
-				distributionAddress,
+				distributorAddress,
+				allocatorAddress,
+				linkerAddress,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -241,7 +253,9 @@ Example:
 	cmd.Flags().String(FlagClawbackDate, "", "Date when rewards are clawed back (after distribution end date)")
 	cmd.Flags().String(FlagClaimTypeDeadlineDate, "", "Deadline to decide on the claim type")
 	cmd.Flags().String(FlagEarlyClaimPenalty, "", "Decimal (0 to 1) representing the penalty for claiming early")
-	cmd.Flags().String(FlagDistributionAddress, "", "Address of the distributor account")
+	cmd.Flags().String(FlagDistributorAddress, "", "Address of the distributor account")
+	cmd.Flags().String(FlagAllocatorAddress, "", "Address of the allocator account")
+	cmd.Flags().String(FlagLinkerAddress, "", "Address of the linker account")
 
 	requiredFlags := []string{
 		FlagDistributionStartDate,
@@ -249,7 +263,9 @@ Example:
 		FlagClawbackDate,
 		FlagClaimTypeDeadlineDate,
 		FlagEarlyClaimPenalty,
-		FlagDistributionAddress,
+		FlagDistributorAddress,
+		FlagAllocatorAddress,
+		FlagLinkerAddress,
 	}
 	for _, flagName := range requiredFlags {
 		if err := cmd.MarkFlagRequired(flagName); err != nil {
@@ -311,9 +327,17 @@ Example:
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early claim penalty address")
 			}
-			distributionAddress, err := cmd.Flags().GetString(FlagDistributionAddress)
+			distributorAddress, err := cmd.Flags().GetString(FlagDistributorAddress)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse distribution address")
+			}
+			allocatorAddress, err := cmd.Flags().GetString(FlagAllocatorAddress)
+			if err != nil {
+				return errorsmod.Wrapf(err, "unable to parse allocator address")
+			}
+			linkerAddress, err := cmd.Flags().GetString(FlagLinkerAddress)
+			if err != nil {
+				return errorsmod.Wrapf(err, "unable to parse linker address")
 			}
 
 			distributionStartDate, err := time.Parse(DateLayout, distributionStartDateString)
@@ -352,7 +376,9 @@ Example:
 				&clawbackDate,
 				&deadlineDate,
 				earlyClaimPenalty,
-				distributionAddress,
+				distributorAddress,
+				allocatorAddress,
+				linkerAddress,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -370,7 +396,9 @@ Example:
 	cmd.Flags().String(FlagClawbackDate, "", "Date when rewards are clawed back (after distribution end date)")
 	cmd.Flags().String(FlagClaimTypeDeadlineDate, "", "Deadline to decide on the claim type")
 	cmd.Flags().String(FlagEarlyClaimPenalty, "", "Decimal (0 to 1) representing the penalty for claiming early")
-	cmd.Flags().String(FlagDistributionAddress, "", "Address of the distributor account")
+	cmd.Flags().String(FlagDistributorAddress, "", "Address of the distributor account")
+	cmd.Flags().String(FlagAllocatorAddress, "", "Address of the allocator account")
+	cmd.Flags().String(FlagLinkerAddress, "", "Address of the linker account")
 
 	requiredFlags := []string{
 		FlagDistributionStartDate,
@@ -378,7 +406,9 @@ Example:
 		FlagClawbackDate,
 		FlagClaimTypeDeadlineDate,
 		FlagEarlyClaimPenalty,
-		FlagDistributionAddress,
+		FlagDistributorAddress,
+		FlagAllocatorAddress,
+		FlagLinkerAddress,
 	}
 	for _, flagName := range requiredFlags {
 		if err := cmd.MarkFlagRequired(flagName); err != nil {
