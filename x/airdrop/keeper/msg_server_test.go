@@ -128,7 +128,6 @@ func (s *KeeperTestSuite) TestAddAllocations() {
 		s.Require().Equal(expectedAllocation.Allocations, userAllocation.Allocations, "allocations")
 		s.Require().Equal(sdkmath.ZeroInt(), userAllocation.Claimed, "claimed")
 		s.Require().Equal(sdkmath.ZeroInt(), userAllocation.Forfeited, "forfeited")
-		s.Require().Equal(types.CLAIM_DAILY, userAllocation.ClaimType, "claim type")
 	}
 
 	// Attempt to create the allocations again, it should error since the allocations already exist

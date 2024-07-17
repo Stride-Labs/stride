@@ -57,28 +57,20 @@ message UserAllocation {
   // The current state of allocations for this airdrop
   //
   // Ex 1:
-  //   Day 0: {claimed:0, allocations:[10,10,10], claim_type:DAILY}
+  //   Day 0: {claimed:0, allocations:[10,10,10]}
   //   *MsgClaim*
-  //   Day 1: {claimed:10, allocations:[0,10,10], claim_type:DAILY}
+  //   Day 1: {claimed:10, allocations:[0,10,10]}
   //   *MsgClaim*
-  //   Day 2: {claimed:20, allocations:[0,0,10], claim_type:DAILY}
+  //   Day 2: {claimed:20, allocations:[0,0,10]}
   //
   // Ex 2:
-  //   Day 0: {claimed:0, allocations:[10,10,10], claim_type:DAILY}
-  //   *MsgClaimAndStake*
-  //   Day 1: {claimed:30, allocations:[0,0,0], claim_type:CLAIM_AND_STAKE}
-  //
-  // Ex 3:
-  //   Day 0: {claimed:0, allocations:[10,10,10], claim_type:DAILY}
+  //   Day 0: {claimed:0, allocations:[10,10,10]}
   //   *MsgClaimEarly*
-  //   Day 1: {claimed:15, allocations:[0,0,0], claim_type:CLAIM_EARLY}
+  //   Day 1: {claimed:15, forfeited:15, allocations:[0,0,0]}
   repeated string allocations = 5 [
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "cosmossdk.io/math.Int"
   ];
-
-  // The claim type (claim daily or claim early)
-  ClaimType claim_type = 6;
 }
 
 // Airdrop track the aggregate unbondings across an epoch

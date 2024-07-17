@@ -20,12 +20,6 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", claimer, airdropId)
 	}
 
-	// Confirm the user has not elected to claim early (meaning their type will be ClaimDaily)
-	if userAllocation.ClaimType != types.CLAIM_DAILY {
-		return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option %s",
-			userAllocation.ClaimType.String())
-	}
-
 	// Confirm the airdrop started
 	currentTime := ctx.BlockTime().Unix()
 	if currentTime < airdrop.DistributionStartDate.Unix() {
@@ -89,12 +83,6 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", claimer, airdropId)
 	}
 
-	// Confirm the user is still in the daily claim mode (has not elected to ClaimEarly yet)
-	if userAllocation.ClaimType != types.CLAIM_DAILY {
-		return types.ErrClaimTypeUnavailable.Wrapf("user has already elected claim option %s",
-			userAllocation.ClaimType.String())
-	}
-
 	// Confirm the airdrop started
 	currentTime := ctx.BlockTime().Unix()
 	if currentTime < airdrop.DistributionStartDate.Unix() {
@@ -131,9 +119,6 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	forfeitedRewards := totalAccruedRewards.Sub(distributedRewards)
 	userAllocation.Forfeited = userAllocation.Forfeited.Add(forfeitedRewards)
 
-	// Flag the user's claim type decision
-	userAllocation.ClaimType = types.CLAIM_EARLY
-
 	// Distribute rewards from the distributor, deducting the early penalty
 	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributorAddress)
 	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
@@ -154,8 +139,6 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 // with the stride address
 // Otherwise, if the stride allocation already exists, the two allocations will be merged and set
 // in on the stride allocation
-// We can safely change the type back to DAILY because if a user claimed early, their allocations
-// will be set to 0 (they will have no remaining allocations)
 // There's no need to merge the Claimed or Forfeited amounts because the host allocations cannot
 // be claimed through a non-stride address
 func (k Keeper) LinkAddresses(ctx sdk.Context, airdropId, strideAddress, hostAddress string) error {
@@ -168,10 +151,8 @@ func (k Keeper) LinkAddresses(ctx sdk.Context, airdropId, strideAddress, hostAdd
 
 	// If the stride user doesn't exist yet, just update the address in the host allocation
 	// to the the stride address overwrite it
-	// Also reset the claim type to DAILY
 	if !strideFound {
 		hostAllocation.Address = strideAddress
-		hostAllocation.ClaimType = types.CLAIM_DAILY
 		k.RemoveUserAllocation(ctx, airdropId, hostAddress)
 		k.SetUserAllocation(ctx, hostAllocation)
 		return nil
@@ -188,10 +169,6 @@ func (k Keeper) LinkAddresses(ctx sdk.Context, airdropId, strideAddress, hostAdd
 		hostReward := hostAllocation.Allocations[i]
 		strideAllocation.Allocations[i] = strideRewards.Add(hostReward)
 	}
-
-	// Reset the claim type to daily
-	// That's to support the use case of a stride user claiming early and then linking a host address
-	strideAllocation.ClaimType = types.CLAIM_DAILY
 
 	// Use the stride allocation as the canonical one moving forward and remove the host allocation
 	k.SetUserAllocation(ctx, strideAllocation)

@@ -36,7 +36,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 		initialClaimed      int64
 		expectedClaimed     int64
 		expectedNewRewards  int64
-		initialClaimType    types.ClaimType
 		expectedError       string
 	}{
 		{
@@ -49,7 +48,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 10,
 			expectedNewRewards:  10,
-			initialClaimType:    types.CLAIM_DAILY,
 		},
 		{
 			// 10 rewards accrued on each of 3 days
@@ -61,7 +59,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 20,
 			expectedNewRewards:  20,
-			initialClaimType:    types.CLAIM_DAILY,
 		},
 		{
 			// 10 rewards accrued on each of 3 days
@@ -73,7 +70,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 30,
 			expectedNewRewards:  30,
-			initialClaimType:    types.CLAIM_DAILY,
 		},
 		{
 			// Claimed on last day of airdrop distribution
@@ -85,7 +81,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 100,
 			expectedNewRewards:  100,
-			initialClaimType:    types.CLAIM_DAILY,
 		},
 		{
 			// Claimed on last second of airdrop distribution
@@ -97,7 +92,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 100,
 			expectedNewRewards:  100,
-			initialClaimType:    types.CLAIM_DAILY,
 		},
 		{
 			// Claimed on the last second before rewards are clawed back
@@ -110,16 +104,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			initialClaimed:      100,
 			expectedClaimed:     100 + 100,
 			expectedNewRewards:  100,
-			initialClaimType:    types.CLAIM_DAILY,
-		},
-		{
-			// Claimer already chose claim early
-			name:               "already chose to claim early",
-			timeOffset:         time.Hour,
-			initialAllocations: []int64{0, 0, 0},
-			initialClaimed:     100,
-			initialClaimType:   types.CLAIM_EARLY,
-			expectedError:      "user has already elected claim option",
 		},
 		{
 			// Claimer has no rewards on the current day
@@ -184,7 +168,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
 				AirdropId:   AirdropId,
 				Address:     claimer.String(),
-				ClaimType:   tc.initialClaimType,
 				Claimed:     sdkmath.NewInt(tc.initialClaimed),
 				Forfeited:   sdkmath.NewInt(tc.initialForfeited),
 				Allocations: allocationsToSdkInt(tc.initialAllocations),
@@ -203,7 +186,6 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			s.Require().Equal(tc.expectedAllocations, allocationsToInt64(userAllocation.Allocations), "allocations")
 			s.Require().Equal(tc.expectedClaimed, userAllocation.Claimed.Int64(), "claimed")
 			s.Require().Equal(tc.expectedForfeited, userAllocation.Forfeited.Int64(), "forfeited")
-			s.Require().Equal(types.CLAIM_DAILY, userAllocation.ClaimType, "claim types")
 
 			// Confirm funds were decremented from the distributor
 			expectedDistributorBalance := initialDistributorBalance.Sub(sdkmath.NewInt(tc.expectedNewRewards))
@@ -227,7 +209,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 		expectedClaimed           int64
 		expectedForfeited         int64
 		expectedUserBalanceChange int64
-		initialClaimType          types.ClaimType
 		expectedError             string
 	}{
 		{
@@ -242,7 +223,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:           100 + 15,
 			expectedForfeited:         15,
 			expectedUserBalanceChange: 15,
-			initialClaimType:          types.CLAIM_DAILY,
 		},
 		{
 			// Claimed early middway through the second day
@@ -256,7 +236,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:           100 + 15,
 			expectedForfeited:         5,
 			expectedUserBalanceChange: 15,
-			initialClaimType:          types.CLAIM_DAILY,
 		},
 		{
 			// Previous daily claims causing earlier days to be 0
@@ -270,16 +249,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			expectedClaimed:           100 + 27,
 			expectedUserBalanceChange: 27,
 			expectedForfeited:         3,
-			initialClaimType:          types.CLAIM_DAILY,
-		},
-		{
-			// Claimer already chose claim early
-			name:               "already chose to claim early",
-			timeOffset:         time.Hour,
-			initialAllocations: []int64{},
-			initialClaimed:     100,
-			initialClaimType:   types.CLAIM_EARLY,
-			expectedError:      "user has already elected claim option",
 		},
 		{
 			// Claimer has no rewards remaining
@@ -289,7 +258,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			initialClaimed:            100,
 			expectedClaimed:           100,
 			expectedUserBalanceChange: 0,
-			initialClaimType:          types.CLAIM_DAILY,
 			expectedError:             "no unclaimed rewards",
 		},
 		{
@@ -347,7 +315,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
 				AirdropId:   AirdropId,
 				Address:     claimer.String(),
-				ClaimType:   tc.initialClaimType,
 				Claimed:     sdkmath.NewInt(tc.initialClaimed),
 				Forfeited:   sdkmath.ZeroInt(),
 				Allocations: allocationsToSdkInt(tc.initialAllocations),
@@ -365,7 +332,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			userAllocation := s.MustGetUserAllocation(AirdropId, claimer.String())
 			s.Require().Equal(tc.expectedClaimed, userAllocation.Claimed.Int64(), "claimed")
 			s.Require().Equal(tc.expectedForfeited, userAllocation.Forfeited.Int64(), "forfeited")
-			s.Require().Equal(types.CLAIM_EARLY, userAllocation.ClaimType, "claim types")
 			for _, allocation := range userAllocation.Allocations {
 				s.Require().Zero(allocation.Int64(), "allocations should be 0")
 			}
@@ -385,7 +351,6 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 func (s *KeeperTestSuite) TestLinkAddresses() {
 	testCases := []struct {
 		name                string
-		initialClaimType    types.ClaimType
 		initialClaimed      sdkmath.Int
 		strideAllocations   []int64
 		hostAllocations     []int64
@@ -394,7 +359,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 	}{
 		{
 			name:                "no stride allocations",
-			initialClaimType:    types.CLAIM_DAILY,
 			initialClaimed:      sdkmath.ZeroInt(),
 			strideAllocations:   nil,
 			hostAllocations:     []int64{10, 20, 30},
@@ -402,7 +366,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 		},
 		{
 			name:                "stride and host allocations",
-			initialClaimType:    types.CLAIM_DAILY,
 			initialClaimed:      sdkmath.NewInt(10),
 			strideAllocations:   []int64{10, 20, 30},
 			hostAllocations:     []int64{40, 50, 60},
@@ -410,7 +373,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 		},
 		{
 			name:                "user previously claimed early",
-			initialClaimType:    types.CLAIM_EARLY,
 			initialClaimed:      sdkmath.NewInt(20),
 			strideAllocations:   []int64{0, 0, 0},
 			hostAllocations:     []int64{40, 50, 60},
@@ -418,7 +380,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 		},
 		{
 			name:                "link after no more left to claim",
-			initialClaimType:    types.CLAIM_EARLY,
 			initialClaimed:      sdkmath.NewInt(100),
 			strideAllocations:   []int64{0, 0, 0},
 			hostAllocations:     []int64{0, 0, 0},
@@ -426,7 +387,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 		},
 		{
 			name:              "different allocation lengths",
-			initialClaimType:  types.CLAIM_DAILY,
 			initialClaimed:    sdkmath.NewInt(100),
 			strideAllocations: []int64{10, 20, 30},
 			hostAllocations:   []int64{40, 50},
@@ -434,7 +394,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 		},
 		{
 			name:              "no host allocations",
-			initialClaimType:  types.CLAIM_DAILY,
 			initialClaimed:    sdkmath.ZeroInt(),
 			strideAllocations: []int64{10, 20, 30},
 			hostAllocations:   nil,
@@ -459,7 +418,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 				s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
 					AirdropId:   AirdropId,
 					Address:     strideAddress,
-					ClaimType:   tc.initialClaimType,
 					Allocations: allocationsToSdkInt(tc.strideAllocations),
 					Claimed:     tc.initialClaimed,
 				})
@@ -468,7 +426,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 				s.App.AirdropKeeper.SetUserAllocation(s.Ctx, types.UserAllocation{
 					AirdropId:   AirdropId,
 					Address:     hostAddress,
-					ClaimType:   tc.initialClaimType,
 					Allocations: allocationsToSdkInt(tc.hostAllocations),
 					Claimed:     sdkmath.ZeroInt(),
 				})
@@ -485,7 +442,6 @@ func (s *KeeperTestSuite) TestLinkAddresses() {
 			// Check that the stride user was created (if it didn't already exist)
 			strideUserAllocation, strideFound := s.App.AirdropKeeper.GetUserAllocation(s.Ctx, AirdropId, strideAddress)
 			s.Require().True(strideFound, "stride user allocation should have been created or modified")
-			s.Require().Equal(types.CLAIM_DAILY, strideUserAllocation.ClaimType, "claim types")
 			s.Require().Equal(tc.initialClaimed.Int64(), strideUserAllocation.Claimed.Int64(), "claimed amount should not have changed")
 			s.Require().Equal(tc.expectedAllocations, allocationsToInt64(strideUserAllocation.Allocations),
 				"stride allocations")

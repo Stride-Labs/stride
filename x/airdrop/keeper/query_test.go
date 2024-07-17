@@ -127,7 +127,6 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	forfeited := sdkmath.ZeroInt()
 	remaining := sdkmath.NewInt(1 + 5 + 3)
 	claimable := sdkmath.NewInt(1 + 5)
-	claimType := types.CLAIM_EARLY
 	dateIndex := int64(2)
 
 	userAllocation := types.UserAllocation{
@@ -135,7 +134,6 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 		Address:   UserAddress,
 		Claimed:   claimed,
 		Forfeited: forfeited,
-		ClaimType: claimType,
 		Allocations: []sdkmath.Int{
 			sdkmath.ZeroInt(),
 			sdkmath.NewInt(1),
@@ -164,6 +162,14 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	s.Require().Equal(forfeited, resp.Forfeited, "amount forfeited")
 	s.Require().Equal(remaining, resp.Remaining, "amount remaining")
 	s.Require().Equal(claimable, resp.Claimable, "amount claimable")
-	s.Require().Equal(claimType.String(), resp.ClaimType, "amount remaining")
+	s.Require().Equal(types.CLAIM_DAILY.String(), resp.ClaimType, "claim type")
 	s.Require().Equal(dateIndex, resp.CurrentDateIndex, "todays index")
+
+	// Update the user so that it appears they claimed early and confirm the type change
+	userAllocation.Forfeited = sdkmath.OneInt()
+	s.App.AirdropKeeper.SetUserAllocation(s.Ctx, userAllocation)
+
+	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying user summary again")
+	s.Require().Equal(types.CLAIM_EARLY.String(), resp.ClaimType, "claim type")
 }

@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -121,8 +122,13 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 
+	claimType := types.CLAIM_DAILY
+	if allocation.Forfeited.GT(sdkmath.ZeroInt()) {
+		claimType = types.CLAIM_EARLY
+	}
+
 	summary := &types.QueryUserSummaryResponse{
-		ClaimType:        allocation.ClaimType.String(),
+		ClaimType:        claimType.String(),
 		Claimed:          allocation.Claimed,
 		Claimable:        allocation.GetClaimableAllocation(currentDateIndex),
 		Forfeited:        allocation.Forfeited,
