@@ -95,15 +95,15 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 			userAllocation.ClaimType.String())
 	}
 
-	// Confirm we're not past the decision date
+	// Confirm airdrop window
 	currentTime := ctx.BlockTime().Unix()
-	if currentTime > airdrop.ClaimTypeDeadlineDate.Unix() {
-		return types.ErrAfterDecisionDeadline
-	}
 
-	// Confirm the airdrop started
 	if currentTime < airdrop.DistributionStartDate.Unix() {
 		return types.ErrDistributionNotStarted
+	}
+
+	if currentTime > airdrop.DistributionEndDate.Unix() {
+		return types.ErrDistributionEnded
 	}
 
 	// Sum the total rewards 0 them out in the process
