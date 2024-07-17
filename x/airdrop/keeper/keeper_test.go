@@ -16,10 +16,14 @@ var (
 	AirdropId   = "airdrop"
 	RewardDenom = "denom"
 
+	// 1/1 - Start
+	// 1/5 - Decision Date
+	// 1/10 - End
+	// 1/15 - Clawback
 	DistributionStartDate = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	DistributionEndDate   = time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
-	ClawbackDate          = time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
-	DeadlineDate          = time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
+	DeadlineDate          = time.Date(2024, 1, 5, 0, 0, 0, 0, time.UTC)
+	DistributionEndDate   = time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
+	ClawbackDate          = time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
 )
 
 type KeeperTestSuite struct {

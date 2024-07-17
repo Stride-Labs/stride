@@ -11,14 +11,19 @@ import (
 )
 
 func TestGetCurrentDateIndex(t *testing.T) {
+	// Setup: 10 day long airdrop from 1/1 to 1/10 with clawback on 1/15
 	startTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	endTime := startTime.Add(time.Hour * 24 * 150) // 150 days later
+	endTime := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)
+	clawbackTime := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
+
 	windowLengthSeconds := int64(24 * 60 * 60)
 
 	airdrop := types.Airdrop{
 		DistributionStartDate: &startTime,
 		DistributionEndDate:   &endTime,
+		ClawbackDate:          &clawbackTime,
 	}
+	require.Equal(t, airdrop.GetAirdropLength(), int64(10), "airdrop length in setup")
 
 	testCases := []struct {
 		name              string
@@ -43,7 +48,7 @@ func TestGetCurrentDateIndex(t *testing.T) {
 		},
 		{
 			name:              "one second before second day",
-			currentTime:       startTime.Add((time.Hour * 23) + (time.Minute * 59) + (time.Second * 59)),
+			currentTime:       startTime.Add((time.Hour * 24) - time.Second),
 			expectedDateIndex: 0,
 		},
 		{
@@ -53,28 +58,43 @@ func TestGetCurrentDateIndex(t *testing.T) {
 		},
 		{
 			name:              "start of third day",
-			currentTime:       startTime.Add(time.Hour * 48),
+			currentTime:       startTime.Add(time.Hour * (24 + 24)),
 			expectedDateIndex: 2,
 		},
 		{
 			name:              "middle of third day",
-			currentTime:       startTime.Add(time.Hour * 60),
+			currentTime:       startTime.Add(time.Hour * (24 + 24 + 16)),
 			expectedDateIndex: 2,
 		},
 		{
-			name:              "100 days later",
-			currentTime:       startTime.Add(time.Hour * 24 * 100),
-			expectedDateIndex: 99,
+			name:              "middle of fifth day",
+			currentTime:       startTime.Add(time.Hour * ((24 * 4) + 16)),
+			expectedDateIndex: 4,
+		},
+		{
+			name:              "last day of distribution",
+			currentTime:       endTime,
+			expectedDateIndex: 9,
+		},
+		{
+			name:              "last second of last day of distribution",
+			currentTime:       endTime.Add((time.Hour * 24) - 1),
+			expectedDateIndex: 9,
+		},
+		{
+			name:              "last second before clawback",
+			currentTime:       clawbackTime.Add(-1 * time.Second),
+			expectedDateIndex: 9, // gets capped at last index
 		},
 		{
 			name:          "airdrop not started",
 			currentTime:   startTime.Add(-1 * time.Minute),
-			expectedError: types.ErrDistributionNotStarted,
+			expectedError: types.ErrAirdropNotFound,
 		},
 		{
 			name:          "airdrop already ended",
-			currentTime:   endTime.Add(time.Minute),
-			expectedError: types.ErrDistributionEnded,
+			currentTime:   clawbackTime,
+			expectedError: types.ErrAirdropEnded,
 		},
 	}
 	for _, tc := range testCases {

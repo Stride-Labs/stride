@@ -12,23 +12,25 @@ func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, windowLengthSeconds int64
 	if a.DistributionStartDate == nil {
 		return 0, errors.New("distribution start date not set")
 	}
-	if a.DistributionEndDate == nil {
-		return 0, errors.New("distribution end date not set")
-	}
 
 	startTime := a.DistributionStartDate.Unix()
-	endTime := a.DistributionEndDate.Unix()
+	endTime := a.ClawbackDate.Unix()
 	blockTime := ctx.BlockTime().Unix()
 
 	if startTime > blockTime {
-		return 0, ErrDistributionNotStarted
+		return 0, ErrAirdropNotStarted
 	}
-	if blockTime > endTime {
-		return 0, ErrDistributionEnded
+	if blockTime >= endTime {
+		return 0, ErrAirdropEnded
 	}
 
 	elapsedTimeSeconds := blockTime - startTime
 	elapsedDays := elapsedTimeSeconds / windowLengthSeconds
+
+	// Cap the airdrop index at the last day
+	if elapsedDays > a.GetAirdropLength() {
+		elapsedDays = a.GetAirdropLength() - 1
+	}
 
 	return int(elapsedDays), nil
 }
