@@ -245,7 +245,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
 	admin := "admin"
 	airdropId := "airdrop"
-	distributionAddress := "distributor"
+	distributorAddress := "distributor"
 	allocatorAddress := "allocator"
 	linkerAddress := "linker"
 	rewardDenom := "denom"
@@ -266,7 +266,7 @@ func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
 		&clawbackDate,
 		&deadlineDate,
 		earlyClaimPenalty,
-		distributionAddress,
+		distributorAddress,
 		allocatorAddress,
 		linkerAddress,
 	)
@@ -279,9 +279,9 @@ func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
 		"allocator_address":"allocator",
 		"claim_type_deadline_date":"2024-02-01T00:00:00Z",
 		"clawback_date":"2024-07-01T00:00:00Z",
-		"distribution_address":"distributor",
 		"distribution_end_date":"2024-06-01T00:00:00Z",
 		"distribution_start_date":"2024-01-01T00:00:00Z",
+		"distributor_address":"distributor",
 		"early_claim_penalty":"0.500000000000000000",
 		"linker_address":"linker",
 		"reward_denom":"denom"}}`)
@@ -402,7 +402,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 	admin := "admin"
 	airdropId := "airdrop"
-	distributionAddress := "distributor"
+	distributorAddress := "distributor"
 	allocatorAddress := "allocator"
 	linkerAddress := "linker"
 	rewardDenom := "denom"
@@ -423,7 +423,7 @@ func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 		&clawbackDate,
 		&deadlineDate,
 		earlyClaimPenalty,
-		distributionAddress,
+		distributorAddress,
 		allocatorAddress,
 		linkerAddress,
 	)
@@ -436,9 +436,9 @@ func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 		"allocator_address":"allocator",
 		"claim_type_deadline_date":"2024-02-01T00:00:00Z",
 		"clawback_date":"2024-07-01T00:00:00Z",
-		"distribution_address":"distributor",
 		"distribution_end_date":"2024-06-01T00:00:00Z",
 		"distribution_start_date":"2024-01-01T00:00:00Z",
+		"distributor_address":"distributor",
 		"early_claim_penalty":"0.500000000000000000",
 		"linker_address":"linker",
 		"reward_denom":"denom"}}`)
@@ -453,9 +453,7 @@ func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 // ----------------------------------------------
 
 func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
-	validNonAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
-	adminAddress, ok := apptesting.GetAdminAddress()
-	require.True(t, ok)
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
 
 	validAirdropId := "airdrop-1"
 	validAllocations := []types.RawAllocation{
@@ -481,7 +479,7 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 		{
 			name: "valid message",
 			msg: types.MsgAddAllocations{
-				Admin:       adminAddress,
+				Admin:       validAddress,
 				AirdropId:   validAirdropId,
 				Allocations: validAllocations,
 			},
@@ -496,18 +494,9 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 			expectedError: "invalid address",
 		},
 		{
-			name: "not admin address",
-			msg: types.MsgAddAllocations{
-				Admin:       validNonAdminAddress,
-				AirdropId:   validAirdropId,
-				Allocations: validAllocations,
-			},
-			expectedError: "is not an admin",
-		},
-		{
 			name: "missing airdrop id",
 			msg: types.MsgAddAllocations{
-				Admin:       adminAddress,
+				Admin:       validAddress,
 				AirdropId:   "",
 				Allocations: validAllocations,
 			},
@@ -516,7 +505,7 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 		{
 			name: "missing address",
 			msg: types.MsgAddAllocations{
-				Admin:     adminAddress,
+				Admin:     validAddress,
 				AirdropId: validAirdropId,
 				Allocations: []types.RawAllocation{
 					{
@@ -534,7 +523,7 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 		{
 			name: "nil allocation",
 			msg: types.MsgAddAllocations{
-				Admin:     adminAddress,
+				Admin:     validAddress,
 				AirdropId: validAirdropId,
 				Allocations: []types.RawAllocation{
 					{
@@ -552,7 +541,7 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 		{
 			name: "negative allocation",
 			msg: types.MsgAddAllocations{
-				Admin:     adminAddress,
+				Admin:     validAddress,
 				AirdropId: validAirdropId,
 				Allocations: []types.RawAllocation{
 					{
@@ -570,7 +559,7 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 		{
 			name: "duplicate address",
 			msg: types.MsgAddAllocations{
-				Admin:     adminAddress,
+				Admin:     validAddress,
 				AirdropId: validAirdropId,
 				Allocations: []types.RawAllocation{
 					{
@@ -588,7 +577,7 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 		{
 			name: "inconsistent allocations length",
 			msg: types.MsgAddAllocations{
-				Admin:     adminAddress,
+				Admin:     validAddress,
 				AirdropId: validAirdropId,
 				Allocations: []types.RawAllocation{
 					{
@@ -653,9 +642,7 @@ func TestMsgAddAllocations_GetSignBytes(t *testing.T) {
 // ----------------------------------------------
 
 func TestMsgUpdateUserAllocation_ValidateBasic(t *testing.T) {
-	validNonAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
-	adminAddress, ok := apptesting.GetAdminAddress()
-	require.True(t, ok)
+	validAddress, invalidAddress := apptesting.GenerateTestAddrs()
 
 	validAirdropId := "airdrop-1"
 	validUser := "user"
@@ -669,7 +656,7 @@ func TestMsgUpdateUserAllocation_ValidateBasic(t *testing.T) {
 		{
 			name: "valid message",
 			msg: types.MsgUpdateUserAllocation{
-				Admin:       adminAddress,
+				Admin:       validAddress,
 				AirdropId:   validAirdropId,
 				UserAddress: validUser,
 				Allocations: validAllocation,
@@ -686,19 +673,9 @@ func TestMsgUpdateUserAllocation_ValidateBasic(t *testing.T) {
 			expectedError: "invalid address",
 		},
 		{
-			name: "not admin address",
-			msg: types.MsgUpdateUserAllocation{
-				Admin:       validNonAdminAddress,
-				AirdropId:   validAirdropId,
-				UserAddress: validUser,
-				Allocations: validAllocation,
-			},
-			expectedError: "is not an admin",
-		},
-		{
 			name: "missing airdrop id",
 			msg: types.MsgUpdateUserAllocation{
-				Admin:       adminAddress,
+				Admin:       validAddress,
 				AirdropId:   "",
 				UserAddress: validUser,
 				Allocations: validAllocation,
@@ -708,7 +685,7 @@ func TestMsgUpdateUserAllocation_ValidateBasic(t *testing.T) {
 		{
 			name: "missing address",
 			msg: types.MsgUpdateUserAllocation{
-				Admin:       adminAddress,
+				Admin:       validAddress,
 				AirdropId:   validAirdropId,
 				UserAddress: "",
 				Allocations: validAllocation,
@@ -718,7 +695,7 @@ func TestMsgUpdateUserAllocation_ValidateBasic(t *testing.T) {
 		{
 			name: "nil allocation",
 			msg: types.MsgUpdateUserAllocation{
-				Admin:       adminAddress,
+				Admin:       validAddress,
 				AirdropId:   validAirdropId,
 				UserAddress: validUser,
 				Allocations: []sdkmath.Int{{}},
@@ -728,7 +705,7 @@ func TestMsgUpdateUserAllocation_ValidateBasic(t *testing.T) {
 		{
 			name: "negative allocation",
 			msg: types.MsgUpdateUserAllocation{
-				Admin:       adminAddress,
+				Admin:       validAddress,
 				AirdropId:   validAirdropId,
 				UserAddress: validUser,
 				Allocations: []sdkmath.Int{sdkmath.NewInt(-1)},
@@ -805,16 +782,6 @@ func TestMsgLinkAddresses_ValidateBasic(t *testing.T) {
 				HostAddress:   validHostAddress,
 			},
 			expectedError: "invalid address",
-		},
-		{
-			name: "not admin address",
-			msg: types.MsgLinkAddresses{
-				Admin:         validNonAdminAddress,
-				AirdropId:     validAirdropId,
-				StrideAddress: validStrideAddress,
-				HostAddress:   validHostAddress,
-			},
-			expectedError: "is not an admin",
 		},
 		{
 			name: "missing airdrop id",

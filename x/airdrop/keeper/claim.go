@@ -62,7 +62,7 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	userAllocation.Claimed = userAllocation.Claimed.Add(todaysRewards)
 
 	// Distribute rewards from the distributor
-	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributionAddress)
+	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributorAddress)
 	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
 	rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, todaysRewards)
 
@@ -135,7 +135,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	userAllocation.ClaimType = types.CLAIM_EARLY
 
 	// Distribute rewards from the distributor, deducting the early penalty
-	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributionAddress)
+	distributorAccount := sdk.MustAccAddressFromBech32(airdrop.DistributorAddress)
 	claimerAccount := sdk.MustAccAddressFromBech32(userAllocation.Address)
 	rewardsCoin := sdk.NewCoin(airdrop.RewardDenom, distributedRewards)
 
@@ -159,11 +159,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 // There's no need to merge the Claimed or Forfeited amounts because the host allocations cannot
 // be claimed through a non-stride address
 func (k Keeper) LinkAddresses(ctx sdk.Context, airdropId, strideAddress, hostAddress string) error {
-	// Fetch the airdrop and user's allocations
-	_, airdropFound := k.GetAirdrop(ctx, airdropId)
-	if !airdropFound {
-		return types.ErrAirdropNotFound.Wrapf("airdrop %s", airdropId)
-	}
+	// Fetch the user's allocation across both addresses
 	hostAllocation, hostFound := k.GetUserAllocation(ctx, airdropId, hostAddress)
 	if !hostFound {
 		return types.ErrUserAllocationNotFound.Wrapf("user %s for airdrop %s", hostAddress, airdropId)

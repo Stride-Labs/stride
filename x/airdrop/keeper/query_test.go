@@ -148,6 +148,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 		Id:                    AirdropId,
 		DistributionStartDate: &DistributionStartDate,
 		DistributionEndDate:   &DistributionEndDate,
+		ClawbackDate:          &ClawbackDate,
 	})
 
 	s.Ctx = s.Ctx.WithBlockTime(DistributionStartDate.Add(time.Hour * 49))

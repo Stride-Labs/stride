@@ -170,7 +170,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{
 				Id:                    AirdropId,
 				RewardDenom:           RewardDenom,
-				DistributionAddress:   distributor.String(),
+				DistributorAddress:    distributor.String(),
 				DistributionStartDate: &DistributionStartDate,
 				DistributionEndDate:   &DistributionEndDate,
 				ClawbackDate:          &ClawbackDate,
@@ -298,7 +298,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			timeOffset:         (-1 * time.Hour), // before airdrop start
 			initialAllocations: []int64{},
 			initialClaimed:     100,
-			expectedError:      "airdrop distribution has not started",
+			expectedError:      "airdrop has not started",
 		},
 		{
 			// Claimed well after the decision deadline
@@ -333,7 +333,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			s.App.AirdropKeeper.SetAirdrop(s.Ctx, types.Airdrop{
 				Id:                    AirdropId,
 				RewardDenom:           RewardDenom,
-				DistributionAddress:   distributor.String(),
+				DistributorAddress:    distributor.String(),
 				DistributionStartDate: &DistributionStartDate,
 				ClaimTypeDeadlineDate: &DeadlineDate,
 				EarlyClaimPenalty:     tc.penalty,

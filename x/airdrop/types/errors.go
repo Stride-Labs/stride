@@ -19,4 +19,5 @@ var (
 	ErrAfterDecisionDeadline       = sdkerrors.Register(ModuleName, 2009, "claim type decision deadline passed")
 	ErrFailedToLinkAddresses       = sdkerrors.Register(ModuleName, 2010, "unable to link addresses")
 	ErrInvalidAllocationListLength = sdkerrors.Register(ModuleName, 2011, "invalid allocations list length")
+	ErrInvalidAdminAddress         = sdkerrors.Register(ModuleName, 2012, "invalid admin address")
 )

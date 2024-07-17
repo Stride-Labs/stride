@@ -320,9 +320,6 @@ func (msg *MsgAddAllocations) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
-	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
-		return err
-	}
 
 	if msg.AirdropId == "" {
 		return errors.New("airdrop-id must be specified")
@@ -396,9 +393,6 @@ func (msg *MsgUpdateUserAllocation) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
-	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
-		return err
-	}
 
 	if msg.AirdropId == "" {
 		return errors.New("airdrop-id must be specified")
@@ -453,9 +447,6 @@ func (msg *MsgLinkAddresses) GetSignBytes() []byte {
 func (msg *MsgLinkAddresses) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
-	}
-	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
-		return err
 	}
 
 	if _, err := sdk.AccAddressFromBech32(msg.StrideAddress); err != nil {

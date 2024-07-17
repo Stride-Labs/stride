@@ -134,8 +134,12 @@ func (ms msgServer) AddAllocations(goCtx context.Context, msg *types.MsgAddAlloc
 func (ms msgServer) UpdateUserAllocation(goCtx context.Context, msg *types.MsgUpdateUserAllocation) (*types.MsgUpdateUserAllocationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if _, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId); !found {
+	airdrop, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId)
+	if !found {
 		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
+	}
+	if msg.Admin != airdrop.AllocatorAddress {
+		return nil, types.ErrInvalidAdminAddress.Wrapf("user allocation updates can only be performed by the allocator admin")
 	}
 
 	userAllocation, found := ms.Keeper.GetUserAllocation(ctx, msg.AirdropId, msg.UserAddress)
@@ -157,6 +161,14 @@ func (ms msgServer) UpdateUserAllocation(goCtx context.Context, msg *types.MsgUp
 // Admin address to link a stride and non-stride address, merging their allocations
 func (ms msgServer) LinkAddresses(goCtx context.Context, msg *types.MsgLinkAddresses) (*types.MsgLinkAddressesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	airdrop, found := ms.Keeper.GetAirdrop(ctx, msg.AirdropId)
+	if !found {
+		return nil, types.ErrAirdropNotFound.Wrapf("airdrop %s", msg.AirdropId)
+	}
+	if msg.Admin != airdrop.LinkerAddress {
+		return nil, types.ErrInvalidAdminAddress.Wrapf("linking can only be performed by the linkor admin")
+	}
 
 	if err := ms.Keeper.LinkAddresses(ctx, msg.AirdropId, msg.StrideAddress, msg.HostAddress); err != nil {
 		return nil, err
