@@ -18,7 +18,9 @@ func (s *KeeperTestSuite) TestCreateAirdrop() {
 		ClawbackDate:          &ClawbackDate,
 		ClaimTypeDeadlineDate: &DeadlineDate,
 		EarlyClaimPenalty:     sdk.MustNewDecFromStr("0.5"),
-		DistributionAddress:   "distributor",
+		DistributorAddress:    "distributor",
+		AllocatorAddress:      "allocator",
+		LinkerAddress:         "linker",
 	}
 	_, err := s.GetMsgServer().CreateAirdrop(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when creating airdrop")
@@ -31,7 +33,9 @@ func (s *KeeperTestSuite) TestCreateAirdrop() {
 	s.Require().Equal(msg.ClawbackDate, airdrop.ClawbackDate, "clawback date")
 	s.Require().Equal(msg.ClaimTypeDeadlineDate, airdrop.ClaimTypeDeadlineDate, "deadline date")
 	s.Require().Equal(msg.EarlyClaimPenalty, airdrop.EarlyClaimPenalty, "early claim penalty")
-	s.Require().Equal(msg.DistributionAddress, airdrop.DistributionAddress, "distribution address")
+	s.Require().Equal(msg.DistributorAddress, airdrop.DistributorAddress, "distributor address")
+	s.Require().Equal(msg.AllocatorAddress, airdrop.AllocatorAddress, "allocator address")
+	s.Require().Equal(msg.LinkerAddress, airdrop.LinkerAddress, "linker address")
 
 	// Attempt to create it again, it should fail
 	_, err = s.GetMsgServer().CreateAirdrop(sdk.UnwrapSDKContext(s.Ctx), &msg)
@@ -52,7 +56,9 @@ func (s *KeeperTestSuite) TestUpdateAirdrop() {
 		ClawbackDate:          &ClawbackDate,
 		ClaimTypeDeadlineDate: &DeadlineDate,
 		EarlyClaimPenalty:     sdk.MustNewDecFromStr("0.8"),
-		DistributionAddress:   "distributor2",
+		DistributorAddress:    "distributor2",
+		AllocatorAddress:      "allocator2",
+		LinkerAddress:         "linker2",
 	}
 	_, err := s.GetMsgServer().UpdateAirdrop(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when updating airdrop")
@@ -65,7 +71,9 @@ func (s *KeeperTestSuite) TestUpdateAirdrop() {
 	s.Require().Equal(msg.ClawbackDate, airdrop.ClawbackDate, "clawback date")
 	s.Require().Equal(msg.ClaimTypeDeadlineDate, airdrop.ClaimTypeDeadlineDate, "deadline date")
 	s.Require().Equal(msg.EarlyClaimPenalty, airdrop.EarlyClaimPenalty, "early claim penalty")
-	s.Require().Equal(msg.DistributionAddress, airdrop.DistributionAddress, "distribution address")
+	s.Require().Equal(msg.DistributorAddress, airdrop.DistributorAddress, "distributor address")
+	s.Require().Equal(msg.AllocatorAddress, airdrop.AllocatorAddress, "allocator address")
+	s.Require().Equal(msg.LinkerAddress, airdrop.LinkerAddress, "linker address")
 
 	// Remove the airdrop and try it again, it should error saying the airdrop doesn't exist
 	s.App.AirdropKeeper.RemoveAirdrop(s.Ctx, AirdropId)

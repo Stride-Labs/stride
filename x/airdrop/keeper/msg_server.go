@@ -61,7 +61,9 @@ func (ms msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreateAir
 		ClawbackDate:          msg.ClawbackDate,
 		ClaimTypeDeadlineDate: msg.ClaimTypeDeadlineDate,
 		EarlyClaimPenalty:     msg.EarlyClaimPenalty,
-		DistributionAddress:   msg.DistributionAddress,
+		DistributorAddress:    msg.DistributorAddress,
+		AllocatorAddress:      msg.AllocatorAddress,
+		LinkerAddress:         msg.LinkerAddress,
 	}
 	ms.Keeper.SetAirdrop(ctx, airdrop)
 
@@ -84,7 +86,9 @@ func (ms msgServer) UpdateAirdrop(goCtx context.Context, msg *types.MsgUpdateAir
 		ClawbackDate:          msg.ClawbackDate,
 		ClaimTypeDeadlineDate: msg.ClaimTypeDeadlineDate,
 		EarlyClaimPenalty:     msg.EarlyClaimPenalty,
-		DistributionAddress:   msg.DistributionAddress,
+		DistributorAddress:    msg.DistributorAddress,
+		AllocatorAddress:      msg.AllocatorAddress,
+		LinkerAddress:         msg.LinkerAddress,
 	}
 	ms.Keeper.SetAirdrop(ctx, airdrop)
 
