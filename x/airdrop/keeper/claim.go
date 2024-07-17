@@ -26,15 +26,15 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 			userAllocation.ClaimType.String())
 	}
 
-	// Confirm we're not past the decision date
+	// Confirm the airdrop started
 	currentTime := ctx.BlockTime().Unix()
-	if currentTime > airdrop.ClaimTypeDeadlineDate.Unix() {
-		return types.ErrAfterDecisionDeadline
+	if currentTime < airdrop.DistributionStartDate.Unix() {
+		return types.ErrAirdropNotStarted
 	}
 
-	// Confirm the airdrop started
-	if currentTime < airdrop.DistributionStartDate.Unix() {
-		return types.ErrDistributionNotStarted
+	// Confirm we're not passed the clawback date
+	if currentTime >= airdrop.ClawbackDate.Unix() {
+		return types.ErrAirdropEnded
 	}
 
 	// Get the index in the allocations array from the current date
@@ -95,15 +95,15 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 			userAllocation.ClaimType.String())
 	}
 
-	// Confirm airdrop window
+	// Confirm the airdrop started
 	currentTime := ctx.BlockTime().Unix()
-
 	if currentTime < airdrop.DistributionStartDate.Unix() {
-		return types.ErrDistributionNotStarted
+		return types.ErrAirdropNotStarted
 	}
 
-	if currentTime > airdrop.DistributionEndDate.Unix() {
-		return types.ErrDistributionEnded
+	// Confirm we're not past the decision date
+	if currentTime > airdrop.ClaimTypeDeadlineDate.Unix() {
+		return types.ErrAfterDecisionDeadline
 	}
 
 	// Sum the total rewards 0 them out in the process
