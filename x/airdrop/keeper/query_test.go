@@ -172,4 +172,32 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying user summary again")
 	s.Require().Equal(types.CLAIM_EARLY.String(), resp.ClaimType, "claim type")
+
+	// Update the block time so it appears as if the airdrop has not started
+	// Then check that the date index is -1 and claimable is 0
+	s.Ctx = s.Ctx.WithBlockTime(DistributionStartDate.Add(-1 * time.Hour))
+
+	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying user summary before airdrop")
+	s.Require().Equal(int64(-1), resp.CurrentDateIndex, "date index")
+	s.Require().Equal(remaining, resp.Remaining, "date index")
+	s.Require().Equal(int64(0), resp.Claimable.Int64(), "date index")
+
+	// Update the block time so it appears as if the airdrop has not started
+	// Then check that the date index is -1 and claimable is 0
+	s.Ctx = s.Ctx.WithBlockTime(DistributionStartDate.Add(-1 * time.Hour))
+
+	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying user summary before airdrop")
+	s.Require().Equal(int64(-1), resp.CurrentDateIndex, "date index")
+	s.Require().Equal(int64(0), resp.Claimable.Int64(), "date index")
+
+	// Update the block time so it appears as if the airdrop has ended
+	// Then check that the date index is -1 and claimable is 0
+	s.Ctx = s.Ctx.WithBlockTime(ClawbackDate.Add(time.Hour))
+
+	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying user summary before airdrop")
+	s.Require().Equal(int64(-1), resp.CurrentDateIndex, "date index")
+	s.Require().Equal(int64(0), resp.Claimable.Int64(), "date index")
 }

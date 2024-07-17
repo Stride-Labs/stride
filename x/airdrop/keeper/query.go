@@ -117,8 +117,15 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	}
 
 	windowLength := k.GetParams(ctx).AllocationWindowSeconds
+
+	// If the airdrop hasn't started yet or has ended, return date index -1 and claimable 0
+	claimable := sdkmath.ZeroInt()
 	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, windowLength)
-	if err != nil {
+	if err == nil {
+		claimable = allocation.GetClaimableAllocation(currentDateIndex)
+	} else if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
+		currentDateIndex = -1
+	} else {
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 
@@ -130,7 +137,7 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	summary := &types.QueryUserSummaryResponse{
 		ClaimType:        claimType.String(),
 		Claimed:          allocation.Claimed,
-		Claimable:        allocation.GetClaimableAllocation(currentDateIndex),
+		Claimable:        claimable,
 		Forfeited:        allocation.Forfeited,
 		Remaining:        allocation.GetRemainingAllocations(),
 		CurrentDateIndex: int64(currentDateIndex),
