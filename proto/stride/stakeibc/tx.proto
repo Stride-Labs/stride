@@ -27,6 +27,8 @@ service Msg {
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
   rpc RestoreInterchainAccount(MsgRestoreInterchainAccount)
       returns (MsgRestoreInterchainAccountResponse);
+  rpc CloseDelegationChannel(MsgCloseDelegationChannel)
+      returns (MsgCloseDelegationChannelResponse);
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc CalibrateDelegation(MsgCalibrateDelegation)
@@ -192,6 +194,13 @@ message MsgRestoreInterchainAccount {
   string account_owner = 4;
 }
 message MsgRestoreInterchainAccountResponse {}
+
+message MsgCloseDelegationChannel {
+  string creator = 1;
+  string channel_id = 2;
+  string port_id = 3;
+}
+message MsgCloseDelegationChannelResponse {}
 
 message MsgUpdateValidatorSharesExchRate {
   string creator = 1;
