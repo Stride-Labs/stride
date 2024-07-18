@@ -2586,6 +2586,44 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 }
 
 // ----------------------------------------------------
+//             CloseDelegationChannel
+// ----------------------------------------------------
+
+func (s *KeeperTestSuite) TestCloseDelegationChannel() {
+	channelID, portID := s.CreateICAChannel(types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION))
+
+	// Confirm the channel is open
+	channel, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
+	s.Require().True(found, "channel should be found")
+	s.Require().Equal(channeltypes.OPEN, channel.State, "channel should be open")
+
+	// Close the channel
+	msg := types.MsgCloseDelegationChannel{
+		ChannelId: channelID,
+		PortId:    portID,
+	}
+	_, err := s.GetMsgServer().CloseDelegationChannel(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when closing channel")
+
+	// Confirm the channel is closed
+	channel, found = s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, portID, channelID)
+	s.Require().True(found, "channel should be found")
+	s.Require().Equal(channeltypes.CLOSED, channel.State, "channel should be closed")
+
+	// Attempt to call it again, it should error since the channel is already closed
+	_, err = s.GetMsgServer().CloseDelegationChannel(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "channel is already CLOSED")
+
+	// Attempt to call it with a different channel ID, it should error since the channel wont be found
+	invalidMsg := types.MsgCloseDelegationChannel{
+		ChannelId: "channel-10",
+		PortId:    portID,
+	}
+	_, err = s.GetMsgServer().CloseDelegationChannel(sdk.UnwrapSDKContext(s.Ctx), &invalidMsg)
+	s.Require().ErrorContains(err, "not found")
+}
+
+// ----------------------------------------------------
 //	         UpdateInnerRedemptionRateBounds
 // ----------------------------------------------------
 

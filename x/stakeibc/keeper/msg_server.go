@@ -1001,6 +1001,21 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	return &types.MsgRestoreInterchainAccountResponse{}, nil
 }
 
+// Admin transaction to close an ICA channel
+// This can be used if there are records stuck in state IN_PROGRESS after a channel has been re-opened after a timeout
+// After the closure, the a new channel can be permissionlessly re-opened with RestoreInterchainAccount
+func (k msgServer) CloseDelegationChannel(goCtx context.Context, msg *types.MsgCloseDelegationChannel) (*types.MsgCloseDelegationChannelResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	_, capability, err := k.IBCKeeper.ChannelKeeper.LookupModuleByChannel(ctx, msg.PortId, msg.ChannelId)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "could not retrieve capability from port ID and channel ID")
+	}
+	if err := k.IBCKeeper.ChannelKeeper.ChanCloseInit(ctx, msg.PortId, msg.ChannelId, capability); err != nil {
+		return nil, errorsmod.Wrapf(err, "unable to initiate channel closure")
+	}
+	return &types.MsgCloseDelegationChannelResponse{}, nil
+}
+
 // This kicks off two ICQs, each with a callback, that will update the number of tokens on a validator
 // after being slashed. The flow is:
 // 1. QueryValidatorSharesToTokensRate (ICQ)
