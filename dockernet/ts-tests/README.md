@@ -8,3 +8,5 @@ pnpm i
 # run tests
 pnpm test
 ```
+
+IMPORTANT: `@cosmjs/amino` and `@cosmjs/stargate` vesrions must match the versions used by stridejs. To get those version, run `pnpm why @cosmjs/amino` and `pnpm why @cosmjs/stargate`.

@@ -1,7 +1,20 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
-import { getSigningStrideClient, stride, cosmos } from "stridejs";
+import { Registry } from "@cosmjs/proto-signing";
+import {
+  AminoTypes,
+  defaultRegistryTypes,
+  SigningStargateClient,
+} from "@cosmjs/stargate";
+import {
+  cosmos,
+  cosmosAminoConverters,
+  getSigningStrideClient,
+  stride,
+  strideAminoConverters,
+  strideProtoRegistry,
+} from "stridejs";
 import { beforeAll, expect, test } from "vitest";
-import { coinsFromString } from "./utils";
+import { feeFromGas } from "./utils";
 
 const RPC_ENDPOINT = "http://localhost:26657";
 
@@ -69,19 +82,22 @@ beforeAll(async () => {
     });
 
     // setup tx client
-    accounts[name].tx = await getSigningStrideClient({
-      rpcEndpoint: RPC_ENDPOINT,
-      signer: accounts[name].signer,
+    const registry = new Registry([
+      ...defaultRegistryTypes,
+      ...strideProtoRegistry,
+    ]);
+    const aminoTypes = new AminoTypes({
+      ...strideAminoConverters,
+      ...cosmosAminoConverters,
     });
 
-    const balance = await accounts[name].query.cosmos.bank.v1beta1.allBalances({
-      address: accounts[name].address,
-    });
-    console.log(
-      "balance",
-      name,
-      BigInt(balance.balances[0].amount) / BigInt(1e6),
-      balance.balances[0].denom,
+    accounts[name].tx = await SigningStargateClient.connectWithSigner(
+      RPC_ENDPOINT,
+      accounts[name].signer,
+      {
+        registry,
+        aminoTypes,
+      },
     );
   }
 
@@ -94,9 +110,8 @@ beforeAll(async () => {
   const tx = await accounts.user.tx.signAndBroadcast(
     accounts.user.address,
     [msgSend],
-    { amount: coinsFromString("0.025ustrd"), gas: "200000" },
+    feeFromGas(200000),
   );
-
   console.log(tx.code);
 });
 
