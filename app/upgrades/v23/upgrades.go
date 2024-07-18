@@ -70,7 +70,7 @@ func ResetLSMRecord(ctx sdk.Context, k recordskeeper.Keeper) {
 		ctx.Logger().Error("Failed LSM deposit record not found")
 		return
 	}
-	lsmDeposit.Amount = lsmDeposit.Amount.Sub(sdkmath.OneInt())
 	lsmDeposit.Status = recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE
+	lsmDeposit.Amount = lsmDeposit.Amount.Sub(sdkmath.OneInt())
 	k.SetLSMTokenDeposit(ctx, lsmDeposit)
 }
