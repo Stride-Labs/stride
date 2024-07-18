@@ -39,9 +39,6 @@ elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then
 fi
 REWARD_CONVERTER_HOST_ZONE=${HOST_CHAINS[0]}
 
-# TODO[airdrop]: revert before merging
-HOST_CHAINS=()
-
 # DENOMS
 STRD_DENOM="ustrd"
 ATOM_DENOM="uatom"
