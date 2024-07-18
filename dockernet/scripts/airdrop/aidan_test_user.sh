@@ -23,7 +23,7 @@ CLAIMER_2_MNEMONIC="glance trigger upgrade keep nature glad wreck snake grief tr
 # stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q
 CLAIMER_3_MNEMONIC="pet garlic cram security clock element truth soda stomach ugly you dress narrow black space grab concert cancel depend crawl corn worry miss submit"
 
-LINKED_CLAIMER_ADDRESS="dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau"
+LINKED_CLAIMER_ADDRESS="dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x"
 
 
 current_time_with_minute_offset() {
@@ -224,7 +224,7 @@ if false; then
     $STRIDE_MAIN_CMD tx airdrop claim-daily $AIRDROP_NAME --from claimer2 -y --gas 1000000 | TRIM_TX
     sleep 5
     echo -e "\n>>> claimer3 links (expected success)"
-    $STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau --from linker -y --gas 1000000 | TRIM_TX
+    $STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x --from linker -y --gas 1000000 | TRIM_TX
     sleep 5
     sleep 50
     # DAY 2 - AIRDROP CONTINUES
@@ -253,7 +253,7 @@ if true; then
     sleep 60
     # DAY 1 - AIRDROP STARTS
     echo -e "\n>>> claimer1 links (expected success)"
-    $STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride1qtzlx93h8xlmej42pjqyez6yp9nscfgxsmtt59 dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau --from linker -y --gas 1000000 | TRIM_TX
+    $STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride1qtzlx93h8xlmej42pjqyez6yp9nscfgxsmtt59 dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x --from linker -y --gas 1000000 | TRIM_TX
     sleep 5
     echo -e "\n>>> claimer1 claims early (expected success)"
     $STRIDE_MAIN_CMD tx airdrop claim-early $AIRDROP_NAME --from claimer1 -y --gas 1000000 | TRIM_TX

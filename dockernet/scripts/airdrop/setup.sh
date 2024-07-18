@@ -19,7 +19,8 @@ CLAIMER_2_MNEMONIC="glance trigger upgrade keep nature glad wreck snake grief tr
 # stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q
 CLAIMER_3_MNEMONIC="pet garlic cram security clock element truth soda stomach ugly you dress narrow black space grab concert cancel depend crawl corn worry miss submit"
 
-LINKED_CLAIMER_ADDRESS="dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau"
+# Same mnemonic as claimer 3
+LINKED_CLAIMER_ADDRESS="dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x"
 
 current_time_with_minute_offset() {
 	minutes=$1

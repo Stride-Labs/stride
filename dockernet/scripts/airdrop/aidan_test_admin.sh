@@ -108,7 +108,7 @@ sleep 5
 # Only linker can link
 echo -e "\n>>> ADMIN TEST 8"
 echo -e "\n>>> Only linker can link"
-$STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau --from linker -y --gas 1000000 | TRIM_TX
+$STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x --from linker -y --gas 1000000 | TRIM_TX
 sleep 5
-$STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau --from admin -y --gas 1000000 | TRIM_TX
+$STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x --from admin -y --gas 1000000 | TRIM_TX
 sleep 5

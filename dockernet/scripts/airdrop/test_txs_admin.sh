@@ -63,7 +63,7 @@ AIRDROP_NAME="sttia"
 # sleep 3
 
 # # echo -e "\n>>> Adding Allocations..."
-# $STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7" "dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau" \
+# $STRIDE_MAIN_CMD tx airdrop link-addresses $AIRDROP_NAME "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7" "dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x" \
 #  --from admin -y --gas 1000000 | TRIM_TX
 # sleep 5
 
@@ -72,5 +72,5 @@ AIRDROP_NAME="sttia"
 # sleep 3
 
 # echo -e "\n>>> Query Airdrop Allocation to stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7..."
-# $STRIDE_MAIN_CMD q airdrop user-allocation $AIRDROP_NAME dym1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6zxkau
+# $STRIDE_MAIN_CMD q airdrop user-allocation $AIRDROP_NAME dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x
 # sleep 3
