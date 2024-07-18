@@ -562,6 +562,8 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 			// only revert records for the select host zone
 			if depositRecord.HostZoneId == hostZone.ChainId && depositRecord.Status == recordtypes.DepositRecord_DELEGATION_IN_PROGRESS {
 				depositRecord.Status = recordtypes.DepositRecord_DELEGATION_QUEUE
+				depositRecord.DelegationTxsInProgress = 0
+
 				k.Logger(ctx).Info(fmt.Sprintf("Setting DepositRecord %d to status DepositRecord_DELEGATION_IN_PROGRESS", depositRecord.Id))
 				k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
 			}

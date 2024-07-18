@@ -1490,9 +1490,11 @@ func (s *KeeperTestSuite) TestUpdateTradeRoute() {
 // ----------------------------------------------------
 
 type DepositRecordStatusUpdate struct {
-	chainId        string
-	initialStatus  recordtypes.DepositRecord_Status
-	revertedStatus recordtypes.DepositRecord_Status
+	chainId                         string
+	initialStatus                   recordtypes.DepositRecord_Status
+	revertedStatus                  recordtypes.DepositRecord_Status
+	initialDelegationTxsInProgress  uint64
+	revertedDelegationTxsInProgress uint64
 }
 
 type HostZoneUnbondingStatusUpdate struct {
@@ -1544,28 +1546,35 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 	depositRecords := []DepositRecordStatusUpdate{
 		{
 			// Status doesn't change
-			chainId:        HostChainId,
-			initialStatus:  recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
-			revertedStatus: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			chainId:                         HostChainId,
+			initialStatus:                   recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			revertedStatus:                  recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			initialDelegationTxsInProgress:  2,
+			revertedDelegationTxsInProgress: 2,
 		},
 		{
 			// Status gets reverted from IN_PROGRESS to QUEUE
-			chainId:        HostChainId,
-			initialStatus:  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
-			revertedStatus: recordtypes.DepositRecord_DELEGATION_QUEUE,
+			chainId:                         HostChainId,
+			initialStatus:                   recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			revertedStatus:                  recordtypes.DepositRecord_DELEGATION_QUEUE,
+			initialDelegationTxsInProgress:  2,
+			revertedDelegationTxsInProgress: 0,
 		},
 		{
 			// Status doesn't get reveted because it's a different host zone
-			chainId:        "different_host_zone",
-			initialStatus:  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
-			revertedStatus: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			chainId:                         "different_host_zone",
+			initialStatus:                   recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			revertedStatus:                  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			initialDelegationTxsInProgress:  2,
+			revertedDelegationTxsInProgress: 2,
 		},
 	}
 	for i, depositRecord := range depositRecords {
 		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordtypes.DepositRecord{
-			Id:         uint64(i),
-			HostZoneId: depositRecord.chainId,
-			Status:     depositRecord.initialStatus,
+			Id:                      uint64(i),
+			HostZoneId:              depositRecord.chainId,
+			Status:                  depositRecord.initialStatus,
+			DelegationTxsInProgress: depositRecord.initialDelegationTxsInProgress,
 		})
 	}
 
@@ -1744,13 +1753,21 @@ func (s *KeeperTestSuite) verifyLSMDepositStatus(expectedLSMDeposits []LSMTokenD
 }
 
 // Helper function to check that the delegation changes in progress field was reset to 0 for each validator
-func (s *KeeperTestSuite) verifyDelegationChangeInProgressReset() {
+// and the delegation txs in progress was set to 0 on each deposit record
+func (s *KeeperTestSuite) verifyDelegationChangeInProgressReset(expectedDepositRecords []DepositRecordStatusUpdate) {
 	hostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Len(hostZone.Validators, 3, "there should be 3 validators on this host zone")
 
 	for _, validator := range hostZone.Validators {
 		s.Require().Zero(validator.DelegationChangesInProgress,
 			"delegation change in progress should have been reset for validator %s", validator.Address)
+	}
+
+	for i, expectedRecord := range expectedDepositRecords {
+		actualRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
+		s.Require().True(found, "deposit record %d should have been found", i)
+		s.Require().Equal(expectedRecord.revertedDelegationTxsInProgress, actualRecord.DelegationTxsInProgress,
+			"delegation txs in progress fro record %d", i)
 	}
 }
 
@@ -1787,7 +1804,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	s.verifyDepositRecordsStatus(tc.depositRecordStatusUpdates, true)
 	s.verifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
 	s.verifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, true)
-	s.verifyDelegationChangeInProgressReset()
+	s.verifyDelegationChangeInProgressReset(tc.depositRecordStatusUpdates)
 	s.verifyUndelegationChangeInProgressReset()
 }
 
