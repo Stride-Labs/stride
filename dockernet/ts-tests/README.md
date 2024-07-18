@@ -9,4 +9,4 @@ pnpm i
 pnpm test
 ```
 
-IMPORTANT: `@cosmjs/amino` and `@cosmjs/stargate` vesrions must match the versions used by stridejs. To get those version, run `pnpm why @cosmjs/amino` and `pnpm why @cosmjs/stargate`.
+IMPORTANT: `@cosmjs/*` dependencies must match the versions used by stridejs. To get those versions, run e.g. `pnpm why @cosmjs/amino`.

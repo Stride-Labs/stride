@@ -171,3 +171,13 @@ export function base64TendermintPubkeyToValconsAddress(
 ): string {
   return tendermintPubkeyToValconsAddress(fromBase64(pubkey), prefix);
 }
+
+/**
+ * Sleep for a certain amount of time
+ *
+ * @param {number} ms The number of milliseconds to sleep for
+ * @returns {Promise<void>} A promise that resolves after the sleep
+ */
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

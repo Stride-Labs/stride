@@ -19,6 +19,7 @@
     "@cosmjs/encoding": "0.31.3",
     "@cosmjs/proto-signing": "0.31.3",
     "@cosmjs/stargate": "0.31.3",
+    "@cosmjs/tendermint-rpc": "0.31.3",
     "@noble/hashes": "1.4.0",
     "bech32": "2.0.0",
     "jest": "29.7.0",
