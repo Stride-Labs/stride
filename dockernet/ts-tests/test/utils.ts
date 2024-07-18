@@ -169,3 +169,18 @@ export function base64TendermintPubkeyToValconsAddress(
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/**
+ * Converts a decimal value to a string representation that Tendermit RPC can parse.
+ *
+ * @example
+ * ```
+ * decToString(0.5) => "500000000000000000"
+ * ```
+ *
+ * @param {number} dec The decimal value to convert.
+ * @returns {string} A string representation of the decimal value.
+ */
+export function decToString(dec: number): string {
+  return String(Math.floor(dec * 1e18));
+}

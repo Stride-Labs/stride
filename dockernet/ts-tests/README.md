@@ -1,3 +1,5 @@
+### run the tests
+
 ```bash
 # build stride locally and run dokcernet
 (cd ../.. && make sync && make start-docker build=sgr)
@@ -10,3 +12,5 @@ pnpm test
 ```
 
 IMPORTANT: `@cosmjs/*` dependencies must match the versions used by stridejs. To get those versions, run e.g. `pnpm why @cosmjs/amino`.
+
+### test new types/protobufs

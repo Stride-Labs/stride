@@ -10,7 +10,7 @@ import {
   strideProtoRegistry,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
-import { feeFromGas, sleep } from "./utils";
+import { decToString, feeFromGas, sleep } from "./utils";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
 
 const RPC_ENDPOINT = "http://localhost:26657";
@@ -125,29 +125,29 @@ describe("x/airdrop", () => {
   // time variables in seconds
   const now = () => Math.floor(Date.now() / 1000);
   const minute = 60;
-  const hour = 60 * 60;
-  const day = 24 * 60 * 60;
+  const hour = 60 * minute;
+  const day = 24 * hour;
 
   test("create airdrop", async () => {
+    const stridejs = accounts.admin;
+
     const nowSec = now();
 
     const msg = stride.airdrop.MessageComposer.withTypeUrl.createAirdrop({
-      admin: accounts.admin.address,
+      admin: stridejs.address,
       airdropId: "🍌",
       rewardDenom: "ustrd",
       distributionStartDate: fromSeconds(now()),
       distributionEndDate: fromSeconds(nowSec + 3 * day),
       clawbackDate: fromSeconds(nowSec + 4 * day),
       claimTypeDeadlineDate: fromSeconds(nowSec + 2 * day),
-      earlyClaimPenalty: "500000000000000000", // 0.5 - Dec has 18 decimals and is represented as an int
-      distributionAddress: accounts.val1.address,
+      earlyClaimPenalty: decToString(0.5),
+      allocatorAddress: stridejs.address,
+      distributorAddress: stridejs.address,
+      linkerAddress: stridejs.address,
     });
 
-    const tx = await accounts.user.tx.signAndBroadcast(
-      accounts.user.address,
-      [msg],
-      feeFromGas(200000),
-    );
+    const tx = await stridejs.tx.signAndBroadcast(stridejs.address, [msg], feeFromGas(200000));
 
     expect(tx.code).toBe(0);
   });
