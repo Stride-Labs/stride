@@ -46,10 +46,7 @@ export const coinsFromString = (coinsAsString: string): Coin[] =>
  * @param {number} [gasPrice=0.025] The gas price to use for the fee calculation. Defaults to 0.025.
  * @returns {StdFee} A StdFee object with the calculated fee amount and gas limit.
  */
-export const feeFromGas = (
-  gasLimit: number,
-  gasPrice: number = 0.025,
-): StdFee => ({
+export const feeFromGas = (gasLimit: number, gasPrice: number = 0.025): StdFee => ({
   amount: coinsFromString(`${gasLimit * gasPrice}ustrd`),
   gas: String(gasLimit),
 });
@@ -92,10 +89,7 @@ export const ibcDenom = (
  * @param {String} [prefix="stride"] The address' bech32 prefix. Defaults to `"stride"`.
  * @returns the account's address
  */
-export function pubkeyToAddress(
-  pubkey: Uint8Array,
-  prefix: string = "stride",
-): string {
+export function pubkeyToAddress(pubkey: Uint8Array, prefix: string = "stride"): string {
   return bech32.encode(prefix, bech32.toWords(ripemd160(sha256(pubkey))));
 }
 
@@ -106,10 +100,7 @@ export function pubkeyToAddress(
  * @param {String} [prefix="stride"] The address' bech32 prefix. Defaults to `"stride"`.
  * @returns the account's address
  */
-export function base64PubkeyToAddress(
-  pubkey: string,
-  prefix: string = "stride",
-): string {
+export function base64PubkeyToAddress(pubkey: string, prefix: string = "stride"): string {
   return pubkeyToAddress(fromBase64(pubkey), prefix);
 }
 
@@ -152,10 +143,7 @@ export function tendermintPubkeyToValconsAddress(
   pubkey: Uint8Array,
   prefix: string = "stride",
 ): string {
-  return bech32.encode(
-    `${prefix}valcons`,
-    bech32.toWords(sha256(pubkey).slice(0, 20)),
-  );
+  return bech32.encode(`${prefix}valcons`, bech32.toWords(sha256(pubkey).slice(0, 20)));
 }
 
 /**

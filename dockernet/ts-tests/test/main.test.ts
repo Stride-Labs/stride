@@ -1,10 +1,6 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
 import { Registry } from "@cosmjs/proto-signing";
-import {
-  AminoTypes,
-  defaultRegistryTypes,
-  SigningStargateClient,
-} from "@cosmjs/stargate";
+import { AminoTypes, defaultRegistryTypes, SigningStargateClient } from "@cosmjs/stargate";
 import {
   cosmos,
   cosmosAminoConverters,
@@ -15,7 +11,7 @@ import {
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import { feeFromGas, sleep } from "./utils";
-import { fromRfc3339WithNanoseconds } from "@cosmjs/tendermint-rpc";
+import { fromSeconds } from "@cosmjs/tendermint-rpc";
 
 const RPC_ENDPOINT = "http://localhost:26657";
 
@@ -97,10 +93,7 @@ beforeAll(async () => {
     });
 
     // setup tx client
-    const registry = new Registry([
-      ...defaultRegistryTypes,
-      ...strideProtoRegistry,
-    ]);
+    const registry = new Registry([...defaultRegistryTypes, ...strideProtoRegistry]);
     const aminoTypes = new AminoTypes({
       ...strideAminoConverters,
       ...cosmosAminoConverters,
@@ -118,10 +111,7 @@ beforeAll(async () => {
 
   console.log("waiting for chain to start...");
   while (true) {
-    const block =
-      await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
-        {},
-      );
+    const block = await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock({});
 
     if (block.block.header.height.toNumber() > 0) {
       break;
@@ -132,20 +122,24 @@ beforeAll(async () => {
 });
 
 describe("x/airdrop", () => {
+  // time variables in seconds
+  const now = () => Math.floor(Date.now() / 1000);
+  const minute = 60;
+  const hour = 60 * 60;
+  const day = 24 * 60 * 60;
+
   test("create airdrop", async () => {
+    const nowSec = now();
+
     const msg = stride.airdrop.MessageComposer.withTypeUrl.createAirdrop({
       admin: accounts.admin.address,
       airdropId: "🍌",
       rewardDenom: "ustrd",
-      distributionStartDate: fromRfc3339WithNanoseconds(
-        new Date().toISOString(),
-      ),
-      distributionEndDate: fromRfc3339WithNanoseconds(new Date().toISOString()),
-      clawbackDate: fromRfc3339WithNanoseconds(new Date().toISOString()),
-      claimTypeDeadlineDate: fromRfc3339WithNanoseconds(
-        new Date().toISOString(),
-      ),
-      earlyClaimPenalty: "5",
+      distributionStartDate: fromSeconds(now()),
+      distributionEndDate: fromSeconds(nowSec + 3 * day),
+      clawbackDate: fromSeconds(nowSec + 4 * day),
+      claimTypeDeadlineDate: fromSeconds(nowSec + 2 * day),
+      earlyClaimPenalty: "500000000000000000", // 0.5 - Dec has 18 decimals and is represented as an int
       distributionAddress: accounts.val1.address,
     });
 
