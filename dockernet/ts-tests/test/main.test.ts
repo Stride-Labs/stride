@@ -1,6 +1,10 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
 import { Registry } from "@cosmjs/proto-signing";
-import { AminoTypes, defaultRegistryTypes, SigningStargateClient } from "@cosmjs/stargate";
+import {
+  AminoTypes,
+  defaultRegistryTypes,
+  SigningStargateClient,
+} from "@cosmjs/stargate";
 import {
   cosmos,
   cosmosAminoConverters,
@@ -93,7 +97,10 @@ beforeAll(async () => {
     });
 
     // setup tx client
-    const registry = new Registry([...defaultRegistryTypes, ...strideProtoRegistry]);
+    const registry = new Registry([
+      ...defaultRegistryTypes,
+      ...strideProtoRegistry,
+    ]);
     const aminoTypes = new AminoTypes({
       ...strideAminoConverters,
       ...cosmosAminoConverters,
@@ -111,7 +118,10 @@ beforeAll(async () => {
 
   console.log("waiting for chain to start...");
   while (true) {
-    const block = await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock({});
+    const block =
+      await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
+        {},
+      );
 
     if (block.block.header.height.toNumber() > 0) {
       break;
@@ -147,7 +157,11 @@ describe("x/airdrop", () => {
       linkerAddress: stridejs.address,
     });
 
-    const tx = await stridejs.tx.signAndBroadcast(stridejs.address, [msg], feeFromGas(200000));
+    const tx = await stridejs.tx.signAndBroadcast(
+      stridejs.address,
+      [msg],
+      feeFromGas(200000),
+    );
 
     expect(tx.code).toBe(0);
   });
