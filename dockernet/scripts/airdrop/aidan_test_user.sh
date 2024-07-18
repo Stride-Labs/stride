@@ -242,7 +242,7 @@ fi
 
 
 if true; then
-    echo -e "\n>>> Testing SUCCESS cases ROUND 2"
+    echo -e "\n>>> Testing SUCCESS cases ROUND 3"
     # ROUND 3
     # Linking then claiming early
     # -claimer1 links then claims early, same day
