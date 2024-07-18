@@ -126,6 +126,9 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v22/utils"
+	airdrop "github.com/Stride-Labs/stride/v22/x/airdrop"
+	airdropkeeper "github.com/Stride-Labs/stride/v22/x/airdrop/keeper"
+	airdroptypes "github.com/Stride-Labs/stride/v22/x/airdrop/types"
 	"github.com/Stride-Labs/stride/v22/x/autopilot"
 	autopilotkeeper "github.com/Stride-Labs/stride/v22/x/autopilot/keeper"
 	autopilottypes "github.com/Stride-Labs/stride/v22/x/autopilot/types"
@@ -232,6 +235,7 @@ var (
 		wasm.AppModuleBasic{},
 		ibchooks.AppModuleBasic{},
 		ibcwasm.AppModuleBasic{},
+		airdrop.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -343,6 +347,7 @@ type StrideApp struct {
 	ICAOracleKeeper       icaoraclekeeper.Keeper
 	StaketiaKeeper        staketiakeeper.Keeper
 	StakedymKeeper        stakedymkeeper.Keeper
+	AirdropKeeper         airdropkeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -398,6 +403,7 @@ func NewStrideApp(
 		wasmtypes.StoreKey,
 		ibchookstypes.StoreKey,
 		ibcwasmtypes.StoreKey,
+		airdroptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -474,6 +480,14 @@ func NewStrideApp(
 	app.StakingKeeper.SetHooks(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.ClaimKeeper.Hooks()),
 	)
+
+	// Add airdrop keeper
+	app.AirdropKeeper = airdropkeeper.NewKeeper(
+		appCodec,
+		keys[airdroptypes.StoreKey],
+		app.BankKeeper,
+	)
+	airdropModule := airdrop.NewAppModule(appCodec, app.AirdropKeeper)
 
 	// Add ICS Consumer Keeper
 	app.ConsumerKeeper = ccvconsumerkeeper.NewNonZeroKeeper(
@@ -918,6 +932,7 @@ func NewStrideApp(
 		icaoracleModule,
 		stakeTiaModule,
 		stakeDymModule,
+		airdropModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -962,6 +977,7 @@ func NewStrideApp(
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
+		airdroptypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -1002,6 +1018,7 @@ func NewStrideApp(
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
+		airdroptypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1047,6 +1064,7 @@ func NewStrideApp(
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
+		airdroptypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
