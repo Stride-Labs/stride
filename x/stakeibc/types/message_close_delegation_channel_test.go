@@ -9,22 +9,22 @@ import (
 	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
 )
 
-func TestMsgCloseICAChannel(t *testing.T) {
+func TestMsgCloseDelegationChannel(t *testing.T) {
 	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
 
 	validChannelId := "channel-10"
-	validPortId := "port"
+	validPortId := "icacontroller-DELEGATION"
 
 	tests := []struct {
 		name string
-		msg  types.MsgCloseICAChannel
+		msg  types.MsgCloseDelegationChannel
 		err  string
 	}{
 		{
 			name: "successful message",
-			msg: types.MsgCloseICAChannel{
+			msg: types.MsgCloseDelegationChannel{
 				Creator:   validAdminAddress,
 				ChannelId: validChannelId,
 				PortId:    validPortId,
@@ -32,7 +32,7 @@ func TestMsgCloseICAChannel(t *testing.T) {
 		},
 		{
 			name: "invalid creator address",
-			msg: types.MsgCloseICAChannel{
+			msg: types.MsgCloseDelegationChannel{
 				Creator:   invalidAddress,
 				ChannelId: validChannelId,
 				PortId:    validPortId,
@@ -41,7 +41,7 @@ func TestMsgCloseICAChannel(t *testing.T) {
 		},
 		{
 			name: "invalid admin address",
-			msg: types.MsgCloseICAChannel{
+			msg: types.MsgCloseDelegationChannel{
 				Creator:   validNotAdminAddress,
 				ChannelId: validChannelId,
 				PortId:    validPortId,
@@ -50,7 +50,7 @@ func TestMsgCloseICAChannel(t *testing.T) {
 		},
 		{
 			name: "invalid channel prefix",
-			msg: types.MsgCloseICAChannel{
+			msg: types.MsgCloseDelegationChannel{
 				Creator:   validAdminAddress,
 				ChannelId: "chann-1",
 				PortId:    validPortId,
@@ -59,7 +59,7 @@ func TestMsgCloseICAChannel(t *testing.T) {
 		},
 		{
 			name: "invalid connection suffix",
-			msg: types.MsgCloseICAChannel{
+			msg: types.MsgCloseDelegationChannel{
 				Creator:   validAdminAddress,
 				ChannelId: "channel-X",
 				PortId:    validPortId,
@@ -68,12 +68,39 @@ func TestMsgCloseICAChannel(t *testing.T) {
 		},
 		{
 			name: "invalid port ID",
-			msg: types.MsgCloseICAChannel{
+			msg: types.MsgCloseDelegationChannel{
 				Creator:   validAdminAddress,
 				ChannelId: validChannelId,
 				PortId:    "",
 			},
 			err: "port ID must be specified",
+		},
+		{
+			name: "invalid port ID",
+			msg: types.MsgCloseDelegationChannel{
+				Creator:   validAdminAddress,
+				ChannelId: validChannelId,
+				PortId:    "",
+			},
+			err: "port ID must be specified",
+		},
+		{
+			name: "not ICA channel",
+			msg: types.MsgCloseDelegationChannel{
+				Creator:   validAdminAddress,
+				ChannelId: validChannelId,
+				PortId:    "DELEGATION",
+			},
+			err: "must be an ICA channel",
+		},
+		{
+			name: "not delegation channel",
+			msg: types.MsgCloseDelegationChannel{
+				Creator:   validAdminAddress,
+				ChannelId: validChannelId,
+				PortId:    "icacontroller-WITHDRAWAL",
+			},
+			err: "must be the delegation ICA channel",
 		},
 	}
 
@@ -87,7 +114,7 @@ func TestMsgCloseICAChannel(t *testing.T) {
 				require.Equal(t, signers[0].String(), validAdminAddress)
 
 				require.Equal(t, test.msg.ChannelId, validChannelId, "channel-id")
-				require.Equal(t, test.msg.Type(), "close_ica_channel", "type")
+				require.Equal(t, test.msg.Type(), "close_delegation_channel", "type")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
 			}

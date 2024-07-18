@@ -22,7 +22,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&AddValidatorsProposal{}, "stakeibc/AddValidatorsProposal", nil)
 	cdc.RegisterConcrete(&ToggleLSMProposal{}, "stakeibc/ToggleLSMProposal", nil)
 	cdc.RegisterConcrete(&MsgRestoreInterchainAccount{}, "stakeibc/RestoreInterchainAccount", nil)
-	cdc.RegisterConcrete(&MsgCloseICAChannel{}, "stakeibc/CloseICAChannel", nil)
+	cdc.RegisterConcrete(&MsgCloseDelegationChannel{}, "stakeibc/CloseDelegationChannel", nil)
 	cdc.RegisterConcrete(&MsgUpdateValidatorSharesExchRate{}, "stakeibc/UpdateValidatorSharesExchRate", nil)
 	cdc.RegisterConcrete(&MsgCalibrateDelegation{}, "stakeibc/CalibrateDelegation", nil)
 	cdc.RegisterConcrete(&MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/UpdateInnerRedemptionRateBounds", nil)
@@ -44,7 +44,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgChangeValidatorWeights{},
 		&MsgDeleteValidator{},
 		&MsgRestoreInterchainAccount{},
-		&MsgCloseICAChannel{},
+		&MsgCloseDelegationChannel{},
 		&MsgUpdateValidatorSharesExchRate{},
 		&MsgCalibrateDelegation{},
 		&MsgUpdateInnerRedemptionRateBounds{},
