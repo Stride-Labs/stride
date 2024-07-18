@@ -89,7 +89,7 @@ set_stride_genesis() {
         jq '.app_state.staketia.host_zone.native_token_ibc_denom = $newVal' --arg newVal "${host_ibc_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
     fi
 
-    jq '.app_state.airdrop.params.period_length_seconds = $newVal' --arg newVal "60" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    # jq '.app_state.airdrop.params.period_length_seconds = $newVal' --arg newVal "60" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {
