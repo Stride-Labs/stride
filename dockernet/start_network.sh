@@ -68,7 +68,7 @@ for chain in STRIDE ${HOST_CHAINS[@]:-}; do
 done
 
 # Register all host zones (except noble)
-for i in ${!HOST_CHAINS[@]:-}; do
+for i in ${!HOST_CHAINS[@]}; do
     bash $SRC/register_host.sh ${HOST_CHAINS[i]} $i 
 done
 
