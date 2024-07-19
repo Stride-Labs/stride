@@ -1,17 +1,23 @@
 package v23
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 
+	recordskeeper "github.com/Stride-Labs/stride/v22/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
 )
 
 var (
 	UpgradeName = "v23"
+
+	CosmosChainId         = "cosmoshub-4"
+	FailedLSMDepositDenom = "cosmosvaloper1yh089p0cre4nhpdqw35uzde5amg3qzexkeggdn/37467"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v23
@@ -19,6 +25,7 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	clientKeeper clientkeeper.Keeper,
+	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -29,6 +36,9 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Migrating trade routes...")
 		MigrateTradeRoutes(ctx, stakeibcKeeper)
+
+		ctx.Logger().Info("Resetting failed LSM detokenization record...")
+		ResetLSMRecord(ctx, recordsKeeper)
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -49,4 +59,18 @@ func MigrateTradeRoutes(ctx sdk.Context, k stakeibckeeper.Keeper) {
 		tradeRoute.MinTransferAmount = tradeRoute.TradeConfig.MinSwapAmount
 		k.SetTradeRoute(ctx, tradeRoute)
 	}
+}
+
+// Reset the failed LSM detokenization record status and decrement the amount by 1
+// so that it will succeed on the retry
+func ResetLSMRecord(ctx sdk.Context, k recordskeeper.Keeper) {
+	lsmDeposit, found := k.GetLSMTokenDeposit(ctx, CosmosChainId, FailedLSMDepositDenom)
+	if !found {
+		// No need to panic in this case since the difference is immaterial
+		ctx.Logger().Error("Failed LSM deposit record not found")
+		return
+	}
+	lsmDeposit.Status = recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE
+	lsmDeposit.Amount = lsmDeposit.Amount.Sub(sdkmath.OneInt())
+	k.SetLSMTokenDeposit(ctx, lsmDeposit)
 }

@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	proto "github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
@@ -999,6 +1000,35 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 	}
 
 	return &types.MsgRestoreInterchainAccountResponse{}, nil
+}
+
+// Admin transaction to close an ICA channel by sending an ICA with a 1 nanosecond timeout (which will force a timeout and closure)
+// This can be used if there are records stuck in state IN_PROGRESS after a channel has been re-opened after a timeout
+// After the closure, the a new channel can be permissionlessly re-opened with RestoreInterchainAccount
+func (k msgServer) CloseDelegationChannel(goCtx context.Context, msg *types.MsgCloseDelegationChannel) (*types.MsgCloseDelegationChannelResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		return nil, types.ErrHostZoneNotFound.Wrapf("chain id %s", msg.ChainId)
+	}
+
+	// Submit an ICA bank send from the delegation ICA account to itself for just 1utoken
+	delegationIcaOwner := types.FormatHostZoneICAOwner(msg.ChainId, types.ICAAccountType_DELEGATION)
+	msgSend := []proto.Message{&banktypes.MsgSend{
+		FromAddress: hostZone.DelegationIcaAddress,
+		ToAddress:   hostZone.DelegationIcaAddress,
+		Amount:      sdk.NewCoins(sdk.NewCoin(hostZone.HostDenom, sdkmath.OneInt())),
+	}}
+
+	// Timeout the ICA 1 nanosecond after the current block time (so it's impossible to be relayed)
+	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + 1)
+	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationIcaOwner, msgSend, timeoutTimestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgCloseDelegationChannelResponse{}, nil
 }
 
 // This kicks off two ICQs, each with a callback, that will update the number of tokens on a validator
