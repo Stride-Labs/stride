@@ -14,8 +14,7 @@ func TestMsgCloseDelegationChannel(t *testing.T) {
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
 
-	validChannelId := "channel-10"
-	validPortId := "icacontroller-DELEGATION"
+	validChainId := "chain-0"
 
 	tests := []struct {
 		name string
@@ -25,82 +24,33 @@ func TestMsgCloseDelegationChannel(t *testing.T) {
 		{
 			name: "successful message",
 			msg: types.MsgCloseDelegationChannel{
-				Creator:   validAdminAddress,
-				ChannelId: validChannelId,
-				PortId:    validPortId,
+				Creator: validAdminAddress,
+				ChainId: validChainId,
 			},
 		},
 		{
 			name: "invalid creator address",
 			msg: types.MsgCloseDelegationChannel{
-				Creator:   invalidAddress,
-				ChannelId: validChannelId,
-				PortId:    validPortId,
+				Creator: invalidAddress,
+				ChainId: validChainId,
 			},
 			err: "invalid creator address",
 		},
 		{
 			name: "invalid admin address",
 			msg: types.MsgCloseDelegationChannel{
-				Creator:   validNotAdminAddress,
-				ChannelId: validChannelId,
-				PortId:    validPortId,
+				Creator: validNotAdminAddress,
+				ChainId: validChainId,
 			},
 			err: "is not an admin",
 		},
 		{
-			name: "invalid channel prefix",
+			name: "invalid chain-id",
 			msg: types.MsgCloseDelegationChannel{
-				Creator:   validAdminAddress,
-				ChannelId: "chann-1",
-				PortId:    validPortId,
+				Creator: validAdminAddress,
+				ChainId: "",
 			},
-			err: "invalid channel-id",
-		},
-		{
-			name: "invalid connection suffix",
-			msg: types.MsgCloseDelegationChannel{
-				Creator:   validAdminAddress,
-				ChannelId: "channel-X",
-				PortId:    validPortId,
-			},
-			err: "invalid channel-id",
-		},
-		{
-			name: "invalid port ID",
-			msg: types.MsgCloseDelegationChannel{
-				Creator:   validAdminAddress,
-				ChannelId: validChannelId,
-				PortId:    "",
-			},
-			err: "port ID must be specified",
-		},
-		{
-			name: "invalid port ID",
-			msg: types.MsgCloseDelegationChannel{
-				Creator:   validAdminAddress,
-				ChannelId: validChannelId,
-				PortId:    "",
-			},
-			err: "port ID must be specified",
-		},
-		{
-			name: "not ICA channel",
-			msg: types.MsgCloseDelegationChannel{
-				Creator:   validAdminAddress,
-				ChannelId: validChannelId,
-				PortId:    "DELEGATION",
-			},
-			err: "must be an ICA channel",
-		},
-		{
-			name: "not delegation channel",
-			msg: types.MsgCloseDelegationChannel{
-				Creator:   validAdminAddress,
-				ChannelId: validChannelId,
-				PortId:    "icacontroller-WITHDRAWAL",
-			},
-			err: "must be the delegation ICA channel",
+			err: "chain ID must be specified",
 		},
 	}
 
@@ -112,8 +62,6 @@ func TestMsgCloseDelegationChannel(t *testing.T) {
 				signers := test.msg.GetSigners()
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAdminAddress)
-
-				require.Equal(t, test.msg.ChannelId, validChannelId, "channel-id")
 				require.Equal(t, test.msg.Type(), "close_delegation_channel", "type")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)

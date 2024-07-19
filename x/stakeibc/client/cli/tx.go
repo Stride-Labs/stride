@@ -540,18 +540,17 @@ ex:
 
 func CmdCloseDelegationChannel() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "close-delegation-channel [channel-id] [port-id]",
+		Use:   "close-delegation-channel [chain-id]",
 		Short: "Broadcast message close-delegation-channel",
 		Long: strings.TrimSpace(
 			`Closes a delegation ICA channel. This can only be run by the admin
 
 Ex:
->>> strided tx close-delegation-channel channel-0 icacontroller-cosmoshub-4.DELEGATION
+>>> strided tx close-delegation-channel cosmoshub-4
 		`),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			channelId := args[0]
-			portId := args[1]
+			chainId := args[0]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -560,8 +559,7 @@ Ex:
 
 			msg := types.NewMsgCloseDelegationChannel(
 				clientCtx.GetFromAddress().String(),
-				channelId,
-				portId,
+				chainId,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
