@@ -16,14 +16,16 @@
   "dependencies": {
     "@cosmjs/amino": "0.31.3",
     "@cosmjs/encoding": "0.31.3",
+    "@cosmjs/math": "0.31.3",
     "@cosmjs/proto-signing": "0.31.3",
     "@cosmjs/stargate": "0.31.3",
     "@cosmjs/tendermint-rpc": "0.31.3",
+    "@cosmology/lcd": "0.13.4",
     "@noble/hashes": "1.4.0",
     "bech32": "2.0.0",
     "jest": "29.7.0",
     "prettier": "3.3.3",
-    "stridejs": "github:Stride-Labs/stridejs#4bf2e255c51f6d5f544a95119252369a9d8c95b8",
+    "stridejs": "github:Stride-Labs/stridejs#4d4d57c458680e2a8b8d98369da117109167e627",
     "typescript": "5.5.3",
     "vitest": "2.0.3"
   },

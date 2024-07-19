@@ -14,6 +14,9 @@ importers:
       '@cosmjs/encoding':
         specifier: 0.31.3
         version: 0.31.3
+      '@cosmjs/math':
+        specifier: 0.31.3
+        version: 0.31.3
       '@cosmjs/proto-signing':
         specifier: 0.31.3
         version: 0.31.3
@@ -23,6 +26,9 @@ importers:
       '@cosmjs/tendermint-rpc':
         specifier: 0.31.3
         version: 0.31.3
+      '@cosmology/lcd':
+        specifier: 0.13.4
+        version: 0.13.4
       '@noble/hashes':
         specifier: 1.4.0
         version: 1.4.0
@@ -36,8 +42,8 @@ importers:
         specifier: 3.3.3
         version: 3.3.3
       stridejs:
-        specifier: github:Stride-Labs/stridejs#4bf2e255c51f6d5f544a95119252369a9d8c95b8
-        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4bf2e255c51f6d5f544a95119252369a9d8c95b8
+        specifier: github:Stride-Labs/stridejs#4d4d57c458680e2a8b8d98369da117109167e627
+        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4d4d57c458680e2a8b8d98369da117109167e627
       typescript:
         specifier: 5.5.3
         version: 5.5.3
@@ -290,6 +296,9 @@ packages:
 
   '@cosmjs/utils@0.31.3':
     resolution: {integrity: sha512-VBhAgzrrYdIe0O5IbKRqwszbQa7ZyQLx9nEQuHQ3HUplQW7P44COG/ye2n6AzCudtqxmwdX7nyX8ta1J07GoqA==}
+
+  '@cosmology/lcd@0.13.4':
+    resolution: {integrity: sha512-llClHHHjOCie9PxnXUOxvMcWi0aVjmzkRXM6IBBXluOczRFFog23rPPfrWZPeT30dIX1SGklp0Fek28O76BkvQ==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -783,6 +792,9 @@ packages:
 
   axios@0.27.2:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
+
+  axios@1.6.0:
+    resolution: {integrity: sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==}
 
   babel-jest@29.7.0:
     resolution: {integrity: sha512-BrvGY3xZSwEcCzKvKsCi2GgHqDqsYkOP4/by5xCgIwGXQxIEh+8ew3gmrE1y7XRR6LHZIj6yLYnUi/mm2KXKBg==}
@@ -1623,6 +1635,9 @@ packages:
     resolution: {integrity: sha512-5kQWPaJHi1WoCpjTGszzQ32PG2F4+wRY6BmAT4Vfw56Q2FZ4YZzK20xUYQH4YkfehY1e6QSICrJquM6xXZNcrw==}
     hasBin: true
 
+  proxy-from-env@1.1.0:
+    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
+
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
@@ -1721,8 +1736,8 @@ packages:
   std-env@3.7.0:
     resolution: {integrity: sha512-JPbdCEQLj1w5GilpiHAx3qJvFndqybBysA3qUOnznweH4QbNYUsW/ea8QzSrnh0vNsezMMw5bcVool8lM0gwzg==}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4bf2e255c51f6d5f544a95119252369a9d8c95b8:
-    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4bf2e255c51f6d5f544a95119252369a9d8c95b8}
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4d4d57c458680e2a8b8d98369da117109167e627:
+    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4d4d57c458680e2a8b8d98369da117109167e627}
     version: 0.10.0-alpha
 
   string-length@4.0.2:
@@ -2382,6 +2397,12 @@ snapshots:
 
   '@cosmjs/utils@0.31.3': {}
 
+  '@cosmology/lcd@0.13.4':
+    dependencies:
+      axios: 1.6.0
+    transitivePeerDependencies:
+      - debug
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -2908,6 +2929,14 @@ snapshots:
     dependencies:
       follow-redirects: 1.15.6
       form-data: 4.0.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.6.0:
+    dependencies:
+      follow-redirects: 1.15.6
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
 
@@ -3929,6 +3958,8 @@ snapshots:
       '@types/node': 20.14.11
       long: 4.0.0
 
+  proxy-from-env@1.1.0: {}
+
   pure-rand@6.1.0: {}
 
   react-is@18.3.1: {}
@@ -4020,7 +4051,7 @@ snapshots:
 
   std-env@3.7.0: {}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4bf2e255c51f6d5f544a95119252369a9d8c95b8:
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/4d4d57c458680e2a8b8d98369da117109167e627:
     dependencies:
       '@babel/runtime': 7.24.8
       '@cosmjs/amino': 0.31.3

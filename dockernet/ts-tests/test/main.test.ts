@@ -16,6 +16,7 @@ import {
 import { beforeAll, describe, expect, test } from "vitest";
 import { decToString, feeFromGas, sleep } from "./utils";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
+import { Decimal } from "@cosmjs/math";
 
 const RPC_ENDPOINT = "http://localhost:26657";
 
@@ -116,19 +117,19 @@ beforeAll(async () => {
     );
   }
 
-  console.log("waiting for chain to start...");
-  while (true) {
-    const block =
-      await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
-        {},
-      );
+  // console.log("waiting for chain to start...");
+  // while (true) {
+  //   const block =
+  //     await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
+  //       {},
+  //     );
 
-    if (block.block.header.height.toNumber() > 0) {
-      break;
-    }
+  //   if (block.block.header.height.toNumber() > 0) {
+  //     break;
+  //   }
 
-    await sleep(50);
-  }
+  //   await sleep(50);
+  // }
 });
 
 describe("x/airdrop", () => {
@@ -142,10 +143,11 @@ describe("x/airdrop", () => {
     const stridejs = accounts.admin;
 
     const nowSec = now();
+    const airdropId = String(nowSec);
 
     const msg = stride.airdrop.MessageComposer.withTypeUrl.createAirdrop({
       admin: stridejs.address,
-      airdropId: "🍌",
+      airdropId: airdropId,
       rewardDenom: "ustrd",
       distributionStartDate: fromSeconds(now()),
       distributionEndDate: fromSeconds(nowSec + 3 * day),
@@ -164,5 +166,12 @@ describe("x/airdrop", () => {
     );
 
     expect(tx.code).toBe(0);
+
+    const { airdrop } = await stridejs.query.stride.airdrop.airdrop({
+      id: airdropId,
+    });
+
+    expect(airdrop.id).toBe(airdropId);
+    expect(airdrop.earlyClaimPenalty).toBe("0.5");
   });
 });

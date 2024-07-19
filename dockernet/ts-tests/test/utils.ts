@@ -181,18 +181,17 @@ export function base64TendermintPubkeyToValconsAddress(
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
 /**
- * Converts a decimal value to a string representation that Tendermit RPC can parse.
+ * Converts a decimal value to its Amino string representation. Use this function when you need to create transaction messages with Dec values.
  *
  * @example
  * ```
- * decToString(0.5) => "500000000000000000"
+ * decToString(0.5) => "0.500000000000000000"
  * ```
  *
  * @param {number} dec The decimal value to convert.
- * @returns {string} A string representation of the decimal value.
+ * @returns {string} An Amino string representation of the decimal value.
  */
 export function decToString(dec: number): string {
-  return String(Math.floor(dec * 1e18));
+  return dec.toFixed(18);
 }
