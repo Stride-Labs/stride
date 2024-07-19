@@ -189,6 +189,44 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	a := appCreator{encodingConfig}
 	server.AddCommands(rootCmd, app.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
 
+	// this code is taken from the Osmosis repo here:
+	// https://github.com/osmosis-labs/osmosis/blob/e5895ce4a460a585c0afb29873de9c7de826b690/cmd/osmosisd/cmd/root.go#L777
+	// their team is full of excellent engineers and we are grateful for their work
+	for i, cmd := range rootCmd.Commands() {
+		if cmd.Name() == "start" {
+			startRunE := cmd.RunE
+
+			// Instrument start command pre run hook with custom logic
+			cmd.RunE = func(cmd *cobra.Command, args []string) error {
+				serverCtx := server.GetServerContextFromCmd(cmd)
+
+				// Get flag value for rejecting config defaults
+				rejectConfigDefaults := serverCtx.Viper.GetBool(FlagRejectConfigDefaults)
+
+				// overwrite config.toml and app.toml values, if rejectConfigDefaults is false
+				if !rejectConfigDefaults {
+					// Add ctx logger line to indicate that config.toml and app.toml values are being overwritten
+					serverCtx.Logger.Info("Overwriting config.toml and app.toml values with some recommended defaults. To prevent this, set the --reject-config-defaults flag to true.")
+
+					err := overwriteConfigTomlValues(serverCtx)
+					if err != nil {
+						return err
+					}
+
+					err = overwriteAppTomlValues(serverCtx)
+					if err != nil {
+						return err
+					}
+				}
+
+				return startRunE(cmd, args)
+			}
+
+			rootCmd.Commands()[i] = cmd
+			break
+		}
+	}
+
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
