@@ -195,3 +195,16 @@ export function sleep(ms: number): Promise<void> {
 export function decToString(dec: number): string {
   return dec.toFixed(18);
 }
+
+/**
+ * Convert a bech32 encoded address from one prefix to another.
+ *
+ * Note: This function works only if both chains use the same BIP-44 coin type.
+ *
+ * @param {string} address The bech32 encoded address to convert.
+ * @param {string} toPrefix The target prefix to convert the address to.
+ * @returns {string} The converted bech32 encoded address with the new prefix.
+ */
+export function convertBech32Prefix(address: string, toPrefix: string): string {
+  return bech32.encode(toPrefix, bech32.decode(address).words);
+}

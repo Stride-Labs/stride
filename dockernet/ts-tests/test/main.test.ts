@@ -1,22 +1,27 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
 import { Registry } from "@cosmjs/proto-signing";
+import { AminoTypes, SigningStargateClient } from "@cosmjs/stargate";
 import {
-  AminoTypes,
-  defaultRegistryTypes,
-  SigningStargateClient,
-} from "@cosmjs/stargate";
-import {
+  ibc,
   cosmos,
   cosmosAminoConverters,
   getSigningStrideClient,
   stride,
   strideAminoConverters,
+  ibcAminoConverters,
+  ibcProtoRegistry,
+  cosmosProtoRegistry,
   strideProtoRegistry,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
-import { decToString, feeFromGas, sleep } from "./utils";
+import {
+  coinFromString,
+  decToString,
+  feeFromGas,
+  convertBech32Prefix,
+  sleep,
+} from "./utils";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
-import { Decimal } from "@cosmjs/math";
 
 const RPC_ENDPOINT = "http://localhost:26657";
 
@@ -99,12 +104,14 @@ beforeAll(async () => {
 
     // setup tx client
     const registry = new Registry([
-      ...defaultRegistryTypes,
       ...strideProtoRegistry,
+      ...cosmosProtoRegistry,
+      ...ibcProtoRegistry,
     ]);
     const aminoTypes = new AminoTypes({
       ...strideAminoConverters,
       ...cosmosAminoConverters,
+      ...ibcAminoConverters,
     });
 
     accounts[name].tx = await SigningStargateClient.connectWithSigner(
@@ -117,28 +124,28 @@ beforeAll(async () => {
     );
   }
 
-  // console.log("waiting for chain to start...");
-  // while (true) {
-  //   const block =
-  //     await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
-  //       {},
-  //     );
+  console.log("waiting for chain to start...");
+  while (true) {
+    const block =
+      await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
+        {},
+      );
 
-  //   if (block.block.header.height.toNumber() > 0) {
-  //     break;
-  //   }
+    if (block?.block?.header.height! > 0n) {
+      break;
+    }
 
-  //   await sleep(50);
-  // }
+    await sleep(50);
+  }
 });
 
-describe("x/airdrop", () => {
-  // time variables in seconds
-  const now = () => Math.floor(Date.now() / 1000);
-  const minute = 60;
-  const hour = 60 * minute;
-  const day = 24 * hour;
+// time variables in seconds
+const now = () => Math.floor(Date.now() / 1000);
+const minute = 60;
+const hour = 60 * minute;
+const day = 24 * hour;
 
+describe("x/airdrop", () => {
   test("create airdrop", async () => {
     const stridejs = accounts.admin;
 
@@ -171,7 +178,38 @@ describe("x/airdrop", () => {
       id: airdropId,
     });
 
-    expect(airdrop.id).toBe(airdropId);
-    expect(airdrop.earlyClaimPenalty).toBe("0.5");
+    expect(airdrop!.id).toBe(airdropId);
+    expect(airdrop!.earlyClaimPenalty).toBe("0.5");
+  });
+});
+
+describe("ibc", () => {
+  test("MsgTransfer", async () => {
+    const stridejs = accounts.user;
+
+    const msg =
+      ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
+        sourcePort: "transfer",
+        sourceChannel: "channel-0",
+        token: coinFromString("1ustrd"),
+        sender: stridejs.address,
+        receiver: convertBech32Prefix(stridejs.address, "cosmos"),
+        timeoutHeight: {
+          revisionNumber: 0n,
+          revisionHeight: 0n,
+        },
+        timeoutTimestamp: BigInt(
+          `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes from now as nanoseconds
+        ),
+        memo: "",
+      });
+
+    const tx = await stridejs.tx.signAndBroadcast(
+      stridejs.address,
+      [msg],
+      feeFromGas(200000),
+    );
+
+    expect(tx.code).toBe(0);
   });
 });
