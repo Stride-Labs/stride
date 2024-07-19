@@ -191,7 +191,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 
 	// this code is taken from the Osmosis repo here:
 	// https://github.com/osmosis-labs/osmosis/blob/e5895ce4a460a585c0afb29873de9c7de826b690/cmd/osmosisd/cmd/root.go#L777
-	// their team is full of excellent engineers and we are grateful for their work
 	for i, cmd := range rootCmd.Commands() {
 		if cmd.Name() == "start" {
 			startRunE := cmd.RunE
