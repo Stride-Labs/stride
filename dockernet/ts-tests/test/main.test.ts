@@ -169,7 +169,7 @@ describe("x/airdrop", () => {
     const tx = await stridejs.tx.signAndBroadcast(
       stridejs.address,
       [msg],
-      feeFromGas(200000),
+      feeFromGas(200_000),
     );
 
     expect(tx.code).toBe(0);
@@ -207,7 +207,7 @@ describe("ibc", () => {
     const tx = await stridejs.tx.signAndBroadcast(
       stridejs.address,
       [msg],
-      feeFromGas(200000),
+      feeFromGas(200_000),
     );
 
     expect(tx.code).toBe(0);
