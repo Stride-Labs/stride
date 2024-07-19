@@ -197,8 +197,7 @@ message MsgRestoreInterchainAccountResponse {}
 
 message MsgCloseDelegationChannel {
   string creator = 1;
-  string channel_id = 2;
-  string port_id = 3;
+  string chain_id = 2;
 }
 message MsgCloseDelegationChannelResponse {}
 
