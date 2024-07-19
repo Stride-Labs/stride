@@ -5,7 +5,7 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/config.sh
 
 # Confirm binaries are present
-for chain in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]:-}; do
+for chain in STRIDE ${HOST_CHAINS[@]:-} ${ACCESSORY_CHAINS[@]:-}; do
     binary_path=$(GET_VAR_VALUE ${chain}_BINARY)
     binary_path=$(realpath "$binary_path")
     if [[ ! -e "$binary_path" ]]; then
@@ -51,7 +51,7 @@ if [[ "${UPGRADE_NAME:-}" != "" ]]; then
 fi
 
 # Initialize the state for each chain
-for chain in STRIDE ${HOST_CHAINS[@]} ${ACCESSORY_CHAINS[@]:-}; do
+for chain in STRIDE ${HOST_CHAINS[@]:-} ${ACCESSORY_CHAINS[@]:-}; do
     bash $SRC/init_chain.sh $chain
 done
 
@@ -61,14 +61,14 @@ bash $SRC/start_chain.sh
 bash $SRC/start_relayers.sh 
 
 # Create governors for chains running the stride binary
-for chain in STRIDE ${HOST_CHAINS[@]}; do
+for chain in STRIDE ${HOST_CHAINS[@]:-}; do
     if [[ "$chain" == "STRIDE" || "$chain" == "HOST" ]]; then
         bash $SRC/create_governors.sh $chain
     fi
 done
 
 # Register all host zones (except noble)
-for i in ${!HOST_CHAINS[@]}; do
+for i in ${!HOST_CHAINS[@]:-}; do
     bash $SRC/register_host.sh ${HOST_CHAINS[i]} $i 
 done
 

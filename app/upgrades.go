@@ -40,6 +40,7 @@ import (
 	v7 "github.com/Stride-Labs/stride/v22/app/upgrades/v7"
 	v8 "github.com/Stride-Labs/stride/v22/app/upgrades/v8"
 	v9 "github.com/Stride-Labs/stride/v22/app/upgrades/v9"
+	airdroptypes "github.com/Stride-Labs/stride/v22/x/airdrop/types"
 	autopilottypes "github.com/Stride-Labs/stride/v22/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
@@ -305,6 +306,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.IBCKeeper.ClientKeeper,
+			app.RecordsKeeper,
 			app.StakeibcKeeper,
 		),
 	)
@@ -368,7 +370,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		}
 	case "v23":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{ibcwasmtypes.ModuleName},
+			Added: []string{ibcwasmtypes.ModuleName, airdroptypes.ModuleName},
 		}
 	}
 
