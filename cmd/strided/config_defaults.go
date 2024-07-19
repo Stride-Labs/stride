@@ -20,7 +20,6 @@ import (
 	This file is taken almost entirely from the Osmosis repo, with minor modifications.
 	Their original file can be found here:
 	https://github.com/osmosis-labs/osmosis/blob/e5895ce4a460a585c0afb29873de9c7de826b690/cmd/osmosisd/cmd/root.go#L1
-	Thank you to the excellent engineers at Osmosis.
 */
 
 const (
