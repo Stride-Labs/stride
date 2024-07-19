@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	epochstypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
 )
 
 // This module has the following epochly triggers

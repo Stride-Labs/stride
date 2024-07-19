@@ -5,9 +5,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/utils"
+	icqtypes "github.com/Stride-Labs/stride/v23/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 // CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations

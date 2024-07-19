@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/epochs/keeper"
-	"github.com/Stride-Labs/stride/v22/x/epochs/types"
+	"github.com/Stride-Labs/stride/v23/x/epochs/keeper"
+	"github.com/Stride-Labs/stride/v23/x/epochs/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

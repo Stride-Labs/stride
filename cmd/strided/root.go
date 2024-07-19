@@ -47,8 +47,8 @@ import (
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v22/app"
-	"github.com/Stride-Labs/stride/v22/utils"
+	"github.com/Stride-Labs/stride/v23/app"
+	"github.com/Stride-Labs/stride/v23/utils"
 )
 
 var ChainID string

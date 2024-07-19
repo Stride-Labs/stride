@@ -9,7 +9,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v23/x/stakedym/types"
 )
 
 var InitialDelegation = sdkmath.NewInt(1_000_000)
