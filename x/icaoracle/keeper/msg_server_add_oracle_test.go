@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v23/x/icaoracle/types"
 )
 
 func (s *KeeperTestSuite) SetupTestAddOracle() types.MsgAddOracle {

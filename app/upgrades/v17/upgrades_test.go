@@ -13,14 +13,14 @@ import (
 
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	icqtypes "github.com/Stride-Labs/stride/v23/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
 
-	"github.com/Stride-Labs/stride/v22/app/apptesting"
-	v17 "github.com/Stride-Labs/stride/v22/app/upgrades/v17"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/app/apptesting"
+	v17 "github.com/Stride-Labs/stride/v23/app/upgrades/v17"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 const (

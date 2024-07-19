@@ -4,7 +4,7 @@ package stride.airdrop;
 import "gogoproto/gogo.proto";
 import "stride/airdrop/airdrop.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
+option go_package = "github.com/Stride-Labs/stride/v23/x/airdrop/types";
 
 // GenesisState defines the airdrop module's genesis state.
 message GenesisState {

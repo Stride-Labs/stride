@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v23/x/stakedym/types"
 )
 
 func (s *KeeperTestSuite) addUnbondingRecords() (unbondingRecords []types.UnbondingRecord) {

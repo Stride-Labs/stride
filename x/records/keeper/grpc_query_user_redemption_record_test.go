@@ -11,9 +11,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v22/testutil/keeper"
-	"github.com/Stride-Labs/stride/v22/testutil/nullify"
-	"github.com/Stride-Labs/stride/v22/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v23/testutil/keeper"
+	"github.com/Stride-Labs/stride/v23/testutil/nullify"
+	"github.com/Stride-Labs/stride/v23/x/records/types"
 )
 
 func TestUserRedemptionRecordQuerySingle(t *testing.T) {
