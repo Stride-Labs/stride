@@ -2,6 +2,7 @@ services:
   # Stride nodes
   stride1:
     image: stridezone:stride
+    command: strided start --reject-config-defaults
     volumes:
       - ./state/stride1:/home/stride/.stride
     ports:
@@ -11,11 +12,13 @@ services:
 
   stride2:
     image: stridezone:stride
+    command: strided start --reject-config-defaults
     volumes:
       - ./state/stride2:/home/stride/.stride
 
   stride3:
     image: stridezone:stride
+    command: strided start --reject-config-defaults
     volumes:
       - ./state/stride3:/home/stride/.stride
 
@@ -192,56 +195,56 @@ services:
     volumes:
       - ./state/relayer-gaia:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-gaia" ]
+    command: ["bash", "start.sh", "stride-gaia"]
 
   relayer-gaia-ics:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-gaia-ics:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-gaia-ics" ]
+    command: ["bash", "start.sh", "stride-gaia-ics"]
 
   relayer-juno:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-juno:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-juno" ]
+    command: ["bash", "start.sh", "stride-juno"]
 
   relayer-osmo:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-osmo:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-osmo" ]
+    command: ["bash", "start.sh", "stride-osmo"]
 
   relayer-stars:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-stars:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-stars" ]
+    command: ["bash", "start.sh", "stride-stars"]
 
   relayer-host:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-host:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-host" ]
+    command: ["bash", "start.sh", "stride-host"]
 
   relayer-evmos:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-evmos:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-evmos" ]
+    command: ["bash", "start.sh", "stride-evmos"]
 
   relayer-dydx:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-dydx:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-dydx" ]
+    command: ["bash", "start.sh", "stride-dydx"]
 
   # Relayers for rate limiter tests
   relayer-juno-osmo:
@@ -249,7 +252,7 @@ services:
     volumes:
       - ./state/relayer-juno-osmo:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "juno-osmo" ]
+    command: ["bash", "start.sh", "juno-osmo"]
 
   # Relayers for reward converter accessory chains
   relayer-stride-noble:
@@ -257,21 +260,21 @@ services:
     volumes:
       - ./state/relayer-stride-noble:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-noble" ]
+    command: ["bash", "start.sh", "stride-noble"]
 
   relayer-noble-osmo:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-noble-osmo:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "noble-osmo" ]
+    command: ["bash", "start.sh", "noble-osmo"]
 
   relayer-stride-osmo:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-stride-osmo:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "stride-osmo" ]
+    command: ["bash", "start.sh", "stride-osmo"]
 
   # Relayers for reward converter with dydx
   relayer-dydx-noble:
@@ -279,14 +282,14 @@ services:
     volumes:
       - ./state/relayer-dydx-noble:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "dydx-noble" ]
+    command: ["bash", "start.sh", "dydx-noble"]
 
   relayer-osmo-dydx:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-osmo-dydx:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "osmo-dydx" ]
+    command: ["bash", "start.sh", "osmo-dydx"]
 
   # Relayers for reward converter with gaia
   relayer-gaia-noble:
@@ -294,11 +297,11 @@ services:
     volumes:
       - ./state/relayer-gaia-noble:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "gaia-noble" ]
+    command: ["bash", "start.sh", "gaia-noble"]
 
   relayer-osmo-gaia:
     image: stridezone:relayer
     volumes:
       - ./state/relayer-osmo-gaia:/home/relayer/.relayer
     restart: always
-    command: [ "bash", "start.sh", "osmo-gaia" ]
+    command: ["bash", "start.sh", "osmo-gaia"]
