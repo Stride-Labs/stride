@@ -45,53 +45,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v23.0.0](https://github.com/Stride-Labs/stride/releases/tag/v23.0.0) - 2024-07-19
 
 ### On-Chain changes
-1. removed trade route dead code ([#1189](https://github.com/Stride-Labs/stride/pull/1189))
-2. move tx LS
-3. move tx LSM LS
-4. move tx register host zone
-5. move tx redeem stake
-6. move tx claim undelegated
-7. move tx rebalance validators
-8. move tx add validator and change val weights
-9. move tx delete validator
-10. move tx restore ica
-11. removed empty files
-12. moved calibrate delegation
-13. moved update inner bounds
-14. moved tx resume host
-15. moved tx set rebate
-16. moved tx toggle trad controller
-17. moved update delegation
-18. moved tx clear balance
-19. deleted more files
-20. moved proposal parsers
-21. created gov.go
-22. moved toggle lsm
-23. moved query params and validator
-24. moved query host zone
-25. moved query epoch tracker and module address
-26. moved query next packet sequence
-27. moved query list trade routes
-28. moved query show ica
-29. deleted empty files
-30. added wasm light client ([#1224](https://github.com/Stride-Labs/stride/pull/1224))
-31. Fix wasmvm dir ([#1231](https://github.com/Stride-Labs/stride/pull/1231))
-32. x/airdrop ([#1235](https://github.com/Stride-Labs/stride/pull/1235))
-33. v23 upgrade handler (final) ([#1243](https://github.com/Stride-Labs/stride/pull/1243))
-34. close delegation channel tx ([#1242](https://github.com/Stride-Labs/stride/pull/1242))
-35. v23 Import Paths ([#1246](https://github.com/Stride-Labs/stride/pull/1246))
+1. added airdrop module ([#1235](https://github.com/Stride-Labs/stride/pull/1235))
+2. removed trade route dead code ([#1189](https://github.com/Stride-Labs/stride/pull/1189))
+3. added wasm light client ([#1224](https://github.com/Stride-Labs/stride/pull/1224)), ([#1231](https://github.com/Stride-Labs/stride/pull/1231))
+4. consolidated cli txs in to same file  ([#1211](https://github.com/Stride-Labs/stride/pull/1211))
+5. v23 upgrade handler (final) ([#1243](https://github.com/Stride-Labs/stride/pull/1243))
+6. close delegation channel tx ([#1242](https://github.com/Stride-Labs/stride/pull/1242))
+7. v23 Import Paths ([#1246](https://github.com/Stride-Labs/stride/pull/1246))
+8. version bumps ([#1187](https://github.com/Stride-Labs/stride/pull/1187)), ([#1228](https://github.com/Stride-Labs/stride/pull/1228))
+9. Add Default Config Settings ([#1245](https://github.com/Stride-Labs/stride/pull/1245))
 
 ### Off-Chain changes
-1. Bump github.com/hashicorp/go-getter from 1.7.1 to 1.7.4 ([#1187](https://github.com/Stride-Labs/stride/pull/1187))
-2. Faster `make sync`
-3. Faster `make sync` ([#1209](https://github.com/Stride-Labs/stride/pull/1209))
-4. deleted query epoch tracker test
-5. Consolidated stakeibc cli commands ([#1211](https://github.com/Stride-Labs/stride/pull/1211))
-6. Replace docker-compose with docker compose
-7. Replace `docker-compose` with `docker compose` ([#1221](https://github.com/Stride-Labs/stride/pull/1221))
-8. removed version from docker compose ([#1227](https://github.com/Stride-Labs/stride/pull/1227))
-9. Bump github.com/hashicorp/go-getter from 1.7.4 to 1.7.5 ([#1228](https://github.com/Stride-Labs/stride/pull/1228))
-10. Add Default Config Settings ([#1245](https://github.com/Stride-Labs/stride/pull/1245))
+1. Faster `make sync` ([#1209](https://github.com/Stride-Labs/stride/pull/1209))
+2. Replace `docker-compose` with `docker compose` ([#1221](https://github.com/Stride-Labs/stride/pull/1221))
+3. removed version from docker compose ([#1227](https://github.com/Stride-Labs/stride/pull/1227))
 
 
 ## [v22.0.0](https://github.com/Stride-Labs/stride/releases/tag/v22.0.0) - 2024-04-16
