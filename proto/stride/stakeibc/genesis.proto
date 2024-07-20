@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "stride/stakeibc/params.proto";
 import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/epoch_tracker.proto";
-// this line is used by starport scaffolding # genesis/proto/import
+import "stride/stakeibc/trade_route.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v23/x/stakeibc/types";
 
@@ -13,10 +13,9 @@ option go_package = "github.com/Stride-Labs/stride/v23/x/stakeibc/types";
 message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
   string port_id = 2;
-  // list of zones that are registered by the protocol
   repeated HostZone host_zone_list = 5 [ (gogoproto.nullable) = false ];
   repeated EpochTracker epoch_tracker_list = 10
       [ (gogoproto.nullable) = false ];
-  // this line is used by starport scaffolding # genesis/proto/state
+  repeated TradeRoute trade_routes = 12 [ (gogoproto.nullable) = false ];
   reserved 3, 4, 6, 9, 11;
 }
