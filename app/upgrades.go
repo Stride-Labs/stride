@@ -32,6 +32,7 @@ import (
 	v20 "github.com/Stride-Labs/stride/v23/app/upgrades/v20"
 	v21 "github.com/Stride-Labs/stride/v23/app/upgrades/v21"
 	v22 "github.com/Stride-Labs/stride/v23/app/upgrades/v22"
+	v22_1 "github.com/Stride-Labs/stride/v23/app/upgrades/v22_1"
 	v23 "github.com/Stride-Labs/stride/v23/app/upgrades/v23"
 	v3 "github.com/Stride-Labs/stride/v23/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v23/app/upgrades/v4"
@@ -299,6 +300,18 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v22_1 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v22_1.UpgradeName,
+		v22_1.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.IBCKeeper.ClientKeeper,
+			app.RecordsKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
 	// v23 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v23.UpgradeName,
@@ -368,9 +381,13 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ibchookstypes.StoreKey},
 		}
+	case "v22_1":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibcwasmtypes.ModuleName},
+		}
 	case "v23":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{ibcwasmtypes.ModuleName, airdroptypes.ModuleName},
+			Added: []string{airdroptypes.ModuleName},
 		}
 	}
 
