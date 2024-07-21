@@ -5,23 +5,12 @@ import {
   coinFromString,
   convertBech32Prefix,
   decToString,
-  getTxIbcResponses,
-  ibc,
   sleep,
-  stride,
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 
 const RPC_ENDPOINT = "http://localhost:26657";
-
-type Account = {
-  signer: Awaited<ReturnType<typeof Secp256k1HdWallet.fromMnemonic>>;
-  address: string;
-  query: Awaited<ReturnType<typeof stride.ClientFactory.createRPCQueryClient>> &
-    Awaited<ReturnType<typeof ibc.ClientFactory.createRPCQueryClient>>;
-  tx: Awaited<ReturnType<typeof SigningStargateClient.connectWithSigner>>;
-};
 
 let accounts: {
   user: StrideClient; // just a normal user account loaded with 100 STRD
@@ -89,6 +78,8 @@ beforeAll(async () => {
 
     accounts[name] = await StrideClient.create(RPC_ENDPOINT, signer, address, {
       gasPrice: GasPrice.fromString("0.025ustrd"),
+      resolveIbcResponsesCheckIntervalMs: 250,
+      resolveIbcResponsesTimeoutMs: 30_000,
     });
   }
 
@@ -135,8 +126,11 @@ describe("x/airdrop", () => {
         linkerAddress: stridejs.address,
       });
 
-    const tx = await stridejs.signAndBroadcast([msg]);
+    const tx = await stridejs.signAndBroadcast([msg], 2);
 
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
     expect(tx.code).toBe(0);
 
     const { airdrop } = await stridejs.query.stride.airdrop.airdrop({
@@ -172,10 +166,13 @@ describe("ibc", () => {
       );
 
     const tx = await stridejs.signAndBroadcast([msg]);
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
     expect(tx.code).toBe(0);
 
     const ibcAck = await tx.ibcResponses[0];
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
-  });
+  }, 30_000);
 });
