@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: stride-validator
+  namespace: integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stride-validator
+  serviceName: stride-validator
+  template:
+    metadata:
+      labels:
+        app: stride-validator
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: stride-validator
+          image: gcr.io/stride-nodes/stride-test
+          imagePullPolicy: Always
+          command:
+            - bash
+            - "-c"
+            - |
+              bash scripts/setup.sh
+              strided start --reject-config-defaults
+          ports:
+            - name: rpc
+              containerPort: 26657
+              protocol: TCP
+            - name: api
+              containerPort: 1317
+              protocol: TCP
+            - name: grpc
+              containerPort: 9090
+              protocol: TCP
+          volumeMounts:
+            - name: state
+              mountPath: /home/stride/.stride
+            - name: shared
+              mountPath: /home/stride/shared
+            - name: scripts
+              mountPath: /home/stride/scripts
+            - name: config
+              mountPath: /home/stride/config
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - bash
+          #       - "-c"
+          #       - |
+          #         set -e
+
+          #         BINARY=strided
+          #         STRIDE_HOME=/home/stride/.stride
+
+          #         # If chain hasn't been initialized yet, exit immediately
+          #         if [ ! -d $STRIDE_HOME/config ]; then
+          #           echo "READINESS CHECK FAILED - Chain has not been initialized yet."
+          #           exit 1
+          #         fi
+
+          #         # Check that the node is running
+          #         if ! $($BINARY status &> /dev/null); then
+          #           echo "READINESS CHECK FAILED - Chain is down"
+          #           exit 1
+          #         fi
+
+          #         # Then check if the node is synced according to it's status query
+          #         CATCHING_UP=$($BINARY status 2>&1 | jq ".SyncInfo.catching_up")
+          #         if [[ "$CATCHING_UP" != "false" ]]; then
+          #           echo "READINESS CHECK FAILED - Node is still syncing"
+          #           exit 1
+          #         fi
+          #   periodSeconds: 5
+      volumes:
+        - name: state
+          emptyDir: 
+            medium: "Memory"
+        - name: shared
+          emptyDir: 
+            medium: "Memory"
+        - name: scripts
+          configMap: 
+            name: scripts
+        - name: config
+          configMap:
+            name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stride-validator
+  namespace: integration
+spec:
+  selector:
+    app: stride-validator
+  ports:
+    - port: 26657
+      name: rpc
+      protocol: TCP
+    - port: 1317
+      name: api
+      protocol: TCP
+    - port: 9090
+      name: grpc
+      protocol: TCP

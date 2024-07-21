@@ -40,3 +40,6 @@ vue/*
 !.vscode/settings.json
 
 .ipynb_checkpoints/*
+
+integration-tests/state
+integration-tests/shared
