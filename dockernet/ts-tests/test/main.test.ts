@@ -1,43 +1,34 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
-import { Registry } from "@cosmjs/proto-signing";
-import { AminoTypes, SigningStargateClient } from "@cosmjs/stargate";
-import {
-  ibc,
-  cosmos,
-  cosmosAminoConverters,
-  getSigningStrideClient,
-  stride,
-  strideAminoConverters,
-  ibcAminoConverters,
-  ibcProtoRegistry,
-  cosmosProtoRegistry,
-  strideProtoRegistry,
-} from "stridejs";
-import { beforeAll, describe, expect, test } from "vitest";
+import { GasPrice, SigningStargateClient } from "@cosmjs/stargate";
+import { fromSeconds } from "@cosmjs/tendermint-rpc";
 import {
   coinFromString,
-  decToString,
-  feeFromGas,
   convertBech32Prefix,
+  decToString,
+  getTxIbcResponses,
+  ibc,
   sleep,
-} from "./utils";
-import { fromSeconds } from "@cosmjs/tendermint-rpc";
+  stride,
+  StrideClient,
+} from "stridejs";
+import { beforeAll, describe, expect, test } from "vitest";
 
 const RPC_ENDPOINT = "http://localhost:26657";
 
 type Account = {
   signer: Awaited<ReturnType<typeof Secp256k1HdWallet.fromMnemonic>>;
   address: string;
-  query: Awaited<ReturnType<typeof stride.ClientFactory.createRPCQueryClient>>;
-  tx: Awaited<ReturnType<typeof getSigningStrideClient>>;
+  query: Awaited<ReturnType<typeof stride.ClientFactory.createRPCQueryClient>> &
+    Awaited<ReturnType<typeof ibc.ClientFactory.createRPCQueryClient>>;
+  tx: Awaited<ReturnType<typeof SigningStargateClient.connectWithSigner>>;
 };
 
 let accounts: {
-  user: Account; // just a normal user account loaded with 100 STRD
-  admin: Account; // the stride admin account loaded with 1000 STRD
-  val1: Account;
-  val2: Account;
-  val3: Account;
+  user: StrideClient; // just a normal user account loaded with 100 STRD
+  admin: StrideClient; // the stride admin account loaded with 1000 STRD
+  val1: StrideClient;
+  val2: StrideClient;
+  val3: StrideClient;
 };
 
 // init accounts and wait for chain to start
@@ -85,43 +76,20 @@ beforeAll(async () => {
 
     // setup signer
     //
-    // IMPORTANT: we're using Secp256k1HdWallet from @cosmjs/amino because sending amino txs tests both amino and direcy.
+    // IMPORTANT: we're using Secp256k1HdWallet from @cosmjs/amino because sending amino txs tests both amino and direct.
     // that's because the tx contains the direct encoding anyway, and also attaches a signature on the amino encoding.
     // the mempool then converts from direct to amino to verify the signature.
     // therefore if the signature verification passes, we can be sure that both amino and direct are supported.
-    accounts[name].signer = await Secp256k1HdWallet.fromMnemonic(mnemonic, {
+    const signer = await Secp256k1HdWallet.fromMnemonic(mnemonic, {
       prefix: "stride",
     });
 
-    // setup address
-    const [{ address }] = await accounts[name].signer.getAccounts();
-    accounts[name].address = address;
+    // get signer address
+    const [{ address }] = await signer.getAccounts();
 
-    // setup query client
-    accounts[name].query = await stride.ClientFactory.createRPCQueryClient({
-      rpcEndpoint: RPC_ENDPOINT,
+    accounts[name] = await StrideClient.create(RPC_ENDPOINT, signer, address, {
+      gasPrice: GasPrice.fromString("0.025ustrd"),
     });
-
-    // setup tx client
-    const registry = new Registry([
-      ...strideProtoRegistry,
-      ...cosmosProtoRegistry,
-      ...ibcProtoRegistry,
-    ]);
-    const aminoTypes = new AminoTypes({
-      ...strideAminoConverters,
-      ...cosmosAminoConverters,
-      ...ibcAminoConverters,
-    });
-
-    accounts[name].tx = await SigningStargateClient.connectWithSigner(
-      RPC_ENDPOINT,
-      accounts[name].signer,
-      {
-        registry,
-        aminoTypes,
-      },
-    );
   }
 
   console.log("waiting for chain to start...");
@@ -152,25 +120,22 @@ describe("x/airdrop", () => {
     const nowSec = now();
     const airdropId = String(nowSec);
 
-    const msg = stride.airdrop.MessageComposer.withTypeUrl.createAirdrop({
-      admin: stridejs.address,
-      airdropId: airdropId,
-      rewardDenom: "ustrd",
-      distributionStartDate: fromSeconds(now()),
-      distributionEndDate: fromSeconds(nowSec + 3 * day),
-      clawbackDate: fromSeconds(nowSec + 4 * day),
-      claimTypeDeadlineDate: fromSeconds(nowSec + 2 * day),
-      earlyClaimPenalty: decToString(0.5),
-      allocatorAddress: stridejs.address,
-      distributorAddress: stridejs.address,
-      linkerAddress: stridejs.address,
-    });
+    const msg =
+      stridejs.types.stride.airdrop.MessageComposer.withTypeUrl.createAirdrop({
+        admin: stridejs.address,
+        airdropId: airdropId,
+        rewardDenom: "ustrd",
+        distributionStartDate: fromSeconds(now()),
+        distributionEndDate: fromSeconds(nowSec + 3 * day),
+        clawbackDate: fromSeconds(nowSec + 4 * day),
+        claimTypeDeadlineDate: fromSeconds(nowSec + 2 * day),
+        earlyClaimPenalty: decToString(0.5),
+        allocatorAddress: stridejs.address,
+        distributorAddress: stridejs.address,
+        linkerAddress: stridejs.address,
+      });
 
-    const tx = await stridejs.tx.signAndBroadcast(
-      stridejs.address,
-      [msg],
-      feeFromGas(200_000),
-    );
+    const tx = await stridejs.signAndBroadcast([msg]);
 
     expect(tx.code).toBe(0);
 
@@ -188,28 +153,29 @@ describe("ibc", () => {
     const stridejs = accounts.user;
 
     const msg =
-      ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
-        sourcePort: "transfer",
-        sourceChannel: "channel-0",
-        token: coinFromString("1ustrd"),
-        sender: stridejs.address,
-        receiver: convertBech32Prefix(stridejs.address, "cosmos"),
-        timeoutHeight: {
-          revisionNumber: 0n,
-          revisionHeight: 0n,
+      stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
+        {
+          sourcePort: "transfer",
+          sourceChannel: "channel-0",
+          token: coinFromString("1ustrd"),
+          sender: stridejs.address,
+          receiver: convertBech32Prefix(stridejs.address, "cosmos"),
+          timeoutHeight: {
+            revisionNumber: 0n,
+            revisionHeight: 0n,
+          },
+          timeoutTimestamp: BigInt(
+            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes from now as nanoseconds
+          ),
+          memo: "",
         },
-        timeoutTimestamp: BigInt(
-          `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes from now as nanoseconds
-        ),
-        memo: "",
-      });
+      );
 
-    const tx = await stridejs.tx.signAndBroadcast(
-      stridejs.address,
-      [msg],
-      feeFromGas(200_000),
-    );
-
+    const tx = await stridejs.signAndBroadcast([msg]);
     expect(tx.code).toBe(0);
+
+    const ibcAck = await tx.ibcResponses[0];
+    expect(ibcAck.type).toBe("ack");
+    expect(ibcAck.tx.code).toBe(0);
   });
 });
