@@ -139,7 +139,12 @@ set_consumer_genesis() {
     genesis_config=$1
 
     # add consumer genesis
-    $MAIN_CMD add-consumer-section $NUM_NODES
+    home_directories=""
+    for (( i=1; i <= $NUM_NODES; i++ )); do
+        home_directories+="${STATE}/stride${i},"
+    done
+
+    $MAIN_CMD add-consumer-section --validator-home-directories $home_directories
     jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
