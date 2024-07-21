@@ -78,6 +78,7 @@ beforeAll(async () => {
 
     accounts[name] = await StrideClient.create(RPC_ENDPOINT, signer, address, {
       gasPrice: GasPrice.fromString("0.025ustrd"),
+      broadcastPollIntervalMs: 100,
       resolveIbcResponsesCheckIntervalMs: 250,
       resolveIbcResponsesTimeoutMs: 30_000,
     });
@@ -105,7 +106,7 @@ const hour = 60 * minute;
 const day = 24 * hour;
 
 describe("x/airdrop", () => {
-  test("create airdrop", async () => {
+  test("MsgCreateAirdrop", async () => {
     const stridejs = accounts.admin;
 
     const nowSec = now();
