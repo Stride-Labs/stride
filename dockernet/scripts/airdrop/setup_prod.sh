@@ -69,11 +69,11 @@ $STRIDE_MAIN_CMD tx bank send val1 $linker_address 1ustrd --from val1 -y | TRIM_
 sleep 3
 
 echo -e "\n>>> Funding claimer accounts..."
-$STRIDE_MAIN_CMD tx bank send val1 $claimer_1_address 1ustrd --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx bank send val1 $claimer_1_address 10000000ustrd --from val1 -y | TRIM_TX
 sleep 3
-$STRIDE_MAIN_CMD tx bank send val1 $claimer_2_address 1ustrd --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx bank send val1 $claimer_2_address 10000000ustrd --from val1 -y | TRIM_TX
 sleep 3
-$STRIDE_MAIN_CMD tx bank send val1 $claimer_3_address 1ustrd --from val1 -y | TRIM_TX
+$STRIDE_MAIN_CMD tx bank send val1 $claimer_3_address 10000000ustrd --from val1 -y | TRIM_TX
 sleep 3
 
 if [[ "$STAGE" == "fresh-start" ]]; then 
