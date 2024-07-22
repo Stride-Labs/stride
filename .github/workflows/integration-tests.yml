@@ -9,7 +9,7 @@ jobs:
       - name: Fetch submodules
         run: |
           git submodule sync --recursive
-	        git submodule update --init --recursive --depth 1
+          git submodule update --init --recursive --depth 1
 
       - name: Build dockernet (only Gaia and Stride)
         run: make start-docker build=sgr
