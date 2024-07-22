@@ -78,9 +78,8 @@ beforeAll(async () => {
 
     accounts[name] = await StrideClient.create(RPC_ENDPOINT, signer, address, {
       gasPrice: GasPrice.fromString("0.025ustrd"),
-      broadcastPollIntervalMs: 100,
-      resolveIbcResponsesCheckIntervalMs: 250,
-      resolveIbcResponsesTimeoutMs: 30_000,
+      broadcastPollIntervalMs: 50,
+      resolveIbcResponsesCheckIntervalMs: 50,
     });
   }
 
