@@ -7,7 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch submodules
-        run: make sync
+        run: 	|
+          git submodule sync --recursive
+	        git submodule update --init --recursive --depth 1
 
       - name: Build dockernet (only Gaia and Stride)
         run: make start-docker build=sgr
