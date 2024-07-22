@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 const (
@@ -49,6 +49,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdChangeMultipleValidatorWeight())
 	cmd.AddCommand(CmdDeleteValidator())
 	cmd.AddCommand(CmdRestoreInterchainAccount())
+	cmd.AddCommand(CmdCloseDelegationChannel())
 	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
 	cmd.AddCommand(CmdCalibrateDelegation())
 	cmd.AddCommand(CmdClearBalance())
@@ -524,6 +525,41 @@ ex:
 				chainId,
 				connectionId,
 				accountOwner,
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdCloseDelegationChannel() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "close-delegation-channel [chain-id]",
+		Short: "Broadcast message close-delegation-channel",
+		Long: strings.TrimSpace(
+			`Closes a delegation ICA channel. This can only be run by the admin
+
+Ex:
+>>> strided tx close-delegation-channel cosmoshub-4
+		`),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			chainId := args[0]
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgCloseDelegationChannel(
+				clientCtx.GetFromAddress().String(),
+				chainId,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

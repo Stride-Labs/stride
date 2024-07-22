@@ -10,8 +10,8 @@ import (
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
 	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 const (

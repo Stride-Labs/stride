@@ -23,6 +23,6 @@ WORKDIR /home/stride
 
 EXPOSE 26657 26656 1317 9090
 
-RUN echo "mv ${COSMOVISOR_HOME} ${DAEMON_HOME}/cosmovisor && cosmovisor run start" > start.sh
+RUN echo "mv ${COSMOVISOR_HOME} ${DAEMON_HOME}/cosmovisor && cosmovisor run start --reject-config-defaults" > start.sh
 
 CMD ["bash", "start.sh" ]

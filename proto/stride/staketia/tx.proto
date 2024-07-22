@@ -9,7 +9,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "stride/staketia/staketia.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/staketia/types";
+option go_package = "github.com/Stride-Labs/stride/v23/x/staketia/types";
 
 enum OverwritableRecordType {
   option (gogoproto.goproto_enum_prefix) = false;

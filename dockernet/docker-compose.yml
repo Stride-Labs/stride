@@ -100,7 +100,7 @@ services:
   # being run when testing upgrades
   host1:
     image: stridezone:stride
-    command: strided start
+    command: strided start --reject-config-defaults
     volumes:
       - ./state/host1:/home/stride/.stride
     ports:
@@ -110,13 +110,13 @@ services:
 
   host2:
     image: stridezone:stride
-    command: strided start
+    command: strided start --reject-config-defaults
     volumes:
       - ./state/host2:/home/stride/.stride
 
   host3:
     image: stridezone:stride
-    command: strided start
+    command: strided start --reject-config-defaults
     volumes:
       - ./state/host3:/home/stride/.stride
 

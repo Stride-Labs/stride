@@ -42,6 +42,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v23.0.0](https://github.com/Stride-Labs/stride/releases/tag/v23.0.0) - 2024-07-19
+
+### On-Chain changes
+1. added airdrop module ([#1235](https://github.com/Stride-Labs/stride/pull/1235))
+2. removed trade route dead code ([#1189](https://github.com/Stride-Labs/stride/pull/1189))
+3. added wasm light client ([#1224](https://github.com/Stride-Labs/stride/pull/1224)), ([#1231](https://github.com/Stride-Labs/stride/pull/1231))
+4. consolidated cli txs in to same file  ([#1211](https://github.com/Stride-Labs/stride/pull/1211))
+5. v23 upgrade handler (final) ([#1243](https://github.com/Stride-Labs/stride/pull/1243))
+6. close delegation channel tx ([#1242](https://github.com/Stride-Labs/stride/pull/1242))
+7. v23 Import Paths ([#1246](https://github.com/Stride-Labs/stride/pull/1246))
+8. version bumps ([#1187](https://github.com/Stride-Labs/stride/pull/1187)), ([#1228](https://github.com/Stride-Labs/stride/pull/1228))
+9. Add Default Config Settings ([#1245](https://github.com/Stride-Labs/stride/pull/1245))
+
+### Off-Chain changes
+1. Faster `make sync` ([#1209](https://github.com/Stride-Labs/stride/pull/1209))
+2. Replace `docker-compose` with `docker compose` ([#1221](https://github.com/Stride-Labs/stride/pull/1221))
+3. removed version from docker compose ([#1227](https://github.com/Stride-Labs/stride/pull/1227))
+
+
 ## [v22.0.0](https://github.com/Stride-Labs/stride/releases/tag/v22.0.0) - 2024-04-16
 
 ### On-Chain changes

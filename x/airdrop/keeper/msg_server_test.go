@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v23/x/airdrop/types"
 )
 
 func (s *KeeperTestSuite) TestCreateAirdrop() {

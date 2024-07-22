@@ -12,12 +12,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	autopilotkeeper "github.com/Stride-Labs/stride/v22/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v22/x/autopilot/types"
-	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v22/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
+	"github.com/Stride-Labs/stride/v23/utils"
+	autopilotkeeper "github.com/Stride-Labs/stride/v23/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v23/x/autopilot/types"
+	claimkeeper "github.com/Stride-Labs/stride/v23/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v23/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v23/x/claim/types"
 )
 
 var (

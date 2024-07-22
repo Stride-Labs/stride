@@ -16,10 +16,10 @@ import (
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/utils"
+	epochstypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v23/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 // JSON Memo for PFM transfers

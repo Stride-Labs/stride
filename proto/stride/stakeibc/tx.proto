@@ -3,7 +3,7 @@ package stride.stakeibc;
 
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v23/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
@@ -27,6 +27,8 @@ service Msg {
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
   rpc RestoreInterchainAccount(MsgRestoreInterchainAccount)
       returns (MsgRestoreInterchainAccountResponse);
+  rpc CloseDelegationChannel(MsgCloseDelegationChannel)
+      returns (MsgCloseDelegationChannelResponse);
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc CalibrateDelegation(MsgCalibrateDelegation)
@@ -192,6 +194,12 @@ message MsgRestoreInterchainAccount {
   string account_owner = 4;
 }
 message MsgRestoreInterchainAccountResponse {}
+
+message MsgCloseDelegationChannel {
+  string creator = 1;
+  string chain_id = 2;
+}
+message MsgCloseDelegationChannelResponse {}
 
 message MsgUpdateValidatorSharesExchRate {
   string creator = 1;

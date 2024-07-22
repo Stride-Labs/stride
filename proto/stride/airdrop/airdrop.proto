@@ -5,7 +5,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/airdrop/types";
+option go_package = "github.com/Stride-Labs/stride/v23/x/airdrop/types";
 
 // Airdrop module parameters
 message Params {
