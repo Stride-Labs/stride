@@ -24,6 +24,9 @@ spec:
             - bash
             - "-c"
             - |
+              if [[ -d $STRIDE_HOME/config ]]; then
+                exit 0
+              fi
               POD_INDEX=${POD_NAME##*-}
               if [[ "$POD_INDEX" == "0" ]]; then
                 bash scripts/init-chain.sh

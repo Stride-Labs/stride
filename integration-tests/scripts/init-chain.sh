@@ -1,24 +1,9 @@
 #!/bin/bash
 
 set -e
+source scripts/config.sh
 
 LOCAL_MODE=${1:-false}
-
-CHAIN_NAME=stride
-BINARY=strided
-DENOM=ustrd
-CHAIN_ID=${CHAIN_NAME}-test-1
-VALIDATOR_BALANCE=10000000
-MICRO_DENOM_UNITS=000000
-CHAIN_HOME=.stride
-SHARED_DIR=shared
-NUM_VALIDATORS=3
-
-STRIDE_DAY_EPOCH_DURATION="140s"
-STRIDE_EPOCH_EPOCH_DURATION="35s"
-MAX_DEPOSIT_PERIOD="30s"
-VOTING_PERIOD="30s"
-UNBONDING_TIME="240s"
 
 # If this is being run locally, don't overwrite the main chain folder
 if [[ "$LOCAL_MODE" == "true" ]]; then
@@ -54,7 +39,7 @@ add_validators() {
     validator_public_keys=""
     for (( i=1; i <= $NUM_VALIDATORS; i++ )); do
         # Extract the validator name and mnemonic from keys.json
-        validator_config=$(jq -r '.validators[$index]' --argjson index "$((i-1))" config/keys.json)
+        validator_config=$(jq -r '.validators[$index]' --argjson index "$((i-1))" ${KEYS_FILE})
         name=$(echo $validator_config | jq -r '.name')
         mnemonic=$(echo $validator_config | jq -r '.mnemonic')
 
@@ -63,7 +48,7 @@ add_validators() {
         address=$($BINARY keys show $name -a)
 
         # Add the genesis account
-        genesis_balance=${VALIDATOR_BALANCE}${MICRO_DENOM_UNITS}${DENOM}
+        genesis_balance=${VALIDATOR_BALANCE}${DENOM}
         $BINARY $chain_genesis_command add-genesis-account $address $genesis_balance
 
         # Save the node-id and validator private keys to the shared directory
@@ -71,16 +56,16 @@ add_validators() {
         $BINARY init $CHAIN_NAME-$name --chain-id $CHAIN_ID --overwrite --home ${validator_home} &> /dev/null
         node_id=$($BINARY tendermint show-node-id --home ${validator_home})
 
-        mkdir -p ${SHARED_DIR}/validator-keys
-        mkdir -p ${SHARED_DIR}/node-keys
-        mkdir -p ${SHARED_DIR}/node-ids
+        mkdir -p ${VALIDATOR_KEYS_DIR}
+        mkdir -p ${NODE_KEYS_DIR}
+        mkdir -p ${NODE_IDS_DIR}
     
-        mv ${validator_home}/config/priv_validator_key.json ${SHARED_DIR}/validator-keys/${name}.json
-        mv ${validator_home}/config/node_key.json ${SHARED_DIR}/node-keys/${name}.json
-        echo $node_id > ${SHARED_DIR}/node-ids/${name}.txt
+        mv ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${name}.json
+        mv ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${name}.json
+        echo $node_id > ${NODE_IDS_DIR}/${name}.txt
 
         # Save the comma separted public keys for the ICS genesis update
-        validator_public_keys+="$(jq -r '.pub_key.value' ${SHARED_DIR}/validator-keys/${name}.json),"
+        validator_public_keys+="$(jq -r '.pub_key.value' ${VALIDATOR_KEYS_DIR}/${name}.json),"
     done
 }
 
