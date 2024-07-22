@@ -1,0 +1,19 @@
+name: Integration Tests
+
+on: [push]
+
+jobs:
+  build-dockernet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch submodules
+        run: make sync
+
+      - name: Build dockernet (only Gaia and Stride)
+        run: make start-docker build=sgr
+
+      - name: Run integration tests
+        run: |
+          cd dockernet/ts-tests
+          pnpm i
+          pnpm test
