@@ -85,16 +85,18 @@ beforeAll(async () => {
 
   console.log("waiting for chain to start...");
   while (true) {
-    const block =
-      await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
-        {},
-      );
+    try {
+      const block =
+        await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
+          {},
+        );
 
-    if (block?.block?.header.height! > 0n) {
-      break;
-    }
+      if (block?.block?.header.height! > 0n) {
+        break;
+      }
 
-    await sleep(50);
+      await sleep(50);
+    } catch (error) {}
   }
 });
 
