@@ -57,6 +57,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdResumeHostZone())
 	cmd.AddCommand(CmdSetCommunityPoolRebate())
 	cmd.AddCommand(CmdToggleTradeController())
+	cmd.AddCommand(CmdRemoveBlacklistedDenom())
 
 	return cmd
 }
@@ -809,6 +810,32 @@ Ex:
 				permissionChange,
 				address,
 			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdRemoveBlacklistedDenom() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "remove-blacklisted-denom",
+		Short: "Removes blacklisted denom",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgRemoveBlacklistedDenom{
+				Creator: clientCtx.GetFromAddress().String(),
+			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

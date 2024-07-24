@@ -1208,3 +1208,16 @@ func (k msgServer) ToggleTradeController(
 
 	return &types.MsgToggleTradeControllerResponse{}, nil
 }
+
+func (k msgServer) RemoveBlacklistedDenom(goCtx context.Context, msg *types.MsgRemoveBlacklistedDenom) (*types.MsgRemoveBlacklistedDenomResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.RatelimitKeeper.RemoveDenomFromBlacklist(ctx, "stadv4tnt")
+
+	for _, record := range k.RecordsKeeper.GetAllDepositRecord(ctx) {
+		if record.HostZoneId == "osmo-test-5" {
+			k.RecordsKeeper.RemoveDepositRecord(ctx, record.Id)
+		}
+	}
+
+	return &types.MsgRemoveBlacklistedDenomResponse{}, nil
+}

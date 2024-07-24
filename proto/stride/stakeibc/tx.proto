@@ -49,6 +49,8 @@ service Msg {
       returns (MsgToggleTradeControllerResponse);
   rpc UpdateHostZoneParams(MsgUpdateHostZoneParams)
       returns (MsgUpdateHostZoneParamsResponse);
+  rpc RemoveBlacklistedDenom(MsgRemoveBlacklistedDenom)
+      returns (MsgRemoveBlacklistedDenomResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -424,3 +426,6 @@ message MsgUpdateHostZoneParams {
   uint64 max_messages_per_ica_tx = 3;
 }
 message MsgUpdateHostZoneParamsResponse {}
+
+message MsgRemoveBlacklistedDenom { string creator = 1; }
+message MsgRemoveBlacklistedDenomResponse {}
