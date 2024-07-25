@@ -2,7 +2,7 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source ${SCRIPT_DIR}/../../config.sh
 
-# NOTE: Before running this script, you must remove the line from init_chain.sh that changes the airdrop period length!
+# NOTE: Before running this script, you must change AIRDROP_PERIOD_LENGTH to "86400" in config.sh
 
 # Options: fresh-start, midway-before-deadline, midway-after-deadline, distribution-ended
 STAGE="fresh-start"
