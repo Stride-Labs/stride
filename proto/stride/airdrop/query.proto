@@ -7,6 +7,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos_proto/cosmos.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v23/x/airdrop/types";
 
@@ -53,7 +54,55 @@ service Query {
 
 // Airdrop
 message QueryAirdropRequest { string id = 1; };
-message QueryAirdropResponse { Airdrop airdrop = 1; }
+message QueryAirdropResponse {
+  // Airdrop ID
+  string id = 1;
+
+  // Denom used when distributing rewards
+  string reward_denom = 2;
+
+  // The first date that claiming begins and rewards are distributed
+  google.protobuf.Timestamp distribution_start_date = 3
+      [ (gogoproto.stdtime) = true ];
+
+  // The last date for rewards to be distributed. Immediately after this date
+  // the rewards can no longer be claimed, but rewards have not been clawed back
+  // yet
+  google.protobuf.Timestamp distribution_end_date = 4
+      [ (gogoproto.stdtime) = true ];
+
+  // Date with which the rewards are clawed back (occurs after the distribution
+  // end date)
+  google.protobuf.Timestamp clawback_date = 5 [ (gogoproto.stdtime) = true ];
+
+  // Deadline for the user to make a decision on their claim type
+  google.protobuf.Timestamp claim_type_deadline_date = 6
+      [ (gogoproto.stdtime) = true ];
+
+  // Penalty for claiming rewards early - e.g. 0.5 means claiming early will
+  // result in losing 50% of rewards
+  string early_claim_penalty = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Account that holds the total reward balance and distributes to users
+  string distributor_address = 8
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Admin account with permissions to add or update allocations
+  string allocator_address = 9
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Admin account with permissions to link addresseses
+  string linker_address = 10 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The current date index into the airdrop array
+  int64 current_date_index = 11;
+
+  // The length of the airdrop (i.e. number of periods in the airdrop array)
+  int64 airdrop_length = 12;
+}
 
 // Airdrops
 message QueryAllAirdropsRequest {};
@@ -118,7 +167,4 @@ message QueryUserSummaryResponse {
     (gogoproto.nullable) = false,
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int"
   ];
-
-  // The current date index into the airdrop array
-  int64 current_date_index = 6;
 }
