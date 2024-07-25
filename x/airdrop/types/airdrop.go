@@ -7,8 +7,8 @@ import (
 )
 
 // Returns the date index in the allocations array using the current block time
-// windowLengthSeconds is the time between each element in the allocations array
-func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, windowLengthSeconds int64) (dateIndex int, err error) {
+// periodLengthSeconds is the time between each element in the allocations array
+func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, periodLengthSeconds int64) (dateIndex int, err error) {
 	if a.DistributionStartDate == nil {
 		return 0, errors.New("distribution start date not set")
 	}
@@ -25,20 +25,20 @@ func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, windowLengthSeconds int64
 	}
 
 	elapsedTimeSeconds := blockTime - startTime
-	elapsedDays := elapsedTimeSeconds / windowLengthSeconds
+	elapsedDays := elapsedTimeSeconds / periodLengthSeconds
 
 	// Cap the airdrop index at the last day
-	if elapsedDays >= a.GetAirdropPeriods(windowLengthSeconds) {
-		elapsedDays = a.GetAirdropPeriods(windowLengthSeconds) - 1
+	if elapsedDays >= a.GetAirdropPeriods(periodLengthSeconds) {
+		elapsedDays = a.GetAirdropPeriods(periodLengthSeconds) - 1
 	}
 
 	return int(elapsedDays), nil
 }
 
 // Returns number of periods in the airdrop
-// windowLengthSeconds is the time between each element in the allocations array
-func (a *Airdrop) GetAirdropPeriods(windowLengthSeconds int64) int64 {
+// periodLengthSeconds is the time between each element in the allocations array
+func (a *Airdrop) GetAirdropPeriods(periodLengthSeconds int64) int64 {
 	airdropLengthSeconds := int64(a.DistributionEndDate.Unix() - a.DistributionStartDate.Unix())
-	numberOfDays := (airdropLengthSeconds / (windowLengthSeconds)) + 1
+	numberOfDays := (airdropLengthSeconds / (periodLengthSeconds)) + 1
 	return numberOfDays
 }
