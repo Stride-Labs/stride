@@ -14,7 +14,7 @@ import (
 	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
-// Builds the delegation ICA messags for a given deposit record
+// Builds the delegation ICA messages for a given deposit record
 // Each validator has a portion of the total amount on the record based on their weight
 func (k Keeper) GetDelegationICAMessages(
 	ctx sdk.Context,
