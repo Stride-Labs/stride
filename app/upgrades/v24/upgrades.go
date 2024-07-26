@@ -1,4 +1,4 @@
-package v23
+package v24
 
 import (
 	errorsmod "cosmossdk.io/errors"
@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	UpgradeName = "v23"
+	UpgradeName = "v24"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v23
@@ -26,7 +26,7 @@ func CreateUpgradeHandler(
 	staketiaKeeper staketiakeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ctx.Logger().Info("Starting upgrade v23...")
+		ctx.Logger().Info("Starting upgrade v24...")
 
 		// Migrate data structures
 		MigrateTradeRoutes(ctx, stakeibcKeeper)

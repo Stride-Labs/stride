@@ -1,4 +1,4 @@
-package v23_test
+package v24_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v23/app/apptesting"
-	v23 "github.com/Stride-Labs/stride/v23/app/upgrades/v23"
+	v24 "github.com/Stride-Labs/stride/v23/app/upgrades/v24"
 	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
@@ -43,7 +43,7 @@ func (s *UpgradeTestSuite) TestMigrateTradeRoutes() {
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoutes)
 
 	// Call migration function
-	v23.MigrateTradeRoutes(s.Ctx, s.App.StakeibcKeeper)
+	v24.MigrateTradeRoutes(s.Ctx, s.App.StakeibcKeeper)
 
 	// Confirm trade route was migrated
 	for _, tradeRoute := range s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx) {
@@ -60,7 +60,7 @@ func (s *UpgradeTestSuite) TestMigrateHostZones() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Call migration function
-	v23.MigrateHostZones(s.Ctx, s.App.StakeibcKeeper)
+	v24.MigrateHostZones(s.Ctx, s.App.StakeibcKeeper)
 
 	// Confirm host route was migrated
 	for _, hostZone := range s.App.StakeibcKeeper.GetAllHostZone(s.Ctx) {
@@ -100,7 +100,7 @@ func (s *UpgradeTestSuite) TestMigrateDepositRecords() {
 	}
 
 	// Migrate the records
-	v23.MigrateDepositRecords(s.Ctx, s.App.RecordsKeeper)
+	v24.MigrateDepositRecords(s.Ctx, s.App.RecordsKeeper)
 
 	// Confirm the expected status for each
 	for id, tc := range testCases {
@@ -209,7 +209,7 @@ func (s *UpgradeTestSuite) TestMigrateEpochUnbondingRecords() {
 	}
 
 	// Call migration function
-	v23.MigrateEpochUnbondingRecords(s.Ctx, s.App.RecordsKeeper)
+	v24.MigrateEpochUnbondingRecords(s.Ctx, s.App.RecordsKeeper)
 
 	// Confirm new fields were added
 	for _, tc := range recordTestCases {
