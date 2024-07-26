@@ -123,6 +123,9 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 	s.FundAccount(staketiaDepositAccount, sdk.NewCoin(HostIBCDenom, depositBalance))
 	s.FundModuleAccount(staketiaFeeModuleName, sdk.NewCoin(HostIBCDenom, feeBalance))
 
+	// Mint stTIA for the redemption rate calculation
+	s.FundAccount(s.TestAccs[1], sdk.NewCoin("st"+HostNativeDenom, sdk.NewInt(1000)))
+
 	// Store the legacy host zone
 	legacyHostZone := oldtypes.HostZone{
 		ChainId:             types.CelestiaChainId,
