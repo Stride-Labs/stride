@@ -27,16 +27,12 @@ spec:
               if [[ -d $STRIDE_HOME/config ]]; then
                 exit 0
               fi
-              POD_INDEX=${POD_NAME##*-}
+              POD_INDEX=${HOSTNAME##*-}
               if [[ "$POD_INDEX" == "0" ]]; then
                 bash scripts/init-chain.sh
               fi
               bash scripts/init-node.sh
           env:
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
@@ -55,6 +51,14 @@ spec:
           image: gcr.io/stride-nodes/stride-test
           imagePullPolicy: Always
           command: ["strided", "start", "--reject-config-defaults"]
+          lifecycle:
+            postStart:
+              exec:
+                command: ["bash", "scripts/create-governor.sh"]
+          readinessProbe:
+            exec:
+              command: ["bash", "scripts/readiness.sh"]
+            periodSeconds: 10
           ports:
             - name: rpc
               containerPort: 26657
@@ -71,6 +75,10 @@ spec:
           volumeMounts:
             - name: state
               mountPath: /home/stride/.stride
+            - name: scripts
+              mountPath: /home/stride/scripts
+            - name: config
+              mountPath: /home/stride/config
           resources:
             limits:
               cpu: "1000m"
@@ -78,15 +86,9 @@ spec:
             requests:
               cpu: "1000m"
               memory: "2Gi"
-          livenessProbe:
-            exec:
-              command: ["bash", "scripts/liveness.sh"]
-            periodSeconds: 10
-            initialDelaySeconds: 30
       volumes:
         - name: state
-          emptyDir:
-            medium: "Memory"
+          emptyDir: {}
         - name: shared
           persistentVolumeClaim:
             claimName: shared
@@ -124,6 +126,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: shared
+  namespace: integration
 spec:
   accessModes:
     - ReadWriteOnce

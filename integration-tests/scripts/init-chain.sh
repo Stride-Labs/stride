@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -eu
 source scripts/config.sh
 
 LOCAL_MODE=${1:-false}
@@ -88,8 +88,12 @@ update_genesis() {
     cp $genesis_json ${SHARED_DIR}/genesis.json
 }
 
-echo "Initializing chain..."
-init_config
-add_validators
-update_genesis
-echo "Done"
+main() {
+    echo "Initializing chain..."
+    init_config
+    add_validators
+    update_genesis
+    echo "Done"
+}
+
+main

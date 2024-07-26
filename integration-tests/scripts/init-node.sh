@@ -9,12 +9,6 @@ init_config() {
         moniker=${CHAIN_NAME}${VALIDATOR_INDEX}
         $BINARY init $moniker --chain-id $CHAIN_ID --overwrite 
         $BINARY config keyring-backend test
-
-        validator_config=$(jq -r '.validators[$index]' --argjson index "$POD_INDEX" ${KEYS_FILE})
-        mnemonic=$(echo $validator_config | jq -r '.mnemonic')
-        name=$(echo $validator_config | jq -r '.name')
-
-        # echo "$mnemonic" | $BINARY keys add $name --recover 
     fi
 }
 
@@ -66,19 +60,13 @@ add_peers() {
     fi
 }
 
-# Create the governor
-create_governor() {
-    echo "Creating governor..."
-    pub_key=$($BINARY tendermint show-validator)
-    $BINARY tx staking create-validator --amount ${VALIDATOR_STAKE}${DENOM} --from ${VALIDATOR_NAME} \
-        --pubkey=$pub_key --commission-rate="0.10" --commission-max-rate="0.20" \
-        --commission-max-change-rate="0.01" --min-self-delegation="1" -y
+main() {
+    echo "Initializing node..."
+    init_config
+    update_config
+    download_shared
+    add_peers
+    echo "Done"
 }
 
-echo "Initializing node..."
-init_config
-update_config
-download_shared
-add_peers
-# create_governor
-echo "Done"
+main
