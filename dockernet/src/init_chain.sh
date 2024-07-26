@@ -77,15 +77,19 @@ set_stride_genesis() {
     jq '.app_state.staketia.host_zone.delegation_address = $newVal' --arg newVal "$DELEGATION_ADDRESS" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.reward_address = $newVal'     --arg newVal "$REWARD_ADDRESS"     $genesis_config > json.tmp && mv json.tmp $genesis_config
 
-    host_chain="${HOST_CHAINS[0]}"
-    host_denom=$(GET_VAR_VALUE     ${host_chain}_DENOM)
-    host_chain_id=$(GET_VAR_VALUE  ${host_chain}_CHAIN_ID)
-    host_ibc_denom=$(GET_VAR_VALUE IBC_${host_chain}_CHANNEL_0_DENOM)
-    jq '.app_state.staketia.host_zone.chain_id = $newVal' --arg newVal "${host_chain_id}" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.unbonding_period_seconds = $newVal' --arg newVal "${UNBONDING_TIME//s/}" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.transfer_channel_id = $newVal' --arg newVal "channel-0" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.native_token_denom = $newVal' --arg newVal "${host_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.native_token_ibc_denom = $newVal' --arg newVal "${host_ibc_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    host_chain="${HOST_CHAINS[0]:-}"
+    if [[ "$host_chain" != "" ]]; then 
+        host_denom=$(GET_VAR_VALUE     ${host_chain}_DENOM)
+        host_chain_id=$(GET_VAR_VALUE  ${host_chain}_CHAIN_ID)
+        host_ibc_denom=$(GET_VAR_VALUE IBC_${host_chain}_CHANNEL_0_DENOM)
+        jq '.app_state.staketia.host_zone.chain_id = $newVal' --arg newVal "${host_chain_id}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.unbonding_period_seconds = $newVal' --arg newVal "${UNBONDING_TIME//s/}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.transfer_channel_id = $newVal' --arg newVal "channel-0" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.native_token_denom = $newVal' --arg newVal "${host_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.native_token_ibc_denom = $newVal' --arg newVal "${host_ibc_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    fi
+
+    jq '.app_state.airdrop.params.period_length_seconds = $newVal' --arg newVal "${AIRDROP_PERIOD_LENGTH}" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {
@@ -286,7 +290,7 @@ else
     # add a relayer account if the chain is a HOST_CHAIN
     # if it's only an accessory chain, the account will be added after the network is started
     is_host_chain=false
-    for host_chain in ${HOST_CHAINS[@]}; do
+    for host_chain in ${HOST_CHAINS[@]:-}; do
         if [ "$CHAIN" == "$host_chain" ]; then 
             relayer_acct=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
             relayer_mnemonic=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)

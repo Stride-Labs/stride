@@ -3,18 +3,17 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v23/utils"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
-
-	icacallbackstypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v23/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 // ICA Callback after delegating deposit records

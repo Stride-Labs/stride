@@ -9,6 +9,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm"
 	"github.com/Stride-Labs/ibc-rate-limiting/ratelimit"
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
@@ -88,6 +89,9 @@ import (
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7"
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/keeper"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	ica "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	icacontroller "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
@@ -122,6 +126,9 @@ import (
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v23/utils"
+	airdrop "github.com/Stride-Labs/stride/v23/x/airdrop"
+	airdropkeeper "github.com/Stride-Labs/stride/v23/x/airdrop/keeper"
+	airdroptypes "github.com/Stride-Labs/stride/v23/x/airdrop/types"
 	"github.com/Stride-Labs/stride/v23/x/autopilot"
 	autopilotkeeper "github.com/Stride-Labs/stride/v23/x/autopilot/keeper"
 	autopilottypes "github.com/Stride-Labs/stride/v23/x/autopilot/types"
@@ -227,6 +234,8 @@ var (
 		stakedym.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ibchooks.AppModuleBasic{},
+		ibcwasm.AppModuleBasic{},
+		airdrop.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -311,6 +320,7 @@ type StrideApp struct {
 	WasmKeeper            wasmkeeper.Keeper
 	ContractKeeper        *wasmkeeper.PermissionedKeeper
 	IBCHooksKeeper        ibchookskeeper.Keeper
+	WasmClientKeeper      ibcwasmkeeper.Keeper
 
 	// Middleware for IBCHooks
 	Ics20WasmHooks   *ibchooks.WasmHooks
@@ -337,6 +347,7 @@ type StrideApp struct {
 	ICAOracleKeeper       icaoraclekeeper.Keeper
 	StaketiaKeeper        staketiakeeper.Keeper
 	StakedymKeeper        stakedymkeeper.Keeper
+	AirdropKeeper         airdropkeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -391,6 +402,8 @@ func NewStrideApp(
 		stakedymtypes.StoreKey,
 		wasmtypes.StoreKey,
 		ibchookstypes.StoreKey,
+		ibcwasmtypes.StoreKey,
+		airdroptypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -468,6 +481,14 @@ func NewStrideApp(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.ClaimKeeper.Hooks()),
 	)
 
+	// Add airdrop keeper
+	app.AirdropKeeper = airdropkeeper.NewKeeper(
+		appCodec,
+		keys[airdroptypes.StoreKey],
+		app.BankKeeper,
+	)
+	airdropModule := airdrop.NewAppModule(appCodec, app.AirdropKeeper)
+
 	// Add ICS Consumer Keeper
 	app.ConsumerKeeper = ccvconsumerkeeper.NewNonZeroKeeper(
 		appCodec,
@@ -542,13 +563,27 @@ func NewStrideApp(
 	// Set the TransferKeeper reference in the PacketForwardKeeper
 	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
 
-	// Add wasm keeper (must be after IBCKeeper and TransferKeeper)
+	// Add wasm keeper and wasm client keeper (must be after IBCKeeper and TransferKeeper)
+	wasmContractMemoryLimit := uint32(32)
 	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
 	wasmDir := filepath.Join(homePath, "wasm")
+	wasmVmDir := filepath.Join(homePath, "wasm", "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
+
+	wasmer, err := wasmvm.NewVM(
+		wasmVmDir,
+		wasmCapabilities,
+		wasmContractMemoryLimit,
+		wasmConfig.ContractDebugMode,
+		wasmConfig.MemoryCacheSize,
+	)
+	if err != nil {
+		panic(err)
+	}
+	wasmOpts = append(wasmOpts, wasmkeeper.WithWasmEngine(wasmer))
 
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.WasmKeeper = wasmkeeper.NewKeeper(
@@ -572,6 +607,15 @@ func NewStrideApp(
 		wasmOpts...,
 	)
 	app.ContractKeeper = wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper)
+
+	app.WasmClientKeeper = ibcwasmkeeper.NewKeeperWithVM(
+		appCodec,
+		keys[ibcwasmtypes.StoreKey],
+		app.IBCKeeper.ClientKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		wasmer,
+		app.GRPCQueryRouter(),
+	)
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -876,6 +920,7 @@ func NewStrideApp(
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.BaseApp.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibchooks.NewAppModule(app.AccountKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
+		ibcwasm.NewAppModule(app.WasmClientKeeper),
 		// monitoringModule,
 		stakeibcModule,
 		epochsModule,
@@ -889,6 +934,7 @@ func NewStrideApp(
 		icaoracleModule,
 		stakeTiaModule,
 		stakeDymModule,
+		airdropModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -932,6 +978,8 @@ func NewStrideApp(
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
+		ibcwasmtypes.ModuleName,
+		airdroptypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -971,6 +1019,8 @@ func NewStrideApp(
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
+		ibcwasmtypes.ModuleName,
+		airdroptypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1015,6 +1065,8 @@ func NewStrideApp(
 		stakedymtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibchookstypes.ModuleName,
+		ibcwasmtypes.ModuleName,
+		airdroptypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)

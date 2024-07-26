@@ -179,6 +179,9 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.CommunityPoolDepositIcaAddress, hostZone.CommunityPoolRedeemHoldingAddress)
 	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.CommunityPoolStakeHoldingAddress, hostZone.CommunityPoolReturnIcaAddress)
 
+	// Remove any blacklisted denoms from the rate limit module (may not be applicable)
+	k.RatelimitKeeper.RemoveDenomFromBlacklist(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom))
+
 	// Finally, remove the host zone struct
 	k.RemoveHostZone(ctx, chainId)
 

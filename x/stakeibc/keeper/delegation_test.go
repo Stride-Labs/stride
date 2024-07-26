@@ -13,7 +13,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	epochstypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
-	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
 	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
@@ -189,7 +188,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 
 	currentEpoch := uint64(2)
 	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		EpochIdentifier:    epochstypes.STRIDE_EPOCH,
 		EpochNumber:        currentEpoch,
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
 	}

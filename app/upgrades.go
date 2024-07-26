@@ -14,6 +14,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
@@ -31,6 +32,7 @@ import (
 	v20 "github.com/Stride-Labs/stride/v23/app/upgrades/v20"
 	v21 "github.com/Stride-Labs/stride/v23/app/upgrades/v21"
 	v22 "github.com/Stride-Labs/stride/v23/app/upgrades/v22"
+	v23 "github.com/Stride-Labs/stride/v23/app/upgrades/v23"
 	v24 "github.com/Stride-Labs/stride/v23/app/upgrades/v24"
 	v3 "github.com/Stride-Labs/stride/v23/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v23/app/upgrades/v4"
@@ -39,6 +41,7 @@ import (
 	v7 "github.com/Stride-Labs/stride/v23/app/upgrades/v7"
 	v8 "github.com/Stride-Labs/stride/v23/app/upgrades/v8"
 	v9 "github.com/Stride-Labs/stride/v23/app/upgrades/v9"
+	airdroptypes "github.com/Stride-Labs/stride/v23/x/airdrop/types"
 	autopilottypes "github.com/Stride-Labs/stride/v23/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v23/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
@@ -297,6 +300,18 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v23 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v23.UpgradeName,
+		v23.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.IBCKeeper.ClientKeeper,
+			app.RecordsKeeper,
+			app.StakeibcKeeper,
+		),
+	)
+
 	// v24 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v24.UpgradeName,
@@ -365,6 +380,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v22":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ibchookstypes.StoreKey},
+		}
+	case "v23":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{ibcwasmtypes.ModuleName, airdroptypes.ModuleName},
 		}
 	}
 

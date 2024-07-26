@@ -4,7 +4,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	_ "github.com/stretchr/testify/suite"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
