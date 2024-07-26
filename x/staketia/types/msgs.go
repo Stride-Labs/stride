@@ -1,8 +1,6 @@
 package types
 
 import (
-	"errors"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -149,7 +147,7 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	}
 
 	if msg.Receiver == "" {
-		return errors.New("receiver must be specified")
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "receiver must be specified")
 	}
 
 	return nil
