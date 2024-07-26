@@ -7,9 +7,12 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
 	"github.com/Stride-Labs/stride/v23/utils"
+	recordkeeper "github.com/Stride-Labs/stride/v23/x/records/keeper"
 	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 	oldtypes "github.com/Stride-Labs/stride/v23/x/staketia/legacytypes"
 	"github.com/Stride-Labs/stride/v23/x/staketia/types"
@@ -164,26 +167,17 @@ func InitiateMigration(k Keeper, ctx sdk.Context) error {
 
 // Direct copy of the, now deprecated, redemption rate update function that was in staketia
 // This is used to verify nothing went wrong during the migration
-func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Updating redemption rate"))
-
-	hostZone, err := k.GetHostZone(ctx)
-	if err != nil {
-		return err
-	}
-
+func GetStaketiaRedemptionRate(ctx sdk.Context, k Keeper, hostZone oldtypes.HostZone) (redemptionRate sdk.Dec, err error) {
 	// Get the number of stTokens from the supply
 	stTokenSupply := k.bankKeeper.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)).Amount
 	if stTokenSupply.IsZero() {
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-			"No st%s in circulation - redemption rate is unchanged", hostZone.NativeTokenDenom))
-		return nil
+		return redemptionRate, errors.New("supply of sttia was 0")
 	}
 
 	// Get the balance of the deposit address
 	depositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
-		return errorsmod.Wrapf(err, "invalid deposit address")
+		return redemptionRate, errorsmod.Wrapf(err, "invalid deposit address")
 	}
 	depositAccountBalance := k.bankKeeper.GetBalance(ctx, depositAddress, hostZone.NativeTokenIbcDenom)
 
@@ -195,70 +189,51 @@ func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
 		undelegatedBalance = undelegatedBalance.Add(delegationRecord.NativeAmount)
 	}
 
+	ctx.Logger().Info(fmt.Sprintf("Staketia Redemption Rate Components - "+
+		"Deposit Account Balance: %v, Undelegated Balance: %v, Native Delegations: %v, stToken Supply: %v",
+		depositAccountBalance, undelegatedBalance, hostZone.DelegatedBalance, stTokenSupply))
+
 	// Finally, calculated the redemption rate as the native tokens locked divided by the stTokens
 	nativeTokensLocked := depositAccountBalance.Amount.Add(undelegatedBalance).Add(hostZone.DelegatedBalance)
 	if !nativeTokensLocked.IsPositive() {
-		return errors.New("Non-zero stToken supply, yet the zero delegated and undelegated balance")
+		return redemptionRate, errors.New("Non-zero stToken supply, yet the zero delegated and undelegated balance")
 	}
-	redemptionRate := sdk.NewDecFromInt(nativeTokensLocked).Quo(sdk.NewDecFromInt(stTokenSupply))
+	redemptionRate = sdk.NewDecFromInt(nativeTokensLocked).Quo(sdk.NewDecFromInt(stTokenSupply))
 
-	// Set the old and update redemption rate on the host
-	hostZone.LastRedemptionRate = hostZone.RedemptionRate
-	hostZone.RedemptionRate = redemptionRate
-	k.SetHostZone(ctx, hostZone)
+	ctx.Logger().Info(fmt.Sprintf("Staketia Redemption Rate %v", redemptionRate))
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId, "Redemption rate updated from %v to %v",
-		hostZone.LastRedemptionRate, hostZone.RedemptionRate))
-	k.Logger(ctx).Info(utils.LogWithHostZone(types.CelestiaChainId,
-		"Deposit Account Balance: %v, Undelegated Balance: %v, Delegated Balance: %v, StToken Supply: %v",
-		depositAccountBalance.Amount, undelegatedBalance, hostZone.DelegatedBalance, stTokenSupply))
-
-	return nil
+	return redemptionRate, nil
 }
 
 // Direct copy of the redemption rate update function in stakeibc
 // This is used to verify nothing went wrong during the migration
-func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.HostZone, depositRecords []recordstypes.DepositRecord) {
+func GetStakeibcRedemptionRate(
+	ctx sdk.Context,
+	bk bankkeeper.Keeper,
+	rk recordkeeper.Keeper,
+	sk stakeibckeeper.Keeper,
+	hostZone stakeibctypes.HostZone,
+) (redemptionRate sdk.Dec, err error) {
 	// Gather redemption rate components
-	stSupply := k.bankKeeper.GetSupply(ctx, types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
+	stSupply := bk.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
 	if stSupply.IsZero() {
-		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-			"No st%s in circulation - redemption rate is unchanged", hostZone.HostDenom))
-		return
+		return redemptionRate, errors.New("supply of sttia was 0")
 	}
 
-	depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
-	undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
-	tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone)
+	depositRecords := rk.GetAllDepositRecord(ctx)
+	depositAccountBalance := sk.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
+	undelegatedBalance := sk.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
 	nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"Redemption Rate Components - Deposit Account Balance: %v, Undelegated Balance: %v, "+
-			"LSM Delegated Balance: %v, Native Delegations: %v, stToken Supply: %v",
-		depositAccountBalance, undelegatedBalance, tokenizedDelegation,
-		nativeDelegation, stSupply))
+	ctx.Logger().Info(fmt.Sprintf("Stakeibc Redemption Rate Components - "+
+		"Deposit Account Balance: %v, Undelegated Balance: %v, Native Delegations: %v, stToken Supply: %v",
+		depositAccountBalance, undelegatedBalance, nativeDelegation, stSupply))
 
 	// Calculate the redemption rate
-	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(tokenizedDelegation).Add(nativeDelegation)
-	redemptionRate := nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
+	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(nativeDelegation)
+	redemptionRate = nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
 
-	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
-		"New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
+	ctx.Logger().Info(fmt.Sprintf("Stakeibc Redemption Rate %v", redemptionRate))
 
-	// Update the host zone
-	hostZone.LastRedemptionRate = hostZone.RedemptionRate
-	hostZone.RedemptionRate = redemptionRate
-	k.SetHostZone(ctx, hostZone)
-
-	// If the redemption rate is outside of safety bounds, exit so the redemption rate is not pushed to the oracle
-	redemptionRateSafe, _ := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
-	if !redemptionRateSafe {
-		return
-	}
-
-	// Otherwise, submit the redemption rate to the oracle
-	if err := k.PostRedemptionRateToOracles(ctx, hostZone.HostDenom, redemptionRate); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Unable to send redemption rate to oracle: %s", err.Error()))
-		return
-	}
+	return redemptionRate, nil
 }
