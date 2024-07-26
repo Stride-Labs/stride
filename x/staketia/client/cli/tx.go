@@ -54,7 +54,7 @@ func GetTxCmd() *cobra.Command {
 // User transaction to redeem stake stTokens into native tokens
 func CmdRedeemStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "redeem-stake [amount]",
+		Use:   "redeem-stake [amount] [reciever]",
 		Short: "Redeems stTokens tokens for native tokens",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Redeems stTokens tokens for native tokens. 
@@ -64,12 +64,13 @@ Example:
   $ %[1]s tx %[2]s redeem-stake 10000
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(1),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			amount, ok := sdkmath.NewIntFromString(args[0])
 			if !ok {
 				return errors.New("unable to parse amount")
 			}
+			receiver := args[1]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -79,6 +80,7 @@ Example:
 			msg := types.NewMsgRedeemStake(
 				clientCtx.GetFromAddress().String(),
 				amount,
+				receiver,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

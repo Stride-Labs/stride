@@ -23,6 +23,8 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// Every day, refresh the redemption rate and prepare delegations
 	// Every 4 days, prepare undelegations
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
+		fmt.Println("STAKETIA DAY EPOCH")
+
 		// Every few days (depending on the unbonding frequency) prepare undelegations which
 		// freezes the accumulating unbonding record and refreshes the native token amount
 		// TODO [cleanup]: replace with unbonding frequency
