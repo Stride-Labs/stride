@@ -18,9 +18,9 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	config "github.com/Stride-Labs/stride/v22/cmd/strided/config"
-	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	config "github.com/Stride-Labs/stride/v23/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {

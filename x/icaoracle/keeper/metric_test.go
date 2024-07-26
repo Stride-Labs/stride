@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"strconv"
 
-	"github.com/Stride-Labs/stride/v22/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v23/x/icaoracle/types"
 )
 
 // Helper function to create 5 metric objects with various attributes

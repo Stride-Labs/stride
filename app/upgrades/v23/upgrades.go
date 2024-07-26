@@ -7,10 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v22/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	staketiakeeper "github.com/Stride-Labs/stride/v22/x/staketia/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v23/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
+	staketiakeeper "github.com/Stride-Labs/stride/v23/x/staketia/keeper"
 )
 
 var (

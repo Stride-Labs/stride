@@ -12,7 +12,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v22/x/records/keeper"
+	"github.com/Stride-Labs/stride/v23/x/records/keeper"
 )
 
 // IBC MODULE IMPLEMENTATION

@@ -3,8 +3,8 @@ package v2
 import (
 	sdkmath "cosmossdk.io/math"
 
-	oldrecordstypes "github.com/Stride-Labs/stride/v22/x/records/migrations/v2/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	oldrecordstypes "github.com/Stride-Labs/stride/v23/x/records/migrations/v2/types"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
 )
 
 func convertToNewDepositRecord(oldDepositRecord oldrecordstypes.DepositRecord) recordstypes.DepositRecord {

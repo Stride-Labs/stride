@@ -5,10 +5,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

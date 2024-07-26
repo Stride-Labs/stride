@@ -10,9 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/utils"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 const (

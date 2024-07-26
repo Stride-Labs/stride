@@ -6,10 +6,10 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
-	oldtypes "github.com/Stride-Labs/stride/v22/x/staketia/legacytypes"
-	"github.com/Stride-Labs/stride/v22/x/staketia/types"
+	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	oldtypes "github.com/Stride-Labs/stride/v23/x/staketia/legacytypes"
+	"github.com/Stride-Labs/stride/v23/x/staketia/types"
 )
 
 // Helper to deserialize the host zone with the old types

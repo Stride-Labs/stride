@@ -8,10 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/utils"
+	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 var (

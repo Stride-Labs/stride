@@ -7,10 +7,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v22/app/apptesting"
-	v23 "github.com/Stride-Labs/stride/v22/app/upgrades/v23"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v23/app/apptesting"
+	v23 "github.com/Stride-Labs/stride/v23/app/upgrades/v23"
+	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {

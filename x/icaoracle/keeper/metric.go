@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v23/x/icaoracle/types"
 )
 
 // Stores a metric in the main metric store and then either
