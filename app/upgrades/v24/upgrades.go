@@ -29,7 +29,6 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Starting upgrade v24...")
 
 		// Migrate data structures
-		MigrateTradeRoutes(ctx, stakeibcKeeper)
 		MigrateHostZones(ctx, stakeibcKeeper)
 		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
 
@@ -42,17 +41,6 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
-	}
-}
-
-// Migration to deprecate the trade config
-// The min transfer amount can be set from the min swap amount
-func MigrateTradeRoutes(ctx sdk.Context, k stakeibckeeper.Keeper) {
-	ctx.Logger().Info("Migrating trade routes...")
-
-	for _, tradeRoute := range k.GetAllTradeRoutes(ctx) {
-		tradeRoute.MinTransferAmount = tradeRoute.TradeConfig.MinSwapAmount
-		k.SetTradeRoute(ctx, tradeRoute)
 	}
 }
 

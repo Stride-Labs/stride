@@ -28,29 +28,6 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 }
 
-func (s *UpgradeTestSuite) TestMigrateTradeRoutes() {
-	minTransferAmount := sdkmath.NewInt(100)
-
-	// Create a trade route with the deprecated trade config
-	tradeRoutes := stakeibctypes.TradeRoute{
-		HostDenomOnHostZone:     "host-denom",
-		RewardDenomOnRewardZone: "reward-denom",
-
-		TradeConfig: stakeibctypes.TradeConfig{ //nolint:staticcheck
-			MinSwapAmount: minTransferAmount,
-		},
-	}
-	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, tradeRoutes)
-
-	// Call migration function
-	v24.MigrateTradeRoutes(s.Ctx, s.App.StakeibcKeeper)
-
-	// Confirm trade route was migrated
-	for _, tradeRoute := range s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx) {
-		s.Require().Equal(tradeRoute.MinTransferAmount, minTransferAmount)
-	}
-}
-
 func (s *UpgradeTestSuite) TestMigrateHostZones() {
 	// Create a host zone with redemptions enabled set to false
 	hostZone := stakeibctypes.HostZone{
