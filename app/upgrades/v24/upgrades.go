@@ -5,6 +5,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	recordskeeper "github.com/Stride-Labs/stride/v23/x/records/keeper"
@@ -21,6 +22,7 @@ var (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	bankKeeper bankkeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	staketiaKeeper staketiakeeper.Keeper,
@@ -33,7 +35,7 @@ func CreateUpgradeHandler(
 		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
 
 		// Migrate staketia to stakeibc
-		if err := staketiakeeper.InitiateMigration(staketiaKeeper, ctx); err != nil {
+		if err := staketiakeeper.InitiateMigration(ctx, staketiaKeeper, bankKeeper, recordsKeeper, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to migrate staketia to stakeibc")
 		}
 

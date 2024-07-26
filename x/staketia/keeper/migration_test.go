@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 	mainnetConnectionId := types.CelestiaConnectionId
 	types.CelestiaConnectionId = ibctesting.FirstConnectionID
 
-	err := keeper.InitiateMigration(s.App.StaketiaKeeper, s.Ctx)
+	err := keeper.InitiateMigration(s.Ctx, s.App.StaketiaKeeper, s.App.BankKeeper, s.App.RecordsKeeper, s.App.StakeibcKeeper)
 	types.CelestiaConnectionId = mainnetConnectionId
 	s.Require().NoError(err, "no error expected during migration")
 

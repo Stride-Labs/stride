@@ -122,15 +122,28 @@ func (k Keeper) MigrateProtocolOwnedAccounts(
 // Initiates the migration to stakeibc by registering the host zone
 // and transferring funds to the new stakeibc accounts
 // This will be called from the upgrade handler
-func InitiateMigration(k Keeper, ctx sdk.Context) error {
+func InitiateMigration(
+	ctx sdk.Context,
+	staketiaKeeper Keeper,
+	bankKeeper bankkeeper.Keeper,
+	recordsKeeper recordkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
+) error {
 	ctx.Logger().Info("Initiating staketia to stakeibc migration...")
 
 	// Deserialize the staketia host zone with the old types (to recover the redemption rates)
-	legacyHostZone, err := k.GetLegacyHostZone(ctx)
+	legacyHostZone, err := staketiaKeeper.GetLegacyHostZone(ctx)
 	if err != nil {
 		return err
 	}
 
+	// Calculate the redemption rate right before the migration
+	initialRedemptionRate, err := GetStaketiaRedemptionRate(ctx, bankKeeper, staketiaKeeper, legacyHostZone)
+	if err != nil {
+		return err
+	}
+
+	// Register the stakeibc host zone
 	registerMsg := stakeibctypes.MsgRegisterHostZone{
 		ConnectionId:                 types.CelestiaConnectionId,
 		Bech32Prefix:                 types.CelestiaBechPrefix,
@@ -146,19 +159,29 @@ func InitiateMigration(k Keeper, ctx sdk.Context) error {
 	}
 
 	ctx.Logger().Info("Registering the stakeibc host zone...")
-	if _, err := k.stakeibcKeeper.RegisterHostZone(ctx, &registerMsg); err != nil {
+	if _, err := stakeibcKeeper.RegisterHostZone(ctx, &registerMsg); err != nil {
 		return errorsmod.Wrapf(err, "unable to register host zone with stakeibc")
 	}
 
 	ctx.Logger().Info("Updating the stakeibc host zone...")
-	stakeibcHostZone, err := k.UpdateStakeibcHostZone(ctx, legacyHostZone)
+	stakeibcHostZone, err := staketiaKeeper.UpdateStakeibcHostZone(ctx, legacyHostZone)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to update the new stakeibc host zone")
 	}
 
 	ctx.Logger().Info("Migrating protocol owned accounts...")
-	if err := k.MigrateProtocolOwnedAccounts(ctx, legacyHostZone, stakeibcHostZone); err != nil {
+	if err := staketiaKeeper.MigrateProtocolOwnedAccounts(ctx, legacyHostZone, stakeibcHostZone); err != nil {
 		return errorsmod.Wrapf(err, "unable to migrate protocol owned accounts")
+	}
+
+	// Calculate the redemption rate again at the end and check that it hasn't changed
+	finalRedemptionRate, err := GetStakeibcRedemptionRate(ctx, bankKeeper, recordsKeeper, stakeibcKeeper, stakeibcHostZone)
+	if err != nil {
+		return err
+	}
+
+	if initialRedemptionRate.Sub(finalRedemptionRate).Abs().GT(sdk.MustNewDecFromStr("0.000000001")) {
+		return errors.New("celestia redemption rate after upgrade did not match redemption rate from staketia ")
 	}
 
 	ctx.Logger().Info("Done with staketia migration")
@@ -167,9 +190,14 @@ func InitiateMigration(k Keeper, ctx sdk.Context) error {
 
 // Direct copy of the, now deprecated, redemption rate update function that was in staketia
 // This is used to verify nothing went wrong during the migration
-func GetStaketiaRedemptionRate(ctx sdk.Context, k Keeper, hostZone oldtypes.HostZone) (redemptionRate sdk.Dec, err error) {
+func GetStaketiaRedemptionRate(
+	ctx sdk.Context,
+	bankKeeper bankkeeper.Keeper,
+	staketiaKeeper Keeper,
+	hostZone oldtypes.HostZone,
+) (redemptionRate sdk.Dec, err error) {
 	// Get the number of stTokens from the supply
-	stTokenSupply := k.bankKeeper.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)).Amount
+	stTokenSupply := bankKeeper.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)).Amount
 	if stTokenSupply.IsZero() {
 		return redemptionRate, errors.New("supply of sttia was 0")
 	}
@@ -179,13 +207,13 @@ func GetStaketiaRedemptionRate(ctx sdk.Context, k Keeper, hostZone oldtypes.Host
 	if err != nil {
 		return redemptionRate, errorsmod.Wrapf(err, "invalid deposit address")
 	}
-	depositAccountBalance := k.bankKeeper.GetBalance(ctx, depositAddress, hostZone.NativeTokenIbcDenom)
+	depositAccountBalance := bankKeeper.GetBalance(ctx, depositAddress, hostZone.NativeTokenIbcDenom)
 
 	// Then add that to the sum of the delegation records to get the undelegated balance
 	// Delegation records are only created once the tokens leave the deposit address
 	// and the record is deleted once the tokens are delegated
 	undelegatedBalance := sdkmath.ZeroInt()
-	for _, delegationRecord := range k.GetAllActiveDelegationRecords(ctx) {
+	for _, delegationRecord := range staketiaKeeper.GetAllActiveDelegationRecords(ctx) {
 		undelegatedBalance = undelegatedBalance.Add(delegationRecord.NativeAmount)
 	}
 
@@ -209,20 +237,20 @@ func GetStaketiaRedemptionRate(ctx sdk.Context, k Keeper, hostZone oldtypes.Host
 // This is used to verify nothing went wrong during the migration
 func GetStakeibcRedemptionRate(
 	ctx sdk.Context,
-	bk bankkeeper.Keeper,
-	rk recordkeeper.Keeper,
-	sk stakeibckeeper.Keeper,
+	bankKeeper bankkeeper.Keeper,
+	recordsKeeper recordkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 	hostZone stakeibctypes.HostZone,
 ) (redemptionRate sdk.Dec, err error) {
 	// Gather redemption rate components
-	stSupply := bk.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
+	stSupply := bankKeeper.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
 	if stSupply.IsZero() {
 		return redemptionRate, errors.New("supply of sttia was 0")
 	}
 
-	depositRecords := rk.GetAllDepositRecord(ctx)
-	depositAccountBalance := sk.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
-	undelegatedBalance := sk.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
+	depositRecords := recordsKeeper.GetAllDepositRecord(ctx)
+	depositAccountBalance := stakeibcKeeper.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
+	undelegatedBalance := stakeibcKeeper.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
 	nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
 
 	ctx.Logger().Info(fmt.Sprintf("Stakeibc Redemption Rate Components - "+
