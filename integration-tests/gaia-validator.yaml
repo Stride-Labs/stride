@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: stride-validator
+  name: cosmos-validator
   namespace: integration
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: stride-validator
-  serviceName: stride-validator
+      app: cosmos-validator
+  serviceName: cosmos-validator
   template:
     metadata:
       labels:
-        app: stride-validator
+        app: cosmos-validator
     spec:
       securityContext:
         fsGroup: 1000
       initContainers:
         - name: init
-          image: gcr.io/stride-nodes/stride-test
+          image: gcr.io/stride-nodes/cosmos-test
           imagePullPolicy: Always
           command:
             - bash
@@ -39,18 +39,18 @@ spec:
                   fieldPath: metadata.namespace
           volumeMounts:
             - name: state
-              mountPath: /home/stride/.stride
+              mountPath: /home/validator/.gaia
             - name: shared
-              mountPath: /home/stride/shared
+              mountPath: /home/validator/shared
             - name: scripts
-              mountPath: /home/stride/scripts
+              mountPath: /home/validator/scripts
             - name: config
-              mountPath: /home/stride/config
+              mountPath: /home/validator/config
       containers:
-        - name: stride-validator
-          image: gcr.io/stride-nodes/stride-test
+        - name: cosmos-validator
+          image: gcr.io/stride-nodes/cosmos-test
           imagePullPolicy: Always
-          command: ["strided", "start", "--reject-config-defaults"]
+          command: ["gaiad", "start"]
           lifecycle:
             postStart:
               exec:
@@ -74,11 +74,11 @@ spec:
               protocol: TCP
           volumeMounts:
             - name: state
-              mountPath: /home/stride/.stride
+              mountPath: /home/validator/.gaia
             - name: scripts
-              mountPath: /home/stride/scripts
+              mountPath: /home/validator/scripts
             - name: config
-              mountPath: /home/stride/config
+              mountPath: /home/validator/config
           resources:
             limits:
               cpu: "1000m"
@@ -91,7 +91,7 @@ spec:
           emptyDir: {}
         - name: shared
           persistentVolumeClaim:
-            claimName: shared
+            claimName: cosmos-shared
         - name: scripts
           configMap:
             name: scripts
@@ -102,12 +102,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: stride-validator
+  name: cosmos-validator
   namespace: integration
 spec:
   clusterIP: None
   selector:
-    app: stride-validator
+    app: cosmos-validator
   ports:
     - port: 26657
       name: rpc
@@ -125,7 +125,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: stride-shared
+  name: cosmos-shared
   namespace: integration
 spec:
   accessModes:

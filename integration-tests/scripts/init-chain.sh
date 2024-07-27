@@ -45,43 +45,40 @@ add_validators() {
         name=$(echo $validator_config | jq -r '.name')
         mnemonic=$(echo $validator_config | jq -r '.mnemonic')
 
-        # Add the key to the keyring
-        echo "$mnemonic" | $BINARY keys add $name --recover 
+        # Add the key to the main keyring the the validator's sub-keyring
+        echo "$mnemonic" | $BINARY keys add $name --recover
         address=$($BINARY keys show $name -a)
 
-        # Add the genesis account
+        # Use a separate directory for the non-main nodes so we can generate unique validator keys
+        if [[ "$i" == "1" ]]; then 
+            validator_home=${CHAIN_HOME}
+        else 
+            validator_home=/tmp/${CHAIN_NAME}-${name} && rm -rf $validator_home
+            $BINARY init $name --chain-id $CHAIN_ID --overwrite --home ${validator_home} &> /dev/null
+        fi
+
+        # Add the genesis account 
         genesis_balance=${VALIDATOR_BALANCE}${DENOM}
         $BINARY $chain_genesis_command add-genesis-account $address $genesis_balance
 
-        # Save the node-id and validator private keys to the shared directory
-        validator_home=/tmp/${CHAIN_NAME}-${name} && rm -rf $validator_home
-        $BINARY init $CHAIN_NAME-$name --chain-id $CHAIN_ID --overwrite --home ${validator_home} &> /dev/null
-        $BINARY config keyring-backend test --home ${validator_home}
-        echo "$mnemonic" | $BINARY keys add $name --recover --home ${validator_home}
-
+        # Save the node IDs and keys to the shared directory
+        mkdir -p ${NODE_IDS_DIR}
         mkdir -p ${VALIDATOR_KEYS_DIR}
         mkdir -p ${NODE_KEYS_DIR}
-        mkdir -p ${NODE_IDS_DIR}
     
-        cp ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${name}.json
-        cp ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${name}.json
-        
         node_id=$($BINARY tendermint show-node-id --home ${validator_home})
         echo $node_id > ${NODE_IDS_DIR}/${name}.txt
+        cp ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${name}.json
+        cp ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${name}.json
 
         # Save the comma separted public keys for the ICS genesis update
         validator_public_keys+="$(jq -r '.pub_key.value' ${VALIDATOR_KEYS_DIR}/${name}.json),"
-
-        # For non-stride nodes, collect genesis txs
-        if [[ "$CHAIN_NAME" != "STRIDE" ]]; then 
-            cp $genesis_json ${validator_home}/config/genesis.json
-            $BINARY $chain_genesis_command gentx $name ${VALIDATOR_STAKE}${DENOM} --chain-id $CHAIN_ID --home ${validator_home} 
-            mkdir -p ${CHAIN_HOME}/config/gentx
-            cp ${validator_home}/config/gentx/* ${CHAIN_HOME}/config/gentx/
-        fi
     done
 
-    if [[ "$CHAIN_NAME" != "STRIDE" ]]; then 
+    # For non-stride nodes, generate and collect the validator gentx (for the main node only)
+    # The other validators will be created after startup
+    if [[ "$CHAIN_NAME" != "stride" ]]; then 
+        $BINARY $chain_genesis_command gentx val1 ${VALIDATOR_STAKE}${DENOM} --chain-id $CHAIN_ID 
         $BINARY $chain_genesis_command collect-gentxs
     fi
 }

@@ -2,7 +2,7 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /opt
 
-RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev ca-certificates build-base git
+RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev ca-certificates build-base git 
 
 ENV REPO=https://github.com/cosmos/gaia
 ENV COMMIT_HASH=v18.1.0
@@ -22,7 +22,7 @@ RUN CGO_ENABLED=1 BUILD_TAGS="muslc linkstatic" LINK_STATICALLY=true LEDGER_ENAB
 
 FROM alpine:3.17
 COPY --from=builder /go/bin/$BINARY /usr/local/bin/
-RUN apk add bash vim \
+RUN apk add bash vim sudo dasel jq \
     && addgroup -g 1000 validator \
     && adduser -S -h /home/validator -D validator -u 1000 -G validator
 
@@ -31,4 +31,3 @@ WORKDIR /home/validator
 
 EXPOSE 26657 26656 1317 9090
 
-CMD ["$BINARY", "start"]

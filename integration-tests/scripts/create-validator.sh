@@ -24,8 +24,13 @@ add_keys() {
     fi
 }
 
-create_governor() {
-    echo "Creating governor..."
+create_validator() {
+    echo "Creating validator..."
+    min_self_delegation=""
+    if [[ $($BINARY tx staking create-validator --help | grep -c "min-self-delegation") -gt 0 ]]; then
+        min_self_delegation='--min-self-delegation=1000000'
+    fi
+
     pub_key=$($BINARY tendermint show-validator)
     $BINARY tx staking create-validator \
         --amount ${VALIDATOR_STAKE}${DENOM} \
@@ -33,15 +38,18 @@ create_governor() {
         --commission-rate="0.10" \
         --commission-max-rate="0.20" \
         --commission-max-change-rate="0.01" \
-        --min-self-delegation="1" \
-        --from ${VALIDATOR_NAME} -y
+        $min_self_delegation \
+        --fees 300000$DENOM \
+        --gas auto \
+        --gas-adjustment 1.2 \
+        --from ${VALIDATOR_NAME} -y 
 }
 
 main() {
     wait_for_startup
     add_keys
-    create_governor
+    create_validator
     echo "Done"
 }
 
-main >> governor.log 2>&1 &
+main >> validator.log 2>&1 &

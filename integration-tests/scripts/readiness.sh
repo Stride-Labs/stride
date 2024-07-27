@@ -1,10 +1,10 @@
-set -e
+#!/bin/bash
 
-BINARY=strided
-STRIDE_HOME=/home/stride/.stride
+set -e
+source scripts/config.sh
 
 # If chain hasn't been initialized yet, exit immediately
-if [ ! -d $STRIDE_HOME/config ]; then
+if [ ! -d $CHAIN_HOME/config ]; then
     echo "READINESS CHECK FAILED - Chain has not been initialized yet."
     exit 1
 fi
