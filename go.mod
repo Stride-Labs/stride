@@ -199,9 +199,11 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
-	// fork SDK to fix SDKv0.47 Distribution Bug
+	// fork SDK to:
+	//   - fix SDKv0.47 Distribution Bug
+	//   - add better mempool error on sig verification failure
 	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler
-	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.10-stride-distribution-fix-0
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.10-stride-distribution-fix-0-mempool-verbose-error-1
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
