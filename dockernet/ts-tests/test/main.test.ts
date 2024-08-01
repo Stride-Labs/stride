@@ -1,5 +1,5 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
-import { GasPrice, SigningStargateClient } from "@cosmjs/stargate";
+import { GasPrice } from "@cosmjs/stargate";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
 import {
   coinFromString,
