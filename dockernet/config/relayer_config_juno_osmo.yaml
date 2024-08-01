@@ -18,7 +18,7 @@ chains:
       gas-prices: 0.02ujuno
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   osmo:
@@ -33,7 +33,7 @@ chains:
       gas-prices: 0.02uosmo
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
 paths:

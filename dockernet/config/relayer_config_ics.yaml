@@ -31,7 +31,7 @@ chains:
       gas-prices: 0.02uatom
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
 

@@ -17,7 +17,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   gaia:
@@ -33,7 +33,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   dydx:
@@ -49,7 +49,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   noble:
@@ -65,7 +65,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   osmo:
@@ -81,7 +81,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
 paths:

@@ -17,7 +17,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   gaia:
@@ -33,7 +33,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   juno:
@@ -49,7 +49,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   osmo:
@@ -65,7 +65,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   stars:
@@ -81,7 +81,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   host:
@@ -97,7 +97,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   evmos:
@@ -113,7 +113,7 @@ chains:
       coin-type: 60
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
       extra-codecs:
@@ -131,7 +131,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
-      min-loop-duration: 50ms
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   # {new-host-zone}:
@@ -147,7 +147,7 @@ chains:
   #     coin-type: {coin-type}
   #     debug: false
   #     timeout: 20s
-  #     min-loop-duration: 50ms
+  #     min-loop-duration: 1s
   #     output-format: json
   #     sign-mode: direct
 
