@@ -59,10 +59,6 @@ beforeAll(async () => {
   // init accounts as an empty object, then add the accounts in the loop
   accounts = {};
   for (const { name, mnemonic } of mnemonics) {
-    // @ts-expect-error
-    // init accounts[name] as an empty object, then add the fields one by one
-    accounts[name] = {};
-
     // setup signer
     //
     // IMPORTANT: we're using Secp256k1HdWallet from @cosmjs/amino because sending amino txs tests both amino and direct.
