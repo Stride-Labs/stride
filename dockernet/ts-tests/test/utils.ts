@@ -159,7 +159,7 @@ export function tendermintPubkeyToValconsAddress(
 }
 
 /**
- * Convert a secp256k1 compressed public key to an address
+ * Convert a base64 encoded public key to a consensus validator address
  *
  * @param {Uint8Array} pubkey The account's pubkey as base64 string, should be 33 bytes (compressed secp256k1)
  * @param {String} [prefix="stride"] The address' bech32 prefix. Defaults to `"stride"`.
