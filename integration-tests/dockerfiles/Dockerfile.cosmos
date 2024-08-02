@@ -22,7 +22,7 @@ RUN CGO_ENABLED=1 BUILD_TAGS="muslc linkstatic" LINK_STATICALLY=true LEDGER_ENAB
 
 FROM alpine:3.17
 COPY --from=builder /go/bin/$BINARY /usr/local/bin/
-RUN apk add bash vim sudo dasel jq \
+RUN apk add bash vim sudo dasel jq curl \
     && addgroup -g 1000 validator \
     && adduser -S -h /home/validator -D validator -u 1000 -G validator
 

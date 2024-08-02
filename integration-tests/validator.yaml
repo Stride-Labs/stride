@@ -2,24 +2,24 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: stride-validator
+  name: cosmos-validator
   namespace: integration
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: stride-validator
-  serviceName: stride-validator
+      app: cosmos-validator
+  serviceName: cosmos-validator
   template:
     metadata:
       labels:
-        app: stride-validator
+        app: cosmos-validator
     spec:
       securityContext:
         fsGroup: 1000
       initContainers:
         - name: init
-          image: gcr.io/stride-nodes/stride-test
+          image: gcr.io/stride-nodes/cosmos-test
           imagePullPolicy: Always
           command:
             - bash
@@ -36,29 +36,29 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: CHAIN_NAME
-              value: stride
+              value: cosmos
             - name: CHAIN_HOME
-              value: /home/stride/.stride
+              value: /home/validator/.gaia
             - name: BINARY
-              value: strided
+              value: gaiad
             - name: DENOM
-              value: ustrd
-            - name: MICRO_DENOM_UNIT
+              value: uatom
+            - name: MICRO_DENOM_UNITS
               value: "000000"
             - name: NUM_VALIDATORS
               value: "3"
           volumeMounts:
             - name: state
-              mountPath: /home/stride/.stride
+              mountPath: /home/validator/.gaia
             - name: scripts
-              mountPath: /home/stride/scripts
+              mountPath: /home/validator/scripts
             - name: config
-              mountPath: /home/stride/config
+              mountPath: /home/validator/config
       containers:
         - name: validator
-          image: gcr.io/stride-nodes/stride-test
+          image: gcr.io/stride-nodes/cosmos-test
           imagePullPolicy: Always
-          command: ["strided", "start", "--reject-config-defaults"]
+          command: ["gaiad", "start"]
           lifecycle:
             postStart:
               exec:
@@ -67,6 +67,19 @@ spec:
             exec:
               command: ["bash", "scripts/readiness.sh"]
             periodSeconds: 10
+          env:
+            - name: CHAIN_NAME
+              value: cosmos
+            - name: CHAIN_HOME
+              value: /home/validator/.gaia
+            - name: BINARY
+              value: gaiad
+            - name: DENOM
+              value: uatom
+            - name: MICRO_DENOM_UNITS
+              value: "000000"
+            - name: NUM_VALIDATORS
+              value: "3"
           ports:
             - name: rpc
               containerPort: 26657
@@ -82,11 +95,11 @@ spec:
               protocol: TCP
           volumeMounts:
             - name: state
-              mountPath: /home/stride/.stride
+              mountPath: /home/validator/.gaia
             - name: scripts
-              mountPath: /home/stride/scripts
+              mountPath: /home/validator/scripts
             - name: config
-              mountPath: /home/stride/config
+              mountPath: /home/validator/config
           resources:
             limits:
               cpu: "1000m"
@@ -107,12 +120,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: stride-validator
+  name: cosmos-validator
   namespace: integration
 spec:
   clusterIP: None
   selector:
-    app: stride-validator
+    app: cosmos-validator
   ports:
     - port: 26657
       name: rpc
@@ -130,7 +143,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: stride-ingress
+  name: cosmos-ingress
   namespace: integration
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
@@ -140,23 +153,23 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: stride-api.internal.stridenet.co
+    - host: cosmos-api.internal.stridenet.co
       http:
         paths:
           - pathType: Prefix
             backend:
               service:
-                name: stride-validator
+                name: cosmos-validator
                 port:
                   number: 1317
             path: /(.*)
-    - host: stride-rpc.internal.stridenet.co
+    - host: cosmos-rpc.internal.stridenet.co
       http:
         paths:
           - pathType: Prefix
             backend:
               service:
-                name: stride-validator
+                name: cosmos-validator
                 port:
                   number: 26657
             path: /(.*)
