@@ -10,8 +10,11 @@ if [[ "$LOCAL_MODE" == "true" ]]; then
     CHAIN_HOME=state
     rm -rf state
     BINARY="$BINARY --home $CHAIN_HOME"
+    API_ENDPOINT="http://localhost:8000"
 fi
 
+# Wait for API server to start
+wait_for_api $API_ENDPOINT
 
 # check if the binary has genesis subcommand or not, if not, set CHAIN_GENESIS_CMD to empty
 genesis_json=${CHAIN_HOME}/config/genesis.json
@@ -32,9 +35,21 @@ init_config() {
     $BINARY config keyring-backend test
 }
 
+# Helper to upload shared files to the API
+upload_shared_file() {
+    file_path="$1"
+    saved_path="${2:-}"
+    file_name=$(basename $file_path)
+
+    curl -s -X 'POST' "${API_ENDPOINT}/upload/${saved_path}" \
+        -H 'accept: application/json' \
+        -H 'Content-Type: multipart/form-data' \
+        -F "file=@$file_path" && echo 
+}
+
 # Adds each validator to the genesis file, and also saves down the public keys 
 # which are needed for ICS
-# Each validators public private key and node ID are saved in the shared directory
+# Each validators public private key and node ID are saved in the API
 add_validators() {
     echo "Adding validators..."
 
@@ -61,18 +76,14 @@ add_validators() {
         genesis_balance=${VALIDATOR_BALANCE}${DENOM}
         $BINARY $chain_genesis_command add-genesis-account $address $genesis_balance
 
-        # Save the node IDs and keys to the shared directory
-        mkdir -p ${NODE_IDS_DIR}
-        mkdir -p ${VALIDATOR_KEYS_DIR}
-        mkdir -p ${NODE_KEYS_DIR}
-    
-        node_id=$($BINARY tendermint show-node-id --home ${validator_home})
-        echo $node_id > ${NODE_IDS_DIR}/${name}.txt
-        cp ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${name}.json
-        cp ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${name}.json
+        # Save the node IDs and keys to the API
+        $BINARY tendermint show-node-id --home ${validator_home} > node_id.txt
+        upload_shared_file node_id.txt ${NODE_IDS_DIR}/${name}.txt 
+        upload_shared_file ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${name}.json
+        upload_shared_file ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${name}.json
 
         # Save the comma separted public keys for the ICS genesis update
-        validator_public_keys+="$(jq -r '.pub_key.value' ${VALIDATOR_KEYS_DIR}/${name}.json),"
+        validator_public_keys+="$(jq -r '.pub_key.value' ${validator_home}/config/priv_validator_key.json),"
     done
 
     # For non-stride nodes, generate and collect the validator gentx (for the main node only)
@@ -93,7 +104,10 @@ update_default_genesis() {
     jq_inplace '.app_state.staking.params.unbonding_time |= "'$UNBONDING_TIME'"' $genesis_json
     jq_inplace '.app_state.gov.params.max_deposit_period |= "'$DEPOSIT_PERIOD'"' $genesis_json 
     jq_inplace '.app_state.gov.params.voting_period |= "'$VOTING_PERIOD'"' $genesis_json 
-    jq_inplace '.app_state.gov.params.expedited_voting_period |= "'$EXPEDITED_VOTING_PERIOD'"' $genesis_json 
+
+    if jq 'has(.app_state.gov.params.expedited_voting_period)' $genesis_json > /dev/null 2>&1; then
+        jq_inplace '.app_state.gov.params.expedited_voting_period |= "'$EXPEDITED_VOTING_PERIOD'"' $genesis_json 
+    fi
 }
 
 # Genesis updates specific to stride
@@ -111,11 +125,11 @@ update_host_genesis() {
     echo "Updating genesis.json with host configuration..."
 }
 
-# Moves the genesis file into the shared directory
+# Saves the genesis file in the API
 save_genesis() {
-    echo "Saving genesis.json to shared directory..."
+    echo "Saving genesis.json..."
 
-    cp $genesis_json ${SHARED_DIR}/genesis.json
+    upload_shared_file $genesis_json genesis.json
 }
 
 main() {

@@ -1,7 +1,25 @@
 K8S_NAMESPACE=integration
+VENV_NAME=integration
 
+CONDA_BASE := $(shell conda info --base)/envs
 KUBECTL := $(shell which kubectl)
 DOCKER := $(shell which docker)
+VENV_BIN := $(CONDA_BASE)/$(VENV_NAME)/bin
+PYTHON := $(VENV_BIN)/python
+
+python-install:
+	conda create --name $(VENV_NAME) python=3.11 -y
+	$(PYTHON) -m pip install -r api/requirements.txt
+
+start-api:
+	@$(PYTHON) -m uvicorn api.main:app --proxy-headers 
+
+build-api:
+	@echo "Building docker image: integration-test-api"
+	@$(DOCKER) buildx build --platform linux/amd64 --tag integration-test-api -f dockerfiles/Dockerfile.api api
+	@$(DOCKER) tag integration-test-api gcr.io/stride-nodes/integration-test-api
+	@echo "Pushing image to GCR"
+	@$(DOCKER) push gcr.io/stride-nodes/integration-test-api
 
 build-stride:
 	@echo "Building docker image: stride-test"
@@ -28,7 +46,9 @@ update-config:
 	@$(KUBECTL) create configmap config --from-file=config -n $(K8S_NAMESPACE)
 
 start:
-	@$(KUBECTL) apply -f gaia-validator.yaml
+	@$(KUBECTL) apply -f api.yaml
+	@$(KUBECTL) apply -f validator.yaml
 
 stop:
-	@$(KUBECTL) delete -f gaia-validator.yaml
+	@$(KUBECTL) delete -f api.yaml
+	@$(KUBECTL) delete -f validator.yaml

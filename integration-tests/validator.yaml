@@ -24,9 +24,6 @@ spec:
             - bash
             - "-c"
             - |
-              if [[ -d $CHAIN_HOME/config ]]; then
-                exit 0
-              fi
               POD_INDEX=${HOSTNAME##*-}
               if [[ "$POD_INDEX" == "0" ]]; then
                 bash scripts/init-chain.sh
@@ -40,8 +37,6 @@ spec:
           volumeMounts:
             - name: state
               mountPath: /home/stride/.stride
-            - name: shared
-              mountPath: /home/stride/shared
             - name: scripts
               mountPath: /home/stride/scripts
             - name: config
@@ -89,9 +84,6 @@ spec:
       volumes:
         - name: state
           emptyDir: {}
-        - name: shared
-          persistentVolumeClaim:
-            claimName: shared
         - name: scripts
           configMap:
             name: scripts
@@ -122,14 +114,36 @@ spec:
       name: grpc
       protocol: TCP
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: stride-shared
+  name: stride-ingress
   namespace: integration
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "360"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "360"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "360"
 spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 50Gi
+  ingressClassName: nginx
+  rules:
+    - host: stride-api.internal.stridenet.co
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: stride-validator
+                port:
+                  number: 1317
+            path: /(.*)
+    - host: stride-rpc.internal.stridenet.co
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: stride-validator
+                port:
+                  number: 26657
+            path: /(.*)

@@ -6,34 +6,35 @@ if [[ "$HOSTNAME" != *"validator"* ]]; then
 fi
 
 SCRIPTS_DIR=scripts
-SHARED_DIR=shared
 CONFIG_DIR=config
 
-VALIDATOR_KEYS_DIR=${SHARED_DIR}/validator-keys
-NODE_KEYS_DIR=${SHARED_DIR}/node-keys
-NODE_IDS_DIR=${SHARED_DIR}/node-ids
+VALIDATOR_KEYS_DIR=validator-keys
+NODE_KEYS_DIR=node-keys
+NODE_IDS_DIR=node-ids
 KEYS_FILE=${CONFIG_DIR}/keys.json
 
 POD_INDEX=${HOSTNAME##*-}
 VALIDATOR_INDEX=$((POD_INDEX+1))
 VALIDATOR_NAME=val${VALIDATOR_INDEX}
 
+API_ENDPOINT=http://api.integration.svc:8000
+
 PEER_PORT=26656
 RPC_PORT=26657
 
-# CHAIN_NAME=stride
-# CHAIN_HOME=${HOME}/.stride
-# BINARY=strided
-# DENOM=ustrd
-# MICRO_DENOM_UNITS=000000
-# NUM_VALIDATORS=3
-
-CHAIN_NAME=cosmos
-CHAIN_HOME=.gaia
-BINARY=gaiad
-DENOM=uatom
+CHAIN_NAME=stride
+CHAIN_HOME=${HOME}/.stride
+BINARY=strided
+DENOM=ustrd
 MICRO_DENOM_UNITS=000000
 NUM_VALIDATORS=3
+
+# CHAIN_NAME=cosmos
+# CHAIN_HOME=.gaia
+# BINARY=gaiad
+# DENOM=uatom
+# MICRO_DENOM_UNITS=000000
+# NUM_VALIDATORS=3
 
 CHAIN_ID=${CHAIN_NAME}-test-1
 BLOCK_TIME=1s
@@ -47,3 +48,12 @@ UNBONDING_TIME="240s"
 
 STRIDE_DAY_EPOCH_DURATION="140s"
 STRIDE_EPOCH_EPOCH_DURATION="35s"
+
+# Wait for API server to start
+wait_for_api() {
+    api_endpoint="$1"
+    until [[ $(curl -o /dev/null -s -w "%{http_code}\n" "${api_endpoint}/status") -eq 200 ]]; do
+        echo "Waiting for API to start..."
+        sleep 2
+    done
+}

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: api
+          image: gcr.io/stride-nodes/integration-test-api
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "400m"
+              memory: "8096M"
+            requests:
+              cpu: "200m"
+              memory: "4096M"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: integration
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8000
+      protocol: TCP

@@ -3,12 +3,27 @@
 set -eu 
 source scripts/config.sh
 
+# Wait for API server to start
+wait_for_api $API_ENDPOINT
+
 # Initialize the config directory and validator key if it's not the main node
 init_config() {
     if [[ "$VALIDATOR_INDEX" != "1" ]]; then
         moniker=${CHAIN_NAME}${VALIDATOR_INDEX}
         $BINARY init $moniker --chain-id $CHAIN_ID --overwrite 
         $BINARY config keyring-backend test
+    fi
+}
+
+# Helper function to download a file from the API
+download_shared_file() {
+    stored_path="$1"
+    destination_path="$2"
+
+    status_code=$(curl -s -o $destination_path -w "%{http_code}" "${API_ENDPOINT}/download/${stored_path}")
+    if [[ "$status_code" != "200" ]]; then
+        echo "ERROR - Failed to download $stored_path, status code ${status_code}"
+        exit 1
     fi
 }
 
@@ -34,14 +49,11 @@ update_config() {
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:${RPC_PORT}\"|g" $client_toml
-}
 
-# Extract private keys and genesis
-download_shared() {
     echo "Retrieving private keys and genesis.json..."
-    cp ${VALIDATOR_KEYS_DIR}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/priv_validator_key.json
-    cp ${NODE_KEYS_DIR}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/node_key.json
-    cp ${SHARED_DIR}/genesis.json ${CHAIN_HOME}/config/genesis.json
+    download_shared_file ${VALIDATOR_KEYS_DIR}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/priv_validator_key.json 
+    download_shared_file ${NODE_KEYS_DIR}/val${VALIDATOR_INDEX}.json  ${CHAIN_HOME}/config/node_key.json 
+    download_shared_file genesis.json ${CHAIN_HOME}/config/genesis.json 
 }
 
 # Update the persistent peers conditionally based on which node it is
@@ -52,7 +64,8 @@ add_peers() {
         sed -i -E "s|^persistent_peers = .*|persistent_peers = \"\"|g" $config_toml
     else
         # For the other nodes, add the main node as the persistent peer
-        main_node_id=$(cat ${NODE_IDS_DIR}/val1.txt)
+        download_shared_file ${NODE_IDS_DIR}/val1.txt main_node_id.txt
+        main_node_id=$(cat main_node_id.txt)
         main_pod_id=${CHAIN_NAME}-validator-0
         service=${CHAIN_NAME}-validator
         persistent_peer=${main_node_id}@${main_pod_id}.${service}.${NAMESPACE}.svc.cluster.local:${PEER_PORT}
@@ -64,7 +77,6 @@ main() {
     echo "Initializing node..."
     init_config
     update_config
-    download_shared
     add_peers
     echo "Done"
 }
