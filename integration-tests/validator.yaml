@@ -1,3 +1,4 @@
+# Helm TODO: app name, images, home directories, start command
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -34,6 +35,18 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: CHAIN_NAME
+              value: stride
+            - name: CHAIN_HOME
+              value: /home/stride/.stride
+            - name: BINARY
+              value: strided
+            - name: DENOM
+              value: ustrd
+            - name: MICRO_DENOM_UNIT
+              value: "000000"
+            - name: NUM_VALIDATORS
+              value: "3"
           volumeMounts:
             - name: state
               mountPath: /home/stride/.stride
@@ -42,7 +55,7 @@ spec:
             - name: config
               mountPath: /home/stride/config
       containers:
-        - name: stride-validator
+        - name: validator
           image: gcr.io/stride-nodes/stride-test
           imagePullPolicy: Always
           command: ["strided", "start", "--reject-config-defaults"]
