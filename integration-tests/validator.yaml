@@ -76,8 +76,8 @@ spec:
               value: gaiad
             - name: DENOM
               value: uatom
-            - name: MICRO_DENOM_UNITS
-              value: "000000"
+            - name: DENOM_DECIMALS
+              value: "6"
             - name: NUM_VALIDATORS
               value: "3"
           ports:
