@@ -17,7 +17,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: api
-          image: gcr.io/stride-nodes/integration-test-api
+          image: gcr.io/stride-nodes/integration-tests/api:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

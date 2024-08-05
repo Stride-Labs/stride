@@ -2,24 +2,24 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: cosmos-validator
+  name: {{ .Values.chainName }}-validator
   namespace: integration
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: cosmos-validator
-  serviceName: cosmos-validator
+      app: {{ .Values.chainName }}-validator
+  serviceName: {{ .Values.chainName }}-validator
   template:
     metadata:
       labels:
-        app: cosmos-validator
+        app: {{ .Values.chainName }}-validator
     spec:
       securityContext:
         fsGroup: 1000
       initContainers:
         - name: init
-          image: gcr.io/stride-nodes/cosmos-test
+          image: gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
           imagePullPolicy: Always
           command:
             - bash
@@ -36,15 +36,15 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: CHAIN_NAME
-              value: cosmos
+              value: {{ .Values.chainName }}
             - name: CHAIN_HOME
               value: /home/validator/.gaia
             - name: BINARY
               value: gaiad
             - name: DENOM
               value: uatom
-            - name: MICRO_DENOM_UNITS
-              value: "000000"
+            - name: DENOM_DECIMALS
+              value: "6"
             - name: NUM_VALIDATORS
               value: "3"
           volumeMounts:
@@ -56,7 +56,7 @@ spec:
               mountPath: /home/validator/config
       containers:
         - name: validator
-          image: gcr.io/stride-nodes/cosmos-test
+          image: gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
           imagePullPolicy: Always
           command: ["gaiad", "start"]
           lifecycle:
@@ -68,8 +68,9 @@ spec:
               command: ["bash", "scripts/readiness.sh"]
             periodSeconds: 10
           env:
+            # TODO: Make it so that these aren't all required
             - name: CHAIN_NAME
-              value: cosmos
+              value: {{ .Values.chainName }}
             - name: CHAIN_HOME
               value: /home/validator/.gaia
             - name: BINARY
@@ -120,12 +121,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cosmos-validator
+  name: {{ .Values.chainName }}-validator
   namespace: integration
 spec:
   clusterIP: None
   selector:
-    app: cosmos-validator
+    app: {{ .Values.chainName }}-validator
   ports:
     - port: 26657
       name: rpc
@@ -143,7 +144,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: cosmos-ingress
+  name: {{ .Values.chainName }}-ingress
   namespace: integration
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
@@ -153,23 +154,23 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: cosmos-api.internal.stridenet.co
+    - host: {{ .Values.chainName }}-api.internal.stridenet.co
       http:
         paths:
           - pathType: Prefix
             backend:
               service:
-                name: cosmos-validator
+                name: {{ .Values.chainName }}-validator
                 port:
                   number: 1317
             path: /(.*)
-    - host: cosmos-rpc.internal.stridenet.co
+    - host: {{ .Values.chainName }}-rpc.internal.stridenet.co
       http:
         paths:
           - pathType: Prefix
             backend:
               service:
-                name: cosmos-validator
+                name: {{ .Values.chainName }}-validator
                 port:
                   number: 26657
             path: /(.*)

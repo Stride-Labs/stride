@@ -4,6 +4,7 @@ VENV_NAME=integration
 CONDA_BASE := $(shell conda info --base)/envs
 KUBECTL := $(shell which kubectl)
 DOCKER := $(shell which docker)
+HELM := $(shell which helm)
 VENV_BIN := $(CONDA_BASE)/$(VENV_NAME)/bin
 PYTHON := $(VENV_BIN)/python
 
@@ -46,9 +47,7 @@ update-config:
 	@$(KUBECTL) create configmap config --from-file=config -n $(K8S_NAMESPACE)
 
 start:
-	@$(KUBECTL) apply -f api.yaml
-	@$(KUBECTL) apply -f validator.yaml
+	@$(HELM) install network network/ --values network/values.yaml
 
 stop:
-	@$(KUBECTL) delete -f api.yaml
-	@$(KUBECTL) delete -f validator.yaml
+	@$(HELM) uninstall network
