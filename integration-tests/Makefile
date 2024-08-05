@@ -15,25 +15,25 @@ start-api:
 	@$(PYTHON) -m uvicorn api.main:app --proxy-headers 
 
 build-api:
-	@echo "Building docker image: integration-test-api"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag integration-test-api -f dockerfiles/Dockerfile.api api
-	@$(DOCKER) tag integration-test-api gcr.io/stride-nodes/integration-test-api
+	@echo "Building docker image: api"
+	@$(DOCKER) buildx build --platform linux/amd64 --tag api -f dockerfiles/Dockerfile.api api
+	@$(DOCKER) tag api gcr.io/stride-nodes/integration-tests/api:latest
 	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-test-api
+	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/api:latest
 
 build-stride:
-	@echo "Building docker image: stride-test"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride-test ..
-	@$(DOCKER) tag stride-test gcr.io/stride-nodes/stride-test
+	@echo "Building docker image: stride-validator"
+	@$(DOCKER) buildx build --platform linux/amd64 --tag stride-validator ..
+	@$(DOCKER) tag stride-validator gcr.io/stride-nodes/integration-tests/chains/stride:v23.0.0
 	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/stride-test
+	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/stride:v23.0.0
 
 build-cosmos:
 	@echo "Building docker image"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag cosmos-test -f dockerfiles/Dockerfile.cosmos .
-	@$(DOCKER) tag cosmos-test gcr.io/stride-nodes/cosmos-test
+	@$(DOCKER) buildx build --platform linux/amd64 --tag cosmos-validator -f dockerfiles/Dockerfile.cosmos .
+	@$(DOCKER) tag cosmos-validator gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
 	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/cosmos-test
+	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
 
 update-scripts:
 	@echo "Updating scripts configmap"
