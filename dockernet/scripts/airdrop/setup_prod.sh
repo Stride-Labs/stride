@@ -7,7 +7,7 @@ source ${SCRIPT_DIR}/../../config.sh
 # Options: fresh-start, midway-before-deadline, midway-after-deadline, distribution-ended
 STAGE="fresh-start"
 
-AIRDROP_NAME="sttia"
+AIRDROP_NAME="stdym"
 OS=$(uname)
 
 # stride1wxv8jnusl5s2che9kp33jrsxz3kxcwm6fgfs0z
@@ -17,15 +17,15 @@ ALLOCATOR_MNEMONIC="board stamp journey usage pen warfare burst that detect rain
 # stride1krn5q0s83qfx9v67awsj7leaql99tmyydcukhl
 LINKER_MNEMONIC="add special provide zebra gasp above tube shield judge vapor tortoise snow receive vibrant couch true tide snack goat fee risk viable coil mutual"
 
-# stride1qtzlx93h8xlmej42pjqyez6yp9nscfgxsmtt59
-CLAIMER_1_MNEMONIC="breeze reason effort latin mask orbit ball raw security gown category royal copper scheme fiction flame few wise siege car text snake famous render"
-# stride183g7tx3u4lmtwv7ph9fpq862e6dyapamexywru
-CLAIMER_2_MNEMONIC="glance trigger upgrade keep nature glad wreck snake grief trap utility curtain bracket large drama ridge loud token service idea smart crisp flavor carpet"
-# stride13k0vj64yr3dxq4e24v5s2ptqmnxmyl7xn5pz7q
-CLAIMER_3_MNEMONIC="pet garlic cram security clock element truth soda stomach ugly you dress narrow black space grab concert cancel depend crawl corn worry miss submit"
+# stride149rta0fd6g8eyu7wya9khg340fmu223r5hvxcg
+CLAIMER_1_MNEMONIC="nurse guide zero below live vital negative bacon bunker include awesome sunny indoor nothing hockey hair bird history practice witness join shell code chalk"
+# stride12wwpymzcxzxd2k3mhjfzp4c3xww7scsx595wqq
+CLAIMER_2_MNEMONIC="during sausage carpet betray anchor submit start lock thumb enable barely around dirt holiday match disorder tonight cabin diet eternal follow define task stem"
+# stride1ym9gshp62tcjqyfshp7a4nmuqurur9j430ce5q
+CLAIMER_3_MNEMONIC="wonder punch casual zoo describe thought leaf carbon purse once hybrid van valid ribbon proud insect push label uphold mesh sniff observe position plastic"
 
 # Same mnemonic as claimer 3
-LINKED_CLAIMER_ADDRESS="dym1np5x8s6lufkv8ghu8lzj5xtlgae5pwl8y8ne6x"
+LINKED_CLAIMER_ADDRESS="dym1az4laz4ez8y98kuu3h4ujch75admaz7xzmvlzx"
 
 current_time_minus_day_offset() {
 	days=$1
@@ -78,28 +78,28 @@ sleep 3
 $STRIDE_MAIN_CMD tx bank send val1 $claimer_3_address 10000000ustrd --from val1 -y | TRIM_TX
 sleep 3
 
-if [[ "$STAGE" == "fresh-start" ]]; then 
+if [[ "$STAGE" == "fresh-start" ]]; then
 	start_date=$(current_time_plus_day_offset 0)
 	end_date=$(current_time_plus_day_offset 149)
 	clawback_date=$(current_time_plus_day_offset 160)
 	deadline_date=$(current_time_plus_day_offset 30)
 fi
 
-if [[ "$STAGE" == "midway-before-deadline" ]]; then 
+if [[ "$STAGE" == "midway-before-deadline" ]]; then
 	start_date=$(current_time_minus_day_offset 10)
 	end_date=$(current_time_plus_day_offset 139)
 	clawback_date=$(current_time_plus_day_offset 150)
 	deadline_date=$(current_time_plus_day_offset 20)
 fi
 
-if [[ "$STAGE" == "midway-after-deadline" ]]; then 
+if [[ "$STAGE" == "midway-after-deadline" ]]; then
 	start_date=$(current_time_minus_day_offset 40)
 	end_date=$(current_time_plus_day_offset 109)
 	clawback_date=$(current_time_plus_day_offset 120)
 	deadline_date=$(current_time_minus_day_offset 10)
 fi
 
-if [[ "$STAGE" == "distribution-ended" ]]; then 
+if [[ "$STAGE" == "distribution-ended" ]]; then
 	start_date=$(current_time_minus_day_offset 155)
 	end_date=$(current_time_minus_day_offset 6)
 	clawback_date=$(current_time_plus_day_offset 25)
@@ -108,11 +108,11 @@ fi
 
 echo -e "\n>>> Creating airdrop..."
 $STRIDE_MAIN_CMD tx airdrop create-airdrop $AIRDROP_NAME \
-  	--distribution-start-date  $start_date \
+  --distribution-start-date  $start_date \
 	--distribution-end-date    $end_date \
 	--clawback-date            $clawback_date \
 	--claim-type-deadline-date $deadline_date \
-	--early-claim-penalty      0.5 \
+	--early-claim-penalty      0.3 \
 	--distributor-address      $distributor_address \
 	--allocator-address        $allocator_address \
 	--linker-address           $linker_address \
@@ -121,12 +121,12 @@ sleep 3
 
 echo -e "\n>>> Adding allocations..."
 $STRIDE_MAIN_CMD tx airdrop add-allocations $AIRDROP_NAME ${SCRIPT_DIR}/allocations_prod.csv \
-    --from allocator -y --gas 1000000 | TRIM_TX 
+    --from allocator -y --gas 1000000 | TRIM_TX
 sleep 3
 
 echo -e "\n>>> Airdrops:"
 $STRIDE_MAIN_CMD q airdrop airdrops
 
 echo -e "\n>>> Allocations:"
-$STRIDE_MAIN_CMD q airdrop all-allocations $AIRDROP_NAME | head -n 10 
+$STRIDE_MAIN_CMD q airdrop all-allocations $AIRDROP_NAME | head -n 10
 echo "..."
