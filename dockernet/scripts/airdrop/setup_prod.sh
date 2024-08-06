@@ -78,32 +78,32 @@ sleep 3
 $STRIDE_MAIN_CMD tx bank send val1 $claimer_3_address 10000000ustrd --from val1 -y | TRIM_TX
 sleep 3
 
-if [[ "$STAGE" == "fresh-start" ]]; then
+if [[ "$STAGE" == "fresh-start" ]]; then 
 	start_date=$(current_time_plus_day_offset 0)
-	end_date=$(current_time_plus_day_offset 149)
-	clawback_date=$(current_time_plus_day_offset 160)
+	end_date=$(current_time_plus_day_offset 119)
+	clawback_date=$(current_time_plus_day_offset 130)
 	deadline_date=$(current_time_plus_day_offset 30)
 fi
 
-if [[ "$STAGE" == "midway-before-deadline" ]]; then
+if [[ "$STAGE" == "midway-before-deadline" ]]; then 
 	start_date=$(current_time_minus_day_offset 10)
-	end_date=$(current_time_plus_day_offset 139)
-	clawback_date=$(current_time_plus_day_offset 150)
+	end_date=$(current_time_plus_day_offset 109)
+	clawback_date=$(current_time_plus_day_offset 120)
 	deadline_date=$(current_time_plus_day_offset 20)
 fi
 
-if [[ "$STAGE" == "midway-after-deadline" ]]; then
+if [[ "$STAGE" == "midway-after-deadline" ]]; then 
 	start_date=$(current_time_minus_day_offset 40)
-	end_date=$(current_time_plus_day_offset 109)
-	clawback_date=$(current_time_plus_day_offset 120)
+	end_date=$(current_time_plus_day_offset 79)
+	clawback_date=$(current_time_plus_day_offset 90)
 	deadline_date=$(current_time_minus_day_offset 10)
 fi
 
-if [[ "$STAGE" == "distribution-ended" ]]; then
-	start_date=$(current_time_minus_day_offset 155)
+if [[ "$STAGE" == "distribution-ended" ]]; then 
+	start_date=$(current_time_minus_day_offset 125)
 	end_date=$(current_time_minus_day_offset 6)
 	clawback_date=$(current_time_plus_day_offset 25)
-	deadline_date=$(current_time_minus_day_offset 125)
+	deadline_date=$(current_time_minus_day_offset 95)
 fi
 
 echo -e "\n>>> Creating airdrop..."
