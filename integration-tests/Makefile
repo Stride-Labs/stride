@@ -39,16 +39,6 @@ build-cosmos:
 	@echo "Pushing image to GCR"
 	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
 
-update-scripts:
-	@echo "Updating scripts configmap"
-	@$(KUBECTL) delete configmap scripts -n $(K8S_NAMESPACE) --ignore-not-found=true
-	@$(KUBECTL) create configmap scripts --from-file=scripts -n $(K8S_NAMESPACE)
-
-update-config:
-	@echo "Updating config configmap"
-	@$(KUBECTL) delete configmap config -n $(K8S_NAMESPACE) --ignore-not-found=true
-	@$(KUBECTL) create configmap config --from-file=config -n $(K8S_NAMESPACE)
-
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 
@@ -56,4 +46,4 @@ stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)
 
 lint: 
-	@$(HELM) lint $(HELM_CHART)
+	@$(HELM) lint $(HELM_CHART) 

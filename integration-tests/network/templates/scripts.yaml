@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts
+  namespace: {{ .Values.namespace }}
+data:
+{{ (.Files.Glob "scripts/*").AsConfig | indent 2 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config
+  namespace: {{ .Values.namespace }}
+data:
+{{ (.Files.Glob "config/*").AsConfig | indent 2 }}
