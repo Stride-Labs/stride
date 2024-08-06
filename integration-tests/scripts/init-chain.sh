@@ -78,9 +78,9 @@ add_validators() {
 
         # Save the node IDs and keys to the API
         $BINARY tendermint show-node-id --home ${validator_home} > node_id.txt
-        upload_shared_file node_id.txt ${NODE_IDS_DIR}/${name}.txt 
-        upload_shared_file ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${name}.json
-        upload_shared_file ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${name}.json
+        upload_shared_file node_id.txt ${NODE_IDS_DIR}/${CHAIN_NAME}/${name}.txt 
+        upload_shared_file ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${CHAIN_NAME}/${name}.json
+        upload_shared_file ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${CHAIN_NAME}/${name}.json
 
         # Save the comma separted public keys for the ICS genesis update
         validator_public_keys+="$(jq -r '.pub_key.value' ${validator_home}/config/priv_validator_key.json),"
@@ -129,7 +129,7 @@ update_host_genesis() {
 save_genesis() {
     echo "Saving genesis.json..."
 
-    upload_shared_file $genesis_json genesis.json
+    upload_shared_file $genesis_json ${GENESIS_DIR}/${CHAIN_NAME}/genesis.json
 }
 
 main() {

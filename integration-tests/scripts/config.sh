@@ -11,6 +11,7 @@ CONFIG_DIR=config
 VALIDATOR_KEYS_DIR=validator-keys
 NODE_KEYS_DIR=node-keys
 NODE_IDS_DIR=node-ids
+GENESIS_DIR=genesis
 KEYS_FILE=${CONFIG_DIR}/keys.json
 
 POD_INDEX=${HOSTNAME##*-}

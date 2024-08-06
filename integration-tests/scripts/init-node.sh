@@ -51,9 +51,9 @@ update_config() {
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:${RPC_PORT}\"|g" $client_toml
 
     echo "Retrieving private keys and genesis.json..."
-    download_shared_file ${VALIDATOR_KEYS_DIR}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/priv_validator_key.json 
-    download_shared_file ${NODE_KEYS_DIR}/val${VALIDATOR_INDEX}.json  ${CHAIN_HOME}/config/node_key.json 
-    download_shared_file genesis.json ${CHAIN_HOME}/config/genesis.json 
+    download_shared_file ${VALIDATOR_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/priv_validator_key.json 
+    download_shared_file ${NODE_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json  ${CHAIN_HOME}/config/node_key.json 
+    download_shared_file ${GENESIS_DIR}/${CHAIN_NAME}/genesis.json ${CHAIN_HOME}/config/genesis.json 
 }
 
 # Update the persistent peers conditionally based on which node it is
@@ -64,7 +64,7 @@ add_peers() {
         sed -i -E "s|^persistent_peers = .*|persistent_peers = \"\"|g" $config_toml
     else
         # For the other nodes, add the main node as the persistent peer
-        download_shared_file ${NODE_IDS_DIR}/val1.txt main_node_id.txt
+        download_shared_file ${NODE_IDS_DIR}/${CHAIN_NAME}/val1.txt main_node_id.txt
         main_node_id=$(cat main_node_id.txt)
         main_pod_id=${CHAIN_NAME}-validator-0
         service=${CHAIN_NAME}-validator

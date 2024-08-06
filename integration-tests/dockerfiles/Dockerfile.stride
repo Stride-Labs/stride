@@ -1,0 +1,12 @@
+FROM alpine:3.17
+
+RUN apk add bash vim sudo dasel jq curl \
+    && addgroup -g 1000 validator \
+    && adduser -S -h /home/validator -D validator -u 1000 -G validator
+
+COPY --from=core:stride --chown=stride:stride /usr/local/bin/strided /usr/local/bin/strided
+
+USER 1000
+WORKDIR /home/validator
+
+EXPOSE 26657 26656 1317 9090

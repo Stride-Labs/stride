@@ -2,7 +2,7 @@
 - name: CHAIN_NAME
   value: {{ .name }}
 - name: CHAIN_HOME
-  value: {{ .home }}
+  value: {{ printf "/home/validator/%s" .home }}
 - name: BINARY
   value: {{ .binary }}
 - name: DENOM
@@ -22,6 +22,7 @@
 
 {{- range $chain := .Values.chains }}
 {{- $appName := printf "%s-validator" $chain.name  -}}
+{{- $chainHomeDirectory := printf "/home/validator/%s" $chain.home  -}}
 {{- $image := printf "%s/%s:%s" $imageRepo $chain.name $chain.version -}}
 ---
 apiVersion: apps/v1
@@ -59,7 +60,7 @@ spec:
             {{- include "chain.env" $chain | nindent 10 }}
           volumeMounts:
             - name: state
-              mountPath: {{ $chain.home }}
+              mountPath: {{ $chainHomeDirectory }}
             - name: scripts
               mountPath: /home/validator/scripts
             - name: config
@@ -94,7 +95,7 @@ spec:
               protocol: TCP
           volumeMounts:
             - name: state
-              mountPath: {{ $chain.home }}
+              mountPath: {{ $chainHomeDirectory }}
             - name: scripts
               mountPath: /home/validator/scripts
             - name: config

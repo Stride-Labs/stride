@@ -2,11 +2,20 @@ namespace: integration
 chainImagesRepo: gcr.io/stride-nodes/integration-tests/chains
 
 chains:
+  - name: stride
+    binary: strided
+    version: latest
+    numValidators: 3
+    home: .stride
+    denom: ustrd
+    decimals: 6
+    command: ["strided", "start", "--reject-config-defaults"]
+
   - name: cosmoshub
     binary: gaiad
     version: v18.1.0
     numValidators: 3
-    home: /home/validator/.gaia
+    home: .gaia
     denom: uatom
     decimals: 6
     command: ["gaiad", "start"]
