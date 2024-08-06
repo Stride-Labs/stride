@@ -68,7 +68,7 @@ spec:
         - name: validator
           image: {{ $image }}
           imagePullPolicy: Always
-          command: ["gaiad", "start"]
+          command: {{ toYaml $chain.command | nindent 10 }}
           lifecycle:
             postStart:
               exec:

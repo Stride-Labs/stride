@@ -26,10 +26,11 @@ build-api:
 
 build-stride:
 	@echo "Building docker image: stride-validator"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride-validator ..
-	@$(DOCKER) tag stride-validator gcr.io/stride-nodes/integration-tests/chains/stride:v23.0.0
+	@$(DOCKER) buildx build --platform linux/amd64 --tag core:stride ..
+	@$(DOCKER) buildx build --platform linux/amd64 --tag stride-validator -f dockerfiles/Dockerfile.stride .
+	@$(DOCKER) tag stride-validator gcr.io/stride-nodes/integration-tests/chains/stride:latest
 	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/stride:v23.0.0
+	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/stride:latest
 
 build-cosmos:
 	@echo "Building docker image"
