@@ -9,7 +9,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: config
+  name: configs
   namespace: {{ .Values.namespace }}
 data:
-{{ (.Files.Glob "config/*").AsConfig | indent 2 }}
+{{ (.Files.Glob "configs/*").AsConfig | indent 2 }}
