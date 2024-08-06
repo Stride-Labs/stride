@@ -41,6 +41,7 @@ vue/*
 
 .ipynb_checkpoints/*
 __pycache__
+node_modules
 
 integration-tests/state
 integration-tests/storage

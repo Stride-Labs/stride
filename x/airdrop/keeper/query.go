@@ -27,7 +27,30 @@ func (k Keeper) Airdrop(goCtx context.Context, req *types.QueryAirdropRequest) (
 		return nil, status.Errorf(codes.NotFound, "airdrop %s not found", req.Id)
 	}
 
-	return &types.QueryAirdropResponse{Airdrop: &airdrop}, nil
+	periodLengthSeconds := k.GetParams(ctx).PeriodLengthSeconds
+	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
+	if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
+		currentDateIndex = -1
+	} else if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
+	}
+
+	airdropResponse := types.QueryAirdropResponse{
+		Id:                    airdrop.Id,
+		RewardDenom:           airdrop.RewardDenom,
+		DistributionStartDate: airdrop.DistributionStartDate,
+		DistributionEndDate:   airdrop.DistributionEndDate,
+		ClawbackDate:          airdrop.ClawbackDate,
+		ClaimTypeDeadlineDate: airdrop.ClaimTypeDeadlineDate,
+		EarlyClaimPenalty:     airdrop.EarlyClaimPenalty,
+		DistributorAddress:    airdrop.DistributorAddress,
+		AllocatorAddress:      airdrop.AllocatorAddress,
+		LinkerAddress:         airdrop.LinkerAddress,
+		CurrentDateIndex:      int64(currentDateIndex),
+		AirdropLength:         airdrop.GetAirdropPeriods(periodLengthSeconds),
+	}
+
+	return &airdropResponse, nil
 }
 
 // Queries all airdrop configurations
@@ -117,13 +140,13 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	}
 
 	// If the airdrop hasn't started yet or has ended, return date index -1 and claimable 0
-	claimable := sdkmath.ZeroInt()
+	var claimable sdkmath.Int
 	periodLengthSeconds := k.GetParams(ctx).PeriodLengthSeconds
 	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
 	if err == nil {
 		claimable = allocation.GetClaimableAllocation(currentDateIndex)
 	} else if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
-		currentDateIndex = -1
+		claimable = sdkmath.ZeroInt()
 	} else {
 		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
 	}
@@ -134,12 +157,11 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	}
 
 	summary := &types.QueryUserSummaryResponse{
-		ClaimType:        claimType.String(),
-		Claimed:          allocation.Claimed,
-		Claimable:        claimable,
-		Forfeited:        allocation.Forfeited,
-		Remaining:        allocation.GetRemainingAllocations(),
-		CurrentDateIndex: int64(currentDateIndex),
+		ClaimType: claimType.String(),
+		Claimed:   allocation.Claimed,
+		Claimable: claimable,
+		Forfeited: allocation.Forfeited,
+		Remaining: allocation.GetRemainingAllocations(),
 	}
 
 	return summary, nil

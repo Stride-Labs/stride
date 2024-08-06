@@ -16,6 +16,7 @@ chains:
       gas-prices: 0.02ustrd
       debug: false
       timeout: 20s
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   gaia:
@@ -30,9 +31,9 @@ chains:
       gas-prices: 0.02uatom
       debug: false
       timeout: 20s
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
-  
 
 paths:
   stride-gaia-ics:
