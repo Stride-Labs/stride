@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -48,14 +49,6 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid receiver address (%s)", err)
 	}
 
-	// construct desired unstaking amount from host zone
-	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
-	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).TruncateInt()
-
-	if nativeAmount.GT(hostZone.TotalDelegations) {
-		return nil, errorsmod.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %v", msg.Amount)
-	}
-
 	// safety check: redemption rate must be within safety bounds
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
 	if !rateIsSafe || (err != nil) {
@@ -63,15 +56,13 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 		return nil, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
 	}
 
-	// safety checks on the coin
-	// 	- Redemption amount must be positive
-	if !nativeAmount.IsPositive() {
+	// construct desired unstaking amount from host zone
+	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).TruncateInt()
+	if nativeAmount.LTE(sdkmath.ZeroInt()) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %v", msg.Amount)
 	}
-	// 	- Creator owns at least "amount" stAssets
-	balance := k.bankKeeper.GetBalance(ctx, sender, stDenom)
-	if balance.Amount.LT(msg.Amount) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "balance is lower than redemption amount. redemption amount: %v, balance %v: ", msg.Amount, balance.Amount)
+	if nativeAmount.GT(hostZone.TotalDelegations) {
+		return nil, errorsmod.Wrapf(types.ErrInvalidAmount, "cannot unstake an amount g.t. staked balance on host zone: %v", msg.Amount)
 	}
 
 	// ----------------- UNBONDING RECORD KEEPING -----------------
@@ -119,6 +110,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 	}
 
 	// Escrow user's balance
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
 	redeemCoin := sdk.NewCoins(sdk.NewCoin(stDenom, msg.Amount))
 	depositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
 	if err != nil {
