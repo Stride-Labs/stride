@@ -8,6 +8,8 @@ HELM := $(shell which helm)
 VENV_BIN := $(CONDA_BASE)/$(VENV_NAME)/bin
 PYTHON := $(VENV_BIN)/python
 
+HELM_CHART=network
+
 python-install:
 	conda create --name $(VENV_NAME) python=3.11 -y
 	$(PYTHON) -m pip install -r api/requirements.txt
@@ -47,7 +49,10 @@ update-config:
 	@$(KUBECTL) create configmap config --from-file=config -n $(K8S_NAMESPACE)
 
 start:
-	@$(HELM) install network network/ --values network/values.yaml
+	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml
 
 stop:
-	@$(HELM) uninstall network
+	@$(HELM) uninstall $(HELM_CHART)
+
+lint: 
+	@$(HELM) lint $(HELM_CHART)

@@ -1,25 +1,30 @@
-# Helm TODO: app name, images, home directories, start command
+{{- $namespace := .Values.namespace -}}
+{{- $imageRepo := .Values.chainImagesRepo -}}
+{{- range $chain := .Values.chains }}
+{{- $appName := printf "%s-validator" $chain.name  -}}
+{{- $image := printf "%s/%s:%s" $imageRepo $chain.name $chain.version -}}
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Values.chainName }}-validator
-  namespace: integration
+  name: {{ $appName }}
+  namespace: {{ $namespace }}
 spec:
-  replicas: 3
+  replicas: {{ $chain.numValidators }}
   selector:
     matchLabels:
-      app: {{ .Values.chainName }}-validator
-  serviceName: {{ .Values.chainName }}-validator
+      app: {{ $appName }}
+  serviceName: {{ $appName }}
   template:
     metadata:
       labels:
-        app: {{ .Values.chainName }}-validator
+        app: {{ $appName }}
     spec:
       securityContext:
         fsGroup: 1000
       initContainers:
         - name: init
-          image: gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
+          image: {{ $image }}
           imagePullPolicy: Always
           command:
             - bash
@@ -36,27 +41,27 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: CHAIN_NAME
-              value: {{ .Values.chainName }}
+              value: {{ $chain.name }}
             - name: CHAIN_HOME
-              value: /home/validator/.gaia
+              value: {{ $chain.home }}
             - name: BINARY
-              value: gaiad
+              value: {{ $chain.binary }}
             - name: DENOM
-              value: uatom
+              value: {{ $chain.denom }}
             - name: DENOM_DECIMALS
-              value: "6"
+              value: "{{ $chain.decimals }}"
             - name: NUM_VALIDATORS
-              value: "3"
+              value: "{{ $chain.numValidators }}"
           volumeMounts:
             - name: state
-              mountPath: /home/validator/.gaia
+              mountPath: {{ $chain.home }}
             - name: scripts
               mountPath: /home/validator/scripts
             - name: config
               mountPath: /home/validator/config
       containers:
         - name: validator
-          image: gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
+          image: {{ $image }}
           imagePullPolicy: Always
           command: ["gaiad", "start"]
           lifecycle:
@@ -70,17 +75,17 @@ spec:
           env:
             # TODO: Make it so that these aren't all required
             - name: CHAIN_NAME
-              value: {{ .Values.chainName }}
+              value: {{ $chain.name }}
             - name: CHAIN_HOME
-              value: /home/validator/.gaia
+              value: {{ $chain.home }}
             - name: BINARY
-              value: gaiad
+              value: {{ $chain.binary }}
             - name: DENOM
-              value: uatom
+              value: {{ $chain.denom }}
             - name: DENOM_DECIMALS
-              value: "6"
+              value: "{{ $chain.decimals }}"
             - name: NUM_VALIDATORS
-              value: "3"
+              value: "{{ $chain.numValidators }}"
           ports:
             - name: rpc
               containerPort: 26657
@@ -96,7 +101,7 @@ spec:
               protocol: TCP
           volumeMounts:
             - name: state
-              mountPath: /home/validator/.gaia
+              mountPath: {{ $chain.home }}
             - name: scripts
               mountPath: /home/validator/scripts
             - name: config
@@ -121,12 +126,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.chainName }}-validator
-  namespace: integration
+  name: {{ $appName }}
+  namespace: {{ $namespace }}
 spec:
   clusterIP: None
   selector:
-    app: {{ .Values.chainName }}-validator
+    app: {{ $appName }}
   ports:
     - port: 26657
       name: rpc
@@ -144,8 +149,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.chainName }}-ingress
-  namespace: integration
+  name: {{ $appName }}
+  namespace: {{ $namespace }}
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "360"
@@ -154,23 +159,25 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ .Values.chainName }}-api.internal.stridenet.co
+    - host: {{ $chain.name }}-api.internal.stridenet.co
       http:
         paths:
           - pathType: Prefix
             backend:
               service:
-                name: {{ .Values.chainName }}-validator
+                name: {{ $appName }}
                 port:
                   number: 1317
             path: /(.*)
-    - host: {{ .Values.chainName }}-rpc.internal.stridenet.co
+    - host: {{ $chain.name }}-rpc.internal.stridenet.co
       http:
         paths:
           - pathType: Prefix
             backend:
               service:
-                name: {{ .Values.chainName }}-validator
+                name: {{ $appName }}
                 port:
                   number: 26657
             path: /(.*)
+---
+{{- end }}

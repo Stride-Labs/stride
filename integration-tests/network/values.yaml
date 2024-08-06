@@ -1,1 +1,12 @@
-chainName: cosmoshub
+namespace: integration
+chainImagesRepo: gcr.io/stride-nodes/integration-tests/chains
+
+chains:
+  - name: cosmoshub
+    binary: gaiad
+    version: v18.1.0
+    numValidators: 3
+    home: /home/validator/.gaia
+    denom: uatom
+    decimals: 6
+    command: ["gaiad", "start"]
