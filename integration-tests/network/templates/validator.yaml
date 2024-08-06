@@ -1,5 +1,25 @@
+{{- define "chain.env" -}}
+- name: CHAIN_NAME
+  value: {{ .name }}
+- name: CHAIN_HOME
+  value: {{ .home }}
+- name: BINARY
+  value: {{ .binary }}
+- name: DENOM
+  value: {{ .denom }}
+- name: DENOM_DECIMALS
+  value: "{{ .decimals }}"
+- name: NUM_VALIDATORS
+  value: "{{ .numValidators }}"
+- name: NAMESPACE
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.namespace
+{{- end -}}
+
 {{- $namespace := .Values.namespace -}}
 {{- $imageRepo := .Values.chainImagesRepo -}}
+
 {{- range $chain := .Values.chains }}
 {{- $appName := printf "%s-validator" $chain.name  -}}
 {{- $image := printf "%s/%s:%s" $imageRepo $chain.name $chain.version -}}
@@ -35,23 +55,8 @@ spec:
                 bash scripts/init-chain.sh
               fi
               bash scripts/init-node.sh
-          env:
-            - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: CHAIN_NAME
-              value: {{ $chain.name }}
-            - name: CHAIN_HOME
-              value: {{ $chain.home }}
-            - name: BINARY
-              value: {{ $chain.binary }}
-            - name: DENOM
-              value: {{ $chain.denom }}
-            - name: DENOM_DECIMALS
-              value: "{{ $chain.decimals }}"
-            - name: NUM_VALIDATORS
-              value: "{{ $chain.numValidators }}"
+          env: 
+            {{- include "chain.env" $chain | nindent 10 }}
           volumeMounts:
             - name: state
               mountPath: {{ $chain.home }}
@@ -72,20 +77,8 @@ spec:
             exec:
               command: ["bash", "scripts/readiness.sh"]
             periodSeconds: 10
-          env:
-            # TODO: Make it so that these aren't all required
-            - name: CHAIN_NAME
-              value: {{ $chain.name }}
-            - name: CHAIN_HOME
-              value: {{ $chain.home }}
-            - name: BINARY
-              value: {{ $chain.binary }}
-            - name: DENOM
-              value: {{ $chain.denom }}
-            - name: DENOM_DECIMALS
-              value: "{{ $chain.decimals }}"
-            - name: NUM_VALIDATORS
-              value: "{{ $chain.numValidators }}"
+          env: 
+            {{- include "chain.env" $chain | nindent 10 }}
           ports:
             - name: rpc
               containerPort: 26657
