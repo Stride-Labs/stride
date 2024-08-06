@@ -9,38 +9,28 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v23/utils"
+	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
 	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
+// TODO [cleanup]: Cleanup this function (errors, logs, comments, whitespace, operation ordering)
+// Exchanges a user's stTokens for native tokens using the current redemption rate
 func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
 	k.Logger(ctx).Info(fmt.Sprintf("redeem stake: %s", msg.String()))
 
-	// ----------------- PRELIMINARY CHECKS -----------------
-	// get our addresses, make sure they're valid
 	sender, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "creator address is invalid: %s. err: %s", msg.Creator, err.Error())
 	}
-	// then make sure host zone is valid
-	hostZone, found := k.GetHostZone(ctx, msg.HostZone)
-	if !found {
-		return nil, errorsmod.Wrapf(types.ErrInvalidHostZone, "host zone is invalid: %s", msg.HostZone)
-	}
 
-	if hostZone.Halted {
-		k.Logger(ctx).Error(fmt.Sprintf("Host Zone halted for zone (%s)", msg.HostZone))
-		return nil, errorsmod.Wrapf(types.ErrHaltedHostZone, "halted host zone found for zone (%s)", msg.HostZone)
+	// confirm the host zone is not halted and has redemptions enabled
+	hostZone, err := k.GetActiveHostZone(ctx, msg.HostZone)
+	if err != nil {
+		return nil, err
 	}
-
 	if !hostZone.RedemptionsEnabled {
 		return nil, errorsmod.Wrapf(types.ErrRedemptionsDisabled, "redemptions disabled for %s", msg.HostZone)
-	}
-
-	// first construct a user redemption record
-	epochTracker, found := k.GetEpochTracker(ctx, "day")
-	if !found {
-		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, "epoch tracker found: %s", "day")
 	}
 
 	// ensure the recipient address is a valid bech32 address on the hostZone
@@ -67,6 +57,11 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 
 	// ----------------- UNBONDING RECORD KEEPING -----------------
 	// Fetch the record
+	epochTracker, found := k.GetEpochTracker(ctx, epochtypes.DAY_EPOCH)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrEpochNotFound, "epoch tracker found: %s", epochtypes.DAY_EPOCH)
+	}
+
 	redemptionId := recordstypes.UserRedemptionRecordKeyFormatter(hostZone.ChainId, epochTracker.EpochNumber, msg.Receiver)
 	userRedemptionRecord, userHasRedeemedThisEpoch := k.RecordsKeeper.GetUserRedemptionRecord(ctx, redemptionId)
 	if userHasRedeemedThisEpoch {
