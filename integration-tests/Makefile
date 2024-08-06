@@ -50,10 +50,10 @@ update-config:
 	@$(KUBECTL) create configmap config --from-file=config -n $(K8S_NAMESPACE)
 
 start:
-	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml
+	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 
 stop:
-	@$(HELM) uninstall $(HELM_CHART)
+	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)
 
 lint: 
 	@$(HELM) lint $(HELM_CHART)

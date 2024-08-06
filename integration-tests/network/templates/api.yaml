@@ -13,8 +13,6 @@ spec:
       labels:
         app: api
     spec:
-      securityContext:
-        fsGroup: 1000
       containers:
         - name: api
           image: gcr.io/stride-nodes/integration-tests/api:latest
