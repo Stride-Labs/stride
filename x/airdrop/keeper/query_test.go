@@ -16,12 +16,66 @@ func (s *KeeperTestSuite) TestQueryAirdrop() {
 	airdrops := s.addAirdrops()
 	expectedAirdrop := airdrops[1]
 
+	// Update the date boundaries
+	startTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	endTime := time.Date(2024, 1, 10, 0, 0, 0, 0, time.UTC)      // 10 days later
+	clawbackDate := time.Date(2024, 1, 20, 0, 0, 0, 0, time.UTC) // 10 more days later
+
+	expectedAirdropLength := int64(10)
+	expectedAirdrop.DistributionStartDate = &startTime
+	expectedAirdrop.DistributionEndDate = &endTime
+	expectedAirdrop.ClawbackDate = &clawbackDate
+	s.App.AirdropKeeper.SetAirdrop(s.Ctx, expectedAirdrop)
+
+	// Set the block time so that we're on the third day
+	blockTime := time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC)
+	expectedDateIndex := int64(2) // third day is index 2
+	s.Ctx = s.Ctx.WithBlockTime(blockTime)
+
+	// Query for the airdrop
 	req := &types.QueryAirdropRequest{
 		Id: expectedAirdrop.Id,
 	}
-	resp, err := s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	respAirdrop, err := s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying an airdrop")
-	s.Require().Equal(expectedAirdrop, *resp.Airdrop, "airdrop")
+
+	// Confirm all the airdrop fields
+	s.Require().Equal(expectedAirdrop.Id, respAirdrop.Id, "airdrop id")
+	s.Require().Equal(expectedAirdrop.RewardDenom, respAirdrop.RewardDenom, "airdrop reward denom")
+
+	s.Require().Equal(expectedAirdrop.DistributionStartDate, respAirdrop.DistributionStartDate, "airdrop start")
+	s.Require().Equal(expectedAirdrop.DistributionEndDate, respAirdrop.DistributionEndDate, "airdrop end")
+	s.Require().Equal(expectedAirdrop.ClawbackDate, respAirdrop.ClawbackDate, "airdrop clawback")
+	s.Require().Equal(expectedAirdrop.ClaimTypeDeadlineDate, respAirdrop.ClaimTypeDeadlineDate, "airdrop deadline")
+
+	s.Require().Equal(expectedAirdrop.EarlyClaimPenalty, respAirdrop.EarlyClaimPenalty, "airdrop penalty")
+	s.Require().Equal(expectedAirdrop.DistributorAddress, respAirdrop.DistributorAddress, "airdrop distributor")
+	s.Require().Equal(expectedAirdrop.AllocatorAddress, respAirdrop.AllocatorAddress, "airdrop allocator")
+	s.Require().Equal(expectedAirdrop.LinkerAddress, respAirdrop.LinkerAddress, "airdrop linker")
+
+	s.Require().Equal(expectedDateIndex, respAirdrop.CurrentDateIndex, "airdrop date index")
+	s.Require().Equal(expectedAirdropLength, respAirdrop.AirdropLength, "airdrop length")
+
+	// Update the block time so the airdrop hasn't started yet
+	// Confirm the current date index is -1
+	s.Ctx = s.Ctx.WithBlockTime(startTime.Add(-1 * time.Hour))
+	respAirdrop, err = s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying an airdrop before it has started")
+	s.Require().Equal(int64(-1), respAirdrop.CurrentDateIndex, "date index before airdrop")
+
+	// Update the block time so the airdrop distribution has ended, but the clawback data hasn't hit
+	// Confirm the current date index is 9 (last index of the 10 day array)
+	s.Ctx = s.Ctx.WithBlockTime(clawbackDate.Add(-1 * time.Hour))
+	respAirdrop, err = s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying an airdrop after distribution ended")
+	s.Require().Equal(int64(9), respAirdrop.CurrentDateIndex, "date index after distribution")
+
+	// Update the block time so the clawback date has passed
+	// Confirm the current date index is -1
+	s.Ctx = s.Ctx.WithBlockTime(clawbackDate.Add(time.Hour))
+	respAirdrop, err = s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying an airdrop after the clawback date")
+	s.Require().Equal(int64(-1), respAirdrop.CurrentDateIndex, "date index after clawback")
 }
 
 func (s *KeeperTestSuite) TestQueryAllAirdrops() {
@@ -127,7 +181,6 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	forfeited := sdkmath.ZeroInt()
 	remaining := sdkmath.NewInt(1 + 5 + 3)
 	claimable := sdkmath.NewInt(1 + 5)
-	dateIndex := int64(2)
 
 	userAllocation := types.UserAllocation{
 		AirdropId: AirdropId,
@@ -163,7 +216,6 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	s.Require().Equal(remaining, resp.Remaining, "amount remaining")
 	s.Require().Equal(claimable, resp.Claimable, "amount claimable")
 	s.Require().Equal(types.CLAIM_DAILY.String(), resp.ClaimType, "claim type")
-	s.Require().Equal(dateIndex, resp.CurrentDateIndex, "todays index")
 
 	// Update the user so that it appears they claimed early and confirm the type change
 	userAllocation.Forfeited = sdkmath.OneInt()
@@ -174,30 +226,19 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	s.Require().Equal(types.CLAIM_EARLY.String(), resp.ClaimType, "claim type")
 
 	// Update the block time so it appears as if the airdrop has not started
-	// Then check that the date index is -1 and claimable is 0
+	// Then check that claimable is 0
 	s.Ctx = s.Ctx.WithBlockTime(DistributionStartDate.Add(-1 * time.Hour))
 
 	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying user summary before airdrop")
-	s.Require().Equal(int64(-1), resp.CurrentDateIndex, "date index")
-	s.Require().Equal(remaining, resp.Remaining, "date index")
-	s.Require().Equal(int64(0), resp.Claimable.Int64(), "date index")
-
-	// Update the block time so it appears as if the airdrop has not started
-	// Then check that the date index is -1 and claimable is 0
-	s.Ctx = s.Ctx.WithBlockTime(DistributionStartDate.Add(-1 * time.Hour))
-
-	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().NoError(err, "no error expected when querying user summary before airdrop")
-	s.Require().Equal(int64(-1), resp.CurrentDateIndex, "date index")
-	s.Require().Equal(int64(0), resp.Claimable.Int64(), "date index")
+	s.Require().Equal(remaining, resp.Remaining, "remaining")
+	s.Require().Equal(int64(0), resp.Claimable.Int64(), "claimable before airdrop")
 
 	// Update the block time so it appears as if the airdrop has ended
-	// Then check that the date index is -1 and claimable is 0
+	// Then check that claimable is 0
 	s.Ctx = s.Ctx.WithBlockTime(ClawbackDate.Add(time.Hour))
 
 	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().NoError(err, "no error expected when querying user summary before airdrop")
-	s.Require().Equal(int64(-1), resp.CurrentDateIndex, "date index")
-	s.Require().Equal(int64(0), resp.Claimable.Int64(), "date index")
+	s.Require().NoError(err, "no error expected when querying user summary after airdrop")
+	s.Require().Equal(int64(0), resp.Claimable.Int64(), "claimable after airdrop")
 }
