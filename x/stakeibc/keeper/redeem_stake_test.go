@@ -190,7 +190,7 @@ func (s *KeeperTestSuite) TestRedeemStake_HostZoneNotFound() {
 	invalidMsg.HostZone = "fake_host_zone"
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
 
-	s.Require().EqualError(err, "host zone is invalid: fake_host_zone: host zone not registered")
+	s.Require().EqualError(err, "host zone fake_host_zone not found: host zone not found")
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_RateAboveMaxThreshold() {
@@ -292,7 +292,7 @@ func (s *KeeperTestSuite) TestRedeemStake_HaltedZone() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
 
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "halted host zone found for zone (GAIA): Halted host zone found")
+	s.Require().EqualError(err, "host zone GAIA is halted: Halted host zone found")
 }
 
 func (s *KeeperTestSuite) TestRedeemStake_RedemptionsDisabled() {
