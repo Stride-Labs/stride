@@ -46,6 +46,14 @@ build-relayer:
 	@echo "Pushing image to GCR"
 	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
 
+local-init-chain:
+	@$(DOCKER) run --rm -it \
+		-v ${PWD}/network/scripts:/home/validator/scripts \
+		-v ${PWD}/network/configs:/home/validator/configs \
+		--env-file .env.local \
+		gcr.io/stride-nodes/integration-tests/chains/stride:latest \
+		bash scripts/init-chain.sh
+
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 
