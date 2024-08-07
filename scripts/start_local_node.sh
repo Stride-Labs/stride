@@ -49,11 +49,7 @@ jq "del(.app_state.interchain_accounts)" $genesis_json > json.tmp && mv json.tmp
 interchain_accts=$(cat dockernet/config/ica_controller.json)
 jq ".app_state += $interchain_accts" $genesis_json > json.tmp && mv json.tmp $genesis_json
 
-# hack since add-comsumer-section is built for dockernet
-rm -rf ~/.stride-loca1
-cp -r ${STRIDE_HOME} ~/.stride-loca1
-
-$STRIDED add-consumer-section 1
+$STRIDED add-consumer-section --validator-home-directories $STRIDE_HOME
 jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_json > json.tmp && mv json.tmp $genesis_json
 
 rm -rf ~/.stride-loca1
