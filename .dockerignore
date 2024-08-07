@@ -6,3 +6,4 @@ dockernet
 scripts
 genesis
 testutil/localstride
+integration-tests
