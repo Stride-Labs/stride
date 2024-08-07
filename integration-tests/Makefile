@@ -19,25 +19,32 @@ start-api:
 
 build-api:
 	@echo "Building docker image: api"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag api -f dockerfiles/Dockerfile.api api
-	@$(DOCKER) tag api gcr.io/stride-nodes/integration-tests/api:latest
+	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:api -f dockerfiles/Dockerfile.api api
+	@$(DOCKER) tag stride:api gcr.io/stride-nodes/integration-tests/api:latest
 	@echo "Pushing image to GCR"
 	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/api:latest
 
 build-stride:
 	@echo "Building docker image: stride-validator"
 	@$(DOCKER) buildx build --platform linux/amd64 --tag core:stride ..
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride-validator -f dockerfiles/Dockerfile.stride .
-	@$(DOCKER) tag stride-validator gcr.io/stride-nodes/integration-tests/chains/stride:latest
+	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:stride-validator -f dockerfiles/Dockerfile.stride .
+	@$(DOCKER) tag stride:stride-validator gcr.io/stride-nodes/integration-tests/chains/stride:latest
 	@echo "Pushing image to GCR"
 	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/stride:latest
 
 build-cosmos:
-	@echo "Building docker image"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag cosmos-validator -f dockerfiles/Dockerfile.cosmos .
-	@$(DOCKER) tag cosmos-validator gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
+	@echo "Building docker image: cosmos-validator"
+	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:cosmos-validator -f dockerfiles/Dockerfile.cosmos .
+	@$(DOCKER) tag stride:cosmos-validator gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
 	@echo "Pushing image to GCR"
 	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
+
+build-relayer:
+	@echo "Building docker image: relayer"
+	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:relayer -f dockerfiles/Dockerfile.relayer .
+	@$(DOCKER) tag stride:relayer gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
+	@echo "Pushing image to GCR"
+	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
 
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
