@@ -63,8 +63,8 @@ spec:
               mountPath: {{ $chainHomeDirectory }}
             - name: scripts
               mountPath: /home/validator/scripts
-            - name: config
-              mountPath: /home/validator/config
+            - name: configs
+              mountPath: /home/validator/configs
       containers:
         - name: validator
           image: {{ $image }}
@@ -98,8 +98,8 @@ spec:
               mountPath: {{ $chainHomeDirectory }}
             - name: scripts
               mountPath: /home/validator/scripts
-            - name: config
-              mountPath: /home/validator/config
+            - name: configs
+              mountPath: /home/validator/configs
           resources:
             limits:
               cpu: "1000m"
@@ -113,9 +113,9 @@ spec:
         - name: scripts
           configMap:
             name: scripts
-        - name: config
+        - name: configs
           configMap:
-            name: config
+            name: configs
 ---
 apiVersion: v1
 kind: Service

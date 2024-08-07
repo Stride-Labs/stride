@@ -6,7 +6,7 @@ if [[ "$HOSTNAME" != *"validator"* ]]; then
 fi
 
 SCRIPTS_DIR=scripts
-CONFIG_DIR=config
+CONFIG_DIR=configs
 
 VALIDATOR_KEYS_DIR=validator-keys
 NODE_KEYS_DIR=node-keys
@@ -52,4 +52,14 @@ wait_for_api() {
         echo "Waiting for API to start..."
         sleep 2
     done
+}
+
+# Wait for node to start
+wait_for_node() {
+    chain_name="$1"
+    rpc_endpoint="http://${chain_name}-validator.integration.svc:26657/status"
+    until [[ $(curl -o /dev/null -s $rpc_endpoint | jq '.result.sync_info.catching_up') == "false" ]]; do
+        echo "Waiting for $chain_name to start..."
+        sleep 2
+    done 
 }
