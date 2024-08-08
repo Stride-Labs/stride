@@ -14,7 +14,14 @@ wait_for_api() {
 wait_for_node() {
     chain_name="$1"
     rpc_endpoint="http://${chain_name}-validator.integration.svc:26657/status"
-    until [[ $(curl -s "$rpc_endpoint" | jq '.result.sync_info.catching_up') == "false" ]]; do
+
+    # Wait for the node to be caught up and confirm it's at least on the 2nd block
+    until 
+        response=$(curl -s "$rpc_endpoint")
+        catching_up=$(echo "$response" | jq -r '.result.sync_info.catching_up')
+        latest_block=$(echo "$response" | jq -r '.result.sync_info.latest_block_height')
+        [[ $catching_up == "false" && $latest_block -gt 2 ]]
+    do
         echo "Waiting for $chain_name to start..."
         sleep 2
     done 

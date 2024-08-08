@@ -138,6 +138,7 @@ update_stride_genesis() {
     jq_inplace '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration |= "'$STRIDE_EPOCH_EPOCH_DURATION'"' $genesis_json 
 
     $BINARY add-consumer-section --validator-public-keys $validator_public_keys
+    jq_inplace '.app_state.ccvconsumer.params.unbonding_period |= "'$UNBONDING_TIME'"' $genesis_json 
 }
 
 # Genesis updates specific to non-stride chains
