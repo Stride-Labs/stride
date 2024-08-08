@@ -9,38 +9,74 @@ VENV_BIN := $(CONDA_BASE)/$(VENV_NAME)/bin
 PYTHON := $(VENV_BIN)/python
 
 HELM_CHART=network
+PLATFORM=linux/amd64
+GCR_REPO = gcr.io/stride-nodes/integration-tests
+
+# Builds and pushes a docker image
+# args: [image-file-suffix] [context] [image-name] 
+# e.g. $(call build_and_push_docker,stride,.,chains/stride:latest
+define build_and_push_docker
+	@echo "Building docker image: $(1)"
+	@$(DOCKER) buildx build --platform $(PLATFORM) --tag stride-tests:$(1) -f dockerfiles/Dockerfile.$(1) $(2)
+	@$(DOCKER) tag stride-tests:$(1) $(GCR_REPO)/$(3)
+	@echo "Pushing image to GCR: $(GCR_REPO)/$(3)"
+	@$(DOCKER) push $(GCR_REPO)/$(3)
+endef
+
+check-empty-namespace:
+	@POD_COUNT=$$($(KUBECTL) get pods --no-headers -n $(K8S_NAMESPACE) | wc -l); \
+	if [ $$POD_COUNT -eq 0 ]; then exit 0; else exit 1; fi
+
+wait-for-startup:
+	@echo "---" && sleep 1
+	@printf "Waiting for network to startup..."
+	@elapsed=0; \
+	while true; do \
+		not_ready_pods=$$($(KUBECTL) get pods --no-headers -n $(K8S_NAMESPACE) | grep -v '1/1 *Running' | wc -l); \
+		if [ $$not_ready_pods -eq 0 ]; then \
+			printf "Ready! 🚀\n"; \
+			break; \
+		fi; \
+		if [ $$elapsed -eq 30 ]; then \
+			printf "\nThe network's taking longer than expected to startup. Please investigate\n"; \
+			exit 1; \
+		fi; \
+		sleep 1 && printf "."; \
+		elapsed=$$((elapsed + 1)); \
+	done
 
 python-install:
 	conda create --name $(VENV_NAME) python=3.11 -y
 	$(PYTHON) -m pip install -r api/requirements.txt
 
-start-api:
-	@$(PYTHON) -m uvicorn api.main:app --proxy-headers 
+start-api: docker-bridge
+	@$(DOCKER) compose up api
 
 build-api:
-	@echo "Building docker image: api"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag api -f dockerfiles/Dockerfile.api api
-	@$(DOCKER) tag api gcr.io/stride-nodes/integration-tests/api:latest
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/api:latest
+	$(call build_and_push_docker,api,api,api:latest)
 
 build-stride:
-	@echo "Building docker image: stride-validator"
 	@$(DOCKER) buildx build --platform linux/amd64 --tag core:stride ..
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride-validator -f dockerfiles/Dockerfile.stride .
-	@$(DOCKER) tag stride-validator gcr.io/stride-nodes/integration-tests/chains/stride:latest
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/stride:latest
+	$(call build_and_push_docker,stride,.,chains/stride:latest)
 
 build-cosmos:
-	@echo "Building docker image"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag cosmos-validator -f dockerfiles/Dockerfile.cosmos .
-	@$(DOCKER) tag cosmos-validator gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
+	$(call build_and_push_docker,cosmos,.,chains/cosmoshub:v18.1.0)
+
+build-relayer:
+	$(call build_and_push_docker,relayer,.,relayer:v2.5.2)
+
+build-hermes:
+	$(call build_and_push_docker,hermes,.,hermes:v1.9.0)
+
+local-init-chain: 
+	@$(DOCKER) compose up --abort-on-container-exit; \
+	EXIT_CODE=$$?; \
+	$(DOCKER) compose down; \
+	exit $$EXIT_CODE
 
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
+	@$(MAKE) wait-for-startup
 
 stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)

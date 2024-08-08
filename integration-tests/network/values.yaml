@@ -1,5 +1,9 @@
 namespace: integration
-chainImagesRepo: gcr.io/stride-nodes/integration-tests/chains
+
+images:
+  chains: gcr.io/stride-nodes/integration-tests/chains
+  relayer: gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
+  hermes: gcr.io/stride-nodes/integration-tests/hermes:v1.9.0
 
 chains:
   - name: stride
@@ -19,3 +23,10 @@ chains:
     denom: uatom
     decimals: 6
     command: ["gaiad", "start"]
+
+# type can be either "relayer" or "hermes"
+relayers:
+  - name: stride-cosmoshub
+    type: relayer
+    chainA: stride
+    chainB: cosmoshub

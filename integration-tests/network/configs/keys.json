@@ -1,4 +1,13 @@
 {
+    
+    "admin": {
+      "name": "admin",
+      "mnemonic": "tone cause tribe this switch near host damage idle fragile antique tail soda alien depth write wool they rapid unfold body scan pledge soft"
+    },
+    "faucet": {
+      "name": "faucet",
+      "mnemonic": "chimney become stuff spoil resource supply picture divorce casual curve check web valid survey zebra various pet sphere timber friend faint blame mansion film"
+    },
     "validators": [
       {
         "name": "val1",
@@ -21,10 +30,20 @@
         "mnemonic": "crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
       }
     ],
-    "faucet": [
+    "relayers": [
       {
-        "name": "faucet",
-        "mnemonic": "chimney become stuff spoil resource supply picture divorce casual curve check web valid survey zebra various pet sphere timber friend faint blame mansion film"
+        "name": "rly1",
+        "mnemonic": "fringe secret hair noise royal inform remove release mother fish swamp swim piece later course glimpse sing very clutch velvet prefer hover common mass"
+      },
+      {
+        "name": "rly2",
+        "mnemonic": "floor chicken advance degree paper arch sugar kit torch auction flash fish attitude clay museum treat favorite clinic verify dose safe bright vessel east"
+      }
+    ],
+    "users": [
+      {
+        "name": "user1",
+        "mnemonic": "brief play describe burden half aim soccer carbon hope wait output play vacuum joke energy crucial output mimic cruise brother document rail anger leaf"
       }
     ]
   }

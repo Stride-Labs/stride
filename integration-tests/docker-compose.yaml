@@ -1,0 +1,15 @@
+services:
+  api:
+    image: gcr.io/stride-nodes/integration-tests/api:latest 
+    ports:
+      - '8000:8000'
+  init-chain:
+    image: gcr.io/stride-nodes/integration-tests/chains/stride:latest
+    depends_on: 
+      - api
+    volumes:
+      - ./network/scripts:/home/validator/scripts
+      - ./network/configs:/home/validator/configs
+    env_file:
+      - .env.local
+    command: ["bash", "scripts/init-chain.sh"]
