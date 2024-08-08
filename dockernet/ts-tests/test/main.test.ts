@@ -186,9 +186,10 @@ describe("ibc", () => {
 
 describe("x/stakeibc", () => {
   test("batch undelegation happy path", async () => {
-    const gaiaClient = gaiaAccounts.user;
     const strideClient = accounts.user;
+    const gaiaClient = gaiaAccounts.user;
 
+    // get stATOM balance before
     let { balances } = await strideClient.query.cosmos.bank.v1beta1.allBalances(
       {
         address: strideClient.address,
@@ -199,22 +200,14 @@ describe("x/stakeibc", () => {
       (coin) => coin.denom === "stuatom",
     )?.amount;
 
+    // get Gaia redemption rate
     const {
       hostZone: { redemptionRate },
     } = await strideClient.query.stride.stakeibc.hostZone({
       chainId: "GAIA",
     });
 
-    const autopilot = JSON.stringify({
-      autopilot: {
-        stakeibc: {
-          stride_address: strideClient.address,
-          action: "LiquidStake",
-        },
-        receiver: strideClient.address,
-      },
-    });
-
+    // on Gaia, send ATOM to Stride and use autopilot to liquid stake
     const amount = 1_000_000;
 
     let msg =
@@ -224,7 +217,15 @@ describe("x/stakeibc", () => {
           sourceChannel: "channel-0",
           token: coinFromString(`${amount}uatom`),
           sender: gaiaClient.address,
-          receiver: autopilot,
+          receiver: JSON.stringify({
+            autopilot: {
+              stakeibc: {
+                stride_address: strideClient.address,
+                action: "LiquidStake",
+              },
+              receiver: strideClient.address,
+            },
+          }),
           timeoutHeight: {
             revisionNumber: 0n,
             revisionHeight: 0n,
@@ -242,10 +243,12 @@ describe("x/stakeibc", () => {
     }
     expect(tx.code).toBe(0);
 
+    // on Gaia, wait for the ibc ack
     const ibcAck = await tx.ibcResponses[0];
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
 
+    // get stATOM balance after
     ({ balances } = await strideClient.query.cosmos.bank.v1beta1.allBalances({
       address: strideClient.address,
     }));
@@ -254,9 +257,11 @@ describe("x/stakeibc", () => {
       (coin) => coin.denom === "stuatom",
     )?.amount;
 
-    expect(Number(stAtomBalanceAfter ?? 0)).toBe(
+    // check expected stAtom balance using expectedStAtomAfter and redemptionRate
+    const expectedStAtomAfter =
       Number(stAtomBalanceBefore ?? 0) +
-        Math.floor(amount / Number(redemptionRate)),
-    );
+      Math.floor(amount / Number(redemptionRate)); // https://github.com/Stride-Labs/stride/blob/0cb59a10d/x/stakeibc/keeper/msg_server.go#L256
+
+    expect(Number(stAtomBalanceAfter ?? 0)).toBe(expectedStAtomAfter);
   }, 120_000);
 });
