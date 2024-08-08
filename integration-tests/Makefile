@@ -9,6 +9,19 @@ VENV_BIN := $(CONDA_BASE)/$(VENV_NAME)/bin
 PYTHON := $(VENV_BIN)/python
 
 HELM_CHART=network
+PLATFORM=linux/amd64
+GCR_REPO = gcr.io/stride-nodes/integration-tests
+
+# Builds and pushes a docker image
+# args: [image-file-suffix] [context] [image-name] 
+# e.g. $(call build_and_push_docker,stride,.,chains/stride:latest
+define build_and_push_docker
+	@echo "Building docker image: $(1)"
+	@$(DOCKER) buildx build --platform $(PLATFORM) --tag stride-tests:$(1) -f dockerfiles/Dockerfile.$(1) $(2)
+	@$(DOCKER) tag stride-tests:$(1) $(GCR_REPO)/$(3)
+	@echo "Pushing image to GCR: $(GCR_REPO)/$(3)"
+	@$(DOCKER) push $(GCR_REPO)/$(3)
+endef
 
 python-install:
 	conda create --name $(VENV_NAME) python=3.11 -y
@@ -18,40 +31,20 @@ start-api: docker-bridge
 	@$(DOCKER) compose up api
 
 build-api:
-	@echo "Building docker image: api"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:api -f dockerfiles/Dockerfile.api api
-	@$(DOCKER) tag stride:api gcr.io/stride-nodes/integration-tests/api:latest
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/api:latest
+	$(call build_and_push_docker,api,api,api:latest)
 
 build-stride:
-	@echo "Building docker image: stride-validator"
 	@$(DOCKER) buildx build --platform linux/amd64 --tag core:stride ..
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:stride-validator -f dockerfiles/Dockerfile.stride .
-	@$(DOCKER) tag stride:stride-validator gcr.io/stride-nodes/integration-tests/chains/stride:latest
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/stride:latest
+	$(call build_and_push_docker,stride,.,chains/stride:latest)
 
 build-cosmos:
-	@echo "Building docker image: cosmos-validator"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:cosmos-validator -f dockerfiles/Dockerfile.cosmos .
-	@$(DOCKER) tag stride:cosmos-validator gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0
+	$(call build_and_push_docker,cosmos,.,chains/cosmoshub:v18.1.0)
 
 build-relayer:
-	@echo "Building docker image: relayer"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:relayer -f dockerfiles/Dockerfile.relayer .
-	@$(DOCKER) tag stride:relayer gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
+	$(call build_and_push_docker,relayer,.,relayer:v2.5.2)
 
 build-hermes:
-	@echo "Building docker image: hermes"
-	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:hermes -f dockerfiles/Dockerfile.hermes .
-	@$(DOCKER) tag stride:hermes gcr.io/stride-nodes/integration-tests/hermes:v1.9.0
-	@echo "Pushing image to GCR"
-	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/hermes:v1.9.0
+	$(call build_and_push_docker,hermes,.,hermes:v1.9.0)
 
 local-init-chain: 
 	@$(DOCKER) compose up --abort-on-container-exit; \
