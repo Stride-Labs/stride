@@ -12,4 +12,4 @@ KEYS_FILE=${CONFIG_DIR}/keys.json
 PEER_PORT=26656
 RPC_PORT=26657
 
-API_ENDPOINT=http://api.integration.svc:8000
+API_ENDPOINT=${API_ENDPOINT:-'http://api.integration.svc:8000'}

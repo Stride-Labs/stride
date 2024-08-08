@@ -14,8 +14,8 @@ python-install:
 	conda create --name $(VENV_NAME) python=3.11 -y
 	$(PYTHON) -m pip install -r api/requirements.txt
 
-start-api:
-	@$(PYTHON) -m uvicorn api.main:app --proxy-headers 
+start-api: docker-bridge
+	@$(DOCKER) compose up api
 
 build-api:
 	@echo "Building docker image: api"
@@ -46,13 +46,11 @@ build-relayer:
 	@echo "Pushing image to GCR"
 	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
 
-local-init-chain:
-	@$(DOCKER) run --rm -it \
-		-v ${PWD}/network/scripts:/home/validator/scripts \
-		-v ${PWD}/network/configs:/home/validator/configs \
-		--env-file .env.local \
-		gcr.io/stride-nodes/integration-tests/chains/stride:latest \
-		bash scripts/init-chain.sh
+local-init-chain: 
+	@$(DOCKER) compose up --abort-on-container-exit; \
+	EXIT_CODE=$$?; \
+	$(DOCKER) compose down; \
+	exit $$EXIT_CODE
 
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
