@@ -249,7 +249,7 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 			stTokensToBurn = sdk.NewDecFromInt(nativeTokensUnbonded).Quo(impliedRedemptionRate).TruncateInt()
 		}
 
-		// Decrement st amount on the record and increment the tota
+		// Decrement st amount on the record and increment the total
 		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokensToBurn.Sub(stTokensToBurn)
 		totalStTokensToBurn = totalStTokensToBurn.Add(stTokensToBurn)
 
