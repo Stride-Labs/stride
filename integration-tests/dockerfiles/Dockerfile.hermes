@@ -1,0 +1,14 @@
+FROM rust:1.71-buster as builder
+
+COPY --from=informalsystems/hermes:v1.9.0 /usr/bin/hermes /usr/bin/hermes
+
+RUN apt-get update \
+    && apt-get install -y iputils-ping ca-certificates libssl-dev bash vim curl \
+    && addgroup --gid 1000 hermes \
+    && adduser --system --home /home/hermes --disabled-password --disabled-login \
+    --uid 1000 --ingroup hermes hermes
+
+USER hermes
+WORKDIR /home/hermes
+
+CMD ["bash", "start-hermes.sh"]

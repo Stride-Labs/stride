@@ -46,6 +46,13 @@ build-relayer:
 	@echo "Pushing image to GCR"
 	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
 
+build-hermes:
+	@echo "Building docker image: hermes"
+	@$(DOCKER) buildx build --platform linux/amd64 --tag stride:hermes -f dockerfiles/Dockerfile.hermes .
+	@$(DOCKER) tag stride:hermes gcr.io/stride-nodes/integration-tests/hermes:v1.9.0
+	@echo "Pushing image to GCR"
+	@$(DOCKER) push gcr.io/stride-nodes/integration-tests/hermes:v1.9.0
+
 local-init-chain: 
 	@$(DOCKER) compose up --abort-on-container-exit; \
 	EXIT_CODE=$$?; \
