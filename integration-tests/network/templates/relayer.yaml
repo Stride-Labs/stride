@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: relayer-stride-cosmoshub
+  namespace: integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: relayer-stride-cosmoshub
+  template:
+    metadata:
+      labels:
+        app: relayer-stride-cosmoshub
+    spec:
+      containers:
+        - name: relayer-stride-cosmoshub
+          image: gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
+          imagePullPolicy: Always
+          command: ["sleep", "infinity"]
+          env:
+            - name: PATH_NAME
+              value: stride-cosmoshub
+            - name: CHAIN_NAME_A
+              value: stride
+            - name: CHAIN_NAME_B
+              value: cosmoshub
+            - name: CHAIN_A_MNEMONIC_INDEX
+              value: "0"
+            - name: CHAIN_B_MNEMONIC_INDEX
+              value: "1"
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "1000M"
+            requests:
+              cpu: "200m"
+              memory: "1000M"
+          volumeMounts:
+            - name: configs
+              mountPath: /home/relayer/configs
+            - name: scripts
+              mountPath: /home/relayer/scripts
+      volumes:
+        - name: configs
+          configMap:
+            name: configs
+        - name: scripts
+          configMap:
+            name: scripts
