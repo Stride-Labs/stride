@@ -27,7 +27,7 @@ RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
 FROM alpine:${RUNNER_IMAGE_VERSION}
 
 COPY --from=builder /opt/build/strided /usr/local/bin/strided
-RUN apk add bash vim sudo dasel jq \
+RUN apk add bash vim sudo dasel jq curl \
     && addgroup -g 1000 stride \
     && adduser -S -h /home/stride -D stride -u 1000 -G stride 
 

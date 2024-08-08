@@ -17,6 +17,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   gaia:
@@ -32,6 +33,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   dydx:
@@ -47,6 +49,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   noble:
@@ -62,6 +65,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
   osmo:
@@ -77,6 +81,7 @@ chains:
       coin-type: 118
       debug: false
       timeout: 20s
+      min-loop-duration: 1s
       output-format: json
       sign-mode: direct
 paths:
@@ -122,7 +127,7 @@ paths:
     src-channel-filter:
       rule: ""
       channel-list: []
-   # Paths for host chain (if running DYDX)
+  # Paths for host chain (if running DYDX)
   dydx-noble:
     src:
       chain-id: DYDX

@@ -1,13 +1,17 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"strconv"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	types1 "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/config"
 	pvm "github.com/cometbft/cometbft/privval"
+	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -22,48 +26,110 @@ import (
 	"github.com/Stride-Labs/stride/v23/testutil"
 )
 
+const (
+	FlagValidatorPublicKeys      = "validator-public-keys"
+	FlagValidatorHomeDirectories = "validator-home-directories"
+)
+
+// Builds the list of validator Ed25519 pubkeys from a comma separate list of base64 encoded pubkeys
+func buildPublicKeysFromString(publicKeysRaw string) (publicKeys []tmprotocrypto.PublicKey, err error) {
+	for _, publicKeyEncoded := range strings.Split(publicKeysRaw, ",") {
+		if publicKeyEncoded == "" {
+			continue
+		}
+		publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyEncoded)
+		if err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to decode public key")
+		}
+		publicKeys = append(publicKeys, tmprotocrypto.PublicKey{
+			Sum: &tmprotocrypto.PublicKey_Ed25519{
+				Ed25519: publicKeyBytes,
+			},
+		})
+	}
+
+	return publicKeys, nil
+}
+
+// Builds the list validator Ed25519 pubkeys from a comma separated list of validator home directories
+func buildPublicKeysFromHomeDirectories(config *config.Config, homeDirectories string) (publicKeys []tmprotocrypto.PublicKey, err error) {
+	for _, homeDir := range strings.Split(homeDirectories, ",") {
+		if homeDir == "" {
+			continue
+		}
+		config.SetRoot(homeDir)
+
+		privValidator := pvm.LoadFilePV(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
+		pk, err := privValidator.GetPubKey()
+		if err != nil {
+			return nil, err
+		}
+		sdkPublicKey, err := cryptocodec.FromTmPubKeyInterface(pk)
+		if err != nil {
+			return nil, err
+		}
+		tmProtoPublicKey, err := cryptocodec.ToTmProtoPublicKey(sdkPublicKey)
+		if err != nil {
+			return nil, err
+		}
+		publicKeys = append(publicKeys, tmProtoPublicKey)
+	}
+
+	return publicKeys, nil
+}
+
 func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
 	genesisMutator := NewDefaultGenesisIO()
 
-	txCmd := &cobra.Command{
-		Use:                        "add-consumer-section [num_nodes]",
-		Args:                       cobra.ExactArgs(1),
+	cmd := &cobra.Command{
+		Use:                        "add-consumer-section",
+		Args:                       cobra.ExactArgs(0),
 		Short:                      "ONLY FOR TESTING PURPOSES! Modifies genesis so that chain can be started locally with one node.",
 		SuggestionsMinimumDistance: 2,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			numNodes, err := strconv.Atoi(args[0])
+			// We need to public keys for each validator - they can either be provided explicitly
+			// or indirectly by providing the validator home directories
+			publicKeysRaw, err := cmd.Flags().GetString(FlagValidatorPublicKeys)
 			if err != nil {
-				return errorsmod.Wrap(err, "invalid number of nodes")
-			} else if numNodes == 0 {
-				return errorsmod.Wrap(nil, "num_nodes can not be zero")
+				return errorsmod.Wrapf(err, "unable to parse validator public key flag")
+			}
+			homeDirectoriesRaw, err := cmd.Flags().GetString(FlagValidatorHomeDirectories)
+			if err != nil {
+				return errorsmod.Wrapf(err, "unable to parse validator home directories flag")
+			}
+			if (publicKeysRaw == "" && homeDirectoriesRaw == "") || (publicKeysRaw != "" && homeDirectoriesRaw != "") {
+				return fmt.Errorf("must specified either --%s or --%s", FlagValidatorPublicKeys, FlagValidatorHomeDirectories)
+			}
+
+			// Build up a list of the validator public keys
+			// If the public keys were passed directly, decode them and create the tm proto pub keys
+			// Otherwise, derrive them from the private keys in each validator's home directory
+			var tmPublicKeys []tmprotocrypto.PublicKey
+			if publicKeysRaw != "" {
+				tmPublicKeys, err = buildPublicKeysFromString(publicKeysRaw)
+				if err != nil {
+					return err
+				}
+			} else {
+				serverCtx := server.GetServerContextFromCmd(cmd)
+				config := serverCtx.Config
+
+				tmPublicKeys, err = buildPublicKeysFromHomeDirectories(config, homeDirectoriesRaw)
+				if err != nil {
+					return err
+				}
+			}
+
+			if len(tmPublicKeys) == 0 {
+				return errors.New("no valid public keys or validator home directories provided")
 			}
 
 			return genesisMutator.AlterConsumerModuleState(cmd, func(state *GenesisData, _ map[string]json.RawMessage) error {
 				initialValset := []types1.ValidatorUpdate{}
 				genesisState := testutil.CreateMinimalConsumerTestGenesis()
-				clientCtx := client.GetClientContextFromCmd(cmd)
-				serverCtx := server.GetServerContextFromCmd(cmd)
-				config := serverCtx.Config
-				homeDir := clientCtx.HomeDir
-				for i := 1; i <= numNodes; i++ {
-					homeDir = fmt.Sprintf("%s%d", homeDir[:len(homeDir)-1], i)
-					config.SetRoot(homeDir)
 
-					privValidator := pvm.LoadFilePV(config.PrivValidatorKeyFile(), config.PrivValidatorStateFile())
-					pk, err := privValidator.GetPubKey()
-					if err != nil {
-						return err
-					}
-					sdkPublicKey, err := cryptocodec.FromTmPubKeyInterface(pk)
-					if err != nil {
-						return err
-					}
-					tmProtoPublicKey, err := cryptocodec.ToTmProtoPublicKey(sdkPublicKey)
-					if err != nil {
-						return err
-					}
-
-					initialValset = append(initialValset, types1.ValidatorUpdate{PubKey: tmProtoPublicKey, Power: 100})
+				for _, publicKey := range tmPublicKeys {
+					initialValset = append(initialValset, types1.ValidatorUpdate{PubKey: publicKey, Power: 100})
 				}
 
 				vals, err := tmtypes.PB2TM.ValidatorUpdates(initialValset)
@@ -80,10 +146,11 @@ func AddConsumerSectionCmd(defaultNodeHome string) *cobra.Command {
 		},
 	}
 
-	txCmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
-	flags.AddQueryFlagsToCmd(txCmd)
+	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The application home directory")
+	cmd.Flags().String(FlagValidatorPublicKeys, "", "Comma separated, base64-encoded public keys for each validator")
+	cmd.Flags().String(FlagValidatorHomeDirectories, "", "Comma separated list of home directories for each validator")
 
-	return txCmd
+	return cmd
 }
 
 type GenesisMutator interface {
