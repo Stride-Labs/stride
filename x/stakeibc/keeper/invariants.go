@@ -41,6 +41,7 @@ func (k Keeper) AssertStrideAndDayEpochRelationship(ctx sdk.Context) {
 	}
 }
 
+// TODO [cleanup]: Update to be CheckRedemptionRateWithinSafetyBound and only throw an error (instead of a bool)
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
 	// Get the wide bounds

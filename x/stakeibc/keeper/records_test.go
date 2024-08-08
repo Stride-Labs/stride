@@ -93,99 +93,87 @@ func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {
 	s.Require().Equal(expectedDepositRecords, actualDepositRecords, "deposit records")
 }
 
-// TODO [cleanup]: Combine this all into one test
-type CleanupEpochUnbondingRecordsTestCase struct {
-	epochUnbondingRecords []recordtypes.EpochUnbondingRecord
-	hostZones             []types.HostZone
-}
-
-func (s *KeeperTestSuite) SetupCleanupEpochUnbondingRecords() CleanupEpochUnbondingRecordsTestCase {
-	hostZones := []types.HostZone{
-		{
-			ChainId:      HostChainId,
-			HostDenom:    Atom,
-			Bech32Prefix: GaiaPrefix,
-		},
-		{
-			ChainId:      OsmoChainId,
-			HostDenom:    Osmo,
-			Bech32Prefix: OsmoPrefix,
-		},
-	}
-	// list of epoch unbonding records
+func (s *KeeperTestSuite) TestCleanupEpochUnbondingRecords() {
+	// Epoch unbonding records with different amounts and statuses
 	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
 		{
+			// Has a non-CLAIMABLE record, should not be removed
 			EpochNumber: 0,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.NewInt(1_000_000),
-					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
+					HostZoneId:            HostChainId,
+					ClaimableNativeTokens: sdkmath.ZeroInt(),
+					Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(1_000_000),
-					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					HostZoneId:            OsmoChainId,
+					ClaimableNativeTokens: sdkmath.NewInt(1_000_000),
+					Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 				},
 			},
 		},
 		{
+			// Has a non-zero CLAIMABLE record, should not be removed
 			EpochNumber: 1,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.ZeroInt(),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:            HostChainId,
+					ClaimableNativeTokens: sdkmath.NewInt(1_000_000),
+					Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.NewInt(1_000_000),
-					Status:            recordtypes.HostZoneUnbonding_CLAIMABLE,
+					HostZoneId:            OsmoChainId,
+					ClaimableNativeTokens: sdkmath.ZeroInt(),
+					Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 			},
 		},
 		{
+			// Has only CLAIMABLE and zero-amounts - should be removed
 			EpochNumber: 2,
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				{
-					HostZoneId:        HostChainId,
-					NativeTokenAmount: sdkmath.ZeroInt(),
-					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					HostZoneId:            HostChainId,
+					ClaimableNativeTokens: sdkmath.ZeroInt(),
+					Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 				{
-					HostZoneId:        OsmoChainId,
-					NativeTokenAmount: sdkmath.ZeroInt(),
-					Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+					HostZoneId:            OsmoChainId,
+					ClaimableNativeTokens: sdkmath.ZeroInt(),
+					Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
+				},
+			},
+		},
+		{
+			// Has a non-CLAIMABLE record, should not be removed
+			EpochNumber: 3,
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					HostZoneId:            HostChainId,
+					ClaimableNativeTokens: sdkmath.ZeroInt(),
+					Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+				},
+				{
+					HostZoneId:            OsmoChainId,
+					ClaimableNativeTokens: sdkmath.NewInt(1_000_000),
+					Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 				},
 			},
 		},
 	}
+
 	for _, epochUnbondingRecord := range epochUnbondingRecords {
 		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	}
 
-	for _, hostZone := range hostZones {
-		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	}
-
-	return CleanupEpochUnbondingRecordsTestCase{
-		epochUnbondingRecords: epochUnbondingRecords,
-		hostZones:             hostZones,
-	}
-}
-
-func (s *KeeperTestSuite) TestCleanupEpochUnbondingRecords_Successful() {
-	tc := s.SetupCleanupEpochUnbondingRecords()
-
 	// Call cleanup on each unbonding record
-	for i := range tc.epochUnbondingRecords {
-		success := s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, uint64(i))
-		s.Require().True(success, "cleanup unbonding record for epoch %d should succeed", i)
+	for i := range epochUnbondingRecords {
+		s.App.StakeibcKeeper.CleanupEpochUnbondingRecords(s.Ctx, uint64(i))
 	}
 
 	// Check one record was removed
 	finalUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	expectedNumUnbondingRecords := len(tc.epochUnbondingRecords) - 1
+	expectedNumUnbondingRecords := len(epochUnbondingRecords) - 1
 	s.Require().Len(finalUnbondingRecords, expectedNumUnbondingRecords, "two epoch unbonding records should remain")
 
 	// Confirm it was the last record that was removed

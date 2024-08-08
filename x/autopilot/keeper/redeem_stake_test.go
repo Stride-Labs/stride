@@ -57,12 +57,13 @@ func (s *KeeperTestSuite) SetupAutopilotRedeemStake(featureEnabled bool, redeemA
 
 	// store the host zone
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
-		ChainId:          HostChainId,
-		Bech32Prefix:     HostBechPrefix, // required to validate claim receiver
-		HostDenom:        HostDenom,
-		RedemptionRate:   sdk.NewDec(1), // used to determine native token amount
-		DepositAddress:   depositAddress.String(),
-		TotalDelegations: redeemAmount, // there must be enough stake to cover the redemption
+		ChainId:            HostChainId,
+		Bech32Prefix:       HostBechPrefix, // required to validate claim receiver
+		HostDenom:          HostDenom,
+		RedemptionRate:     sdk.NewDec(1), // used to determine native token amount
+		DepositAddress:     depositAddress.String(),
+		TotalDelegations:   redeemAmount, // there must be enough stake to cover the redemption
+		RedemptionsEnabled: true,
 	})
 
 	// fund the user with sttokens so they can redeem

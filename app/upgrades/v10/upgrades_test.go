@@ -165,10 +165,10 @@ func (s *UpgradeTestSuite) TestMigrateCallbackData() {
 	}
 	initialUndelegateCallbackArgs := stakeibctypes.UndelegateCallback{
 		HostZoneId: "host-0",
-		SplitDelegations: []*types.SplitDelegation{{
-			Validator: "val-0",
-			Amount:    sdkmath.NewInt(1),
-		}},
+		// SplitDelegations: []*types.SplitDelegation{{
+		// 	Validator: "val-0",
+		// 	Amount:    sdkmath.NewInt(1),
+		// }},
 	}
 	initialTransferCallbackArgs := recordstypes.TransferCallback{
 		DepositRecordId: 1,

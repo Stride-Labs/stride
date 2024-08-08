@@ -106,10 +106,11 @@ func (msg *MsgLiquidStake) ValidateBasic() error {
 //               MsgRedeemStake
 // ----------------------------------------------
 
-func NewMsgRedeemStake(redeemer string, stTokenAmount sdkmath.Int) *MsgRedeemStake {
+func NewMsgRedeemStake(redeemer string, stTokenAmount sdkmath.Int, receiver string) *MsgRedeemStake {
 	return &MsgRedeemStake{
 		Redeemer:      redeemer,
 		StTokenAmount: stTokenAmount,
+		Receiver:      receiver,
 	}
 }
 
@@ -143,6 +144,10 @@ func (msg *MsgRedeemStake) ValidateBasic() error {
 	minThreshold := int64(100000)
 	if msg.StTokenAmount.LT(sdkmath.NewInt(minThreshold)) {
 		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount (%v) is below 0.1 stTIA minimum", msg.StTokenAmount)
+	}
+
+	if msg.Receiver == "" {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "receiver must be specified")
 	}
 
 	return nil
