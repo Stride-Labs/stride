@@ -23,6 +23,28 @@ define build_and_push_docker
 	@$(DOCKER) push $(GCR_REPO)/$(3)
 endef
 
+check-empty-namespace:
+	@POD_COUNT=$$($(KUBECTL) get pods --no-headers -n $(K8S_NAMESPACE) | wc -l); \
+	if [ $$POD_COUNT -eq 0 ]; then exit 0; else exit 1; fi
+
+wait-for-startup:
+	@echo "---" && sleep 1
+	@printf "Waiting for network to startup..."
+	@elapsed=0; \
+	while true; do \
+		not_ready_pods=$$($(KUBECTL) get pods --no-headers -n $(K8S_NAMESPACE) | grep -v '1/1 *Running' | wc -l); \
+		if [ $$not_ready_pods -eq 0 ]; then \
+			printf "Ready! 🚀\n"; \
+			break; \
+		fi; \
+		if [ $$elapsed -eq 30 ]; then \
+			printf "\nThe network's taking longer than expected to startup. Please investigate\n"; \
+			exit 1; \
+		fi; \
+		sleep 1 && printf "."; \
+		elapsed=$$((elapsed + 1)); \
+	done
+
 python-install:
 	conda create --name $(VENV_NAME) python=3.11 -y
 	$(PYTHON) -m pip install -r api/requirements.txt
@@ -54,6 +76,7 @@ local-init-chain:
 
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
+	@$(MAKE) wait-for-startup
 
 stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)
