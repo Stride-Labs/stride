@@ -2,16 +2,7 @@
 
 set -eu
 source scripts/config.sh
-
-LOCAL_MODE=${1:-false}
-
-# If this is being run locally, don't overwrite the main chain folder
-if [[ "$LOCAL_MODE" == "true" ]]; then
-    CHAIN_HOME=state
-    rm -rf state
-    BINARY="$BINARY --home $CHAIN_HOME"
-    API_ENDPOINT="http://localhost:8000"
-fi
+source scripts/utils.sh
 
 # Wait for API server to start
 wait_for_api $API_ENDPOINT
@@ -47,6 +38,22 @@ upload_shared_file() {
         -F "file=@$file_path" && echo 
 }
 
+# Helper function to add an account to the keyring and genesis
+# The key arg is a JSON string with "name" and "mnemonic" fields
+add_genesis_account() {
+    key="$1"
+    balance="$2"
+
+    echo $key
+    name=$(echo $key | jq -r '.name')
+    mnemonic=$(echo $key | jq -r '.mnemonic')
+
+    echo "$mnemonic" | $BINARY keys add $name --recover
+    address=$($BINARY keys show $name -a)
+
+    $BINARY $chain_genesis_command add-genesis-account $address $balance
+}
+
 # Adds each validator to the genesis file, and also saves down the public keys 
 # which are needed for ICS
 # Each validators public private key and node ID are saved in the API
@@ -55,14 +62,11 @@ add_validators() {
 
     validator_public_keys=""
     for (( i=1; i <= $NUM_VALIDATORS; i++ )); do
-        # Extract the validator name and mnemonic from keys.json
-        validator_config=$(jq -r '.validators[$index]' --argjson index "$((i-1))" ${KEYS_FILE})
-        name=$(echo $validator_config | jq -r '.name')
-        mnemonic=$(echo $validator_config | jq -r '.mnemonic')
+        # Add the validator account to the keyring and genesis
+        validator_key=$(jq -r '.validators[$index]' --argjson index "$((i-1))" ${KEYS_FILE})
+        name=$(echo $validator_key | jq -r '.name')
 
-        # Add the key to the main keyring the the validator's sub-keyring
-        echo "$mnemonic" | $BINARY keys add $name --recover
-        address=$($BINARY keys show $name -a)
+        add_genesis_account "$validator_key" "${VALIDATOR_BALANCE}${DENOM}"
 
         # Use a separate directory for the non-main nodes so we can generate unique validator keys
         if [[ "$i" == "1" ]]; then 
@@ -71,10 +75,6 @@ add_validators() {
             validator_home=/tmp/${CHAIN_NAME}-${name} && rm -rf $validator_home
             $BINARY init $name --chain-id $CHAIN_ID --overwrite --home ${validator_home} &> /dev/null
         fi
-
-        # Add the genesis account 
-        genesis_balance=${VALIDATOR_BALANCE}${DENOM}
-        $BINARY $chain_genesis_command add-genesis-account $address $genesis_balance
 
         # Save the node IDs and keys to the API
         $BINARY tendermint show-node-id --home ${validator_home} > node_id.txt
@@ -86,12 +86,32 @@ add_validators() {
         validator_public_keys+="$(jq -r '.pub_key.value' ${validator_home}/config/priv_validator_key.json),"
     done
 
-    # For non-stride nodes, generate and collect the validator gentx (for the main node only)
+    # For non-stride nodes, generate the validator gentx (for the main node only)
     # The other validators will be created after startup
     if [[ "$CHAIN_NAME" != "stride" ]]; then 
         $BINARY $chain_genesis_command gentx val1 ${VALIDATOR_STAKE}${DENOM} --chain-id $CHAIN_ID 
-        $BINARY $chain_genesis_command collect-gentxs
     fi
+}
+
+# Adds all the non-validator accounts
+add_accounts() {
+    echo "Adding admin account..."
+    admin_key=$(cat $KEYS_FILE | jq -c '.admin')
+    add_genesis_account "$admin_key" ${USER_BALANCE}${DENOM} 
+
+    echo "Adding faucet account..."
+    faucet_key=$(cat $KEYS_FILE | jq -c '.faucet')
+    add_genesis_account "$faucet_key" ${USER_BALANCE}${DENOM} 
+
+    echo "Adding relayer accounts..."
+    jq -c '.relayers[]' $KEYS_FILE | while IFS= read -r relayer_key; do
+        add_genesis_account "$relayer_key" ${RELAYER_BALANCE}${DENOM}
+    done
+
+    echo "Adding user accounts..."
+    jq -c '.users[]' $KEYS_FILE | while IFS= read -r user_keys; do
+        add_genesis_account "$user_keys" ${RELAYER_BALANCE}${DENOM}
+    done
 }
 
 # Updates the genesis config with defaults
@@ -136,11 +156,13 @@ main() {
     echo "Initializing chain..."
     init_config
     add_validators
+    add_accounts
     update_default_genesis
     if [[ "$CHAIN_NAME" == "stride" ]]; then 
         update_stride_genesis
     else 
         update_host_genesis
+        $BINARY $chain_genesis_command collect-gentxs
     fi
     save_genesis
     echo "Done"
