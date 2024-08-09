@@ -17,7 +17,8 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
-const MaxMemoCharLength = 2000
+const MaxMemoCharLength = 4096
+const MaxReceiverCharLength = 1024
 
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
@@ -135,7 +136,7 @@ func (im IBCModule) OnRecvPacket(
 	if len(tokenPacketData.Memo) > MaxMemoCharLength {
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(tokenPacketData.Memo)))
 	}
-	if len(tokenPacketData.Receiver) > MaxMemoCharLength {
+	if len(tokenPacketData.Receiver) > MaxReceiverCharLength {
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(tokenPacketData.Receiver)))
 	}
 
