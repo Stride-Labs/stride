@@ -25,12 +25,15 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
 		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
-		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
-		k.SweepAllUnbondedTokens(ctx)
 		// Cleanup any records that are no longer needed
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
 		k.CreateEpochUnbondingRecord(ctx, epochNumber)
+	}
+
+	if epochInfo.Identifier == epochstypes.HOUR_EPOCH {
+		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
+		k.SweepAllUnbondedTokens(ctx)
 	}
 
 	// Stride Epoch - Process Deposits and Delegations
