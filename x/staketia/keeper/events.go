@@ -90,6 +90,7 @@ func EmitHaltZoneEvent(ctx sdk.Context, hostZone types.HostZone) {
 		sdk.NewEvent(
 			types.EventTypeHostZoneHalt,
 			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyRedemptionRate, hostZone.RedemptionRate.String()),
 		),
 	)
 }

@@ -736,8 +736,6 @@ func NewStrideApp(
 		app.BankKeeper,
 		app.ICAOracleKeeper,
 		app.RatelimitKeeper,
-		app.RecordsKeeper,
-		app.StakeibcKeeper,
 		app.TransferKeeper,
 	)
 	stakeTiaModule := staketia.NewAppModule(appCodec, app.StaketiaKeeper)

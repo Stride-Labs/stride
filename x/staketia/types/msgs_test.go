@@ -92,7 +92,6 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			msg: types.MsgRedeemStake{
 				Redeemer:      sample.AccAddress(),
 				StTokenAmount: sdkmath.NewInt(1000000),
-				Receiver:      "reciever",
 			},
 		},
 		{
@@ -100,7 +99,6 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			msg: types.MsgRedeemStake{
 				Redeemer:      "invalid_address",
 				StTokenAmount: sdkmath.NewInt(1000000),
-				Receiver:      "reciever",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		},
@@ -109,18 +107,8 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			msg: types.MsgRedeemStake{
 				Redeemer:      sample.AccAddress(),
 				StTokenAmount: sdkmath.NewInt(20000),
-				Receiver:      "reciever",
 			},
 			err: types.ErrInvalidAmountBelowMinimum,
-		},
-		{
-			name: "invalid receiver",
-			msg: types.MsgRedeemStake{
-				Redeemer:      sample.AccAddress(),
-				StTokenAmount: sdkmath.NewInt(1000000),
-				Receiver:      "",
-			},
-			err: sdkerrors.ErrInvalidRequest,
 		},
 	}
 	for _, tt := range tests {
@@ -137,10 +125,10 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 
 func TestMsgRedeemStake_GetSignBytes(t *testing.T) {
 	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgRedeemStake(addr, sdkmath.NewInt(1000000), "receiver")
+	msg := types.NewMsgRedeemStake(addr, sdkmath.NewInt(1000000))
 	res := msg.GetSignBytes()
 
-	expected := `{"type":"staketia/MsgRedeemStake","value":{"receiver":"receiver","redeemer":"stride1v9jxgu33kfsgr5","st_token_amount":"1000000"}}`
+	expected := `{"type":"staketia/MsgRedeemStake","value":{"redeemer":"stride1v9jxgu33kfsgr5","st_token_amount":"1000000"}}`
 	require.Equal(t, expected, string(res))
 }
 

@@ -75,12 +75,10 @@ service Msg {
       returns (MsgSetOperatorAddressResponse);
 }
 
-// Deprecated: Liquid stakes should be handled in stakeibc
 // LiquidStake
 message MsgLiquidStake {
   option (cosmos.msg.v1.signer) = "staker";
   option (amino.name) = "staketia/MsgLiquidStake";
-  option deprecated = true;
 
   string staker = 1;
   string native_amount = 2 [
@@ -89,8 +87,6 @@ message MsgLiquidStake {
   ];
 }
 message MsgLiquidStakeResponse {
-  option deprecated = true;
-
   cosmos.base.v1beta1.Coin st_token = 1 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
@@ -107,9 +103,6 @@ message MsgRedeemStake {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  // The receiver field is a celestia address
-  // It is only used in the case where the redemption spills over to stakeibc
-  string receiver = 3;
 }
 message MsgRedeemStakeResponse {
   cosmos.base.v1beta1.Coin native_token = 1 [
