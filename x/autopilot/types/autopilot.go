@@ -34,10 +34,10 @@ type ModuleRoutingInfo interface {
 	Validate() error
 }
 
-// GenerateHashedSender generates a new  address for a packet, by hashing
+// GenerateHashedAddress generates a new  address for a packet, by hashing
 // the channel and original sender.
 // This makes the address deterministic and can used to identify the sender
-// from the preivous hop
+// from the previous hop
 // Additionally, this prevents a forwarded packet from impersonating a different account
 // when moving to the next hop (i.e. receiver of one hop, becomes sender of next)
 //

@@ -247,7 +247,7 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) erro
 	return nil
 }
 
-// ClearClaimables clear claimable amounts
+// clearInitialClaimables clear claimable amounts
 func (k Keeper) clearInitialClaimables(ctx sdk.Context, airdropIdentifier string) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropIdentifier)...))
