@@ -1,7 +1,6 @@
 package v24
 
 import (
-	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -11,7 +10,6 @@ import (
 	recordskeeper "github.com/Stride-Labs/stride/v23/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
-	staketiakeeper "github.com/Stride-Labs/stride/v23/x/staketia/keeper"
 )
 
 var (
@@ -25,7 +23,6 @@ func CreateUpgradeHandler(
 	bankKeeper bankkeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
-	staketiaKeeper staketiakeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v24...")
@@ -33,13 +30,6 @@ func CreateUpgradeHandler(
 		// Migrate data structures
 		MigrateHostZones(ctx, stakeibcKeeper)
 		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
-
-		// Migrate staketia to stakeibc
-		if err := staketiakeeper.InitiateMigration(ctx, staketiaKeeper, bankKeeper, recordsKeeper, stakeibcKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to migrate staketia to stakeibc")
-		}
-
-		// TODO: add celestia validator set
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)

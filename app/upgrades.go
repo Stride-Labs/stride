@@ -321,7 +321,6 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.BankKeeper,
 			app.RecordsKeeper,
 			app.StakeibcKeeper,
-			app.StaketiaKeeper,
 		),
 	)
 
