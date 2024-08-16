@@ -29,6 +29,7 @@ func CreateUpgradeHandler(
 
 		// Migrate data structures
 		MigrateHostZones(ctx, stakeibcKeeper)
+		MigrateDepositRecords(ctx, recordsKeeper)
 		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
 
 		ctx.Logger().Info("Running module migrations...")
