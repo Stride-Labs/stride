@@ -25,8 +25,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
 		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
-		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
-		k.SweepUnbondedTokensAllHostZones(ctx)
 		// Cleanup any records that are no longer needed
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
@@ -79,6 +77,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		if epochNumber%StrideEpochsPerDayEpoch == 0 {
 			k.RebalanceAllHostZones(ctx)
 		}
+
+		// Check previous epochs to see if unbondings finished, and sends the relevant tokens
+		// to the redemption account
+		k.SweepUnbondedTokensAllHostZones(ctx)
 
 		// Transfers in and out of tokens for hostZones which have community pools
 		k.ProcessAllCommunityPoolTokens(ctx)
