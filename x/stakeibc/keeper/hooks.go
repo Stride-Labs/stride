@@ -80,12 +80,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		// Check previous epochs to see if unbondings finished, and sends the relevant tokens
 		// to the redemption account
-		// This is run on the stride epoch immediately after a day epoch
-		// Since the unbonding is initiated at the start of the day epoch, we know that by the
-		// next stride epoch, they will have finished unbonding
-		if epochNumber%StrideEpochsPerDayEpoch == 2 {
-			k.SweepUnbondedTokensAllHostZones(ctx)
-		}
+		k.SweepUnbondedTokensAllHostZones(ctx)
 
 		// Transfers in and out of tokens for hostZones which have community pools
 		k.ProcessAllCommunityPoolTokens(ctx)
