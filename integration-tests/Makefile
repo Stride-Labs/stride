@@ -10,7 +10,10 @@ PYTHON := $(VENV_BIN)/python
 
 HELM_CHART=network
 PLATFORM=linux/amd64
-GCR_REPO = gcr.io/stride-nodes/integration-tests
+GCR_REPO=gcr.io/stride-nodes/integration-tests
+
+ADMINS_FILE=../utils/admins.go
+KEYS_FILE=network/configs/keys.json
 
 # Builds and pushes a docker image
 # args: [image-file-suffix] [context] [image-name] 
@@ -56,8 +59,7 @@ build-api:
 	$(call build_and_push_docker,api,api,api:latest)
 
 build-stride:
-	@$(DOCKER) buildx build --platform linux/amd64 --tag core:stride ..
-	$(call build_and_push_docker,stride,.,chains/stride:latest)
+	@bash network/scripts/build.sh stride
 
 build-cosmos:
 	$(call build_and_push_docker,cosmos,.,chains/cosmoshub:v18.1.0)
