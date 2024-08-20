@@ -2,6 +2,7 @@
 
 set -eu 
 source scripts/config.sh
+source scripts/utils.sh
 
 # Wait for API server to start
 wait_for_api $API_ENDPOINT
