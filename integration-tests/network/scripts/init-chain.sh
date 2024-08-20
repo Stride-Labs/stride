@@ -139,6 +139,8 @@ update_stride_genesis() {
 
     $BINARY add-consumer-section --validator-public-keys $validator_public_keys
     jq_inplace '.app_state.ccvconsumer.params.unbonding_period |= "'$UNBONDING_TIME'"' $genesis_json 
+
+    jq_inplace '.app_state.airdrop.params.period_length_seconds |= "'${AIRDROP_PERIOD_LENGTH}'"' $genesis_json 
 }
 
 # Genesis updates specific to non-stride chains
