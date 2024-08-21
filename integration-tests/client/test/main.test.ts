@@ -9,11 +9,12 @@ import {
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
+import { waitForChain } from "./utils";
 
 const RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 
 let accounts: {
-  user: StrideClient; // just a normal user account loaded with 100 STRD
+  user: StrideClient; // a normal account loaded with 100 STRD
   admin: StrideClient; // the stride admin account loaded with 1000 STRD
   val1: StrideClient;
   val2: StrideClient;
@@ -79,21 +80,8 @@ beforeAll(async () => {
     });
   }
 
-  console.log("waiting for chain to start...");
-  while (true) {
-    try {
-      const block =
-        await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
-          {},
-        );
-
-      if (block?.block?.header.height! > 0n) {
-        break;
-      }
-
-      await sleep(50);
-    } catch (error) {}
-  }
+  console.log("waiting for stride to start...");
+  await waitForChain(accounts.user, "ustrd");
 });
 
 // time variables in seconds
@@ -157,13 +145,13 @@ describe("ibc", () => {
             revisionHeight: 0n,
           },
           timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes from now as nanoseconds
+            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes 
           ),
           memo: "",
         },
       );
 
-    const tx = await stridejs.signAndBroadcast([msg]);
+    const tx = await stridejs.signAndBroadcast([msg], 2);
     if (tx.code !== 0) {
       console.error(tx.rawLog);
     }
