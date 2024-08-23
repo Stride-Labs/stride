@@ -70,11 +70,11 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 	// In the query response, this will be used to verify that the query wasn't historical
 	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, query.ConnectionId)
 	if !found {
-		return errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, query.ConnectionId)
+		return errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "%s", query.ConnectionId)
 	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
-		return errorsmod.Wrapf(clienttypes.ErrClientNotFound, connection.ClientId)
+		return errorsmod.Wrapf(clienttypes.ErrClientNotFound, "%s", connection.ClientId)
 	}
 	query.SubmissionHeight = clientState.GetLatestHeight().GetRevisionHeight()
 
@@ -96,7 +96,7 @@ func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
 
 	// Submit a new query (with a new ID)
 	if err := k.SubmitICQRequest(ctx, query, true); err != nil {
-		return errorsmod.Wrapf(err, types.ErrFailedToRetryQuery.Error())
+		return errorsmod.Wrapf(err, "failed to retry query")
 	}
 
 	return nil

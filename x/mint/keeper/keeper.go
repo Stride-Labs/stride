@@ -165,9 +165,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	// allocate pool allocation ratio to strategic reserve
 	strategicReserveAddress, err := sdk.AccAddressFromBech32(StrategicReserveAddress)
 	if err != nil {
-		errMsg := fmt.Sprintf("invalid strategic reserve address: %s", StrategicReserveAddress)
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, errMsg)
+		return errorsmod.Wrapf(err, "invalid strategic reserve address: %s", StrategicReserveAddress)
 	}
 	strategicReserveProportion := k.GetProportions(ctx, mintedCoin, proportions.StrategicReserve)
 	strategicReserveCoins := sdk.NewCoins(strategicReserveProportion)
@@ -196,9 +194,9 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	remainingBal := remainingCoins.AmountOf(sdk.DefaultBondDenom)
 	thresh := sdk.NewDec(5).Quo(sdk.NewDec(100))
 	if sdk.NewDecFromInt(remainingBal).Quo(sdk.NewDecFromInt(mintedCoin.Amount)).GT(thresh) {
-		errMsg := fmt.Sprintf("Failed to divvy up mint module rewards fully -- remaining coins should be LT 5pct of total, instead are %#v/%#v", remainingCoins, remainingBal)
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds, errMsg)
+		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
+			"Failed to divvy up mint module rewards fully -- remaining coins should be LT 5pct of total, instead are %#v/%#v",
+			remainingCoins, remainingBal)
 	}
 
 	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, k.feeCollectorName, stakingIncentivesCoins)

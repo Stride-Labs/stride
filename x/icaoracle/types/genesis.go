@@ -17,7 +17,7 @@ func DefaultGenesis() *GenesisState {
 // failure.
 func (gs GenesisState) Validate() error {
 	if err := gs.Params.Validate(); err != nil {
-		return errorsmod.Wrapf(ErrInvalidGenesisState, err.Error())
+		return errorsmod.Wrapf(err, "invalid genesis state")
 	}
 	for _, oracle := range gs.Oracles {
 		if oracle.ChainId == "" {
