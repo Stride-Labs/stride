@@ -28,8 +28,7 @@ func (k Keeper) MarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallback 
 func (k Keeper) UnmarshalRebalanceCallbackArgs(ctx sdk.Context, rebalanceCallback []byte) (*types.RebalanceCallback, error) {
 	unmarshalledRebalanceCallback := types.RebalanceCallback{}
 	if err := proto.Unmarshal(rebalanceCallback, &unmarshalledRebalanceCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalRebalanceCallbackArgs %v", err.Error()))
-		return nil, err
+		return nil, errorsmod.Wrap(err, "unable to unmarshal rebalance callback args")
 	}
 	return &unmarshalledRebalanceCallback, nil
 }
@@ -41,7 +40,7 @@ func (k Keeper) RebalanceCallback(ctx sdk.Context, packet channeltypes.Packet, a
 	// Fetch callback args
 	rebalanceCallback, err := k.UnmarshalRebalanceCallbackArgs(ctx, args)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal rebalance callback args: %s", err.Error()))
+		return err
 	}
 	chainId := rebalanceCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Rebalance, "Starting rebalance callback"))

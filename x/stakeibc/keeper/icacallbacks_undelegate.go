@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v23/utils"
@@ -32,7 +30,7 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	// Fetch callback args
 	var undelegateCallback types.UndelegateCallback
 	if err := proto.Unmarshal(args, &undelegateCallback); err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal undelegate callback args: %s", err.Error()))
+		return errorsmod.Wrap(err, "unable to unmarshal undelegate callback args")
 	}
 
 	// Fetch the relevant host zone

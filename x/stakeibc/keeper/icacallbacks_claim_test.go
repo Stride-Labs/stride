@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) TestClaimCallback_WrongCallbackArgs() {
 	invalidCallbackArgs := []byte("random bytes")
 
 	err := s.App.StakeibcKeeper.ClaimCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal claim callback args: unexpected EOF: unable to unmarshal data structure")
+	s.Require().ErrorContains(err, "unable to unmarshal claim callback args")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {

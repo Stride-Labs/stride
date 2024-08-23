@@ -159,7 +159,7 @@ func (s *KeeperTestSuite) TestRedemptionCallback_WrongCallbackArgs() {
 	invalidCallbackArgs := []byte("random bytes")
 
 	err := s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal redemption callback args: unexpected EOF: unable to unmarshal data structure")
+	s.Require().ErrorContains(err, "unable to unmarshal redemption callback args: unexpected EOF")
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
 
