@@ -297,7 +297,7 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 func (k Keeper) EnableRedemptions(ctx sdk.Context, chainId string) error {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		return types.ErrHostZoneNotFound.Wrapf(chainId)
+		return types.ErrHostZoneNotFound.Wrap(chainId)
 	}
 
 	hostZone.RedemptionsEnabled = true

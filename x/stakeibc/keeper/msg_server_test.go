@@ -412,9 +412,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_HostZoneNotFound() {
 	badHostZoneMsg := tc.validMsgs[0]
 	badHostZoneMsg.HostZone = "gaia"
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
-	errMsg := "Validator (stride_VAL1) not removed from host zone (gaia) "
-	errMsg += "| err: HostZone (gaia) not found: host zone not found: validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "host zone gaia not found")
 }
 
 func (s *KeeperTestSuite) TestDeleteValidator_AddressNotFound() {
@@ -425,10 +423,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_AddressNotFound() {
 	badAddressMsg.ValAddr = "stride_VAL5"
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &badAddressMsg)
 
-	errMsg := "Validator (stride_VAL5) not removed from host zone (GAIA) "
-	errMsg += "| err: Validator address (stride_VAL5) not found on host zone (GAIA): "
-	errMsg += "validator not found: validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "failed to remove validator stride_VAL5 from host zone GAIA")
 }
 
 func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
@@ -440,10 +435,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
-	errMsg := "Validator (stride_VAL1) not removed from host zone (GAIA) "
-	errMsg += "| err: Validator (stride_VAL1) has non-zero delegation (1) or weight (0): "
-	errMsg += "validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "Validator (stride_VAL1) has non-zero delegation (1) or weight (0)")
 }
 
 func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
@@ -455,10 +447,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
-	errMsg := "Validator (stride_VAL1) not removed from host zone (GAIA) "
-	errMsg += "| err: Validator (stride_VAL1) has non-zero delegation (0) or weight (1): "
-	errMsg += "validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "Validator (stride_VAL1) has non-zero delegation (0) or weight (1)")
 }
 
 // ----------------------------------------------------
@@ -2053,10 +2042,7 @@ func (s *KeeperTestSuite) TestResumeHostZone_MissingZones() {
 
 	// Set the inner bounds on the host zone
 	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &invalidMsg)
-
-	s.Require().Error(err, "shouldn't be able to call tx on missing zones")
-	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not found: host zone not found", invalidChainId)
-	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
+	s.Require().ErrorContains(err, "host zone invalid-chain not found")
 }
 
 // verify that the function can't be called on unhalted zones
@@ -2071,9 +2057,7 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 
 	// Set the inner bounds on the host zone
 	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &tc.validMsg)
-	s.Require().Error(err, "shouldn't be able to call tx on unhalted zones")
-	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not halted: host zone is not halted", HostChainId)
-	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
+	s.Require().Error(err, "host zone GAIA is not halted")
 }
 
 // ----------------------------------------------------

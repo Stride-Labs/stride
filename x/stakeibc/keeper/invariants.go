@@ -3,8 +3,6 @@ package keeper
 // DONTCOVER
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -50,9 +48,8 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	redemptionRate := zone.RedemptionRate
 
 	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds,
+			"redemption rate %v is outside safety bounds [%v, %v]", redemptionRate, minSafetyThreshold, maxSafetyThreshold)
 	}
 
 	// Verify the redemption rate is within the inner safety bounds
@@ -61,9 +58,8 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	// There is also one scenario where the outer bounds go within the inner bounds - if they're updated as part of a param change proposal.
 	minInnerSafetyThreshold, maxInnerSafetyThreshold := k.GetInnerSafetyBounds(ctx, zone)
 	if redemptionRate.LT(minInnerSafetyThreshold) || redemptionRate.GT(maxInnerSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minInnerSafetyThreshold.String(), maxInnerSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds,
+			"redemption rate %v is outside inner safety bounds [%v, %v]", redemptionRate, minInnerSafetyThreshold, maxInnerSafetyThreshold)
 	}
 
 	return true, nil

@@ -41,9 +41,11 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 
 	// safety check: redemption rate must be within safety bounds
 	rateIsSafe, err := k.IsRedemptionRateWithinSafetyBounds(ctx, hostZone)
-	if !rateIsSafe || (err != nil) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed. hostZone: %s, err: %s", hostZone.String(), err.Error())
-		return nil, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, "unable to check if redemption rate is within safety bounds")
+	}
+	if !rateIsSafe {
+		return nil, types.ErrRedemptionRateOutsideSafetyBounds
 	}
 
 	// construct desired unstaking amount from host zone

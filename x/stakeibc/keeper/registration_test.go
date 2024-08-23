@@ -258,7 +258,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	msg.ConnectionId = "connection-10" // an invalid connection ID
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().EqualError(err, "invalid connection id, connection-10 not found: failed to register host zone")
+	s.Require().ErrorContains(err, "connection-id connection-10 does not exist")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState() {
@@ -276,9 +276,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState()
 	msg.IbcDenom = "ibc-atom-different"   // a different IBC denom
 
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "invalid chain id, zone for GAIA already registered: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate connection ID should fail")
+	s.Require().ErrorContains(err, "host zone already registered for chain-id GAIA")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInStakeibcState() {
@@ -303,9 +301,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInStakeibcSt
 
 	// Registering should fail with a duplicate connection ID
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &newHostZoneMsg)
-	expectedErrMsg := "connectionId connection-1 already registered: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate connection ID should fail")
+	s.Require().ErrorContains(err, "connection-id connection-1 already registered")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
@@ -325,8 +321,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
 	invalidMsg.HostDenom = tc.validMsg.HostDenom
 
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	expectedErrMsg := "host denom uatom already registered: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
+	s.Require().ErrorContains(err, "host denom uatom already registered")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
@@ -346,8 +341,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
 	invalidMsg.TransferChannelId = tc.validMsg.TransferChannelId
 
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	expectedErrMsg := "transfer channel channel-0 already registered: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
+	s.Require().ErrorContains(err, "transfer channel channel-0 already registered")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
@@ -367,8 +361,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
 	invalidMsg.Bech32Prefix = tc.validMsg.Bech32Prefix
 
 	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	expectedErrMsg := "bech32prefix cosmos already registered: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate bech32 prefix should fail")
+	s.Require().ErrorContains(err, "bech32 prefix cosmos already registered")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindDayEpochTracker() {
@@ -406,8 +399,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() 
 	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "unable to find latest epoch unbonding record: epoch unbonding record not found"
-	s.Require().EqualError(err, expectedErrMsg, " epoch unbonding record not found")
+	s.Require().ErrorContains(err, "epoch unbonding record not found for epoch 3")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount() {
@@ -418,10 +410,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount()
 	s.createActiveChannelOnICAPort("DELEGATION", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register delegation account, err: existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register delegation account")
+	s.Require().ErrorContains(err, "failed to register delegation ICA")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
@@ -432,10 +421,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
 	s.createActiveChannelOnICAPort("FEE", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register fee account, err: existing active channel channel-1 for portID icacontroller-GAIA.FEE "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
+	s.Require().ErrorContains(err, "failed to register fee ICA")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount() {
@@ -446,10 +432,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount()
 	s.createActiveChannelOnICAPort("WITHDRAWAL", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register withdrawal account, err: existing active channel channel-1 for portID icacontroller-GAIA.WITHDRAWAL "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
+	s.Require().ErrorContains(err, "failed to register withdrawal ICA")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount() {
@@ -460,10 +443,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount()
 	s.createActiveChannelOnICAPort("REDEMPTION", "channel-1")
 
 	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register redemption account, err: existing active channel channel-1 for portID icacontroller-GAIA.REDEMPTION "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
+	s.Require().ErrorContains(err, "failed to register redemption ICA")
 }
 
 func (s *KeeperTestSuite) TestRegisterHostZone_InvalidCommunityPoolTreasuryAddress() {

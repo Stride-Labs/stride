@@ -89,9 +89,7 @@ func (k msgServer) DeleteValidator(goCtx context.Context, msg *types.MsgDeleteVa
 
 	err := k.RemoveValidatorFromHostZone(ctx, msg.HostZone, msg.ValAddr)
 	if err != nil {
-		errMsg := fmt.Sprintf("Validator (%s) not removed from host zone (%s) | err: %s", msg.ValAddr, msg.HostZone, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrValidatorNotRemoved, errMsg)
+		return nil, errorsmod.Wrapf(err, "failed to remove validator %s from host zone %s", msg.ValAddr, msg.HostZone)
 	}
 
 	return &types.MsgDeleteValidatorResponse{}, nil
@@ -694,15 +692,15 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 
 	// Confirm the inner bounds are within the outer bounds
 	if innerMinSafetyThreshold.LT(outerMinSafetyThreshold) {
-		errMsg := fmt.Sprintf("inner min safety threshold (%s) is less than outer min safety threshold (%s)", innerMinSafetyThreshold, outerMinSafetyThreshold)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrInvalidBounds, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidBounds,
+			"inner min safety threshold (%s) is less than outer min safety threshold (%s)",
+			innerMinSafetyThreshold, outerMinSafetyThreshold)
 	}
 
 	if innerMaxSafetyThreshold.GT(outerMaxSafetyThreshold) {
-		errMsg := fmt.Sprintf("inner max safety threshold (%s) is greater than outer max safety threshold (%s)", innerMaxSafetyThreshold, outerMaxSafetyThreshold)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrInvalidBounds, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrInvalidBounds,
+			"inner max safety threshold (%s) is greater than outer max safety threshold (%s)",
+			innerMaxSafetyThreshold, outerMaxSafetyThreshold)
 	}
 
 	// Set the inner bounds on the host zone
@@ -720,16 +718,12 @@ func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHos
 	// Get Host Zone
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
-		errMsg := fmt.Sprintf("invalid chain id, zone for %s not found", msg.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", msg.ChainId)
 	}
 
 	// Check the zone is halted
 	if !hostZone.Halted {
-		errMsg := fmt.Sprintf("invalid chain id, zone for %s not halted", msg.ChainId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, "host zone %s is not halted", msg.ChainId)
 	}
 
 	// remove from blacklist
