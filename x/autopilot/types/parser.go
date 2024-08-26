@@ -79,7 +79,7 @@ func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 		middlewareModulesEnabled++
 	}
 	if middlewareModulesEnabled > 1 {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata,
+		return nil, errorsmod.Wrap(ErrInvalidPacketMetadata,
 			"only one of autopilot, pfm, and wasm can both be used in the same packet")
 	}
 
@@ -91,7 +91,7 @@ func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 
 	// Confirm a receiver address was supplied
 	if _, err := sdk.AccAddressFromBech32(raw.Autopilot.Receiver); err != nil {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidReceiverAddress.Error())
+		return nil, errorsmod.Wrap(ErrInvalidPacketMetadata, ErrInvalidReceiverAddress.Error())
 	}
 
 	// Parse the packet info into the specific module type
@@ -111,12 +111,12 @@ func ParseAutopilotMetadata(metadata string) (*AutopilotMetadata, error) {
 		routingInfo = *raw.Autopilot.Claim
 	}
 	if moduleCount != 1 {
-		return nil, errorsmod.Wrapf(ErrInvalidPacketMetadata, ErrInvalidModuleRoutes.Error())
+		return nil, errorsmod.Wrap(ErrInvalidPacketMetadata, ErrInvalidModuleRoutes.Error())
 	}
 
 	// Validate the packet info according to the specific module type
 	if err := routingInfo.Validate(); err != nil {
-		return nil, errorsmod.Wrapf(err, ErrInvalidPacketMetadata.Error())
+		return nil, errorsmod.Wrap(err, ErrInvalidPacketMetadata.Error())
 	}
 
 	return &AutopilotMetadata{

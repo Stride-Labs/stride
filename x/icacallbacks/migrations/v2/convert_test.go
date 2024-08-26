@@ -161,7 +161,7 @@ func TestConvertCallbackData_Delegate_Error(t *testing.T) {
 
 	// The convert function should fail since it cannot unmarshal the callback args into a DelegateCallback
 	_, err := convertCallbackData(oldCallbackData)
-	require.ErrorContains(t, err, "unable to unmarshal data structure")
+	require.ErrorContains(t, err, "failed to unmarshal")
 }
 
 func TestConvertCallbackData_Rebalance_Success(t *testing.T) {
@@ -207,7 +207,7 @@ func TestConvertCallbackData_Rebalance_Error(t *testing.T) {
 
 	// The convert function should fail since it cannot unmarshal the callback args into a RebalanceCallback
 	_, err := convertCallbackData(oldCallbackData)
-	require.ErrorContains(t, err, "unable to unmarshal data structure")
+	require.ErrorContains(t, err, "failed to unmarshal")
 }
 
 func TestConvertCallbackData_Other(t *testing.T) {

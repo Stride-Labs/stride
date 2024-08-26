@@ -1,7 +1,6 @@
 package v8
 
 import (
-	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -45,7 +44,7 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Resetting airdrop claims...")
 		for _, claimType := range ResetAirdropIdentifiers {
 			if err := claimKeeper.ResetClaimStatus(ctx, claimType); err != nil {
-				return vm, errorsmod.Wrapf(err, fmt.Sprintf("unable to reset %s claim status", claimType))
+				return vm, errorsmod.Wrapf(err, "unable to reset %s claim status", claimType)
 			}
 		}
 

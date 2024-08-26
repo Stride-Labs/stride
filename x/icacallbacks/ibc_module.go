@@ -140,9 +140,7 @@ func (im IBCModule) OnTimeoutPacket(
 	}
 
 	if err := im.keeper.CallRegisteredICACallback(ctx, packet, &ackResponse); err != nil {
-		errMsg := fmt.Sprintf("Unable to call registered ICACallback from OnTimeoutPacket, Packet: %+v", packet)
-		im.keeper.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(types.ErrCallbackFailed, errMsg)
+		return errorsmod.Wrapf(err, "Unable to call registered ICACallback from OnTimeoutPacket, Packet: %+v", packet)
 	}
 	return nil
 }
