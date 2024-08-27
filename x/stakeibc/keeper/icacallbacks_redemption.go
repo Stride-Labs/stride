@@ -63,7 +63,7 @@ func (k Keeper) RedemptionCallback(ctx sdk.Context, packet channeltypes.Packet, 
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
 		// Reset unbondings record status
-		err := k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
+		err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
 		if err != nil {
 			return err
 		}

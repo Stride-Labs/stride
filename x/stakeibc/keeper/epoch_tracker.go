@@ -110,7 +110,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	}
 	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
-		return sdk.ZeroDec(), errorsmod.Wrapf(err, "unable to convert next epoch start time to int64")
+		return sdk.ZeroDec(), errorsmod.Wrap(err, "unable to convert next epoch start time to int64")
 	}
 	epochStartTime := epochEndTime - epochDuration
 

@@ -31,8 +31,7 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	}
 
 	// Confirm host zone is not halted
-	_, err = k.GetActiveHostZone(ctx, msg.HostZoneId)
-	if err != nil {
+	if _, err = k.GetActiveHostZone(ctx, msg.HostZoneId); err != nil {
 		return nil, err
 	}
 
