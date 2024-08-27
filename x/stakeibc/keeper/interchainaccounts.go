@@ -106,32 +106,11 @@ func (k Keeper) SubmitTxsStrideEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, icaAccountType, epochstypes.STRIDE_EPOCH, callbackId, callbackArgs)
+	timeoutNanosUint64, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
-		return 0, err
+		return 0, errorsmod.Wrap(err, "failed to convert timeoutNanos to uint64")
 	}
-	return sequence, nil
-}
-
-func (k Keeper) SubmitTxsEpoch(
-	ctx sdk.Context,
-	connectionId string,
-	msgs []proto.Message,
-	icaAccountType types.ICAAccountType,
-	epochType string,
-	callbackId string,
-	callbackArgs []byte,
-) (uint64, error) {
-	timeoutNanosUint64, err := k.GetICATimeoutNanos(ctx, epochType)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to get ICA timeout nanos for epochType %s using param, error: %s", epochType, err.Error()))
-		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
-	}
-	sequence, err := k.SubmitTxs(ctx, connectionId, msgs, icaAccountType, timeoutNanosUint64, callbackId, callbackArgs)
-	if err != nil {
-		return 0, err
-	}
-	return sequence, nil
+	return k.SubmitTxs(ctx, connectionId, msgs, icaAccountType, timeoutNanosUint64, callbackId, callbackArgs)
 }
 
 // SubmitTxs submits an ICA transaction containing multiple messages
