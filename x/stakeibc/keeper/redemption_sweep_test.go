@@ -49,7 +49,7 @@ func (s *KeeperTestSuite) SetupSweepUnbondedTokens() SweepUnbondedTokensTestCase
 
 	// Add epoch tracker to determine ICA timeout
 	dayEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochtypes.DAY_EPOCH,
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        1,
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
 	}

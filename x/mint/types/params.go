@@ -194,7 +194,7 @@ func validateDistributionProportions(i interface{}) error {
 	totalProportions := v.Staking.Add(v.CommunityPoolGrowth).Add(v.CommunityPoolSecurityBudget).Add(v.StrategicReserve)
 
 	if !totalProportions.Equal(sdk.NewDec(1)) {
-		return fmt.Errorf(fmt.Sprintf("total distributions ratio should be 1, instead got %s", totalProportions.String()))
+		return fmt.Errorf("total distributions ratio should be 1, instead got %s", totalProportions.String())
 	}
 
 	return nil

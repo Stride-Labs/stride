@@ -1,12 +1,11 @@
 package keeper
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
 	"github.com/Stride-Labs/stride/v23/utils"
 	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
@@ -25,50 +24,36 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 	// Get ConnectionEnd (for counterparty connection)
 	connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, msg.ConnectionId)
 	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", msg.ConnectionId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection-id %s does not exist", msg.ConnectionId)
 	}
 	counterpartyConnection := connectionEnd.Counterparty
 
 	// Get chain id from connection
 	chainId, err := k.GetChainIdFromConnectionId(ctx, msg.ConnectionId)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to obtain chain id from connection %s, err: %s", msg.ConnectionId, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrapf(err, "unable to obtain chain id from connection %s", msg.ConnectionId)
 	}
 
 	// get zone
 	_, found = k.GetHostZone(ctx, chainId)
 	if found {
-		errMsg := fmt.Sprintf("invalid chain id, zone for %s already registered", chainId)
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "host zone already registered for chain-id %s", chainId)
 	}
 
 	// check the denom is not already registered
 	hostZones := k.GetAllHostZone(ctx)
 	for _, hostZone := range hostZones {
 		if hostZone.HostDenom == msg.HostDenom {
-			errMsg := fmt.Sprintf("host denom %s already registered", msg.HostDenom)
-			k.Logger(ctx).Error(errMsg)
-			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "host denom %s already registered", msg.HostDenom)
 		}
 		if hostZone.ConnectionId == msg.ConnectionId {
-			errMsg := fmt.Sprintf("connectionId %s already registered", msg.ConnectionId)
-			k.Logger(ctx).Error(errMsg)
-			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "connection-id %s already registered", msg.ConnectionId)
 		}
 		if hostZone.TransferChannelId == msg.TransferChannelId {
-			errMsg := fmt.Sprintf("transfer channel %s already registered", msg.TransferChannelId)
-			k.Logger(ctx).Error(errMsg)
-			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "transfer channel %s already registered", msg.TransferChannelId)
 		}
 		if hostZone.Bech32Prefix == msg.Bech32Prefix {
-			errMsg := fmt.Sprintf("bech32prefix %s already registered", msg.Bech32Prefix)
-			k.Logger(ctx).Error(errMsg)
-			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+			return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "bech32 prefix %s already registered", msg.Bech32Prefix)
 		}
 	}
 
@@ -150,45 +135,37 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_DELEGATION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVersion); err != nil {
-		errMsg := fmt.Sprintf("unable to register delegation account, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrap(err, "failed to register delegation ICA")
 	}
 
 	// generate fee account
 	feeAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_FEE)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVersion); err != nil {
-		errMsg := fmt.Sprintf("unable to register fee account, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrap(err, "failed to register fee ICA")
 	}
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_WITHDRAWAL)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVersion); err != nil {
-		errMsg := fmt.Sprintf("unable to register withdrawal account, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrap(err, "failed to register withdrawal ICA")
 	}
 
 	// generate redemption account
 	redemptionAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_REDEMPTION)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVersion); err != nil {
-		errMsg := fmt.Sprintf("unable to register redemption account, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrap(err, "failed to register redemption ICA")
 	}
 
 	// create community pool deposit account
 	communityPoolDepositAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolDepositAccount, appVersion); err != nil {
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "failed to register community pool deposit ICA")
+		return nil, errorsmod.Wrap(err, "failed to register community pool deposit ICA")
 	}
 
 	// create community pool return account
 	communityPoolReturnAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
 	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolReturnAccount, appVersion); err != nil {
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, "failed to register community pool return ICA")
+		return nil, errorsmod.Wrap(err, "failed to register community pool return ICA")
 	}
 
 	// add this host zone to unbonding hostZones, otherwise users won't be able to unbond
@@ -199,9 +176,8 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 	}
 	epochUnbondingRecord, found := k.RecordsKeeper.GetEpochUnbondingRecord(ctx, dayEpochTracker.EpochNumber)
 	if !found {
-		errMsg := "unable to find latest epoch unbonding record"
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound, errMsg)
+		return nil, errorsmod.Wrapf(recordstypes.ErrEpochUnbondingRecordNotFound,
+			"epoch unbonding record not found for epoch %d", dayEpochTracker.EpochNumber)
 	}
 	hostZoneUnbonding := recordstypes.HostZoneUnbonding{
 		NativeTokenAmount: sdkmath.ZeroInt(),
@@ -235,9 +211,7 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 	// stToken rewards can be distributed to provider validators
 	err = k.RegisterStTokenDenomsToWhitelist(ctx, []string{types.StAssetDenomFromHostZoneDenom(zone.HostDenom)})
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to register reward denom, err: %s", err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return nil, errorsmod.Wrapf(types.ErrFailedToRegisterHostZone, errMsg)
+		return nil, errorsmod.Wrap(err, "unable to register stToken as ICS reward denom")
 	}
 
 	// emit events

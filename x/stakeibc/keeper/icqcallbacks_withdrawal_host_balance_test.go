@@ -69,11 +69,7 @@ func (s *KeeperTestSuite) SetupWithdrawalHostBalanceCallbackTest() WithdrawalBal
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	withdrawalBalance := int64(1000)
-	commission := uint64(10)
 	expectedReinvestment := sdk.NewCoin(Atom, sdkmath.NewInt(int64(900)))
-
-	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.StrideCommission = uint64(commission)
 
 	queryResponse := s.CreateBalanceQueryResponse(withdrawalBalance, Atom)
 

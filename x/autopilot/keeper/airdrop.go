@@ -40,7 +40,7 @@ func (k Keeper) TryUpdateAirdropClaim(
 	// grab relevant addresses
 	senderStrideAddress := utils.ConvertAddressToStrideAddress(transferMetadata.Sender)
 	if senderStrideAddress == "" {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", transferMetadata.Sender))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", transferMetadata.Sender)
 	}
 	newStrideAddress := transferMetadata.Receiver
 

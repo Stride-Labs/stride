@@ -26,6 +26,59 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+	chainId := "chain-0"
+	depositRecordId := uint64(1)
+	epochNumber := uint64(1)
+	upgradeHeight := int64(4)
+
+	// Create a host zone with redemptions enabled set to false
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:            chainId,
+		RedemptionsEnabled: false,
+	})
+
+	// Create an in-progress deposit record
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordstypes.DepositRecord{
+		Id:                      depositRecordId,
+		Status:                  recordstypes.DepositRecord_DELEGATION_IN_PROGRESS,
+		DelegationTxsInProgress: 0,
+	})
+
+	// Create an in-progress unbonding record
+	stTokens := sdkmath.NewInt(100)
+	nativeTokens := sdkmath.NewInt(200)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
+		EpochNumber: 1,
+		HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{
+			{
+				HostZoneId:        chainId,
+				StTokenAmount:     stTokens,
+				NativeTokenAmount: nativeTokens,
+				Status:            recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
+			},
+		},
+	})
+
+	// Run the upgrade
+	s.ConfirmUpgradeSucceededs(v24.UpgradeName, upgradeHeight)
+
+	// Confirm the host zone's redemptions enabled were set to true
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+	s.Require().True(found, "host zone should have been found")
+	s.Require().True(hostZone.RedemptionsEnabled, "redemptions enabled")
+
+	// Confirm the deposit record's delegations in progress were set to 1
+	depositRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, depositRecordId)
+	s.Require().True(found, "deposit record should have been found")
+	s.Require().Equal(uint64(1), depositRecord.DelegationTxsInProgress, "delegation txs in progress")
+
+	// Confirm the new unbonding record fields were set
+	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumber, chainId)
+	s.Require().True(found, "host zone unbonding should have been found")
+	s.Require().Equal(uint64(1), hostZoneUnbonding.UndelegationTxsInProgress, "undelegation txs in progress")
+	s.Require().Equal(stTokens.Int64(), hostZoneUnbonding.StTokensToBurn.Int64(), "sttokens to burn")
+	s.Require().Equal(nativeTokens.Int64(), hostZoneUnbonding.NativeTokensToUnbond.Int64(), "native to unbond")
+	s.Require().Zero(hostZoneUnbonding.ClaimableNativeTokens.Int64(), "claimable tokens")
 }
 
 func (s *UpgradeTestSuite) TestMigrateHostZones() {
