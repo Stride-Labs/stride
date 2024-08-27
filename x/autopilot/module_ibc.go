@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	MaxMemoCharLength     = 4096
+	MaxMemoCharLength     = 4000
 	MaxReceiverCharLength = 100
 )
 

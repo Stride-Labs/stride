@@ -233,7 +233,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			destinationPortID:            transfertypes.PortID,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Receiver: strideAddress,
-				Memo:     strings.Repeat("X", 4097),
+				Memo:     strings.Repeat("X", 4001),
 			},
 			transferShouldSucceed: false,
 			airdropShouldUpdate:   false,
