@@ -257,14 +257,8 @@ setup_file() {
   sttoken_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom st$HOST_DENOM | GETBAL)
 
   # Send the IBC transfer with the JSON memo
-  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
-  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
-    # For GAIA (ibc-v3), pass the memo into the receiver field
-    $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
-  else
-    # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
-  fi
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
+    $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
 
   # Wait for the transfer to complete
   WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
@@ -282,14 +276,8 @@ setup_file() {
   stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN 2>/dev/null | GETBAL)
 
   # Send the IBC transfer with the JSON memo
-  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
-  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
-    # For GAIA (ibc-v3), pass the memo into the receiver field
-    $transfer_msg_prefix "$memo" ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
-  else
-    # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
-  fi
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
+      $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
 
   # Wait for the transfer to complete
   WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $HOST_VAL_ADDRESS $IBC_STTOKEN
@@ -312,14 +300,10 @@ setup_file() {
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "RedeemStake", "ibc_receiver": "'$HOST_RECEIVER_ADDRESS'" } } }'
 
   # do IBC transfer
-  transfer_msg_prefix="$HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL"
-  if [[ "$CHAIN_NAME" == "GAIA" ]]; then
-    # For GAIA (ibc-v3), pass the memo into the receiver field
-    $transfer_msg_prefix "$memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
-  else
-    # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
-    $transfer_msg_prefix $(STRIDE_ADDRESS) ${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
-  fi
+  # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
+    $(STRIDE_ADDRESS) ${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
+    
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure stATOM balance decreased
