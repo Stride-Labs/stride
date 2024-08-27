@@ -110,12 +110,12 @@ func (k Keeper) SubmitTxsStrideEpoch(
 	if err != nil {
 		return 0, errorsmod.Wrap(err, "failed to convert timeoutNanos to uint64")
 	}
-	return k.SubmitTxs(ctx, connectionId, msgs, icaAccountType, timeoutNanosUint64, callbackId, callbackArgs)
+	return k.SubmitICATx(ctx, connectionId, msgs, icaAccountType, timeoutNanosUint64, callbackId, callbackArgs)
 }
 
-// SubmitTxs submits an ICA transaction containing multiple messages
+// SubmitICATx submits an ICA transaction containing multiple messages
 // This function only supports messages to ICAs on the host zone
-func (k Keeper) SubmitTxs(
+func (k Keeper) SubmitICATx(
 	ctx sdk.Context,
 	connectionId string,
 	msgs []proto.Message,

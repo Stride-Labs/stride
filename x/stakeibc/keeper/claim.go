@@ -50,9 +50,8 @@ func (k msgServer) ClaimUndelegatedTokens(goCtx context.Context, msg *types.MsgC
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "unable to marshal claim callback args")
 	}
-	_, err = k.SubmitTxs(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.ICAAccountType, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
+	_, err = k.SubmitICATx(ctx, icaTx.ConnectionId, icaTx.Msgs, icaTx.ICAAccountType, icaTx.Timeout, ICACallbackID_Claim, marshalledCallbackArgs)
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Submit tx error: %s", err.Error()))
 		return nil, errorsmod.Wrap(err, "unable to submit ICA redemption tx")
 	}
 

@@ -153,7 +153,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	var icaCallbackData []byte
 
 	// Send the transaction through SubmitTx to kick off ICA commands -- no ICA callback method name, or callback args needed
-	_, err = k.SubmitTxs(ctx,
+	_, err = k.SubmitICATx(ctx,
 		hostZone.ConnectionId,
 		msgs,
 		types.ICAAccountType_COMMUNITY_POOL_DEPOSIT,
@@ -161,7 +161,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 		icaCallbackId,
 		icaCallbackData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
+		return errorsmod.Wrapf(err, "failed to submit community pool transfer ICA, Messages: %v", msgs)
 	}
 	k.Logger(ctx).Info("Successfully sent ICA command to kick off ibc transfer from deposit ICA to stake holding address")
 

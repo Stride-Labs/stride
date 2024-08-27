@@ -443,7 +443,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 
 	// Submit the ICA with a coonservative timeout
 	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
-	if _, err := k.SubmitTxs(
+	if _, err := k.SubmitICATx(
 		ctx,
 		hostZone.ConnectionId,
 		detokenizeMsg,

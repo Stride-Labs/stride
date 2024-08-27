@@ -179,9 +179,9 @@ func (k msgServer) ClearBalance(goCtx context.Context, msg *types.MsgClearBalanc
 	icaTimeoutNanos := k.GetParam(ctx, types.KeyICATimeoutNanos)
 	icaTimeoutNanos = cast.ToUint64(ctx.BlockTime().UnixNano()) + icaTimeoutNanos
 
-	_, err = k.SubmitTxs(ctx, connectionId, msgs, types.ICAAccountType_FEE, icaTimeoutNanos, "", nil)
+	_, err = k.SubmitICATx(ctx, connectionId, msgs, types.ICAAccountType_FEE, icaTimeoutNanos, "", nil)
 	if err != nil {
-		return nil, errorsmod.Wrapf(err, "failed to submit txs")
+		return nil, errorsmod.Wrap(err, "failed to submit clear balance ICA txs")
 	}
 	return &types.MsgClearBalanceResponse{}, nil
 }

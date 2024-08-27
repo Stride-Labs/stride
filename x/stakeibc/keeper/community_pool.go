@@ -295,7 +295,7 @@ func (k Keeper) FundCommunityPool(
 	var icaCallbackData []byte
 
 	// Send the transaction through SubmitTx to kick off ICA command
-	_, err = k.SubmitTxs(ctx,
+	_, err = k.SubmitICATx(ctx,
 		hostZone.ConnectionId,
 		msgs,
 		senderAccountType,
@@ -303,7 +303,7 @@ func (k Keeper) FundCommunityPool(
 		icaCallbackId,
 		icaCallbackData)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Failed to SubmitTxs for FundCommunityPool, Messages: %+v", msgs)
+		return errorsmod.Wrapf(err, "Failed to submit ICA tx for FundCommunityPool, Messages: %+v", msgs)
 	}
 
 	return nil
