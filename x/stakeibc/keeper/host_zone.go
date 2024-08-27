@@ -291,3 +291,16 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 
 	return targetUnbondingsByValidator, nil
 }
+
+// Enables redemptions by setting the parameter on the host zone to true
+// This is used during the staketia/stakedym migrations
+func (k Keeper) EnableRedemptions(ctx sdk.Context, chainId string) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrap(chainId)
+	}
+
+	hostZone.RedemptionsEnabled = true
+	k.SetHostZone(ctx, hostZone)
+	return nil
+}

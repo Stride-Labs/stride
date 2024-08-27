@@ -313,7 +313,7 @@ func ClearPendingQueries(ctx sdk.Context, k icqkeeper.Keeper) {
 func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	hostZone, found := k.GetHostZone(ctx, GaiaChainId)
 	if !found {
-		return stakeibctypes.ErrHostZoneNotFound.Wrapf(GaiaChainId)
+		return stakeibctypes.ErrHostZoneNotFound.Wrap(GaiaChainId)
 	}
 
 	hostZone.LsmLiquidStakeEnabled = true

@@ -32,7 +32,7 @@ func (k Keeper) Airdrop(goCtx context.Context, req *types.QueryAirdropRequest) (
 	if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
 		currentDateIndex = -1
 	} else if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
 
 	airdropResponse := types.QueryAirdropResponse{
@@ -148,7 +148,7 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	} else if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
 		claimable = sdkmath.ZeroInt()
 	} else {
-		return nil, status.Errorf(codes.FailedPrecondition, err.Error())
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
 
 	claimType := types.CLAIM_DAILY

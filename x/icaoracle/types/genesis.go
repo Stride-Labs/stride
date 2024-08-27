@@ -17,22 +17,22 @@ func DefaultGenesis() *GenesisState {
 // failure.
 func (gs GenesisState) Validate() error {
 	if err := gs.Params.Validate(); err != nil {
-		return errorsmod.Wrapf(ErrInvalidGenesisState, err.Error())
+		return errorsmod.Wrap(err, "invalid genesis state")
 	}
 	for _, oracle := range gs.Oracles {
 		if oracle.ChainId == "" {
-			return errorsmod.Wrapf(ErrInvalidGenesisState, "oracle has empty chain ID")
+			return errorsmod.Wrap(ErrInvalidGenesisState, "oracle has empty chain ID")
 		}
 	}
 	for _, metric := range gs.Metrics {
 		if metric.Key == "" {
-			return errorsmod.Wrapf(ErrInvalidGenesisState, "metric has missing key")
+			return errorsmod.Wrap(ErrInvalidGenesisState, "metric has missing key")
 		}
 		if metric.UpdateTime == 0 {
-			return errorsmod.Wrapf(ErrInvalidGenesisState, "metric has missing time")
+			return errorsmod.Wrap(ErrInvalidGenesisState, "metric has missing time")
 		}
 		if metric.DestinationOracle == "" {
-			return errorsmod.Wrapf(ErrInvalidGenesisState, "metric has missing destination oracle chain ID")
+			return errorsmod.Wrap(ErrInvalidGenesisState, "metric has missing destination oracle chain ID")
 		}
 	}
 
