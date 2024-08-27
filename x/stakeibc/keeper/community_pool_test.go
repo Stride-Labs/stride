@@ -161,7 +161,7 @@ func (s *KeeperTestSuite) TestQueryCommunityPoolBalance_Failure_MissingEpoch() {
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
 	err := s.App.StakeibcKeeper.QueryCommunityPoolIcaBalance(s.Ctx, tc.hostZone, icaAccountType, Atom)
-	s.Require().ErrorContains(err, "stride_epoch: epoch not found")
+	s.Require().ErrorContains(err, "epoch stride_epoch not found")
 }
 
 // Tests a community pool balance query that fails to submit the query
@@ -297,7 +297,7 @@ func (s *KeeperTestSuite) TestLiquidStakeCommunityPoolTokens_LiquidStakeFailure(
 	invalidHostZone.HostDenom = "invalid"
 
 	err := s.App.StakeibcKeeper.LiquidStakeCommunityPoolTokens(s.Ctx, invalidHostZone)
-	s.Require().ErrorContains(err, "Failed to liquid stake")
+	s.Require().ErrorContains(err, "failed to liquid stake community pool tokens")
 }
 
 // Set an invalid transfer channel on the host so that the transfer fails
@@ -352,6 +352,7 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 		DepositAddress:                    depositAddress.String(),
 		TotalDelegations:                  initialStTokens, // at least as much as we are trying to redeem
 		RedemptionRate:                    sdk.OneDec(),
+		RedemptionsEnabled:                true,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 

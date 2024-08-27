@@ -79,9 +79,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) error {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		errMsg := fmt.Sprintf("HostZone (%s) not found", chainId)
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", chainId)
 	}
 
 	// Check for LSMTokenDeposit records with this specific validator address
@@ -104,9 +102,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 			return errors.New(errMsg)
 		}
 	}
-	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
-	k.Logger(ctx).Error(errMsg)
-	return errorsmod.Wrapf(types.ErrValidatorNotFound, errMsg)
+	return errorsmod.Wrapf(types.ErrValidatorNotFound, "Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 }
 
 // Updates a validator's individual delegation, and the corresponding total delegation on the host zone

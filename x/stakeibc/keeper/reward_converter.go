@@ -175,7 +175,7 @@ func (k Keeper) BuildHostToTradeTransferMsg(
 	// Get the epoch tracker to determine the timeouts
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return msg, errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return msg, errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
 
 	// Timeout the first transfer halfway through the epoch, and the second transfer at the end of the epoch
@@ -271,7 +271,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 	// Timeout for ica tx and the transfer msgs is at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
 	timeout := uint64(strideEpochTracker.NextEpochStartTime)
 
@@ -339,7 +339,7 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeR
 	// in the pfm sequence will timeout)
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
 	timeoutDuration := time.Duration(strideEpochTracker.Duration) / 2
 
@@ -389,7 +389,7 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())

@@ -36,8 +36,7 @@ func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback ty
 func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback []byte) (*types.ReinvestCallback, error) {
 	unmarshalledReinvestCallback := types.ReinvestCallback{}
 	if err := proto.Unmarshal(reinvestCallback, &unmarshalledReinvestCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
-		return nil, err
+		return nil, errorsmod.Wrap(err, "unable to unmarshal reinvest callback args")
 	}
 	return &unmarshalledReinvestCallback, nil
 }
@@ -53,7 +52,7 @@ func (k Keeper) ReinvestCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal reinvest callback args: %s", err.Error()))
+		return err
 	}
 	chainId := reinvestCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Starting reinvest callback"))

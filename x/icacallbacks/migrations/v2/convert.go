@@ -34,18 +34,18 @@ func convertDelegateCallback(oldDelegateCallback oldstakeibctypes.DelegateCallba
 }
 
 func convertUndelegateCallback(oldUndelegateCallback oldstakeibctypes.UndelegateCallback) stakeibctypes.UndelegateCallback {
-	newSplitDelegations := []*stakeibctypes.SplitDelegation{}
-	for _, oldSplitDelegation := range oldUndelegateCallback.SplitDelegations {
-		newSplitDelegation := stakeibctypes.SplitDelegation{
-			Validator: oldSplitDelegation.Validator,
-			Amount:    sdkmath.NewIntFromUint64(oldSplitDelegation.Amount),
-		}
-		newSplitDelegations = append(newSplitDelegations, &newSplitDelegation)
-	}
+	// newSplitDelegations := []*stakeibctypes.SplitDelegation{}
+	// for _, oldSplitDelegation := range oldUndelegateCallback.SplitDelegations {
+	// 	newSplitDelegation := stakeibctypes.SplitDelegation{
+	// 		Validator: oldSplitDelegation.Validator,
+	// 		Amount:    sdkmath.NewIntFromUint64(oldSplitDelegation.Amount),
+	// 	}
+	// 	newSplitDelegations = append(newSplitDelegations, &newSplitDelegation)
+	// }
 
 	return stakeibctypes.UndelegateCallback{
-		HostZoneId:              oldUndelegateCallback.HostZoneId,
-		SplitDelegations:        newSplitDelegations,
+		HostZoneId: oldUndelegateCallback.HostZoneId,
+		// SplitDelegations:        newSplitDelegations,
 		EpochUnbondingRecordIds: oldUndelegateCallback.EpochUnbondingRecordIds,
 	}
 }
@@ -74,14 +74,14 @@ func convertCallbackData(oldCallbackData icacallbacktypes.CallbackData) (icacall
 		// Deserialize the callback args with the old DelegateCallback type
 		oldDelegateCallback := oldstakeibctypes.DelegateCallback{}
 		if err := proto.Unmarshal(oldCallbackData.CallbackArgs, &oldDelegateCallback); err != nil {
-			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrap(err, "failed to unmarshal")
 		}
 
 		// Convert and serialize with the new DelegateCallback type
 		newDelegateCallback := convertDelegateCallback(oldDelegateCallback)
 		newDelegateCallbackBz, err := proto.Marshal(&newDelegateCallback)
 		if err != nil {
-			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrap(err, "failed to marshal")
 		}
 
 		// Update the CallbackData with the new args
@@ -91,14 +91,14 @@ func convertCallbackData(oldCallbackData icacallbacktypes.CallbackData) (icacall
 		// Deserialize the callback args with the old UndelegateCallback type
 		oldUndelegateCallback := oldstakeibctypes.UndelegateCallback{}
 		if err := proto.Unmarshal(oldCallbackData.CallbackArgs, &oldUndelegateCallback); err != nil {
-			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrap(err, "failed to unmarshal")
 		}
 
 		// Convert and serialize with the new UndelegateCallback type
 		newUndelegateCallback := convertUndelegateCallback(oldUndelegateCallback)
 		newUndelegateCallbackBz, err := proto.Marshal(&newUndelegateCallback)
 		if err != nil {
-			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrap(err, "failed to marshal")
 		}
 
 		// Update the CallbackData with the new args
@@ -108,14 +108,14 @@ func convertCallbackData(oldCallbackData icacallbacktypes.CallbackData) (icacall
 		// Deserialize the callback args with the old RebalanceCallback type
 		oldRebalanceCallback := oldstakeibctypes.RebalanceCallback{}
 		if err := proto.Unmarshal(oldCallbackData.CallbackArgs, &oldRebalanceCallback); err != nil {
-			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrUnmarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrap(err, "failed to unmarshal")
 		}
 
 		// Convert and serialize with the new RebalanceCallback type
 		newRebalanceCallback := convertRebalanceCallback(oldRebalanceCallback)
 		newRebalanceCallbackBz, err := proto.Marshal(&newRebalanceCallback)
 		if err != nil {
-			return icacallbacktypes.CallbackData{}, errorsmod.Wrapf(stakeibctypes.ErrMarshalFailure, err.Error())
+			return icacallbacktypes.CallbackData{}, errorsmod.Wrap(err, "failed to marshal")
 		}
 
 		// Update the CallbackData with the new args

@@ -38,7 +38,7 @@ func Int64ToCoinString(amount int64, denom string) string {
 
 func ValidateAdminAddress(address string) error {
 	if !Admins[address] {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("address (%s) is not an admin", address))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "address (%s) is not an admin", address)
 	}
 	return nil
 }

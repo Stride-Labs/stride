@@ -67,7 +67,7 @@ func (k Keeper) SweepStTokensFromRewardCollToFeeColl(ctx sdk.Context) error {
 
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RewardCollectorName, authtypes.FeeCollectorName, stTokens)
 	if err != nil {
-		return errorsmod.Wrapf(err, fmt.Sprintf("Can't send coins from module %s to module %s, err %s", types.RewardCollectorName, authtypes.FeeCollectorName, err.Error()))
+		return errorsmod.Wrapf(err, "Can't send coins from module %s to module %s", types.RewardCollectorName, authtypes.FeeCollectorName)
 	}
 	return nil
 }

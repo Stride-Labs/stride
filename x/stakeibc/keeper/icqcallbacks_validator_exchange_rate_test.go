@@ -149,7 +149,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 }
 
 // Helper function to check the validator's shares to tokens rate after the query
-func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdk.Dec, tc ValidatorICQCallbackTestCase) {
+func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdk.Dec) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),
@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) checkLSMLiquidStakeNotCalled() {
 
 // Helper function to check that the delegator shares query was submitted by checking
 // that the query object was stored
-func (s *KeeperTestSuite) checkDelegatorSharesQuerySubmitted(liquidStakeCallback bool, tc ValidatorICQCallbackTestCase) {
+func (s *KeeperTestSuite) checkDelegatorSharesQuerySubmitted(tc ValidatorICQCallbackTestCase) {
 	// Check that this is only one query in the store
 	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
 	s.Require().Len(queries, 1, "there should be one new query submitted for delegator shares")
@@ -251,7 +251,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 
 	// Confirm validator's sharesToTokens rate DID NOT update
 	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate)
 
 	// Confirm the delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -271,10 +271,10 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Sla
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID update
-	s.checkValidatorSharesToTokensRate(tc.sharesToTokensRateIfSlashed, tc)
+	s.checkValidatorSharesToTokensRate(tc.sharesToTokensRateIfSlashed)
 
 	// Confirm delegator shares query WAS submitted
-	s.checkDelegatorSharesQuerySubmitted(lsmCallback, tc)
+	s.checkDelegatorSharesQuerySubmitted(tc)
 
 	// Confirm the liquid stake flow as not touched
 	s.checkLSMLiquidStakeNotCalled()
@@ -293,7 +293,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 
 	// Confirm validator's sharesToTokens rate DID NOT update
 	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate)
 
 	// Confirm the delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -331,7 +331,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoS
 
 	// Confirm validator's sharesToTokens rate DID NOT update
 	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -359,10 +359,10 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_Sla
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID update
-	s.checkValidatorSharesToTokensRate(tc.sharesToTokensRateIfSlashed, tc)
+	s.checkValidatorSharesToTokensRate(tc.sharesToTokensRateIfSlashed)
 
 	// Confirm delegator shares query WAS submitted
-	s.checkDelegatorSharesQuerySubmitted(lsmCallback, tc)
+	s.checkDelegatorSharesQuerySubmitted(tc)
 
 	// Confirm the liquid stake failed
 	s.checkLSMLiquidStakeFailed()
@@ -385,7 +385,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoP
 	s.Require().NoError(err, "validator sharesToTokens rate callback error")
 
 	// Confirm validator's sharesToTokens rate DID update
-	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -410,7 +410,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoSlash_LiqudS
 
 	// Confirm validator's sharesToTokens rate DID update
 	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -432,7 +432,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoLiquidStake_
 
 	// Confirm validator's shares to tokens rate DID NOT update
 	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()
@@ -451,7 +451,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_LiquidStake_Qu
 
 	// Confirm validator's shares to tokens rate DID NOT update
 	expectedSharesToTokensRate := tc.initialState.validator.SharesToTokensRate
-	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate, tc)
+	s.checkValidatorSharesToTokensRate(expectedSharesToTokensRate)
 
 	// Confirm delegator shares query WAS NOT submitted
 	s.checkDelegatorSharesQueryNotSubmitted()

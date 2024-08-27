@@ -136,7 +136,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(tc.initialState.durationUntilNextEpoch, query.TimeoutDuration, "query timeout duration")
 }
 
-func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {
+func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed() {
 	// Confirm deposit record has not been added
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
 	s.Require().Len(records, 0, "number of deposit records")
@@ -151,7 +151,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackTimeout() {
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
-	s.checkReinvestStateIfCallbackFailed(tc)
+	s.checkReinvestStateIfCallbackFailed()
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
@@ -163,7 +163,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
-	s.checkReinvestStateIfCallbackFailed(tc)
+	s.checkReinvestStateIfCallbackFailed()
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
@@ -174,7 +174,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	invalidCallbackArgs := []byte("random bytes")
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal reinvest callback args: unexpected EOF: unable to unmarshal data structure")
+	s.Require().ErrorContains(err, "unable to unmarshal reinvest callback args")
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_HostZoneNotFound() {
