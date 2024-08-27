@@ -22,6 +22,8 @@ import (
 	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
 )
 
+const OsmosisSwapTypeUrl = "/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn"
+
 // JSON Memo for PFM transfers
 type PacketForwardMetadata struct {
 	Forward *ForwardMetadata `json:"forward"`
@@ -134,11 +136,9 @@ func (k Keeper) BuildTradeAuthzMsg(
 	permissionChange types.AuthzPermissionChange,
 	grantee string,
 ) (authzMsg []proto.Message, err error) {
-	swapMsgTypeUrl := "/" + proto.MessageName(&types.MsgSwapExactAmountIn{})
-
 	switch permissionChange {
 	case types.AuthzPermissionChange_GRANT:
-		authorization := authz.NewGenericAuthorization(swapMsgTypeUrl)
+		authorization := authz.NewGenericAuthorization(OsmosisSwapTypeUrl)
 		expiration := ctx.BlockTime().Add(time.Hour * 24 * 365 * 100) // 100 years
 
 		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, &expiration)
@@ -155,7 +155,7 @@ func (k Keeper) BuildTradeAuthzMsg(
 		authzMsg = []proto.Message{&authz.MsgRevoke{
 			Granter:    tradeRoute.TradeAccount.Address,
 			Grantee:    grantee,
-			MsgTypeUrl: swapMsgTypeUrl,
+			MsgTypeUrl: OsmosisSwapTypeUrl,
 		}}
 
 	default:

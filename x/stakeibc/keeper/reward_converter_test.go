@@ -332,7 +332,7 @@ func (s *KeeperTestSuite) TestBuildTradeAuthzMsg() {
 		},
 	}
 
-	expectedTypeUrl := "/osmosis.gamm.v1beta1.MsgSwapExactAmountIn"
+	expectedTypeUrl := "/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn"
 
 	// Test granting trade permissions
 	msgs, err := s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, types.AuthzPermissionChange_GRANT, granteeAddress)
