@@ -108,9 +108,9 @@ func WithdrawalHostBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query
 	}
 
 	// Send the transaction through SubmitTx
-	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_WITHDRAWAL, ICACallbackID_Reinvest, marshalledCallbackArgs)
+	_, err = k.SubmitIcaTxStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_WITHDRAWAL, ICACallbackID_Reinvest, marshalledCallbackArgs)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
+		return errorsmod.Wrapf(err, "failed to submit ICA tx, Messages: %v", msgs)
 	}
 
 	ctx.EventManager().EmitEvent(

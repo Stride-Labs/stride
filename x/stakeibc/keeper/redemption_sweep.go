@@ -103,7 +103,7 @@ func (k Keeper) SweepUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.H
 	}
 
 	// Send the bank send ICA
-	_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Redemption, marshalledCallbackArgs)
+	_, err = k.SubmitIcaTxStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_DELEGATION, ICACallbackID_Redemption, marshalledCallbackArgs)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to submit redemption ICA for %s", chainId)
 	}

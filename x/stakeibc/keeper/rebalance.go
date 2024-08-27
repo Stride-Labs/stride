@@ -92,7 +92,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 		}
 
 		// Submit the rebalance ICA
-		_, err = k.SubmitTxsStrideEpoch(
+		_, err = k.SubmitIcaTxStrideEpoch(
 			ctx,
 			hostZone.ConnectionId,
 			msgsBatch,
@@ -101,7 +101,7 @@ func (k Keeper) RebalanceDelegationsForHostZone(ctx sdk.Context, chainId string)
 			rebalanceCallbackBz,
 		)
 		if err != nil {
-			return errorsmod.Wrapf(err, "Failed to SubmitTxs for %s, messages: %+v", hostZone.ChainId, msgs)
+			return errorsmod.Wrapf(err, "failed to submit ICA tx for %s, messages: %+v", hostZone.ChainId, msgs)
 		}
 
 		// flag the delegation change in progress on each validator

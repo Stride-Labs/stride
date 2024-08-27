@@ -85,8 +85,8 @@ func FeeBalanceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Q
 		"Preparing MsgTransfer of %v from the fee account to the rewards collector module account (for commission)", rewardsCoin.String()))
 
 	// Send the transaction through SubmitTx
-	if _, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_FEE, ICACallbackID_Reinvest, nil); err != nil {
-		return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
+	if _, err := k.SubmitIcaTxStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_FEE, ICACallbackID_Reinvest, nil); err != nil {
+		return errorsmod.Wrapf(err, "Failed to submit ICA tx, Messages: %v", msgs)
 	}
 
 	return nil

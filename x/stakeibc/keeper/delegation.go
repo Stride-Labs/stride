@@ -84,7 +84,7 @@ func (k Keeper) BatchSubmitDelegationICAMessages(
 		}
 
 		// Send the transaction through SubmitTx
-		_, err = k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgBatch, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
+		_, err = k.SubmitIcaTxStrideEpoch(ctx, hostZone.ConnectionId, msgBatch, types.ICAAccountType_DELEGATION, ICACallbackID_Delegate, marshalledCallbackArgs)
 		if err != nil {
 			return 0, errorsmod.Wrapf(err, "failed to submit delegation ICAs on %s. Messages: %s", hostZone.ChainId, msgs)
 		}
