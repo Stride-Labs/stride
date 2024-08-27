@@ -41,6 +41,8 @@ setup_file() {
   REDEEM_AMOUNT=10000
   PACKET_FORWARD_STAKE_AMOUNT=300000
 
+  HOST_FEES="--fees 1000000ufee"
+
   # HELPER FUNCTIONS
   DECADD () {
     echo "scale=2; $1+$2" | bc
@@ -98,7 +100,7 @@ setup_file() {
 
   # do IBC transfer
   $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANSFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y 
-  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y 
+  $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y $HOST_FEES
 
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
@@ -177,11 +179,11 @@ setup_file() {
   validator_address=$(GET_VAL_ADDR $CHAIN_NAME 1)
 
   # delegate on the host chain
-  $HOST_MAIN_CMD tx staking delegate $validator_address ${TRANSFER_AMOUNT}${HOST_DENOM} --from $USER_ACCT -y
+  $HOST_MAIN_CMD tx staking delegate $validator_address ${TRANSFER_AMOUNT}${HOST_DENOM} --from $USER_ACCT -y $HOST_FEES
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # tokenize shares
-  $HOST_MAIN_CMD tx staking tokenize-share $validator_address ${TRANSFER_AMOUNT}${HOST_DENOM} $staker_address_on_host --from $USER_ACCT -y --gas 1000000
+  $HOST_MAIN_CMD tx staking tokenize-share $validator_address ${TRANSFER_AMOUNT}${HOST_DENOM} $staker_address_on_host --from $USER_ACCT -y --gas 1000000 $HOST_FEES
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # get the record id from the tokenized share record
@@ -190,7 +192,7 @@ setup_file() {
   # transfer LSM tokens to stride
   lsm_token_denom=${validator_address}/${record_id}
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
-    $staker_address_on_stride ${TRANSFER_AMOUNT}${lsm_token_denom} --from $USER_ACCT -y
+    $staker_address_on_stride ${TRANSFER_AMOUNT}${lsm_token_denom} --from $USER_ACCT -y $HOST_FEES
   
   WAIT_FOR_BLOCK $STRIDE_LOGS 8
 
@@ -258,7 +260,7 @@ setup_file() {
 
   # Send the IBC transfer with the JSON memo
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
-    $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
+    $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y $HOST_FEES
 
   # Wait for the transfer to complete
   WAIT_FOR_BALANCE_CHANGE STRIDE $(STRIDE_ADDRESS) st$HOST_DENOM
@@ -277,7 +279,7 @@ setup_file() {
 
   # Send the IBC transfer with the JSON memo
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
-      $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y 
+      $(STRIDE_ADDRESS) ${PACKET_FORWARD_STAKE_AMOUNT}${HOST_DENOM} --memo "$memo" --from $HOST_VAL -y $HOST_FEES
 
   # Wait for the transfer to complete
   WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $HOST_VAL_ADDRESS $IBC_STTOKEN
@@ -302,8 +304,8 @@ setup_file() {
   # do IBC transfer
   # For all other hosts (ibc-v5), pass an address for a receiver and the memo in the --memo field
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
-    $(STRIDE_ADDRESS) ${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y 
-    
+    $(STRIDE_ADDRESS) ${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$memo" --from $HOST_VAL -y $HOST_FEES
+
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure stATOM balance decreased
@@ -320,7 +322,9 @@ setup_file() {
 
   # attempt to redeem with an invalid receiver address to invoke a failure
   invalid_memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "RedeemStake", "ibc_receiver": "XXX" } } }'
-  $transfer_msg_prefix "$invalid_memo" ${REDEEM_AMOUNT}${IBC_STTOKEN} --from $HOST_VAL -y 
+  $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
+     $(STRIDE_ADDRESS) ${REDEEM_AMOUNT}${IBC_STTOKEN} --memo "$invalid_memo" --from $HOST_VAL -y $HOST_FEES
+  
   WAIT_FOR_BLOCK $STRIDE_LOGS 10
 
   # Confirm the stATOM balance was refunded
