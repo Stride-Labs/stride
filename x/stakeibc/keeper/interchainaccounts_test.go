@@ -70,18 +70,18 @@ func (s *KeeperTestSuite) ClaimAccruedStakingRewardsOnHost() {
 	// Attempt to call it with a host zone without a delegation ICA address, it should fail
 	invalidHostZone := hostZone
 	invalidHostZone.DelegationIcaAddress = ""
-	err = s.App.StakeibcKeeper.ClaimAccruedStakingRewardsOnHost(s.Ctx, hostZone)
+	err = s.App.StakeibcKeeper.ClaimAccruedStakingRewardsOnHost(s.Ctx, invalidHostZone)
 	s.Require().ErrorContains(err, "ICA account not found")
 
 	// Attempt to call it with a host zone without a withdrawal ICA address, it should fail
 	invalidHostZone = hostZone
 	invalidHostZone.WithdrawalIcaAddress = ""
-	err = s.App.StakeibcKeeper.ClaimAccruedStakingRewardsOnHost(s.Ctx, hostZone)
+	err = s.App.StakeibcKeeper.ClaimAccruedStakingRewardsOnHost(s.Ctx, invalidHostZone)
 	s.Require().ErrorContains(err, "ICA account not found")
 
 	// Attempt to call claim with an invalid connection ID on the host zone so the ica fails
 	invalidHostZone = hostZone
 	invalidHostZone.ConnectionId = ""
-	err = s.App.StakeibcKeeper.ClaimAccruedStakingRewardsOnHost(s.Ctx, hostZone)
+	err = s.App.StakeibcKeeper.ClaimAccruedStakingRewardsOnHost(s.Ctx, invalidHostZone)
 	s.Require().ErrorContains(err, "Failed to SubmitTxs")
 }

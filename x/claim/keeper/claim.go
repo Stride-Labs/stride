@@ -849,13 +849,13 @@ func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error 
 func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress string, newStrideAddress string, airdropId string) error {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropId)
 	if airdrop == nil {
-		return errorsmod.Wrapf(types.ErrAirdropNotFound, fmt.Sprintf("airdrop not found for identifier %s", airdropId))
+		return errorsmod.Wrapf(types.ErrAirdropNotFound, "airdrop not found for identifier %s", airdropId)
 	}
 
 	// verify that the strideAddress is valid
 	_, err := sdk.AccAddressFromBech32(newStrideAddress)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid stride address %s", newStrideAddress))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride address %s", newStrideAddress)
 	}
 
 	// note: existingAccAddress will be a STRIDE address with the same coin type as existingAddress
@@ -865,26 +865,26 @@ func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress stri
 	existingAccAddress, err := sdk.AccAddressFromBech32(existingStrideAddress)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrClaimNotFound,
-			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+			"error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
 	}
 	claimRecord, err := k.GetClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
 	if (err != nil) || (claimRecord.Address == "") {
 		return errorsmod.Wrapf(types.ErrClaimNotFound,
-			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+			"error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
 	}
 
 	claimRecord.Address = newStrideAddress
 	err = k.SetClaimRecord(ctx, claimRecord) // this does NOT delete the old record, because claims are indexed by address
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
-			fmt.Sprintf("error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId))
+			"error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId)
 	}
 
 	// this deletes the old record
 	err = k.DeleteClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
-			fmt.Sprintf("error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+			"error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
 	}
 
 	return nil

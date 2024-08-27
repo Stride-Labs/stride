@@ -103,10 +103,8 @@ func (im IBCModule) OnAcknowledgementPacket(
 
 	ackResponse, err := UnpackAcknowledgementResponse(ctx, im.keeper.Logger(ctx), acknowledgement, true)
 	if err != nil {
-		errMsg := fmt.Sprintf("Unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s: %s",
-			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort, err.Error())
-		im.keeper.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(types.ErrInvalidAcknowledgement, errMsg)
+		return errorsmod.Wrapf(err, "unable to unpack message data from acknowledgement, Sequence %d, from %s %s, to %s %s",
+			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
 	}
 
 	ackInfo := fmt.Sprintf("sequence #%d, from %s %s, to %s %s",
@@ -123,10 +121,8 @@ func (im IBCModule) OnAcknowledgementPacket(
 	)
 
 	if err := im.keeper.CallRegisteredICACallback(ctx, modulePacket, ackResponse); err != nil {
-		errMsg := fmt.Sprintf("Unable to call registered ICACallback from OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
+		return errorsmod.Wrapf(err, "unable to call registered ICACallback from OnAcknowledgePacket | Sequence %d, from %s %s, to %s %s",
 			modulePacket.Sequence, modulePacket.SourceChannel, modulePacket.SourcePort, modulePacket.DestinationChannel, modulePacket.DestinationPort)
-		im.keeper.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(types.ErrCallbackFailed, errMsg)
 	}
 	return nil
 }
@@ -144,9 +140,7 @@ func (im IBCModule) OnTimeoutPacket(
 	}
 
 	if err := im.keeper.CallRegisteredICACallback(ctx, packet, &ackResponse); err != nil {
-		errMsg := fmt.Sprintf("Unable to call registered ICACallback from OnTimeoutPacket, Packet: %+v", packet)
-		im.keeper.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(types.ErrCallbackFailed, errMsg)
+		return errorsmod.Wrapf(err, "Unable to call registered ICACallback from OnTimeoutPacket, Packet: %+v", packet)
 	}
 	return nil
 }

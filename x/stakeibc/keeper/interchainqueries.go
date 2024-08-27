@@ -206,7 +206,7 @@ func (k Keeper) SubmitWithdrawalHostBalanceICQ(ctx sdk.Context, hostZone types.H
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, "epoch %s not found", epochstypes.STRIDE_EPOCH)
 	}
 	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
