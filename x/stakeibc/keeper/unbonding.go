@@ -325,7 +325,7 @@ func (k Keeper) BatchSubmitUndelegateICAMessages(
 		}
 
 		// Submit the undelegation ICA
-		if _, err := k.SubmitTxsDayEpoch(
+		if _, err := k.SubmitTxsStrideEpoch(
 			ctx,
 			hostZone.ConnectionId,
 			msgsBatch,

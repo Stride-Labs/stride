@@ -98,21 +98,6 @@ func (k Keeper) ClaimAccruedStakingRewardsOnHost(ctx sdk.Context, hostZone types
 	return nil
 }
 
-func (k Keeper) SubmitTxsDayEpoch(
-	ctx sdk.Context,
-	connectionId string,
-	msgs []proto.Message,
-	icaAccountType types.ICAAccountType,
-	callbackId string,
-	callbackArgs []byte,
-) (uint64, error) {
-	sequence, err := k.SubmitTxsEpoch(ctx, connectionId, msgs, icaAccountType, epochstypes.DAY_EPOCH, callbackId, callbackArgs)
-	if err != nil {
-		return 0, err
-	}
-	return sequence, nil
-}
-
 func (k Keeper) SubmitTxsStrideEpoch(
 	ctx sdk.Context,
 	connectionId string,
