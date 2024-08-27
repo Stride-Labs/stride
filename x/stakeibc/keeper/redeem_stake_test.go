@@ -130,7 +130,7 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 
 	// Gaia's hostZoneUnbonding NATIVE TOKEN amount should have INCREASED from 0 to the amount redeemed multiplied by the redemption rate
 	// Gaia's hostZoneUnbonding STTOKEN amount should have INCREASED from 0 to be amount redeemed
-	epochTracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, "day")
+	epochTracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, epochtypes.DAY_EPOCH)
 	s.Require().True(found, "epoch tracker")
 	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, epochTracker.EpochNumber)
 	s.Require().True(found, "epoch unbonding record")

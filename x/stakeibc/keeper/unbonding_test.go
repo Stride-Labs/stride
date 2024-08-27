@@ -12,6 +12,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
+	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
 	"github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
@@ -93,7 +94,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 
 	// Mock the epoch tracker to timeout 90% through the epoch
 	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochstypes.DAY_EPOCH,
+		EpochIdentifier:    epochstypes.STRIDE_EPOCH,
 		Duration:           10_000_000_000,                                                // 10 second epochs
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeout
 	}
@@ -1192,7 +1193,7 @@ func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
 
 	// Mock the epoch tracker to timeout 90% through the epoch
 	strideEpochTracker := types.EpochTracker{
-		EpochIdentifier:    epochstypes.DAY_EPOCH,
+		EpochIdentifier:    epochstypes.STRIDE_EPOCH,
 		Duration:           10_000_000_000,                                                // 10 second epochs
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeout
 	}
@@ -1337,7 +1338,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 	})
 
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, types.EpochTracker{
-		EpochIdentifier:    "day",
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
 		EpochNumber:        12,
 		NextEpochStartTime: uint64(2661750006000000000), // arbitrary time in the future, year 2056 I believe
 		Duration:           uint64(1000000000000),       // 16 min 40 sec

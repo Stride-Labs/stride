@@ -248,6 +248,6 @@ func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_FailedSubmitTx() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
 	err := keeper.WithdrawalHostBalanceCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
-	s.Require().ErrorContains(err, "Failed to SubmitTxs")
+	s.Require().ErrorContains(err, "failed to submit ICA tx")
 	s.Require().ErrorContains(err, "connection connection-X not found")
 }

@@ -199,7 +199,7 @@ func (s *KeeperTestSuite) TestRebalanceDelegationsForHostZone_FailedToSubmitICA(
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
 	err := s.App.StakeibcKeeper.RebalanceDelegationsForHostZone(s.Ctx, HostChainId)
-	s.Require().ErrorContains(err, "Failed to SubmitTxs for GAIA")
+	s.Require().ErrorContains(err, "failed to submit ICA tx for GAIA")
 }
 
 // Given a set of validator deltas (containing the expected change in delegation for each validator)

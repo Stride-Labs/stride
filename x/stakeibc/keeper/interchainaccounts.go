@@ -105,11 +105,11 @@ func (k Keeper) SubmitIcaTxStrideEpoch(
 	callbackId string,
 	callbackArgs []byte,
 ) (uint64, error) {
-	timeoutNanosUint64, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
+	timeoutNanos, err := k.GetICATimeoutNanos(ctx, epochstypes.STRIDE_EPOCH)
 	if err != nil {
-		return 0, errorsmod.Wrap(err, "failed to convert timeoutNanos to uint64")
+		return 0, errorsmod.Wrap(err, "failed to get timeout timestamp for stride epoch")
 	}
-	return k.SubmitICATx(ctx, connectionId, msgs, icaAccountType, timeoutNanosUint64, callbackId, callbackArgs)
+	return k.SubmitICATx(ctx, connectionId, msgs, icaAccountType, timeoutNanos, callbackId, callbackArgs)
 }
 
 // SubmitICATx submits an ICA transaction containing multiple messages
