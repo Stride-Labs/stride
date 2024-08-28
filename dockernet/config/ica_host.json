@@ -24,7 +24,7 @@
                     "/ibc.applications.transfer.v1.MsgTransfer",
                     "/cosmwasm.wasm.v1.MsgExecuteContract",
                     "/cosmwasm.wasm.v1.MsgInstantiateContract",
-                    "/osmosis.gamm.v1beta1.MsgSwapExactAmountIn"
+                    "/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn"
                 ]
             }
         }
