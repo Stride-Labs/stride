@@ -332,38 +332,56 @@ func (s *KeeperTestSuite) TestBuildTradeAuthzMsg() {
 		},
 	}
 
-	expectedTypeUrl := "/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn"
+	testCases := map[bool]string{
+		false: "/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn",
+		true:  "/osmosis.gamm.v1beta1.MsgSwapExactAmountIn",
+	}
 
-	// Test granting trade permissions
-	msgs, err := s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, types.AuthzPermissionChange_GRANT, granteeAddress)
-	s.Require().NoError(err, "no error expected when building grant message")
-	s.Require().Len(msgs, 1, "there should be one message")
+	for legacy, expectedTypeUrl := range testCases {
+		// Test granting trade permissions
+		msgs, err := s.App.StakeibcKeeper.BuildTradeAuthzMsg(
+			s.Ctx,
+			tradeRoute,
+			types.AuthzPermissionChange_GRANT,
+			granteeAddress,
+			legacy,
+		)
+		s.Require().NoError(err, "no error expected when building grant message")
+		s.Require().Len(msgs, 1, "there should be one message")
 
-	grantMsg, ok := msgs[0].(*authz.MsgGrant)
-	s.Require().True(ok, "message should be of type grant")
-	s.Require().Equal(granterAddress, grantMsg.Granter, "granter of grant message")
-	s.Require().Equal(granteeAddress, grantMsg.Grantee, "grantee of grant message")
+		grantMsg, ok := msgs[0].(*authz.MsgGrant)
+		s.Require().True(ok, "message should be of type grant")
+		s.Require().Equal(granterAddress, grantMsg.Granter, "granter of grant message")
+		s.Require().Equal(granteeAddress, grantMsg.Grantee, "grantee of grant message")
 
-	authorization, err := grantMsg.Grant.GetAuthorization()
-	expectedExpiration := s.Ctx.BlockTime().Add(time.Hour * 24 * 365 * 100)
-	s.Require().NoError(err)
-	s.Require().Equal(expectedTypeUrl, authorization.MsgTypeURL(), "grant msg type url")
-	s.Require().Equal(expectedExpiration, *grantMsg.Grant.Expiration, "expiration should be one year from the current block time")
+		authorization, err := grantMsg.Grant.GetAuthorization()
+		expectedExpiration := s.Ctx.BlockTime().Add(time.Hour * 24 * 365 * 100)
+		s.Require().NoError(err)
+		s.Require().Equal(expectedTypeUrl, authorization.MsgTypeURL(), "grant msg type url")
+		s.Require().Equal(expectedExpiration, *grantMsg.Grant.Expiration, "expiration should be one year from the current block time")
 
-	// Test revoking trade permissions
-	msgs, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, types.AuthzPermissionChange_REVOKE, granteeAddress)
-	s.Require().NoError(err, "no error expected when building revoke message")
-	s.Require().Len(msgs, 1, "there should be one message")
+		// Test revoking trade permissions
+		msgs, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(
+			s.Ctx,
+			tradeRoute,
+			types.AuthzPermissionChange_REVOKE,
+			granteeAddress,
+			legacy,
+		)
+		s.Require().NoError(err, "no error expected when building revoke message")
+		s.Require().Len(msgs, 1, "there should be one message")
 
-	revokeMsg, ok := msgs[0].(*authz.MsgRevoke)
-	s.Require().True(ok, "message should be of type revoke")
-	s.Require().Equal(granterAddress, revokeMsg.Granter, "granter of revoke message")
-	s.Require().Equal(granteeAddress, revokeMsg.Grantee, "grantee of revoke message")
-	s.Require().Equal(expectedTypeUrl, revokeMsg.MsgTypeUrl, "revoke msg type url")
+		revokeMsg, ok := msgs[0].(*authz.MsgRevoke)
+		s.Require().True(ok, "message should be of type revoke")
+		s.Require().Equal(granterAddress, revokeMsg.Granter, "granter of revoke message")
+		s.Require().Equal(granteeAddress, revokeMsg.Grantee, "grantee of revoke message")
+		s.Require().Equal(expectedTypeUrl, revokeMsg.MsgTypeUrl, "revoke msg type url")
 
-	// Test invalid permissions
-	_, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, 100, granteeAddress)
-	s.Require().ErrorContains(err, "invalid permission change")
+		// Test invalid permissions
+		_, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, 100, granteeAddress, legacy)
+		s.Require().ErrorContains(err, "invalid permission change")
+	}
+
 }
 
 // --------------------------------------------------------------
