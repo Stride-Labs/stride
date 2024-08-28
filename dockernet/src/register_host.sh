@@ -55,7 +55,7 @@ for (( i=1; i <= $NUM_VALS; i++ )); do
         if [[ "$i" == "1" ]]; then
             echo "$CHAIN - Submitting validator bonds..."
         fi
-        $GAIA_MAIN_CMD tx staking validator-bond $delegate_val --from ${VAL_PREFIX}${i} -y | TRIM_TX
+        $GAIA_MAIN_CMD tx staking validator-bond $delegate_val --from ${VAL_PREFIX}${i} -y --fees 1000000ufee | TRIM_TX
     fi
 done
 
