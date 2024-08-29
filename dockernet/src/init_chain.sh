@@ -146,7 +146,7 @@ set_consumer_genesis() {
     # add consumer genesis
     home_directories=""
     for (( i=1; i <= $NUM_NODES; i++ )); do
-        home_directories+="${STATE}/stride${i},"
+        home_directories+="${STATE}/${NODE_PREFIX}${i},"
     done
 
     $MAIN_CMD add-consumer-section --validator-home-directories $home_directories
