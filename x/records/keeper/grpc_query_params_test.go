@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	testkeeper "github.com/Stride-Labs/stride/v23/testutil/keeper"
-	"github.com/Stride-Labs/stride/v23/x/records/types"
+	testkeeper "github.com/Stride-Labs/stride/v24/testutil/keeper"
+	"github.com/Stride-Labs/stride/v24/x/records/types"
 )
 
 func TestParamsQuery(t *testing.T) {

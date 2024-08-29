@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v23/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v24/x/icaoracle/types"
 )
 
 func (s *KeeperTestSuite) TestGovToggleOracle() {

@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "cosmos_proto/cosmos.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v23/x/interchainquery/types";
+option go_package = "github.com/Stride-Labs/stride/v24/x/interchainquery/types";
 
 enum TimeoutPolicy {
   REJECT_QUERY_RESPONSE = 0;

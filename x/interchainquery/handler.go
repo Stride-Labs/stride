@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v23/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v23/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v24/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v24/x/interchainquery/types"
 )
 
 // NewHandler returns a handler for interchainquery module messages

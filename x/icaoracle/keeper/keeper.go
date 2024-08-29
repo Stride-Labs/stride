@@ -10,7 +10,7 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
 
-	"github.com/Stride-Labs/stride/v23/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v24/x/icaoracle/types"
 )
 
 type Keeper struct {
