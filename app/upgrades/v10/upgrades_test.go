@@ -16,23 +16,23 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v23/app/apptesting"
-	v10 "github.com/Stride-Labs/stride/v23/app/upgrades/v10"
-	"github.com/Stride-Labs/stride/v23/utils"
+	"github.com/Stride-Labs/stride/v24/app/apptesting"
+	v10 "github.com/Stride-Labs/stride/v24/app/upgrades/v10"
+	"github.com/Stride-Labs/stride/v24/utils"
 
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
-	recordskeeper "github.com/Stride-Labs/stride/v23/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
+	recordskeeper "github.com/Stride-Labs/stride/v24/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
 
-	claimtypes "github.com/Stride-Labs/stride/v23/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v24/x/claim/types"
 )
 
 var initialRateLimitChannelValue = sdk.NewInt(1_000_000)

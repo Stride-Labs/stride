@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v23/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v24/x/stakedym/types"
 )
 
 const (

@@ -3,8 +3,8 @@ package stakeibc
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
