@@ -297,6 +297,7 @@ func (k Keeper) BurnStTokensAfterUndelegation(ctx sdk.Context, hostZone types.Ho
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to burn %v%s tokens", stTokenBurnAmount, stCoinDenom)
 	}
-	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, ICACallbackID_Undelegate, "Burned %v", stCoin))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, ICACallbackID_Undelegate,
+		"Total Burned from Batch %v", stCoin))
 	return nil
 }
