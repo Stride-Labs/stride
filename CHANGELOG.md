@@ -42,6 +42,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v24.0.0](https://github.com/Stride-Labs/stride/releases/tag/v24.0.0) - 2024-08-29
+
+### On-Chain changes
+1. batching delegations and undelegations ([#1263](https://github.com/Stride-Labs/stride/pull/1263))
+2. removed autopilot support for metadata in receiver and increased memo lengths ([#1273](https://github.com/Stride-Labs/stride/pull/1273))
+3. changed osmosis swap type URL ([#1275](https://github.com/Stride-Labs/stride/pull/1275))
+4. added log to undelegate icacallback ([#1277](https://github.com/Stride-Labs/stride/pull/1277))
+5. v24 Import Paths ([#1278](https://github.com/Stride-Labs/stride/pull/1278))
+
+### Off-Chain changes
+1. TS Integration Tests Framework ([#1244](https://github.com/Stride-Labs/stride/pull/1244))
+2. integration test initial network setup ([#1256](https://github.com/Stride-Labs/stride/pull/1256))
+3. Bump fastapi from 0.103.2 to 0.109.1 in /integration-tests/api ([#1257](https://github.com/Stride-Labs/stride/pull/1257))
+4. add relayers to integration tests framework ([#1258](https://github.com/Stride-Labs/stride/pull/1258))
+5. bumped wasmd to v0.46 ([#1274](https://github.com/Stride-Labs/stride/pull/1274))
+6. add admin address to integration test framework ([#1276](https://github.com/Stride-Labs/stride/pull/1276))
+
+
 ## [v23.0.0](https://github.com/Stride-Labs/stride/releases/tag/v23.0.0) - 2024-07-19
 
 ### On-Chain changes
