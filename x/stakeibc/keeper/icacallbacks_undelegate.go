@@ -247,6 +247,10 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 			stTokensToBurn = sdk.NewDecFromInt(nativeTokensUnbonded).Quo(impliedRedemptionRate).TruncateInt()
 		}
 
+		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
+			"Epoch Unbonding Record: %d - Native Unbonded: %v, StTokens Burned: %v",
+			epochNumber, nativeTokensUnbonded, stTokensToBurn))
+
 		// Decrement st amount on the record and increment the total
 		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokensToBurn.Sub(stTokensToBurn)
 		totalStTokensToBurn = totalStTokensToBurn.Add(stTokensToBurn)
@@ -259,15 +263,15 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		// Update the unbonding time if the time from this batch is later than what's on the record
 		if unbondingTime > hostZoneUnbonding.UnbondingTime {
 			hostZoneUnbonding.UnbondingTime = unbondingTime
+
+			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
+				"Epoch Unbonding Record: %d - Setting unbonding time to %d", epochNumber, unbondingTime))
 		}
 
 		// Persist the record changes
 		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, *hostZoneUnbonding); err != nil {
 			return totalStTokensToBurn, err
 		}
-
-		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: %d - Setting unbonding time to %d", epochNumber, unbondingTime))
 	}
 	return totalStTokensToBurn, nil
 }
