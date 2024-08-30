@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 4. v24 Import Paths ([#1278](https://github.com/Stride-Labs/stride/pull/1278))
 5. bumped wasmd to v0.46 ([#1274](https://github.com/Stride-Labs/stride/pull/1274))
 6. Loosened outer redemption rate bounds ([#1280](https://github.com/Stride-Labs/stride/pull/1280))
+7. fixed map nondeterminism ([#1281](https://github.com/Stride-Labs/stride/pull/1281))
 
 ### Off-Chain changes
 
