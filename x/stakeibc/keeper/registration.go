@@ -7,10 +7,10 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
-	"github.com/Stride-Labs/stride/v23/utils"
-	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/utils"
+	epochtypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 var (

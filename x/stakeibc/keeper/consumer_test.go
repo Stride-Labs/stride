@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestRegisterStTokenDenomsToWhitelist() {

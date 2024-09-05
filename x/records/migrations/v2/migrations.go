@@ -8,8 +8,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	oldrecordtypes "github.com/Stride-Labs/stride/v23/x/records/migrations/v2/types"
-	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	oldrecordtypes "github.com/Stride-Labs/stride/v24/x/records/migrations/v2/types"
+	recordtypes "github.com/Stride-Labs/stride/v24/x/records/types"
 )
 
 func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {

@@ -6,9 +6,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 type SweepUnbondedTokensTestCase struct {

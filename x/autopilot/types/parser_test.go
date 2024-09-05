@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v23/app/apptesting"
-	"github.com/Stride-Labs/stride/v23/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v24/app/apptesting"
+	"github.com/Stride-Labs/stride/v24/x/autopilot/types"
 )
 
 func init() {

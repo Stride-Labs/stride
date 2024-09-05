@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v23/x/staketia/types"
+	"github.com/Stride-Labs/stride/v24/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) addDelegationRecords() (delegationRecords []types.DelegationRecord) {

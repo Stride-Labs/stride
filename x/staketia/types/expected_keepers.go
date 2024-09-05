@@ -7,8 +7,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 // Required AccountKeeper functions

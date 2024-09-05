@@ -11,9 +11,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v23/utils"
-	epochstypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/utils"
+	epochstypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 const RebalanceIcaBatchSize = 5
