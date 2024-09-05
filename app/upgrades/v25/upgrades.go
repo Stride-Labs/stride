@@ -9,7 +9,9 @@ import (
 
 	recordskeeper "github.com/Stride-Labs/stride/v24/x/records/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 	staketiakeeper "github.com/Stride-Labs/stride/v24/x/staketia/keeper"
+	staketiatypes "github.com/Stride-Labs/stride/v24/x/staketia/types"
 )
 
 const UpgradeName = "v25"
@@ -31,7 +33,33 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to migrate staketia to stakeibc")
 		}
 
+		// Add celestia validators
+		if err := AddCelestiaValidators(ctx, stakeibcKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to add celestia validators")
+		}
+
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+// Adds the full celestia validator set, with a 0 delegation for each
+func AddCelestiaValidators(ctx sdk.Context, k stakeibckeeper.Keeper) error {
+	for _, validatorConfig := range Validators {
+		validator := stakeibctypes.Validator{
+			Name:    validatorConfig.name,
+			Address: validatorConfig.address,
+			Weight:  validatorConfig.weight,
+		}
+
+		if err := k.AddValidatorToHostZone(ctx, staketiatypes.CelestiaChainId, validator, false); err != nil {
+			return err
+		}
+
+		// Query and store the validator's sharesToTokens rate
+		if err := k.QueryValidatorSharesToTokensRate(ctx, staketiatypes.CelestiaChainId, validatorConfig.address); err != nil {
+			return err
+		}
+	}
+	return nil
 }
