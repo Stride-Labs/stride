@@ -788,7 +788,7 @@ func (k msgServer) ToggleTradeController(
 	}
 
 	// Build the authz message that grants or revokes trade permissions to the specified address
-	authzMsg, err := k.BuildTradeAuthzMsg(ctx, tradeRoute, msg.PermissionChange, msg.Address)
+	authzMsg, err := k.BuildTradeAuthzMsg(ctx, tradeRoute, msg.PermissionChange, msg.Address, msg.Legacy)
 	if err != nil {
 		return nil, err
 	}

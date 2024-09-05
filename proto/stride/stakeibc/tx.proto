@@ -407,6 +407,8 @@ message MsgToggleTradeController {
   AuthzPermissionChange permission_change = 3;
   // Address of trade operator
   string address = 4;
+  // Option to grant/revoke the legacy osmosis swap message
+  bool legacy = 5;
 }
 message MsgToggleTradeControllerResponse {}
 

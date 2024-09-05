@@ -298,6 +298,7 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 	redeemerOnStride := s.TestAccs[0]
 	depositAddress := s.TestAccs[1]
+	differentAddress := s.TestAccs[2].String()
 	redeemerOnHost := HostAddress
 
 	redeemAmount := sdk.NewInt(1000000)
@@ -323,19 +324,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 		expSuccess bool
 	}{
 		{
-			name:    "successful redemption with metadata in receiver",
-			enabled: true,
-			packetData: transfertypes.FungibleTokenPacketData{
-				Denom:    stAtomTrace,
-				Amount:   redeemAmount.String(),
-				Sender:   redeemerOnHost,
-				Receiver: getRedeemStakeStakeibcPacketMetadata(redeemerOnStride.String(), redeemerOnHost),
-				Memo:     "",
-			},
-			expSuccess: true,
-		},
-		{
-			name:    "successful redemption with metadata in memo",
+			name:    "successful redemption",
 			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    stAtomTrace,
@@ -353,20 +342,44 @@ func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 				Denom:    stAtomTrace,
 				Amount:   redeemAmount.String(),
 				Sender:   redeemerOnHost,
-				Receiver: getRedeemStakeStakeibcPacketMetadata(redeemerOnStride.String(), redeemerOnHost),
-				Memo:     "",
+				Receiver: redeemerOnStride.String(),
+				Memo:     getRedeemStakeStakeibcPacketMetadata(redeemerOnStride.String(), redeemerOnHost),
 			},
 			expSuccess: false,
 		},
 		{
-			name:    "failed because invalid stride address",
+			name:    "failed because invalid stride address in memo",
 			enabled: true,
 			packetData: transfertypes.FungibleTokenPacketData{
 				Denom:    stAtomTrace,
 				Amount:   redeemAmount.String(),
 				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
-				Receiver: getRedeemStakeStakeibcPacketMetadata("XXX", redeemerOnHost),
-				Memo:     "",
+				Receiver: redeemerOnStride.String(),
+				Memo:     getRedeemStakeStakeibcPacketMetadata("XXX", redeemerOnHost),
+			},
+			expSuccess: false,
+		},
+		{
+			name:    "failed because invalid stride address in reciever",
+			enabled: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    stAtomTrace,
+				Amount:   redeemAmount.String(),
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: "XXX",
+				Memo:     getRedeemStakeStakeibcPacketMetadata(redeemerOnStride.String(), redeemerOnHost),
+			},
+			expSuccess: false,
+		},
+		{
+			name:    "failed because transfer receiver address does not match memo receiver",
+			enabled: true,
+			packetData: transfertypes.FungibleTokenPacketData{
+				Denom:    stAtomTrace,
+				Amount:   redeemAmount.String(),
+				Sender:   "cosmos16plylpsgxechajltx9yeseqexzdzut9g8vla4k",
+				Receiver: differentAddress,
+				Memo:     getRedeemStakeStakeibcPacketMetadata(redeemerOnStride.String(), redeemerOnHost),
 			},
 			expSuccess: false,
 		},

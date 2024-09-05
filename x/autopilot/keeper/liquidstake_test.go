@@ -320,6 +320,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	liquidStakerOnStride := s.TestAccs[0]
 	depositAddress := s.TestAccs[1]
+	differentAddress := s.TestAccs[2].String()
 	forwardRecipientOnHost := HostAddress
 
 	stakeAmount := sdk.NewInt(1000000)
@@ -337,16 +338,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 		expectedLiquidStake       bool
 	}{
 		{
-			name:                "successful liquid stake with metadata in receiver",
-			enabled:             true,
-			liquidStakeDenom:    Atom,
-			transferReceiver:    getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
-			transferMemo:        "",
-			expectedSuccess:     true,
-			expectedLiquidStake: true,
-		},
-		{
-			name:                "successful liquid stake with metadata in the memo",
+			name:                "successful liquid stake",
 			enabled:             true,
 			liquidStakeDenom:    Atom,
 			transferReceiver:    liquidStakerOnStride.String(),
@@ -355,17 +347,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expectedLiquidStake: true,
 		},
 		{
-			name:                     "successful liquid stake and forward to default host (receiver)",
-			enabled:                  true,
-			liquidStakeDenom:         Atom,
-			transferReceiver:         getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, ""),
-			transferMemo:             "",
-			expectedForwardChannelId: ibctesting.FirstChannelID,
-			expectedSuccess:          true,
-			expectedLiquidStake:      true,
-		},
-		{
-			name:                     "successful liquid stake and forward to default host (memo)",
+			name:                     "successful liquid stake and forward to default host",
 			enabled:                  true,
 			liquidStakeDenom:         Atom,
 			transferReceiver:         liquidStakerOnStride.String(),
@@ -375,19 +357,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expectedLiquidStake:      true,
 		},
 		{
-			name:                      "successful liquid stake and forward to custom transfer channel (receiver)",
-			enabled:                   true,
-			liquidStakeDenom:          Atom,
-			transferReceiver:          getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, "channel-0"),
-			transferMemo:              "",
-			hostZoneChannelID:         "channel-1",
-			inboundTransferChannnelId: "channel-1",
-			expectedForwardChannelId:  "channel-0", // different than host zone, specified in memo
-			expectedSuccess:           true,
-			expectedLiquidStake:       true,
-		},
-		{
-			name:                      "successful liquid stake and forward to custom transfer channel (memo)",
+			name:                      "successful liquid stake and forward to custom transfer channel",
 			enabled:                   true,
 			liquidStakeDenom:          Atom,
 			transferReceiver:          liquidStakerOnStride.String(),
@@ -432,6 +402,14 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			expectedSuccess:  false,
 		},
 		{
+			name:             "memo and transfer address mismatch",
+			enabled:          true,
+			liquidStakeDenom: Osmo,
+			transferReceiver: liquidStakerOnStride.String(),
+			transferMemo:     getLiquidStakePacketMetadata(differentAddress, "", ""),
+			expectedSuccess:  false,
+		},
+		{
 			name:             "not host denom",
 			enabled:          true,
 			liquidStakeDenom: Osmo,
@@ -443,16 +421,16 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			name:             "failed to outbound transfer",
 			enabled:          true,
 			liquidStakeDenom: Atom,
-			transferReceiver: getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, "channel-999"), // channel DNE
-			transferMemo:     "",
+			transferReceiver: liquidStakerOnStride.String(),
+			transferMemo:     getLiquidStakePacketMetadata(liquidStakerOnStride.String(), forwardRecipientOnHost, "channel-999"), // channel DNE
 			expectedSuccess:  false,
 		},
 		{
 			name:                      "valid uatom token from invalid channel",
 			enabled:                   true,
 			liquidStakeDenom:          Atom,
-			transferReceiver:          getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
-			transferMemo:              "",
+			transferReceiver:          liquidStakerOnStride.String(),
+			transferMemo:              getLiquidStakePacketMetadata(liquidStakerOnStride.String(), "", ""),
 			hostZoneChannelID:         "channel-0",
 			inboundTransferChannnelId: "channel-999", // channel DNE
 			expectedSuccess:           false,

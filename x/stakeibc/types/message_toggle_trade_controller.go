@@ -15,12 +15,13 @@ const TypeMsgToggleTradeController = "toggle_trade_controller"
 
 var _ sdk.Msg = &MsgToggleTradeController{}
 
-func NewMsgToggleTradeController(creator, chainId string, permissionChange AuthzPermissionChange, address string) *MsgToggleTradeController {
+func NewMsgToggleTradeController(creator, chainId string, permissionChange AuthzPermissionChange, address string, legacy bool) *MsgToggleTradeController {
 	return &MsgToggleTradeController{
 		Creator:          creator,
 		ChainId:          chainId,
 		PermissionChange: permissionChange,
 		Address:          address,
+		Legacy:           legacy,
 	}
 }
 

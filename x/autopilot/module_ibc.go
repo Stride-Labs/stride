@@ -17,7 +17,10 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 )
 
-const MaxMemoCharLength = 2000
+const (
+	MaxMemoCharLength     = 4000
+	MaxReceiverCharLength = 100
+)
 
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
@@ -133,31 +136,27 @@ func (im IBCModule) OnRecvPacket(
 
 	// Error any transactions with a Memo or Receiver field are greater than the max characters
 	if len(tokenPacketData.Memo) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "memo length: %d", len(tokenPacketData.Memo)))
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoLength, "memo length: %d", len(tokenPacketData.Memo)))
 	}
-	if len(tokenPacketData.Receiver) > MaxMemoCharLength {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidMemoSize, "receiver length: %d", len(tokenPacketData.Receiver)))
+	if len(tokenPacketData.Receiver) > MaxReceiverCharLength {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidReceiverLength, "receiver length: %d", len(tokenPacketData.Receiver)))
 	}
 
-	// ibc-go v5 has a Memo field that can store forwarding info
-	// For older version of ibc-go, the data must be stored in the receiver field
-	var metadata string
-	if tokenPacketData.Memo != "" { // ibc-go v5+
-		metadata = tokenPacketData.Memo
-	} else { // before ibc-go v5
-		metadata = tokenPacketData.Receiver
+	// The receiver must always be a valid address
+	// In the case of autopilot, this address is also duplicated in the autopilot payload
+	if _, err := sdk.AccAddressFromBech32(tokenPacketData.Receiver); err != nil {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(types.ErrInvalidReceiverAddress, tokenPacketData.Receiver))
 	}
 
 	// If a valid receiver address has been provided and no memo,
 	// this is clearly just an normal IBC transfer
 	// Pass down the stack immediately instead of parsing
-	_, err := sdk.AccAddressFromBech32(tokenPacketData.Receiver)
-	if err == nil && tokenPacketData.Memo == "" {
+	if tokenPacketData.Memo == "" {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
 	}
 
 	// parse out any autopilot forwarding info
-	autopilotMetadata, err := types.ParseAutopilotMetadata(metadata)
+	autopilotMetadata, err := types.ParseAutopilotMetadata(tokenPacketData.Memo)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
@@ -171,9 +170,12 @@ func (im IBCModule) OnRecvPacket(
 
 	//// At this point, we are officially dealing with an autopilot packet
 
-	// Update the reciever in the packet data so that we can pass the packet down the stack
-	// (since the "receiver" may have technically been a full JSON memo)
-	tokenPacketData.Receiver = autopilotMetadata.Receiver
+	// Confirm the receiver in the autopilot metadata matched the transfer receiver
+	if tokenPacketData.Receiver != autopilotMetadata.Receiver {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidReceiverAddress,
+			"the transfer receiver (%s) must match the autopilot receiver (%s)",
+			tokenPacketData.Receiver, autopilotMetadata.Receiver))
+	}
 
 	// For autopilot liquid stake and forward, we'll override the receiver with a hashed address
 	// The hashed address will also be the sender of the outbound transfer
