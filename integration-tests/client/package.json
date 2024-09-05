@@ -25,7 +25,7 @@
     "bech32": "2.0.0",
     "jest": "29.7.0",
     "prettier": "3.3.3",
-    "stridejs": "github:Stride-Labs/stridejs#f369bd62361a6879f182038c2648c33348863a7e",
+    "stridejs": "github:Stride-Labs/stridejs#f8ed078fba0b6cd818487d8fa7059b9b916ca355",
     "typescript": "5.5.3",
     "vitest": "2.0.3"
   },

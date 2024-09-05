@@ -1,13 +1,8 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
 import { GasPrice } from "@cosmjs/stargate";
-import {
-  StrideClient,
-  ibcDenom,
-  coinFromString,
-  convertBech32Prefix,
-} from "stridejs";
+import { StrideClient, ibcDenom } from "stridejs";
 import { beforeAll, describe, test } from "vitest";
-import { waitForChain, submitTxAndExpectSuccess } from "./utils";
+import { submitTxAndExpectSuccess, waitForChain } from "./utils";
 
 const RPC_ENDPOINT = "https://stride-rpc.internal.stridenet.co";
 
@@ -90,7 +85,10 @@ describe("x/stakeibc", () => {
       creator: stridejs.address,
       bech32prefix: "cosmos",
       hostDenom: "uatom",
-      ibcDenom: ibcDenom([{incomingPortId: "transfer", incomingChannelId: "channel-0"}], "uatom"),
+      ibcDenom: ibcDenom(
+        [{ incomingPortId: "transfer", incomingChannelId: "channel-0" }],
+        "uatom",
+      ),
       connectionId: "connection-0",
       transferChannelId: "channel-0",
       unbondingPeriod: BigInt(1),
@@ -99,26 +97,30 @@ describe("x/stakeibc", () => {
       lsmLiquidStakeEnabled: true,
       communityPoolTreasuryAddress: "",
       maxMessagesPerIcaTx: BigInt(2),
-    })
-
-    const msg = stridejs.types.stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
-        creator: stridejs.address,
-        bech32prefix: "cosmos",
-        hostDenom: "uatom",
-        ibcDenom: ibcDenom([{incomingPortId: "transfer", incomingChannelId: "channel-0"}], "uatom"),
-        connectionId: "connection-0",
-        transferChannelId: "channel-0",
-        unbondingPeriod: BigInt(1),
-        minRedemptionRate: "0.9",
-        maxRedemptionRate: "1.5",
-        lsmLiquidStakeEnabled: true,
-        communityPoolTreasuryAddress: "",
-        maxMessagesPerIcaTx: BigInt(2),
     });
+
+    const msg =
+      stridejs.types.stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone(
+        {
+          creator: stridejs.address,
+          bech32prefix: "cosmos",
+          hostDenom: "uatom",
+          ibcDenom: ibcDenom(
+            [{ incomingPortId: "transfer", incomingChannelId: "channel-0" }],
+            "uatom",
+          ),
+          connectionId: "connection-0",
+          transferChannelId: "channel-0",
+          unbondingPeriod: BigInt(1),
+          minRedemptionRate: "0.9",
+          maxRedemptionRate: "1.5",
+          lsmLiquidStakeEnabled: true,
+          communityPoolTreasuryAddress: "",
+          maxMessagesPerIcaTx: BigInt(2),
+        },
+      );
 
     await submitTxAndExpectSuccess(stridejs, [msg]);
     console.log(stridejs.query.stride.stakeibc.hostZoneAll());
   });
 });
-
-

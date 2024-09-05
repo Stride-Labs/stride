@@ -1,4 +1,5 @@
-import { coinsFromString, StrideClient } from "stridejs";
+import { coinsFromString, EncodeObject, StrideClient } from "stridejs";
+import { expect } from "vitest";
 
 /**
  * Waits for the chain to start by continuously sending transactions until .
@@ -30,4 +31,22 @@ export async function waitForChain(
       // signAndBroadcast might throw if the RPC is not up yet
     }
   }
+}
+
+/**
+ * Submit a transaction and wait for it to be broadcasted and executed.
+ *
+ * @param {StrideClient} stridejs The Stride client instance.
+ * @param {any[]} msgs The messages array.
+ */
+export async function submitTxAndExpectSuccess(
+  stridejs: StrideClient,
+  msgs: EncodeObject[],
+): Promise<void> {
+  const tx = await stridejs.signAndBroadcast(msgs, 2);
+
+  if (tx.code !== 0) {
+    console.error(tx.rawLog);
+  }
+  expect(tx.code).toBe(0);
 }

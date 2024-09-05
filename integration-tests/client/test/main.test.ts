@@ -119,12 +119,13 @@ describe("x/airdrop", () => {
     }
     expect(tx.code).toBe(0);
 
-    const { airdrop } = await stridejs.query.stride.airdrop.airdrop({
-      id: airdropId,
-    });
+    const { id, earlyClaimPenalty } =
+      await stridejs.query.stride.airdrop.airdrop({
+        id: airdropId,
+      });
 
-    expect(airdrop!.id).toBe(airdropId);
-    expect(airdrop!.earlyClaimPenalty).toBe("0.5");
+    expect(id).toBe(airdropId);
+    expect(earlyClaimPenalty).toBe("0.5");
   });
 });
 
@@ -145,7 +146,7 @@ describe("ibc", () => {
             revisionHeight: 0n,
           },
           timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes 
+            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
           ),
           memo: "",
         },
