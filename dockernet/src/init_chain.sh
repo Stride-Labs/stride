@@ -204,7 +204,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     sed -i -E "s|cors_allowed_origins = \[\]|cors_allowed_origins = [\"\*\"]|g" $config_toml
     sed -i -E "s|127.0.0.1|0.0.0.0|g" $config_toml
-    sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
+    sed -i -E "s|timeout_commit = \".*\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
     sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
 
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
@@ -219,6 +219,21 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json 
     sed -i -E "s|\"aphoton\"|\"${DENOM}\"|g" $genesis_json # ethermint default
+
+    if [[ "$CHAIN" == "CELESTIA" ]]; then
+        sed -i'.bak' 's#"null"#"kv"#g' $config_toml
+        sed -i'.bak' 's#discard_abci_responses = true#discard_abci_responses = false#g' $config_toml
+        sed -i'.bak' 's#"app_version": "2"#"app_version": "1"#g' $genesis_json
+
+        trace_type="local"
+        sed -i.bak -e "s/^trace_type *=.*/trace_type = \"$trace_type\"/" $config_toml
+
+        trace_pull_address=":26661"
+        sed -i.bak -e "s/^trace_pull_address *=.*/trace_pull_address = \"$trace_pull_address\"/" $config_toml
+
+        trace_push_batch_size=1000
+        sed -i.bak -e "s/^trace_push_batch_size *=.*/trace_push_batch_size = \"$trace_push_batch_size\"/" $config_toml
+    fi
 
     # add a validator account
     val_acct="${VAL_PREFIX}${i}"
@@ -243,7 +258,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Only generate the validator txs for host chains
     if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
-        $cmd $GENESIS_CMD gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+        $cmd $GENESIS_CMD gentx $val_acct ${STAKE_TOKENS}${DENOM} --fees 500utia --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
     fi
     
     # Get the endpoint and node ID

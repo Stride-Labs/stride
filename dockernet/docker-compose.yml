@@ -177,6 +177,15 @@ services:
     volumes:
       - ./state/noble3:/home/noble/.noble
 
+  celestia1:
+    image: stridezone:celestia
+    volumes:
+      - ./state/celestia1:/home/celestia/.celestia-app
+    ports:
+      - "25757:26657"
+      - "1227:1317"
+      - "9000:9090"
+
   # Fill in new host zone being tested here
 
   hermes:
@@ -242,6 +251,13 @@ services:
       - ./state/relayer-dydx:/home/relayer/.relayer
     restart: always
     command: [ "bash", "start.sh", "stride-dydx" ]
+
+  relayer-celestia:
+    image: stridezone:relayer
+    volumes:
+      - ./state/relayer-celestia:/home/relayer/.relayer
+    restart: always
+    command: [ "bash", "start.sh", "stride-celestia" ]
 
   # Relayers for rate limiter tests
   relayer-juno-osmo:
