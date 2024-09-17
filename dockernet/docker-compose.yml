@@ -259,6 +259,12 @@ services:
     restart: always
     command: [ "bash", "start.sh", "stride-celestia" ]
 
+  hermes-celestia:
+    image: stridezone:hermes
+    volumes:
+      - ./state/hermes-celestia:/home/hermes/.hermes
+    restart: always
+
   # Relayers for rate limiter tests
   relayer-juno-osmo:
     image: stridezone:relayer
