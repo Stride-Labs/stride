@@ -4,9 +4,9 @@ WORKDIR /opt
 
 RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev ca-certificates build-base git 
 
-ENV COMMIT_HASH=v2.0.0
+ENV COMMIT_HASH=sam/v2-silence-fee
 
-RUN git clone https://github.com/celestiaorg/celestia-app \
+RUN git clone https://github.com/Stride-Labs/celestia-app \
     && cd celestia-app \
     && git checkout $COMMIT_HASH 
 
