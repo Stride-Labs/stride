@@ -25,4 +25,8 @@ WORKDIR /home/celestia
 
 EXPOSE 26657 26656 1317 9090
 
-CMD celestia-appd start --force-no-bbr --v2-upgrade-height 3
+CMD celestia-appd start \
+    --api.enable \
+    --grpc.enable \
+    --grpc-web.enable \
+    --v2-upgrade-height 3 
