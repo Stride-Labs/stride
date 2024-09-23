@@ -73,6 +73,10 @@ service Msg {
   // Sets the operator address
   rpc SetOperatorAddress(MsgSetOperatorAddress)
       returns (MsgSetOperatorAddressResponse);
+
+  // Updates the host zone params for a testnet deployment
+  rpc SetHostZoneParams(MsgSetHostZoneParams)
+      returns (MsgSetHostZoneParamsResponse);
 }
 
 // LiquidStake
@@ -234,3 +238,12 @@ message MsgSetOperatorAddress {
   string operator = 2;
 }
 message MsgSetOperatorAddressResponse {}
+
+// SetHostZoneParams
+message MsgSetHostZoneParams {
+  option (cosmos.msg.v1.signer) = "signer";
+  option (amino.name) = "staketia/MsgSetHostZoneParams";
+
+  string signer = 1;
+}
+message MsgSetHostZoneParamsResponse {}

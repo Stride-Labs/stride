@@ -47,6 +47,7 @@ func GetTxCmd() *cobra.Command {
 		CmdOverwriteRecord(),
 		CmdRefreshRedemptionRate(),
 		CmdSetOperatorAddress(),
+		CmdSetHostZoneParams(),
 	)
 
 	return cmd
@@ -526,6 +527,32 @@ $ %[1]s tx %[2]s setup-operator-address stride1265uqtckmd3kt7jek2pv0vrp04j0d74jj
 				clientCtx.GetFromAddress().String(),
 				operatorAddress,
 			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdSetHostZoneParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set-host-zone-params",
+		Short: "updates the host zone params for testnet",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgSetHostZoneParams{
+				Signer: clientCtx.GetFromAddress().String(),
+			}
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}

@@ -283,3 +283,29 @@ func (k msgServer) SetOperatorAddress(goCtx context.Context, msg *types.MsgSetOp
 
 	return &types.MsgSetOperatorAddressResponse{}, nil
 }
+
+func (k msgServer) SetHostZoneParams(goCtx context.Context, msg *types.MsgSetHostZoneParams) (*types.MsgSetHostZoneParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	hostZone, err := k.GetHostZone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	hostZone.ChainId = "mocha-4"
+	hostZone.ClaimAddress = "stride1nm5hd2vvutksxu5cl35gn2k77yjrd5tdfeawy4"
+	hostZone.DelegationAddress = "celestia1cr67t725a76hyaapx3degxua3ey8zqrrxyxqu8"
+	hostZone.DepositAddress = "stride1e9gf63q0wpqyrge5xv2wkt7kz95wl5ntp94m9c"
+	hostZone.NativeTokenDenom = "utia"
+	hostZone.NativeTokenIbcDenom = "ibc/1A7653323C1A9E267FF7BEBF40B3EEA8065E8F069F47F2493ABC3E0B621BF793"
+	hostZone.OperatorAddressOnStride = "stride19zwp2gs73dwfa7zwvhc36lhcke6ur8k3plkrvy"
+	hostZone.RedemptionAddress = "stride1kjylv75j4t9za70k38uxnesywc4x620t42edt9"
+	hostZone.RewardAddress = "celestia18etj3sqjj49l2vna303fmszqf40j4k5wnwha0d"
+	hostZone.SafeAddressOnStride = "stride19zwp2gs73dwfa7zwvhc36lhcke6ur8k3plkrvy"
+	hostZone.TransferChannelId = "channel-38"
+	hostZone.UnbondingPeriodSeconds = 1814400
+
+	k.SetHostZone(ctx, hostZone)
+
+	return &types.MsgSetHostZoneParamsResponse{}, nil
+}

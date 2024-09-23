@@ -24,6 +24,7 @@ const (
 	TypeMsgOverwriteUnbondingRecord        = "overwrite_unbonding_record"
 	TypeMsgOverwriteRedemptionRecord       = "overwrite_redemption_record"
 	TypeMsgSetOperatorAddress              = "set_operator_address"
+	TypeMsgSetHostZoneParmas               = "set_host_zone_params"
 )
 
 var (
@@ -40,6 +41,7 @@ var (
 	_ sdk.Msg = &MsgOverwriteUnbondingRecord{}
 	_ sdk.Msg = &MsgOverwriteRedemptionRecord{}
 	_ sdk.Msg = &MsgSetOperatorAddress{}
+	_ sdk.Msg = &MsgSetHostZoneParams{}
 
 	// Implement legacy interface for ledger support
 	_ legacytx.LegacyMsg = &MsgLiquidStake{}
@@ -55,6 +57,7 @@ var (
 	_ legacytx.LegacyMsg = &MsgOverwriteUnbondingRecord{}
 	_ legacytx.LegacyMsg = &MsgOverwriteRedemptionRecord{}
 	_ legacytx.LegacyMsg = &MsgSetOperatorAddress{}
+	_ legacytx.LegacyMsg = &MsgSetHostZoneParams{}
 )
 
 // ----------------------------------------------
@@ -669,6 +672,43 @@ func (msg *MsgOverwriteRedemptionRecord) ValidateBasic() error {
 	// - assert the stTokenAmount is non-negative (zero is acceptable)
 	if msg.RedemptionRecord.StTokenAmount.LT(sdk.ZeroInt()) {
 		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount < 0")
+	}
+
+	return nil
+}
+
+// ----------------------------------------------
+//       MsgSetHostZoneParams
+// ----------------------------------------------
+
+func (msg MsgSetHostZoneParams) Type() string {
+	return TypeMsgSetHostZoneParmas
+}
+
+func (msg MsgSetHostZoneParams) Route() string {
+	return RouterKey
+}
+
+func (msg *MsgSetHostZoneParams) GetSigners() []sdk.AccAddress {
+	creator, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{creator}
+}
+
+func (msg *MsgSetHostZoneParams) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+func (msg *MsgSetHostZoneParams) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if err := utils.ValidateAdminAddress(msg.Signer); err != nil {
+		return err
 	}
 
 	return nil
