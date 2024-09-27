@@ -18,9 +18,9 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	config "github.com/Stride-Labs/stride/v23/cmd/strided/config"
-	icacallbacktypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
+	config "github.com/Stride-Labs/stride/v24/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -61,6 +61,15 @@ func StringMapKeys[V any](m map[string]V) []string {
 
 func Int32MapKeys[V any](m map[int32]V) []int32 {
 	keys := make([]int32, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return keys
+}
+
+func Uint64MapKeys[V any](m map[uint64]V) []uint64 {
+	keys := make([]uint64, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}

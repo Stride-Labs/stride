@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 const (
@@ -25,6 +25,7 @@ const (
 	FlagMaxRedemptionRate            = "max-redemption-rate"
 	FlagCommunityPoolTreasuryAddress = "community-pool-treasury-address"
 	FlagMaxMessagesPerIcaTx          = "max-messages-per-ica-tx"
+	FlagLegacy                       = "legacy"
 )
 
 var DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
@@ -798,6 +799,11 @@ Ex:
 			}
 			permissionChange := types.AuthzPermissionChange(permissionChangeInt)
 
+			legacy, err := cmd.Flags().GetBool(FlagLegacy)
+			if err != nil {
+				return err
+			}
+
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
@@ -808,6 +814,7 @@ Ex:
 				chainId,
 				permissionChange,
 				address,
+				legacy,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -817,6 +824,7 @@ Ex:
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().Bool(FlagLegacy, false, "Use legacy osmosis swap message from gamm")
 
 	return cmd
 }

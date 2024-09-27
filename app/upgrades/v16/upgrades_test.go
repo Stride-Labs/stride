@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v23/app/apptesting"
-	stakeibctypes "github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/app/apptesting"
+	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {

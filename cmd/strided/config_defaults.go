@@ -9,6 +9,8 @@ import (
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/server"
+
+	"github.com/Stride-Labs/stride/v24/utils"
 )
 
 /*
@@ -216,7 +218,8 @@ func OverwriteWithCustomConfig(configFilePath string, sectionKeyValues []Section
 			currentSection = line[1 : len(line)-1]
 		} else if configMap[currentSection] != nil {
 			// If the line is in a section that needs to be overwritten, check each key
-			for key, value := range configMap[currentSection] {
+			for _, key := range utils.StringMapKeys(configMap[currentSection]) {
+				value := configMap[currentSection][key]
 				// Split the line into key and value parts
 				parts := strings.SplitN(line, "=", 2)
 				if len(parts) != 2 {

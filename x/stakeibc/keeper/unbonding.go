@@ -12,9 +12,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v23/utils"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/utils"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 type ValidatorUnbondCapacity struct {
@@ -140,7 +140,8 @@ func (k Keeper) RefreshUnbondingNativeTokenAmounts(
 ) (refreshedHostZoneUnbondings map[uint64]recordstypes.HostZoneUnbonding, err error) {
 	// Refresh the amount for all records in status UNBONDING_QUEUE
 	// We don't want to refresh the failed unbonding records
-	for epochNumber, hostZoneUnbondingRecord := range hostZoneUnbondings {
+	for _, epochNumber := range utils.Uint64MapKeys(hostZoneUnbondings) {
+		hostZoneUnbondingRecord := hostZoneUnbondings[epochNumber]
 		if hostZoneUnbondingRecord.Status != recordstypes.HostZoneUnbonding_UNBONDING_QUEUE {
 			continue
 		}
@@ -451,7 +452,8 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Update the epoch unbonding record status and number of undelegation ICAs
-	for epochNumber, hostZoneUnbonding := range epochNumbersToHostZoneUnbondings {
+	for _, epochNumber := range utils.Uint64MapKeys(epochNumbersToHostZoneUnbondings) {
+		hostZoneUnbonding := epochNumbersToHostZoneUnbondings[epochNumber]
 		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS
 		hostZoneUnbonding.UndelegationTxsInProgress += numTxsSubmitted
 		err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, hostZone.ChainId, hostZoneUnbonding)

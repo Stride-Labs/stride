@@ -4,8 +4,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 // Emits a successful liquid stake event, and displays metadata such as the stToken amount

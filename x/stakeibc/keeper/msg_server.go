@@ -17,11 +17,11 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v23/utils"
-	epochtypes "github.com/Stride-Labs/stride/v23/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/utils"
+	epochtypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 )
 
 type msgServer struct {
@@ -788,7 +788,7 @@ func (k msgServer) ToggleTradeController(
 	}
 
 	// Build the authz message that grants or revokes trade permissions to the specified address
-	authzMsg, err := k.BuildTradeAuthzMsg(ctx, tradeRoute, msg.PermissionChange, msg.Address)
+	authzMsg, err := k.BuildTradeAuthzMsg(ctx, tradeRoute, msg.PermissionChange, msg.Address, msg.Legacy)
 	if err != nil {
 		return nil, err
 	}

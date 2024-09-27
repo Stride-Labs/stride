@@ -5,7 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v23/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v24/x/claim/vesting/types"
 )
 
 // GetTxCmd returns stride vesting module's transaction commands.

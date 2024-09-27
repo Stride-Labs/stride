@@ -3,10 +3,10 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v23/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v23/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	"github.com/Stride-Labs/stride/v23/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v24/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -247,6 +247,10 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 			stTokensToBurn = sdk.NewDecFromInt(nativeTokensUnbonded).Quo(impliedRedemptionRate).TruncateInt()
 		}
 
+		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
+			"Epoch Unbonding Record: %d - Native Unbonded: %v, StTokens Burned: %v",
+			epochNumber, nativeTokensUnbonded, stTokensToBurn))
+
 		// Decrement st amount on the record and increment the total
 		hostZoneUnbonding.StTokensToBurn = hostZoneUnbonding.StTokensToBurn.Sub(stTokensToBurn)
 		totalStTokensToBurn = totalStTokensToBurn.Add(stTokensToBurn)
@@ -259,15 +263,15 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		// Update the unbonding time if the time from this batch is later than what's on the record
 		if unbondingTime > hostZoneUnbonding.UnbondingTime {
 			hostZoneUnbonding.UnbondingTime = unbondingTime
+
+			k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
+				"Epoch Unbonding Record: %d - Setting unbonding time to %d", epochNumber, unbondingTime))
 		}
 
 		// Persist the record changes
 		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, *hostZoneUnbonding); err != nil {
 			return totalStTokensToBurn, err
 		}
-
-		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
-			"Epoch Unbonding Record: %d - Setting unbonding time to %d", epochNumber, unbondingTime))
 	}
 	return totalStTokensToBurn, nil
 }
@@ -293,6 +297,7 @@ func (k Keeper) BurnStTokensAfterUndelegation(ctx sdk.Context, hostZone types.Ho
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to burn %v%s tokens", stTokenBurnAmount, stCoinDenom)
 	}
-	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, ICACallbackID_Undelegate, "Burned %v", stCoin))
+	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(hostZone.ChainId, ICACallbackID_Undelegate,
+		"Total Burned from Batch %v", stCoin))
 	return nil
 }

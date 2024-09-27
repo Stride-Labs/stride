@@ -5,8 +5,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/v23/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v24/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
 )
 
 var (

@@ -35,8 +35,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v23/app"
-	"github.com/Stride-Labs/stride/v23/utils"
+	"github.com/Stride-Labs/stride/v24/app"
+	"github.com/Stride-Labs/stride/v24/utils"
 )
 
 var (

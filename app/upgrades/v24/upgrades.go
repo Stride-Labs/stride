@@ -7,13 +7,22 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v23/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v23/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v23/x/stakeibc/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v24/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
 )
 
 var (
 	UpgradeName = "v24"
+
+	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
+	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
+	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+
+	// Osmosis will have a slighly larger buffer with the redemption rate
+	// since their yield is less predictable
+	OsmosisChainId              = "osmosis-1"
+	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v23
@@ -31,6 +40,7 @@ func CreateUpgradeHandler(
 		MigrateHostZones(ctx, stakeibcKeeper)
 		MigrateDepositRecords(ctx, recordsKeeper)
 		MigrateEpochUnbondingRecords(ctx, recordsKeeper)
+		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -115,5 +125,29 @@ func MigrateEpochUnbondingRecords(ctx sdk.Context, k recordskeeper.Keeper) {
 			epochUnbondingRecord.HostZoneUnbondings[i] = updatedHostZoneUnbondingRecord
 		}
 		k.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+	}
+}
+
+// Updates the outer redemption rate bounds
+func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Updating redemption rate bounds...")
+
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		// Give osmosis a bit more slack since OSMO stakers collect real yield
+		outerAdjustment := RedemptionRateOuterMaxAdjustment
+		if hostZone.ChainId == OsmosisChainId {
+			outerAdjustment = outerAdjustment.Add(OsmosisRedemptionRateBuffer)
+		}
+
+		outerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMinAdjustment)
+		outerMaxDelta := hostZone.RedemptionRate.Mul(outerAdjustment)
+
+		outerMin := hostZone.RedemptionRate.Sub(outerMinDelta)
+		outerMax := hostZone.RedemptionRate.Add(outerMaxDelta)
+
+		hostZone.MinRedemptionRate = outerMin
+		hostZone.MaxRedemptionRate = outerMax
+
+		k.SetHostZone(ctx, hostZone)
 	}
 }
