@@ -25,7 +25,7 @@ var (
 	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v23
+// CreateUpgradeHandler creates an SDK upgrade handler for v24
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
