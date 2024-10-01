@@ -44,6 +44,12 @@ spec:
               value: "{{ $chainMnemonicIndexA }}"
             - name: CHAIN_B_MNEMONIC_INDEX
               value: "{{ $chainMnemonicIndexB }}"
+          readinessProbe:
+            exec:
+              command: ["bash", "scripts/relayer-readiness.sh", "{{ $relayer.type }}"]
+            periodSeconds: 2
+            initialDelaySeconds: 30
+            timeoutSeconds: 10
           resources:
             limits:
               cpu: "200m"

@@ -10,6 +10,8 @@ CHAIN_ID_B=${CHAIN_NAME_B}-test-1
 wait_for_node $CHAIN_NAME_A 
 wait_for_node $CHAIN_NAME_B
 
+hermes_config_file=${HOME}/.hermes/config.toml
+
 restore_keys() {
     mnemonic_a=$(jq -r '.relayers[$index].mnemonic' --argjson index "$CHAIN_A_MNEMONIC_INDEX" ${KEYS_FILE})
     mnemonic_b=$(jq -r '.relayers[$index].mnemonic' --argjson index "$CHAIN_B_MNEMONIC_INDEX" ${KEYS_FILE})
@@ -35,7 +37,6 @@ create_path() {
 main() {
     # The config is mounted from a configmap which is read-only by default
     # In order to make it writeable, we need to copy it to a new location
-    hermes_config_file=${HOME}/.hermes/config.toml
     mkdir -p $(dirname $hermes_config_file)
     cp configs/hermes.toml ${hermes_config_file}
 

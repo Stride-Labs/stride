@@ -31,22 +31,7 @@ check-empty-namespace:
 	if [ $$POD_COUNT -eq 0 ]; then exit 0; else exit 1; fi
 
 wait-for-startup:
-	@echo "---" && sleep 1
-	@printf "Waiting for network to startup..."
-	@elapsed=0; \
-	while true; do \
-		not_ready_pods=$$($(KUBECTL) get pods --no-headers -n $(K8S_NAMESPACE) | grep -v '1/1 *Running' | wc -l); \
-		if [ $$not_ready_pods -eq 0 ]; then \
-			printf "Ready! 🚀\n"; \
-			break; \
-		fi; \
-		if [ $$elapsed -eq 30 ]; then \
-			printf "\nThe network's taking longer than expected to startup. Please investigate\n"; \
-			exit 1; \
-		fi; \
-		sleep 1 && printf "."; \
-		elapsed=$$((elapsed + 1)); \
-	done
+	@bash network/scripts/network-readiness.sh $(K8S_NAMESPACE)
 
 python-install:
 	conda create --name $(VENV_NAME) python=3.11 -y
