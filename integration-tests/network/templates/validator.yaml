@@ -75,8 +75,9 @@ spec:
                 command: ["bash", "scripts/create-validator.sh"]
           readinessProbe:
             exec:
-              command: ["bash", "scripts/readiness.sh"]
+              command: ["bash", "scripts/node-readiness.sh"]
             periodSeconds: 10
+            timeoutSeconds: 10
           env: 
             {{- include "chain.env" $chain | nindent 10 }}
           ports:
