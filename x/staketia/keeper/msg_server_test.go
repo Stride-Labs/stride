@@ -4,34 +4,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/app/apptesting"
+	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v24/x/staketia/types"
 )
-
-// ----------------------------------------------
-//                MsgLiquidStake
-// ----------------------------------------------
-
-// More granular testing of liquid stake is done in the keeper function
-// This just tests the msg server wrapper
-func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
-	tc := s.DefaultSetupTestLiquidStake()
-
-	// Attempt a successful liquid stake
-	validMsg := types.MsgLiquidStake{
-		Staker:       tc.stakerAddress.String(),
-		NativeAmount: tc.liquidStakeAmount,
-	}
-	resp, err := s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
-	s.Require().NoError(err, "no error expected during liquid stake")
-	s.Require().Equal(tc.expectedStAmount.Int64(), resp.StToken.Amount.Int64(), "stToken amount")
-
-	s.ConfirmLiquidStakeTokenTransfer(tc)
-
-	// Attempt a liquid stake again, it should fail now that the staker is out of funds
-	_, err = s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
-	s.Require().ErrorContains(err, "insufficient funds")
-}
 
 // ----------------------------------------------
 //            MsgConfirmDelegation
@@ -182,10 +157,14 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 
 	safeAddress := "safe"
 
-	// Create the host zone
+	// Create the host zones
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		SafeAddressOnStride: safeAddress,
-		DelegatedBalance:    sdk.NewInt(0),
+		SafeAddressOnStride:       safeAddress,
+		RemainingDelegatedBalance: sdk.NewInt(0),
+	})
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:          types.CelestiaChainId,
+		TotalDelegations: sdk.NewInt(0),
 	})
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
@@ -213,7 +192,11 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 		s.Require().NoError(err, "no error expected when adjusting delegated bal properly for %s", tc.address)
 
 		hostZone := s.MustGetHostZone()
-		s.Require().Equal(tc.endDelegation, hostZone.DelegatedBalance, "delegation after change for %s", tc.address)
+		s.Require().Equal(tc.endDelegation, hostZone.RemainingDelegatedBalance, "remaining delegation after change for %s", tc.address)
+
+		stakeibcHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, types.CelestiaChainId)
+		s.Require().True(found)
+		s.Require().Equal(tc.endDelegation, stakeibcHostZone.TotalDelegations, "total delegation after change for %s", tc.address)
 	}
 
 	// Attempt to call it with an amount that would make it negative, it should fail
@@ -233,190 +216,6 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
 	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
-
-}
-
-// ----------------------------------------------
-//      MsgUpdateInnerRedemptionRateBounds
-// ----------------------------------------------
-
-func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
-	adminAddress, ok := apptesting.GetAdminAddress()
-	s.Require().True(ok)
-
-	// Register a host zone
-	zone := types.HostZone{
-		ChainId: HostChainId,
-		// Upper bound 1.5
-		MaxRedemptionRate: sdk.NewDec(3).Quo(sdk.NewDec(2)),
-		// Lower bound 0.9
-		MinRedemptionRate: sdk.NewDec(9).Quo(sdk.NewDec(10)),
-	}
-
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
-	// we're halting the zone to test that the tx works even when the host zone is halted
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
-
-	initialMsg := types.MsgUpdateInnerRedemptionRateBounds{
-		Creator:                adminAddress,
-		MinInnerRedemptionRate: sdk.NewDec(90).Quo(sdk.NewDec(100)),
-		MaxInnerRedemptionRate: sdk.NewDec(105).Quo(sdk.NewDec(100)),
-	}
-
-	updateMsg := types.MsgUpdateInnerRedemptionRateBounds{
-		Creator:                adminAddress,
-		MinInnerRedemptionRate: sdk.NewDec(95).Quo(sdk.NewDec(100)),
-		MaxInnerRedemptionRate: sdk.NewDec(11).Quo(sdk.NewDec(10)),
-	}
-
-	invalidMsg := types.MsgUpdateInnerRedemptionRateBounds{
-		Creator:                adminAddress,
-		MinInnerRedemptionRate: sdk.NewDec(0),
-		MaxInnerRedemptionRate: sdk.NewDec(2),
-	}
-
-	nonAdminMsg := types.MsgUpdateInnerRedemptionRateBounds{
-		Creator:                "non-admin",
-		MinInnerRedemptionRate: sdk.NewDec(0),
-		MaxInnerRedemptionRate: sdk.NewDec(2),
-	}
-
-	// Set the inner bounds on the host zone for the first time
-	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &initialMsg)
-	s.Require().NoError(err, "should not throw an error")
-
-	// Confirm the inner bounds were set
-	zone = s.MustGetHostZone()
-	s.Require().Equal(initialMsg.MinInnerRedemptionRate, zone.MinInnerRedemptionRate, "min inner redemption rate should be set")
-	s.Require().Equal(initialMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
-
-	// Update the inner bounds on the host zone
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &updateMsg)
-	s.Require().NoError(err, "should not throw an error")
-
-	// Confirm the inner bounds were set
-	zone = s.MustGetHostZone()
-	s.Require().Equal(updateMsg.MinInnerRedemptionRate, zone.MinInnerRedemptionRate, "min inner redemption rate should be set")
-	s.Require().Equal(updateMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
-
-	// Set the inner bounds on the host zone for the first time
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &invalidMsg)
-	s.Require().ErrorContains(err, "invalid host zone redemption rate inner bounds")
-
-	// Attempt to update bounds with a non-admin address, it should fail
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &nonAdminMsg)
-	s.Require().ErrorContains(err, "signer is not an admin")
-}
-
-// ----------------------------------------------
-//             MsgResumeHostZone
-// ----------------------------------------------
-
-// Test cases
-// - Zone is not halted
-// - Zone is halted - unhalt it
-func (s *KeeperTestSuite) TestResumeHostZone() {
-	// TODO [sttia]: verify denom blacklisting removal works
-
-	adminAddress, ok := apptesting.GetAdminAddress()
-	s.Require().True(ok)
-
-	zone := types.HostZone{
-		ChainId:          HostChainId,
-		RedemptionRate:   sdk.NewDec(1),
-		Halted:           false,
-		NativeTokenDenom: HostNativeDenom,
-	}
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, zone)
-
-	msg := types.MsgResumeHostZone{
-		Creator: adminAddress,
-	}
-
-	// TEST 1: Zone is not halted
-	// Try to unhalt the unhalted zone
-	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
-	s.Require().ErrorContains(err, "zone is not halted")
-
-	// Verify the denom is not in the blacklist
-	blacklist := s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
-	s.Require().NotContains(blacklist, StDenom, "denom should not be blacklisted")
-
-	// Confirm the zone is not halted
-	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "should not throw an error")
-	s.Require().False(zone.Halted, "zone should not be halted")
-
-	// TEST 2: Zone is halted
-	// Halt the zone
-	s.App.StaketiaKeeper.HaltZone(s.Ctx)
-
-	// Verify the denom is in the blacklist
-	blacklist = s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
-	s.Require().Contains(blacklist, StDenom, "denom should be blacklisted")
-
-	// Try to unhalt the halted zone
-	_, err = s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
-	s.Require().NoError(err, "should not throw an error")
-
-	// Confirm the zone is not halted
-	zone, err = s.App.StaketiaKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "should not throw an error")
-	s.Require().False(zone.Halted, "zone should not be halted")
-
-	// Verify the denom is not in the blacklist
-	blacklist = s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
-	s.Require().NotContains(blacklist, StDenom, "denom should not be blacklisted")
-
-	// Attempt to resume with a non-admin address, it should fail
-	_, err = s.GetMsgServer().ResumeHostZone(s.Ctx, &types.MsgResumeHostZone{
-		Creator: "non-admin",
-	})
-	s.Require().ErrorContains(err, "signer is not an admin")
-}
-
-// ----------------------------------------------
-//           MsgRefreshRedemptionRate
-// ----------------------------------------------
-
-func (s *KeeperTestSuite) TestRefreshRedemptionRate() {
-	safeAddress := "safe"
-	depositAddress := s.TestAccs[0]
-	redemptionAddress := s.TestAccs[1]
-
-	// Create host zone with initial redemption rate of 1
-	// There will be 1000 delegated tokens, and 500 stTokens
-	// implying an updated redemption rate of 2
-	initialRedemptionRate := sdk.OneDec()
-	expectedRedemptionRate := sdk.NewDec(2)
-
-	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
-		DelegatedBalance:    sdkmath.NewInt(1000),
-		RedemptionRate:      initialRedemptionRate,
-		NativeTokenDenom:    HostNativeDenom,
-		NativeTokenIbcDenom: HostIBCDenom,
-		SafeAddressOnStride: safeAddress,
-		DepositAddress:      depositAddress.String(),
-	})
-
-	// Mint 500 stTokens (implying a redemption rate of 2)
-	s.FundAccount(redemptionAddress, sdk.NewCoin(StDenom, sdkmath.NewInt(500)))
-
-	// Attempt to refresh the rate with a non-safe address, it should fail
-	_, err := s.GetMsgServer().RefreshRedemptionRate(s.Ctx, &types.MsgRefreshRedemptionRate{
-		Creator: "non-admin",
-	})
-	s.Require().ErrorContains(err, "signer is not an admin")
-
-	// Attempt to refresh the rate with the safe address, it should succeed
-	_, err = s.GetMsgServer().RefreshRedemptionRate(s.Ctx, &types.MsgRefreshRedemptionRate{
-		Creator: safeAddress,
-	})
-	s.Require().NoError(err, "no error expected when using safe address")
-
-	// Confirm the redemption rate was updated
-	hostZone := s.MustGetHostZone()
-	s.Require().Equal(expectedRedemptionRate, hostZone.RedemptionRate)
 }
 
 // ----------------------------------------------

@@ -76,49 +76,9 @@ func (h HostZone) ValidateGenesis() error {
 		return errorsmod.Wrapf(err, "invalid safe address")
 	}
 
-	// Validate the redemption rate bounds are set properly
-	if !h.RedemptionRate.IsPositive() {
-		return ErrInvalidHostZone.Wrap("redemption rate must be positive")
-	}
-	if err := h.ValidateRedemptionRateBoundsInitalized(); err != nil {
-		return err
-	}
-
 	// Validate unbonding period is set
 	if h.UnbondingPeriodSeconds == 0 {
 		return ErrInvalidHostZone.Wrap("unbonding period must be set")
-	}
-
-	return nil
-}
-
-// Verify the redemption rate bounds are set properly on the host zone
-func (h HostZone) ValidateRedemptionRateBoundsInitalized() error {
-	// Validate outer bounds are set
-	if h.MinRedemptionRate.IsNil() || !h.MinRedemptionRate.IsPositive() {
-		return ErrInvalidRedemptionRateBounds.Wrapf("min outer redemption rate bound not set")
-	}
-	if h.MaxRedemptionRate.IsNil() || !h.MaxRedemptionRate.IsPositive() {
-		return ErrInvalidRedemptionRateBounds.Wrapf("max outer redemption rate bound not set")
-	}
-
-	// Validate inner bounds set
-	if h.MinInnerRedemptionRate.IsNil() || !h.MinInnerRedemptionRate.IsPositive() {
-		return ErrInvalidRedemptionRateBounds.Wrapf("min inner redemption rate bound not set")
-	}
-	if h.MaxInnerRedemptionRate.IsNil() || !h.MaxInnerRedemptionRate.IsPositive() {
-		return ErrInvalidRedemptionRateBounds.Wrapf("max inner redemption rate bound not set")
-	}
-
-	// Validate inner bounds are within outer bounds
-	if h.MinInnerRedemptionRate.LT(h.MinRedemptionRate) {
-		return ErrInvalidRedemptionRateBounds.Wrapf("min inner redemption rate bound outside of min outer bound")
-	}
-	if h.MaxInnerRedemptionRate.GT(h.MaxRedemptionRate) {
-		return ErrInvalidRedemptionRateBounds.Wrapf("max inner redemption rate bound outside of max outer bound")
-	}
-	if h.MinInnerRedemptionRate.GT(h.MaxInnerRedemptionRate) {
-		return ErrInvalidRedemptionRateBounds.Wrapf("min inner redemption rate greater than max inner bound")
 	}
 
 	return nil
