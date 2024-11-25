@@ -6,7 +6,7 @@ toolchain go1.21.3
 
 require (
 	cosmossdk.io/errors v1.0.1
-	cosmossdk.io/math v1.3.0
+	cosmossdk.io/math v1.4.0
 	github.com/CosmWasm/wasmd v0.46.0
 	github.com/CosmWasm/wasmvm v1.5.5
 	github.com/Stride-Labs/ibc-rate-limiting v1.0.0
@@ -30,7 +30,7 @@ require (
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0
 	google.golang.org/grpc v1.60.1
 	gopkg.in/yaml.v2 v2.4.0
