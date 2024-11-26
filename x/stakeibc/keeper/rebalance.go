@@ -38,7 +38,7 @@ func (k Keeper) RebalanceAllHostZones(ctx sdk.Context) {
 	}
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
-		if dayEpoch.EpochNumber%hostZone.UnbondingPeriod != 0 {
+		if dayEpoch.EpochNumber%(hostZone.UnbondingPeriod+1) != 0 {
 			k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 				"Host does not rebalance this epoch (Unbonding Period: %d, Epoch: %d)", hostZone.UnbondingPeriod, dayEpoch.EpochNumber))
 			continue
