@@ -23,7 +23,7 @@ require (
 	github.com/cosmos/interchain-security/v4 v4.0.0
 	github.com/evmos/vesting v0.0.0-20230818101748-9ea561e4529c
 	github.com/gogo/protobuf v1.3.3
-	github.com/golang/protobuf v1.5.3
+	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/prometheus/client_golang v1.16.0
@@ -205,12 +205,13 @@ replace (
 	// Use the keyring specified by the cosmos-sdk
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
-	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
+	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 // indirect
+
 	// fork SDK to:
 	//   - fix SDKv0.47 Distribution Bug
 	//   - add better mempool error on sig verification failure
 	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler
-	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.10-stride-distribution-fix-0-mempool-verbose-error-2
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.10-stride-distribution-fix-0-mempool-verbose-error-3
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
