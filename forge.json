@@ -1,0 +1,22 @@
+{
+  "display": {
+    "name": "Stride",
+    "description": "Stride is a layer one blockchain built with the CosmosSDK and connected with many other chains via the inter-blockchain communication protocol (IBC). \n Stride is purpose-built for a single function: cross-chain liquid staking. Stride is the leading liquid staking protocol for Celestia, Osmosis, dYdX, Cosmos Hub, and 10+ other blockchains. Liquid staking provides a simple way to earn staking rewards on your tokens while allowing you to use them in DeFi. \n In addition to providing liquid staking, Stride is also a bridging hub for the Celestia rollup ecosystem. TIA can't be bridged from Celestia directly to rollups, so it's bridged through Stride instead, using Stride's Hyperlane bridge deployment. This connects the Celestia rollup ecosystem, making any two rollups just one hop apart.",
+    "links": {
+      "discord": "https://discord.com/invite/stride-zone",
+      "email": "support@stride.zone",
+      "github": "https://github.com/Stride-Labs",
+      "telegram": "https://t.me/myspace",
+      "twitter": "https://x.com/stride_zone",
+      "website": "https://www.stride.zone/",
+      "whitepaper": "https://docs.stride.zone/",
+      "logo": "https://avatars.githubusercontent.com/u/104537275?s=200&v=4"
+    },
+    "widget": {
+      "title": "Liquid stake with Stride",
+      "description": "Liquid stake your ATOM, TIA, OSMO, DYDX, and more on Stride today.",
+      "buttonText": "Liquid stake",
+      "buttonUrl": "https://app.stride.zone/"
+    }
+  }
+}
