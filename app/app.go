@@ -146,6 +146,9 @@ import (
 	icaoracle "github.com/Stride-Labs/stride/v24/x/icaoracle"
 	icaoraclekeeper "github.com/Stride-Labs/stride/v24/x/icaoracle/keeper"
 	icaoracletypes "github.com/Stride-Labs/stride/v24/x/icaoracle/types"
+	icqoracle "github.com/Stride-Labs/stride/v24/x/icqoracle"
+	icqoraclekeeper "github.com/Stride-Labs/stride/v24/x/icqoracle/keeper"
+	icqoracletypes "github.com/Stride-Labs/stride/v24/x/icqoracle/types"
 	"github.com/Stride-Labs/stride/v24/x/interchainquery"
 	interchainquerykeeper "github.com/Stride-Labs/stride/v24/x/interchainquery/keeper"
 	interchainquerytypes "github.com/Stride-Labs/stride/v24/x/interchainquery/types"
@@ -236,6 +239,7 @@ var (
 		ibchooks.AppModuleBasic{},
 		ibcwasm.AppModuleBasic{},
 		airdrop.AppModuleBasic{},
+		icqoracle.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -348,6 +352,7 @@ type StrideApp struct {
 	StaketiaKeeper        staketiakeeper.Keeper
 	StakedymKeeper        stakedymkeeper.Keeper
 	AirdropKeeper         airdropkeeper.Keeper
+	ICQOracleKeeper       icqoraclekeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -404,6 +409,7 @@ func NewStrideApp(
 		ibchookstypes.StoreKey,
 		ibcwasmtypes.StoreKey,
 		airdroptypes.StoreKey,
+		icqoracletypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -757,6 +763,15 @@ func NewStrideApp(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
 	)
 
+	// ICQOracle Keeper must be initialized after TransferKeeper
+	app.ICQOracleKeeper = *icqoraclekeeper.NewKeeper(
+		appCodec,
+		keys[icqoracletypes.StoreKey],
+		app.BankKeeper,
+		app.TransferKeeper,
+	)
+	icqOracleModule := icqoracle.NewAppModule(appCodec, app.ICQOracleKeeper)
+
 	// Register Gov (must be registered after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
@@ -933,6 +948,8 @@ func NewStrideApp(
 		stakeTiaModule,
 		stakeDymModule,
 		airdropModule,
+		stakeTiaModule,
+		icqOracleModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -978,6 +995,7 @@ func NewStrideApp(
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
 		airdroptypes.ModuleName,
+		icqoracletypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -1019,6 +1037,7 @@ func NewStrideApp(
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
 		airdroptypes.ModuleName,
+		icqoracletypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1065,6 +1084,7 @@ func NewStrideApp(
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
 		airdroptypes.ModuleName,
+		icqoracletypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
