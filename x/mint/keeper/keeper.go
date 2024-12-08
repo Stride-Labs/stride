@@ -150,7 +150,7 @@ const (
 	StrategicReserveAddress = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
 )
 
-// DistributeMintedCoins implements distribution of minted coins from mint to external modules.
+// DistributeMintedCoin implements distribution of minted coins from mint to external modules.
 func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error {
 	params := k.GetParams(ctx)
 	proportions := params.DistributionProportions

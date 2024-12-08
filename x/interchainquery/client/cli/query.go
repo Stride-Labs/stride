@@ -33,7 +33,7 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// GetCmdQueries provides a list of all pending queries
+// GetCmdListPendingQueries provides a list of all pending queries
 // (queries that have not have been requested but have not received a response)
 func GetCmdListPendingQueries() *cobra.Command {
 	cmd := &cobra.Command{
