@@ -1,0 +1,60 @@
+syntax = "proto3";
+package stride.icqoracle;
+
+import "cosmos/msg/v1/msg.proto";
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams allows the admin to update the module parameters
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // AddTokenPrice adds a new token to track prices for
+  rpc AddTokenPrice(MsgAddTokenPrice) returns (MsgAddTokenPriceResponse);
+
+  // RemoveTokenPrice removes a token from price tracking
+  rpc RemoveTokenPrice(MsgRemoveTokenPrice)
+      returns (MsgRemoveTokenPriceResponse);
+}
+
+// MsgUpdateParams defines the message for updating module parameters
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "stride/x/icqoracle/MsgUpdateParams";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // How often to fetch the price
+  uint64 update_interval_sec = 2;
+  // When price is considered stale
+  uint64 timeout_sec = 3;
+}
+
+message MsgUpdateParamsResponse {}
+
+// MsgAddTokenPrice defines the message for adding a new token to track prices
+message MsgAddTokenPrice {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "stride/x/icqoracle/MsgAddTokenPrice";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string denom = 2;
+}
+
+message MsgAddTokenPriceResponse {}
+
+// MsgRemoveTokenPrice defines the message for removing a token from price
+// tracking
+message MsgRemoveTokenPrice {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "stride/x/icqoracle/MsgRemoveTokenPrice";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string denom = 2;
+}
+
+message MsgRemoveTokenPriceResponse {}

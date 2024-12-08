@@ -1,0 +1,58 @@
+syntax = "proto3";
+package stride.icqoracle;
+
+import "stride/icqoracle/icqoracle.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // TokenPrice queries the current price for a specific token
+  rpc TokenPrice(QueryTokenPriceRequest) returns (QueryTokenPriceResponse) {
+    option (google.api.http).get = "/stride/icqoracle/v1beta1/price/{denom}";
+  }
+
+  // TokenPrices queries all token prices
+  rpc TokenPrices(QueryTokenPricesRequest) returns (QueryTokenPricesResponse) {
+    option (google.api.http).get = "/stride/icqoracle/v1beta1/prices";
+  }
+
+  // Params queries the oracle parameters
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/stride/icqoracle/v1beta1/params";
+  }
+}
+
+// QueryTokenPriceRequest is the request type for the Query/TokenPrice RPC
+// method
+message QueryTokenPriceRequest { string denom = 1; }
+
+// QueryTokenPriceResponse is the response type for the Query/TokenPrice RPC
+// method
+message QueryTokenPriceResponse {
+  TokenPrice token_price = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryTokenPricesRequest is the request type for the Query/TokenPrices RPC
+// method
+message QueryTokenPricesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryTokenPricesResponse is the response type for the Query/TokenPrices RPC
+// method
+message QueryTokenPricesResponse {
+  repeated TokenPrice token_prices = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method
+message QueryParamsResponse {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}

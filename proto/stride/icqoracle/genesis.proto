@@ -2,18 +2,15 @@ syntax = "proto3";
 package stride.icqoracle;
 
 import "gogoproto/gogo.proto";
+import "stride/icqoracle/icqoracle.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 
-// Params defines the icqoracle module parameters.
-message Params {}
-
-// GenesisState defines the icqoracle module's genesis state.
+// GenesisState defines the icqoracle module's genesis state
 message GenesisState {
-  Params params = 1 [
-    (gogoproto.moretags) = "yaml:\"params\"",
-    (gogoproto.nullable) = false
-  ];
+  // Module parameters
+  Params params = 1 [ (gogoproto.nullable) = false ];
 
-  // TODO: Add data structures
+  // List of token prices
+  repeated TokenPrice token_prices = 2 [ (gogoproto.nullable) = false ];
 }
