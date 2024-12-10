@@ -229,6 +229,25 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
 }
 
+// Returns a log string with a base denom, quote denom and tab as the prefix
+// Ex:
+//
+//	| uosmo/ustrd   |   string
+func LogWithPriceToken(baseDenom string, quoteDenom string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("|   %-13s |  %s/%s", baseDenom, quoteDenom, msg)
+}
+
+// Returns a log string with a chain Id and callback as a prefix
+// callbackType is either ICACALLBACK or ICQCALLBACK
+// Format:
+//
+//	|   uosmo/ustrd    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
+func logCallbackWithPriceToken(baseDenom string, quoteDenom string, callbackId string, callbackType string, s string, a ...any) string {
+	msg := fmt.Sprintf(s, a...)
+	return fmt.Sprintf("| %s/%s |  %s %s  |  %s", baseDenom, quoteDenom, strings.ToUpper(callbackId), callbackType, msg)
+}
+
 // Returns a log string with a chain Id and callback as a prefix
 // callbackType is either ICACALLBACK or ICQCALLBACK
 // Format:
@@ -270,6 +289,14 @@ func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status 
 //	| COSMOSHUB-4   |  WITHDRAWALHOSTBALANCE ICQCALLBACK  |  string
 func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICQCALLBACK", s, a...)
+}
+
+// Returns a log string with a chain Id and icqcallback as a prefix
+// Ex:
+//
+//	| COSMOSHUB-4   |  WITHDRAWALHOSTBALANCE ICQCALLBACK  |  string
+func LogICQCallbackWithPriceToken(baseDenom string, quoteDenom string, callbackId string, s string, a ...any) string {
+	return logCallbackWithPriceToken(baseDenom, quoteDenom, callbackId, "ICQCALLBACK", s, a...)
 }
 
 // Returns a log header string with a dash padding on either side

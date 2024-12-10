@@ -9,29 +9,44 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 // TokenPrice stores latest price data for a token
 message TokenPrice {
   // Token denom (e.g. "uatom", "uosmo")
-  string denom = 1;
+  string base_denom = 1;
+
+  // Quote denom (e.g. ustrd, uusdc)
+  string quote_denom = 2;
 
   // Price in USDC or STRD
-  string price = 2 [
+  string price = 3 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Last update timestamp
-  google.protobuf.Timestamp updated_at = 3
+  google.protobuf.Timestamp updated_at = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 }
 
 // OracleParams stores global oracle parameters
 message Params {
+  // Osmosis chain identifier
+  string osmosis_chain_id = 1 [
+    (gogoproto.moretags) = "yaml:\"osmosis_chain_id\"",
+    (gogoproto.jsontag) = "osmosis_chain_id"
+  ];
+
+  // Osmosis IBC connection identifier
+  string osmosis_connection_id = 2 [
+    (gogoproto.moretags) = "yaml:\"osmosis_connection_id\"",
+    (gogoproto.jsontag) = "osmosis_connection_id"
+  ];
+
   // Time between price updates
-  uint64 update_interval_sec = 1 [
+  uint64 update_interval_sec = 3 [
     (gogoproto.moretags) = "yaml:\"update_interval_sec\"",
     (gogoproto.jsontag) = "update_interval_sec"
   ];
 
   // Max time before price is stale
-  uint64 timeout_sec = 2 [
+  uint64 timeout_sec = 4 [
     (gogoproto.moretags) = "yaml:\"timeout_sec\"",
     (gogoproto.jsontag) = "timeout_sec"
   ];
