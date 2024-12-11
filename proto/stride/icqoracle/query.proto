@@ -12,8 +12,7 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 service Query {
   // TokenPrice queries the current price for a specific token
   rpc TokenPrice(QueryTokenPriceRequest) returns (QueryTokenPriceResponse) {
-    option (google.api.http).get =
-        "/stride/icqoracle/v1beta1/price/{quote_denom}/{base_denom}";
+    option (google.api.http).get = "/stride/icqoracle/v1beta1/price";
   }
 
   // TokenPrices queries all token prices
@@ -32,6 +31,7 @@ service Query {
 message QueryTokenPriceRequest {
   string base_denom = 1;
   string quote_denom = 2;
+  string pool_id = 3;
 }
 
 // QueryTokenPriceResponse is the response type for the Query/TokenPrice RPC

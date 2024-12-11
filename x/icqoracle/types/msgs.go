@@ -27,11 +27,14 @@ var (
 //               MsgClaim
 // ----------------------------------------------
 
-func NewMsgAddTokenPrice(sender, baseDenom, quoteDenom string) *MsgAddTokenPrice {
+func NewMsgAddTokenPrice(sender, baseDenom, quoteDenom, poolId, osmosisBaseDenom, osmosisQuoteDenom string) *MsgAddTokenPrice {
 	return &MsgAddTokenPrice{
-		Sender:     sender,
-		BaseDenom:  baseDenom,
-		QuoteDenom: quoteDenom,
+		Sender:            sender,
+		BaseDenom:         baseDenom,
+		QuoteDenom:        quoteDenom,
+		OsmosisPoolId:     poolId,
+		OsmosisBaseDenom:  osmosisBaseDenom,
+		OsmosisQuoteDenom: osmosisQuoteDenom,
 	}
 }
 
@@ -66,6 +69,15 @@ func (msg *MsgAddTokenPrice) ValidateBasic() error {
 	if msg.QuoteDenom == "" {
 		return errors.New("quote-denom must be specified")
 	}
+	if msg.OsmosisPoolId == "" {
+		return errors.New("osmosis-pool-id must be specified")
+	}
+	if msg.OsmosisBaseDenom == "" {
+		return errors.New("osmosis-base-denom must be specified")
+	}
+	if msg.OsmosisQuoteDenom == "" {
+		return errors.New("osmosis-quote-denom must be specified")
+	}
 
 	return nil
 }
@@ -74,11 +86,12 @@ func (msg *MsgAddTokenPrice) ValidateBasic() error {
 //               MsgRemoveTokenPrice
 // ----------------------------------------------
 
-func NewMsgRemoveTokenPrice(sender, baseDenom, quoteDenom string) *MsgRemoveTokenPrice {
+func NewMsgRemoveTokenPrice(sender, baseDenom, quoteDenom, osmosisPoolId string) *MsgRemoveTokenPrice {
 	return &MsgRemoveTokenPrice{
-		Sender:     sender,
-		BaseDenom:  baseDenom,
-		QuoteDenom: quoteDenom,
+		Sender:        sender,
+		BaseDenom:     baseDenom,
+		QuoteDenom:    quoteDenom,
+		OsmosisPoolId: osmosisPoolId,
 	}
 }
 
@@ -112,6 +125,9 @@ func (msg *MsgRemoveTokenPrice) ValidateBasic() error {
 	}
 	if msg.QuoteDenom == "" {
 		return errors.New("quote-denom must be specified")
+	}
+	if msg.OsmosisPoolId == "" {
+		return errors.New("osmosis-pool-id must be specified")
 	}
 
 	return nil

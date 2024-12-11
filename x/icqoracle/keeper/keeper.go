@@ -61,30 +61,11 @@ func (k Keeper) GetLastUpdateTime(ctx sdk.Context) (time.Time, error) {
 	return time.Unix(0, nanos), nil
 }
 
-// UpdatePrices queries and updates all token prices
-func (k Keeper) UpdatePrices(ctx sdk.Context) error {
-	// Query prices from Osmosis via ICQ
-	prices, err := k.QueryOsmosisPrices(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Update stored prices
-	for _, price := range prices {
-		if err := k.SetTokenPrice(ctx, price); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // SetTokenPrice stores price data for a token
-func (k Keeper) SetTokenPrice(ctx sdk.Context, price types.TokenPrice) error {
+func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) error {
 	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("%s/%s/%s", types.KeyPricePrefix, price.BaseDenom, price.QuoteDenom))
-
-	bz, err := k.cdc.Marshal(&price)
+	key := types.TokenPriceKey(tokenPrice.Denom, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+	bz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
 		return err
 	}
@@ -94,14 +75,14 @@ func (k Keeper) SetTokenPrice(ctx sdk.Context, price types.TokenPrice) error {
 }
 
 // RemoveTokenPrice removes price data for a token
-func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string) {
+func (k Keeper) RemoveTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) {
 	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("%s/%s/%s", types.KeyPricePrefix, baseDenom, quoteDenom))
+	key := types.TokenPriceKey(tokenPrice.Denom, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	store.Delete(key)
 }
 
-func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, queryInProgress bool) error {
-	tokenPrice, err := k.GetTokenPrice(ctx, baseDenom, quoteDenom)
+func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, tokenPrice types.TokenPrice, queryInProgress bool) error {
+	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
 	if err != nil {
 		return err
 	}
@@ -116,13 +97,13 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, 
 }
 
 // GetTokenPrice retrieves price data for a token
-func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string) (types.TokenPrice, error) {
+func (k Keeper) GetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) (types.TokenPrice, error) {
 	store := ctx.KVStore(k.storeKey)
-	key := []byte(fmt.Sprintf("%s/%s/%s", types.KeyPricePrefix, baseDenom, quoteDenom))
+	key := types.TokenPriceKey(tokenPrice.Denom, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 
 	bz := store.Get(key)
 	if bz == nil {
-		return types.TokenPrice{}, fmt.Errorf("price not found for base denom '%s' & quote denom '%s'", baseDenom, quoteDenom)
+		return types.TokenPrice{}, fmt.Errorf("price not found for baseDenom='%s' quoteDenom='%s' poolId='%s'", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	}
 
 	var price types.TokenPrice
@@ -147,27 +128,4 @@ func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
 	}
 
 	return prices
-}
-
-// QueryOsmosisPrices implements the ICQ price query
-func (k Keeper) QueryOsmosisPrices(ctx sdk.Context) ([]types.TokenPrice, error) {
-	// TODO: Implement actual ICQ query to Osmosis
-	// This is a placeholder that returns mock data
-	mockPrices := []types.TokenPrice{
-		{
-			BaseDenom:       "uatom",
-			QuoteDenom:      "ustrd",
-			Price:           sdk.NewDec(10),
-			UpdatedAt:       ctx.BlockTime(),
-			QueryInProgress: false,
-		},
-		{
-			BaseDenom:       "uosmo",
-			QuoteDenom:      "ustrd",
-			Price:           sdk.NewDec(5),
-			UpdatedAt:       ctx.BlockTime(),
-			QueryInProgress: false,
-		},
-	}
-	return mockPrices, nil
 }

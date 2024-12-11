@@ -14,19 +14,56 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v24/x/interchainquery/types"
 )
 
+const (
+	ICQCallbackID_SpotPriceV2 = "spotpricev2"
+)
+
+// ICQCallbacks wrapper struct for stakeibc keeper
+type ICQCallback func(Keeper, sdk.Context, []byte, icqtypes.Query) error
+
+type ICQCallbacks struct {
+	k         Keeper
+	callbacks map[string]ICQCallback
+}
+
+var _ icqtypes.QueryCallbacks = ICQCallbacks{}
+
+func (k Keeper) ICQCallbackHandler() ICQCallbacks {
+	return ICQCallbacks{k, make(map[string]ICQCallback)}
+}
+
+func (c ICQCallbacks) CallICQCallback(ctx sdk.Context, id string, args []byte, query icqtypes.Query) error {
+	return c.callbacks[id](c.k, ctx, args, query)
+}
+
+func (c ICQCallbacks) HasICQCallback(id string) bool {
+	_, found := c.callbacks[id]
+	return found
+}
+
+func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCallbacks {
+	c.callbacks[id] = fn.(ICQCallback)
+	return c
+}
+
+func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
+	return c.
+		AddICQCallback(ICQCallbackID_SpotPriceV2, ICQCallback(SpotPriceV2Callback))
+}
+
 // Submits an ICQ to get a validator's shares to tokens rate
 func (k Keeper) SubmitSpotPriceV2CallbackICQ(
 	ctx sdk.Context,
 	tokenPrice types.TokenPrice,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithPriceToken(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, "Submitting SpotPriceV2 ICQ"))
+	k.Logger(ctx).Info(utils.LogWithPriceToken(tokenPrice, "Submitting SpotPriceV2 ICQ"))
 
 	params := k.GetParams(ctx)
 
 	// Submit validator sharesToTokens rate ICQ
 	// Considering this query is executed manually, we can be conservative with the timeout
 	query := icqtypes.Query{
-		Id:              fmt.Sprintf("%s|%s-%d", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, ctx.BlockHeight()), // TODO fix?
+		Id:              fmt.Sprintf("%s|%s|%s|%d", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, ctx.BlockHeight()), // TODO fix?
 		ChainId:         params.OsmosisChainId,
 		ConnectionId:    params.OsmosisConnectionId,
 		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF, // TODO fix
@@ -38,51 +75,57 @@ func (k Keeper) SubmitSpotPriceV2CallbackICQ(
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST, // TODO fix
 	}
 	if err := k.icqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
-		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, "Error submitting SpotPriceV2 ICQ, error '%s'", err.Error()))
+		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error submitting SpotPriceV2 ICQ, error '%s'", err.Error()))
 		return err
 	}
 
-	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, true); err != nil {
-		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, "Error updating queryInProgress=true, error '%s'", err.Error()))
+	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice, true); err != nil {
+		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error updating queryInProgress=true, error '%s'", err.Error()))
 		return err
 	}
 
 	return nil
 }
 
-var queryIdRegex = regexp.MustCompile(`^(.+)\|(.+)-(\d+)$`)
+var queryIdRegex = regexp.MustCompile(`^(.+)\|(.+)\|(\d+)\|(\d+)$`)
 
 // Helper function to parse the ID string
-func ParseQueryID(id string) (baseDenom, quoteDenom, blockHeight string, ok bool) {
+func parseQueryID(id string) (baseDenom, quoteDenom, poolId, blockHeight string, ok bool) {
 	matches := queryIdRegex.FindStringSubmatch(id)
-	if len(matches) != 4 {
-		return "", "", "", false
+	if len(matches) != 5 {
+		return "", "", "", "", false
 	}
-	return matches[1], matches[2], matches[3], true
+	return matches[1], matches[2], matches[3], matches[4], true
 }
 
 func SpotPriceV2Callback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	baseDenom, quoteDenom, _, ok := ParseQueryID(query.Id)
+	baseDenom, quoteDenom, poolId, _, ok := parseQueryID(query.Id)
 	if !ok {
 		return fmt.Errorf("unable to parse baseDenom and quoteDenom from queryId '%s'", query.Id)
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithPriceToken(baseDenom, quoteDenom, "SpotPriceV2",
+	tokenPrice := types.TokenPrice{
+		BaseDenom:     baseDenom,
+		QuoteDenom:    quoteDenom,
+		OsmosisPoolId: poolId,
+	}
+
+	k.Logger(ctx).Info(utils.LogICQCallbackWithPriceToken(tokenPrice, "SpotPriceV2",
 		"Starting SpotPriceV2 ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
+	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
+	if err != nil {
+		return errorsmod.Wrap(err, "unable to get current spot price")
+	}
+
 	// Unmarshal the query response args to determine the balance
-	spotPrice, err := icqkeeper.UnmarshalSpotPriceFromSpotPriceV2Query(k.cdc, args)
+	newSpotPrice, err := icqkeeper.UnmarshalSpotPriceFromSpotPriceV2Query(k.cdc, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "unable to determine spot price from query response")
 	}
 
-	tokenPrice := types.TokenPrice{
-		BaseDenom:       baseDenom,
-		QuoteDenom:      quoteDenom,
-		Price:           spotPrice,
-		UpdatedAt:       ctx.BlockTime(),
-		QueryInProgress: false,
-	}
+	tokenPrice.Price = newSpotPrice
+	tokenPrice.QueryInProgress = false
 
 	if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
 		return errorsmod.Wrap(err, "unable to update spot price from query response")

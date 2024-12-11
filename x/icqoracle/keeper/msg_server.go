@@ -29,11 +29,14 @@ func (ms msgServer) AddTokenPrice(goCtx context.Context, msg *types.MsgAddTokenP
 	// TODO check admin
 
 	tokenPrice := types.TokenPrice{
-		BaseDenom:       msg.BaseDenom,
-		QuoteDenom:      msg.QuoteDenom,
-		UpdatedAt:       time.Time{},
-		Price:           sdkmath.LegacyZeroDec(),
-		QueryInProgress: false,
+		BaseDenom:         msg.BaseDenom,
+		QuoteDenom:        msg.QuoteDenom,
+		OsmosisPoolId:     msg.OsmosisPoolId,
+		OsmosisBaseDenom:  msg.OsmosisBaseDenom,
+		OsmosisQuoteDenom: msg.OsmosisQuoteDenom,
+		UpdatedAt:         time.Time{},
+		Price:             sdkmath.LegacyZeroDec(),
+		QueryInProgress:   false,
 	}
 
 	err := ms.Keeper.SetTokenPrice(ctx, tokenPrice)
@@ -50,7 +53,12 @@ func (ms msgServer) RemoveTokenPrice(goCtx context.Context, msg *types.MsgRemove
 
 	// TODO check admin
 
-	ms.Keeper.RemoveTokenPrice(ctx, msg.BaseDenom, msg.QuoteDenom)
+	tokenPrice := types.TokenPrice{
+		BaseDenom:     msg.BaseDenom,
+		QuoteDenom:    msg.QuoteDenom,
+		OsmosisPoolId: msg.OsmosisPoolId,
+	}
+	ms.Keeper.RemoveTokenPrice(ctx, tokenPrice)
 
 	return &types.MsgRemoveTokenPriceResponse{}, nil
 }

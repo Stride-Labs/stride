@@ -25,10 +25,17 @@ message MsgAddTokenPrice {
   option (amino.name) = "stride/x/icqoracle/MsgAddTokenPrice";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // Token denom (e.g. "uatom", "uosmo")
+
+  // Token denom on its base chain (e.g. "uosmo", "uatom", "udym")
   string base_denom = 2;
-  // Quote denom (e.g. ustrd, uusdc)
+  // Quote denom on its base chain (e.g. "uosmo", "uatom", "udym")
   string quote_denom = 3;
+  // Token denom on Osmosis (e.g. "uosmo", "ibc/...")
+  string osmosis_base_denom = 4;
+  // Quote denom on Osmosis (e.g. "uosmo", "ibc/...")
+  string osmosis_quote_denom = 5;
+  // Pool ID on Osmosis
+  string osmosis_pool_id = 6;
 }
 
 message MsgAddTokenPriceResponse {}
@@ -40,10 +47,12 @@ message MsgRemoveTokenPrice {
   option (amino.name) = "stride/x/icqoracle/MsgRemoveTokenPrice";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // Token denom (e.g. "uatom", "uosmo")
+  // Token denom on its base chain (e.g. "uosmo", "uatom", "udym")
   string base_denom = 2;
-  // Quote denom (e.g. ustrd, uusdc)
+  // Quote denom on its base chain (e.g. "uosmo", "uatom", "udym")
   string quote_denom = 3;
+  // Pool ID on Osmosis
+  string osmosis_pool_id = 4;
 }
 
 message MsgRemoveTokenPriceResponse {}
