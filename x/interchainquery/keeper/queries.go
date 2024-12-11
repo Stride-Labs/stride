@@ -180,5 +180,6 @@ func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []by
 }
 
 func UnmarshalSpotPriceFromSpotPriceV2Query(cdc codec.BinaryCodec, queryResponseBz []byte) (price sdkmath.LegacyDec, err error) {
+	panic("TODO")
 	return sdkmath.LegacyDec{}, nil
 }

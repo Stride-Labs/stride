@@ -16,6 +16,6 @@ const (
 	KeyLastUpdateTime = "last_update_time"
 )
 
-func TokenPriceKey(denom, baseDenom, quoteDenom, poolId string) []byte {
-	return []byte(fmt.Sprintf("%s%s%s%s%s", KeyPricePrefix, denom, baseDenom, quoteDenom, poolId))
+func TokenPriceKey(baseDenom, quoteDenom, poolId string) []byte {
+	return []byte(fmt.Sprintf("%s%s%s%s", KeyPricePrefix, baseDenom, quoteDenom, poolId))
 }

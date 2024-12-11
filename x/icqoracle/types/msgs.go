@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"strconv"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -69,8 +70,8 @@ func (msg *MsgAddTokenPrice) ValidateBasic() error {
 	if msg.QuoteDenom == "" {
 		return errors.New("quote-denom must be specified")
 	}
-	if msg.OsmosisPoolId == "" {
-		return errors.New("osmosis-pool-id must be specified")
+	if _, err := strconv.ParseUint(msg.OsmosisPoolId, 10, 64); err != nil {
+		return errors.New("osmosis-pool-id must be uint64")
 	}
 	if msg.OsmosisBaseDenom == "" {
 		return errors.New("osmosis-base-denom must be specified")
@@ -126,8 +127,8 @@ func (msg *MsgRemoveTokenPrice) ValidateBasic() error {
 	if msg.QuoteDenom == "" {
 		return errors.New("quote-denom must be specified")
 	}
-	if msg.OsmosisPoolId == "" {
-		return errors.New("osmosis-pool-id must be specified")
+	if _, err := strconv.ParseUint(msg.OsmosisPoolId, 10, 64); err != nil {
+		return errors.New("osmosis-pool-id must be uint64")
 	}
 
 	return nil

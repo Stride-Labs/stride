@@ -1,6 +1,9 @@
 package types
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+	"strconv"
+)
 
 const (
 	// ModuleName defines the module name
@@ -35,6 +38,8 @@ const (
 	BANK_STORE_QUERY_WITH_PROOF = "store/bank/key"
 	// The Osmosis twap store - key'd by the pool ID and denom's
 	TWAP_STORE_QUERY_WITH_PROOF = "store/twap/key"
+	// The Osmosis concentrated liquidity store
+	CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF = "store/concentratedliquidity/key"
 )
 
 var (
@@ -61,4 +66,18 @@ func FormatOsmosisMostRecentTWAPKey(poolId uint64, denom1, denom2 string) []byte
 
 	poolIdBz := fmt.Sprintf("%0.20d", poolId)
 	return []byte(fmt.Sprintf("%s%s%s%s%s%s", OsmosisMostRecentTWAPsPrefix, poolIdBz, OsmosisKeySeparator, denom1, OsmosisKeySeparator, denom2))
+}
+
+// Source: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/types/keys.go#L227-L235
+// Used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/pool.go#L117-L130
+// Which is used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/pool.go#L179-L209
+//
+// Pool Prefix Keys
+// keyPool is used to map a pool id to a pool struct
+func FormatOsmosisKeyPool(poolId uint64) []byte {
+	// Start with PoolPrefix initialized
+	result := []byte{0x03}
+	// Directly append the string representation of poolId as bytes
+	result = strconv.AppendUint(result, poolId, 10)
+	return result
 }

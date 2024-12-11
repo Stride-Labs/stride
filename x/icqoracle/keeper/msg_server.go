@@ -35,7 +35,7 @@ func (ms msgServer) AddTokenPrice(goCtx context.Context, msg *types.MsgAddTokenP
 		OsmosisBaseDenom:  msg.OsmosisBaseDenom,
 		OsmosisQuoteDenom: msg.OsmosisQuoteDenom,
 		UpdatedAt:         time.Time{},
-		Price:             sdkmath.LegacyZeroDec(),
+		SpotPrice:         sdkmath.LegacyZeroDec(),
 		QueryInProgress:   false,
 	}
 

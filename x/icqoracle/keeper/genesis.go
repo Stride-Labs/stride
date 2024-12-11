@@ -10,7 +10,9 @@ import (
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
 	for _, tokenPrice := range genState.TokenPrices {
-		k.SetTokenPrice(ctx, tokenPrice)
+		if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
+			panic(err)
+		}
 	}
 }
 

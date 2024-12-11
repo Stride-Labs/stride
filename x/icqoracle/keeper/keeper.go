@@ -64,7 +64,7 @@ func (k Keeper) GetLastUpdateTime(ctx sdk.Context) (time.Time, error) {
 // SetTokenPrice stores price data for a token
 func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) error {
 	store := ctx.KVStore(k.storeKey)
-	key := types.TokenPriceKey(tokenPrice.Denom, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+	key := types.TokenPriceKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	bz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) erro
 // RemoveTokenPrice removes price data for a token
 func (k Keeper) RemoveTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.TokenPriceKey(tokenPrice.Denom, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+	key := types.TokenPriceKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	store.Delete(key)
 }
 
@@ -99,7 +99,7 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, tokenPrice types.T
 // GetTokenPrice retrieves price data for a token
 func (k Keeper) GetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) (types.TokenPrice, error) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.TokenPriceKey(tokenPrice.Denom, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+	key := types.TokenPriceKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 
 	bz := store.Get(key)
 	if bz == nil {

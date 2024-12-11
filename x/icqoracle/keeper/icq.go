@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"regexp"
+	"strconv"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -60,19 +62,30 @@ func (k Keeper) SubmitSpotPriceV2CallbackICQ(
 
 	params := k.GetParams(ctx)
 
-	// Submit validator sharesToTokens rate ICQ
-	// Considering this query is executed manually, we can be conservative with the timeout
+	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
+	if err != nil {
+		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error converting osmosis pool id '%s' to uint64, error '%s'", tokenPrice.OsmosisPoolId, err.Error()))
+		return err
+	}
+
+	tokenPriceBz, err := k.cdc.Marshal(&tokenPrice)
+	if err != nil {
+		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error serializing tokenPrice '%+v' to bytes, error '%s'", tokenPrice, err.Error()))
+		return err
+	}
+
+	queryId := fmt.Sprintf("%s|%s|%s|%d", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, ctx.BlockHeight())
 	query := icqtypes.Query{
-		Id:              fmt.Sprintf("%s|%s|%s|%d", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, ctx.BlockHeight()), // TODO fix?
+		Id:              queryId,
 		ChainId:         params.OsmosisChainId,
 		ConnectionId:    params.OsmosisConnectionId,
-		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF, // TODO fix
-		RequestData:     []byte{},                                // TODO fix
+		QueryType:       icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
+		RequestData:     icqtypes.FormatOsmosisKeyPool(osmosisPoolId),
 		CallbackModule:  types.ModuleName,
-		CallbackId:      "banana",                                   // TODO fix
-		CallbackData:    []byte{},                                   // TODO fix
-		TimeoutDuration: 10 * time.Minute,                           // TODO fix
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST, // TODO fix
+		CallbackId:      queryId,
+		CallbackData:    tokenPriceBz,
+		TimeoutDuration: time.Duration(params.IcqTimeoutSec) * time.Second,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.icqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
 		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error submitting SpotPriceV2 ICQ, error '%s'", err.Error()))
@@ -99,15 +112,40 @@ func parseQueryID(id string) (baseDenom, quoteDenom, poolId, blockHeight string,
 }
 
 func SpotPriceV2Callback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	baseDenom, quoteDenom, poolId, _, ok := parseQueryID(query.Id)
-	if !ok {
-		return fmt.Errorf("unable to parse baseDenom and quoteDenom from queryId '%s'", query.Id)
+	// TODO is this check even needed?
+	if query.Id != query.CallbackId {
+		return fmt.Errorf("query.Id ('%s') != query.CallbackId ('%s')", query.Id, query.CallbackId)
 	}
 
-	tokenPrice := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    quoteDenom,
-		OsmosisPoolId: poolId,
+	baseDenom, quoteDenom, poolId, _, ok := parseQueryID(query.Id)
+	if !ok {
+		return fmt.Errorf("Error parsing baseDenom and quoteDenom from queryId '%s'", query.Id)
+	}
+
+	var tokenPrice types.TokenPrice
+	if err := k.cdc.Unmarshal(query.CallbackData, &tokenPrice); err != nil {
+		return fmt.Errorf("Error deserializing query.CallbackData '%s' as TokenPrice", hex.EncodeToString(query.CallbackData))
+	}
+
+	// TODO is this check even needed?
+	if tokenPrice.BaseDenom != baseDenom {
+		return fmt.Errorf("tokenPrice.BaseDenom ('%s') != baseDenom ('%s')", tokenPrice.BaseDenom, baseDenom)
+	}
+
+	// TODO is this check even needed?
+	if tokenPrice.QuoteDenom != quoteDenom {
+		return fmt.Errorf("tokenPrice.QuoteDenom ('%s') != quoteDenom ('%s')", tokenPrice.QuoteDenom, quoteDenom)
+	}
+
+	// TODO is this check even needed?
+	if tokenPrice.OsmosisPoolId != poolId {
+		return fmt.Errorf("tokenPrice.OsmosisPoolId ('%s') != poolId ('%s')", tokenPrice.OsmosisPoolId, poolId)
+	}
+
+	// TODO review this
+	// this should never happen
+	if !tokenPrice.QueryInProgress {
+		return nil
 	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithPriceToken(tokenPrice, "SpotPriceV2",
@@ -115,74 +153,21 @@ func SpotPriceV2Callback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 
 	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
 	if err != nil {
-		return errorsmod.Wrap(err, "unable to get current spot price")
+		return errorsmod.Wrap(err, "Error getting current spot price")
 	}
 
 	// Unmarshal the query response args to determine the balance
 	newSpotPrice, err := icqkeeper.UnmarshalSpotPriceFromSpotPriceV2Query(k.cdc, args)
 	if err != nil {
-		return errorsmod.Wrap(err, "unable to determine spot price from query response")
+		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
-	tokenPrice.Price = newSpotPrice
+	tokenPrice.SpotPrice = newSpotPrice
 	tokenPrice.QueryInProgress = false
 
 	if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
-		return errorsmod.Wrap(err, "unable to update spot price from query response")
+		return errorsmod.Wrap(err, "Error updating spot price from query response")
 	}
 
 	return nil
-
-	// k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_FeeBalance,
-	// 	"Query response - Fee Balance: %v %s", feeBalanceAmount, hostZone.HostDenom))
-
-	// // Confirm the balance is greater than zero
-	// if feeBalanceAmount.LTE(sdkmath.ZeroInt()) {
-	// 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_FeeBalance,
-	// 		"No balance to transfer for address: %s, balance: %v", hostZone.FeeIcaAddress, feeBalanceAmount))
-	// 	return nil
-	// }
-
-	// // Confirm the fee account has been initiated
-	// if hostZone.FeeIcaAddress == "" {
-	// 	return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no fee account found for %s", chainId)
-	// }
-
-	// // The ICA and transfer should both timeout before the end of the epoch
-	// timeout, err := k.GetICATimeoutNanos(ctx, epochtypes.STRIDE_EPOCH)
-	// if err != nil {
-	// 	return errorsmod.Wrapf(err, "Failed to get ICATimeout from %s epoch", epochtypes.STRIDE_EPOCH)
-	// }
-
-	// // get counterparty chain's transfer channel
-	// transferChannel, found := k.IBCKeeper.ChannelKeeper.GetChannel(ctx, transfertypes.PortID, hostZone.TransferChannelId)
-	// if !found {
-	// 	return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "transfer channel %s not found", hostZone.TransferChannelId)
-	// }
-	// counterpartyChannelId := transferChannel.Counterparty.ChannelId
-
-	// // Prepare a MsgTransfer from the fee account to the rewards collector account
-	// rewardsCoin := sdk.NewCoin(hostZone.HostDenom, feeBalanceAmount)
-	// rewardsCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
-	// transferMsg := ibctypes.NewMsgTransfer(
-	// 	transfertypes.PortID,
-	// 	counterpartyChannelId,
-	// 	rewardsCoin,
-	// 	hostZone.FeeIcaAddress,
-	// 	rewardsCollectorAddress.String(),
-	// 	clienttypes.Height{},
-	// 	timeout,
-	// 	"",
-	// )
-
-	// msgs := []proto.Message{transferMsg}
-	// k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_FeeBalance,
-	// 	"Preparing MsgTransfer of %v from the fee account to the rewards collector module account (for commission)", rewardsCoin.String()))
-
-	// // Send the transaction through SubmitTx
-	// if _, err := k.SubmitTxsStrideEpoch(ctx, hostZone.ConnectionId, msgs, types.ICAAccountType_FEE, ICACallbackID_Reinvest, nil); err != nil {
-	// 	return errorsmod.Wrapf(types.ErrICATxFailed, "Failed to SubmitTxs, Messages: %v, err: %s", msgs, err.Error())
-	// }
-
-	// return nil
 }
