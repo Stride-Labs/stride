@@ -8,16 +8,18 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v24/utils"
+	deps "github.com/Stride-Labs/stride/v24/x/icqoracle/deps/types"
 	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
-	icqkeeper "github.com/Stride-Labs/stride/v24/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v24/x/interchainquery/types"
 )
 
 const (
-	ICQCallbackID_SpotPriceV2 = "spotpricev2"
+	ICQCallbackID_OsmosisClPool = "osmosisclpool"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
@@ -50,15 +52,15 @@ func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCa
 
 func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 	return c.
-		AddICQCallback(ICQCallbackID_SpotPriceV2, ICQCallback(SpotPriceV2Callback))
+		AddICQCallback(ICQCallbackID_OsmosisClPool, ICQCallback(OsmosisClPoolCallback))
 }
 
-// Submits an ICQ to get a validator's shares to tokens rate
-func (k Keeper) SubmitSpotPriceV2CallbackICQ(
+// Submits an ICQ to get a concentrated liquidity pool from Osmosis' store
+func (k Keeper) SubmitOsmosisClPoolICQ(
 	ctx sdk.Context,
 	tokenPrice types.TokenPrice,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithPriceToken(tokenPrice, "Submitting SpotPriceV2 ICQ"))
+	k.Logger(ctx).Info(utils.LogWithPriceToken(tokenPrice, "Submitting OsmosisClPool ICQ"))
 
 	params := k.GetParams(ctx)
 
@@ -88,7 +90,7 @@ func (k Keeper) SubmitSpotPriceV2CallbackICQ(
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.icqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
-		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error submitting SpotPriceV2 ICQ, error '%s'", err.Error()))
+		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error submitting OsmosisClPool ICQ, error '%s'", err.Error()))
 		return err
 	}
 
@@ -111,7 +113,7 @@ func parseQueryID(id string) (baseDenom, quoteDenom, poolId, blockHeight string,
 	return matches[1], matches[2], matches[3], matches[4], true
 }
 
-func SpotPriceV2Callback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	// TODO is this check even needed?
 	if query.Id != query.CallbackId {
 		return fmt.Errorf("query.Id ('%s') != query.CallbackId ('%s')", query.Id, query.CallbackId)
@@ -148,8 +150,8 @@ func SpotPriceV2Callback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 		return nil
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithPriceToken(tokenPrice, "SpotPriceV2",
-		"Starting SpotPriceV2 ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
+	k.Logger(ctx).Info(utils.LogICQCallbackWithPriceToken(tokenPrice, "OsmosisClPool",
+		"Starting OsmosisClPool ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
 	if err != nil {
@@ -157,7 +159,7 @@ func SpotPriceV2Callback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 	}
 
 	// Unmarshal the query response args to determine the balance
-	newSpotPrice, err := icqkeeper.UnmarshalSpotPriceFromSpotPriceV2Query(k.cdc, args)
+	newSpotPrice, err := unmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
@@ -170,4 +172,18 @@ func SpotPriceV2Callback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 	}
 
 	return nil
+}
+
+func unmarshalSpotPriceFromOsmosisClPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
+	var pool deps.OsmosisConcentratedLiquidityPool
+	if err := proto.Unmarshal(queryResponseBz, &pool); err != nil {
+		return math.LegacyZeroDec(), err
+	}
+
+	spotPrice, err := pool.SpotPrice(tokenPrice.OsmosisQuoteDenom, tokenPrice.OsmosisBaseDenom)
+	if err != nil {
+		return math.LegacyZeroDec(), err
+	}
+
+	return spotPrice, nil
 }

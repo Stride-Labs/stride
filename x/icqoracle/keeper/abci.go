@@ -21,7 +21,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		// If never updated or update interval has passed
 		if lastUpdate.IsZero() || !tokenPrice.QueryInProgress && currentTime.Sub(lastUpdate) >= time.Second*time.Duration(params.UpdateIntervalSec) {
 			// Update price for this specific token
-			err := k.SubmitSpotPriceV2CallbackICQ(ctx, tokenPrice)
+			err := k.SubmitOsmosisClPoolICQ(ctx, tokenPrice)
 			if err != nil {
 				// TODO handle error, maybe log it
 				continue
