@@ -23,6 +23,9 @@ message TokenPrice {
   // Last update timestamp
   google.protobuf.Timestamp updated_at = 4
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // Whether there is a price query currently in progress
+  bool query_in_progress = 5;
 }
 
 // OracleParams stores global oracle parameters

@@ -100,6 +100,21 @@ func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom s
 	store.Delete(key)
 }
 
+func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, queryInProgress bool) error {
+	tokenPrice, err := k.GetTokenPrice(ctx, baseDenom, quoteDenom)
+	if err != nil {
+		return err
+	}
+
+	tokenPrice.QueryInProgress = queryInProgress
+	err = k.SetTokenPrice(ctx, tokenPrice)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetTokenPrice retrieves price data for a token
 func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string) (types.TokenPrice, error) {
 	store := ctx.KVStore(k.storeKey)
@@ -140,16 +155,18 @@ func (k Keeper) QueryOsmosisPrices(ctx sdk.Context) ([]types.TokenPrice, error) 
 	// This is a placeholder that returns mock data
 	mockPrices := []types.TokenPrice{
 		{
-			BaseDenom:  "uatom",
-			QuoteDenom: "ustrd",
-			Price:      sdk.NewDec(10),
-			UpdatedAt:  ctx.BlockTime(),
+			BaseDenom:       "uatom",
+			QuoteDenom:      "ustrd",
+			Price:           sdk.NewDec(10),
+			UpdatedAt:       ctx.BlockTime(),
+			QueryInProgress: false,
 		},
 		{
-			BaseDenom:  "uosmo",
-			QuoteDenom: "ustrd",
-			Price:      sdk.NewDec(5),
-			UpdatedAt:  ctx.BlockTime(),
+			BaseDenom:       "uosmo",
+			QuoteDenom:      "ustrd",
+			Price:           sdk.NewDec(5),
+			UpdatedAt:       ctx.BlockTime(),
+			QueryInProgress: false,
 		},
 	}
 	return mockPrices, nil

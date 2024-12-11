@@ -178,3 +178,7 @@ func UnmarshalAmountFromBalanceQuery(cdc codec.BinaryCodec, queryResponseBz []by
 	return sdkmath.Int{}, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
 		"unable to unmarshal balance query response %v as sdkmath.Int (err: %s) or sdk.Coin (err: %s)", queryResponseBz, intError.Error(), coinError.Error())
 }
+
+func UnmarshalSpotPriceFromSpotPriceV2Query(cdc codec.BinaryCodec, queryResponseBz []byte) (price sdkmath.LegacyDec, err error) {
+	return sdkmath.LegacyDec{}, nil
+}

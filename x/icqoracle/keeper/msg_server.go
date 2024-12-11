@@ -29,10 +29,11 @@ func (ms msgServer) AddTokenPrice(goCtx context.Context, msg *types.MsgAddTokenP
 	// TODO check admin
 
 	tokenPrice := types.TokenPrice{
-		BaseDenom:  msg.BaseDenom,
-		QuoteDenom: msg.QuoteDenom,
-		UpdatedAt:  time.Time{},
-		Price:      sdkmath.LegacyZeroDec(),
+		BaseDenom:       msg.BaseDenom,
+		QuoteDenom:      msg.QuoteDenom,
+		UpdatedAt:       time.Time{},
+		Price:           sdkmath.LegacyZeroDec(),
+		QueryInProgress: false,
 	}
 
 	err := ms.Keeper.SetTokenPrice(ctx, tokenPrice)
