@@ -71,7 +71,7 @@ func (ms msgServer) UpdateAuction(goCtx context.Context, msg *types.MsgUpdateAuc
 
 	auction.Enabled = msg.Enabled
 	auction.MinBidAmount = msg.MinBidAmount
-	auction.PriceMultiplier = auction.PriceMultiplier
+	auction.PriceMultiplier = msg.PriceMultiplier
 
 	err = ms.Keeper.SetAuction(ctx, auction)
 	if err != nil {
