@@ -1,0 +1,47 @@
+syntax = "proto3";
+package stride.auction;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/auction/types";
+
+// Global auction parameters
+message Params {}
+
+message Auction {
+  // Token denom being auctioned
+  string denom = 1;
+
+  // Whether auction is active
+  bool enabled = 2;
+
+  // Price multiplier (e.g. 0.95 for 5% discount)
+  string price_multiplier = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Minimum STRD bid amount
+  string min_bid_amount = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Stats tracks burning metrics
+message Stats {
+  // Token denom being tracked
+  string token_denom = 1;
+
+  // Total amount of STRD burned
+  string total_strd_burned = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total amount of tokens sold
+  string total_tokens_sold = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

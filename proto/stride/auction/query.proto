@@ -1,0 +1,76 @@
+syntax = "proto3";
+package stride.auction;
+
+import "stride/auction/auction.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/auction/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Auction queries the auction info for a specific token
+  rpc Auction(QueryAuctionRequest) returns (QueryAuctionResponse) {
+    option (google.api.http).get = "/auction/v1beta1/auction/{denom}";
+  }
+
+  // Auctions queries the auction info for a specific token
+  rpc Auctions(QueryAuctionsRequest) returns (QueryAuctionsResponse) {
+    option (google.api.http).get = "/auction/v1beta1/auctions";
+  }
+
+  // Stats queries the auction stats for a specific token
+  rpc Stats(QueryStatsRequest) returns (QueryStatsResponse) {
+    option (google.api.http).get = "/auction/v1beta1/stats/{denom}";
+  }
+
+  // AllStats queries the auction stats for a specific token
+  rpc AllStats(QueryAllStatsRequest) returns (QueryAllStatsResponse) {
+    option (google.api.http).get = "/auction/v1beta1/stats";
+  }
+}
+
+// QueryAuctionRequest is the request type for the Query/Auction RPC
+// method
+message QueryAuctionRequest { string denom = 1; }
+
+// QueryAuctionResponse is the response type for the Query/Auction RPC
+// method
+message QueryAuctionResponse {
+  Auction auction = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryAuctionsRequest is the request type for the
+// Query/Auctions RPC method
+message QueryAuctionsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryAuctionsResponse is the response type for the
+// Query/Auctions RPC method
+message QueryAuctionsResponse {
+  repeated Auction auctions = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryStatsRequest is the request type for the Query/TokenStats RPC
+// method
+message QueryStatsRequest { string denom = 1; }
+
+// QueryStatsResponse is the response type for the Query/TokenStats RPC
+// method
+message QueryStatsResponse { Stats stats = 1 [ (gogoproto.nullable) = false ]; }
+
+// QueryAllStatsRequest is the request type for the
+// Query/Auctions RPC method
+message QueryAllStatsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryAllStatsResponse is the response type for the
+// Query/Auctions RPC method
+message QueryAllStatsResponse {
+  repeated Stats all_stats = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
