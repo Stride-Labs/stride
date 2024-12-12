@@ -123,7 +123,7 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 	// Get auction
 	auction, err := k.GetAuction(ctx, bid.TokenDenom)
 	if err != nil {
-		return fmt.Errorf("cannot get auction for denom='%s': %w", err)
+		return fmt.Errorf("cannot get auction for denom='%s': %w", bid.TokenDenom, err)
 	}
 
 	// Get token amount being auctioned off
