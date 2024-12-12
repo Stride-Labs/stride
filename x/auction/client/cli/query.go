@@ -22,34 +22,29 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		CmdQueryTokenPrice(),
-		CmdQueryTokenPrices(),
-		CmdQueryParams(),
+		CmdQueryAuction(),
+		CmdQueryAuctions(),
 	)
 
 	return cmd
 }
 
-func CmdQueryTokenPrice() *cobra.Command {
+func CmdQueryAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "token-price [base-denom] [quote-denom]",
-		Short: "Query the current price for a specific token",
-		Args:  cobra.ExactArgs(2),
+		Use:   "auction [denom]",
+		Short: "Query the auction info for a specific token",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			baseDenom := args[0]
-			quoteDenom := args[1]
-
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryTokenPriceRequest{
-				BaseDenom:  baseDenom,
-				QuoteDenom: quoteDenom,
+			req := &types.QueryAuctionRequest{
+				Denom: args[0],
 			}
-			res, err := queryClient.TokenPrice(context.Background(), req)
+			res, err := queryClient.Auction(context.Background(), req)
 			if err != nil {
 				return err
 			}
@@ -59,10 +54,10 @@ func CmdQueryTokenPrice() *cobra.Command {
 	return cmd
 }
 
-func CmdQueryTokenPrices() *cobra.Command {
+func CmdQueryAuctions() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "token-prices",
-		Short: "Query all token prices",
+		Use:   "auctions",
+		Short: "Query all auctions",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -70,30 +65,9 @@ func CmdQueryTokenPrices() *cobra.Command {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
-			req := &types.QueryTokenPricesRequest{}
-			res, err := queryClient.TokenPrices(context.Background(), req)
-			if err != nil {
-				return err
-			}
-			return clientCtx.PrintProto(res)
-		},
-	}
-	return cmd
-}
 
-func CmdQueryParams() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "params",
-		Short: "Get the parameters",
-		Args:  cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-			req := &types.QueryParamsRequest{}
-			res, err := queryClient.Params(context.Background(), req)
+			req := &types.QueryAuctionsRequest{}
+			res, err := queryClient.Auctions(context.Background(), req)
 			if err != nil {
 				return err
 			}
