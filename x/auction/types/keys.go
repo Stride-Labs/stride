@@ -13,13 +13,8 @@ const (
 
 	ParamsPrefix     = "params"
 	KeyAuctionPrefix = "auction"
-	KeyStatsPrefix   = "stats"
 )
 
 func AuctionKey(denom string) []byte {
 	return []byte(fmt.Sprintf("%s%s", KeyAuctionPrefix, denom))
-}
-
-func StatsKey(denom string) []byte {
-	return []byte(fmt.Sprintf("%s%s", KeyStatsPrefix, denom))
 }

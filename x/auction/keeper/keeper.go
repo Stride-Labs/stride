@@ -84,40 +84,6 @@ func (k Keeper) GetAllAuctions(ctx sdk.Context) []types.Auction {
 	return auctions
 }
 
-// GetStats retrieves stats info for an auction
-func (k Keeper) GetStats(ctx sdk.Context, denom string) (types.Stats, error) {
-	store := ctx.KVStore(k.storeKey)
-	key := types.StatsKey(denom)
-
-	bz := store.Get(key)
-	if bz == nil {
-		return types.Stats{}, fmt.Errorf("Stats not found for auction denom='%s'", denom)
-	}
-
-	var stats types.Stats
-	if err := k.cdc.Unmarshal(bz, &stats); err != nil {
-		return types.Stats{}, err
-	}
-
-	return stats, nil
-}
-
-// GetAllStats retrieves all stored auctions stats
-func (k Keeper) GetAllStats(ctx sdk.Context) []types.Stats {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(types.KeyStatsPrefix))
-	defer iterator.Close()
-
-	allStats := []types.Stats{}
-	for ; iterator.Valid(); iterator.Next() {
-		var auctionStats types.Stats
-		k.cdc.MustUnmarshal(iterator.Value(), &auctionStats)
-		allStats = append(allStats, auctionStats)
-	}
-
-	return allStats
-}
-
 // SetAuction stores auction info for a token
 func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 	// Get auction

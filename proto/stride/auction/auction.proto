@@ -26,21 +26,15 @@ message Auction {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
-}
-
-// Stats tracks burning metrics
-message Stats {
-  // Token denom being tracked
-  string token_denom = 1;
 
   // Total amount of STRD burned
-  string total_strd_burned = 2 [
+  string total_strd_burned = 5 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 
   // Total amount of tokens sold
-  string total_tokens_sold = 3 [
+  string total_tokens_sold = 6 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
