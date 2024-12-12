@@ -8,13 +8,13 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 
 // TokenPrice stores latest price data for a token
 message TokenPrice {
-  // Token denom on its base chain (e.g. "uosmo", "uatom", "udym")
+  // Token denom on Stride
   string base_denom = 1;
-  // Quote denom on its base chain (e.g. "uosmo", "uatom", "udym")
+  // Quote denom on Stride
   string quote_denom = 2;
-  // Token denom on Osmosis (e.g. "uosmo", "ibc/...")
+  // Token denom on Osmosis
   string osmosis_base_denom = 3;
-  // Quote denom on Osmosis (e.g. "uosmo", "ibc/...")
+  // Quote denom on Osmosis
   string osmosis_quote_denom = 4;
   // Pool ID on Osmosis
   string osmosis_pool_id = 5;

@@ -109,11 +109,12 @@ Example:
 
 			msg := types.NewMsgCreateAuction(
 				clientCtx.GetFromAddress().String(),
-				args[0],      // denom
-				enabled,      // enabled
-				args[2],      // price multiplier
-				minBidAmount, // min bid amount
-				args[4],      // beneficiary
+				types.AuctionType_AUCTION_TYPE_FCFS, // auction type
+				args[0],                             // denom
+				enabled,                             // enabled
+				args[2],                             // price multiplier
+				minBidAmount,                        // min bid amount
+				args[4],                             // beneficiary
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -156,11 +157,12 @@ Example:
 
 			msg := types.NewMsgUpdateAuction(
 				clientCtx.GetFromAddress().String(),
-				args[0],      // denom
-				enabled,      // enabled
-				args[2],      // price multiplier
-				minBidAmount, // min bid amount
-				args[4],      // beneficiary
+				types.AuctionType_AUCTION_TYPE_FCFS, // auction type
+				args[0],                             // denom
+				enabled,                             // enabled
+				args[2],                             // price multiplier
+				minBidAmount,                        // min bid amount
+				args[4],                             // beneficiary
 
 			)
 

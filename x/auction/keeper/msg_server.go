@@ -44,6 +44,7 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 	}
 
 	auction := types.Auction{
+		Type:            msg.AuctionType,
 		Denom:           msg.Denom,
 		Enabled:         msg.Enabled,
 		PriceMultiplier: msg.PriceMultiplier,
@@ -70,6 +71,7 @@ func (ms msgServer) UpdateAuction(goCtx context.Context, msg *types.MsgUpdateAuc
 		return nil, types.ErrAuctionDoesntExist.Wrapf("cannot find auction for token '%s'", msg.Denom)
 	}
 
+	auction.Type = msg.AuctionType
 	auction.Enabled = msg.Enabled
 	auction.MinBidAmount = msg.MinBidAmount
 	auction.PriceMultiplier = msg.PriceMultiplier

@@ -114,6 +114,29 @@ func (k Keeper) GetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) (typ
 	return price, nil
 }
 
+// GetTokenPriceByDenom retrieves all price data for a base denom
+func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[string]*types.TokenPrice, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	// Create prefix iterator for all keys starting with baseDenom
+	iterator := sdk.KVStorePrefixIterator(store, types.TokenPriceByDenomKey(baseDenom))
+	defer iterator.Close()
+
+	prices := make(map[string]*types.TokenPrice)
+
+	for ; iterator.Valid(); iterator.Next() {
+		var price types.TokenPrice
+		if err := k.cdc.Unmarshal(iterator.Value(), &price); err != nil {
+			return nil, err
+		}
+
+		// Use quoteDenom as the map key
+		prices[price.QuoteDenom] = &price
+	}
+
+	return prices, nil
+}
+
 // GetAllTokenPrices retrieves all stored token prices
 func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
 	store := ctx.KVStore(k.storeKey)

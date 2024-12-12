@@ -32,12 +32,17 @@ var (
 //               MsgPlaceBid
 // ----------------------------------------------
 
-func NewMsgPlaceBid(bidder, tokenDenom string, utokenAmount, ustrdAmount uint64) *MsgPlaceBid {
+func NewMsgPlaceBid(
+	bidder string,
+	tokenDenom string,
+	auctionTokenAmount uint64,
+	paymentTokenAmount uint64,
+) *MsgPlaceBid {
 	return &MsgPlaceBid{
-		Bidder:       bidder,
-		TokenDenom:   tokenDenom,
-		UtokenAmount: math.NewIntFromUint64(utokenAmount),
-		UstrdAmount:  math.NewIntFromUint64(ustrdAmount),
+		Bidder:             bidder,
+		AuctionTokenDenom:  tokenDenom,
+		AuctionTokenAmount: math.NewIntFromUint64(auctionTokenAmount),
+		PaymentTokenAmount: math.NewIntFromUint64(paymentTokenAmount),
 	}
 }
 
@@ -66,13 +71,13 @@ func (msg *MsgPlaceBid) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Bidder); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
-	if msg.TokenDenom == "" {
+	if msg.AuctionTokenDenom == "" {
 		return errors.New("token-denom must be specified")
 	}
-	if msg.UtokenAmount.IsZero() {
+	if msg.AuctionTokenAmount.IsZero() {
 		return errors.New("utoken-amount cannot be 0")
 	}
-	if msg.UstrdAmount.IsZero() {
+	if msg.PaymentTokenAmount.IsZero() {
 		return errors.New("ustrd-amount cannot be 0")
 	}
 
@@ -83,7 +88,9 @@ func (msg *MsgPlaceBid) ValidateBasic() error {
 //               MsgCreateAuction
 // ----------------------------------------------
 
-func NewMsgCreateAuction(admin string,
+func NewMsgCreateAuction(
+	admin string,
+	auctionType AuctionType,
 	denom string,
 	enabled bool,
 	priceMultiplier string,
@@ -97,6 +104,7 @@ func NewMsgCreateAuction(admin string,
 
 	return &MsgCreateAuction{
 		Admin:           admin,
+		AuctionType:     auctionType,
 		Denom:           denom,
 		Enabled:         enabled,
 		PriceMultiplier: priceMultiplierDec,
@@ -130,6 +138,9 @@ func (msg *MsgCreateAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
+	if _, ok := AuctionType_name[int32(msg.AuctionType)]; !ok {
+		return errors.New("auction-type is invalid")
+	}
 	if msg.Denom == "" {
 		return errors.New("denom must be specified")
 	}
@@ -150,7 +161,9 @@ func (msg *MsgCreateAuction) ValidateBasic() error {
 //               MsgUpdateAuction
 // ----------------------------------------------
 
-func NewMsgUpdateAuction(admin string,
+func NewMsgUpdateAuction(
+	admin string,
+	auctionType AuctionType,
 	denom string,
 	enabled bool,
 	priceMultiplier string,
@@ -164,6 +177,7 @@ func NewMsgUpdateAuction(admin string,
 
 	return &MsgUpdateAuction{
 		Admin:           admin,
+		AuctionType:     auctionType,
 		Denom:           denom,
 		Enabled:         enabled,
 		PriceMultiplier: priceMultiplierDec,
@@ -196,6 +210,9 @@ func (msg *MsgUpdateAuction) GetSignBytes() []byte {
 func (msg *MsgUpdateAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
+	if _, ok := AuctionType_name[int32(msg.AuctionType)]; !ok {
+		return errors.New("auction-type is invalid")
 	}
 	if msg.Denom == "" {
 		return errors.New("denom must be specified")

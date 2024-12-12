@@ -30,13 +30,13 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // TokenPrice stores latest price data for a token
 type TokenPrice struct {
-	// Token denom on its base chain (e.g. "uosmo", "uatom", "udym")
+	// Token denom on Stride
 	BaseDenom string `protobuf:"bytes,1,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty"`
-	// Quote denom on its base chain (e.g. "uosmo", "uatom", "udym")
+	// Quote denom on Stride
 	QuoteDenom string `protobuf:"bytes,2,opt,name=quote_denom,json=quoteDenom,proto3" json:"quote_denom,omitempty"`
-	// Token denom on Osmosis (e.g. "uosmo", "ibc/...")
+	// Token denom on Osmosis
 	OsmosisBaseDenom string `protobuf:"bytes,3,opt,name=osmosis_base_denom,json=osmosisBaseDenom,proto3" json:"osmosis_base_denom,omitempty"`
-	// Quote denom on Osmosis (e.g. "uosmo", "ibc/...")
+	// Quote denom on Osmosis
 	OsmosisQuoteDenom string `protobuf:"bytes,4,opt,name=osmosis_quote_denom,json=osmosisQuoteDenom,proto3" json:"osmosis_quote_denom,omitempty"`
 	// Pool ID on Osmosis
 	OsmosisPoolId string `protobuf:"bytes,5,opt,name=osmosis_pool_id,json=osmosisPoolId,proto3" json:"osmosis_pool_id,omitempty"`
