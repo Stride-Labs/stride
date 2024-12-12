@@ -84,7 +84,7 @@ Example:
 
 func CmdCreateAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-auction [denom] [enabled] [price-multiplier] [min-bid-amount]",
+		Use:   "create-auction [denom] [enabled] [price-multiplier] [min-bid-amount] [beneficiary]",
 		Short: "Create a new auction",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Create a new auction for a specific token.
@@ -113,6 +113,7 @@ Example:
 				enabled,      // enabled
 				args[2],      // price multiplier
 				minBidAmount, // min bid amount
+				args[4],      // beneficiary
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -130,7 +131,7 @@ Example:
 
 func CmdUpdateAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-auction [denom] [enabled] [price-multiplier] [min-bid-amount]",
+		Use:   "update-auction [denom] [enabled] [price-multiplier] [min-bid-amount] [beneficiary]",
 		Short: "Update an existing auction",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Update an existing auction's parameters.
@@ -159,6 +160,8 @@ Example:
 				enabled,      // enabled
 				args[2],      // price multiplier
 				minBidAmount, // min bid amount
+				args[4],      // beneficiary
+
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

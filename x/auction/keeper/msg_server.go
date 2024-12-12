@@ -48,6 +48,7 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 		Enabled:         msg.Enabled,
 		PriceMultiplier: msg.PriceMultiplier,
 		MinBidAmount:    msg.MinBidAmount,
+		Beneficiary:     msg.Beneficiary,
 	}
 
 	err = ms.Keeper.SetAuction(ctx, auction)
@@ -72,6 +73,7 @@ func (ms msgServer) UpdateAuction(goCtx context.Context, msg *types.MsgUpdateAuc
 	auction.Enabled = msg.Enabled
 	auction.MinBidAmount = msg.MinBidAmount
 	auction.PriceMultiplier = msg.PriceMultiplier
+	auction.Beneficiary = msg.Beneficiary
 
 	err = ms.Keeper.SetAuction(ctx, auction)
 	if err != nil {

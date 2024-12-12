@@ -88,6 +88,7 @@ func NewMsgCreateAuction(admin string,
 	enabled bool,
 	priceMultiplier string,
 	minBidAmount uint64,
+	beneficiary string,
 ) *MsgCreateAuction {
 	priceMultiplierDec, err := math.LegacyNewDecFromStr(priceMultiplier)
 	if err != nil {
@@ -100,6 +101,7 @@ func NewMsgCreateAuction(admin string,
 		Enabled:         enabled,
 		PriceMultiplier: priceMultiplierDec,
 		MinBidAmount:    math.NewIntFromUint64(minBidAmount),
+		Beneficiary:     beneficiary,
 	}
 }
 
@@ -137,6 +139,9 @@ func (msg *MsgCreateAuction) ValidateBasic() error {
 	if msg.PriceMultiplier.IsZero() {
 		return errors.New("price-multiplier cannot be 0")
 	}
+	if _, err := sdk.AccAddressFromBech32(msg.Beneficiary); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	}
 
 	return nil
 }
@@ -150,6 +155,7 @@ func NewMsgUpdateAuction(admin string,
 	enabled bool,
 	priceMultiplier string,
 	minBidAmount uint64,
+	beneficiary string,
 ) *MsgUpdateAuction {
 	priceMultiplierDec, err := math.LegacyNewDecFromStr(priceMultiplier)
 	if err != nil {
@@ -162,6 +168,7 @@ func NewMsgUpdateAuction(admin string,
 		Enabled:         enabled,
 		PriceMultiplier: priceMultiplierDec,
 		MinBidAmount:    math.NewIntFromUint64(minBidAmount),
+		Beneficiary:     beneficiary,
 	}
 }
 
@@ -198,6 +205,9 @@ func (msg *MsgUpdateAuction) ValidateBasic() error {
 	}
 	if msg.PriceMultiplier.IsZero() {
 		return errors.New("price-multiplier cannot be 0")
+	}
+	if _, err := sdk.AccAddressFromBech32(msg.Beneficiary); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
 
 	return nil

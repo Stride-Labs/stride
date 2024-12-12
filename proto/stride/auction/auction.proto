@@ -2,6 +2,7 @@ syntax = "proto3";
 package stride.auction;
 
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v24/x/auction/types";
 
@@ -27,14 +28,16 @@ message Auction {
     (gogoproto.nullable) = false
   ];
 
+  string beneficiary = 5 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
   // Total amount of STRD burned
-  string total_strd_burned = 5 [
+  string total_strd_burned = 6 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 
   // Total amount of tokens sold
-  string total_tokens_sold = 6 [
+  string total_tokens_sold = 7 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
