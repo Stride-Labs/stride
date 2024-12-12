@@ -11,16 +11,17 @@ import (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	// TODO [msgserver]: register legacy amino for each msg
-	// legacy.RegisterAminoMsg(cdc, &MsgSomeMessage{}, "icqoracle/MsgSomeMessage")
-	_ = legacy.Cdc // remove
+	legacy.RegisterAminoMsg(cdc, &MsgAddTokenPrice{}, "icqoracle/MsgAddTokenPrice")
+	legacy.RegisterAminoMsg(cdc, &MsgRemoveTokenPrice{}, "icqoracle/MsgRemoveTokenPrice")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-	// TODO [msgserver]: add implement sdk.Msg interface for message types
-	// registry.RegisterImplementations((*sdk.Msg)(nil), ...)
-	// msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
-	_ = msgservice.E_Service // remove
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgAddTokenPrice{},
+		&MsgRemoveTokenPrice{},
+	)
+
+	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
 var (

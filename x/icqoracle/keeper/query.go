@@ -43,6 +43,8 @@ func (k Keeper) TokenPrices(goCtx context.Context, req *types.QueryTokenPricesRe
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// TODO impl paging
+
 	prices := k.GetAllTokenPrices(ctx)
 
 	return &types.QueryTokenPricesResponse{
