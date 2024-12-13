@@ -136,22 +136,22 @@ func (msg *MsgCreateAuction) GetSignBytes() []byte {
 
 func (msg *MsgCreateAuction) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid admin address (%s)", err)
 	}
 	if _, ok := AuctionType_name[int32(msg.AuctionType)]; !ok {
-		return errors.New("auction-type is invalid")
+		return fmt.Errorf("auction-type %d is invalid", msg.AuctionType)
 	}
 	if msg.Denom == "" {
 		return errors.New("denom must be specified")
 	}
 	if msg.MinBidAmount.LT(math.ZeroInt()) {
-		return errors.New("min-bid-amount must be at least 0")
+		return errors.New("min-bid-amount must be >= 0")
 	}
-	if msg.PriceMultiplier.IsZero() {
-		return errors.New("price-multiplier cannot be 0")
+	if !(msg.PriceMultiplier.GT(math.LegacyZeroDec()) && msg.PriceMultiplier.LTE(math.LegacyOneDec())) {
+		return errors.New("price-multiplier must be > 0 and <= 1 (0 > priceMultiplier >= 1)")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Beneficiary); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid beneficiary address (%s)", err)
 	}
 
 	return nil
