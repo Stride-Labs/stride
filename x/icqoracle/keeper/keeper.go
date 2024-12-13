@@ -189,6 +189,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	foundCommonQuoteToken := false
 	foundBaseTokenStalePrice := false
 	foundQuoteTokenStalePrice := false
+	foundQuoteTokenZeroPrice := false
 
 	// Find a common quote denom and calculate baseToken to quoteToken price
 	for quoteDenom1, baseTokenPrice := range baseTokenPrices {
@@ -206,6 +207,13 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 					continue
 				}
 
+				// Check that quote price is not zero to prevent division by zero
+
+				if quoteTokenPrice.SpotPrice.IsZero() {
+					foundQuoteTokenZeroPrice = true
+					continue
+				}
+
 				// Calculate the price of 1 baseToken in quoteToken
 				price = baseTokenPrice.SpotPrice.Quo(quoteTokenPrice.SpotPrice)
 
@@ -216,12 +224,13 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 	if price.IsZero() {
 		return math.LegacyDec{}, fmt.Errorf(
-			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', foundQuoteTokenStalePrice='%v')",
+			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v')",
 			baseDenom,
 			quoteDenom,
 			foundCommonQuoteToken,
 			foundBaseTokenStalePrice,
 			foundQuoteTokenStalePrice,
+			foundQuoteTokenZeroPrice,
 		)
 	}
 
