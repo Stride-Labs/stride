@@ -12,17 +12,23 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 service Query {
   // TokenPrice queries the current price for a specific token
   rpc TokenPrice(QueryTokenPriceRequest) returns (QueryTokenPriceResponse) {
-    option (google.api.http).get = "/stride/icqoracle/v1beta1/price";
+    option (google.api.http).get = "/icqoracle/v1beta1/price";
   }
 
   // TokenPrices queries all token prices
   rpc TokenPrices(QueryTokenPricesRequest) returns (QueryTokenPricesResponse) {
-    option (google.api.http).get = "/stride/icqoracle/v1beta1/prices";
+    option (google.api.http).get = "/icqoracle/v1beta1/prices";
   }
 
   // Params queries the oracle parameters
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/stride/icqoracle/v1beta1/params";
+    option (google.api.http).get = "/icqoracle/v1beta1/params";
+  }
+
+  // TokenPriceForQuoteDenom queries the exchange rate between two tokens
+  rpc TokenPriceForQuoteDenom(QueryTokenPriceForQuoteDenomRequest)
+      returns (QueryTokenPriceForQuoteDenomResponse) {
+    option (google.api.http).get = "/icqoracle/v1beta1/quote_price";
   }
 }
 
@@ -59,4 +65,20 @@ message QueryParamsRequest {}
 // QueryParamsResponse is the response type for the Query/Params RPC method
 message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryTokenPriceForQuoteDenomRequest is the request type for the
+// Query/TokenPriceForQuoteDenom RPC method
+message QueryTokenPriceForQuoteDenomRequest {
+  string base_denom = 1;
+  string quote_denom = 2;
+}
+
+// QueryTokenPriceForQuoteDenomResponse is the response type for the
+// Query/TokenPriceForQuoteDenom RPC method
+message QueryTokenPriceForQuoteDenomResponse {
+  string price = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }

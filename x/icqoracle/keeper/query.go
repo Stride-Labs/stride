@@ -64,3 +64,21 @@ func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*t
 		Params: params,
 	}, nil
 }
+
+// TokenPriceForQuoteDenom queries the exchange rate between two tokens
+func (k Keeper) TokenPriceForQuoteDenom(goCtx context.Context, req *types.QueryTokenPriceForQuoteDenomRequest) (*types.QueryTokenPriceForQuoteDenomResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	price, err := k.GetTokenPriceForQuoteDenom(ctx, req.BaseDenom, req.QuoteDenom)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	return &types.QueryTokenPriceForQuoteDenomResponse{
+		Price: price,
+	}, nil
+}
