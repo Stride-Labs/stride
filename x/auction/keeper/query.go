@@ -27,7 +27,7 @@ func (k Keeper) Auction(goCtx context.Context, req *types.QueryAuctionRequest) (
 	}
 
 	return &types.QueryAuctionResponse{
-		Auction: auction,
+		Auction: *auction,
 	}, nil
 }
 

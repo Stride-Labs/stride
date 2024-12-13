@@ -52,7 +52,7 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 		Beneficiary:     msg.Beneficiary,
 	}
 
-	err = ms.Keeper.SetAuction(ctx, auction)
+	err = ms.Keeper.SetAuction(ctx, &auction)
 	if err != nil {
 		return nil, err
 	}

@@ -41,10 +41,10 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // SetAuction stores auction info for a token
-func (k Keeper) SetAuction(ctx sdk.Context, auction types.Auction) error {
+func (k Keeper) SetAuction(ctx sdk.Context, auction *types.Auction) error {
 	store := ctx.KVStore(k.storeKey)
 	key := types.AuctionKey(auction.Denom)
-	bz, err := k.cdc.Marshal(&auction)
+	bz, err := k.cdc.Marshal(auction)
 	if err != nil {
 		return fmt.Errorf("error setting auction for denom '%s': %w", auction.Denom, err)
 	}
@@ -54,21 +54,21 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction types.Auction) error {
 }
 
 // GetAuction retrieves auction info for a token
-func (k Keeper) GetAuction(ctx sdk.Context, denom string) (types.Auction, error) {
+func (k Keeper) GetAuction(ctx sdk.Context, denom string) (*types.Auction, error) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.AuctionKey(denom)
 
 	bz := store.Get(key)
 	if bz == nil {
-		return types.Auction{}, fmt.Errorf("auction not found for denom '%s'", denom)
+		return &types.Auction{}, fmt.Errorf("auction not found for denom '%s'", denom)
 	}
 
 	var auction types.Auction
 	if err := k.cdc.Unmarshal(bz, &auction); err != nil {
-		return types.Auction{}, fmt.Errorf("error retrieving auction for denom '%s': %w", auction.Denom, err)
+		return &types.Auction{}, fmt.Errorf("error retrieving auction for denom '%s': %w", auction.Denom, err)
 	}
 
-	return auction, nil
+	return &auction, nil
 }
 
 // GetAllAuctions retrieves all stored auctions
@@ -95,93 +95,12 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 		return fmt.Errorf("cannot get auction for denom='%s': %w", bid.AuctionTokenDenom, err)
 	}
 
-	// TODO check auction type and call handler
-
-	// Get token amount being auctioned off
-	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	balance := k.bankKeeper.GetBalance(ctx, moduleAddr, auction.Denom)
-	tokenAmountAvailable := balance.Amount
-
-	// Verify auction has enough tokens to service the bid amount
-	if bid.AuctionTokenAmount.GT(tokenAmountAvailable) {
-		return fmt.Errorf("bid wants %s%s but auction has only %s%s",
-			bid.AuctionTokenAmount.String(),
-			auction.Denom,
-			tokenAmountAvailable.String(),
-			auction.Denom,
-		)
+	// Get the appropriate auctionBidHandler for the auction type
+	auctionBidHandler, exists := bidHandlers[auction.Type]
+	if !exists {
+		return fmt.Errorf("unsupported auction type: %s", auction.Type)
 	}
 
-	paymentTokenDenom := "ustrd" // TODO fix
-
-	price, err := k.icqoracleKeeper.GetTokenPriceForQuoteDenom(ctx, auction.Denom, paymentTokenDenom)
-	if err != nil {
-	}
-
-	discountedPrice := price.Mul(auction.PriceMultiplier)
-
-	if bid.AuctionTokenAmount.ToLegacyDec().
-		Mul(discountedPrice).
-		LT(bid.PaymentTokenAmount.ToLegacyDec()) {
-		return fmt.Errorf("bid price too low: offered %s%s for %s%s, minimum required is %s%s (price=%s %s/%s)",
-			bid.PaymentTokenAmount.String(),
-			paymentTokenDenom,
-			bid.AuctionTokenAmount.String(),
-			auction.Denom,
-			bid.AuctionTokenAmount.ToLegacyDec().Mul(discountedPrice).String(),
-			paymentTokenDenom,
-			discountedPrice.String(),
-			paymentTokenDenom,
-			auction.Denom,
-		)
-	}
-
-	// Execute the exchange
-
-	// Safe to use MustAccAddressFromBech32 because bid.Bidder passed ValidateBasic
-	bidder := sdk.MustAccAddressFromBech32(bid.Bidder)
-
-	// Send paymentToken to beneficiary
-	// TODO move this up to fail early if not enought funds?
-	err = k.bankKeeper.SendCoins(
-		ctx,
-		bidder,
-		sdk.MustAccAddressFromBech32(auction.Beneficiary),
-		sdk.NewCoins(sdk.NewCoin(paymentTokenDenom, bid.PaymentTokenAmount)),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to send payment tokens from bidder '%s' to beneficiary '%s': %w",
-			bid.Bidder,
-			auction.Beneficiary,
-			err,
-		)
-	}
-
-	// Send auctionToken to bidder
-	// TODO move this up to fail early if not enought funds?
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx,
-		types.ModuleName,
-		bidder,
-		sdk.NewCoins(sdk.NewCoin(auction.Denom, bid.AuctionTokenAmount)),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to send auction tokens from module '%s' to bidder '%s': %w",
-			types.ModuleName,
-			bid.Bidder,
-			err,
-		)
-	}
-
-	auction.TotalTokensSold = auction.TotalTokensSold.Add(bid.AuctionTokenAmount)
-	auction.TotalStrdBurned = auction.TotalStrdBurned.Add(bid.PaymentTokenAmount)
-
-	err = k.SetAuction(ctx, auction)
-	if err != nil {
-		return fmt.Errorf("failed to update auction stats")
-	}
-
-	// TODO emit event
-
-	return nil
+	// Call the handler
+	return auctionBidHandler(ctx, k, auction, bid)
 }
