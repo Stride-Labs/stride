@@ -1,9 +1,8 @@
 package types
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	icqoracletypes "github.com/Stride-Labs/stride/v24/x/icqoracle/types"
 )
 
 // Required AccountKeeper functions
@@ -23,6 +22,5 @@ type BankKeeper interface {
 
 // Required IcqOracleKeeper functions
 type IcqOracleKeeper interface {
-	GetParams(ctx sdk.Context) *icqoracletypes.Params
-	GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[string]*icqoracletypes.TokenPrice, error)
+	GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (price math.LegacyDec, err error)
 }

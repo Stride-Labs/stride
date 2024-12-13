@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -113,74 +112,25 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 		)
 	}
 
-	auctionTokenPrices, err := k.icqoracleKeeper.GetTokenPricesByDenom(ctx, auction.Denom)
-	if err != nil {
-		return fmt.Errorf("error getting price for '%s': %w", auction.Denom, err)
-	}
-	if len(auctionTokenPrices) == 0 {
-		return fmt.Errorf("no price for '%s'", auction.Denom)
-	}
-
 	paymentTokenDenom := "ustrd" // TODO fix
-	paymentTokenPrices, err := k.icqoracleKeeper.GetTokenPricesByDenom(ctx, paymentTokenDenom)
+
+	price, err := k.icqoracleKeeper.GetTokenPriceForQuoteDenom(ctx, auction.Denom, paymentTokenDenom)
 	if err != nil {
-		return fmt.Errorf("error getting price for '%s': %w", paymentTokenDenom, err)
-	}
-	if len(paymentTokenPrices) == 0 {
-		return fmt.Errorf("no price for '%s'", paymentTokenDenom)
 	}
 
-	// Get price staleness timeout
-	priceStaleTimeoutSec := int64(k.icqoracleKeeper.GetParams(ctx).PriceStaleTimeoutSec)
+	discountedPrice := price.Mul(auction.PriceMultiplier)
 
-	// Find a common quote denom and calculate auctionToken-paymentToken price
-	auctionTokenToPaymentTokenPrice := math.LegacyZeroDec()
-	foundCommonQuoteToken := false
-	foundAuctionTokenStalePrice := false
-	foundPaymentTokenStalePrice := false
-	for quoteDenom1, auctionTokenPrice := range auctionTokenPrices {
-		for quoteDenom2, paymentTokenPrice := range paymentTokenPrices {
-			if quoteDenom1 == quoteDenom2 {
-				foundCommonQuoteToken = true
-
-				// Check that prices are not stale
-				if ctx.BlockTime().Unix()-auctionTokenPrice.UpdatedAt.Unix() > priceStaleTimeoutSec {
-					foundAuctionTokenStalePrice = true
-					continue
-				}
-				if ctx.BlockTime().Unix()-paymentTokenPrice.UpdatedAt.Unix() > priceStaleTimeoutSec {
-					foundPaymentTokenStalePrice = true
-					continue
-				}
-
-				// Calculate the price of 1 auctionToken in paymentToken including auction discount
-				// i.e. baseToken = auctionToken, quoteToken = paymentToken
-				auctionTokenToPaymentTokenPrice = auctionTokenPrice.SpotPrice.Quo(paymentTokenPrice.SpotPrice).Mul(auction.PriceMultiplier)
-				break
-			}
-		}
-	}
-
-	if auctionTokenToPaymentTokenPrice.IsZero() {
-		return fmt.Errorf(
-			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundAuctionTokenStalePrice='%v', foundPaymentTokenStalePrice='%v')",
-			auction.Denom,
-			paymentTokenDenom,
-			foundCommonQuoteToken,
-			foundAuctionTokenStalePrice,
-			foundPaymentTokenStalePrice,
-		)
-	}
-
-	if bid.AuctionTokenAmount.ToLegacyDec().Mul(auctionTokenToPaymentTokenPrice).LT(bid.PaymentTokenAmount.ToLegacyDec()) {
+	if bid.AuctionTokenAmount.ToLegacyDec().
+		Mul(discountedPrice).
+		LT(bid.PaymentTokenAmount.ToLegacyDec()) {
 		return fmt.Errorf("bid price too low: offered %s%s for %s%s, minimum required is %s%s (price=%s %s/%s)",
 			bid.PaymentTokenAmount.String(),
 			paymentTokenDenom,
 			bid.AuctionTokenAmount.String(),
 			auction.Denom,
-			bid.AuctionTokenAmount.ToLegacyDec().Mul(auctionTokenToPaymentTokenPrice).String(),
+			bid.AuctionTokenAmount.ToLegacyDec().Mul(discountedPrice).String(),
 			paymentTokenDenom,
-			auctionTokenToPaymentTokenPrice.String(),
+			discountedPrice.String(),
 			paymentTokenDenom,
 			auction.Denom,
 		)
