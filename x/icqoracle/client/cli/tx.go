@@ -89,7 +89,7 @@ Example:
 				return err
 			}
 
-			msg := types.NewMsgRemoveTokenPrice(
+			msg := types.NewMsgRemoveTokenPriceQuery(
 				clientCtx.GetFromAddress().String(),
 				args[0],
 				args[1],

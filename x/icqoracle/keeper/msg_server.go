@@ -47,8 +47,8 @@ func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.Ms
 	return &types.MsgRegisterTokenPriceQueryResponse{}, nil
 }
 
-// RemoveTokenPrice removes a token from price tracking
-func (ms msgServer) RemoveTokenPrice(goCtx context.Context, msg *types.MsgRemoveTokenPrice) (*types.MsgRemoveTokenPriceResponse, error) {
+// RemoveTokenPriceQuery removes a token from price tracking
+func (ms msgServer) RemoveTokenPriceQuery(goCtx context.Context, msg *types.MsgRemoveTokenPriceQuery) (*types.MsgRemoveTokenPriceQueryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// TODO check admin
@@ -60,5 +60,5 @@ func (ms msgServer) RemoveTokenPrice(goCtx context.Context, msg *types.MsgRemove
 	}
 	ms.Keeper.RemoveTokenPrice(ctx, tokenPrice)
 
-	return &types.MsgRemoveTokenPriceResponse{}, nil
+	return &types.MsgRemoveTokenPriceQueryResponse{}, nil
 }
