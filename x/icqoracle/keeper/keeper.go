@@ -1,9 +1,7 @@
 package keeper
 
 import (
-	"encoding/binary"
 	"fmt"
-	"time"
 
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
@@ -41,25 +39,6 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
-}
-
-// SetLastUpdateTime stores the last time prices were updated
-func (k Keeper) SetLastUpdateTime(ctx sdk.Context, timestamp time.Time) {
-	store := ctx.KVStore(k.storeKey)
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, uint64(ctx.BlockTime().UnixNano()))
-	store.Set([]byte(types.KeyLastUpdateTime), bz)
-}
-
-// GetLastUpdateTime retrieves the last time prices were updated
-func (k Keeper) GetLastUpdateTime(ctx sdk.Context) (time.Time, error) {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get([]byte(types.KeyLastUpdateTime))
-	if bz == nil {
-		return time.Time{}, fmt.Errorf("last update time not found")
-	}
-	nanos := int64(binary.BigEndian.Uint64(bz))
-	return time.Unix(0, nanos), nil
 }
 
 // SetTokenPrice stores price data for a token
