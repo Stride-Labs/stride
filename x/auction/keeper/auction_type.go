@@ -20,41 +20,39 @@ var bidHandlers = map[types.AuctionType]AuctionBidHandler{
 func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *types.MsgPlaceBid) error {
 	// Get token amount being auctioned off
 	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	balance := k.bankKeeper.GetBalance(ctx, moduleAddr, auction.Denom)
+	balance := k.bankKeeper.GetBalance(ctx, moduleAddr, auction.SellingDenom)
 	tokenAmountAvailable := balance.Amount
 
 	// Verify auction has enough tokens to service the bid amount
-	if bid.AuctionTokenAmount.GT(tokenAmountAvailable) {
+	if bid.PaymentTokenAmount.GT(tokenAmountAvailable) {
 		return fmt.Errorf("bid wants %s%s but auction has only %s%s",
-			bid.AuctionTokenAmount.String(),
-			auction.Denom,
+			bid.PaymentTokenAmount.String(),
+			auction.SellingDenom,
 			tokenAmountAvailable.String(),
-			auction.Denom,
+			auction.SellingDenom,
 		)
 	}
 
-	paymentTokenDenom := "ustrd" // TODO fix
-
-	price, err := k.icqoracleKeeper.GetTokenPriceForQuoteDenom(ctx, auction.Denom, paymentTokenDenom)
+	price, err := k.icqoracleKeeper.GetTokenPriceForQuoteDenom(ctx, auction.SellingDenom, auction.PaymentDenom)
 	if err != nil {
 		return err
 	}
 
 	discountedPrice := price.Mul(auction.PriceMultiplier)
 
-	if bid.AuctionTokenAmount.ToLegacyDec().
+	if bid.SellingTokenAmount.ToLegacyDec().
 		Mul(discountedPrice).
 		LT(bid.PaymentTokenAmount.ToLegacyDec()) {
 		return fmt.Errorf("bid price too low: offered %s%s for %s%s, minimum required is %s%s (price=%s %s/%s)",
 			bid.PaymentTokenAmount.String(),
-			paymentTokenDenom,
-			bid.AuctionTokenAmount.String(),
-			auction.Denom,
-			bid.AuctionTokenAmount.ToLegacyDec().Mul(discountedPrice).String(),
-			paymentTokenDenom,
+			auction.PaymentDenom,
+			bid.SellingTokenAmount.String(),
+			auction.SellingDenom,
+			bid.SellingTokenAmount.ToLegacyDec().Mul(discountedPrice).String(),
+			auction.PaymentDenom,
 			discountedPrice.String(),
-			paymentTokenDenom,
-			auction.Denom,
+			auction.PaymentDenom,
+			auction.SellingDenom,
 		)
 	}
 
@@ -66,7 +64,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 		ctx,
 		bidder,
 		sdk.MustAccAddressFromBech32(auction.Beneficiary),
-		sdk.NewCoins(sdk.NewCoin(paymentTokenDenom, bid.PaymentTokenAmount)),
+		sdk.NewCoins(sdk.NewCoin(auction.PaymentDenom, bid.PaymentTokenAmount)),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to send payment tokens from bidder '%s' to beneficiary '%s': %w",
@@ -81,7 +79,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 		ctx,
 		types.ModuleName,
 		bidder,
-		sdk.NewCoins(sdk.NewCoin(auction.Denom, bid.AuctionTokenAmount)),
+		sdk.NewCoins(sdk.NewCoin(auction.SellingDenom, bid.SellingTokenAmount)),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to send auction tokens from module '%s' to bidder '%s': %w",
@@ -91,8 +89,8 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 		)
 	}
 
-	auction.TotalTokensSold = auction.TotalTokensSold.Add(bid.AuctionTokenAmount)
-	auction.TotalStrdBurned = auction.TotalStrdBurned.Add(bid.PaymentTokenAmount)
+	auction.TotalSellingTokenSold = auction.TotalSellingTokenSold.Add(bid.SellingTokenAmount)
+	auction.TotalPaymentTokenReceived = auction.TotalPaymentTokenReceived.Add(bid.PaymentTokenAmount)
 
 	err = k.SetAuction(ctx, auction)
 	if err != nil {

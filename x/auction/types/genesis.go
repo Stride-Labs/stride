@@ -16,8 +16,10 @@ func (gs GenesisState) Validate() error {
 
 		msg := NewMsgCreateAuction(
 			"stride16eenchewedupsplt0ut600ed0ffstageeeervs", // dummy address, not stored in auction
+			auction.Name,
 			auction.Type,
-			auction.Denom,
+			auction.SellingDenom,
+			auction.PaymentDenom,
 			auction.Enabled,
 			auction.PriceMultiplier.String(),
 			auction.MinBidAmount.Uint64(),

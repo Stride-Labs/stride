@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
@@ -36,13 +35,13 @@ func GetTxCmd() *cobra.Command {
 
 func CmdPlaceBid() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "place-bid [utokenAmount] [ustrdAmount]",
+		Use:   "place-bid [auction-name] [selling-token-amount] [payment-token-amount]",
 		Short: "Place a bid on an auction",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Place a bid on an auction for a specific token.
 
 Example:
-  $ %[1]s tx %[2]s place-bid 123ibc/DEADBEEF 1000000 --from mykey
+  $ %[1]s tx %[2]s place-bid auctionName 123 1000000 --from mykey
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(2),
@@ -52,21 +51,21 @@ Example:
 				return err
 			}
 
-			coin, err := sdk.ParseCoinNormalized(args[0])
+			sellingTokenAmount, err := strconv.ParseUint(args[1], 10, 64)
 			if err != nil {
-				return fmt.Errorf("cannot parse token amount and denom from '%s': %w", args[0], err)
+				return fmt.Errorf("cannot parse sellingTokenAmount as uint64 from '%s': %w", args[1], err)
 			}
 
-			ustrdAmount, err := strconv.ParseUint(args[1], 10, 64)
+			paymentTokenAmount, err := strconv.ParseUint(args[2], 10, 64)
 			if err != nil {
-				return fmt.Errorf("cannot parse ustrdAmount as uint64 from '%s': %w", args[2], err)
+				return fmt.Errorf("cannot parse paymentTokenAmount as uint64 from '%s': %w", args[2], err)
 			}
 
 			msg := types.NewMsgPlaceBid(
 				clientCtx.GetFromAddress().String(),
-				coin.Denom,
-				coin.Amount.Uint64(),
-				ustrdAmount,
+				args[0],
+				sellingTokenAmount,
+				paymentTokenAmount,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -84,13 +83,13 @@ Example:
 
 func CmdCreateAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-auction [denom] [enabled] [price-multiplier] [min-bid-amount] [beneficiary]",
+		Use:   "create-auction [name] [selling-denom] [payment-denom] [enabled] [price-multiplier] [min-bid-amount] [beneficiary]",
 		Short: "Create a new auction",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Create a new auction for a specific token.
 
 Example:
-  $ %[1]s tx %[2]s create-auction ibc/DEADBEEF true 0.95 1000000 --from admin
+  $ %[1]s tx %[2]s create-auction my-auction ibc/DEADBEEF true 0.95 1000000 --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(4),
@@ -100,7 +99,7 @@ Example:
 				return err
 			}
 
-			enabled := args[1] == "true"
+			enabled := args[3] == "true"
 
 			minBidAmount, err := strconv.ParseUint(args[3], 10, 64)
 			if err != nil {
@@ -109,12 +108,14 @@ Example:
 
 			msg := types.NewMsgCreateAuction(
 				clientCtx.GetFromAddress().String(),
-				types.AuctionType_AUCTION_TYPE_FCFS, // auction type
-				args[0],                             // denom
-				enabled,                             // enabled
-				args[2],                             // price multiplier
-				minBidAmount,                        // min bid amount
-				args[4],                             // beneficiary
+				args[0],
+				types.AuctionType_AUCTION_TYPE_FCFS,
+				args[1],
+				args[2],
+				enabled,
+				args[4],
+				minBidAmount,
+				args[6],
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
@@ -132,13 +133,13 @@ Example:
 
 func CmdUpdateAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-auction [denom] [enabled] [price-multiplier] [min-bid-amount] [beneficiary]",
+		Use:   "update-auction [name] [enabled] [price-multiplier] [min-bid-amount] [beneficiary]",
 		Short: "Update an existing auction",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Update an existing auction's parameters.
 
 Example:
-  $ %[1]s tx %[2]s update-auction ibc/DEADBEEF true 0.97 500000 --from admin
+  $ %[1]s tx %[2]s update-auction auctionName true 0.97 500000 --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(4),
@@ -157,13 +158,12 @@ Example:
 
 			msg := types.NewMsgUpdateAuction(
 				clientCtx.GetFromAddress().String(),
-				types.AuctionType_AUCTION_TYPE_FCFS, // auction type
-				args[0],                             // denom
-				enabled,                             // enabled
-				args[2],                             // price multiplier
-				minBidAmount,                        // min bid amount
-				args[4],                             // beneficiary
-
+				args[0],
+				types.AuctionType_AUCTION_TYPE_FCFS,
+				enabled,
+				args[2],
+				minBidAmount,
+				args[4],
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

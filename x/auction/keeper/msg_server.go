@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v24/x/auction/types"
@@ -38,18 +39,22 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 
 	// TODO check admin
 
-	_, err := ms.Keeper.GetAuction(ctx, msg.Denom)
+	_, err := ms.Keeper.GetAuction(ctx, msg.AuctionName)
 	if err == nil {
-		return nil, types.ErrAuctionAlreadyExists.Wrapf("auction for token '%s' already exists", msg.Denom)
+		return nil, types.ErrAuctionAlreadyExists.Wrapf("auction with name '%s' already exists", msg.AuctionName)
 	}
 
 	auction := types.Auction{
-		Type:            msg.AuctionType,
-		Denom:           msg.Denom,
-		Enabled:         msg.Enabled,
-		PriceMultiplier: msg.PriceMultiplier,
-		MinBidAmount:    msg.MinBidAmount,
-		Beneficiary:     msg.Beneficiary,
+		Type:                      msg.AuctionType,
+		Name:                      msg.AuctionName,
+		SellingDenom:              msg.SellingDenom,
+		PaymentDenom:              msg.PaymentDenom,
+		Enabled:                   msg.Enabled,
+		PriceMultiplier:           msg.PriceMultiplier,
+		MinBidAmount:              msg.MinBidAmount,
+		Beneficiary:               msg.Beneficiary,
+		TotalPaymentTokenReceived: math.ZeroInt(),
+		TotalSellingTokenSold:     math.ZeroInt(),
 	}
 
 	err = ms.Keeper.SetAuction(ctx, &auction)
@@ -66,9 +71,9 @@ func (ms msgServer) UpdateAuction(goCtx context.Context, msg *types.MsgUpdateAuc
 
 	// TODO check admin
 
-	auction, err := ms.Keeper.GetAuction(ctx, msg.Denom)
+	auction, err := ms.Keeper.GetAuction(ctx, msg.AuctionName)
 	if err != nil {
-		return nil, types.ErrAuctionDoesntExist.Wrapf("cannot find auction for token '%s'", msg.Denom)
+		return nil, types.ErrAuctionDoesntExist.Wrapf("cannot find auction with name '%s'", msg.AuctionName)
 	}
 
 	auction.Type = msg.AuctionType

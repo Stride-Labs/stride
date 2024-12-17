@@ -15,6 +15,6 @@ const (
 	KeyAuctionPrefix = "auction"
 )
 
-func AuctionKey(denom string) []byte {
-	return []byte(fmt.Sprintf("%s%s", KeyAuctionPrefix, denom))
+func AuctionKey(auctionName string) []byte {
+	return []byte(fmt.Sprintf("%s|%s", KeyAuctionPrefix, auctionName))
 }
