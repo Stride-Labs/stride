@@ -1,0 +1,26 @@
+syntax = "proto3";
+package stride.strdburner;
+
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/strdburner/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // StrdBurnerAddress queries the address of the strdburner module
+  rpc StrdBurnerAddress(QueryStrdBurnerAddressRequest)
+      returns (QueryStrdBurnerAddressResponse) {
+    option (google.api.http).get = "/stride/strdburner/address";
+  }
+}
+
+// QueryStrdBurnerAddressRequest is the request type for the Query/strdburner
+// RPC method
+message QueryStrdBurnerAddressRequest { string name = 1; }
+
+// QueryStrdBurnerAddressResponse is the response type for the Query/strdburner
+// RPC method
+message QueryStrdBurnerAddressResponse {
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
