@@ -1,23 +1,16 @@
 package keeper
 
 import (
-	"time"
-
-	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v24/x/auction/types"
 )
 
 // Loads module state from genesis
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
-	for _, tokenPrice := range genState.TokenPrices {
-		tokenPrice.SpotPrice = math.LegacyZeroDec()
-		tokenPrice.UpdatedAt = time.Time{}
-		tokenPrice.QueryInProgress = false
-
-		if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
+	for _, auction := range genState.Auctions {
+		if err := k.SetAuction(ctx, &auction); err != nil {
 			panic(err)
 		}
 	}
@@ -27,6 +20,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
-	genesis.TokenPrices = k.GetAllTokenPrices(ctx)
+	genesis.Auctions = k.GetAllAuctions(ctx)
 	return genesis
 }

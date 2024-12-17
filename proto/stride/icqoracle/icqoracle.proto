@@ -8,13 +8,13 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 
 // TokenPrice stores latest price data for a token
 message TokenPrice {
-  // Token denom on its base chain (e.g. "uosmo", "uatom", "udym")
+  // Token denom on Stride
   string base_denom = 1;
-  // Quote denom on its base chain (e.g. "uosmo", "uatom", "udym")
+  // Quote denom on Stride
   string quote_denom = 2;
-  // Token denom on Osmosis (e.g. "uosmo", "ibc/...")
+  // Token denom on Osmosis
   string osmosis_base_denom = 3;
-  // Quote denom on Osmosis (e.g. "uosmo", "ibc/...")
+  // Quote denom on Osmosis
   string osmosis_quote_denom = 4;
   // Pool ID on Osmosis
   string osmosis_pool_id = 5;
@@ -53,10 +53,10 @@ message Params {
     (gogoproto.jsontag) = "update_interval_sec"
   ];
 
-  // Max time before price is considered stale
-  uint64 price_stale_timeout_sec = 4 [
-    (gogoproto.moretags) = "yaml:\"price_stale_timeout_sec\"",
-    (gogoproto.jsontag) = "price_stale_timeout_sec"
+  // Max time before price is considered stale/expired
+  uint64 price_expiration_timeout_sec = 4 [
+    (gogoproto.moretags) = "yaml:\"price_expiration_timeout_sec\"",
+    (gogoproto.jsontag) = "price_expiration_timeout_sec"
   ];
 
   // ICQ timeout

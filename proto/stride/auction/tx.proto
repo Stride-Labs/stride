@@ -1,0 +1,127 @@
+syntax = "proto3";
+package stride.auction;
+
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
+import "stride/auction/auction.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/auction/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // User messages
+
+  // PlaceBid places a bid to buy a token off an auction
+  rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
+
+  // Admin messages
+
+  // CreateAuction creates a new auction
+  rpc CreateAuction(MsgCreateAuction) returns (MsgCreateAuctionResponse);
+  // CreateAuction updates an existing auction
+  rpc UpdateAuction(MsgUpdateAuction) returns (MsgUpdateAuctionResponse);
+}
+
+// MsgPlaceBid defines the message for bidding in a token auction
+message MsgPlaceBid {
+  option (cosmos.msg.v1.signer) = "bidder";
+  option (amino.name) = "auction/MsgPlaceBid";
+
+  // Bidder's address
+  string bidder = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Token being bid on
+  string auction_name = 2;
+
+  // Amount of tokens requested in base units (utoken)
+  string selling_token_amount = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Amount of tokens being paid in base units (utoken)
+  string payment_token_amount = 4 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message MsgPlaceBidResponse {}
+
+// MsgCreateAuction defines the message for adding a token auction
+message MsgCreateAuction {
+  option (cosmos.msg.v1.signer) = "admin";
+  option (amino.name) = "auction/MsgCreateAuction";
+
+  // Admin's address
+  string admin = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // A unique auction name
+  string auction_name = 2;
+
+  // Auction type
+  AuctionType auction_type = 3;
+
+  // Denom on Stride of the token being auctioned off (e.g. "ibc/...")
+  string selling_denom = 4;
+
+  // Denom on Stride of the token being used to place bids (e.g. "ustrd")
+  string payment_denom = 5;
+
+  // Whether auction is active
+  bool enabled = 6;
+
+  // Price multiplier (e.g. 0.95 for 5% discount)
+  string price_multiplier = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Minimum payment token bid amount
+  string min_bid_amount = 8 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  string beneficiary = 9 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message MsgCreateAuctionResponse {}
+
+// MsgUpdateAuction defines the message for adding a token auction
+message MsgUpdateAuction {
+  option (cosmos.msg.v1.signer) = "admin";
+  option (amino.name) = "auction/MsgUpdateAuction";
+
+  // Admin's address
+  string admin = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // A unique auction name
+  string auction_name = 2;
+
+  // Auction type
+  AuctionType auction_type = 3;
+
+  // Whether auction is active
+  bool enabled = 4;
+
+  // Price multiplier (e.g. 0.95 for 5% discount)
+  string price_multiplier = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Minimum payment token bid amount
+  string min_bid_amount = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  string beneficiary = 7 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message MsgUpdateAuctionResponse {}
