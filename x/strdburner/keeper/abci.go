@@ -15,6 +15,13 @@ func EndBlocker(ctx sdk.Context, k Keeper) {
 		err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(strdBalance))
 		if err != nil {
 			k.Logger(ctx).Error("unable to burn %s", strdBalance.String())
+		} else {
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					types.EventTypeBurn,
+					sdk.NewAttribute(types.AttributeAmount, strdBalance.String()),
+				),
+			)
 		}
 	}
 }
