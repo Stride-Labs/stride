@@ -767,8 +767,6 @@ func NewStrideApp(
 	app.ICQOracleKeeper = *icqoraclekeeper.NewKeeper(
 		appCodec,
 		keys[icqoracletypes.StoreKey],
-		app.BankKeeper,
-		app.TransferKeeper,
 	)
 	icqOracleModule := icqoracle.NewAppModule(appCodec, app.ICQOracleKeeper)
 
