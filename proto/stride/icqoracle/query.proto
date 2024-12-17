@@ -12,17 +12,17 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 service Query {
   // TokenPrice queries the current price for a specific token
   rpc TokenPrice(QueryTokenPriceRequest) returns (QueryTokenPriceResponse) {
-    option (google.api.http).get = "/stride/icqoracle/v1beta1/price";
+    option (google.api.http).get = "/icqoracle/price";
   }
 
   // TokenPrices queries all token prices
   rpc TokenPrices(QueryTokenPricesRequest) returns (QueryTokenPricesResponse) {
-    option (google.api.http).get = "/stride/icqoracle/v1beta1/prices";
+    option (google.api.http).get = "/icqoracle/prices";
   }
 
   // Params queries the oracle parameters
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/stride/icqoracle/v1beta1/params";
+    option (google.api.http).get = "/icqoracle/params";
   }
 }
 
