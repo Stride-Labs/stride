@@ -116,6 +116,7 @@ func (k Keeper) GetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) (typ
 }
 
 // GetTokenPriceByDenom retrieves all price data for a base denom
+// Returned as a mapping of each quote denom to the spot price
 func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[string]*types.TokenPrice, error) {
 	store := ctx.KVStore(k.storeKey)
 
