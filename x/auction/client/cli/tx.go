@@ -44,7 +44,7 @@ Example:
   $ %[1]s tx %[2]s place-bid auctionName 123 1000000 --from mykey
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -92,7 +92,7 @@ Example:
   $ %[1]s tx %[2]s create-auction my-auction ibc/DEADBEEF true 0.95 1000000 --from admin
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(4),
+		Args: cobra.ExactArgs(7),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -142,7 +142,7 @@ Example:
   $ %[1]s tx %[2]s update-auction auctionName true 0.97 500000 --from admin
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(4),
+		Args: cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
