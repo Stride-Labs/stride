@@ -2,6 +2,7 @@ syntax = "proto3";
 package stride.strdburner;
 
 import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v24/x/strdburner/types";
@@ -13,6 +14,12 @@ service Query {
       returns (QueryStrdBurnerAddressResponse) {
     option (google.api.http).get = "/stride/strdburner/address";
   }
+
+  // StrdBurnerAddress queries the address of the strdburner module
+  rpc TotalStrdBurned(QueryTotalStrdBurnedRequest)
+      returns (QueryTotalStrdBurnedResponse) {
+    option (google.api.http).get = "/stride/strdburner/total_burned";
+  }
 }
 
 // QueryStrdBurnerAddressRequest is the request type for the Query/strdburner
@@ -23,4 +30,17 @@ message QueryStrdBurnerAddressRequest {}
 // RPC method
 message QueryStrdBurnerAddressResponse {
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// QueryTotalStrdBurnedRequest is the request type for the Query/strdburner
+// RPC method
+message QueryTotalStrdBurnedRequest {}
+
+// QueryTotalStrdBurnedResponse is the response type for the Query/strdburner
+// RPC method
+message QueryTotalStrdBurnedResponse {
+  string total_burned = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
 }

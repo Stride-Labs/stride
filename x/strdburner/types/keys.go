@@ -8,4 +8,6 @@ const (
 
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
+
+	TotalStrdBurnedKey = "total_burned"
 )

@@ -8,9 +8,12 @@ import (
 
 // Loads module state from genesis
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
+	k.SetTotalStrdBurned(ctx, genState.TotalUstrdBurned)
 }
 
 // Export's module state into genesis file
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	return types.DefaultGenesis()
+	genesis := types.DefaultGenesis()
+	genesis.TotalUstrdBurned = k.GetTotalStrdBurned(ctx)
+	return genesis
 }

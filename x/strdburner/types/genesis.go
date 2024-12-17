@@ -1,12 +1,23 @@
 package types
 
+import (
+	"fmt"
+
+	"cosmossdk.io/math"
+)
+
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	return &GenesisState{}
+	return &GenesisState{
+		TotalUstrdBurned: math.ZeroInt(),
+	}
 }
 
-// Performs basic genesis state validation by iterating through all auctions and validating
-// using ValidateBasic() since it already implements thorough validation of all auction fields
+// Performs basic genesis state validation by
 func (gs GenesisState) Validate() error {
-	return nil
+	if gs.TotalUstrdBurned.IsNil() {
+		return fmt.Errorf("GenesisState.TotalUstrdBurned cannot be nil")
+	} else {
+		return nil
+	}
 }

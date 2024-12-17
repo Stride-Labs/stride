@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -39,4 +40,20 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 func (k Keeper) GetStrdBurnerAddress() sdk.AccAddress {
 	return k.accountKeeper.GetModuleAddress(types.ModuleName)
+}
+
+func (k Keeper) SetTotalStrdBurned(ctx sdk.Context, amount math.Int) {
+	bz := sdk.Uint64ToBigEndian(amount.Uint64())
+	ctx.KVStore(k.storeKey).Set([]byte(types.TotalStrdBurnedKey), bz)
+}
+
+func (k Keeper) GetTotalStrdBurned(ctx sdk.Context) math.Int {
+	bz := ctx.KVStore(k.storeKey).Get([]byte(types.TotalStrdBurnedKey))
+
+	// If no value has been set, return zero
+	if bz == nil {
+		return math.ZeroInt()
+	}
+
+	return math.NewIntFromUint64(sdk.BigEndianToUint64(bz))
 }
