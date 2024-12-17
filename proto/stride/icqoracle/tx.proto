@@ -24,7 +24,7 @@ service Msg {
 // track prices
 message MsgRegisterTokenPriceQuery {
   option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "stride/x/icqoracle/MsgRegisterTokenPriceQuery";
+  option (amino.name) = "icqoracle/MsgRegisterTokenPriceQuery";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
@@ -46,7 +46,7 @@ message MsgRegisterTokenPriceQueryResponse {}
 // tracking
 message MsgRemoveTokenPrice {
   option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "stride/x/icqoracle/MsgRemoveTokenPrice";
+  option (amino.name) = "icqoracle/MsgRemoveTokenPrice";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // Token denom on its base chain (e.g. "uosmo", "uatom", "udym")
