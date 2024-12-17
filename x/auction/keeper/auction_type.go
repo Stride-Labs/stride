@@ -74,7 +74,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 		)
 	}
 
-	// Send auctionToken to bidder
+	// Send sellingToken to bidder
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(
 		ctx,
 		types.ModuleName,
