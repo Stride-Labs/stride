@@ -1,0 +1,60 @@
+syntax = "proto3";
+package stride.icqoracle;
+
+import "cosmos/msg/v1/msg.proto";
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterTokenPriceQuery registers a new token to track prices for
+  rpc RegisterTokenPriceQuery(MsgRegisterTokenPriceQuery)
+      returns (MsgRegisterTokenPriceQueryResponse);
+
+  // RemoveTokenPriceQuery removes a token from price tracking
+  rpc RemoveTokenPriceQuery(MsgRemoveTokenPriceQuery)
+      returns (MsgRemoveTokenPriceQueryResponse);
+}
+
+// MsgRegisterTokenPriceQuery defines the message for adding a new token to
+// track prices
+message MsgRegisterTokenPriceQuery {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "icqoracle/MsgRegisterTokenPriceQuery";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Token denom on Stride
+  string base_denom = 2;
+  // Quote denom on Stride
+  string quote_denom = 3;
+  // Token denom on Osmosis
+  string osmosis_base_denom = 4;
+  // Quote denom on Osmosis
+  string osmosis_quote_denom = 5;
+  // Pool ID on Osmosis
+  string osmosis_pool_id = 6;
+}
+
+message MsgRegisterTokenPriceQueryResponse {}
+
+// MsgRemoveTokenPriceQuery defines the message for removing a token from price
+// tracking
+message MsgRemoveTokenPriceQuery {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "icqoracle/MsgRemoveTokenPriceQuery";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Token denom on Stride
+  string base_denom = 2;
+  // Quote denom on Stride
+  string quote_denom = 3;
+  // Pool ID on Osmosis
+  string osmosis_pool_id = 4;
+}
+
+message MsgRemoveTokenPriceQueryResponse {}

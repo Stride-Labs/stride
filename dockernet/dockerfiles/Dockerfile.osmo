@@ -1,10 +1,10 @@
-FROM golang:1.20-alpine3.16 AS builder
+FROM golang:1.23-alpine3.21 AS builder
 
 WORKDIR /opt/
 
 RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
 
-ENV COMMIT_HASH=v20.5.0-no-fees
+ENV COMMIT_HASH=v27.0.0-no-fees
 
 RUN git clone https://github.com/Stride-Labs/osmosis.git \
     && cd osmosis \
@@ -13,16 +13,16 @@ RUN git clone https://github.com/Stride-Labs/osmosis.git \
 WORKDIR /opt/osmosis
 
 # Cosmwasm - download correct libwasmvm version and verify checksum
-# Note: checksum not available for v1.2.3, otherwise command should be
-#  wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt
-#  && sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
-RUN WASMVM_VERSION=v1.2.3 \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
-    -O /lib/libwasmvm_muslc.a 
+RUN ARCH=$(uname -m) && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //') && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$ARCH.a \
+    -O /lib/libwasmvm_muslc.$ARCH.a && \
+    # verify checksum
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
+    sha256sum /lib/libwasmvm_muslc.$ARCH.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$ARCH | cut -d ' ' -f 1) 
 
 RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
 
-FROM alpine:3.16
+FROM alpine:3.21
 COPY --from=builder /opt/osmosis/build/osmosisd /usr/local/bin/
 RUN apk add bash vim \
     && addgroup -g 1000 osmosis \
