@@ -97,7 +97,18 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 		return fmt.Errorf("failed to update auction stats")
 	}
 
-	// TODO emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeBidAccepted,
+			sdk.NewAttribute(types.AttributeKeyAuctionName, auction.Name),
+			sdk.NewAttribute(types.AttributeKeyBidder, bid.Bidder),
+			sdk.NewAttribute(types.AttributeKeyPaymentAmount, bid.PaymentTokenAmount.String()),
+			sdk.NewAttribute(types.AttributeKeyPaymentDenom, auction.PaymentDenom),
+			sdk.NewAttribute(types.AttributeKeySellingAmount, bid.SellingTokenAmount.String()),
+			sdk.NewAttribute(types.AttributeKeySellingDenom, auction.SellingDenom),
+			sdk.NewAttribute(types.AttributeKeyPrice, discountedPrice.String()),
+		),
+	)
 
 	return nil
 }
