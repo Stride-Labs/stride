@@ -1,0 +1,7 @@
+syntax = "proto3";
+package stride.strdburner;
+
+option go_package = "github.com/Stride-Labs/stride/v24/x/strdburner/types";
+
+// GenesisState defines the strdburner module's genesis state
+message GenesisState {}

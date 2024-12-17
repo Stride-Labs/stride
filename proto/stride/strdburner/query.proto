@@ -17,7 +17,7 @@ service Query {
 
 // QueryStrdBurnerAddressRequest is the request type for the Query/strdburner
 // RPC method
-message QueryStrdBurnerAddressRequest { string name = 1; }
+message QueryStrdBurnerAddressRequest {}
 
 // QueryStrdBurnerAddressResponse is the response type for the Query/strdburner
 // RPC method
