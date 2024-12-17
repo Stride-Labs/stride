@@ -30,8 +30,9 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgAddTokenPrice defines the message for adding a new token to track prices
-type MsgAddTokenPrice struct {
+// MsgRegisterTokenPriceQuery defines the message for adding a new token to
+// track prices
+type MsgRegisterTokenPriceQuery struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// Token denom on Stride
 	BaseDenom string `protobuf:"bytes,2,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty"`
@@ -45,18 +46,18 @@ type MsgAddTokenPrice struct {
 	OsmosisPoolId string `protobuf:"bytes,6,opt,name=osmosis_pool_id,json=osmosisPoolId,proto3" json:"osmosis_pool_id,omitempty"`
 }
 
-func (m *MsgAddTokenPrice) Reset()         { *m = MsgAddTokenPrice{} }
-func (m *MsgAddTokenPrice) String() string { return proto.CompactTextString(m) }
-func (*MsgAddTokenPrice) ProtoMessage()    {}
-func (*MsgAddTokenPrice) Descriptor() ([]byte, []int) {
+func (m *MsgRegisterTokenPriceQuery) Reset()         { *m = MsgRegisterTokenPriceQuery{} }
+func (m *MsgRegisterTokenPriceQuery) String() string { return proto.CompactTextString(m) }
+func (*MsgRegisterTokenPriceQuery) ProtoMessage()    {}
+func (*MsgRegisterTokenPriceQuery) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be640eb75c1babd5, []int{0}
 }
-func (m *MsgAddTokenPrice) XXX_Unmarshal(b []byte) error {
+func (m *MsgRegisterTokenPriceQuery) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddTokenPrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRegisterTokenPriceQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddTokenPrice.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRegisterTokenPriceQuery.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -66,75 +67,75 @@ func (m *MsgAddTokenPrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *MsgAddTokenPrice) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddTokenPrice.Merge(m, src)
+func (m *MsgRegisterTokenPriceQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRegisterTokenPriceQuery.Merge(m, src)
 }
-func (m *MsgAddTokenPrice) XXX_Size() int {
+func (m *MsgRegisterTokenPriceQuery) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddTokenPrice) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddTokenPrice.DiscardUnknown(m)
+func (m *MsgRegisterTokenPriceQuery) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRegisterTokenPriceQuery.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddTokenPrice proto.InternalMessageInfo
+var xxx_messageInfo_MsgRegisterTokenPriceQuery proto.InternalMessageInfo
 
-func (m *MsgAddTokenPrice) GetSender() string {
+func (m *MsgRegisterTokenPriceQuery) GetSender() string {
 	if m != nil {
 		return m.Sender
 	}
 	return ""
 }
 
-func (m *MsgAddTokenPrice) GetBaseDenom() string {
+func (m *MsgRegisterTokenPriceQuery) GetBaseDenom() string {
 	if m != nil {
 		return m.BaseDenom
 	}
 	return ""
 }
 
-func (m *MsgAddTokenPrice) GetQuoteDenom() string {
+func (m *MsgRegisterTokenPriceQuery) GetQuoteDenom() string {
 	if m != nil {
 		return m.QuoteDenom
 	}
 	return ""
 }
 
-func (m *MsgAddTokenPrice) GetOsmosisBaseDenom() string {
+func (m *MsgRegisterTokenPriceQuery) GetOsmosisBaseDenom() string {
 	if m != nil {
 		return m.OsmosisBaseDenom
 	}
 	return ""
 }
 
-func (m *MsgAddTokenPrice) GetOsmosisQuoteDenom() string {
+func (m *MsgRegisterTokenPriceQuery) GetOsmosisQuoteDenom() string {
 	if m != nil {
 		return m.OsmosisQuoteDenom
 	}
 	return ""
 }
 
-func (m *MsgAddTokenPrice) GetOsmosisPoolId() string {
+func (m *MsgRegisterTokenPriceQuery) GetOsmosisPoolId() string {
 	if m != nil {
 		return m.OsmosisPoolId
 	}
 	return ""
 }
 
-type MsgAddTokenPriceResponse struct {
+type MsgRegisterTokenPriceQueryResponse struct {
 }
 
-func (m *MsgAddTokenPriceResponse) Reset()         { *m = MsgAddTokenPriceResponse{} }
-func (m *MsgAddTokenPriceResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgAddTokenPriceResponse) ProtoMessage()    {}
-func (*MsgAddTokenPriceResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRegisterTokenPriceQueryResponse) Reset()         { *m = MsgRegisterTokenPriceQueryResponse{} }
+func (m *MsgRegisterTokenPriceQueryResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRegisterTokenPriceQueryResponse) ProtoMessage()    {}
+func (*MsgRegisterTokenPriceQueryResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be640eb75c1babd5, []int{1}
 }
-func (m *MsgAddTokenPriceResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRegisterTokenPriceQueryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddTokenPriceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRegisterTokenPriceQueryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddTokenPriceResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRegisterTokenPriceQueryResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -144,21 +145,21 @@ func (m *MsgAddTokenPriceResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *MsgAddTokenPriceResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddTokenPriceResponse.Merge(m, src)
+func (m *MsgRegisterTokenPriceQueryResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRegisterTokenPriceQueryResponse.Merge(m, src)
 }
-func (m *MsgAddTokenPriceResponse) XXX_Size() int {
+func (m *MsgRegisterTokenPriceQueryResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddTokenPriceResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddTokenPriceResponse.DiscardUnknown(m)
+func (m *MsgRegisterTokenPriceQueryResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRegisterTokenPriceQueryResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddTokenPriceResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRegisterTokenPriceQueryResponse proto.InternalMessageInfo
 
-// MsgRemoveTokenPrice defines the message for removing a token from price
+// MsgRemoveTokenPriceQuery defines the message for removing a token from price
 // tracking
-type MsgRemoveTokenPrice struct {
+type MsgRemoveTokenPriceQuery struct {
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
 	// Token denom on Stride
 	BaseDenom string `protobuf:"bytes,2,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty"`
@@ -168,18 +169,18 @@ type MsgRemoveTokenPrice struct {
 	OsmosisPoolId string `protobuf:"bytes,4,opt,name=osmosis_pool_id,json=osmosisPoolId,proto3" json:"osmosis_pool_id,omitempty"`
 }
 
-func (m *MsgRemoveTokenPrice) Reset()         { *m = MsgRemoveTokenPrice{} }
-func (m *MsgRemoveTokenPrice) String() string { return proto.CompactTextString(m) }
-func (*MsgRemoveTokenPrice) ProtoMessage()    {}
-func (*MsgRemoveTokenPrice) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveTokenPriceQuery) Reset()         { *m = MsgRemoveTokenPriceQuery{} }
+func (m *MsgRemoveTokenPriceQuery) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveTokenPriceQuery) ProtoMessage()    {}
+func (*MsgRemoveTokenPriceQuery) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be640eb75c1babd5, []int{2}
 }
-func (m *MsgRemoveTokenPrice) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveTokenPriceQuery) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRemoveTokenPrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveTokenPriceQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRemoveTokenPrice.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveTokenPriceQuery.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -189,61 +190,61 @@ func (m *MsgRemoveTokenPrice) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *MsgRemoveTokenPrice) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRemoveTokenPrice.Merge(m, src)
+func (m *MsgRemoveTokenPriceQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveTokenPriceQuery.Merge(m, src)
 }
-func (m *MsgRemoveTokenPrice) XXX_Size() int {
+func (m *MsgRemoveTokenPriceQuery) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRemoveTokenPrice) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRemoveTokenPrice.DiscardUnknown(m)
+func (m *MsgRemoveTokenPriceQuery) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveTokenPriceQuery.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRemoveTokenPrice proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveTokenPriceQuery proto.InternalMessageInfo
 
-func (m *MsgRemoveTokenPrice) GetSender() string {
+func (m *MsgRemoveTokenPriceQuery) GetSender() string {
 	if m != nil {
 		return m.Sender
 	}
 	return ""
 }
 
-func (m *MsgRemoveTokenPrice) GetBaseDenom() string {
+func (m *MsgRemoveTokenPriceQuery) GetBaseDenom() string {
 	if m != nil {
 		return m.BaseDenom
 	}
 	return ""
 }
 
-func (m *MsgRemoveTokenPrice) GetQuoteDenom() string {
+func (m *MsgRemoveTokenPriceQuery) GetQuoteDenom() string {
 	if m != nil {
 		return m.QuoteDenom
 	}
 	return ""
 }
 
-func (m *MsgRemoveTokenPrice) GetOsmosisPoolId() string {
+func (m *MsgRemoveTokenPriceQuery) GetOsmosisPoolId() string {
 	if m != nil {
 		return m.OsmosisPoolId
 	}
 	return ""
 }
 
-type MsgRemoveTokenPriceResponse struct {
+type MsgRemoveTokenPriceQueryResponse struct {
 }
 
-func (m *MsgRemoveTokenPriceResponse) Reset()         { *m = MsgRemoveTokenPriceResponse{} }
-func (m *MsgRemoveTokenPriceResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgRemoveTokenPriceResponse) ProtoMessage()    {}
-func (*MsgRemoveTokenPriceResponse) Descriptor() ([]byte, []int) {
+func (m *MsgRemoveTokenPriceQueryResponse) Reset()         { *m = MsgRemoveTokenPriceQueryResponse{} }
+func (m *MsgRemoveTokenPriceQueryResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveTokenPriceQueryResponse) ProtoMessage()    {}
+func (*MsgRemoveTokenPriceQueryResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be640eb75c1babd5, []int{3}
 }
-func (m *MsgRemoveTokenPriceResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgRemoveTokenPriceQueryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgRemoveTokenPriceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgRemoveTokenPriceQueryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgRemoveTokenPriceResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgRemoveTokenPriceQueryResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -253,58 +254,59 @@ func (m *MsgRemoveTokenPriceResponse) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-func (m *MsgRemoveTokenPriceResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgRemoveTokenPriceResponse.Merge(m, src)
+func (m *MsgRemoveTokenPriceQueryResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveTokenPriceQueryResponse.Merge(m, src)
 }
-func (m *MsgRemoveTokenPriceResponse) XXX_Size() int {
+func (m *MsgRemoveTokenPriceQueryResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgRemoveTokenPriceResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgRemoveTokenPriceResponse.DiscardUnknown(m)
+func (m *MsgRemoveTokenPriceQueryResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveTokenPriceQueryResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgRemoveTokenPriceResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgRemoveTokenPriceQueryResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgAddTokenPrice)(nil), "stride.icqoracle.MsgAddTokenPrice")
-	proto.RegisterType((*MsgAddTokenPriceResponse)(nil), "stride.icqoracle.MsgAddTokenPriceResponse")
-	proto.RegisterType((*MsgRemoveTokenPrice)(nil), "stride.icqoracle.MsgRemoveTokenPrice")
-	proto.RegisterType((*MsgRemoveTokenPriceResponse)(nil), "stride.icqoracle.MsgRemoveTokenPriceResponse")
+	proto.RegisterType((*MsgRegisterTokenPriceQuery)(nil), "stride.icqoracle.MsgRegisterTokenPriceQuery")
+	proto.RegisterType((*MsgRegisterTokenPriceQueryResponse)(nil), "stride.icqoracle.MsgRegisterTokenPriceQueryResponse")
+	proto.RegisterType((*MsgRemoveTokenPriceQuery)(nil), "stride.icqoracle.MsgRemoveTokenPriceQuery")
+	proto.RegisterType((*MsgRemoveTokenPriceQueryResponse)(nil), "stride.icqoracle.MsgRemoveTokenPriceQueryResponse")
 }
 
 func init() { proto.RegisterFile("stride/icqoracle/tx.proto", fileDescriptor_be640eb75c1babd5) }
 
 var fileDescriptor_be640eb75c1babd5 = []byte{
-	// 459 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x93, 0x3f, 0x6f, 0xd3, 0x40,
-	0x18, 0xc6, 0x73, 0xfd, 0x13, 0xa9, 0x2f, 0xaa, 0x48, 0x5d, 0x24, 0x5c, 0xa3, 0x1a, 0x64, 0x44,
-	0x85, 0x22, 0xe2, 0x83, 0x06, 0x31, 0xb0, 0x35, 0x62, 0x41, 0x22, 0x52, 0x49, 0x99, 0x58, 0xac,
-	0xc4, 0x77, 0x72, 0x4f, 0xc4, 0x7e, 0x53, 0xbf, 0x6e, 0x54, 0x36, 0xc4, 0xc8, 0xc4, 0x47, 0xc9,
-	0xc0, 0xce, 0xca, 0x58, 0xb1, 0xc0, 0x88, 0x92, 0x21, 0x5f, 0x03, 0xe5, 0x7c, 0x2e, 0x89, 0xb1,
-	0x04, 0x5b, 0x97, 0x44, 0xf7, 0x3c, 0xbf, 0xf7, 0x39, 0xdd, 0x73, 0x67, 0xd8, 0xa3, 0x2c, 0x55,
-	0x42, 0x72, 0x15, 0x9e, 0x61, 0xda, 0x0f, 0x87, 0x92, 0x67, 0x17, 0xfe, 0x28, 0xc5, 0x0c, 0xad,
-	0x46, 0x6e, 0xf9, 0x57, 0x96, 0x73, 0x3b, 0x44, 0x8a, 0x91, 0x78, 0x4c, 0x11, 0x1f, 0x3f, 0x59,
-	0xfc, 0xe5, 0xa8, 0xb3, 0xd3, 0x8f, 0x55, 0x82, 0x5c, 0xff, 0x1a, 0x69, 0x2f, 0x67, 0x03, 0xbd,
-	0xe2, 0xf9, 0x22, 0xb7, 0xbc, 0xaf, 0x6b, 0xd0, 0xe8, 0x52, 0x74, 0x24, 0xc4, 0x1b, 0x7c, 0x27,
-	0x93, 0xe3, 0x54, 0x85, 0xd2, 0x7a, 0x0c, 0x75, 0x92, 0x89, 0x90, 0xa9, 0xcd, 0xee, 0xb1, 0x87,
-	0x5b, 0x1d, 0xfb, 0xfb, 0x97, 0xd6, 0x2d, 0x33, 0x76, 0x24, 0x44, 0x2a, 0x89, 0x4e, 0xb2, 0x54,
-	0x25, 0x51, 0xcf, 0x70, 0xd6, 0x3e, 0xc0, 0xa0, 0x4f, 0x32, 0x10, 0x32, 0xc1, 0xd8, 0x5e, 0x5b,
-	0x4c, 0xf5, 0xb6, 0x16, 0xca, 0x8b, 0x85, 0x60, 0xdd, 0x85, 0x1b, 0x67, 0xe7, 0x98, 0x15, 0xfe,
-	0xba, 0xf6, 0x41, 0x4b, 0x39, 0xf0, 0x08, 0x2c, 0x1d, 0xaf, 0x28, 0x58, 0xca, 0xd9, 0xd0, 0x5c,
-	0xc3, 0x38, 0x9d, 0xab, 0x38, 0x1f, 0x76, 0x0b, 0x7a, 0x39, 0x76, 0x53, 0xe3, 0x3b, 0xc6, 0x7a,
-	0xfd, 0x27, 0xfd, 0x00, 0x6e, 0x16, 0xfc, 0x08, 0x71, 0x18, 0x28, 0x61, 0xd7, 0x35, 0xbb, 0x6d,
-	0xe4, 0x63, 0xc4, 0xe1, 0x4b, 0xf1, 0xbc, 0xfd, 0x71, 0x3e, 0x69, 0x9a, 0x23, 0x7d, 0x9a, 0x4f,
-	0x9a, 0xf7, 0xcd, 0x85, 0x5c, 0x2c, 0x5d, 0x49, 0xb9, 0x2c, 0xcf, 0x01, 0xbb, 0xac, 0xf5, 0x24,
-	0x8d, 0x30, 0x21, 0xe9, 0xcd, 0x19, 0xec, 0x76, 0x29, 0xea, 0xc9, 0x18, 0xc7, 0xf2, 0x5a, 0x0b,
-	0xae, 0xa8, 0x60, 0xa3, 0xaa, 0x82, 0x67, 0xa5, 0x0a, 0x0e, 0xaa, 0x2b, 0x28, 0x9f, 0xc8, 0xdb,
-	0x87, 0x3b, 0x15, 0x72, 0x51, 0xc4, 0xe1, 0x0f, 0x06, 0xeb, 0x5d, 0x8a, 0xac, 0x00, 0xb6, 0x57,
-	0x9f, 0x9a, 0xe7, 0x97, 0x5f, 0xb6, 0x5f, 0x6e, 0xd3, 0x69, 0xfe, 0x9b, 0x29, 0x36, 0xb2, 0x4e,
-	0xa1, 0xf1, 0x57, 0xdb, 0x0f, 0x2a, 0xe7, 0xcb, 0x98, 0xd3, 0xfa, 0x2f, 0xac, 0xd8, 0xc9, 0xd9,
-	0xfc, 0x30, 0x9f, 0x34, 0x59, 0xa7, 0xfb, 0x6d, 0xea, 0xb2, 0xcb, 0xa9, 0xcb, 0x7e, 0x4d, 0x5d,
-	0xf6, 0x79, 0xe6, 0xd6, 0x2e, 0x67, 0x6e, 0xed, 0xe7, 0xcc, 0xad, 0xbd, 0x6d, 0x47, 0x2a, 0x3b,
-	0x3d, 0x1f, 0xf8, 0x21, 0xc6, 0xfc, 0x44, 0x27, 0xb7, 0x5e, 0xf5, 0x07, 0xc4, 0x4d, 0xa3, 0xe3,
-	0xc3, 0xa7, 0x2b, 0xad, 0x66, 0xef, 0x47, 0x92, 0x06, 0x75, 0xfd, 0x59, 0xb6, 0x7f, 0x07, 0x00,
-	0x00, 0xff, 0xff, 0xdc, 0x6d, 0x69, 0x4f, 0x0c, 0x04, 0x00, 0x00,
+	// 467 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x94, 0xb1, 0x6f, 0xd3, 0x40,
+	0x14, 0xc6, 0xe3, 0xb4, 0x8d, 0xd4, 0x87, 0x10, 0xad, 0x01, 0xd5, 0xb5, 0x84, 0xa9, 0xac, 0x0a,
+	0xa1, 0xa8, 0xf5, 0x41, 0x9a, 0x89, 0x8d, 0x88, 0x05, 0x89, 0x48, 0x6d, 0xca, 0xc4, 0x12, 0x25,
+	0xf6, 0x93, 0x39, 0x11, 0xfb, 0xa5, 0xf7, 0x9c, 0xd0, 0x0e, 0x48, 0x08, 0x31, 0x31, 0xf1, 0xa7,
+	0x64, 0xe0, 0x8f, 0x40, 0x4c, 0x15, 0x13, 0x23, 0x4a, 0x86, 0xf0, 0x67, 0xa0, 0x9c, 0xed, 0x36,
+	0x8a, 0x6c, 0x09, 0xa6, 0x2e, 0xb6, 0xee, 0xfb, 0x7e, 0xfe, 0xec, 0xfb, 0xee, 0x7c, 0xb0, 0xcb,
+	0x89, 0x92, 0x01, 0x0a, 0xe9, 0x9f, 0x91, 0xea, 0xf9, 0x03, 0x14, 0xc9, 0xb9, 0x37, 0x54, 0x94,
+	0x90, 0xb9, 0x95, 0x5a, 0xde, 0x95, 0x65, 0xef, 0xf8, 0xc4, 0x11, 0xb1, 0x88, 0x38, 0x14, 0xe3,
+	0xa7, 0x8b, 0x5b, 0x8a, 0xda, 0xdb, 0xbd, 0x48, 0xc6, 0x24, 0xf4, 0x35, 0x93, 0x76, 0x53, 0xb6,
+	0xab, 0x47, 0x22, 0x1d, 0xa4, 0x96, 0xfb, 0xa3, 0x0a, 0x76, 0x9b, 0xc3, 0x0e, 0x86, 0x92, 0x13,
+	0x54, 0xaf, 0xe9, 0x1d, 0xc6, 0xc7, 0x4a, 0xfa, 0x78, 0x32, 0x42, 0x75, 0x61, 0x3e, 0x81, 0x1a,
+	0x63, 0x1c, 0xa0, 0xb2, 0x8c, 0x3d, 0xe3, 0xf1, 0x66, 0xcb, 0xfa, 0xf9, 0xed, 0xf0, 0x5e, 0x16,
+	0xf0, 0x3c, 0x08, 0x14, 0x32, 0x9f, 0x26, 0x4a, 0xc6, 0x61, 0x27, 0xe3, 0xcc, 0x07, 0x00, 0xfd,
+	0x1e, 0x63, 0x37, 0xc0, 0x98, 0x22, 0xab, 0xba, 0x78, 0xaa, 0xb3, 0xb9, 0x50, 0x5e, 0x2c, 0x04,
+	0xf3, 0x21, 0xdc, 0x3a, 0x1b, 0x51, 0x92, 0xfb, 0x6b, 0xda, 0x07, 0x2d, 0xa5, 0xc0, 0x01, 0x98,
+	0x3a, 0x5e, 0x72, 0x77, 0x29, 0x67, 0x5d, 0x73, 0x5b, 0x99, 0xd3, 0xba, 0x8a, 0xf3, 0xe0, 0x6e,
+	0x4e, 0x2f, 0xc7, 0x6e, 0x68, 0x7c, 0x3b, 0xb3, 0x4e, 0xae, 0xd3, 0x1f, 0xc1, 0x9d, 0x9c, 0x1f,
+	0x12, 0x0d, 0xba, 0x32, 0xb0, 0x6a, 0x9a, 0xbd, 0x9d, 0xc9, 0xc7, 0x44, 0x83, 0x97, 0xc1, 0xb3,
+	0xe6, 0xa7, 0xf9, 0xa4, 0x9e, 0x4d, 0xe9, 0xcb, 0x7c, 0x52, 0xdf, 0xbf, 0x5e, 0x93, 0xf2, 0xb6,
+	0xdc, 0x7d, 0x70, 0xcb, 0xdd, 0x0e, 0xf2, 0x90, 0x62, 0x46, 0xf7, 0x8f, 0x01, 0x96, 0xc6, 0x22,
+	0x1a, 0xe3, 0xcd, 0x17, 0x5e, 0x50, 0xc9, 0x7a, 0x51, 0x25, 0x8d, 0x95, 0x4a, 0xdc, 0x95, 0x4a,
+	0x0a, 0x66, 0xe3, 0xba, 0xb0, 0x57, 0xe6, 0xe5, 0x75, 0x34, 0x3e, 0x57, 0x61, 0xad, 0xcd, 0xa1,
+	0xf9, 0x01, 0x76, 0xca, 0x76, 0xe1, 0x81, 0xb7, 0xba, 0xfd, 0xbd, 0xf2, 0x9e, 0xed, 0xe6, 0xff,
+	0xd0, 0xf9, 0x67, 0x98, 0xef, 0xe1, 0x7e, 0xf1, 0x8a, 0xd4, 0x4b, 0xe2, 0x0a, 0x58, 0xbb, 0xf1,
+	0xef, 0x6c, 0xfe, 0x62, 0x7b, 0xe3, 0xe3, 0x7c, 0x52, 0x37, 0x5a, 0xed, 0xef, 0x53, 0xc7, 0xb8,
+	0x9c, 0x3a, 0xc6, 0xef, 0xa9, 0x63, 0x7c, 0x9d, 0x39, 0x95, 0xcb, 0x99, 0x53, 0xf9, 0x35, 0x73,
+	0x2a, 0x6f, 0x8e, 0x42, 0x99, 0xbc, 0x1d, 0xf5, 0x3d, 0x9f, 0x22, 0x71, 0xaa, 0xe3, 0x0f, 0x5f,
+	0xf5, 0xfa, 0x2c, 0xb2, 0xd3, 0x62, 0xdc, 0x68, 0x8a, 0xf3, 0xe5, 0x33, 0xe3, 0x62, 0x88, 0xdc,
+	0xaf, 0xe9, 0xdf, 0xfb, 0xe8, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x69, 0x60, 0x42, 0x55, 0x54,
+	0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -319,10 +321,10 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// AddTokenPrice adds a new token to track prices for
-	AddTokenPrice(ctx context.Context, in *MsgAddTokenPrice, opts ...grpc.CallOption) (*MsgAddTokenPriceResponse, error)
-	// RemoveTokenPrice removes a token from price tracking
-	RemoveTokenPrice(ctx context.Context, in *MsgRemoveTokenPrice, opts ...grpc.CallOption) (*MsgRemoveTokenPriceResponse, error)
+	// RegisterTokenPriceQuery registers a new token to track prices for
+	RegisterTokenPriceQuery(ctx context.Context, in *MsgRegisterTokenPriceQuery, opts ...grpc.CallOption) (*MsgRegisterTokenPriceQueryResponse, error)
+	// RemoveTokenPriceQuery removes a token from price tracking
+	RemoveTokenPriceQuery(ctx context.Context, in *MsgRemoveTokenPriceQuery, opts ...grpc.CallOption) (*MsgRemoveTokenPriceQueryResponse, error)
 }
 
 type msgClient struct {
@@ -333,18 +335,18 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) AddTokenPrice(ctx context.Context, in *MsgAddTokenPrice, opts ...grpc.CallOption) (*MsgAddTokenPriceResponse, error) {
-	out := new(MsgAddTokenPriceResponse)
-	err := c.cc.Invoke(ctx, "/stride.icqoracle.Msg/AddTokenPrice", in, out, opts...)
+func (c *msgClient) RegisterTokenPriceQuery(ctx context.Context, in *MsgRegisterTokenPriceQuery, opts ...grpc.CallOption) (*MsgRegisterTokenPriceQueryResponse, error) {
+	out := new(MsgRegisterTokenPriceQueryResponse)
+	err := c.cc.Invoke(ctx, "/stride.icqoracle.Msg/RegisterTokenPriceQuery", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *msgClient) RemoveTokenPrice(ctx context.Context, in *MsgRemoveTokenPrice, opts ...grpc.CallOption) (*MsgRemoveTokenPriceResponse, error) {
-	out := new(MsgRemoveTokenPriceResponse)
-	err := c.cc.Invoke(ctx, "/stride.icqoracle.Msg/RemoveTokenPrice", in, out, opts...)
+func (c *msgClient) RemoveTokenPriceQuery(ctx context.Context, in *MsgRemoveTokenPriceQuery, opts ...grpc.CallOption) (*MsgRemoveTokenPriceQueryResponse, error) {
+	out := new(MsgRemoveTokenPriceQueryResponse)
+	err := c.cc.Invoke(ctx, "/stride.icqoracle.Msg/RemoveTokenPriceQuery", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -353,59 +355,59 @@ func (c *msgClient) RemoveTokenPrice(ctx context.Context, in *MsgRemoveTokenPric
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// AddTokenPrice adds a new token to track prices for
-	AddTokenPrice(context.Context, *MsgAddTokenPrice) (*MsgAddTokenPriceResponse, error)
-	// RemoveTokenPrice removes a token from price tracking
-	RemoveTokenPrice(context.Context, *MsgRemoveTokenPrice) (*MsgRemoveTokenPriceResponse, error)
+	// RegisterTokenPriceQuery registers a new token to track prices for
+	RegisterTokenPriceQuery(context.Context, *MsgRegisterTokenPriceQuery) (*MsgRegisterTokenPriceQueryResponse, error)
+	// RemoveTokenPriceQuery removes a token from price tracking
+	RemoveTokenPriceQuery(context.Context, *MsgRemoveTokenPriceQuery) (*MsgRemoveTokenPriceQueryResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) AddTokenPrice(ctx context.Context, req *MsgAddTokenPrice) (*MsgAddTokenPriceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddTokenPrice not implemented")
+func (*UnimplementedMsgServer) RegisterTokenPriceQuery(ctx context.Context, req *MsgRegisterTokenPriceQuery) (*MsgRegisterTokenPriceQueryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterTokenPriceQuery not implemented")
 }
-func (*UnimplementedMsgServer) RemoveTokenPrice(ctx context.Context, req *MsgRemoveTokenPrice) (*MsgRemoveTokenPriceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RemoveTokenPrice not implemented")
+func (*UnimplementedMsgServer) RemoveTokenPriceQuery(ctx context.Context, req *MsgRemoveTokenPriceQuery) (*MsgRemoveTokenPriceQueryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveTokenPriceQuery not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_AddTokenPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgAddTokenPrice)
+func _Msg_RegisterTokenPriceQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRegisterTokenPriceQuery)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).AddTokenPrice(ctx, in)
+		return srv.(MsgServer).RegisterTokenPriceQuery(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stride.icqoracle.Msg/AddTokenPrice",
+		FullMethod: "/stride.icqoracle.Msg/RegisterTokenPriceQuery",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).AddTokenPrice(ctx, req.(*MsgAddTokenPrice))
+		return srv.(MsgServer).RegisterTokenPriceQuery(ctx, req.(*MsgRegisterTokenPriceQuery))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_RemoveTokenPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgRemoveTokenPrice)
+func _Msg_RemoveTokenPriceQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveTokenPriceQuery)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).RemoveTokenPrice(ctx, in)
+		return srv.(MsgServer).RemoveTokenPriceQuery(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/stride.icqoracle.Msg/RemoveTokenPrice",
+		FullMethod: "/stride.icqoracle.Msg/RemoveTokenPriceQuery",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).RemoveTokenPrice(ctx, req.(*MsgRemoveTokenPrice))
+		return srv.(MsgServer).RemoveTokenPriceQuery(ctx, req.(*MsgRemoveTokenPriceQuery))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -415,19 +417,19 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddTokenPrice",
-			Handler:    _Msg_AddTokenPrice_Handler,
+			MethodName: "RegisterTokenPriceQuery",
+			Handler:    _Msg_RegisterTokenPriceQuery_Handler,
 		},
 		{
-			MethodName: "RemoveTokenPrice",
-			Handler:    _Msg_RemoveTokenPrice_Handler,
+			MethodName: "RemoveTokenPriceQuery",
+			Handler:    _Msg_RemoveTokenPriceQuery_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "stride/icqoracle/tx.proto",
 }
 
-func (m *MsgAddTokenPrice) Marshal() (dAtA []byte, err error) {
+func (m *MsgRegisterTokenPriceQuery) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -437,12 +439,12 @@ func (m *MsgAddTokenPrice) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgAddTokenPrice) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRegisterTokenPriceQuery) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgAddTokenPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRegisterTokenPriceQuery) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -492,7 +494,7 @@ func (m *MsgAddTokenPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgAddTokenPriceResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgRegisterTokenPriceQueryResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -502,12 +504,12 @@ func (m *MsgAddTokenPriceResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgAddTokenPriceResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRegisterTokenPriceQueryResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgAddTokenPriceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRegisterTokenPriceQueryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -515,7 +517,7 @@ func (m *MsgAddTokenPriceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgRemoveTokenPrice) Marshal() (dAtA []byte, err error) {
+func (m *MsgRemoveTokenPriceQuery) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -525,12 +527,12 @@ func (m *MsgRemoveTokenPrice) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgRemoveTokenPrice) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRemoveTokenPriceQuery) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgRemoveTokenPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRemoveTokenPriceQuery) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -566,7 +568,7 @@ func (m *MsgRemoveTokenPrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgRemoveTokenPriceResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgRemoveTokenPriceQueryResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -576,12 +578,12 @@ func (m *MsgRemoveTokenPriceResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgRemoveTokenPriceResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgRemoveTokenPriceQueryResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgRemoveTokenPriceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgRemoveTokenPriceQueryResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -600,7 +602,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgAddTokenPrice) Size() (n int) {
+func (m *MsgRegisterTokenPriceQuery) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -633,7 +635,7 @@ func (m *MsgAddTokenPrice) Size() (n int) {
 	return n
 }
 
-func (m *MsgAddTokenPriceResponse) Size() (n int) {
+func (m *MsgRegisterTokenPriceQueryResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -642,7 +644,7 @@ func (m *MsgAddTokenPriceResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgRemoveTokenPrice) Size() (n int) {
+func (m *MsgRemoveTokenPriceQuery) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -667,7 +669,7 @@ func (m *MsgRemoveTokenPrice) Size() (n int) {
 	return n
 }
 
-func (m *MsgRemoveTokenPriceResponse) Size() (n int) {
+func (m *MsgRemoveTokenPriceQueryResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -682,7 +684,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgAddTokenPrice) Unmarshal(dAtA []byte) error {
+func (m *MsgRegisterTokenPriceQuery) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -705,10 +707,10 @@ func (m *MsgAddTokenPrice) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddTokenPrice: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRegisterTokenPriceQuery: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddTokenPrice: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRegisterTokenPriceQuery: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -924,7 +926,7 @@ func (m *MsgAddTokenPrice) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgAddTokenPriceResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgRegisterTokenPriceQueryResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -947,10 +949,10 @@ func (m *MsgAddTokenPriceResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddTokenPriceResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRegisterTokenPriceQueryResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddTokenPriceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRegisterTokenPriceQueryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -974,7 +976,7 @@ func (m *MsgAddTokenPriceResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgRemoveTokenPrice) Unmarshal(dAtA []byte) error {
+func (m *MsgRemoveTokenPriceQuery) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -997,10 +999,10 @@ func (m *MsgRemoveTokenPrice) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRemoveTokenPrice: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRemoveTokenPriceQuery: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRemoveTokenPrice: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRemoveTokenPriceQuery: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1152,7 +1154,7 @@ func (m *MsgRemoveTokenPrice) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgRemoveTokenPriceResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgRemoveTokenPriceQueryResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1175,10 +1177,10 @@ func (m *MsgRemoveTokenPriceResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgRemoveTokenPriceResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgRemoveTokenPriceQueryResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgRemoveTokenPriceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgRemoveTokenPriceQueryResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

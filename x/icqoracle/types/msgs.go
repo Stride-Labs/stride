@@ -11,25 +11,25 @@ import (
 )
 
 const (
-	TypeMsgAddTokenPrice    = "add_token_price"
-	TypeMsgRemoveTokenPrice = "remove_token_price"
+	TypeMsgRegisterTokenPriceQuery = "register_token_price_query"
+	TypeMsgRemoveTokenPriceQuery   = "remove_token_price_query"
 )
 
 var (
-	_ sdk.Msg = &MsgAddTokenPrice{}
-	_ sdk.Msg = &MsgRemoveTokenPrice{}
+	_ sdk.Msg = &MsgRegisterTokenPriceQuery{}
+	_ sdk.Msg = &MsgRemoveTokenPriceQuery{}
 
 	// Implement legacy interface for ledger support
-	_ legacytx.LegacyMsg = &MsgAddTokenPrice{}
-	_ legacytx.LegacyMsg = &MsgRemoveTokenPrice{}
+	_ legacytx.LegacyMsg = &MsgRegisterTokenPriceQuery{}
+	_ legacytx.LegacyMsg = &MsgRemoveTokenPriceQuery{}
 )
 
 // ----------------------------------------------
 //               MsgClaim
 // ----------------------------------------------
 
-func NewMsgAddTokenPrice(sender, baseDenom, quoteDenom, poolId, osmosisBaseDenom, osmosisQuoteDenom string) *MsgAddTokenPrice {
-	return &MsgAddTokenPrice{
+func NewMsgRegisterTokenPriceQuery(sender, baseDenom, quoteDenom, poolId, osmosisBaseDenom, osmosisQuoteDenom string) *MsgRegisterTokenPriceQuery {
+	return &MsgRegisterTokenPriceQuery{
 		Sender:            sender,
 		BaseDenom:         baseDenom,
 		QuoteDenom:        quoteDenom,
@@ -39,15 +39,15 @@ func NewMsgAddTokenPrice(sender, baseDenom, quoteDenom, poolId, osmosisBaseDenom
 	}
 }
 
-func (msg MsgAddTokenPrice) Type() string {
-	return TypeMsgAddTokenPrice
+func (msg MsgRegisterTokenPriceQuery) Type() string {
+	return TypeMsgRegisterTokenPriceQuery
 }
 
-func (msg MsgAddTokenPrice) Route() string {
+func (msg MsgRegisterTokenPriceQuery) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgAddTokenPrice) GetSigners() []sdk.AccAddress {
+func (msg *MsgRegisterTokenPriceQuery) GetSigners() []sdk.AccAddress {
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
@@ -55,12 +55,12 @@ func (msg *MsgAddTokenPrice) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sender}
 }
 
-func (msg *MsgAddTokenPrice) GetSignBytes() []byte {
+func (msg *MsgRegisterTokenPriceQuery) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgAddTokenPrice) ValidateBasic() error {
+func (msg *MsgRegisterTokenPriceQuery) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
@@ -84,11 +84,11 @@ func (msg *MsgAddTokenPrice) ValidateBasic() error {
 }
 
 // ----------------------------------------------
-//               MsgRemoveTokenPrice
+//               MsgRemoveTokenPriceQuery
 // ----------------------------------------------
 
-func NewMsgRemoveTokenPrice(sender, baseDenom, quoteDenom, osmosisPoolId string) *MsgRemoveTokenPrice {
-	return &MsgRemoveTokenPrice{
+func NewMsgRemoveTokenPriceQuery(sender, baseDenom, quoteDenom, osmosisPoolId string) *MsgRemoveTokenPriceQuery {
+	return &MsgRemoveTokenPriceQuery{
 		Sender:        sender,
 		BaseDenom:     baseDenom,
 		QuoteDenom:    quoteDenom,
@@ -96,15 +96,15 @@ func NewMsgRemoveTokenPrice(sender, baseDenom, quoteDenom, osmosisPoolId string)
 	}
 }
 
-func (msg MsgRemoveTokenPrice) Type() string {
-	return TypeMsgRemoveTokenPrice
+func (msg MsgRemoveTokenPriceQuery) Type() string {
+	return TypeMsgRemoveTokenPriceQuery
 }
 
-func (msg MsgRemoveTokenPrice) Route() string {
+func (msg MsgRemoveTokenPriceQuery) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgRemoveTokenPrice) GetSigners() []sdk.AccAddress {
+func (msg *MsgRemoveTokenPriceQuery) GetSigners() []sdk.AccAddress {
 	sender, err := sdk.AccAddressFromBech32(msg.Sender)
 	if err != nil {
 		panic(err)
@@ -112,12 +112,12 @@ func (msg *MsgRemoveTokenPrice) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sender}
 }
 
-func (msg *MsgRemoveTokenPrice) GetSignBytes() []byte {
+func (msg *MsgRemoveTokenPriceQuery) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgRemoveTokenPrice) ValidateBasic() error {
+func (msg *MsgRemoveTokenPriceQuery) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}

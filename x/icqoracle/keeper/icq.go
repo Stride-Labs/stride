@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
-	"regexp"
 	"strconv"
 	"time"
 
@@ -84,7 +83,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		QueryType:       icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
 		RequestData:     icqtypes.FormatOsmosisKeyPool(osmosisPoolId),
 		CallbackModule:  types.ModuleName,
-		CallbackId:      queryId,
+		CallbackId:      ICQCallbackID_OsmosisClPool,
 		CallbackData:    tokenPriceBz,
 		TimeoutDuration: time.Duration(params.IcqTimeoutSec) * time.Second,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
@@ -102,52 +101,10 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 	return nil
 }
 
-var queryIdRegex = regexp.MustCompile(`^(.+)\|(.+)\|(\d+)\|(\d+)$`)
-
-// Helper function to parse the ID string
-func parseQueryID(id string) (baseDenom, quoteDenom, poolId, blockHeight string, ok bool) {
-	matches := queryIdRegex.FindStringSubmatch(id)
-	if len(matches) != 5 {
-		return "", "", "", "", false
-	}
-	return matches[1], matches[2], matches[3], matches[4], true
-}
-
 func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
-	// TODO is this check even needed?
-	if query.Id != query.CallbackId {
-		return fmt.Errorf("query.Id ('%s') != query.CallbackId ('%s')", query.Id, query.CallbackId)
-	}
-
-	baseDenom, quoteDenom, poolId, _, ok := parseQueryID(query.Id)
-	if !ok {
-		return fmt.Errorf("Error parsing baseDenom and quoteDenom from queryId '%s'", query.Id)
-	}
-
 	var tokenPrice types.TokenPrice
 	if err := k.cdc.Unmarshal(query.CallbackData, &tokenPrice); err != nil {
 		return fmt.Errorf("Error deserializing query.CallbackData '%s' as TokenPrice", hex.EncodeToString(query.CallbackData))
-	}
-
-	// TODO is this check even needed?
-	if tokenPrice.BaseDenom != baseDenom {
-		return fmt.Errorf("tokenPrice.BaseDenom ('%s') != baseDenom ('%s')", tokenPrice.BaseDenom, baseDenom)
-	}
-
-	// TODO is this check even needed?
-	if tokenPrice.QuoteDenom != quoteDenom {
-		return fmt.Errorf("tokenPrice.QuoteDenom ('%s') != quoteDenom ('%s')", tokenPrice.QuoteDenom, quoteDenom)
-	}
-
-	// TODO is this check even needed?
-	if tokenPrice.OsmosisPoolId != poolId {
-		return fmt.Errorf("tokenPrice.OsmosisPoolId ('%s') != poolId ('%s')", tokenPrice.OsmosisPoolId, poolId)
-	}
-
-	// TODO review this
-	// this should never happen
-	if !tokenPrice.QueryInProgress {
-		return nil
 	}
 
 	k.Logger(ctx).Info(utils.LogICQCallbackWithPriceToken(tokenPrice, "OsmosisClPool",
@@ -156,6 +113,12 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error getting current spot price")
+	}
+
+	// TODO review this
+	// this should never happen
+	if !tokenPrice.QueryInProgress {
+		return nil
 	}
 
 	// Unmarshal the query response args to determine the balance

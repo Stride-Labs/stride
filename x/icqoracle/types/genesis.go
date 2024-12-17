@@ -16,7 +16,7 @@ func DefaultGenesis() *GenesisState {
 func (gs GenesisState) Validate() error {
 	for i, tokenPrice := range gs.TokenPrices {
 
-		msg := NewMsgAddTokenPrice(
+		msg := NewMsgRegisterTokenPriceQuery(
 			"stride1palmssweatykneesweakarmsareheavy8ahm9u", // dummy address, not stored in token price
 			tokenPrice.BaseDenom,
 			tokenPrice.QuoteDenom,

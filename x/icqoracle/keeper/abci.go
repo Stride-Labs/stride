@@ -23,7 +23,14 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 			// Update price for this specific token
 			err := k.SubmitOsmosisClPoolICQ(ctx, tokenPrice)
 			if err != nil {
-				// TODO handle error, maybe log it
+				// Can't really do anything but log
+				ctx.Logger().Error(
+					"failed to submit Osmosis CL pool ICQ error='%w' baseToken='%s' quoteToken='%s' poolId='%s'",
+					err,
+					tokenPrice.BaseDenom,
+					tokenPrice.QuoteDenom,
+					tokenPrice.OsmosisPoolId,
+				)
 				continue
 			}
 		}

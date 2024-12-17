@@ -42,14 +42,14 @@ Example:
   $ %[1]s tx %[2]s add-token-price uosmo uatom 123 uosmo ibc/... --from admin
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgAddTokenPrice(
+			msg := types.NewMsgRegisterTokenPriceQuery(
 				clientCtx.GetFromAddress().String(),
 				args[0],
 				args[1],
@@ -82,14 +82,14 @@ Example:
   $ %[1]s tx %[2]s remove-token-price uatom uosmo 123 --from admin
 `, version.AppName, types.ModuleName),
 		),
-		Args: cobra.ExactArgs(2),
+		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgRemoveTokenPrice(
+			msg := types.NewMsgRemoveTokenPriceQuery(
 				clientCtx.GetFromAddress().String(),
 				args[0],
 				args[1],
