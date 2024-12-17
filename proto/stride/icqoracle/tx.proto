@@ -11,18 +11,20 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/icqoracle/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // AddTokenPrice adds a new token to track prices for
-  rpc AddTokenPrice(MsgAddTokenPrice) returns (MsgAddTokenPriceResponse);
+  // RegisterTokenPriceQuery registers a new token to track prices for
+  rpc RegisterTokenPriceQuery(MsgRegisterTokenPriceQuery)
+      returns (MsgRegisterTokenPriceQueryResponse);
 
   // RemoveTokenPrice removes a token from price tracking
   rpc RemoveTokenPrice(MsgRemoveTokenPrice)
       returns (MsgRemoveTokenPriceResponse);
 }
 
-// MsgAddTokenPrice defines the message for adding a new token to track prices
-message MsgAddTokenPrice {
+// MsgRegisterTokenPriceQuery defines the message for adding a new token to
+// track prices
+message MsgRegisterTokenPriceQuery {
   option (cosmos.msg.v1.signer) = "sender";
-  option (amino.name) = "stride/x/icqoracle/MsgAddTokenPrice";
+  option (amino.name) = "stride/x/icqoracle/MsgRegisterTokenPriceQuery";
 
   string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
@@ -38,7 +40,7 @@ message MsgAddTokenPrice {
   string osmosis_pool_id = 6;
 }
 
-message MsgAddTokenPriceResponse {}
+message MsgRegisterTokenPriceQueryResponse {}
 
 // MsgRemoveTokenPrice defines the message for removing a token from price
 // tracking

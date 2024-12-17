@@ -22,8 +22,8 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// AddTokenPrice adds a token to price tracking
-func (ms msgServer) AddTokenPrice(goCtx context.Context, msg *types.MsgAddTokenPrice) (*types.MsgAddTokenPriceResponse, error) {
+// RegisterTokenPriceQuery registers a token to price tracking
+func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.MsgRegisterTokenPriceQuery) (*types.MsgRegisterTokenPriceQueryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// TODO check admin
@@ -44,7 +44,7 @@ func (ms msgServer) AddTokenPrice(goCtx context.Context, msg *types.MsgAddTokenP
 		return nil, err
 	}
 
-	return &types.MsgAddTokenPriceResponse{}, nil
+	return &types.MsgRegisterTokenPriceQueryResponse{}, nil
 }
 
 // RemoveTokenPrice removes a token from price tracking

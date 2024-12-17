@@ -11,13 +11,13 @@ import (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgAddTokenPrice{}, "icqoracle/MsgAddTokenPrice")
+	legacy.RegisterAminoMsg(cdc, &MsgRegisterTokenPriceQuery{}, "icqoracle/MsgRegisterTokenPriceQuery")
 	legacy.RegisterAminoMsg(cdc, &MsgRemoveTokenPrice{}, "icqoracle/MsgRemoveTokenPrice")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgAddTokenPrice{},
+		&MsgRegisterTokenPriceQuery{},
 		&MsgRemoveTokenPrice{},
 	)
 
