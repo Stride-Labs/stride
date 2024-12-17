@@ -21,7 +21,7 @@ func (k Keeper) Auction(goCtx context.Context, req *types.QueryAuctionRequest) (
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	auction, err := k.GetAuction(ctx, req.Denom)
+	auction, err := k.GetAuction(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}

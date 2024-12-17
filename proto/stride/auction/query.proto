@@ -12,18 +12,18 @@ option go_package = "github.com/Stride-Labs/stride/v24/x/auction/types";
 service Query {
   // Auction queries the auction info for a specific token
   rpc Auction(QueryAuctionRequest) returns (QueryAuctionResponse) {
-    option (google.api.http).get = "/auction/auction/{denom}";
+    option (google.api.http).get = "/stride/auction/{name}";
   }
 
   // Auctions queries the auction info for a specific token
   rpc Auctions(QueryAuctionsRequest) returns (QueryAuctionsResponse) {
-    option (google.api.http).get = "/auction/auctions";
+    option (google.api.http).get = "/stride/auction/auctions";
   }
 }
 
 // QueryAuctionRequest is the request type for the Query/Auction RPC
 // method
-message QueryAuctionRequest { string denom = 1; }
+message QueryAuctionRequest { string name = 1; }
 
 // QueryAuctionResponse is the response type for the Query/Auction RPC
 // method

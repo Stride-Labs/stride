@@ -31,8 +31,8 @@ func GetQueryCmd() *cobra.Command {
 
 func CmdQueryAuction() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "auction [denom]",
-		Short: "Query the auction info for a specific token",
+		Use:   "auction [name]",
+		Short: "Query the auction info for a specific auction",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -42,7 +42,7 @@ func CmdQueryAuction() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			req := &types.QueryAuctionRequest{
-				Denom: args[0],
+				Name: args[0],
 			}
 			res, err := queryClient.Auction(context.Background(), req)
 			if err != nil {
@@ -57,7 +57,7 @@ func CmdQueryAuction() *cobra.Command {
 func CmdQueryAuctions() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auctions",
-		Short: "Query all auctions",
+		Short: "Get all auctions",
 		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

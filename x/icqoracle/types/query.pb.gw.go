@@ -382,13 +382,13 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_TokenPrice_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"icqoracle", "v1beta1", "price"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TokenPrice_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"stride", "icqoracle", "price"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TokenPrices_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"icqoracle", "v1beta1", "prices"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TokenPrices_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"stride", "icqoracle", "prices"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"icqoracle", "v1beta1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"stride", "icqoracle", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_TokenPriceForQuoteDenom_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"icqoracle", "v1beta1", "quote_price"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_TokenPriceForQuoteDenom_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"stride", "icqoracle", "quote_price"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
