@@ -11,15 +11,14 @@ const (
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
 
-	ParamsPrefix      = "params"
-	KeyPricePrefix    = "price"
-	KeyLastUpdateTime = "last_update_time"
+	ParamsPrefix   = "params"
+	KeyPricePrefix = "price"
 )
 
 func TokenPriceKey(baseDenom, quoteDenom, poolId string) []byte {
-	return []byte(fmt.Sprintf("%s%s%s%s", KeyPricePrefix, baseDenom, quoteDenom, poolId))
+	return []byte(fmt.Sprintf("%s|%s|%s|%s", KeyPricePrefix, baseDenom, quoteDenom, poolId))
 }
 
 func TokenPriceByDenomKey(baseDenom string) []byte {
-	return []byte(fmt.Sprintf("%s%s", KeyPricePrefix, baseDenom))
+	return []byte(fmt.Sprintf("%s|%s", KeyPricePrefix, baseDenom))
 }
