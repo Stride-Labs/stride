@@ -11,7 +11,11 @@ import (
 
 // Loads module state from genesis
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
-	k.SetParams(ctx, genState.Params)
+	err := k.SetParams(ctx, genState.Params)
+	if err != nil {
+		panic(err)
+	}
+
 	for _, tokenPrice := range genState.TokenPrices {
 		tokenPrice.SpotPrice = math.LegacyZeroDec()
 		tokenPrice.UpdatedAt = time.Time{}
@@ -25,8 +29,13 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 // Export's module state into genesis file
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	genesis := types.DefaultGenesis()
-	genesis.Params = k.GetParams(ctx)
+	genesis.Params = params
 	genesis.TokenPrices = k.GetAllTokenPrices(ctx)
 	return genesis
 }

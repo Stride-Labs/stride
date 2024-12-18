@@ -16,13 +16,13 @@ import (
 )
 
 type Keeper struct {
-	cdc       codec.BinaryCodec
+	cdc       codec.Codec
 	storeKey  storetypes.StoreKey
 	icqKeeper interchainquerykeeper.Keeper
 }
 
 func NewKeeper(
-	cdc codec.BinaryCodec,
+	cdc codec.Codec,
 	storeKey storetypes.StoreKey,
 ) *Keeper {
 	return &Keeper{
@@ -154,7 +154,11 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	}
 
 	// Get price expiration timeout
-	priceExpirationTimeoutSec := int64(k.GetParams(ctx).PriceExpirationTimeoutSec)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return math.LegacyDec{}, fmt.Errorf("error getting params: %w", err)
+	}
+	priceExpirationTimeoutSec := int64(params.PriceExpirationTimeoutSec)
 
 	// Init price
 	price = math.LegacyZeroDec()

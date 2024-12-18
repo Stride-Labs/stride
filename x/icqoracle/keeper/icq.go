@@ -61,7 +61,11 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 ) error {
 	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisClPool ICQ"))
 
-	params := k.GetParams(ctx)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error getting module params: %s", err.Error()))
+		return err
+	}
 
 	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
 	if err != nil {

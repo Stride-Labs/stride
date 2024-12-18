@@ -6,20 +6,22 @@ import (
 	"github.com/Stride-Labs/stride/v24/x/auction/types"
 )
 
-// Writes params to the store
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
+// GetParams get params
+func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	store := ctx.KVStore(k.storeKey)
-	paramsBz := k.cdc.MustMarshal(&params)
-	store.Set([]byte(types.ParamsPrefix), paramsBz)
+	bz := store.Get([]byte(types.ParamsKey))
+	params := types.Params{}
+	err := k.cdc.UnmarshalJSON(bz, &params)
+	return params, err
 }
 
-// Retrieves the module parameters
-func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
+// SetParams set params
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	store := ctx.KVStore(k.storeKey)
-	paramsBz := store.Get([]byte(types.ParamsPrefix))
-	if len(paramsBz) == 0 {
-		panic("module parameters not set")
+	bz, err := k.cdc.MarshalJSON(&params)
+	if err != nil {
+		return err
 	}
-	k.cdc.MustUnmarshal(paramsBz, &params)
-	return params
+	store.Set([]byte(types.ParamsKey), bz)
+	return nil
 }

@@ -11,7 +11,7 @@ const (
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
 
-	ParamsPrefix   = "params"
+	ParamsKey      = "params"
 	KeyPricePrefix = "price"
 )
 

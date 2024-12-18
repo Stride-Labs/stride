@@ -8,7 +8,13 @@ import (
 
 func (k Keeper) BeginBlocker(ctx sdk.Context) {
 	// Get all token prices
-	params := k.GetParams(ctx)
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		// Can't really do anything but log
+		// A panic would halt the chain
+		ctx.Logger().Error("failed to get icqoracle params: %w", err)
+		return
+	}
 
 	currentTime := ctx.BlockTime()
 
