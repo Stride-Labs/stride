@@ -59,19 +59,19 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 	ctx sdk.Context,
 	tokenPrice types.TokenPrice,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithPriceToken(tokenPrice, "Submitting OsmosisClPool ICQ"))
+	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisClPool ICQ"))
 
 	params := k.GetParams(ctx)
 
 	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error converting osmosis pool id '%s' to uint64, error '%s'", tokenPrice.OsmosisPoolId, err.Error()))
+		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error converting osmosis pool id '%s' to uint64, error '%s'", tokenPrice.OsmosisPoolId, err.Error()))
 		return err
 	}
 
 	tokenPriceBz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error serializing tokenPrice '%+v' to bytes, error '%s'", tokenPrice, err.Error()))
+		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error serializing tokenPrice '%+v' to bytes, error '%s'", tokenPrice, err.Error()))
 		return err
 	}
 
@@ -89,12 +89,12 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.icqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
-		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error submitting OsmosisClPool ICQ, error '%s'", err.Error()))
+		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error submitting OsmosisClPool ICQ, error '%s'", err.Error()))
 		return err
 	}
 
 	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice, true); err != nil {
-		k.Logger(ctx).Error(utils.LogWithPriceToken(tokenPrice, "Error updating queryInProgress=true, error '%s'", err.Error()))
+		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error updating queryInProgress=true, error '%s'", err.Error()))
 		return err
 	}
 
@@ -107,7 +107,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return fmt.Errorf("Error deserializing query.CallbackData '%s' as TokenPrice", hex.EncodeToString(query.CallbackData))
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithPriceToken(tokenPrice, "OsmosisClPool",
+	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisClPool",
 		"Starting OsmosisClPool ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)

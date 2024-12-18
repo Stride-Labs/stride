@@ -20,7 +20,6 @@ import (
 
 	config "github.com/Stride-Labs/stride/v24/cmd/strided/config"
 	icacallbacktypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
-	icqoracletypes "github.com/Stride-Labs/stride/v24/x/icqoracle/types"
 	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
 )
 
@@ -234,9 +233,10 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 // Ex:
 //
 //	| uosmo/ustrd   |   string
-func LogWithPriceToken(tokenPrice icqoracletypes.TokenPrice, s string, a ...any) string {
+func LogWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, s string, a ...any,
+) string {
 	msg := fmt.Sprintf(s, a...)
-	return fmt.Sprintf("|   %s/%s/%s   |  %s", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, msg)
+	return fmt.Sprintf("|   %s/%s/%s   |  %s", baseDenom, quoteDenom, osmosisPoolId, msg)
 }
 
 // Returns a log string with a chain Id and callback as a prefix
@@ -244,9 +244,9 @@ func LogWithPriceToken(tokenPrice icqoracletypes.TokenPrice, s string, a ...any)
 // Format:
 //
 //	|   uosmo/ustrd    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
-func logCallbackWithPriceToken(tokenPrice icqoracletypes.TokenPrice, callbackId string, callbackType string, s string, a ...any) string {
+func logCallbackWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, callbackId string, callbackType string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
-	return fmt.Sprintf("|   %s/%s/%s   |  %s %s  |  %s", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, strings.ToUpper(callbackId), callbackType, msg)
+	return fmt.Sprintf("|   %s/%s/%s   |  %s %s  |  %s", baseDenom, quoteDenom, osmosisPoolId, strings.ToUpper(callbackId), callbackType, msg)
 }
 
 // Returns a log string with a chain Id and callback as a prefix
@@ -296,8 +296,8 @@ func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a .
 // Ex:
 //
 //	| COSMOSHUB-4   |  WITHDRAWALHOSTBALANCE ICQCALLBACK  |  string
-func LogICQCallbackWithPriceToken(tokenPrice icqoracletypes.TokenPrice, callbackId string, s string, a ...any) string {
-	return logCallbackWithPriceToken(tokenPrice, callbackId, "ICQCALLBACK", s, a...)
+func LogICQCallbackWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, callbackId string, s string, a ...any) string {
+	return logCallbackWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, callbackId, "ICQCALLBACK", s, a...)
 }
 
 // Returns a log header string with a dash padding on either side

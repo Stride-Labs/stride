@@ -4,10 +4,10 @@ import (
 	"errors"
 	"strconv"
 
-	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+
+	"github.com/Stride-Labs/stride/v24/utils"
 )
 
 const (
@@ -28,9 +28,9 @@ var (
 //               MsgClaim
 // ----------------------------------------------
 
-func NewMsgRegisterTokenPriceQuery(sender, baseDenom, quoteDenom, poolId, osmosisBaseDenom, osmosisQuoteDenom string) *MsgRegisterTokenPriceQuery {
+func NewMsgRegisterTokenPriceQuery(admin, baseDenom, quoteDenom, poolId, osmosisBaseDenom, osmosisQuoteDenom string) *MsgRegisterTokenPriceQuery {
 	return &MsgRegisterTokenPriceQuery{
-		Sender:            sender,
+		Admin:             admin,
 		BaseDenom:         baseDenom,
 		QuoteDenom:        quoteDenom,
 		OsmosisPoolId:     poolId,
@@ -48,7 +48,7 @@ func (msg MsgRegisterTokenPriceQuery) Route() string {
 }
 
 func (msg *MsgRegisterTokenPriceQuery) GetSigners() []sdk.AccAddress {
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	sender, err := sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
 		panic(err)
 	}
@@ -61,8 +61,8 @@ func (msg *MsgRegisterTokenPriceQuery) GetSignBytes() []byte {
 }
 
 func (msg *MsgRegisterTokenPriceQuery) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
+		return err
 	}
 	if msg.BaseDenom == "" {
 		return errors.New("base-denom must be specified")
@@ -87,9 +87,9 @@ func (msg *MsgRegisterTokenPriceQuery) ValidateBasic() error {
 //               MsgRemoveTokenPriceQuery
 // ----------------------------------------------
 
-func NewMsgRemoveTokenPriceQuery(sender, baseDenom, quoteDenom, osmosisPoolId string) *MsgRemoveTokenPriceQuery {
+func NewMsgRemoveTokenPriceQuery(admin, baseDenom, quoteDenom, osmosisPoolId string) *MsgRemoveTokenPriceQuery {
 	return &MsgRemoveTokenPriceQuery{
-		Sender:        sender,
+		Admin:         admin,
 		BaseDenom:     baseDenom,
 		QuoteDenom:    quoteDenom,
 		OsmosisPoolId: osmosisPoolId,
@@ -105,7 +105,7 @@ func (msg MsgRemoveTokenPriceQuery) Route() string {
 }
 
 func (msg *MsgRemoveTokenPriceQuery) GetSigners() []sdk.AccAddress {
-	sender, err := sdk.AccAddressFromBech32(msg.Sender)
+	sender, err := sdk.AccAddressFromBech32(msg.Admin)
 	if err != nil {
 		panic(err)
 	}
@@ -118,8 +118,8 @@ func (msg *MsgRemoveTokenPriceQuery) GetSignBytes() []byte {
 }
 
 func (msg *MsgRemoveTokenPriceQuery) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Sender); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
+		return err
 	}
 	if msg.BaseDenom == "" {
 		return errors.New("base-denom must be specified")

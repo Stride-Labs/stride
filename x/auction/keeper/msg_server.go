@@ -37,8 +37,6 @@ func (ms msgServer) PlaceBid(goCtx context.Context, msg *types.MsgPlaceBid) (*ty
 func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuction) (*types.MsgCreateAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO check admin
-
 	_, err := ms.Keeper.GetAuction(ctx, msg.AuctionName)
 	if err == nil {
 		return nil, types.ErrAuctionAlreadyExists.Wrapf("auction with name '%s' already exists", msg.AuctionName)
@@ -68,8 +66,6 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 // CreateAuction updates an existing auction
 func (ms msgServer) UpdateAuction(goCtx context.Context, msg *types.MsgUpdateAuction) (*types.MsgUpdateAuctionResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// TODO check admin
 
 	auction, err := ms.Keeper.GetAuction(ctx, msg.AuctionName)
 	if err != nil {

@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
+
+	"github.com/Stride-Labs/stride/v24/utils"
 )
 
 const (
@@ -139,8 +141,8 @@ func (msg *MsgCreateAuction) GetSignBytes() []byte {
 }
 
 func (msg *MsgCreateAuction) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid admin address (%s)", err)
+	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
+		return err
 	}
 	if msg.AuctionName == "" {
 		return errors.New("auction-name must be specified")
@@ -218,8 +220,8 @@ func (msg *MsgUpdateAuction) GetSignBytes() []byte {
 }
 
 func (msg *MsgUpdateAuction) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
+	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
+		return err
 	}
 	if msg.AuctionName == "" {
 		return errors.New("auction-name must be specified")
