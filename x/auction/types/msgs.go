@@ -144,29 +144,16 @@ func (msg *MsgCreateAuction) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
 		return err
 	}
-	if msg.AuctionName == "" {
-		return errors.New("auction-name must be specified")
-	}
-	if _, ok := AuctionType_name[int32(msg.AuctionType)]; !ok {
-		return fmt.Errorf("auction-type %d is invalid", msg.AuctionType)
-	}
-	if msg.SellingDenom == "" {
-		return errors.New("selling-denom must be specified")
-	}
-	if msg.PaymentDenom == "" {
-		return errors.New("payment-denom must be specified")
-	}
-	if !(msg.PriceMultiplier.GT(math.LegacyZeroDec()) && msg.PriceMultiplier.LTE(math.LegacyOneDec())) {
-		return errors.New("price-multiplier must be > 0 and <= 1 (0 > priceMultiplier >= 1)")
-	}
-	if msg.MinBidAmount.LT(math.ZeroInt()) {
-		return errors.New("min-bid-amount must be >= 0")
-	}
-	if _, err := sdk.AccAddressFromBech32(msg.Beneficiary); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid beneficiary address (%s)", err)
-	}
 
-	return nil
+	return ValidateCreateAuctionParams(
+		msg.AuctionName,
+		msg.AuctionType,
+		msg.SellingDenom,
+		msg.PaymentDenom,
+		msg.PriceMultiplier,
+		msg.MinBidAmount,
+		msg.Beneficiary,
+	)
 }
 
 // ----------------------------------------------

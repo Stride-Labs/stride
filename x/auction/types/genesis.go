@@ -10,23 +10,19 @@ func DefaultGenesis() *GenesisState {
 }
 
 // Performs basic genesis state validation by iterating through all auctions and validating
-// using ValidateBasic() since it already implements thorough validation of all auction fields
+// using ValidateCreateAuctionParams()
 func (gs GenesisState) Validate() error {
 	for i, auction := range gs.Auctions {
-
-		msg := NewMsgCreateAuction(
-			"stride16eenchewedupsplt0ut600ed0ffstageeeervs", // dummy address, not stored in auction
+		err := ValidateCreateAuctionParams(
 			auction.Name,
 			auction.Type,
 			auction.SellingDenom,
 			auction.PaymentDenom,
-			auction.Enabled,
-			auction.PriceMultiplier.String(),
-			auction.MinBidAmount.Uint64(),
+			auction.PriceMultiplier,
+			auction.MinBidAmount,
 			auction.Beneficiary,
 		)
-
-		if err := msg.ValidateBasic(); err != nil {
+		if err != nil {
 			return fmt.Errorf("invalid genesis auction at index %d: %w", i, err)
 		}
 	}

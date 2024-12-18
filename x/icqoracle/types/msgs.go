@@ -64,23 +64,13 @@ func (msg *MsgRegisterTokenPriceQuery) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
 		return err
 	}
-	if msg.BaseDenom == "" {
-		return errors.New("base-denom must be specified")
-	}
-	if msg.QuoteDenom == "" {
-		return errors.New("quote-denom must be specified")
-	}
-	if _, err := strconv.ParseUint(msg.OsmosisPoolId, 10, 64); err != nil {
-		return errors.New("osmosis-pool-id must be uint64")
-	}
-	if msg.OsmosisBaseDenom == "" {
-		return errors.New("osmosis-base-denom must be specified")
-	}
-	if msg.OsmosisQuoteDenom == "" {
-		return errors.New("osmosis-quote-denom must be specified")
-	}
-
-	return nil
+	return ValidateTokenPriceQueryParams(
+		msg.BaseDenom,
+		msg.QuoteDenom,
+		msg.OsmosisPoolId,
+		msg.OsmosisBaseDenom,
+		msg.OsmosisQuoteDenom,
+	)
 }
 
 // ----------------------------------------------
