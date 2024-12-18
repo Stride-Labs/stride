@@ -16,7 +16,7 @@ information, please include it in an additional reply as an additional attachmen
 
 ### Guidelines
 We require that all researchers:
-- Abide by this policy to disclose vulnerabilities, and avoid posting vulnerability information in public places, including GitHub, Discord, Telegram, and Twitter. Make every effort to avoid privacy violations, degradation of user experience, disruption to production systems (including but not limited to the Cosmos Hub), and destruction of data.
+- Abide by this policy to disclose vulnerabilities, and avoid posting vulnerability information in public places, including GitHub, Discord, Telegram, and X. Make every effort to avoid privacy violations, degradation of user experience, disruption to production systems (including but not limited to the Cosmos Hub), and destruction of data.
 - Keep any information about vulnerabilities that you’ve discovered confidential between yourself and the Stride engineering team until the issue has been resolved and disclosed.
 - Avoid posting personally identifiable information, privately or publicly.
 

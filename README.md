@@ -2,7 +2,7 @@
 
 # Multichain Liquid Staking
 
-[Twitter](https://twitter.com/stride_zone) | [Discord](http://stride.zone/discord) | [Website](https://stride.zone/)
+[x](https://x.com/stride_zone) | [Discord](http://stride.zone/discord) | [Website](https://stride.zone/)
 ## What is Stride?
 
 
