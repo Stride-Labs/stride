@@ -41,10 +41,12 @@ var (
 	defaultBigDecPrecisionReuse = new(big.Int).Exp(big.NewInt(10), big.NewInt(BigDecPrecision), nil)
 	precisionReuseSDKDec        = new(big.Int).Exp(big.NewInt(10), big.NewInt(DecPrecision), nil)
 
+	//nolint:unused
 	bigDecDecPrecision           = new(big.Int).Mul(defaultBigDecPrecisionReuse, precisionReuseSDKDec)
 	squaredPrecisionReuse        = new(big.Int).Mul(defaultBigDecPrecisionReuse, defaultBigDecPrecisionReuse)
 	bigDecDecPrecisionFactorDiff = new(big.Int).Exp(big.NewInt(10), big.NewInt(BigDecPrecision-DecPrecision), nil)
 
+	//nolint:unused
 	tenTimesPrecision   = new(big.Int).Exp(big.NewInt(10), big.NewInt(BigDecPrecision+1), nil)
 	fivePrecision       = new(big.Int).Quo(defaultBigDecPrecisionReuse, big.NewInt(2))
 	fivePrecisionSDKDec = new(big.Int).Quo(precisionReuseSDKDec, big.NewInt(2))
@@ -52,8 +54,9 @@ var (
 	precisionMultipliers []*big.Int
 	zeroInt              = big.NewInt(0)
 	oneInt               = big.NewInt(1)
-	fiveInt              = big.NewInt(5)
-	tenInt               = big.NewInt(10)
+	//nolint:unused
+	fiveInt = big.NewInt(5)
+	tenInt  = big.NewInt(10)
 
 	// log_2(e)
 	// From: https://www.wolframalpha.com/input?i=log_2%28e%29+with+37+digits
@@ -864,6 +867,8 @@ func chopPrecisionAndRoundSdkDec(d *big.Int) *big.Int {
 
 // chopPrecisionAndRoundUpDec removes DecPrecision amount of rightmost digits and rounds up.
 // Non-mutative.
+//
+//nolint:unused
 func chopPrecisionAndRoundUpDec(d *big.Int) *big.Int {
 	copy := new(big.Int).Set(d)
 	return chopPrecisionAndRoundUpMut(copy, precisionReuseSDKDec)
