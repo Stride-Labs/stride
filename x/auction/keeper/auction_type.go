@@ -21,14 +21,14 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 	// Get token amount being auctioned off
 	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
 	balance := k.bankKeeper.GetBalance(ctx, moduleAddr, auction.SellingDenom)
-	tokenAmountAvailable := balance.Amount
+	sellingAmountAvailable := balance.Amount
 
-	// Verify auction has enough tokens to service the bid amount
-	if bid.PaymentTokenAmount.GT(tokenAmountAvailable) {
-		return fmt.Errorf("bid wants %s%s but auction has only %s%s",
-			bid.PaymentTokenAmount.String(),
+	// Verify auction has enough sellingtokens to service the bid
+	if bid.SellingTokenAmount.GT(sellingAmountAvailable) {
+		return fmt.Errorf("bid wants to buy %s%s but auction has only %s%s",
+			bid.SellingTokenAmount.String(),
 			auction.SellingDenom,
-			tokenAmountAvailable.String(),
+			sellingAmountAvailable.String(),
 			auction.SellingDenom,
 		)
 	}
