@@ -149,7 +149,10 @@ Example:
 				return err
 			}
 
-			enabled := args[1] == "true"
+			enabled, err := strconv.ParseBool(args[1])
+			if err != nil {
+				return fmt.Errorf("cannot parse enabled as bool from '%s': %w", args[1], err)
+			}
 
 			minBidAmount, err := strconv.ParseUint(args[3], 10, 64)
 			if err != nil {
