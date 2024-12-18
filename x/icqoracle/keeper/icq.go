@@ -86,7 +86,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		CallbackId:      ICQCallbackID_OsmosisClPool,
 		CallbackData:    tokenPriceBz,
 		TimeoutDuration: time.Duration(params.IcqTimeoutSec) * time.Second,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 	if err := k.icqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
 		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error submitting OsmosisClPool ICQ, error '%s'", err.Error()))
