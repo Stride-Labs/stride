@@ -42,8 +42,8 @@ importers:
         specifier: 3.3.3
         version: 3.3.3
       stridejs:
-        specifier: github:Stride-Labs/stridejs#e17c404f6451bad95ef0093f2b41244248bd7ebd
-        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e17c404f6451bad95ef0093f2b41244248bd7ebd
+        specifier: github:Stride-Labs/stridejs#e949e35
+        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e949e35
       typescript:
         specifier: 5.5.3
         version: 5.5.3
@@ -208,10 +208,6 @@ packages:
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
-
-  '@babel/runtime@7.24.8':
-    resolution: {integrity: sha512-5F7SDGs1T72ZczbRwbGO9lQi0NLjQxzl6i4lJxLxfW9U5UluCSyEJeniWvnhl3/euNiqQVbo8zruhsDfid0esA==}
-    engines: {node: '>=6.9.0'}
 
   '@babel/template@7.24.7':
     resolution: {integrity: sha512-jYqfPrU9JTF0PmPy1tLYHW4Mp4KlgxJD9l2nP9fD6yT/ICi554DmrWBAEYpIelzjHf1msDP3PxJIRt/nFNfBig==}
@@ -1587,9 +1583,6 @@ packages:
   readonly-date@1.0.0:
     resolution: {integrity: sha512-tMKIV7hlk0h4mO3JTmmVuIlJVXjKk3Sep9Bf5OH0O+758ruuVkUy2J9SttDLm91IEX/WHlXPSpxMGjPj4beMIQ==}
 
-  regenerator-runtime@0.14.1:
-    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
-
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
@@ -1676,9 +1669,9 @@ packages:
   std-env@3.7.0:
     resolution: {integrity: sha512-JPbdCEQLj1w5GilpiHAx3qJvFndqybBysA3qUOnznweH4QbNYUsW/ea8QzSrnh0vNsezMMw5bcVool8lM0gwzg==}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e17c404f6451bad95ef0093f2b41244248bd7ebd:
-    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e17c404f6451bad95ef0093f2b41244248bd7ebd}
-    version: 0.10.0-alpha
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e949e35:
+    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e949e35}
+    version: 0.11.4
 
   string-length@4.0.2:
     resolution: {integrity: sha512-+l6rNN5fYHNhZZy41RXsYptCjA2Igmq4EG7kZAYFQI1E1VTXarr6ZPXBg6eq7Y6eK4FEhY6AJlyuFIb/v/S0VQ==}
@@ -2110,10 +2103,6 @@ snapshots:
     dependencies:
       '@babel/core': 7.24.9
       '@babel/helper-plugin-utils': 7.24.8
-
-  '@babel/runtime@7.24.8':
-    dependencies:
-      regenerator-runtime: 0.14.1
 
   '@babel/template@7.24.7':
     dependencies:
@@ -3753,8 +3742,6 @@ snapshots:
 
   readonly-date@1.0.0: {}
 
-  regenerator-runtime@0.14.1: {}
-
   require-directory@2.1.1: {}
 
   resolve-cwd@3.0.0:
@@ -3838,9 +3825,8 @@ snapshots:
 
   std-env@3.7.0: {}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e17c404f6451bad95ef0093f2b41244248bd7ebd:
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e949e35:
     dependencies:
-      '@babel/runtime': 7.24.8
       '@cosmjs/amino': 0.32.4
       '@cosmjs/encoding': 0.32.4
       '@cosmjs/math': 0.32.4
