@@ -1,7 +1,5 @@
 package types
 
-import fmt "fmt"
-
 const (
 	ModuleName = "auction"
 
@@ -10,11 +8,9 @@ const (
 
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
-
-	ParamsKey        = "params"
-	KeyAuctionPrefix = "auction"
 )
 
-func AuctionKey(auctionName string) []byte {
-	return []byte(fmt.Sprintf("%s|%s", KeyAuctionPrefix, auctionName))
-}
+var (
+	ParamsKey     = []byte("params")
+	AuctionPrefix = []byte("auction")
+)

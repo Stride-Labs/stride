@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -42,8 +43,9 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // SetAuction stores auction info for a token
 func (k Keeper) SetAuction(ctx sdk.Context, auction *types.Auction) error {
-	store := ctx.KVStore(k.storeKey)
-	key := types.AuctionKey(auction.Name)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AuctionPrefix)
+	key := []byte(auction.Name)
+
 	bz, err := k.cdc.Marshal(auction)
 	if err != nil {
 		return fmt.Errorf("error setting auction for name='%s': %w", auction.Name, err)
@@ -55,8 +57,8 @@ func (k Keeper) SetAuction(ctx sdk.Context, auction *types.Auction) error {
 
 // GetAuction retrieves auction info for a token
 func (k Keeper) GetAuction(ctx sdk.Context, name string) (*types.Auction, error) {
-	store := ctx.KVStore(k.storeKey)
-	key := types.AuctionKey(name)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AuctionPrefix)
+	key := []byte(name)
 
 	bz := store.Get(key)
 	if bz == nil {
@@ -73,8 +75,8 @@ func (k Keeper) GetAuction(ctx sdk.Context, name string) (*types.Auction, error)
 
 // GetAllAuctions retrieves all stored auctions
 func (k Keeper) GetAllAuctions(ctx sdk.Context) []types.Auction {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(types.KeyAuctionPrefix))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AuctionPrefix)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(types.AuctionPrefix))
 	defer iterator.Close()
 
 	auctions := []types.Auction{}
