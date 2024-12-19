@@ -38,19 +38,19 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 		return err
 	}
 
-	discountedPrice := price.Mul(auction.PriceMultiplier)
+	bidsFloorPrice := price.Mul(auction.MinPriceMultiplier)
 
 	if bid.SellingTokenAmount.ToLegacyDec().
-		Mul(discountedPrice).
+		Mul(bidsFloorPrice).
 		LT(bid.PaymentTokenAmount.ToLegacyDec()) {
-		return fmt.Errorf("bid price too low: offered %s%s for %s%s, minimum required is %s%s (price=%s %s/%s)",
+		return fmt.Errorf("bid price too low: offered %s%s for %s%s, bids floor price is %s%s (price=%s %s/%s)",
 			bid.PaymentTokenAmount.String(),
 			auction.PaymentDenom,
 			bid.SellingTokenAmount.String(),
 			auction.SellingDenom,
-			bid.SellingTokenAmount.ToLegacyDec().Mul(discountedPrice).String(),
+			bid.SellingTokenAmount.ToLegacyDec().Mul(bidsFloorPrice).String(),
 			auction.PaymentDenom,
-			discountedPrice.String(),
+			bidsFloorPrice.String(),
 			auction.PaymentDenom,
 			auction.SellingDenom,
 		)
@@ -106,7 +106,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 			sdk.NewAttribute(types.AttributeKeyPaymentDenom, auction.PaymentDenom),
 			sdk.NewAttribute(types.AttributeKeySellingAmount, bid.SellingTokenAmount.String()),
 			sdk.NewAttribute(types.AttributeKeySellingDenom, auction.SellingDenom),
-			sdk.NewAttribute(types.AttributeKeyPrice, discountedPrice.String()),
+			sdk.NewAttribute(types.AttributeKeyPrice, bidsFloorPrice.String()),
 		),
 	)
 

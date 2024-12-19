@@ -18,7 +18,7 @@ func (gs GenesisState) Validate() error {
 			auction.Type,
 			auction.SellingDenom,
 			auction.PaymentDenom,
-			auction.PriceMultiplier,
+			auction.MinPriceMultiplier,
 			auction.MinBidAmount,
 			auction.Beneficiary,
 		)

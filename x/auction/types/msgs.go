@@ -97,25 +97,25 @@ func NewMsgCreateAuction(
 	sellingDenom string,
 	paymentDenom string,
 	enabled bool,
-	priceMultiplier string,
+	minPriceMultiplier string,
 	minBidAmount uint64,
 	beneficiary string,
 ) *MsgCreateAuction {
-	priceMultiplierDec, err := math.LegacyNewDecFromStr(priceMultiplier)
+	minPriceMultiplierDec, err := math.LegacyNewDecFromStr(minPriceMultiplier)
 	if err != nil {
-		panic(fmt.Sprintf("cannot parse LegacyDecimal from priceMultiplier '%s'", priceMultiplier))
+		panic(fmt.Sprintf("cannot parse LegacyDecimal from minPriceMultiplier '%s'", minPriceMultiplier))
 	}
 
 	return &MsgCreateAuction{
-		Admin:           admin,
-		AuctionName:     auctionName,
-		AuctionType:     auctionType,
-		SellingDenom:    sellingDenom,
-		PaymentDenom:    paymentDenom,
-		Enabled:         enabled,
-		PriceMultiplier: priceMultiplierDec,
-		MinBidAmount:    math.NewIntFromUint64(minBidAmount),
-		Beneficiary:     beneficiary,
+		Admin:              admin,
+		AuctionName:        auctionName,
+		AuctionType:        auctionType,
+		SellingDenom:       sellingDenom,
+		PaymentDenom:       paymentDenom,
+		Enabled:            enabled,
+		MinPriceMultiplier: minPriceMultiplierDec,
+		MinBidAmount:       math.NewIntFromUint64(minBidAmount),
+		Beneficiary:        beneficiary,
 	}
 }
 
@@ -150,7 +150,7 @@ func (msg *MsgCreateAuction) ValidateBasic() error {
 		msg.AuctionType,
 		msg.SellingDenom,
 		msg.PaymentDenom,
-		msg.PriceMultiplier,
+		msg.MinPriceMultiplier,
 		msg.MinBidAmount,
 		msg.Beneficiary,
 	)
@@ -165,23 +165,23 @@ func NewMsgUpdateAuction(
 	auctionName string,
 	auctionType AuctionType,
 	enabled bool,
-	priceMultiplier string,
+	minPriceMultiplier string,
 	minBidAmount uint64,
 	beneficiary string,
 ) *MsgUpdateAuction {
-	priceMultiplierDec, err := math.LegacyNewDecFromStr(priceMultiplier)
+	minPriceMultiplierDec, err := math.LegacyNewDecFromStr(minPriceMultiplier)
 	if err != nil {
-		panic(fmt.Sprintf("cannot parse LegacyDecimal from priceMultiplier '%s'", priceMultiplier))
+		panic(fmt.Sprintf("cannot parse LegacyDecimal from minPriceMultiplier '%s'", minPriceMultiplier))
 	}
 
 	return &MsgUpdateAuction{
-		Admin:           admin,
-		AuctionName:     auctionName,
-		AuctionType:     auctionType,
-		Enabled:         enabled,
-		PriceMultiplier: priceMultiplierDec,
-		MinBidAmount:    math.NewIntFromUint64(minBidAmount),
-		Beneficiary:     beneficiary,
+		Admin:              admin,
+		AuctionName:        auctionName,
+		AuctionType:        auctionType,
+		Enabled:            enabled,
+		MinPriceMultiplier: minPriceMultiplierDec,
+		MinBidAmount:       math.NewIntFromUint64(minBidAmount),
+		Beneficiary:        beneficiary,
 	}
 }
 
@@ -216,8 +216,8 @@ func (msg *MsgUpdateAuction) ValidateBasic() error {
 	if _, ok := AuctionType_name[int32(msg.AuctionType)]; !ok {
 		return errors.New("auction-type is invalid")
 	}
-	if msg.PriceMultiplier.IsZero() {
-		return errors.New("price-multiplier cannot be 0")
+	if msg.MinPriceMultiplier.IsZero() {
+		return errors.New("min-price-multiplier cannot be 0")
 	}
 	if msg.MinBidAmount.LT(math.ZeroInt()) {
 		return errors.New("min-bid-amount must be at least 0")

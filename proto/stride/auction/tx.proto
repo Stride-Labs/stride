@@ -75,8 +75,9 @@ message MsgCreateAuction {
   // Whether auction is active
   bool enabled = 6;
 
-  // Price multiplier (e.g. 0.95 for 5% discount)
-  string price_multiplier = 7 [
+  // Minimum price multiplier (e.g. 0.95 for 5% discount off the oracle price)
+  // bids_floor_price = oracle_price * min_price_multiplier
+  string min_price_multiplier = 7 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
@@ -109,8 +110,9 @@ message MsgUpdateAuction {
   // Whether auction is active
   bool enabled = 4;
 
-  // Price multiplier (e.g. 0.95 for 5% discount)
-  string price_multiplier = 5 [
+  // Minimum price multiplier (e.g. 0.95 for 5% discount off the oracle price)
+  // bids_floor_price = oracle_price * min_price_multiplier
+  string min_price_multiplier = 5 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];

@@ -15,7 +15,7 @@ func ValidateCreateAuctionParams(
 	auctionType AuctionType,
 	sellingDenom string,
 	paymentDenom string,
-	priceMultiplier math.LegacyDec,
+	minPriceMultiplier math.LegacyDec,
 	minBidAmount math.Int,
 	beneficiary string,
 ) error {
@@ -31,8 +31,8 @@ func ValidateCreateAuctionParams(
 	if paymentDenom == "" {
 		return errors.New("payment-denom must be specified")
 	}
-	if !(priceMultiplier.GT(math.LegacyZeroDec()) && priceMultiplier.LTE(math.LegacyOneDec())) {
-		return errors.New("price-multiplier must be > 0 and <= 1 (0 > priceMultiplier >= 1)")
+	if !(minPriceMultiplier.GT(math.LegacyZeroDec()) && minPriceMultiplier.LTE(math.LegacyOneDec())) {
+		return errors.New("min-price-multiplier must be > 0 and <= 1 (0 > minPriceMultiplier >= 1)")
 	}
 	if minBidAmount.LT(math.ZeroInt()) {
 		return errors.New("min-bid-amount must be >= 0")

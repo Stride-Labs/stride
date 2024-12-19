@@ -48,7 +48,7 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 		SellingDenom:              msg.SellingDenom,
 		PaymentDenom:              msg.PaymentDenom,
 		Enabled:                   msg.Enabled,
-		PriceMultiplier:           msg.PriceMultiplier,
+		MinPriceMultiplier:        msg.MinPriceMultiplier,
 		MinBidAmount:              msg.MinBidAmount,
 		Beneficiary:               msg.Beneficiary,
 		TotalPaymentTokenReceived: math.ZeroInt(),
@@ -75,7 +75,7 @@ func (ms msgServer) UpdateAuction(goCtx context.Context, msg *types.MsgUpdateAuc
 	auction.Type = msg.AuctionType
 	auction.Enabled = msg.Enabled
 	auction.MinBidAmount = msg.MinBidAmount
-	auction.PriceMultiplier = msg.PriceMultiplier
+	auction.MinPriceMultiplier = msg.MinPriceMultiplier
 	auction.Beneficiary = msg.Beneficiary
 
 	err = ms.Keeper.SetAuction(ctx, auction)
