@@ -133,6 +133,10 @@ import (
 	auctionkeeper "github.com/Stride-Labs/stride/v24/x/auction/keeper"
 	auctiontypes "github.com/Stride-Labs/stride/v24/x/auction/types"
 
+	"github.com/Stride-Labs/stride/v24/x/strdburner"
+	strdburnerkeeper "github.com/Stride-Labs/stride/v24/x/strdburner/keeper"
+	strdburnertypes "github.com/Stride-Labs/stride/v24/x/strdburner/types"
+
 	"github.com/Stride-Labs/stride/v24/x/autopilot"
 	autopilotkeeper "github.com/Stride-Labs/stride/v24/x/autopilot/keeper"
 	autopilottypes "github.com/Stride-Labs/stride/v24/x/autopilot/types"
@@ -245,6 +249,7 @@ var (
 		airdrop.AppModuleBasic{},
 		icqoracle.AppModuleBasic{},
 		auction.AppModuleBasic{},
+		strdburner.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -269,6 +274,10 @@ var (
 		stakedymtypes.ModuleName:                      {authtypes.Minter, authtypes.Burner},
 		stakedymtypes.FeeAddress:                      nil,
 		wasmtypes.ModuleName:                          {authtypes.Burner},
+		icqoracletypes.ModuleName:                     nil,
+		auctiontypes.ModuleName:                       nil,
+		// strdburner module needs burn access to burn STRD tokens that are sent to it
+		strdburnertypes.ModuleName: {authtypes.Burner},
 	}
 )
 
@@ -359,6 +368,7 @@ type StrideApp struct {
 	AirdropKeeper         airdropkeeper.Keeper
 	ICQOracleKeeper       icqoraclekeeper.Keeper
 	AuctionKeeper         auctionkeeper.Keeper
+	StrdburnerKeeper      strdburnerkeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -417,6 +427,7 @@ func NewStrideApp(
 		airdroptypes.StoreKey,
 		icqoracletypes.StoreKey,
 		auctiontypes.StoreKey,
+		strdburnertypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -785,6 +796,14 @@ func NewStrideApp(
 	)
 	auctionModule := auction.NewAppModule(appCodec, app.AuctionKeeper)
 
+	app.StrdburnerKeeper = *strdburnerkeeper.NewKeeper(
+		appCodec,
+		keys[strdburnertypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+	)
+	strdburnerModule := strdburner.NewAppModule(appCodec, app.StrdburnerKeeper)
+
 	// Register Gov (must be registered after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
@@ -964,6 +983,7 @@ func NewStrideApp(
 		stakeTiaModule,
 		icqOracleModule,
 		auctionModule,
+		strdburnerModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -1011,6 +1031,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		strdburnertypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -1054,6 +1075,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		strdburnertypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1102,6 +1124,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		strdburnertypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
