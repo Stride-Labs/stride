@@ -368,7 +368,7 @@ type StrideApp struct {
 	AirdropKeeper         airdropkeeper.Keeper
 	ICQOracleKeeper       icqoraclekeeper.Keeper
 	AuctionKeeper         auctionkeeper.Keeper
-	StrdburnerKeeper      strdburnerkeeper.Keeper
+	StrdBurnerKeeper      strdburnerkeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -796,13 +796,13 @@ func NewStrideApp(
 	)
 	auctionModule := auction.NewAppModule(appCodec, app.AuctionKeeper)
 
-	app.StrdburnerKeeper = *strdburnerkeeper.NewKeeper(
+	app.StrdBurnerKeeper = *strdburnerkeeper.NewKeeper(
 		appCodec,
 		keys[strdburnertypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
 	)
-	strdburnerModule := strdburner.NewAppModule(appCodec, app.StrdburnerKeeper)
+	strdburnerModule := strdburner.NewAppModule(appCodec, app.StrdBurnerKeeper)
 
 	// Register Gov (must be registered after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()

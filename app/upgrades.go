@@ -34,6 +34,7 @@ import (
 	v22 "github.com/Stride-Labs/stride/v24/app/upgrades/v22"
 	v23 "github.com/Stride-Labs/stride/v24/app/upgrades/v23"
 	v24 "github.com/Stride-Labs/stride/v24/app/upgrades/v24"
+	v25 "github.com/Stride-Labs/stride/v24/app/upgrades/v25"
 	v3 "github.com/Stride-Labs/stride/v24/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v24/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v24/app/upgrades/v5"
@@ -46,6 +47,9 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v24/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
 	icaoracletypes "github.com/Stride-Labs/stride/v24/x/icaoracle/types"
+	auctiontypes "github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+	icqoracletypes "github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+	strdburnertypes "github.com/Stride-Labs/stride/v24/x/icqoracle/types"
 	recordtypes "github.com/Stride-Labs/stride/v24/x/records/types"
 	stakedymtypes "github.com/Stride-Labs/stride/v24/x/stakedym/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
@@ -324,6 +328,16 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v25 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v25.UpgradeName,
+		v25.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.ICQOracleKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -384,6 +398,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v23":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ibcwasmtypes.ModuleName, airdroptypes.ModuleName},
+		}
+	case "v25":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{icqoracletypes.ModuleName, strdburnertypes.ModuleName, auctiontypes.ModuleName},
 		}
 	}
 
