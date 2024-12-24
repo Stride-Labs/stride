@@ -33,16 +33,19 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 		)
 	}
 
+	// Note: price converts SellingToken to PaymentToken
+	// Any calculation down the road makes sense only if price is multiplied by a derivative of SellingToken
 	price, err := k.icqoracleKeeper.GetTokenPriceForQuoteDenom(ctx, auction.SellingDenom, auction.PaymentDenom)
 	if err != nil {
 		return err
 	}
 
+	// Apply MinPriceMultiplier
 	bidsFloorPrice := price.Mul(auction.MinPriceMultiplier)
 
-	if bid.SellingTokenAmount.ToLegacyDec().
-		Mul(bidsFloorPrice).
-		LT(bid.PaymentTokenAmount.ToLegacyDec()) {
+	// if paymentAmount < sellingAmount * bidsFloorPrice
+	if bid.PaymentTokenAmount.ToLegacyDec().LT(bid.SellingTokenAmount.ToLegacyDec().
+		Mul(bidsFloorPrice)) {
 		return fmt.Errorf("bid price too low: offered %s%s for %s%s, bids floor price is %s%s (price=%s %s/%s)",
 			bid.PaymentTokenAmount.String(),
 			auction.PaymentDenom,
