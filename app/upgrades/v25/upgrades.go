@@ -25,9 +25,9 @@ func CreateUpgradeHandler(
 		err := icqoracleKeeper.SetParams(ctx, icqoracletypes.Params{
 			OsmosisChainId:            "osmosis-1",
 			OsmosisConnectionId:       "connection-2",
-			UpdateIntervalSec:         5 * 60, // 5 min
-			PriceExpirationTimeoutSec: 5 * 60, // 5 min
-			IcqTimeoutSec:             2 * 60, // 2 min
+			UpdateIntervalSec:         5 * 60,  // 5 min
+			PriceExpirationTimeoutSec: 10 * 60, // 10 min
+			IcqTimeoutSec:             2 * 60,  // 2 min
 		})
 		if err != nil {
 			panic(fmt.Errorf("unable to set icqoracle params: %w", err))
