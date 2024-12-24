@@ -133,6 +133,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 
 	tokenPrice.SpotPrice = newSpotPrice
 	tokenPrice.QueryInProgress = false
+	tokenPrice.UpdatedAt = ctx.BlockTime()
 
 	if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
 		return errorsmod.Wrap(err, "Error updating spot price from query response")
