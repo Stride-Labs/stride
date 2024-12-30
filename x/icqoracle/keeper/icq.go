@@ -97,7 +97,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		return err
 	}
 
-	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice, true); err != nil {
+	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, true); err != nil {
 		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error updating queryInProgress=true, error '%s'", err.Error()))
 		return err
 	}
@@ -114,7 +114,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisClPool",
 		"Starting OsmosisClPool ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
-	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
+	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error getting current spot price")
 	}

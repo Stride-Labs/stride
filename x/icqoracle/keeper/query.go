@@ -20,12 +20,8 @@ func (k Keeper) TokenPrice(goCtx context.Context, req *types.QueryTokenPriceRequ
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	tokenPrice := types.TokenPrice{
-		BaseDenom:     req.BaseDenom,
-		QuoteDenom:    req.QuoteDenom,
-		OsmosisPoolId: req.PoolId,
-	}
-	price, err := k.GetTokenPrice(ctx, tokenPrice)
+
+	price, err := k.GetTokenPrice(ctx, req.BaseDenom, req.QuoteDenom, req.PoolId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
