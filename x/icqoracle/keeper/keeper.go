@@ -146,21 +146,28 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 		return math.LegacyDec{}, fmt.Errorf("no price for '%s'", baseDenom)
 	}
 
-	// Get all price for quoteToken
-	quoteTokenPrices, err := k.GetTokenPricesByDenom(ctx, quoteDenom)
-	if err != nil {
-		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
-	}
-	if len(quoteTokenPrices) == 0 {
-		return math.LegacyDec{}, fmt.Errorf("no price for '%s'", quoteDenom)
-	}
-
 	// Get price expiration timeout
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		return math.LegacyDec{}, fmt.Errorf("error getting params: %w", err)
 	}
 	priceExpirationTimeoutSec := int64(params.PriceExpirationTimeoutSec)
+
+	// Check if baseDenom already has a price for quoteDenom
+	foundAlreadyHasStalePrice := false
+	if price, ok := baseTokenPrices[quoteDenom]; ok {
+		if ctx.BlockTime().Unix()-price.UpdatedAt.Unix() <= priceExpirationTimeoutSec {
+			return price.SpotPrice, nil
+		} else {
+			foundAlreadyHasStalePrice = true
+		}
+	}
+
+	// Get all price for quoteToken
+	quoteTokenPrices, err := k.GetTokenPricesByDenom(ctx, quoteDenom)
+	if err != nil {
+		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
+	}
 
 	// Init price
 	price = math.LegacyZeroDec()
@@ -195,7 +202,6 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 				// Calculate the price of 1 baseToken in quoteToken
 				price = baseTokenPrice.SpotPrice.Quo(quoteTokenPrice.SpotPrice)
-
 				break
 			}
 		}
@@ -203,13 +209,14 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 	if price.IsZero() {
 		return math.LegacyDec{}, fmt.Errorf(
-			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v')",
+			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v', foundAlreadyHasStalePrice='%v')",
 			baseDenom,
 			quoteDenom,
 			foundCommonQuoteToken,
 			foundBaseTokenStalePrice,
 			foundQuoteTokenStalePrice,
 			foundQuoteTokenZeroPrice,
+			foundAlreadyHasStalePrice,
 		)
 	}
 
@@ -218,9 +225,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 // GetAllTokenPrices retrieves all stored token prices
 func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
-
-	iterator := sdk.KVStorePrefixIterator(store, []byte(types.PriceQueryPrefix))
+	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), []byte(types.PriceQueryPrefix))
 	defer iterator.Close()
 
 	prices := []types.TokenPrice{}
