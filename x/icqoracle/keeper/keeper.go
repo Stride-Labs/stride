@@ -11,15 +11,13 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	interchainquerykeeper "github.com/Stride-Labs/stride/v24/x/interchainquery/keeper"
-
 	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
 )
 
 type Keeper struct {
 	cdc       codec.Codec
 	storeKey  storetypes.StoreKey
-	icqKeeper interchainquerykeeper.Keeper
+	IcqKeeper types.IcqKeeper
 }
 
 func NewKeeper(

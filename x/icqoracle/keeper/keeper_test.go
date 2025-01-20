@@ -3,19 +3,34 @@ package keeper_test
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v24/app/apptesting"
 	"github.com/Stride-Labs/stride/v24/x/icqoracle/keeper"
 	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+	icqtypes "github.com/Stride-Labs/stride/v24/x/interchainquery/types"
 )
 
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
+	mockICQKeeper MockICQKeeper
 }
 
+// Helper function to setup keeper with mock ICQ keeper
+func (s *KeeperTestSuite) SetupMockICQKeeper() {
+	mockICQKeeper := MockICQKeeper{
+		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, prove bool) error {
+			return nil
+		},
+	}
+	s.App.ICQOracleKeeper.IcqKeeper = mockICQKeeper
+}
+
+// Modify SetupTest to include mock setup
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
+	s.SetupMockICQKeeper()
 }
 
 // Dynamically gets the MsgServer for this module's keeper
