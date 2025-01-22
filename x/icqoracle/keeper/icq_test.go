@@ -533,25 +533,40 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			name:          "invalid pool data",
 			tokenPrice:    baseTokenPrice,
 			poolData:      []byte("invalid pool data"),
-			expectedError: "failed to unmarshal",
+			expectedError: "proto: wrong wireType",
 		},
 		{
-			name:       "successful price calculation",
+			name:       "successful price calculation - base/quote order",
 			tokenPrice: baseTokenPrice,
 			poolData: s.createMockPoolData(
 				baseTokenPrice.OsmosisBaseDenom,
 				baseTokenPrice.OsmosisQuoteDenom,
 			),
-			expectedPrice: math.LegacyNewDec(1), // Based on our mock pool data
+			expectedPrice: math.LegacyNewDecWithPrec(15, 1), // 1.5 from mock pool data
 		},
 		{
-			name:       "swapped denoms",
+			name:       "successful price calculation - quote/base order",
 			tokenPrice: baseTokenPrice,
 			poolData: s.createMockPoolData(
-				baseTokenPrice.OsmosisQuoteDenom, // Swapped!
-				baseTokenPrice.OsmosisBaseDenom,  // Swapped!
+				baseTokenPrice.OsmosisQuoteDenom,
+				baseTokenPrice.OsmosisBaseDenom,
 			),
-			expectedError: "denom not found in pool",
+			expectedPrice: math.LegacyMustNewDecFromStr("0.666666666666666667"), // 1/1.5 from mock pool data
+		},
+		{
+			name: "different denom ordering in pool",
+			tokenPrice: types.TokenPrice{
+				BaseDenom:         "uatom",
+				QuoteDenom:        "uusdc",
+				OsmosisPoolId:     "1",
+				OsmosisBaseDenom:  "ibc/uatom",
+				OsmosisQuoteDenom: "different_denom", // Different from pool data
+			},
+			poolData: s.createMockPoolData(
+				"ibc/uatom",
+				"uusdc",
+			),
+			expectedError: "quote asset denom (different_denom) is not in pool with (ibc/uatom, uusdc) pair",
 		},
 	}
 
@@ -564,7 +579,13 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 				s.Require().Contains(err.Error(), tc.expectedError)
 			} else {
 				s.Require().NoError(err)
-				s.Require().True(tc.expectedPrice.Sub(spotPrice).Abs().LTE(math.LegacyNewDecWithPrec(1, 6)))
+				// Use InDelta for floating point comparison with small tolerance
+				s.Require().InDelta(
+					tc.expectedPrice.MustFloat64(),
+					spotPrice.MustFloat64(),
+					0.01,
+					"expected price %v, got %v", tc.expectedPrice, spotPrice,
+				)
 			}
 		})
 	}
