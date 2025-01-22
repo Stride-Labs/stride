@@ -787,6 +787,12 @@ func NewStrideApp(
 	)
 	icqOracleModule := icqoracle.NewAppModule(appCodec, app.ICQOracleKeeper)
 
+	// Register ICQ callbacks
+	err = app.InterchainqueryKeeper.SetCallbackHandler(icqoracletypes.ModuleName, app.ICQOracleKeeper.ICQCallbackHandler())
+	if err != nil {
+		return nil
+	}
+
 	app.AuctionKeeper = *auctionkeeper.NewKeeper(
 		appCodec,
 		keys[auctiontypes.StoreKey],

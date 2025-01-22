@@ -126,7 +126,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	}
 
 	// Unmarshal the query response args to determine the balance
-	newSpotPrice, err := unmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
+	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
@@ -142,7 +142,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	return nil
 }
 
-func unmarshalSpotPriceFromOsmosisClPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
+func UnmarshalSpotPriceFromOsmosisClPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
 	var pool deps.OsmosisConcentratedLiquidityPool
 	if err := proto.Unmarshal(queryResponseBz, &pool); err != nil {
 		return math.LegacyZeroDec(), err
