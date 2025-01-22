@@ -484,6 +484,183 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 				s.Require().InDelta(1/1.5, tokenPrice.SpotPrice.MustFloat64(), 0.01) // inversed price
 			},
 		},
+		{
+			name: "empty query callback data",
+			setup: func() ([]byte, icqtypes.Query) {
+				return []byte{}, icqtypes.Query{
+					CallbackData: []byte{},
+				}
+			},
+			expectedError: "price not found for baseDenom='' quoteDenom='' poolId=''",
+		},
+		{
+			name: "nil query callback data",
+			setup: func() ([]byte, icqtypes.Query) {
+				return []byte{}, icqtypes.Query{
+					CallbackData: nil,
+				}
+			},
+			expectedError: "price not found for baseDenom='' quoteDenom='' poolId=''",
+		},
+		{
+			name: "corrupted token price in callback data",
+			setup: func() ([]byte, icqtypes.Query) {
+				// Create corrupted protobuf data
+				corruptedData := []byte{0xFF, 0xFF, 0xFF, 0xFF}
+				return []byte{}, icqtypes.Query{
+					CallbackData: corruptedData,
+				}
+			},
+			expectedError: "Error deserializing query.CallbackData",
+		},
+		{
+			name: "empty pool response data",
+			setup: func() ([]byte, icqtypes.Query) {
+				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+				s.Require().NoError(err)
+
+				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
+				s.Require().NoError(err)
+
+				return []byte{}, icqtypes.Query{
+					CallbackData: tokenPriceBz,
+				}
+			},
+			expectedError: "Error determining spot price from query response",
+		},
+		{
+			name: "nil pool response data",
+			setup: func() ([]byte, icqtypes.Query) {
+				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+				s.Require().NoError(err)
+
+				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
+				s.Require().NoError(err)
+
+				return nil, icqtypes.Query{
+					CallbackData: tokenPriceBz,
+				}
+			},
+			expectedError: "Error determining spot price from query response",
+		},
+		{
+			name: "corrupted pool response data",
+			setup: func() ([]byte, icqtypes.Query) {
+				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+				s.Require().NoError(err)
+
+				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
+				s.Require().NoError(err)
+
+				// Create corrupted protobuf data
+				corruptedPoolData := []byte{0xFF, 0xFF, 0xFF, 0xFF}
+				return corruptedPoolData, icqtypes.Query{
+					CallbackData: tokenPriceBz,
+				}
+			},
+			expectedError: "Error determining spot price from query response",
+		},
+		{
+			name: "pool with empty tokens",
+			setup: func() ([]byte, icqtypes.Query) {
+				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+				s.Require().NoError(err)
+
+				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
+				s.Require().NoError(err)
+
+				// Create pool with empty token denoms
+				pool := deps.OsmosisConcentratedLiquidityPool{
+					Token0:           "",
+					Token1:           "",
+					CurrentSqrtPrice: osmomath.NewBigDecWithPrec(1224744871, 9),
+				}
+				poolBz, err := proto.Marshal(&pool)
+				s.Require().NoError(err)
+
+				return poolBz, icqtypes.Query{
+					CallbackData: tokenPriceBz,
+				}
+			},
+			expectedError: "Error determining spot price from query response",
+		},
+		{
+			name: "pool with invalid sqrt price",
+			setup: func() ([]byte, icqtypes.Query) {
+				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+				s.Require().NoError(err)
+
+				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
+				s.Require().NoError(err)
+
+				// Create pool with invalid sqrt price
+				pool := deps.OsmosisConcentratedLiquidityPool{
+					Token0:           baseTokenPrice.OsmosisBaseDenom,
+					Token1:           baseTokenPrice.OsmosisQuoteDenom,
+					CurrentSqrtPrice: osmomath.NewBigDec(0), // Invalid sqrt price of 0
+				}
+				poolBz, err := proto.Marshal(&pool)
+				s.Require().NoError(err)
+
+				return poolBz, icqtypes.Query{
+					CallbackData: tokenPriceBz,
+				}
+			},
+			expectedError: "zero sqrt price",
+		},
+		{
+			name: "pool with invalid inverse sqrt price",
+			setup: func() ([]byte, icqtypes.Query) {
+				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+				s.Require().NoError(err)
+
+				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
+				s.Require().NoError(err)
+
+				// Create pool with invalid sqrt price
+				pool := deps.OsmosisConcentratedLiquidityPool{
+					Token0:           baseTokenPrice.OsmosisQuoteDenom,
+					Token1:           baseTokenPrice.OsmosisBaseDenom,
+					CurrentSqrtPrice: osmomath.NewBigDec(0), // Invalid sqrt price of 0
+				}
+				poolBz, err := proto.Marshal(&pool)
+				s.Require().NoError(err)
+
+				return poolBz, icqtypes.Query{
+					CallbackData: tokenPriceBz,
+				}
+			},
+			expectedError: "zero sqrt price",
+		},
+		{
+			name: "error setting updated token price",
+			setup: func() ([]byte, icqtypes.Query) {
+				// First set the token price
+				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+				s.Require().NoError(err)
+
+				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
+				s.Require().NoError(err)
+
+				// Create valid pool data
+				poolData := s.createMockPoolData(
+					baseTokenPrice.OsmosisBaseDenom,
+					baseTokenPrice.OsmosisQuoteDenom,
+				)
+
+				// Remove the token price from state right before setting the updated price
+				s.App.ICQOracleKeeper.RemoveTokenPrice(s.Ctx, baseTokenPrice.BaseDenom, baseTokenPrice.QuoteDenom, baseTokenPrice.OsmosisPoolId)
+
+				return poolData, icqtypes.Query{
+					CallbackData: tokenPriceBz,
+				}
+			},
+			expectedError: fmt.Sprintf(
+				"price not found for baseDenom='%s' quoteDenom='%s' poolId='%s'",
+				baseTokenPrice.BaseDenom,
+				baseTokenPrice.QuoteDenom,
+				baseTokenPrice.OsmosisPoolId),
+		},
 	}
 
 	for _, tc := range testCases {

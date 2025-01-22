@@ -24,6 +24,9 @@ func (p OsmosisConcentratedLiquidityPool) SpotPrice(quoteAssetDenom string, base
 	if quoteAssetDenom != p.Token0 && quoteAssetDenom != p.Token1 {
 		return math.LegacyDec{}, fmt.Errorf("quote asset denom (%s) is not in pool with (%s, %s) pair", quoteAssetDenom, p.Token0, p.Token1)
 	}
+	if p.CurrentSqrtPrice.IsZero() {
+		return math.LegacyDec{}, fmt.Errorf("zero sqrt price would result in either a zero spot price or division by zero when calculating the inverse price")
+	}
 
 	priceSquared := p.CurrentSqrtPrice.PowerInteger(2)
 	// The reason why we convert the result to Dec and then back to BigDec is to temporarily
