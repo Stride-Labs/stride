@@ -206,77 +206,77 @@ func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
 		"query in progress should remain false when ICQ submission fails")
 }
 
-// func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
-// 	var submittedQueries int
+func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
+	var submittedQueries int
 
-// 	// Setup mock ICQ keeper to count submitted queries
-// 	s.mockICQKeeper = MockICQKeeper{
-// 		SubmitICQRequest: func(ctx sdk.Context, query types.Query, forceUnique bool) error {
-// 			submittedQueries++
-// 			return nil
-// 		},
-// 	}
-// 	s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
+	// Setup mock ICQ keeper to count submitted queries
+	mockICQKeeper := MockICQKeeper{
+		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
+			submittedQueries++
+			return nil
+		},
+	}
+	s.App.ICQOracleKeeper.IcqKeeper = mockICQKeeper
 
-// 	// Set params
-// 	params := types.Params{
-// 		UpdateIntervalSec: 60,
-// 		IcqTimeoutSec:     30,
-// 	}
-// 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-// 	s.Require().NoError(err)
+	// Set params
+	params := types.Params{
+		UpdateIntervalSec: 60,
+		IcqTimeoutSec:     30,
+	}
+	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
+	s.Require().NoError(err)
 
-// 	now := time.Now().UTC()
-// 	oldTime := now.Add(-2 * time.Minute)
+	now := time.Now().UTC()
+	staleTime := now.Add(-2 * time.Minute)
 
-// 	// Create multiple token prices
-// 	tokenPrices := []types.TokenPrice{
-// 		{
-// 			BaseDenom:     "uatom",
-// 			QuoteDenom:    "uusdc",
-// 			OsmosisPoolId: "1",
-// 			UpdatedAt:     oldTime,
-// 		},
-// 		{
-// 			BaseDenom:     "uosmo",
-// 			QuoteDenom:    "uusdc",
-// 			OsmosisPoolId: "2",
-// 			UpdatedAt:     oldTime,
-// 		},
-// 		{
-// 			BaseDenom:       "ustrd",
-// 			QuoteDenom:      "uusdc",
-// 			OsmosisPoolId:   "3",
-// 			UpdatedAt:       oldTime,
-// 			QueryInProgress: true, // Should skip this one
-// 		},
-// 	}
+	// Create multiple token prices
+	tokenPrices := []types.TokenPrice{
+		{
+			BaseDenom:     "uatom",
+			QuoteDenom:    "uusdc",
+			OsmosisPoolId: "1",
+			UpdatedAt:     staleTime,
+		},
+		{
+			BaseDenom:     "uosmo",
+			QuoteDenom:    "uusdc",
+			OsmosisPoolId: "2",
+			UpdatedAt:     staleTime,
+		},
+		{
+			BaseDenom:       "ustrd",
+			QuoteDenom:      "uusdc",
+			OsmosisPoolId:   "3",
+			UpdatedAt:       staleTime,
+			QueryInProgress: true, // Should skip this one
+		},
+	}
 
-// 	// Store all token prices
-// 	for _, tp := range tokenPrices {
-// 		err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tp)
-// 		s.Require().NoError(err)
-// 	}
+	// Store all token prices
+	for _, tp := range tokenPrices {
+		err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tp)
+		s.Require().NoError(err)
+	}
 
-// 	// Set block time
-// 	s.Ctx = s.Ctx.WithBlockTime(now)
+	// Set block time
+	s.Ctx = s.Ctx.WithBlockTime(now)
 
-// 	// Run BeginBlocker
-// 	s.App.ICQOracleKeeper.BeginBlocker(s.Ctx)
+	// Run BeginBlocker
+	s.App.ICQOracleKeeper.BeginBlocker(s.Ctx)
 
-// 	// Verify number of submitted queries
-// 	s.Require().Equal(2, submittedQueries,
-// 		"expected 2 ICQ queries to be submitted (skipping the one in progress)")
+	// Verify number of submitted queries
+	s.Require().Equal(2, submittedQueries,
+		"expected 2 ICQ queries to be submitted (skipping the one in progress)")
 
-// 	// Verify query in progress flags
-// 	for _, tp := range tokenPrices {
-// 		updatedPrice := s.MustGetTokenPrice(tp.BaseDenom, tp.QuoteDenom, tp.OsmosisPoolId)
-// 		if tp.QueryInProgress {
-// 			s.Require().True(updatedPrice.QueryInProgress,
-// 				"query in progress should remain true for token that was already updating")
-// 		} else {
-// 			s.Require().True(updatedPrice.QueryInProgress,
-// 				"query in progress should be true for tokens that needed updates")
-// 		}
-// 	}
-// }
+	// Verify query in progress flags
+	for _, tp := range tokenPrices {
+		updatedPrice := s.MustGetTokenPrice(tp.BaseDenom, tp.QuoteDenom, tp.OsmosisPoolId)
+		if tp.QueryInProgress {
+			s.Require().True(updatedPrice.QueryInProgress,
+				"query in progress should remain true for token that was already updating")
+		} else {
+			s.Require().True(updatedPrice.QueryInProgress,
+				"query in progress should be true for tokens that needed updates")
+		}
+	}
+}
