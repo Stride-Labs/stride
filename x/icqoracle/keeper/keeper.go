@@ -235,3 +235,8 @@ func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
 
 	return prices
 }
+
+// GetStoreKey returns the store key
+func (k Keeper) GetStoreKey() storetypes.StoreKey {
+	return k.storeKey
+}

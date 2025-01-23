@@ -18,12 +18,12 @@ import (
 
 // Mock ICQ Keeper struct
 type MockICQKeeper struct {
-	SubmitICQRequestFn func(ctx sdk.Context, query icqtypes.Query, prove bool) error
+	SubmitICQRequestFn func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error
 }
 
-func (m MockICQKeeper) SubmitICQRequest(ctx sdk.Context, query icqtypes.Query, prove bool) error {
+func (m MockICQKeeper) SubmitICQRequest(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
 	if m.SubmitICQRequestFn != nil {
-		return m.SubmitICQRequestFn(ctx, query, prove)
+		return m.SubmitICQRequestFn(ctx, query, forceUnique)
 	}
 	return nil
 }
@@ -54,7 +54,7 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 
 	// Setup mock ICQ keeper with custom behavior
 	s.mockICQKeeper = MockICQKeeper{
-		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, prove bool) error {
+		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
 			submittedQuery = query
 			return nil
 		},
@@ -137,7 +137,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 
 				// Mock ICQ keeper to return error
 				s.mockICQKeeper = MockICQKeeper{
-					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, prove bool) error {
+					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
 						return fmt.Errorf("mock ICQ submit error")
 					},
 				}
@@ -163,8 +163,8 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 
 				// Setup mock ICQ keeper with success response
 				s.mockICQKeeper = MockICQKeeper{
-					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, prove bool) error {
-						// Remove token price so set query in progress will fail to get it after SubmitICQRequestFn returns
+					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
+						// Remove token price so set query in progress will fail to get it after SubmitICQRequest returns
 						s.App.ICQOracleKeeper.RemoveTokenPrice(ctx, "uatom", "uusdc", "1")
 						return nil
 					},
@@ -193,7 +193,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 
 				// Setup mock ICQ keeper with success response
 				s.mockICQKeeper = MockICQKeeper{
-					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, prove bool) error {
+					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
 						return nil
 					},
 				}
@@ -249,13 +249,11 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 
 func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	var capturedQuery icqtypes.Query
-	var capturedProve bool
 
 	// Setup mock ICQ keeper to capture the submitted query and prove flag
 	s.mockICQKeeper = MockICQKeeper{
-		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, prove bool) error {
+		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
 			capturedQuery = query
-			capturedProve = prove
 			return nil
 		},
 	}
@@ -316,10 +314,6 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	expectedTimeout := time.Duration(params.IcqTimeoutSec) * time.Second
 	s.Require().Equal(expectedTimeout, capturedQuery.TimeoutDuration)
 	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, capturedQuery.TimeoutPolicy)
-
-	// Verify prove flag
-	// For Osmosis CL pool queries, we require cryptographic proofs to ensure data authenticity
-	s.Require().True(capturedProve, "prove flag should be true to request cryptographic proofs in ICQ response")
 }
 
 // Helper function to create mock pool data

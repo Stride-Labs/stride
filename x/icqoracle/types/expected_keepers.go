@@ -8,5 +8,5 @@ import (
 
 // IcqKeeper defines the expected interface needed to send ICQ requests.
 type IcqKeeper interface {
-	SubmitICQRequest(ctx sdk.Context, query types.Query, forceUnique bool) error
+	SubmitICQRequest(ctx sdk.Context, icqtypes types.Query, forceUnique bool) error
 }
