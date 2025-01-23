@@ -141,7 +141,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", baseDenom, err)
 	}
 	if len(baseTokenPrices) == 0 {
-		return math.LegacyDec{}, fmt.Errorf("no price for '%s'", baseDenom)
+		return math.LegacyDec{}, fmt.Errorf("no price for baseDenom '%s'", baseDenom)
 	}
 
 	// Get price expiration timeout
@@ -165,6 +165,9 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	quoteTokenPrices, err := k.GetTokenPricesByDenom(ctx, quoteDenom)
 	if err != nil {
 		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
+	}
+	if len(quoteTokenPrices) == 0 {
+		return math.LegacyDec{}, fmt.Errorf("no price for quoteDenom '%s' (foundAlreadyHasStalePrice='%v')", quoteDenom, foundAlreadyHasStalePrice)
 	}
 
 	// Init price

@@ -38,6 +38,15 @@ func (s *KeeperTestSuite) TestQueryTokenPrice() {
 	// Query with invalid request
 	_, err = s.App.ICQOracleKeeper.TokenPrice(sdk.WrapSDKContext(s.Ctx), nil)
 	s.Require().Error(err, "error expected when querying with nil request")
+
+	// Query with non existing
+	req = &types.QueryTokenPriceRequest{
+		BaseDenom:  "banana",
+		QuoteDenom: "papaya",
+		PoolId:     "1",
+	}
+	_, err = s.App.ICQOracleKeeper.TokenPrice(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().Error(err, "error expected when querying non existing token price")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPrices() {
@@ -94,6 +103,16 @@ func (s *KeeperTestSuite) TestQueryParams() {
 	// Query with invalid request
 	_, err = s.App.ICQOracleKeeper.Params(sdk.WrapSDKContext(s.Ctx), nil)
 	s.Require().Error(err, "error expected when querying with nil request")
+}
+
+func (s *KeeperTestSuite) TestQueryParamsError() {
+	s.DeleteParams()
+
+	// Query parameters
+	req := &types.QueryParamsRequest{}
+	_, err := s.App.ICQOracleKeeper.Params(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().Error(err, "error expected when querying params")
+	s.Require().Contains(err.Error(), "EOF")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
@@ -294,4 +313,61 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoCommonQuote() {
 	_, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().Error(err, "expected error when no common quote denom exists")
 	s.Require().Contains(err.Error(), "could not calculate price", "error should indicate price calculation failure")
+}
+
+func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomParamsError() {
+	s.DeleteParams()
+
+	baseDenom := "uatom"
+
+	// Set base token price with one quote denom
+	tokenPrice1 := types.TokenPrice{
+		BaseDenom:     baseDenom,
+		QuoteDenom:    "quote1",
+		OsmosisPoolId: "1",
+		SpotPrice:     sdkmath.LegacyNewDec(1000000),
+		UpdatedAt:     s.Ctx.BlockTime(),
+	}
+	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
+	s.Require().NoError(err)
+
+	// Query for token price using quote denom
+	req := &types.QueryTokenPriceForQuoteDenomRequest{
+		BaseDenom:  baseDenom,
+		QuoteDenom: "banana",
+	}
+	_, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().Error(err, "error expected when querying token price for quote denom")
+	s.Require().Contains(err.Error(), "error getting params")
+}
+
+func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoBaseDenom() {
+	req := &types.QueryTokenPriceForQuoteDenomRequest{
+		BaseDenom:  "banana",
+		QuoteDenom: "papaya",
+	}
+	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().Error(err, "error expected when querying token price for quote denom")
+	s.Require().Contains(err.Error(), "no price for baseDenom 'banana'")
+}
+
+func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
+	// Set base token price with one quote denom
+	tokenPrice1 := types.TokenPrice{
+		BaseDenom:     "banana",
+		QuoteDenom:    "quote1",
+		OsmosisPoolId: "1",
+		SpotPrice:     sdkmath.LegacyNewDec(1000000),
+		UpdatedAt:     s.Ctx.BlockTime(),
+	}
+	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
+	s.Require().NoError(err)
+
+	req := &types.QueryTokenPriceForQuoteDenomRequest{
+		BaseDenom:  "banana",
+		QuoteDenom: "papaya",
+	}
+	_, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().Error(err, "error expected when querying token price for quote denom")
+	s.Require().Contains(err.Error(), "no price for quoteDenom 'papaya'")
 }
