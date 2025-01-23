@@ -371,3 +371,93 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
 	s.Require().Error(err, "error expected when querying token price for quote denom")
 	s.Require().Contains(err.Error(), "no price for quoteDenom 'papaya'")
 }
+
+func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
+	// Set up parameters with short expiration time
+	params := types.Params{
+		PriceExpirationTimeoutSec: 60, // 1 minute timeout
+	}
+	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
+	s.Require().NoError(err)
+
+	// Create token prices with same quote denom
+	baseDenom := "uatom"
+	quoteDenom := "uusdc"
+	intermediateQuote := "uosmo"
+
+	// Set base token price (will become stale)
+	tokenPrice1 := types.TokenPrice{
+		BaseDenom:     baseDenom,
+		QuoteDenom:    intermediateQuote,
+		OsmosisPoolId: "1",
+		SpotPrice:     sdkmath.LegacyNewDec(1000000),
+		UpdatedAt:     s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
+	}
+	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
+	s.Require().NoError(err)
+
+	// Set quote token price (fresh)
+	tokenPrice2 := types.TokenPrice{
+		BaseDenom:     quoteDenom,
+		QuoteDenom:    intermediateQuote,
+		OsmosisPoolId: "2",
+		SpotPrice:     sdkmath.LegacyNewDec(2000000),
+		UpdatedAt:     s.Ctx.BlockTime(),
+	}
+	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
+	s.Require().NoError(err)
+
+	// Query should fail due to stale base price
+	req := &types.QueryTokenPriceForQuoteDenomRequest{
+		BaseDenom:  baseDenom,
+		QuoteDenom: quoteDenom,
+	}
+	_, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().Error(err, "expected error for stale base price")
+	s.Require().Contains(err.Error(), "foundBaseTokenStalePrice='true'", "error should indicate base token price is stale")
+}
+
+func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleQuotePrice() {
+	// Set up parameters with short expiration time
+	params := types.Params{
+		PriceExpirationTimeoutSec: 60, // 1 minute timeout
+	}
+	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
+	s.Require().NoError(err)
+
+	// Create token prices with same quote denom
+	baseDenom := "uatom"
+	quoteDenom := "uusdc"
+	intermediateQuote := "uosmo"
+
+	// Set base token price (fresh)
+	tokenPrice1 := types.TokenPrice{
+		BaseDenom:     baseDenom,
+		QuoteDenom:    intermediateQuote,
+		OsmosisPoolId: "1",
+		SpotPrice:     sdkmath.LegacyNewDec(1000000),
+		UpdatedAt:     s.Ctx.BlockTime(),
+	}
+	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
+	s.Require().NoError(err)
+
+	// Set quote token price (will be stale)
+	tokenPrice2 := types.TokenPrice{
+		BaseDenom:     quoteDenom,
+		QuoteDenom:    intermediateQuote,
+		OsmosisPoolId: "2",
+		SpotPrice:     sdkmath.LegacyNewDec(2000000),
+		UpdatedAt:     s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
+	}
+	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
+	s.Require().NoError(err)
+
+	// Query should fail due to stale quote price
+	req := &types.QueryTokenPriceForQuoteDenomRequest{
+		BaseDenom:  baseDenom,
+		QuoteDenom: quoteDenom,
+	}
+	_, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().Error(err, "expected error for stale quote price")
+	s.Require().Contains(err.Error(), "foundQuoteTokenStalePrice='true'", "error should indicate quote token price is stale")
+}
