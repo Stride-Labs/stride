@@ -97,6 +97,12 @@ func (s *KeeperTestSuite) TestQueryParams() {
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
+	// Setup params
+	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, types.Params{
+		PriceExpirationTimeoutSec: 60,
+	})
+	s.Require().NoError(err, "no error expected when setting params")
+
 	// Create token price with same quote denom
 	baseDenom := "uatom"
 	quoteDenom := "uusdc"
@@ -107,8 +113,9 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
 		QuoteDenom:    quoteDenom,
 		OsmosisPoolId: "1",
 		SpotPrice:     expectedPrice,
+		UpdatedAt:     s.Ctx.BlockTime(),
 	}
-	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
+	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err, "no error expected when setting token price %+v", tokenPrice)
 
 	// Query for token price using quote denom
@@ -134,6 +141,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
+	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, types.Params{
+		PriceExpirationTimeoutSec: 60,
+	})
+	s.Require().NoError(err, "no error expected when setting params")
+
 	// Create two token prices with same quote denom
 	baseDenom1 := "uatom"
 	baseDenom2 := "uosmo"
@@ -147,8 +159,9 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
 		QuoteDenom:    quoteDenom,
 		OsmosisPoolId: "1",
 		SpotPrice:     expectedPrice1,
+		UpdatedAt:     s.Ctx.BlockTime(),
 	}
-	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
+	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err, "no error expected when setting token price %+v", tokenPrice1)
 
 	// Set uosmo price
@@ -157,6 +170,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
 		QuoteDenom:    quoteDenom,
 		OsmosisPoolId: "2",
 		SpotPrice:     expectedPrice2,
+		UpdatedAt:     s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 	s.Require().NoError(err, "no error expected when setting token price %+v", tokenPrice2)
@@ -189,7 +203,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStalePrice() {
 		QuoteDenom:    quoteDenom,
 		OsmosisPoolId: "1",
 		SpotPrice:     expectedPrice,
-		UpdatedAt:     s.Ctx.BlockTime(), // Current time
+		UpdatedAt:     s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
