@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -35,10 +34,6 @@ func NewKeeper(
 		bankKeeper:      bankKeeper,
 		icqoracleKeeper: icqoracleKeeper,
 	}
-}
-
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 // SetAuction stores auction info for a token
@@ -105,4 +100,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 
 	// Call the handler
 	return auctionBidHandler(ctx, k, auction, bid)
+}
+
+// GetStoreKey returns the store key
+func (k Keeper) GetStoreKey() storetypes.StoreKey {
+	return k.storeKey
 }

@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v24/x/auction/types"
@@ -23,9 +24,9 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 	balance := k.bankKeeper.GetBalance(ctx, moduleAddr, auction.SellingDenom)
 	sellingAmountAvailable := balance.Amount
 
-	// Verify auction has enough sellingtokens to service the bid
+	// Verify auction has enough selling tokens to service the bid
 	if bid.SellingTokenAmount.GT(sellingAmountAvailable) {
-		return fmt.Errorf("bid wants to buy %s%s but auction has only %s%s",
+		return fmt.Errorf("bid wants to buy %s%s but auction only has %s%s",
 			bid.SellingTokenAmount.String(),
 			auction.SellingDenom,
 			sellingAmountAvailable.String(),
@@ -37,7 +38,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 	// Any calculation down the road makes sense only if price is multiplied by a derivative of SellingToken
 	price, err := k.icqoracleKeeper.GetTokenPriceForQuoteDenom(ctx, auction.SellingDenom, auction.PaymentDenom)
 	if err != nil {
-		return err
+		return errorsmod.Wrapf(err, "error getting price for baseDenom='%s' quoteDenom='%s'", auction.SellingDenom, auction.PaymentDenom)
 	}
 
 	// Apply MinPriceMultiplier
@@ -97,7 +98,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 
 	err = k.SetAuction(ctx, auction)
 	if err != nil {
-		return fmt.Errorf("failed to update auction stats")
+		return errorsmod.Wrap(err, "failed to update auction stats")
 	}
 
 	ctx.EventManager().EmitEvent(
