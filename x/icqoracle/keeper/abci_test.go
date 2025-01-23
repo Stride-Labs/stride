@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -158,45 +159,52 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 	}
 }
 
-// func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
-// 	// Setup mock ICQ keeper that returns an error
-// 	s.mockICQKeeper = MockICQKeeper{
-// 		SubmitICQRequest: func(ctx sdk.Context, query types.Query, forceUnique bool) error {
-// 			return types.ErrICQSubmitFailed
-// 		},
-// 	}
-// 	s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
+func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
+	// Setup mock ICQ keeper that returns an error
+	s.mockICQKeeper = MockICQKeeper{
+		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
+			return fmt.Errorf("icq submit failed")
+		},
+	}
+	s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
 
-// 	// Set params
-// 	params := types.Params{
-// 		UpdateIntervalSec: 60,
-// 		IcqTimeoutSec:     30,
-// 	}
-// 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-// 	s.Require().NoError(err)
+	// Set params
+	params := types.Params{
+		UpdateIntervalSec: 60,
+		IcqTimeoutSec:     30,
+	}
+	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
+	s.Require().NoError(err)
 
-// 	// Create token price that needs updating
-// 	tokenPrice := types.TokenPrice{
-// 		BaseDenom:     "uatom",
-// 		QuoteDenom:    "uusdc",
-// 		OsmosisPoolId: "1",
-// 		UpdatedAt:     time.Time{}, // Zero time to trigger update
-// 	}
-// 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-// 	s.Require().NoError(err)
+	// Create token price that needs updating
+	tokenPrice := types.TokenPrice{
+		BaseDenom:     "uatom",
+		QuoteDenom:    "uusdc",
+		OsmosisPoolId: "1",
+		UpdatedAt:     time.Time{}, // Zero time to trigger update
+	}
+	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
+	s.Require().NoError(err)
 
-// 	// Run BeginBlocker - should log error but continue
-// 	s.App.ICQOracleKeeper.BeginBlocker(s.Ctx)
+	// Run BeginBlocker - should log error but continue
+	s.App.ICQOracleKeeper.BeginBlocker(s.Ctx)
 
-// 	// Verify token price was not modified
-// 	updatedPrice := s.MustGetTokenPrice(
-// 		tokenPrice.BaseDenom,
-// 		tokenPrice.QuoteDenom,
-// 		tokenPrice.OsmosisPoolId,
-// 	)
-// 	s.Require().False(updatedPrice.QueryInProgress,
-// 		"query in progress should remain false when ICQ submission fails")
-// }
+	// Get the logged output and verify error was logged
+	logOutput := s.logBuffer.String()
+	s.Require().True(
+		strings.Contains(logOutput, "icq submit failed"),
+		"expected error log message about ICQ submission failure, got: %s", logOutput,
+	)
+
+	// Verify token price was not modified
+	updatedPrice := s.MustGetTokenPrice(
+		tokenPrice.BaseDenom,
+		tokenPrice.QuoteDenom,
+		tokenPrice.OsmosisPoolId,
+	)
+	s.Require().False(updatedPrice.QueryInProgress,
+		"query in progress should remain false when ICQ submission fails")
+}
 
 // func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 // 	var submittedQueries int
