@@ -82,4 +82,4 @@ main() {
     echo "Done"
 }
 
-main
+main >> startup.log 2>&1 
