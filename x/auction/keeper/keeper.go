@@ -71,7 +71,7 @@ func (k Keeper) GetAuction(ctx sdk.Context, name string) (*types.Auction, error)
 // GetAllAuctions retrieves all stored auctions
 func (k Keeper) GetAllAuctions(ctx sdk.Context) []types.Auction {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AuctionPrefix)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(types.AuctionPrefix))
+	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
 	auctions := []types.Auction{}
