@@ -26,12 +26,17 @@ define build_and_push_docker
 	@$(DOCKER) push $(GCR_REPO)/$(3)
 endef
 
+install: typescript-install python-install
+
 check-empty-namespace:
 	@POD_COUNT=$$($(KUBECTL) get pods --no-headers -n $(K8S_NAMESPACE) | wc -l); \
 	if [ $$POD_COUNT -eq 0 ]; then exit 0; else exit 1; fi
 
 wait-for-startup:
 	@bash network/scripts/network-readiness.sh $(K8S_NAMESPACE)
+
+typescript-install:
+	(cd client && pnpm i)
 
 python-install:
 	conda create --name $(VENV_NAME) python=3.11 -y
@@ -64,6 +69,9 @@ local-init-chain:
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 	@$(MAKE) wait-for-startup
+
+test:
+	(cd client && pnpm test)
 
 startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat startup.log

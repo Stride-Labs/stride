@@ -4,11 +4,27 @@ This design for this integration test framework is heavily inspired by the Cosmo
 
 ## Setup
 
-TODO
+Install javascript and python dependencies
 
-## Motivation
+```bash
+make install
+```
 
-TODO
+IMPORTANT: `@cosmjs/*` dependencies must match the versions used by stridejs. To get those versions, run e.g. `pnpm why @cosmjs/amino`.
+
+## Running Tests
+
+Start the network
+
+```bash
+make start
+```
+
+Run the tests
+
+```bash
+make test
+```
 
 ## Network
 
@@ -32,6 +48,29 @@ TODO
 - This is run after startup because the validator must sign the tx with their key
 
 ## Testing Client
+
+### Debugging (VSCode)
+
+- open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
+- run the `Debug: Create JavaScript Debug Terminal` command
+- set breakpoints
+- run `pnpm test`
+
+### Test new protobuf
+
+- go to https://github.com/Stride-Labs/stridejs
+  - update the config in `scripts/clone_repos.ts` to point to the new `stride`, `cosmos-sdk`, `ibc-go`, `wasmd` versions
+  - run `pnpm i`
+  - run `pnpm codegen`
+  - run `git commit...`
+  - run `git push`
+  - get the current `stridejs` commit using `git rev-parse HEAD`
+- in the integration tests (this project):
+  - update the `stridejs` dependency commit hash in `package.json`
+  - `pnpm i`
+  - `pnpm test`
+
+## Motivation
 
 TODO
 
