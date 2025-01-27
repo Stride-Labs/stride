@@ -18,15 +18,28 @@ chains:
   - name: cosmoshub
     binary: gaiad
     version: v18.1.0
-    numValidators: 3
+    numValidators: 1
     home: .gaia
     denom: uatom
     decimals: 6
     command: ["gaiad", "start"]
 
+  - name: osmosis
+    binary: osmosisd
+    version: v27.0.0
+    numValidators: 1
+    home: .osmosisd
+    denom: uosmo
+    decimals: 6
+    command: ["sleep", "infinity"]
+
 # type can be either "relayer" or "hermes"
 relayers:
   - name: stride-cosmoshub
-    type: relayer
+    type: hermes
     chainA: stride
     chainB: cosmoshub
+  - name: stride-osmosis
+    type: hermes
+    chainA: stride
+    chainB: osmosis

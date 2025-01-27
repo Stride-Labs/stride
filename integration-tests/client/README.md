@@ -23,9 +23,11 @@ IMPORTANT: `@cosmjs/*` dependencies must match the versions used by stridejs. To
 ### test new protobufs
 
 - go to https://github.com/Stride-Labs/stridejs
-  - update the config in `scripts/clone_repos.ts` to point to the new `stride`, `cosmos-sdk`, `ibc-go`, `wasmd` versions
+  - remove `/dist` from `.gitignore`
+  - update the config in `scripts/clone_repos.ts` to point to the new `stride/cosmos-sdk/ibc-go` version
   - run `pnpm i`
   - run `pnpm codegen`
+  - run `pnpm build`
   - run `git commit...`
   - run `git push`
   - get the current `stridejs` commit using `git rev-parse HEAD`

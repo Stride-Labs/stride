@@ -46,8 +46,11 @@ build-api:
 build-stride:
 	@bash network/scripts/build.sh stride
 
-build-cosmos:
-	$(call build_and_push_docker,cosmos,.,chains/cosmoshub:v18.1.0)
+build-cosmoshub:
+	$(call build_and_push_docker,cosmoshub,.,chains/cosmoshub:v18.1.0)
+
+build-osmosis:
+	$(call build_and_push_docker,osmosis,.,chains/osmosis:v27.0.0)
 
 build-relayer:
 	$(call build_and_push_docker,relayer,.,relayer:v2.5.2)
