@@ -65,6 +65,9 @@ start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 	@$(MAKE) wait-for-startup
 
+startup-logs:
+	@$(KUBECTL) exec -it $(POD_ID) -- cat startup.log
+
 stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)
 
