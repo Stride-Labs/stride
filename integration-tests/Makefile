@@ -77,7 +77,7 @@ test:
 	(cd client && pnpm test)
 
 startup-logs:
-	@$(KUBECTL) exec -it $(POD_ID) -- cat startup.log
+	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log
 
 stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)

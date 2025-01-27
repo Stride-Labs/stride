@@ -53,4 +53,4 @@ main() {
     echo "Done"
 }
 
-main >> startup.log 2>&1 &
+main >> logs/startup.log 2>&1 &

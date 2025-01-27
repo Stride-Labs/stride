@@ -9,7 +9,8 @@ wait_for_api $API_ENDPOINT
 
 # check if the binary has genesis subcommand or not, if not, set CHAIN_GENESIS_CMD to empty
 genesis_json=${CHAIN_HOME}/config/genesis.json
-chain_genesis_command=$($BINARY 2>&1 | grep -q "genesis-related subcommands" && echo "genesis" || echo "")
+chain_genesis_command=$($BINARY --help 2>&1  | grep -q "genesis-related subcommands" && echo "genesis" || echo "")
+client_config_command=$($BINARY config --help 2>&1  | grep -q "Set an application config" && echo "config set client" || echo "config")
 
 # Helper to update a json attribute in-place
 jq_inplace() {
@@ -23,7 +24,8 @@ jq_inplace() {
 init_config() {
     moniker=${CHAIN_NAME}1
     $BINARY init $moniker --chain-id $CHAIN_ID --overwrite 
-    $BINARY config keyring-backend test
+    $BINARY $client_config_command chain-id $CHAIN_ID
+    $BINARY $client_config_command keyring-backend test
 }
 
 # Helper to upload shared files to the API
@@ -171,4 +173,4 @@ main() {
     echo "Done"
 }
 
-main >> startup.log 2>&1 
+main >> logs/startup.log 2>&1 
