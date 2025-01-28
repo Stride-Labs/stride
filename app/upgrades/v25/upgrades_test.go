@@ -36,11 +36,13 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Setup state before upgrade
 	checkStaketiaMigration := s.SetupStaketiaMigration()
+	checkLSMRecord := s.SetupLSMRecord()
 
 	// Run upgrade
 	s.ConfirmUpgradeSucceededs(v25.UpgradeName, upgradeHeight)
 
 	// Validate state after upgrade
+	checkLSMRecord()
 	checkStaketiaMigration()
 }
 
@@ -99,5 +101,25 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 		// Confirm the validator set was registered
 		s.Require().Equal(len(hostZone.Validators), len(v25.Validators), "Number of validators")
 		s.Require().Equal(hostZone.Validators[0].Address, "celestiavaloper1uvytvhunccudw8fzaxvsrumec53nawyj939gj9", "First validator")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupLSMRecord() func() {
+	initialDetokenizeAmount := sdkmath.NewInt(100)
+	expectedDetokenizeAmount := sdkmath.NewInt(99)
+
+	// Create the failed detokenization record
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, recordtypes.LSMTokenDeposit{
+		ChainId: v25.CosmosChainId,
+		Denom:   v25.FailedLSMDepositDenom,
+		Amount:  initialDetokenizeAmount,
+	})
+
+	return func() {
+		// Confirm the lsm deposit record was reset
+		lsmRecord, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, v25.CosmosChainId, v25.FailedLSMDepositDenom)
+		s.Require().True(found, "lsm deposit record should have been found")
+		s.Require().Equal(recordtypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, lsmRecord.Status, "lsm record status")
+		s.Require().Equal(expectedDetokenizeAmount, lsmRecord.Amount, "lsm deposit record amount")
 	}
 }

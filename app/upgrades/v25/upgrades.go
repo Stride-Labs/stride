@@ -2,19 +2,26 @@ package v25
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	recordskeeper "github.com/Stride-Labs/stride/v25/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 	staketiakeeper "github.com/Stride-Labs/stride/v25/x/staketia/keeper"
 	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
-const UpgradeName = "v25"
+const (
+	UpgradeName = "v25"
+
+	CosmosChainId         = "cosmoshub-4"
+	FailedLSMDepositDenom = "cosmosvaloper1yh089p0cre4nhpdqw35uzde5amg3qzexkeggdn/59223"
+)
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v25
 func CreateUpgradeHandler(
@@ -37,6 +44,9 @@ func CreateUpgradeHandler(
 		if err := AddCelestiaValidators(ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add celestia validators")
 		}
+
+		// Reset failed LSM record
+		ResetLSMRecord(ctx, recordsKeeper)
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -62,4 +72,20 @@ func AddCelestiaValidators(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 		}
 	}
 	return nil
+}
+
+// Reset the failed LSM detokenization record status and decrement the amount by 1
+// so that it will succeed on the retry
+func ResetLSMRecord(ctx sdk.Context, k recordskeeper.Keeper) {
+	ctx.Logger().Info("Resetting failed LSM detokenization record...")
+
+	lsmDeposit, found := k.GetLSMTokenDeposit(ctx, CosmosChainId, FailedLSMDepositDenom)
+	if !found {
+		// No need to panic in this case since the difference is immaterial
+		ctx.Logger().Error("Failed LSM deposit record not found")
+		return
+	}
+	lsmDeposit.Status = recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE
+	lsmDeposit.Amount = lsmDeposit.Amount.Sub(sdkmath.OneInt())
+	k.SetLSMTokenDeposit(ctx, lsmDeposit)
 }
