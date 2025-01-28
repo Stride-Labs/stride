@@ -10,7 +10,7 @@ import (
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/server"
 
-	"github.com/Stride-Labs/stride/v24/utils"
+	"github.com/Stride-Labs/stride/v25/utils"
 )
 
 /*

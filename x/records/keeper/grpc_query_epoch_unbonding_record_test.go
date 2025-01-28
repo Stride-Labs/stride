@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v24/testutil/keeper"
-	"github.com/Stride-Labs/stride/v24/testutil/nullify"
-	"github.com/Stride-Labs/stride/v24/x/records/types"
+	keepertest "github.com/Stride-Labs/stride/v25/testutil/keeper"
+	"github.com/Stride-Labs/stride/v25/testutil/nullify"
+	"github.com/Stride-Labs/stride/v25/x/records/types"
 )
 
 func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
