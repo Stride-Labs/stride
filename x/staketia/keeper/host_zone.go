@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/staketia/types"
+	"github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
 // Writes a host zone to the store

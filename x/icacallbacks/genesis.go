@@ -3,8 +3,8 @@ package icacallbacks
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v25/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

@@ -3,7 +3,7 @@ package stride.stakeibc;
 
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v24/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v25/x/stakeibc/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";

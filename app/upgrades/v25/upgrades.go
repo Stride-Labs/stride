@@ -7,11 +7,11 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v24/x/records/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
-	staketiakeeper "github.com/Stride-Labs/stride/v24/x/staketia/keeper"
-	staketiatypes "github.com/Stride-Labs/stride/v24/x/staketia/types"
+	recordskeeper "github.com/Stride-Labs/stride/v25/x/records/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	staketiakeeper "github.com/Stride-Labs/stride/v25/x/staketia/keeper"
+	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
 const UpgradeName = "v25"
