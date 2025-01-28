@@ -124,7 +124,7 @@ func UpdateCelestiaInnerBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	maxInnerRedemptionRate := hostZone.RedemptionRate.Add(innerRedemptionRateDelta)
 
 	hostZone.MinInnerRedemptionRate = minInnerRedemptionRate
-	hostZone.MaxRedemptionRate = maxInnerRedemptionRate
+	hostZone.MaxInnerRedemptionRate = maxInnerRedemptionRate
 
 	k.SetHostZone(ctx, hostZone)
 }

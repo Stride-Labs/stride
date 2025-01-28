@@ -26,6 +26,13 @@ type UpdateRedemptionRateBounds struct {
 	ExpectedMaxOuterRedemptionRate sdk.Dec
 }
 
+type UpdateRedemptionRateInnerBounds struct {
+	ChainId                        string
+	CurrentRedemptionRate          sdk.Dec
+	ExpectedMinInnerRedemptionRate sdk.Dec
+	ExpectedMaxInnerRedemptionRate sdk.Dec
+}
+
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
 }
@@ -44,6 +51,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Setup state before upgrade
 	checkStaketiaMigration := s.SetupStaketiaMigration()
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
+	checkInnerRedemptionRatesAfterUpgrade := s.SetupTestUpdateInnerRedemptionRateBounds()
 
 	// Run upgrade
 	s.ConfirmUpgradeSucceededs(v25.UpgradeName, upgradeHeight)
@@ -51,6 +59,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Validate state after upgrade
 	checkStaketiaMigration()
 	checkRedemptionRatesAfterUpgrade()
+	checkInnerRedemptionRatesAfterUpgrade()
 }
 
 func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
@@ -153,6 +162,31 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 
 			s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "%s - min outer", tc.ChainId)
 			s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "%s - max outer", tc.ChainId)
+		}
+	}
+}
+
+func (s *UpgradeTestSuite) SetupTestUpdateInnerRedemptionRateBounds() func() {
+	// Define test cases consisting of an initial redemption rate and expected bounds
+	// Celestia already set with rr of 1.2
+	testCases := []UpdateRedemptionRateInnerBounds{
+		{
+			ChainId:                        "celestia",
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.2"),
+			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("1.1988"), // 1.2-(1.2*.001) = 1.1988
+			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.2012"), // 1.2+(1.2*.001) = 1.2012
+		},
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Confirm they were all updated
+		for _, tc := range testCases {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.ChainId)
+			s.Require().True(found)
+
+			s.Require().Equal(tc.ExpectedMinInnerRedemptionRate, hostZone.MinInnerRedemptionRate, "%s - min inner", tc.ChainId)
+			s.Require().Equal(tc.ExpectedMaxInnerRedemptionRate, hostZone.MaxInnerRedemptionRate, "%s - max inner", tc.ChainId)
 		}
 	}
 }
