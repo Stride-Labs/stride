@@ -11,9 +11,9 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v24/utils"
-	claimtypes "github.com/Stride-Labs/stride/v24/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v25/utils"
+	claimtypes "github.com/Stride-Labs/stride/v25/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
 // Attempt to link a host address with a stride address to enable airdrop claims

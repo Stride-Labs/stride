@@ -9,8 +9,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v24/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v25/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
 )
 
 // In the event of an ack error after a outbound transfer, we'll have to bank send to a fallback address

@@ -10,10 +10,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v24/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v25/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
 // ICA Callback after delegating deposit records

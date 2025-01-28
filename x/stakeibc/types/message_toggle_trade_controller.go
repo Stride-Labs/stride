@@ -8,7 +8,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v24/utils"
+	"github.com/Stride-Labs/stride/v25/utils"
 )
 
 const TypeMsgToggleTradeController = "toggle_trade_controller"

@@ -9,9 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v24/utils"
-	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v24/x/staketia/types"
+	"github.com/Stride-Labs/stride/v25/utils"
+	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
 // Takes custody of staked tokens in an escrow account, updates the current
