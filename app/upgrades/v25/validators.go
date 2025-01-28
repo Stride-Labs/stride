@@ -87,7 +87,6 @@ var Validators = []struct {
 	{address: "celestiavaloper1ax83exaawlmy5p2qn22gcynrchwdntt5xvj0qu", name: "kooltek68", weight: 13},
 	{address: "celestiavaloper1vfydl5r98zev8xc7j0mus28r63jcklsu63vuah", name: "counterpoint", weight: 13},
 	{address: "celestiavaloper1cqgzxhn3dqd58xexz8yley2wntdvym4emzvpd7", name: "blockscope", weight: 13},
-	{address: "celestiavaloper1vlugkygcx9dng7lsc03wjw997zq855xywma3pj", name: "pleaseredelegate", weight: 12},
 	{address: "celestiavaloper1t345w0vxnyyrf4eh43lpd3jl7z378rtsdn9tz3", name: "activenodes", weight: 12},
 	{address: "celestiavaloper1clf3nqp89h97umhl4fmcqr642jz6rszcxegjc6", name: "partnerstaking", weight: 12},
 	{address: "celestiavaloper1q2kaajedxm0r5xc0twdqz6atap96502d67yjyj", name: "mhventures", weight: 10},
