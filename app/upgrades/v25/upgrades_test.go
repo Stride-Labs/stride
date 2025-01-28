@@ -19,6 +19,20 @@ import (
 	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
+type UpdateRedemptionRateBounds struct {
+	ChainId                        string
+	CurrentRedemptionRate          sdk.Dec
+	ExpectedMinOuterRedemptionRate sdk.Dec
+	ExpectedMaxOuterRedemptionRate sdk.Dec
+}
+
+type UpdateRedemptionRateInnerBounds struct {
+	ChainId                        string
+	CurrentRedemptionRate          sdk.Dec
+	ExpectedMinInnerRedemptionRate sdk.Dec
+	ExpectedMaxInnerRedemptionRate sdk.Dec
+}
+
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
 }
@@ -36,14 +50,18 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Setup state before upgrade
 	checkStaketiaMigration := s.SetupStaketiaMigration()
+	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
+	checkInnerRedemptionRatesAfterUpgrade := s.SetupTestUpdateInnerRedemptionRateBounds()
 	checkLSMRecord := s.SetupLSMRecord()
 
 	// Run upgrade
 	s.ConfirmUpgradeSucceededs(v25.UpgradeName, upgradeHeight)
 
 	// Validate state after upgrade
-	checkLSMRecord()
 	checkStaketiaMigration()
+	checkRedemptionRatesAfterUpgrade()
+	checkInnerRedemptionRatesAfterUpgrade()
+	checkLSMRecord()
 }
 
 func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
@@ -101,6 +119,77 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 		// Confirm the validator set was registered
 		s.Require().Equal(len(hostZone.Validators), len(v25.Validators), "Number of validators")
 		s.Require().Equal(hostZone.Validators[0].Address, "celestiavaloper1uvytvhunccudw8fzaxvsrumec53nawyj939gj9", "First validator")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
+	// Define test cases consisting of an initial redemption rate and expected bounds
+	testCases := []UpdateRedemptionRateBounds{
+		{
+			ChainId:                        "chain-0",
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
+		},
+		{
+			ChainId:                        "chain-1",
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
+		},
+		{
+			// Max outer for osmo uses 12% instead of 10%
+			ChainId:                        v25.OsmosisChainId,
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
+		},
+	}
+
+	// Create a host zone for each test case
+	for _, tc := range testCases {
+		hostZone := stakeibctypes.HostZone{
+			ChainId:        tc.ChainId,
+			RedemptionRate: tc.CurrentRedemptionRate,
+		}
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Confirm they were all updated
+		for _, tc := range testCases {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.ChainId)
+			s.Require().True(found)
+
+			s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "%s - min outer", tc.ChainId)
+			s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "%s - max outer", tc.ChainId)
+		}
+	}
+}
+
+func (s *UpgradeTestSuite) SetupTestUpdateInnerRedemptionRateBounds() func() {
+	// Define test cases consisting of an initial redemption rate and expected bounds
+	// Celestia already set with rr of 1.2
+	testCases := []UpdateRedemptionRateInnerBounds{
+		{
+			ChainId:                        "celestia",
+			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.2"),
+			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("1.1988"), // 1.2-(1.2*.001) = 1.1988
+			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.2012"), // 1.2+(1.2*.001) = 1.2012
+		},
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Confirm they were all updated
+		for _, tc := range testCases {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.ChainId)
+			s.Require().True(found)
+
+			s.Require().Equal(tc.ExpectedMinInnerRedemptionRate, hostZone.MinInnerRedemptionRate, "%s - min inner", tc.ChainId)
+			s.Require().Equal(tc.ExpectedMaxInnerRedemptionRate, hostZone.MaxInnerRedemptionRate, "%s - max inner", tc.ChainId)
+		}
 	}
 }
 
