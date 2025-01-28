@@ -74,7 +74,7 @@ start:
 	@$(MAKE) wait-for-startup
 
 test:
-	(cd client && pnpm test)
+	@(cd client && pnpm test)
 
 startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log

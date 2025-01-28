@@ -17,6 +17,7 @@ export default defineConfig({
         inline: ["stridejs"],
       },
     },
+    reporters: ["verbose"],
   },
   resolve: {
     alias: {
