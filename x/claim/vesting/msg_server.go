@@ -3,7 +3,7 @@ package vesting
 import (
 	"github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
-	"github.com/Stride-Labs/stride/v24/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v25/x/claim/vesting/types"
 )
 
 type msgServer struct {
