@@ -1,80 +1,15 @@
 package keeper
 
 import (
-	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v24/utils"
-	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v24/x/staketia/types"
 )
-
-// Liquid stakes native tokens and returns stTokens to the user
-// The staker's native tokens (which exist as an IBC denom on stride) are escrowed
-// in the deposit account
-// StTokens are minted at the current redemption rate
-func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount sdkmath.Int) (stToken sdk.Coin, err error) {
-	// Get the host zone and verify it's unhalted
-	hostZone, err := k.GetUnhaltedHostZone(ctx)
-	if err != nil {
-		return stToken, err
-	}
-
-	// Get user and deposit account addresses
-	liquidStakerAddress, err := sdk.AccAddressFromBech32(liquidStaker)
-	if err != nil {
-		return stToken, errorsmod.Wrapf(err, "user's address is invalid")
-	}
-	hostZoneDepositAddress, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
-	if err != nil {
-		return stToken, errorsmod.Wrapf(err, "host zone deposit address is invalid")
-	}
-
-	// Check redemption rates are within safety bounds
-	if err := k.CheckRedemptionRateExceedsBounds(ctx); err != nil {
-		return stToken, err
-	}
-
-	// The tokens that are sent to the protocol are denominated in the ibc hash of the native token on stride (e.g. ibc/xxx)
-	nativeToken := sdk.NewCoin(hostZone.NativeTokenIbcDenom, nativeAmount)
-	if !utils.IsIBCToken(hostZone.NativeTokenIbcDenom) {
-		return stToken, errorsmod.Wrapf(stakeibctypes.ErrInvalidToken,
-			"denom is not an IBC token (%s)", hostZone.NativeTokenIbcDenom)
-	}
-
-	// Determine the amount of stTokens to mint using the redemption rate
-	stAmount := (sdk.NewDecFromInt(nativeAmount).Quo(hostZone.RedemptionRate)).TruncateInt()
-	if stAmount.IsZero() {
-		return stToken, errorsmod.Wrapf(stakeibctypes.ErrInsufficientLiquidStake,
-			"Liquid stake of %s%s would return 0 stTokens", nativeAmount.String(), hostZone.NativeTokenDenom)
-	}
-
-	// Transfer the native tokens from the user to module account
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(nativeToken)); err != nil {
-		return stToken, errorsmod.Wrapf(err, "failed to send tokens from liquid staker %s to deposit address", liquidStaker)
-	}
-
-	// Mint the stTokens and transfer them to the user
-	stDenom := utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)
-	stToken = sdk.NewCoin(stDenom, stAmount)
-	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(stToken)); err != nil {
-		return stToken, errorsmod.Wrapf(err, "Failed to mint stTokens")
-	}
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, liquidStakerAddress, sdk.NewCoins(stToken)); err != nil {
-		return stToken, errorsmod.Wrapf(err, "Failed to send %s from deposit address to liquid staker", stToken.String())
-	}
-
-	// Emit liquid stake event with the same schema as stakeibc
-	EmitSuccessfulLiquidStakeEvent(ctx, liquidStaker, hostZone, nativeAmount, stAmount)
-
-	return stToken, nil
-}
 
 // IBC transfers all TIA in the deposit account and sends it to the delegation account
 func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDuration time.Duration) error {
@@ -159,6 +94,10 @@ func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash strin
 	if err != nil {
 		return err
 	}
+	stakeibcHostZone, err := k.stakeibcKeeper.GetActiveHostZone(ctx, types.CelestiaChainId)
+	if err != nil {
+		return err
+	}
 
 	// verify delegation record is nonzero
 	if !delegationRecord.NativeAmount.IsPositive() {
@@ -171,42 +110,12 @@ func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash strin
 	k.ArchiveDelegationRecord(ctx, delegationRecord)
 
 	// increment delegation on Host Zone
-	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(delegationRecord.NativeAmount)
+	hostZone.RemainingDelegatedBalance = hostZone.RemainingDelegatedBalance.Add(delegationRecord.NativeAmount)
+	stakeibcHostZone.TotalDelegations = stakeibcHostZone.TotalDelegations.Add(delegationRecord.NativeAmount)
 	k.SetHostZone(ctx, hostZone)
+	k.stakeibcKeeper.SetHostZone(ctx, stakeibcHostZone)
 
 	EmitSuccessfulConfirmDelegationEvent(ctx, recordId, delegationRecord.NativeAmount, txHash, sender)
-	return nil
-}
-
-// Liquid stakes tokens in the fee account and distributes them to the fee collector
-func (k Keeper) LiquidStakeAndDistributeFees(ctx sdk.Context) error {
-	// Get the fee address from the host zone
-	hostZone, err := k.GetUnhaltedHostZone(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Get the balance of native tokens in the fee address, if there are no tokens, no action is necessary
-	feeAddress := k.accountKeeper.GetModuleAddress(types.FeeAddress)
-	feesBalance := k.bankKeeper.GetBalance(ctx, feeAddress, hostZone.NativeTokenIbcDenom)
-	if feesBalance.IsZero() {
-		k.Logger(ctx).Info("No fees generated this epoch")
-		return nil
-	}
-
-	// Liquid stake those native tokens
-	stTokens, err := k.LiquidStake(ctx, feeAddress.String(), feesBalance.Amount)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to liquid stake fees")
-	}
-
-	// Send the stTokens to the fee collector
-	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.FeeAddress, authtypes.FeeCollectorName, sdk.NewCoins(stTokens))
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to send liquid staked tokens to fee collector")
-	}
-	k.Logger(ctx).Info(fmt.Sprintf("Liquid staked and sent %v to fee collector", stTokens))
-
 	return nil
 }
 
@@ -214,12 +123,5 @@ func (k Keeper) LiquidStakeAndDistributeFees(ctx sdk.Context) error {
 func (k Keeper) SafelyPrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDuration time.Duration) error {
 	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
 		return k.PrepareDelegation(ctx, epochNumber, epochDuration)
-	})
-}
-
-// Liquid stakes fees with a cache context wrapper so revert any partial state changes
-func (k Keeper) SafelyLiquidStakeAndDistributeFees(ctx sdk.Context) error {
-	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
-		return k.LiquidStakeAndDistributeFees(ctx)
 	})
 }
