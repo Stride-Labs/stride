@@ -3,6 +3,9 @@ package v25_test
 import (
 	"testing"
 
+	v25 "github.com/Stride-Labs/stride/v24/app/upgrades/v25"
+	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v24/app/apptesting"
@@ -33,7 +36,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
 
 	// Run the upgrade --------------------------
-	s.ConfirmUpgradeSucceededs(v24.UpgradeName, upgradeHeight)
+	s.ConfirmUpgradeSucceededs(v25.UpgradeName, upgradeHeight)
 
 	// Post upgrade tests --------------------------
 	checkRedemptionRatesAfterUpgrade()
@@ -56,7 +59,7 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 		},
 		{
 			// Max outer for osmo uses 12% instead of 10%
-			ChainId:                        v24.OsmosisChainId,
+			ChainId:                        v25.OsmosisChainId,
 			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
 			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
 			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400

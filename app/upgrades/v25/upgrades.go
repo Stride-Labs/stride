@@ -25,6 +25,9 @@ var (
 	// since their yield is less predictable
 	OsmosisChainId              = "osmosis-1"
 	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
+
+	// Inner redemption rate adjustment variables
+	RedemptionRateInnerAdjustment = sdk.MustNewDecFromStr("0.001")
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v25
@@ -51,6 +54,9 @@ func CreateUpgradeHandler(
 
 		// Update redemption rate bounds
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+
+		// Update Celestia inner bounds
+		UpdateCelestiaInnerBounds(ctx, stakeibcKeeper)
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -100,4 +106,25 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 		k.SetHostZone(ctx, hostZone)
 	}
+}
+
+// Tighten Celestia's inner bounds as a safety measure
+func UpdateCelestiaInnerBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Tightening Celestia inner bounds...")
+
+	hostZone, found := k.GetHostZone(ctx, staketiatypes.CelestiaChainId)
+	if !found {
+		ctx.Logger().Error("Celestia host zone not found, could not update inner bounds")
+		return
+	}
+
+	innerRedemptionRateDelta := hostZone.RedemptionRate.Mul(RedemptionRateInnerAdjustment)
+
+	minInnerRedemptionRate := hostZone.RedemptionRate.Sub(innerRedemptionRateDelta)
+	maxInnerRedemptionRate := hostZone.RedemptionRate.Add(innerRedemptionRateDelta)
+
+	hostZone.MinInnerRedemptionRate = minInnerRedemptionRate
+	hostZone.MaxRedemptionRate = maxInnerRedemptionRate
+
+	k.SetHostZone(ctx, hostZone)
 }
