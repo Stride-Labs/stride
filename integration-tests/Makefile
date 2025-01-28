@@ -26,6 +26,8 @@ define build_and_push_docker
 	@$(DOCKER) push $(GCR_REPO)/$(3)
 endef
 
+install: typescript-install python-install
+
 check-empty-namespace:
 	@POD_COUNT=$$($(KUBECTL) get pods --no-headers -n $(K8S_NAMESPACE) | wc -l); \
 	if [ $$POD_COUNT -eq 0 ]; then exit 0; else exit 1; fi
@@ -33,9 +35,12 @@ check-empty-namespace:
 wait-for-startup:
 	@bash network/scripts/network-readiness.sh $(K8S_NAMESPACE)
 
+typescript-install:
+	@(cd client && pnpm i)
+
 python-install:
-	conda create --name $(VENV_NAME) python=3.11 -y
-	$(PYTHON) -m pip install -r api/requirements.txt
+	@conda create --name $(VENV_NAME) python=3.11 -y
+	@$(PYTHON) -m pip install -r api/requirements.txt
 
 start-api: docker-bridge
 	@$(DOCKER) compose up api
@@ -48,6 +53,9 @@ build-stride:
 
 build-cosmos:
 	$(call build_and_push_docker,cosmos,.,chains/cosmoshub:v18.1.0)
+
+build-osmosis:
+	$(call build_and_push_docker,osmosis,.,chains/osmosis:v27.0.0)
 
 build-relayer:
 	$(call build_and_push_docker,relayer,.,relayer:v2.5.2)
@@ -64,6 +72,12 @@ local-init-chain:
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 	@$(MAKE) wait-for-startup
+
+test:
+	@(cd client && pnpm test)
+
+startup-logs:
+	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log
 
 stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)
