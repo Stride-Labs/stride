@@ -9,7 +9,7 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v24/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v25/x/icaoracle/types"
 )
 
 func TestValidateICATx(t *testing.T) {

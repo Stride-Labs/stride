@@ -9,14 +9,14 @@ import (
 
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	"github.com/Stride-Labs/stride/v24/app/apptesting"
-	v25 "github.com/Stride-Labs/stride/v24/app/upgrades/v25"
-	epochtypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v24/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
-	oldstaketiatypes "github.com/Stride-Labs/stride/v24/x/staketia/legacytypes"
-	"github.com/Stride-Labs/stride/v24/x/staketia/types"
-	staketiatypes "github.com/Stride-Labs/stride/v24/x/staketia/types"
+	"github.com/Stride-Labs/stride/v25/app/apptesting"
+	v25 "github.com/Stride-Labs/stride/v25/app/upgrades/v25"
+	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v25/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	oldstaketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/legacytypes"
+	"github.com/Stride-Labs/stride/v25/x/staketia/types"
+	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
 type UpgradeTestSuite struct {

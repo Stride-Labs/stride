@@ -16,10 +16,10 @@ import (
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v24/utils"
-	epochstypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v24/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v25/utils"
+	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
 const (

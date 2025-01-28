@@ -4,7 +4,7 @@ package stride.icaoracle;
 import "gogoproto/gogo.proto";
 import "stride/icaoracle/icaoracle.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v24/x/icaoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v25/x/icaoracle/types";
 
 // Params defines the icaoracle module parameters.
 message Params {}
