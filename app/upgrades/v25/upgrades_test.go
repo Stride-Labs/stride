@@ -35,32 +35,15 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	upgradeHeight := int64(4)
 
 	// Setup state before upgrade
-	checkProp256 := s.SetupProp256()
 	checkStaketiaMigration := s.SetupStaketiaMigration()
+	checkProp256 := s.SetupProp256()
 
 	// Run upgrade
 	s.ConfirmUpgradeSucceededs(v25.UpgradeName, upgradeHeight)
 
 	// Validate state after upgrade
-	checkProp256()
 	checkStaketiaMigration()
-}
-
-func (s *UpgradeTestSuite) SetupProp256() func() {
-	// Fund the community pool growth address
-	communityGrowthAddress := sdk.MustAccAddressFromBech32(v25.CommunityPoolGrowthAddress)
-	s.FundAccount(communityGrowthAddress, sdk.NewCoin(v25.Ustrd, v25.BnocsProposalAmount))
-
-	// Return a callback to check the state after the upgrade
-	return func() {
-		// Check the transfer was successful
-		communityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityGrowthAddress, v25.Ustrd)
-		s.Require().Zero(communityGrowthBalance.Amount.Int64(), "community growth balance after transfer")
-
-		bnocsCuostidanAddress := sdk.MustAccAddressFromBech32(v25.BnocsCustodian)
-		bnocsCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, bnocsCuostidanAddress, v25.Ustrd)
-		s.Require().Equal(v25.BnocsProposalAmount.Int64(), bnocsCustodianBalance.Amount.Int64(), "bnocs balance")
-	}
+	checkProp256()
 }
 
 func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
@@ -118,5 +101,22 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 		// Confirm the validator set was registered
 		s.Require().Equal(len(hostZone.Validators), len(v25.Validators), "Number of validators")
 		s.Require().Equal(hostZone.Validators[0].Address, "celestiavaloper1uvytvhunccudw8fzaxvsrumec53nawyj939gj9", "First validator")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupProp256() func() {
+	// Fund the community pool growth address
+	communityGrowthAddress := sdk.MustAccAddressFromBech32(v25.CommunityPoolGrowthAddress)
+	s.FundAccount(communityGrowthAddress, sdk.NewCoin(v25.Ustrd, v25.BnocsProposalAmount))
+
+	// Return a callback to check the state after the upgrade
+	return func() {
+		// Check the transfer was successful
+		communityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityGrowthAddress, v25.Ustrd)
+		s.Require().Zero(communityGrowthBalance.Amount.Int64(), "community growth balance after transfer")
+
+		bnocsCuostidanAddress := sdk.MustAccAddressFromBech32(v25.BnocsCustodian)
+		bnocsCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, bnocsCuostidanAddress, v25.Ustrd)
+		s.Require().Equal(v25.BnocsProposalAmount.Int64(), bnocsCustodianBalance.Amount.Int64(), "bnocs balance")
 	}
 }
