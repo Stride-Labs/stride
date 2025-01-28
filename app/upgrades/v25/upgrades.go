@@ -36,6 +36,13 @@ var (
 	FailedLSMDepositDenom = "cosmosvaloper1yh089p0cre4nhpdqw35uzde5amg3qzexkeggdn/59223"
 )
 
+var (
+	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
+	BnocsCustodian             = "stride1ff875h5plrnyumhm3cezn85dj4hzjzjqpz99mg"
+	BnocsProposalAmount        = sdk.NewInt(17_857_000_000)
+	Ustrd                      = "ustrd"
+)
+
 // CreateUpgradeHandler creates an SDK upgrade handler for v25
 func CreateUpgradeHandler(
 	mm *module.Manager,
@@ -56,6 +63,11 @@ func CreateUpgradeHandler(
 		// Add celestia validators
 		if err := AddCelestiaValidators(ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add celestia validators")
+		}
+
+		// Implement Bnocs Proposal 256
+		if err := ExecuteProp256(ctx, bankKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to implement Bnocs Proposal")
 		}
 
 		// Update redemption rate bounds
@@ -91,6 +103,17 @@ func AddCelestiaValidators(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 		}
 	}
 	return nil
+}
+
+// Execute Prop #256 - Signaling proposal to give a grant to Bnocs
+// Sends 17,857 STRD from "Community Pool - Growth" to Bnocs recipient address
+// See more here: https://www.mintscan.io/stride/proposals/256
+// And here: https://common.xyz/stride/discussion/25922-proposal-for-grant-bnocscom-dashboard-for-the-stride-ecosystem
+func ExecuteProp256(ctx sdk.Context, k bankkeeper.Keeper) error {
+	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
+	bnocsCuostidanAddress := sdk.MustAccAddressFromBech32(BnocsCustodian)
+	transferCoin := sdk.NewCoin(Ustrd, BnocsProposalAmount)
+	return k.SendCoins(ctx, communityPoolGrowthAddress, bnocsCuostidanAddress, sdk.NewCoins(transferCoin))
 }
 
 // Updates the outer redemption rate bounds

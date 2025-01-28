@@ -15,7 +15,6 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/v25/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 	oldstaketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/legacytypes"
-	"github.com/Stride-Labs/stride/v25/x/staketia/types"
 	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
@@ -50,6 +49,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Setup state before upgrade
 	checkStaketiaMigration := s.SetupStaketiaMigration()
+	checkProp256 := s.SetupProp256()
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
 	checkInnerRedemptionRatesAfterUpgrade := s.SetupTestUpdateInnerRedemptionRateBounds()
 	checkLSMRecord := s.SetupLSMRecord()
@@ -59,6 +59,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Validate state after upgrade
 	checkStaketiaMigration()
+	checkProp256()
 	checkRedemptionRatesAfterUpgrade()
 	checkInnerRedemptionRatesAfterUpgrade()
 	checkLSMRecord()
@@ -104,12 +105,12 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 	// Before we call the migration function, temporarily update the variable to be connection-0 to match the above
 	// and then set it back after the function call for other tests that use it
 	mainnetConnectionId := staketiatypes.CelestiaConnectionId
-	types.CelestiaConnectionId = ibctesting.FirstConnectionID
+	staketiatypes.CelestiaConnectionId = ibctesting.FirstConnectionID
 
 	// Return a callback to check the state after the upgrade
 	return func() {
 		// Set back the connectionID
-		types.CelestiaConnectionId = mainnetConnectionId
+		staketiatypes.CelestiaConnectionId = mainnetConnectionId
 
 		// Confirm the stakeibc host zone was created
 		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, staketiatypes.CelestiaChainId)
@@ -119,6 +120,23 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 		// Confirm the validator set was registered
 		s.Require().Equal(len(hostZone.Validators), len(v25.Validators), "Number of validators")
 		s.Require().Equal(hostZone.Validators[0].Address, "celestiavaloper1uvytvhunccudw8fzaxvsrumec53nawyj939gj9", "First validator")
+	}
+}
+
+func (s *UpgradeTestSuite) SetupProp256() func() {
+	// Fund the community pool growth address
+	communityGrowthAddress := sdk.MustAccAddressFromBech32(v25.CommunityPoolGrowthAddress)
+	s.FundAccount(communityGrowthAddress, sdk.NewCoin(v25.Ustrd, v25.BnocsProposalAmount))
+
+	// Return a callback to check the state after the upgrade
+	return func() {
+		// Check the transfer was successful
+		communityGrowthBalance := s.App.BankKeeper.GetBalance(s.Ctx, communityGrowthAddress, v25.Ustrd)
+		s.Require().Zero(communityGrowthBalance.Amount.Int64(), "community growth balance after transfer")
+
+		bnocsCuostidanAddress := sdk.MustAccAddressFromBech32(v25.BnocsCustodian)
+		bnocsCustodianBalance := s.App.BankKeeper.GetBalance(s.Ctx, bnocsCuostidanAddress, v25.Ustrd)
+		s.Require().Equal(v25.BnocsProposalAmount.Int64(), bnocsCustodianBalance.Amount.Int64(), "bnocs balance")
 	}
 }
 
