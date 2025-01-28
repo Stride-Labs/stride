@@ -16,6 +16,13 @@ import (
 
 const UpgradeName = "v25"
 
+var (
+	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
+	BnocsCustodian             = "stride1ff875h5plrnyumhm3cezn85dj4hzjzjqpz99mg"
+	BnocsProposalAmount        = sdk.NewInt(17_857_000_000)
+	Ustrd                      = "ustrd"
+)
+
 // CreateUpgradeHandler creates an SDK upgrade handler for v25
 func CreateUpgradeHandler(
 	mm *module.Manager,
@@ -36,6 +43,11 @@ func CreateUpgradeHandler(
 		// Add celestia validators
 		if err := AddCelestiaValidators(ctx, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to add celestia validators")
+		}
+
+		// Implement Bnocs Proposal 256
+		if err := ExecuteProp256(ctx, bankKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to implement Bnocs Proposal")
 		}
 
 		ctx.Logger().Info("Running module migrations...")
@@ -62,4 +74,13 @@ func AddCelestiaValidators(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 		}
 	}
 	return nil
+}
+
+// Execute Prop #256 - Signaling proposal to give a grant to Bnocs
+// Sends 17,857 STRD from "Community Pool - Growth" to Bnocs recipient address
+func ExecuteProp256(ctx sdk.Context, k bankkeeper.Keeper) error {
+	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
+	bnocsCuostidanAddress := sdk.MustAccAddressFromBech32(BnocsCustodian)
+	transferCoin := sdk.NewCoin(Ustrd, BnocsProposalAmount)
+	return k.SendCoins(ctx, communityPoolGrowthAddress, bnocsCuostidanAddress, sdk.NewCoins(transferCoin))
 }
