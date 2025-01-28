@@ -15,7 +15,6 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/v25/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 	oldstaketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/legacytypes"
-	"github.com/Stride-Labs/stride/v25/x/staketia/types"
 	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
@@ -106,12 +105,12 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 	// Before we call the migration function, temporarily update the variable to be connection-0 to match the above
 	// and then set it back after the function call for other tests that use it
 	mainnetConnectionId := staketiatypes.CelestiaConnectionId
-	types.CelestiaConnectionId = ibctesting.FirstConnectionID
+	staketiatypes.CelestiaConnectionId = ibctesting.FirstConnectionID
 
 	// Return a callback to check the state after the upgrade
 	return func() {
 		// Set back the connectionID
-		types.CelestiaConnectionId = mainnetConnectionId
+		staketiatypes.CelestiaConnectionId = mainnetConnectionId
 
 		// Confirm the stakeibc host zone was created
 		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, staketiatypes.CelestiaChainId)
