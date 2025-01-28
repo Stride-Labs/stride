@@ -78,6 +78,8 @@ func AddCelestiaValidators(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 
 // Execute Prop #256 - Signaling proposal to give a grant to Bnocs
 // Sends 17,857 STRD from "Community Pool - Growth" to Bnocs recipient address
+// See more here: https://www.mintscan.io/stride/proposals/256
+// And here: https://common.xyz/stride/discussion/25922-proposal-for-grant-bnocscom-dashboard-for-the-stride-ecosystem
 func ExecuteProp256(ctx sdk.Context, k bankkeeper.Keeper) error {
 	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
 	bnocsCuostidanAddress := sdk.MustAccAddressFromBech32(BnocsCustodian)
