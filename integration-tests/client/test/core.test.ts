@@ -81,24 +81,6 @@ describe("x/stakeibc", () => {
   test("Registration", async () => {
     const stridejs = accounts.admin;
 
-    console.log({
-      creator: stridejs.address,
-      bech32prefix: "cosmos",
-      hostDenom: "uatom",
-      ibcDenom: ibcDenom(
-        [{ incomingPortId: "transfer", incomingChannelId: "channel-0" }],
-        "uatom",
-      ),
-      connectionId: "connection-0",
-      transferChannelId: "channel-0",
-      unbondingPeriod: BigInt(1),
-      minRedemptionRate: "0.9",
-      maxRedemptionRate: "1.5",
-      lsmLiquidStakeEnabled: true,
-      communityPoolTreasuryAddress: "",
-      maxMessagesPerIcaTx: BigInt(2),
-    });
-
     const msg =
       stridejs.types.stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone(
         {
@@ -115,7 +97,8 @@ describe("x/stakeibc", () => {
           minRedemptionRate: "0.9",
           maxRedemptionRate: "1.5",
           lsmLiquidStakeEnabled: true,
-          communityPoolTreasuryAddress: "",
+          communityPoolTreasuryAddress:
+            "cosmos1kl8d29eadt93rfxmkf2q8msxwylaax9dxzr5lj",
           maxMessagesPerIcaTx: BigInt(2),
         },
       );
