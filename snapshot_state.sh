@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Constants - fill in these values
-CELESTIA_HOST_ZONE="celestia"
+CELESTIA_HOST_ZONE="mocha-4"
 STTIA_DENOM="stutia"
 TIA_DENOM="utia"
 
