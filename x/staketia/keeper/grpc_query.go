@@ -179,3 +179,13 @@ func (k Keeper) SlashRecords(c context.Context, req *types.QuerySlashRecordsRequ
 
 	return &types.QuerySlashRecordsResponse{SlashRecords: slashRecords}, nil
 }
+
+func (k Keeper) PendingPackets(c context.Context, req *types.QueryPendingPacketsRequest) (*types.QueryPendingPacketsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	return &types.QueryPendingPacketsResponse{Packets: k.GetAllTransferInProgressId(ctx)}, nil
+}

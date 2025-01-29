@@ -39,6 +39,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryRedemptionRecord(),
 		CmdQueryRedemptionRecords(),
 		CmdQuerySlashRecords(),
+		CmdQueryPendingPackets(),
 	)
 
 	return cmd
@@ -280,6 +281,37 @@ Examples:
 
 			req := &types.QuerySlashRecordsRequest{}
 			res, err := queryClient.SlashRecords(context.Background(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	return cmd
+}
+
+func CmdQueryPendingPackets() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pending-packets",
+		Short: "Queries all pending packet",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Queries all slash records
+Examples:
+  $ %s query %s slash-records
+`, version.AppName, types.ModuleName),
+		),
+		Args: cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryPendingPacketsRequest{}
+			res, err := queryClient.PendingPackets(context.Background(), req)
 			if err != nil {
 				return err
 			}

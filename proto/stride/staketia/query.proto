@@ -6,6 +6,7 @@ import "stride/staketia/staketia.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "stride/staketia/genesis.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v24/x/staketia/types";
 
@@ -60,6 +61,13 @@ service Query {
       returns (QuerySlashRecordsResponse) {
     option (google.api.http).get = "/Stride-Labs/stride/staketia/slash_records";
   }
+
+  // Queries slash records
+  rpc PendingPackets(QueryPendingPacketsRequest)
+      returns (QueryPendingPacketsResponse) {
+    option (google.api.http).get =
+        "/Stride-Labs/stride/staketia/pending_packets";
+  }
 }
 
 // Host Zone
@@ -105,6 +113,12 @@ message QueryRedemptionRecordsResponse {
 message QuerySlashRecordsRequest {};
 message QuerySlashRecordsResponse {
   repeated SlashRecord slash_records = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryPendingPacketsRequest {};
+message QueryPendingPacketsResponse {
+  repeated TransferInProgressRecordIds packets = 1
+      [ (gogoproto.nullable) = false ];
 }
 
 // Data structure for frontend to consume
