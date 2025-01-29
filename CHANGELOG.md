@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### On-Chain changes
 
 1. Increment Rebalance Period by 1 Day ([#1308](https://github.com/Stride-Labs/stride/pull/1308))
-2. stTIA Migration ([#1271](https://github.com/Stride-Labs/stride/pull/1271), [#1330](https://github.com/Stride-Labs/stride/pull/1330))
+2. stTIA Migration ([#1271](https://github.com/Stride-Labs/stride/pull/1271), [#1330](https://github.com/Stride-Labs/stride/pull/1330), [#1337](https://github.com/Stride-Labs/stride/pull/1337), [#1338](https://github.com/Stride-Labs/stride/pull/1338))
 3. v25 Import Paths ([#1333](https://github.com/Stride-Labs/stride/pull/1333))
 4. Fixed stuck LSM records ([#1335](https://github.com/Stride-Labs/stride/pull/1335))
 5. Update outer bounds + Celestia inner bounds + tests ([#1329](https://github.com/Stride-Labs/stride/pull/1329))
