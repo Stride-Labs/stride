@@ -257,18 +257,18 @@ func GetStakeibcRedemptionRate(
 	// Staketia delegation records are not included in any of the above yet so we must
 	// gather than explicitly
 	// In practice, there will be no records here when the upgrade runs
-	staketiaUndelegatedBalance := sdk.ZeroDec()
+	staketiaPendingDelegations := sdk.ZeroDec()
 	for _, delegationRecord := range staketiaKeeper.GetAllActiveDelegationRecords(ctx) {
-		staketiaUndelegatedBalance = staketiaUndelegatedBalance.Add(sdk.NewDecFromInt(delegationRecord.NativeAmount))
+		staketiaPendingDelegations = staketiaPendingDelegations.Add(sdk.NewDecFromInt(delegationRecord.NativeAmount))
 	}
 
 	ctx.Logger().Info(fmt.Sprintf("Stakeibc Redemption Rate Components - "+
-		"Deposit Account Balance: %v, Stakeibc Undelegated Balance: %v, Staketia Undelegated Balance: %v, "+
+		"Deposit Account Balance: %v, Stakeibc Undelegated Balance: %v, Staketia Pending Delegations: %v, "+
 		"Native Delegations: %v, stToken Supply: %v",
-		depositAccountBalance, undelegatedBalance, staketiaUndelegatedBalance, nativeDelegation, stSupply))
+		depositAccountBalance, undelegatedBalance, staketiaPendingDelegations, nativeDelegation, stSupply))
 
 	// Calculate the redemption rate
-	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(staketiaUndelegatedBalance).Add(nativeDelegation)
+	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(staketiaPendingDelegations).Add(nativeDelegation)
 	redemptionRate = nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
 
 	ctx.Logger().Info(fmt.Sprintf("Stakeibc Redemption Rate %v", redemptionRate))
