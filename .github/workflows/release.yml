@@ -34,11 +34,11 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up gcloud Cloud SDK environment
-        uses: google-github-actions/setup-gcloud@v0.6.0
+        uses: google-github-actions/setup-gcloud@v1
         with:
-          version: "389.0.0"
-          service_account_key: ${{ secrets.GCP_KEY }}
           project_id: ${{ secrets.GCP_NODES_PROJECT }}
+          service_account_key: ${{ secrets.GCP_KEY }}
+          install_components: 'gke-gcloud-auth-plugin'
           export_default_credentials: true
 
       - name: GCloud Configure Docker
