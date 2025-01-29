@@ -42,6 +42,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v25.0.0](https://github.com/Stride-Labs/stride/releases/tag/v25.0.0) - 2025-01-28
+
+### On-Chain changes
+
+1. Increment Rebalance Period by 1 Day ([#1308](https://github.com/Stride-Labs/stride/pull/1308))
+2. stTIA Migration ([#1271](https://github.com/Stride-Labs/stride/pull/1271), [#1330](https://github.com/Stride-Labs/stride/pull/1330))
+3. v25 Import Paths ([#1333](https://github.com/Stride-Labs/stride/pull/1333))
+4. Fixed stuck LSM records ([#1335](https://github.com/Stride-Labs/stride/pull/1335))
+5. Update outer bounds + Celestia inner bounds + tests ([#1329](https://github.com/Stride-Labs/stride/pull/1329))
+6. Executes Prop 256 in Upgrade Handler ([#1332](https://github.com/Stride-Labs/stride/pull/1332))
+7. Version bumps (sdk, wasmvm, sdkmath, x/crypto, cometbft) ([#1331](https://github.com/Stride-Labs/stride/pull/1331), [#1297](https://github.com/Stride-Labs/stride/pull/1297), [#1306](https://github.com/Stride-Labs/stride/pull/1306), [#1285](https://github.com/Stride-Labs/stride/pull/1285), [#1317](https://github.com/Stride-Labs/stride/pull/1317), [#1309](https://github.com/Stride-Labs/stride/pull/1309), [#1324](https://github.com/Stride-Labs/stride/pull/1324))
+
+### Off-Chain changes
+
+1. Add forge.json file to display Stride's Forge (ICS directory) page correctly ([#1301](https://github.com/Stride-Labs/stride/pull/1301))
+2. liquid stake dockernet integration test ([#1269](https://github.com/Stride-Labs/stride/pull/1269))
+3. Added osmosis to integration test framework ([#1328](https://github.com/Stride-Labs/stride/pull/1328))
+
 ## [v24.0.0](https://github.com/Stride-Labs/stride/releases/tag/v24.0.0) - 2024-08-29
 
 ### On-Chain changes
