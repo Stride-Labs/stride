@@ -18,10 +18,12 @@ func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	halted := true
 	totalDelegations := sdk.NewInt(1_000)
 	redemptionRate := sdk.NewDec(2)
+	lastRedemptionRate := sdk.NewDec(1)
 	minInnerRedemptionRate := sdk.MustNewDecFromStr("1.9")
 	maxInnerRedemptionRate := sdk.MustNewDecFromStr("2.1")
 	legacyHostZone := oldtypes.HostZone{
 		RedemptionRate:         redemptionRate,
+		LastRedemptionRate:     lastRedemptionRate,
 		DelegatedBalance:       totalDelegations,
 		MinInnerRedemptionRate: minInnerRedemptionRate,
 		MaxInnerRedemptionRate: maxInnerRedemptionRate,
@@ -40,6 +42,7 @@ func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	s.Require().Equal(types.CelestiaChainId, actualStakeibcHostZone.ChainId, "chain ID")
 	s.Require().Equal(totalDelegations, actualStakeibcHostZone.TotalDelegations, "total delegations")
 	s.Require().Equal(redemptionRate, actualStakeibcHostZone.RedemptionRate, "redemption rate")
+	s.Require().Equal(lastRedemptionRate, actualStakeibcHostZone.LastRedemptionRate, "last redemption rate")
 	s.Require().Equal(minInnerRedemptionRate, actualStakeibcHostZone.MinInnerRedemptionRate, "min redemption rate")
 	s.Require().Equal(maxInnerRedemptionRate, actualStakeibcHostZone.MaxInnerRedemptionRate, "max redemption rate")
 	s.Require().Equal(halted, actualStakeibcHostZone.Halted, "halted")
@@ -136,6 +139,7 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 		MinRedemptionRate:   sdk.MustNewDecFromStr("0.90"),
 		MaxRedemptionRate:   sdk.MustNewDecFromStr("1.5"),
 		RedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+		LastRedemptionRate:  sdk.MustNewDecFromStr("1.1"),
 		DelegatedBalance:    totalDelegations,
 	}
 	s.App.StaketiaKeeper.SetLegacyHostZone(s.Ctx, legacyHostZone)
@@ -174,6 +178,7 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 	s.Require().Equal(legacyHostZone.NativeTokenIbcDenom, hostZone.IbcDenom, "ibc denom")
 
 	s.Require().Equal(legacyHostZone.RedemptionRate, hostZone.RedemptionRate, "redemption rate")
+	s.Require().Equal(legacyHostZone.LastRedemptionRate, hostZone.LastRedemptionRate, "last redemption rate")
 	s.Require().Equal(legacyHostZone.MinRedemptionRate, hostZone.MinRedemptionRate, "min redemption rate")
 	s.Require().Equal(legacyHostZone.MaxRedemptionRate, hostZone.MaxRedemptionRate, "max redemption rate")
 

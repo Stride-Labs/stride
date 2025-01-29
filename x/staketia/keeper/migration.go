@@ -50,6 +50,7 @@ func (k Keeper) UpdateStakeibcHostZone(ctx sdk.Context, legacyHostZone oldtypes.
 	// Disable redemptions and set the redemption rate to the one from stakeibc
 	stakeibcHostZone.RedemptionsEnabled = false
 	stakeibcHostZone.RedemptionRate = legacyHostZone.RedemptionRate
+	stakeibcHostZone.LastRedemptionRate = legacyHostZone.LastRedemptionRate
 	stakeibcHostZone.MinInnerRedemptionRate = legacyHostZone.MinInnerRedemptionRate
 	stakeibcHostZone.MaxInnerRedemptionRate = legacyHostZone.MaxInnerRedemptionRate
 	stakeibcHostZone.Halted = legacyHostZone.Halted
