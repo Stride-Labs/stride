@@ -2,20 +2,20 @@
 package types
 
 const (
-	CelestiaChainId                   = "celestia"
-	StrideToCelestiaTransferChannelId = "channel-162"
+	CelestiaChainId                   = "mocha-4"
+	StrideToCelestiaTransferChannelId = "channel-38"
 	CelestiaNativeTokenDenom          = "utia"
-	CelestiaNativeTokenIBCDenom       = "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801" // #nosec G101
+	CelestiaNativeTokenIBCDenom       = "ibc/1A7653323C1A9E267FF7BEBF40B3EEA8065E8F069F47F2493ABC3E0B621BF793" // #nosec G101
 
-	DelegationAddressOnCelestia = "celestia1d6ntc7s8gs86tpdyn422vsqc6uaz9cejnxz5p5" // C0
-	RewardAddressOnCelestia     = "celestia15up3hegy8zuqhy0p9m8luh0c984ptu2g5p4xpf" // C1
+	DelegationAddressOnCelestia = "celestia1cr67t725a76hyaapx3degxua3ey8zqrrxyxqu8" // C0
+	RewardAddressOnCelestia     = "celestia18etj3sqjj49l2vna303fmszqf40j4k5wnwha0d" // C1
 
-	DepositAddress    = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04" // S0
-	RedemptionAddress = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g" // S1
-	ClaimAddress      = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd" // S2
+	DepositAddress    = "stride1e9gf63q0wpqyrge5xv2wkt7kz95wl5ntp94m9c" // S0
+	RedemptionAddress = "stride1kjylv75j4t9za70k38uxnesywc4x620t42edt9" // S1
+	ClaimAddress      = "stride1nm5hd2vvutksxu5cl35gn2k77yjrd5tdfeawy4" // S2
 
-	SafeAddressOnStride            = "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc" // S3
-	OperatorAddressOnStride        = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw" // OP-STRIDE
+	SafeAddressOnStride            = "stride19zwp2gs73dwfa7zwvhc36lhcke6ur8k3plkrvy" // S3
+	OperatorAddressOnStride        = "stride19zwp2gs73dwfa7zwvhc36lhcke6ur8k3plkrvy" // OP-STRIDE
 	CelestiaUnbondingPeriodDays    = 21
 	CelestiaUnbondingPeriodSeconds = uint64(CelestiaUnbondingPeriodDays * 24 * 60 * 60) // 21 days
 
@@ -23,4 +23,4 @@ const (
 )
 
 // The connection ID is stored as a var so it can be overriden in tests
-var CelestiaConnectionId = "connection-125"
+var CelestiaConnectionId = "connection-26"

@@ -55,6 +55,11 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v25...")
 
+		if err := staketiaKeeper.ArchiveFailedTransferRecord(ctx, 427); err != nil {
+			return vm, errorsmod.Wrapf(err, "Unable to archive transfer record")
+		}
+		staketiaKeeper.RemoveTransferInProgressRecordId(ctx, "channel-38", 26)
+
 		// Migrate staketia to stakeibc
 		if err := staketiakeeper.InitiateMigration(ctx, staketiaKeeper, bankKeeper, recordsKeeper, stakeibcKeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to migrate staketia to stakeibc")
@@ -66,18 +71,18 @@ func CreateUpgradeHandler(
 		}
 
 		// Implement Bnocs Proposal 256
-		if err := ExecuteProp256(ctx, bankKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to implement Bnocs Proposal")
-		}
+		// if err := ExecuteProp256(ctx, bankKeeper); err != nil {
+		// 	return vm, errorsmod.Wrapf(err, "unable to implement Bnocs Proposal")
+		// }
 
 		// Update redemption rate bounds
-		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+		// UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
 		// Update Celestia inner bounds
-		UpdateCelestiaInnerBounds(ctx, stakeibcKeeper)
+		// UpdateCelestiaInnerBounds(ctx, stakeibcKeeper)
 
 		// Reset failed LSM record
-		ResetLSMRecord(ctx, recordsKeeper)
+		// ResetLSMRecord(ctx, recordsKeeper)
 
 		ctx.Logger().Info("Running module migrations...")
 		return mm.RunMigrations(ctx, configurator, vm)
