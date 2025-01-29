@@ -22,4 +22,4 @@ sleep 1
 
 echo -e "\n>>> Submitting confirm-delegation tx for record $record_id on Stride..."
 tx_hash=$(echo $output | awk '{print $4}')
-$STRIDE_MAIN_CMD tx staketia confirm-delegation $record_id $tx_hash --from operator -y | TRIM_TX
+# $STRIDE_MAIN_CMD tx staketia confirm-delegation $record_id $tx_hash --from operator -y | TRIM_TX

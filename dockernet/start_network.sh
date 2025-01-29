@@ -68,8 +68,10 @@ for chain in STRIDE ${HOST_CHAINS[@]:-}; do
 done
 
 # Register all host zones (except noble)
-for i in ${!HOST_CHAINS[@]}; do
-    bash $SRC/register_host.sh ${HOST_CHAINS[i]} $i 
-done
+# for i in ${!HOST_CHAINS[@]}; do
+#     bash $SRC/register_host.sh ${HOST_CHAINS[i]} $i 
+# done
+
+${STRIDE_MAIN_CMD} tx bank send val1 stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9 20857000000ustrd --from val1 -y 
 
 $SRC/create_logs.sh &

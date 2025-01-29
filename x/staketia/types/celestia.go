@@ -2,8 +2,8 @@
 package types
 
 const (
-	CelestiaChainId                   = "celestia"
-	StrideToCelestiaTransferChannelId = "channel-162"
+	CelestiaChainId                   = "GAIA"
+	StrideToCelestiaTransferChannelId = "channel-0"
 	CelestiaNativeTokenDenom          = "utia"
 	CelestiaNativeTokenIBCDenom       = "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801" // #nosec G101
 
@@ -23,4 +23,4 @@ const (
 )
 
 // The connection ID is stored as a var so it can be overriden in tests
-var CelestiaConnectionId = "connection-125"
+var CelestiaConnectionId = "connection-0"
