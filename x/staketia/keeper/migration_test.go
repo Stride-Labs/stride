@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	s.Require().Equal(types.CelestiaChainId, actualStakeibcHostZone.ChainId, "chain ID")
 	s.Require().Equal(totalDelegations, actualStakeibcHostZone.TotalDelegations, "total delegations")
 	s.Require().Equal(redemptionRate, actualStakeibcHostZone.RedemptionRate, "redemption rate")
-	s.Require().Equal(lastRedemptionRate, actualStakeibcHostZone.RedemptionRate, "last redemption rate")
+	s.Require().Equal(lastRedemptionRate, actualStakeibcHostZone.LastRedemptionRate, "last redemption rate")
 	s.Require().Equal(minInnerRedemptionRate, actualStakeibcHostZone.MinInnerRedemptionRate, "min redemption rate")
 	s.Require().Equal(maxInnerRedemptionRate, actualStakeibcHostZone.MaxInnerRedemptionRate, "max redemption rate")
 	s.Require().Equal(halted, actualStakeibcHostZone.Halted, "halted")
