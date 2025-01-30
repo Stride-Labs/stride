@@ -5,13 +5,13 @@ import {
   coinFromString,
   convertBech32Prefix,
   decToString,
-  sleep,
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import { waitForChain } from "./utils";
 
 const RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
+const HUB_RPC_ENDPOINT = "http://localhost:26557";
 
 let accounts: {
   user: StrideClient; // a normal account loaded with 100 STRD
@@ -19,6 +19,10 @@ let accounts: {
   val1: StrideClient;
   val2: StrideClient;
   val3: StrideClient;
+};
+
+let gaiaAccounts: {
+  user: StrideClient; // a normal account loaded with 100 ATOM
 };
 
 // init accounts and wait for chain to start
@@ -78,10 +82,27 @@ beforeAll(async () => {
       broadcastPollIntervalMs: 50,
       resolveIbcResponsesCheckIntervalMs: 50,
     });
-  }
 
+    if (name === "user") {
+      const signer = await Secp256k1HdWallet.fromMnemonic(mnemonic);
+
+      // get signer address
+      const [{ address }] = await signer.getAccounts();
+
+      gaiaAccounts = {
+        user: await StrideClient.create(HUB_RPC_ENDPOINT, signer, address, {
+          gasPrice: GasPrice.fromString("0.025uatom"),
+          broadcastPollIntervalMs: 50,
+          resolveIbcResponsesCheckIntervalMs: 50,
+        }),
+      };
+    }
+  }
   console.log("waiting for stride to start...");
   await waitForChain(accounts.user, "ustrd");
+
+  console.log("waiting for gaia to start...");
+  await waitForChain(gaiaAccounts.user, "uatom");
 });
 
 // time variables in seconds
