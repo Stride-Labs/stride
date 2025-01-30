@@ -46,10 +46,11 @@ create_validator() {
 }
 
 main() {
+    echo "Creating validator..."
     wait_for_startup
     add_keys
     create_validator
     echo "Done"
 }
 
-main >> validator.log 2>&1 &
+main >> logs/startup.log 2>&1 &

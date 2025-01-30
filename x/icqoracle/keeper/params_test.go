@@ -1,6 +1,6 @@
 package keeper_test
 
-import "github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+import "github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 
 func (s *KeeperTestSuite) TestParams() {
 	expectedParams := types.Params{

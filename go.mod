@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/stride/v24
+module github.com/Stride-Labs/stride/v25
 
 go 1.21.1
 
@@ -8,12 +8,12 @@ require (
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.4.0
 	github.com/CosmWasm/wasmd v0.46.0
-	github.com/CosmWasm/wasmvm v1.5.5
+	github.com/CosmWasm/wasmvm v1.5.7
 	github.com/Stride-Labs/ibc-rate-limiting v1.0.0
 	github.com/cometbft/cometbft v0.37.11
 	github.com/cometbft/cometbft-db v0.8.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/cosmos/cosmos-sdk v0.47.10
+	github.com/cosmos/cosmos-sdk v0.47.15
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7 v7.1.3-0.20240228213828-cce7f56d000b
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v7 v7.0.0-20240403143657-8e64543c87e0
@@ -164,7 +164,6 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/viper v1.19.0 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect

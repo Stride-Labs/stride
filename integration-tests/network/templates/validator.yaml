@@ -64,6 +64,8 @@ spec:
               mountPath: /home/validator/scripts
             - name: configs
               mountPath: /home/validator/configs
+            - name: logs
+              mountPath: /home/validator/logs
       containers:
         - name: validator
           image: {{ $image }}
@@ -100,6 +102,8 @@ spec:
               mountPath: /home/validator/scripts
             - name: configs
               mountPath: /home/validator/configs
+            - name: logs
+              mountPath: /home/validator/logs
           resources:
             limits:
               cpu: "1000m"
@@ -109,6 +113,8 @@ spec:
               memory: "2Gi"
       volumes:
         - name: state
+          emptyDir: {}
+        - name: logs
           emptyDir: {}
         - name: scripts
           configMap:

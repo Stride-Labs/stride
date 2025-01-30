@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v24/app/apptesting"
-	"github.com/Stride-Labs/stride/v24/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v25/app/apptesting"
+	"github.com/Stride-Labs/stride/v25/x/airdrop/types"
 )
 
 // ----------------------------------------------

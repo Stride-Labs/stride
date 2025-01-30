@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v25/x/stakedym/types"
 )
 
 // Writes a slash record to the store

@@ -29,4 +29,5 @@ var (
 	ErrDivisionByZero                    = errorsmod.Register(ModuleName, 1924, "division by zero")
 	ErrInvalidRecordType                 = errorsmod.Register(ModuleName, 1925, "invalid record type")
 	ErrInvalidGenesisRecords             = errorsmod.Register(ModuleName, 1926, "invalid records during genesis")
+	ErrRedemptionsDisabled               = errorsmod.Register(ModuleName, 1927, "redemptions are no longer enabled with staketia")
 )

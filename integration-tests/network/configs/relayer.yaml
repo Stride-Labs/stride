@@ -38,9 +38,31 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  osmosis:
+    type: cosmos
+    value:
+      key: osmosis
+      chain-id: osmosis-test-1
+      rpc-addr: http://osmosis-validator.integration.svc:26657
+      account-prefix: osmo
+      keyring-backend: test
+      gas-adjustment: 1.3
+      # TODO: investigate why this has to be set so high
+      gas-prices: 1uosmo
+      coin-type: 118
+      min-loop-duration: 1s
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
 paths:
   stride-cosmoshub:
     src:
       chain-id: stride-test-1
     dst:
       chain-id: cosmoshub-test-1
+  stride-osmosis:
+    src:
+      chain-id: stride-test-1
+    dst:
+      chain-id: osmosis-test-1

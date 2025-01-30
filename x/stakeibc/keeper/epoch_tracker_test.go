@@ -8,12 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v24/testutil/keeper"
-	"github.com/Stride-Labs/stride/v24/testutil/nullify"
-	epochtypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v25/testutil/keeper"
+	"github.com/Stride-Labs/stride/v25/testutil/nullify"
+	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
 // These are used to indicate that the value does not matter for the sake of the test

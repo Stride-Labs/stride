@@ -31,7 +31,7 @@ chains:
     home: .osmosisd
     denom: uosmo
     decimals: 6
-    command: ["sleep", "infinity"]
+    command: ["osmosisd", "start"]
 
 # type can be either "relayer" or "hermes"
 relayers:

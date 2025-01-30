@@ -21,7 +21,7 @@ import (
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/deps/osmomath"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/deps/osmomath"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"

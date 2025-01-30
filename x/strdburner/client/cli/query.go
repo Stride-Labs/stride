@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v24/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v25/x/strdburner/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module.

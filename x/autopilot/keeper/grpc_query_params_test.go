@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/v24/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v25/x/autopilot/types"
 )
 
 func (s *KeeperTestSuite) TestParamsQuery() {

@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "stride/auction/auction.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v24/x/auction/types";
+option go_package = "github.com/Stride-Labs/stride/v25/x/auction/types";
 
 // Query defines the gRPC querier service.
 service Query {

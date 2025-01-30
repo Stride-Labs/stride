@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
-	"github.com/Stride-Labs/stride/v24/utils"
+	"github.com/Stride-Labs/stride/v25/utils"
 )
 
 const (

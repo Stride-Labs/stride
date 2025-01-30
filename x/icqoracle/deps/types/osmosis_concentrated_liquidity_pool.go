@@ -5,7 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/deps/osmomath"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/deps/osmomath"
 )
 
 // SpotPrice returns the spot price of the pool.

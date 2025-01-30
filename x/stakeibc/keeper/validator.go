@@ -9,8 +9,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/utils"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v25/utils"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
 // Get a validator and its index from a list of validators, by address
@@ -60,12 +60,15 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
-		Name:                      validator.Name,
-		Address:                   validator.Address,
-		Weight:                    valWeight,
-		Delegation:                sdkmath.ZeroInt(),
-		SlashQueryProgressTracker: sdkmath.ZeroInt(),
-		SlashQueryCheckpoint:      checkpoint,
+		Name:                        validator.Name,
+		Address:                     validator.Address,
+		Weight:                      valWeight,
+		Delegation:                  sdkmath.ZeroInt(),
+		SlashQueryProgressTracker:   sdkmath.ZeroInt(),
+		SlashQueryCheckpoint:        checkpoint,
+		SharesToTokensRate:          sdk.OneDec(),
+		DelegationChangesInProgress: 0,
+		SlashQueryInProgress:        false,
 	})
 
 	k.SetHostZone(ctx, hostZone)

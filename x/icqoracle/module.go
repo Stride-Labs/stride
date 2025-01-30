@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/client/cli"
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/keeper"
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/client/cli"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/keeper"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 )
 
 var (

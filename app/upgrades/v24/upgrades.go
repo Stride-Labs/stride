@@ -7,9 +7,9 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v24/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v25/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
 )
 
 var (
@@ -25,7 +25,7 @@ var (
 	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v23
+// CreateUpgradeHandler creates an SDK upgrade handler for v24
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,

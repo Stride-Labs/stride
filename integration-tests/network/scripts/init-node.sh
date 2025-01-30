@@ -7,12 +7,16 @@ source scripts/utils.sh
 # Wait for API server to start
 wait_for_api $API_ENDPOINT
 
+# Get the relevant config command for the respective SDK version
+client_config_command=$($BINARY config --help 2>&1  | grep -q "Set an application config" && echo "config set client" || echo "config")
+
 # Initialize the config directory and validator key if it's not the main node
 init_config() {
     if [[ "$VALIDATOR_INDEX" != "1" ]]; then
         moniker=${CHAIN_NAME}${VALIDATOR_INDEX}
         $BINARY init $moniker --chain-id $CHAIN_ID --overwrite 
-        $BINARY config keyring-backend test
+        $BINARY $client_config_command chain-id $CHAIN_ID
+        $BINARY $client_config_command keyring-backend test
     fi
 }
 
@@ -82,4 +86,4 @@ main() {
     echo "Done"
 }
 
-main
+main >> logs/startup.log 2>&1 

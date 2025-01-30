@@ -6,7 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/auction/types"
+	"github.com/Stride-Labs/stride/v25/x/auction/types"
 )
 
 // Define a type for bid handler functions

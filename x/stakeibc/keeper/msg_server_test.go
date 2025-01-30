@@ -13,15 +13,15 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	"github.com/Stride-Labs/stride/v24/app/apptesting"
-	"github.com/Stride-Labs/stride/v24/utils"
-	epochtypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v24/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v24/x/records/types"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v25/app/apptesting"
+	"github.com/Stride-Labs/stride/v25/utils"
+	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v25/x/records/types"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
 // ----------------------------------------------------
@@ -150,7 +150,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	for _, validator := range expectedValidators {
 		validator.Delegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
-		validator.SharesToTokensRate = sdk.ZeroDec()
+		validator.SharesToTokensRate = sdk.OneDec()
 		validator.SlashQueryCheckpoint = expectedSlashCheckpoint
 	}
 
