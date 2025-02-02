@@ -52,7 +52,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 			auction.PaymentDenom,
 			bid.SellingTokenAmount.String(),
 			auction.SellingDenom,
-			bid.SellingTokenAmount.ToLegacyDec().Mul(bidsFloorPrice).String(),
+			minPaymentRequired.String(),
 			auction.PaymentDenom,
 			bidsFloorPrice.String(),
 			auction.PaymentDenom,
