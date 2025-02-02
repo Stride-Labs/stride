@@ -10,7 +10,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v25/x/strdburner/types"
 )
 
 type Keeper struct {

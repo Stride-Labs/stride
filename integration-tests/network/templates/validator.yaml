@@ -64,6 +64,8 @@ spec:
               mountPath: /home/validator/scripts
             - name: configs
               mountPath: /home/validator/configs
+            - name: logs
+              mountPath: /home/validator/logs
       containers:
         - name: validator
           image: {{ $image }}
@@ -75,8 +77,9 @@ spec:
                 command: ["bash", "scripts/create-validator.sh"]
           readinessProbe:
             exec:
-              command: ["bash", "scripts/readiness.sh"]
+              command: ["bash", "scripts/node-readiness.sh"]
             periodSeconds: 10
+            timeoutSeconds: 10
           env: 
             {{- include "chain.env" $chain | nindent 10 }}
           ports:
@@ -99,6 +102,8 @@ spec:
               mountPath: /home/validator/scripts
             - name: configs
               mountPath: /home/validator/configs
+            - name: logs
+              mountPath: /home/validator/logs
           resources:
             limits:
               cpu: "1000m"
@@ -108,6 +113,8 @@ spec:
               memory: "2Gi"
       volumes:
         - name: state
+          emptyDir: {}
+        - name: logs
           emptyDir: {}
         - name: scripts
           configMap:

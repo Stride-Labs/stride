@@ -7,7 +7,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 )
 
 type msgServer struct {
@@ -26,7 +26,10 @@ var _ types.MsgServer = msgServer{}
 func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.MsgRegisterTokenPriceQuery) (*types.MsgRegisterTokenPriceQueryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO check admin
+	_, err := ms.Keeper.GetTokenPrice(ctx, msg.BaseDenom, msg.QuoteDenom, msg.OsmosisPoolId)
+	if err == nil {
+		return nil, types.ErrTokenPriceAlreadyExists.Wrapf("token price BaseDenom='%s' QuoteDenom='%s' OsmosisPoolId='%s'", msg.BaseDenom, msg.QuoteDenom, msg.OsmosisPoolId)
+	}
 
 	tokenPrice := types.TokenPrice{
 		BaseDenom:         msg.BaseDenom,
@@ -39,7 +42,7 @@ func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.Ms
 		QueryInProgress:   false,
 	}
 
-	err := ms.Keeper.SetTokenPrice(ctx, tokenPrice)
+	err = ms.Keeper.SetTokenPrice(ctx, tokenPrice)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +54,7 @@ func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.Ms
 func (ms msgServer) RemoveTokenPriceQuery(goCtx context.Context, msg *types.MsgRemoveTokenPriceQuery) (*types.MsgRemoveTokenPriceQueryResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO check admin
-
-	tokenPrice := types.TokenPrice{
-		BaseDenom:     msg.BaseDenom,
-		QuoteDenom:    msg.QuoteDenom,
-		OsmosisPoolId: msg.OsmosisPoolId,
-	}
-	ms.Keeper.RemoveTokenPrice(ctx, tokenPrice)
+	ms.Keeper.RemoveTokenPrice(ctx, msg.BaseDenom, msg.QuoteDenom, msg.OsmosisPoolId)
 
 	return &types.MsgRemoveTokenPriceQueryResponse{}, nil
 }

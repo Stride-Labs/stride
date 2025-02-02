@@ -12,10 +12,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	epochstypes "github.com/Stride-Labs/stride/v24/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v24/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v24/x/records/types"
-	"github.com/Stride-Labs/stride/v24/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
+	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
 type TestDepositRecords struct {

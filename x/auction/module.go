@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v24/x/auction/client/cli"
-	"github.com/Stride-Labs/stride/v24/x/auction/keeper"
-	"github.com/Stride-Labs/stride/v24/x/auction/types"
+	"github.com/Stride-Labs/stride/v25/x/auction/client/cli"
+	"github.com/Stride-Labs/stride/v25/x/auction/keeper"
+	"github.com/Stride-Labs/stride/v25/x/auction/types"
 )
 
 var (

@@ -35,7 +35,7 @@ ACCESSORY_CHAINS=()
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA EVMOS HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA)
+  HOST_CHAINS=(GAIA OSMO)
 fi
 REWARD_CONVERTER_HOST_ZONE=${HOST_CHAINS[0]}
 
@@ -121,8 +121,8 @@ IBC_STARS_DENOM=$IBC_STARS_CHANNEL_3_DENOM
 # CHAIN PARAMS
 BLOCK_TIME='1s'
 STRIDE_HOUR_EPOCH_DURATION="60s"
-STRIDE_DAY_EPOCH_DURATION="140s"
-STRIDE_EPOCH_EPOCH_DURATION="35s"
+STRIDE_DAY_EPOCH_DURATION="80s"
+STRIDE_EPOCH_EPOCH_DURATION="20s"
 STRIDE_MINT_EPOCH_DURATION="20s"
 HOST_DAY_EPOCH_DURATION="60s"
 HOST_HOUR_EPOCH_DURATION="60s"
@@ -512,7 +512,7 @@ GET_VAL_ADDR() {
   val_index=$2
 
   MAIN_CMD=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  $MAIN_CMD q staking validators | grep ${chain}_${val_index} -A 6 | grep operator | awk '{print $2}'
+  $MAIN_CMD q staking validators 2>&1 | grep ${chain}_${val_index} -A 6 | grep operator | awk '{print $2}'
 }
 
 GET_ICA_ADDR() {

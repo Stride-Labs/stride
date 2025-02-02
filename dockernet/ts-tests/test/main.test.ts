@@ -5,19 +5,24 @@ import {
   coinFromString,
   convertBech32Prefix,
   decToString,
-  sleep,
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
+import { waitForChain } from "./utils";
 
 const RPC_ENDPOINT = "http://localhost:26657";
+const HUB_RPC_ENDPOINT = "http://localhost:26557";
 
 let accounts: {
-  user: StrideClient; // just a normal user account loaded with 100 STRD
+  user: StrideClient; // a normal account loaded with 100 STRD
   admin: StrideClient; // the stride admin account loaded with 1000 STRD
   val1: StrideClient;
   val2: StrideClient;
   val3: StrideClient;
+};
+
+let gaiaAccounts: {
+  user: StrideClient; // a normal account loaded with 100 ATOM
 };
 
 // init accounts and wait for chain to start
@@ -77,23 +82,27 @@ beforeAll(async () => {
       broadcastPollIntervalMs: 50,
       resolveIbcResponsesCheckIntervalMs: 50,
     });
+
+    if (name === "user") {
+      const signer = await Secp256k1HdWallet.fromMnemonic(mnemonic);
+
+      // get signer address
+      const [{ address }] = await signer.getAccounts();
+
+      gaiaAccounts = {
+        user: await StrideClient.create(HUB_RPC_ENDPOINT, signer, address, {
+          gasPrice: GasPrice.fromString("0.025uatom"),
+          broadcastPollIntervalMs: 50,
+          resolveIbcResponsesCheckIntervalMs: 50,
+        }),
+      };
+    }
   }
+  console.log("waiting for stride to start...");
+  await waitForChain(accounts.user, "ustrd");
 
-  console.log("waiting for chain to start...");
-  while (true) {
-    try {
-      const block =
-        await accounts.user.query.cosmos.base.tendermint.v1beta1.getLatestBlock(
-          {},
-        );
-
-      if (block?.block?.header.height! > 0n) {
-        break;
-      }
-
-      await sleep(50);
-    } catch (error) {}
-  }
+  console.log("waiting for gaia to start...");
+  await waitForChain(gaiaAccounts.user, "uatom");
 });
 
 // time variables in seconds
@@ -131,12 +140,13 @@ describe("x/airdrop", () => {
     }
     expect(tx.code).toBe(0);
 
-    const { airdrop } = await stridejs.query.stride.airdrop.airdrop({
-      id: airdropId,
-    });
+    const { id, earlyClaimPenalty } =
+      await stridejs.query.stride.airdrop.airdrop({
+        id: airdropId,
+      });
 
-    expect(airdrop!.id).toBe(airdropId);
-    expect(airdrop!.earlyClaimPenalty).toBe("0.5");
+    expect(id).toBe(airdropId);
+    expect(earlyClaimPenalty).toBe("0.5");
   });
 });
 
@@ -157,13 +167,13 @@ describe("ibc", () => {
             revisionHeight: 0n,
           },
           timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes from now as nanoseconds
+            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
           ),
           memo: "",
         },
       );
 
-    const tx = await stridejs.signAndBroadcast([msg]);
+    const tx = await stridejs.signAndBroadcast([msg], 2);
     if (tx.code !== 0) {
       console.error(tx.rawLog);
     }
@@ -173,4 +183,86 @@ describe("ibc", () => {
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
   }, 30_000);
+});
+
+describe("x/stakeibc", () => {
+  test("batch undelegation happy path", async () => {
+    const strideClient = accounts.user;
+    const gaiaClient = gaiaAccounts.user;
+
+    // get stATOM balance before
+    let { balances } = await strideClient.query.cosmos.bank.v1beta1.allBalances(
+      {
+        address: strideClient.address,
+      },
+    );
+
+    const stAtomBalanceBefore = balances.find(
+      (coin) => coin.denom === "stuatom",
+    )?.amount;
+
+    // get Gaia redemption rate
+    const {
+      hostZone: { redemptionRate },
+    } = await strideClient.query.stride.stakeibc.hostZone({
+      chainId: "GAIA",
+    });
+
+    // on Gaia, send ATOM to Stride and use autopilot to liquid stake
+    const amount = 1_000_000;
+
+    let msg =
+      gaiaClient.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
+        {
+          sourcePort: "transfer",
+          sourceChannel: "channel-0",
+          token: coinFromString(`${amount}uatom`),
+          sender: gaiaClient.address,
+          receiver: JSON.stringify({
+            autopilot: {
+              stakeibc: {
+                stride_address: strideClient.address,
+                action: "LiquidStake",
+              },
+              receiver: strideClient.address,
+            },
+          }),
+          timeoutHeight: {
+            revisionNumber: 0n,
+            revisionHeight: 0n,
+          },
+          timeoutTimestamp: BigInt(
+            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
+          ),
+          memo: "",
+        },
+      );
+
+    let tx = await gaiaClient.signAndBroadcast([msg], 2);
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
+    expect(tx.code).toBe(0);
+
+    // on Gaia, wait for the ibc ack
+    const ibcAck = await tx.ibcResponses[0];
+    expect(ibcAck.type).toBe("ack");
+    expect(ibcAck.tx.code).toBe(0);
+
+    // get stATOM balance after
+    ({ balances } = await strideClient.query.cosmos.bank.v1beta1.allBalances({
+      address: strideClient.address,
+    }));
+
+    const stAtomBalanceAfter = balances.find(
+      (coin) => coin.denom === "stuatom",
+    )?.amount;
+
+    // check expected stAtom balance using expectedStAtomAfter and redemptionRate
+    const expectedStAtomAfter =
+      Number(stAtomBalanceBefore ?? 0) +
+      Math.floor(amount / Number(redemptionRate)); // https://github.com/Stride-Labs/stride/blob/0cb59a10d/x/stakeibc/keeper/msg_server.go#L256
+
+    expect(Number(stAtomBalanceAfter ?? 0)).toBe(expectedStAtomAfter);
+  }, 120_000);
 });

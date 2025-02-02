@@ -11,15 +11,13 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	interchainquerykeeper "github.com/Stride-Labs/stride/v24/x/interchainquery/keeper"
-
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 )
 
 type Keeper struct {
 	cdc       codec.Codec
 	storeKey  storetypes.StoreKey
-	icqKeeper interchainquerykeeper.Keeper
+	IcqKeeper types.IcqKeeper
 }
 
 func NewKeeper(
@@ -51,14 +49,14 @@ func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) erro
 }
 
 // RemoveTokenPrice removes price query for a token
-func (k Keeper) RemoveTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) {
-	store := ctx.KVStore(k.storeKey)
-	key := types.TokenPriceQueryKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
+	key := types.TokenPriceQueryKey(baseDenom, quoteDenom, osmosisPoolId)
 	store.Delete(key)
 }
 
-func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, tokenPrice types.TokenPrice, queryInProgress bool) error {
-	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
+func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId string, queryInProgress bool) error {
+	tokenPrice, err := k.GetTokenPrice(ctx, baseDenom, quoteDenom, osmosisPoolId)
 	if err != nil {
 		return err
 	}
@@ -73,13 +71,13 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, tokenPrice types.T
 }
 
 // GetTokenPrice retrieves price data for a token
-func (k Keeper) GetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) (types.TokenPrice, error) {
+func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId string) (types.TokenPrice, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
-	key := types.TokenPriceQueryKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+	key := types.TokenPriceQueryKey(baseDenom, quoteDenom, osmosisPoolId)
 
 	bz := store.Get(key)
 	if bz == nil {
-		return types.TokenPrice{}, fmt.Errorf("price not found for baseDenom='%s' quoteDenom='%s' poolId='%s'", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+		return types.TokenPrice{}, fmt.Errorf("price not found for baseDenom='%s' quoteDenom='%s' poolId='%s'", baseDenom, quoteDenom, osmosisPoolId)
 	}
 
 	var price types.TokenPrice
@@ -143,16 +141,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", baseDenom, err)
 	}
 	if len(baseTokenPrices) == 0 {
-		return math.LegacyDec{}, fmt.Errorf("no price for '%s'", baseDenom)
-	}
-
-	// Get all price for quoteToken
-	quoteTokenPrices, err := k.GetTokenPricesByDenom(ctx, quoteDenom)
-	if err != nil {
-		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
-	}
-	if len(quoteTokenPrices) == 0 {
-		return math.LegacyDec{}, fmt.Errorf("no price for '%s'", quoteDenom)
+		return math.LegacyDec{}, fmt.Errorf("no price for baseDenom '%s'", baseDenom)
 	}
 
 	// Get price expiration timeout
@@ -161,6 +150,25 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 		return math.LegacyDec{}, fmt.Errorf("error getting params: %w", err)
 	}
 	priceExpirationTimeoutSec := int64(params.PriceExpirationTimeoutSec)
+
+	// Check if baseDenom already has a price for quoteDenom
+	foundAlreadyHasStalePrice := false
+	if price, ok := baseTokenPrices[quoteDenom]; ok {
+		if ctx.BlockTime().Unix()-price.UpdatedAt.Unix() <= priceExpirationTimeoutSec {
+			return price.SpotPrice, nil
+		} else {
+			foundAlreadyHasStalePrice = true
+		}
+	}
+
+	// Get all price for quoteToken
+	quoteTokenPrices, err := k.GetTokenPricesByDenom(ctx, quoteDenom)
+	if err != nil {
+		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
+	}
+	if len(quoteTokenPrices) == 0 {
+		return math.LegacyDec{}, fmt.Errorf("no price for quoteDenom '%s' (foundAlreadyHasStalePrice='%v')", quoteDenom, foundAlreadyHasStalePrice)
+	}
 
 	// Init price
 	price = math.LegacyZeroDec()
@@ -195,7 +203,6 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 				// Calculate the price of 1 baseToken in quoteToken
 				price = baseTokenPrice.SpotPrice.Quo(quoteTokenPrice.SpotPrice)
-
 				break
 			}
 		}
@@ -203,13 +210,14 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 	if price.IsZero() {
 		return math.LegacyDec{}, fmt.Errorf(
-			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v')",
+			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v', foundAlreadyHasStalePrice='%v')",
 			baseDenom,
 			quoteDenom,
 			foundCommonQuoteToken,
 			foundBaseTokenStalePrice,
 			foundQuoteTokenStalePrice,
 			foundQuoteTokenZeroPrice,
+			foundAlreadyHasStalePrice,
 		)
 	}
 
@@ -218,9 +226,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 // GetAllTokenPrices retrieves all stored token prices
 func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
-
-	iterator := sdk.KVStorePrefixIterator(store, []byte(types.PriceQueryPrefix))
+	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), []byte(types.PriceQueryPrefix))
 	defer iterator.Close()
 
 	prices := []types.TokenPrice{}
@@ -231,4 +237,9 @@ func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
 	}
 
 	return prices
+}
+
+// GetStoreKey returns the store key
+func (k Keeper) GetStoreKey() storetypes.StoreKey {
+	return k.storeKey
 }

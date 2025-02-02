@@ -11,10 +11,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v24/utils"
-	deps "github.com/Stride-Labs/stride/v24/x/icqoracle/deps/types"
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/types"
-	icqtypes "github.com/Stride-Labs/stride/v24/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v25/utils"
+	deps "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
+	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
 )
 
 const (
@@ -64,19 +64,19 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error getting module params: %s", err.Error()))
-		return err
+		return errorsmod.Wrapf(err, "Error getting module params")
 	}
 
 	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
 	if err != nil {
 		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error converting osmosis pool id '%s' to uint64, error '%s'", tokenPrice.OsmosisPoolId, err.Error()))
-		return err
+		return errorsmod.Wrapf(err, "Error converting osmosis pool id '%s' to uint64", tokenPrice.OsmosisPoolId)
 	}
 
 	tokenPriceBz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
 		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error serializing tokenPrice '%+v' to bytes, error '%s'", tokenPrice, err.Error()))
-		return err
+		return errorsmod.Wrapf(err, "Error serializing tokenPrice '%+v' to bytes", tokenPrice)
 	}
 
 	queryId := fmt.Sprintf("%s|%s|%s|%d", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, ctx.BlockHeight())
@@ -92,14 +92,14 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		TimeoutDuration: time.Duration(params.IcqTimeoutSec) * time.Second,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
-	if err := k.icqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
+	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
 		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error submitting OsmosisClPool ICQ, error '%s'", err.Error()))
-		return err
+		return errorsmod.Wrapf(err, "Error submitting OsmosisClPool ICQ")
 	}
 
-	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice, true); err != nil {
+	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, true); err != nil {
 		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error updating queryInProgress=true, error '%s'", err.Error()))
-		return err
+		return errorsmod.Wrapf(err, "Error updating queryInProgress=true")
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisClPool",
 		"Starting OsmosisClPool ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
-	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice)
+	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error getting current spot price")
 	}
@@ -126,13 +126,14 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	}
 
 	// Unmarshal the query response args to determine the balance
-	newSpotPrice, err := unmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
+	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
 	tokenPrice.SpotPrice = newSpotPrice
 	tokenPrice.QueryInProgress = false
+	tokenPrice.UpdatedAt = ctx.BlockTime()
 
 	if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
 		return errorsmod.Wrap(err, "Error updating spot price from query response")
@@ -141,7 +142,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	return nil
 }
 
-func unmarshalSpotPriceFromOsmosisClPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
+func UnmarshalSpotPriceFromOsmosisClPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
 	var pool deps.OsmosisConcentratedLiquidityPool
 	if err := proto.Unmarshal(queryResponseBz, &pool); err != nil {
 		return math.LegacyZeroDec(), err

@@ -5,7 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v24/x/icqoracle/deps/osmomath"
+	"github.com/Stride-Labs/stride/v25/x/icqoracle/deps/osmomath"
 )
 
 // SpotPrice returns the spot price of the pool.
@@ -23,6 +23,9 @@ func (p OsmosisConcentratedLiquidityPool) SpotPrice(quoteAssetDenom string, base
 	// validate quote asset is in pool
 	if quoteAssetDenom != p.Token0 && quoteAssetDenom != p.Token1 {
 		return math.LegacyDec{}, fmt.Errorf("quote asset denom (%s) is not in pool with (%s, %s) pair", quoteAssetDenom, p.Token0, p.Token1)
+	}
+	if p.CurrentSqrtPrice.IsZero() {
+		return math.LegacyDec{}, fmt.Errorf("zero sqrt price would result in either a zero spot price or division by zero when calculating the inverse price")
 	}
 
 	priceSquared := p.CurrentSqrtPrice.PowerInteger(2)

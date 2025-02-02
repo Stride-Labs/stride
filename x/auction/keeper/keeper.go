@@ -3,14 +3,13 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v24/x/auction/types"
+	"github.com/Stride-Labs/stride/v25/x/auction/types"
 )
 
 type Keeper struct {
@@ -35,10 +34,6 @@ func NewKeeper(
 		bankKeeper:      bankKeeper,
 		icqoracleKeeper: icqoracleKeeper,
 	}
-}
-
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
 // SetAuction stores auction info for a token
@@ -76,7 +71,7 @@ func (k Keeper) GetAuction(ctx sdk.Context, name string) (*types.Auction, error)
 // GetAllAuctions retrieves all stored auctions
 func (k Keeper) GetAllAuctions(ctx sdk.Context) []types.Auction {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AuctionPrefix)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(types.AuctionPrefix))
+	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
 	auctions := []types.Auction{}
@@ -105,4 +100,9 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 
 	// Call the handler
 	return auctionBidHandler(ctx, k, auction, bid)
+}
+
+// GetStoreKey returns the store key
+func (k Keeper) GetStoreKey() storetypes.StoreKey {
+	return k.storeKey
 }

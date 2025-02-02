@@ -3,12 +3,11 @@ package types_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v24/app/apptesting"
-	"github.com/Stride-Labs/stride/v24/x/staketia/types"
+	"github.com/Stride-Labs/stride/v25/app/apptesting"
+	"github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
 const (
@@ -51,14 +50,6 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	hostZone.ClaimAddress = fillDefaultValue(hostZone.ClaimAddress, validAddress)
 	hostZone.OperatorAddressOnStride = fillDefaultValue(hostZone.OperatorAddressOnStride, validAddress)
 	hostZone.SafeAddressOnStride = fillDefaultValue(hostZone.SafeAddressOnStride, validAddress)
-
-	if hostZone.RedemptionRate.IsNil() {
-		hostZone.RedemptionRate = sdk.OneDec()
-		hostZone.MinRedemptionRate = sdk.MustNewDecFromStr("0.8")
-		hostZone.MinInnerRedemptionRate = sdk.MustNewDecFromStr("0.9")
-		hostZone.MaxInnerRedemptionRate = sdk.MustNewDecFromStr("1.1")
-		hostZone.MaxRedemptionRate = sdk.MustNewDecFromStr("1.2")
-	}
 
 	if hostZone.UnbondingPeriodSeconds == UninitializedInt {
 		hostZone.UnbondingPeriodSeconds = 0 // invalid
@@ -201,22 +192,6 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 			expectedError: "invalid safe address",
 		},
 		{
-			name: "invalid redemption rate",
-			hostZone: types.HostZone{
-				RedemptionRate: sdk.OneDec().Neg(),
-			},
-			expectedError: "redemption rate must be positive",
-		},
-		{
-			name: "invalid redemption rate bounds",
-			hostZone: types.HostZone{
-				RedemptionRate:         sdk.OneDec(),
-				MinRedemptionRate:      sdk.MustNewDecFromStr("1.1"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-			},
-			expectedError: "invalid host zone redemption rate inner bounds",
-		},
-		{
 			name: "missing unbonding period",
 			hostZone: types.HostZone{
 				UnbondingPeriodSeconds: UninitializedInt,
@@ -234,114 +209,6 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 				require.NoError(t, err, "no error expected")
 			} else {
 				require.ErrorContains(t, err, tc.expectedError)
-			}
-		})
-	}
-}
-
-func TestValidateRedemptionRateBoundsInitalized(t *testing.T) {
-	testCases := []struct {
-		name     string
-		hostZone types.HostZone
-		valid    bool
-	}{
-		{
-			name: "valid bounds",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-			},
-			valid: true,
-		},
-		{
-			name: "min outer negative",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8").Neg(),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-			},
-			valid: false,
-		},
-		{
-			name: "min inner negative",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9").Neg(),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-			},
-			valid: false,
-		},
-		{
-			name: "max inner negative",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1").Neg(),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-			},
-			valid: false,
-		},
-		{
-			name: "max outer negative",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2").Neg(),
-			},
-			valid: false,
-		},
-		{
-			name: "max inner outside outer",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.3"), // <--
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-			},
-			valid: false,
-		},
-		{
-			name: "min inner outside outer",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.7"), // <--
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-			},
-			valid: false,
-		},
-		{
-			name: "min inner greater than min outer",
-			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"), // <--
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"), // <--
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-			},
-			valid: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.hostZone.ValidateRedemptionRateBoundsInitalized()
-			if tc.valid {
-				require.NoError(t, err, "no error expected")
-			} else {
-				require.ErrorIs(t, err, types.ErrInvalidRedemptionRateBounds)
 			}
 		})
 	}
