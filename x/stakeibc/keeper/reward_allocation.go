@@ -25,8 +25,3 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 		k.Logger(ctx).Info("Cannot send rewards from RewardCollector to Auction module: %w", err)
 	}
 }
-
-// AllocateRewardsFromHostZones auctions off the reward collector balance
-func (k Keeper) AllocateRewardsFromHostZones(ctx sdk.Context) {
-	k.AuctionOffRewardCollectorBalance(ctx)
-}
