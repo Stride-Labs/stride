@@ -79,9 +79,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		return errorsmod.Wrapf(err, "Error serializing tokenPrice '%+v' to bytes", tokenPrice)
 	}
 
-	queryId := fmt.Sprintf("%s|%s|%s|%d", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, ctx.BlockHeight())
 	query := icqtypes.Query{
-		Id:              queryId,
 		ChainId:         params.OsmosisChainId,
 		ConnectionId:    params.OsmosisConnectionId,
 		QueryType:       icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
