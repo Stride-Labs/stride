@@ -22,6 +22,6 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 
 	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RewardCollectorName, auctiontypes.ModuleName, rewardCollectorBalances)
 	if err != nil {
-		k.Logger(ctx).Info("Cannot send rewards from RewardCollector to Auction module: %w", err)
+		k.Logger(ctx).Error(fmt.Sprintf("Cannot send rewards from RewardCollector to Auction module: %s", err))
 	}
 }
