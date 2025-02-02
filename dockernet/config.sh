@@ -35,7 +35,7 @@ ACCESSORY_CHAINS=()
 if [[ "${ALL_HOST_CHAINS:-false}" == "true" ]]; then 
   HOST_CHAINS=(GAIA EVMOS HOST)
 elif [[ "${#HOST_CHAINS[@]}" == "0" ]]; then 
-  HOST_CHAINS=(GAIA OSMO)
+  HOST_CHAINS=(GAIA)
 fi
 REWARD_CONVERTER_HOST_ZONE=${HOST_CHAINS[0]}
 
