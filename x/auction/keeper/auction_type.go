@@ -43,10 +43,10 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 
 	// Apply MinPriceMultiplier
 	bidsFloorPrice := price.Mul(auction.MinPriceMultiplier)
+	minPaymentRequired := bid.SellingTokenAmount.ToLegacyDec().Mul(bidsFloorPrice)
 
 	// if paymentAmount < sellingAmount * bidsFloorPrice
-	if bid.PaymentTokenAmount.ToLegacyDec().LT(bid.SellingTokenAmount.ToLegacyDec().
-		Mul(bidsFloorPrice)) {
+	if bid.PaymentTokenAmount.ToLegacyDec().LT(minPaymentRequired) {
 		return fmt.Errorf("bid price too low: offered %s%s for %s%s, bids floor price is %s%s (price=%s %s/%s)",
 			bid.PaymentTokenAmount.String(),
 			auction.PaymentDenom,
