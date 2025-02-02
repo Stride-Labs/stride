@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,6 +36,8 @@ func (s *KeeperTestSuite) SetupMockICQKeeper() {
 func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
 	s.SetupMockICQKeeper()
+
+	s.Ctx = s.Ctx.WithBlockTime(time.Now().UTC())
 
 	// Register ICQ callback
 	s.icqCallbacks = s.App.ICQOracleKeeper.ICQCallbackHandler()
