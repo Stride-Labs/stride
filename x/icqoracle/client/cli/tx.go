@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -33,13 +34,13 @@ func GetTxCmd() *cobra.Command {
 
 func CmdAddTokenPrice() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-token-price [base-denom] [quote-denom] [osmosis-pool-id] [osmosis-base-denom] [osmosis-quote-denom]",
+		Use:   "add-token-price [base-denom] [quote-denom] [base-denom-decimals] [quote-denom-decimals] [osmosis-pool-id] [osmosis-base-denom] [osmosis-quote-denom]",
 		Short: "Add a token to price tracking",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Add a token to price tracking.
 
 Example:
-  $ %[1]s tx %[2]s add-token-price uosmo uatom 123 uosmo ibc/... --from admin
+  $ %[1]s tx %[2]s add-token-price uosmo uatom 6 6 123 uosmo ibc/... --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(5),
@@ -49,13 +50,25 @@ Example:
 				return err
 			}
 
+			baseDenomDecimls, err := strconv.ParseInt(args[2], 10, 64)
+			if err != nil {
+				return fmt.Errorf("Error parsing baseDenomDecmnals as int64: %w", err)
+			}
+
+			quoteDenomDecimls, err := strconv.ParseInt(args[3], 10, 64)
+			if err != nil {
+				return fmt.Errorf("Error parsing quoteDenomDecmnals as int64: %w", err)
+			}
+
 			msg := types.NewMsgRegisterTokenPriceQuery(
 				clientCtx.GetFromAddress().String(),
 				args[0],
 				args[1],
-				args[2],
-				args[3],
+				baseDenomDecimls,
+				quoteDenomDecimls,
 				args[4],
+				args[5],
+				args[6],
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

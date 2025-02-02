@@ -8,29 +8,33 @@ option go_package = "github.com/Stride-Labs/stride/v25/x/icqoracle/types";
 
 // TokenPrice stores latest price data for a token
 message TokenPrice {
-  // Token denom on Stride
+  // Base denom on Stride
   string base_denom = 1;
   // Quote denom on Stride
   string quote_denom = 2;
-  // Token denom on Osmosis
-  string osmosis_base_denom = 3;
+  // Decimals of base token, used for normalizing price feed from Osmosis
+  int64 base_denom_decimals = 3;
+  // Decimals of quote token, used for normalizing price feed from Osmosis
+  int64 quote_denom_decimals = 4;
+  // Base denom on Osmosis
+  string osmosis_base_denom = 5;
   // Quote denom on Osmosis
-  string osmosis_quote_denom = 4;
+  string osmosis_quote_denom = 6;
   // Pool ID on Osmosis
-  string osmosis_pool_id = 5;
+  string osmosis_pool_id = 7;
 
   // Spot price of base_denom denominated in quote_denom
-  string spot_price = 6 [
+  string spot_price = 8 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Last update timestamp
-  google.protobuf.Timestamp updated_at = 7
+  google.protobuf.Timestamp updated_at = 9
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress
-  bool query_in_progress = 8;
+  bool query_in_progress = 10;
 }
 
 // OracleParams stores global oracle parameters

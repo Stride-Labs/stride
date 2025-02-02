@@ -686,11 +686,13 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 
 func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 	baseTokenPrice := types.TokenPrice{
-		BaseDenom:         "uatom",
-		QuoteDenom:        "uusdc",
-		OsmosisPoolId:     "1",
-		OsmosisBaseDenom:  "ibc/uatom",
-		OsmosisQuoteDenom: "uusdc",
+		BaseDenom:          "uatom",
+		QuoteDenom:         "uusdc",
+		OsmosisPoolId:      "1",
+		OsmosisBaseDenom:   "ibc/uatom",
+		OsmosisQuoteDenom:  "uusdc",
+		BaseDenomDecimals:  6,
+		QuoteDenomDecimals: 6,
 	}
 
 	testCases := []struct {
@@ -707,7 +709,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			expectedError: "proto: wrong wireType",
 		},
 		{
-			name:       "successful price calculation - base/quote order",
+			name:       "successful price calculation with equal decimals",
 			tokenPrice: baseTokenPrice,
 			poolData: s.createMockPoolData(
 				baseTokenPrice.OsmosisBaseDenom,
@@ -716,22 +718,66 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			expectedPrice: math.LegacyNewDecWithPrec(15, 1), // 1.5 from mock pool data
 		},
 		{
-			name:       "successful price calculation - quote/base order",
-			tokenPrice: baseTokenPrice,
+			name: "successful price calculation with more base decimals",
+			tokenPrice: types.TokenPrice{
+				BaseDenom:          "satoshi",
+				QuoteDenom:         "uusdc",
+				OsmosisPoolId:      "1",
+				OsmosisBaseDenom:   "ibc/satoshi",
+				OsmosisQuoteDenom:  "ibc/uusdc",
+				BaseDenomDecimals:  8, // BTC has 8 decimals
+				QuoteDenomDecimals: 6, // USDC has 6 decimals
+			},
 			poolData: s.createMockPoolData(
-				baseTokenPrice.OsmosisQuoteDenom,
-				baseTokenPrice.OsmosisBaseDenom,
+				"ibc/satoshi",
+				"ibc/uusdc",
 			),
-			expectedPrice: math.LegacyMustNewDecFromStr("0.666666666666666667"), // 1/1.5 from mock pool data
+			expectedPrice: math.LegacyNewDecWithPrec(15, 1).Mul(math.LegacyNewDec(100)), // 1.5 * 10^2
+		},
+		{
+			name: "successful price calculation with more quote decimals",
+			tokenPrice: types.TokenPrice{
+				BaseDenom:          "uatom",
+				QuoteDenom:         "uusdc",
+				OsmosisPoolId:      "1",
+				OsmosisBaseDenom:   "ibc/uatom",
+				OsmosisQuoteDenom:  "ibc/uusdc",
+				BaseDenomDecimals:  6, // ATOM has 6 decimals
+				QuoteDenomDecimals: 8, // Quote has 8 decimals
+			},
+			poolData: s.createMockPoolData(
+				"ibc/uatom",
+				"ibc/uusdc",
+			),
+			expectedPrice: math.LegacyNewDecWithPrec(15, 1).Quo(math.LegacyNewDec(100)), // 1.5 / 10^2
+		},
+		{
+			name: "price calculation with inverse pool ordering",
+			tokenPrice: types.TokenPrice{
+				BaseDenom:          "uatom",
+				QuoteDenom:         "uusdc",
+				OsmosisPoolId:      "1",
+				OsmosisBaseDenom:   "ibc/uatom",
+				OsmosisQuoteDenom:  "ibc/uusdc",
+				BaseDenomDecimals:  8,
+				QuoteDenomDecimals: 6,
+			},
+			poolData: s.createMockPoolData(
+				"ibc/uusdc",
+				"ibc/uatom",
+			),
+			expectedPrice: math.LegacyMustNewDecFromStr("0.666666666666666667").Mul(math.LegacyNewDec(100)), // (1/1.5) * 10^2
 		},
 		{
 			name: "different denom ordering in pool",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:         "uatom",
-				QuoteDenom:        "uusdc",
-				OsmosisPoolId:     "1",
-				OsmosisBaseDenom:  "ibc/uatom",
-				OsmosisQuoteDenom: "different_denom", // Different from pool data
+				BaseDenom:          "uatom",
+				QuoteDenom:         "uusdc",
+				OsmosisPoolId:      "1",
+				OsmosisBaseDenom:   "ibc/uatom",
+				OsmosisQuoteDenom:  "different_denom",
+				BaseDenomDecimals:  6,
+				QuoteDenomDecimals: 6,
 			},
 			poolData: s.createMockPoolData(
 				"ibc/uatom",
@@ -750,14 +796,97 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 				s.Require().Contains(err.Error(), tc.expectedError)
 			} else {
 				s.Require().NoError(err)
-				// Use InDelta for floating point comparison with small tolerance
 				s.Require().InDelta(
 					tc.expectedPrice.MustFloat64(),
 					spotPrice.MustFloat64(),
-					0.01,
+					0.000001,
 					"expected price %v, got %v", tc.expectedPrice, spotPrice,
 				)
 			}
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestAdjustSpotPriceForDecimals() {
+	testCases := []struct {
+		name          string
+		rawPrice      math.LegacyDec
+		baseDecimals  int64
+		quoteDecimals int64
+		expectedPrice math.LegacyDec
+	}{
+		{
+			name:          "equal decimals",
+			rawPrice:      math.LegacyNewDec(1000),
+			baseDecimals:  6,
+			quoteDecimals: 6,
+			expectedPrice: math.LegacyNewDec(1000),
+		},
+		{
+			name:          "base has more decimals",
+			rawPrice:      math.LegacyNewDec(1000),
+			baseDecimals:  8,                         // BTC
+			quoteDecimals: 6,                         // USDC
+			expectedPrice: math.LegacyNewDec(100000), // 1000 * 10^(8-6)
+		},
+		{
+			name:          "quote has more decimals",
+			rawPrice:      math.LegacyNewDec(1000),
+			baseDecimals:  6,                     // USDC
+			quoteDecimals: 8,                     // BTC
+			expectedPrice: math.LegacyNewDec(10), // 1000 / 10^(8-6)
+		},
+		{
+			name:          "large base decimal",
+			rawPrice:      math.LegacyNewDec(1),
+			baseDecimals:  18,                               // ETH
+			quoteDecimals: 6,                                // USDC
+			expectedPrice: math.LegacyNewDec(1000000000000), // 1 * 10^(18-6)
+		},
+		{
+			name:          "large quote decimal",
+			rawPrice:      math.LegacyNewDec(1000000000000),
+			baseDecimals:  6,                    // USDC
+			quoteDecimals: 18,                   // ETH
+			expectedPrice: math.LegacyNewDec(1), // 1000000000000 / 10^(18-6)
+		},
+		{
+			name:          "zero base decimals",
+			rawPrice:      math.LegacyNewDec(100),
+			baseDecimals:  0,
+			quoteDecimals: 6,
+			expectedPrice: math.LegacyNewDec(1).Quo(math.LegacyNewDec(1000000)), // 100 / 10^6
+		},
+		{
+			name:          "zero quote decimals",
+			rawPrice:      math.LegacyNewDec(100),
+			baseDecimals:  6,
+			quoteDecimals: 0,
+			expectedPrice: math.LegacyNewDec(100000000), // 100 * 10^6
+		},
+		{
+			name:          "both zero decimals",
+			rawPrice:      math.LegacyNewDec(100),
+			baseDecimals:  0,
+			quoteDecimals: 0,
+			expectedPrice: math.LegacyNewDec(100),
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			adjustedPrice := keeper.AdjustSpotPriceForDecimals(
+				tc.rawPrice,
+				tc.baseDecimals,
+				tc.quoteDecimals,
+			)
+
+			s.Require().InDelta(
+				tc.expectedPrice.MustFloat64(),
+				adjustedPrice.MustFloat64(),
+				0.0001,
+				"expected price %v, got %v", tc.expectedPrice, adjustedPrice,
+			)
 		})
 	}
 }

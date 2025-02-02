@@ -148,10 +148,40 @@ func UnmarshalSpotPriceFromOsmosisClPool(tokenPrice types.TokenPrice, queryRespo
 		return math.LegacyZeroDec(), err
 	}
 
-	spotPrice, err := pool.SpotPrice(tokenPrice.OsmosisQuoteDenom, tokenPrice.OsmosisBaseDenom)
+	rawSpotPrice, err := pool.SpotPrice(tokenPrice.OsmosisQuoteDenom, tokenPrice.OsmosisBaseDenom)
 	if err != nil {
 		return math.LegacyZeroDec(), err
 	}
 
-	return spotPrice, nil
+	return AdjustSpotPriceForDecimals(
+		rawSpotPrice,
+		tokenPrice.BaseDenomDecimals,
+		tokenPrice.QuoteDenomDecimals,
+	), nil
+}
+
+// AdjustSpotPriceForDecimals corrects the spot price to account for different decimal places between tokens
+// Example: For BTC (8 decimals) / USDC (6 decimals):
+// - If raw price is 1,000 USDC/BTC, we multiply by 10^(8-6) to get 100,000 USDC/BTC
+func AdjustSpotPriceForDecimals(rawPrice math.LegacyDec, baseDecimals, quoteDecimals int64) math.LegacyDec {
+	decimalsDiff := baseDecimals - quoteDecimals
+	if decimalsDiff == 0 {
+		return rawPrice
+	}
+
+	decimalAdjustmentExp := abs(decimalsDiff)
+	decimalAdjustment := math.LegacyNewDec(10).Power(decimalAdjustmentExp)
+
+	if decimalsDiff > 0 {
+		return rawPrice.Mul(decimalAdjustment)
+	} else {
+		return rawPrice.Quo(decimalAdjustment)
+	}
+}
+
+func abs(num int64) uint64 {
+	if num < 0 {
+		return uint64(-num)
+	}
+	return uint64(num)
 }
