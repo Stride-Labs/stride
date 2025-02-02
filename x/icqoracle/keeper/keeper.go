@@ -180,9 +180,9 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	foundQuoteTokenZeroPrice := false
 
 	// Find a common quote denom and calculate baseToken to quoteToken price
-	for quoteDenom1, baseTokenPrice := range baseTokenPrices {
-		for quoteDenom2, quoteTokenPrice := range quoteTokenPrices {
-			if quoteDenom1 == quoteDenom2 {
+	for commonQuoteDenom1, baseTokenPrice := range baseTokenPrices {
+		for commonQuoteDenom2, quoteTokenPrice := range quoteTokenPrices {
+			if commonQuoteDenom1 == commonQuoteDenom2 {
 				foundCommonQuoteToken = true
 
 				// Check that both prices are not stale
