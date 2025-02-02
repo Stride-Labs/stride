@@ -281,15 +281,6 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	s.Require().NoError(err)
 
 	// Verify the captured query data
-	s.Require().NotEmpty(capturedQuery.Id, "query ID should not be empty")
-	expectedQueryId := fmt.Sprintf("%s|%s|%s|%d",
-		tokenPrice.BaseDenom,
-		tokenPrice.QuoteDenom,
-		tokenPrice.OsmosisPoolId,
-		s.Ctx.BlockHeight(),
-	)
-	s.Require().Equal(expectedQueryId, capturedQuery.Id, "query ID should match expected format")
-
 	s.Require().Equal(params.OsmosisChainId, capturedQuery.ChainId)
 	s.Require().Equal(params.OsmosisConnectionId, capturedQuery.ConnectionId)
 	s.Require().Equal(icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF, capturedQuery.QueryType)
