@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
-## [v25.0.0](https://github.com/Stride-Labs/stride/releases/tag/v25.0.0) - 2025-01-28
+## [v25.1.0](https://github.com/Stride-Labs/stride/releases/tag/v25.1.0) - 2025-02-03
 
 ### On-Chain changes
 
@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 4. Fixed stuck LSM records ([#1335](https://github.com/Stride-Labs/stride/pull/1335))
 5. Update outer bounds + Celestia inner bounds + tests ([#1329](https://github.com/Stride-Labs/stride/pull/1329))
 6. Executes Prop 256 in Upgrade Handler ([#1332](https://github.com/Stride-Labs/stride/pull/1332))
-7. Version bumps (sdk, wasmvm, sdkmath, x/crypto, cometbft) ([#1331](https://github.com/Stride-Labs/stride/pull/1331), [#1297](https://github.com/Stride-Labs/stride/pull/1297), [#1306](https://github.com/Stride-Labs/stride/pull/1306), [#1285](https://github.com/Stride-Labs/stride/pull/1285), [#1317](https://github.com/Stride-Labs/stride/pull/1317), [#1309](https://github.com/Stride-Labs/stride/pull/1309), [#1324](https://github.com/Stride-Labs/stride/pull/1324))
+7. Version bumps (sdk, wasmvm, sdkmath, x/crypto, cometbft) ([#1331](https://github.com/Stride-Labs/stride/pull/1331), [#1297](https://github.com/Stride-Labs/stride/pull/1297), [#1306](https://github.com/Stride-Labs/stride/pull/1306), [#1285](https://github.com/Stride-Labs/stride/pull/1285), [#1317](https://github.com/Stride-Labs/stride/pull/1317), [#1309](https://github.com/Stride-Labs/stride/pull/1309), [#1324](https://github.com/Stride-Labs/stride/pull/1324), [#1340](https://github.com/Stride-Labs/stride/pull/1340))
 
 ### Off-Chain changes
 
