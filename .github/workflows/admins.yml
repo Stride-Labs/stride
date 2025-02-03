@@ -1,4 +1,4 @@
-name: Verify no Admins change
+name: Admins List
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Verify admins.go did not change
+    name: Verify admins.go
     steps:
       - uses: actions/checkout@v3
         with:
