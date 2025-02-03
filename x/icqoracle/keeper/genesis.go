@@ -1,9 +1,6 @@
 package keeper
 
 import (
-	"time"
-
-	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
@@ -17,10 +14,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	}
 
 	for _, tokenPrice := range genState.TokenPrices {
-		tokenPrice.SpotPrice = math.LegacyZeroDec()
-		tokenPrice.UpdatedAt = time.Time{}
-		tokenPrice.QueryInProgress = false
-
 		if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
 			panic(err)
 		}
