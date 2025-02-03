@@ -87,7 +87,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		TimeoutDuration: time.Duration(params.IcqTimeoutSec) * time.Second,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
-	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
+	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		return errorsmod.Wrapf(err, "Error submitting OsmosisClPool ICQ")
 	}
 
