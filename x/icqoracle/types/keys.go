@@ -17,7 +17,7 @@ var (
 	PriceQueryPrefix = []byte("pricequery")
 )
 
-func TokenPriceQueryKey(baseDenom, quoteDenom, poolId string) []byte {
+func TokenPriceKey(baseDenom, quoteDenom, poolId string) []byte {
 	return []byte(fmt.Sprintf("%s|%s|%s", baseDenom, quoteDenom, poolId))
 }
 

@@ -42,7 +42,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // SetTokenPrice stores price query for a token
 func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
-	key := types.TokenPriceQueryKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+	key := types.TokenPriceKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 
 	bz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
@@ -56,7 +56,7 @@ func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) erro
 // RemoveTokenPrice removes price query for a token
 func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
-	key := types.TokenPriceQueryKey(baseDenom, quoteDenom, osmosisPoolId)
+	key := types.TokenPriceKey(baseDenom, quoteDenom, osmosisPoolId)
 	store.Delete(key)
 }
 
@@ -78,7 +78,7 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, 
 // GetTokenPrice retrieves price data for a token
 func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId string) (types.TokenPrice, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
-	key := types.TokenPriceQueryKey(baseDenom, quoteDenom, osmosisPoolId)
+	key := types.TokenPriceKey(baseDenom, quoteDenom, osmosisPoolId)
 
 	bz := store.Get(key)
 	if bz == nil {
