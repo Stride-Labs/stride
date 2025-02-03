@@ -7,8 +7,8 @@ on:
     branches: ["main"]
 
 jobs:
-  golangci:
-    name: golangci-lint
+  build:
+    name: Go Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
