@@ -22,14 +22,15 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.21
+          go-version: 1.22
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}
 
       - name: Compile stride
         run: make build
-      - uses: actions/upload-artifact@v3
+        
+      - uses: actions/upload-artifact@v4
         with:
           name: strided ${{ matrix.targetos }} ${{ matrix.arch }}
           path: build/strided
