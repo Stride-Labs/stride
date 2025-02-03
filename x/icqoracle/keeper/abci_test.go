@@ -41,7 +41,6 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 
 	params := types.Params{
 		UpdateIntervalSec: 60, // 1 minute interval
-		IcqTimeoutSec:     30,
 	}
 
 	now := time.Now().UTC()
@@ -171,7 +170,6 @@ func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
 	// Set params
 	params := types.Params{
 		UpdateIntervalSec: 60,
-		IcqTimeoutSec:     30,
 	}
 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)
@@ -221,7 +219,6 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 	// Set params
 	params := types.Params{
 		UpdateIntervalSec: 60,
-		IcqTimeoutSec:     30,
 	}
 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)

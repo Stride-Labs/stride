@@ -52,6 +52,7 @@ message Params {
   ];
 
   // Time between price updates
+  // Also used to timeout icq requests
   uint64 update_interval_sec = 3 [
     (gogoproto.moretags) = "yaml:\"update_interval_sec\"",
     (gogoproto.jsontag) = "update_interval_sec"
@@ -61,11 +62,5 @@ message Params {
   uint64 price_expiration_timeout_sec = 4 [
     (gogoproto.moretags) = "yaml:\"price_expiration_timeout_sec\"",
     (gogoproto.jsontag) = "price_expiration_timeout_sec"
-  ];
-
-  // ICQ timeout
-  uint64 icq_timeout_sec = 5 [
-    (gogoproto.moretags) = "yaml:\"icq_timeout_sec\"",
-    (gogoproto.jsontag) = "icq_timeout_sec"
   ];
 }

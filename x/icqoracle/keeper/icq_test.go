@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQUnknownPrice() {
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
 		OsmosisConnectionId: "connection-0",
-		IcqTimeoutSec:       60,
+		UpdateIntervalSec:   60,
 	}
 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)
@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
 		OsmosisConnectionId: "connection-0",
-		IcqTimeoutSec:       60,
+		UpdateIntervalSec:   60,
 	}
 	err = s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)
@@ -112,7 +112,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -130,7 +130,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -186,7 +186,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -271,7 +271,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
 		OsmosisConnectionId: "connection-0",
-		IcqTimeoutSec:       60,
+		UpdateIntervalSec:   60,
 	}
 	err = s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)
@@ -302,7 +302,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	s.Require().Equal(tokenPrice.OsmosisPoolId, decodedTokenPrice.OsmosisPoolId)
 
 	// Verify timeout settings
-	expectedTimeout := time.Duration(params.IcqTimeoutSec) * time.Second
+	expectedTimeout := time.Duration(params.UpdateIntervalSec) * time.Second
 	s.Require().Equal(expectedTimeout, capturedQuery.TimeoutDuration)
 	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, capturedQuery.TimeoutPolicy)
 }

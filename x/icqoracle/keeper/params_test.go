@@ -7,8 +7,7 @@ func (s *KeeperTestSuite) TestParams() {
 		OsmosisChainId:            "osmosis-1",
 		OsmosisConnectionId:       "connection-2",
 		UpdateIntervalSec:         5 * 60,  // 5 min
-		PriceExpirationTimeoutSec: 10 * 60, // 10 min
-		IcqTimeoutSec:             2 * 60,  // 2 min
+		PriceExpirationTimeoutSec: 15 * 60, // 15 min
 	}
 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, expectedParams)
 	s.Require().NoError(err, "should not error on set params")
