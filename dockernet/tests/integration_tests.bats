@@ -113,8 +113,10 @@ setup_file() {
   # get all STRD balance diffs
   sval_strd_balance_diff=$(($sval_strd_balance_start - $sval_strd_balance_end))
   hval_strd_balance_diff=$(($hval_strd_balance_start - $hval_strd_balance_end))
-  assert_equal "$sval_strd_balance_diff" "$TRANSFER_AMOUNT"
-  assert_equal "$hval_strd_balance_diff" "-$TRANSFER_AMOUNT"
+
+  # Disabling this checks since TIA is the only asset that can be transferred
+  # assert_equal "$sval_strd_balance_diff" "$TRANSFER_AMOUNT"
+  # assert_equal "$hval_strd_balance_diff" "-$TRANSFER_AMOUNT"
 
   # get all host balance diffs
   sval_token_balance_diff=$(($sval_token_balance_start - $sval_token_balance_end))
@@ -272,6 +274,8 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] autopilot liquid stake and transfer" {
+  skip "Skipping because stTokens cannot be transferred to celestia" 
+
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake", "ibc_receiver": "'$HOST_VAL_ADDRESS'" } } }'
 
   # get initial balances
@@ -291,6 +295,8 @@ setup_file() {
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] autopilot redeem stake" {
+  skip "Skipping because stTokens cannot live on celestia" 
+
   # Over the next two tests, we will run two redemptions in a row and we want both to occur in the same epoch
   # To ensure we don't accidentally cross the epoch boundary, we'll make sure there's enough of a buffer here
   # between the two redemptions
@@ -334,6 +340,9 @@ setup_file() {
 
 # check that redemptions and claims work
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] redemption and undelegation on $CHAIN_NAME" {
+  AVOID_EPOCH_BOUNDARY day 25
+  WAIT_FOR_BLOCK $STRIDE_LOGS 30
+
   # get initial balance of redemption ICA
   redemption_ica_balance_start=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID redemption) --denom $HOST_DENOM | GETBAL)
 
@@ -348,7 +357,7 @@ setup_file() {
   assert_equal "$num_records" "1"
 
   redemption_record_st_amount=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'st_token_amount' | head -n 1 | grep -o -E '[0-9]+')
-  expected_record_minimum=$(echo "$REDEEM_AMOUNT * 2" | bc)
+  expected_record_minimum=$(echo "$REDEEM_AMOUNT" | bc)
   assert_equal "$redemption_record_st_amount" "$expected_record_minimum"
 
   WAIT_FOR_STRING $STRIDE_LOGS "\[REDEMPTION] completed on $HOST_CHAIN_ID"
