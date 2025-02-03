@@ -63,19 +63,16 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error getting module params: %s", err.Error()))
 		return errorsmod.Wrapf(err, "Error getting module params")
 	}
 
 	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error converting osmosis pool id '%s' to uint64, error '%s'", tokenPrice.OsmosisPoolId, err.Error()))
 		return errorsmod.Wrapf(err, "Error converting osmosis pool id '%s' to uint64", tokenPrice.OsmosisPoolId)
 	}
 
 	tokenPriceBz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
-		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error serializing tokenPrice '%+v' to bytes, error '%s'", tokenPrice, err.Error()))
 		return errorsmod.Wrapf(err, "Error serializing tokenPrice '%+v' to bytes", tokenPrice)
 	}
 
@@ -91,12 +88,10 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
-		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error submitting OsmosisClPool ICQ, error '%s'", err.Error()))
 		return errorsmod.Wrapf(err, "Error submitting OsmosisClPool ICQ")
 	}
 
 	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, true); err != nil {
-		k.Logger(ctx).Error(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Error updating queryInProgress=true, error '%s'", err.Error()))
 		return errorsmod.Wrapf(err, "Error updating queryInProgress=true")
 	}
 
