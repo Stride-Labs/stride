@@ -7,8 +7,6 @@ on:
 jobs:
   Gosec:
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
     steps:
       - name: Checkout Source
         uses: actions/checkout@v3
@@ -19,6 +17,6 @@ jobs:
           go-version: 1.22.11
 
       - name: Run Gosec Security Scanner
-        uses: securego/gosec@v2.18.2
+        uses: securego/gosec@v2.22.0
         with:
           args: -exclude-dir=deps -severity=high ./...
