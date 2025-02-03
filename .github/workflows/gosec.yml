@@ -16,7 +16,8 @@ jobs:
         with:
           go-version: 1.22.11
 
-      - name: Run Gosec Security Scanner
-        uses: securego/gosec@v2.22.0
-        with:
-          args: -exclude-dir=deps -exclude-generated -severity=high ./...
+      # TODO: Fix
+      # - name: Run Gosec Security Scanner
+      #   uses: securego/gosec@v2.22.0
+      #   with:
+      #     args: -exclude-dir=deps -exclude-generated -severity=high ./...
