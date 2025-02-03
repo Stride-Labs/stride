@@ -15,6 +15,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
+	auctiontypes "github.com/Stride-Labs/stride/v25/x/auction/types"
 	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v25/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"

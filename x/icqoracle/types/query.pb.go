@@ -5,12 +5,15 @@ package types
 
 import (
 	context "context"
+	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
+	_ "github.com/cosmos/gogoproto/types"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -18,12 +21,14 @@ import (
 	io "io"
 	math "math"
 	math_bits "math/bits"
+	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+var _ = time.Kitchen
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -96,7 +101,7 @@ func (m *QueryTokenPriceRequest) GetPoolId() string {
 // QueryTokenPriceResponse is the response type for the Query/TokenPrice RPC
 // method
 type QueryTokenPriceResponse struct {
-	TokenPrice TokenPrice `protobuf:"bytes,1,opt,name=token_price,json=tokenPrice,proto3" json:"token_price"`
+	TokenPrice TokenPriceResponse `protobuf:"bytes,1,opt,name=token_price,json=tokenPrice,proto3" json:"token_price"`
 }
 
 func (m *QueryTokenPriceResponse) Reset()         { *m = QueryTokenPriceResponse{} }
@@ -132,11 +137,11 @@ func (m *QueryTokenPriceResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryTokenPriceResponse proto.InternalMessageInfo
 
-func (m *QueryTokenPriceResponse) GetTokenPrice() TokenPrice {
+func (m *QueryTokenPriceResponse) GetTokenPrice() TokenPriceResponse {
 	if m != nil {
 		return m.TokenPrice
 	}
-	return TokenPrice{}
+	return TokenPriceResponse{}
 }
 
 // QueryTokenPricesRequest is the request type for the Query/TokenPrices RPC
@@ -188,8 +193,8 @@ func (m *QueryTokenPricesRequest) GetPagination() *query.PageRequest {
 // QueryTokenPricesResponse is the response type for the Query/TokenPrices RPC
 // method
 type QueryTokenPricesResponse struct {
-	TokenPrices []TokenPrice        `protobuf:"bytes,1,rep,name=token_prices,json=tokenPrices,proto3" json:"token_prices"`
-	Pagination  *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	TokenPrices []TokenPriceResponse `protobuf:"bytes,1,rep,name=token_prices,json=tokenPrices,proto3" json:"token_prices"`
+	Pagination  *query.PageResponse  `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
 func (m *QueryTokenPricesResponse) Reset()         { *m = QueryTokenPricesResponse{} }
@@ -225,7 +230,7 @@ func (m *QueryTokenPricesResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryTokenPricesResponse proto.InternalMessageInfo
 
-func (m *QueryTokenPricesResponse) GetTokenPrices() []TokenPrice {
+func (m *QueryTokenPricesResponse) GetTokenPrices() []TokenPriceResponse {
 	if m != nil {
 		return m.TokenPrices
 	}
@@ -414,6 +419,144 @@ func (m *QueryTokenPriceForQuoteDenomResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryTokenPriceForQuoteDenomResponse proto.InternalMessageInfo
 
+// TokenPriceResponse adds human readable info on to of TokenPrice
+type TokenPriceResponse struct {
+	// If IBC token, base denom unwrapped (e.g. ibc/... -> uatom)
+	BaseDenomUnwrapped string `protobuf:"bytes,1,opt,name=base_denom_unwrapped,json=baseDenomUnwrapped,proto3" json:"base_denom_unwrapped,omitempty"`
+	// If IBC token, Quote denom unwrapped (e.g. ibc/... -> uatom)
+	QuoteDenomUnwrapped string `protobuf:"bytes,2,opt,name=quote_denom_unwrapped,json=quoteDenomUnwrapped,proto3" json:"quote_denom_unwrapped,omitempty"`
+	// Base denom on Stride, can be IBC denom
+	BaseDenom string `protobuf:"bytes,3,opt,name=base_denom,json=baseDenom,proto3" json:"base_denom,omitempty"`
+	// Quote denom on Stride, can be IBC denom
+	QuoteDenom string `protobuf:"bytes,4,opt,name=quote_denom,json=quoteDenom,proto3" json:"quote_denom,omitempty"`
+	// Decimals of base token, used for normalizing price feed from Osmosis
+	BaseDenomDecimals int64 `protobuf:"varint,5,opt,name=base_denom_decimals,json=baseDenomDecimals,proto3" json:"base_denom_decimals,omitempty"`
+	// Decimals of quote token, used for normalizing price feed from Osmosis
+	QuoteDenomDecimals int64 `protobuf:"varint,6,opt,name=quote_denom_decimals,json=quoteDenomDecimals,proto3" json:"quote_denom_decimals,omitempty"`
+	// Base denom on Osmosis
+	OsmosisBaseDenom string `protobuf:"bytes,7,opt,name=osmosis_base_denom,json=osmosisBaseDenom,proto3" json:"osmosis_base_denom,omitempty"`
+	// Quote denom on Osmosis
+	OsmosisQuoteDenom string `protobuf:"bytes,8,opt,name=osmosis_quote_denom,json=osmosisQuoteDenom,proto3" json:"osmosis_quote_denom,omitempty"`
+	// Pool ID on Osmosis
+	OsmosisPoolId string `protobuf:"bytes,9,opt,name=osmosis_pool_id,json=osmosisPoolId,proto3" json:"osmosis_pool_id,omitempty"`
+	// Spot price of base_denom denominated in quote_denom
+	SpotPrice cosmossdk_io_math.LegacyDec `protobuf:"bytes,10,opt,name=spot_price,json=spotPrice,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"spot_price"`
+	// Last update timestamp
+	UpdatedAt time.Time `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3,stdtime" json:"updated_at"`
+	// Whether there is a spot price query currently in progress
+	QueryInProgress bool `protobuf:"varint,12,opt,name=query_in_progress,json=queryInProgress,proto3" json:"query_in_progress,omitempty"`
+}
+
+func (m *TokenPriceResponse) Reset()         { *m = TokenPriceResponse{} }
+func (m *TokenPriceResponse) String() string { return proto.CompactTextString(m) }
+func (*TokenPriceResponse) ProtoMessage()    {}
+func (*TokenPriceResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_51a2bacbcf1e1cb4, []int{8}
+}
+func (m *TokenPriceResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TokenPriceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TokenPriceResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TokenPriceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TokenPriceResponse.Merge(m, src)
+}
+func (m *TokenPriceResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *TokenPriceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_TokenPriceResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TokenPriceResponse proto.InternalMessageInfo
+
+func (m *TokenPriceResponse) GetBaseDenomUnwrapped() string {
+	if m != nil {
+		return m.BaseDenomUnwrapped
+	}
+	return ""
+}
+
+func (m *TokenPriceResponse) GetQuoteDenomUnwrapped() string {
+	if m != nil {
+		return m.QuoteDenomUnwrapped
+	}
+	return ""
+}
+
+func (m *TokenPriceResponse) GetBaseDenom() string {
+	if m != nil {
+		return m.BaseDenom
+	}
+	return ""
+}
+
+func (m *TokenPriceResponse) GetQuoteDenom() string {
+	if m != nil {
+		return m.QuoteDenom
+	}
+	return ""
+}
+
+func (m *TokenPriceResponse) GetBaseDenomDecimals() int64 {
+	if m != nil {
+		return m.BaseDenomDecimals
+	}
+	return 0
+}
+
+func (m *TokenPriceResponse) GetQuoteDenomDecimals() int64 {
+	if m != nil {
+		return m.QuoteDenomDecimals
+	}
+	return 0
+}
+
+func (m *TokenPriceResponse) GetOsmosisBaseDenom() string {
+	if m != nil {
+		return m.OsmosisBaseDenom
+	}
+	return ""
+}
+
+func (m *TokenPriceResponse) GetOsmosisQuoteDenom() string {
+	if m != nil {
+		return m.OsmosisQuoteDenom
+	}
+	return ""
+}
+
+func (m *TokenPriceResponse) GetOsmosisPoolId() string {
+	if m != nil {
+		return m.OsmosisPoolId
+	}
+	return ""
+}
+
+func (m *TokenPriceResponse) GetUpdatedAt() time.Time {
+	if m != nil {
+		return m.UpdatedAt
+	}
+	return time.Time{}
+}
+
+func (m *TokenPriceResponse) GetQueryInProgress() bool {
+	if m != nil {
+		return m.QueryInProgress
+	}
+	return false
+}
+
 func init() {
 	proto.RegisterType((*QueryTokenPriceRequest)(nil), "stride.icqoracle.QueryTokenPriceRequest")
 	proto.RegisterType((*QueryTokenPriceResponse)(nil), "stride.icqoracle.QueryTokenPriceResponse")
@@ -423,51 +566,68 @@ func init() {
 	proto.RegisterType((*QueryParamsResponse)(nil), "stride.icqoracle.QueryParamsResponse")
 	proto.RegisterType((*QueryTokenPriceForQuoteDenomRequest)(nil), "stride.icqoracle.QueryTokenPriceForQuoteDenomRequest")
 	proto.RegisterType((*QueryTokenPriceForQuoteDenomResponse)(nil), "stride.icqoracle.QueryTokenPriceForQuoteDenomResponse")
+	proto.RegisterType((*TokenPriceResponse)(nil), "stride.icqoracle.TokenPriceResponse")
 }
 
 func init() { proto.RegisterFile("stride/icqoracle/query.proto", fileDescriptor_51a2bacbcf1e1cb4) }
 
 var fileDescriptor_51a2bacbcf1e1cb4 = []byte{
-	// 622 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0xcd, 0x6e, 0xd3, 0x40,
-	0x10, 0x8e, 0xfb, 0x13, 0xd4, 0x09, 0x07, 0xb4, 0x54, 0xc4, 0x58, 0xa9, 0x13, 0x99, 0xb6, 0x94,
-	0x4a, 0xf5, 0xaa, 0xa9, 0xda, 0x07, 0x08, 0xa1, 0x08, 0x89, 0x4a, 0x69, 0xe0, 0xc4, 0x81, 0x68,
-	0xe3, 0xac, 0x8c, 0xd5, 0xc4, 0xeb, 0x78, 0x9d, 0x42, 0xaf, 0x3d, 0x70, 0x46, 0xe2, 0x2d, 0xb8,
-	0xf0, 0x0a, 0x1c, 0x7b, 0xac, 0xc4, 0x05, 0x71, 0xa8, 0x50, 0xc2, 0x83, 0x20, 0xef, 0xae, 0xf3,
-	0x53, 0x27, 0x24, 0x48, 0x9c, 0xb2, 0x99, 0xf9, 0x66, 0xe6, 0x9b, 0x6f, 0x3f, 0x2f, 0x14, 0x78,
-	0x14, 0x7a, 0x2d, 0x8a, 0x3d, 0xa7, 0xcb, 0x42, 0xe2, 0xb4, 0x29, 0xee, 0xf6, 0x68, 0x78, 0x61,
-	0x07, 0x21, 0x8b, 0x18, 0xba, 0x27, 0xb3, 0xf6, 0x30, 0x6b, 0x94, 0x52, 0xf8, 0xe1, 0x49, 0xd6,
-	0x18, 0xeb, 0x2e, 0x73, 0x99, 0x38, 0xe2, 0xf8, 0xa4, 0xa2, 0x05, 0x97, 0x31, 0xb7, 0x4d, 0x31,
-	0x09, 0x3c, 0x4c, 0x7c, 0x9f, 0x45, 0x24, 0xf2, 0x98, 0xcf, 0x55, 0x76, 0xd7, 0x61, 0xbc, 0xc3,
-	0x38, 0x6e, 0x12, 0xae, 0x08, 0xe0, 0xf3, 0xfd, 0x26, 0x8d, 0xc8, 0x3e, 0x0e, 0x88, 0xeb, 0xf9,
-	0x02, 0x2c, 0xb1, 0x56, 0x17, 0x1e, 0x9c, 0xc6, 0x88, 0xd7, 0xec, 0x8c, 0xfa, 0xb5, 0xd0, 0x73,
-	0x68, 0x9d, 0x76, 0x7b, 0x94, 0x47, 0x68, 0x03, 0x20, 0x6e, 0xd0, 0x68, 0x51, 0x9f, 0x75, 0x74,
-	0xad, 0xa4, 0xed, 0xac, 0xd5, 0xd7, 0xe2, 0x48, 0x35, 0x0e, 0xa0, 0x22, 0xe4, 0xba, 0x3d, 0x16,
-	0x25, 0xf9, 0x25, 0x91, 0x07, 0x11, 0x92, 0x80, 0x3c, 0xdc, 0x09, 0x18, 0x6b, 0x37, 0xbc, 0x96,
-	0xbe, 0x2c, 0x92, 0xd9, 0xf8, 0xef, 0x8b, 0x96, 0xf5, 0x16, 0xf2, 0xa9, 0x91, 0x3c, 0x60, 0x3e,
-	0xa7, 0xe8, 0x29, 0xe4, 0xa2, 0x38, 0xda, 0x08, 0xe2, 0xb0, 0x18, 0x9a, 0x2b, 0x17, 0xec, 0xdb,
-	0xba, 0xd9, 0xa3, 0xd2, 0xca, 0xca, 0xd5, 0x4d, 0x31, 0x53, 0x87, 0x68, 0x18, 0xb1, 0x48, 0xaa,
-	0x3f, 0x4f, 0x76, 0x3a, 0x06, 0x18, 0x29, 0xa0, 0xda, 0x6f, 0xdb, 0x52, 0x2e, 0x3b, 0xde, 0xcd,
-	0x96, 0xf7, 0xa5, 0xe4, 0xb2, 0x6b, 0xc4, 0x4d, 0xf4, 0xa8, 0x8f, 0x55, 0x5a, 0x5f, 0x34, 0xd0,
-	0xd3, 0x33, 0xd4, 0x12, 0xcf, 0xe0, 0xee, 0xd8, 0x12, 0x5c, 0xd7, 0x4a, 0xcb, 0x0b, 0x6e, 0x91,
-	0x1b, 0x6d, 0xc1, 0xd1, 0xf3, 0x09, 0xae, 0x4b, 0x82, 0xeb, 0xe3, 0xb9, 0x5c, 0x25, 0x87, 0x09,
-	0xb2, 0xeb, 0x80, 0x04, 0xd7, 0x1a, 0x09, 0x49, 0x27, 0x91, 0xc2, 0x3a, 0x81, 0xfb, 0x13, 0x51,
-	0x45, 0xfe, 0x08, 0xb2, 0x81, 0x88, 0x28, 0x75, 0xf4, 0x34, 0x6d, 0x59, 0xa1, 0x28, 0x2b, 0xb4,
-	0x45, 0xe1, 0xd1, 0x2d, 0x41, 0x8e, 0x59, 0x78, 0x3a, 0x74, 0xc3, 0x7f, 0x32, 0x95, 0xd5, 0x86,
-	0xcd, 0xbf, 0x8f, 0x51, 0x6b, 0x54, 0x61, 0x75, 0x64, 0xa1, 0xb5, 0x8a, 0x1d, 0x73, 0xfd, 0x79,
-	0x53, 0xdc, 0x76, 0xbd, 0xe8, 0x5d, 0xaf, 0x69, 0x3b, 0xac, 0x83, 0xd5, 0x47, 0x22, 0x7f, 0xf6,
-	0x78, 0xeb, 0x0c, 0x47, 0x17, 0x01, 0xe5, 0x76, 0x95, 0x3a, 0x75, 0x59, 0x5c, 0xfe, 0xb6, 0x02,
-	0xab, 0x62, 0x1c, 0xba, 0xd4, 0x00, 0x46, 0x33, 0xd1, 0x4e, 0x5a, 0x95, 0xe9, 0x5f, 0x91, 0xf1,
-	0x64, 0x01, 0xa4, 0xe4, 0x6c, 0x15, 0x2f, 0xbf, 0xff, 0xfe, 0xbc, 0xf4, 0x10, 0xe5, 0x71, 0xea,
-	0x55, 0x10, 0x74, 0xd0, 0x47, 0x0d, 0x72, 0x63, 0x86, 0x43, 0xf3, 0x7b, 0x27, 0xb7, 0x6d, 0xec,
-	0x2e, 0x02, 0x55, 0x3c, 0x4a, 0x82, 0x87, 0x81, 0xf4, 0x19, 0x3c, 0x38, 0x7a, 0x0f, 0x59, 0x69,
-	0x02, 0xb4, 0x39, 0xa3, 0xef, 0x84, 0xd7, 0x8c, 0xad, 0x39, 0xa8, 0x05, 0x06, 0xcb, 0x71, 0x5f,
-	0x35, 0xc8, 0xcf, 0xb8, 0x7a, 0x74, 0x38, 0x77, 0xc5, 0x69, 0x8e, 0x34, 0x8e, 0xfe, 0xb5, 0x4c,
-	0x91, 0xdd, 0x12, 0x64, 0x8b, 0x68, 0x03, 0x4f, 0x79, 0xf3, 0x63, 0x0b, 0x0b, 0xad, 0x2a, 0x27,
-	0x57, 0x7d, 0x53, 0xbb, 0xee, 0x9b, 0xda, 0xaf, 0xbe, 0xa9, 0x7d, 0x1a, 0x98, 0x99, 0xeb, 0x81,
-	0x99, 0xf9, 0x31, 0x30, 0x33, 0x6f, 0x0e, 0xc6, 0xbc, 0xf8, 0x4a, 0xb4, 0xd8, 0x7b, 0x49, 0x9a,
-	0x3c, 0x69, 0x77, 0x5e, 0x3e, 0xc4, 0x1f, 0xc6, 0x9a, 0x0a, 0x73, 0x36, 0xb3, 0xe2, 0xd5, 0x3e,
-	0xf8, 0x13, 0x00, 0x00, 0xff, 0xff, 0xcc, 0xd0, 0xaa, 0x7e, 0x69, 0x06, 0x00, 0x00,
+	// 880 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0x4d, 0x6f, 0x1b, 0x45,
+	0x18, 0xce, 0xe6, 0xc3, 0x8d, 0x5f, 0x17, 0xb5, 0x99, 0x04, 0xb2, 0x98, 0xd6, 0xb6, 0xb6, 0x69,
+	0x08, 0x11, 0x9d, 0xa5, 0xa9, 0xda, 0x3b, 0x26, 0x2a, 0xaa, 0x68, 0x24, 0x77, 0x29, 0x17, 0x2e,
+	0xd6, 0x78, 0x77, 0xba, 0x5d, 0xc5, 0xbb, 0xb3, 0xde, 0x19, 0xb7, 0xe4, 0xda, 0x03, 0xe7, 0x4a,
+	0xfc, 0x10, 0x24, 0x7e, 0x01, 0xc7, 0x1e, 0x2b, 0x71, 0x00, 0x71, 0x28, 0x28, 0xe1, 0x87, 0xa0,
+	0xf9, 0xd8, 0x0f, 0x77, 0x1d, 0x9c, 0x48, 0x9c, 0xba, 0x7e, 0x3f, 0x9f, 0xe7, 0x7d, 0xdf, 0x79,
+	0x1a, 0xb8, 0xc1, 0x45, 0x16, 0x05, 0xd4, 0x8d, 0xfc, 0x09, 0xcb, 0x88, 0x3f, 0xa6, 0xee, 0x64,
+	0x4a, 0xb3, 0x13, 0x9c, 0x66, 0x4c, 0x30, 0x74, 0x5d, 0x7b, 0x71, 0xe1, 0x6d, 0xef, 0xfb, 0x8c,
+	0xc7, 0x8c, 0xbb, 0x23, 0xc2, 0x4d, 0xa8, 0xfb, 0xe2, 0xee, 0x88, 0x0a, 0x72, 0xd7, 0x4d, 0x49,
+	0x18, 0x25, 0x44, 0x44, 0x2c, 0xd1, 0xd9, 0xed, 0xad, 0x90, 0x85, 0x4c, 0x7d, 0xba, 0xf2, 0xcb,
+	0x58, 0x6f, 0x84, 0x8c, 0x85, 0x63, 0xea, 0x92, 0x34, 0x72, 0x49, 0x92, 0x30, 0xa1, 0x52, 0xb8,
+	0xf1, 0x76, 0x8d, 0x57, 0xfd, 0x1a, 0x4d, 0x9f, 0xb9, 0x22, 0x8a, 0x29, 0x17, 0x24, 0x4e, 0x4d,
+	0x40, 0xaf, 0x06, 0xb8, 0xf8, 0xd2, 0x11, 0xce, 0x04, 0x3e, 0x7a, 0x22, 0x81, 0x3d, 0x65, 0xc7,
+	0x34, 0x19, 0x64, 0x91, 0x4f, 0x3d, 0x3a, 0x99, 0x52, 0x2e, 0xd0, 0x4d, 0x00, 0x89, 0x7b, 0x18,
+	0xd0, 0x84, 0xc5, 0xb6, 0xd5, 0xb3, 0xf6, 0x9a, 0x5e, 0x53, 0x5a, 0x0e, 0xa5, 0x01, 0x75, 0xa1,
+	0x35, 0x99, 0x32, 0x91, 0xfb, 0x97, 0x95, 0x1f, 0x94, 0x49, 0x07, 0x6c, 0xc3, 0x95, 0x94, 0xb1,
+	0xf1, 0x30, 0x0a, 0xec, 0x15, 0xe5, 0x6c, 0xc8, 0x9f, 0x8f, 0x02, 0xe7, 0x19, 0x6c, 0xd7, 0x5a,
+	0xf2, 0x94, 0x25, 0x9c, 0xa2, 0x6f, 0xa0, 0x25, 0xa4, 0x75, 0x98, 0x4a, 0xb3, 0x6a, 0xda, 0x3a,
+	0xd8, 0xc1, 0xef, 0x0f, 0x16, 0xd7, 0x53, 0xfb, 0xab, 0x6f, 0xde, 0x75, 0x97, 0x3c, 0x10, 0x85,
+	0xc7, 0x21, 0xb5, 0x3e, 0x3c, 0xe7, 0xf6, 0x10, 0xa0, 0x5c, 0x80, 0x69, 0xb3, 0x8b, 0xf5, 0xb6,
+	0xb0, 0xe4, 0x88, 0xf5, 0x62, 0xcd, 0xb6, 0xf0, 0x80, 0x84, 0xf9, 0x5c, 0xbc, 0x4a, 0xa6, 0xf3,
+	0x8b, 0x05, 0x76, 0xbd, 0x87, 0x21, 0x73, 0x04, 0x57, 0x2b, 0x64, 0xb8, 0x6d, 0xf5, 0x56, 0x2e,
+	0xc9, 0xa6, 0x55, 0xb2, 0xe1, 0xe8, 0xeb, 0x19, 0xcc, 0xcb, 0x0a, 0xf3, 0xa7, 0x0b, 0x31, 0xeb,
+	0x7a, 0x33, 0xa0, 0xb7, 0x00, 0x29, 0xcc, 0x03, 0x92, 0x91, 0x38, 0x1f, 0x89, 0x73, 0x04, 0x9b,
+	0x33, 0x56, 0x43, 0xe2, 0x01, 0x34, 0x52, 0x65, 0x31, 0x53, 0xb2, 0xeb, 0xf0, 0x75, 0x86, 0x81,
+	0x6c, 0xa2, 0x1d, 0x0a, 0xb7, 0xde, 0x1b, 0xcc, 0x43, 0x96, 0x3d, 0x29, 0xae, 0xe3, 0x7f, 0x3a,
+	0x32, 0x67, 0x0c, 0x3b, 0xff, 0xdd, 0xc6, 0xd0, 0x38, 0x84, 0xb5, 0xf2, 0xa4, 0x9a, 0x7d, 0x2c,
+	0xb1, 0xfe, 0xf9, 0xae, 0xbb, 0x1b, 0x46, 0xe2, 0xf9, 0x74, 0x84, 0x7d, 0x16, 0xbb, 0xe6, 0xad,
+	0xea, 0x7f, 0xee, 0xf0, 0xe0, 0xd8, 0x15, 0x27, 0x29, 0xe5, 0xf8, 0x90, 0xfa, 0x9e, 0x4e, 0x76,
+	0x7e, 0x5f, 0x05, 0x34, 0xe7, 0x6a, 0xbf, 0x80, 0xad, 0x92, 0xc4, 0x70, 0x9a, 0xbc, 0xcc, 0x48,
+	0x9a, 0xd2, 0xc0, 0xd0, 0x41, 0x05, 0x9d, 0xef, 0x72, 0x0f, 0x3a, 0x80, 0x0f, 0x2b, 0xbc, 0x2a,
+	0x29, 0x9a, 0xe1, 0x66, 0xc9, 0xb0, 0xcc, 0x99, 0x1d, 0xd5, 0xca, 0x82, 0x51, 0xad, 0xd6, 0xde,
+	0x23, 0x86, 0xcd, 0x0a, 0xca, 0x80, 0xfa, 0x51, 0x4c, 0xc6, 0xdc, 0x5e, 0xeb, 0x59, 0x7b, 0x2b,
+	0xde, 0x46, 0x51, 0xe8, 0xd0, 0x38, 0x24, 0xab, 0x2a, 0xc6, 0x22, 0xa1, 0xa1, 0x12, 0x50, 0x59,
+	0xb9, 0xc8, 0xf8, 0x1c, 0x90, 0x1a, 0x5e, 0xc4, 0x87, 0x15, 0xa4, 0x57, 0x14, 0x92, 0xeb, 0xc6,
+	0xd3, 0x2f, 0x00, 0x63, 0xd8, 0xcc, 0xa3, 0xab, 0xc0, 0xd7, 0x55, 0xf8, 0x86, 0x71, 0x95, 0xab,
+	0x44, 0xbb, 0x70, 0x2d, 0x8f, 0xcf, 0x75, 0xa5, 0xa9, 0x62, 0x3f, 0x30, 0xe6, 0x81, 0x92, 0x17,
+	0xd4, 0x07, 0xe0, 0x29, 0x13, 0x46, 0x42, 0x40, 0xed, 0xfb, 0x96, 0xd9, 0xf7, 0x27, 0x7a, 0xbb,
+	0x3c, 0x38, 0xc6, 0x11, 0x73, 0x63, 0x22, 0x9e, 0xe3, 0xc7, 0x34, 0x24, 0xfe, 0x89, 0x5c, 0x72,
+	0x53, 0xa6, 0xa9, 0xcd, 0xa2, 0xaf, 0x00, 0xa6, 0x69, 0x40, 0x04, 0x0d, 0x86, 0x44, 0xd8, 0x2d,
+	0x75, 0xf9, 0x6d, 0xac, 0xd5, 0x16, 0xe7, 0x6a, 0x8b, 0x9f, 0xe6, 0x6a, 0xdb, 0x5f, 0x97, 0xf5,
+	0x5f, 0xff, 0xd5, 0xb5, 0xbc, 0xa6, 0xc9, 0xfb, 0x52, 0xa0, 0x7d, 0xd8, 0x50, 0x2f, 0x72, 0x18,
+	0x49, 0x09, 0x60, 0x61, 0x46, 0x39, 0xb7, 0xaf, 0xf6, 0xac, 0xbd, 0x75, 0xef, 0x9a, 0x72, 0x3c,
+	0x4a, 0x06, 0xc6, 0x7c, 0xf0, 0xeb, 0x2a, 0xac, 0xa9, 0x43, 0x46, 0xaf, 0x2c, 0x80, 0xf2, 0xc6,
+	0xd0, 0x5e, 0xfd, 0xbd, 0xcd, 0xd7, 0xeb, 0xf6, 0x67, 0x17, 0x88, 0xd4, 0x07, 0xeb, 0x74, 0x5f,
+	0xfd, 0xf6, 0xcf, 0x4f, 0xcb, 0x1f, 0xa3, 0x6d, 0xb7, 0xf6, 0xff, 0x83, 0x9a, 0x1a, 0xfa, 0xd1,
+	0x82, 0x56, 0x45, 0xd2, 0xd0, 0xe2, 0xda, 0xb9, 0x8e, 0xb4, 0xf7, 0x2f, 0x12, 0x6a, 0x70, 0xf4,
+	0x14, 0x8e, 0x36, 0xb2, 0xcf, 0xc1, 0xc1, 0xd1, 0x4b, 0x68, 0x68, 0x79, 0x41, 0x3b, 0xe7, 0xd4,
+	0x9d, 0x51, 0xb1, 0xf6, 0xed, 0x05, 0x51, 0x17, 0x68, 0xac, 0xdb, 0xfd, 0x6c, 0xc1, 0xf6, 0x39,
+	0xa2, 0x82, 0xee, 0x2f, 0xa4, 0x38, 0x4f, 0xeb, 0xda, 0x0f, 0x2e, 0x9b, 0x66, 0xc0, 0xde, 0x56,
+	0x60, 0xbb, 0xe8, 0xa6, 0x3b, 0xe7, 0xcf, 0x0f, 0xf9, 0x70, 0xd4, 0xac, 0xfa, 0x47, 0x6f, 0x4e,
+	0x3b, 0xd6, 0xdb, 0xd3, 0x8e, 0xf5, 0xf7, 0x69, 0xc7, 0x7a, 0x7d, 0xd6, 0x59, 0x7a, 0x7b, 0xd6,
+	0x59, 0xfa, 0xe3, 0xac, 0xb3, 0xf4, 0xfd, 0xbd, 0x8a, 0xca, 0x7d, 0xab, 0x4a, 0xdc, 0x79, 0x4c,
+	0x46, 0x3c, 0x2f, 0xf7, 0xe2, 0xe0, 0xbe, 0xfb, 0x43, 0xa5, 0xa8, 0x92, 0xbd, 0x51, 0x43, 0x9d,
+	0xf9, 0xbd, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0xb6, 0x1f, 0xa4, 0xc3, 0xf4, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -953,6 +1113,116 @@ func (m *QueryTokenPriceForQuoteDenomResponse) MarshalToSizedBuffer(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
+func (m *TokenPriceResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TokenPriceResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TokenPriceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.QueryInProgress {
+		i--
+		if m.QueryInProgress {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x60
+	}
+	n5, err5 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(m.UpdatedAt, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(m.UpdatedAt):])
+	if err5 != nil {
+		return 0, err5
+	}
+	i -= n5
+	i = encodeVarintQuery(dAtA, i, uint64(n5))
+	i--
+	dAtA[i] = 0x5a
+	{
+		size := m.SpotPrice.Size()
+		i -= size
+		if _, err := m.SpotPrice.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x52
+	if len(m.OsmosisPoolId) > 0 {
+		i -= len(m.OsmosisPoolId)
+		copy(dAtA[i:], m.OsmosisPoolId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.OsmosisPoolId)))
+		i--
+		dAtA[i] = 0x4a
+	}
+	if len(m.OsmosisQuoteDenom) > 0 {
+		i -= len(m.OsmosisQuoteDenom)
+		copy(dAtA[i:], m.OsmosisQuoteDenom)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.OsmosisQuoteDenom)))
+		i--
+		dAtA[i] = 0x42
+	}
+	if len(m.OsmosisBaseDenom) > 0 {
+		i -= len(m.OsmosisBaseDenom)
+		copy(dAtA[i:], m.OsmosisBaseDenom)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.OsmosisBaseDenom)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.QuoteDenomDecimals != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.QuoteDenomDecimals))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.BaseDenomDecimals != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.BaseDenomDecimals))
+		i--
+		dAtA[i] = 0x28
+	}
+	if len(m.QuoteDenom) > 0 {
+		i -= len(m.QuoteDenom)
+		copy(dAtA[i:], m.QuoteDenom)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.QuoteDenom)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.BaseDenom) > 0 {
+		i -= len(m.BaseDenom)
+		copy(dAtA[i:], m.BaseDenom)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.BaseDenom)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.QuoteDenomUnwrapped) > 0 {
+		i -= len(m.QuoteDenomUnwrapped)
+		copy(dAtA[i:], m.QuoteDenomUnwrapped)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.QuoteDenomUnwrapped)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.BaseDenomUnwrapped) > 0 {
+		i -= len(m.BaseDenomUnwrapped)
+		copy(dAtA[i:], m.BaseDenomUnwrapped)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.BaseDenomUnwrapped)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -1073,6 +1343,56 @@ func (m *QueryTokenPriceForQuoteDenomResponse) Size() (n int) {
 	_ = l
 	l = m.Price.Size()
 	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *TokenPriceResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BaseDenomUnwrapped)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.QuoteDenomUnwrapped)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.BaseDenom)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.QuoteDenom)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.BaseDenomDecimals != 0 {
+		n += 1 + sovQuery(uint64(m.BaseDenomDecimals))
+	}
+	if m.QuoteDenomDecimals != 0 {
+		n += 1 + sovQuery(uint64(m.QuoteDenomDecimals))
+	}
+	l = len(m.OsmosisBaseDenom)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.OsmosisQuoteDenom)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.OsmosisPoolId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = m.SpotPrice.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	l = github_com_cosmos_gogoproto_types.SizeOfStdTime(m.UpdatedAt)
+	n += 1 + l + sovQuery(uint64(l))
+	if m.QueryInProgress {
+		n += 2
+	}
 	return n
 }
 
@@ -1455,7 +1775,7 @@ func (m *QueryTokenPricesResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.TokenPrices = append(m.TokenPrices, TokenPrice{})
+			m.TokenPrices = append(m.TokenPrices, TokenPriceResponse{})
 			if err := m.TokenPrices[len(m.TokenPrices)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1827,6 +2147,405 @@ func (m *QueryTokenPriceForQuoteDenomResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TokenPriceResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TokenPriceResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TokenPriceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BaseDenomUnwrapped", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BaseDenomUnwrapped = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field QuoteDenomUnwrapped", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.QuoteDenomUnwrapped = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BaseDenom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BaseDenom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field QuoteDenom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.QuoteDenom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BaseDenomDecimals", wireType)
+			}
+			m.BaseDenomDecimals = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BaseDenomDecimals |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field QuoteDenomDecimals", wireType)
+			}
+			m.QuoteDenomDecimals = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.QuoteDenomDecimals |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OsmosisBaseDenom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OsmosisBaseDenom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OsmosisQuoteDenom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OsmosisQuoteDenom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OsmosisPoolId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OsmosisPoolId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SpotPrice", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.SpotPrice.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdatedAt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(&m.UpdatedAt, dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 12:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field QueryInProgress", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.QueryInProgress = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

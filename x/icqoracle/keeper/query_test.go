@@ -75,7 +75,7 @@ func (s *KeeperTestSuite) TestQueryTokenPrices() {
 	req := &types.QueryTokenPricesRequest{}
 	resp, err := s.App.ICQOracleKeeper.TokenPrices(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().NoError(err, "no error expected when querying all token prices")
-	s.Require().Equal(expectedPrices, resp.TokenPrices, "token prices")
+	s.Require().Equal(s.App.ICQOracleKeeper.TokenPriceToTokenPriceResponse(s.Ctx, expectedPrices...), resp.TokenPrices, "token prices")
 
 	// Query with invalid request
 	_, err = s.App.ICQOracleKeeper.TokenPrices(sdk.WrapSDKContext(s.Ctx), nil)

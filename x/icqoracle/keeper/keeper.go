@@ -15,18 +15,23 @@ import (
 )
 
 type Keeper struct {
-	cdc       codec.Codec
-	storeKey  storetypes.StoreKey
-	IcqKeeper types.IcqKeeper
+	cdc               codec.Codec
+	storeKey          storetypes.StoreKey
+	IcqKeeper         types.IcqKeeper
+	ibcTransferKeeper types.IbcTransferKeeper
 }
 
 func NewKeeper(
 	cdc codec.Codec,
 	storeKey storetypes.StoreKey,
+	icqKeeper types.IcqKeeper,
+	ibcTransferKeeper types.IbcTransferKeeper,
 ) *Keeper {
 	return &Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
+		cdc:               cdc,
+		storeKey:          storeKey,
+		IcqKeeper:         icqKeeper,
+		ibcTransferKeeper: ibcTransferKeeper,
 	}
 }
 
