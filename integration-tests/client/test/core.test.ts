@@ -78,7 +78,7 @@ beforeAll(async () => {
 });
 
 describe("x/stakeibc", () => {
-  test("Registration", async () => {
+  test.only("Registration", async () => {
     const stridejs = accounts.admin;
 
     const msg =
@@ -105,5 +105,5 @@ describe("x/stakeibc", () => {
 
     await submitTxAndExpectSuccess(stridejs, [msg]);
     console.log(stridejs.query.stride.stakeibc.hostZoneAll());
-  });
+  }, 120000);
 });

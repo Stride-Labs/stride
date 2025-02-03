@@ -42,8 +42,14 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	if options.TXCounterStoreKey == nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrLogic, "tx counter key is required for ante builder")
 	}
+	if options.TxDecoder == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx decoder is required for ante builder")
+	}
+	if options.TxJSONEncoder == nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrLogic, "tx json encoder is required for ante builder")
+	}
 
-	var sigGasConsumer = options.SigGasConsumer
+	sigGasConsumer := options.SigGasConsumer
 	if sigGasConsumer == nil {
 		sigGasConsumer = ante.DefaultSigVerificationGasConsumer
 	}
@@ -66,7 +72,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.AccountKeeper, sigGasConsumer),
-		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
+		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler, options.TxDecoder, options.TxJSONEncoder),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 	}
