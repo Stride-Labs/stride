@@ -36,7 +36,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 			if err != nil {
 				// Can't really do anything but log
 				ctx.Logger().Error(
-					"failed to submit Osmosis CL pool ICQ error='%w' baseToken='%s' quoteToken='%s' poolId='%s'",
+					"failed to submit Osmosis CL pool ICQ baseToken='%s' quoteToken='%s' poolId='%s': %w",
 					err,
 					tokenPrice.BaseDenom,
 					tokenPrice.QuoteDenom,
