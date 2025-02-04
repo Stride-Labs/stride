@@ -16,7 +16,6 @@ import (
 type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 	mockICQKeeper types.IcqKeeper
-	icqCallbacks  keeper.ICQCallbacks
 }
 
 // Helper function to setup keeper with mock ICQ keeper
@@ -34,14 +33,8 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
 	s.SetupMockICQKeeper()
 
+	// Set the time to test price staleness
 	s.Ctx = s.Ctx.WithBlockTime(time.Now().UTC())
-
-	// Register ICQ callback
-	s.icqCallbacks = s.App.ICQOracleKeeper.ICQCallbackHandler()
-	s.icqCallbacks.RegisterICQCallbacks()
-
-	s.Require().True(s.icqCallbacks.HasICQCallback(keeper.ICQCallbackID_OsmosisClPool),
-		"OsmosisClPool callback should be registered")
 }
 
 // Dynamically gets the MsgServer for this module's keeper

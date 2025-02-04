@@ -617,12 +617,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 			poolData, query := tc.setup()
 
 			// Execute callback
-			err := s.icqCallbacks.CallICQCallback(
-				s.Ctx,
-				keeper.ICQCallbackID_OsmosisClPool,
-				poolData,
-				query,
-			)
+			err := keeper.OsmosisClPoolCallback(s.App.ICQOracleKeeper, s.Ctx, poolData, query)
 
 			// Verify results
 			if tc.expectedError != "" {

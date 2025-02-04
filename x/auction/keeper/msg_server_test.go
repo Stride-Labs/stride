@@ -109,8 +109,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidHappyPath() {
 		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
-	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err, "no error expected when setting tokenPrice")
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	// Prepare bid
 	bidder := s.TestAccs[0]
@@ -299,8 +298,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
 		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
-	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err, "no error expected when setting tokenPrice")
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	// Prepare bid
 	bidder := s.TestAccs[0]
@@ -344,8 +342,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
 		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
-	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err, "no error expected when setting tokenPrice")
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	// Prepare bid with a price that's too low
 	// With spot price = 1 and multiplier = 1, minimum accepted price should be 1
@@ -395,8 +392,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
 		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
-	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err, "no error expected when setting tokenPrice")
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	// Prepare bid
 	bidder := s.TestAccs[0]
