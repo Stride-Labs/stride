@@ -63,7 +63,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Error getting module params")
+		return errorsmod.Wrap(err, "Error getting module params")
 	}
 
 	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
@@ -89,11 +89,11 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 	}
 
 	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		return errorsmod.Wrapf(err, "Error submitting OsmosisClPool ICQ")
+		return errorsmod.Wrap(err, "Error submitting OsmosisClPool ICQ")
 	}
 
 	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
-		return errorsmod.Wrapf(err, "Error updating token price query to in progress")
+		return errorsmod.Wrap(err, "Error updating token price query to in progress")
 	}
 
 	return nil

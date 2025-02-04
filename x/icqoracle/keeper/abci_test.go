@@ -82,39 +82,6 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 			},
 			expectedICQSubmit: false,
 		},
-		{
-			name: "query in progress stale token price",
-			tokenPrice: types.TokenPrice{
-				BaseDenom:       "ujuno",
-				QuoteDenom:      "uusdc",
-				OsmosisPoolId:   "4",
-				LastRequestTime: staleTime,
-				QueryInProgress: true,
-			},
-			expectedICQSubmit: false,
-		},
-		{
-			name: "query in progress fresh token price",
-			tokenPrice: types.TokenPrice{
-				BaseDenom:       "udydx",
-				QuoteDenom:      "uusdc",
-				OsmosisPoolId:   "5",
-				LastRequestTime: freshTime,
-				QueryInProgress: true,
-			},
-			expectedICQSubmit: false,
-		},
-		{
-			name: "query in progress never updated token price",
-			tokenPrice: types.TokenPrice{
-				BaseDenom:       "utia",
-				QuoteDenom:      "uusdc",
-				OsmosisPoolId:   "6",
-				LastRequestTime: time.Time{}, // Zero time
-				QueryInProgress: true,
-			},
-			expectedICQSubmit: false,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -233,19 +200,28 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 			QuoteDenom:      "uusdc",
 			OsmosisPoolId:   "1",
 			LastRequestTime: staleTime,
+			QueryInProgress: false,
 		},
 		{
 			BaseDenom:       "uosmo",
 			QuoteDenom:      "uusdc",
 			OsmosisPoolId:   "2",
 			LastRequestTime: staleTime,
+			QueryInProgress: false,
 		},
 		{
 			BaseDenom:       "ustrd",
 			QuoteDenom:      "uusdc",
 			OsmosisPoolId:   "3",
-			LastRequestTime: staleTime,
-			QueryInProgress: true, // Should skip this one
+			LastRequestTime: s.Ctx.BlockTime(), // Should skip this one
+			QueryInProgress: true,
+		},
+		{
+			BaseDenom:       "ustrd",
+			QuoteDenom:      "uusdc",
+			OsmosisPoolId:   "4",
+			LastRequestTime: s.Ctx.BlockTime(), // Should skip this one
+			QueryInProgress: false,
 		},
 	}
 
@@ -266,14 +242,14 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 		"expected 2 ICQ queries to be submitted (skipping the one in progress)")
 
 	// Verify query in progress flags
-	for _, tp := range tokenPrices {
+	for _, tp := range tokenPrices[:2] {
 		updatedPrice := s.MustGetTokenPrice(tp.BaseDenom, tp.QuoteDenom, tp.OsmosisPoolId)
-		if tp.QueryInProgress {
-			s.Require().True(updatedPrice.QueryInProgress,
-				"query in progress should remain true for token that was already updating")
-		} else {
-			s.Require().True(updatedPrice.QueryInProgress,
-				"query in progress should be true for tokens that needed updates")
-		}
+		s.Require().True(updatedPrice.QueryInProgress,
+			"query in progress should be set to true for tokens that are updating")
+	}
+	for _, tp := range tokenPrices[2:] {
+		updatedPrice := s.MustGetTokenPrice(tp.BaseDenom, tp.QuoteDenom, tp.OsmosisPoolId)
+		s.Require().Equal(tp.QueryInProgress, updatedPrice.QueryInProgress,
+			"query in progress should not change for tokens that are not updating")
 	}
 }
