@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 
@@ -60,18 +61,32 @@ func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom s
 	store.Delete(key)
 }
 
-func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId string, queryInProgress bool) error {
+// Updates the token price when a query is requested
+func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId string) error {
 	tokenPrice, err := k.GetTokenPrice(ctx, baseDenom, quoteDenom, osmosisPoolId)
 	if err != nil {
 		return err
 	}
 
-	tokenPrice.QueryInProgress = queryInProgress
+	tokenPrice.QueryInProgress = true
 	tokenPrice.LastRequestTime = ctx.BlockTime()
 
 	err = k.SetTokenPrice(ctx, tokenPrice)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// Updates the token price when a query response is received
+func (k Keeper) SetTokenPriceQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, newSpotPrice math.LegacyDec) error {
+	tokenPrice.SpotPrice = newSpotPrice
+	tokenPrice.QueryInProgress = false
+	tokenPrice.LastResponseTime = ctx.BlockTime()
+
+	if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
+		return errorsmod.Wrap(err, "Error updating spot price from query response")
 	}
 
 	return nil
