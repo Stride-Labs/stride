@@ -60,13 +60,18 @@ Example:
 				return fmt.Errorf("Error parsing quoteDenomDecmnals as int64: %w", err)
 			}
 
+			osmosisPoolId, err := strconv.ParseUint(args[4], 10, 64)
+			if err != nil {
+				return fmt.Errorf("Error parsing osmosis pool ID as uint64: %w", err)
+			}
+
 			msg := types.NewMsgRegisterTokenPriceQuery(
 				clientCtx.GetFromAddress().String(),
 				args[0],
 				args[1],
 				baseDenomDecimls,
 				quoteDenomDecimls,
-				args[4],
+				osmosisPoolId,
 				args[5],
 				args[6],
 			)
@@ -102,11 +107,16 @@ Example:
 				return err
 			}
 
+			osmosisPoolId, err := strconv.ParseUint(args[2], 10, 64)
+			if err != nil {
+				return fmt.Errorf("Error parsing osmosis pool ID as uint64: %w", err)
+			}
+
 			msg := types.NewMsgRemoveTokenPriceQuery(
 				clientCtx.GetFromAddress().String(),
 				args[0],
 				args[1],
-				args[2],
+				osmosisPoolId,
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

@@ -2,7 +2,6 @@ package types
 
 import (
 	"errors"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
@@ -34,7 +33,7 @@ func NewMsgRegisterTokenPriceQuery(
 	quoteDenom string,
 	baseDecimals int64,
 	quoteDecimals int64,
-	poolId string,
+	poolId uint64,
 	osmosisBaseDenom string,
 	osmosisQuoteDenom string,
 ) *MsgRegisterTokenPriceQuery {
@@ -90,7 +89,7 @@ func (msg *MsgRegisterTokenPriceQuery) ValidateBasic() error {
 //               MsgRemoveTokenPriceQuery
 // ----------------------------------------------
 
-func NewMsgRemoveTokenPriceQuery(admin, baseDenom, quoteDenom, osmosisPoolId string) *MsgRemoveTokenPriceQuery {
+func NewMsgRemoveTokenPriceQuery(admin, baseDenom, quoteDenom string, osmosisPoolId uint64) *MsgRemoveTokenPriceQuery {
 	return &MsgRemoveTokenPriceQuery{
 		Admin:         admin,
 		BaseDenom:     baseDenom,
@@ -130,8 +129,8 @@ func (msg *MsgRemoveTokenPriceQuery) ValidateBasic() error {
 	if msg.QuoteDenom == "" {
 		return errors.New("quote-denom must be specified")
 	}
-	if _, err := strconv.ParseUint(msg.OsmosisPoolId, 10, 64); err != nil {
-		return errors.New("osmosis-pool-id must be uint64")
+	if msg.OsmosisPoolId == 0 {
+		return errors.New("osmosis-pool-id must be specified")
 	}
 
 	return nil
