@@ -42,7 +42,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // SetTokenPrice stores price query for a token
 func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	key := types.TokenPriceKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 
 	bz, err := k.cdc.Marshal(&tokenPrice)
@@ -56,7 +56,7 @@ func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) erro
 
 // RemoveTokenPrice removes price query for a token
 func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId uint64) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	key := types.TokenPriceKey(baseDenom, quoteDenom, osmosisPoolId)
 	store.Delete(key)
 }
@@ -94,7 +94,7 @@ func (k Keeper) SetTokenPriceQueryComplete(ctx sdk.Context, tokenPrice types.Tok
 
 // GetTokenPrice retrieves price data for a token
 func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId uint64) (types.TokenPrice, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	key := types.TokenPriceKey(baseDenom, quoteDenom, osmosisPoolId)
 
 	bz := store.Get(key)
@@ -113,7 +113,7 @@ func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom stri
 // GetTokenPriceByDenom retrieves all price data for a base denom
 // Returned as a mapping of each quote denom to the spot price
 func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[string]*types.TokenPrice, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PriceQueryPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 
 	// Create prefix iterator for all keys starting with baseDenom
 	iterator := sdk.KVStorePrefixIterator(store, types.TokenPriceByDenomKey(baseDenom))
@@ -245,7 +245,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 // GetAllTokenPrices retrieves all stored token prices
 func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), []byte(types.PriceQueryPrefix))
+	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), []byte(types.TokenPricePrefix))
 	defer iterator.Close()
 
 	prices := []types.TokenPrice{}
