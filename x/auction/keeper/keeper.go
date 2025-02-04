@@ -95,8 +95,3 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 	// Call the handler
 	return auctionBidHandler(ctx, k, auction, bid)
 }
-
-// GetStoreKey returns the store key
-func (k Keeper) GetStoreKey() storetypes.StoreKey {
-	return k.storeKey
-}

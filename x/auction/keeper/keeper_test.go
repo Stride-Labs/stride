@@ -45,8 +45,3 @@ func (s *KeeperTestSuite) MustGetAuction(name string) types.Auction {
 	s.Require().NoError(err, "no error expected when getting auction")
 	return *auction
 }
-
-func (s *KeeperTestSuite) DeleteParams() {
-	store := s.Ctx.KVStore(s.App.AuctionKeeper.GetStoreKey())
-	store.Delete([]byte(types.ParamsKey))
-}
