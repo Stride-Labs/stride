@@ -211,9 +211,7 @@ replace (
 	//   - fix SDKv0.47 Distribution Bug
 	//   - add better mempool error on sig verification failure
 	// TODO - Remove this patch and update Tokens in a subsequent upgrade handler
-	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.15-stride-distribution-fix-0-mempool-verbose-error-1beta3
-	github.com/cosmos/ibc-go/v7 => github.com/Stride-Labs/ibc-go/v7 v7.4.0-mempool-verbose-error-1beta3
-	github.com/cosmos/interchain-security/v4 => github.com/Stride-Labs/interchain-security/v4 v4.0.0-mempool-verbose-error-1beta3
+	github.com/cosmos/cosmos-sdk => github.com/Stride-Labs/cosmos-sdk v0.47.15-stride-distribution-fix-0-mempool-verbose-error-1
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
