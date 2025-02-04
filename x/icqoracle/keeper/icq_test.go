@@ -106,25 +106,6 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 		expectedError string
 	}{
 		{
-			name: "error parsing pool ID",
-			setup: func() {
-				// Set valid params
-				params := types.Params{
-					OsmosisChainId:      "osmosis-1",
-					OsmosisConnectionId: "connection-0",
-					UpdateIntervalSec:   60,
-				}
-				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-				s.Require().NoError(err)
-			},
-			tokenPrice: types.TokenPrice{
-				BaseDenom:     "uatom",
-				QuoteDenom:    "uusdc",
-				OsmosisPoolId: 0, // invalid pool ID
-			},
-			expectedError: "Error converting osmosis pool id",
-		},
-		{
 			name: "error submitting ICQ request",
 			setup: func() {
 				params := types.Params{
@@ -165,7 +146,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				s.mockICQKeeper = MockICQKeeper{
 					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
 						// Remove token price so set query in progress will fail to get it after SubmitICQRequest returns
-						s.App.ICQOracleKeeper.RemoveTokenPrice(ctx, "uatom", "uusdc", "1")
+						s.App.ICQOracleKeeper.RemoveTokenPrice(ctx, "uatom", "uusdc", 1)
 						return nil
 					},
 				}
@@ -474,7 +455,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 					CallbackData: []byte{},
 				}
 			},
-			expectedError: "price not found for baseDenom='' quoteDenom='' poolId=''",
+			expectedError: "price not found for baseDenom='' quoteDenom='' poolId='0'",
 		},
 		{
 			name: "nil query callback data",
@@ -483,7 +464,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 					CallbackData: nil,
 				}
 			},
-			expectedError: "price not found for baseDenom='' quoteDenom='' poolId=''",
+			expectedError: "price not found for baseDenom='' quoteDenom='' poolId='0'",
 		},
 		{
 			name: "corrupted token price in callback data",
@@ -639,7 +620,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 				}
 			},
 			expectedError: fmt.Sprintf(
-				"price not found for baseDenom='%s' quoteDenom='%s' poolId='%s'",
+				"price not found for baseDenom='%s' quoteDenom='%s' poolId='%d'",
 				baseTokenPrice.BaseDenom,
 				baseTokenPrice.QuoteDenom,
 				baseTokenPrice.OsmosisPoolId),
