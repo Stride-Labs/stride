@@ -106,7 +106,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidHappyPath() {
 		QuoteDenom:      auction.PaymentDenom,
 		OsmosisPoolId:   "1",
 		SpotPrice:       sdkmath.LegacyNewDec(1),
-		UpdatedAt:       s.Ctx.BlockTime(),
+		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
@@ -296,7 +296,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
 		QuoteDenom:      "uusdc",
 		OsmosisPoolId:   "1",
 		SpotPrice:       sdkmath.LegacyNewDec(1),
-		UpdatedAt:       s.Ctx.BlockTime(),
+		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
@@ -341,7 +341,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
 		QuoteDenom:      auction.PaymentDenom,
 		OsmosisPoolId:   "1",
 		SpotPrice:       sdkmath.LegacyNewDec(1),
-		UpdatedAt:       s.Ctx.BlockTime(),
+		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
@@ -392,7 +392,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
 		QuoteDenom:      auction.PaymentDenom,
 		OsmosisPoolId:   "1",
 		SpotPrice:       sdkmath.LegacyNewDec(1),
-		UpdatedAt:       s.Ctx.BlockTime(),
+		LastRequestTime: s.Ctx.BlockTime(),
 		QueryInProgress: false,
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)

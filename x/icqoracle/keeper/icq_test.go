@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQUnknownPrice() {
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
 		OsmosisConnectionId: "connection-0",
-		IcqTimeoutSec:       60,
+		UpdateIntervalSec:   60,
 	}
 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)
@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
 		OsmosisConnectionId: "connection-0",
-		IcqTimeoutSec:       60,
+		UpdateIntervalSec:   60,
 	}
 	err = s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)
@@ -95,7 +95,8 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 	tokenPriceAfter, err := s.App.ICQOracleKeeper.GetTokenPrice(s.Ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	s.Require().NoError(err)
 
-	s.Require().True(tokenPriceAfter.QueryInProgress)
+	s.Require().True(tokenPriceAfter.QueryInProgress, "query in progress")
+	s.Require().Equal(tokenPriceAfter.LastRequestTime, s.Ctx.BlockTime(), "query request time")
 }
 
 func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
@@ -112,7 +113,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -130,7 +131,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -156,7 +157,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -178,7 +179,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				QuoteDenom:    "uusdc",
 				OsmosisPoolId: "1",
 			},
-			expectedError: "Error updating queryInProgress=true",
+			expectedError: "Error updating token price query to in progress",
 		},
 		{
 			name: "successful submission",
@@ -186,7 +187,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				params := types.Params{
 					OsmosisChainId:      "osmosis-1",
 					OsmosisConnectionId: "connection-0",
-					IcqTimeoutSec:       60,
+					UpdateIntervalSec:   60,
 				}
 				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 				s.Require().NoError(err)
@@ -271,7 +272,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
 		OsmosisConnectionId: "connection-0",
-		IcqTimeoutSec:       60,
+		UpdateIntervalSec:   60,
 	}
 	err = s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 	s.Require().NoError(err)
@@ -302,7 +303,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	s.Require().Equal(tokenPrice.OsmosisPoolId, decodedTokenPrice.OsmosisPoolId)
 
 	// Verify timeout settings
-	expectedTimeout := time.Duration(params.IcqTimeoutSec) * time.Second
+	expectedTimeout := time.Duration(params.UpdateIntervalSec) * time.Second
 	s.Require().Equal(expectedTimeout, capturedQuery.TimeoutDuration)
 	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, capturedQuery.TimeoutPolicy)
 }
@@ -429,7 +430,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 
 				// Verify updated fields
 				s.Require().False(tokenPrice.QueryInProgress)
-				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.UpdatedAt.UnixNano())
+				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.LastResponseTime.UnixNano())
 				s.Require().InDelta(1.5, tokenPrice.SpotPrice.MustFloat64(), 0.01)
 			},
 		},
@@ -465,7 +466,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 
 				// Verify updated fields
 				s.Require().False(tokenPrice.QueryInProgress)
-				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.UpdatedAt.UnixNano())
+				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.LastResponseTime.UnixNano())
 				s.Require().InDelta(1/1.5, tokenPrice.SpotPrice.MustFloat64(), 0.01) // inversed price
 			},
 		},

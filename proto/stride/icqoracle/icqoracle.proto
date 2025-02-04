@@ -29,12 +29,16 @@ message TokenPrice {
     (gogoproto.nullable) = false
   ];
 
-  // Last update timestamp
-  google.protobuf.Timestamp updated_at = 9
+  // Last time a query request was submitted
+  google.protobuf.Timestamp last_request_time = 9
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // Last time a query response was received
+  google.protobuf.Timestamp last_response_time = 10
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress
-  bool query_in_progress = 10;
+  bool query_in_progress = 11;
 }
 
 // OracleParams stores global oracle parameters
@@ -52,6 +56,7 @@ message Params {
   ];
 
   // Time between price updates
+  // Also used to timeout icq requests
   uint64 update_interval_sec = 3 [
     (gogoproto.moretags) = "yaml:\"update_interval_sec\"",
     (gogoproto.jsontag) = "update_interval_sec"
@@ -61,11 +66,5 @@ message Params {
   uint64 price_expiration_timeout_sec = 4 [
     (gogoproto.moretags) = "yaml:\"price_expiration_timeout_sec\"",
     (gogoproto.jsontag) = "price_expiration_timeout_sec"
-  ];
-
-  // ICQ timeout
-  uint64 icq_timeout_sec = 5 [
-    (gogoproto.moretags) = "yaml:\"icq_timeout_sec\"",
-    (gogoproto.jsontag) = "icq_timeout_sec"
   ];
 }

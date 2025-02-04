@@ -63,7 +63,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return errorsmod.Wrapf(err, "Error getting module params")
+		return errorsmod.Wrap(err, "Error getting module params")
 	}
 
 	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
@@ -84,20 +84,22 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_OsmosisClPool,
 		CallbackData:    tokenPriceBz,
-		TimeoutDuration: time.Duration(params.IcqTimeoutSec) * time.Second,
+		TimeoutDuration: time.Duration(params.UpdateIntervalSec) * time.Second,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
-	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, true); err != nil {
-		return errorsmod.Wrapf(err, "Error submitting OsmosisClPool ICQ")
+
+	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+		return errorsmod.Wrap(err, "Error submitting OsmosisClPool ICQ")
 	}
 
-	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, true); err != nil {
-		return errorsmod.Wrapf(err, "Error updating queryInProgress=true")
+	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
+		return errorsmod.Wrap(err, "Error updating token price query to in progress")
 	}
 
 	return nil
 }
 
+// Callback from Osmosis spot price query
 func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	var tokenPrice types.TokenPrice
 	if err := k.cdc.Unmarshal(query.CallbackData, &tokenPrice); err != nil {
@@ -118,18 +120,14 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return nil
 	}
 
-	// Unmarshal the query response args to determine the balance
+	// Unmarshal the query response args to determine the prices
 	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
-	tokenPrice.SpotPrice = newSpotPrice
-	tokenPrice.QueryInProgress = false
-	tokenPrice.UpdatedAt = ctx.BlockTime()
-
-	if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
-		return errorsmod.Wrap(err, "Error updating spot price from query response")
+	if err := k.SetTokenPriceQueryComplete(ctx, tokenPrice, newSpotPrice); err != nil {
+		return errorsmod.Wrapf(err, "Unable to mark token price query as complete")
 	}
 
 	return nil

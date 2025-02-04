@@ -88,8 +88,7 @@ func (s *KeeperTestSuite) TestQueryParams() {
 		OsmosisChainId:            "osmosis-1",
 		OsmosisConnectionId:       "connection-2",
 		UpdateIntervalSec:         5 * 60,  // 5 min
-		PriceExpirationTimeoutSec: 10 * 60, // 10 min
-		IcqTimeoutSec:             2 * 60,  // 2 min
+		PriceExpirationTimeoutSec: 15 * 60, // 15 min
 	}
 	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, expectedParams)
 	s.Require().NoError(err, "no error expected when setting params")
@@ -128,11 +127,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
 	expectedPrice := sdkmath.LegacyNewDec(1000000)
 
 	tokenPrice := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    quoteDenom,
-		OsmosisPoolId: "1",
-		SpotPrice:     expectedPrice,
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom,
+		QuoteDenom:      quoteDenom,
+		OsmosisPoolId:   "1",
+		SpotPrice:       expectedPrice,
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err, "no error expected when setting token price %+v", tokenPrice)
@@ -174,22 +173,22 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
 
 	// Set uatom price
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:     baseDenom1,
-		QuoteDenom:    quoteDenom,
-		OsmosisPoolId: "1",
-		SpotPrice:     expectedPrice1,
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom1,
+		QuoteDenom:      quoteDenom,
+		OsmosisPoolId:   "1",
+		SpotPrice:       expectedPrice1,
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err, "no error expected when setting token price %+v", tokenPrice1)
 
 	// Set uosmo price
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:     baseDenom2,
-		QuoteDenom:    quoteDenom,
-		OsmosisPoolId: "2",
-		SpotPrice:     expectedPrice2,
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom2,
+		QuoteDenom:      quoteDenom,
+		OsmosisPoolId:   "2",
+		SpotPrice:       expectedPrice2,
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 	s.Require().NoError(err, "no error expected when setting token price %+v", tokenPrice2)
@@ -218,11 +217,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStalePrice() {
 	expectedPrice := sdkmath.LegacyNewDec(1000000)
 
 	tokenPrice := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    quoteDenom,
-		OsmosisPoolId: "1",
-		SpotPrice:     expectedPrice,
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom,
+		QuoteDenom:      quoteDenom,
+		OsmosisPoolId:   "1",
+		SpotPrice:       expectedPrice,
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
@@ -248,22 +247,22 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomZeroPrice() {
 
 	// Set base token price
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    intermediateQuote,
-		OsmosisPoolId: "1",
-		SpotPrice:     sdkmath.LegacyNewDec(1000000),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom,
+		QuoteDenom:      intermediateQuote,
+		OsmosisPoolId:   "1",
+		SpotPrice:       sdkmath.LegacyNewDec(1000000),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err)
 
 	// Set quote token price with zero value
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:     quoteDenom,
-		QuoteDenom:    intermediateQuote,
-		OsmosisPoolId: "2",
-		SpotPrice:     sdkmath.LegacyZeroDec(),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       quoteDenom,
+		QuoteDenom:      intermediateQuote,
+		OsmosisPoolId:   "2",
+		SpotPrice:       sdkmath.LegacyZeroDec(),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 	s.Require().NoError(err)
@@ -285,22 +284,22 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoCommonQuote() {
 
 	// Set base token price with one quote denom
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    "quote1",
-		OsmosisPoolId: "1",
-		SpotPrice:     sdkmath.LegacyNewDec(1000000),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom,
+		QuoteDenom:      "quote1",
+		OsmosisPoolId:   "1",
+		SpotPrice:       sdkmath.LegacyNewDec(1000000),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err)
 
 	// Set quote token price with different quote denom
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:     quoteDenom,
-		QuoteDenom:    "quote2",
-		OsmosisPoolId: "2",
-		SpotPrice:     sdkmath.LegacyNewDec(2000000),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       quoteDenom,
+		QuoteDenom:      "quote2",
+		OsmosisPoolId:   "2",
+		SpotPrice:       sdkmath.LegacyNewDec(2000000),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 	s.Require().NoError(err)
@@ -322,11 +321,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomParamsError() {
 
 	// Set base token price with one quote denom
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    "quote1",
-		OsmosisPoolId: "1",
-		SpotPrice:     sdkmath.LegacyNewDec(1000000),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom,
+		QuoteDenom:      "quote1",
+		OsmosisPoolId:   "1",
+		SpotPrice:       sdkmath.LegacyNewDec(1000000),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err)
@@ -354,11 +353,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoBaseDenom() {
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
 	// Set base token price with one quote denom
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:     "banana",
-		QuoteDenom:    "quote1",
-		OsmosisPoolId: "1",
-		SpotPrice:     sdkmath.LegacyNewDec(1000000),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       "banana",
+		QuoteDenom:      "quote1",
+		OsmosisPoolId:   "1",
+		SpotPrice:       sdkmath.LegacyNewDec(1000000),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err)
@@ -387,22 +386,22 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
 
 	// Set base token price (will become stale)
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    intermediateQuote,
-		OsmosisPoolId: "1",
-		SpotPrice:     sdkmath.LegacyNewDec(1000000),
-		UpdatedAt:     s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
+		BaseDenom:       baseDenom,
+		QuoteDenom:      intermediateQuote,
+		OsmosisPoolId:   "1",
+		SpotPrice:       sdkmath.LegacyNewDec(1000000),
+		LastRequestTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err)
 
 	// Set quote token price (fresh)
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:     quoteDenom,
-		QuoteDenom:    intermediateQuote,
-		OsmosisPoolId: "2",
-		SpotPrice:     sdkmath.LegacyNewDec(2000000),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       quoteDenom,
+		QuoteDenom:      intermediateQuote,
+		OsmosisPoolId:   "2",
+		SpotPrice:       sdkmath.LegacyNewDec(2000000),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 	s.Require().NoError(err)
@@ -432,22 +431,22 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleQuotePrice() {
 
 	// Set base token price (fresh)
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:     baseDenom,
-		QuoteDenom:    intermediateQuote,
-		OsmosisPoolId: "1",
-		SpotPrice:     sdkmath.LegacyNewDec(1000000),
-		UpdatedAt:     s.Ctx.BlockTime(),
+		BaseDenom:       baseDenom,
+		QuoteDenom:      intermediateQuote,
+		OsmosisPoolId:   "1",
+		SpotPrice:       sdkmath.LegacyNewDec(1000000),
+		LastRequestTime: s.Ctx.BlockTime(),
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 	s.Require().NoError(err)
 
 	// Set quote token price (will be stale)
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:     quoteDenom,
-		QuoteDenom:    intermediateQuote,
-		OsmosisPoolId: "2",
-		SpotPrice:     sdkmath.LegacyNewDec(2000000),
-		UpdatedAt:     s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
+		BaseDenom:       quoteDenom,
+		QuoteDenom:      intermediateQuote,
+		OsmosisPoolId:   "2",
+		SpotPrice:       sdkmath.LegacyNewDec(2000000),
+		LastRequestTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 	s.Require().NoError(err)
