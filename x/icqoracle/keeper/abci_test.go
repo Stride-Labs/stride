@@ -72,16 +72,14 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 			s.SetupTest()
 
 			// Setup params
-			err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-			s.Require().NoError(err)
+			s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 			// Reset mock IcqKeeper
 			s.App.ICQOracleKeeper.IcqKeeper = mockICQKeeper
 			submitICQCalled = false
 
 			// Store token price
-			err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tc.tokenPrice)
-			s.Require().NoError(err)
+			s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tc.tokenPrice)
 
 			// Set block time to now
 			s.Ctx = s.Ctx.WithBlockTime(now)
@@ -124,11 +122,10 @@ func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
 		OsmosisPoolId:   1,
 		LastRequestTime: time.Time{}, // Zero time to trigger update
 	}
-	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	// Run BeginBlocker - should log error but continue
-	err = s.App.ICQOracleKeeper.RefreshTokenPrice(s.Ctx, tokenPrice, updateIntervalSec)
+	err := s.App.ICQOracleKeeper.RefreshTokenPrice(s.Ctx, tokenPrice, updateIntervalSec)
 	s.Require().ErrorContains(err, "failed to submit Osmosis CL pool ICQ")
 
 	// Verify token price query was not submitted
@@ -157,8 +154,7 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 	params := types.Params{
 		UpdateIntervalSec: 60,
 	}
-	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 	now := time.Now().UTC()
 	staleTime := now.Add(-2 * time.Minute)
@@ -197,8 +193,7 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 
 	// Store all token prices
 	for _, tp := range tokenPrices {
-		err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tp)
-		s.Require().NoError(err)
+		s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tp)
 	}
 
 	// Set block time

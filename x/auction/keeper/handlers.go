@@ -96,10 +96,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 	auction.TotalSellingTokenSold = auction.TotalSellingTokenSold.Add(bid.SellingTokenAmount)
 	auction.TotalPaymentTokenReceived = auction.TotalPaymentTokenReceived.Add(bid.PaymentTokenAmount)
 
-	err = k.SetAuction(ctx, auction)
-	if err != nil {
-		return errorsmod.Wrap(err, "failed to update auction stats")
-	}
+	k.SetAuction(ctx, auction)
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

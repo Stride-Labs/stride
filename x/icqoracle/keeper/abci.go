@@ -11,11 +11,7 @@ import (
 )
 
 func (k Keeper) BeginBlocker(ctx sdk.Context) {
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		ctx.Logger().Error("Unable to fetch params")
-		return
-	}
+	params := k.GetParams(ctx)
 
 	for _, tokenPrice := range k.GetAllTokenPrices(ctx) {
 		if err := k.RefreshTokenPrice(ctx, tokenPrice, params.UpdateIntervalSec); err != nil {
@@ -43,7 +39,7 @@ func (k Keeper) RefreshTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice, 
 	// have the same query ID
 	if err := k.SubmitOsmosisClPoolICQ(ctx, tokenPrice); err != nil {
 		return errorsmod.Wrapf(err,
-			"failed to submit Osmosis CL pool ICQ baseToken='%s' quoteToken='%s' poolId='%s'",
+			"failed to submit Osmosis CL pool ICQ baseToken='%s' quoteToken='%s' poolId='%d'",
 			tokenPrice.BaseDenom,
 			tokenPrice.QuoteDenom,
 			tokenPrice.OsmosisPoolId)

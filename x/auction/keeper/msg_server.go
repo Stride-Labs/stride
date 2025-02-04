@@ -54,11 +54,7 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 		TotalPaymentTokenReceived: math.ZeroInt(),
 		TotalSellingTokenSold:     math.ZeroInt(),
 	}
-
-	err = ms.Keeper.SetAuction(ctx, &auction)
-	if err != nil {
-		return nil, err
-	}
+	ms.Keeper.SetAuction(ctx, &auction)
 
 	return &types.MsgCreateAuctionResponse{}, nil
 }
@@ -77,11 +73,7 @@ func (ms msgServer) UpdateAuction(goCtx context.Context, msg *types.MsgUpdateAuc
 	auction.MinBidAmount = msg.MinBidAmount
 	auction.MinPriceMultiplier = msg.MinPriceMultiplier
 	auction.Beneficiary = msg.Beneficiary
-
-	err = ms.Keeper.SetAuction(ctx, auction)
-	if err != nil {
-		return nil, err
-	}
+	ms.Keeper.SetAuction(ctx, auction)
 
 	return &types.MsgUpdateAuctionResponse{}, nil
 }

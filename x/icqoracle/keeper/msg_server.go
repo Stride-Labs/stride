@@ -41,11 +41,7 @@ func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.Ms
 		SpotPrice:         sdkmath.LegacyZeroDec(),
 		QueryInProgress:   false,
 	}
-
-	err = ms.Keeper.SetTokenPrice(ctx, tokenPrice)
-	if err != nil {
-		return nil, err
-	}
+	ms.Keeper.SetTokenPrice(ctx, tokenPrice)
 
 	return &types.MsgRegisterTokenPriceQueryResponse{}, nil
 }

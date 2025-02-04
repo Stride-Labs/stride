@@ -60,10 +60,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 ) error {
 	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisClPool ICQ"))
 
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return errorsmod.Wrap(err, "Error getting module params")
-	}
+	params := k.GetParams(ctx)
 
 	tokenPriceBz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
@@ -86,7 +83,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		return errorsmod.Wrap(err, "Error submitting OsmosisClPool ICQ")
 	}
 
-	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
+	if err := k.SetQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
 		return errorsmod.Wrap(err, "Error updating token price query to in progress")
 	}
 
@@ -120,9 +117,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
-	if err := k.SetTokenPriceQueryComplete(ctx, tokenPrice, newSpotPrice); err != nil {
-		return errorsmod.Wrapf(err, "Unable to mark token price query as complete")
-	}
+	k.SetQueryComplete(ctx, tokenPrice, newSpotPrice)
 
 	return nil
 }

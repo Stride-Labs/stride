@@ -9,10 +9,8 @@ func (s *KeeperTestSuite) TestParams() {
 		UpdateIntervalSec:         5 * 60,  // 5 min
 		PriceExpirationTimeoutSec: 15 * 60, // 15 min
 	}
-	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, expectedParams)
-	s.Require().NoError(err, "should not error on set params")
+	s.App.ICQOracleKeeper.SetParams(s.Ctx, expectedParams)
 
-	actualParams, err := s.App.ICQOracleKeeper.GetParams(s.Ctx)
-	s.Require().NoError(err, "should not error on get params")
+	actualParams := s.App.ICQOracleKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedParams, actualParams, "params")
 }

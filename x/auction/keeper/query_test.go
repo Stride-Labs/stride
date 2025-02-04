@@ -21,8 +21,7 @@ func (s *KeeperTestSuite) TestQueryAuction() {
 		TotalSellingTokenSold:     sdkmath.ZeroInt(),
 		TotalPaymentTokenReceived: sdkmath.ZeroInt(),
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &expectedAuction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &expectedAuction)
 
 	// Query for the auction
 	req := &types.QueryAuctionRequest{
@@ -75,8 +74,7 @@ func (s *KeeperTestSuite) TestQueryAuctions() {
 	}
 
 	for _, auction := range expectedAuctions {
-		err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-		s.Require().NoError(err, "no error expected when setting auction %+v", auction)
+		s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 	}
 
 	// Query all auctions
