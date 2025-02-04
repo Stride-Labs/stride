@@ -1,11 +1,9 @@
 package keeper_test
 
 import (
-	"bytes"
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
@@ -19,7 +17,6 @@ type KeeperTestSuite struct {
 	apptesting.AppTestHelper
 	mockICQKeeper types.IcqKeeper
 	icqCallbacks  keeper.ICQCallbacks
-	logBuffer     bytes.Buffer
 }
 
 // Helper function to setup keeper with mock ICQ keeper
@@ -45,10 +42,6 @@ func (s *KeeperTestSuite) SetupTest() {
 
 	s.Require().True(s.icqCallbacks.HasICQCallback(keeper.ICQCallbackID_OsmosisClPool),
 		"OsmosisClPool callback should be registered")
-
-	// Create a logger with accessible output
-	logger := log.NewTMLogger(&s.logBuffer)
-	s.Ctx = s.Ctx.WithLogger(logger)
 }
 
 // Dynamically gets the MsgServer for this module's keeper
