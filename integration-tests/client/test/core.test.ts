@@ -105,5 +105,5 @@ describe("x/stakeibc", () => {
 
     await submitTxAndExpectSuccess(stridejs, [msg]);
     console.log(stridejs.query.stride.stakeibc.hostZoneAll());
-  }, 120000);
+  });
 });

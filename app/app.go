@@ -1177,7 +1177,7 @@ func NewStrideApp(
 				FeegrantKeeper:  app.FeeGrantKeeper,
 				SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
 				SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
-				TxDecoder:       encodingConfig.TxConfig.TxDecoder(),
+				Cdc:             appCodec,
 				TxJSONEncoder:   encodingConfig.TxConfig.TxJSONEncoder(),
 			},
 			IBCKeeper:         app.IBCKeeper,
