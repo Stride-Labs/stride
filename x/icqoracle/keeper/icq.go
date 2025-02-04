@@ -173,31 +173,6 @@ func AdjustSpotPriceForDecimals(rawPrice math.LegacyDec, baseDecimals, quoteDeci
 	}
 }
 
-// Given a token price config, returns the query ID that's used for each ICQ submission
-func (k Keeper) GetOsmosisCLPoolQueryId(ctx sdk.Context, tokenPrice types.TokenPrice) (queryId string, err error) {
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return queryId, err
-	}
-
-	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
-	if err != nil {
-		return queryId, errorsmod.Wrapf(err, "Error converting osmosis pool id '%s' to uint64", tokenPrice.OsmosisPoolId)
-	}
-
-	query := icqtypes.Query{
-		ChainId:        params.OsmosisChainId,
-		ConnectionId:   params.OsmosisConnectionId,
-		QueryType:      icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
-		RequestData:    icqtypes.FormatOsmosisKeyPool(osmosisPoolId),
-		CallbackModule: types.ModuleName,
-		CallbackId:     ICQCallbackID_OsmosisClPool,
-	}
-	queryId = k.IcqKeeper.GetQueryId(ctx, query, false)
-
-	return queryId, nil
-}
-
 func abs(num int64) uint64 {
 	if num < 0 {
 		return uint64(-num)

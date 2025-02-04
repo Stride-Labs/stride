@@ -101,14 +101,3 @@ func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
 
 	return nil
 }
-
-// Forces a query timeout of an in-progress query by removing it from the store
-func (k *Keeper) ForceQueryTimeout(ctx sdk.Context, queryId string) error {
-	query, found := k.GetQuery(ctx, queryId)
-	if !found {
-		return errorsmod.Wrapf(types.ErrQueryNotFound, "Query not found for %s", queryId)
-	}
-	EmitEventQueryResponse(ctx, query)
-	k.DeleteQuery(ctx, query.Id)
-	return nil
-}
