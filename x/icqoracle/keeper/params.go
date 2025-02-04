@@ -7,10 +7,9 @@ import (
 )
 
 // GetParams get params
-func (k Keeper) GetParams(ctx sdk.Context) types.Params {
+func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.ParamsKey)
-	params := types.Params{}
 	k.cdc.MustUnmarshal(bz, &params)
 	return params
 }
