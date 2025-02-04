@@ -22,8 +22,8 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		updateIntervalPassed := currentTime.Sub(lastUpdate) >= time.Second*time.Duration(params.UpdateIntervalSec)
 
 		// If never updated or update interval has passed, submit a new query for the price
-		// If a query was already in progress, it will be replaced with this new one that will
-		// will have the same query ID
+		// If a query was already in progress, it will be replaced with a new one that will
+		// have the same query ID
 		if isNewToken || updateIntervalPassed {
 			if err := k.SubmitOsmosisClPoolICQ(ctx, tokenPrice); err != nil {
 				ctx.Logger().Error(
