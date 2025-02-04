@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:     "uatom",
 				QuoteDenom:    "uusdc",
 				OsmosisPoolId: "1",
-				UpdatedAt:     time.Time{}, // Zero time
+				LastQueryTime: time.Time{}, // Zero time
 			},
 			expectedICQSubmit: true,
 		},
@@ -68,7 +68,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:     "uosmo",
 				QuoteDenom:    "uusdc",
 				OsmosisPoolId: "2",
-				UpdatedAt:     staleTime,
+				LastQueryTime: staleTime,
 			},
 			expectedICQSubmit: true,
 		},
@@ -78,7 +78,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:     "ustrd",
 				QuoteDenom:    "uusdc",
 				OsmosisPoolId: "3",
-				UpdatedAt:     freshTime,
+				LastQueryTime: freshTime,
 			},
 			expectedICQSubmit: false,
 		},
@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:       "ujuno",
 				QuoteDenom:      "uusdc",
 				OsmosisPoolId:   "4",
-				UpdatedAt:       staleTime,
+				LastQueryTime:   staleTime,
 				QueryInProgress: true,
 			},
 			expectedICQSubmit: false,
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:       "udydx",
 				QuoteDenom:      "uusdc",
 				OsmosisPoolId:   "5",
-				UpdatedAt:       freshTime,
+				LastQueryTime:   freshTime,
 				QueryInProgress: true,
 			},
 			expectedICQSubmit: false,
@@ -110,7 +110,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:       "utia",
 				QuoteDenom:      "uusdc",
 				OsmosisPoolId:   "6",
-				UpdatedAt:       time.Time{}, // Zero time
+				LastQueryTime:   time.Time{}, // Zero time
 				QueryInProgress: true,
 			},
 			expectedICQSubmit: false,
@@ -179,7 +179,7 @@ func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
 		BaseDenom:     "uatom",
 		QuoteDenom:    "uusdc",
 		OsmosisPoolId: "1",
-		UpdatedAt:     time.Time{}, // Zero time to trigger update
+		LastQueryTime: time.Time{}, // Zero time to trigger update
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
@@ -232,19 +232,19 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 			BaseDenom:     "uatom",
 			QuoteDenom:    "uusdc",
 			OsmosisPoolId: "1",
-			UpdatedAt:     staleTime,
+			LastQueryTime: staleTime,
 		},
 		{
 			BaseDenom:     "uosmo",
 			QuoteDenom:    "uusdc",
 			OsmosisPoolId: "2",
-			UpdatedAt:     staleTime,
+			LastQueryTime: staleTime,
 		},
 		{
 			BaseDenom:       "ustrd",
 			QuoteDenom:      "uusdc",
 			OsmosisPoolId:   "3",
-			UpdatedAt:       staleTime,
+			LastQueryTime:   staleTime,
 			QueryInProgress: true, // Should skip this one
 		},
 	}

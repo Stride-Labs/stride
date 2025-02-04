@@ -29,8 +29,8 @@ message TokenPrice {
     (gogoproto.nullable) = false
   ];
 
-  // Last update timestamp
-  google.protobuf.Timestamp updated_at = 9
+  // Last time a query request was submitted
+  google.protobuf.Timestamp last_query_time = 9
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress

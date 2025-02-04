@@ -112,7 +112,7 @@ message TokenPriceResponse {
   ];
 
   // Last update timestamp
-  google.protobuf.Timestamp updated_at = 11
+  google.protobuf.Timestamp last_query_time = 11
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress

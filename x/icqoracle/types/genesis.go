@@ -11,7 +11,7 @@ func DefaultGenesis() *GenesisState {
 
 // Performs basic genesis state validation by iterating through all token prices and validating
 // using ValidateTokenPriceQueryParams().
-// We ignore the SpotPrice, UpdatedAt & QueryInProgress fields since they are reset in InitGenesis().
+// We ignore the SpotPrice, LastQueryTime & QueryInProgress fields since they are reset in InitGenesis().
 func (gs GenesisState) Validate() error {
 	for i, tokenPrice := range gs.TokenPrices {
 		err := ValidateTokenPriceQueryParams(
