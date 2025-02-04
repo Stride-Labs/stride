@@ -13,7 +13,7 @@ func (s *KeeperTestSuite) TestQueryTokenPrice() {
 	// Create token price entry
 	baseDenom := "uatom"
 	quoteDenom := "uusdc"
-	poolId := "1"
+	poolId := uint64(1)
 	expectedPrice := sdkmath.LegacyNewDec(1000000)
 
 	tokenPrice := types.TokenPrice{
@@ -55,13 +55,13 @@ func (s *KeeperTestSuite) TestQueryTokenPrices() {
 		{
 			BaseDenom:     "uatom",
 			QuoteDenom:    "uusdc",
-			OsmosisPoolId: "1",
+			OsmosisPoolId: 1,
 			SpotPrice:     sdkmath.LegacyNewDec(1000000),
 		},
 		{
 			BaseDenom:     "uosmo",
 			QuoteDenom:    "uusdc",
-			OsmosisPoolId: "2",
+			OsmosisPoolId: 2,
 			SpotPrice:     sdkmath.LegacyNewDec(2000000),
 		},
 	}
@@ -129,7 +129,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
 	tokenPrice := types.TokenPrice{
 		BaseDenom:       baseDenom,
 		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       expectedPrice,
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -175,7 +175,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
 	tokenPrice1 := types.TokenPrice{
 		BaseDenom:       baseDenom1,
 		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       expectedPrice1,
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -186,7 +186,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
 	tokenPrice2 := types.TokenPrice{
 		BaseDenom:       baseDenom2,
 		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   "2",
+		OsmosisPoolId:   2,
 		SpotPrice:       expectedPrice2,
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -219,7 +219,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStalePrice() {
 	tokenPrice := types.TokenPrice{
 		BaseDenom:       baseDenom,
 		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       expectedPrice,
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -249,7 +249,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomZeroPrice() {
 	tokenPrice1 := types.TokenPrice{
 		BaseDenom:       baseDenom,
 		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       sdkmath.LegacyNewDec(1000000),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -260,7 +260,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomZeroPrice() {
 	tokenPrice2 := types.TokenPrice{
 		BaseDenom:       quoteDenom,
 		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   "2",
+		OsmosisPoolId:   2,
 		SpotPrice:       sdkmath.LegacyZeroDec(),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -286,7 +286,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoCommonQuote() {
 	tokenPrice1 := types.TokenPrice{
 		BaseDenom:       baseDenom,
 		QuoteDenom:      "quote1",
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       sdkmath.LegacyNewDec(1000000),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -297,7 +297,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoCommonQuote() {
 	tokenPrice2 := types.TokenPrice{
 		BaseDenom:       quoteDenom,
 		QuoteDenom:      "quote2",
-		OsmosisPoolId:   "2",
+		OsmosisPoolId:   2,
 		SpotPrice:       sdkmath.LegacyNewDec(2000000),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -323,7 +323,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomParamsError() {
 	tokenPrice1 := types.TokenPrice{
 		BaseDenom:       baseDenom,
 		QuoteDenom:      "quote1",
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       sdkmath.LegacyNewDec(1000000),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -355,7 +355,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
 	tokenPrice1 := types.TokenPrice{
 		BaseDenom:       "banana",
 		QuoteDenom:      "quote1",
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       sdkmath.LegacyNewDec(1000000),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -388,7 +388,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
 	tokenPrice1 := types.TokenPrice{
 		BaseDenom:       baseDenom,
 		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       sdkmath.LegacyNewDec(1000000),
 		LastRequestTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
 	}
@@ -399,7 +399,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
 	tokenPrice2 := types.TokenPrice{
 		BaseDenom:       quoteDenom,
 		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   "2",
+		OsmosisPoolId:   2,
 		SpotPrice:       sdkmath.LegacyNewDec(2000000),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -433,7 +433,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleQuotePrice() {
 	tokenPrice1 := types.TokenPrice{
 		BaseDenom:       baseDenom,
 		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		SpotPrice:       sdkmath.LegacyNewDec(1000000),
 		LastRequestTime: s.Ctx.BlockTime(),
 	}
@@ -444,7 +444,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleQuotePrice() {
 	tokenPrice2 := types.TokenPrice{
 		BaseDenom:       quoteDenom,
 		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   "2",
+		OsmosisPoolId:   2,
 		SpotPrice:       sdkmath.LegacyNewDec(2000000),
 		LastRequestTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
 	}

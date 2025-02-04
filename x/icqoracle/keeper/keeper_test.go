@@ -65,7 +65,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 // Helper function to get a token price and confirm there's no error
-func (s *KeeperTestSuite) MustGetTokenPrice(baseDenom string, quoteDenom string, osmosisPoolId string) types.TokenPrice {
+func (s *KeeperTestSuite) MustGetTokenPrice(baseDenom string, quoteDenom string, osmosisPoolId uint64) types.TokenPrice {
 	tp, err := s.App.ICQOracleKeeper.GetTokenPrice(s.Ctx, baseDenom, quoteDenom, osmosisPoolId)
 	s.Require().NoError(err, "no error expected when getting token price")
 	return tp

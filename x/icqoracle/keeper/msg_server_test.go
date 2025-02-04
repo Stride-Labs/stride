@@ -14,7 +14,7 @@ func (s *KeeperTestSuite) TestRegisterTokenPriceQuery() {
 	msg := types.MsgRegisterTokenPriceQuery{
 		BaseDenom:         "uatom",
 		QuoteDenom:        "uusdc",
-		OsmosisPoolId:     "1",
+		OsmosisPoolId:     1,
 		OsmosisBaseDenom:  "ibc/uatom",
 		OsmosisQuoteDenom: "uusdc",
 	}
@@ -43,7 +43,7 @@ func (s *KeeperTestSuite) TestRemoveTokenPriceQuery() {
 	tokenPrice := types.TokenPrice{
 		BaseDenom:         "uatom",
 		QuoteDenom:        "uusdc",
-		OsmosisPoolId:     "1",
+		OsmosisPoolId:     1,
 		OsmosisBaseDenom:  "ibc/uatom",
 		OsmosisQuoteDenom: "uusdc",
 		SpotPrice:         sdkmath.LegacyNewDec(1),

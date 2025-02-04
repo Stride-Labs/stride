@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:       "uatom",
 				QuoteDenom:      "uusdc",
-				OsmosisPoolId:   "1",
+				OsmosisPoolId:   1,
 				LastRequestTime: time.Time{}, // Zero time
 			},
 			expectedICQSubmit: true,
@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:       "uosmo",
 				QuoteDenom:      "uusdc",
-				OsmosisPoolId:   "2",
+				OsmosisPoolId:   2,
 				LastRequestTime: staleTime,
 			},
 			expectedICQSubmit: true,
@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:       "ustrd",
 				QuoteDenom:      "uusdc",
-				OsmosisPoolId:   "3",
+				OsmosisPoolId:   3,
 				LastRequestTime: freshTime,
 			},
 			expectedICQSubmit: false,
@@ -145,7 +145,7 @@ func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
 	tokenPrice := types.TokenPrice{
 		BaseDenom:       "uatom",
 		QuoteDenom:      "uusdc",
-		OsmosisPoolId:   "1",
+		OsmosisPoolId:   1,
 		LastRequestTime: time.Time{}, // Zero time to trigger update
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
@@ -198,28 +198,28 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 		{
 			BaseDenom:       "uatom",
 			QuoteDenom:      "uusdc",
-			OsmosisPoolId:   "1",
+			OsmosisPoolId:   1,
 			LastRequestTime: staleTime,
 			QueryInProgress: false,
 		},
 		{
 			BaseDenom:       "uosmo",
 			QuoteDenom:      "uusdc",
-			OsmosisPoolId:   "2",
+			OsmosisPoolId:   2,
 			LastRequestTime: staleTime,
 			QueryInProgress: false,
 		},
 		{
 			BaseDenom:       "ustrd",
 			QuoteDenom:      "uusdc",
-			OsmosisPoolId:   "3",
+			OsmosisPoolId:   3,
 			LastRequestTime: s.Ctx.BlockTime(), // Should skip this one
 			QueryInProgress: true,
 		},
 		{
 			BaseDenom:       "ustrd",
 			QuoteDenom:      "uusdc",
-			OsmosisPoolId:   "4",
+			OsmosisPoolId:   4,
 			LastRequestTime: s.Ctx.BlockTime(), // Should skip this one
 			QueryInProgress: false,
 		},
