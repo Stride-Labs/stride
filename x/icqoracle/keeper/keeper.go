@@ -41,17 +41,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // SetTokenPrice stores price query for a token
-func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) error {
+func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	key := types.TokenPriceKey(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
-
-	bz, err := k.cdc.Marshal(&tokenPrice)
-	if err != nil {
-		return err
-	}
-
+	bz := k.cdc.MustMarshal(&tokenPrice)
 	store.Set(key, bz)
-	return nil
 }
 
 // RemoveTokenPrice removes price query for a token
@@ -71,25 +65,17 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, 
 	tokenPrice.QueryInProgress = true
 	tokenPrice.LastRequestTime = ctx.BlockTime()
 
-	err = k.SetTokenPrice(ctx, tokenPrice)
-	if err != nil {
-		return err
-	}
+	k.SetTokenPrice(ctx, tokenPrice)
 
 	return nil
 }
 
 // Updates the token price when a query response is received
-func (k Keeper) SetTokenPriceQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, newSpotPrice math.LegacyDec) error {
+func (k Keeper) SetTokenPriceQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, newSpotPrice math.LegacyDec) {
 	tokenPrice.SpotPrice = newSpotPrice
 	tokenPrice.QueryInProgress = false
 	tokenPrice.LastResponseTime = ctx.BlockTime()
-
-	if err := k.SetTokenPrice(ctx, tokenPrice); err != nil {
-		return errorsmod.Wrap(err, "Error updating spot price from query response")
-	}
-
-	return nil
+	k.SetTokenPrice(ctx, tokenPrice)
 }
 
 // GetTokenPrice retrieves price data for a token
@@ -104,7 +90,7 @@ func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom stri
 
 	var price types.TokenPrice
 	if err := k.cdc.Unmarshal(bz, &price); err != nil {
-		return types.TokenPrice{}, err
+		return types.TokenPrice{}, errorsmod.Wrapf(err, "unable to unmarshal token price")
 	}
 
 	return price, nil

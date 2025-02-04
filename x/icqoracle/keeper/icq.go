@@ -117,9 +117,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
-	if err := k.SetTokenPriceQueryComplete(ctx, tokenPrice, newSpotPrice); err != nil {
-		return errorsmod.Wrapf(err, "Unable to mark token price query as complete")
-	}
+	k.SetTokenPriceQueryComplete(ctx, tokenPrice, newSpotPrice)
 
 	return nil
 }
