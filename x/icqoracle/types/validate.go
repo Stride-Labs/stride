@@ -2,7 +2,6 @@ package types
 
 import (
 	"errors"
-	"strconv"
 )
 
 func ValidateTokenPriceQueryParams(
@@ -10,7 +9,7 @@ func ValidateTokenPriceQueryParams(
 	quoteDenom string,
 	baseDenomDecimals int64,
 	quoteDenomDecimals int64,
-	osmosisPoolId string,
+	osmosisPoolId uint64,
 	osmosisBaseDenom string,
 	osmosisQuoteDenom string,
 ) error {
@@ -26,8 +25,8 @@ func ValidateTokenPriceQueryParams(
 	if quoteDenomDecimals <= 0 {
 		return errors.New("quote-denom-decimals must be bigger than 0")
 	}
-	if _, err := strconv.ParseUint(osmosisPoolId, 10, 64); err != nil {
-		return errors.New("osmosis-pool-id must be uint64")
+	if osmosisPoolId == 0 {
+		return errors.New("osmosis-pool-id must be specified")
 	}
 	if osmosisBaseDenom == "" {
 		return errors.New("osmosis-base-denom must be specified")

@@ -27,7 +27,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		if isNewToken || updateIntervalPassed {
 			if err := k.SubmitOsmosisClPoolICQ(ctx, tokenPrice); err != nil {
 				ctx.Logger().Error(
-					"failed to submit Osmosis CL pool ICQ baseToken='%s' quoteToken='%s' poolId='%s': %w",
+					"failed to submit Osmosis CL pool ICQ baseToken='%s' quoteToken='%s' poolId=%d: %w",
 					tokenPrice.BaseDenom,
 					tokenPrice.QuoteDenom,
 					tokenPrice.OsmosisPoolId,
