@@ -38,7 +38,7 @@ service Query {
 message QueryTokenPriceRequest {
   string base_denom = 1;
   string quote_denom = 2;
-  string pool_id = 3;
+  uint64 pool_id = 3;
 }
 
 // QueryTokenPriceResponse is the response type for the Query/TokenPrice RPC

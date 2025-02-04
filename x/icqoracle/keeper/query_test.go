@@ -43,7 +43,7 @@ func (s *KeeperTestSuite) TestQueryTokenPrice() {
 	req = &types.QueryTokenPriceRequest{
 		BaseDenom:  "banana",
 		QuoteDenom: "papaya",
-		PoolId:     "1",
+		PoolId:     1,
 	}
 	_, err = s.App.ICQOracleKeeper.TokenPrice(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().Error(err, "error expected when querying non existing token price")
