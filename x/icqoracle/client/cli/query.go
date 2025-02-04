@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -32,12 +33,16 @@ func GetQueryCmd() *cobra.Command {
 
 func CmdQueryTokenPrice() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "token-price [base-denom] [quote-denom]",
+		Use:   "token-price [base-denom] [quote-denom] [pool-id]",
 		Short: "Query the current price for a specific token",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			baseDenom := args[0]
 			quoteDenom := args[1]
+			poolId, err := strconv.ParseUint(args[2], 10, 64)
+			if err != nil {
+				return fmt.Errorf("Error parsing osmosis pool ID as uint64: %w", err)
+			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -48,6 +53,7 @@ func CmdQueryTokenPrice() *cobra.Command {
 			req := &types.QueryTokenPriceRequest{
 				BaseDenom:  baseDenom,
 				QuoteDenom: quoteDenom,
+				PoolId:     poolId,
 			}
 			res, err := queryClient.TokenPrice(context.Background(), req)
 			if err != nil {
