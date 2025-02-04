@@ -21,7 +21,7 @@ message TokenPrice {
   // Quote denom on Osmosis
   string osmosis_quote_denom = 6;
   // Pool ID on Osmosis
-  string osmosis_pool_id = 7;
+  uint64 osmosis_pool_id = 7;
 
   // Spot price of base_denom denominated in quote_denom
   string spot_price = 8 [
