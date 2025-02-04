@@ -272,7 +272,7 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 
 	// update the record's txhash, status, and unbonding completion time
 	unbondingLength := time.Duration(staketiaHostZone.UnbondingPeriodSeconds) * time.Second // 21 days
-	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix())          // now + 21 days
+	unbondingCompletionTime := utils.IntToUint(ctx.BlockTime().Add(unbondingLength).Unix()) // now + 21 days
 
 	record.UndelegationTxHash = txHash
 	record.Status = types.UNBONDING_IN_PROGRESS
@@ -330,7 +330,7 @@ func (k Keeper) BurnRedeemedStTokens(ctx sdk.Context, stTokensToBurn sdk.Coins, 
 // Records are annotated with a new status UNBONDED
 func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
 	for _, unbondingRecord := range k.GetAllUnbondingRecordsByStatus(ctx, types.UNBONDING_IN_PROGRESS) {
-		if ctx.BlockTime().Unix() > int64(unbondingRecord.UnbondingCompletionTimeSeconds) {
+		if ctx.BlockTime().Unix() > utils.UintToInt(unbondingRecord.UnbondingCompletionTimeSeconds) {
 			unbondingRecord.Status = types.UNBONDED
 			k.SetUnbondingRecord(ctx, unbondingRecord)
 		}

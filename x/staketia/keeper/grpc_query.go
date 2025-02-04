@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	"github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
@@ -100,8 +101,8 @@ func (k Keeper) RedemptionRecords(c context.Context, req *types.QueryRedemptionR
 		return &types.QueryRedemptionRecordsResponse{}, types.ErrHostZoneNotFound
 	}
 	fourDays := time.Duration(4) * time.Hour * 24
-	unbondingLength := time.Duration(zone.UnbondingPeriodSeconds) * time.Second                 // 21 days
-	estimatedUnbondingTime := uint64(ctx.BlockTime().Add(unbondingLength).Add(fourDays).Unix()) // 21 days from now + 4 day buffer
+	unbondingLength := time.Duration(zone.UnbondingPeriodSeconds) * time.Second                          // 21 days
+	estimatedUnbondingTime := utils.IntToUint(ctx.BlockTime().Add(unbondingLength).Add(fourDays).Unix()) // 21 days from now + 4 day buffer
 	for _, unbondingRecord := range unbondingRecords {
 		// Edge case: a user has submitted a redemption, but the corresponding unbonding record has not been confirmed, meaning
 		// the unbonding completion time is 0. Give a rough estimate.

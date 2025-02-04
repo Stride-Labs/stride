@@ -68,7 +68,7 @@ func (k Keeper) IBCTransferLSMToken(
 	hostZoneDelegationICAAddress string,
 ) error {
 	// Build transfer message with a conservative timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds())
+	timeout := utils.IntToUint(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds())
 	ibcToken := sdk.NewCoin(lsmTokenDeposit.IbcDenom, lsmTokenDeposit.Amount)
 	transferMsg := transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,

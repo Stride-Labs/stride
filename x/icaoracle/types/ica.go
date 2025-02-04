@@ -7,6 +7,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	proto "github.com/cosmos/gogoproto/proto"
+
+	"github.com/Stride-Labs/stride/v25/utils"
 )
 
 const (
@@ -51,7 +53,7 @@ func (i ICATx) ValidateICATx() error {
 }
 
 func (i ICATx) GetRelativeTimeoutNano() uint64 {
-	return uint64(i.RelativeTimeout.Nanoseconds())
+	return utils.IntToUint(i.RelativeTimeout.Nanoseconds())
 }
 
 func FormatICAAccountOwner(chainId string, accountType string) string {

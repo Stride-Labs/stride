@@ -523,7 +523,7 @@ func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
 // This also mocks out the consensus state to enable testing registering interchain accounts
 func (s *AppTestHelper) MockClientAndConnection(chainId, clientId, connectionId string) {
 	clientHeight := clienttypes.Height{
-		RevisionHeight: uint64(s.Ctx.BlockHeight()),
+		RevisionHeight: utils.IntToUint(s.Ctx.BlockHeight()),
 	}
 	clientState := tendermint.ClientState{
 		ChainId:        chainId,
