@@ -106,11 +106,5 @@ while getopts sgojtednhrz flag; do
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;
-
-         printf '%s' "Building Hermes Locally... ";
-         cd deps/hermes; 
-         cargo build --release --target-dir $BUILDDIR/hermes; 
-         cd ../..
-         echo "Done" ;;
    esac
 done
