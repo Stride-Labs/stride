@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,23 +9,6 @@ import (
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
 )
-
-func (s *KeeperTestSuite) TestBeginBlockerParams() {
-	// Delete params from store
-	s.DeleteParams()
-
-	// Run BeginBlocker with missing params
-	s.App.ICQOracleKeeper.BeginBlocker(s.Ctx)
-
-	// Get the logged output
-	logOutput := s.logBuffer.String()
-
-	// Verify the error was logged
-	s.Require().True(
-		strings.Contains(logOutput, "failed to get icqoracle params"),
-		"expected error log message about missing params, got: %s", logOutput,
-	)
-}
 
 func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 	var submitICQCalled bool
@@ -134,34 +116,22 @@ func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
 	}
 	s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
 
-	// Set params
-	params := types.Params{
-		UpdateIntervalSec: 60,
-	}
-	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-	s.Require().NoError(err)
-
 	// Create token price that needs updating
+	updateIntervalSec := uint64(60)
 	tokenPrice := types.TokenPrice{
 		BaseDenom:       "uatom",
 		QuoteDenom:      "uusdc",
 		OsmosisPoolId:   1,
 		LastRequestTime: time.Time{}, // Zero time to trigger update
 	}
-	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
+	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
 
 	// Run BeginBlocker - should log error but continue
-	s.App.ICQOracleKeeper.BeginBlocker(s.Ctx)
+	err = s.App.ICQOracleKeeper.RefreshTokenPrice(s.Ctx, tokenPrice, updateIntervalSec)
+	s.Require().ErrorContains(err, "failed to submit Osmosis CL pool ICQ")
 
-	// Get the logged output and verify error was logged
-	logOutput := s.logBuffer.String()
-	s.Require().True(
-		strings.Contains(logOutput, "icq submit failed"),
-		"expected error log message about ICQ submission failure, got: %s", logOutput,
-	)
-
-	// Verify token price was not modified
+	// Verify token price query was not submitted
 	updatedPrice := s.MustGetTokenPrice(
 		tokenPrice.BaseDenom,
 		tokenPrice.QuoteDenom,
