@@ -28,7 +28,7 @@ func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.Ms
 
 	_, err := ms.Keeper.GetTokenPrice(ctx, msg.BaseDenom, msg.QuoteDenom, msg.OsmosisPoolId)
 	if err == nil {
-		return nil, types.ErrTokenPriceAlreadyExists.Wrapf("token price BaseDenom='%s' QuoteDenom='%s' OsmosisPoolId='%s'", msg.BaseDenom, msg.QuoteDenom, msg.OsmosisPoolId)
+		return nil, types.ErrTokenPriceAlreadyExists.Wrapf("token price BaseDenom='%s' QuoteDenom='%s' OsmosisPoolId='%d'", msg.BaseDenom, msg.QuoteDenom, msg.OsmosisPoolId)
 	}
 
 	tokenPrice := types.TokenPrice{

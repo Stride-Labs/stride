@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"cosmossdk.io/math"
@@ -33,7 +32,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQUnknownPrice() {
 	tokenPrice := types.TokenPrice{
 		BaseDenom:     "uatom",
 		QuoteDenom:    "uusdc",
-		OsmosisPoolId: "1",
+		OsmosisPoolId: 1,
 	}
 
 	params := types.Params{
@@ -65,7 +64,7 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 	tokenPrice := types.TokenPrice{
 		BaseDenom:     "uatom",
 		QuoteDenom:    "uusdc",
-		OsmosisPoolId: "1",
+		OsmosisPoolId: 1,
 	}
 
 	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
@@ -107,25 +106,6 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 		expectedError string
 	}{
 		{
-			name: "error parsing pool ID",
-			setup: func() {
-				// Set valid params
-				params := types.Params{
-					OsmosisChainId:      "osmosis-1",
-					OsmosisConnectionId: "connection-0",
-					UpdateIntervalSec:   60,
-				}
-				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-				s.Require().NoError(err)
-			},
-			tokenPrice: types.TokenPrice{
-				BaseDenom:     "uatom",
-				QuoteDenom:    "uusdc",
-				OsmosisPoolId: "invalid_pool_id", // NaN invalid pool ID
-			},
-			expectedError: "Error converting osmosis pool id",
-		},
-		{
 			name: "error submitting ICQ request",
 			setup: func() {
 				params := types.Params{
@@ -147,7 +127,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:     "uatom",
 				QuoteDenom:    "uusdc",
-				OsmosisPoolId: "1",
+				OsmosisPoolId: 1,
 			},
 			expectedError: "Error submitting OsmosisClPool ICQ",
 		},
@@ -166,7 +146,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 				s.mockICQKeeper = MockICQKeeper{
 					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
 						// Remove token price so set query in progress will fail to get it after SubmitICQRequest returns
-						s.App.ICQOracleKeeper.RemoveTokenPrice(ctx, "uatom", "uusdc", "1")
+						s.App.ICQOracleKeeper.RemoveTokenPrice(ctx, "uatom", "uusdc", 1)
 						return nil
 					},
 				}
@@ -177,7 +157,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:     "uatom",
 				QuoteDenom:    "uusdc",
-				OsmosisPoolId: "1",
+				OsmosisPoolId: 1,
 			},
 			expectedError: "Error updating token price query to in progress",
 		},
@@ -203,7 +183,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:     "uatom",
 				QuoteDenom:    "uusdc",
-				OsmosisPoolId: "1",
+				OsmosisPoolId: 1,
 			},
 			expectedError: "",
 		},
@@ -264,7 +244,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	tokenPrice := types.TokenPrice{
 		BaseDenom:     "uatom",
 		QuoteDenom:    "uusdc",
-		OsmosisPoolId: "1",
+		OsmosisPoolId: 1,
 	}
 	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
@@ -289,9 +269,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	s.Require().Equal(keeper.ICQCallbackID_OsmosisClPool, capturedQuery.CallbackId)
 
 	// Verify request data format (pool key)
-	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
-	s.Require().NoError(err)
-	expectedRequestData := icqtypes.FormatOsmosisKeyPool(osmosisPoolId)
+	expectedRequestData := icqtypes.FormatOsmosisKeyPool(tokenPrice.OsmosisPoolId)
 	s.Require().Equal(expectedRequestData, capturedQuery.RequestData)
 
 	// Verify callback data contains the token price
@@ -328,7 +306,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 	baseTokenPrice := types.TokenPrice{
 		BaseDenom:         "uatom",
 		QuoteDenom:        "uusdc",
-		OsmosisPoolId:     "1",
+		OsmosisPoolId:     1,
 		OsmosisBaseDenom:  "ibc/uatom",
 		OsmosisQuoteDenom: "ibc/uusdc",
 		SpotPrice:         math.LegacyNewDec(2),
@@ -477,7 +455,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 					CallbackData: []byte{},
 				}
 			},
-			expectedError: "price not found for baseDenom='' quoteDenom='' poolId=''",
+			expectedError: "price not found for baseDenom='' quoteDenom='' poolId='0'",
 		},
 		{
 			name: "nil query callback data",
@@ -486,7 +464,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 					CallbackData: nil,
 				}
 			},
-			expectedError: "price not found for baseDenom='' quoteDenom='' poolId=''",
+			expectedError: "price not found for baseDenom='' quoteDenom='' poolId='0'",
 		},
 		{
 			name: "corrupted token price in callback data",
@@ -642,7 +620,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 				}
 			},
 			expectedError: fmt.Sprintf(
-				"price not found for baseDenom='%s' quoteDenom='%s' poolId='%s'",
+				"price not found for baseDenom='%s' quoteDenom='%s' poolId='%d'",
 				baseTokenPrice.BaseDenom,
 				baseTokenPrice.QuoteDenom,
 				baseTokenPrice.OsmosisPoolId),
@@ -680,7 +658,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 	baseTokenPrice := types.TokenPrice{
 		BaseDenom:          "uatom",
 		QuoteDenom:         "uusdc",
-		OsmosisPoolId:      "1",
+		OsmosisPoolId:      1,
 		OsmosisBaseDenom:   "ibc/uatom",
 		OsmosisQuoteDenom:  "uusdc",
 		BaseDenomDecimals:  6,
@@ -714,7 +692,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:          "satoshi",
 				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      "1",
+				OsmosisPoolId:      1,
 				OsmosisBaseDenom:   "ibc/satoshi",
 				OsmosisQuoteDenom:  "ibc/uusdc",
 				BaseDenomDecimals:  8, // BTC has 8 decimals
@@ -731,7 +709,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:          "uatom",
 				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      "1",
+				OsmosisPoolId:      1,
 				OsmosisBaseDenom:   "ibc/uatom",
 				OsmosisQuoteDenom:  "ibc/uusdc",
 				BaseDenomDecimals:  6, // ATOM has 6 decimals
@@ -748,7 +726,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:          "uatom",
 				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      "1",
+				OsmosisPoolId:      1,
 				OsmosisBaseDenom:   "ibc/uatom",
 				OsmosisQuoteDenom:  "ibc/uusdc",
 				BaseDenomDecimals:  8,
@@ -765,7 +743,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			tokenPrice: types.TokenPrice{
 				BaseDenom:          "uatom",
 				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      "1",
+				OsmosisPoolId:      1,
 				OsmosisBaseDenom:   "ibc/uatom",
 				OsmosisQuoteDenom:  "different_denom",
 				BaseDenomDecimals:  6,

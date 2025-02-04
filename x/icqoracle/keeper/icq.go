@@ -3,7 +3,6 @@ package keeper
 import (
 	"encoding/hex"
 	"fmt"
-	"strconv"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -66,11 +65,6 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		return errorsmod.Wrap(err, "Error getting module params")
 	}
 
-	osmosisPoolId, err := strconv.ParseUint(tokenPrice.OsmosisPoolId, 10, 64)
-	if err != nil {
-		return errorsmod.Wrapf(err, "Error converting osmosis pool id '%s' to uint64", tokenPrice.OsmosisPoolId)
-	}
-
 	tokenPriceBz, err := k.cdc.Marshal(&tokenPrice)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Error serializing tokenPrice '%+v' to bytes", tokenPrice)
@@ -80,7 +74,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		ChainId:         params.OsmosisChainId,
 		ConnectionId:    params.OsmosisConnectionId,
 		QueryType:       icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
-		RequestData:     icqtypes.FormatOsmosisKeyPool(osmosisPoolId),
+		RequestData:     icqtypes.FormatOsmosisKeyPool(tokenPrice.OsmosisPoolId),
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_OsmosisClPool,
 		CallbackData:    tokenPriceBz,

@@ -1,6 +1,8 @@
 package types
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+)
 
 const (
 	ModuleName = "icqoracle"
@@ -17,8 +19,8 @@ var (
 	PriceQueryPrefix = []byte("pricequery")
 )
 
-func TokenPriceKey(baseDenom, quoteDenom, poolId string) []byte {
-	return []byte(fmt.Sprintf("%s|%s|%s", baseDenom, quoteDenom, poolId))
+func TokenPriceKey(baseDenom, quoteDenom string, poolId uint64) []byte {
+	return []byte(fmt.Sprintf("%s|%s|%d", baseDenom, quoteDenom, poolId))
 }
 
 func TokenPriceByDenomKey(baseDenom string) []byte {

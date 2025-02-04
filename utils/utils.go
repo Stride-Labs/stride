@@ -233,10 +233,10 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 // Ex:
 //
 //	| uosmo/ustrd   |   string
-func LogWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, s string, a ...any,
+func LogWithTokenPriceQuery(baseDenom, quoteDenom string, osmosisPoolId uint64, s string, a ...any,
 ) string {
 	msg := fmt.Sprintf(s, a...)
-	return fmt.Sprintf("|   %s/%s/%s   |  %s", baseDenom, quoteDenom, osmosisPoolId, msg)
+	return fmt.Sprintf("|   %s/%s/%d   |  %s", baseDenom, quoteDenom, osmosisPoolId, msg)
 }
 
 // Returns a log string with a chain Id and callback as a prefix
@@ -244,9 +244,9 @@ func LogWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, s string, a ..
 // Format:
 //
 //	|   uosmo/ustrd    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
-func logCallbackWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, callbackId string, callbackType string, s string, a ...any) string {
+func logCallbackWithTokenPriceQuery(baseDenom, quoteDenom string, osmosisPoolId uint64, callbackId string, callbackType string, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
-	return fmt.Sprintf("|   %s/%s/%s   |  %s %s  |  %s", baseDenom, quoteDenom, osmosisPoolId, strings.ToUpper(callbackId), callbackType, msg)
+	return fmt.Sprintf("|   %s/%s/%d   |  %s %s  |  %s", baseDenom, quoteDenom, osmosisPoolId, strings.ToUpper(callbackId), callbackType, msg)
 }
 
 // Returns a log string with a chain Id and callback as a prefix
@@ -296,7 +296,7 @@ func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a .
 // Ex:
 //
 //	| COSMOSHUB-4   |  WITHDRAWALHOSTBALANCE ICQCALLBACK  |  string
-func LogICQCallbackWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, callbackId string, s string, a ...any) string {
+func LogICQCallbackWithTokenPriceQuery(baseDenom, quoteDenom string, osmosisPoolId uint64, callbackId string, s string, a ...any) string {
 	return logCallbackWithTokenPriceQuery(baseDenom, quoteDenom, osmosisPoolId, callbackId, "ICQCALLBACK", s, a...)
 }
 
