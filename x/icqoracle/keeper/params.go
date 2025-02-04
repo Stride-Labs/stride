@@ -7,21 +7,17 @@ import (
 )
 
 // GetParams get params
-func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+func (k Keeper) GetParams(ctx sdk.Context) types.Params {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get([]byte(types.ParamsKey))
+	bz := store.Get(types.ParamsKey)
 	params := types.Params{}
-	err := k.cdc.UnmarshalJSON(bz, &params)
-	return params, err
+	k.cdc.Unmarshal(bz, &params)
+	return params
 }
 
 // SetParams set params
-func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	store := ctx.KVStore(k.storeKey)
-	bz, err := k.cdc.MarshalJSON(&params)
-	if err != nil {
-		return err
-	}
-	store.Set([]byte(types.ParamsKey), bz)
-	return nil
+	bz := k.cdc.MustMarshal(&params)
+	store.Set(types.ParamsKey, bz)
 }
