@@ -16,7 +16,7 @@ const (
 
 var (
 	ParamsKey        = []byte("params")
-	TokenPricePrefix = []byte("pricequery")
+	TokenPricePrefix = []byte("tokenprice")
 )
 
 func TokenPriceKey(baseDenom, quoteDenom string, poolId uint64) []byte {
