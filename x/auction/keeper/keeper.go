@@ -37,17 +37,11 @@ func NewKeeper(
 }
 
 // SetAuction stores auction info for a token
-func (k Keeper) SetAuction(ctx sdk.Context, auction *types.Auction) error {
+func (k Keeper) SetAuction(ctx sdk.Context, auction *types.Auction) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.AuctionPrefix)
 	key := []byte(auction.Name)
-
-	bz, err := k.cdc.Marshal(auction)
-	if err != nil {
-		return fmt.Errorf("error setting auction for name='%s': %w", auction.Name, err)
-	}
-
+	bz := k.cdc.MustMarshal(auction)
 	store.Set(key, bz)
-	return nil
 }
 
 // GetAuction retrieves auction info for a token

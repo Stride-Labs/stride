@@ -56,8 +56,7 @@ func (s *KeeperTestSuite) TestUpdateAuction() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        "beneficiary-address",
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Update the auction
 	msg := types.MsgUpdateAuction{
@@ -68,7 +67,7 @@ func (s *KeeperTestSuite) TestUpdateAuction() {
 		MinBidAmount:       sdkmath.NewInt(2000),
 		Beneficiary:        "new-beneficiary-address",
 	}
-	_, err = s.GetMsgServer().UpdateAuction(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().UpdateAuction(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when updating auction")
 
 	// Confirm the auction was updated
@@ -97,8 +96,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidHappyPath() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Create a price
 	tokenPrice := icqoracletypes.TokenPrice{
@@ -127,7 +125,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidHappyPath() {
 	s.FundAccount(bidder, sdk.NewCoin(auction.PaymentDenom, msg.PaymentTokenAmount))
 
 	// Place Bid
-	_, err = s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when placing bid")
 
 	// Check payment token to beneficiary
@@ -177,8 +175,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidUnsupportedAuctionType() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Prepare bid
 	bidder := s.TestAccs[0]
@@ -190,7 +187,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidUnsupportedAuctionType() {
 	}
 
 	// Place Bid
-	_, err = s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().Error(err, "error expected when placing bid")
 	s.Require().Contains(err.Error(), "unsupported auction type")
 }
@@ -223,8 +220,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughSellingTokens() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Prepare bid
 	bidder := s.TestAccs[0]
@@ -236,7 +232,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughSellingTokens() {
 	}
 
 	// Place Bid
-	_, err = s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().Error(err, "error expected when placing bid")
 	s.Require().Contains(err.Error(), "bid wants to buy 1000uosmo but auction only has 0uosmo")
 }
@@ -253,8 +249,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForSellingDenom() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Prepare bid
 	bidder := s.TestAccs[0]
@@ -269,7 +264,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForSellingDenom() {
 	s.FundModuleAccount(types.ModuleName, sdk.NewCoin(auction.SellingDenom, msg.SellingTokenAmount))
 
 	// Place Bid
-	_, err = s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().Error(err, "error expected when placing bid")
 	s.Require().Contains(err.Error(), "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for baseDenom 'uosmo'")
 }
@@ -286,8 +281,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Create a price only for SellingDenom
 	tokenPrice := icqoracletypes.TokenPrice{
@@ -313,7 +307,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
 	s.FundModuleAccount(types.ModuleName, sdk.NewCoin(auction.SellingDenom, msg.SellingTokenAmount))
 
 	// Place Bid
-	_, err = s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().Error(err, "error expected when placing bid")
 	s.Require().Contains(err.Error(), "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for quoteDenom 'ustrd'")
 }
@@ -330,8 +324,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        "beneficiary-address",
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Create a price
 	tokenPrice := icqoracletypes.TokenPrice{
@@ -363,7 +356,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
 	s.FundAccount(bidder, sdk.NewCoin(auction.PaymentDenom, msg.PaymentTokenAmount))
 
 	// Place Bid
-	_, err = s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().Error(err, "error expected when placing bid with price too low")
 	s.Require().Contains(err.Error(), "bid price too low")
 }
@@ -380,8 +373,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
 		MinBidAmount:       sdkmath.NewInt(1000),
 		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
 	}
-	err := s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
-	s.Require().NoError(err, "no error expected when setting auction")
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
 
 	// Create a price
 	tokenPrice := icqoracletypes.TokenPrice{
@@ -409,7 +401,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
 	// DON'T fund the bidder with payment tokens
 
 	// Place Bid
-	_, err = s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().Error(err, "error expected when placing bid")
 	s.Require().Contains(err.Error(), "failed to send payment tokens from bidder")
 }

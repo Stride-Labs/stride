@@ -11,9 +11,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
 
 	for _, auction := range genState.Auctions {
-		if err := k.SetAuction(ctx, &auction); err != nil {
-			panic(err)
-		}
+		k.SetAuction(ctx, &auction)
 	}
 }
 
