@@ -203,8 +203,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 
 			// Verify results
 			if tc.expectedError != "" {
-				s.Require().Error(err)
-				s.Require().Contains(err.Error(), tc.expectedError)
+				s.Require().ErrorContains(err, tc.expectedError)
 			} else {
 				s.Require().NoError(err)
 
@@ -621,8 +620,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 
 			// Verify results
 			if tc.expectedError != "" {
-				s.Require().Error(err)
-				s.Require().Contains(err.Error(), tc.expectedError)
+				s.Require().ErrorContains(err, tc.expectedError)
 			} else if tc.verify != nil {
 				tc.verify(err)
 			}
@@ -738,8 +736,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisClPool() {
 			spotPrice, err := keeper.UnmarshalSpotPriceFromOsmosisClPool(tc.tokenPrice, tc.poolData)
 
 			if tc.expectedError != "" {
-				s.Require().Error(err)
-				s.Require().Contains(err.Error(), tc.expectedError)
+				s.Require().ErrorContains(err, tc.expectedError)
 			} else {
 				s.Require().NoError(err)
 				s.Require().InDelta(

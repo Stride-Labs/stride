@@ -188,8 +188,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidUnsupportedAuctionType() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err, "error expected when placing bid")
-	s.Require().Contains(err.Error(), "unsupported auction type")
+	s.Require().ErrorContains(err, "unsupported auction type")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidAuctionNoFound() {
@@ -204,8 +203,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidAuctionNoFound() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err, "error expected when placing bid")
-	s.Require().Contains(err.Error(), "cannot get auction for name='banana'")
+	s.Require().ErrorContains(err, "cannot get auction for name='banana'")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughSellingTokens() {
@@ -233,8 +231,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughSellingTokens() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err, "error expected when placing bid")
-	s.Require().Contains(err.Error(), "bid wants to buy 1000uosmo but auction only has 0uosmo")
+	s.Require().ErrorContains(err, "bid wants to buy 1000uosmo but auction only has 0uosmo")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForSellingDenom() {
@@ -265,8 +262,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForSellingDenom() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err, "error expected when placing bid")
-	s.Require().Contains(err.Error(), "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for baseDenom 'uosmo'")
+	s.Require().ErrorContains(err, "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for baseDenom 'uosmo'")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
@@ -308,8 +304,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err, "error expected when placing bid")
-	s.Require().Contains(err.Error(), "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for quoteDenom 'ustrd'")
+	s.Require().ErrorContains(err, "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for quoteDenom 'ustrd'")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
@@ -357,8 +352,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err, "error expected when placing bid with price too low")
-	s.Require().Contains(err.Error(), "bid price too low")
+	s.Require().ErrorContains(err, "bid price too low")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
@@ -402,6 +396,5 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().Error(err, "error expected when placing bid")
-	s.Require().Contains(err.Error(), "failed to send payment tokens from bidder")
+	s.Require().ErrorContains(err, "failed to send payment tokens from bidder")
 }

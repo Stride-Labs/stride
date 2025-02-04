@@ -216,8 +216,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStalePrice() {
 		QuoteDenom: quoteDenom,
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().Error(err, "expected error for stale price")
-	s.Require().Contains(err.Error(), "foundAlreadyHasStalePrice='true'", "error should indicate price calculation failure")
+	s.Require().ErrorContains(err, "foundAlreadyHasStalePrice='true'", "error should indicate price calculation failure")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomZeroPrice() {
@@ -252,8 +251,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomZeroPrice() {
 		QuoteDenom: quoteDenom,
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().Error(err, "expected error for zero price")
-	s.Require().Contains(err.Error(), "could not calculate price", "error should indicate price calculation failure")
+	s.Require().ErrorContains(err, "could not calculate price", "error should indicate price calculation failure")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoCommonQuote() {
@@ -287,8 +285,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoCommonQuote() {
 		QuoteDenom: quoteDenom,
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().Error(err, "expected error when no common quote denom exists")
-	s.Require().Contains(err.Error(), "could not calculate price", "error should indicate price calculation failure")
+	s.Require().ErrorContains(err, "could not calculate price", "error should indicate price calculation failure")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoBaseDenom() {
@@ -297,8 +294,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoBaseDenom() {
 		QuoteDenom: "papaya",
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().Error(err, "error expected when querying token price for quote denom")
-	s.Require().Contains(err.Error(), "no price for baseDenom 'banana'")
+	s.Require().ErrorContains(err, "no price for baseDenom 'banana'")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
@@ -317,8 +313,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
 		QuoteDenom: "papaya",
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().Error(err, "error expected when querying token price for quote denom")
-	s.Require().Contains(err.Error(), "no price for quoteDenom 'papaya'")
+	s.Require().ErrorContains(err, "no price for quoteDenom 'papaya'")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
@@ -359,8 +354,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
 		QuoteDenom: quoteDenom,
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().Error(err, "expected error for stale base price")
-	s.Require().Contains(err.Error(), "foundBaseTokenStalePrice='true'", "error should indicate base token price is stale")
+	s.Require().ErrorContains(err, "foundBaseTokenStalePrice='true'", "error should indicate base token price is stale")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleQuotePrice() {
@@ -401,6 +395,5 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleQuotePrice() {
 		QuoteDenom: quoteDenom,
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().Error(err, "expected error for stale quote price")
-	s.Require().Contains(err.Error(), "foundQuoteTokenStalePrice='true'", "error should indicate quote token price is stale")
+	s.Require().ErrorContains(err, "foundQuoteTokenStalePrice='true'", "error should indicate quote token price is stale")
 }
