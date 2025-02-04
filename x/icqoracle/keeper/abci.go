@@ -24,13 +24,20 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 		// Get last update time for this token
 		lastUpdate := tokenPrice.LastQueryTime
 
-		// Skip if there's already a query in progress
-		if tokenPrice.QueryInProgress {
-			continue
-		}
-
 		// If never updated or update interval has passed
-		if lastUpdate.IsZero() || currentTime.Sub(lastUpdate) >= time.Second*time.Duration(params.UpdateIntervalSec) {
+		isNewToken := lastUpdate.IsZero()
+		updateIntervalPassed := currentTime.Sub(lastUpdate) >= time.Second*time.Duration(params.UpdateIntervalSec)
+		if isNewToken || updateIntervalPassed {
+			// If the token is in progress, time it out
+			if tokenPrice.QueryInProgress {
+				queryId, err := k.GetOsmosisCLPoolQueryId(ctx, tokenPrice)
+				if err != nil {
+					ctx.Logger().Error("Failed to get osmosis query ID: %w", err)
+					continue
+				}
+				k.IcqKeeper.ForceQueryTimeout(ctx, queryId)
+			}
+
 			// Update price for this specific token
 			err := k.SubmitOsmosisClPoolICQ(ctx, tokenPrice)
 			if err != nil {

@@ -67,6 +67,8 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, 
 	}
 
 	tokenPrice.QueryInProgress = queryInProgress
+	tokenPrice.LastQueryTime = ctx.BlockTime()
+
 	err = k.SetTokenPrice(ctx, tokenPrice)
 	if err != nil {
 		return err
