@@ -101,7 +101,7 @@ func (k Keeper) RedemptionRecords(c context.Context, req *types.QueryRedemptionR
 		return &types.QueryRedemptionRecordsResponse{}, types.ErrHostZoneNotFound
 	}
 	fourDays := time.Duration(4) * time.Hour * 24
-	unbondingLength := time.Duration(zone.UnbondingPeriodSeconds) * time.Second                          // 21 days
+	unbondingLength := time.Duration(utils.UintToInt(zone.UnbondingPeriodSeconds)) * time.Second         // 21 days
 	estimatedUnbondingTime := utils.IntToUint(ctx.BlockTime().Add(unbondingLength).Add(fourDays).Unix()) // 21 days from now + 4 day buffer
 	for _, unbondingRecord := range unbondingRecords {
 		// Edge case: a user has submitted a redemption, but the corresponding unbonding record has not been confirmed, meaning

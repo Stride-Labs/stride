@@ -271,8 +271,8 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	stDenom := utils.StAssetDenomFromHostZoneDenom(staketiaHostZone.NativeTokenDenom)
 
 	// update the record's txhash, status, and unbonding completion time
-	unbondingLength := time.Duration(staketiaHostZone.UnbondingPeriodSeconds) * time.Second // 21 days
-	unbondingCompletionTime := utils.IntToUint(ctx.BlockTime().Add(unbondingLength).Unix()) // now + 21 days
+	unbondingLength := time.Duration(utils.UintToInt(staketiaHostZone.UnbondingPeriodSeconds)) * time.Second // 21 days
+	unbondingCompletionTime := utils.IntToUint(ctx.BlockTime().Add(unbondingLength).Unix())                  // now + 21 days
 
 	record.UndelegationTxHash = txHash
 	record.Status = types.UNBONDING_IN_PROGRESS

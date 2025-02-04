@@ -582,7 +582,7 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, aird
 	totalClaimable := sdk.Coins{}
 
 	for action := range utils.Int32MapKeys(types.Action_name) {
-		claimableForAction, err := k.GetClaimableAmountForAction(ctx, addr, types.Action(action), airdropIdentifier, includeClaimed)
+		claimableForAction, err := k.GetClaimableAmountForAction(ctx, addr, types.Action(action), airdropIdentifier, includeClaimed) //nolint:gosec // G115
 		if err != nil {
 			return sdk.Coins{}, err
 		}
