@@ -167,10 +167,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	}
 
 	// Get price expiration timeout
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return math.LegacyDec{}, fmt.Errorf("error getting params: %w", err)
-	}
+	params := k.GetParams(ctx)
 	priceExpirationTimeoutSec := int64(params.PriceExpirationTimeoutSec)
 
 	// Check if baseDenom already has a price for quoteDenom

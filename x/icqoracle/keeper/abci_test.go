@@ -72,15 +72,14 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 			s.SetupTest()
 
 			// Setup params
-			err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-			s.Require().NoError(err)
+			s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 			// Reset mock IcqKeeper
 			s.App.ICQOracleKeeper.IcqKeeper = mockICQKeeper
 			submitICQCalled = false
 
 			// Store token price
-			err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tc.tokenPrice)
+			err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tc.tokenPrice)
 			s.Require().NoError(err)
 
 			// Set block time to now
@@ -157,8 +156,7 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 	params := types.Params{
 		UpdateIntervalSec: 60,
 	}
-	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 	now := time.Now().UTC()
 	staleTime := now.Add(-2 * time.Minute)
@@ -197,7 +195,7 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 
 	// Store all token prices
 	for _, tp := range tokenPrices {
-		err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tp)
+		err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tp)
 		s.Require().NoError(err)
 	}
 

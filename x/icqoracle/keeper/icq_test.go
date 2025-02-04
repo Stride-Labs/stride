@@ -40,11 +40,10 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQUnknownPrice() {
 		OsmosisConnectionId: "connection-0",
 		UpdateIntervalSec:   60,
 	}
-	err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 	// Submit ICQ request
-	err = s.App.ICQOracleKeeper.SubmitOsmosisClPoolICQ(s.Ctx, tokenPrice)
+	err := s.App.ICQOracleKeeper.SubmitOsmosisClPoolICQ(s.Ctx, tokenPrice)
 	s.Require().ErrorContains(err, "price not found")
 }
 
@@ -75,8 +74,7 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 		OsmosisConnectionId: "connection-0",
 		UpdateIntervalSec:   60,
 	}
-	err = s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 	// Verify tokenPrice.QueryInProgress before
 	s.Require().False(tokenPrice.QueryInProgress)
@@ -113,8 +111,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 					OsmosisConnectionId: "connection-0",
 					UpdateIntervalSec:   60,
 				}
-				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 				// Mock ICQ keeper to return error
 				s.mockICQKeeper = MockICQKeeper{
@@ -139,8 +136,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 					OsmosisConnectionId: "connection-0",
 					UpdateIntervalSec:   60,
 				}
-				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 				// Setup mock ICQ keeper with success response
 				s.mockICQKeeper = MockICQKeeper{
@@ -169,8 +165,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 					OsmosisConnectionId: "connection-0",
 					UpdateIntervalSec:   60,
 				}
-				err := s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 				// Setup mock ICQ keeper with success response
 				s.mockICQKeeper = MockICQKeeper{
@@ -254,8 +249,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 		OsmosisConnectionId: "connection-0",
 		UpdateIntervalSec:   60,
 	}
-	err = s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 	// Submit ICQ request
 	err = s.App.ICQOracleKeeper.SubmitOsmosisClPoolICQ(s.Ctx, tokenPrice)

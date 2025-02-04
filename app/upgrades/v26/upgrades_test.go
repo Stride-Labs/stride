@@ -26,8 +26,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	s.ConfirmUpgradeSucceededs(v26.UpgradeName, upgradeHeight)
 
-	params, err := s.App.ICQOracleKeeper.GetParams(s.Ctx)
-	s.Require().NoError(err, "No error expected when getting params")
+	params := s.App.ICQOracleKeeper.GetParams(s.Ctx)
 	s.Require().Equal(v26.OsmosisChainId, params.OsmosisChainId, "Osmosis chain ID")
 	s.Require().Equal(v26.OsmosisConnectionId, params.OsmosisConnectionId, "Osmosis connection ID")
 	s.Require().Equal(v26.ICQOracleUpdateIntervalSec, params.UpdateIntervalSec, "Update interval")

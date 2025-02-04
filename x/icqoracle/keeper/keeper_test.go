@@ -63,8 +63,3 @@ func (s *KeeperTestSuite) MustGetTokenPrice(baseDenom string, quoteDenom string,
 	s.Require().NoError(err, "no error expected when getting token price")
 	return tp
 }
-
-func (s *KeeperTestSuite) DeleteParams() {
-	store := s.Ctx.KVStore(s.App.ICQOracleKeeper.GetStoreKey())
-	store.Delete([]byte(types.ParamsKey))
-}
