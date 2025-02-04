@@ -50,8 +50,7 @@ func (s *KeeperTestSuite) TestRemoveTokenPriceQuery() {
 		LastRequestTime:   time.Now().UTC(),
 		QueryInProgress:   false,
 	}
-	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err, "no error expected when setting token price")
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	// Remove the token price
 	msg := types.MsgRemoveTokenPriceQuery{
@@ -59,7 +58,7 @@ func (s *KeeperTestSuite) TestRemoveTokenPriceQuery() {
 		QuoteDenom:    tokenPrice.QuoteDenom,
 		OsmosisPoolId: tokenPrice.OsmosisPoolId,
 	}
-	_, err = s.GetMsgServer().RemoveTokenPriceQuery(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RemoveTokenPriceQuery(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when removing token price query")
 
 	// Confirm the token price was removed

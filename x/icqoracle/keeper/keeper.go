@@ -56,7 +56,7 @@ func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom s
 }
 
 // Updates the token price when a query is requested
-func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId uint64) error {
+func (k Keeper) SetQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId uint64) error {
 	tokenPrice, err := k.GetTokenPrice(ctx, baseDenom, quoteDenom, osmosisPoolId)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, 
 }
 
 // Updates the token price when a query response is received
-func (k Keeper) SetTokenPriceQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, newSpotPrice math.LegacyDec) {
+func (k Keeper) SetQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, newSpotPrice math.LegacyDec) {
 	tokenPrice.SpotPrice = newSpotPrice
 	tokenPrice.QueryInProgress = false
 	tokenPrice.LastResponseTime = ctx.BlockTime()

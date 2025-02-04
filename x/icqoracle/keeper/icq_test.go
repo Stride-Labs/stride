@@ -66,8 +66,7 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 		OsmosisPoolId: 1,
 	}
 
-	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
@@ -80,7 +79,7 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 	s.Require().False(tokenPrice.QueryInProgress)
 
 	// Submit ICQ request
-	err = s.App.ICQOracleKeeper.SubmitOsmosisClPoolICQ(s.Ctx, tokenPrice)
+	err := s.App.ICQOracleKeeper.SubmitOsmosisClPoolICQ(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
 
 	// Verify the submitted query
@@ -195,8 +194,8 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQBranches() {
 			// If this is not an error case testing query in progress,
 			// set the token price first
 			if tc.expectedError != "token price not found" {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tc.tokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tc.tokenPrice)
+
 			}
 
 			// Execute
@@ -241,8 +240,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 		QuoteDenom:    "uusdc",
 		OsmosisPoolId: 1,
 	}
-	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-	s.Require().NoError(err)
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 	params := types.Params{
 		OsmosisChainId:      "osmosis-1",
@@ -252,7 +250,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisClPoolICQQueryData() {
 	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 	// Submit ICQ request
-	err = s.App.ICQOracleKeeper.SubmitOsmosisClPoolICQ(s.Ctx, tokenPrice)
+	err := s.App.ICQOracleKeeper.SubmitOsmosisClPoolICQ(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
 
 	// Verify the captured query data
@@ -340,8 +338,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 			setup: func() ([]byte, icqtypes.Query) {
 				tokenPrice := baseTokenPrice
 				tokenPrice.QueryInProgress = false
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&tokenPrice)
 				s.Require().NoError(err)
@@ -358,8 +355,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "invalid pool data",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -373,8 +369,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "successful update with valid pool data",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -409,8 +404,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "successful update with inverse pool data",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -474,8 +468,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "empty pool response data",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -489,8 +482,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "nil pool response data",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -504,8 +496,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "corrupted pool response data",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -521,8 +512,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "pool with empty tokens",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -545,8 +535,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "pool with invalid sqrt price",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -569,8 +558,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 		{
 			name: "pool with invalid inverse sqrt price",
 			setup: func() ([]byte, icqtypes.Query) {
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)
@@ -594,8 +582,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 			name: "error setting updated token price",
 			setup: func() ([]byte, icqtypes.Query) {
 				// First set the token price
-				err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-				s.Require().NoError(err)
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				tokenPriceBz, err := s.App.AppCodec().Marshal(&baseTokenPrice)
 				s.Require().NoError(err)

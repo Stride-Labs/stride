@@ -83,7 +83,7 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		return errorsmod.Wrap(err, "Error submitting OsmosisClPool ICQ")
 	}
 
-	if err := k.SetTokenPriceQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
+	if err := k.SetQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
 		return errorsmod.Wrap(err, "Error updating token price query to in progress")
 	}
 
@@ -117,7 +117,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
-	k.SetTokenPriceQueryComplete(ctx, tokenPrice, newSpotPrice)
+	k.SetQueryComplete(ctx, tokenPrice, newSpotPrice)
 
 	return nil
 }
