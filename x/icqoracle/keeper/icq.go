@@ -120,7 +120,7 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return nil
 	}
 
-	// Unmarshal the query response args to determine the balance
+	// Unmarshal the query response args to determine the prices
 	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
