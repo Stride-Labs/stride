@@ -30,11 +30,15 @@ message TokenPrice {
   ];
 
   // Last time a query request was submitted
-  google.protobuf.Timestamp last_query_time = 9
+  google.protobuf.Timestamp last_request_time = 9
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // Last time a query response was received
+  google.protobuf.Timestamp last_response_time = 10
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress
-  bool query_in_progress = 10;
+  bool query_in_progress = 11;
 }
 
 // OracleParams stores global oracle parameters

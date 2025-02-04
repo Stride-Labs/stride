@@ -67,7 +67,7 @@ func (k Keeper) SetTokenPriceQueryInProgress(ctx sdk.Context, baseDenom string, 
 	}
 
 	tokenPrice.QueryInProgress = queryInProgress
-	tokenPrice.LastQueryTime = ctx.BlockTime()
+	tokenPrice.LastRequestTime = ctx.BlockTime()
 
 	err = k.SetTokenPrice(ctx, tokenPrice)
 	if err != nil {
@@ -161,7 +161,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	// Check if baseDenom already has a price for quoteDenom
 	foundAlreadyHasStalePrice := false
 	if price, ok := baseTokenPrices[quoteDenom]; ok {
-		if ctx.BlockTime().Unix()-price.LastQueryTime.Unix() <= priceExpirationTimeoutSec {
+		if ctx.BlockTime().Unix()-price.LastRequestTime.Unix() <= priceExpirationTimeoutSec {
 			return price.SpotPrice, nil
 		} else {
 			foundAlreadyHasStalePrice = true
@@ -193,11 +193,11 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 				foundCommonQuoteToken = true
 
 				// Check that both prices are not stale
-				if ctx.BlockTime().Unix()-baseTokenPrice.LastQueryTime.Unix() > priceExpirationTimeoutSec {
+				if ctx.BlockTime().Unix()-baseTokenPrice.LastRequestTime.Unix() > priceExpirationTimeoutSec {
 					foundBaseTokenStalePrice = true
 					continue
 				}
-				if ctx.BlockTime().Unix()-quoteTokenPrice.LastQueryTime.Unix() > priceExpirationTimeoutSec {
+				if ctx.BlockTime().Unix()-quoteTokenPrice.LastRequestTime.Unix() > priceExpirationTimeoutSec {
 					foundQuoteTokenStalePrice = true
 					continue
 				}

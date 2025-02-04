@@ -22,7 +22,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 	tokenPrices := k.GetAllTokenPrices(ctx)
 	for _, tokenPrice := range tokenPrices {
 		// Get last update time for this token
-		lastUpdate := tokenPrice.LastQueryTime
+		lastUpdate := tokenPrice.LastRequestTime
 
 		// If never updated or update interval has passed
 		isNewToken := lastUpdate.IsZero()

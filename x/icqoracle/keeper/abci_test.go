@@ -55,30 +55,30 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 		{
 			name: "never updated token price",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:     "uatom",
-				QuoteDenom:    "uusdc",
-				OsmosisPoolId: "1",
-				LastQueryTime: time.Time{}, // Zero time
+				BaseDenom:       "uatom",
+				QuoteDenom:      "uusdc",
+				OsmosisPoolId:   "1",
+				LastRequestTime: time.Time{}, // Zero time
 			},
 			expectedICQSubmit: true,
 		},
 		{
 			name: "stale token price",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:     "uosmo",
-				QuoteDenom:    "uusdc",
-				OsmosisPoolId: "2",
-				LastQueryTime: staleTime,
+				BaseDenom:       "uosmo",
+				QuoteDenom:      "uusdc",
+				OsmosisPoolId:   "2",
+				LastRequestTime: staleTime,
 			},
 			expectedICQSubmit: true,
 		},
 		{
 			name: "fresh token price",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:     "ustrd",
-				QuoteDenom:    "uusdc",
-				OsmosisPoolId: "3",
-				LastQueryTime: freshTime,
+				BaseDenom:       "ustrd",
+				QuoteDenom:      "uusdc",
+				OsmosisPoolId:   "3",
+				LastRequestTime: freshTime,
 			},
 			expectedICQSubmit: false,
 		},
@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:       "ujuno",
 				QuoteDenom:      "uusdc",
 				OsmosisPoolId:   "4",
-				LastQueryTime:   staleTime,
+				LastRequestTime: staleTime,
 				QueryInProgress: true,
 			},
 			expectedICQSubmit: false,
@@ -99,7 +99,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:       "udydx",
 				QuoteDenom:      "uusdc",
 				OsmosisPoolId:   "5",
-				LastQueryTime:   freshTime,
+				LastRequestTime: freshTime,
 				QueryInProgress: true,
 			},
 			expectedICQSubmit: false,
@@ -110,7 +110,7 @@ func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {
 				BaseDenom:       "utia",
 				QuoteDenom:      "uusdc",
 				OsmosisPoolId:   "6",
-				LastQueryTime:   time.Time{}, // Zero time
+				LastRequestTime: time.Time{}, // Zero time
 				QueryInProgress: true,
 			},
 			expectedICQSubmit: false,
@@ -176,10 +176,10 @@ func (s *KeeperTestSuite) TestBeginBlockerICQErrors() {
 
 	// Create token price that needs updating
 	tokenPrice := types.TokenPrice{
-		BaseDenom:     "uatom",
-		QuoteDenom:    "uusdc",
-		OsmosisPoolId: "1",
-		LastQueryTime: time.Time{}, // Zero time to trigger update
+		BaseDenom:       "uatom",
+		QuoteDenom:      "uusdc",
+		OsmosisPoolId:   "1",
+		LastRequestTime: time.Time{}, // Zero time to trigger update
 	}
 	err = s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
@@ -229,22 +229,22 @@ func (s *KeeperTestSuite) TestBeginBlockerMultipleTokens() {
 	// Create multiple token prices
 	tokenPrices := []types.TokenPrice{
 		{
-			BaseDenom:     "uatom",
-			QuoteDenom:    "uusdc",
-			OsmosisPoolId: "1",
-			LastQueryTime: staleTime,
+			BaseDenom:       "uatom",
+			QuoteDenom:      "uusdc",
+			OsmosisPoolId:   "1",
+			LastRequestTime: staleTime,
 		},
 		{
-			BaseDenom:     "uosmo",
-			QuoteDenom:    "uusdc",
-			OsmosisPoolId: "2",
-			LastQueryTime: staleTime,
+			BaseDenom:       "uosmo",
+			QuoteDenom:      "uusdc",
+			OsmosisPoolId:   "2",
+			LastRequestTime: staleTime,
 		},
 		{
 			BaseDenom:       "ustrd",
 			QuoteDenom:      "uusdc",
 			OsmosisPoolId:   "3",
-			LastQueryTime:   staleTime,
+			LastRequestTime: staleTime,
 			QueryInProgress: true, // Should skip this one
 		},
 	}

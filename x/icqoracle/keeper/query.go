@@ -121,7 +121,7 @@ func (k Keeper) TokenPriceToTokenPriceResponse(ctx sdk.Context, tokenPrices ...t
 			OsmosisQuoteDenom:   tokenPrice.OsmosisQuoteDenom,
 			OsmosisPoolId:       tokenPrice.OsmosisPoolId,
 			SpotPrice:           tokenPrice.SpotPrice,
-			LastQueryTime:       tokenPrice.LastQueryTime,
+			LastRequestTime:     tokenPrice.LastRequestTime,
 			QueryInProgress:     tokenPrice.QueryInProgress,
 		}
 	}

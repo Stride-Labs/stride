@@ -37,7 +37,7 @@ func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.Ms
 		OsmosisPoolId:     msg.OsmosisPoolId,
 		OsmosisBaseDenom:  msg.OsmosisBaseDenom,
 		OsmosisQuoteDenom: msg.OsmosisQuoteDenom,
-		LastQueryTime:     time.Time{},
+		LastRequestTime:   time.Time{},
 		SpotPrice:         sdkmath.LegacyZeroDec(),
 		QueryInProgress:   false,
 	}

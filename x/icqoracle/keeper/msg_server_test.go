@@ -31,7 +31,7 @@ func (s *KeeperTestSuite) TestRegisterTokenPriceQuery() {
 	s.Require().Equal(msg.OsmosisQuoteDenom, tokenPrice.OsmosisQuoteDenom, "osmosis quote denom")
 	s.Require().Equal(sdkmath.LegacyZeroDec(), tokenPrice.SpotPrice, "spot price")
 	s.Require().Equal(false, tokenPrice.QueryInProgress, "query in progress")
-	s.Require().Equal(time.Time{}, tokenPrice.LastQueryTime, "updated at")
+	s.Require().Equal(time.Time{}, tokenPrice.LastRequestTime, "updated at")
 
 	// Attempt to register it again, it should fail
 	_, err = s.GetMsgServer().RegisterTokenPriceQuery(sdk.UnwrapSDKContext(s.Ctx), &msg)
@@ -47,7 +47,7 @@ func (s *KeeperTestSuite) TestRemoveTokenPriceQuery() {
 		OsmosisBaseDenom:  "ibc/uatom",
 		OsmosisQuoteDenom: "uusdc",
 		SpotPrice:         sdkmath.LegacyNewDec(1),
-		LastQueryTime:     time.Now().UTC(),
+		LastRequestTime:   time.Now().UTC(),
 		QueryInProgress:   false,
 	}
 	err := s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)

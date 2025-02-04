@@ -429,7 +429,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 
 				// Verify updated fields
 				s.Require().False(tokenPrice.QueryInProgress)
-				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.LastQueryTime.UnixNano())
+				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.LastRequestTime.UnixNano())
 				s.Require().InDelta(1.5, tokenPrice.SpotPrice.MustFloat64(), 0.01)
 			},
 		},
@@ -465,7 +465,7 @@ func (s *KeeperTestSuite) TestOsmosisClPoolCallback() {
 
 				// Verify updated fields
 				s.Require().False(tokenPrice.QueryInProgress)
-				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.LastQueryTime.UnixNano())
+				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.LastRequestTime.UnixNano())
 				s.Require().InDelta(1/1.5, tokenPrice.SpotPrice.MustFloat64(), 0.01) // inversed price
 			},
 		},
