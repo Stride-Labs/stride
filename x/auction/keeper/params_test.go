@@ -4,10 +4,8 @@ import "github.com/Stride-Labs/stride/v25/x/auction/types"
 
 func (s *KeeperTestSuite) TestParams() {
 	expectedParams := types.Params{}
-	err := s.App.AuctionKeeper.SetParams(s.Ctx, expectedParams)
-	s.Require().NoError(err, "should not error on set params")
+	s.App.AuctionKeeper.SetParams(s.Ctx, expectedParams)
 
-	actualParams, err := s.App.AuctionKeeper.GetParams(s.Ctx)
-	s.Require().NoError(err, "should not error on get params")
+	actualParams := s.App.AuctionKeeper.GetParams(s.Ctx)
 	s.Require().Equal(expectedParams, actualParams, "params")
 }
