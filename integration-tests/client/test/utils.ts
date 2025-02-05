@@ -29,6 +29,7 @@ export async function waitForChain(
       }
     } catch (e) {
       // signAndBroadcast might throw if the RPC is not up yet
+      // console.log(e);
     }
   }
 }
