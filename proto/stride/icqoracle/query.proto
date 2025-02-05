@@ -1,10 +1,11 @@
 syntax = "proto3";
 package stride.icqoracle;
 
-import "stride/icqoracle/icqoracle.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
+import "google/protobuf/timestamp.proto";
+import "stride/icqoracle/icqoracle.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v25/x/icqoracle/types";
 
@@ -37,13 +38,13 @@ service Query {
 message QueryTokenPriceRequest {
   string base_denom = 1;
   string quote_denom = 2;
-  string pool_id = 3;
+  uint64 pool_id = 3;
 }
 
 // QueryTokenPriceResponse is the response type for the Query/TokenPrice RPC
 // method
 message QueryTokenPriceResponse {
-  TokenPrice token_price = 1 [ (gogoproto.nullable) = false ];
+  TokenPriceResponse token_price = 1 [ (gogoproto.nullable) = false ];
 }
 
 // QueryTokenPricesRequest is the request type for the Query/TokenPrices RPC
@@ -55,7 +56,7 @@ message QueryTokenPricesRequest {
 // QueryTokenPricesResponse is the response type for the Query/TokenPrices RPC
 // method
 message QueryTokenPricesResponse {
-  repeated TokenPrice token_prices = 1 [ (gogoproto.nullable) = false ];
+  repeated TokenPriceResponse token_prices = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
@@ -81,4 +82,43 @@ message QueryTokenPriceForQuoteDenomResponse {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+}
+
+// TokenPriceResponse adds human readable info on to of TokenPrice
+message TokenPriceResponse {
+  // If IBC token, base denom unwrapped (e.g. ibc/... -> uatom)
+  string base_denom_unwrapped = 1;
+  // If IBC token, Quote denom unwrapped (e.g. ibc/... -> uatom)
+  string quote_denom_unwrapped = 2;
+  // Base denom on Stride, can be IBC denom
+  string base_denom = 3;
+  // Quote denom on Stride, can be IBC denom
+  string quote_denom = 4;
+  // Decimals of base token, used for normalizing price feed from Osmosis
+  int64 base_denom_decimals = 5;
+  // Decimals of quote token, used for normalizing price feed from Osmosis
+  int64 quote_denom_decimals = 6;
+  // Base denom on Osmosis
+  string osmosis_base_denom = 7;
+  // Quote denom on Osmosis
+  string osmosis_quote_denom = 8;
+  // Pool ID on Osmosis
+  uint64 osmosis_pool_id = 9;
+
+  // Spot price of base_denom denominated in quote_denom
+  string spot_price = 10 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Last time a query request was submitted
+  google.protobuf.Timestamp last_request_time = 11
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // Last time a query response was received
+  google.protobuf.Timestamp last_response_time = 12
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // Whether there is a spot price query currently in progress
+  bool query_in_progress = 13;
 }

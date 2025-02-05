@@ -55,11 +55,13 @@ message MsgUpdateInnerRedemptionRateBounds {
   string creator = 1;
   string chain_id = 2;
   string min_inner_redemption_rate = 3 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   string max_inner_redemption_rate = 4 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
 }
@@ -128,11 +130,13 @@ message MsgRegisterHostZone {
   uint64 unbonding_period = 11
       [ (gogoproto.moretags) = "yaml:\"unbonding_period\"" ];
   string min_redemption_rate = 13 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   string max_redemption_rate = 14 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   bool lsm_liquid_stake_enabled = 15;
@@ -372,7 +376,7 @@ message MsgSetCommunityPoolRebate {
   string chain_id = 2;
   // Rebate percentage represented as a decimal (e.g. 0.2 for 20%)
   string rebate_rate = 3 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // Number of stTokens recieved by the community pool after liquid staking

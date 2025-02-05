@@ -41,7 +41,7 @@ message MsgRegisterTokenPriceQuery {
   // Quote denom on Osmosis
   string osmosis_quote_denom = 7;
   // Pool ID on Osmosis
-  string osmosis_pool_id = 8;
+  uint64 osmosis_pool_id = 8;
 }
 
 message MsgRegisterTokenPriceQueryResponse {}
@@ -58,7 +58,7 @@ message MsgRemoveTokenPriceQuery {
   // Quote denom on Stride
   string quote_denom = 3;
   // Pool ID on Osmosis
-  string osmosis_pool_id = 4;
+  uint64 osmosis_pool_id = 4;
 }
 
 message MsgRemoveTokenPriceQueryResponse {}
