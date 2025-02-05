@@ -275,7 +275,7 @@ describe("x/icqoracle", () => {
             sourceChannel: TRANSFER_CHANNEL["GAIA"]["STRIDE"],
             token: coinFromString("1000000uatom"),
             sender: gaiaAddress,
-            receiver: convertBech32Prefix(gaiaAddress, "stride"), // ignored by pfm
+            receiver: convertBech32Prefix(gaiaAddress, "stride"), // needs to be valid but ignored by pfm
             timeoutHeight: {
               revisionNumber: 0n,
               revisionHeight: 0n,
