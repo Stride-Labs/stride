@@ -90,7 +90,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.TransferAllRewardTokens(ctx)
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
-		k.AllocateHostZoneReward(ctx)
+		k.AuctionOffRewardCollectorBalance(ctx)
 	}
 }
 

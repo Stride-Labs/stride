@@ -11,4 +11,6 @@ const (
 
 	AttributeValueCategory = ModuleName
 	AttributeValueQuery    = "query"
+
+	EventTypeQueryResponse = "query_response"
 )
