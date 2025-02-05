@@ -76,7 +76,7 @@ func CreateUpgradeHandler(
 			Identifier:       EvmosAirdropIdentifier,
 			ChainId:          EvmosChainId,
 			Denom:            claimtypes.DefaultClaimDenom,
-			StartTime:        uint64(AirdropStartTime.Unix()),
+			StartTime:        utils.IntToUint(AirdropStartTime.Unix()),
 			Duration:         duration,
 			AutopilotEnabled: true,
 		}); err != nil {

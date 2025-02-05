@@ -16,6 +16,7 @@ import (
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
 	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
@@ -161,7 +162,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
 					}
 					unbondingTime = unbondingTime + nanosecondsInDay
-					unbondingTimeStr := time.Unix(0, int64(unbondingTime)).UTC().String()
+					unbondingTimeStr := time.Unix(0, utils.UintToInt(unbondingTime)).UTC().String()
 
 					addressUnbonding := types.AddressUnbonding{
 						Address:                userRedemptionRecordAddress,

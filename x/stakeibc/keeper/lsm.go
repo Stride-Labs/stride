@@ -16,6 +16,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
 
 	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
@@ -208,7 +209,7 @@ func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidSta
 // Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL
 func (k Keeper) GetUpdatedSlashQueryCheckpoint(ctx sdk.Context, totalDelegations sdkmath.Int) sdkmath.Int {
 	params := k.GetParams(ctx)
-	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
+	queryThreshold := sdk.NewDecWithPrec(utils.UintToInt(params.ValidatorSlashQueryThreshold), 2) // percentage
 	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
 	return checkpoint
 }
@@ -442,7 +443,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	}
 
 	// Submit the ICA with a coonservative timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
+	timeout := utils.IntToUint(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
 	if _, err := k.SubmitTxs(
 		ctx,
 		hostZone.ConnectionId,

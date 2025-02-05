@@ -67,7 +67,7 @@ func (k Keeper) TransferExistingDepositsToHostZones(ctx sdk.Context, epochNumber
 		// if we onboard non-tendermint chains, we need to use the time on the host chain to
 		// calculate the timeout
 		// https://github.com/cometbft/cometbft/blob/v0.34.x/spec/consensus/bft-time.md
-		timeoutTimestamp := uint64(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
+		timeoutTimestamp := utils.IntToUint(ctx.BlockTime().UnixNano()) + ibcTransferTimeoutNanos
 		msg := ibctypes.NewMsgTransfer(
 			ibctransfertypes.PortID,
 			hostZone.TransferChannelId,

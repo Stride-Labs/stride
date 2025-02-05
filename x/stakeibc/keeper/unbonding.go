@@ -423,7 +423,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Get the undelegation ICA messages and split delegations for the callback
-	undelegateBatchSize := int(hostZone.MaxMessagesPerIcaTx)
+	undelegateBatchSize := int(utils.UintToInt(hostZone.MaxMessagesPerIcaTx))
 	msgs, unbondings, err := k.GetUnbondingICAMessages(
 		hostZone,
 		totalNativeUnbondAmount,

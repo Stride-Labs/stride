@@ -16,6 +16,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	"github.com/spf13/cast"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v25/x/icacallbacks/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v25/x/interchainquery/keeper"
 	recordsmodulekeeper "github.com/Stride-Labs/stride/v25/x/records/keeper"
@@ -134,14 +135,14 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
 	// Fetch the wide bounds
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
-	minSafetyThreshold := sdk.NewDec(int64(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	minSafetyThreshold := sdk.NewDec(utils.UintToInt(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
 
 	if !zone.MinRedemptionRate.IsNil() && zone.MinRedemptionRate.IsPositive() {
 		minSafetyThreshold = zone.MinRedemptionRate
 	}
 
 	maxSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMaxRedemptionRateThreshold)
-	maxSafetyThreshold := sdk.NewDec(int64(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	maxSafetyThreshold := sdk.NewDec(utils.UintToInt(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
 
 	if !zone.MaxRedemptionRate.IsNil() && zone.MaxRedemptionRate.IsPositive() {
 		maxSafetyThreshold = zone.MaxRedemptionRate
