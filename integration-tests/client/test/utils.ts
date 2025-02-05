@@ -1,5 +1,7 @@
+import { SigningStargateClient } from "@cosmjs/stargate";
 import { coinsFromString, EncodeObject, StrideClient } from "stridejs";
 import { expect } from "vitest";
+import { GaiaClient, isGaiaClient } from "./main.test";
 
 /**
  * Waits for the chain to start by continuously sending transactions until .
@@ -8,24 +10,39 @@ import { expect } from "vitest";
  * @param {string} denom The denomination of the coins to send.
  */
 export async function waitForChain(
-  client: StrideClient,
+  client: StrideClient | GaiaClient,
   denom: string,
 ): Promise<void> {
   // the best way to ensure a chain is up is to successfully send a tx
 
   while (true) {
     try {
-      const msg =
-        client.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
-          fromAddress: client.address,
-          toAddress: client.address,
-          amount: coinsFromString(`1${denom}`),
-        });
+      if (client instanceof StrideClient) {
+        const msg =
+          client.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
+            fromAddress: client.address,
+            toAddress: client.address,
+            amount: coinsFromString(`1${denom}`),
+          });
 
-      const tx = await client.signAndBroadcast([msg], 2);
+        const tx = await client.signAndBroadcast([msg], 2);
 
-      if (tx.code == 0) {
-        break;
+        if (tx.code === 0) {
+          break;
+        }
+      } else if (isGaiaClient(client)) {
+        const [{ address }] = await client.signer.getAccounts();
+
+        const tx = await client.client.sendTokens(
+          address,
+          address,
+          coinsFromString(`1${denom}`),
+          2,
+        );
+
+        if (tx.code === 0) {
+          break;
+        }
       }
     } catch (e) {
       // signAndBroadcast might throw if the RPC is not up yet
