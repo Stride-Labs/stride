@@ -148,7 +148,7 @@ func (k Keeper) StakeExistingDepositsOnHostZones(ctx sdk.Context, epochNumber ui
 		}
 
 		// Submit the delegation messages in batchs
-		delegateBatchSize := int(hostZone.MaxMessagesPerIcaTx)
+		delegateBatchSize := int(utils.UintToInt(hostZone.MaxMessagesPerIcaTx))
 		numTxsSubmitted, err := k.BatchSubmitDelegationICAMessages(ctx, hostZone, depositRecord, msgs, delegations, delegateBatchSize)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Unable to submit delegation ICA: %s", err.Error()))

@@ -190,7 +190,7 @@ func (k Keeper) GetLatestUnbondingCompletionTime(ctx sdk.Context, msgResponses [
 			return 0, errorsmod.Wrapf(types.ErrUnmarshalFailure, "Unable to unmarshal undelegation tx response: %s", err.Error())
 		}
 
-		responseCompletionTime := uint64(undelegateResponse.CompletionTime.UnixNano())
+		responseCompletionTime := utils.IntToUint(undelegateResponse.CompletionTime.UnixNano())
 		if responseCompletionTime > latestCompletionTime {
 			latestCompletionTime = responseCompletionTime
 		}

@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	"github.com/Stride-Labs/stride/v25/x/staketia/types"
 )
 
@@ -128,7 +129,7 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 	latestSlashRecordId := k.IncrementSlashRecordId(ctx)
 	slashRecord := types.SlashRecord{
 		Id:               latestSlashRecordId,
-		Time:             uint64(ctx.BlockTime().Unix()),
+		Time:             utils.IntToUint(ctx.BlockTime().Unix()),
 		NativeAmount:     msg.DelegationOffset,
 		ValidatorAddress: msg.ValidatorAddress,
 	}
