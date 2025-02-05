@@ -1,4 +1,4 @@
-name: Tests & Code Coverage
+name: Tests
 
 on:
   push:
@@ -7,10 +7,9 @@ on:
     branches: ["main"]
 
 jobs:
-  should_run_unit_tests:
+  build:
+    name: "Unit Tests"
     runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
       - id: skip_check
         uses: fkirc/skip-duplicate-actions@master
@@ -20,35 +19,21 @@ jobs:
           skip_after_successful_duplicate: "true"
           paths: '["**/*.go", "**/*.mod", "**/*.sum"]'
           do_not_skip: '["pull_request", "workflow_dispatch", "schedule"]'
+
       - name: Skipping test
         run: echo Should I skip tests? ${{ steps.skip_check.outputs.should_skip }}
 
-  unit_tests:
-    needs: should_run_unit_tests
-    if: ${{ needs.should_run_test.outputs.should_skip != 'true' }}
-    runs-on: ubuntu-latest
-    steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        if: steps.skip_check.outputs.should_skip != 'true'
+        uses: actions/checkout@v3
+
       - name: Setup Golang
-        uses: actions/setup-go@v2.1.4
+        if: steps.skip_check.outputs.should_skip != 'true'
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.21
-      # - name: Get data from build cache
-      #   uses: actions/cache@v2
-      #   with:
-      #     # In order:
-      #     # * Module download cache
-      #     # * Build cache (Linux)
-      #     # * Build cache (Mac)
-      #     # * Build cache (Windows)
-      #     path: |
-      #       ~/go/pkg/mod
-      #       ~/.cache/go-build
-      #       ~/Library/Caches/go-build
-      #       ~\AppData\Local\go-build
-      #     key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-go-${{ matrix.go-version }}-
+          go-version: 1.22
+
       - name: Run all unit tests
+        if: steps.skip_check.outputs.should_skip != 'true'
         run: make test-unit
+

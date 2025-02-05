@@ -59,7 +59,7 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 	}
 
 	// Set the timeout using the block time and timeout duration
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
 	query.TimeoutTimestamp = timeoutTimestamp
 
 	// Generate and set the query ID - optionally force it to be unique

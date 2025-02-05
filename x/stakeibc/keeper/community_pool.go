@@ -134,7 +134,7 @@ func (k Keeper) QueryCommunityPoolIcaBalance(
 	if !found {
 		return errorsmod.Wrapf(types.ErrEpochNotFound, "epoch %s not found", epochstypes.STRIDE_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, utils.UintToInt(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
 	// Submit the ICQ for the withdrawal account balance

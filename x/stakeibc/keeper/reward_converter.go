@@ -350,7 +350,7 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeR
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeoutDuration := time.Duration(strideEpochTracker.Duration) / 2
+	timeoutDuration := time.Duration(utils.UintToInt(strideEpochTracker.Duration)) / 2
 
 	// We need the trade route keys in the callback to look up the tradeRoute struct
 	callbackData := types.TradeRouteCallback{
@@ -400,7 +400,7 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, utils.UintToInt(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
 	// We need the trade route keys in the callback to look up the tradeRoute struct

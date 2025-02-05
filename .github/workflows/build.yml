@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         arch: [amd64]
@@ -17,12 +18,14 @@ jobs:
         include:
           - targetos: darwin
             arch: arm64
-    name: stride ${{ matrix.arch }} for ${{ matrix.targetos }}
+
+    name: ${{ matrix.arch }} for ${{ matrix.targetos }}
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.21
+          go-version: 1.22
         env:
           GOOS: ${{ matrix.targetos }}
           GOARCH: ${{ matrix.arch }}

@@ -123,7 +123,7 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 	latestSlashRecordId := k.IncrementSlashRecordId(ctx)
 	slashRecord := types.SlashRecord{
 		Id:               latestSlashRecordId,
-		Time:             uint64(ctx.BlockTime().Unix()),
+		Time:             utils.IntToUint(ctx.BlockTime().Unix()),
 		NativeAmount:     msg.DelegationOffset,
 		ValidatorAddress: msg.ValidatorAddress,
 	}

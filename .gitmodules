@@ -1,7 +1,3 @@
-[submodule "deps/hermes"]
-	# Commit: v1.5.1
-	path = deps/hermes
-	url = https://github.com/informalsystems/ibc-rs.git
 # TODO [LSM]: Revert to cosmos relayer once they've merged 
 # the fix for the unbonding time query
 [submodule "deps/relayer"]

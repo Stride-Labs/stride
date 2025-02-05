@@ -187,8 +187,8 @@ func AddRedemptionRateSafetyChecks(cdc codec.Codec, storeKey storetypes.StoreKey
 	k.SetParams(ctx, params)
 
 	// Get default min/max redemption rate
-	defaultMinRedemptionRate := sdk.NewDecWithPrec(int64(params.DefaultMinRedemptionRateThreshold), 2)
-	defaultMaxRedemptionRate := sdk.NewDecWithPrec(int64(params.DefaultMaxRedemptionRateThreshold), 2)
+	defaultMinRedemptionRate := sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
+	defaultMaxRedemptionRate := sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
 
 	for _, hostZone := range GetAllHostZone(cdc, storeKey, ctx) {
 
