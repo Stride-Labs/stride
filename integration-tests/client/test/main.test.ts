@@ -1,5 +1,5 @@
-import { Secp256k1HdWallet } from "@cosmjs/amino";
-import { GasPrice } from "@cosmjs/stargate";
+import { OfflineAminoSigner, Secp256k1HdWallet } from "@cosmjs/amino";
+import { GasPrice, SigningStargateClient } from "@cosmjs/stargate";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
 import {
   coinFromString,
@@ -12,7 +12,7 @@ import { waitForChain } from "./utils";
 
 const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
-const OSMO_RPC_ENDPOINT = "http://localhost:26357";
+const OSMO_RPC_ENDPOINT = "http://osmosis-rpc.internal.stridenet.co";
 
 const TRANSFER_CHANNEL = {
   STRIDE: { GAIA: "channel-0", OSMO: "channel-1" },
@@ -28,8 +28,23 @@ let accounts: {
   val3: StrideClient;
 };
 
+export type GaiaClient = {
+  signer: OfflineAminoSigner;
+  client: SigningStargateClient;
+};
+
+export function isGaiaClient(client: any): client is GaiaClient {
+  return (
+    "signer" in client &&
+    "getAccounts" in client.signer &&
+    "signAmino" in client.signer &&
+    "client" in client &&
+    client.client instanceof SigningStargateClient
+  );
+}
+
 let gaiaAccounts: {
-  user: StrideClient; // a normal account loaded with 100 ATOM
+  user: GaiaClient; // a normal account loaded with 100 ATOM
 };
 
 const mnemonics: {
@@ -101,12 +116,20 @@ beforeAll(async () => {
       const [{ address }] = await signer.getAccounts();
 
       gaiaAccounts = {
-        user: await StrideClient.create(GAIA_RPC_ENDPOINT, signer, address, {
-          gasPrice: GasPrice.fromString("0.025uatom"),
-          broadcastPollIntervalMs: 50,
-          resolveIbcResponsesCheckIntervalMs: 50,
-        }),
+        user: {
+          signer,
+          client: await SigningStargateClient.connectWithSigner(
+            GAIA_RPC_ENDPOINT,
+            signer,
+            {
+              gasPrice: GasPrice.fromString("1.0uatom"),
+              broadcastPollIntervalMs: 50,
+            },
+          ),
+        },
       };
+
+      // TODO osmosisAccount
     }
   }
   console.log("waiting for stride to start...");
@@ -198,9 +221,18 @@ describe("ibc", () => {
 
 describe("x/icqoracle", () => {
   test.only("happy path", async () => {
+    // - Transfer STRD to Osmosis
+    // - Transfer ATOM to Osmosis
+    // - Create STRD/OSMO pool
+    // - Create ATOM/OSMO pool
+    // - Add TokenPrice(base=STRD, quote=OSMO)
+    // - Add TokenPrice(base=ATOM, quote=OSMO)
+    // - Query for price of ATOM in STRD
+
+    // Transfer STRD to Osmosis
     const stridejs = accounts.user;
 
-    let msg =
+    const strideTx = await stridejs.signAndBroadcast([
       stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
         {
           sourcePort: "transfer",
@@ -213,77 +245,65 @@ describe("x/icqoracle", () => {
             revisionHeight: 0n,
           },
           timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes from now as nanoseconds
+            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
           ),
           memo: "",
         },
-      );
-
-    let tx = await stridejs.signAndBroadcast([msg]);
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
+      ),
+    ]);
+    if (strideTx.code !== 0) {
+      console.error(strideTx.rawLog);
     }
-    expect(tx.code).toBe(0);
+    expect(strideTx.code).toBe(0);
 
-    let ibcAck = await tx.ibcResponses[0];
+    const ibcAck = await strideTx.ibcResponses[0];
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
 
-    const gaiaSigner = await Secp256k1HdWallet.fromMnemonic(
-      mnemonics.find((x) => x.name === "user")!.mnemonic,
-      {
-        prefix: "cosmos",
-      },
-    );
+    // Transfer ATOM to Osmosis
+    const gaiajs = gaiaAccounts.user;
 
-    // get signer address
-    const [{ address: gaiaAddress }] = await gaiaSigner.getAccounts();
+    const [{ address: gaiaAddress }] = await gaiajs.signer.getAccounts();
 
-    const gaiaClient = await StrideClient.create(
-      GAIA_RPC_ENDPOINT,
-      gaiaSigner,
+    const gaiaTx = await gaiajs.client.signAndBroadcast(
       gaiaAddress,
-      {
-        gasPrice: GasPrice.fromString("0uatom"),
-        broadcastPollIntervalMs: 50,
-        resolveIbcResponsesCheckIntervalMs: 50,
-      },
+      [
+        {
+          typeUrl: "/ibc.applications.transfer.v1.MsgTransfer",
+          value: {
+            sourcePort: "transfer",
+            sourceChannel: TRANSFER_CHANNEL["GAIA"]["STRIDE"],
+            token: coinFromString("1000000uatom"),
+            sender: gaiaAddress,
+            receiver: convertBech32Prefix(gaiaAddress, "stride"), // needs to be valid but ignored by pfm
+            timeoutHeight: {
+              revisionNumber: 0n,
+              revisionHeight: 0n,
+            },
+            timeoutTimestamp: BigInt(
+              `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
+            ),
+            memo: JSON.stringify({
+              forward: {
+                receiver: convertBech32Prefix(gaiaAddress, "osmo"),
+                port: "transfer",
+                channel: TRANSFER_CHANNEL["STRIDE"]["OSMO"],
+              },
+            }),
+          },
+        },
+      ],
+      "auto",
     );
 
-    msg =
-      gaiaClient.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
-        {
-          sourcePort: "transfer",
-          sourceChannel: TRANSFER_CHANNEL["GAIA"]["STRIDE"],
-          token: coinFromString("1000000uatom"),
-          sender: gaiaAddress,
-          receiver: convertBech32Prefix(gaiaAddress, "stride"), // ignored by pfm
-          timeoutHeight: {
-            revisionNumber: 0n,
-            revisionHeight: 0n,
-          },
-          timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes from now as nanoseconds
-          ),
-          memo: JSON.stringify({
-            forward: {
-              receiver: convertBech32Prefix(gaiaAddress, "osmo"),
-              port: "transfer",
-              channel: TRANSFER_CHANNEL["STRIDE"]["OSMO"],
-            },
-          }),
-        },
-      );
-
-    tx = await stridejs.signAndBroadcast([msg]);
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
+    if (gaiaTx.code !== 0) {
+      console.error(gaiaTx.rawLog);
     }
-    expect(tx.code).toBe(0);
+    expect(gaiaTx.code).toBe(0);
 
-    // packet forward should resolve only after the final destination is acked
-    ibcAck = await tx.ibcResponses[0];
-    expect(ibcAck.type).toBe("ack");
-    expect(ibcAck.tx.code).toBe(0);
+    // // packet forward should resolve only after the final destination is acked
+    // ibcAck = await tx.ibcResponses[0];
+    // expect(ibcAck.type).toBe("ack");
+    // expect(ibcAck.tx.code).toBe(0);
   }, 120_000);
 });

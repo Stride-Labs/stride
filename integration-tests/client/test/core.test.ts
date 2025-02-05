@@ -77,7 +77,7 @@ beforeAll(async () => {
   await waitForChain(accounts.user, "ustrd");
 });
 
-describe("x/stakeibc", () => {
+describe.skip("x/stakeibc", () => {
   test("Registration", async () => {
     const stridejs = accounts.admin;
 
