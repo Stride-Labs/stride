@@ -301,7 +301,7 @@ describe("x/icqoracle", () => {
     const osmojs = osmoAccounts.user;
 
     // Transfer STRD to Osmosis
-    const strideTx = await stridejs.signAndBroadcast([
+    let strideTx = await stridejs.signAndBroadcast([
       stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
         {
           sourcePort: "transfer",
@@ -383,13 +383,20 @@ describe("x/icqoracle", () => {
     tx = await osmojs.client.signAndBroadcast(
       osmojs.address,
       [
-        osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
+        osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool(
           {
             sender: osmojs.address,
-            denom0: strdDenomOnOsmosis,
-            denom1: "uosmo",
-            tickSpacing: 100n,
-            spreadFactor: "0.001",
+            poolAssets: [
+              {
+                token: coinFromString(`10uosmo`),
+                weight: "1",
+              },
+              {
+                token: coinFromString(`5${strdDenomOnOsmosis}`),
+                weight: "1",
+              },
+            ],
+            futurePoolGovernor: "",
           },
         ),
       ],
@@ -401,8 +408,127 @@ describe("x/icqoracle", () => {
     }
     expect(tx.code).toBe(0);
 
+    // TODO get pool id from tx
     console.log(JSON.stringify(tx, null, 4));
 
     // Create ATOM/OSMO pool
+    const atomDenomOnOsmosis = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"],
+        },
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"],
+        },
+      ],
+      "uatom",
+    );
+
+    tx = await osmojs.client.signAndBroadcast(
+      osmojs.address,
+      [
+        osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool(
+          {
+            sender: osmojs.address,
+            poolAssets: [
+              {
+                token: coinFromString(`10uosmo`),
+                weight: "1",
+              },
+              {
+                token: coinFromString(`2${atomDenomOnOsmosis}`),
+                weight: "1",
+              },
+            ],
+            futurePoolGovernor: "",
+          },
+        ),
+      ],
+      "auto",
+    );
+
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
+    expect(tx.code).toBe(0);
+
+    // TODO get pool id from tx
+
+    // Add TokenPrice(base=STRD, quote=OSMO)
+    const osmoDenomOnStride = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["OSMO"],
+        },
+      ],
+      "uosmo",
+    );
+    strideTx = await accounts.admin.signAndBroadcast([
+      stridejs.types.stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery(
+        {
+          admin: accounts.admin.address,
+          baseDenom: "ustrd",
+          quoteDenom: osmoDenomOnStride,
+          baseDenomDecimals: 6n,
+          quoteDenomDecimals: 6n,
+          osmosisBaseDenom: strdDenomOnOsmosis,
+          osmosisQuoteDenom: "uosmo",
+          osmosisPoolId: 0n, // TODO get from tx
+        },
+      ),
+    ]);
+    if (strideTx.code !== 0) {
+      console.error(strideTx.rawLog);
+    }
+    expect(strideTx.code).toBe(0);
+
+    // Add TokenPrice(base=ATOM, quote=OSMO)
+    const atomDenomOnStride = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"],
+        },
+      ],
+      "uatom",
+    );
+    strideTx = await accounts.admin.signAndBroadcast([
+      stridejs.types.stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery(
+        {
+          admin: accounts.admin.address,
+          baseDenom: atomDenomOnStride,
+          quoteDenom: osmoDenomOnStride,
+          baseDenomDecimals: 6n,
+          quoteDenomDecimals: 6n,
+          osmosisBaseDenom: atomDenomOnOsmosis,
+          osmosisQuoteDenom: "uosmo",
+          osmosisPoolId: 1n, // TODO get from tx
+        },
+      ),
+    ]);
+    if (strideTx.code !== 0) {
+      console.error(strideTx.rawLog);
+    }
+    expect(strideTx.code).toBe(0);
+
+    // Query for price of ATOM in STRD
+    const { price } =
+      await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
+        baseDenom: atomDenomOnStride,
+        quoteDenom: "ustrd",
+      });
+
+    // Price should be 2.5:
+    //
+    // ATOM/OSMO pool is 2/10 => 1 ATOM is 5 OSMO
+    // STRD/OSMO pool is 5/10 => 1 STRD is 2 OSMO
+    // =>
+    // 2.5 STRD is 5 OSMO
+    // =>
+    // 1 ATOM is 2.5 STRD
+    expect(price).toBe("2.500000000000000000");
   }, 240_000);
 });
