@@ -18,14 +18,16 @@ export async function waitForChain(
   while (true) {
     try {
       if (client instanceof StrideClient) {
-        const msg =
-          client.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
-            fromAddress: client.address,
-            toAddress: client.address,
-            amount: coinsFromString(`1${denom}`),
-          });
-
-        const tx = await client.signAndBroadcast([msg], 2);
+        const tx = await client.signAndBroadcast(
+          [
+            client.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
+              fromAddress: client.address,
+              toAddress: client.address,
+              amount: coinsFromString(`1${denom}`),
+            }),
+          ],
+          2,
+        );
 
         if (tx.code === 0) {
           break;
@@ -46,7 +48,7 @@ export async function waitForChain(
       }
     } catch (e) {
       // signAndBroadcast might throw if the RPC is not up yet
-      // console.error(e);
+      console.log(e);
     }
   }
 }
