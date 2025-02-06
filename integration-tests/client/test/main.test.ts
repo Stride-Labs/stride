@@ -397,6 +397,10 @@ describe("x/icqoracle", () => {
               },
             ],
             futurePoolGovernor: "",
+            poolParams: {
+              swapFee: "0.001",
+              exitFee: "0.001",
+            },
           },
         ),
       ],
@@ -443,6 +447,10 @@ describe("x/icqoracle", () => {
               },
             ],
             futurePoolGovernor: "",
+            poolParams: {
+              swapFee: "0.001",
+              exitFee: "0.001",
+            },
           },
         ),
       ],
