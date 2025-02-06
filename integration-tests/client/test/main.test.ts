@@ -1,14 +1,19 @@
-import { OfflineAminoSigner, Secp256k1HdWallet } from "@cosmjs/amino";
+import { Secp256k1HdWallet } from "@cosmjs/amino";
+import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { GasPrice, SigningStargateClient } from "@cosmjs/stargate";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
 import {
   coinFromString,
   convertBech32Prefix,
   decToString,
+  ibcDenom,
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import { waitForChain } from "./utils";
+import { osmosis } from "osmojs";
+
+osmosis.gamm.v1beta1.MessageComposer.withTypeUrl;
 
 const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
@@ -28,23 +33,25 @@ let accounts: {
   val3: StrideClient;
 };
 
-export type GaiaClient = {
-  signer: OfflineAminoSigner;
+export type CosmosClient = {
+  address: string;
   client: SigningStargateClient;
 };
 
-export function isGaiaClient(client: any): client is GaiaClient {
+export function isCosmosClient(client: any): client is CosmosClient {
   return (
-    "signer" in client &&
-    "getAccounts" in client.signer &&
-    "signAmino" in client.signer &&
+    "address" in client &&
     "client" in client &&
     client.client instanceof SigningStargateClient
   );
 }
 
 let gaiaAccounts: {
-  user: GaiaClient; // a normal account loaded with 100 ATOM
+  user: CosmosClient; // a normal account loaded with 100 ATOM
+};
+
+let osmoAccounts: {
+  user: CosmosClient; // a normal account loaded with 1,000,000 OSMO
 };
 
 const mnemonics: {
@@ -110,17 +117,16 @@ beforeAll(async () => {
     );
 
     if (name === "user") {
-      const signer = await Secp256k1HdWallet.fromMnemonic(mnemonic);
+      const gaiaSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
 
-      // get signer address
-      const [{ address }] = await signer.getAccounts();
+      const [{ address: gaiaAddress }] = await gaiaSigner.getAccounts();
 
       gaiaAccounts = {
         user: {
-          signer,
+          address: gaiaAddress,
           client: await SigningStargateClient.connectWithSigner(
             GAIA_RPC_ENDPOINT,
-            signer,
+            gaiaSigner,
             {
               gasPrice: GasPrice.fromString("1.0uatom"),
               broadcastPollIntervalMs: 50,
@@ -129,7 +135,25 @@ beforeAll(async () => {
         },
       };
 
-      // TODO osmosisAccount
+      const osmoSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+        prefix: "osmo",
+      });
+
+      const [{ address: osmoAddress }] = await osmoSigner.getAccounts();
+
+      osmoAccounts = {
+        user: {
+          address: osmoAddress,
+          client: await SigningStargateClient.connectWithSigner(
+            OSMO_RPC_ENDPOINT,
+            osmoSigner,
+            {
+              gasPrice: GasPrice.fromString("1.0uosmo"),
+              broadcastPollIntervalMs: 50,
+            },
+          ),
+        },
+      };
     }
   }
   console.log("waiting for stride to start...");
@@ -137,6 +161,9 @@ beforeAll(async () => {
 
   console.log("waiting for gaia to start...");
   await waitForChain(gaiaAccounts.user, "uatom");
+
+  console.log("waiting for osmosis to start...");
+  await waitForChain(osmoAccounts.user, "uosmo");
 });
 
 // time variables in seconds
@@ -229,9 +256,11 @@ describe("x/icqoracle", () => {
     // - Add TokenPrice(base=ATOM, quote=OSMO)
     // - Query for price of ATOM in STRD
 
-    // Transfer STRD to Osmosis
     const stridejs = accounts.user;
+    const gaiajs = gaiaAccounts.user;
+    const osmojs = osmoAccounts.user;
 
+    // Transfer STRD to Osmosis
     const strideTx = await stridejs.signAndBroadcast([
       stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
         {
@@ -239,7 +268,7 @@ describe("x/icqoracle", () => {
           sourceChannel: TRANSFER_CHANNEL["STRIDE"]["OSMO"],
           token: coinFromString("1000000ustrd"),
           sender: stridejs.address,
-          receiver: convertBech32Prefix(stridejs.address, "osmo"),
+          receiver: osmojs.address,
           timeoutHeight: {
             revisionNumber: 0n,
             revisionHeight: 0n,
@@ -261,12 +290,8 @@ describe("x/icqoracle", () => {
     expect(ibcAck.tx.code).toBe(0);
 
     // Transfer ATOM to Osmosis
-    const gaiajs = gaiaAccounts.user;
-
-    const [{ address: gaiaAddress }] = await gaiajs.signer.getAccounts();
-
     const gaiaTx = await gaiajs.client.signAndBroadcast(
-      gaiaAddress,
+      gaiajs.address,
       [
         {
           typeUrl: "/ibc.applications.transfer.v1.MsgTransfer",
@@ -274,8 +299,8 @@ describe("x/icqoracle", () => {
             sourcePort: "transfer",
             sourceChannel: TRANSFER_CHANNEL["GAIA"]["STRIDE"],
             token: coinFromString("1000000uatom"),
-            sender: gaiaAddress,
-            receiver: convertBech32Prefix(gaiaAddress, "stride"), // needs to be valid but ignored by pfm
+            sender: gaiajs.address,
+            receiver: stridejs.address, // needs to be valid but ignored by pfm
             timeoutHeight: {
               revisionNumber: 0n,
               revisionHeight: 0n,
@@ -285,7 +310,7 @@ describe("x/icqoracle", () => {
             ),
             memo: JSON.stringify({
               forward: {
-                receiver: convertBech32Prefix(gaiaAddress, "osmo"),
+                receiver: osmojs.address,
                 port: "transfer",
                 channel: TRANSFER_CHANNEL["STRIDE"]["OSMO"],
               },
@@ -301,9 +326,32 @@ describe("x/icqoracle", () => {
     }
     expect(gaiaTx.code).toBe(0);
 
-    // // packet forward should resolve only after the final destination is acked
-    // ibcAck = await tx.ibcResponses[0];
-    // expect(ibcAck.type).toBe("ack");
-    // expect(ibcAck.tx.code).toBe(0);
+    // Wait for ATOM to arrive on Osmosis
+    const atomDenomOnOsmosis = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"],
+        },
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"],
+        },
+      ],
+      "uatom",
+    );
+
+    while (true) {
+      const [{ amount }, balances] = await Promise.all([
+        osmojs.client.getBalance(osmojs.address, atomDenomOnOsmosis),
+        osmojs.client.getAllBalances(osmojs.address),
+      ]);
+
+      console.log(atomDenomOnOsmosis, balances);
+
+      if (BigInt(amount) > 0n) {
+        break;
+      }
+    }
   }, 120_000);
 });

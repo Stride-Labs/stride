@@ -4,6 +4,14 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@cosmjs/amino': 0.32.4
+  '@cosmjs/encoding': 0.32.4
+  '@cosmjs/math': 0.32.4
+  '@cosmjs/proto-signing': 0.32.4
+  '@cosmjs/stargate': 0.32.4
+  '@cosmjs/tendermint-rpc': 0.32.4
+
 importers:
 
   .:
@@ -38,6 +46,9 @@ importers:
       jest:
         specifier: 29.7.0
         version: 29.7.0(@types/node@20.14.11)(ts-node@10.9.2(@types/node@20.14.11)(typescript@5.5.3))
+      osmojs:
+        specifier: 16.15.0
+        version: 16.15.0
       prettier:
         specifier: 3.3.3
         version: 3.3.3
@@ -1488,6 +1499,9 @@ packages:
   onetime@6.0.0:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
+
+  osmojs@16.15.0:
+    resolution: {integrity: sha512-ERIXRzSF+EkS+RNFSzhTurr/EfWnpNfV6b1onf0MXd+YA3X3t8WbkboXg9+/ol61HDEGjugEGzRtz6sFvwaC3w==}
 
   p-limit@2.3.0:
     resolution: {integrity: sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w==}
@@ -3653,6 +3667,18 @@ snapshots:
   onetime@6.0.0:
     dependencies:
       mimic-fn: 4.0.0
+
+  osmojs@16.15.0:
+    dependencies:
+      '@cosmjs/amino': 0.32.4
+      '@cosmjs/proto-signing': 0.32.4
+      '@cosmjs/stargate': 0.32.4
+      '@cosmjs/tendermint-rpc': 0.32.4
+      '@cosmology/lcd': 0.13.4
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
 
   p-limit@2.3.0:
     dependencies:
