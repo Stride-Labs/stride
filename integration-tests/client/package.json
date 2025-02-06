@@ -4,8 +4,8 @@
   "type": "module",
   "description": "integration tests for stride chain",
   "scripts": {
-    "test": "NODE_OPTIONS=--conditions=node vitest run",
-    "test-watch": "NODE_OPTIONS=--conditions=node vitest watch"
+    "test": "vitest run",
+    "test-watch": "vitest watch"
   },
   "keywords": [
     "wow",
