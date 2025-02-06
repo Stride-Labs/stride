@@ -301,12 +301,11 @@ describe("x/icqoracle", () => {
     expect(ibcAck.tx.code).toBe(0);
 
     // Transfer ATOM to Osmosis
-    const gaiaTx = await gaiajs.client.signAndBroadcast(
+    let tx = await gaiajs.client.signAndBroadcast(
       gaiajs.address,
       [
-        {
-          typeUrl: "/ibc.applications.transfer.v1.MsgTransfer",
-          value: {
+        stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
+          {
             sourcePort: "transfer",
             sourceChannel: TRANSFER_CHANNEL["GAIA"]["STRIDE"],
             token: coinFromString("1000000uatom"),
@@ -327,15 +326,15 @@ describe("x/icqoracle", () => {
               },
             }),
           },
-        },
+        ),
       ],
       "auto",
     );
 
-    if (gaiaTx.code !== 0) {
-      console.error(gaiaTx.rawLog);
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
     }
-    expect(gaiaTx.code).toBe(0);
+    expect(tx.code).toBe(0);
 
     // Wait for ATOM to arrive on Osmosis
     const atomDenomOnOsmosis = ibcDenom(
@@ -353,16 +352,50 @@ describe("x/icqoracle", () => {
     );
 
     while (true) {
-      const [{ amount }, balances] = await Promise.all([
-        osmojs.client.getBalance(osmojs.address, atomDenomOnOsmosis),
-        osmojs.client.getAllBalances(osmojs.address),
-      ]);
-
-      console.log(atomDenomOnOsmosis, balances);
+      const { amount } = await osmojs.client.getBalance(
+        osmojs.address,
+        atomDenomOnOsmosis,
+      );
 
       if (BigInt(amount) > 0n) {
         break;
       }
     }
-  }, 120_000);
+
+    // Create STRD/OSMO pool
+    const strdDenomOnOsmosis = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"],
+        },
+      ],
+      "ustrd",
+    );
+
+    tx = await osmojs.client.signAndBroadcast(
+      osmojs.address,
+      [
+        osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
+          {
+            sender: osmojs.address,
+            denom0: strdDenomOnOsmosis,
+            denom1: "uosmo",
+            tickSpacing: 100n,
+            spreadFactor: "0.001",
+          },
+        ),
+      ],
+      "auto",
+    );
+
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
+    expect(tx.code).toBe(0);
+
+    console.log(JSON.stringify(tx, null, 4));
+
+    // Create ATOM/OSMO pool
+  }, 240_000);
 });
