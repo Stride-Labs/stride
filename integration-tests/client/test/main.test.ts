@@ -16,10 +16,7 @@ import {
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
-import { waitForChain } from "./utils";
-import { osmosis } from "osmojs";
-
-osmosis.gamm.v1beta1.MessageComposer.withTypeUrl;
+import { submitTxAndExpectSuccess, waitForChain } from "./utils";
 
 const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
@@ -255,6 +252,37 @@ describe("ibc", () => {
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
   }, 30_000);
+});
+
+describe("x/stakeibc", () => {
+  test("Registration", async () => {
+    const stridejs = accounts.admin;
+
+    const msg =
+      stridejs.types.stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone(
+        {
+          creator: stridejs.address,
+          bech32prefix: "cosmos",
+          hostDenom: "uatom",
+          ibcDenom: ibcDenom(
+            [{ incomingPortId: "transfer", incomingChannelId: "channel-0" }],
+            "uatom",
+          ),
+          connectionId: "connection-0",
+          transferChannelId: "channel-0",
+          unbondingPeriod: BigInt(1),
+          minRedemptionRate: "0.9",
+          maxRedemptionRate: "1.5",
+          lsmLiquidStakeEnabled: true,
+          communityPoolTreasuryAddress:
+            "cosmos1kl8d29eadt93rfxmkf2q8msxwylaax9dxzr5lj",
+          maxMessagesPerIcaTx: BigInt(2),
+        },
+      );
+
+    await submitTxAndExpectSuccess(stridejs, [msg]);
+    console.log(stridejs.query.stride.stakeibc.hostZoneAll());
+  });
 });
 
 describe("x/icqoracle", () => {
