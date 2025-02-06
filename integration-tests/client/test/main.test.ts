@@ -12,6 +12,7 @@ import {
   coinFromString,
   convertBech32Prefix,
   decToString,
+  getTxIbcResponses,
   ibcDenom,
   StrideClient,
 } from "stridejs";
@@ -324,7 +325,7 @@ describe("x/icqoracle", () => {
     }
     expect(strideTx.code).toBe(0);
 
-    const ibcAck = await strideTx.ibcResponses[0];
+    let ibcAck = await strideTx.ibcResponses[0];
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
 
@@ -364,31 +365,9 @@ describe("x/icqoracle", () => {
     }
     expect(tx.code).toBe(0);
 
-    // Wait for ATOM to arrive on Osmosis
-    const atomDenomOnOsmosis = ibcDenom(
-      [
-        {
-          incomingPortId: "transfer",
-          incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"],
-        },
-        {
-          incomingPortId: "transfer",
-          incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"],
-        },
-      ],
-      "uatom",
-    );
-
-    while (true) {
-      const { amount } = await osmojs.client.getBalance(
-        osmojs.address,
-        atomDenomOnOsmosis,
-      );
-
-      if (BigInt(amount) > 0n) {
-        break;
-      }
-    }
+    ibcAck = await getTxIbcResponses(gaiajs.client, tx, 30_000, 50)[0];
+    expect(ibcAck.type).toBe("ack");
+    expect(ibcAck.tx.code).toBe(0);
 
     // Create STRD/OSMO pool
     const strdDenomOnOsmosis = ibcDenom(
