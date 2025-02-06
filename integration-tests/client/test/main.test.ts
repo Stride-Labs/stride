@@ -1,7 +1,13 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
-import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
+import { DirectSecp256k1HdWallet, Registry } from "@cosmjs/proto-signing";
 import { GasPrice, SigningStargateClient } from "@cosmjs/stargate";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
+import {
+  cosmosProtoRegistry,
+  ibcProtoRegistry,
+  osmosis,
+  osmosisProtoRegistry,
+} from "osmojs";
 import {
   coinFromString,
   convertBech32Prefix,
@@ -150,6 +156,11 @@ beforeAll(async () => {
             {
               gasPrice: GasPrice.fromString("1.0uosmo"),
               broadcastPollIntervalMs: 50,
+              registry: new Registry([
+                ...osmosisProtoRegistry,
+                ...cosmosProtoRegistry,
+                ...ibcProtoRegistry,
+              ]),
             },
           ),
         },
