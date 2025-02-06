@@ -1,7 +1,7 @@
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { coinsFromString, EncodeObject, StrideClient } from "stridejs";
 import { expect } from "vitest";
-import { GaiaClient, isGaiaClient } from "./main.test";
+import { CosmosClient, isCosmosClient } from "./main.test";
 
 /**
  * Waits for the chain to start by continuously sending transactions until .
@@ -10,7 +10,7 @@ import { GaiaClient, isGaiaClient } from "./main.test";
  * @param {string} denom The denomination of the coins to send.
  */
 export async function waitForChain(
-  client: StrideClient | GaiaClient,
+  client: StrideClient | CosmosClient,
   denom: string,
 ): Promise<void> {
   // the best way to ensure a chain is up is to successfully send a tx
@@ -18,24 +18,24 @@ export async function waitForChain(
   while (true) {
     try {
       if (client instanceof StrideClient) {
-        const msg =
-          client.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
-            fromAddress: client.address,
-            toAddress: client.address,
-            amount: coinsFromString(`1${denom}`),
-          });
-
-        const tx = await client.signAndBroadcast([msg], 2);
+        const tx = await client.signAndBroadcast(
+          [
+            client.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
+              fromAddress: client.address,
+              toAddress: client.address,
+              amount: coinsFromString(`1${denom}`),
+            }),
+          ],
+          2,
+        );
 
         if (tx.code === 0) {
           break;
         }
-      } else if (isGaiaClient(client)) {
-        const [{ address }] = await client.signer.getAccounts();
-
+      } else if (isCosmosClient(client)) {
         const tx = await client.client.sendTokens(
-          address,
-          address,
+          client.address,
+          client.address,
           coinsFromString(`1${denom}`),
           2,
         );
@@ -43,10 +43,12 @@ export async function waitForChain(
         if (tx.code === 0) {
           break;
         }
+      } else {
+        throw new Error(`unknown client ${client}`);
       }
     } catch (e) {
       // signAndBroadcast might throw if the RPC is not up yet
-      // console.log(e);
+      console.log(e);
     }
   }
 }
