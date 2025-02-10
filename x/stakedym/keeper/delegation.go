@@ -117,7 +117,7 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 	}
 
 	// Timeout the transfer at the end of the epoch
-	timeoutTimestamp := uint64(ctx.BlockTime().Add(epochDuration).UnixNano())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(epochDuration).UnixNano())
 
 	// Transfer the native tokens to the host chain
 	transferMsgDepositToDelegation := transfertypes.MsgTransfer{

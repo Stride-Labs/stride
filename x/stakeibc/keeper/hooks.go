@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
 	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
@@ -157,7 +158,7 @@ func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
 	})
 
 	// Send the ICA tx to disable tokenization
-	timeoutTimestamp := uint64(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
 	delegationOwner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
 	if err != nil {

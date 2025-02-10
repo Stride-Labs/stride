@@ -81,7 +81,11 @@ type AppTestHelper struct {
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
 	s.App = app.InitStrideTestApp(true)
-	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{Height: 1, ChainID: StrideChainID})
+	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{
+		Height:  1,
+		ChainID: StrideChainID,
+		Time:    time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+	})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
@@ -523,7 +527,7 @@ func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
 // This also mocks out the consensus state to enable testing registering interchain accounts
 func (s *AppTestHelper) MockClientAndConnection(chainId, clientId, connectionId string) {
 	clientHeight := clienttypes.Height{
-		RevisionHeight: uint64(s.Ctx.BlockHeight()),
+		RevisionHeight: utils.IntToUint(s.Ctx.BlockHeight()),
 	}
 	clientState := tendermint.ClientState{
 		ChainId:        chainId,
