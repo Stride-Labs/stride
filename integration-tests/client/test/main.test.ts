@@ -10,6 +10,7 @@ import {
 } from "osmojs";
 import {
   coinFromString,
+  coinsFromString,
   convertBech32Prefix,
   decToString,
   getTxIbcResponses,
@@ -306,7 +307,7 @@ describe("x/icqoracle", () => {
     const gaiajs = gaiaAccounts.user;
     const osmojs = osmoAccounts.user;
 
-    // Transfer STRD to Osmosis
+    console.log("Transfer STRD to Osmosis");
     let strideTx = await stridejs.signAndBroadcast([
       stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
         {
@@ -335,7 +336,7 @@ describe("x/icqoracle", () => {
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
 
-    // Transfer ATOM to Osmosis
+    console.log("Transfer ATOM to Osmosis");
     let tx = await gaiajs.client.signAndBroadcast(
       gaiajs.address,
       [
@@ -374,7 +375,7 @@ describe("x/icqoracle", () => {
     expect(ibcAck.type).toBe("ack");
     expect(ibcAck.tx.code).toBe(0);
 
-    // Create STRD/OSMO pool
+    console.log("Create STRD/OSMO pool");
     const strdDenomOnOsmosis = ibcDenom(
       [
         {
@@ -388,24 +389,13 @@ describe("x/icqoracle", () => {
     tx = await osmojs.client.signAndBroadcast(
       osmojs.address,
       [
-        osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool(
+        osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
           {
             sender: osmojs.address,
-            poolAssets: [
-              {
-                token: coinFromString(`10uosmo`),
-                weight: "1",
-              },
-              {
-                token: coinFromString(`5${strdDenomOnOsmosis}`),
-                weight: "1",
-              },
-            ],
-            futurePoolGovernor: "",
-            poolParams: {
-              swapFee: "0.001",
-              exitFee: "0",
-            },
+            denom0: "uosmo",
+            denom1: strdDenomOnOsmosis,
+            tickSpacing: 100n,
+            spreadFactor: "0.001",
           },
         ),
       ],
@@ -420,7 +410,7 @@ describe("x/icqoracle", () => {
       tx.events.find((e) => e.type === "pool_created")?.attributes[0].value!,
     );
 
-    // Create ATOM/OSMO pool
+    console.log("Create ATOM/OSMO pool");
     const atomDenomOnOsmosis = ibcDenom(
       [
         {
@@ -470,7 +460,7 @@ describe("x/icqoracle", () => {
       tx.events.find((e) => e.type === "pool_created")?.attributes[0].value!,
     );
 
-    // Add TokenPrice(base=STRD, quote=OSMO)
+    console.log("Add TokenPrice(base=STRD, quote=OSMO)");
     const osmoDenomOnStride = ibcDenom(
       [
         {
@@ -502,7 +492,7 @@ describe("x/icqoracle", () => {
     }
     expect(strideTx.code).toBe(0);
 
-    // Add TokenPrice(base=ATOM, quote=OSMO)
+    console.log("Add TokenPrice(base=ATOM, quote=OSMO)");
     const atomDenomOnStride = ibcDenom(
       [
         {
@@ -534,7 +524,7 @@ describe("x/icqoracle", () => {
     }
     expect(strideTx.code).toBe(0);
 
-    // Wait for both TokenPrices to be updated
+    console.log("Wait for both TokenPrices to be updated");
     while (true) {
       const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
         baseDenom: "ustrd",
@@ -564,7 +554,7 @@ describe("x/icqoracle", () => {
       await sleep(500);
     }
 
-    // Query for price of ATOM in STRD
+    console.log("Query for price of ATOM in STRD");
     const { price } =
       await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
         baseDenom: atomDenomOnStride,
@@ -581,4 +571,37 @@ describe("x/icqoracle", () => {
     // 1 ATOM is 2.5 STRD
     expect(price).toBe("2.500000000000000000");
   }, 240_000);
+
+  test.skip("update params", async () => {
+    const stridejs = accounts.user;
+
+    const tx = await stridejs.signAndBroadcast([
+      stridejs.types.cosmos.gov.v1.MessageComposer.withTypeUrl.submitProposal({
+        messages: [
+          stridejs.types.stride.icqoracle.MsgUpdateParams.toProtoMsg({
+            authority: "", // TODO get x/gov address
+            params: {
+              osmosisChainId: "osmosis-test-1",
+              osmosisConnectionId: "connection-1",
+              updateIntervalSec: 10n,
+              priceExpirationTimeoutSec: 60n,
+            },
+          }),
+        ],
+        initialDeposit: coinsFromString("10000000ustrd"),
+        proposer: stridejs.address,
+        metadata: "Update icqoracle params",
+        title: "Update icqoracle params",
+        summary: "Update icqoracle params",
+      }),
+    ]);
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
+    expect(tx.code).toBe(0);
+
+    // TODO vote
+  });
+
+  // TODO test unwrapIBCDenom via stridejs.query.stride.icqoracle.tokenPrices
 });
