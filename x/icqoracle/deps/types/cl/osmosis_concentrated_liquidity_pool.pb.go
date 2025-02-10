@@ -12,7 +12,7 @@
 // until clear steps for migration logic and the unknowns for state breaking are
 // investigated for changing proto package.
 
-package types
+package cl
 
 import (
 	cosmossdk_io_math "cosmossdk.io/math"
