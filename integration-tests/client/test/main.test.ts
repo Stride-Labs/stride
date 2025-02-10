@@ -14,6 +14,7 @@ import {
   decToString,
   getTxIbcResponses,
   ibcDenom,
+  sleep,
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
@@ -364,7 +365,6 @@ describe("x/icqoracle", () => {
       ],
       "auto",
     );
-
     if (tx.code !== 0) {
       console.error(tx.rawLog);
     }
@@ -411,14 +411,14 @@ describe("x/icqoracle", () => {
       ],
       "auto",
     );
-
     if (tx.code !== 0) {
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
 
-    // TODO get pool id from tx
-    console.log(JSON.stringify(tx, null, 4));
+    const osmoStrdPoolId = BigInt(
+      tx.events.find((e) => e.type === "pool_created")?.attributes[0].value!,
+    );
 
     // Create ATOM/OSMO pool
     const atomDenomOnOsmosis = ibcDenom(
@@ -461,13 +461,14 @@ describe("x/icqoracle", () => {
       ],
       "auto",
     );
-
     if (tx.code !== 0) {
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
 
-    // TODO get pool id from tx
+    const osmoAtomPoolId = BigInt(
+      tx.events.find((e) => e.type === "pool_created")?.attributes[0].value!,
+    );
 
     // Add TokenPrice(base=STRD, quote=OSMO)
     const osmoDenomOnStride = ibcDenom(
@@ -479,20 +480,23 @@ describe("x/icqoracle", () => {
       ],
       "uosmo",
     );
-    strideTx = await accounts.admin.signAndBroadcast([
-      stridejs.types.stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery(
-        {
-          admin: accounts.admin.address,
-          baseDenom: "ustrd",
-          quoteDenom: osmoDenomOnStride,
-          baseDenomDecimals: 6n,
-          quoteDenomDecimals: 6n,
-          osmosisBaseDenom: strdDenomOnOsmosis,
-          osmosisQuoteDenom: "uosmo",
-          osmosisPoolId: 0n, // TODO get from tx
-        },
-      ),
-    ]);
+    strideTx = await accounts.admin.signAndBroadcast(
+      [
+        stridejs.types.stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery(
+          {
+            admin: accounts.admin.address,
+            baseDenom: "ustrd",
+            quoteDenom: osmoDenomOnStride,
+            baseDenomDecimals: 6n,
+            quoteDenomDecimals: 6n,
+            osmosisBaseDenom: strdDenomOnOsmosis,
+            osmosisQuoteDenom: "uosmo",
+            osmosisPoolId: osmoStrdPoolId,
+          },
+        ),
+      ],
+      2,
+    );
     if (strideTx.code !== 0) {
       console.error(strideTx.rawLog);
     }
@@ -508,24 +512,57 @@ describe("x/icqoracle", () => {
       ],
       "uatom",
     );
-    strideTx = await accounts.admin.signAndBroadcast([
-      stridejs.types.stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery(
-        {
-          admin: accounts.admin.address,
-          baseDenom: atomDenomOnStride,
-          quoteDenom: osmoDenomOnStride,
-          baseDenomDecimals: 6n,
-          quoteDenomDecimals: 6n,
-          osmosisBaseDenom: atomDenomOnOsmosis,
-          osmosisQuoteDenom: "uosmo",
-          osmosisPoolId: 1n, // TODO get from tx
-        },
-      ),
-    ]);
+    strideTx = await accounts.admin.signAndBroadcast(
+      [
+        stridejs.types.stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery(
+          {
+            admin: accounts.admin.address,
+            baseDenom: atomDenomOnStride,
+            quoteDenom: osmoDenomOnStride,
+            baseDenomDecimals: 6n,
+            quoteDenomDecimals: 6n,
+            osmosisBaseDenom: atomDenomOnOsmosis,
+            osmosisQuoteDenom: "uosmo",
+            osmosisPoolId: osmoAtomPoolId,
+          },
+        ),
+      ],
+      2,
+    );
     if (strideTx.code !== 0) {
       console.error(strideTx.rawLog);
     }
     expect(strideTx.code).toBe(0);
+
+    // Wait for both TokenPrices to be updated
+    while (true) {
+      const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
+        baseDenom: "ustrd",
+        quoteDenom: osmoDenomOnStride,
+        poolId: osmoStrdPoolId,
+      });
+      if (
+        tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
+      ) {
+        expect(tokenPrice.spotPrice).toBe("2.000000000000000000");
+        break;
+      }
+      await sleep(500);
+    }
+    while (true) {
+      const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
+        baseDenom: atomDenomOnStride,
+        quoteDenom: osmoDenomOnStride,
+        poolId: osmoAtomPoolId,
+      });
+      if (
+        tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
+      ) {
+        expect(tokenPrice.spotPrice).toBe("5.000000000000000000");
+        break;
+      }
+      await sleep(500);
+    }
 
     // Query for price of ATOM in STRD
     const { price } =
