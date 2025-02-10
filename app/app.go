@@ -802,7 +802,6 @@ func NewStrideApp(
 	app.StrdBurnerKeeper = *strdburnerkeeper.NewKeeper(
 		appCodec,
 		keys[strdburnertypes.StoreKey],
-		app.AccountKeeper,
 		app.BankKeeper,
 	)
 	strdburnerModule := strdburner.NewAppModule(appCodec, app.StrdBurnerKeeper)
