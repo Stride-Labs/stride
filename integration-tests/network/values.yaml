@@ -36,10 +36,10 @@ chains:
 # type can be either "relayer" or "hermes"
 relayers:
   - name: stride-cosmoshub
-    type: hermes
+    type: relayer
     chainA: stride
     chainB: cosmoshub
   - name: stride-osmosis
-    type: hermes
+    type: relayer
     chainA: stride
     chainB: osmosis
