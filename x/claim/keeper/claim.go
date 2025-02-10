@@ -581,7 +581,7 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, aird
 
 	totalClaimable := sdk.Coins{}
 
-	for action := range utils.Int32MapKeys(types.Action_name) {
+	for _, action := range utils.Int32MapKeys(types.Action_name) {
 		claimableForAction, err := k.GetClaimableAmountForAction(ctx, addr, types.Action(action), airdropIdentifier, includeClaimed)
 		if err != nil {
 			return sdk.Coins{}, err
@@ -765,10 +765,10 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdro
 	airdrop := types.Airdrop{
 		AirdropIdentifier:  msg.Identifier,
 		ChainId:            msg.ChainId,
-		AirdropDuration:    time.Duration(msg.Duration * uint64(time.Second)),
+		AirdropDuration:    time.Duration(utils.UintToInt(msg.Duration) * int64(time.Second)),
 		ClaimDenom:         msg.Denom,
 		DistributorAddress: msg.Distributor,
-		AirdropStartTime:   time.Unix(int64(msg.StartTime), 0),
+		AirdropStartTime:   time.Unix(utils.UintToInt(msg.StartTime), 0),
 		AutopilotEnabled:   msg.AutopilotEnabled,
 	}
 

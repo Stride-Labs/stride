@@ -171,7 +171,7 @@ func CreateUpgradeHandler(
 
 func InitAirdrops(ctx sdk.Context, claimKeeper claimkeeper.Keeper) error {
 	duration := uint64(AirdropDuration.Seconds())
-	startTime := uint64(AirdropStartTime.Unix())
+	startTime := utils.IntToUint(AirdropStartTime.Unix())
 
 	// Add the Injective Airdrop
 	ctx.Logger().Info("Adding Injective airdrop...")

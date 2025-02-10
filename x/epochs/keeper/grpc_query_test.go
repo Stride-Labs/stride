@@ -2,67 +2,27 @@ package keeper_test
 
 import (
 	gocontext "context"
-	"time"
-
-	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v25/x/epochs/types"
 )
 
-func (suite *KeeperTestSuite) TestQueryEpochInfos() {
-	suite.SetupTest()
-	queryClient := suite.queryClient
+func (s *KeeperTestSuite) TestQueryEpochInfos() {
+	s.SetupTest()
 
-	chainStartTime := suite.Ctx.BlockTime()
+	expectedEpochs := map[string]types.EpochInfo{}
+	for _, epoch := range types.DefaultGenesis().Epochs {
+		expectedEpochs[epoch.Identifier] = epoch
+	}
 
 	// Invalid param
-	epochInfosResponse, err := queryClient.EpochInfos(gocontext.Background(), &types.QueryEpochsInfoRequest{})
-	suite.Require().NoError(err)
-	suite.Require().Len(epochInfosResponse.Epochs, 5)
+	epochInfosResponse, err := s.queryClient.EpochInfos(gocontext.Background(), &types.QueryEpochsInfoRequest{})
+	s.Require().NoError(err)
+	s.Require().Len(epochInfosResponse.Epochs, 5)
 
 	// check if EpochInfos are correct
-	suite.Require().Equal(epochInfosResponse.Epochs[0], types.EpochInfo{
-		Identifier:            "day",
-		StartTime:             chainStartTime,
-		Duration:              time.Hour * 24,
-		CurrentEpoch:          int64(0),
-		CurrentEpochStartTime: chainStartTime,
-		EpochCountingStarted:  false,
-	})
-
-	suite.Require().Equal(epochInfosResponse.Epochs[1], types.EpochInfo{
-		Identifier:            "hour",
-		StartTime:             chainStartTime,
-		Duration:              time.Hour,
-		CurrentEpoch:          int64(0),
-		CurrentEpochStartTime: chainStartTime,
-		EpochCountingStarted:  false,
-	})
-
-	suite.Require().Equal(epochInfosResponse.Epochs[2], types.EpochInfo{
-		Identifier:            "mint",
-		StartTime:             chainStartTime,
-		Duration:              time.Minute * 60,
-		CurrentEpoch:          int64(0),
-		CurrentEpochStartTime: chainStartTime,
-		EpochCountingStarted:  false,
-	})
-
-	suite.Require().Equal(epochInfosResponse.Epochs[3], types.EpochInfo{
-		Identifier:            "stride_epoch",
-		StartTime:             chainStartTime,
-		Duration:              time.Hour * 6,
-		CurrentEpoch:          int64(0),
-		CurrentEpochStartTime: chainStartTime,
-		EpochCountingStarted:  false,
-	})
-
-	suite.Require().Equal(epochInfosResponse.Epochs[4], types.EpochInfo{
-		Identifier:            "week",
-		StartTime:             chainStartTime,
-		Duration:              time.Hour * 24 * 7,
-		CurrentEpoch:          int64(0),
-		CurrentEpochStartTime: chainStartTime,
-		EpochCountingStarted:  false,
-	})
+	s.Require().Equal(epochInfosResponse.Epochs[0], expectedEpochs["day"])
+	s.Require().Equal(epochInfosResponse.Epochs[1], expectedEpochs["hour"])
+	s.Require().Equal(epochInfosResponse.Epochs[2], expectedEpochs["mint"])
+	s.Require().Equal(epochInfosResponse.Epochs[3], expectedEpochs["stride_epoch"])
+	s.Require().Equal(epochInfosResponse.Epochs[4], expectedEpochs["week"])
 }

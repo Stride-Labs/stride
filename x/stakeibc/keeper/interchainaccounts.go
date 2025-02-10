@@ -194,7 +194,7 @@ func (k Keeper) SubmitTxs(
 
 	// Submit ICA tx
 	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
-	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+	relativeTimeoutOffset := timeoutTimestamp - utils.IntToUint(ctx.BlockTime().UnixNano())
 	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
 	res, err := msgServer.SendTx(ctx, msgSendTx)
 	if err != nil {
@@ -235,7 +235,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 		Type: icatypes.EXECUTE_TX,
 		Data: txBz,
 	}
-	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+	relativeTimeoutOffset := timeoutTimestamp - utils.IntToUint(ctx.BlockTime().UnixNano())
 
 	// Submit ICA, no need to store callback data or register callback function
 	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)

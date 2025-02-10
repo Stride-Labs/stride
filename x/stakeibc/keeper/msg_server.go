@@ -634,7 +634,7 @@ func (k msgServer) CloseDelegationChannel(goCtx context.Context, msg *types.MsgC
 	}}
 
 	// Timeout the ICA 1 nanosecond after the current block time (so it's impossible to be relayed)
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + 1)
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().UnixNano() + 1)
 	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationIcaOwner, msgSend, timeoutTimestamp)
 	if err != nil {
 		return nil, err
@@ -802,7 +802,7 @@ func (k msgServer) ToggleTradeController(
 
 	// Submit the ICA tx from the trade ICA account
 	// Timeout the ICA at 1 hour
-	timeoutTimestamp := uint64(ctx.BlockTime().Add(time.Hour).UnixNano())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(time.Hour).UnixNano())
 	err = k.SubmitICATxWithoutCallback(
 		ctx,
 		tradeRoute.TradeAccount.ConnectionId,

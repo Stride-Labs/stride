@@ -11,6 +11,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	"github.com/Stride-Labs/stride/v25/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
@@ -125,7 +126,7 @@ func (k Keeper) IBCTransferStToken(
 	}
 
 	// Use a long timeout for the transfer
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
 
 	// Submit the transfer from the hashed address
 	transferMsg := &transfertypes.MsgTransfer{
