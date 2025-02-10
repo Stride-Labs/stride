@@ -125,7 +125,11 @@ update_default_genesis() {
 
     jq_inplace '.app_state.staking.params.unbonding_time |= "'$UNBONDING_TIME'"' $genesis_json
     jq_inplace '.app_state.gov.params.max_deposit_period |= "'$DEPOSIT_PERIOD'"' $genesis_json 
-    jq_inplace '.app_state.gov.params.voting_period |= "'$VOTING_PERIOD'"' $genesis_json 
+    jq_inplace '.app_state.gov.params.voting_period |= "'$VOTING_PERIOD'"' $genesis_json
+    jq_inplace '.app_state.icqoracle.params.osmosis_chain_id |= "'$ICQORACLE_OSMOSIS_CHAIN_ID'"' $genesis_json
+    jq_inplace '.app_state.icqoracle.params.osmosis_connection_id |= "'$ICQORACLE_OSMOSIS_CONNECTION_ID'"' $genesis_json
+    jq_inplace '.app_state.icqoracle.params.update_interval_sec |= "'$ICQORACLE_UPDATE_INTERVAL_SEC'"' $genesis_json
+    jq_inplace '.app_state.icqoracle.params.price_expiration_timeout_sec |= "'$ICQORACLE_PRICE_EXPIRATION_TIMEOUT_SEC'"' $genesis_json
 
     if jq 'has(.app_state.gov.params.expedited_voting_period)' $genesis_json > /dev/null 2>&1; then
         jq_inplace '.app_state.gov.params.expedited_voting_period |= "'$EXPEDITED_VOTING_PERIOD'"' $genesis_json 
