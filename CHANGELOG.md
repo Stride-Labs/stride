@@ -66,8 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Redemptions will still be processed through `staketia` until everything's been unstaked (estimated to be in a few months)
 - Once everything's been unstaked, liquid stakes and redemptions will go through `stakeibc`. This transition can be witnessed by tracking the `redemptions_enabled` field on the stakeibc host zone query, which will flip to `true`
 - Redemption records should be queried across both modules. Relevant queries:
-  _ /Stride-Labs/stride/stakeibc/unbondings/{address}
-  _ /Stride-Labs/stride/staketia/unbonding_records \* /Stride-Labs/stride/staketia/redemption_record/{unbonding_record_id}/{address}
+  - `/Stride-Labs/stride/stakeibc/unbondings/{address}`
+  - `/Stride-Labs/stride/staketia/unbonding_records`
+  - `/Stride-Labs/stride/staketia/redemption_record/{unbonding_record_id}/{address}`
 - The redemption rate can now be found on the [stakeibc host zone query](https://stride-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/celestia) instead of the [staketia host zone query](https://stride-api.polkachu.com/Stride-Labs/stride/staketia/host_zone).
 
 ## [v24.0.0](https://github.com/Stride-Labs/stride/releases/tag/v24.0.0) - 2024-08-29
