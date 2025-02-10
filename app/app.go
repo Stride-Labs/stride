@@ -786,6 +786,7 @@ func NewStrideApp(
 		keys[icqoracletypes.StoreKey],
 		&app.InterchainqueryKeeper,
 		app.TransferKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	icqOracleModule := icqoracle.NewAppModule(appCodec, app.ICQOracleKeeper)
 
