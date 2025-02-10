@@ -188,23 +188,26 @@ describe("x/airdrop", () => {
     const nowSec = now();
     const airdropId = String(nowSec);
 
-    const msg =
-      stridejs.types.stride.airdrop.MessageComposer.withTypeUrl.createAirdrop({
-        admin: stridejs.address,
-        airdropId: airdropId,
-        rewardDenom: "ustrd",
-        distributionStartDate: fromSeconds(now()),
-        distributionEndDate: fromSeconds(nowSec + 3 * day),
-        clawbackDate: fromSeconds(nowSec + 4 * day),
-        claimTypeDeadlineDate: fromSeconds(nowSec + 2 * day),
-        earlyClaimPenalty: decToString(0.5),
-        allocatorAddress: stridejs.address,
-        distributorAddress: stridejs.address,
-        linkerAddress: stridejs.address,
-      });
-
-    const tx = await stridejs.signAndBroadcast([msg], 2);
-
+    const tx = await stridejs.signAndBroadcast(
+      [
+        stridejs.types.stride.airdrop.MessageComposer.withTypeUrl.createAirdrop(
+          {
+            admin: stridejs.address,
+            airdropId: airdropId,
+            rewardDenom: "ustrd",
+            distributionStartDate: fromSeconds(now()),
+            distributionEndDate: fromSeconds(nowSec + 3 * day),
+            clawbackDate: fromSeconds(nowSec + 4 * day),
+            claimTypeDeadlineDate: fromSeconds(nowSec + 2 * day),
+            earlyClaimPenalty: decToString(0.5),
+            allocatorAddress: stridejs.address,
+            distributorAddress: stridejs.address,
+            linkerAddress: stridejs.address,
+          },
+        ),
+      ],
+      2,
+    );
     if (tx.code !== 0) {
       console.error(tx.rawLog);
     }
@@ -224,26 +227,28 @@ describe("ibc", () => {
   test("MsgTransfer", async () => {
     const stridejs = accounts.user;
 
-    const msg =
-      stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
-        {
-          sourcePort: "transfer",
-          sourceChannel: TRANSFER_CHANNEL["STRIDE"]["GAIA"],
-          token: coinFromString("1ustrd"),
-          sender: stridejs.address,
-          receiver: convertBech32Prefix(stridejs.address, "cosmos"),
-          timeoutHeight: {
-            revisionNumber: 0n,
-            revisionHeight: 0n,
+    const tx = await stridejs.signAndBroadcast(
+      [
+        stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
+          {
+            sourcePort: "transfer",
+            sourceChannel: TRANSFER_CHANNEL["STRIDE"]["GAIA"],
+            token: coinFromString("1ustrd"),
+            sender: stridejs.address,
+            receiver: convertBech32Prefix(stridejs.address, "cosmos"),
+            timeoutHeight: {
+              revisionNumber: 0n,
+              revisionHeight: 0n,
+            },
+            timeoutTimestamp: BigInt(
+              `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
+            ),
+            memo: "",
           },
-          timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
-          ),
-          memo: "",
-        },
-      );
-
-    const tx = await stridejs.signAndBroadcast([msg], 2);
+        ),
+      ],
+      2,
+    );
     if (tx.code !== 0) {
       console.error(tx.rawLog);
     }
