@@ -16,16 +16,11 @@ import {
   getTxIbcResponses,
   ibcDenom,
   sleep,
-  stride,
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
-import { submitTxAndExpectSuccess, waitForChain, transfer } from "./utils";
-import {
-  newGammPoolMsg,
-  newRegisterTokenPriceQueryMsg,
-  newTransferMsg,
-} from "./msgs";
+import { newGammPoolMsg, newRegisterTokenPriceQueryMsg } from "./msgs";
+import { submitTxAndExpectSuccess, transfer, waitForChain } from "./utils";
 
 const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
