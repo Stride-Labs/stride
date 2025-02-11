@@ -7,8 +7,8 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
+	"github.com/osmosis-labs/osmosis/osmomath"
 
-	"github.com/Stride-Labs/stride/v25/x/icqoracle/deps/osmomath"
 	cltypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/concentratedliquidity"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/keeper"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
