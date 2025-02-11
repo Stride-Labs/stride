@@ -234,10 +234,9 @@ func (s *KeeperTestSuite) TestSubmitOsmosisCLPoolICQQueryData() {
 
 	// Set up test parameters
 	tokenPrice := types.TokenPrice{
-		BaseDenom:       "uatom",
-		QuoteDenom:      "uusdc",
-		OsmosisPoolId:   1,
-		OsmosisPoolType: types.CONCENTRATED_LIQUIDITY,
+		BaseDenom:     "uatom",
+		QuoteDenom:    "uusdc",
+		OsmosisPoolId: 1,
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
@@ -291,10 +290,9 @@ func (s *KeeperTestSuite) TestSubmitOsmosisGammPoolICQQueryData() {
 
 	// Set up test parameters
 	tokenPrice := types.TokenPrice{
-		BaseDenom:       "uatom",
-		QuoteDenom:      "uusdc",
-		OsmosisPoolId:   1,
-		OsmosisPoolType: types.GAMM,
+		BaseDenom:     "uatom",
+		QuoteDenom:    "uusdc",
+		OsmosisPoolId: 1,
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
@@ -355,7 +353,6 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 		BaseDenom:         "uatom",
 		QuoteDenom:        "uusdc",
 		OsmosisPoolId:     1,
-		OsmosisPoolType:   types.CONCENTRATED_LIQUIDITY,
 		OsmosisBaseDenom:  "ibc/uatom",
 		OsmosisQuoteDenom: "ibc/uusdc",
 		SpotPrice:         math.LegacyNewDec(2),
@@ -691,7 +688,6 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 		BaseDenom:          "uatom",
 		QuoteDenom:         "uusdc",
 		OsmosisPoolId:      1,
-		OsmosisPoolType:    types.CONCENTRATED_LIQUIDITY,
 		OsmosisBaseDenom:   "ibc/uatom",
 		OsmosisQuoteDenom:  "uusdc",
 		BaseDenomDecimals:  6,
@@ -726,7 +722,6 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenom:          "satoshi",
 				QuoteDenom:         "uusdc",
 				OsmosisPoolId:      1,
-				OsmosisPoolType:    types.CONCENTRATED_LIQUIDITY,
 				OsmosisBaseDenom:   "ibc/satoshi",
 				OsmosisQuoteDenom:  "ibc/uusdc",
 				BaseDenomDecimals:  8, // BTC has 8 decimals
@@ -744,7 +739,6 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenom:          "uatom",
 				QuoteDenom:         "uusdc",
 				OsmosisPoolId:      1,
-				OsmosisPoolType:    types.CONCENTRATED_LIQUIDITY,
 				OsmosisBaseDenom:   "ibc/uatom",
 				OsmosisQuoteDenom:  "ibc/uusdc",
 				BaseDenomDecimals:  6, // ATOM has 6 decimals
@@ -762,7 +756,6 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenom:          "uatom",
 				QuoteDenom:         "uusdc",
 				OsmosisPoolId:      1,
-				OsmosisPoolType:    types.CONCENTRATED_LIQUIDITY,
 				OsmosisBaseDenom:   "ibc/uatom",
 				OsmosisQuoteDenom:  "ibc/uusdc",
 				BaseDenomDecimals:  8,
@@ -780,7 +773,6 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenom:          "uatom",
 				QuoteDenom:         "uusdc",
 				OsmosisPoolId:      1,
-				OsmosisPoolType:    types.CONCENTRATED_LIQUIDITY,
 				OsmosisBaseDenom:   "ibc/uatom",
 				OsmosisQuoteDenom:  "different_denom",
 				BaseDenomDecimals:  6,
