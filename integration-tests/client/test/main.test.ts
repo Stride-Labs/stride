@@ -295,7 +295,7 @@ describe("x/stakeibc", () => {
 });
 
 describe("x/icqoracle", () => {
-  test.only("gamm price", async () => {
+  test.skip("gamm price", async () => {
     const stridejs = accounts.user;
     const osmojs = osmoAccounts.user;
 
@@ -369,7 +369,7 @@ describe("x/icqoracle", () => {
     );
   });
 
-  test("happy path", async () => {
+  test.only("happy path", async () => {
     // - Transfer STRD to Osmosis
     // - Transfer ATOM to Osmosis
     // - Create STRD/OSMO pool
