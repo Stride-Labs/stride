@@ -631,7 +631,7 @@ describe("x/icqoracle", () => {
       if (
         tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
       ) {
-        expect(tokenPrice.spotPrice).toBe("2.000000000000000000");
+        expect(Number(tokenPrice.spotPrice)).toBe(2);
         break;
       }
       await sleep(500);
@@ -645,7 +645,7 @@ describe("x/icqoracle", () => {
       if (
         tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
       ) {
-        expect(tokenPrice.spotPrice).toBe("5.000000000000000000");
+        expect(Number(tokenPrice.spotPrice)).toBe(5);
         break;
       }
       await sleep(500);
@@ -666,7 +666,7 @@ describe("x/icqoracle", () => {
     // 2.5 STRD is 5 OSMO
     // =>
     // 1 ATOM is 2.5 STRD
-    expect(price).toBe("2.500000000000000000");
+    expect(Number(price)).toBe(2.5);
   }, 240_000);
 
   test.skip("update params", async () => {
