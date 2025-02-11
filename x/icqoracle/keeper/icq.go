@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	ICQCallbackID_OsmosisClPool = "osmosisclpool"
+	ICQCallbackID_OsmosisPool = "osmosispool"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
@@ -52,7 +52,7 @@ func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCa
 
 func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 	return c.
-		AddICQCallback(ICQCallbackID_OsmosisClPool, ICQCallback(OsmosisClPoolCallback))
+		AddICQCallback(ICQCallbackID_OsmosisPool, ICQCallback(OsmosisPoolCallback))
 }
 
 // Submits an ICQ to get a concentrated liquidity pool from Osmosis' store
@@ -60,7 +60,7 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 	ctx sdk.Context,
 	tokenPrice types.TokenPrice,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisClPool ICQ"))
+	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisPool ICQ"))
 
 	params := k.GetParams(ctx)
 
@@ -85,14 +85,14 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 		QueryType:       icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
 		RequestData:     requestData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_OsmosisClPool,
+		CallbackId:      ICQCallbackID_OsmosisPool,
 		CallbackData:    tokenPriceBz,
 		TimeoutDuration: time.Duration(params.UpdateIntervalSec) * time.Second,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 
 	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		return errorsmod.Wrap(err, "Error submitting OsmosisClPool ICQ")
+		return errorsmod.Wrap(err, "Error submitting OsmosisPool ICQ")
 	}
 
 	if err := k.SetQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
@@ -103,14 +103,14 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 }
 
 // Callback from Osmosis spot price query
-func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	var tokenPrice types.TokenPrice
 	if err := k.cdc.Unmarshal(query.CallbackData, &tokenPrice); err != nil {
 		return fmt.Errorf("Error deserializing query.CallbackData '%s' as TokenPrice", hex.EncodeToString(query.CallbackData))
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisClPool",
-		"Starting OsmosisClPool ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
+	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPool",
+		"Starting OsmosisPool ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	if err != nil {

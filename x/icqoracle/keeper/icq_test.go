@@ -195,7 +195,6 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQBranches() {
 			// set the token price first
 			if tc.expectedError != "token price not found" {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tc.tokenPrice)
-
 			}
 
 			// Execute
@@ -258,7 +257,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQQueryData() {
 	s.Require().Equal(params.OsmosisConnectionId, capturedQuery.ConnectionId)
 	s.Require().Equal(icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF, capturedQuery.QueryType)
 	s.Require().Equal(types.ModuleName, capturedQuery.CallbackModule)
-	s.Require().Equal(keeper.ICQCallbackID_OsmosisClPool, capturedQuery.CallbackId)
+	s.Require().Equal(keeper.ICQCallbackID_OsmosisPool, capturedQuery.CallbackId)
 
 	// Verify request data format (pool key)
 	expectedRequestData := icqtypes.FormatOsmosisCLKeyPool(tokenPrice.OsmosisPoolId)
@@ -618,7 +617,7 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 			poolData, query := tc.setup()
 
 			// Execute callback
-			err := keeper.OsmosisClPoolCallback(s.App.ICQOracleKeeper, s.Ctx, poolData, query)
+			err := keeper.OsmosisPoolCallback(s.App.ICQOracleKeeper, s.Ctx, poolData, query)
 
 			// Verify results
 			if tc.expectedError != "" {
