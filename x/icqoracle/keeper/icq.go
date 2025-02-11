@@ -12,6 +12,8 @@ import (
 
 	"github.com/Stride-Labs/stride/v25/utils"
 	deps "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types"
+	cltypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/concentrated_liquidity"
+	gammtypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/gamm"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
 )
@@ -54,7 +56,7 @@ func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 }
 
 // Submits an ICQ to get a concentrated liquidity pool from Osmosis' store
-func (k Keeper) SubmitOsmosisClPoolICQ(
+func (k Keeper) SubmitOsmosisPoolICQ(
 	ctx sdk.Context,
 	tokenPrice types.TokenPrice,
 ) error {
@@ -67,11 +69,21 @@ func (k Keeper) SubmitOsmosisClPoolICQ(
 		return errorsmod.Wrapf(err, "Error serializing tokenPrice '%+v' to bytes", tokenPrice)
 	}
 
+	var requestData []byte
+	switch tokenPrice.OsmosisPoolType {
+	case types.GAMM:
+		requestData = icqtypes.FormatOsmosisGammKeyPool(tokenPrice.OsmosisPoolId)
+	case types.CONCENTRATED_LIQUIDITY:
+		requestData = icqtypes.FormatOsmosisCLKeyPool(tokenPrice.OsmosisPoolId)
+	default:
+		return errorsmod.Wrapf(err, "Unsupported pool type: %d", tokenPrice.OsmosisPoolType)
+	}
+
 	query := icqtypes.Query{
 		ChainId:         params.OsmosisChainId,
 		ConnectionId:    params.OsmosisConnectionId,
 		QueryType:       icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
-		RequestData:     icqtypes.FormatOsmosisKeyPool(tokenPrice.OsmosisPoolId),
+		RequestData:     requestData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_OsmosisClPool,
 		CallbackData:    tokenPriceBz,
@@ -105,14 +117,11 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 		return errorsmod.Wrap(err, "Error getting current spot price")
 	}
 
-	// TODO review this
-	// this should never happen
 	if !tokenPrice.QueryInProgress {
 		return nil
 	}
 
-	// Unmarshal the query response args to determine the prices
-	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisClPool(tokenPrice, args)
+	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisPool(tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
@@ -122,15 +131,31 @@ func OsmosisClPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtype
 	return nil
 }
 
-func UnmarshalSpotPriceFromOsmosisClPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
-	var pool deps.OsmosisConcentratedLiquidityPool
-	if err := proto.Unmarshal(queryResponseBz, &pool); err != nil {
-		return math.LegacyZeroDec(), err
+// Unmarshals the Osmosis pool query response and extracts the actual spot price
+// Supports both CL and GAMM pools
+func UnmarshalSpotPriceFromOsmosisPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
+	var pool deps.Pool
+	var gammPool gammtypes.OsmosisGammPool
+	var clPool cltypes.OsmosisConcentratedLiquidityPool
+
+	switch tokenPrice.OsmosisPoolType {
+	case types.GAMM:
+		if err := proto.Unmarshal(queryResponseBz, &gammPool); err != nil {
+			return math.LegacyZeroDec(), err
+		}
+		pool = &gammPool
+	case types.CONCENTRATED_LIQUIDITY:
+		if err := proto.Unmarshal(queryResponseBz, &clPool); err != nil {
+			return math.LegacyZeroDec(), err
+		}
+		pool = &clPool
+	default:
+		return price, fmt.Errorf("Unsupported pool type: %d", tokenPrice.OsmosisPoolType)
 	}
 
 	rawSpotPrice, err := pool.SpotPrice(tokenPrice.OsmosisQuoteDenom, tokenPrice.OsmosisBaseDenom)
 	if err != nil {
-		return math.LegacyZeroDec(), err
+		return price, err
 	}
 
 	return AdjustSpotPriceForDecimals(

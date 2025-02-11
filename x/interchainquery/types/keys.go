@@ -3,6 +3,8 @@ package types
 import (
 	fmt "fmt"
 	"strconv"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -72,12 +74,22 @@ func FormatOsmosisMostRecentTWAPKey(poolId uint64, denom1, denom2 string) []byte
 // Used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/pool.go#L117-L130
 // Which is used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/pool.go#L179-L209
 //
-// Pool Prefix Keys
-// keyPool is used to map a pool id to a pool struct
-func FormatOsmosisKeyPool(poolId uint64) []byte {
+// CL Pool Prefix Keys
+// Maps a pool id to a pool struct
+func FormatOsmosisCLKeyPool(poolId uint64) []byte {
 	// Start with PoolPrefix initialized
-	result := []byte{0x03}
+	poolPrefix := []byte{0x03}
 	// Directly append the string representation of poolId as bytes
-	result = strconv.AppendUint(result, poolId, 10)
-	return result
+	return strconv.AppendUint(poolPrefix, poolId, 10)
+}
+
+// Source: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/gamm/types/key.go#L60-L62
+// Used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/gamm/keeper/pool.go#L53-L72
+// Which is used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/gamm/keeper/pool.go#L30-L33
+//
+// Gamm Pool Prefix Keys
+// Maps a pool ID to a pool struct
+func FormatOsmosisGammKeyPool(poolId uint64) []byte {
+	keyPrefixPools := []byte{0x02}
+	return append(keyPrefixPools, sdk.Uint64ToBigEndian(poolId)...)
 }
