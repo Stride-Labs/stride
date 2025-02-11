@@ -16,16 +16,25 @@ import {
   getTxIbcResponses,
   ibcDenom,
   sleep,
+  stride,
   StrideClient,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
-import { submitTxAndExpectSuccess, waitForChain } from "./utils";
+import { submitTxAndExpectSuccess, waitForChain, transfer } from "./utils";
+import {
+  newGammPoolMsg,
+  newRegisterTokenPriceQueryMsg,
+  newTransferMsg,
+} from "./msgs";
 
 const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
 const OSMO_RPC_ENDPOINT = "http://osmosis-rpc.internal.stridenet.co";
 
-const TRANSFER_CHANNEL = {
+const USTRD = "ustrd";
+const UOSMO = "uosmo";
+
+export const TRANSFER_CHANNEL = {
   STRIDE: { GAIA: "channel-0", OSMO: "channel-1" },
   GAIA: { STRIDE: "channel-0" },
   OSMO: { STRIDE: "channel-0" },
@@ -43,14 +52,6 @@ export type CosmosClient = {
   address: string;
   client: SigningStargateClient;
 };
-
-export function isCosmosClient(client: any): client is CosmosClient {
-  return (
-    "address" in client &&
-    "client" in client &&
-    client.client instanceof SigningStargateClient
-  );
-}
 
 let gaiaAccounts: {
   user: CosmosClient; // a normal account loaded with 100 ATOM
@@ -294,7 +295,81 @@ describe("x/stakeibc", () => {
 });
 
 describe("x/icqoracle", () => {
-  test.only("happy path", async () => {
+  test.only("gamm price", async () => {
+    const stridejs = accounts.user;
+    const osmojs = osmoAccounts.user;
+
+    console.log("Transfering STRD from Stride to Osmosis");
+    await transfer({
+      stridejs: stridejs,
+      signingClient: stridejs,
+      sourceChain: "STRIDE",
+      destinationChain: "OSMO",
+      coins: `1000000${USTRD}`,
+      sender: stridejs.address,
+      receiver: osmojs.address,
+    });
+
+    console.log("Transfering OSMO from Osmosis to Stride");
+    await transfer({
+      stridejs: stridejs,
+      signingClient: osmojs,
+      sourceChain: "OSMO",
+      destinationChain: "STRIDE",
+      coins: `1000000${UOSMO}`,
+      sender: osmojs.address,
+      receiver: stridejs.address,
+    });
+
+    const osmoDenomOnStride = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["OSMO"],
+        },
+      ],
+      UOSMO,
+    );
+
+    const strdOnOsmoDenom = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"],
+        },
+      ],
+      USTRD,
+    );
+
+    console.log("Create STRD/OSMO GAMM pool");
+    const poolMsg = newGammPoolMsg({
+      sender: osmojs.address,
+      tokens: ["10uosmo", `2${strdOnOsmoDenom}`],
+      weights: [1, 1],
+    });
+    const poolTx = await submitTxAndExpectSuccess(osmojs, poolMsg);
+
+    const osmoStrdPoolId = BigInt(
+      poolTx.events.find((e) => e.type === "pool_created")?.attributes[0]
+        .value!,
+    );
+
+    console.log("Register the token price query on Stride");
+    const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
+      adminClient: accounts.admin,
+      baseDenom: USTRD,
+      quoteDenom: osmoDenomOnStride,
+      baseDenomOnOsmosis: strdOnOsmoDenom,
+      quoteDenomOnOsmosis: UOSMO,
+      poolId: osmoStrdPoolId,
+    });
+    const tokenPriceTx = await submitTxAndExpectSuccess(
+      accounts.admin,
+      registerTokenPriceMsg,
+    );
+  });
+
+  test("happy path", async () => {
     // - Transfer STRD to Osmosis
     // - Transfer ATOM to Osmosis
     // - Create STRD/OSMO pool

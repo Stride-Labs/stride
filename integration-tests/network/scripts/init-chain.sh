@@ -152,6 +152,13 @@ update_stride_genesis() {
 # Genesis updates specific to non-stride chains
 update_host_genesis() {
     echo "Updating genesis.json with host configuration..."
+
+    if [[ "$CHAIN_NAME" == "osmosis" ]]; then
+        strd_on_osmo="ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA"
+        atom_on_osmo="ibc/6CDD4663F2F09CD62285E2D45891FC149A3568E316CE3EBBE201A71A78A69388" # through stride
+        jq_inplace '.app_state.concentratedliquidity.params.is_permissionless_pool_creation_enabled |= true' $genesis_json 
+        jq_inplace '.app_state.concentratedliquidity.params.authorized_quote_denoms += ["uosmo", "'$strd_on_osmo'", "'$atom_on_osmo'"]' $genesis_json 
+    fi
 }
 
 # Saves the genesis file in the API
