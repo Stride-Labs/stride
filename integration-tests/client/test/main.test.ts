@@ -467,8 +467,8 @@ describe("x/icqoracle", () => {
         osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
           {
             sender: osmojs.address,
-            denom0: "uosmo",
-            denom1: strdDenomOnOsmosis,
+            denom0: strdDenomOnOsmosis,
+            denom1: "uosmo",
             tickSpacing: 100n,
             spreadFactor: "0.001",
           },
