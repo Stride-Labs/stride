@@ -485,6 +485,28 @@ describe("x/icqoracle", () => {
       tx.events.find((e) => e.type === "pool_created")?.attributes[0].value!,
     );
 
+    tx = await osmojs.client.signAndBroadcast(
+      osmojs.address,
+      [
+        osmosis.concentratedliquidity.v1beta1.MessageComposer.withTypeUrl.createPosition(
+          {
+            poolId: osmoStrdPoolId,
+            sender: osmojs.address,
+            lowerTick: -108000000n,
+            upperTick: 342000000n,
+            tokensProvided: coinsFromString(`5${strdDenomOnOsmosis},10uosmo`),
+            tokenMinAmount0: "5",
+            tokenMinAmount1: "10",
+          },
+        ),
+      ],
+      "auto",
+    );
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
+    expect(tx.code).toBe(0);
+
     console.log("Create ATOM/OSMO pool");
     const atomDenomOnOsmosis = ibcDenom(
       [
