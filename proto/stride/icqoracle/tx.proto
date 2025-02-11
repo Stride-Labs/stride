@@ -48,8 +48,6 @@ message MsgRegisterTokenPriceQuery {
   string osmosis_quote_denom = 7;
   // Pool ID on Osmosis
   uint64 osmosis_pool_id = 8;
-  // Pool type on Osmosis (GAMM or CL)
-  OsmosisPoolType osmosis_pool_type = 9;
 }
 
 message MsgRegisterTokenPriceQueryResponse {}
