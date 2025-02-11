@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQBranches() {
 	}
 }
 
-func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQQueryData() {
+func (s *KeeperTestSuite) TestSubmitOsmosisCLPoolICQQueryData() {
 	var capturedQuery icqtypes.Query
 
 	// Setup mock ICQ keeper to capture the submitted query and prove flag
@@ -261,6 +261,63 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQQueryData() {
 
 	// Verify request data format (pool key)
 	expectedRequestData := icqtypes.FormatOsmosisCLKeyPool(tokenPrice.OsmosisPoolId)
+	s.Require().Equal(expectedRequestData, capturedQuery.RequestData)
+
+	// Verify callback data contains the token price
+	var decodedTokenPrice types.TokenPrice
+	err = s.App.AppCodec().Unmarshal(capturedQuery.CallbackData, &decodedTokenPrice)
+	s.Require().NoError(err)
+	s.Require().Equal(tokenPrice.BaseDenom, decodedTokenPrice.BaseDenom)
+	s.Require().Equal(tokenPrice.QuoteDenom, decodedTokenPrice.QuoteDenom)
+	s.Require().Equal(tokenPrice.OsmosisPoolId, decodedTokenPrice.OsmosisPoolId)
+
+	// Verify timeout settings
+	expectedTimeout := time.Duration(params.UpdateIntervalSec) * time.Second
+	s.Require().Equal(expectedTimeout, capturedQuery.TimeoutDuration)
+	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, capturedQuery.TimeoutPolicy)
+}
+
+func (s *KeeperTestSuite) TestSubmitOsmosisGammPoolICQQueryData() {
+	var capturedQuery icqtypes.Query
+
+	// Setup mock ICQ keeper to capture the submitted query and prove flag
+	s.mockICQKeeper = MockICQKeeper{
+		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
+			capturedQuery = query
+			return nil
+		},
+	}
+	s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
+
+	// Set up test parameters
+	tokenPrice := types.TokenPrice{
+		BaseDenom:       "uatom",
+		QuoteDenom:      "uusdc",
+		OsmosisPoolId:   1,
+		OsmosisPoolType: types.GAMM,
+	}
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
+
+	params := types.Params{
+		OsmosisChainId:      "osmosis-1",
+		OsmosisConnectionId: "connection-0",
+		UpdateIntervalSec:   60,
+	}
+	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
+
+	// Submit ICQ request
+	err := s.App.ICQOracleKeeper.SubmitOsmosisPoolICQ(s.Ctx, tokenPrice)
+	s.Require().NoError(err)
+
+	// Verify the captured query data
+	s.Require().Equal(params.OsmosisChainId, capturedQuery.ChainId)
+	s.Require().Equal(params.OsmosisConnectionId, capturedQuery.ConnectionId)
+	s.Require().Equal(icqtypes.GAMM_STORE_QUERY_WITH_PROOF, capturedQuery.QueryType)
+	s.Require().Equal(types.ModuleName, capturedQuery.CallbackModule)
+	s.Require().Equal(keeper.ICQCallbackID_OsmosisPool, capturedQuery.CallbackId)
+
+	// Verify request data format (pool key)
+	expectedRequestData := icqtypes.FormatOsmosisGammKeyPool(tokenPrice.OsmosisPoolId)
 	s.Require().Equal(expectedRequestData, capturedQuery.RequestData)
 
 	// Verify callback data contains the token price

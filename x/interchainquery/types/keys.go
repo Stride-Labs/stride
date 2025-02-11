@@ -42,6 +42,8 @@ const (
 	TWAP_STORE_QUERY_WITH_PROOF = "store/twap/key"
 	// The Osmosis concentrated liquidity store
 	CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF = "store/concentratedliquidity/key"
+	// The Osmosis gamm store
+	GAMM_STORE_QUERY_WITH_PROOF = "store/gamm/key"
 )
 
 var (

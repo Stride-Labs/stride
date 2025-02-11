@@ -69,11 +69,14 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 		return errorsmod.Wrapf(err, "Error serializing tokenPrice '%+v' to bytes", tokenPrice)
 	}
 
+	var queryType string
 	var requestData []byte
 	switch tokenPrice.OsmosisPoolType {
 	case types.GAMM:
+		queryType = icqtypes.GAMM_STORE_QUERY_WITH_PROOF
 		requestData = icqtypes.FormatOsmosisGammKeyPool(tokenPrice.OsmosisPoolId)
 	case types.CONCENTRATED_LIQUIDITY:
+		queryType = icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF
 		requestData = icqtypes.FormatOsmosisCLKeyPool(tokenPrice.OsmosisPoolId)
 	default:
 		return errorsmod.Wrapf(err, "Unsupported pool type: %d", tokenPrice.OsmosisPoolType)
@@ -82,7 +85,7 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 	query := icqtypes.Query{
 		ChainId:         params.OsmosisChainId,
 		ConnectionId:    params.OsmosisConnectionId,
-		QueryType:       icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF,
+		QueryType:       queryType,
 		RequestData:     requestData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_OsmosisPool,
