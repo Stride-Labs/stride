@@ -236,7 +236,7 @@ func (m *PoolAsset) GetToken() types.Coin {
 	return types.Coin{}
 }
 
-type Pool struct {
+type OsmosisGammPool struct {
 	Address    string     `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
 	Id         uint64     `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
 	PoolParams PoolParams `protobuf:"bytes,3,opt,name=pool_params,json=poolParams,proto3" json:"pool_params" yaml:"balancer_pool_params"`
@@ -259,16 +259,16 @@ type Pool struct {
 	TotalWeight cosmossdk_io_math.Int `protobuf:"bytes,7,opt,name=total_weight,json=totalWeight,proto3,customtype=cosmossdk.io/math.Int" json:"total_weight" yaml:"total_weight"`
 }
 
-func (m *Pool) Reset()      { *m = Pool{} }
-func (m *Pool) String() string { return proto.CompactTextString(m) }
-func (*Pool) ProtoMessage() {}
-func (*Pool) Descriptor() ([]byte, []int) {
+func (m *OsmosisGammPool) Reset()      { *m = OsmosisGammPool{} }
+func (m *OsmosisGammPool) String() string { return proto.CompactTextString(m) }
+func (*OsmosisGammPool) ProtoMessage() {}
+func (*OsmosisGammPool) Descriptor() ([]byte, []int) {
 	return fileDescriptor_8bed8b78c08e572f, []int{3}
 }
-func (m *Pool) XXX_Unmarshal(b []byte) error {
+func (m *OsmosisGammPool) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Pool) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OsmosisGammPool) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Pool.Marshal(b, m, deterministic)
 	} else {
@@ -280,13 +280,13 @@ func (m *Pool) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Pool) XXX_Merge(src proto.Message) {
+func (m *OsmosisGammPool) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Pool.Merge(m, src)
 }
-func (m *Pool) XXX_Size() int {
+func (m *OsmosisGammPool) XXX_Size() int {
 	return m.Size()
 }
-func (m *Pool) XXX_DiscardUnknown() {
+func (m *OsmosisGammPool) XXX_DiscardUnknown() {
 	xxx_messageInfo_Pool.DiscardUnknown(m)
 }
 
@@ -296,7 +296,7 @@ func init() {
 	proto.RegisterType((*SmoothWeightChangeParams)(nil), "osmosis.gamm.v1beta1.SmoothWeightChangeParams")
 	proto.RegisterType((*PoolParams)(nil), "osmosis.gamm.v1beta1.PoolParams")
 	proto.RegisterType((*PoolAsset)(nil), "osmosis.gamm.v1beta1.PoolAsset")
-	proto.RegisterType((*Pool)(nil), "osmosis.gamm.v1beta1.Pool")
+	proto.RegisterType((*OsmosisGammPool)(nil), "osmosis.gamm.v1beta1.Pool")
 }
 
 func init() {
@@ -527,7 +527,7 @@ func (m *PoolAsset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Pool) Marshal() (dAtA []byte, err error) {
+func (m *OsmosisGammPool) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -537,12 +537,12 @@ func (m *Pool) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Pool) MarshalTo(dAtA []byte) (int, error) {
+func (m *OsmosisGammPool) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Pool) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OsmosisGammPool) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -679,7 +679,7 @@ func (m *PoolAsset) Size() (n int) {
 	return n
 }
 
-func (m *Pool) Size() (n int) {
+func (m *OsmosisGammPool) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1172,7 +1172,7 @@ func (m *PoolAsset) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Pool) Unmarshal(dAtA []byte) error {
+func (m *OsmosisGammPool) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
