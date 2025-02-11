@@ -12,7 +12,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v25/utils"
 	deps "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types"
-	cltypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/concentrated_liquidity"
+	cltypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/concentratedliquidity"
 	gammtypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/gamm"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
