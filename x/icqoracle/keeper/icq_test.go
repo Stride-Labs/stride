@@ -796,7 +796,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			spotPrice, err := keeper.UnmarshalSpotPriceFromOsmosisPool(s.App.ICQOracleKeeper, tc.tokenPrice, tc.poolData)
+			spotPrice, err := keeper.UnmarshalSpotPriceFromOsmosis(s.App.ICQOracleKeeper, tc.tokenPrice, tc.poolData)
 
 			if tc.expectedError != "" {
 				s.Require().ErrorContains(err, tc.expectedError)
@@ -808,6 +808,75 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 					0.000001,
 					"expected price %v, got %v", tc.expectedPrice, spotPrice,
 				)
+			}
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestAssertTwapAssetsMatchTokenPrice() {
+	testCases := []struct {
+		name          string
+		twapRecord    types.OsmosisTwapRecord
+		tokenPrice    types.TokenPrice
+		expectedMatch bool
+	}{
+		{
+			name:          "successful match - 1",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-a", OsmosisQuoteDenom: "denom-b"},
+			expectedMatch: true,
+		},
+		{
+			name:          "successful match - 2",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-b", Asset1Denom: "denom-a"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-b", OsmosisQuoteDenom: "denom-a"},
+			expectedMatch: true,
+		},
+		{
+			name:          "successful match - 3",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-b", OsmosisQuoteDenom: "denom-a"},
+			expectedMatch: true,
+		},
+		{
+			name:          "successful match - 4",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-b", Asset1Denom: "denom-a"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-a", OsmosisQuoteDenom: "denom-b"},
+			expectedMatch: true,
+		},
+		{
+			name:          "mismatch osmo asset 0",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-z", Asset1Denom: "denom-b"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-a", OsmosisQuoteDenom: "denom-b"},
+			expectedMatch: false,
+		},
+		{
+			name:          "mismatch osmo asset 1",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-z"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-a", OsmosisQuoteDenom: "denom-b"},
+			expectedMatch: false,
+		},
+		{
+			name:          "mismatch route reward denom",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-z", OsmosisQuoteDenom: "denom-b"},
+			expectedMatch: false,
+		},
+		{
+			name:          "mismatch route host denom",
+			twapRecord:    types.OsmosisTwapRecord{Asset0Denom: "denom-a", Asset1Denom: "denom-b"},
+			tokenPrice:    types.TokenPrice{OsmosisBaseDenom: "denom-a", OsmosisQuoteDenom: "denom-z"},
+			expectedMatch: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			err := keeper.AssertTwapAssetsMatchTokenPrice(tc.twapRecord, tc.tokenPrice)
+			if tc.expectedMatch {
+				s.Require().NoError(err)
+			} else {
+				s.Require().Error(err)
 			}
 		})
 	}
