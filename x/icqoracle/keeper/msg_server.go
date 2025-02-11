@@ -35,14 +35,17 @@ func (ms msgServer) RegisterTokenPriceQuery(goCtx context.Context, msg *types.Ms
 	}
 
 	tokenPrice := types.TokenPrice{
-		BaseDenom:         msg.BaseDenom,
-		QuoteDenom:        msg.QuoteDenom,
-		OsmosisPoolId:     msg.OsmosisPoolId,
-		OsmosisBaseDenom:  msg.OsmosisBaseDenom,
-		OsmosisQuoteDenom: msg.OsmosisQuoteDenom,
-		LastRequestTime:   time.Time{},
-		SpotPrice:         sdkmath.LegacyZeroDec(),
-		QueryInProgress:   false,
+		BaseDenom:          msg.BaseDenom,
+		QuoteDenom:         msg.QuoteDenom,
+		BaseDenomDecimals:  msg.BaseDenomDecimals,
+		QuoteDenomDecimals: msg.QuoteDenomDecimals,
+		OsmosisBaseDenom:   msg.OsmosisBaseDenom,
+		OsmosisQuoteDenom:  msg.OsmosisQuoteDenom,
+		OsmosisPoolId:      msg.OsmosisPoolId,
+		OsmosisPoolType:    msg.OsmosisPoolType,
+		SpotPrice:          sdkmath.LegacyZeroDec(),
+		LastRequestTime:    time.Time{},
+		QueryInProgress:    false,
 	}
 	ms.Keeper.SetTokenPrice(ctx, tokenPrice)
 

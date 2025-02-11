@@ -37,6 +37,7 @@ func NewMsgRegisterTokenPriceQuery(
 	baseDecimals int64,
 	quoteDecimals int64,
 	poolId uint64,
+	poolType OsmosisPoolType,
 	osmosisBaseDenom string,
 	osmosisQuoteDenom string,
 ) *MsgRegisterTokenPriceQuery {
@@ -46,9 +47,10 @@ func NewMsgRegisterTokenPriceQuery(
 		QuoteDenom:         quoteDenom,
 		BaseDenomDecimals:  baseDecimals,
 		QuoteDenomDecimals: quoteDecimals,
+		OsmosisPoolId:      poolId,
+		OsmosisPoolType:    poolType,
 		OsmosisBaseDenom:   osmosisBaseDenom,
 		OsmosisQuoteDenom:  osmosisQuoteDenom,
-		OsmosisPoolId:      poolId,
 	}
 }
 
