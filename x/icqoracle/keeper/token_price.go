@@ -56,7 +56,7 @@ func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom stri
 
 	bz := store.Get(key)
 	if bz == nil {
-		return types.TokenPrice{}, fmt.Errorf("price not found for baseDenom='%s' quoteDenom='%s' poolId='%d'", baseDenom, quoteDenom, osmosisPoolId)
+		return types.TokenPrice{}, fmt.Errorf("token price not found for baseDenom='%s' quoteDenom='%s' poolId='%d'", baseDenom, quoteDenom, osmosisPoolId)
 	}
 
 	var price types.TokenPrice

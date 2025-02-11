@@ -9,7 +9,6 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/osmosis-labs/osmosis/osmomath"
 
-	cltypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/concentratedliquidity"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/keeper"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
@@ -27,27 +26,7 @@ func (m MockICQKeeper) SubmitICQRequest(ctx sdk.Context, query icqtypes.Query, f
 	return nil
 }
 
-func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQUnknownPrice() {
-	// Set up test parameters
-	tokenPrice := types.TokenPrice{
-		BaseDenom:     "uatom",
-		QuoteDenom:    "uusdc",
-		OsmosisPoolId: 1,
-	}
-
-	params := types.Params{
-		OsmosisChainId:      "osmosis-1",
-		OsmosisConnectionId: "connection-0",
-		UpdateIntervalSec:   60,
-	}
-	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-
-	// Submit ICQ request
-	err := s.App.ICQOracleKeeper.SubmitOsmosisPoolICQ(s.Ctx, tokenPrice)
-	s.Require().ErrorContains(err, "price not found")
-}
-
-func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
+func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Success() {
 	var submittedQuery icqtypes.Query
 
 	// Setup mock ICQ keeper with custom behavior
@@ -82,26 +61,65 @@ func (s *KeeperTestSuite) TestHappyPathOsmosisClPoolICQ() {
 	err := s.App.ICQOracleKeeper.SubmitOsmosisPoolICQ(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
 
-	// Verify the submitted query
+	// Verify the captured query data
 	s.Require().Equal(params.OsmosisChainId, submittedQuery.ChainId)
 	s.Require().Equal(params.OsmosisConnectionId, submittedQuery.ConnectionId)
-	s.Require().Equal(icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF, submittedQuery.QueryType)
+	s.Require().Equal(icqtypes.OSMOSIS_TWAP_STORE_QUERY_WITH_PROOF, submittedQuery.QueryType)
+	s.Require().Equal(types.ModuleName, submittedQuery.CallbackModule)
+	s.Require().Equal(keeper.ICQCallbackID_OsmosisPool, submittedQuery.CallbackId)
 
 	// Verify tokenPrice.QueryInProgress after
-	tokenPriceAfter, err := s.App.ICQOracleKeeper.GetTokenPrice(s.Ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
+	tokenPriceAfter, err := s.App.ICQOracleKeeper.GetTokenPrice(
+		s.Ctx,
+		tokenPrice.BaseDenom,
+		tokenPrice.QuoteDenom,
+		tokenPrice.OsmosisPoolId,
+	)
 	s.Require().NoError(err)
 
 	s.Require().True(tokenPriceAfter.QueryInProgress, "query in progress")
 	s.Require().Equal(tokenPriceAfter.LastRequestTime, s.Ctx.BlockTime(), "query request time")
+
+	// Verify callback data contains the token price
+	var decodedTokenPrice types.TokenPrice
+	err = s.App.AppCodec().Unmarshal(submittedQuery.CallbackData, &decodedTokenPrice)
+	s.Require().NoError(err)
+	s.Require().Equal(tokenPrice.BaseDenom, decodedTokenPrice.BaseDenom)
+	s.Require().Equal(tokenPrice.QuoteDenom, decodedTokenPrice.QuoteDenom)
+	s.Require().Equal(tokenPrice.OsmosisPoolId, decodedTokenPrice.OsmosisPoolId)
+
+	// Verify timeout settings
+	expectedTimeout := time.Duration(params.UpdateIntervalSec) * time.Second
+	s.Require().Equal(expectedTimeout, submittedQuery.TimeoutDuration)
+	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, submittedQuery.TimeoutPolicy)
 }
 
-func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQBranches() {
+func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Errors() {
 	testCases := []struct {
 		name          string
 		setup         func()
 		tokenPrice    types.TokenPrice
 		expectedError string
 	}{
+		{
+			name: "token price not found",
+			setup: func() {
+				params := types.Params{
+					OsmosisChainId:      "osmosis-1",
+					OsmosisConnectionId: "connection-0",
+					UpdateIntervalSec:   60,
+				}
+				s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
+
+				// Token price will not be added to the store in this test
+			},
+			tokenPrice: types.TokenPrice{
+				BaseDenom:     "uatom",
+				QuoteDenom:    "uusdc",
+				OsmosisPoolId: 1,
+			},
+			expectedError: "token price not found",
+		},
 		{
 			name: "error submitting ICQ request",
 			setup: func() {
@@ -125,7 +143,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQBranches() {
 				QuoteDenom:    "uusdc",
 				OsmosisPoolId: 1,
 			},
-			expectedError: "Error submitting OsmosisClPool ICQ",
+			expectedError: "Error submitting OsmosisPool ICQ",
 		},
 		{
 			name: "error setting query in progress",
@@ -155,31 +173,6 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQBranches() {
 				OsmosisPoolId: 1,
 			},
 			expectedError: "Error updating token price query to in progress",
-		},
-		{
-			name: "successful submission",
-			setup: func() {
-				params := types.Params{
-					OsmosisChainId:      "osmosis-1",
-					OsmosisConnectionId: "connection-0",
-					UpdateIntervalSec:   60,
-				}
-				s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-
-				// Setup mock ICQ keeper with success response
-				s.mockICQKeeper = MockICQKeeper{
-					SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
-						return nil
-					},
-				}
-				s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
-			},
-			tokenPrice: types.TokenPrice{
-				BaseDenom:     "uatom",
-				QuoteDenom:    "uusdc",
-				OsmosisPoolId: 1,
-			},
-			expectedError: "",
 		},
 	}
 
@@ -220,126 +213,14 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQBranches() {
 	}
 }
 
-func (s *KeeperTestSuite) TestSubmitOsmosisCLPoolICQQueryData() {
-	var capturedQuery icqtypes.Query
-
-	// Setup mock ICQ keeper to capture the submitted query and prove flag
-	s.mockICQKeeper = MockICQKeeper{
-		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
-			capturedQuery = query
-			return nil
-		},
-	}
-	s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
-
-	// Set up test parameters
-	tokenPrice := types.TokenPrice{
-		BaseDenom:     "uatom",
-		QuoteDenom:    "uusdc",
-		OsmosisPoolId: 1,
-	}
-	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-
-	params := types.Params{
-		OsmosisChainId:      "osmosis-1",
-		OsmosisConnectionId: "connection-0",
-		UpdateIntervalSec:   60,
-	}
-	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-
-	// Submit ICQ request
-	err := s.App.ICQOracleKeeper.SubmitOsmosisPoolICQ(s.Ctx, tokenPrice)
-	s.Require().NoError(err)
-
-	// Verify the captured query data
-	s.Require().Equal(params.OsmosisChainId, capturedQuery.ChainId)
-	s.Require().Equal(params.OsmosisConnectionId, capturedQuery.ConnectionId)
-	s.Require().Equal(icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF, capturedQuery.QueryType)
-	s.Require().Equal(types.ModuleName, capturedQuery.CallbackModule)
-	s.Require().Equal(keeper.ICQCallbackID_OsmosisPool, capturedQuery.CallbackId)
-
-	// Verify request data format (pool key)
-	expectedRequestData := icqtypes.FormatOsmosisCLKeyPool(tokenPrice.OsmosisPoolId)
-	s.Require().Equal(expectedRequestData, capturedQuery.RequestData)
-
-	// Verify callback data contains the token price
-	var decodedTokenPrice types.TokenPrice
-	err = s.App.AppCodec().Unmarshal(capturedQuery.CallbackData, &decodedTokenPrice)
-	s.Require().NoError(err)
-	s.Require().Equal(tokenPrice.BaseDenom, decodedTokenPrice.BaseDenom)
-	s.Require().Equal(tokenPrice.QuoteDenom, decodedTokenPrice.QuoteDenom)
-	s.Require().Equal(tokenPrice.OsmosisPoolId, decodedTokenPrice.OsmosisPoolId)
-
-	// Verify timeout settings
-	expectedTimeout := time.Duration(params.UpdateIntervalSec) * time.Second
-	s.Require().Equal(expectedTimeout, capturedQuery.TimeoutDuration)
-	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, capturedQuery.TimeoutPolicy)
-}
-
-func (s *KeeperTestSuite) TestSubmitOsmosisGammPoolICQQueryData() {
-	var capturedQuery icqtypes.Query
-
-	// Setup mock ICQ keeper to capture the submitted query and prove flag
-	s.mockICQKeeper = MockICQKeeper{
-		SubmitICQRequestFn: func(ctx sdk.Context, query icqtypes.Query, forceUnique bool) error {
-			capturedQuery = query
-			return nil
-		},
-	}
-	s.App.ICQOracleKeeper.IcqKeeper = s.mockICQKeeper
-
-	// Set up test parameters
-	tokenPrice := types.TokenPrice{
-		BaseDenom:     "uatom",
-		QuoteDenom:    "uusdc",
-		OsmosisPoolId: 1,
-	}
-	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-
-	params := types.Params{
-		OsmosisChainId:      "osmosis-1",
-		OsmosisConnectionId: "connection-0",
-		UpdateIntervalSec:   60,
-	}
-	s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
-
-	// Submit ICQ request
-	err := s.App.ICQOracleKeeper.SubmitOsmosisPoolICQ(s.Ctx, tokenPrice)
-	s.Require().NoError(err)
-
-	// Verify the captured query data
-	s.Require().Equal(params.OsmosisChainId, capturedQuery.ChainId)
-	s.Require().Equal(params.OsmosisConnectionId, capturedQuery.ConnectionId)
-	s.Require().Equal(icqtypes.GAMM_STORE_QUERY_WITH_PROOF, capturedQuery.QueryType)
-	s.Require().Equal(types.ModuleName, capturedQuery.CallbackModule)
-	s.Require().Equal(keeper.ICQCallbackID_OsmosisPool, capturedQuery.CallbackId)
-
-	// Verify request data format (pool key)
-	expectedRequestData := icqtypes.FormatOsmosisGammKeyPool(tokenPrice.OsmosisPoolId)
-	s.Require().Equal(expectedRequestData, capturedQuery.RequestData)
-
-	// Verify callback data contains the token price
-	var decodedTokenPrice types.TokenPrice
-	err = s.App.AppCodec().Unmarshal(capturedQuery.CallbackData, &decodedTokenPrice)
-	s.Require().NoError(err)
-	s.Require().Equal(tokenPrice.BaseDenom, decodedTokenPrice.BaseDenom)
-	s.Require().Equal(tokenPrice.QuoteDenom, decodedTokenPrice.QuoteDenom)
-	s.Require().Equal(tokenPrice.OsmosisPoolId, decodedTokenPrice.OsmosisPoolId)
-
-	// Verify timeout settings
-	expectedTimeout := time.Duration(params.UpdateIntervalSec) * time.Second
-	s.Require().Equal(expectedTimeout, capturedQuery.TimeoutDuration)
-	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, capturedQuery.TimeoutPolicy)
-}
-
 // Helper function to create mock pool data
-func (s *KeeperTestSuite) createMockPoolData(baseDenom string, quoteDenom string) []byte {
-	pool := cltypes.OsmosisConcentratedLiquidityPool{
-		Token0: baseDenom,
-		Token1: quoteDenom,
-		// The square root of the price
-		// For a price of 1.5, 1.224744871 is the square root
-		CurrentSqrtPrice: osmomath.NewBigDecWithPrec(1224744871, 9),
+func (s *KeeperTestSuite) createMockTwapData(baseDenom string, quoteDenom string) []byte {
+	pool := types.OsmosisTwapRecord{
+		Asset0Denom: baseDenom,
+		Asset1Denom: quoteDenom,
+
+		P0LastSpotPrice: sdk.MustNewDecFromStr("1.1"),
+		P1LastSpotPrice: sdk.MustNewDecFromStr("0.9090909091"), // 1 / 1.1
 	}
 
 	bz, err := proto.Marshal(&pool)
@@ -429,7 +310,7 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 				s.Require().NoError(err)
 
 				// Create mock pool data with expected price of 2.0
-				poolData := s.createMockPoolData(
+				poolData := s.createMockTwapData(
 					baseTokenPrice.OsmosisBaseDenom,
 					baseTokenPrice.OsmosisQuoteDenom,
 				)
@@ -464,7 +345,7 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 				s.Require().NoError(err)
 
 				// Create pool with swapped denoms
-				poolData := s.createMockPoolData(
+				poolData := s.createMockTwapData(
 					baseTokenPrice.OsmosisQuoteDenom, // Swapped!
 					baseTokenPrice.OsmosisBaseDenom,  // Swapped!
 				)
@@ -642,7 +523,7 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 				s.Require().NoError(err)
 
 				// Create valid pool data
-				poolData := s.createMockPoolData(
+				poolData := s.createMockTwapData(
 					baseTokenPrice.OsmosisBaseDenom,
 					baseTokenPrice.OsmosisQuoteDenom,
 				)
@@ -697,20 +578,20 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 	testCases := []struct {
 		name          string
 		tokenPrice    types.TokenPrice
-		poolData      []byte
+		twapData      []byte
 		expectedPrice math.LegacyDec
 		expectedError string
 	}{
 		{
 			name:          "invalid pool data",
 			tokenPrice:    baseTokenPrice,
-			poolData:      []byte("invalid pool data"),
+			twapData:      []byte("invalid pool data"),
 			expectedError: "proto: wrong wireType",
 		},
 		{
 			name:       "successful price calculation with equal decimals",
 			tokenPrice: baseTokenPrice,
-			poolData: s.createMockPoolData(
+			twapData: s.createMockTwapData(
 				baseTokenPrice.OsmosisBaseDenom,
 				baseTokenPrice.OsmosisQuoteDenom,
 			),
@@ -727,7 +608,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenomDecimals:  8, // BTC has 8 decimals
 				QuoteDenomDecimals: 6, // USDC has 6 decimals
 			},
-			poolData: s.createMockPoolData(
+			twapData: s.createMockTwapData(
 				"ibc/satoshi",
 				"ibc/uusdc",
 			),
@@ -744,7 +625,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenomDecimals:  6, // ATOM has 6 decimals
 				QuoteDenomDecimals: 8, // Quote has 8 decimals
 			},
-			poolData: s.createMockPoolData(
+			twapData: s.createMockTwapData(
 				"ibc/uatom",
 				"ibc/uusdc",
 			),
@@ -761,7 +642,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenomDecimals:  8,
 				QuoteDenomDecimals: 6,
 			},
-			poolData: s.createMockPoolData(
+			twapData: s.createMockTwapData(
 				"ibc/uusdc",
 				"ibc/uatom",
 			),
@@ -778,7 +659,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 				BaseDenomDecimals:  6,
 				QuoteDenomDecimals: 6,
 			},
-			poolData: s.createMockPoolData(
+			twapData: s.createMockTwapData(
 				"ibc/uatom",
 				"uusdc",
 			),
@@ -788,7 +669,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			spotPrice, err := keeper.UnmarshalSpotPriceFromOsmosis(s.App.ICQOracleKeeper, tc.tokenPrice, tc.poolData)
+			spotPrice, err := keeper.UnmarshalSpotPriceFromOsmosis(s.App.ICQOracleKeeper, tc.tokenPrice, tc.twapData)
 
 			if tc.expectedError != "" {
 				s.Require().ErrorContains(err, tc.expectedError)
