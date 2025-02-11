@@ -8,12 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v25/utils"
-	deps "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types"
-	cltypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/concentratedliquidity"
-	gammtypes "github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/gamm"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
 )
@@ -69,24 +65,17 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 		return errorsmod.Wrapf(err, "Error serializing tokenPrice '%+v' to bytes", tokenPrice)
 	}
 
-	var queryType string
-	var requestData []byte
-	switch tokenPrice.OsmosisPoolType {
-	case types.GAMM:
-		queryType = icqtypes.GAMM_STORE_QUERY_WITH_PROOF
-		requestData = icqtypes.FormatOsmosisGammKeyPool(tokenPrice.OsmosisPoolId)
-	case types.CONCENTRATED_LIQUIDITY:
-		queryType = icqtypes.CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF
-		requestData = icqtypes.FormatOsmosisCLKeyPool(tokenPrice.OsmosisPoolId)
-	default:
-		return errorsmod.Wrapf(err, "Unsupported pool type: %d", tokenPrice.OsmosisPoolType)
-	}
+	queryData := icqtypes.FormatOsmosisMostRecentTWAPKey(
+		tokenPrice.OsmosisPoolId,
+		tokenPrice.OsmosisBaseDenom,
+		tokenPrice.OsmosisQuoteDenom,
+	)
 
 	query := icqtypes.Query{
 		ChainId:         params.OsmosisChainId,
 		ConnectionId:    params.OsmosisConnectionId,
-		QueryType:       queryType,
-		RequestData:     requestData,
+		QueryType:       icqtypes.OSMOSIS_TWAP_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_OsmosisPool,
 		CallbackData:    tokenPriceBz,
@@ -105,7 +94,7 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 	return nil
 }
 
-// Callback from Osmosis spot price query
+// Callback handler for the Omsosis pool spot price query.
 func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	var tokenPrice types.TokenPrice
 	if err := k.cdc.Unmarshal(query.CallbackData, &tokenPrice); err != nil {
@@ -124,7 +113,7 @@ func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 		return nil
 	}
 
-	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisPool(k, tokenPrice, args)
+	newSpotPrice, err := UnmarshalSpotPriceFromOsmosis(k, tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
@@ -135,37 +124,61 @@ func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 }
 
 // Unmarshals the Osmosis pool query response and extracts the actual spot price
-// Supports both CL and GAMM pools
-func UnmarshalSpotPriceFromOsmosisPool(k Keeper, tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
-	var pool deps.Pool
-	var gammPool gammtypes.OsmosisGammPool
-	var clPool cltypes.OsmosisConcentratedLiquidityPool
+// The query response returns an Osmosis TwapRecord for the associated pool denom's
+//
+// The assets in the response are identified by indicies and are sorted alphabetically
+// (e.g. if the two denom's are ibc/AXXX, and ibc/BXXX,
+// then Asset0Denom is ibc/AXXX and Asset1Denom is ibc/BXXX)
+//
+// The price fields (P0LastSpotPrice and P1LastSpotPrice) represent the relative
+// ratios of tokens in the pool
+//
+//	P0LastSpotPrice gives the ratio of Asset0Denom / Asset1Denom
+//	P1LastSpotPrice gives the ratio of Asset1Denom / Asset0Denom
+//
+// When storing down the price, we want to store down the ratio of QuoteDenom to BaseDenom
+// Meaning, if Asset0Denom is the QuoteDenom, we want to store P0LastSpotPrice, and vice versa
+func UnmarshalSpotPriceFromOsmosis(k Keeper, tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
+	var twapRecord types.OsmosisTwapRecord
 
-	switch tokenPrice.OsmosisPoolType {
-	case types.GAMM:
-		if err := k.cdc.UnmarshalInterface(queryResponseBz, &gammPool); err != nil {
-			return math.LegacyZeroDec(), err
-		}
-		pool = &gammPool
-	case types.CONCENTRATED_LIQUIDITY:
-		if err := proto.Unmarshal(queryResponseBz, &clPool); err != nil {
-			return math.LegacyZeroDec(), err
-		}
-		pool = &clPool
-	default:
-		return price, fmt.Errorf("Unsupported pool type: %d", tokenPrice.OsmosisPoolType)
+	if err := twapRecord.Unmarshal(queryResponseBz); err != nil {
+		return price, errorsmod.Wrap(err, "unable to unmarshal the query response")
 	}
 
-	rawSpotPrice, err := pool.CalcSpotPrice(tokenPrice.OsmosisQuoteDenom, tokenPrice.OsmosisBaseDenom)
-	if err != nil {
+	if err := AssertTwapAssetsMatchTokenPrice(twapRecord, tokenPrice); err != nil {
 		return price, err
 	}
 
+	// Get the associate "SpotPrice" from the twap record, based on the asset ordering
+	// The "SpotPrice" is actually a ratio of the assets in the pool
+	if twapRecord.Asset0Denom == tokenPrice.QuoteDenom {
+		price = twapRecord.P0LastSpotPrice
+	} else {
+		price = twapRecord.P1LastSpotPrice
+	}
+
 	return AdjustSpotPriceForDecimals(
-		rawSpotPrice,
+		price,
 		tokenPrice.BaseDenomDecimals,
 		tokenPrice.QuoteDenomDecimals,
 	), nil
+}
+
+// Helper function to confirm that the two assets in the twap record match the assets in the token price
+// The assets in the twap record are sorted alphabetically, so we have to check both orderings
+func AssertTwapAssetsMatchTokenPrice(twapRecord types.OsmosisTwapRecord, tokenPrice types.TokenPrice) error {
+	baseDenomFirst := twapRecord.Asset0Denom == tokenPrice.OsmosisBaseDenom
+	quoteDenomSecond := twapRecord.Asset1Denom == tokenPrice.OsmosisQuoteDenom
+
+	quoteDenomFirst := twapRecord.Asset0Denom == tokenPrice.OsmosisQuoteDenom
+	baseDenomSecond := twapRecord.Asset1Denom == tokenPrice.OsmosisBaseDenom
+
+	if (baseDenomFirst && quoteDenomSecond) || (quoteDenomFirst && baseDenomSecond) {
+		return nil
+	}
+
+	return fmt.Errorf("Assets in query response (%s, %s) do not match denom's from token price (%s, %s)",
+		twapRecord.Asset0Denom, twapRecord.Asset1Denom, tokenPrice.OsmosisBaseDenom, tokenPrice.OsmosisQuoteDenom)
 }
 
 // AdjustSpotPriceForDecimals corrects the spot price to account for different decimal places between tokens
