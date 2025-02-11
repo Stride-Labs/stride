@@ -26,19 +26,19 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgUpdateParams{},
 	)
 
-	proto.RegisterType((*gamm.OsmosisGammPool)(nil), "gamm.OsmosisGammPool")
-
 	registry.RegisterInterface(
 		"osmosis.gamm.v1beta1.PoolI",
+		(*gamm.PoolI)(nil),
+		&gamm.OsmosisGammPool{},
+	)
+
+	registry.RegisterInterface(
+		"osmosis.gamm.v1beta1.CFMMPoolI",
 		(*gamm.CFMMPoolI)(nil),
 		&gamm.OsmosisGammPool{},
 	)
 
-	// Add explicit registration for OsmosisGammPool
-	registry.RegisterImplementations(
-		(*proto.Message)(nil),
-		&gamm.OsmosisGammPool{},
-	)
+	proto.RegisterType((*gamm.OsmosisGammPool)(nil), "osmosis.gamm.v1beta1.Pool")
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
