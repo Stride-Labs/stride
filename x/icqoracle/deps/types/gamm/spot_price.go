@@ -26,7 +26,7 @@ import (
 // Forked from https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/gamm/pool-models/balancer/pool.go#L617-L649 under the Apache v2.0 License.
 // Modified to return math.LegacyDec instead of osmomath.BigDec.
 // Removed unused ctx param.
-func (p OsmosisGammPool) SpotPrice(quoteAssetDenom string, baseAssetDenom string) (spotPrice math.LegacyDec, err error) {
+func (p OsmosisGammPool) CalcSpotPrice(quoteAssetDenom string, baseAssetDenom string) (spotPrice math.LegacyDec, err error) {
 	quote, base, err := p.parsePoolAssetsByDenoms(quoteAssetDenom, baseAssetDenom)
 	if err != nil {
 		return math.LegacyDec{}, err

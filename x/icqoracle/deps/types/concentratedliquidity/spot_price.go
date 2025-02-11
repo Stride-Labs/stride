@@ -15,7 +15,7 @@ import (
 // Forked from https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/model/pool.go#L108-L129 under the Apache v2.0 License.
 // Modified to return math.LegacyDec instead of osmomath.BigDec.
 // Removed unused ctx param.
-func (p OsmosisConcentratedLiquidityPool) SpotPrice(quoteAssetDenom string, baseAssetDenom string) (math.LegacyDec, error) {
+func (p OsmosisConcentratedLiquidityPool) CalcSpotPrice(quoteAssetDenom string, baseAssetDenom string) (math.LegacyDec, error) {
 	// validate base asset is in pool
 	if baseAssetDenom != p.Token0 && baseAssetDenom != p.Token1 {
 		return math.LegacyDec{}, fmt.Errorf("base asset denom (%s) is not in pool with (%s, %s) pair", baseAssetDenom, p.Token0, p.Token1)

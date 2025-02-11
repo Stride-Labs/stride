@@ -124,7 +124,7 @@ func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 		return nil
 	}
 
-	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisPool(tokenPrice, args)
+	newSpotPrice, err := UnmarshalSpotPriceFromOsmosisPool(k, tokenPrice, args)
 	if err != nil {
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
@@ -136,14 +136,14 @@ func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 
 // Unmarshals the Osmosis pool query response and extracts the actual spot price
 // Supports both CL and GAMM pools
-func UnmarshalSpotPriceFromOsmosisPool(tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
+func UnmarshalSpotPriceFromOsmosisPool(k Keeper, tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
 	var pool deps.Pool
 	var gammPool gammtypes.OsmosisGammPool
 	var clPool cltypes.OsmosisConcentratedLiquidityPool
 
 	switch tokenPrice.OsmosisPoolType {
 	case types.GAMM:
-		if err := proto.Unmarshal(queryResponseBz, &gammPool); err != nil {
+		if err := k.cdc.UnmarshalInterface(queryResponseBz, &gammPool); err != nil {
 			return math.LegacyZeroDec(), err
 		}
 		pool = &gammPool
@@ -156,7 +156,7 @@ func UnmarshalSpotPriceFromOsmosisPool(tokenPrice types.TokenPrice, queryRespons
 		return price, fmt.Errorf("Unsupported pool type: %d", tokenPrice.OsmosisPoolType)
 	}
 
-	rawSpotPrice, err := pool.SpotPrice(tokenPrice.OsmosisQuoteDenom, tokenPrice.OsmosisBaseDenom)
+	rawSpotPrice, err := pool.CalcSpotPrice(tokenPrice.OsmosisQuoteDenom, tokenPrice.OsmosisBaseDenom)
 	if err != nil {
 		return price, err
 	}

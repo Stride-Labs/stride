@@ -796,7 +796,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			spotPrice, err := keeper.UnmarshalSpotPriceFromOsmosisPool(tc.tokenPrice, tc.poolData)
+			spotPrice, err := keeper.UnmarshalSpotPriceFromOsmosisPool(s.App.ICQOracleKeeper, tc.tokenPrice, tc.poolData)
 
 			if tc.expectedError != "" {
 				s.Require().ErrorContains(err, tc.expectedError)

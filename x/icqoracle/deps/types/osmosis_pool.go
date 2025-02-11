@@ -8,5 +8,5 @@ import (
 type Pool interface {
 	// SpotPrice returns the spot price of the pool given a quote and base asset denom
 	// Returns math.LegacyDec for the spot price and error if the operation fails
-	SpotPrice(quoteAssetDenom string, baseAssetDenom string) (math.LegacyDec, error)
+	CalcSpotPrice(quoteAssetDenom string, baseAssetDenom string) (math.LegacyDec, error)
 }
