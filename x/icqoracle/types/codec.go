@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	govcodec "github.com/cosmos/cosmos-sdk/x/gov/codec"
-	proto "github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/gamm"
 )
@@ -37,8 +36,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		(*gamm.CFMMPoolI)(nil),
 		&gamm.OsmosisGammPool{},
 	)
-
-	proto.RegisterType((*gamm.OsmosisGammPool)(nil), "osmosis.gamm.v1beta1.Pool")
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
