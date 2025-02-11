@@ -6,16 +6,6 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v25/x/icqoracle/types";
 
-// The type of the Osmosis pool (gamm or CL), needed to determine the ICQ format
-enum OsmosisPoolType {
-  option (gogoproto.goproto_enum_prefix) = false;
-
-  // Gamm (Balancer) pool
-  GAMM = 0;
-  // Concentrated liquidity pool
-  CONCENTRATED_LIQUIDITY = 1;
-}
-
 // TokenPrice stores latest price data for a token
 message TokenPrice {
   // Base denom on Stride
@@ -32,25 +22,23 @@ message TokenPrice {
   string osmosis_quote_denom = 6;
   // Pool ID on Osmosis
   uint64 osmosis_pool_id = 7;
-  // Osmosis pool type (gamm or CL)
-  OsmosisPoolType osmosis_pool_type = 8;
 
   // Spot price of base_denom denominated in quote_denom
-  string spot_price = 9 [
+  string spot_price = 8 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Last time a query request was submitted
-  google.protobuf.Timestamp last_request_time = 10
+  google.protobuf.Timestamp last_request_time = 9
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Last time a query response was received
-  google.protobuf.Timestamp last_response_time = 11
+  google.protobuf.Timestamp last_response_time = 10
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress
-  bool query_in_progress = 12;
+  bool query_in_progress = 11;
 }
 
 // OracleParams stores global oracle parameters

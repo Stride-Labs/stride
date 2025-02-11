@@ -104,23 +104,21 @@ message TokenPriceResponse {
   string osmosis_quote_denom = 8;
   // Pool ID on Osmosis
   uint64 osmosis_pool_id = 9;
-  // Osmosis pool type (gamm or CL)
-  OsmosisPoolType osmosis_pool_type = 10;
 
   // Spot price of base_denom denominated in quote_denom
-  string spot_price = 11 [
+  string spot_price = 10 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Last time a query request was submitted
-  google.protobuf.Timestamp last_request_time = 12
+  google.protobuf.Timestamp last_request_time = 11
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Last time a query response was received
-  google.protobuf.Timestamp last_response_time = 13
+  google.protobuf.Timestamp last_response_time = 12
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress
-  bool query_in_progress = 14;
+  bool query_in_progress = 13;
 }
