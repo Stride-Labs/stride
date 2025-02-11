@@ -557,6 +557,9 @@ describe("x/icqoracle", () => {
             osmosisBaseDenom: strdDenomOnOsmosis,
             osmosisQuoteDenom: "uosmo",
             osmosisPoolId: osmoStrdPoolId,
+            osmosisPoolType:
+              stridejs.types.stride.icqoracle.OsmosisPoolType
+                .CONCENTRATED_LIQUIDITY,
           },
         ),
       ],
@@ -589,6 +592,8 @@ describe("x/icqoracle", () => {
             osmosisBaseDenom: atomDenomOnOsmosis,
             osmosisQuoteDenom: "uosmo",
             osmosisPoolId: osmoAtomPoolId,
+            osmosisPoolType:
+              stridejs.types.stride.icqoracle.OsmosisPoolType.GAMM,
           },
         ),
       ],
