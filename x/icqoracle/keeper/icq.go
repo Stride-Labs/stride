@@ -118,6 +118,9 @@ func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
+	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPool",
+		"Price of %s in terms of %s: %vs", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, newSpotPrice))
+
 	k.SetQueryComplete(ctx, tokenPrice, newSpotPrice)
 
 	return nil
