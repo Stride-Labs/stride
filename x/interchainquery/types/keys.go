@@ -2,9 +2,6 @@ package types
 
 import (
 	fmt "fmt"
-	"strconv"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -39,11 +36,7 @@ const (
 	// The bank store is key'd by the account address
 	BANK_STORE_QUERY_WITH_PROOF = "store/bank/key"
 	// The Osmosis twap store - key'd by the pool ID and denom's
-	TWAP_STORE_QUERY_WITH_PROOF = "store/twap/key"
-	// The Osmosis concentrated liquidity store
-	CONCENTRATEDLIQUIDITY_STORE_QUERY_WITH_PROOF = "store/concentratedliquidity/key"
-	// The Osmosis gamm store
-	GAMM_STORE_QUERY_WITH_PROOF = "store/gamm/key"
+	OSMOSIS_TWAP_STORE_QUERY_WITH_PROOF = "store/twap/key"
 )
 
 var (
@@ -70,28 +63,4 @@ func FormatOsmosisMostRecentTWAPKey(poolId uint64, denom1, denom2 string) []byte
 
 	poolIdBz := fmt.Sprintf("%0.20d", poolId)
 	return []byte(fmt.Sprintf("%s%s%s%s%s%s", OsmosisMostRecentTWAPsPrefix, poolIdBz, OsmosisKeySeparator, denom1, OsmosisKeySeparator, denom2))
-}
-
-// Source: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/types/keys.go#L227-L235
-// Used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/pool.go#L117-L130
-// Which is used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/concentrated-liquidity/pool.go#L179-L209
-//
-// CL Pool Prefix Keys
-// Maps a pool id to a pool struct
-func FormatOsmosisCLKeyPool(poolId uint64) []byte {
-	// Start with PoolPrefix initialized
-	poolPrefix := []byte{0x03}
-	// Directly append the string representation of poolId as bytes
-	return strconv.AppendUint(poolPrefix, poolId, 10)
-}
-
-// Source: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/gamm/types/key.go#L60-L62
-// Used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/gamm/keeper/pool.go#L53-L72
-// Which is used by: https://github.com/osmosis-labs/osmosis/blob/v27.0.0/x/gamm/keeper/pool.go#L30-L33
-//
-// Gamm Pool Prefix Keys
-// Maps a pool ID to a pool struct
-func FormatOsmosisGammKeyPool(poolId uint64) []byte {
-	keyPrefixPools := []byte{0x02}
-	return append(keyPrefixPools, sdk.Uint64ToBigEndian(poolId)...)
 }

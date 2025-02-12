@@ -8,8 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	govcodec "github.com/cosmos/cosmos-sdk/x/gov/codec"
-
-	"github.com/Stride-Labs/stride/v25/x/icqoracle/deps/types/gamm"
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
@@ -23,18 +21,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgRegisterTokenPriceQuery{},
 		&MsgRemoveTokenPriceQuery{},
 		&MsgUpdateParams{},
-	)
-
-	registry.RegisterInterface(
-		"osmosis.gamm.v1beta1.PoolI",
-		(*gamm.PoolI)(nil),
-		&gamm.OsmosisGammPool{},
-	)
-
-	registry.RegisterInterface(
-		"osmosis.gamm.v1beta1.CFMMPoolI",
-		(*gamm.CFMMPoolI)(nil),
-		&gamm.OsmosisGammPool{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

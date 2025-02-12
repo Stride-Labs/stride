@@ -34,16 +34,13 @@ func GetTxCmd() *cobra.Command {
 
 func CmdAddTokenPrice() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "add-token-price [base-denom] [quote-denom] " +
-			"[base-denom-decimals] [quote-denom-decimals] " +
-			"[osmosis-pool-id] [osmosis-pool-type] " +
-			"[osmosis-base-denom] [osmosis-quote-denom]",
+		Use:   "add-token-price [base-denom] [quote-denom] [base-denom-decimals] [quote-denom-decimals] [osmosis-pool-id] [osmosis-base-denom] [osmosis-quote-denom]",
 		Short: "Add a token to price tracking",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Add a token to price tracking.
 
 Example:
-  $ %[1]s tx %[2]s add-token-price uosmo uatom 6 6 123 GAMM uosmo ibc/... --from admin
+  $ %[1]s tx %[2]s add-token-price uosmo uatom 6 6 123 uosmo ibc/... --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(5),
@@ -68,11 +65,6 @@ Example:
 				return fmt.Errorf("Error parsing osmosis pool ID as uint64: %w", err)
 			}
 
-			osmosisPoolType, ok := types.OsmosisPoolType_value[args[5]]
-			if !ok {
-				return fmt.Errorf("Invalid osmosis pool type: %s", args[5])
-			}
-
 			msg := types.NewMsgRegisterTokenPriceQuery(
 				clientCtx.GetFromAddress().String(),
 				args[0],
@@ -80,9 +72,8 @@ Example:
 				baseDenomDecimls,
 				quoteDenomDecimls,
 				osmosisPoolId,
-				types.OsmosisPoolType(osmosisPoolType),
+				args[5],
 				args[6],
-				args[7],
 			)
 
 			if err := msg.ValidateBasic(); err != nil {
