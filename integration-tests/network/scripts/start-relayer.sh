@@ -6,6 +6,7 @@ source scripts/constants.sh
 
 CHAIN_ID_A=${CHAIN_NAME_A}-test-1
 CHAIN_ID_B=${CHAIN_NAME_B}-test-1
+RELAYER_DEPENDENCY=${RELAYER_DEPENDENCY:-}
 
 wait_for_node $CHAIN_NAME_A 
 wait_for_node $CHAIN_NAME_B
@@ -20,13 +21,24 @@ restore_keys() {
     rly keys restore $CHAIN_NAME_B $CHAIN_NAME_B "$mnemonic_b"
 }
 
+wait_for_turn() {
+    if [[ -z "$RELAYER_DEPENDENCY" ]]; then 
+        echo "First relayer in sequence"
+        return
+    fi
+    until nslookup ${RELAYER_DEPENDENCY}.${NAMESPACE}.svc.cluster.local; do 
+        echo Waiting for $RELAYER_DEPENDENCY to start...
+        sleep 2 
+    done
+}
+
 create_path() {
-    # If there aren't any channels yet, create a new path
-    if ! rly q channels $CHAIN_NAME_A 2>/dev/null | grep -q $CHAIN_ID_A; then
+    # If there aren't any channels between the two chains yet, create a new path
+    if ! rly q channels $CHAIN_NAME_A $CHAIN_NAME_B 2>/dev/null | grep -q STATE_OPEN; then
         echo "Creating path..."
         rly tx link $PATH_NAME
     else
-        # Otherwise, add the exising connection to the config
+        # Otherwise, add the existing connection to the config
         client_id_a=$(rly q clients $CHAIN_NAME_A | grep $CHAIN_ID_B | jq -r '.client_id')
         client_id_b=$(rly q clients $CHAIN_NAME_B | grep $CHAIN_ID_A | jq -r '.client_id')
 
@@ -50,6 +62,7 @@ main() {
     cp configs/relayer.yaml ${relayer_config_file}
 
     restore_keys
+    wait_for_turn
     create_path
 
     echo "Starting relayer..."

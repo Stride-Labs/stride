@@ -4,8 +4,11 @@ import (
 	"context"
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 )
@@ -53,4 +56,15 @@ func (ms msgServer) RemoveTokenPriceQuery(goCtx context.Context, msg *types.MsgR
 	ms.Keeper.RemoveTokenPrice(ctx, msg.BaseDenom, msg.QuoteDenom, msg.OsmosisPoolId)
 
 	return &types.MsgRemoveTokenPriceQueryResponse{}, nil
+}
+
+func (k msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	if k.GetAuthority() != req.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", k.GetAuthority(), req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	k.SetParams(ctx, req.Params)
+
+	return &types.MsgUpdateParamsResponse{}, nil
 }

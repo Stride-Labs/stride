@@ -4,6 +4,14 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@cosmjs/amino': 0.32.4
+  '@cosmjs/encoding': 0.32.4
+  '@cosmjs/math': 0.32.4
+  '@cosmjs/proto-signing': 0.32.4
+  '@cosmjs/stargate': 0.32.4
+  '@cosmjs/tendermint-rpc': 0.32.4
+
 importers:
 
   .:
@@ -38,12 +46,15 @@ importers:
       jest:
         specifier: 29.7.0
         version: 29.7.0(@types/node@20.14.11)(ts-node@10.9.2(@types/node@20.14.11)(typescript@5.5.3))
+      osmojs:
+        specifier: 16.15.0
+        version: 16.15.0
       prettier:
         specifier: 3.3.3
         version: 3.3.3
       stridejs:
-        specifier: github:Stride-Labs/stridejs#f60d3e2d6c3b0ddbbb5522ccb57a8ae33ee67bfc
-        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/f60d3e2d6c3b0ddbbb5522ccb57a8ae33ee67bfc
+        specifier: github:Stride-Labs/stridejs#6e75e69775bef6a0184cea3a9ff95ba96a505da1
+        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/6e75e69775bef6a0184cea3a9ff95ba96a505da1
       typescript:
         specifier: 5.5.3
         version: 5.5.3
@@ -1489,6 +1500,9 @@ packages:
     resolution: {integrity: sha512-1FlR+gjXK7X+AsAHso35MnyN5KqGwJRi/31ft6x0M194ht7S+rWAvd7PHss9xSKMzE0asv1pyIHaJYq+BbacAQ==}
     engines: {node: '>=12'}
 
+  osmojs@16.15.0:
+    resolution: {integrity: sha512-ERIXRzSF+EkS+RNFSzhTurr/EfWnpNfV6b1onf0MXd+YA3X3t8WbkboXg9+/ol61HDEGjugEGzRtz6sFvwaC3w==}
+
   p-limit@2.3.0:
     resolution: {integrity: sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w==}
     engines: {node: '>=6'}
@@ -1669,8 +1683,8 @@ packages:
   std-env@3.7.0:
     resolution: {integrity: sha512-JPbdCEQLj1w5GilpiHAx3qJvFndqybBysA3qUOnznweH4QbNYUsW/ea8QzSrnh0vNsezMMw5bcVool8lM0gwzg==}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/f60d3e2d6c3b0ddbbb5522ccb57a8ae33ee67bfc:
-    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/f60d3e2d6c3b0ddbbb5522ccb57a8ae33ee67bfc}
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/6e75e69775bef6a0184cea3a9ff95ba96a505da1:
+    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/6e75e69775bef6a0184cea3a9ff95ba96a505da1}
     version: 0.11.4
 
   string-length@4.0.2:
@@ -3654,6 +3668,18 @@ snapshots:
     dependencies:
       mimic-fn: 4.0.0
 
+  osmojs@16.15.0:
+    dependencies:
+      '@cosmjs/amino': 0.32.4
+      '@cosmjs/proto-signing': 0.32.4
+      '@cosmjs/stargate': 0.32.4
+      '@cosmjs/tendermint-rpc': 0.32.4
+      '@cosmology/lcd': 0.13.4
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
+
   p-limit@2.3.0:
     dependencies:
       p-try: 2.2.0
@@ -3825,7 +3851,7 @@ snapshots:
 
   std-env@3.7.0: {}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/f60d3e2d6c3b0ddbbb5522ccb57a8ae33ee67bfc:
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/6e75e69775bef6a0184cea3a9ff95ba96a505da1:
     dependencies:
       '@cosmjs/amino': 0.32.4
       '@cosmjs/encoding': 0.32.4
