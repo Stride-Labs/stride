@@ -12,11 +12,13 @@ import (
 func (s *KeeperTestSuite) TestRegisterTokenPriceQuery() {
 	// Create a new token price query
 	msg := types.MsgRegisterTokenPriceQuery{
-		BaseDenom:         "uatom",
-		QuoteDenom:        "uusdc",
-		OsmosisPoolId:     1,
-		OsmosisBaseDenom:  "ibc/uatom",
-		OsmosisQuoteDenom: "uusdc",
+		BaseDenom:          "uatom",
+		QuoteDenom:         "uusdc",
+		BaseDenomDecimals:  6,
+		QuoteDenomDecimals: 6,
+		OsmosisPoolId:      1,
+		OsmosisBaseDenom:   "ibc/uatom",
+		OsmosisQuoteDenom:  "uusdc",
 	}
 	_, err := s.GetMsgServer().RegisterTokenPriceQuery(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().NoError(err, "no error expected when registering token price query")
@@ -26,6 +28,8 @@ func (s *KeeperTestSuite) TestRegisterTokenPriceQuery() {
 
 	s.Require().Equal(msg.BaseDenom, tokenPrice.BaseDenom, "base denom")
 	s.Require().Equal(msg.QuoteDenom, tokenPrice.QuoteDenom, "quote denom")
+	s.Require().Equal(msg.BaseDenomDecimals, tokenPrice.BaseDenomDecimals, "base denom decimals")
+	s.Require().Equal(msg.QuoteDenomDecimals, tokenPrice.QuoteDenomDecimals, "quote denom decimals")
 	s.Require().Equal(msg.OsmosisPoolId, tokenPrice.OsmosisPoolId, "osmosis pool id")
 	s.Require().Equal(msg.OsmosisBaseDenom, tokenPrice.OsmosisBaseDenom, "osmosis base denom")
 	s.Require().Equal(msg.OsmosisQuoteDenom, tokenPrice.OsmosisQuoteDenom, "osmosis quote denom")
