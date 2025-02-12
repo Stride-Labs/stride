@@ -1,6 +1,6 @@
 import { Secp256k1HdWallet } from "@cosmjs/amino";
 import { DirectSecp256k1HdWallet, Registry } from "@cosmjs/proto-signing";
-import { GasPrice, SigningStargateClient } from "@cosmjs/stargate";
+import { Event, GasPrice, SigningStargateClient } from "@cosmjs/stargate";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
 import {
   cosmosProtoRegistry,
@@ -25,7 +25,14 @@ import {
   newGammPoolMsg,
   newRegisterTokenPriceQueryMsg,
 } from "./msgs";
-import { submitTxAndExpectSuccess, transfer, waitForChain } from "./utils";
+import {
+  getValueFromEvents,
+  submitTxAndExpectSuccess,
+  transfer,
+  waitForChain,
+} from "./utils";
+import { ProposalStatus, VoteOption } from "osmojs/cosmos/gov/v1beta1/gov";
+import { ModuleAccount } from "osmojs/cosmos/auth/v1beta1/auth";
 
 const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
@@ -108,7 +115,7 @@ beforeAll(async () => {
     // That's because the tx contains the direct encoding anyway, and also attaches a signature on the amino encoding.
     // The mempool then converts from direct to amino to verify the signature.
     // Therefore if the signature verification passes, we can be sure that both amino and direct are working properly.
-    const signer = await Secp256k1HdWallet.fromMnemonic(mnemonic, {
+    const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
       prefix: "stride",
     });
 
@@ -276,8 +283,9 @@ describe("ibc", () => {
   }, 30_000);
 });
 
-describe.skip("x/stakeibc", () => {
-  test("Registration", async () => {
+describe("x/stakeibc", () => {
+  // skip due to amino bullshit
+  test.skip("Registration", async () => {
     const stridejs = accounts.admin;
 
     const msg =
@@ -760,20 +768,26 @@ describe("buyback and burn", () => {
     expect(Number(price)).toBe(2.5);
   }, 240_000);
 
+  // skip due to amino bullshit
   test.skip("update params", async () => {
     const stridejs = accounts.user;
+
+    const { params } = await stridejs.query.stride.icqoracle.params({});
+    params.priceExpirationTimeoutSec += 1n;
+
+    const govAccount =
+      await stridejs.query.cosmos.auth.v1beta1.moduleAccountByName({
+        name: "gov",
+      });
+    const govAddress = (govAccount.account as ModuleAccount).baseAccount
+      ?.address!;
 
     const tx = await stridejs.signAndBroadcast([
       stridejs.types.cosmos.gov.v1.MessageComposer.withTypeUrl.submitProposal({
         messages: [
           stridejs.types.stride.icqoracle.MsgUpdateParams.toProtoMsg({
-            authority: "", // TODO get x/gov address
-            params: {
-              osmosisChainId: "osmosis-test-1",
-              osmosisConnectionId: "connection-1",
-              updateIntervalSec: 10n,
-              priceExpirationTimeoutSec: 60n,
-            },
+            authority: govAddress,
+            params,
           }),
         ],
         initialDeposit: coinsFromString(`10000000${USTRD}`),
@@ -788,8 +802,71 @@ describe("buyback and burn", () => {
     }
     expect(tx.code).toBe(0);
 
-    // TODO vote
-  });
+    const proposalId = BigInt(
+      getValueFromEvents(tx.events, "submit_proposal.proposal_id"),
+    );
+
+    const txs = await Promise.all([
+      accounts.val1.signAndBroadcast(
+        [
+          stridejs.types.cosmos.gov.v1.MessageComposer.withTypeUrl.vote({
+            proposalId: proposalId,
+            voter: accounts.val1.address,
+            option: VoteOption.VOTE_OPTION_YES,
+            metadata: "",
+          }),
+        ],
+        2,
+      ),
+      accounts.val2.signAndBroadcast(
+        [
+          stridejs.types.cosmos.gov.v1.MessageComposer.withTypeUrl.vote({
+            proposalId: proposalId,
+            voter: accounts.val2.address,
+            option: VoteOption.VOTE_OPTION_YES,
+            metadata: "",
+          }),
+        ],
+        2,
+      ),
+      accounts.val3.signAndBroadcast(
+        [
+          stridejs.types.cosmos.gov.v1.MessageComposer.withTypeUrl.vote({
+            proposalId: proposalId,
+            voter: accounts.val3.address,
+            option: VoteOption.VOTE_OPTION_YES,
+            metadata: "",
+          }),
+        ],
+        2,
+      ),
+    ]);
+
+    for (const tx of txs) {
+      if (tx.code !== 0) {
+        console.error(tx.rawLog);
+      }
+      expect(tx.code).toBe(0);
+    }
+
+    while (true) {
+      const { proposal } = await stridejs.query.cosmos.gov.v1.proposal({
+        proposalId,
+      });
+
+      if (proposal?.status !== ProposalStatus.PROPOSAL_STATUS_VOTING_PERIOD) {
+        expect(proposal?.status).toBe(ProposalStatus.PROPOSAL_STATUS_PASSED);
+        break;
+      }
+
+      await sleep(500);
+    }
+
+    const { params: newParams } = await stridejs.query.stride.icqoracle.params(
+      {},
+    );
+    expect(newParams).toStrictEqual(params);
+  }, 60_000);
 
   // TODO test unwrapIBCDenom via stridejs.query.stride.icqoracle.tokenPrices
 });

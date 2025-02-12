@@ -1,4 +1,8 @@
-import { DeliverTxResponse, SigningStargateClient } from "@cosmjs/stargate";
+import {
+  DeliverTxResponse,
+  SigningStargateClient,
+  Event,
+} from "@cosmjs/stargate";
 import { coinsFromString, EncodeObject, StrideClient } from "stridejs";
 import { expect } from "vitest";
 import { Chain, CosmosClient } from "./main.test";
@@ -151,4 +155,19 @@ export async function transfer({
 
   expect(ibcAck.type).toBe("ack");
   expect(ibcAck.tx.code).toBe(0);
+}
+
+export function getValueFromEvents(
+  events: readonly Event[],
+  key: string,
+): string {
+  for (const e of events) {
+    for (const a of e.attributes) {
+      if (`${e.type}.${a.key}` === key) {
+        return String(a.value);
+      }
+    }
+  }
+
+  throw new Error(`Event ${key} isn't in ${JSON.stringify(events)}`);
 }
