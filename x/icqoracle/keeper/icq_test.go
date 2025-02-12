@@ -213,14 +213,39 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Errors() {
 	}
 }
 
-// Helper function to create mock pool data
-func (s *KeeperTestSuite) createMockTwapData(baseDenom string, quoteDenom string) []byte {
-	pool := types.OsmosisTwapRecord{
-		Asset0Denom: baseDenom,
-		Asset1Denom: quoteDenom,
+// Helper function to create mock twap data
+// P0 and P1 store the relative ratio of assets in the pool
+//
+//	P0 is ratio of Asset0 / Asset1
+//	P1 is ratio of Asset1 / Asset0
+//
+// We want to ratio of quote denom to base denom, which will give the price of base denom
+// in terms of quote denom
+//
+// For this function, we'll always return a price of 1.5 for the baseDenom in terms of quote denom
+// However, the assets may be inverted depending on the parameters
+func (s *KeeperTestSuite) createMockTwapData(baseDenom, quoteDenom, assetDenom0, assetDenom1 string) []byte {
+	baseAssetPrice := sdk.MustNewDecFromStr("1.5")
+	quoteAssetPrice := sdk.OneDec().Quo(baseAssetPrice)
 
-		P0LastSpotPrice: sdk.MustNewDecFromStr("1.1"),
-		P1LastSpotPrice: sdk.MustNewDecFromStr("0.9090909091"), // 1 / 1.1
+	pool := types.OsmosisTwapRecord{
+		Asset0Denom: assetDenom0,
+		Asset1Denom: assetDenom1,
+	}
+
+	// If asset0 is the quote denom, then we want P0 to give us the price of base asset
+	if assetDenom0 == quoteDenom {
+		s.Require().Equal(assetDenom1, baseDenom, "Invalid test case setup, baseDenom not asset 1")
+
+		pool.P0LastSpotPrice = baseAssetPrice // <- price we use
+		pool.P1LastSpotPrice = quoteAssetPrice
+	} else {
+		s.Require().Equal(assetDenom0, baseDenom, "Invalid test case setup, baseDenom not asset 0")
+		s.Require().Equal(assetDenom1, quoteDenom, "Invalid test case setup, quoteDenom not asset 1")
+
+		// If asset0 is the base denom, then we want P1 to give us the price of the base asset
+		pool.P0LastSpotPrice = quoteAssetPrice
+		pool.P1LastSpotPrice = baseAssetPrice // <- price we use
 	}
 
 	bz, err := proto.Marshal(&pool)
@@ -564,17 +589,7 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 	}
 }
 
-func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
-	baseTokenPrice := types.TokenPrice{
-		BaseDenom:          "uatom",
-		QuoteDenom:         "uusdc",
-		OsmosisPoolId:      1,
-		OsmosisBaseDenom:   "ibc/uatom",
-		OsmosisQuoteDenom:  "uusdc",
-		BaseDenomDecimals:  6,
-		QuoteDenomDecimals: 6,
-	}
-
+func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosis() {
 	testCases := []struct {
 		name          string
 		tokenPrice    types.TokenPrice
@@ -583,87 +598,127 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosisPool() {
 		expectedError string
 	}{
 		{
-			name:          "invalid pool data",
-			tokenPrice:    baseTokenPrice,
+			name: "invalid pool data",
+			tokenPrice: types.TokenPrice{
+				OsmosisBaseDenom:   "ibc/atom",
+				OsmosisQuoteDenom:  "ibc/usdc",
+				BaseDenomDecimals:  6,
+				QuoteDenomDecimals: 6,
+			},
 			twapData:      []byte("invalid pool data"),
-			expectedError: "proto: wrong wireType",
+			expectedError: "unable to unmarshal the query response",
 		},
 		{
-			name:       "successful price calculation with equal decimals",
-			tokenPrice: baseTokenPrice,
+			name: "successful price calculation with equal decimals",
+			tokenPrice: types.TokenPrice{
+				OsmosisBaseDenom:   "ibc/atom",
+				OsmosisQuoteDenom:  "ibc/usdc",
+				BaseDenomDecimals:  6,
+				QuoteDenomDecimals: 6,
+			},
 			twapData: s.createMockTwapData(
-				baseTokenPrice.OsmosisBaseDenom,
-				baseTokenPrice.OsmosisQuoteDenom,
+				"ibc/atom", // base
+				"ibc/usdc", // quote
+				"ibc/atom", // asset0
+				"ibc/usdc", // asset1
 			),
-			expectedPrice: math.LegacyNewDecWithPrec(15, 1), // 1.5 from mock pool data
+			expectedPrice: sdk.MustNewDecFromStr("1.5"), // 1.5 from mock pool data
+		},
+		{
+			name: "successful price calculation with equal decimals and assets inverted",
+			tokenPrice: types.TokenPrice{
+				OsmosisBaseDenom:   "ibc/atom",
+				OsmosisQuoteDenom:  "ibc/usdc",
+				BaseDenomDecimals:  6,
+				QuoteDenomDecimals: 6,
+			},
+			twapData: s.createMockTwapData(
+				"ibc/atom", // base
+				"ibc/usdc", // quote
+				"ibc/usdc", // asset0
+				"ibc/atom", // asset1
+			),
+			expectedPrice: sdk.MustNewDecFromStr("1.5"), // 1.5 from mock pool data
 		},
 		{
 			name: "successful price calculation with more base decimals",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:          "satoshi",
-				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      1,
 				OsmosisBaseDenom:   "ibc/satoshi",
-				OsmosisQuoteDenom:  "ibc/uusdc",
+				OsmosisQuoteDenom:  "ibc/usdc",
 				BaseDenomDecimals:  8, // BTC has 8 decimals
 				QuoteDenomDecimals: 6, // USDC has 6 decimals
 			},
 			twapData: s.createMockTwapData(
-				"ibc/satoshi",
-				"ibc/uusdc",
+				"ibc/satoshi", // base
+				"ibc/usdc",    // quote
+				"ibc/satoshi", // asset0
+				"ibc/usdc",    // asset1
 			),
-			expectedPrice: math.LegacyNewDecWithPrec(15, 1).Mul(math.LegacyNewDec(100)), // 1.5 * 10^2
+			expectedPrice: sdk.MustNewDecFromStr("1.5").Mul(math.LegacyNewDec(100)), // 1.5 * 10^2
+		},
+		{
+			name: "successful price calculation with more base decimals and assets inverted",
+			tokenPrice: types.TokenPrice{
+				OsmosisBaseDenom:   "ibc/satoshi",
+				OsmosisQuoteDenom:  "ibc/usdc",
+				BaseDenomDecimals:  8, // BTC has 8 decimals
+				QuoteDenomDecimals: 6, // USDC has 6 decimals
+			},
+			twapData: s.createMockTwapData(
+				"ibc/satoshi", // base
+				"ibc/usdc",    // quote
+				"ibc/usdc",    // asset0
+				"ibc/satoshi", // asset1
+			),
+			expectedPrice: sdk.MustNewDecFromStr("1.5").Mul(math.LegacyNewDec(100)), // 1.5 * 10^2
 		},
 		{
 			name: "successful price calculation with more quote decimals",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:          "uatom",
-				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      1,
-				OsmosisBaseDenom:   "ibc/uatom",
-				OsmosisQuoteDenom:  "ibc/uusdc",
+				OsmosisBaseDenom:   "ibc/atom",
+				OsmosisQuoteDenom:  "ibc/usdc",
 				BaseDenomDecimals:  6, // ATOM has 6 decimals
 				QuoteDenomDecimals: 8, // Quote has 8 decimals
 			},
 			twapData: s.createMockTwapData(
-				"ibc/uatom",
-				"ibc/uusdc",
+				"ibc/atom", // base
+				"ibc/usdc", // quote
+				"ibc/atom", // asset0
+				"ibc/usdc", // asset1
 			),
-			expectedPrice: math.LegacyNewDecWithPrec(15, 1).Quo(math.LegacyNewDec(100)), // 1.5 / 10^2
+			expectedPrice: sdk.MustNewDecFromStr("1.5").Quo(math.LegacyNewDec(100)), // 1.5 / 10^2
 		},
 		{
-			name: "price calculation with inverse pool ordering",
+			name: "successful price calculation with more quote decimals and assets inverted",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:          "uatom",
-				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      1,
-				OsmosisBaseDenom:   "ibc/uatom",
-				OsmosisQuoteDenom:  "ibc/uusdc",
-				BaseDenomDecimals:  8,
-				QuoteDenomDecimals: 6,
+				OsmosisBaseDenom:   "ibc/atom",
+				OsmosisQuoteDenom:  "ibc/usdc",
+				BaseDenomDecimals:  6, // ATOM has 6 decimals
+				QuoteDenomDecimals: 8, // Quote has 8 decimals
 			},
 			twapData: s.createMockTwapData(
-				"ibc/uusdc",
-				"ibc/uatom",
+				"ibc/atom", // base
+				"ibc/usdc", // quote
+				"ibc/usdc", // asset0
+				"ibc/atom", // asset1
 			),
-			expectedPrice: math.LegacyMustNewDecFromStr("0.666666666666666667").Mul(math.LegacyNewDec(100)), // (1/1.5) * 10^2
+			expectedPrice: sdk.MustNewDecFromStr("1.5").Quo(math.LegacyNewDec(100)), // 1.5 / 10^2
 		},
 		{
 			name: "different denom ordering in pool",
 			tokenPrice: types.TokenPrice{
-				BaseDenom:          "uatom",
-				QuoteDenom:         "uusdc",
-				OsmosisPoolId:      1,
-				OsmosisBaseDenom:   "ibc/uatom",
+				OsmosisBaseDenom:   "ibc/atom",
 				OsmosisQuoteDenom:  "different_denom",
 				BaseDenomDecimals:  6,
 				QuoteDenomDecimals: 6,
 			},
 			twapData: s.createMockTwapData(
-				"ibc/uatom",
-				"uusdc",
+				"ibc/atom",
+				"ibc/usdc",
+				"ibc/atom",
+				"ibc/usdc",
 			),
-			expectedError: "quote asset denom (different_denom) is not in pool with (ibc/uatom, uusdc) pair",
+			expectedError: "Assets in query response (ibc/atom, ibc/usdc) do not match denom's from token price (ibc/atom, different_denom)",
 		},
 	}
 

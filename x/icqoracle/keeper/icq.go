@@ -139,8 +139,22 @@ func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.
 //	P0LastSpotPrice gives the ratio of Asset0Denom / Asset1Denom
 //	P1LastSpotPrice gives the ratio of Asset1Denom / Asset0Denom
 //
-// When storing down the price, we want to store down the ratio of QuoteDenom to BaseDenom
-// Meaning, if Asset0Denom is the QuoteDenom, we want to store P0LastSpotPrice, and vice versa
+// ** When storing down the price, we want to store down the ratio of QuoteDenom to BaseDenom **
+// This will give us the human readable price
+//
+// Ex: Let's say the price of OSMO is $2 and it's in a pool with USDC
+// This means 1 OSMO is equal to 2 USDC, and there should be twice as much USDC in the pool
+// The ratio of OSMO:USDC is 0.5 and the ratio of USDC:OSMO is 2.0
+// Since we want to store the quote denom in terms of base denom, we want to store USDC:OSMO = 2
+//
+// In this example, if Asset0 was USDC and Asset1 was OSMO, we would want to store (Asset0Denom / Asset1Denom),
+// since we want USDC / OSMO, so we would store P0LastSpotPrice
+//
+// However, if Asset0 was OSMO and Asset1 was USDC, we would want (Asset1Denom / Asset0Denom),
+// since we want USDC / OSMO, so we would store P1LastSpotPrice
+//
+// To summarize, we check if Asset0 is equal to our quote denom (USDC in the example), and if
+// it is, we store P0; otherwise, we store P1
 func UnmarshalSpotPriceFromOsmosis(k Keeper, tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
 	var twapRecord types.OsmosisTwapRecord
 
@@ -154,7 +168,7 @@ func UnmarshalSpotPriceFromOsmosis(k Keeper, tokenPrice types.TokenPrice, queryR
 
 	// Get the associate "SpotPrice" from the twap record, based on the asset ordering
 	// The "SpotPrice" is actually a ratio of the assets in the pool
-	if twapRecord.Asset0Denom == tokenPrice.QuoteDenom {
+	if twapRecord.Asset0Denom == tokenPrice.OsmosisQuoteDenom {
 		price = twapRecord.P0LastSpotPrice
 	} else {
 		price = twapRecord.P1LastSpotPrice
