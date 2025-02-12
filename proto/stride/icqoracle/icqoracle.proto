@@ -12,33 +12,29 @@ message TokenPrice {
   string base_denom = 1;
   // Quote denom on Stride
   string quote_denom = 2;
-  // Decimals of base token, used for normalizing price feed from Osmosis
-  int64 base_denom_decimals = 3;
-  // Decimals of quote token, used for normalizing price feed from Osmosis
-  int64 quote_denom_decimals = 4;
   // Base denom on Osmosis
-  string osmosis_base_denom = 5;
+  string osmosis_base_denom = 3;
   // Quote denom on Osmosis
-  string osmosis_quote_denom = 6;
+  string osmosis_quote_denom = 4;
   // Pool ID on Osmosis
-  uint64 osmosis_pool_id = 7;
+  uint64 osmosis_pool_id = 5;
 
   // Spot price of base_denom denominated in quote_denom
-  string spot_price = 8 [
+  string spot_price = 6 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // Last time a query request was submitted
-  google.protobuf.Timestamp last_request_time = 9
+  google.protobuf.Timestamp last_request_time = 7
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Last time a query response was received
-  google.protobuf.Timestamp last_response_time = 10
+  google.protobuf.Timestamp last_response_time = 8
       [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
 
   // Whether there is a spot price query currently in progress
-  bool query_in_progress = 11;
+  bool query_in_progress = 9;
 }
 
 // OracleParams stores global oracle parameters

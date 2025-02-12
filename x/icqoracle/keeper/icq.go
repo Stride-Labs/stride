@@ -174,11 +174,7 @@ func UnmarshalSpotPriceFromOsmosis(k Keeper, tokenPrice types.TokenPrice, queryR
 		price = twapRecord.P1LastSpotPrice
 	}
 
-	return AdjustSpotPriceForDecimals(
-		price,
-		tokenPrice.BaseDenomDecimals,
-		tokenPrice.QuoteDenomDecimals,
-	), nil
+	return price, nil
 }
 
 // Helper function to confirm that the two assets in the twap record match the assets in the token price
@@ -196,33 +192,4 @@ func AssertTwapAssetsMatchTokenPrice(twapRecord types.OsmosisTwapRecord, tokenPr
 
 	return fmt.Errorf("Assets in query response (%s, %s) do not match denom's from token price (%s, %s)",
 		twapRecord.Asset0Denom, twapRecord.Asset1Denom, tokenPrice.OsmosisBaseDenom, tokenPrice.OsmosisQuoteDenom)
-}
-
-// AdjustSpotPriceForDecimals corrects the spot price to account for different decimal places between tokens
-// Example: For BTC (8 decimals) / USDC (6 decimals):
-// - If raw price is 1,000 USDC/BTC, we multiply by 10^(8-6) to get 100,000 USDC/BTC
-func AdjustSpotPriceForDecimals(rawPrice math.LegacyDec, baseDecimals, quoteDecimals int64) math.LegacyDec {
-	decimalsDiff := baseDecimals - quoteDecimals
-	if decimalsDiff == 0 {
-		return rawPrice
-	}
-
-	decimalAdjustmentExp := abs(decimalsDiff)
-	decimalAdjustment := math.LegacyNewDec(10).Power(decimalAdjustmentExp)
-
-	if decimalsDiff > 0 {
-		return rawPrice.Mul(decimalAdjustment)
-	} else {
-		return rawPrice.Quo(decimalAdjustment)
-	}
-}
-
-// abs returns the absolute value of an int64 input as a uint64.
-// It converts negative values to their positive equivalent and handles
-// the case where the input is positive or zero.
-func abs(num int64) uint64 {
-	if num < 0 {
-		return uint64(-num)
-	}
-	return uint64(num)
 }

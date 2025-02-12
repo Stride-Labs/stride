@@ -38,16 +38,12 @@ message MsgRegisterTokenPriceQuery {
   string base_denom = 2;
   // Quote denom on Stride
   string quote_denom = 3;
-  // Decimals of base token, used for normalizing price feed from Osmosis
-  int64 base_denom_decimals = 4;
-  // Decimals of quote token, used for normalizing price feed from Osmosis
-  int64 quote_denom_decimals = 5;
   // Token denom on Osmosis
-  string osmosis_base_denom = 6;
+  string osmosis_base_denom = 4;
   // Quote denom on Osmosis
-  string osmosis_quote_denom = 7;
+  string osmosis_quote_denom = 5;
   // Pool ID on Osmosis
-  uint64 osmosis_pool_id = 8;
+  uint64 osmosis_pool_id = 6;
 }
 
 message MsgRegisterTokenPriceQueryResponse {}

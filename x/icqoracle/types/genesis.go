@@ -16,8 +16,6 @@ func (gs GenesisState) Validate() error {
 		err := ValidateTokenPriceQueryParams(
 			tokenPrice.BaseDenom,
 			tokenPrice.QuoteDenom,
-			tokenPrice.BaseDenomDecimals,
-			tokenPrice.QuoteDenomDecimals,
 			tokenPrice.OsmosisPoolId,
 			tokenPrice.OsmosisBaseDenom,
 			tokenPrice.OsmosisQuoteDenom,

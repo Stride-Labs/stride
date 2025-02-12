@@ -41,14 +41,12 @@ func NewMsgRegisterTokenPriceQuery(
 	osmosisQuoteDenom string,
 ) *MsgRegisterTokenPriceQuery {
 	return &MsgRegisterTokenPriceQuery{
-		Admin:              admin,
-		BaseDenom:          baseDenom,
-		QuoteDenom:         quoteDenom,
-		BaseDenomDecimals:  baseDecimals,
-		QuoteDenomDecimals: quoteDecimals,
-		OsmosisBaseDenom:   osmosisBaseDenom,
-		OsmosisQuoteDenom:  osmosisQuoteDenom,
-		OsmosisPoolId:      poolId,
+		Admin:             admin,
+		BaseDenom:         baseDenom,
+		QuoteDenom:        quoteDenom,
+		OsmosisBaseDenom:  osmosisBaseDenom,
+		OsmosisQuoteDenom: osmosisQuoteDenom,
+		OsmosisPoolId:     poolId,
 	}
 }
 
@@ -77,8 +75,6 @@ func (msg *MsgRegisterTokenPriceQuery) ValidateBasic() error {
 	return ValidateTokenPriceQueryParams(
 		msg.BaseDenom,
 		msg.QuoteDenom,
-		msg.BaseDenomDecimals,
-		msg.QuoteDenomDecimals,
 		msg.OsmosisPoolId,
 		msg.OsmosisBaseDenom,
 		msg.OsmosisQuoteDenom,
