@@ -1,17 +1,13 @@
-import { StrideClient } from "stridejs";
-import { coinFromString } from "stridejs";
-import {
-  cosmosProtoRegistry,
-  ibcProtoRegistry,
-  osmosis,
-  osmosisProtoRegistry,
-} from "osmojs";
-
-const defaultTransferTimeout = BigInt(
-  `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`,
-);
+import { osmosis } from "osmojs";
+import { ConcentratedPoolInfo } from "osmojs/osmosis/protorev/v1beta1/protorev";
+import { Coin, coinFromString, coinsFromString, StrideClient } from "stridejs";
 import { MsgTransfer } from "stridejs/types/codegen/ibc/applications/transfer/v1/tx";
 import { MsgRegisterTokenPriceQuery } from "stridejs/types/codegen/stride/icqoracle/tx";
+import { UOSMO } from "./main.test";
+
+const DEFAULT_TRANSFER_TIMEOUT = BigInt(
+  `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`,
+);
 
 /**
  * Creates a new transfer message for IBC transactions
@@ -44,7 +40,7 @@ export function newTransferMsg({
   typeUrl: string;
   value: MsgTransfer;
 } {
-  timeout = timeout === undefined ? timeout : defaultTransferTimeout;
+  timeout = timeout === undefined ? timeout : DEFAULT_TRANSFER_TIMEOUT;
   return stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
     {
       sourcePort: "transfer",
@@ -56,7 +52,7 @@ export function newTransferMsg({
         revisionNumber: 0n,
         revisionHeight: 0n,
       },
-      timeoutTimestamp: defaultTransferTimeout,
+      timeoutTimestamp: DEFAULT_TRANSFER_TIMEOUT,
       memo: memo,
     },
   );
@@ -132,6 +128,66 @@ export function newGammPoolMsg({
         swapFee: "0.001",
         exitFee: "0",
       },
+    },
+  );
+}
+
+/**
+ * denom1 is always "uosmo"
+ */
+export function newConcentratedLiquidityPoolMsg({
+  sender,
+  denom0,
+}: {
+  sender: string;
+  denom0: string;
+}) {
+  return osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
+    {
+      sender,
+      denom0,
+      denom1: UOSMO,
+      tickSpacing: 100n,
+      spreadFactor: "0.001",
+    },
+  );
+}
+
+/**
+ * since denom1 is always "uosmo", `tokenMinAmount1` should be denominated in `uosmo` and `tokensProvided` should have uosmos at index 1
+ */
+export function addConcentratedLiquidityPositionMsg({
+  sender,
+  poolId,
+  tokensProvided,
+  tokenMinAmount0,
+  tokenMinAmount1,
+}: {
+  sender: string;
+  poolId: bigint;
+  tokensProvided: Coin[];
+  tokenMinAmount0: string;
+  tokenMinAmount1: string;
+}) {
+  if (tokensProvided.length !== 2) {
+    throw new Error("tokensProvided.length must be 2");
+  }
+  if (BigInt(tokenMinAmount0) > BigInt(tokensProvided[0].amount)) {
+    throw new Error("tokenMinAmount0 bigger than provided");
+  }
+  if (BigInt(tokenMinAmount1) > BigInt(tokensProvided[1].amount)) {
+    throw new Error("tokenMinAmount1 bigger than provided");
+  }
+
+  return osmosis.concentratedliquidity.v1beta1.MessageComposer.withTypeUrl.createPosition(
+    {
+      sender,
+      poolId,
+      lowerTick: -108000000n,
+      upperTick: 342000000n,
+      tokensProvided,
+      tokenMinAmount0,
+      tokenMinAmount1,
     },
   );
 }

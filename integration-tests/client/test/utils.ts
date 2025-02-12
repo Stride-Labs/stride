@@ -1,7 +1,7 @@
 import { DeliverTxResponse, SigningStargateClient } from "@cosmjs/stargate";
 import { coinsFromString, EncodeObject, StrideClient } from "stridejs";
 import { expect } from "vitest";
-import { CosmosClient } from "./main.test";
+import { Chain, CosmosClient } from "./main.test";
 import { IbcResponse } from "stridejs";
 import { newTransferMsg } from "./msgs";
 import { TRANSFER_CHANNEL } from "./main.test";
@@ -82,21 +82,28 @@ export async function submitTxAndExpectSuccess(
 > {
   msgs = Array.isArray(msgs) ? msgs : [msgs];
 
-  const isStrideClient = "signingStargateClient" in client;
+  if (isCosmosClient(client)) {
+    const tx = await client.client.signAndBroadcast(client.address, msgs, 2);
 
-  const tx = isStrideClient
-    ? await client.signAndBroadcast(msgs, "auto") // stride
-    : await client.client.signAndBroadcast(client.address, msgs, "auto"); // cosmos
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
+    expect(tx.code).toBe(0);
 
-  if (tx.code !== 0) {
-    console.error(tx.rawLog);
+    return {
+      ...tx,
+      ibcResponses: getTxIbcResponses(client.client, tx, 30_000, 50),
+    };
+  } else {
+    const tx = await client.signAndBroadcast(msgs, 2);
+
+    if (tx.code !== 0) {
+      console.error(tx.rawLog);
+    }
+    expect(tx.code).toBe(0);
+
+    return tx;
   }
-  expect(tx.code).toBe(0);
-
-  return {
-    ...tx,
-    ibcResponses: (tx as any).ibcResponses || [],
-  };
 }
 
 /**
@@ -120,15 +127,15 @@ export async function transfer({
 }: {
   stridejs: StrideClient;
   signingClient: StrideClient | CosmosClient;
-  sourceChain: string;
-  destinationChain: string;
+  sourceChain: Chain;
+  destinationChain: Chain;
   sender: string;
   receiver: string;
   coins: string;
 }) {
   const msg = newTransferMsg({
     stridejs: stridejs,
-    channelId: TRANSFER_CHANNEL[sourceChain][destinationChain],
+    channelId: TRANSFER_CHANNEL[sourceChain][destinationChain]!,
     coins: coins,
     sender: sender,
     receiver: receiver,
