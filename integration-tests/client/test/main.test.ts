@@ -373,15 +373,51 @@ describe("buyback and burn", () => {
     await submitTxAndExpectSuccess(accounts.admin, registerTokenPriceMsg);
 
     while (true) {
-      const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
+      const {
+        tokenPrice: {
+          baseDenom,
+          quoteDenom,
+          baseDenomDecimals,
+          quoteDenomDecimals,
+          osmosisBaseDenom,
+          osmosisQuoteDenom,
+          osmosisPoolId,
+          spotPrice,
+          lastRequestTime,
+          lastResponseTime,
+          queryInProgress,
+        },
+      } = await stridejs.query.stride.icqoracle.tokenPrice({
         baseDenom: USTRD,
         quoteDenom: osmoDenomOnStride,
         poolId: osmoStrdPoolId,
       });
-      if (
-        tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
-      ) {
-        expect(Number(tokenPrice.spotPrice)).toBe(5);
+      if (lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
+        expect(Number(spotPrice)).toBe(5);
+
+        // Verify base denom matches
+        expect(baseDenom).toBe(USTRD);
+        expect(osmosisBaseDenom).toBe(strdOnOsmoDenom);
+
+        // Verify quote denom matches
+        expect(quoteDenom).toBe(osmoDenomOnStride);
+        expect(osmosisQuoteDenom).toBe(UOSMO);
+
+        // Verify pool ID
+        expect(osmosisPoolId).toBe(osmoStrdPoolId);
+
+        // Verify decimals
+        expect(baseDenomDecimals).toBe(6n); // STRD has 6 decimals
+        expect(quoteDenomDecimals).toBe(6n); // OSMO has 6 decimals
+
+        // Verify query metadata
+        expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
+        expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
+        expect(lastResponseTime.toISOString()).toBeTruthy();
+        expect(new Date(lastResponseTime) > new Date(lastRequestTime)).toBe(
+          true,
+        );
+
         break;
       }
       await sleep(500);
@@ -453,15 +489,51 @@ describe("buyback and burn", () => {
     await submitTxAndExpectSuccess(accounts.admin, registerTokenPriceMsg);
 
     while (true) {
-      const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
+      const {
+        tokenPrice: {
+          baseDenom,
+          quoteDenom,
+          baseDenomDecimals,
+          quoteDenomDecimals,
+          osmosisBaseDenom,
+          osmosisQuoteDenom,
+          osmosisPoolId,
+          spotPrice,
+          lastRequestTime,
+          lastResponseTime,
+          queryInProgress,
+        },
+      } = await stridejs.query.stride.icqoracle.tokenPrice({
         baseDenom: USTRD,
         quoteDenom: osmoDenomOnStride,
         poolId: osmoStrdPoolId,
       });
-      if (
-        tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
-      ) {
-        expect(Number(tokenPrice.spotPrice)).toBe(5);
+      if (lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
+        expect(Number(spotPrice)).toBe(5);
+
+        // Verify base denom matches
+        expect(baseDenom).toBe(USTRD);
+        expect(osmosisBaseDenom).toBe(strdOnOsmoDenom);
+
+        // Verify quote denom matches
+        expect(quoteDenom).toBe(osmoDenomOnStride);
+        expect(osmosisQuoteDenom).toBe(UOSMO);
+
+        // Verify pool ID
+        expect(osmosisPoolId).toBe(osmoStrdPoolId);
+
+        // Verify decimals
+        expect(baseDenomDecimals).toBe(6n); // STRD has 6 decimals
+        expect(quoteDenomDecimals).toBe(6n); // OSMO has 6 decimals
+
+        // Verify query metadata
+        expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
+        expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
+        expect(lastResponseTime.toISOString()).toBeTruthy();
+        expect(new Date(lastResponseTime) > new Date(lastRequestTime)).toBe(
+          true,
+        );
+
         break;
       }
       await sleep(500);
