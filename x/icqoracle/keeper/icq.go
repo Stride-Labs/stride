@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	ICQCallbackID_OsmosisPool = "osmosispool"
+	ICQCallbackID_OsmosisPrice = "osmosisprice"
 )
 
 // ICQCallbacks wrapper struct for stakeibc keeper
@@ -48,7 +48,7 @@ func (c ICQCallbacks) AddICQCallback(id string, fn interface{}) icqtypes.QueryCa
 
 func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 	return c.
-		AddICQCallback(ICQCallbackID_OsmosisPool, ICQCallback(OsmosisPoolCallback))
+		AddICQCallback(ICQCallbackID_OsmosisPrice, ICQCallback(OsmosisPriceCallback))
 }
 
 // Submits an ICQ to get a concentrated liquidity pool from Osmosis' store
@@ -77,7 +77,7 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 		QueryType:       icqtypes.OSMOSIS_TWAP_STORE_QUERY_WITH_PROOF,
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_OsmosisPool,
+		CallbackId:      ICQCallbackID_OsmosisPrice,
 		CallbackData:    tokenPriceBz,
 		TimeoutDuration: time.Duration(params.UpdateIntervalSec) * time.Second,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
@@ -95,7 +95,7 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 }
 
 // Callback handler for the Omsosis pool spot price query.
-func OsmosisPoolCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
+func OsmosisPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	var tokenPrice types.TokenPrice
 	if err := k.cdc.Unmarshal(query.CallbackData, &tokenPrice); err != nil {
 		return fmt.Errorf("Error deserializing query.CallbackData '%s' as TokenPrice", hex.EncodeToString(query.CallbackData))

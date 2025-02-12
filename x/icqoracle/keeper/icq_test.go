@@ -65,7 +65,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Success() {
 	s.Require().Equal(params.OsmosisConnectionId, submittedQuery.ConnectionId)
 	s.Require().Equal(icqtypes.OSMOSIS_TWAP_STORE_QUERY_WITH_PROOF, submittedQuery.QueryType)
 	s.Require().Equal(types.ModuleName, submittedQuery.CallbackModule)
-	s.Require().Equal(keeper.ICQCallbackID_OsmosisPool, submittedQuery.CallbackId)
+	s.Require().Equal(keeper.ICQCallbackID_OsmosisPrice, submittedQuery.CallbackId)
 
 	// Verify tokenPrice.QueryInProgress after
 	tokenPriceAfter, err := s.App.ICQOracleKeeper.GetTokenPrice(
@@ -252,7 +252,7 @@ func (s *KeeperTestSuite) createMockTwapData(baseDenom, quoteDenom, asset0Denom,
 	return bz
 }
 
-func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
+func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 	// Setup base test parameters used across test cases
 	baseTokenPrice := types.TokenPrice{
 		BaseDenom:         "uatom",
@@ -478,7 +478,7 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 
 			// Execute callback
 			query := icqtypes.Query{CallbackData: callbackDataBz}
-			err := keeper.OsmosisPoolCallback(s.App.ICQOracleKeeper, s.Ctx, twapDataBz, query)
+			err := keeper.OsmosisPriceCallback(s.App.ICQOracleKeeper, s.Ctx, twapDataBz, query)
 
 			// Verify results
 			if tc.expectedError != "" {
