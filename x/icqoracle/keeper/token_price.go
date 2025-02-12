@@ -112,7 +112,7 @@ func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[st
 //   - error: Returns an error if:
 //   - No prices exist for either token
 //   - No common quote token exists between the two tokens
-//   - All available prices with a common quote token are stale (exceeded the stale timeout)
+//   - All available prices with a common quote token are stale (exceeded the expiration timeout)
 func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (price math.LegacyDec, err error) {
 	// Get all price for baseToken
 	baseTokenPrices, err := k.GetTokenPricesByDenom(ctx, baseDenom)

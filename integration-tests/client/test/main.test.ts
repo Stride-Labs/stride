@@ -1,6 +1,5 @@
-import { Secp256k1HdWallet } from "@cosmjs/amino";
 import { DirectSecp256k1HdWallet, Registry } from "@cosmjs/proto-signing";
-import { Event, GasPrice, SigningStargateClient } from "@cosmjs/stargate";
+import { GasPrice, SigningStargateClient } from "@cosmjs/stargate";
 import { fromSeconds } from "@cosmjs/tendermint-rpc";
 import {
   cosmosProtoRegistry,
@@ -8,6 +7,8 @@ import {
   osmosis,
   osmosisProtoRegistry,
 } from "osmojs";
+import { ModuleAccount } from "osmojs/cosmos/auth/v1beta1/auth";
+import { ProposalStatus, VoteOption } from "osmojs/cosmos/gov/v1beta1/gov";
 import {
   coinFromString,
   coinsFromString,
@@ -31,8 +32,7 @@ import {
   transfer,
   waitForChain,
 } from "./utils";
-import { ProposalStatus, VoteOption } from "osmojs/cosmos/gov/v1beta1/gov";
-import { ModuleAccount } from "osmojs/cosmos/auth/v1beta1/auth";
+import { AuctionType } from "stridejs/dist/types/codegen/stride/auction/auction";
 
 const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
@@ -358,8 +358,7 @@ describe("buyback and burn", () => {
     const poolTx = await submitTxAndExpectSuccess(osmojs, poolMsg);
 
     const osmoStrdPoolId = BigInt(
-      poolTx.events.find((e) => e.type === "pool_created")?.attributes[0]
-        .value!,
+      getValueFromEvents(poolTx.events, "pool_created.pool_id"),
     );
 
     const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
@@ -407,7 +406,6 @@ describe("buyback and burn", () => {
         // Verify query metadata
         expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
         expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
-        expect(lastResponseTime.toISOString()).toBeTruthy();
         expect(new Date(lastResponseTime) > new Date(lastRequestTime)).toBe(
           true,
         );
@@ -459,8 +457,7 @@ describe("buyback and burn", () => {
     const poolTx = await submitTxAndExpectSuccess(osmojs, poolMsg);
 
     const osmoStrdPoolId = BigInt(
-      poolTx.events.find((e) => e.type === "pool_created")?.attributes[0]
-        .value!,
+      getValueFromEvents(poolTx.events, "pool_created.pool_id"),
     );
 
     const addLiquidityMsg = addConcentratedLiquidityPositionMsg({
@@ -517,7 +514,6 @@ describe("buyback and burn", () => {
         // Verify query metadata
         expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
         expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
-        expect(lastResponseTime.toISOString()).toBeTruthy();
         expect(new Date(lastResponseTime) > new Date(lastRequestTime)).toBe(
           true,
         );
@@ -641,7 +637,7 @@ describe("buyback and burn", () => {
     expect(tx.code).toBe(0);
 
     const osmoStrdPoolId = BigInt(
-      tx.events.find((e) => e.type === "pool_created")?.attributes[0].value!,
+      getValueFromEvents(tx.events, "pool_created.pool_id"),
     );
 
     tx = await osmojs.client.signAndBroadcast(
@@ -713,7 +709,7 @@ describe("buyback and burn", () => {
     expect(tx.code).toBe(0);
 
     const osmoAtomPoolId = BigInt(
-      tx.events.find((e) => e.type === "pool_created")?.attributes[0].value!,
+      getValueFromEvents(tx.events, "pool_created.pool_id"),
     );
 
     // Add TokenPrice(base=STRD, quote=OSMO)
@@ -923,6 +919,144 @@ describe("buyback and burn", () => {
     );
     expect(newParams).toStrictEqual(params);
   }, 60_000);
+
+  test.only("auction + strdburner", async () => {
+    const stridejs = accounts.user;
+    const osmojs = osmoAccounts.user;
+
+    await transfer({
+      stridejs: stridejs,
+      signingClient: stridejs,
+      sourceChain: "STRIDE",
+      destinationChain: "OSMO",
+      coins: `1000000${USTRD}`,
+      sender: stridejs.address,
+      receiver: osmojs.address,
+    });
+
+    const osmoDenomOnStride = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["OSMO"]!,
+        },
+      ],
+      UOSMO,
+    );
+
+    const strdOnOsmoDenom = ibcDenom(
+      [
+        {
+          incomingPortId: "transfer",
+          incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"]!,
+        },
+      ],
+      USTRD,
+    );
+
+    const poolMsg = newGammPoolMsg({
+      sender: osmojs.address,
+      tokens: [`10${UOSMO}`, `2${strdOnOsmoDenom}`],
+      weights: [1, 1],
+    });
+    const poolTx = await submitTxAndExpectSuccess(osmojs, poolMsg);
+
+    const osmoStrdPoolId = BigInt(
+      getValueFromEvents(poolTx.events, "pool_created.pool_id"),
+    );
+
+    const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
+      adminClient: accounts.admin,
+      baseDenom: osmoDenomOnStride,
+      quoteDenom: USTRD,
+      baseDenomOnOsmosis: UOSMO,
+      quoteDenomOnOsmosis: strdOnOsmoDenom,
+      poolId: osmoStrdPoolId,
+    });
+    await submitTxAndExpectSuccess(accounts.admin, registerTokenPriceMsg);
+
+    while (true) {
+      const {
+        tokenPrice: { spotPrice, lastResponseTime },
+      } = await stridejs.query.stride.icqoracle.tokenPrice({
+        baseDenom: USTRD,
+        quoteDenom: osmoDenomOnStride,
+        poolId: osmoStrdPoolId,
+      });
+      if (lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
+        expect(Number(spotPrice)).toBe(5);
+        break;
+      }
+      await sleep(500);
+    }
+
+    const auctionName = String(Math.random());
+
+    const strdburnerAddress = (
+      (
+        await stridejs.query.cosmos.auth.v1beta1.moduleAccountByName({
+          name: "strdburner",
+        })
+      ).account as ModuleAccount
+    ).baseAccount?.address!;
+
+    const tx = await accounts.admin.signAndBroadcast(
+      [
+        stridejs.types.stride.auction.MessageComposer.withTypeUrl.createAuction(
+          {
+            admin: accounts.admin.address,
+            auctionName: auctionName,
+            auctionType: 1, //AuctionType.AUCTION_TYPE_FCFS,
+            sellingDenom: osmoDenomOnStride,
+            paymentDenom: USTRD,
+            enabled: true,
+            minPriceMultiplier: "0.95",
+            minBidAmount: "1",
+            beneficiary: strdburnerAddress,
+          },
+        ),
+      ],
+      2,
+    );
+
+    // const { balance: balanceBefore } =
+    //   await stridejs.query.cosmos.bank.v1beta1.balance({
+    //     address: strdburnerAddress,
+    //     denom: USTRD,
+    //   });
+
+    // expect(balanceBefore?.amount).toBe("0");
+
+    // const { totalBurned: totalBurnedBefore } =
+    //   await stridejs.query.stride.strdburner.totalStrdBurned({});
+
+    // const amount = 100;
+
+    // const tx = await stridejs.signAndBroadcast([
+    //   stridejs.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
+    //     fromAddress: stridejs.address,
+    //     toAddress: strdburnerAddress,
+    //     amount: coinsFromString(`${amount}${USTRD}`),
+    //   }),
+    // ]);
+    // if (tx.code !== 0) {
+    //   console.error(tx.rawLog);
+    // }
+    // expect(tx.code).toBe(0);
+
+    // const { balance: balanceAfter } =
+    //   await stridejs.query.cosmos.bank.v1beta1.balance({
+    //     address: strdburnerAddress,
+    //     denom: USTRD,
+    //   });
+
+    // expect(balanceAfter?.amount).toBe("0");
+
+    // const { totalBurned: totalBurnedAfter } =
+    //   await stridejs.query.stride.strdburner.totalStrdBurned({});
+
+    // expect(BigInt(totalBurnedAfter) - BigInt(totalBurnedBefore)).toBe(amount);
+  });
 
   // TODO test unwrapIBCDenom via stridejs.query.stride.icqoracle.tokenPrices
 });
