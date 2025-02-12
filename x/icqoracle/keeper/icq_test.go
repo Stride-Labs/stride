@@ -271,44 +271,6 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 		verify        func(err error)
 	}{
 		{
-			name: "invalid callback data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
-				return []byte{}, []byte("invalid callback data")
-			},
-			expectedError: "Error deserializing query.CallbackData",
-		},
-		{
-			name: "token price not found",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
-				// Don't set the token price in state
-				return []byte{}, s.App.AppCodec().MustMarshal(&baseTokenPrice)
-			},
-			expectedError: "token price not found",
-		},
-		{
-			name: "query not in progress",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
-				tokenPrice := baseTokenPrice
-				tokenPrice.QueryInProgress = false
-				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
-
-				return []byte{}, s.App.AppCodec().MustMarshal(&tokenPrice)
-			},
-			expectedError: "",
-			verify: func(err error) {
-				s.Require().NoError(err, "no error expected when query not in progress")
-			},
-		},
-		{
-			name: "invalid twap data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
-				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
-
-				return []byte("invalid twap data"), s.App.AppCodec().MustMarshal(&baseTokenPrice)
-			},
-			expectedError: "Error determining spot price from query response",
-		},
-		{
 			name: "successful update with valid pool data",
 			setup: func() (responseBz []byte, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
@@ -371,6 +333,44 @@ func (s *KeeperTestSuite) TestOsmosisPoolCallback() {
 				s.Require().Equal(s.Ctx.BlockTime().UnixNano(), tokenPrice.LastResponseTime.UnixNano())
 				s.Require().InDelta(1.5, tokenPrice.SpotPrice.MustFloat64(), 0.00001) // inversed price
 			},
+		},
+		{
+			name: "invalid callback data",
+			setup: func() (responseBz []byte, callbackDataBz []byte) {
+				return []byte{}, []byte("invalid callback data")
+			},
+			expectedError: "Error deserializing query.CallbackData",
+		},
+		{
+			name: "token price not found",
+			setup: func() (responseBz []byte, callbackDataBz []byte) {
+				// Don't set the token price in state
+				return []byte{}, s.App.AppCodec().MustMarshal(&baseTokenPrice)
+			},
+			expectedError: "token price not found",
+		},
+		{
+			name: "query not in progress",
+			setup: func() (responseBz []byte, callbackDataBz []byte) {
+				tokenPrice := baseTokenPrice
+				tokenPrice.QueryInProgress = false
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
+
+				return []byte{}, s.App.AppCodec().MustMarshal(&tokenPrice)
+			},
+			expectedError: "",
+			verify: func(err error) {
+				s.Require().NoError(err, "no error expected when query not in progress")
+			},
+		},
+		{
+			name: "invalid twap data",
+			setup: func() (responseBz []byte, callbackDataBz []byte) {
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
+
+				return []byte("invalid twap data"), s.App.AppCodec().MustMarshal(&baseTokenPrice)
+			},
+			expectedError: "Error determining spot price from query response",
 		},
 		{
 			name: "empty query callback data",
