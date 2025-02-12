@@ -217,6 +217,9 @@ func AdjustSpotPriceForDecimals(rawPrice math.LegacyDec, baseDecimals, quoteDeci
 	}
 }
 
+// abs returns the absolute value of an int64 input as a uint64.
+// It converts negative values to their positive equivalent and handles
+// the case where the input is positive or zero.
 func abs(num int64) uint64 {
 	if num < 0 {
 		return uint64(-num)
