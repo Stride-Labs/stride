@@ -25,7 +25,7 @@ func (m MockICQKeeper) SubmitICQRequest(ctx sdk.Context, query icqtypes.Query, f
 	return nil
 }
 
-func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Success() {
+func (s *KeeperTestSuite) TestSubmitOsmosisPriceICQ_Success() {
 	var submittedQuery icqtypes.Query
 
 	// Setup mock ICQ keeper with custom behavior
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Success() {
 	s.Require().False(tokenPrice.QueryInProgress)
 
 	// Submit ICQ request
-	err := s.App.ICQOracleKeeper.SubmitOsmosisPoolICQ(s.Ctx, tokenPrice)
+	err := s.App.ICQOracleKeeper.SubmitOsmosisPriceICQ(s.Ctx, tokenPrice)
 	s.Require().NoError(err)
 
 	// Verify the captured query data
@@ -93,7 +93,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Success() {
 	s.Require().Equal(icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE, submittedQuery.TimeoutPolicy)
 }
 
-func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Errors() {
+func (s *KeeperTestSuite) TestSubmitOsmosisPriceICQ_Errors() {
 	testCases := []struct {
 		name          string
 		setup         func()
@@ -142,7 +142,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Errors() {
 				QuoteDenom:    "uusdc",
 				OsmosisPoolId: 1,
 			},
-			expectedError: "Error submitting OsmosisPool ICQ",
+			expectedError: "Error submitting OsmosisPrice ICQ",
 		},
 		{
 			name: "error setting query in progress",
@@ -190,7 +190,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPoolICQ_Errors() {
 			}
 
 			// Execute
-			err := s.App.ICQOracleKeeper.SubmitOsmosisPoolICQ(s.Ctx, tc.tokenPrice)
+			err := s.App.ICQOracleKeeper.SubmitOsmosisPriceICQ(s.Ctx, tc.tokenPrice)
 
 			// Verify results
 			if tc.expectedError != "" {

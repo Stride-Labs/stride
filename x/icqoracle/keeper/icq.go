@@ -52,11 +52,11 @@ func (c ICQCallbacks) RegisterICQCallbacks() icqtypes.QueryCallbacks {
 }
 
 // Submits an ICQ to get a concentrated liquidity pool from Osmosis' store
-func (k Keeper) SubmitOsmosisPoolICQ(
+func (k Keeper) SubmitOsmosisPriceICQ(
 	ctx sdk.Context,
 	tokenPrice types.TokenPrice,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisPool ICQ"))
+	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisPrice ICQ"))
 
 	params := k.GetParams(ctx)
 
@@ -84,7 +84,7 @@ func (k Keeper) SubmitOsmosisPoolICQ(
 	}
 
 	if err := k.IcqKeeper.SubmitICQRequest(ctx, query, false); err != nil {
-		return errorsmod.Wrap(err, "Error submitting OsmosisPool ICQ")
+		return errorsmod.Wrap(err, "Error submitting OsmosisPrice ICQ")
 	}
 
 	if err := k.SetQueryInProgress(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId); err != nil {
@@ -101,8 +101,8 @@ func OsmosisPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes
 		return fmt.Errorf("Error deserializing query.CallbackData '%s' as TokenPrice", hex.EncodeToString(query.CallbackData))
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPool",
-		"Starting OsmosisPool ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
+	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPrice",
+		"Starting OsmosisPrice ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
 
 	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	if err != nil {
@@ -118,7 +118,7 @@ func OsmosisPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPool",
+	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPrice",
 		"Price of %s in terms of %s: %vs", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, newSpotPrice))
 
 	k.SetQueryComplete(ctx, tokenPrice, newSpotPrice)
