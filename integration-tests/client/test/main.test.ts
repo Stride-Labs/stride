@@ -377,8 +377,6 @@ describe("buyback and burn", () => {
         tokenPrice: {
           baseDenom,
           quoteDenom,
-          baseDenomDecimals,
-          quoteDenomDecimals,
           osmosisBaseDenom,
           osmosisQuoteDenom,
           osmosisPoolId,
@@ -405,10 +403,6 @@ describe("buyback and burn", () => {
 
         // Verify pool ID
         expect(osmosisPoolId).toBe(osmoStrdPoolId);
-
-        // Verify decimals
-        expect(baseDenomDecimals).toBe(6n); // STRD has 6 decimals
-        expect(quoteDenomDecimals).toBe(6n); // OSMO has 6 decimals
 
         // Verify query metadata
         expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
@@ -493,8 +487,6 @@ describe("buyback and burn", () => {
         tokenPrice: {
           baseDenom,
           quoteDenom,
-          baseDenomDecimals,
-          quoteDenomDecimals,
           osmosisBaseDenom,
           osmosisQuoteDenom,
           osmosisPoolId,
@@ -521,10 +513,6 @@ describe("buyback and burn", () => {
 
         // Verify pool ID
         expect(osmosisPoolId).toBe(osmoStrdPoolId);
-
-        // Verify decimals
-        expect(baseDenomDecimals).toBe(6n); // STRD has 6 decimals
-        expect(quoteDenomDecimals).toBe(6n); // OSMO has 6 decimals
 
         // Verify query metadata
         expect(lastRequestTime).not.toBe("0001-01-01T00:00:00.000Z");
@@ -745,8 +733,6 @@ describe("buyback and burn", () => {
             admin: accounts.admin.address,
             baseDenom: USTRD,
             quoteDenom: osmoDenomOnStride,
-            baseDenomDecimals: 6n,
-            quoteDenomDecimals: 6n,
             osmosisBaseDenom: strdDenomOnOsmosis,
             osmosisQuoteDenom: "uosmo",
             osmosisPoolId: osmoStrdPoolId,
@@ -777,8 +763,6 @@ describe("buyback and burn", () => {
             admin: accounts.admin.address,
             baseDenom: atomDenomOnStride,
             quoteDenom: osmoDenomOnStride,
-            baseDenomDecimals: 6n,
-            quoteDenomDecimals: 6n,
             osmosisBaseDenom: atomDenomOnOsmosis,
             osmosisQuoteDenom: "uosmo",
             osmosisPoolId: osmoAtomPoolId,

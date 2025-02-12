@@ -1,8 +1,7 @@
 import { osmosis } from "osmojs";
-import { ConcentratedPoolInfo } from "osmojs/osmosis/protorev/v1beta1/protorev";
-import { Coin, coinFromString, coinsFromString, StrideClient } from "stridejs";
-import { MsgTransfer } from "stridejs/types/codegen/ibc/applications/transfer/v1/tx";
-import { MsgRegisterTokenPriceQuery } from "stridejs/types/codegen/stride/icqoracle/tx";
+import { Coin, coinFromString, StrideClient } from "stridejs";
+import { MsgTransfer } from "stridejs/dist/types/codegen/ibc/applications/transfer/v1/tx";
+import { MsgRegisterTokenPriceQuery } from "stridejs/dist/types/codegen/stride/icqoracle/tx";
 import { UOSMO } from "./main.test";
 
 const DEFAULT_TRANSFER_TIMEOUT = BigInt(
@@ -65,8 +64,6 @@ export function newRegisterTokenPriceQueryMsg({
   baseDenomOnOsmosis,
   quoteDenomOnOsmosis,
   poolId,
-  baseDenomDecimals = 6n,
-  quoteDenomDecimals = 6n,
 }: {
   adminClient: StrideClient;
   baseDenom: string;
@@ -74,8 +71,6 @@ export function newRegisterTokenPriceQueryMsg({
   baseDenomOnOsmosis: string;
   quoteDenomOnOsmosis: string;
   poolId: bigint;
-  baseDenomDecimals?: bigint;
-  quoteDenomDecimals?: bigint;
 }): {
   typeUrl: string;
   value: MsgRegisterTokenPriceQuery;
@@ -85,8 +80,6 @@ export function newRegisterTokenPriceQueryMsg({
       admin: adminClient.address,
       baseDenom: baseDenom,
       quoteDenom: quoteDenom,
-      baseDenomDecimals: baseDenomDecimals,
-      quoteDenomDecimals: quoteDenomDecimals,
       osmosisPoolId: poolId,
       osmosisBaseDenom: baseDenomOnOsmosis,
       osmosisQuoteDenom: quoteDenomOnOsmosis,

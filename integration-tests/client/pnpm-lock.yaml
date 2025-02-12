@@ -53,18 +53,14 @@ importers:
         specifier: 3.3.3
         version: 3.3.3
       stridejs:
-        specifier: github:Stride-Labs/stridejs#7c13e46dabd22e5e4393ffd4b2b9b44f6c4f394d
-        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/7c13e46dabd22e5e4393ffd4b2b9b44f6c4f394d
+        specifier: github:Stride-Labs/stridejs#2b1012b3566a7abf04aa25abf0c3adcf99e0cd74
+        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/2b1012b3566a7abf04aa25abf0c3adcf99e0cd74
       typescript:
         specifier: 5.5.3
         version: 5.5.3
       vitest:
         specifier: 2.0.3
         version: 2.0.3(@types/node@20.14.11)(terser@5.31.3)
-    devDependencies:
-      vite-tsconfig-paths:
-        specifier: 5.1.4
-        version: 5.1.4(typescript@5.5.3)(vite@5.3.4(@types/node@20.14.11)(terser@5.31.3))
 
 packages:
 
@@ -1115,9 +1111,6 @@ packages:
     resolution: {integrity: sha512-DpLKbNU4WylpxJykQujfCcwYWiV/Jhm50Goo0wrVILAv5jOr9d+H+UR3PhSCD2rCCEIg0uc+G+muBTwD54JhDQ==}
     engines: {node: '>= 0.4'}
 
-  globrex@0.1.2:
-    resolution: {integrity: sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==}
-
   gopd@1.0.1:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
 
@@ -1690,8 +1683,8 @@ packages:
   std-env@3.7.0:
     resolution: {integrity: sha512-JPbdCEQLj1w5GilpiHAx3qJvFndqybBysA3qUOnznweH4QbNYUsW/ea8QzSrnh0vNsezMMw5bcVool8lM0gwzg==}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/7c13e46dabd22e5e4393ffd4b2b9b44f6c4f394d:
-    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/7c13e46dabd22e5e4393ffd4b2b9b44f6c4f394d}
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/2b1012b3566a7abf04aa25abf0c3adcf99e0cd74:
+    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/2b1012b3566a7abf04aa25abf0c3adcf99e0cd74}
     version: 0.11.4
 
   string-length@4.0.2:
@@ -1791,16 +1784,6 @@ packages:
       '@swc/wasm':
         optional: true
 
-  tsconfck@3.1.5:
-    resolution: {integrity: sha512-CLDfGgUp7XPswWnezWwsCRxNmgQjhYq3VXHM0/XIRxhVrKw0M1if9agzryh1QS3nxjCROvV+xWxoJO1YctzzWg==}
-    engines: {node: ^18 || >=20}
-    hasBin: true
-    peerDependencies:
-      typescript: ^5.0.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
   type-detect@4.0.8:
     resolution: {integrity: sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==}
     engines: {node: '>=4'}
@@ -1834,14 +1817,6 @@ packages:
     resolution: {integrity: sha512-14jzwMx7XTcMB+9BhGQyoEAmSl0eOr3nrnn+Z12WNERtOvLN+d2scbRUvyni05rT3997Bg+rZb47NyP4IQPKXg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
-
-  vite-tsconfig-paths@5.1.4:
-    resolution: {integrity: sha512-cYj0LRuLV2c2sMqhqhGpaO3LretdtMn/BVX4cPLanIZuwwrkVl+lK84E/miEXkCHWXuq65rhNN4rXsBcOB3S4w==}
-    peerDependencies:
-      vite: '*'
-    peerDependenciesMeta:
-      vite:
-        optional: true
 
   vite@5.3.4:
     resolution: {integrity: sha512-Cw+7zL3ZG9/NZBB8C+8QbQZmR54GwqIz+WMI4b3JgdYJvX+ny9AjJXqkGQlDXSXRP9rP0B4tbciRMOVEKulVOA==}
@@ -3155,8 +3130,6 @@ snapshots:
       define-properties: 1.2.1
       gopd: 1.0.1
 
-  globrex@0.1.2: {}
-
   gopd@1.0.1:
     dependencies:
       get-intrinsic: 1.2.4
@@ -3878,7 +3851,7 @@ snapshots:
 
   std-env@3.7.0: {}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/7c13e46dabd22e5e4393ffd4b2b9b44f6c4f394d:
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/2b1012b3566a7abf04aa25abf0c3adcf99e0cd74:
     dependencies:
       '@cosmjs/amino': 0.32.4
       '@cosmjs/encoding': 0.32.4
@@ -3984,10 +3957,6 @@ snapshots:
       yn: 3.1.1
     optional: true
 
-  tsconfck@3.1.5(typescript@5.5.3):
-    optionalDependencies:
-      typescript: 5.5.3
-
   type-detect@4.0.8: {}
 
   type-fest@0.21.3: {}
@@ -4027,17 +3996,6 @@ snapshots:
       - sugarss
       - supports-color
       - terser
-
-  vite-tsconfig-paths@5.1.4(typescript@5.5.3)(vite@5.3.4(@types/node@20.14.11)(terser@5.31.3)):
-    dependencies:
-      debug: 4.3.5
-      globrex: 0.1.2
-      tsconfck: 3.1.5(typescript@5.5.3)
-    optionalDependencies:
-      vite: 5.3.4(@types/node@20.14.11)(terser@5.31.3)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   vite@5.3.4(@types/node@20.14.11)(terser@5.31.3):
     dependencies:
