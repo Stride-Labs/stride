@@ -17,7 +17,7 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // TokenPrice queries the current price for a specific token
-func (k Keeper) TokenPrice(goCtx context.Context, req *types.QueryTokenPriceRequest) (*types.QueryTokenPriceResponse, error) {
+func (k Keeper) TokenPrice(goCtx context.Context, req *types.QueryTokenPriceRequest) (*types.TokenPriceResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -29,8 +29,10 @@ func (k Keeper) TokenPrice(goCtx context.Context, req *types.QueryTokenPriceRequ
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	return &types.QueryTokenPriceResponse{
-		TokenPrice: k.TokenPriceToTokenPriceResponse(ctx, tokenPrice)[0],
+	return &types.TokenPriceResponse{
+		BaseDenomUnwrapped:  k.unwrapIBCDenom(ctx, tokenPrice.BaseDenom),
+		QuoteDenomUnwrapped: k.unwrapIBCDenom(ctx, tokenPrice.QuoteDenom),
+		TokenPrice:          tokenPrice,
 	}, nil
 }
 
@@ -44,11 +46,16 @@ func (k Keeper) TokenPrices(goCtx context.Context, req *types.QueryTokenPricesRe
 
 	// TODO impl paging
 
-	prices := k.GetAllTokenPrices(ctx)
+	responses := []types.TokenPriceResponse{}
+	for _, tokenPrice := range k.GetAllTokenPrices(ctx) {
+		responses = append(responses, types.TokenPriceResponse{
+			BaseDenomUnwrapped:  k.unwrapIBCDenom(ctx, tokenPrice.BaseDenom),
+			QuoteDenomUnwrapped: k.unwrapIBCDenom(ctx, tokenPrice.QuoteDenom),
+			TokenPrice:          tokenPrice,
+		})
+	}
 
-	return &types.QueryTokenPricesResponse{
-		TokenPrices: k.TokenPriceToTokenPriceResponse(ctx, prices...),
-	}, nil
+	return &types.QueryTokenPricesResponse{TokenPrices: responses}, nil
 }
 
 // Params queries the oracle parameters
@@ -97,32 +104,4 @@ func (k Keeper) unwrapIBCDenom(ctx sdk.Context, denom string) string {
 		}
 	}
 	return denom
-}
-
-// TokenPriceToTokenPriceResponse converts TokenPrices to TokenPriceResponses format
-func (k Keeper) TokenPriceToTokenPriceResponse(ctx sdk.Context, tokenPrices ...types.TokenPrice) []types.TokenPriceResponse {
-	responses := make([]types.TokenPriceResponse, len(tokenPrices))
-
-	for i, tokenPrice := range tokenPrices {
-		baseDenomUnwrapped := k.unwrapIBCDenom(ctx, tokenPrice.BaseDenom)
-		quoteDenomUnwrapped := k.unwrapIBCDenom(ctx, tokenPrice.QuoteDenom)
-
-		responses[i] = types.TokenPriceResponse{
-			BaseDenomUnwrapped:  baseDenomUnwrapped,
-			QuoteDenomUnwrapped: quoteDenomUnwrapped,
-			BaseDenom:           tokenPrice.BaseDenom,
-			QuoteDenom:          tokenPrice.QuoteDenom,
-			BaseDenomDecimals:   tokenPrice.BaseDenomDecimals,
-			QuoteDenomDecimals:  tokenPrice.QuoteDenomDecimals,
-			OsmosisBaseDenom:    tokenPrice.OsmosisBaseDenom,
-			OsmosisQuoteDenom:   tokenPrice.OsmosisQuoteDenom,
-			OsmosisPoolId:       tokenPrice.OsmosisPoolId,
-			SpotPrice:           tokenPrice.SpotPrice,
-			LastRequestTime:     tokenPrice.LastRequestTime,
-			LastResponseTime:    tokenPrice.LastResponseTime,
-			QueryInProgress:     tokenPrice.QueryInProgress,
-		}
-	}
-
-	return responses
 }
