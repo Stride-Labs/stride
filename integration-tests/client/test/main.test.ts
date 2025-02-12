@@ -305,17 +305,6 @@ describe("x/icqoracle", () => {
       receiver: osmojs.address,
     });
 
-    console.log("Transfering OSMO from Osmosis to Stride");
-    await transfer({
-      stridejs: stridejs,
-      signingClient: osmojs,
-      sourceChain: "OSMO",
-      destinationChain: "STRIDE",
-      coins: `1000000${UOSMO}`,
-      sender: osmojs.address,
-      receiver: stridejs.address,
-    });
-
     const osmoDenomOnStride = ibcDenom(
       [
         {
@@ -574,9 +563,6 @@ describe("x/icqoracle", () => {
             osmosisBaseDenom: strdDenomOnOsmosis,
             osmosisQuoteDenom: "uosmo",
             osmosisPoolId: osmoStrdPoolId,
-            osmosisPoolType:
-              stridejs.types.stride.icqoracle.OsmosisPoolType
-                .CONCENTRATED_LIQUIDITY,
           },
         ),
       ],
@@ -609,8 +595,6 @@ describe("x/icqoracle", () => {
             osmosisBaseDenom: atomDenomOnOsmosis,
             osmosisQuoteDenom: "uosmo",
             osmosisPoolId: osmoAtomPoolId,
-            osmosisPoolType:
-              stridejs.types.stride.icqoracle.OsmosisPoolType.GAMM,
           },
         ),
       ],
