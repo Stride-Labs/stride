@@ -277,7 +277,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
-	s.RegisterInterchainAccount(icaPath.EndpointA, owner)
+	s.RegisterInterchainAccountWithOrdering(icaPath.EndpointA, owner)
 
 	err := icaPath.EndpointB.ChanOpenTry()
 	s.Require().NoError(err, "ChanOpenTry error")
@@ -309,7 +309,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 
 // Register's a new ICA account on the next channel available
 // This function assumes a connection already exists
-func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint, owner string) {
+func (s *AppTestHelper) RegisterInterchainAccountWithOrdering(endpoint *ibctesting.Endpoint, owner string) {
 	// Get the port ID from the owner name (i.e. "icacontroller-{owner}")
 	portID, err := icatypes.NewControllerPortID(owner)
 	s.Require().NoError(err, "owner to portID error")
@@ -317,7 +317,7 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 	// Get the next channel available and register the ICA
 	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
-	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion)
+	err = s.App.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion, channeltypes.ORDERED)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state

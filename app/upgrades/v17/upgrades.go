@@ -11,6 +11,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
@@ -238,12 +239,12 @@ func RegisterCommunityPoolAddresses(ctx sdk.Context, k stakeibckeeper.Keeper) er
 		}))
 
 		depositAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
-		if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, depositAccount, appVersion); err != nil {
+		if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, depositAccount, appVersion, types.ORDERED); err != nil {
 			return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool deposit ICA")
 		}
 
 		returnAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_RETURN)
-		if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, returnAccount, appVersion); err != nil {
+		if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, returnAccount, appVersion, types.ORDERED); err != nil {
 			return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool return ICA")
 		}
 	}

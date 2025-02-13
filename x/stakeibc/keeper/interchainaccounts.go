@@ -12,6 +12,7 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v25/utils"
 	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
@@ -304,7 +305,7 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 	}
 
 	// Otherwise, if there's no account already, register a new one
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, owner, appVersion); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
 		return account, err
 	}
 
