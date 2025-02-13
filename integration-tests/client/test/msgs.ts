@@ -2,7 +2,8 @@ import { osmosis } from "osmojs";
 import { Coin, coinFromString, StrideClient } from "stridejs";
 import { MsgTransfer } from "stridejs/dist/types/codegen/ibc/applications/transfer/v1/tx";
 import { MsgRegisterTokenPriceQuery } from "stridejs/dist/types/codegen/stride/icqoracle/tx";
-import { UOSMO } from "./main.test";
+import { UOSMO } from "./consts";
+import { stride, ibc } from "stridejs";
 
 const DEFAULT_TRANSFER_TIMEOUT = BigInt(
   `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`,
@@ -20,17 +21,15 @@ const DEFAULT_TRANSFER_TIMEOUT = BigInt(
  * @returns The IBC transfer message
  */
 export function newTransferMsg({
-  stridejs,
   channelId,
-  coins,
+  coin,
   sender,
   receiver,
   memo = "",
   timeout,
 }: {
-  stridejs: StrideClient;
   channelId: string;
-  coins: string;
+  coin: string;
   sender: string;
   receiver: string;
   timeout?: BigInt;
@@ -40,32 +39,30 @@ export function newTransferMsg({
   value: MsgTransfer;
 } {
   timeout = timeout === undefined ? timeout : DEFAULT_TRANSFER_TIMEOUT;
-  return stridejs.types.ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer(
-    {
-      sourcePort: "transfer",
-      sourceChannel: channelId,
-      token: coinFromString(coins),
-      sender: sender,
-      receiver: receiver,
-      timeoutHeight: {
-        revisionNumber: 0n,
-        revisionHeight: 0n,
-      },
-      timeoutTimestamp: DEFAULT_TRANSFER_TIMEOUT,
-      memo: memo,
+  return ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
+    sourcePort: "transfer",
+    sourceChannel: channelId,
+    token: coinFromString(coin),
+    sender: sender,
+    receiver: receiver,
+    timeoutHeight: {
+      revisionNumber: 0n,
+      revisionHeight: 0n,
     },
-  );
+    timeoutTimestamp: DEFAULT_TRANSFER_TIMEOUT,
+    memo: memo,
+  });
 }
 
 export function newRegisterTokenPriceQueryMsg({
-  adminClient,
+  admin,
   baseDenom,
   quoteDenom,
   baseDenomOnOsmosis,
   quoteDenomOnOsmosis,
   poolId,
 }: {
-  adminClient: StrideClient;
+  admin: string;
   baseDenom: string;
   quoteDenom: string;
   baseDenomOnOsmosis: string;
@@ -75,16 +72,14 @@ export function newRegisterTokenPriceQueryMsg({
   typeUrl: string;
   value: MsgRegisterTokenPriceQuery;
 } {
-  return adminClient.types.stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery(
-    {
-      admin: adminClient.address,
-      baseDenom: baseDenom,
-      quoteDenom: quoteDenom,
-      osmosisPoolId: poolId,
-      osmosisBaseDenom: baseDenomOnOsmosis,
-      osmosisQuoteDenom: quoteDenomOnOsmosis,
-    },
-  );
+  return stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
+    admin: admin,
+    baseDenom: baseDenom,
+    quoteDenom: quoteDenom,
+    osmosisPoolId: poolId,
+    osmosisBaseDenom: baseDenomOnOsmosis,
+    osmosisQuoteDenom: quoteDenomOnOsmosis,
+  });
 }
 
 /**

@@ -1,15 +1,18 @@
+import { DeliverTxResponse, SigningStargateClient } from "@cosmjs/stargate";
 import {
-  DeliverTxResponse,
-  SigningStargateClient,
-  Event,
-} from "@cosmjs/stargate";
-import { coinsFromString, EncodeObject, StrideClient } from "stridejs";
+  coinsFromString,
+  convertBech32Prefix,
+  cosmos,
+  EncodeObject,
+  getTxIbcResponses,
+  getValueFromEvents,
+  IbcResponse,
+  StrideClient,
+} from "stridejs";
 import { expect } from "vitest";
-import { Chain, CosmosClient } from "./main.test";
-import { IbcResponse } from "stridejs";
 import { newTransferMsg } from "./msgs";
-import { TRANSFER_CHANNEL } from "./main.test";
-import { getTxIbcResponses } from "stridejs";
+import { TRANSFER_CHANNEL } from "./consts";
+import { CosmosClient, Chain } from "./types";
 
 export function isCosmosClient(client: any): client is CosmosClient {
   return (
@@ -22,7 +25,7 @@ export function isCosmosClient(client: any): client is CosmosClient {
 /**
  * Waits for the chain to start by continuously sending transactions until .
  *
- * @param {StrideClient} client The Stride client instance.
+ * @param {StrideClient | CosmosClient} client The client instance.
  * @param {string} denom The denomination of the coins to send.
  */
 export async function waitForChain(
@@ -31,37 +34,86 @@ export async function waitForChain(
 ): Promise<void> {
   // the best way to ensure a chain is up is to successfully send a tx
 
+  const msg = cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
+    fromAddress: client.address,
+    toAddress: client.address,
+    amount: coinsFromString(`1${denom}`),
+  });
+
   while (true) {
+    let tx: DeliverTxResponse;
+
     try {
       if (client instanceof StrideClient) {
-        const tx = await client.signAndBroadcast(
-          [
-            client.types.cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
-              fromAddress: client.address,
-              toAddress: client.address,
-              amount: coinsFromString(`1${denom}`),
-            }),
-          ],
-          2,
-        );
-
-        if (tx.code === 0) {
-          break;
-        }
+        tx = await client.signAndBroadcast([msg], 2);
       } else if (isCosmosClient(client)) {
-        const tx = await client.client.sendTokens(
-          client.address,
-          client.address,
-          coinsFromString(`1${denom}`),
-          2,
-        );
-
-        if (tx.code === 0) {
-          break;
-        }
+        tx = await client.client.signAndBroadcast(client.address, [msg], 2);
       } else {
         throw new Error(`unknown client ${client}`);
       }
+
+      if (tx.code === 0) {
+        break;
+      }
+    } catch (e) {
+      // signAndBroadcast might throw if the RPC is not up yet
+      console.log(e);
+    }
+  }
+}
+
+/**
+ * Waits for the chain to start by continuously sending transactions until .
+ *
+ * @param {StrideClient | CosmosClient} client The client instance.
+ * @param {string} denom The denomination of the coins to send.
+ */
+export async function waitForIbc(
+  client: StrideClient | CosmosClient,
+  channelId: string,
+  denom: string,
+  receiverPrefix: string,
+): Promise<void> {
+  // the best way to ensure ibc is up is to successfully transfer funds
+
+  const msg = newTransferMsg({
+    channelId,
+    coin: `1${denom}`,
+    sender: client.address,
+    receiver: convertBech32Prefix(client.address, receiverPrefix),
+  });
+
+  while (true) {
+    let ibcAck: IbcResponse;
+
+    try {
+      if (client instanceof StrideClient) {
+        const tx = await client.signAndBroadcast([msg], 2);
+        if (tx.code === 0) {
+          break;
+        }
+        ibcAck = await tx.ibcResponses[0];
+      } else if (isCosmosClient(client)) {
+        const tx = await client.client.signAndBroadcast(
+          client.address,
+          [msg],
+          2,
+        );
+        if (tx.code === 0) {
+          break;
+        }
+
+        ibcAck = await getTxIbcResponses(client.client, tx, 30_000, 50)[0];
+      } else {
+        throw new Error(`unknown client ${client}`);
+      }
+
+      expect(ibcAck.type).toBe("ack");
+      expect(ibcAck.tx.code).toBe(0);
+
+      expect(
+        getValueFromEvents(ibcAck.tx.events, "fungible_token_packet.success"),
+      ).toBe("\u0001");
     } catch (e) {
       // signAndBroadcast might throw if the RPC is not up yet
       console.log(e);
@@ -121,16 +173,14 @@ export async function submitTxAndExpectSuccess(
  * @param receiver The address of the receiver
  */
 export async function transfer({
-  stridejs,
-  signingClient,
+  client,
   sourceChain,
   destinationChain,
   coins,
   sender,
   receiver,
 }: {
-  stridejs: StrideClient;
-  signingClient: StrideClient | CosmosClient;
+  client: StrideClient | CosmosClient;
   sourceChain: Chain;
   destinationChain: Chain;
   sender: string;
@@ -138,36 +188,20 @@ export async function transfer({
   coins: string;
 }) {
   const msg = newTransferMsg({
-    stridejs: stridejs,
     channelId: TRANSFER_CHANNEL[sourceChain][destinationChain]!,
-    coins: coins,
+    coin: coins,
     sender: sender,
     receiver: receiver,
   });
 
-  const tx = await submitTxAndExpectSuccess(signingClient, msg);
+  const tx = await submitTxAndExpectSuccess(client, msg);
 
-  const isStrideClient = "signingStargateClient" in signingClient;
+  const isStrideClient = "signingStargateClient" in client;
 
   let ibcAck = isStrideClient
     ? await tx.ibcResponses[0]
-    : await getTxIbcResponses(signingClient.client, tx, 30_000, 50)[0];
+    : await getTxIbcResponses(client.client, tx, 30_000, 50)[0];
 
   expect(ibcAck.type).toBe("ack");
   expect(ibcAck.tx.code).toBe(0);
-}
-
-export function getValueFromEvents(
-  events: readonly Event[],
-  key: string,
-): string {
-  for (const e of events) {
-    for (const a of e.attributes) {
-      if (`${e.type}.${a.key}` === key) {
-        return String(a.value);
-      }
-    }
-  }
-
-  throw new Error(`Event ${key} isn't in ${JSON.stringify(events)}`);
 }
