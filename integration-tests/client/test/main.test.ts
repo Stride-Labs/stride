@@ -970,7 +970,7 @@ describe("buyback and burn", () => {
     // expect(BigInt(totalBurnedAfter) - BigInt(totalBurnedBefore)).toBe(amount);
   });
 
-  test.only("registration, liquid stake and collect rewards", async () => {
+  test("registration, liquid stake and collect rewards", async () => {
     const stridejs = accounts.admin;
     const gaiajs = gaiaAccounts.user;
 
@@ -998,10 +998,12 @@ describe("buyback and burn", () => {
     await sleep(2 * 140_000);
 
     // Check st tokens
-    let { balances } = await stridejs.query.cosmos.bank.v1beta1.allBalances({
-      address: stridejs.address,
-    });
-    console.log("st tokens", balances);
+    const { balance: stAtomBalance } =
+      await stridejs.query.cosmos.bank.v1beta1.balance({
+        address: stridejs.address,
+        denom: "stuatom",
+      });
+    expect(BigInt(stAtomBalance?.amount!)).toBeGreaterThan(0n);
 
     // Check Rewards
     const auctionAddress = (
@@ -1012,12 +1014,55 @@ describe("buyback and burn", () => {
       ).account as ModuleAccount
     ).baseAccount?.address!;
 
-    ({ balances } = await stridejs.query.cosmos.bank.v1beta1.allBalances({
+    const { balances } = await stridejs.query.cosmos.bank.v1beta1.allBalances({
       address: auctionAddress,
-    }));
+    });
 
     console.log("rewards in auction", balances);
-  }, 360_000); // Set timeout to 4 minutes to account for epoch waits
+  }, 360_000);
 
-  // TODO test unwrapIBCDenom via stridejs.query.stride.icqoracle.tokenPrices
+  test("unwrapIBCDenom", async () => {
+    const stridejs = accounts.admin;
+    const gaiajs = gaiaAccounts.user;
+    const osmojs = osmoAccounts.user;
+
+    // Transfer ATOM & OSMO to Stride to register their ibc denoms on Stride's ibc transfer app
+    await ibcTransfer({
+      client: gaiajs,
+      sourceChain: "GAIA",
+      destinationChain: "STRIDE",
+      coin: `1${UATOM}`,
+      sender: gaiajs.address,
+      receiver: stridejs.address,
+    });
+
+    await ibcTransfer({
+      client: osmojs,
+      sourceChain: "OSMO",
+      destinationChain: "STRIDE",
+      coin: `1${UOSMO}`,
+      sender: osmojs.address,
+      receiver: stridejs.address,
+    });
+
+    const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
+      admin: accounts.admin.address,
+      baseDenom: ATOM_DENOM_ON_STRIDE,
+      quoteDenom: OSMO_DENOM_ON_STRIDE,
+      baseDenomOnOsmosis: ATOM_DENOM_ON_OSMOSIS,
+      quoteDenomOnOsmosis: UOSMO,
+      poolId: 1n, // not important for thie TokenPrice to work for the test to work
+    });
+    await submitTxAndExpectSuccess(accounts.admin, registerTokenPriceMsg);
+
+    const { baseDenomUnwrapped, quoteDenomUnwrapped } =
+      await stridejs.query.stride.icqoracle.tokenPrice({
+        baseDenom: ATOM_DENOM_ON_STRIDE,
+        quoteDenom: OSMO_DENOM_ON_STRIDE,
+        poolId: 1n,
+      });
+
+    expect(baseDenomUnwrapped).toBe(UATOM);
+    expect(quoteDenomUnwrapped).toBe(UOSMO);
+  });
 });
