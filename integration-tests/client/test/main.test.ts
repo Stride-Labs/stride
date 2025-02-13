@@ -35,7 +35,10 @@ import { beforeAll, describe, expect, test } from "vitest";
 import {
   ATOM_DENOM_ON_OSMOSIS,
   ATOM_DENOM_ON_STRIDE,
+  CONNECTION_ID,
+  GAIA_CHAIN_ID,
   GAIA_RPC_ENDPOINT,
+  OSMO_CHAIN_ID,
   OSMO_DENOM_ON_STRIDE,
   OSMO_RPC_ENDPOINT,
   STRD_DENOM_ON_OSMOSIS,
@@ -54,7 +57,7 @@ import {
 import { CosmosClient } from "./types";
 import {
   submitTxAndExpectSuccess,
-  transfer,
+  transfer as ibcTransfer,
   waitForChain,
   waitForIbc,
 } from "./utils";
@@ -149,7 +152,7 @@ beforeAll(async () => {
             GAIA_RPC_ENDPOINT,
             gaiaSigner,
             {
-              gasPrice: GasPrice.fromString("1.0uatom"),
+              gasPrice: GasPrice.fromString(`1.0${UATOM}`),
               broadcastPollIntervalMs: 50,
             },
           ),
@@ -176,7 +179,7 @@ beforeAll(async () => {
             OSMO_RPC_ENDPOINT,
             osmoSigner,
             {
-              gasPrice: GasPrice.fromString("1.0uosmo"),
+              gasPrice: GasPrice.fromString(`1.0${UOSMO}`),
               broadcastPollIntervalMs: 50,
               registry: new Registry([
                 ...osmosisProtoRegistry,
@@ -208,18 +211,13 @@ beforeAll(async () => {
   console.log("waiting for stride-gaia ibc...");
   await waitForIbc(
     accounts.user,
-    TRANSFER_CHANNEL["STRIDE"]["GAIA"]!,
+    TRANSFER_CHANNEL.STRIDE.GAIA!,
     USTRD,
     "cosmos",
   );
 
   console.log("waiting for stride-osmosis ibc...");
-  await waitForIbc(
-    accounts.user,
-    TRANSFER_CHANNEL["STRIDE"]["OSMO"]!,
-    USTRD,
-    "osmo",
-  );
+  await waitForIbc(accounts.user, TRANSFER_CHANNEL.STRIDE.OSMO!, USTRD, "osmo");
 
   console.log("registering host zones...");
 
@@ -228,15 +226,20 @@ beforeAll(async () => {
     {},
   );
 
-  if (hostZone.find((h) => h.chainId === "cosmoshub-test-1") === undefined) {
+  const gaiaHostZoneExists =
+    hostZone.find((h) => h.chainId === GAIA_CHAIN_ID) === undefined;
+  const osmoHostZoneExists =
+    hostZone.find((h) => h.chainId === OSMO_CHAIN_ID) === undefined;
+
+  if (gaiaHostZoneExists) {
     const gaiaRegisterHostZoneMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
         creator: accounts.admin.address,
-        connectionId: "connection-0",
+        connectionId: CONNECTION_ID.STRIDE.GAIA!,
         bech32prefix: "cosmos",
         hostDenom: UATOM,
         ibcDenom: ATOM_DENOM_ON_STRIDE,
-        transferChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"]!,
+        transferChannelId: TRANSFER_CHANNEL.STRIDE.GAIA!,
         unbondingPeriod: BigInt(1),
         minRedemptionRate: "0.9",
         maxRedemptionRate: "1.5",
@@ -246,13 +249,13 @@ beforeAll(async () => {
         maxMessagesPerIcaTx: BigInt(2),
       });
 
-    const { validators: osmoValidators } =
-      await osmoAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
+    const { validators: gaiaValidators } =
+      await gaiaAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
     const gaiaAddValidatorsMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
         creator: accounts.admin.address,
-        hostZone: "cosmoshub-test-1",
-        validators: osmoValidators.map((val) => ({
+        hostZone: GAIA_CHAIN_ID,
+        validators: gaiaValidators.map((val) => ({
           name: val.description.moniker,
           address: val.operatorAddress,
           weight: 10n,
@@ -268,15 +271,15 @@ beforeAll(async () => {
     registerHostZonesMsgs.push(gaiaRegisterHostZoneMsg, gaiaAddValidatorsMsg);
   }
 
-  if (hostZone.find((h) => h.chainId === "osmosis-test-1") === undefined) {
+  if (osmoHostZoneExists) {
     const osmoRegisterHostZoneMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
         creator: accounts.admin.address,
-        connectionId: "connection-0",
+        connectionId: CONNECTION_ID.STRIDE.OSMO!,
         bech32prefix: "osmo",
         hostDenom: UOSMO,
         ibcDenom: OSMO_DENOM_ON_STRIDE,
-        transferChannelId: TRANSFER_CHANNEL["STRIDE"]["OSMO"]!,
+        transferChannelId: TRANSFER_CHANNEL.STRIDE.OSMO!,
         unbondingPeriod: BigInt(1),
         minRedemptionRate: "0.9",
         maxRedemptionRate: "1.5",
@@ -293,7 +296,7 @@ beforeAll(async () => {
     const osmoAddValidatorsMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
         creator: accounts.admin.address,
-        hostZone: "osmosis-test-1",
+        hostZone: OSMO_CHAIN_ID,
         validators: osmoValidators.map((val) => ({
           name: val.description.moniker,
           address: val.operatorAddress,
@@ -365,7 +368,7 @@ describe("ibc", () => {
   test("MsgTransfer", async () => {
     const stridejs = accounts.user;
 
-    await transfer({
+    await ibcTransfer({
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "GAIA",
@@ -378,7 +381,7 @@ describe("ibc", () => {
       [
         ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
           sourcePort: "transfer",
-          sourceChannel: TRANSFER_CHANNEL["STRIDE"]["GAIA"]!,
+          sourceChannel: TRANSFER_CHANNEL.STRIDE.GAIA!,
           token: coinFromString(`1${USTRD}`),
           sender: stridejs.address,
           receiver: convertBech32Prefix(stridejs.address, "cosmos"),
@@ -413,10 +416,10 @@ describe("x/stakeibc", () => {
     const msg = stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
       creator: stridejs.address,
       bech32prefix: "cosmos",
-      hostDenom: "uatom",
+      hostDenom: UATOM,
       ibcDenom: ATOM_DENOM_ON_STRIDE,
-      connectionId: "connection-0",
-      transferChannelId: "channel-0",
+      connectionId: CONNECTION_ID.STRIDE.GAIA!,
+      transferChannelId: TRANSFER_CHANNEL.STRIDE.GAIA!,
       unbondingPeriod: BigInt(1),
       minRedemptionRate: "0.9",
       maxRedemptionRate: "1.5",
@@ -436,7 +439,7 @@ describe("buyback and burn", () => {
     const stridejs = accounts.user;
     const osmojs = osmoAccounts.user;
 
-    await transfer({
+    await ibcTransfer({
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "OSMO",
@@ -515,7 +518,7 @@ describe("buyback and burn", () => {
     const stridejs = accounts.user;
     const osmojs = osmoAccounts.user;
 
-    await transfer({
+    await ibcTransfer({
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "OSMO",
@@ -537,7 +540,7 @@ describe("buyback and burn", () => {
     const addLiquidityMsg = addConcentratedLiquidityPositionMsg({
       sender: osmojs.address,
       poolId: osmoStrdPoolId,
-      tokensProvided: coinsFromString(`5${STRD_DENOM_ON_OSMOSIS},10uosmo`),
+      tokensProvided: coinsFromString(`5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`),
       tokenMinAmount0: "5",
       tokenMinAmount1: "10",
     });
@@ -615,7 +618,7 @@ describe("buyback and burn", () => {
     let strideTx = await stridejs.signAndBroadcast([
       ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
         sourcePort: "transfer",
-        sourceChannel: TRANSFER_CHANNEL["STRIDE"]["OSMO"]!,
+        sourceChannel: TRANSFER_CHANNEL.STRIDE.OSMO!,
         token: coinFromString(`1000000${USTRD}`),
         sender: stridejs.address,
         receiver: osmojs.address,
@@ -644,8 +647,8 @@ describe("buyback and burn", () => {
       [
         ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
           sourcePort: "transfer",
-          sourceChannel: TRANSFER_CHANNEL["GAIA"]["STRIDE"]!,
-          token: coinFromString("1000000uatom"),
+          sourceChannel: TRANSFER_CHANNEL.GAIA.STRIDE!,
+          token: coinFromString(`1000000${UATOM}`),
           sender: gaiajs.address,
           receiver: stridejs.address, // needs to be valid but ignored by pfm
           timeoutHeight: {
@@ -659,7 +662,7 @@ describe("buyback and burn", () => {
             forward: {
               receiver: osmojs.address,
               port: "transfer",
-              channel: TRANSFER_CHANNEL["STRIDE"]["OSMO"],
+              channel: TRANSFER_CHANNEL.STRIDE.OSMO,
             },
           }),
         }),
@@ -684,7 +687,7 @@ describe("buyback and burn", () => {
           {
             sender: osmojs.address,
             denom0: STRD_DENOM_ON_OSMOSIS,
-            denom1: "uosmo",
+            denom1: UOSMO,
             tickSpacing: 100n,
             spreadFactor: "0.001",
           },
@@ -711,7 +714,7 @@ describe("buyback and burn", () => {
             lowerTick: -108000000n,
             upperTick: 342000000n,
             tokensProvided: coinsFromString(
-              `5${STRD_DENOM_ON_OSMOSIS},10uosmo`,
+              `5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`,
             ),
             tokenMinAmount0: "5",
             tokenMinAmount1: "10",
@@ -734,7 +737,7 @@ describe("buyback and burn", () => {
             sender: osmojs.address,
             poolAssets: [
               {
-                token: coinFromString(`10uosmo`),
+                token: coinFromString(`10${UOSMO}`),
                 weight: "1",
               },
               {
@@ -769,7 +772,7 @@ describe("buyback and burn", () => {
           baseDenom: USTRD,
           quoteDenom: OSMO_DENOM_ON_STRIDE,
           osmosisBaseDenom: STRD_DENOM_ON_OSMOSIS,
-          osmosisQuoteDenom: "uosmo",
+          osmosisQuoteDenom: UOSMO,
           osmosisPoolId: osmoStrdPoolId,
         }),
       ],
@@ -788,7 +791,7 @@ describe("buyback and burn", () => {
           baseDenom: ATOM_DENOM_ON_STRIDE,
           quoteDenom: OSMO_DENOM_ON_STRIDE,
           osmosisBaseDenom: ATOM_DENOM_ON_OSMOSIS,
-          osmosisQuoteDenom: "uosmo",
+          osmosisQuoteDenom: UOSMO,
           osmosisPoolId: osmoAtomPoolId,
         }),
       ],
@@ -951,7 +954,7 @@ describe("buyback and burn", () => {
     const stridejs = accounts.user;
     const osmojs = osmoAccounts.user;
 
-    await transfer({
+    await ibcTransfer({
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "OSMO",
@@ -1064,20 +1067,30 @@ describe("buyback and burn", () => {
 
   test.only("registration, liquid stake and collect rewards", async () => {
     const stridejs = accounts.admin;
+    const gaiajs = gaiaAccounts.user;
 
-    // Perform Liquid Stake
-    const liquidStakeAmount = 1_000_000;
+    const amount = String(1_000_000);
+
+    await ibcTransfer({
+      client: gaiajs,
+      sourceChain: "GAIA",
+      destinationChain: "STRIDE",
+      coins: `${amount}${UATOM}`,
+      sender: gaiajs.address,
+      receiver: stridejs.address,
+    });
+
     const liquidStakeMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
         creator: stridejs.address,
-        amount: `${liquidStakeAmount}${ATOM_DENOM_ON_STRIDE}`,
-        hostDenom: "uatom",
+        amount,
+        hostDenom: UATOM,
       });
 
     await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
 
-    // Wait for STRIDE_DAY_EPOCH to pass (140s)
-    await sleep(140_000);
+    // Wait for 2 STRIDE_DAY_EPOCH to pass (140s)
+    await sleep(2 * 140_000);
 
     // Check Rewards
     const auctionAddress = (
@@ -1093,7 +1106,7 @@ describe("buyback and burn", () => {
     });
 
     console.log(balances);
-  }, 240_000); // Set timeout to 4 minutes to account for epoch waits
+  }, 360_000); // Set timeout to 4 minutes to account for epoch waits
 
   // TODO test unwrapIBCDenom via stridejs.query.stride.icqoracle.tokenPrices
 });

@@ -204,4 +204,8 @@ export async function transfer({
 
   expect(ibcAck.type).toBe("ack");
   expect(ibcAck.tx.code).toBe(0);
+
+  expect(
+    getValueFromEvents(ibcAck.tx.events, "fungible_token_packet.success"),
+  ).toBe("\u0001");
 }
