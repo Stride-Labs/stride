@@ -32,7 +32,7 @@ type ChannelKeeper interface {
 type ICAControllerKeeper interface {
 	GetInterchainAccountAddress(ctx sdk.Context, connectionID, portID string) (string, bool)
 	GetOpenActiveChannel(ctx sdk.Context, connectionID, portID string) (string, bool)
-	RegisterInterchainAccount(ctx sdk.Context, connectionID, owner, version string) error
+	RegisterInterchainAccountWithOrdering(ctx sdk.Context, connectionID, owner, version string) error
 }
 
 // ICACallbacksKeeper defines the expected ICA callback keeper
