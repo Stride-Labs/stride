@@ -172,26 +172,29 @@ export async function submitTxAndExpectSuccess(
  * @param sender The address of the sender
  * @param receiver The address of the receiver
  */
-export async function transfer({
+export async function ibcTransfer({
   client,
   sourceChain,
   destinationChain,
-  coins,
+  coin,
   sender,
   receiver,
+  memo = "",
 }: {
   client: StrideClient | CosmosClient;
   sourceChain: Chain;
   destinationChain: Chain;
   sender: string;
   receiver: string;
-  coins: string;
+  coin: string;
+  memo?: string;
 }) {
   const msg = newTransferMsg({
     channelId: TRANSFER_CHANNEL[sourceChain][destinationChain]!,
-    coin: coins,
-    sender: sender,
-    receiver: receiver,
+    coin,
+    sender,
+    receiver,
+    memo,
   });
 
   const tx = await submitTxAndExpectSuccess(client, msg);

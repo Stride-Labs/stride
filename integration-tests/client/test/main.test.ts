@@ -12,21 +12,17 @@ import { Comet38Client, fromSeconds } from "@cosmjs/tendermint-rpc";
 import {
   cosmosProtoRegistry,
   ibcProtoRegistry,
-  osmosis,
   osmosisProtoRegistry,
 } from "osmojs";
 import { ModuleAccount } from "osmojs/cosmos/auth/v1beta1/auth";
 import { ProposalStatus, VoteOption } from "osmojs/cosmos/gov/v1beta1/gov";
 import {
-  coinFromString,
   coinsFromString,
   convertBech32Prefix,
   cosmos,
   decToString,
   EncodeObject,
-  getTxIbcResponses,
   getValueFromEvents,
-  ibc,
   sleep,
   stride,
   StrideClient,
@@ -56,8 +52,8 @@ import {
 } from "./msgs";
 import { CosmosClient } from "./types";
 import {
+  ibcTransfer,
   submitTxAndExpectSuccess,
-  transfer as ibcTransfer,
   waitForChain,
   waitForIbc,
 } from "./utils";
@@ -226,12 +222,12 @@ beforeAll(async () => {
     {},
   );
 
-  const gaiaHostZoneExists =
-    hostZone.find((h) => h.chainId === GAIA_CHAIN_ID) === undefined;
-  const osmoHostZoneExists =
-    hostZone.find((h) => h.chainId === OSMO_CHAIN_ID) === undefined;
+  const gaiaHostZoneNotRegistered =
+    hostZone.find((hz) => hz.chainId === GAIA_CHAIN_ID) === undefined;
+  const osmoHostZoneNotRegistered =
+    hostZone.find((hz) => hz.chainId === OSMO_CHAIN_ID) === undefined;
 
-  if (gaiaHostZoneExists) {
+  if (gaiaHostZoneNotRegistered) {
     const gaiaRegisterHostZoneMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
         creator: accounts.admin.address,
@@ -271,7 +267,7 @@ beforeAll(async () => {
     registerHostZonesMsgs.push(gaiaRegisterHostZoneMsg, gaiaAddValidatorsMsg);
   }
 
-  if (osmoHostZoneExists) {
+  if (osmoHostZoneNotRegistered) {
     const osmoRegisterHostZoneMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
         creator: accounts.admin.address,
@@ -372,39 +368,10 @@ describe("ibc", () => {
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "GAIA",
-      coins: `1${USTRD}`,
+      coin: `1${USTRD}`,
       sender: stridejs.address,
       receiver: convertBech32Prefix(stridejs.address, "cosmos"),
     });
-
-    const tx = await stridejs.signAndBroadcast(
-      [
-        ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
-          sourcePort: "transfer",
-          sourceChannel: TRANSFER_CHANNEL.STRIDE.GAIA!,
-          token: coinFromString(`1${USTRD}`),
-          sender: stridejs.address,
-          receiver: convertBech32Prefix(stridejs.address, "cosmos"),
-          timeoutHeight: {
-            revisionNumber: 0n,
-            revisionHeight: 0n,
-          },
-          timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
-          ),
-          memo: "",
-        }),
-      ],
-      2,
-    );
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
-    }
-    expect(tx.code).toBe(0);
-
-    const ibcAck = await tx.ibcResponses[0];
-    expect(ibcAck.type).toBe("ack");
-    expect(ibcAck.tx.code).toBe(0);
   }, 30_000);
 });
 
@@ -443,7 +410,7 @@ describe("buyback and burn", () => {
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "OSMO",
-      coins: `1000000${USTRD}`,
+      coin: `1000000${USTRD}`,
       sender: stridejs.address,
       receiver: osmojs.address,
     });
@@ -522,7 +489,7 @@ describe("buyback and burn", () => {
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "OSMO",
-      coins: `1000000${USTRD}`,
+      coin: `1000000${USTRD}`,
       sender: stridejs.address,
       receiver: osmojs.address,
     });
@@ -615,157 +582,95 @@ describe("buyback and burn", () => {
     const osmojs = osmoAccounts.user;
 
     // Transfer STRD to Osmosis
-    let strideTx = await stridejs.signAndBroadcast([
-      ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
-        sourcePort: "transfer",
-        sourceChannel: TRANSFER_CHANNEL.STRIDE.OSMO!,
-        token: coinFromString(`1000000${USTRD}`),
-        sender: stridejs.address,
-        receiver: osmojs.address,
-        timeoutHeight: {
-          revisionNumber: 0n,
-          revisionHeight: 0n,
-        },
-        timeoutTimestamp: BigInt(
-          `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
-        ),
-        memo: "",
-      }),
-    ]);
-    if (strideTx.code !== 0) {
-      console.error(strideTx.rawLog);
-    }
-    expect(strideTx.code).toBe(0);
-
-    let ibcAck = await strideTx.ibcResponses[0];
-    expect(ibcAck.type).toBe("ack");
-    expect(ibcAck.tx.code).toBe(0);
+    await ibcTransfer({
+      client: stridejs,
+      sourceChain: "STRIDE",
+      destinationChain: "OSMO",
+      coin: `1000000${USTRD}`,
+      sender: stridejs.address,
+      receiver: osmojs.address,
+    });
 
     // Transfer ATOM to Osmosis
-    let tx = await gaiajs.client.signAndBroadcast(
-      gaiajs.address,
-      [
-        ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
-          sourcePort: "transfer",
-          sourceChannel: TRANSFER_CHANNEL.GAIA.STRIDE!,
-          token: coinFromString(`1000000${UATOM}`),
-          sender: gaiajs.address,
-          receiver: stridejs.address, // needs to be valid but ignored by pfm
-          timeoutHeight: {
-            revisionNumber: 0n,
-            revisionHeight: 0n,
-          },
-          timeoutTimestamp: BigInt(
-            `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`, // 3 minutes
-          ),
-          memo: JSON.stringify({
-            forward: {
-              receiver: osmojs.address,
-              port: "transfer",
-              channel: TRANSFER_CHANNEL.STRIDE.OSMO,
-            },
-          }),
-        }),
-      ],
-      "auto",
-    );
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
-    }
-    expect(tx.code).toBe(0);
-
-    ibcAck = await getTxIbcResponses(gaiajs.client, tx, 30_000, 50)[0];
-    expect(ibcAck.type).toBe("ack");
-    expect(ibcAck.tx.code).toBe(0);
-
+    await ibcTransfer({
+      client: stridejs,
+      sourceChain: "GAIA",
+      destinationChain: "STRIDE",
+      coin: `1000000${UATOM}`,
+      sender: gaiajs.address,
+      receiver: stridejs.address, // needs to be valid but ignored by pfm
+      memo: JSON.stringify({
+        forward: {
+          receiver: osmojs.address,
+          port: "transfer",
+          channel: TRANSFER_CHANNEL.STRIDE.OSMO,
+        },
+      }),
+    });
     // Create STRD/OSMO pool
 
-    tx = await osmojs.client.signAndBroadcast(
+    let osmoTx = await osmojs.client.signAndBroadcast(
       osmojs.address,
       [
-        osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
-          {
-            sender: osmojs.address,
-            denom0: STRD_DENOM_ON_OSMOSIS,
-            denom1: UOSMO,
-            tickSpacing: 100n,
-            spreadFactor: "0.001",
-          },
-        ),
+        newConcentratedLiquidityPoolMsg({
+          sender: osmojs.address,
+          denom0: STRD_DENOM_ON_OSMOSIS,
+        }),
       ],
-      "auto",
+      2,
     );
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
+    if (osmoTx.code !== 0) {
+      console.error(osmoTx.rawLog);
     }
-    expect(tx.code).toBe(0);
+    expect(osmoTx.code).toBe(0);
 
     const osmoStrdPoolId = BigInt(
-      getValueFromEvents(tx.events, "pool_created.pool_id"),
+      getValueFromEvents(osmoTx.events, "pool_created.pool_id"),
     );
 
-    tx = await osmojs.client.signAndBroadcast(
+    osmoTx = await osmojs.client.signAndBroadcast(
       osmojs.address,
       [
-        osmosis.concentratedliquidity.v1beta1.MessageComposer.withTypeUrl.createPosition(
-          {
-            poolId: osmoStrdPoolId,
-            sender: osmojs.address,
-            lowerTick: -108000000n,
-            upperTick: 342000000n,
-            tokensProvided: coinsFromString(
-              `5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`,
-            ),
-            tokenMinAmount0: "5",
-            tokenMinAmount1: "10",
-          },
-        ),
+        addConcentratedLiquidityPositionMsg({
+          poolId: osmoStrdPoolId,
+          sender: osmojs.address,
+          tokensProvided: coinsFromString(
+            `5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`,
+          ),
+          tokenMinAmount0: "5",
+          tokenMinAmount1: "10",
+        }),
       ],
-      "auto",
+      2,
     );
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
+    if (osmoTx.code !== 0) {
+      console.error(osmoTx.rawLog);
     }
-    expect(tx.code).toBe(0);
+    expect(osmoTx.code).toBe(0);
 
     // Create ATOM/OSMO pool
-    tx = await osmojs.client.signAndBroadcast(
+    osmoTx = await osmojs.client.signAndBroadcast(
       osmojs.address,
       [
-        osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool(
-          {
-            sender: osmojs.address,
-            poolAssets: [
-              {
-                token: coinFromString(`10${UOSMO}`),
-                weight: "1",
-              },
-              {
-                token: coinFromString(`2${ATOM_DENOM_ON_OSMOSIS}`),
-                weight: "1",
-              },
-            ],
-            futurePoolGovernor: "",
-            poolParams: {
-              swapFee: "0.001",
-              exitFee: "0",
-            },
-          },
-        ),
+        newGammPoolMsg({
+          sender: osmojs.address,
+          tokens: [`10${UOSMO}`, `2${ATOM_DENOM_ON_OSMOSIS}`],
+          weights: [1, 1],
+        }),
       ],
-      "auto",
+      2,
     );
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
+    if (osmoTx.code !== 0) {
+      console.error(osmoTx.rawLog);
     }
-    expect(tx.code).toBe(0);
+    expect(osmoTx.code).toBe(0);
 
     const osmoAtomPoolId = BigInt(
-      getValueFromEvents(tx.events, "pool_created.pool_id"),
+      getValueFromEvents(osmoTx.events, "pool_created.pool_id"),
     );
 
     // Add TokenPrice(base=STRD, quote=OSMO)
-    strideTx = await accounts.admin.signAndBroadcast(
+    let strideTx = await accounts.admin.signAndBroadcast(
       [
         stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
           admin: accounts.admin.address,
@@ -958,7 +863,7 @@ describe("buyback and burn", () => {
       client: stridejs,
       sourceChain: "STRIDE",
       destinationChain: "OSMO",
-      coins: `1000000${USTRD}`,
+      coin: `1000000${USTRD}`,
       sender: stridejs.address,
       receiver: osmojs.address,
     });
@@ -1075,7 +980,7 @@ describe("buyback and burn", () => {
       client: gaiajs,
       sourceChain: "GAIA",
       destinationChain: "STRIDE",
-      coins: `${amount}${UATOM}`,
+      coin: `${amount}${UATOM}`,
       sender: gaiajs.address,
       receiver: stridejs.address,
     });
