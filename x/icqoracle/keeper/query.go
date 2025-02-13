@@ -7,7 +7,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
@@ -44,18 +46,31 @@ func (k Keeper) TokenPrices(goCtx context.Context, req *types.QueryTokenPricesRe
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO impl paging
+	store := ctx.KVStore(k.storeKey)
+	tokenPriceStore := prefix.NewStore(store, types.TokenPricePrefix)
 
 	responses := []types.TokenPriceResponse{}
-	for _, tokenPrice := range k.GetAllTokenPrices(ctx) {
+	pageRes, err := query.Paginate(tokenPriceStore, req.Pagination, func(key []byte, value []byte) error {
+		var tokenPrice types.TokenPrice
+		if err := k.cdc.Unmarshal(value, &tokenPrice); err != nil {
+			return err
+		}
+
 		responses = append(responses, types.TokenPriceResponse{
 			BaseDenomUnwrapped:  k.unwrapIBCDenom(ctx, tokenPrice.BaseDenom),
 			QuoteDenomUnwrapped: k.unwrapIBCDenom(ctx, tokenPrice.QuoteDenom),
 			TokenPrice:          tokenPrice,
 		})
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &types.QueryTokenPricesResponse{TokenPrices: responses}, nil
+	return &types.QueryTokenPricesResponse{
+		TokenPrices: responses,
+		Pagination:  pageRes,
+	}, nil
 }
 
 // Params queries the oracle parameters

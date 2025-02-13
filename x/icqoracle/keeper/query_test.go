@@ -5,6 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 )
@@ -67,7 +68,6 @@ func (s *KeeperTestSuite) TestQueryTokenPrices() {
 
 	for _, price := range expectedPrices {
 		s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, price)
-
 	}
 
 	// Query all token prices
@@ -80,6 +80,63 @@ func (s *KeeperTestSuite) TestQueryTokenPrices() {
 	// Query with invalid request
 	_, err = s.App.ICQOracleKeeper.TokenPrices(sdk.WrapSDKContext(s.Ctx), nil)
 	s.Require().Error(err, "error expected when querying with nil request")
+}
+
+func (s *KeeperTestSuite) TestQueryTokenPricesPagination() {
+	// Create multiple token prices
+	// Sorted by store ket `baseDenom + quoteDenom + poolId`
+	expectedPrices := []types.TokenPrice{
+		{
+			BaseDenom:       "uatom",
+			QuoteDenom:      "uusdc",
+			OsmosisPoolId:   1,
+			SpotPrice:       sdkmath.LegacyNewDec(1000000),
+			LastRequestTime: s.Ctx.BlockTime(),
+		},
+		{
+			BaseDenom:       "ujuno",
+			QuoteDenom:      "uusdc",
+			OsmosisPoolId:   3,
+			SpotPrice:       sdkmath.LegacyNewDec(3000000),
+			LastRequestTime: s.Ctx.BlockTime(),
+		},
+		{
+			BaseDenom:       "uosmo",
+			QuoteDenom:      "uusdc",
+			OsmosisPoolId:   2,
+			SpotPrice:       sdkmath.LegacyNewDec(2000000),
+			LastRequestTime: s.Ctx.BlockTime(),
+		},
+	}
+
+	for _, price := range expectedPrices {
+		s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, price)
+	}
+
+	// Test pagination with limit of 2
+	req := &types.QueryTokenPricesRequest{
+		Pagination: &query.PageRequest{
+			Limit: 2,
+		},
+	}
+	resp, err := s.App.ICQOracleKeeper.TokenPrices(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying with pagination")
+	s.Require().Len(resp.TokenPrices, 2, "should return 2 token prices")
+	s.Require().Equal(expectedPrices[0].String(), resp.TokenPrices[0].TokenPrice.String(), "first page token prices")
+	s.Require().Equal(expectedPrices[1].String(), resp.TokenPrices[1].TokenPrice.String(), "first page token prices")
+	s.Require().NotNil(resp.Pagination.NextKey, "next key should be present")
+
+	// Query second page
+	req = &types.QueryTokenPricesRequest{
+		Pagination: &query.PageRequest{
+			Key: resp.Pagination.NextKey,
+		},
+	}
+	resp, err = s.App.ICQOracleKeeper.TokenPrices(sdk.WrapSDKContext(s.Ctx), req)
+	s.Require().NoError(err, "no error expected when querying second page")
+	s.Require().Len(resp.TokenPrices, 1, "should return 1 token price")
+	s.Require().Equal(expectedPrices[2].String(), resp.TokenPrices[0].TokenPrice.String(), "second page token price")
+	s.Require().Nil(resp.Pagination.NextKey, "next key should be nil")
 }
 
 func (s *KeeperTestSuite) TestQueryParams() {

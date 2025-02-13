@@ -202,7 +202,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 // GetAllTokenPrices retrieves all stored token prices
 func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), []byte(types.TokenPricePrefix))
+	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	defer iterator.Close()
 
 	prices := []types.TokenPrice{}
