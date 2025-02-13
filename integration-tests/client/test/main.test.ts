@@ -997,6 +997,12 @@ describe("buyback and burn", () => {
     // Wait for 2 STRIDE_DAY_EPOCH to pass (140s)
     await sleep(2 * 140_000);
 
+    // Check st tokens
+    let { balances } = await stridejs.query.cosmos.bank.v1beta1.allBalances({
+      address: stridejs.address,
+    });
+    console.log("st tokens", balances);
+
     // Check Rewards
     const auctionAddress = (
       (
@@ -1006,11 +1012,11 @@ describe("buyback and burn", () => {
       ).account as ModuleAccount
     ).baseAccount?.address!;
 
-    const { balances } = await stridejs.query.cosmos.bank.v1beta1.allBalances({
+    ({ balances } = await stridejs.query.cosmos.bank.v1beta1.allBalances({
       address: auctionAddress,
-    });
+    }));
 
-    console.log(balances);
+    console.log("rewards in auction", balances);
   }, 360_000); // Set timeout to 4 minutes to account for epoch waits
 
   // TODO test unwrapIBCDenom via stridejs.query.stride.icqoracle.tokenPrices
