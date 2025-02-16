@@ -23,6 +23,7 @@ func GetQueryCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		CmdQueryStrdBurnerAddress(),
+		CmdQueryStrdBurnerTotalBurned(),
 	)
 
 	return cmd
@@ -41,6 +42,28 @@ func CmdQueryStrdBurnerAddress() *cobra.Command {
 
 			req := &types.QueryStrdBurnerAddressRequest{}
 			res, err := queryClient.StrdBurnerAddress(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	return cmd
+}
+
+func CmdQueryStrdBurnerTotalBurned() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "total-burned",
+		Short: "Query the total amount of STRD the was burned using x/strdburner",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryTotalStrdBurnedRequest{}
+			res, err := queryClient.TotalStrdBurned(context.Background(), req)
 			if err != nil {
 				return err
 			}
