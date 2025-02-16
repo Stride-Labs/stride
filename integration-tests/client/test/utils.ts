@@ -9,10 +9,11 @@ import {
   IbcResponse,
   StrideClient,
 } from "stridejs";
+import { ModuleAccount } from "stridejs/dist/types/codegen/cosmos/auth/v1beta1/auth";
 import { expect } from "vitest";
-import { newTransferMsg } from "./msgs";
 import { TRANSFER_CHANNEL } from "./consts";
-import { CosmosClient, Chain } from "./types";
+import { newTransferMsg } from "./msgs";
+import { Chain, CosmosClient } from "./types";
 
 export function isCosmosClient(client: any): client is CosmosClient {
   return (
@@ -211,4 +212,17 @@ export async function ibcTransfer({
   expect(
     getValueFromEvents(ibcAck.tx.events, "fungible_token_packet.success"),
   ).toBe("\u0001");
+}
+
+export async function moduleAddress(
+  client: StrideClient,
+  name: string,
+): Promise<string> {
+  return (
+    (
+      await client.query.cosmos.auth.v1beta1.moduleAccountByName({
+        name,
+      })
+    ).account as ModuleAccount
+  ).baseAccount?.address!;
 }
