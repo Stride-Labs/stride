@@ -568,7 +568,7 @@ describe("buyback and burn", () => {
     }
   });
 
-  test.only("icqoracle happy path", async () => {
+  test.only("happy path", async () => {
     // - Transfer STRD to Osmosis
     // - Transfer ATOM to Osmosis
     // - Create STRD/OSMO pool
@@ -586,146 +586,164 @@ describe("buyback and burn", () => {
     const gaiajs = gaiaAccounts.user;
     const osmojs = osmoAccounts.user;
 
-    console.log("Transfer STRD to Osmosis");
-    await ibcTransfer({
-      client: stridejs,
-      sourceChain: "STRIDE",
-      destinationChain: "OSMO",
-      coin: `1000000${USTRD}`,
-      sender: stridejs.address,
-      receiver: osmojs.address,
-    });
-
-    console.log("Transfer ATOM to Osmosis");
-    await ibcTransfer({
-      client: gaiajs,
-      sourceChain: "GAIA",
-      destinationChain: "STRIDE",
-      coin: `1000000${UATOM}`,
-      sender: gaiajs.address,
-      receiver: stridejs.address, // needs to be valid but ignored by pfm
-      memo: JSON.stringify({
-        forward: {
-          receiver: osmojs.address,
-          port: "transfer",
-          channel: TRANSFER_CHANNEL.STRIDE.OSMO,
-        },
-      }),
-    });
-
-    console.log("Create STRD/OSMO pool");
-    const createClPoolTx = await submitTxAndExpectSuccess(
-      osmojs,
-      newConcentratedLiquidityPoolMsg({
-        sender: osmojs.address,
-        denom0: STRD_DENOM_ON_OSMOSIS,
-      }),
-    );
-
-    const osmoStrdPoolId = BigInt(
-      getValueFromEvents(createClPoolTx.events, "pool_created.pool_id"),
-    );
-
-    await submitTxAndExpectSuccess(
-      osmojs,
-      addConcentratedLiquidityPositionMsg({
-        poolId: osmoStrdPoolId,
-        sender: osmojs.address,
-        tokensProvided: coinsFromString(`5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`),
-        tokenMinAmount0: "5",
-        tokenMinAmount1: "10",
-      }),
-    );
-
-    console.log("Create ATOM/OSMO pool");
-    const createGammPoolTx = await submitTxAndExpectSuccess(
-      osmojs,
-      newGammPoolMsg({
-        sender: osmojs.address,
-        tokens: [`10${UOSMO}`, `2${ATOM_DENOM_ON_OSMOSIS}`],
-        weights: [1, 1],
-      }),
-    );
-
-    const osmoAtomPoolId = BigInt(
-      getValueFromEvents(createGammPoolTx.events, "pool_created.pool_id"),
-    );
-
-    console.log(" Add TokenPrice(base=STRD, quote=OSMO)");
-    await submitTxAndExpectSuccess(
-      accounts.admin,
-      stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
-        admin: accounts.admin.address,
-        baseDenom: USTRD,
-        quoteDenom: OSMO_DENOM_ON_STRIDE,
-        osmosisBaseDenom: STRD_DENOM_ON_OSMOSIS,
-        osmosisQuoteDenom: UOSMO,
-        osmosisPoolId: osmoStrdPoolId,
-      }),
-    );
-
-    console.log(" Add TokenPrice(base=ATOM, quote=OSMO)");
-    await submitTxAndExpectSuccess(
-      accounts.admin,
-      stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
-        admin: accounts.admin.address,
-        baseDenom: ATOM_DENOM_ON_STRIDE,
-        quoteDenom: OSMO_DENOM_ON_STRIDE,
-        osmosisBaseDenom: ATOM_DENOM_ON_OSMOSIS,
-        osmosisQuoteDenom: UOSMO,
-        osmosisPoolId: osmoAtomPoolId,
-      }),
-    );
-
-    console.log("Wait for both TokenPrices to be updated");
-    while (true) {
-      const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
-        baseDenom: USTRD,
-        quoteDenom: OSMO_DENOM_ON_STRIDE,
-        poolId: osmoStrdPoolId,
-      });
-      if (
-        tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
-      ) {
-        expect(Number(tokenPrice.spotPrice)).toBe(2);
-        break;
-      }
-      await sleep(500);
-    }
-    while (true) {
-      const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
-        baseDenom: ATOM_DENOM_ON_STRIDE,
-        quoteDenom: OSMO_DENOM_ON_STRIDE,
-        poolId: osmoAtomPoolId,
-      });
-      if (
-        tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z"
-      ) {
-        expect(Number(tokenPrice.spotPrice)).toBe(5);
-        break;
-      }
-      await sleep(500);
-    }
-
     console.log("Query for price of ATOM in STRD");
-    const { price } =
+    let { price } =
       await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
         baseDenom: ATOM_DENOM_ON_STRIDE,
         quoteDenom: USTRD,
       });
 
-    // Price should be 2.5:
-    //
-    // TODO: Tind a better way to test this.
-    // This will fail if other tests set the price to be something different
-    //
-    // ATOM/OSMO pool is 2/10 => 1 ATOM is 5 OSMO
-    // STRD/OSMO pool is 5/10 => 1 STRD is 2 OSMO
-    // =>
-    // 2.5 STRD is 5 OSMO
-    // =>
-    // 1 ATOM is 2.5 STRD
-    expect(Number(price)).toBe(2.5);
+    // Price should be 2.5. Can skip some steps if already true.
+    if (Number(price) !== 2.5) {
+      console.log("Transfer STRD to Osmosis");
+      await ibcTransfer({
+        client: stridejs,
+        sourceChain: "STRIDE",
+        destinationChain: "OSMO",
+        coin: `1000000${USTRD}`,
+        sender: stridejs.address,
+        receiver: osmojs.address,
+      });
+
+      console.log("Transfer ATOM to Osmosis");
+      await ibcTransfer({
+        client: gaiajs,
+        sourceChain: "GAIA",
+        destinationChain: "STRIDE",
+        coin: `1000000${UATOM}`,
+        sender: gaiajs.address,
+        receiver: stridejs.address, // needs to be valid but ignored by pfm
+        memo: JSON.stringify({
+          forward: {
+            receiver: osmojs.address,
+            port: "transfer",
+            channel: TRANSFER_CHANNEL.STRIDE.OSMO,
+          },
+        }),
+      });
+
+      console.log("Create STRD/OSMO pool");
+      const createClPoolTx = await submitTxAndExpectSuccess(
+        osmojs,
+        newConcentratedLiquidityPoolMsg({
+          sender: osmojs.address,
+          denom0: STRD_DENOM_ON_OSMOSIS,
+        }),
+      );
+
+      const osmoStrdPoolId = BigInt(
+        getValueFromEvents(createClPoolTx.events, "pool_created.pool_id"),
+      );
+
+      await submitTxAndExpectSuccess(
+        osmojs,
+        addConcentratedLiquidityPositionMsg({
+          poolId: osmoStrdPoolId,
+          sender: osmojs.address,
+          tokensProvided: coinsFromString(
+            `5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`,
+          ),
+          tokenMinAmount0: "5",
+          tokenMinAmount1: "10",
+        }),
+      );
+
+      console.log("Create ATOM/OSMO pool");
+      const createGammPoolTx = await submitTxAndExpectSuccess(
+        osmojs,
+        newGammPoolMsg({
+          sender: osmojs.address,
+          tokens: [`10${UOSMO}`, `2${ATOM_DENOM_ON_OSMOSIS}`],
+          weights: [1, 1],
+        }),
+      );
+
+      const osmoAtomPoolId = BigInt(
+        getValueFromEvents(createGammPoolTx.events, "pool_created.pool_id"),
+      );
+
+      console.log("Add TokenPrice(base=STRD, quote=OSMO)");
+      await submitTxAndExpectSuccess(
+        accounts.admin,
+        stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
+          admin: accounts.admin.address,
+          baseDenom: USTRD,
+          quoteDenom: OSMO_DENOM_ON_STRIDE,
+          osmosisBaseDenom: STRD_DENOM_ON_OSMOSIS,
+          osmosisQuoteDenom: UOSMO,
+          osmosisPoolId: osmoStrdPoolId,
+        }),
+      );
+
+      console.log("Add TokenPrice(base=ATOM, quote=OSMO)");
+      await submitTxAndExpectSuccess(
+        accounts.admin,
+        stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
+          admin: accounts.admin.address,
+          baseDenom: ATOM_DENOM_ON_STRIDE,
+          quoteDenom: OSMO_DENOM_ON_STRIDE,
+          osmosisBaseDenom: ATOM_DENOM_ON_OSMOSIS,
+          osmosisQuoteDenom: UOSMO,
+          osmosisPoolId: osmoAtomPoolId,
+        }),
+      );
+
+      console.log("Wait for both TokenPrices to be updated");
+      while (true) {
+        const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice(
+          {
+            baseDenom: USTRD,
+            quoteDenom: OSMO_DENOM_ON_STRIDE,
+            poolId: osmoStrdPoolId,
+          },
+        );
+        if (
+          tokenPrice.lastResponseTime.toISOString() !=
+          "0001-01-01T00:00:00.000Z"
+        ) {
+          expect(Number(tokenPrice.spotPrice)).toBe(2);
+          break;
+        }
+        await sleep(500);
+      }
+      while (true) {
+        const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice(
+          {
+            baseDenom: ATOM_DENOM_ON_STRIDE,
+            quoteDenom: OSMO_DENOM_ON_STRIDE,
+            poolId: osmoAtomPoolId,
+          },
+        );
+        if (
+          tokenPrice.lastResponseTime.toISOString() !=
+          "0001-01-01T00:00:00.000Z"
+        ) {
+          expect(Number(tokenPrice.spotPrice)).toBe(5);
+          break;
+        }
+        await sleep(500);
+      }
+
+      console.log("Query for price of ATOM in STRD");
+      ({ price } =
+        await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
+          baseDenom: ATOM_DENOM_ON_STRIDE,
+          quoteDenom: USTRD,
+        }));
+
+      // Price should be 2.5:
+      //
+      // TODO: Tind a better way to test this.
+      // This will fail if other tests set the price to be something different
+      //
+      // ATOM/OSMO pool is 2/10 => 1 ATOM is 5 OSMO
+      // STRD/OSMO pool is 5/10 => 1 STRD is 2 OSMO
+      // =>
+      // 2.5 STRD is 5 OSMO
+      // =>
+      // 1 ATOM is 2.5 STRD
+      expect(Number(price)).toBe(2.5);
+    }
 
     const stakeAmount = 10_000_000;
 
@@ -776,7 +794,7 @@ describe("buyback and burn", () => {
           denom: ATOM_DENOM_ON_STRIDE,
         }));
 
-      if (BigInt(auctionAtomBalance) >= 0n) {
+      if (BigInt(auctionAtomBalance) > 0n) {
         break;
       }
 
