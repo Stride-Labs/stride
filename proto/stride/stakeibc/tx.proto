@@ -266,8 +266,7 @@ message MsgResumeHostZone {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakeibc/MsgResumeHostZone";
 
-  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ]
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
 }
 message MsgResumeHostZoneResponse {}
