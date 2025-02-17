@@ -1,8 +1,11 @@
 syntax = "proto3";
 package stride.claim;
 
-import "gogoproto/gogo.proto";
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/claim/types";
 
