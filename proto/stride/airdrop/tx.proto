@@ -225,7 +225,7 @@ message MsgLinkAddresses {
   string airdrop_id = 2;
 
   // Stride address - this address may or may not exist in allocations yet
-  string stride_address = 3;
+  string stride_address = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // Host address - this address must exist
   string host_address = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
