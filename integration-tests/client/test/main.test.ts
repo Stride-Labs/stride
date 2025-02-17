@@ -312,7 +312,7 @@ beforeAll(async () => {
   if (registerHostZonesMsgs.length > 0) {
     await submitTxAndExpectSuccess(accounts.admin, registerHostZonesMsgs);
   }
-});
+}, 45_000);
 
 describe("x/airdrop", () => {
   // time variables in seconds
@@ -568,284 +568,289 @@ describe("buyback and burn", () => {
     }
   });
 
-  test.only("happy path", async () => {
-    // - Transfer STRD to Osmosis
-    // - Transfer ATOM to Osmosis
-    // - Create STRD/OSMO pool
-    // - Create ATOM/OSMO pool
-    // - Add TokenPrice(base=STRD, quote=OSMO)
-    // - Add TokenPrice(base=ATOM, quote=OSMO)
-    // - Query for price of ATOM in STRD
-    // - Liquid stake 10 ATOM
-    // - Wait for rewards to get swept to x/auction
-    // - Create ATOM auction
-    // - Buy ATOM with STRD off auction
-    // - Verify STRD was burned by x/strdburner
+  test.only(
+    "happy path",
+    async () => {
+      // - Transfer STRD to Osmosis
+      // - Transfer ATOM to Osmosis
+      // - Create STRD/OSMO pool
+      // - Create ATOM/OSMO pool
+      // - Add TokenPrice(base=STRD, quote=OSMO)
+      // - Add TokenPrice(base=ATOM, quote=OSMO)
+      // - Query for price of ATOM in STRD
+      // - Liquid stake 10 ATOM
+      // - Wait for rewards to get swept to x/auction
+      // - Create ATOM auction
+      // - Buy ATOM with STRD off auction
+      // - Verify STRD was burned by x/strdburner
 
-    const stridejs = accounts.user;
-    const gaiajs = gaiaAccounts.user;
-    const osmojs = osmoAccounts.user;
+      const stridejs = accounts.user;
+      const gaiajs = gaiaAccounts.user;
+      const osmojs = osmoAccounts.user;
 
-    console.log("Query for price of ATOM in STRD");
-    let { price } =
-      await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
-        baseDenom: ATOM_DENOM_ON_STRIDE,
-        quoteDenom: USTRD,
-      });
+      console.log("Query for price of ATOM in STRD");
+      let { price } =
+        await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
+          baseDenom: ATOM_DENOM_ON_STRIDE,
+          quoteDenom: USTRD,
+        });
 
-    // Price should be 2.5. Can skip some steps if already true.
-    if (Number(price) !== 2.5) {
-      console.log("Transfer STRD to Osmosis");
-      await ibcTransfer({
-        client: stridejs,
-        sourceChain: "STRIDE",
-        destinationChain: "OSMO",
-        coin: `1000000${USTRD}`,
-        sender: stridejs.address,
-        receiver: osmojs.address,
-      });
+      // Price should be 2.5. Can skip some steps if already true.
+      if (Number(price) !== 2.5) {
+        console.log("Transfer STRD to Osmosis");
+        await ibcTransfer({
+          client: stridejs,
+          sourceChain: "STRIDE",
+          destinationChain: "OSMO",
+          coin: `1000000${USTRD}`,
+          sender: stridejs.address,
+          receiver: osmojs.address,
+        });
 
-      console.log("Transfer ATOM to Osmosis");
+        console.log("Transfer ATOM to Osmosis");
+        await ibcTransfer({
+          client: gaiajs,
+          sourceChain: "GAIA",
+          destinationChain: "STRIDE",
+          coin: `1000000${UATOM}`,
+          sender: gaiajs.address,
+          receiver: stridejs.address, // needs to be valid but ignored by pfm
+          memo: JSON.stringify({
+            forward: {
+              receiver: osmojs.address,
+              port: "transfer",
+              channel: TRANSFER_CHANNEL.STRIDE.OSMO,
+            },
+          }),
+        });
+
+        console.log("Create STRD/OSMO pool");
+        const createClPoolTx = await submitTxAndExpectSuccess(
+          osmojs,
+          newConcentratedLiquidityPoolMsg({
+            sender: osmojs.address,
+            denom0: STRD_DENOM_ON_OSMOSIS,
+          }),
+        );
+
+        const osmoStrdPoolId = BigInt(
+          getValueFromEvents(createClPoolTx.events, "pool_created.pool_id"),
+        );
+
+        await submitTxAndExpectSuccess(
+          osmojs,
+          addConcentratedLiquidityPositionMsg({
+            poolId: osmoStrdPoolId,
+            sender: osmojs.address,
+            tokensProvided: coinsFromString(
+              `5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`,
+            ),
+            tokenMinAmount0: "5",
+            tokenMinAmount1: "10",
+          }),
+        );
+
+        console.log("Create ATOM/OSMO pool");
+        const createGammPoolTx = await submitTxAndExpectSuccess(
+          osmojs,
+          newGammPoolMsg({
+            sender: osmojs.address,
+            tokens: [`10${UOSMO}`, `2${ATOM_DENOM_ON_OSMOSIS}`],
+            weights: [1, 1],
+          }),
+        );
+
+        const osmoAtomPoolId = BigInt(
+          getValueFromEvents(createGammPoolTx.events, "pool_created.pool_id"),
+        );
+
+        console.log("Add TokenPrice(base=STRD, quote=OSMO)");
+        await submitTxAndExpectSuccess(
+          accounts.admin,
+          stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
+            admin: accounts.admin.address,
+            baseDenom: USTRD,
+            quoteDenom: OSMO_DENOM_ON_STRIDE,
+            osmosisBaseDenom: STRD_DENOM_ON_OSMOSIS,
+            osmosisQuoteDenom: UOSMO,
+            osmosisPoolId: osmoStrdPoolId,
+          }),
+        );
+
+        console.log("Add TokenPrice(base=ATOM, quote=OSMO)");
+        await submitTxAndExpectSuccess(
+          accounts.admin,
+          stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
+            admin: accounts.admin.address,
+            baseDenom: ATOM_DENOM_ON_STRIDE,
+            quoteDenom: OSMO_DENOM_ON_STRIDE,
+            osmosisBaseDenom: ATOM_DENOM_ON_OSMOSIS,
+            osmosisQuoteDenom: UOSMO,
+            osmosisPoolId: osmoAtomPoolId,
+          }),
+        );
+
+        console.log("Wait for both TokenPrices to be updated");
+        while (true) {
+          const { tokenPrice } =
+            await stridejs.query.stride.icqoracle.tokenPrice({
+              baseDenom: USTRD,
+              quoteDenom: OSMO_DENOM_ON_STRIDE,
+              poolId: osmoStrdPoolId,
+            });
+          if (
+            tokenPrice.lastResponseTime.toISOString() !=
+            "0001-01-01T00:00:00.000Z"
+          ) {
+            expect(Number(tokenPrice.spotPrice)).toBe(2);
+            break;
+          }
+          await sleep(500);
+        }
+        while (true) {
+          const { tokenPrice } =
+            await stridejs.query.stride.icqoracle.tokenPrice({
+              baseDenom: ATOM_DENOM_ON_STRIDE,
+              quoteDenom: OSMO_DENOM_ON_STRIDE,
+              poolId: osmoAtomPoolId,
+            });
+          if (
+            tokenPrice.lastResponseTime.toISOString() !=
+            "0001-01-01T00:00:00.000Z"
+          ) {
+            expect(Number(tokenPrice.spotPrice)).toBe(5);
+            break;
+          }
+          await sleep(500);
+        }
+
+        console.log("Query for price of ATOM in STRD");
+        ({ price } =
+          await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
+            baseDenom: ATOM_DENOM_ON_STRIDE,
+            quoteDenom: USTRD,
+          }));
+
+        // Price should be 2.5:
+        //
+        // TODO: Tind a better way to test this.
+        // This will fail if other tests set the price to be something different
+        //
+        // ATOM/OSMO pool is 2/10 => 1 ATOM is 5 OSMO
+        // STRD/OSMO pool is 5/10 => 1 STRD is 2 OSMO
+        // =>
+        // 2.5 STRD is 5 OSMO
+        // =>
+        // 1 ATOM is 2.5 STRD
+        expect(Number(price)).toBe(2.5);
+      }
+
+      const stakeAmount = 10_000_000;
+
+      console.log("Liquid stake 10 ATOM");
       await ibcTransfer({
         client: gaiajs,
         sourceChain: "GAIA",
         destinationChain: "STRIDE",
-        coin: `1000000${UATOM}`,
+        coin: `${stakeAmount}${UATOM}`,
         sender: gaiajs.address,
-        receiver: stridejs.address, // needs to be valid but ignored by pfm
-        memo: JSON.stringify({
-          forward: {
-            receiver: osmojs.address,
-            port: "transfer",
-            channel: TRANSFER_CHANNEL.STRIDE.OSMO,
-          },
-        }),
+        receiver: stridejs.address,
       });
 
-      console.log("Create STRD/OSMO pool");
-      const createClPoolTx = await submitTxAndExpectSuccess(
-        osmojs,
-        newConcentratedLiquidityPoolMsg({
-          sender: osmojs.address,
-          denom0: STRD_DENOM_ON_OSMOSIS,
+      await submitTxAndExpectSuccess(stridejs, [
+        stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
+          creator: stridejs.address,
+          amount: String(stakeAmount),
+          hostDenom: UATOM,
         }),
-      );
+      ]);
 
-      const osmoStrdPoolId = BigInt(
-        getValueFromEvents(createClPoolTx.events, "pool_created.pool_id"),
-      );
+      console.log("Send 10% of stake to withdrawal address");
+      // If we send more, you risk tripping some rate limits
+      const {
+        hostZone: { withdrawalIcaAddress },
+      } = await stridejs.query.stride.stakeibc.hostZone({
+        chainId: GAIA_CHAIN_ID,
+      });
 
-      await submitTxAndExpectSuccess(
-        osmojs,
-        addConcentratedLiquidityPositionMsg({
-          poolId: osmoStrdPoolId,
-          sender: osmojs.address,
-          tokensProvided: coinsFromString(
-            `5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`,
-          ),
-          tokenMinAmount0: "5",
-          tokenMinAmount1: "10",
+      await submitTxAndExpectSuccess(gaiajs, [
+        cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
+          fromAddress: gaiajs.address,
+          toAddress: withdrawalIcaAddress,
+          amount: coinsFromString(`${stakeAmount / 10}${UATOM}`),
         }),
-      );
+      ]);
 
-      console.log("Create ATOM/OSMO pool");
-      const createGammPoolTx = await submitTxAndExpectSuccess(
-        osmojs,
-        newGammPoolMsg({
-          sender: osmojs.address,
-          tokens: [`10${UOSMO}`, `2${ATOM_DENOM_ON_OSMOSIS}`],
-          weights: [1, 1],
-        }),
+      console.log(
+        "Wait for funds to get swept from gaia withdrawal address to x/auction",
       );
+      const auctionAddress = await moduleAddress(stridejs, "auction");
 
-      const osmoAtomPoolId = BigInt(
-        getValueFromEvents(createGammPoolTx.events, "pool_created.pool_id"),
-      );
-
-      console.log("Add TokenPrice(base=STRD, quote=OSMO)");
-      await submitTxAndExpectSuccess(
-        accounts.admin,
-        stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
-          admin: accounts.admin.address,
-          baseDenom: USTRD,
-          quoteDenom: OSMO_DENOM_ON_STRIDE,
-          osmosisBaseDenom: STRD_DENOM_ON_OSMOSIS,
-          osmosisQuoteDenom: UOSMO,
-          osmosisPoolId: osmoStrdPoolId,
-        }),
-      );
-
-      console.log("Add TokenPrice(base=ATOM, quote=OSMO)");
-      await submitTxAndExpectSuccess(
-        accounts.admin,
-        stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
-          admin: accounts.admin.address,
-          baseDenom: ATOM_DENOM_ON_STRIDE,
-          quoteDenom: OSMO_DENOM_ON_STRIDE,
-          osmosisBaseDenom: ATOM_DENOM_ON_OSMOSIS,
-          osmosisQuoteDenom: UOSMO,
-          osmosisPoolId: osmoAtomPoolId,
-        }),
-      );
-
-      console.log("Wait for both TokenPrices to be updated");
+      let auctionAtomBalance: string;
       while (true) {
-        const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice(
-          {
-            baseDenom: USTRD,
-            quoteDenom: OSMO_DENOM_ON_STRIDE,
-            poolId: osmoStrdPoolId,
-          },
-        );
-        if (
-          tokenPrice.lastResponseTime.toISOString() !=
-          "0001-01-01T00:00:00.000Z"
-        ) {
-          expect(Number(tokenPrice.spotPrice)).toBe(2);
+        ({ balance: { amount: auctionAtomBalance } = { amount: "0" } } =
+          await stridejs.query.cosmos.bank.v1beta1.balance({
+            address: auctionAddress,
+            denom: ATOM_DENOM_ON_STRIDE,
+          }));
+
+        if (BigInt(auctionAtomBalance) > 0n) {
           break;
         }
-        await sleep(500);
-      }
-      while (true) {
-        const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice(
-          {
-            baseDenom: ATOM_DENOM_ON_STRIDE,
-            quoteDenom: OSMO_DENOM_ON_STRIDE,
-            poolId: osmoAtomPoolId,
-          },
-        );
-        if (
-          tokenPrice.lastResponseTime.toISOString() !=
-          "0001-01-01T00:00:00.000Z"
-        ) {
-          expect(Number(tokenPrice.spotPrice)).toBe(5);
-          break;
-        }
+
         await sleep(500);
       }
 
-      console.log("Query for price of ATOM in STRD");
-      ({ price } =
-        await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
-          baseDenom: ATOM_DENOM_ON_STRIDE,
-          quoteDenom: USTRD,
-        }));
+      console.log("Create ATOM auction");
+      const auctionName = "ATOM" + Math.random();
+      const strdburnerAddress = await moduleAddress(
+        accounts.admin,
+        "strdburner",
+      );
 
-      // Price should be 2.5:
-      //
-      // TODO: Tind a better way to test this.
-      // This will fail if other tests set the price to be something different
-      //
-      // ATOM/OSMO pool is 2/10 => 1 ATOM is 5 OSMO
-      // STRD/OSMO pool is 5/10 => 1 STRD is 2 OSMO
-      // =>
-      // 2.5 STRD is 5 OSMO
-      // =>
-      // 1 ATOM is 2.5 STRD
-      expect(Number(price)).toBe(2.5);
-    }
+      await submitTxAndExpectSuccess(
+        accounts.admin,
+        stride.auction.MessageComposer.withTypeUrl.createAuction({
+          admin: accounts.admin.address,
+          auctionName,
+          auctionType: stride.auction.AuctionType.AUCTION_TYPE_FCFS,
+          sellingDenom: ATOM_DENOM_ON_STRIDE,
+          paymentDenom: USTRD,
+          enabled: true,
+          minPriceMultiplier: "0.95",
+          minBidAmount: "1",
+          beneficiary: strdburnerAddress,
+        }),
+      );
 
-    const stakeAmount = 10_000_000;
+      console.log("Buy ATOM with STRD off auction and verify STRD was burned");
+      const { totalBurned: totalBurnedBefore } =
+        await stridejs.query.stride.strdburner.totalStrdBurned({});
 
-    console.log("Liquid stake 10 ATOM");
-    await ibcTransfer({
-      client: gaiajs,
-      sourceChain: "GAIA",
-      destinationChain: "STRIDE",
-      coin: `${stakeAmount}${UATOM}`,
-      sender: gaiajs.address,
-      receiver: stridejs.address,
-    });
+      // price is 2.5 and BigInt doesn't support fractions so we'll multiply by 10 for a price of 25
+      // and then divide by 10
+      const strdToPay =
+        (BigInt(Number(price) * 10) * BigInt(auctionAtomBalance)) / 10n;
 
-    await submitTxAndExpectSuccess(stridejs, [
-      stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
-        creator: stridejs.address,
-        amount: String(stakeAmount),
-        hostDenom: UATOM,
-      }),
-    ]);
+      await submitTxAndExpectSuccess(
+        accounts.user,
+        stride.auction.MessageComposer.withTypeUrl.placeBid({
+          bidder: accounts.user.address,
+          auctionName,
+          sellingTokenAmount: String(auctionAtomBalance),
+          paymentTokenAmount: String(strdToPay),
+        }),
+      );
 
-    console.log("Send 10% of stake to withdrawal address");
-    // If we send more, you risk tripping some rate limits
-    const {
-      hostZone: { withdrawalIcaAddress },
-    } = await stridejs.query.stride.stakeibc.hostZone({
-      chainId: GAIA_CHAIN_ID,
-    });
+      const { totalBurned: totalBurnedAfter } =
+        await stridejs.query.stride.strdburner.totalStrdBurned({});
 
-    await submitTxAndExpectSuccess(gaiajs, [
-      cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
-        fromAddress: gaiajs.address,
-        toAddress: withdrawalIcaAddress,
-        amount: coinsFromString(`${stakeAmount / 10}${UATOM}`),
-      }),
-    ]);
-
-    console.log(
-      "Wait for funds to get swept from gaia withdrawal address to x/auction",
-    );
-    const auctionAddress = await moduleAddress(stridejs, "auction");
-
-    let auctionAtomBalance: string;
-    while (true) {
-      ({ balance: { amount: auctionAtomBalance } = { amount: "0" } } =
-        await stridejs.query.cosmos.bank.v1beta1.balance({
-          address: auctionAddress,
-          denom: ATOM_DENOM_ON_STRIDE,
-        }));
-
-      if (BigInt(auctionAtomBalance) > 0n) {
-        break;
-      }
-
-      await sleep(500);
-    }
-
-    console.log("Create ATOM auction");
-    const auctionName = "ATOM" + Math.random();
-    const strdburnerAddress = await moduleAddress(accounts.admin, "strdburner");
-
-    await submitTxAndExpectSuccess(
-      accounts.admin,
-      stride.auction.MessageComposer.withTypeUrl.createAuction({
-        admin: accounts.admin.address,
-        auctionName,
-        auctionType: stride.auction.AuctionType.AUCTION_TYPE_FCFS,
-        sellingDenom: ATOM_DENOM_ON_STRIDE,
-        paymentDenom: USTRD,
-        enabled: true,
-        minPriceMultiplier: "0.95",
-        minBidAmount: "1",
-        beneficiary: strdburnerAddress,
-      }),
-    );
-
-    console.log("Buy ATOM with STRD off auction and verify STRD was burned");
-    const { totalBurned: totalBurnedBefore } =
-      await stridejs.query.stride.strdburner.totalStrdBurned({});
-
-    // price is 2.5 and BigInt doesn't support fractions so we'll multiply by 10 for a price of 25
-    // and then divide by 10
-    const strdToPay =
-      (BigInt(Number(price) * 10) * BigInt(auctionAtomBalance)) / 10n;
-
-    await submitTxAndExpectSuccess(
-      accounts.user,
-      stride.auction.MessageComposer.withTypeUrl.placeBid({
-        bidder: accounts.user.address,
-        auctionName,
-        sellingTokenAmount: String(auctionAtomBalance),
-        paymentTokenAmount: String(strdToPay),
-      }),
-    );
-
-    const { totalBurned: totalBurnedAfter } =
-      await stridejs.query.stride.strdburner.totalStrdBurned({});
-
-    expect(BigInt(totalBurnedAfter)).toBe(
-      BigInt(totalBurnedBefore) + strdToPay,
-    );
-  }, 360_000);
+      expect(BigInt(totalBurnedAfter)).toBe(
+        BigInt(totalBurnedBefore) + strdToPay,
+      );
+    },
+    10 * 60 * 1000 /* 10min */,
+  );
 
   // skip due to amino bullshit
   test("update params", async () => {
