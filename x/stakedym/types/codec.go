@@ -17,7 +17,7 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgConfirmUndelegation{}, "stakedym/MsgConfirmUndelegation")
 	legacy.RegisterAminoMsg(cdc, &MsgConfirmUnbondedTokenSweep{}, "stakedym/MsgConfirmUnbondedTokenSweep")
 	legacy.RegisterAminoMsg(cdc, &MsgAdjustDelegatedBalance{}, "stakedym/MsgAdjustDelegatedBalance")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stakedym/MsgUpdateRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stakedym/MsgUpdateInnerRedemptionRateBounds")
 	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stakedym/MsgResumeHostZone")
 	legacy.RegisterAminoMsg(cdc, &MsgRefreshRedemptionRate{}, "stakedym/MsgRefreshRedemptionRate")
 	legacy.RegisterAminoMsg(cdc, &MsgOverwriteDelegationRecord{}, "stakedym/MsgOverwriteDelegationRecord")

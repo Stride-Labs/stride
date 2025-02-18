@@ -9,8 +9,8 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgSetAirdropAllocations{}, "claim/SetAirdropAllocation", nil)
-	cdc.RegisterConcrete(&MsgClaimFreeAmount{}, "claim/ClaimFreeAmount", nil)
+	cdc.RegisterConcrete(&MsgSetAirdropAllocations{}, "claim/MsgSetAirdropAllocations", nil)
+	cdc.RegisterConcrete(&MsgClaimFreeAmount{}, "claim/MsgClaimFreeAmount", nil)
 	cdc.RegisterConcrete(&MsgCreateAirdrop{}, "claim/MsgCreateAirdrop", nil)
 	cdc.RegisterConcrete(&MsgDeleteAirdrop{}, "claim/MsgDeleteAirdrop", nil)
 }
