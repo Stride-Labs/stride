@@ -1,6 +1,5 @@
-import { DirectSecp256k1HdWallet, Registry } from "@cosmjs/proto-signing";
+import { Registry } from "@cosmjs/proto-signing";
 import {
-  GasPrice,
   QueryClient,
   setupAuthExtension,
   setupBankExtension,
@@ -20,7 +19,9 @@ import {
   convertBech32Prefix,
   cosmos,
   decToString,
+  DirectSecp256k1HdWallet,
   EncodeObject,
+  GasPrice,
   getValueFromEvents,
   sleep,
   stride,
