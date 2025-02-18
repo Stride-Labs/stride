@@ -1,9 +1,8 @@
 import { osmosis } from "osmojs";
-import { Coin, coinFromString, StrideClient } from "stridejs";
+import { Coin, coinFromString, ibc, stride } from "stridejs";
 import { MsgTransfer } from "stridejs/dist/types/codegen/ibc/applications/transfer/v1/tx";
 import { MsgRegisterTokenPriceQuery } from "stridejs/dist/types/codegen/stride/icqoracle/tx";
 import { UOSMO } from "./consts";
-import { stride, ibc } from "stridejs";
 
 const DEFAULT_TRANSFER_TIMEOUT = BigInt(
   `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`,
