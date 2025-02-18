@@ -1,0 +1,66 @@
+syntax = "proto3";
+package stride.icqoracle;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v25/x/icqoracle/types";
+
+// TokenPrice stores latest price data for a token
+message TokenPrice {
+  // Base denom on Stride
+  string base_denom = 1;
+  // Quote denom on Stride
+  string quote_denom = 2;
+  // Base denom on Osmosis
+  string osmosis_base_denom = 3;
+  // Quote denom on Osmosis
+  string osmosis_quote_denom = 4;
+  // Pool ID on Osmosis
+  uint64 osmosis_pool_id = 5;
+
+  // Spot price of base_denom denominated in quote_denom
+  string spot_price = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Last time a query request was submitted
+  google.protobuf.Timestamp last_request_time = 7
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // Last time a query response was received
+  google.protobuf.Timestamp last_response_time = 8
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // Whether there is a spot price query currently in progress
+  bool query_in_progress = 9;
+}
+
+// OracleParams stores global oracle parameters
+message Params {
+  // Osmosis chain identifier
+  string osmosis_chain_id = 1 [
+    (gogoproto.moretags) = "yaml:\"osmosis_chain_id\"",
+    (gogoproto.jsontag) = "osmosis_chain_id"
+  ];
+
+  // Osmosis IBC connection identifier
+  string osmosis_connection_id = 2 [
+    (gogoproto.moretags) = "yaml:\"osmosis_connection_id\"",
+    (gogoproto.jsontag) = "osmosis_connection_id"
+  ];
+
+  // Time between price updates
+  // Also used to timeout icq requests
+  uint64 update_interval_sec = 3 [
+    (gogoproto.moretags) = "yaml:\"update_interval_sec\"",
+    (gogoproto.jsontag) = "update_interval_sec"
+  ];
+
+  // Max time before price is considered stale/expired
+  uint64 price_expiration_timeout_sec = 4 [
+    (gogoproto.moretags) = "yaml:\"price_expiration_timeout_sec\"",
+    (gogoproto.jsontag) = "price_expiration_timeout_sec"
+  ];
+}

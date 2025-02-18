@@ -1,6 +1,8 @@
 package types
 
-import fmt "fmt"
+import (
+	fmt "fmt"
+)
 
 const (
 	// ModuleName defines the module name
@@ -34,7 +36,7 @@ const (
 	// The bank store is key'd by the account address
 	BANK_STORE_QUERY_WITH_PROOF = "store/bank/key"
 	// The Osmosis twap store - key'd by the pool ID and denom's
-	TWAP_STORE_QUERY_WITH_PROOF = "store/twap/key"
+	OSMOSIS_TWAP_STORE_QUERY_WITH_PROOF = "store/twap/key"
 )
 
 var (

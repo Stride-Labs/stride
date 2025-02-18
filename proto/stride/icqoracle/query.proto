@@ -1,0 +1,89 @@
+syntax = "proto3";
+package stride.icqoracle;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "stride/icqoracle/icqoracle.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v25/x/icqoracle/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // TokenPrice queries the current price for a specific token
+  rpc TokenPrice(QueryTokenPriceRequest) returns (TokenPriceResponse) {
+    option (google.api.http).get = "/stride/icqoracle/price";
+  }
+
+  // TokenPrices queries all token prices
+  rpc TokenPrices(QueryTokenPricesRequest) returns (QueryTokenPricesResponse) {
+    option (google.api.http).get = "/stride/icqoracle/prices";
+  }
+
+  // Params queries the oracle parameters
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/stride/icqoracle/params";
+  }
+
+  // TokenPriceForQuoteDenom queries the exchange rate between two tokens
+  rpc TokenPriceForQuoteDenom(QueryTokenPriceForQuoteDenomRequest)
+      returns (QueryTokenPriceForQuoteDenomResponse) {
+    option (google.api.http).get = "/stride/icqoracle/quote_price";
+  }
+}
+
+// QueryTokenPriceRequest is the request type for the Query/TokenPrice RPC
+// method
+message QueryTokenPriceRequest {
+  string base_denom = 1;
+  string quote_denom = 2;
+  uint64 pool_id = 3;
+}
+
+// QueryTokenPricesRequest is the request type for the Query/TokenPrices RPC
+// method
+message QueryTokenPricesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// TokenPriceResponse adds human readable info on to of TokenPrice
+message TokenPriceResponse {
+  // If IBC token, base denom unwrapped (e.g. ibc/... -> uatom)
+  string base_denom_unwrapped = 1;
+  // If IBC token, Quote denom unwrapped (e.g. ibc/... -> uatom)
+  string quote_denom_unwrapped = 2;
+
+  // The token price object with the remaining price metadata
+  TokenPrice token_price = 3 [ (gogoproto.nullable) = false ];
+}
+
+// QueryTokenPricesResponse is the response type for the Query/TokenPrices RPC
+// method
+message QueryTokenPricesResponse {
+  repeated TokenPriceResponse token_prices = 1 [ (gogoproto.nullable) = false ];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method
+message QueryParamsResponse {
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryTokenPriceForQuoteDenomRequest is the request type for the
+// Query/TokenPriceForQuoteDenom RPC method
+message QueryTokenPriceForQuoteDenomRequest {
+  string base_denom = 1;
+  string quote_denom = 2;
+}
+
+// QueryTokenPriceForQuoteDenomResponse is the response type for the
+// Query/TokenPriceForQuoteDenom RPC method
+message QueryTokenPriceForQuoteDenomResponse {
+  string price = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}

@@ -2,6 +2,12 @@
 {{- range $index, $relayer := .Values.relayers }}
   {{- $appName := printf "%s-%s" $relayer.type $relayer.name  -}}
 
+  {{- $prevRelayerName := "" -}}
+  {{- if gt $index 0 -}}
+    {{- $prevRelayer := index $root.relayers (sub $index 1) -}}
+    {{- $prevRelayerName = printf "%s-%s" $prevRelayer.type $prevRelayer.name -}}
+  {{- end -}}
+
   {{- $image := "" -}}
   {{- if eq $relayer.type "relayer" -}}
     {{- $image = $root.images.relayer -}}
@@ -44,6 +50,10 @@ spec:
               value: "{{ $chainMnemonicIndexA }}"
             - name: CHAIN_B_MNEMONIC_INDEX
               value: "{{ $chainMnemonicIndexB }}"
+            - name: NAMESPACE
+              value: {{ $root.namespace }}
+            - name: RELAYER_DEPENDENCY
+              value: {{ $prevRelayerName }}
           readinessProbe:
             exec:
               command: ["bash", "scripts/relayer-readiness.sh", "{{ $relayer.type }}"]
@@ -70,4 +80,17 @@ spec:
           configMap:
             name: scripts
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $root.namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ $appName }}
+  ports:
+    - port: 5183
+      name: rpc
+      protocol: TCP
 {{- end }}

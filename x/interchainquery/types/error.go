@@ -10,4 +10,5 @@ var (
 	ErrInvalidConsensusState = errors.New("invalid consensus state")
 	ErrInvalidICQRequest     = errors.New("invalid interchain query request")
 	ErrFailedToRetryQuery    = errors.New("failed to retry query")
+	ErrQueryNotFound         = errors.New("Query not found")
 )

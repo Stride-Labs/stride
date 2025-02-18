@@ -18,7 +18,7 @@ fi
 # It's not possible for one node to start up by itself (without peers), 
 # so if we identify that the node is on block 0, we'll mark it as ready
 # so the other nodes can start connecting
-if [[ "$($BINARY status | jq -r 'if .SyncInfo then .SyncInfo.latest_block_height else .sync_info.latest_block_height end')" == "0" ]]; then
+if [[ "$($BINARY status 2>/dev/null | jq -r 'if .SyncInfo then .SyncInfo.latest_block_height else .sync_info.latest_block_height end')" == "0" ]]; then
     exit 0
 fi
 
