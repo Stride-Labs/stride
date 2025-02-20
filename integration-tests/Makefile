@@ -85,4 +85,7 @@ stop:
 lint: 
 	@$(HELM) lint $(HELM_CHART) 
 
-restart: stop start
+restart:
+	$(MAKE) stop
+	sleep 10
+	$(MAKE) start

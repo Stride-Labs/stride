@@ -586,17 +586,16 @@ describe("buyback and burn", () => {
       // - Add TokenPrice(base=STRD, quote=OSMO)
       // - Add TokenPrice(base=ATOM, quote=OSMO)
       // - Query for price of ATOM in STRD
-      // - Liquid stake 1,000,000 ATOM
-      // - Wait for rewards to get swept to x/auction
+      // - Send 10 ATOM to reward_collector account on Stride
+      // - Wait for rewards to get swept from reward_collector to x/auction
       // - Create ATOM auction
       // - Buy ATOM with STRD off auction
-      // - Verify STRD was burned by x/strdburner
+      // - Verify STRD was burned by x/strdburner and ATOM was sent to user
 
       const stridejs = strideAccounts.user;
       const gaiajs = gaiaAccounts.val1;
       const osmojs = osmoAccounts.user;
 
-      console.log("Query for price of ATOM in STRD");
       let price: string = "0";
       try {
         ({ price } =
@@ -756,46 +755,27 @@ describe("buyback and burn", () => {
         expect(Number(price)).toBe(2.5);
       }
 
-      const stakeAmount = 1_000_000_000000;
-
-      console.log("Liquid stake 1,000,000 ATOM");
+      const rewardAmount = 10_000000;
+      const rewardCollectorAddress = await moduleAddress(
+        stridejs,
+        "reward_collector",
+      );
+      console.log("Send 10 ATOM to reward_collector account on Stride");
       await ibcTransfer({
         client: gaiajs,
         sourceChain: "GAIA",
         destinationChain: "STRIDE",
-        coin: `${stakeAmount}${UATOM}`,
+        coin: `${rewardAmount}${UATOM}`,
         sender: gaiajs.address,
-        receiver: stridejs.address,
+        receiver: rewardCollectorAddress,
       });
-
-      await submitTxAndExpectSuccess(stridejs, [
-        stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
-          creator: stridejs.address,
-          amount: String(stakeAmount),
-          hostDenom: UATOM,
-        }),
-      ]);
-
-      console.log("Send 10% of stake to withdrawal address");
-      // If we send more, you risk tripping some rate limits
-      const {
-        hostZone: { withdrawalIcaAddress },
-      } = await stridejs.query.stride.stakeibc.hostZone({
-        chainId: GAIA_CHAIN_ID,
-      });
-
-      await submitTxAndExpectSuccess(gaiajs, [
-        cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
-          fromAddress: gaiajs.address,
-          toAddress: withdrawalIcaAddress,
-          amount: coinsFromString(`${stakeAmount / 10}${UATOM}`),
-        }),
-      ]);
 
       console.log(
-        "Wait for funds to get swept from gaia withdrawal address to x/auction",
+        "Wait for funds to get swept from reward_collector to auction",
       );
       const auctionAddress = await moduleAddress(stridejs, "auction");
+      console.log({ rewardCollectorAddress });
+      console.log({ auctionAddress });
 
       let auctionAtomBalance: string;
       while (true) {
@@ -809,15 +789,22 @@ describe("buyback and burn", () => {
           break;
         }
 
+        const {
+          balance: { amount: rewardCollectorAtomBalance } = { amount: "0" },
+        } = await stridejs.query.cosmos.bank.v1beta1.balance({
+          address: rewardCollectorAddress,
+          denom: ATOM_DENOM_ON_STRIDE,
+        });
+
+        console.log({ rewardCollectorAtomBalance });
+        console.log({ auctionAtomBalance });
         await sleep(500);
       }
 
       console.log("Create ATOM auction");
       const auctionName = "ATOM" + Math.random();
-      const strdburnerAddress = await moduleAddress(
-        strideAccounts.admin,
-        "strdburner",
-      );
+      const { address: strdburnerAddress } =
+        await stridejs.query.stride.strdburner.strdBurnerAddress({});
 
       await submitTxAndExpectSuccess(
         strideAccounts.admin,
@@ -834,33 +821,48 @@ describe("buyback and burn", () => {
         }),
       );
 
-      console.log("Buy ATOM with STRD off auction and verify STRD was burned");
+      console.log(
+        "Buy ATOM with STRD off auction and verify STRD was burned and ATOM was sent to user",
+      );
       const { totalBurned: totalBurnedBefore } =
         await stridejs.query.stride.strdburner.totalStrdBurned({});
+      const { balance: { amount: userAtomBalanceBefore } = { amount: "0" } } =
+        await stridejs.query.cosmos.bank.v1beta1.balance({
+          address: strideAccounts.user.address,
+          denom: ATOM_DENOM_ON_STRIDE,
+        });
 
       // price is 2.5 and BigInt doesn't support fractions so we'll multiply by 10 for a price of 25
       // and then divide by 10
-      const strdToPay =
-        (BigInt(Number(price) * 10) * BigInt(auctionAtomBalance)) / 10n;
+      const atomsToBuy = BigInt(auctionAtomBalance) / 100n;
+      const strdToPay = (BigInt(Number(price) * 10) * atomsToBuy) / 10n;
 
       await submitTxAndExpectSuccess(
         strideAccounts.user,
         stride.auction.MessageComposer.withTypeUrl.placeBid({
           bidder: strideAccounts.user.address,
           auctionName,
-          sellingTokenAmount: String(auctionAtomBalance),
+          sellingTokenAmount: String(atomsToBuy),
           paymentTokenAmount: String(strdToPay),
         }),
       );
 
       const { totalBurned: totalBurnedAfter } =
         await stridejs.query.stride.strdburner.totalStrdBurned({});
+      const { balance: { amount: userAtomBalanceAfter } = { amount: "0" } } =
+        await stridejs.query.cosmos.bank.v1beta1.balance({
+          address: strideAccounts.user.address,
+          denom: ATOM_DENOM_ON_STRIDE,
+        });
 
+      expect(BigInt(userAtomBalanceAfter)).toBe(
+        BigInt(userAtomBalanceBefore) + atomsToBuy,
+      );
       expect(BigInt(totalBurnedAfter)).toBe(
         BigInt(totalBurnedBefore) + strdToPay,
       );
     },
-    10 * 60 * 1000 /* 10min */,
+    20 * 60 * 1000 /* 20min */,
   );
 
   // skip due to amino bullshit
