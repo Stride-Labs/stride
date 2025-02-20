@@ -1,3 +1,4 @@
+import { OfflineSigner } from "@cosmjs/proto-signing";
 import {
   SigningStargateClient,
   QueryClient,
@@ -17,4 +18,5 @@ export type CosmosClient = {
     BankExtension &
     StakingExtension &
     TxExtension;
+  signer: OfflineSigner;
 };

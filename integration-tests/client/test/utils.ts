@@ -1,4 +1,10 @@
-import { DeliverTxResponse, SigningStargateClient } from "@cosmjs/stargate";
+import { IbcClient, Link } from "@confio/relayer";
+import { OfflineSigner } from "@cosmjs/proto-signing";
+import {
+  DeliverTxResponse,
+  GasPrice,
+  SigningStargateClient,
+} from "@cosmjs/stargate";
 import {
   coinsFromString,
   convertBech32Prefix,
@@ -7,6 +13,7 @@ import {
   getTxIbcResponses,
   getValueFromEvents,
   IbcResponse,
+  sleep,
   StrideClient,
 } from "stridejs";
 import { ModuleAccount } from "stridejs/dist/types/codegen/cosmos/auth/v1beta1/auth";
@@ -225,4 +232,73 @@ export async function moduleAddress(
       })
     ).account as ModuleAccount
   ).baseAccount?.address!;
+}
+
+export async function getIbcConnection(
+  signerA: OfflineSigner,
+  signerB: OfflineSigner,
+  rpcA: string,
+  rpcB: string,
+  gasPriceA: GasPrice,
+  gasPriceB: GasPrice,
+  connIdA: string,
+  connIdB: string,
+): Promise<Link> {
+  const [{ address: addressA }] = await signerA.getAccounts();
+  const [{ address: addressB }] = await signerB.getAccounts();
+
+  // Create IBC Client for chain A
+  const clientA = await IbcClient.connectWithSigner(rpcA, signerA, addressA, {
+    gasPrice: gasPriceA,
+    estimatedBlockTime: 1000,
+    estimatedIndexerTime: 500,
+  });
+
+  // Create IBC Client for chain B
+  const clientB = await IbcClient.connectWithSigner(rpcB, signerB, addressB, {
+    gasPrice: gasPriceB,
+    estimatedBlockTime: 1000,
+    estimatedIndexerTime: 500,
+  });
+
+  // Connect to the existing connection for the 2 clients
+  return await Link.createWithExistingConnections(
+    clientA,
+    clientB,
+    connIdA,
+    connIdB,
+  );
+}
+
+export async function loopRelayer(
+  signerA: OfflineSigner,
+  signerB: OfflineSigner,
+  rpcA: string,
+  rpcB: string,
+  gasPriceA: GasPrice,
+  gasPriceB: GasPrice,
+  connIdA: string,
+  connIdB: string,
+) {
+  const conn = await getIbcConnection(
+    signerA,
+    signerB,
+    rpcA,
+    rpcB,
+    gasPriceA,
+    gasPriceB,
+    connIdA,
+    connIdB,
+  );
+
+  while (true) {
+    try {
+      await conn.relayAll();
+
+      await Promise.all([conn.updateClient("A"), conn.updateClient("B")]);
+    } catch (e) {
+      console.warn(`<loopRelayer>: caught error:`, e.message);
+    }
+    await sleep(500);
+  }
 }

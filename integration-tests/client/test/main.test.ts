@@ -53,6 +53,7 @@ import {
 import { CosmosClient } from "./types";
 import {
   ibcTransfer,
+  loopRelayer,
   moduleAddress,
   submitTxAndExpectSuccess,
   waitForChain,
@@ -166,6 +167,7 @@ beforeAll(async () => {
           setupStakingExtension,
           setupTxExtension,
         ),
+        signer: gaiaSigner,
       };
 
       const osmoSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
@@ -196,6 +198,7 @@ beforeAll(async () => {
           setupStakingExtension,
           setupTxExtension,
         ),
+        signer: osmoSigner,
       };
     }
   }
@@ -216,6 +219,18 @@ beforeAll(async () => {
     "cosmos",
   );
 
+  // loop backup relayer forever in the background
+  // loopRelayer(
+  //   strideAccounts.val1.signer,
+  //   gaiaAccounts.val1.signer,
+  //   STRIDE_RPC_ENDPOINT,
+  //   GAIA_RPC_ENDPOINT,
+  //   GasPrice.fromString(`0.025${USTRD}`),
+  //   GasPrice.fromString(`1.0${UATOM}`),
+  //   CONNECTION_ID.STRIDE.GAIA!,
+  //   CONNECTION_ID.GAIA.STRIDE!,
+  // );
+
   console.log("waiting for stride-osmosis ibc...");
   await waitForIbc(
     strideAccounts.user,
@@ -223,6 +238,18 @@ beforeAll(async () => {
     USTRD,
     "osmo",
   );
+
+  // loop backup relayer forever in the background
+  // loopRelayer(
+  //   strideAccounts.val2.signer,
+  //   osmoAccounts.val1.signer,
+  //   STRIDE_RPC_ENDPOINT,
+  //   OSMO_RPC_ENDPOINT,
+  //   GasPrice.fromString(`0.025${USTRD}`),
+  //   GasPrice.fromString(`1.0${UOSMO}`),
+  //   CONNECTION_ID.STRIDE.OSMO!,
+  //   CONNECTION_ID.OSMO.STRIDE!,
+  // );
 
   console.log("registering host zones...");
 
