@@ -9,26 +9,28 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/Stride-Labs/stride/v25/x/strdburner/types"
 )
 
 type Keeper struct {
-	cdc        codec.BinaryCodec
-	storeKey   storetypes.StoreKey
-	bankKeeper types.BankKeeper
+	cdc           codec.BinaryCodec
+	storeKey      storetypes.StoreKey
+	accountKeeper types.AccountKeeper
+	bankKeeper    types.BankKeeper
 }
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
+	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 ) *Keeper {
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		bankKeeper: bankKeeper,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		accountKeeper: accountKeeper,
+		bankKeeper:    bankKeeper,
 	}
 }
 
@@ -37,7 +39,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 func (k Keeper) GetStrdBurnerAddress() sdk.AccAddress {
-	return authtypes.NewModuleAddress(types.ModuleName)
+	return k.accountKeeper.GetModuleAddress(types.ModuleName)
 }
 
 func (k Keeper) SetTotalStrdBurned(ctx sdk.Context, amount math.Int) {
