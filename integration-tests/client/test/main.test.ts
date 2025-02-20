@@ -590,11 +590,14 @@ describe("buyback and burn", () => {
       const osmojs = osmoAccounts.user;
 
       console.log("Query for price of ATOM in STRD");
-      let { price } =
+      let price: string = "0";
+      try {
+        ({ price } =
         await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
           baseDenom: ATOM_DENOM_ON_STRIDE,
           quoteDenom: USTRD,
-        });
+          }));
+      } catch (error) {}
 
       // Price should be 2.5. Can skip some steps if already true.
       if (Number(price) !== 2.5) {
