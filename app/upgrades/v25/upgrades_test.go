@@ -51,7 +51,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkStaketiaMigration := s.SetupStaketiaMigration()
 	checkProp256 := s.SetupProp256()
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
-	checkInnerRedemptionRatesAfterUpgrade := s.SetupTestUpdateInnerRedemptionRateBounds()
+	checkInnerRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
 	checkLSMRecord := s.SetupLSMRecord()
 
 	// Run upgrade
@@ -186,7 +186,7 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 	}
 }
 
-func (s *UpgradeTestSuite) SetupTestUpdateInnerRedemptionRateBounds() func() {
+func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 	// Define test cases consisting of an initial redemption rate and expected bounds
 	// Celestia already set with rr of 1.2
 	testCases := []UpdateRedemptionRateInnerBounds{

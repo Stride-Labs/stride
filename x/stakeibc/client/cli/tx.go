@@ -54,7 +54,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdUpdateValSharesExchRate())
 	cmd.AddCommand(CmdCalibrateDelegation())
 	cmd.AddCommand(CmdClearBalance())
-	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
+	cmd.AddCommand(CmdUpdateRedemptionRateBounds())
 	cmd.AddCommand(CmdResumeHostZone())
 	cmd.AddCommand(CmdSetCommunityPoolRebate())
 	cmd.AddCommand(CmdToggleTradeController())
@@ -672,7 +672,7 @@ func CmdClearBalance() *cobra.Command {
 	return cmd
 }
 
-func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
+func CmdUpdateRedemptionRateBounds() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-redemption-rate-bounds [chainid] [min-bound] [max-bound]",
 		Short: "Broadcast message set-redemption-rate-bounds",
@@ -687,7 +687,7 @@ func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgUpdateInnerRedemptionRateBounds(
+			msg := types.NewMsgUpdateRedemptionRateBounds(
 				clientCtx.GetFromAddress().String(),
 				argChainId,
 				minInnerRedemptionRate,

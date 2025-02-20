@@ -1868,15 +1868,15 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_NoRecordChange_Success() 
 }
 
 // ----------------------------------------------------
-//	         UpdateInnerRedemptionRateBounds
+//	         UpdateRedemptionRateBounds
 // ----------------------------------------------------
 
-type UpdateInnerRedemptionRateBoundsTestCase struct {
-	validMsg stakeibctypes.MsgUpdateInnerRedemptionRateBounds
+type UpdateRedemptionRateBoundsTestCase struct {
+	validMsg stakeibctypes.MsgUpdateRedemptionRateBounds
 	zone     stakeibctypes.HostZone
 }
 
-func (s *KeeperTestSuite) SetupUpdateInnerRedemptionRateBounds() UpdateInnerRedemptionRateBoundsTestCase {
+func (s *KeeperTestSuite) SetupUpdateRedemptionRateBounds() UpdateRedemptionRateBoundsTestCase {
 	// Register a host zone
 	hostZone := stakeibctypes.HostZone{
 		ChainId:           HostChainId,
@@ -1889,7 +1889,7 @@ func (s *KeeperTestSuite) SetupUpdateInnerRedemptionRateBounds() UpdateInnerRede
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	defaultMsg := stakeibctypes.MsgUpdateInnerRedemptionRateBounds{
+	defaultMsg := stakeibctypes.MsgUpdateRedemptionRateBounds{
 		// TODO: does this need to be the admin address?
 		Creator:                s.TestAccs[0].String(),
 		ChainId:                HostChainId,
@@ -1897,18 +1897,18 @@ func (s *KeeperTestSuite) SetupUpdateInnerRedemptionRateBounds() UpdateInnerRede
 		MaxInnerRedemptionRate: sdk.NewDec(11).Quo(sdk.NewDec(10)),
 	}
 
-	return UpdateInnerRedemptionRateBoundsTestCase{
+	return UpdateRedemptionRateBoundsTestCase{
 		validMsg: defaultMsg,
 		zone:     hostZone,
 	}
 }
 
 // Verify that bounds can be set successfully
-func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_Success() {
-	tc := s.SetupUpdateInnerRedemptionRateBounds()
+func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds_Success() {
+	tc := s.SetupUpdateRedemptionRateBounds()
 
 	// Set the inner bounds on the host zone
-	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.validMsg)
+	_, err := s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the inner bounds were set
@@ -1919,14 +1919,14 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_Success() {
 }
 
 // Setting inner bounds outside of outer bounds should throw an error
-func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_OutOfBounds() {
-	tc := s.SetupUpdateInnerRedemptionRateBounds()
+func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds_OutOfBounds() {
+	tc := s.SetupUpdateRedemptionRateBounds()
 
 	// Set the min inner bound to be less than the min outer bound
 	tc.validMsg.MinInnerRedemptionRate = sdk.NewDec(0)
 
 	// Set the inner bounds on the host zone
-	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.validMsg)
+	_, err := s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &tc.validMsg)
 	// verify it throws an error
 	errMsg := fmt.Sprintf("inner min safety threshold (%s) is less than outer min safety threshold (%s)", tc.validMsg.MinInnerRedemptionRate, sdk.NewDec(9).Quo(sdk.NewDec(10)))
 	s.Require().ErrorContains(err, errMsg)
@@ -1935,15 +1935,15 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_OutOfBounds() {
 	tc.validMsg.MinInnerRedemptionRate = sdk.NewDec(1)
 	tc.validMsg.MaxInnerRedemptionRate = sdk.NewDec(3)
 	// Set the inner bounds on the host zone
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.validMsg)
+	_, err = s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &tc.validMsg)
 	// verify it throws an error
 	errMsg = fmt.Sprintf("inner max safety threshold (%s) is greater than outer max safety threshold (%s)", tc.validMsg.MaxInnerRedemptionRate, sdk.NewDec(15).Quo(sdk.NewDec(10)))
 	s.Require().ErrorContains(err, errMsg)
 }
 
 // Validate basic tests
-func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_InvalidMsg() {
-	tc := s.SetupUpdateInnerRedemptionRateBounds()
+func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds_InvalidMsg() {
+	tc := s.SetupUpdateRedemptionRateBounds()
 
 	// Set the min inner bound to be greater than than the max inner bound
 	invalidMsg := tc.validMsg
@@ -1958,7 +1958,7 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_InvalidMsg() {
 
 // Verify that if inner bounds end up outside of outer bounds (somehow), the outer bounds are returned
 func (s *KeeperTestSuite) TestGetInnerSafetyBounds() {
-	tc := s.SetupUpdateInnerRedemptionRateBounds()
+	tc := s.SetupUpdateRedemptionRateBounds()
 
 	// Set the inner bounds outside the outer bounds on the host zone directly
 	tc.zone.MinInnerRedemptionRate = sdk.NewDec(0)
