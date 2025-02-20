@@ -54,7 +54,7 @@ ValidatorSlashQueryThreshold (default uint64 = 1)
 - `RegisterHostZone()`
 - `ClearBalance()`
 - `RestoreInterchainAccount()`
-- `UpdateValidatorSharesExchRate()`
+- `UpdateValSharesExchRate()`
 
 ## State
 
@@ -106,15 +106,14 @@ Governance
 
 `stakeibc` module emits the following events:
 
-Type: Attribute Key &rarr; Attribute Value
---------------------------------------------------
+## Type: Attribute Key &rarr; Attribute Value
 
 registerHostZone: module &rarr; stakeibc
 registerHostZone: connectionId &rarr; connectionId
 registerHostZone: chainId &rarr; chainId
-submitHostZoneUnbonding: hostZone &rarr;  chainId
+submitHostZoneUnbonding: hostZone &rarr; chainId
 submitHostZoneUnbonding: newAmountUnbonding &rarr; totalAmtToUnbond
 stakeExistingDepositsOnHostZone: hostZone &rarr; chainId
 stakeExistingDepositsOnHostZone: newAmountStaked &rarr; amount
-onAckPacket (IBC): module &rarr;  moduleName
+onAckPacket (IBC): module &rarr; moduleName
 onAckPacket (IBC): ack &rarr; ackInfo

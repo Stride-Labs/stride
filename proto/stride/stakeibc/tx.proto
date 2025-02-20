@@ -29,8 +29,8 @@ service Msg {
       returns (MsgRestoreInterchainAccountResponse);
   rpc CloseDelegationChannel(MsgCloseDelegationChannel)
       returns (MsgCloseDelegationChannelResponse);
-  rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
-      returns (MsgUpdateValidatorSharesExchRateResponse);
+  rpc UpdateValSharesExchRate(MsgUpdateValSharesExchRate)
+      returns (MsgUpdateValSharesExchRateResponse);
   rpc CalibrateDelegation(MsgCalibrateDelegation)
       returns (MsgCalibrateDelegationResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
@@ -240,16 +240,16 @@ message MsgCloseDelegationChannel {
 }
 message MsgCloseDelegationChannelResponse {}
 
-message MsgUpdateValidatorSharesExchRate {
+message MsgUpdateValSharesExchRate {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stakeibc/MsgUpdateValidatorSharesExchRate";
+  option (amino.name) = "stakeibc/MsgUpdateValSharesExchRate";
 
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
   string valoper = 3
       [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
 }
-message MsgUpdateValidatorSharesExchRateResponse {}
+message MsgUpdateValSharesExchRateResponse {}
 
 message MsgCalibrateDelegation {
   option (cosmos.msg.v1.signer) = "creator";

@@ -51,7 +51,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdDeleteValidator())
 	cmd.AddCommand(CmdRestoreInterchainAccount())
 	cmd.AddCommand(CmdCloseDelegationChannel())
-	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
+	cmd.AddCommand(CmdUpdateValSharesExchRate())
 	cmd.AddCommand(CmdCalibrateDelegation())
 	cmd.AddCommand(CmdClearBalance())
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
@@ -574,7 +574,7 @@ Ex:
 	return cmd
 }
 
-func CmdUpdateValidatorSharesExchRate() *cobra.Command {
+func CmdUpdateValSharesExchRate() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-delegation [chainid] [valoper]",
 		Short: "Broadcast message update-delegation",
@@ -588,7 +588,7 @@ func CmdUpdateValidatorSharesExchRate() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgUpdateValidatorSharesExchRate(
+			msg := types.NewMsgUpdateValSharesExchRate(
 				clientCtx.GetFromAddress().String(),
 				argHostdenom,
 				argValoper,
