@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v25/x/strdburner/keeper"
 	"github.com/Stride-Labs/stride/v25/x/strdburner/types"
 )
 
@@ -47,7 +46,7 @@ func (s *KeeperTestSuite) TestEndBlocker() {
 			require.Equal(t, sdk.ZeroInt(), initialTotalBurned)
 
 			// Run EndBlocker
-			keeper.EndBlocker(s.Ctx, s.App.StrdBurnerKeeper)
+			s.App.StrdBurnerKeeper.EndBlocker(s.Ctx)
 
 			// Verify final state
 			finalBalance := s.App.BankKeeper.GetBalance(s.Ctx, burnerAddress, "ustrd")

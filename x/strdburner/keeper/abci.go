@@ -6,7 +6,7 @@ import (
 	"github.com/Stride-Labs/stride/v25/x/strdburner/types"
 )
 
-func EndBlocker(ctx sdk.Context, k Keeper) {
+func (k Keeper) EndBlocker(ctx sdk.Context) {
 	strdBurnerAddress := k.GetStrdBurnerAddress()
 
 	// Get STRD balance
