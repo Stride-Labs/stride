@@ -1,10 +1,14 @@
 syntax = "proto3";
 package stride.stakeibc;
+
 import "gogoproto/gogo.proto";
 import "stride/stakeibc/validator.proto";
+import "amino/amino.proto";
+
 option go_package = "github.com/Stride-Labs/stride/v25/x/stakeibc/types";
 
 message AddValidatorsProposal {
+  option (amino.name) = "stakeibc/AddValidatorsProposal";
   option (gogoproto.equal) = true;
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.goproto_stringer) = false;
@@ -17,6 +21,7 @@ message AddValidatorsProposal {
 }
 
 message ToggleLSMProposal {
+  option (amino.name) = "stakeibc/ToggleLSMProposal";
   option (gogoproto.equal) = true;
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.goproto_stringer) = false;
