@@ -15,6 +15,7 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v25/utils"
@@ -538,7 +539,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, msg.ConnectionId, msg.AccountOwner, appVersion); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, msg.ConnectionId, msg.AccountOwner, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register account for owner %s", msg.AccountOwner)
 	}
 
