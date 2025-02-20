@@ -10,6 +10,9 @@ import (
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
 
+	// Initialize module account in account keeper if not already initialized
+	k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
+
 	for _, auction := range genState.Auctions {
 		k.SetAuction(ctx, &auction)
 	}

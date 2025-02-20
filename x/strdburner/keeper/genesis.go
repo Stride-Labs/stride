@@ -8,6 +8,10 @@ import (
 
 // Loads module state from genesis
 func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
+	// Initialize module account in account keeper if not already initialized
+	k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
+
+	// Set Total STRD Burned
 	k.SetTotalStrdBurned(ctx, genState.TotalUstrdBurned)
 }
 

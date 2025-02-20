@@ -255,6 +255,7 @@ var (
 		authtypes.FeeCollectorName: nil,
 		distrtypes.ModuleName:      nil,
 		// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
+		// strdburner module needs burn access to burn STRD tokens that are sent to it
 		ccvconsumertypes.ConsumerRedistributeName:     nil,
 		ccvconsumertypes.ConsumerToSendToProviderName: nil,
 		minttypes.ModuleName:                          {authtypes.Minter, authtypes.Burner},
@@ -274,8 +275,7 @@ var (
 		wasmtypes.ModuleName:                          {authtypes.Burner},
 		icqoracletypes.ModuleName:                     nil,
 		auctiontypes.ModuleName:                       nil,
-		// strdburner module needs burn access to burn STRD tokens that are sent to it
-		strdburnertypes.ModuleName: {authtypes.Burner},
+		strdburnertypes.ModuleName:                    {authtypes.Burner},
 	}
 )
 
