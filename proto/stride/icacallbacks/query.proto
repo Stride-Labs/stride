@@ -1,11 +1,11 @@
 syntax = "proto3";
 package stride.icacallbacks;
 
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "stride/icacallbacks/params.proto";
 import "stride/icacallbacks/callback_data.proto";
+import "stride/icacallbacks/params.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/icacallbacks/types";

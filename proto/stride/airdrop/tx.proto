@@ -2,9 +2,9 @@
 syntax = "proto3";
 package stride.airdrop;
 
-import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 

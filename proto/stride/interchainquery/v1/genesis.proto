@@ -1,9 +1,9 @@
 syntax = "proto3";
 package stride.interchainquery.v1;
 
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
-import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/interchainquery/types";
 
