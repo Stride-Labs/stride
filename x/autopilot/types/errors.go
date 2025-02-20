@@ -15,4 +15,5 @@ var (
 	ErrPacketForwardingInactive  = errorsmod.Register(ModuleName, 1507, "autopilot packet forwarding is disabled")
 	ErrInvalidMemoLength         = errorsmod.Register(ModuleName, 1508, "the memo field exceeded the max allowable size")
 	ErrInvalidReceiverLength     = errorsmod.Register(ModuleName, 1509, "the receiver field exceeded the max allowable size")
+	ErrBlockedFallbackAddress    = errorsmod.Register(ModuleName, 1510, "autopilot metadata fallback address is blocked")
 )
