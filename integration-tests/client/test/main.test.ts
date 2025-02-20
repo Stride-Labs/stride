@@ -69,10 +69,12 @@ let accounts: {
 
 let gaiaAccounts: {
   user: CosmosClient; // a normal account loaded with 100 ATOM
+  val1: CosmosClient;
 };
 
 let osmoAccounts: {
   user: CosmosClient; // a normal account loaded with 1,000,000 OSMO
+  val1: CosmosClient;
 };
 
 const mnemonics: {
@@ -109,9 +111,14 @@ const mnemonics: {
 // init accounts and wait for chain to start
 beforeAll(async () => {
   console.log("setting up accounts...");
+
+  // init {,gaia,osmo}Accounts as an empty object, then add the accounts in the loop
   // @ts-expect-error
-  // init accounts as an empty object, then add the accounts in the loop
   accounts = {};
+  // @ts-expect-error
+  gaiaAccounts = {};
+  // @ts-expect-error
+  osmoAccounts = {};
   for (const { name, mnemonic } of mnemonics) {
     // setup signer
     //
@@ -137,30 +144,28 @@ beforeAll(async () => {
       },
     );
 
-    if (name === "user") {
+    if (name === "user" || name === "val1") {
       const gaiaSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
 
       const [{ address: gaiaAddress }] = await gaiaSigner.getAccounts();
 
-      gaiaAccounts = {
-        user: {
-          address: gaiaAddress,
-          client: await SigningStargateClient.connectWithSigner(
-            GAIA_RPC_ENDPOINT,
-            gaiaSigner,
-            {
-              gasPrice: GasPrice.fromString(`1.0${UATOM}`),
-              broadcastPollIntervalMs: 50,
-            },
-          ),
-          query: QueryClient.withExtensions(
-            await Comet38Client.connect(GAIA_RPC_ENDPOINT),
-            setupAuthExtension,
-            setupBankExtension,
-            setupStakingExtension,
-            setupTxExtension,
-          ),
-        },
+      gaiaAccounts[name] = {
+        address: gaiaAddress,
+        client: await SigningStargateClient.connectWithSigner(
+          GAIA_RPC_ENDPOINT,
+          gaiaSigner,
+          {
+            gasPrice: GasPrice.fromString(`1.0${UATOM}`),
+            broadcastPollIntervalMs: 50,
+          },
+        ),
+        query: QueryClient.withExtensions(
+          await Comet38Client.connect(GAIA_RPC_ENDPOINT),
+          setupAuthExtension,
+          setupBankExtension,
+          setupStakingExtension,
+          setupTxExtension,
+        ),
       };
 
       const osmoSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
@@ -169,30 +174,28 @@ beforeAll(async () => {
 
       const [{ address: osmoAddress }] = await osmoSigner.getAccounts();
 
-      osmoAccounts = {
-        user: {
-          address: osmoAddress,
-          client: await SigningStargateClient.connectWithSigner(
-            OSMO_RPC_ENDPOINT,
-            osmoSigner,
-            {
-              gasPrice: GasPrice.fromString(`1.0${UOSMO}`),
-              broadcastPollIntervalMs: 50,
-              registry: new Registry([
-                ...osmosisProtoRegistry,
-                ...cosmosProtoRegistry,
-                ...ibcProtoRegistry,
-              ]),
-            },
-          ),
-          query: QueryClient.withExtensions(
-            await Comet38Client.connect(OSMO_RPC_ENDPOINT),
-            setupAuthExtension,
-            setupBankExtension,
-            setupStakingExtension,
-            setupTxExtension,
-          ),
-        },
+      osmoAccounts[name] = {
+        address: osmoAddress,
+        client: await SigningStargateClient.connectWithSigner(
+          OSMO_RPC_ENDPOINT,
+          osmoSigner,
+          {
+            gasPrice: GasPrice.fromString(`1.0${UOSMO}`),
+            broadcastPollIntervalMs: 50,
+            registry: new Registry([
+              ...osmosisProtoRegistry,
+              ...cosmosProtoRegistry,
+              ...ibcProtoRegistry,
+            ]),
+          },
+        ),
+        query: QueryClient.withExtensions(
+          await Comet38Client.connect(OSMO_RPC_ENDPOINT),
+          setupAuthExtension,
+          setupBankExtension,
+          setupStakingExtension,
+          setupTxExtension,
+        ),
       };
     }
   }
@@ -579,23 +582,23 @@ describe("buyback and burn", () => {
       // - Add TokenPrice(base=STRD, quote=OSMO)
       // - Add TokenPrice(base=ATOM, quote=OSMO)
       // - Query for price of ATOM in STRD
-      // - Liquid stake 10 ATOM
+      // - Liquid stake 1,000,000 ATOM
       // - Wait for rewards to get swept to x/auction
       // - Create ATOM auction
       // - Buy ATOM with STRD off auction
       // - Verify STRD was burned by x/strdburner
 
       const stridejs = accounts.user;
-      const gaiajs = gaiaAccounts.user;
+      const gaiajs = gaiaAccounts.val1;
       const osmojs = osmoAccounts.user;
 
       console.log("Query for price of ATOM in STRD");
       let price: string = "0";
       try {
         ({ price } =
-        await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
-          baseDenom: ATOM_DENOM_ON_STRIDE,
-          quoteDenom: USTRD,
+          await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
+            baseDenom: ATOM_DENOM_ON_STRIDE,
+            quoteDenom: USTRD,
           }));
       } catch (error) {}
 
@@ -749,9 +752,9 @@ describe("buyback and burn", () => {
         expect(Number(price)).toBe(2.5);
       }
 
-      const stakeAmount = 10_000_000;
+      const stakeAmount = 1_000_000_000000;
 
-      console.log("Liquid stake 10 ATOM");
+      console.log("Liquid stake 1,000,000 ATOM");
       await ibcTransfer({
         client: gaiajs,
         sourceChain: "GAIA",
