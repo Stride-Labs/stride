@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,30 +11,30 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgLiquidStake{}, "stakeibc/MsgLiquidStake", nil)
-	cdc.RegisterConcrete(&MsgLSMLiquidStake{}, "stakeibc/MsgLSMLiquidStake", nil)
-	cdc.RegisterConcrete(&MsgClearBalance{}, "stakeibc/MsgClearBalance", nil)
-	cdc.RegisterConcrete(&MsgRegisterHostZone{}, "stakeibc/MsgRegisterHostZone", nil)
-	cdc.RegisterConcrete(&MsgRedeemStake{}, "stakeibc/MsgRedeemStake", nil)
-	cdc.RegisterConcrete(&MsgClaimUndelegatedTokens{}, "stakeibc/MsgClaimUndelegatedTokens", nil)
-	cdc.RegisterConcrete(&MsgRebalanceValidators{}, "stakeibc/MsgRebalanceValidators", nil)
-	cdc.RegisterConcrete(&MsgAddValidators{}, "stakeibc/MsgAddValidators", nil)
-	cdc.RegisterConcrete(&MsgChangeValidatorWeights{}, "stakeibc/MsgChangeValidatorWeights", nil)
-	cdc.RegisterConcrete(&MsgDeleteValidator{}, "stakeibc/MsgDeleteValidator", nil)
-	cdc.RegisterConcrete(&AddValidatorsProposal{}, "stakeibc/MsgAddValidatorsProposal", nil)
-	cdc.RegisterConcrete(&ToggleLSMProposal{}, "stakeibc/MsgToggleLSMProposal", nil)
-	cdc.RegisterConcrete(&MsgRestoreInterchainAccount{}, "stakeibc/MsgRestoreInterchainAccount", nil)
-	cdc.RegisterConcrete(&MsgCloseDelegationChannel{}, "stakeibc/MsgCloseDelegationChannel", nil)
-	cdc.RegisterConcrete(&MsgUpdateValidatorSharesExchRate{}, "stakeibc/MsgUpdateValidatorSharesExchRate", nil)
-	cdc.RegisterConcrete(&MsgCalibrateDelegation{}, "stakeibc/MsgCalibrateDelegation", nil)
-	cdc.RegisterConcrete(&MsgCreateTradeRoute{}, "stakeibc/MsgCreateTradeRoute", nil)
-	cdc.RegisterConcrete(&MsgDeleteTradeRoute{}, "stakeibc/MsgDeleteTradeRoute", nil)
-	cdc.RegisterConcrete(&MsgUpdateTradeRoute{}, "stakeibc/MsgUpdateTradeRoute", nil)
-	cdc.RegisterConcrete(&MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/MsgUpdateInnerRedemptionRateBounds", nil)
-	cdc.RegisterConcrete(&MsgResumeHostZone{}, "stakeibc/MsgResumeHostZone", nil)
-	cdc.RegisterConcrete(&MsgSetCommunityPoolRebate{}, "stakeibc/MsgSetCommunityPoolRebate", nil)
-	cdc.RegisterConcrete(&MsgToggleTradeController{}, "stakeibc/MsgToggleTradeController", nil)
-	cdc.RegisterConcrete(&MsgUpdateHostZoneParams{}, "stakeibc/MsgUpdateHostZoneParams", nil)
+	legacy.RegisterAminoMsg(cdc, &MsgLiquidStake{}, "stakeibc/MsgLiquidStake")
+	legacy.RegisterAminoMsg(cdc, &MsgLSMLiquidStake{}, "stakeibc/MsgLSMLiquidStake")
+	legacy.RegisterAminoMsg(cdc, &MsgClearBalance{}, "stakeibc/MsgClearBalance")
+	legacy.RegisterAminoMsg(cdc, &MsgRegisterHostZone{}, "stakeibc/MsgRegisterHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgRedeemStake{}, "stakeibc/MsgRedeemStake")
+	legacy.RegisterAminoMsg(cdc, &MsgClaimUndelegatedTokens{}, "stakeibc/MsgClaimUndelegatedTokens")
+	legacy.RegisterAminoMsg(cdc, &MsgRebalanceValidators{}, "stakeibc/MsgRebalanceValidators")
+	legacy.RegisterAminoMsg(cdc, &MsgAddValidators{}, "stakeibc/MsgAddValidators")
+	legacy.RegisterAminoMsg(cdc, &MsgChangeValidatorWeights{}, "stakeibc/MsgChangeValidatorWeights")
+	legacy.RegisterAminoMsg(cdc, &MsgDeleteValidator{}, "stakeibc/MsgDeleteValidator")
+	cdc.RegisterConcrete(&AddValidatorsProposal{}, "stakeibc/AddValidatorsProposal", nil)
+	cdc.RegisterConcrete(&ToggleLSMProposal{}, "stakeibc/ToggleLSMProposal", nil)
+	legacy.RegisterAminoMsg(cdc, &MsgRestoreInterchainAccount{}, "stakeibc/MsgRestoreInterchainAccount")
+	legacy.RegisterAminoMsg(cdc, &MsgCloseDelegationChannel{}, "stakeibc/MsgCloseDelegationChannel")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateValidatorSharesExchRate{}, "stakeibc/MsgUpdateValidatorSharesExchRate")
+	legacy.RegisterAminoMsg(cdc, &MsgCalibrateDelegation{}, "stakeibc/MsgCalibrateDelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgCreateTradeRoute{}, "stakeibc/MsgCreateTradeRoute")
+	legacy.RegisterAminoMsg(cdc, &MsgDeleteTradeRoute{}, "stakeibc/MsgDeleteTradeRoute")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateTradeRoute{}, "stakeibc/MsgUpdateTradeRoute")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/MsgUpdateInnerRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stakeibc/MsgResumeHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgSetCommunityPoolRebate{}, "stakeibc/MsgSetCommunityPoolRebate")
+	legacy.RegisterAminoMsg(cdc, &MsgToggleTradeController{}, "stakeibc/MsgToggleTradeController")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateHostZoneParams{}, "stakeibc/MsgUpdateHostZoneParams")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
