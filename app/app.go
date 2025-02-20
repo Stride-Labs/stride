@@ -542,7 +542,6 @@ func NewStrideApp(
 		keys[packetforwardtypes.StoreKey],
 		nil, // will be zero-value here, reference is set later on with SetTransferKeeper.
 		app.IBCKeeper.ChannelKeeper,
-		app.DistrKeeper,
 		app.BankKeeper,
 		app.HooksICS4Wrapper, // ICS4Wrapper
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -816,6 +815,7 @@ func NewStrideApp(
 		scopedICAHostKeeper,
 		app.MsgServiceRouter(),
 	)
+	app.ICAHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
 
 	// Create the middleware stacks
@@ -1363,7 +1363,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacallbacksmoduletypes.ModuleName)
 	paramsKeeper.Subspace(ccvconsumertypes.ModuleName)
 	paramsKeeper.Subspace(autopilottypes.ModuleName)
-	paramsKeeper.Subspace(packetforwardtypes.ModuleName).WithKeyTable(packetforwardtypes.ParamKeyTable())
+	paramsKeeper.Subspace(packetforwardtypes.ModuleName)
 	paramsKeeper.Subspace(icaoracletypes.ModuleName)
 	paramsKeeper.Subspace(claimtypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
