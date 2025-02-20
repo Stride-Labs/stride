@@ -1,9 +1,9 @@
 syntax = "proto3";
 package stride.stakeibc;
 
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "stride/stakeibc/ica_account.proto";
-import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v25/x/stakeibc/types";
 

@@ -1,9 +1,9 @@
 syntax = "proto3";
 package stride.epochs;
 
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
 import "stride/epochs/genesis.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v25/x/epochs/types";

@@ -1,14 +1,14 @@
 syntax = "proto3";
 package stride.stakeibc;
 
-import "stride/stakeibc/validator.proto";
-
-option go_package = "github.com/Stride-Labs/stride/v25/x/stakeibc/types";
-import "gogoproto/gogo.proto";
+import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
-import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "stride/stakeibc/validator.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v25/x/stakeibc/types";
 
 // Msg defines the Msg service.
 service Msg {
