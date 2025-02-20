@@ -649,12 +649,12 @@ func (k msgServer) CloseDelegationChannel(goCtx context.Context, msg *types.MsgC
 // 2. ValidatorSharesToTokensRate (CALLBACK)
 // 3. SubmitDelegationICQ (ICQ)
 // 4. DelegatorSharesCallback (CALLBACK)
-func (k msgServer) UpdateValidatorSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
+func (k msgServer) UpdateValSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValSharesExchRate) (*types.MsgUpdateValSharesExchRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := k.QueryValidatorSharesToTokensRate(ctx, msg.ChainId, msg.Valoper); err != nil {
 		return nil, err
 	}
-	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
+	return &types.MsgUpdateValSharesExchRateResponse{}, nil
 }
 
 // Submits an ICQ to get the validator's delegated shares

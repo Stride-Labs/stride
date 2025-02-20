@@ -11,7 +11,7 @@ import (
 	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 )
 
-func SimulateMsgUpdateValidatorSharesExchRate(
+func SimulateMsgUpdateValSharesExchRate(
 	ak types.AccountKeeper,
 	bk types.BankKeeper,
 	k keeper.Keeper,
@@ -19,12 +19,12 @@ func SimulateMsgUpdateValidatorSharesExchRate(
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		msg := &types.MsgUpdateValidatorSharesExchRate{
+		msg := &types.MsgUpdateValSharesExchRate{
 			Creator: simAccount.Address.String(),
 		}
 
-		// TODO: Handling the UpdateValidatorSharesExchRate simulation
+		// TODO: Handling the UpdateValSharesExchRate simulation
 
-		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "UpdateValidatorSharesExchRate simulation not implemented"), nil, nil
+		return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "UpdateValSharesExchRate simulation not implemented"), nil, nil
 	}
 }
