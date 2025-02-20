@@ -59,7 +59,7 @@ import {
   waitForIbc,
 } from "./utils";
 
-let accounts: {
+let strideAccounts: {
   user: StrideClient; // a normal account loaded with 100 STRD
   admin: StrideClient; // the stride admin account loaded with 1000 STRD
   val1: StrideClient;
@@ -114,7 +114,7 @@ beforeAll(async () => {
 
   // init {,gaia,osmo}Accounts as an empty object, then add the accounts in the loop
   // @ts-expect-error
-  accounts = {};
+  strideAccounts = {};
   // @ts-expect-error
   gaiaAccounts = {};
   // @ts-expect-error
@@ -133,7 +133,7 @@ beforeAll(async () => {
     // get signer address
     const [{ address }] = await signer.getAccounts();
 
-    accounts[name] = await StrideClient.create(
+    strideAccounts[name] = await StrideClient.create(
       STRIDE_RPC_ENDPOINT,
       signer,
       address,
@@ -200,7 +200,7 @@ beforeAll(async () => {
     }
   }
   console.log("waiting for stride to start...");
-  await waitForChain(accounts.user, USTRD);
+  await waitForChain(strideAccounts.user, USTRD);
 
   console.log("waiting for gaia to start...");
   await waitForChain(gaiaAccounts.user, UATOM);
@@ -210,21 +210,25 @@ beforeAll(async () => {
 
   console.log("waiting for stride-gaia ibc...");
   await waitForIbc(
-    accounts.user,
+    strideAccounts.user,
     TRANSFER_CHANNEL.STRIDE.GAIA!,
     USTRD,
     "cosmos",
   );
 
   console.log("waiting for stride-osmosis ibc...");
-  await waitForIbc(accounts.user, TRANSFER_CHANNEL.STRIDE.OSMO!, USTRD, "osmo");
+  await waitForIbc(
+    strideAccounts.user,
+    TRANSFER_CHANNEL.STRIDE.OSMO!,
+    USTRD,
+    "osmo",
+  );
 
   console.log("registering host zones...");
 
   const registerHostZonesMsgs: EncodeObject[] = [];
-  const { hostZone } = await accounts.admin.query.stride.stakeibc.hostZoneAll(
-    {},
-  );
+  const { hostZone } =
+    await strideAccounts.admin.query.stride.stakeibc.hostZoneAll({});
 
   const gaiaHostZoneNotRegistered =
     hostZone.find((hz) => hz.chainId === GAIA_CHAIN_ID) === undefined;
@@ -234,7 +238,7 @@ beforeAll(async () => {
   if (gaiaHostZoneNotRegistered) {
     const gaiaRegisterHostZoneMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
-        creator: accounts.admin.address,
+        creator: strideAccounts.admin.address,
         connectionId: CONNECTION_ID.STRIDE.GAIA!,
         bech32prefix: "cosmos",
         hostDenom: UATOM,
@@ -253,7 +257,7 @@ beforeAll(async () => {
       await gaiaAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
     const gaiaAddValidatorsMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
-        creator: accounts.admin.address,
+        creator: strideAccounts.admin.address,
         hostZone: GAIA_CHAIN_ID,
         validators: gaiaValidators.map((val) => ({
           name: val.description.moniker,
@@ -274,7 +278,7 @@ beforeAll(async () => {
   if (osmoHostZoneNotRegistered) {
     const osmoRegisterHostZoneMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
-        creator: accounts.admin.address,
+        creator: strideAccounts.admin.address,
         connectionId: CONNECTION_ID.STRIDE.OSMO!,
         bech32prefix: "osmo",
         hostDenom: UOSMO,
@@ -295,7 +299,7 @@ beforeAll(async () => {
       await gaiaAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
     const osmoAddValidatorsMsg =
       stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
-        creator: accounts.admin.address,
+        creator: strideAccounts.admin.address,
         hostZone: OSMO_CHAIN_ID,
         validators: osmoValidators.map((val) => ({
           name: val.description.moniker,
@@ -314,7 +318,7 @@ beforeAll(async () => {
   }
 
   if (registerHostZonesMsgs.length > 0) {
-    await submitTxAndExpectSuccess(accounts.admin, registerHostZonesMsgs);
+    await submitTxAndExpectSuccess(strideAccounts.admin, registerHostZonesMsgs);
   }
 }, 45_000);
 
@@ -326,7 +330,7 @@ describe("x/airdrop", () => {
   const day = 24 * hour;
 
   test("MsgCreateAirdrop", async () => {
-    const stridejs = accounts.admin;
+    const stridejs = strideAccounts.admin;
 
     const nowSec = now();
     const airdropId = String(nowSec);
@@ -366,7 +370,7 @@ describe("x/airdrop", () => {
 
 describe("ibc", () => {
   test("MsgTransfer", async () => {
-    const stridejs = accounts.user;
+    const stridejs = strideAccounts.user;
 
     await ibcTransfer({
       client: stridejs,
@@ -382,7 +386,7 @@ describe("ibc", () => {
 describe("x/stakeibc", () => {
   // skip due to amino bullshit
   test.skip("Registration", async () => {
-    const stridejs = accounts.admin;
+    const stridejs = strideAccounts.admin;
 
     const msg = stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
       creator: stridejs.address,
@@ -407,7 +411,7 @@ describe("x/stakeibc", () => {
 
 describe("buyback and burn", () => {
   test("gamm pool price", async () => {
-    const stridejs = accounts.user;
+    const stridejs = strideAccounts.user;
     const osmojs = osmoAccounts.user;
 
     await ibcTransfer({
@@ -431,14 +435,14 @@ describe("buyback and burn", () => {
     );
 
     const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
-      admin: accounts.admin.address,
+      admin: strideAccounts.admin.address,
       baseDenom: USTRD,
       quoteDenom: OSMO_DENOM_ON_STRIDE,
       baseDenomOnOsmosis: STRD_DENOM_ON_OSMOSIS,
       quoteDenomOnOsmosis: UOSMO,
       poolId: osmoStrdPoolId,
     });
-    await submitTxAndExpectSuccess(accounts.admin, registerTokenPriceMsg);
+    await submitTxAndExpectSuccess(strideAccounts.admin, registerTokenPriceMsg);
 
     while (true) {
       const {
@@ -486,7 +490,7 @@ describe("buyback and burn", () => {
   });
 
   test("concentrated liquidity pool price", async () => {
-    const stridejs = accounts.user;
+    const stridejs = strideAccounts.user;
     const osmojs = osmoAccounts.user;
 
     await ibcTransfer({
@@ -518,14 +522,14 @@ describe("buyback and burn", () => {
     await submitTxAndExpectSuccess(osmojs, addLiquidityMsg);
 
     const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
-      admin: accounts.admin.address,
+      admin: strideAccounts.admin.address,
       baseDenom: USTRD,
       quoteDenom: OSMO_DENOM_ON_STRIDE,
       baseDenomOnOsmosis: STRD_DENOM_ON_OSMOSIS,
       quoteDenomOnOsmosis: UOSMO,
       poolId: osmoStrdPoolId,
     });
-    await submitTxAndExpectSuccess(accounts.admin, registerTokenPriceMsg);
+    await submitTxAndExpectSuccess(strideAccounts.admin, registerTokenPriceMsg);
 
     while (true) {
       const {
@@ -588,7 +592,7 @@ describe("buyback and burn", () => {
       // - Buy ATOM with STRD off auction
       // - Verify STRD was burned by x/strdburner
 
-      const stridejs = accounts.user;
+      const stridejs = strideAccounts.user;
       const gaiajs = gaiaAccounts.val1;
       const osmojs = osmoAccounts.user;
 
@@ -673,9 +677,9 @@ describe("buyback and burn", () => {
 
         console.log("Add TokenPrice(base=STRD, quote=OSMO)");
         await submitTxAndExpectSuccess(
-          accounts.admin,
+          strideAccounts.admin,
           stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
-            admin: accounts.admin.address,
+            admin: strideAccounts.admin.address,
             baseDenom: USTRD,
             quoteDenom: OSMO_DENOM_ON_STRIDE,
             osmosisBaseDenom: STRD_DENOM_ON_OSMOSIS,
@@ -686,9 +690,9 @@ describe("buyback and burn", () => {
 
         console.log("Add TokenPrice(base=ATOM, quote=OSMO)");
         await submitTxAndExpectSuccess(
-          accounts.admin,
+          strideAccounts.admin,
           stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
-            admin: accounts.admin.address,
+            admin: strideAccounts.admin.address,
             baseDenom: ATOM_DENOM_ON_STRIDE,
             quoteDenom: OSMO_DENOM_ON_STRIDE,
             osmosisBaseDenom: ATOM_DENOM_ON_OSMOSIS,
@@ -811,14 +815,14 @@ describe("buyback and burn", () => {
       console.log("Create ATOM auction");
       const auctionName = "ATOM" + Math.random();
       const strdburnerAddress = await moduleAddress(
-        accounts.admin,
+        strideAccounts.admin,
         "strdburner",
       );
 
       await submitTxAndExpectSuccess(
-        accounts.admin,
+        strideAccounts.admin,
         stride.auction.MessageComposer.withTypeUrl.createAuction({
-          admin: accounts.admin.address,
+          admin: strideAccounts.admin.address,
           auctionName,
           auctionType: stride.auction.AuctionType.AUCTION_TYPE_FCFS,
           sellingDenom: ATOM_DENOM_ON_STRIDE,
@@ -840,9 +844,9 @@ describe("buyback and burn", () => {
         (BigInt(Number(price) * 10) * BigInt(auctionAtomBalance)) / 10n;
 
       await submitTxAndExpectSuccess(
-        accounts.user,
+        strideAccounts.user,
         stride.auction.MessageComposer.withTypeUrl.placeBid({
-          bidder: accounts.user.address,
+          bidder: strideAccounts.user.address,
           auctionName,
           sellingTokenAmount: String(auctionAtomBalance),
           paymentTokenAmount: String(strdToPay),
@@ -861,7 +865,7 @@ describe("buyback and burn", () => {
 
   // skip due to amino bullshit
   test("update params", async () => {
-    const stridejs = accounts.user;
+    const stridejs = strideAccounts.user;
 
     const { params } = await stridejs.query.stride.icqoracle.params({});
     params.priceExpirationTimeoutSec += 1n;
@@ -893,33 +897,33 @@ describe("buyback and burn", () => {
     );
 
     const txs = await Promise.all([
-      accounts.val1.signAndBroadcast(
+      strideAccounts.val1.signAndBroadcast(
         [
           cosmos.gov.v1.MessageComposer.withTypeUrl.vote({
             proposalId: proposalId,
-            voter: accounts.val1.address,
+            voter: strideAccounts.val1.address,
             option: VoteOption.VOTE_OPTION_YES,
             metadata: "",
           }),
         ],
         2,
       ),
-      accounts.val2.signAndBroadcast(
+      strideAccounts.val2.signAndBroadcast(
         [
           cosmos.gov.v1.MessageComposer.withTypeUrl.vote({
             proposalId: proposalId,
-            voter: accounts.val2.address,
+            voter: strideAccounts.val2.address,
             option: VoteOption.VOTE_OPTION_YES,
             metadata: "",
           }),
         ],
         2,
       ),
-      accounts.val3.signAndBroadcast(
+      strideAccounts.val3.signAndBroadcast(
         [
           cosmos.gov.v1.MessageComposer.withTypeUrl.vote({
             proposalId: proposalId,
-            voter: accounts.val3.address,
+            voter: strideAccounts.val3.address,
             option: VoteOption.VOTE_OPTION_YES,
             metadata: "",
           }),
@@ -955,7 +959,7 @@ describe("buyback and burn", () => {
   }, 60_000);
 
   test("staking rewards funneled to x/auction", async () => {
-    const stridejs = accounts.admin;
+    const stridejs = strideAccounts.admin;
     const gaiajs = gaiaAccounts.user;
 
     const auctionAddress = await moduleAddress(stridejs, "auction");
@@ -1030,7 +1034,7 @@ describe("buyback and burn", () => {
   }, 240_000);
 
   test("unwrapIBCDenom", async () => {
-    const stridejs = accounts.admin;
+    const stridejs = strideAccounts.admin;
     const gaiajs = gaiaAccounts.user;
     const osmojs = osmoAccounts.user;
 
@@ -1054,14 +1058,14 @@ describe("buyback and burn", () => {
     });
 
     const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
-      admin: accounts.admin.address,
+      admin: strideAccounts.admin.address,
       baseDenom: ATOM_DENOM_ON_STRIDE,
       quoteDenom: OSMO_DENOM_ON_STRIDE,
       baseDenomOnOsmosis: ATOM_DENOM_ON_OSMOSIS,
       quoteDenomOnOsmosis: UOSMO,
       poolId: 1n, // not important for thie TokenPrice to work for the test to work
     });
-    await submitTxAndExpectSuccess(accounts.admin, registerTokenPriceMsg);
+    await submitTxAndExpectSuccess(strideAccounts.admin, registerTokenPriceMsg);
 
     const { baseDenomUnwrapped, quoteDenomUnwrapped } =
       await stridejs.query.stride.icqoracle.tokenPrice({
