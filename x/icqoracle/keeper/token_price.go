@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 )
 
@@ -125,7 +126,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 	// Get price expiration timeout
 	params := k.GetParams(ctx)
-	priceExpirationTimeoutSec := int64(params.PriceExpirationTimeoutSec)
+	priceExpirationTimeoutSec := utils.UintToInt(params.PriceExpirationTimeoutSec)
 
 	// Check if baseDenom already has a price for quoteDenom
 	foundAlreadyHasStalePrice := false

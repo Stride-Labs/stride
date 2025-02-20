@@ -79,7 +79,7 @@ func (k Keeper) SubmitOsmosisPriceICQ(
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_OsmosisPrice,
 		CallbackData:    tokenPriceBz,
-		TimeoutDuration: time.Duration(params.UpdateIntervalSec) * time.Second,
+		TimeoutDuration: time.Duration(utils.UintToInt(params.UpdateIntervalSec)) * time.Second,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
 	}
 

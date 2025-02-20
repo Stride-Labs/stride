@@ -7,6 +7,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v25/utils"
 	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 )
 
@@ -27,7 +28,7 @@ func (k Keeper) RefreshTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice, 
 	currentTime := ctx.BlockTime()
 	lastUpdate := tokenPrice.LastRequestTime
 	isNewToken := lastUpdate.IsZero()
-	updateIntervalPassed := currentTime.Sub(lastUpdate) >= time.Second*time.Duration(updateIntervalSec)
+	updateIntervalPassed := currentTime.Sub(lastUpdate) >= time.Second*time.Duration(utils.UintToInt(updateIntervalSec))
 
 	// If the update interval has not passed, don't update
 	if !isNewToken && !updateIntervalPassed {
