@@ -17,14 +17,13 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgConfirmUndelegation{}, "stakedym/MsgConfirmUndelegation")
 	legacy.RegisterAminoMsg(cdc, &MsgConfirmUnbondedTokenSweep{}, "stakedym/MsgConfirmUnbondedTokenSweep")
 	legacy.RegisterAminoMsg(cdc, &MsgAdjustDelegatedBalance{}, "stakedym/MsgAdjustDelegatedBalance")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stakedym/MsgUpdateInnerRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateRedemptionRateBounds{}, "stakedym/MsgUpdateRedemptionRateBounds")
 	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stakedym/MsgResumeHostZone")
 	legacy.RegisterAminoMsg(cdc, &MsgRefreshRedemptionRate{}, "stakedym/MsgRefreshRedemptionRate")
 	legacy.RegisterAminoMsg(cdc, &MsgOverwriteDelegationRecord{}, "stakedym/MsgOverwriteDelegationRecord")
 	legacy.RegisterAminoMsg(cdc, &MsgOverwriteUnbondingRecord{}, "stakedym/MsgOverwriteUnbondingRecord")
 	legacy.RegisterAminoMsg(cdc, &MsgOverwriteRedemptionRecord{}, "stakedym/MsgOverwriteRedemptionRecord")
 	legacy.RegisterAminoMsg(cdc, &MsgSetOperatorAddress{}, "stakedym/MsgSetOperatorAddress")
-
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -35,7 +34,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgConfirmUndelegation{},
 		&MsgConfirmUnbondedTokenSweep{},
 		&MsgAdjustDelegatedBalance{},
-		&MsgUpdateInnerRedemptionRateBounds{},
+		&MsgUpdateRedemptionRateBounds{},
 		&MsgResumeHostZone{},
 		&MsgRefreshRedemptionRate{},
 		&MsgOverwriteDelegationRecord{},

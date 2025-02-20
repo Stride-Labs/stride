@@ -30,7 +30,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgCreateTradeRoute{}, "stakeibc/MsgCreateTradeRoute")
 	legacy.RegisterAminoMsg(cdc, &MsgDeleteTradeRoute{}, "stakeibc/MsgDeleteTradeRoute")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateTradeRoute{}, "stakeibc/MsgUpdateTradeRoute")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/MsgUpdateInnerRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateRedemptionRateBounds{}, "stakeibc/MsgUpdateRedemptionRateBounds")
 	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stakeibc/MsgResumeHostZone")
 	legacy.RegisterAminoMsg(cdc, &MsgSetCommunityPoolRebate{}, "stakeibc/MsgSetCommunityPoolRebate")
 	legacy.RegisterAminoMsg(cdc, &MsgToggleTradeController{}, "stakeibc/MsgToggleTradeController")
@@ -52,7 +52,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCloseDelegationChannel{},
 		&MsgUpdateValSharesExchRate{},
 		&MsgCalibrateDelegation{},
-		&MsgUpdateInnerRedemptionRateBounds{},
+		&MsgUpdateRedemptionRateBounds{},
 		&MsgResumeHostZone{},
 		&MsgSetCommunityPoolRebate{},
 		&MsgToggleTradeController{},

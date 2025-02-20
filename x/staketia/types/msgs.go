@@ -11,19 +11,19 @@ import (
 )
 
 const (
-	TypeMsgLiquidStake                     = "liquid_stake"
-	TypeMsgRedeemStake                     = "redeem_stake"
-	TypeMsgConfirmDelegation               = "confirm_delegation"
-	TypeMsgConfirmUndelegation             = "confirm_undelegation"
-	TypeMsgConfirmUnbondedTokenSweep       = "confirm_unbonded_token_sweep"
-	TypeMsgAdjustDelegatedBalance          = "adjust_delegated_balance"
-	TypeMsgUpdateInnerRedemptionRateBounds = "redemption_rate_bounds"
-	TypeMsgResumeHostZone                  = "resume_host_zone"
-	TypeMsgRefreshRedemptionRate           = "refresh_redemption_rate"
-	TypeMsgOverwriteDelegationRecord       = "overwrite_delegation_record"
-	TypeMsgOverwriteUnbondingRecord        = "overwrite_unbonding_record"
-	TypeMsgOverwriteRedemptionRecord       = "overwrite_redemption_record"
-	TypeMsgSetOperatorAddress              = "set_operator_address"
+	TypeMsgLiquidStake                = "liquid_stake"
+	TypeMsgRedeemStake                = "redeem_stake"
+	TypeMsgConfirmDelegation          = "confirm_delegation"
+	TypeMsgConfirmUndelegation        = "confirm_undelegation"
+	TypeMsgConfirmUnbondedTokenSweep  = "confirm_unbonded_token_sweep"
+	TypeMsgAdjustDelegatedBalance     = "adjust_delegated_balance"
+	TypeMsgUpdateRedemptionRateBounds = "redemption_rate_bounds"
+	TypeMsgResumeHostZone             = "resume_host_zone"
+	TypeMsgRefreshRedemptionRate      = "refresh_redemption_rate"
+	TypeMsgOverwriteDelegationRecord  = "overwrite_delegation_record"
+	TypeMsgOverwriteUnbondingRecord   = "overwrite_unbonding_record"
+	TypeMsgOverwriteRedemptionRecord  = "overwrite_redemption_record"
+	TypeMsgSetOperatorAddress         = "set_operator_address"
 )
 
 var (
@@ -33,7 +33,7 @@ var (
 	_ sdk.Msg = &MsgConfirmUndelegation{}
 	_ sdk.Msg = &MsgConfirmUnbondedTokenSweep{}
 	_ sdk.Msg = &MsgAdjustDelegatedBalance{}
-	_ sdk.Msg = &MsgUpdateInnerRedemptionRateBounds{}
+	_ sdk.Msg = &MsgUpdateRedemptionRateBounds{}
 	_ sdk.Msg = &MsgResumeHostZone{}
 	_ sdk.Msg = &MsgRefreshRedemptionRate{}
 	_ sdk.Msg = &MsgOverwriteDelegationRecord{}
@@ -48,7 +48,7 @@ var (
 	_ legacytx.LegacyMsg = &MsgConfirmUndelegation{}
 	_ legacytx.LegacyMsg = &MsgConfirmUnbondedTokenSweep{}
 	_ legacytx.LegacyMsg = &MsgAdjustDelegatedBalance{}
-	_ legacytx.LegacyMsg = &MsgUpdateInnerRedemptionRateBounds{}
+	_ legacytx.LegacyMsg = &MsgUpdateRedemptionRateBounds{}
 	_ legacytx.LegacyMsg = &MsgResumeHostZone{}
 	_ legacytx.LegacyMsg = &MsgRefreshRedemptionRate{}
 	_ legacytx.LegacyMsg = &MsgOverwriteDelegationRecord{}
@@ -341,26 +341,26 @@ func (msg *MsgAdjustDelegatedBalance) ValidateBasic() error {
 }
 
 // ----------------------------------------------
-//       MsgUpdateInnerRedemptionRateBounds
+//       MsgUpdateRedemptionRateBounds
 // ----------------------------------------------
 
-func NewMsgUpdateInnerRedemptionRateBounds(creator string, minRedemptionRate, maxRedemptionRate sdk.Dec) *MsgUpdateInnerRedemptionRateBounds {
-	return &MsgUpdateInnerRedemptionRateBounds{
+func NewMsgUpdateRedemptionRateBounds(creator string, minRedemptionRate, maxRedemptionRate sdk.Dec) *MsgUpdateRedemptionRateBounds {
+	return &MsgUpdateRedemptionRateBounds{
 		Creator:                creator,
 		MinInnerRedemptionRate: minRedemptionRate,
 		MaxInnerRedemptionRate: maxRedemptionRate,
 	}
 }
 
-func (msg MsgUpdateInnerRedemptionRateBounds) Type() string {
-	return TypeMsgUpdateInnerRedemptionRateBounds
+func (msg MsgUpdateRedemptionRateBounds) Type() string {
+	return TypeMsgUpdateRedemptionRateBounds
 }
 
-func (msg MsgUpdateInnerRedemptionRateBounds) Route() string {
+func (msg MsgUpdateRedemptionRateBounds) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgUpdateInnerRedemptionRateBounds) GetSigners() []sdk.AccAddress {
+func (msg *MsgUpdateRedemptionRateBounds) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -368,12 +368,12 @@ func (msg *MsgUpdateInnerRedemptionRateBounds) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgUpdateInnerRedemptionRateBounds) GetSignBytes() []byte {
+func (msg *MsgUpdateRedemptionRateBounds) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgUpdateInnerRedemptionRateBounds) ValidateBasic() error {
+func (msg *MsgUpdateRedemptionRateBounds) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)

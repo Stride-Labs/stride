@@ -674,7 +674,7 @@ func (k msgServer) CalibrateDelegation(goCtx context.Context, msg *types.MsgCali
 	return &types.MsgCalibrateDelegationResponse{}, nil
 }
 
-func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
+func (k msgServer) UpdateRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateRedemptionRateBounds) (*types.MsgUpdateRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Note: we're intentionally not checking the zone is halted
@@ -709,7 +709,7 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 
 	k.SetHostZone(ctx, zone)
 
-	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
+	return &types.MsgUpdateRedemptionRateBoundsResponse{}, nil
 }
 
 func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
