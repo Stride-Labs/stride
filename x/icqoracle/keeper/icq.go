@@ -56,7 +56,8 @@ func (k Keeper) SubmitOsmosisPriceICQ(
 	ctx sdk.Context,
 	tokenPrice types.TokenPrice,
 ) error {
-	k.Logger(ctx).Info(utils.LogWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "Submitting OsmosisPrice ICQ"))
+	k.Logger(ctx).Info(fmt.Sprintf("Submitting OsmosisPrice ICQ - Base: %s / Quote: %s / Pool: %d",
+		tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId))
 
 	params := k.GetParams(ctx)
 
@@ -101,8 +102,9 @@ func OsmosisPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes
 		return fmt.Errorf("Error deserializing query.CallbackData '%s' as TokenPrice", hex.EncodeToString(query.CallbackData))
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPrice",
-		"Starting OsmosisPrice ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone("osmosis", query.CallbackId,
+		"Starting OsmosisPrice ICQ callback, QueryId: %vs, QueryType: %s, Connection: %s, Base Denom: %s, Quote Denom: %s, PoolId: %d",
+		query.Id, query.QueryType, query.ConnectionId, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId))
 
 	tokenPrice, err := k.GetTokenPrice(ctx, tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId)
 	if err != nil {
@@ -118,7 +120,7 @@ func OsmosisPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes
 		return errorsmod.Wrap(err, "Error determining spot price from query response")
 	}
 
-	k.Logger(ctx).Info(utils.LogICQCallbackWithTokenPriceQuery(tokenPrice.BaseDenom, tokenPrice.QuoteDenom, tokenPrice.OsmosisPoolId, "OsmosisPrice",
+	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone("osmosis", query.CallbackId,
 		"Price of %s in terms of %s: %vs", tokenPrice.BaseDenom, tokenPrice.QuoteDenom, newSpotPrice))
 
 	k.SetQueryComplete(ctx, tokenPrice, newSpotPrice)
