@@ -970,6 +970,8 @@ describe("buyback and burn", () => {
       });
 
     const stakeAmount = 10_000_000;
+    const rewardAmount = 10_000;
+    const feeAmount = 1_000;
 
     // Liquid stake 10 ATOM
     await ibcTransfer({
@@ -989,6 +991,7 @@ describe("buyback and burn", () => {
       });
 
     await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
+    sleep(1000);
 
     // Check st tokens
     const { balance: { amount: stAtomBalance } = { amount: "0" } } =
@@ -998,7 +1001,7 @@ describe("buyback and burn", () => {
       });
     expect(BigInt(stAtomBalance)).toBeGreaterThan(0n);
 
-    // Send 10% of stake to withdrawal address
+    // Send 10% of stake to fee address
     // If we send more, you risk tripping some rate limits
     const {
       hostZone: { withdrawalIcaAddress },
@@ -1010,11 +1013,12 @@ describe("buyback and burn", () => {
       cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
         fromAddress: gaiajs.address,
         toAddress: withdrawalIcaAddress,
-        amount: coinsFromString(`${stakeAmount / 10}${UATOM}`),
+        amount: coinsFromString(`${rewardAmount}${UATOM}`),
       }),
     ]);
 
-    // Wait for funds to get swept from withdrawal address on gaia into x/auction
+    // Wait for funds to get swept from fee address on gaia into x/auction
+    console.log("Waiting for funds to land in auction account");
     while (true) {
       const { balance: { amount: auctionBalanceAfter } = { amount: "0" } } =
         await stridejs.query.cosmos.bank.v1beta1.balance({
@@ -1024,7 +1028,7 @@ describe("buyback and burn", () => {
 
       if (
         BigInt(auctionBalanceAfter) >=
-        BigInt(auctionBalanceBefore) + BigInt(stakeAmount)
+        BigInt(auctionBalanceBefore) + BigInt(feeAmount)
       ) {
         break;
       }
