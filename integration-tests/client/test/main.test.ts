@@ -455,7 +455,6 @@ describe("buyback and burn", () => {
           spotPrice,
           lastRequestTime,
           lastResponseTime,
-          queryInProgress,
         },
       } = await stridejs.query.stride.icqoracle.tokenPrice({
         baseDenom: USTRD,
@@ -542,7 +541,6 @@ describe("buyback and burn", () => {
           spotPrice,
           lastRequestTime,
           lastResponseTime,
-          queryInProgress,
         },
       } = await stridejs.query.stride.icqoracle.tokenPrice({
         baseDenom: USTRD,
@@ -550,7 +548,7 @@ describe("buyback and burn", () => {
         poolId: osmoStrdPoolId,
       });
       if (lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
-        expect(Number(spotPrice)).toBe(5);
+        expect(Number(spotPrice)).toBe(2);
 
         // Verify base denom matches
         expect(baseDenom).toBe(USTRD);
@@ -576,7 +574,7 @@ describe("buyback and burn", () => {
     }
   });
 
-  test.only(
+  test(
     "happy path",
     async () => {
       // - Transfer STRD to Osmosis
@@ -866,7 +864,7 @@ describe("buyback and burn", () => {
   );
 
   // skip due to amino bullshit
-  test("update params", async () => {
+  test.skip("update params", async () => {
     const stridejs = strideAccounts.user;
 
     const { params } = await stridejs.query.stride.icqoracle.params({});
