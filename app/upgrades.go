@@ -338,6 +338,19 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v26 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v25.UpgradeName,
+		v25.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.BankKeeper,
+			app.RecordsKeeper,
+			app.StakeibcKeeper,
+			app.StaketiaKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
