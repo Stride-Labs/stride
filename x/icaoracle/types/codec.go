@@ -11,9 +11,9 @@ import (
 )
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgAddOracle{}, "icaoracle/AddOracle")
-	legacy.RegisterAminoMsg(cdc, &MsgInstantiateOracle{}, "icaoracle/InstantiateOracle")
-	legacy.RegisterAminoMsg(cdc, &MsgRestoreOracleICA{}, "icaoracle/RestoreOracleICA")
+	legacy.RegisterAminoMsg(cdc, &MsgAddOracle{}, "icaoracle/MsgAddOracle")
+	legacy.RegisterAminoMsg(cdc, &MsgInstantiateOracle{}, "icaoracle/MsgInstantiateOracle")
+	legacy.RegisterAminoMsg(cdc, &MsgRestoreOracleICA{}, "icaoracle/MsgRestoreOracleICA")
 	legacy.RegisterAminoMsg(cdc, &MsgToggleOracle{}, "icaoracle/MsgToggleOracle")
 	legacy.RegisterAminoMsg(cdc, &MsgRemoveOracle{}, "icaoracle/MsgRemoveOracle")
 }

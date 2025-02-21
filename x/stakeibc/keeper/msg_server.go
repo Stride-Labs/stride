@@ -650,12 +650,12 @@ func (k msgServer) CloseDelegationChannel(goCtx context.Context, msg *types.MsgC
 // 2. ValidatorSharesToTokensRate (CALLBACK)
 // 3. SubmitDelegationICQ (ICQ)
 // 4. DelegatorSharesCallback (CALLBACK)
-func (k msgServer) UpdateValidatorSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValidatorSharesExchRate) (*types.MsgUpdateValidatorSharesExchRateResponse, error) {
+func (k msgServer) UpdateValSharesExchRate(goCtx context.Context, msg *types.MsgUpdateValSharesExchRate) (*types.MsgUpdateValSharesExchRateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := k.QueryValidatorSharesToTokensRate(ctx, msg.ChainId, msg.Valoper); err != nil {
 		return nil, err
 	}
-	return &types.MsgUpdateValidatorSharesExchRateResponse{}, nil
+	return &types.MsgUpdateValSharesExchRateResponse{}, nil
 }
 
 // Submits an ICQ to get the validator's delegated shares
@@ -675,7 +675,7 @@ func (k msgServer) CalibrateDelegation(goCtx context.Context, msg *types.MsgCali
 	return &types.MsgCalibrateDelegationResponse{}, nil
 }
 
-func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
+func (k msgServer) UpdateRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateRedemptionRateBounds) (*types.MsgUpdateRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Note: we're intentionally not checking the zone is halted
@@ -710,7 +710,7 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 
 	k.SetHostZone(ctx, zone)
 
-	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
+	return &types.MsgUpdateRedemptionRateBoundsResponse{}, nil
 }
 
 func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {

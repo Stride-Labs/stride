@@ -179,7 +179,6 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep() {
 // ----------------------------------------------
 
 func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
-
 	safeAddress := "safe"
 
 	// Create the host zone
@@ -233,14 +232,13 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
 	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
-
 }
 
 // ----------------------------------------------
-//      MsgUpdateInnerRedemptionRateBounds
+//      MsgUpdateRedemptionRateBounds
 // ----------------------------------------------
 
-func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
+func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds() {
 	adminAddress, ok := apptesting.GetAdminAddress()
 	s.Require().True(ok)
 
@@ -257,32 +255,32 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	// we're halting the zone to test that the tx works even when the host zone is halted
 	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
-	initialMsg := types.MsgUpdateInnerRedemptionRateBounds{
+	initialMsg := types.MsgUpdateRedemptionRateBounds{
 		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(90).Quo(sdk.NewDec(100)),
 		MaxInnerRedemptionRate: sdk.NewDec(105).Quo(sdk.NewDec(100)),
 	}
 
-	updateMsg := types.MsgUpdateInnerRedemptionRateBounds{
+	updateMsg := types.MsgUpdateRedemptionRateBounds{
 		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(95).Quo(sdk.NewDec(100)),
 		MaxInnerRedemptionRate: sdk.NewDec(11).Quo(sdk.NewDec(10)),
 	}
 
-	invalidMsg := types.MsgUpdateInnerRedemptionRateBounds{
+	invalidMsg := types.MsgUpdateRedemptionRateBounds{
 		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(0),
 		MaxInnerRedemptionRate: sdk.NewDec(2),
 	}
 
-	nonAdminMsg := types.MsgUpdateInnerRedemptionRateBounds{
+	nonAdminMsg := types.MsgUpdateRedemptionRateBounds{
 		Creator:                "non-admin",
 		MinInnerRedemptionRate: sdk.NewDec(0),
 		MaxInnerRedemptionRate: sdk.NewDec(2),
 	}
 
 	// Set the inner bounds on the host zone for the first time
-	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &initialMsg)
+	_, err := s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &initialMsg)
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the inner bounds were set
@@ -291,7 +289,7 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	s.Require().Equal(initialMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
 
 	// Update the inner bounds on the host zone
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &updateMsg)
+	_, err = s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &updateMsg)
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the inner bounds were set
@@ -300,11 +298,11 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	s.Require().Equal(updateMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
 
 	// Set the inner bounds on the host zone for the first time
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &invalidMsg)
+	_, err = s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "invalid host zone redemption rate inner bounds")
 
 	// Attempt to update bounds with a non-admin address, it should fail
-	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &nonAdminMsg)
+	_, err = s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &nonAdminMsg)
 	s.Require().ErrorContains(err, "signer is not an admin")
 }
 
@@ -597,7 +595,6 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 
 // Verify that operator address can be set successfully
 func (s *KeeperTestSuite) TestSetOperatorAddress() {
-
 	safeAddress := s.TestAccs[0].String()
 	operatorAddress := s.TestAccs[1].String()
 	nonAdminAddress := s.TestAccs[2].String()

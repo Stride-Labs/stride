@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,10 +10,10 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgSetAirdropAllocations{}, "claim/SetAirdropAllocation", nil)
-	cdc.RegisterConcrete(&MsgClaimFreeAmount{}, "claim/ClaimFreeAmount", nil)
-	cdc.RegisterConcrete(&MsgCreateAirdrop{}, "claim/MsgCreateAirdrop", nil)
-	cdc.RegisterConcrete(&MsgDeleteAirdrop{}, "claim/MsgDeleteAirdrop", nil)
+	legacy.RegisterAminoMsg(cdc, &MsgSetAirdropAllocations{}, "claim/MsgSetAirdropAllocations")
+	legacy.RegisterAminoMsg(cdc, &MsgClaimFreeAmount{}, "claim/MsgClaimFreeAmount")
+	legacy.RegisterAminoMsg(cdc, &MsgCreateAirdrop{}, "claim/MsgCreateAirdrop")
+	legacy.RegisterAminoMsg(cdc, &MsgDeleteAirdrop{}, "claim/MsgDeleteAirdrop")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
