@@ -2,7 +2,7 @@ FROM golang:1.23-alpine3.21 AS builder
 
 WORKDIR /opt/
 
-RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers
+RUN set -eux; apk add --no-cache ca-certificates build-base; apk add git linux-headers gcc linux-headers eudev-dev binutils-gold
 
 ENV COMMIT_HASH=v27.0.0-no-fees
 
@@ -15,15 +15,12 @@ WORKDIR /opt/osmosis
 # Cosmwasm - download correct libwasmvm version and verify checksum
 RUN ARCH=$(uname -m) && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //') && \
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$ARCH.a \
-    -O /lib/libwasmvm_muslc.$ARCH.a && \
-    # verify checksum
-    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
-    sha256sum /lib/libwasmvm_muslc.$ARCH.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$ARCH | cut -d ' ' -f 1) 
+    -O /lib/libwasmvm_muslc.$ARCH.a
 
-RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
+RUN BUILD_TAGS=muslc LINK_STATICALLY=true make install
 
 FROM alpine:3.21
-COPY --from=builder /opt/osmosis/build/osmosisd /usr/local/bin/
+COPY --from=builder /go/bin/osmosisd /usr/local/bin/
 RUN apk add bash vim \
     && addgroup -g 1000 osmosis \
     && adduser -S -h /home/osmosis -D osmosis -u 1000 -G osmosis
