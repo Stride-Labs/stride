@@ -17,7 +17,7 @@ wait_for_node() {
 
     # Wait for the node to be caught up and confirm it's at least on the 2nd block
     until 
-        response=$(curl -s -H "Cache-Control: no-cache" "$rpc_endpoint")
+        response=$(curl -s --connect-timeout 5 -H "Cache-Control: no-cache" "$rpc_endpoint")
         catching_up=$(echo "$response" | jq -r '.result.sync_info.catching_up')
         latest_block=$(echo "$response" | jq -r '.result.sync_info.latest_block_height')
         [[ $catching_up == "false" && $latest_block -gt 2 ]]
