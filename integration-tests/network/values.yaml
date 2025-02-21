@@ -17,7 +17,7 @@ chains:
 
   - name: cosmoshub
     binary: gaiad
-    version: v18.1.0
+    version: v22.1.0
     numValidators: 1
     home: .gaia
     denom: uatom

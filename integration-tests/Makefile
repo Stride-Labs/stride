@@ -52,7 +52,7 @@ build-stride:
 	@bash network/scripts/build.sh stride
 
 build-cosmoshub:
-	$(call build_and_push_docker,cosmoshub,.,chains/cosmoshub:v18.1.0)
+	$(call build_and_push_docker,cosmoshub,.,chains/cosmoshub:v22.1.0)
 
 build-osmosis:
 	$(call build_and_push_docker,osmosis,.,chains/osmosis:v28.0.0)

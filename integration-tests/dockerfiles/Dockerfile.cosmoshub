@@ -5,7 +5,7 @@ WORKDIR /opt
 RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev ca-certificates build-base git 
 
 ENV REPO=https://github.com/cosmos/gaia
-ENV COMMIT_HASH=v18.1.0
+ENV COMMIT_HASH=v22.1.0
 ENV BINARY=gaiad
 
 RUN git clone ${REPO} chain \
@@ -14,11 +14,11 @@ RUN git clone ${REPO} chain \
     
 WORKDIR /opt/chain
 
-RUN WASMVM_VERSION=$(cat go.mod | grep github.com/CosmWasm/wasmvm | awk '{print $2}') \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
-    -O /lib/libwasmvm_muslc.a
+RUN ARCH=$(uname -m) && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //') && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$ARCH.a \
+    -O /lib/libwasmvm_muslc.$ARCH.a
 
-RUN CGO_ENABLED=1 BUILD_TAGS="muslc linkstatic" LINK_STATICALLY=true LEDGER_ENABLED=false make install
+RUN BUILD_TAGS=muslc LINK_STATICALLY=true make install
 
 FROM alpine:3.17
 COPY --from=builder /go/bin/$BINARY /usr/local/bin/
