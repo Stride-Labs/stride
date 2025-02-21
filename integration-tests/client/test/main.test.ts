@@ -891,6 +891,7 @@ describe("buyback and burn", () => {
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
+    sleep(1500);
 
     const proposalId = BigInt(
       getValueFromEvents(tx.events, "submit_proposal.proposal_id"),

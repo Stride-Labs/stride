@@ -14,6 +14,7 @@ import { expect } from "vitest";
 import { TRANSFER_CHANNEL } from "./consts";
 import { newTransferMsg } from "./msgs";
 import { Chain, CosmosClient } from "./types";
+import { sleep } from "stridejs";
 
 export function isCosmosClient(client: any): client is CosmosClient {
   return (
@@ -146,6 +147,7 @@ export async function submitTxAndExpectSuccess(
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
+    sleep(1500);
 
     return {
       ...tx,
@@ -158,6 +160,7 @@ export async function submitTxAndExpectSuccess(
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
+    sleep(1500);
 
     return tx;
   }
