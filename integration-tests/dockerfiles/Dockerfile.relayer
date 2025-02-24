@@ -2,10 +2,10 @@ FROM golang:1.21-alpine3.17 AS builder
 
 WORKDIR /src/
 
-ENV COMMIT_HASH=v2.5.2
+ENV COMMIT_HASH=v2.5.2-debug-non-membership-0
 
 RUN apk add --update git make gcc linux-headers libc-dev eudev-dev 
-RUN git clone https://github.com/cosmos/relayer.git \
+RUN git clone https://github.com/Stride-Labs/relayer.git \
     && cd relayer \
     && git checkout ${COMMIT_HASH} \
     && CGO_ENABLED=1 LDFLAGS='-linkmode external -extldflags "-static"' make install

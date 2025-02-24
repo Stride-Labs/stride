@@ -54,11 +54,17 @@ build-stride:
 build-cosmoshub:
 	$(call build_and_push_docker,cosmoshub,.,chains/cosmoshub:v18.1.0)
 
+build-cosmoshub-debug:
+	docker tag gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v18.1.0 gcr.io/stride-nodes/integration-tests/chains/cosmoshub-47:v18.1.0 
+	docker push gcr.io/stride-nodes/integration-tests/chains/cosmoshub-47:v18.1.0
+	docker tag gcr.io/stride-nodes/integration-tests/chains/cosmoshub:v22.1.0 gcr.io/stride-nodes/integration-tests/chains/cosmoshub-50:v22.1.0 
+	docker push gcr.io/stride-nodes/integration-tests/chains/cosmoshub-50:v22.1.0
+
 build-osmosis:
 	$(call build_and_push_docker,osmosis,.,chains/osmosis:v28.0.0)
 
 build-relayer:
-	$(call build_and_push_docker,relayer,.,relayer:v2.5.2)
+	$(call build_and_push_docker,relayer,.,relayer:v2.5.2-debug)
 
 build-hermes:
 	$(call build_and_push_docker,hermes,.,hermes:v1.9.0)
