@@ -4,9 +4,9 @@ import { MsgTransfer } from "stridejs/dist/types/codegen/ibc/applications/transf
 import { MsgRegisterTokenPriceQuery } from "stridejs/dist/types/codegen/stride/icqoracle/tx";
 import { UOSMO } from "./consts";
 
-const DEFAULT_TRANSFER_TIMEOUT = BigInt(
-  `${Math.floor(Date.now() / 1000) + 3 * 60}000000000`,
-);
+function TransferTimeoutSec(sec: number) {
+  return BigInt(`${Math.floor(Date.now() / 1000) + sec}000000000`);
+}
 
 /**
  * Creates a new transfer message for IBC transactions
@@ -37,7 +37,7 @@ export function newTransferMsg({
   typeUrl: string;
   value: MsgTransfer;
 } {
-  timeout = timeout === undefined ? timeout : DEFAULT_TRANSFER_TIMEOUT;
+  timeout = timeout === undefined ? timeout : TransferTimeoutSec(60);
   return ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
     sourcePort: "transfer",
     sourceChannel: channelId,
@@ -48,7 +48,7 @@ export function newTransferMsg({
       revisionNumber: 0n,
       revisionHeight: 0n,
     },
-    timeoutTimestamp: DEFAULT_TRANSFER_TIMEOUT,
+    timeoutTimestamp: TransferTimeoutSec(60),
     memo: memo,
   });
 }
