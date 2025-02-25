@@ -34,7 +34,7 @@ func GetTxCmd() *cobra.Command {
 
 func CmdAddTokenPrice() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-token-price [base-denom] [quote-denom] [base-denom-decimals] [quote-denom-decimals] [osmosis-pool-id] [osmosis-base-denom] [osmosis-quote-denom]",
+		Use:   "add-token-price [base-denom] [quote-denom] [osmosis-pool-id] [osmosis-base-denom] [osmosis-quote-denom]",
 		Short: "Add a token to price tracking",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Add a token to price tracking.
