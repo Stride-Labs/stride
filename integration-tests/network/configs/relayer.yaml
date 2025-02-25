@@ -55,6 +55,22 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  osmosis-main:
+    type: cosmos
+    value:
+      key: osmosis-main
+      chain-id: osmosis-1
+      rpc-addr: https://osmosis-strd-rpc.polkachu.com:443
+      account-prefix: osmo
+      keyring-backend: test
+      gas-adjustment: 1.3
+      gas-prices: 0.02uosmo
+      coin-type: 118
+      min-loop-duration: 5s
+      debug: false
+      timeout: 60s
+      output-format: json
+      sign-mode: direct
 paths:
   stride-cosmoshub:
     src:
@@ -66,3 +82,8 @@ paths:
       chain-id: stride-test-1
     dst:
       chain-id: osmosis-test-1
+  stride-osmosis-main:
+    src:
+      chain-id: stride-test-1
+    dst:
+      chain-id: osmosis-1

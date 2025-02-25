@@ -5,11 +5,13 @@ source scripts/utils.sh
 source scripts/constants.sh
 
 CHAIN_ID_A=${CHAIN_NAME_A}-test-1
-CHAIN_ID_B=${CHAIN_NAME_B}-test-1
+# CHAIN_ID_B=${CHAIN_NAME_B}-test-1
+CHAIN_ID_B=osmosis-1
+
 RELAYER_DEPENDENCY=${RELAYER_DEPENDENCY:-}
 
 wait_for_node $CHAIN_NAME_A 
-wait_for_node $CHAIN_NAME_B
+# wait_for_node $CHAIN_NAME_B
 
 relayer_config_file=${HOME}/.relayer/config/config.yaml
 

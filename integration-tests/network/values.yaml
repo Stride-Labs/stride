@@ -15,31 +15,31 @@ chains:
     decimals: 6
     command: ["strided", "start", "--reject-config-defaults"]
 
-  - name: cosmoshub
-    binary: gaiad
-    version: v22.1.0
-    numValidators: 1
-    home: .gaia
-    denom: uatom
-    decimals: 6
-    command: ["gaiad", "start"]
+  # - name: cosmoshub
+  #   binary: gaiad
+  #   version: v22.1.0
+  #   numValidators: 1
+  #   home: .gaia
+  #   denom: uatom
+  #   decimals: 6
+  #   command: ["gaiad", "start"]
 
-  - name: osmosis
-    binary: osmosisd
-    version: v28.0.0
-    numValidators: 1
-    home: .osmosisd
-    denom: uosmo
-    decimals: 6
-    command: ["osmosisd", "start"]
+  # - name: osmosis
+  #   binary: osmosisd
+  #   version: v28.0.0
+  #   numValidators: 1
+  #   home: .osmosisd
+  #   denom: uosmo
+  #   decimals: 6
+  #   command: ["osmosisd", "start"]
 
 # type can be either "relayer" or "hermes"
 relayers:
-  - name: stride-cosmoshub
+  - name: stride-osmosis-main
     type: relayer
     chainA: stride
-    chainB: cosmoshub
-  - name: stride-osmosis
-    type: relayer
-    chainA: stride
-    chainB: osmosis
+    chainB: osmosis-main
+  # - name: stride-osmosis
+  #   type: relayer
+  #   chainA: stride
+  #   chainB: osmosis
