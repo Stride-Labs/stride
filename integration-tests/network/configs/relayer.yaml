@@ -38,6 +38,40 @@ chains:
       timeout: 20s
       output-format: json
       sign-mode: direct
+  cosmoshub-47:
+    type: cosmos
+    value:
+      key: cosmoshub-47
+      chain-id: cosmoshub-47-test-1
+      rpc-addr: http://cosmoshub-47-validator.integration.svc:26657
+      account-prefix: cosmos
+      keyring-backend: test
+      gas-adjustment: 1.3
+      # TODO: investigate why this has to be set so high
+      gas-prices: 1uatom
+      coin-type: 118
+      min-loop-duration: 1s
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
+  cosmoshub-50:
+    type: cosmos
+    value:
+      key: cosmoshub-50
+      chain-id: cosmoshub-50-test-1
+      rpc-addr: http://cosmoshub-50-validator.integration.svc:26657
+      account-prefix: cosmos
+      keyring-backend: test
+      gas-adjustment: 1.3
+      # TODO: investigate why this has to be set so high
+      gas-prices: 1uatom
+      coin-type: 118
+      min-loop-duration: 1s
+      debug: false
+      timeout: 20s
+      output-format: json
+      sign-mode: direct
   osmosis:
     type: cosmos
     value:
@@ -61,6 +95,16 @@ paths:
       chain-id: stride-test-1
     dst:
       chain-id: cosmoshub-test-1
+  stride-cosmoshub-47:
+    src:
+      chain-id: stride-test-1
+    dst:
+      chain-id: cosmoshub-47-test-1
+  stride-cosmoshub-50:
+    src:
+      chain-id: stride-test-1
+    dst:
+      chain-id: cosmoshub-50-test-1
   stride-osmosis:
     src:
       chain-id: stride-test-1

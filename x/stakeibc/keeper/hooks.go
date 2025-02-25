@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
+	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+
 	"github.com/Stride-Labs/stride/v25/utils"
 	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
 	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
@@ -35,8 +37,21 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	// Stride Epoch - Process Deposits and Delegations
 	if epochInfo.Identifier == epochstypes.STRIDE_EPOCH {
 
-		for _, hostZone := range k.GetAllHostZone(ctx) {
-			if err := k.SubmitBalanceICQ(ctx, hostZone); err != nil {
+		for _, connection := range k.IBCKeeper.ConnectionKeeper.GetAllConnections(ctx) {
+			if connection.State != connectiontypes.OPEN {
+				continue
+			}
+
+			var chainId string
+			if connection.Id == "connection-0" {
+				chainId = "cosmoshub-47-test-1"
+			} else if connection.Id == "connection-1" {
+				chainId = "cosmoshub-50-test-1"
+			} else {
+				continue
+			}
+
+			if err := k.SubmitBalanceICQ(ctx, chainId, connection.Id); err != nil {
 				fmt.Printf("[DEBUG] Error submitting balance ICQ: %s\n", err.Error())
 			}
 		}

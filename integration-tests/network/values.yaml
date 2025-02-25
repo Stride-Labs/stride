@@ -20,7 +20,7 @@ chains:
     version: v18.1.0
     numValidators: 1
     home: .gaia
-    denom: uatom1
+    denom: uatom
     decimals: 6
     command: ["gaiad", "start"]
 
@@ -29,7 +29,7 @@ chains:
     version: v22.1.0
     numValidators: 1
     home: .gaia
-    denom: uatom2
+    denom: uatom
     decimals: 6
     command: ["gaiad", "start"]
 
