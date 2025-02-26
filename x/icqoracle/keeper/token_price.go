@@ -157,7 +157,7 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 	// Check if baseDenom already has a price for quoteDenom
 	foundAlreadyHasStalePrice := false
 	if price, ok := baseTokenPrices[quoteDenom]; ok {
-		if ctx.BlockTime().Unix()-price.LastRequestTime.Unix() <= priceExpirationTimeoutSec {
+		if ctx.BlockTime().Unix()-price.LastResponseTime.Unix() <= priceExpirationTimeoutSec {
 			return price.SpotPrice, nil
 		} else {
 			foundAlreadyHasStalePrice = true
@@ -189,11 +189,11 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 				foundCommonQuoteToken = true
 
 				// Check that both prices are not stale
-				if ctx.BlockTime().Unix()-baseTokenPrice.LastRequestTime.Unix() > priceExpirationTimeoutSec {
+				if ctx.BlockTime().Unix()-baseTokenPrice.LastResponseTime.Unix() > priceExpirationTimeoutSec {
 					foundBaseTokenStalePrice = true
 					continue
 				}
-				if ctx.BlockTime().Unix()-quoteTokenPrice.LastRequestTime.Unix() > priceExpirationTimeoutSec {
+				if ctx.BlockTime().Unix()-quoteTokenPrice.LastResponseTime.Unix() > priceExpirationTimeoutSec {
 					foundQuoteTokenStalePrice = true
 					continue
 				}
