@@ -54,22 +54,22 @@ func (s *KeeperTestSuite) TestGetAllTokenPrices() {
 // Tests getting a price from a common quote denom
 func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 	freshTime := s.Ctx.BlockTime().Add(-1 * time.Second)
-	// staleTime := s.Ctx.BlockTime().Add(-1 * time.Hour)
+	staleTime := s.Ctx.BlockTime().Add(-1 * time.Hour)
 
 	testCases := []struct {
-		name          string
-		baseDenom     string
-		quoteDenom    string
-		tokenPrices   []types.TokenPrice
-		expectedPrice sdk.Dec
-		expectedError string
+		name           string
+		baseDenom      string
+		quoteDenom     string
+		tokenPrices    []types.TokenPrice
+		expectedPrice  sdk.Dec
+		expectedErrors []string // array of errors from each search
 	}{
 		{
 			name:       "exact price found",
 			baseDenom:  "denomA",
 			quoteDenom: "denomB",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "denomA", QuoteDenom: "denomB", SpotPrice: sdk.NewDec(4), LastRequestTime: freshTime},
+				{BaseDenom: "denomA", QuoteDenom: "denomB", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
 			},
 			expectedPrice: sdk.MustNewDecFromStr("4.0"),
 		},
@@ -78,9 +78,108 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			baseDenom:  "denomA",
 			quoteDenom: "denomB",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "denomB", QuoteDenom: "denomA", SpotPrice: sdk.NewDec(4), LastRequestTime: freshTime},
+				{BaseDenom: "denomB", QuoteDenom: "denomA", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
 			},
-			expectedPrice: sdk.MustNewDecFromStr("0.25"), // 1 / price = 1 / 4
+			expectedPrice: sdk.MustNewDecFromStr("0.25"), // 1 / 4
+		},
+		{
+			name:       "price through common token",
+			baseDenom:  "base",
+			quoteDenom: "quote",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+			},
+			expectedPrice: sdk.MustNewDecFromStr("0.5"), // 2 / 4
+		},
+		{
+			name:       "price through common token with inversion",
+			baseDenom:  "quote",
+			quoteDenom: "base",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+			},
+			expectedPrice: sdk.MustNewDecFromStr("2.0"), // (1/2) / (1/4)
+		},
+		{
+			name:       "no common price",
+			baseDenom:  "quote",
+			quoteDenom: "base",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "common1", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common2", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+			},
+			expectedErrors: []string{"foundCommonQuoteToken='false'", "foundCommonQuoteToken='false'"},
+		},
+		{
+			name:       "stale price",
+			baseDenom:  "base",
+			quoteDenom: "quote",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdk.NewDec(1), LastResponseTime: staleTime},
+			},
+			expectedErrors: []string{"foundAlreadyHasStalePrice='true'", "no price for baseDenom 'quote'"},
+		},
+		{
+			name:       "zero price",
+			baseDenom:  "base",
+			quoteDenom: "quote",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdk.NewDec(0), LastResponseTime: freshTime},
+			},
+			expectedErrors: []string{"zero", "zero"},
+		},
+		{
+			name:       "stale base price through common token",
+			baseDenom:  "base",
+			quoteDenom: "quote",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: staleTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+			},
+			expectedErrors: []string{
+				"foundCommonQuoteToken='true', foundBaseTokenStalePrice='true', foundQuoteTokenStalePrice='false'",
+				"foundCommonQuoteToken='true', foundBaseTokenStalePrice='false', foundQuoteTokenStalePrice='true'",
+			},
+		},
+		{
+			name:       "stale quote price through common token",
+			baseDenom:  "quote",
+			quoteDenom: "base",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: staleTime},
+			},
+			expectedErrors: []string{
+				"foundCommonQuoteToken='true', foundBaseTokenStalePrice='true', foundQuoteTokenStalePrice='false'",
+				"foundCommonQuoteToken='true', foundBaseTokenStalePrice='false', foundQuoteTokenStalePrice='true'",
+			},
+		},
+		{
+			name:           "non-existent denoms",
+			baseDenom:      "base",
+			quoteDenom:     "quote",
+			tokenPrices:    []types.TokenPrice{},
+			expectedErrors: []string{"no price for baseDenom 'base'", "no price for baseDenom 'quote'"},
+		},
+		{
+			name:       "no base denom",
+			baseDenom:  "base",
+			quoteDenom: "quote",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+			},
+			expectedErrors: []string{"no price for baseDenom 'base'", "no price for quoteDenom 'base' (foundAlreadyHasStalePrice='false')"},
+		},
+		{
+			name:       "no quote denom",
+			baseDenom:  "base",
+			quoteDenom: "quote",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
+			},
+			expectedErrors: []string{"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='false')", "no price for baseDenom 'quote'"},
 		},
 	}
 
@@ -89,7 +188,7 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			s.SetupTest()
 
 			params := types.DefaultParams()
-			params.PriceExpirationTimeoutSec = 10 * 60 // 10 minutes
+			params.PriceExpirationTimeoutSec = 60 // 1 minutes
 			s.App.ICQOracleKeeper.SetParams(s.Ctx, params)
 
 			for _, tokenPrice := range tc.tokenPrices {
@@ -98,8 +197,10 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			}
 
 			actualPrice, actualError := s.App.ICQOracleKeeper.GetTokenPriceForQuoteDenom(s.Ctx, tc.baseDenom, tc.quoteDenom)
-			if tc.expectedError != "" {
-				s.Require().ErrorContains(actualError, tc.expectedError)
+			if len(tc.expectedErrors) != 0 {
+				for _, expectedError := range tc.expectedErrors {
+					s.Require().ErrorContains(actualError, expectedError)
+				}
 			} else {
 				s.Require().NoError(actualError)
 				s.Require().Equal(tc.expectedPrice, actualPrice, "price")
