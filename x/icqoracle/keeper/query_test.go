@@ -423,7 +423,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
 		QuoteDenom: "papaya",
 	}
 	_, err := s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
-	s.Require().ErrorContains(err, "no price for quoteDenom 'papaya' (foundAlreadyHasStalePrice='false')")
+	s.Require().ErrorContains(err, "no price for quoteDenom 'papaya' (foundAlreadyHasStalePrice='false'")
 	s.Require().ErrorContains(err, "no price for baseDenom 'papaya'")
 
 	req = &types.QueryTokenPriceForQuoteDenomRequest{
@@ -432,7 +432,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
 	}
 	_, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(sdk.WrapSDKContext(s.Ctx), req)
 	s.Require().ErrorContains(err, "no price for baseDenom 'papaya'")
-	s.Require().ErrorContains(err, "no price for quoteDenom 'papaya' (foundAlreadyHasStalePrice='false')")
+	s.Require().ErrorContains(err, "no price for quoteDenom 'papaya' (foundAlreadyHasStalePrice='false'")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
