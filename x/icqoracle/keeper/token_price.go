@@ -156,10 +156,11 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 
 	// Check if baseDenom already has a price for quoteDenom
 	foundAlreadyHasStalePrice := false
+	foundHasUninitializedPrice := false
 	if price, ok := baseTokenPrices[quoteDenom]; ok {
 		if ctx.BlockTime().Unix()-price.LastResponseTime.Unix() <= priceExpirationTimeoutSec {
 			if price.SpotPrice.IsZero() {
-				foundAlreadyHasStalePrice = true
+				foundHasUninitializedPrice = true
 			} else {
 				return price.SpotPrice, nil
 			}
@@ -174,7 +175,8 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
 	}
 	if len(quoteTokenPrices) == 0 {
-		return math.LegacyDec{}, fmt.Errorf("no price for quoteDenom '%s' (foundAlreadyHasStalePrice='%v')", quoteDenom, foundAlreadyHasStalePrice)
+		return math.LegacyDec{}, fmt.Errorf("no price for quoteDenom '%s' (foundAlreadyHasStalePrice='%v', foundHasUninitializedPrice='%v')",
+			quoteDenom, foundAlreadyHasStalePrice, foundHasUninitializedPrice)
 	}
 
 	// Init price

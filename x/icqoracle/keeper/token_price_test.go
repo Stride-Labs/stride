@@ -119,7 +119,10 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			tokenPrices: []types.TokenPrice{
 				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdk.NewDec(1), LastResponseTime: staleTime},
 			},
-			expectedErrors: []string{"foundAlreadyHasStalePrice='true'", "no price for baseDenom 'quote'"},
+			expectedErrors: []string{
+				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='true', foundHasUninitializedPrice='false')",
+				"no price for baseDenom 'quote'",
+			},
 		},
 		{
 			name:       "zero price",
@@ -129,7 +132,7 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdk.NewDec(0), LastResponseTime: freshTime},
 			},
 			expectedErrors: []string{
-				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='true')", // zero price is considered stale
+				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='true')",
 				"no price for baseDenom 'quote'",
 			},
 		},
@@ -185,7 +188,9 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			tokenPrices: []types.TokenPrice{
 				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
 			},
-			expectedErrors: []string{"no price for baseDenom 'base'", "no price for quoteDenom 'base' (foundAlreadyHasStalePrice='false')"},
+			expectedErrors: []string{
+				"no price for baseDenom 'base'",
+				"no price for quoteDenom 'base' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='false')"},
 		},
 		{
 			name:       "no quote denom",
@@ -194,7 +199,10 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			tokenPrices: []types.TokenPrice{
 				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
 			},
-			expectedErrors: []string{"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='false')", "no price for baseDenom 'quote'"},
+			expectedErrors: []string{
+				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='false')",
+				"no price for baseDenom 'quote'",
+			},
 		},
 	}
 
