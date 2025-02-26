@@ -148,6 +148,9 @@ func (k Keeper) IBCTransferStToken(
 	// autopilotMetadata.StrideAddress is never the hashed address, because the autopilotMetadata struct
 	// is parsed upstream of hashing the receiver
 	// So StrideAddress is used as the fallback (which is always the original receiver)
+	if k.bankKeeper.BlockedAddr(sdk.MustAccAddressFromBech32(autopilotMetadata.StrideAddress)) {
+		return errorsmod.Wrapf(types.ErrBlockedFallbackAddress, "fallback address %s is blocked", autopilotMetadata.StrideAddress)
+	}
 	k.SetTransferFallbackAddress(ctx, channelId, transferResponse.Sequence, autopilotMetadata.StrideAddress)
 
 	return err

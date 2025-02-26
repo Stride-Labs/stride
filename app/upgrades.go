@@ -35,6 +35,7 @@ import (
 	v23 "github.com/Stride-Labs/stride/v25/app/upgrades/v23"
 	v24 "github.com/Stride-Labs/stride/v25/app/upgrades/v24"
 	v25 "github.com/Stride-Labs/stride/v25/app/upgrades/v25"
+	v26 "github.com/Stride-Labs/stride/v25/app/upgrades/v26"
 	v3 "github.com/Stride-Labs/stride/v25/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v25/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v25/app/upgrades/v5"
@@ -43,14 +44,17 @@ import (
 	v8 "github.com/Stride-Labs/stride/v25/app/upgrades/v8"
 	v9 "github.com/Stride-Labs/stride/v25/app/upgrades/v9"
 	airdroptypes "github.com/Stride-Labs/stride/v25/x/airdrop/types"
+	auctiontypes "github.com/Stride-Labs/stride/v25/x/auction/types"
 	autopilottypes "github.com/Stride-Labs/stride/v25/x/autopilot/types"
 	claimtypes "github.com/Stride-Labs/stride/v25/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
 	icaoracletypes "github.com/Stride-Labs/stride/v25/x/icaoracle/types"
+	icqoracletypes "github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 	recordtypes "github.com/Stride-Labs/stride/v25/x/records/types"
 	stakedymtypes "github.com/Stride-Labs/stride/v25/x/stakedym/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
 	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
+	strdburnertypes "github.com/Stride-Labs/stride/v25/x/strdburner/types"
 )
 
 func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
@@ -338,6 +342,16 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v26 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v26.UpgradeName,
+		v26.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.ICQOracleKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -398,6 +412,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v23":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{ibcwasmtypes.ModuleName, airdroptypes.ModuleName},
+		}
+	case "v26":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{icqoracletypes.ModuleName, strdburnertypes.ModuleName, auctiontypes.ModuleName},
 		}
 	}
 

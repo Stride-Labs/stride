@@ -129,6 +129,9 @@ import (
 	airdrop "github.com/Stride-Labs/stride/v25/x/airdrop"
 	airdropkeeper "github.com/Stride-Labs/stride/v25/x/airdrop/keeper"
 	airdroptypes "github.com/Stride-Labs/stride/v25/x/airdrop/types"
+	auction "github.com/Stride-Labs/stride/v25/x/auction"
+	auctionkeeper "github.com/Stride-Labs/stride/v25/x/auction/keeper"
+	auctiontypes "github.com/Stride-Labs/stride/v25/x/auction/types"
 	"github.com/Stride-Labs/stride/v25/x/autopilot"
 	autopilotkeeper "github.com/Stride-Labs/stride/v25/x/autopilot/keeper"
 	autopilottypes "github.com/Stride-Labs/stride/v25/x/autopilot/types"
@@ -146,6 +149,9 @@ import (
 	icaoracle "github.com/Stride-Labs/stride/v25/x/icaoracle"
 	icaoraclekeeper "github.com/Stride-Labs/stride/v25/x/icaoracle/keeper"
 	icaoracletypes "github.com/Stride-Labs/stride/v25/x/icaoracle/types"
+	icqoracle "github.com/Stride-Labs/stride/v25/x/icqoracle"
+	icqoraclekeeper "github.com/Stride-Labs/stride/v25/x/icqoracle/keeper"
+	icqoracletypes "github.com/Stride-Labs/stride/v25/x/icqoracle/types"
 	"github.com/Stride-Labs/stride/v25/x/interchainquery"
 	interchainquerykeeper "github.com/Stride-Labs/stride/v25/x/interchainquery/keeper"
 	interchainquerytypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
@@ -165,6 +171,9 @@ import (
 	staketia "github.com/Stride-Labs/stride/v25/x/staketia"
 	staketiakeeper "github.com/Stride-Labs/stride/v25/x/staketia/keeper"
 	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
+	strdburner "github.com/Stride-Labs/stride/v25/x/strdburner"
+	strdburnerkeeper "github.com/Stride-Labs/stride/v25/x/strdburner/keeper"
+	strdburnertypes "github.com/Stride-Labs/stride/v25/x/strdburner/types"
 )
 
 const (
@@ -236,6 +245,9 @@ var (
 		ibchooks.AppModuleBasic{},
 		ibcwasm.AppModuleBasic{},
 		airdrop.AppModuleBasic{},
+		icqoracle.AppModuleBasic{},
+		auction.AppModuleBasic{},
+		strdburner.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -243,6 +255,7 @@ var (
 		authtypes.FeeCollectorName: nil,
 		distrtypes.ModuleName:      nil,
 		// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
+		// strdburner module needs burn access to burn STRD tokens that are sent to it
 		ccvconsumertypes.ConsumerRedistributeName:     nil,
 		ccvconsumertypes.ConsumerToSendToProviderName: nil,
 		minttypes.ModuleName:                          {authtypes.Minter, authtypes.Burner},
@@ -260,6 +273,9 @@ var (
 		stakedymtypes.ModuleName:                      {authtypes.Minter, authtypes.Burner},
 		stakedymtypes.FeeAddress:                      nil,
 		wasmtypes.ModuleName:                          {authtypes.Burner},
+		icqoracletypes.ModuleName:                     nil,
+		auctiontypes.ModuleName:                       nil,
+		strdburnertypes.ModuleName:                    {authtypes.Burner},
 	}
 )
 
@@ -348,6 +364,9 @@ type StrideApp struct {
 	StaketiaKeeper        staketiakeeper.Keeper
 	StakedymKeeper        stakedymkeeper.Keeper
 	AirdropKeeper         airdropkeeper.Keeper
+	ICQOracleKeeper       icqoraclekeeper.Keeper
+	AuctionKeeper         auctionkeeper.Keeper
+	StrdBurnerKeeper      strdburnerkeeper.Keeper
 
 	mm           *module.Manager
 	sm           *module.SimulationManager
@@ -404,6 +423,9 @@ func NewStrideApp(
 		ibchookstypes.StoreKey,
 		ibcwasmtypes.StoreKey,
 		airdroptypes.StoreKey,
+		icqoracletypes.StoreKey,
+		auctiontypes.StoreKey,
+		strdburnertypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -758,6 +780,32 @@ func NewStrideApp(
 		app.AccountKeeper, app.BankKeeper, app.DistrKeeper, app.StakingKeeper,
 	)
 
+	app.ICQOracleKeeper = *icqoraclekeeper.NewKeeper(
+		appCodec,
+		keys[icqoracletypes.StoreKey],
+		&app.InterchainqueryKeeper,
+		app.TransferKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+	icqOracleModule := icqoracle.NewAppModule(appCodec, app.ICQOracleKeeper)
+
+	app.AuctionKeeper = *auctionkeeper.NewKeeper(
+		appCodec,
+		keys[auctiontypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.ICQOracleKeeper,
+	)
+	auctionModule := auction.NewAppModule(appCodec, app.AuctionKeeper)
+
+	app.StrdBurnerKeeper = *strdburnerkeeper.NewKeeper(
+		appCodec,
+		keys[strdburnertypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+	)
+	strdburnerModule := strdburner.NewAppModule(appCodec, app.StrdBurnerKeeper)
+
 	// Register Gov (must be registered after stakeibc)
 	govRouter := govtypesv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypesv1beta1.ProposalHandler).
@@ -776,6 +824,10 @@ func NewStrideApp(
 
 	// Register ICQ callbacks
 	err = app.InterchainqueryKeeper.SetCallbackHandler(stakeibcmoduletypes.ModuleName, app.StakeibcKeeper.ICQCallbackHandler())
+	if err != nil {
+		return nil
+	}
+	err = app.InterchainqueryKeeper.SetCallbackHandler(icqoracletypes.ModuleName, app.ICQOracleKeeper.ICQCallbackHandler())
 	if err != nil {
 		return nil
 	}
@@ -935,6 +987,10 @@ func NewStrideApp(
 		stakeTiaModule,
 		stakeDymModule,
 		airdropModule,
+		stakeTiaModule,
+		icqOracleModule,
+		auctionModule,
+		strdburnerModule,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -980,6 +1036,9 @@ func NewStrideApp(
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
 		airdroptypes.ModuleName,
+		icqoracletypes.ModuleName,
+		auctiontypes.ModuleName,
+		strdburnertypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -1021,6 +1080,9 @@ func NewStrideApp(
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
 		airdroptypes.ModuleName,
+		icqoracletypes.ModuleName,
+		auctiontypes.ModuleName,
+		strdburnertypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1067,6 +1129,9 @@ func NewStrideApp(
 		ibchookstypes.ModuleName,
 		ibcwasmtypes.ModuleName,
 		airdroptypes.ModuleName,
+		icqoracletypes.ModuleName,
+		auctiontypes.ModuleName,
+		strdburnertypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)

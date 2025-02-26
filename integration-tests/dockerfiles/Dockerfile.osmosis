@@ -5,13 +5,12 @@ WORKDIR /opt
 RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev ca-certificates build-base git 
 
 ENV REPO=https://github.com/osmosis-labs/osmosis
-ENV COMMIT_HASH=v27.0.0
+ENV COMMIT_HASH=v28.0.0
 ENV BINARY=osmosisd
 
 RUN git clone ${REPO} chain \
     && cd chain \
     && git checkout $COMMIT_HASH 
-
 WORKDIR /opt/chain
 
 RUN ARCH=$(uname -m) && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //') && \

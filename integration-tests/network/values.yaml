@@ -17,7 +17,7 @@ chains:
 
   - name: cosmoshub
     binary: gaiad
-    version: v18.1.0
+    version: v22.1.0
     numValidators: 1
     home: .gaia
     denom: uatom
@@ -26,7 +26,7 @@ chains:
 
   - name: osmosis
     binary: osmosisd
-    version: v27.0.0
+    version: v28.0.0
     numValidators: 1
     home: .osmosisd
     denom: uosmo
@@ -36,10 +36,10 @@ chains:
 # type can be either "relayer" or "hermes"
 relayers:
   - name: stride-cosmoshub
-    type: hermes
+    type: relayer
     chainA: stride
     chainB: cosmoshub
   - name: stride-osmosis
-    type: hermes
+    type: relayer
     chainA: stride
     chainB: osmosis

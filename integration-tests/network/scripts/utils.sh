@@ -4,7 +4,7 @@ set -eu
 # Wait for API server to start
 wait_for_api() {
     api_endpoint="$1"
-    until [[ $(curl -o /dev/null -s -w "%{http_code}\n" "${api_endpoint}/status") -eq 200 ]]; do
+    until [[ $(curl -o /dev/null -H "Cache-Control: no-cache" -s -w "%{http_code}\n" "${api_endpoint}/status") -eq 200 ]]; do
         echo "Waiting for API to start..."
         sleep 2
     done
@@ -17,7 +17,7 @@ wait_for_node() {
 
     # Wait for the node to be caught up and confirm it's at least on the 2nd block
     until 
-        response=$(curl -s "$rpc_endpoint")
+        response=$(curl -s --connect-timeout 5 -H "Cache-Control: no-cache" "$rpc_endpoint")
         catching_up=$(echo "$response" | jq -r '.result.sync_info.catching_up')
         latest_block=$(echo "$response" | jq -r '.result.sync_info.latest_block_height')
         [[ $catching_up == "false" && $latest_block -gt 2 ]]

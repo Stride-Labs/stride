@@ -1,0 +1,86 @@
+syntax = "proto3";
+package stride.icqoracle;
+
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
+import "stride/icqoracle/icqoracle.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v25/x/icqoracle/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // RegisterTokenPriceQuery registers a new token to track prices for
+  rpc RegisterTokenPriceQuery(MsgRegisterTokenPriceQuery)
+      returns (MsgRegisterTokenPriceQueryResponse);
+
+  // RemoveTokenPriceQuery removes a token from price tracking
+  rpc RemoveTokenPriceQuery(MsgRemoveTokenPriceQuery)
+      returns (MsgRemoveTokenPriceQueryResponse);
+
+  // UpdateParams defines a governance operation for updating the x/icqoracle
+  // module parameters. The authority is defined in the keeper.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+// MsgRegisterTokenPriceQuery defines the message for adding a new token to
+// track prices
+message MsgRegisterTokenPriceQuery {
+  option (cosmos.msg.v1.signer) = "admin";
+  option (amino.name) = "icqoracle/MsgRegisterTokenPriceQuery";
+
+  string admin = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Token denom on Stride
+  string base_denom = 2;
+  // Quote denom on Stride
+  string quote_denom = 3;
+  // Token denom on Osmosis
+  string osmosis_base_denom = 4;
+  // Quote denom on Osmosis
+  string osmosis_quote_denom = 5;
+  // Pool ID on Osmosis
+  uint64 osmosis_pool_id = 6;
+}
+
+message MsgRegisterTokenPriceQueryResponse {}
+
+// MsgRemoveTokenPriceQuery defines the message for removing a token from price
+// tracking
+message MsgRemoveTokenPriceQuery {
+  option (cosmos.msg.v1.signer) = "admin";
+  option (amino.name) = "icqoracle/MsgRemoveTokenPriceQuery";
+
+  string admin = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // Token denom on Stride
+  string base_denom = 2;
+  // Quote denom on Stride
+  string quote_denom = 3;
+  // Pool ID on Osmosis
+  uint64 osmosis_pool_id = 4;
+}
+
+message MsgRemoveTokenPriceQueryResponse {}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "icqoracle/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // params defines the x/icqoracle parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  Params params = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}

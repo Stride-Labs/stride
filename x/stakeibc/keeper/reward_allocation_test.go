@@ -15,6 +15,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
+	auctiontypes "github.com/Stride-Labs/stride/v25/x/auction/types"
 	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v25/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
@@ -80,14 +81,14 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcAtom, rewardAmount))
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcOsmo, rewardAmount))
 
-	// Liquid stake all hostzone token then get stTokens back
-	rewardsAccrued := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
-	s.Require().True(rewardsAccrued, "rewards should have been liquid staked")
+	// Send all rewrds to auction module
+	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
 
-	// Reward Collector acct should have all ibc/XXX tokens converted to stTokens
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StAtom, rewardAmount)
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StOsmo, rewardAmount)
+	// Check Auction module balance
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, rewardAmount)
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, rewardAmount)
 
+	// Check RewardCollector module balance
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, sdkmath.ZeroInt())
 }
@@ -95,74 +96,20 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_NoRewardsAccrued() {
 	s.SetupTestRewardAllocation()
 
-	// With no IBC tokens in the rewards collector account, the liquid stake rewards function should return false
-	rewardsAccrued := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
-	s.Require().False(rewardsAccrued, "no rewards should have been liquid staked")
-
-	// There should also be no stTokens in the account
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StAtom, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StOsmo, sdkmath.ZeroInt())
-}
-
-func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_BalanceDoesNotBelongToHost() {
-	s.SetupTestRewardAllocation()
-	amount := sdkmath.NewInt(1000)
-
-	// Fund the reward collector with ibc/atom and a denom that is not registerd to a host zone
-	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcAtom, amount))
-	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin("fake_denom", amount))
-
-	// Liquid stake should only succeed with atom
-	rewardsAccrued := s.App.StakeibcKeeper.LiquidStakeRewardCollectorBalance(s.Ctx, s.GetMsgServer())
-	s.Require().True(rewardsAccrued, "rewards should have been liquid staked")
-
-	// The atom should have been liquid staked
+	// balances should be 0 before
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StAtom, amount)
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
 
-	// But the fake denom and uosmo should not have been touched
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, "fake_denom", amount)
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StOsmo, sdkmath.ZeroInt())
-}
+	// With no IBC tokens in the rewards collector account, the auction off rewards function should do nothing
+	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
 
-func (s *KeeperTestSuite) TestSweepRewardCollToFeeCollector_Success() {
-	s.SetupTestRewardAllocation()
-	rewardAmount := sdkmath.NewInt(1000)
-
-	// Add stTokens to reward collector
-	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(StAtom, rewardAmount))
-	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(StOsmo, rewardAmount))
-
-	// Sweep stTokens from Reward Collector to Fee Collector
-	err := s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
-	s.Require().NoError(err)
-
-	// Fee Collector acct should have stTokens after they're swept there from Reward Collector
-	// The reward collector should have nothing
-	s.checkModuleAccountBalance(authtypes.FeeCollectorName, StAtom, rewardAmount)
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StAtom, sdkmath.ZeroInt())
-
-	s.checkModuleAccountBalance(authtypes.FeeCollectorName, StOsmo, rewardAmount)
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, StOsmo, sdkmath.ZeroInt())
-}
-
-func (s *KeeperTestSuite) TestSweepRewardCollToFeeCollector_NonStTokens() {
-	s.SetupTestRewardAllocation()
-	amount := sdkmath.NewInt(1000)
-	nonStTokenDenom := "XXX"
-
-	// Fund reward collector account with stTokens
-	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(nonStTokenDenom, amount))
-
-	// Sweep stTokens from Reward Collector to Fee Collector
-	err := s.App.StakeibcKeeper.SweepStTokensFromRewardCollToFeeColl(s.Ctx)
-	s.Require().NoError(err)
-
-	// Reward Collector acct should still contain nonStTokenDenom after stTokens after they're swept
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, nonStTokenDenom, amount)
-
-	// Fee Collector acct should have nothing
-	s.checkModuleAccountBalance(authtypes.FeeCollectorName, nonStTokenDenom, sdkmath.ZeroInt())
+	// balances should be 0 after
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
 }
 
 // Test the process of a delegator claiming staking reward stTokens (tests that Fee Account can distribute arbitrary denoms)
