@@ -50,17 +50,7 @@ Example:
 				return err
 			}
 
-			baseDenomDecimls, err := strconv.ParseInt(args[2], 10, 64)
-			if err != nil {
-				return fmt.Errorf("Error parsing baseDenomDecmnals as int64: %w", err)
-			}
-
-			quoteDenomDecimls, err := strconv.ParseInt(args[3], 10, 64)
-			if err != nil {
-				return fmt.Errorf("Error parsing quoteDenomDecmnals as int64: %w", err)
-			}
-
-			osmosisPoolId, err := strconv.ParseUint(args[4], 10, 64)
+			osmosisPoolId, err := strconv.ParseUint(args[2], 10, 64)
 			if err != nil {
 				return fmt.Errorf("Error parsing osmosis pool ID as uint64: %w", err)
 			}
@@ -69,11 +59,9 @@ Example:
 				clientCtx.GetFromAddress().String(),
 				args[0],
 				args[1],
-				baseDenomDecimls,
-				quoteDenomDecimls,
 				osmosisPoolId,
-				args[5],
-				args[6],
+				args[3],
+				args[4],
 			)
 
 			if err := msg.ValidateBasic(); err != nil {

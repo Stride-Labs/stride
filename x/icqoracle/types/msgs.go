@@ -34,8 +34,6 @@ func NewMsgRegisterTokenPriceQuery(
 	admin string,
 	baseDenom string,
 	quoteDenom string,
-	baseDecimals int64,
-	quoteDecimals int64,
 	poolId uint64,
 	osmosisBaseDenom string,
 	osmosisQuoteDenom string,
