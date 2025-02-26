@@ -88,25 +88,25 @@ func (s *KeeperTestSuite) TestQueryTokenPricesPagination() {
 	// Sorted by store ket `baseDenom + quoteDenom + poolId`
 	expectedPrices := []types.TokenPrice{
 		{
-			BaseDenom:       "uatom",
-			QuoteDenom:      "uusdc",
-			OsmosisPoolId:   1,
-			SpotPrice:       sdkmath.LegacyNewDec(1000000),
-			LastRequestTime: s.Ctx.BlockTime(),
+			BaseDenom:        "uatom",
+			QuoteDenom:       "uusdc",
+			OsmosisPoolId:    1,
+			SpotPrice:        sdkmath.LegacyNewDec(1000000),
+			LastResponseTime: s.Ctx.BlockTime(),
 		},
 		{
-			BaseDenom:       "ujuno",
-			QuoteDenom:      "uusdc",
-			OsmosisPoolId:   3,
-			SpotPrice:       sdkmath.LegacyNewDec(3000000),
-			LastRequestTime: s.Ctx.BlockTime(),
+			BaseDenom:        "ujuno",
+			QuoteDenom:       "uusdc",
+			OsmosisPoolId:    3,
+			SpotPrice:        sdkmath.LegacyNewDec(3000000),
+			LastResponseTime: s.Ctx.BlockTime(),
 		},
 		{
-			BaseDenom:       "uosmo",
-			QuoteDenom:      "uusdc",
-			OsmosisPoolId:   2,
-			SpotPrice:       sdkmath.LegacyNewDec(2000000),
-			LastRequestTime: s.Ctx.BlockTime(),
+			BaseDenom:        "uosmo",
+			QuoteDenom:       "uusdc",
+			OsmosisPoolId:    2,
+			SpotPrice:        sdkmath.LegacyNewDec(2000000),
+			LastResponseTime: s.Ctx.BlockTime(),
 		},
 	}
 
@@ -173,11 +173,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
 	expectedPrice := sdkmath.LegacyNewDec(1000000)
 
 	tokenPrice := types.TokenPrice{
-		BaseDenom:       baseDenom,
-		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   1,
-		SpotPrice:       expectedPrice,
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        baseDenom,
+		QuoteDenom:       quoteDenom,
+		OsmosisPoolId:    1,
+		SpotPrice:        expectedPrice,
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
@@ -226,21 +226,21 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
 
 	// Set uatom price
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:       baseDenom1,
-		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   1,
-		SpotPrice:       expectedPrice1,
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        baseDenom1,
+		QuoteDenom:       quoteDenom,
+		OsmosisPoolId:    1,
+		SpotPrice:        expectedPrice1,
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 
 	// Set uosmo price
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:       baseDenom2,
-		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   2,
-		SpotPrice:       expectedPrice2,
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        baseDenom2,
+		QuoteDenom:       quoteDenom,
+		OsmosisPoolId:    2,
+		SpotPrice:        expectedPrice2,
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 
@@ -276,11 +276,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStalePrice() {
 	expectedPrice := sdkmath.LegacyNewDec(1000000)
 
 	tokenPrice := types.TokenPrice{
-		BaseDenom:       baseDenom,
-		QuoteDenom:      quoteDenom,
-		OsmosisPoolId:   1,
-		SpotPrice:       expectedPrice,
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        baseDenom,
+		QuoteDenom:       quoteDenom,
+		OsmosisPoolId:    1,
+		SpotPrice:        expectedPrice,
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
@@ -312,21 +312,21 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomZeroPrice() {
 
 	// Set base token price
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:       baseDenom,
-		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1000000),
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        baseDenom,
+		QuoteDenom:       intermediateQuote,
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1000000),
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 
 	// Set quote token price with zero value
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:       quoteDenom,
-		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   2,
-		SpotPrice:       sdkmath.LegacyZeroDec(),
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        quoteDenom,
+		QuoteDenom:       intermediateQuote,
+		OsmosisPoolId:    2,
+		SpotPrice:        sdkmath.LegacyZeroDec(),
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 
@@ -354,21 +354,21 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoCommonQuote() {
 
 	// Set base token price with one quote denom
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:       baseDenom,
-		QuoteDenom:      "quote1",
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1000000),
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        baseDenom,
+		QuoteDenom:       "quote1",
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1000000),
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 
 	// Set quote token price with different quote denom
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:       quoteDenom,
-		QuoteDenom:      "quote2",
-		OsmosisPoolId:   2,
-		SpotPrice:       sdkmath.LegacyNewDec(2000000),
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        quoteDenom,
+		QuoteDenom:       "quote2",
+		OsmosisPoolId:    2,
+		SpotPrice:        sdkmath.LegacyNewDec(2000000),
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 
@@ -410,11 +410,11 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoBaseDenom() {
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomNoQuoteDenom() {
 	// Set base token price with one quote denom
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:       "banana",
-		QuoteDenom:      "quote1",
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1000000),
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        "banana",
+		QuoteDenom:       "quote1",
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1000000),
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 
@@ -449,21 +449,21 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleBasePrice() {
 
 	// Set base token price (will become stale)
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:       baseDenom,
-		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1000000),
-		LastRequestTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
+		BaseDenom:        baseDenom,
+		QuoteDenom:       intermediateQuote,
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1000000),
+		LastResponseTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 
 	// Set quote token price (fresh)
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:       quoteDenom,
-		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   2,
-		SpotPrice:       sdkmath.LegacyNewDec(2000000),
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        quoteDenom,
+		QuoteDenom:       intermediateQuote,
+		OsmosisPoolId:    2,
+		SpotPrice:        sdkmath.LegacyNewDec(2000000),
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 
@@ -498,21 +498,21 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStaleQuotePrice() {
 
 	// Set base token price (fresh)
 	tokenPrice1 := types.TokenPrice{
-		BaseDenom:       baseDenom,
-		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1000000),
-		LastRequestTime: s.Ctx.BlockTime(),
+		BaseDenom:        baseDenom,
+		QuoteDenom:       intermediateQuote,
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1000000),
+		LastResponseTime: s.Ctx.BlockTime(),
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice1)
 
 	// Set quote token price (will be stale)
 	tokenPrice2 := types.TokenPrice{
-		BaseDenom:       quoteDenom,
-		QuoteDenom:      intermediateQuote,
-		OsmosisPoolId:   2,
-		SpotPrice:       sdkmath.LegacyNewDec(2000000),
-		LastRequestTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
+		BaseDenom:        quoteDenom,
+		QuoteDenom:       intermediateQuote,
+		OsmosisPoolId:    2,
+		SpotPrice:        sdkmath.LegacyNewDec(2000000),
+		LastResponseTime: s.Ctx.BlockTime().Add(-2 * time.Minute), // Stale
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice2)
 

@@ -100,12 +100,12 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidHappyPath() {
 
 	// Create a price
 	tokenPrice := icqoracletypes.TokenPrice{
-		BaseDenom:       auction.SellingDenom,
-		QuoteDenom:      auction.PaymentDenom,
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1),
-		LastRequestTime: s.Ctx.BlockTime(),
-		QueryInProgress: false,
+		BaseDenom:        auction.SellingDenom,
+		QuoteDenom:       auction.PaymentDenom,
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1),
+		LastResponseTime: s.Ctx.BlockTime(),
+		QueryInProgress:  false,
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
@@ -262,7 +262,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForSellingDenom() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().ErrorContains(err, "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for baseDenom 'uosmo'")
+	s.Require().ErrorContains(err, "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price found for baseDenom 'uosmo'")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
@@ -281,12 +281,12 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
 
 	// Create a price only for SellingDenom
 	tokenPrice := icqoracletypes.TokenPrice{
-		BaseDenom:       auction.SellingDenom,
-		QuoteDenom:      "uusdc",
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1),
-		LastRequestTime: s.Ctx.BlockTime(),
-		QueryInProgress: false,
+		BaseDenom:        auction.SellingDenom,
+		QuoteDenom:       "uusdc",
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1),
+		LastResponseTime: s.Ctx.BlockTime(),
+		QueryInProgress:  false,
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
@@ -304,7 +304,7 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNoPriceForPaymentDenom() {
 
 	// Place Bid
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().ErrorContains(err, "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price for quoteDenom 'ustrd'")
+	s.Require().ErrorContains(err, "error getting price for baseDenom='uosmo' quoteDenom='ustrd': no price found for baseDenom 'uosmo'")
 }
 
 func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
@@ -323,12 +323,12 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidTooLowPrice() {
 
 	// Create a price
 	tokenPrice := icqoracletypes.TokenPrice{
-		BaseDenom:       auction.SellingDenom,
-		QuoteDenom:      auction.PaymentDenom,
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1),
-		LastRequestTime: s.Ctx.BlockTime(),
-		QueryInProgress: false,
+		BaseDenom:        auction.SellingDenom,
+		QuoteDenom:       auction.PaymentDenom,
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1),
+		LastResponseTime: s.Ctx.BlockTime(),
+		QueryInProgress:  false,
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
@@ -371,12 +371,12 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
 
 	// Create a price
 	tokenPrice := icqoracletypes.TokenPrice{
-		BaseDenom:       auction.SellingDenom,
-		QuoteDenom:      auction.PaymentDenom,
-		OsmosisPoolId:   1,
-		SpotPrice:       sdkmath.LegacyNewDec(1),
-		LastRequestTime: s.Ctx.BlockTime(),
-		QueryInProgress: false,
+		BaseDenom:        auction.SellingDenom,
+		QuoteDenom:       auction.PaymentDenom,
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1),
+		LastResponseTime: s.Ctx.BlockTime(),
+		QueryInProgress:  false,
 	}
 	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
 
