@@ -86,5 +86,5 @@ lint:
 	@$(HELM) lint $(HELM_CHART) 
 
 restart:
-	@$(MAKE) stop
+	@$(MAKE) stop || true
 	@$(MAKE) start
