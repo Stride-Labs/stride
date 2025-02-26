@@ -2,4 +2,6 @@ rly keys restore stride stride "fringe secret hair noise royal inform remove rel
 
 rly keys restore osmosis osmosis "floor chicken advance degree paper arch sugar kit torch auction flash fish attitude clay museum treat favorite clinic verify dose safe bright vessel east" --home relayer
 
-rly tx client stride osmosis stride-osmosis --home relayer --override
+rly tx clients stride-osmosis --home relayer --override
+
+rly tx connection stride-osmosis --home relayer
