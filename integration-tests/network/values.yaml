@@ -35,10 +35,10 @@ chains:
 
 # type can be either "relayer" or "hermes"
 relayers:
-  - name: stride-osmosis-main
-    type: relayer
-    chainA: stride
-    chainB: osmosis-main
+  # - name: stride-osmosis-main
+  #   type: relayer
+  #   chainA: stride
+  #   chainB: osmosis-main
   # - name: stride-osmosis
   #   type: relayer
   #   chainA: stride

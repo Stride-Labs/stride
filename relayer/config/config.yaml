@@ -1,65 +1,74 @@
 global:
-  api-listen-addr: :5183
-  timeout: 10s
-  memo: ""
-  light-cache-size: 20
+    api-listen-addr: :5183
+    debug-listen-addr: ""
+    metrics-listen-addr: ""
+    timeout: 10s
+    memo: stride-tests
+    light-cache-size: 20
+    log-level: ""
+    ics20-memo-limit: 0
+    max-receiver-size: 0
 chains:
-  consumer:
-    type: cosmos
-    value:
-      key-directory: relayer/keys/consumer
-      key: rly2
-      chain-id: consumer
-      rpc-addr: http://127.0.0.1:26638
-      account-prefix: stride
-      keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.00stake
-      min-gas-amount: 0
-      debug: false
-      timeout: 20s
-      block-timeout: ""
-      output-format: json
-      sign-mode: direct
-      extra-codecs: []
-      coin-type: null
-      broadcast-mode: batch
-  provider:
-    type: cosmos
-    value:
-      key-directory: relayer/keys/provider
-      key: rly1
-      chain-id: provider
-      rpc-addr: http://127.0.0.1:26658
-      account-prefix: cosmos
-      keyring-backend: test
-      gas-adjustment: 1.2
-      gas-prices: 0.00stake
-      min-gas-amount: 0
-      debug: false
-      timeout: 20s
-      block-timeout: ""
-      output-format: json
-      sign-mode: direct
-      extra-codecs: []
-      coin-type: null
-      broadcast-mode: batch
+    osmosis:
+        type: cosmos
+        value:
+            key-directory: relayer/keys/osmosis-1
+            key: osmosis
+            chain-id: osmosis-1
+            rpc-addr: https://osmosis-strd-rpc.polkachu.com:443
+            backup-rpc-addrs: []
+            account-prefix: osmo
+            keyring-backend: test
+            dynamic-gas-price: false
+            gas-adjustment: 1.3
+            gas-prices: 0.02uosmo
+            min-gas-amount: 0
+            max-gas-amount: 0
+            debug: false
+            timeout: 60s
+            block-timeout: ""
+            output-format: json
+            sign-mode: direct
+            extra-codecs: []
+            coin-type: 118
+            signing-algorithm: ""
+            broadcast-mode: batch
+            min-loop-duration: 5s
+            extension-options: []
+            feegrants: null
+    stride:
+        type: cosmos
+        value:
+            key-directory: relayer/keys/stride-test-1
+            key: stride
+            chain-id: stride-test-1
+            rpc-addr: https://stride-rpc.internal.stridenet.co:443
+            backup-rpc-addrs: []
+            account-prefix: stride
+            keyring-backend: test
+            dynamic-gas-price: false
+            gas-adjustment: 1.3
+            gas-prices: 1ustrd
+            min-gas-amount: 0
+            max-gas-amount: 0
+            debug: false
+            timeout: 20s
+            block-timeout: ""
+            output-format: json
+            sign-mode: direct
+            extra-codecs: []
+            coin-type: 118
+            signing-algorithm: ""
+            broadcast-mode: batch
+            min-loop-duration: 1s
+            extension-options: []
+            feegrants: null
 paths:
-  consumer-provider:
-    src:
-      chain-id: consumer
-    dst:
-      chain-id: provider
-    src-channel-filter:
-      rule: ""
-      channel-list: []
-  consumer-provider-ics:
-    src:
-      chain-id: consumer
-      client-id: 07-tendermint-1
-    dst:
-      chain-id: provider
-      client-id: 07-tendermint-1
-    src-channel-filter:
-      rule: ""
-      channel-list: []
+    stride-osmosis:
+        src:
+            chain-id: stride-test-1
+        dst:
+            chain-id: osmosis-1
+        src-channel-filter:
+            rule: ""
+            channel-list: []
