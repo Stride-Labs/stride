@@ -158,7 +158,11 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 	foundAlreadyHasStalePrice := false
 	if price, ok := baseTokenPrices[quoteDenom]; ok {
 		if ctx.BlockTime().Unix()-price.LastResponseTime.Unix() <= priceExpirationTimeoutSec {
-			return price.SpotPrice, nil
+			if price.SpotPrice.IsZero() {
+				foundAlreadyHasStalePrice = true
+			} else {
+				return price.SpotPrice, nil
+			}
 		} else {
 			foundAlreadyHasStalePrice = true
 		}

@@ -128,7 +128,22 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			tokenPrices: []types.TokenPrice{
 				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdk.NewDec(0), LastResponseTime: freshTime},
 			},
-			expectedErrors: []string{"zero", "zero"},
+			expectedErrors: []string{
+				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='true')", // zero price is considered stale
+				"no price for baseDenom 'quote'",
+			},
+		},
+		{
+			name:       "zero price through common",
+			baseDenom:  "base",
+			quoteDenom: "quote",
+			tokenPrices: []types.TokenPrice{
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(1), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(0), LastResponseTime: freshTime},
+			},
+			expectedErrors: []string{
+				"could not calculate price for baseToken='base'",
+				"could not calculate price for baseToken='quote'"},
 		},
 		{
 			name:       "stale base price through common token",
