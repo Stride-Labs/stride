@@ -116,15 +116,15 @@ func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[st
 //   - All available prices with a common quote token are stale (exceeded the expiration timeout)
 func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (math.LegacyDec, error) {
 	// First attempt: Try to get the price with baseDenom as the base token and quoteDenom as the quote token
-	price, err := k.getTokenPriceForQuoteDenomImpl(ctx, baseDenom, quoteDenom)
-	if err == nil {
+	price, errDirect := k.getTokenPriceForQuoteDenomImpl(ctx, baseDenom, quoteDenom)
+	if errDirect == nil {
 		return price, nil
 	}
 
 	// Second attempt: If the first attempt fails, try the reverse - use quoteDenom as the base token
 	// and baseDenom as the quote token, then invert the price (1/price)
-	price, err = k.getTokenPriceForQuoteDenomImpl(ctx, quoteDenom, baseDenom)
-	if err == nil {
+	price, errInverted := k.getTokenPriceForQuoteDenomImpl(ctx, quoteDenom, baseDenom)
+	if errInverted == nil {
 		// Invert the price to get the correct exchange rate
 		price = math.LegacyNewDec(1).Quo(price)
 
@@ -132,7 +132,9 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	}
 
 	// If both attempts fail, return an error
-	return math.LegacyDec{}, err
+	return math.LegacyDec{}, errorsmod.Wrapf(types.ErrQuotePriceNotFound,
+		"no price found for baseDenom %s in terms of quoteDenom %s (%v), nor for %s in terms of %s (%v)",
+		baseDenom, quoteDenom, errDirect, quoteDenom, baseDenom, errInverted)
 }
 
 // getTokenPriceForQuoteDenomImpl is the internal implementation that attempts to get the price
@@ -211,7 +213,9 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 
 	if price.IsZero() {
 		return math.LegacyDec{}, fmt.Errorf(
-			"could not calculate price for baseToken='%s' quoteToken='%s' (foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v', foundAlreadyHasStalePrice='%v')",
+			"could not calculate price for baseToken='%s' quoteToken='%s' "+
+				"(foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', "+
+				"foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v', foundAlreadyHasStalePrice='%v')",
 			baseDenom,
 			quoteDenom,
 			foundCommonQuoteToken,
