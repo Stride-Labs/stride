@@ -133,7 +133,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 
 	// If both attempts fail, return an error
 	return math.LegacyDec{}, errorsmod.Wrapf(types.ErrQuotePriceNotFound,
-		"no price found for baseDenom %s in terms of quoteDenom %s (%v), nor for %s in terms of %s (%v)",
+		"no price found for baseDenom %s in terms of quoteDenom %s [%v], nor for %s in terms of %s [%v]",
 		baseDenom, quoteDenom, errDirect, quoteDenom, baseDenom, errInverted)
 }
 
