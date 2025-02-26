@@ -17,11 +17,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/Stride-Labs/stride/v25/x/mint/client/cli"
-	"github.com/Stride-Labs/stride/v25/x/mint/keeper"
+	"github.com/Stride-Labs/stride/v26/x/mint/client/cli"
+	"github.com/Stride-Labs/stride/v26/x/mint/keeper"
 
-	//"github.com/Stride-Labs/stride/v25/x/mint/simulation"
-	"github.com/Stride-Labs/stride/v25/x/mint/types"
+	//"github.com/Stride-Labs/stride/v26/x/mint/simulation"
+	"github.com/Stride-Labs/stride/v26/x/mint/types"
 )
 
 var (

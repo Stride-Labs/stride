@@ -5,7 +5,7 @@ import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v25/x/icaoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/icaoracle/types";
 
 // Msg defines the Msg service.
 service Msg {

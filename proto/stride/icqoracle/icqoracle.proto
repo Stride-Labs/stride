@@ -4,7 +4,7 @@ package stride.icqoracle;
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v25/x/icqoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/icqoracle/types";
 
 // TokenPrice stores latest price data for a token
 message TokenPrice {

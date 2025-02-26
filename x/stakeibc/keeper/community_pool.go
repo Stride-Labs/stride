@@ -15,10 +15,10 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v25/utils"
-	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // For each hostZone with a valid community pool, trigger the ICQs and ICAs to transfer tokens from DepositICA or back to ReturnICA

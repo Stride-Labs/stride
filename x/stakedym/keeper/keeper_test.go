@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v25/app/apptesting"
-	"github.com/Stride-Labs/stride/v25/x/stakedym/keeper"
-	"github.com/Stride-Labs/stride/v25/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/keeper"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
 
 const (

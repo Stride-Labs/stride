@@ -13,10 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v25/app"
-	"github.com/Stride-Labs/stride/v25/app/apptesting"
-	v19 "github.com/Stride-Labs/stride/v25/app/upgrades/v19"
-	legacyratelimittypes "github.com/Stride-Labs/stride/v25/app/upgrades/v19/legacyratelimit/types"
+	"github.com/Stride-Labs/stride/v26/app"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	v19 "github.com/Stride-Labs/stride/v26/app/upgrades/v19"
+	legacyratelimittypes "github.com/Stride-Labs/stride/v26/app/upgrades/v19/legacyratelimit/types"
 )
 
 var (

@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 type FeeBalanceICQCallbackState struct {

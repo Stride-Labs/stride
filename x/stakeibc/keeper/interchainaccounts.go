@@ -14,10 +14,10 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v25/utils"
-	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 const (

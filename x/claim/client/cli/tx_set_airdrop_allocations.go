@@ -10,7 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/x/claim/types"
+	"github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
 func CmdSetAirdropAllocations() *cobra.Command {

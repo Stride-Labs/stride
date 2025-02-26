@@ -10,9 +10,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-	"github.com/Stride-Labs/stride/v25/testutil/sample"
-	icacallbackssimulation "github.com/Stride-Labs/stride/v25/x/icacallbacks/simulation"
-	"github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/testutil/sample"
+	icacallbackssimulation "github.com/Stride-Labs/stride/v26/x/icacallbacks/simulation"
+	"github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 )
 
 // avoid unused import issue

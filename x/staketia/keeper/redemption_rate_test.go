@@ -3,8 +3,8 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v25/x/staketia/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
