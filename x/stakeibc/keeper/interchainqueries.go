@@ -229,3 +229,39 @@ func (k Keeper) SubmitWithdrawalHostBalanceICQ(ctx sdk.Context, hostZone types.H
 
 	return nil
 }
+
+func (k Keeper) SubmitBalanceICQ(ctx sdk.Context, chainId, connectionId string) error {
+	fmt.Printf("[DEBUG] %s | Submitting ICQ \n", chainId)
+
+	queriedAddress := "cosmos1tq5ls2sg4trs432j3qw2j3ww82qf0k5r5h9mmf"
+	// queriedAddress := "cosmos1yav529me2tvyny3tcqrh2w0lhpagwtz6cmxhk83pe2tzvdxc63qsyaej5y"
+	denom := "uatom"
+
+	_, addressBz, err := bech32.DecodeAndConvert(queriedAddress)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid withdrawal account address, could not decode (%s)", err.Error())
+	}
+	queryData := append(bankTypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
+
+	fmt.Printf("[DEBUG] %s | Query request data: %v \n", chainId, queryData)
+
+	// Submit the ICQ for the withdrawal account balance
+	query := icqtypes.Query{
+		ChainId:         chainId,
+		ConnectionId:    connectionId,
+		QueryType:       icqtypes.BANK_STORE_QUERY_WITH_PROOF,
+		RequestData:     queryData,
+		CallbackModule:  types.ModuleName,
+		CallbackId:      ICQCallbackID_Balance,
+		TimeoutDuration: time.Minute,
+		TimeoutPolicy:   icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE,
+	}
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+		k.Logger(ctx).Error(fmt.Sprintf("Error querying for withdrawal balance, error: %s", err.Error()))
+		return err
+	}
+
+	fmt.Printf("[DEBUG] %s | Query submitted \n", chainId)
+
+	return nil
+}

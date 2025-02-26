@@ -248,7 +248,8 @@ beforeAll(async () => {
         minRedemptionRate: "0.9",
         maxRedemptionRate: "1.5",
         lsmLiquidStakeEnabled: true,
-        communityPoolTreasuryAddress: "",
+        communityPoolTreasuryAddress:
+          "cosmos1kl8d29eadt93rfxmkf2q8msxwylaax9dxzr5lj", // TODO fix magic string?
         maxMessagesPerIcaTx: BigInt(2),
       });
 
@@ -287,7 +288,10 @@ beforeAll(async () => {
         minRedemptionRate: "0.9",
         maxRedemptionRate: "1.5",
         lsmLiquidStakeEnabled: true,
-        communityPoolTreasuryAddress: "",
+        communityPoolTreasuryAddress: convertBech32Prefix(
+          "cosmos1kl8d29eadt93rfxmkf2q8msxwylaax9dxzr5lj", // TODO fix magic string?
+          "osmo",
+        ),
         maxMessagesPerIcaTx: BigInt(2),
       });
 
