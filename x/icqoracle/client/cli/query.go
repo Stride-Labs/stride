@@ -113,7 +113,7 @@ func CmdQueryTokenPriceForQuoteDenom() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token-price-by-quote [base-denom] [quote-denom]",
 		Short: "Query the current price for a specific token",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			baseDenom := args[0]
 			quoteDenom := args[1]
