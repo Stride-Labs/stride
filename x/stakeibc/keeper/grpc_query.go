@@ -16,9 +16,9 @@ import (
 
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 
-	"github.com/Stride-Labs/stride/v25/utils"
-	epochtypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
-	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 const nanosecondsInDay = 86400000000000

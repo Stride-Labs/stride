@@ -3,8 +3,8 @@ package autopilot
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/x/autopilot/keeper"
-	"github.com/Stride-Labs/stride/v25/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v26/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v26/x/autopilot/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

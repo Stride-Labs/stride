@@ -9,7 +9,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v25/x/airdrop/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/airdrop/types";
 
 // Query defines the gRPC querier service.
 service Query {

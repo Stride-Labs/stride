@@ -13,7 +13,7 @@ import (
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v26/x/icqoracle/types"
 )
 
 var _ types.QueryServer = Keeper{}

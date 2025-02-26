@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v25/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v26/x/strdburner/types"
 )
 
 func (s *KeeperTestSuite) TestEndBlocker() {

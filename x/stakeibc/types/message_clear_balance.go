@@ -8,7 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v25/utils"
+	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 const TypeMsgClearBalance = "clear_balance"

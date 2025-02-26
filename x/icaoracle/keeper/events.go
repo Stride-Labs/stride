@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v26/x/icaoracle/types"
 )
 
 // Emits an event for an oracle update

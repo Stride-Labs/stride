@@ -16,11 +16,11 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v25/utils"
-	icqtypes "github.com/Stride-Labs/stride/v25/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
-	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 var (

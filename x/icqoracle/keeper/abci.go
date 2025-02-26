@@ -7,8 +7,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/utils"
-	"github.com/Stride-Labs/stride/v25/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v26/x/icqoracle/types"
 )
 
 func (k Keeper) BeginBlocker(ctx sdk.Context) {

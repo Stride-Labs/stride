@@ -8,7 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v25/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
 )
 
 // Parses an allocations CSV file consisting of allocations for various addresses

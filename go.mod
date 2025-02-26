@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/stride/v25
+module github.com/Stride-Labs/stride/v26
 
 go 1.22.11
 

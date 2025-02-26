@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v25/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
 )
 
 // Creates a user allocation using the specified Ids and filling in default values

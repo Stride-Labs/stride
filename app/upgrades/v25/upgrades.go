@@ -8,12 +8,12 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v25/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v25/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
-	staketiakeeper "github.com/Stride-Labs/stride/v25/x/staketia/keeper"
-	staketiatypes "github.com/Stride-Labs/stride/v25/x/staketia/types"
+	recordskeeper "github.com/Stride-Labs/stride/v26/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	staketiakeeper "github.com/Stride-Labs/stride/v26/x/staketia/keeper"
+	staketiatypes "github.com/Stride-Labs/stride/v26/x/staketia/types"
 )
 
 var (

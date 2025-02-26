@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v25/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
 )
 
 const (
