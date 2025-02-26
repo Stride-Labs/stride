@@ -114,7 +114,31 @@ func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[st
 //   - No prices exist for either token
 //   - No common quote token exists between the two tokens
 //   - All available prices with a common quote token are stale (exceeded the expiration timeout)
-func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (price math.LegacyDec, err error) {
+func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (math.LegacyDec, error) {
+	// First attempt: Try to get the price with baseDenom as the base token and quoteDenom as the quote token
+	price, err := k.getTokenPriceForQuoteDenomImpl(ctx, baseDenom, quoteDenom)
+	if err == nil {
+		return price, nil
+	}
+
+	// Second attempt: If the first attempt fails, try the reverse - use quoteDenom as the base token
+	// and baseDenom as the quote token, then invert the price (1/price)
+	price, err = k.getTokenPriceForQuoteDenomImpl(ctx, quoteDenom, baseDenom)
+	if err == nil {
+		// Invert the price to get the correct exchange rate
+		price = math.LegacyNewDec(1).Quo(price)
+
+		return price, nil
+	}
+
+	// If both attempts fail, return an error
+	return math.LegacyDec{}, err
+}
+
+// getTokenPriceForQuoteDenomImpl is the internal implementation that attempts to get the price
+// for baseDenom in terms of quoteDenom by finding a common quote token. It returns an error
+// if no valid price path can be found.
+func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string, quoteDenom string) (price math.LegacyDec, err error) {
 	// Get all price for baseToken
 	baseTokenPrices, err := k.GetTokenPricesByDenom(ctx, baseDenom)
 	if err != nil {
