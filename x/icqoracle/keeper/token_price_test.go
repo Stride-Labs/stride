@@ -49,3 +49,33 @@ func (s *KeeperTestSuite) TestGetAllTokenPrices() {
 		s.Require().Equal(expectedTokenPrice, actualTokenPrices[i])
 	}
 }
+
+// Tests getting a price from a common quote denom
+func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
+	testCases := []struct {
+		name          string
+		baseDenom     string
+		quoteDenom    string
+		tokenPrices   []types.TokenPrice
+		expectedPrice sdk.Dec
+		expectedError string
+	}{
+		{},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			for _, tokenPrice := range tc.tokenPrices {
+				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
+			}
+
+			actualPrice, actualError := s.App.ICQOracleKeeper.GetTokenPriceForQuoteDenom(s.Ctx, tc.baseDenom, tc.quoteDenom)
+			if tc.expectedError == "" {
+				s.Require().ErrorContains(actualError, tc.expectedError)
+			} else {
+				s.Require().NoError(actualError)
+				s.Require().Equal(tc.expectedPrice, actualPrice, "price")
+			}
+		})
+	}
+}
