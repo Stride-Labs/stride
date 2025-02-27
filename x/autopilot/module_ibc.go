@@ -199,7 +199,7 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 	newPacket := packet
-	newPacket.Data = bz
+	newPacket.Data = sdk.MustSortJSON(bz)
 
 	// Pass the new packet down the middleware stack first to complete the transfer
 	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
