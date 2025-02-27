@@ -350,8 +350,8 @@ github.com/cosmos/ibc-apps/modules/ibc-hooks/v7 v7.0.0-20240403143657-8e64543c87
 github.com/cosmos/ibc-apps/modules/ibc-hooks/v7 v7.0.0-20240403143657-8e64543c87e0/go.mod h1:JwHFbo1oX/ht4fPpnPvmhZr+dCkYK1Vihw+vZE9umR4=
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.1.2-0.20240412103620-7ee2a2452b79 h1:Y7zi+3BksgH5kCMLFfC2vghihNoQVrt3Ft+sHtgywPQ=
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.1.2-0.20240412103620-7ee2a2452b79/go.mod h1:VR2Hg2i/X1bafbmmNsV2Khwsg0PzNeuWoVKmSN5dAwo=
-github.com/cosmos/ibc-go/v7 v7.7.0 h1:/ndLv4GiAkOaHQKpcoQyoGIZpGpT4d+9kjl5n3DsaVQ=
-github.com/cosmos/ibc-go/v7 v7.7.0/go.mod h1:zzFhtp9g9RrN/UxXWrdUu5VyonBALCAHujXQCzrZSu8=
+github.com/cosmos/ibc-go/v7 v7.9.0 h1:8TYkxeCqNOu5Jy58VpCFAyCP6x3pnzhYQrnkagViqtE=
+github.com/cosmos/ibc-go/v7 v7.9.0/go.mod h1:wbWPvOfyukv1cN8+pN8bD/d8GQf4Kmh/SCSBb/1u2Lc=
 github.com/cosmos/ics23/go v0.10.0 h1:iXqLLgp2Lp+EdpIuwXTYIQU+AiHj9mOC2X9ab++bZDM=
 github.com/cosmos/ics23/go v0.10.0/go.mod h1:ZfJSmng/TBNTBkFemHHHj5YY7VAU/MBU980F4VU1NG0=
 github.com/cosmos/interchain-security/v4 v4.0.0 h1:6olP/UIrvckLgDpzJLAqPjmzo3+AoHjMM1TRrcrpME0=
