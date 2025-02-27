@@ -16,7 +16,7 @@ require (
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7 v7.2.1
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v7 v7.0.0-20240403143657-8e64543c87e0
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.1.2-0.20240412103620-7ee2a2452b79
-	github.com/cosmos/ibc-go/v7 v7.9.0
+	github.com/cosmos/ibc-go/v7 v7.9.2
 	github.com/cosmos/ics23/go v0.10.0
 	github.com/cosmos/interchain-security/v4 v4.0.0
 	github.com/evmos/vesting v0.0.0-20230818101748-9ea561e4529c
