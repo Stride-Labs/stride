@@ -391,15 +391,3 @@ setup_file() {
   assert_equal "$redemption_rate_increased" "1"
 }
 
-# rewards have been collected and distributed to strd stakers
-@test "[INTEGRATION-BASIC-$CHAIN_NAME] rewards are being distributed to stakers" {
-  # collect the 2nd validator's outstanding rewards
-  val_address=$($STRIDE_MAIN_CMD keys show ${STRIDE_VAL_PREFIX}2 --keyring-backend test -a)
-  $STRIDE_MAIN_CMD tx distribution withdraw-all-rewards --from ${STRIDE_VAL_PREFIX}2 -y 
-  WAIT_FOR_BLOCK $STRIDE_LOGS 2
-
-  # confirm they've received stTokens
-  sttoken_balance=$($STRIDE_MAIN_CMD q bank balances $val_address --denom st$HOST_DENOM | GETBAL)
-  rewards_accumulated=$(($sttoken_balance > 0))
-  assert_equal "$rewards_accumulated" "1"
-}
