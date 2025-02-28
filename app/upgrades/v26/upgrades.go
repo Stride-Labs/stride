@@ -28,6 +28,14 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v26...")
 
+		// Run migrations first
+		ctx.Logger().Info("Running module migrations...")
+		versionMap, err := mm.RunMigrations(ctx, configurator, vm)
+		if err != nil {
+			return nil, err
+		}
+
+		// Set params after migrations
 		icqoracleKeeper.SetParams(ctx, icqoracletypes.Params{
 			OsmosisChainId:            OsmosisChainId,
 			OsmosisConnectionId:       OsmosisConnectionId,
@@ -35,7 +43,6 @@ func CreateUpgradeHandler(
 			PriceExpirationTimeoutSec: ICQOraclePriceExpirationTimeoutSec,
 		})
 
-		ctx.Logger().Info("Running module migrations...")
-		return mm.RunMigrations(ctx, configurator, vm)
+		return versionMap, nil
 	}
 }
