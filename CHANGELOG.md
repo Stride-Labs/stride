@@ -45,20 +45,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v26.0.0](https://github.com/Stride-Labs/stride/releases/tag/v26.0.0) - 2025-02-28
 
 ### On-Chain changes
-1. fixed gosec errors ([#1350](https://github.com/Stride-Labs/stride/pull/1350))
-2. update ibc & pfm ([#1360](https://github.com/Stride-Labs/stride/pull/1360))
-3. Buyback and Burn ([#1318](https://github.com/Stride-Labs/stride/pull/1318))
+
+1. Buyback and Burn ([#1318](https://github.com/Stride-Labs/stride/pull/1318))
+2. fixed gosec errors ([#1350](https://github.com/Stride-Labs/stride/pull/1350))
+3. version bumps (ibc, pfm, wasmvm, cobra) ([#1360](https://github.com/Stride-Labs/stride/pull/1360), [#1361](https://github.com/Stride-Labs/stride/pull/1361), [#1345](https://github.com/Stride-Labs/stride/pull/1345))
 4. v26 Import Paths ([#1367](https://github.com/Stride-Labs/stride/pull/1367))
+5. Localstride changes ([#1370](https://github.com/Stride-Labs/stride/pull/1370))
+6. add txBytes support to `strided tx decode` in addition to signBytes ([#1347](https://github.com/Stride-Labs/stride/pull/1347))
 
 ### Off-Chain changes
-1. Updated dockernet hermes ([#1342](https://github.com/Stride-Labs/stride/pull/1342))
-2. Update CHANGELOG.md ([#1341](https://github.com/Stride-Labs/stride/pull/1341))
-3. bumped wasmvm ([#1345](https://github.com/Stride-Labs/stride/pull/1345))
-4. add txBytes support to `strided tx decode` in addition to signBytes ([#1347](https://github.com/Stride-Labs/stride/pull/1347))
-5. added staketia API changes to changelog ([#1358](https://github.com/Stride-Labs/stride/pull/1358))
-6. Bump github.com/spf13/cobra from 1.8.1 to 1.9.1 ([#1361](https://github.com/Stride-Labs/stride/pull/1361))
-7. Bump vitest from 2.0.3 to 2.1.9 in /integration-tests/client ([#1353](https://github.com/Stride-Labs/stride/pull/1353))
 
+1. Updated dockernet hermes ([#1342](https://github.com/Stride-Labs/stride/pull/1342))
+2. Bump vitest from 2.0.3 to 2.1.9 in /integration-tests/client ([#1353](https://github.com/Stride-Labs/stride/pull/1353))
 
 ## [v25.1.0](https://github.com/Stride-Labs/stride/releases/tag/v25.1.0) - 2025-02-03
 
