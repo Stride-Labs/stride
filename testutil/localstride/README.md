@@ -101,7 +101,7 @@ This will create a file called `state_export.json` which is a snapshot of the cu
 5. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
 
 ```sh
-cp state_export.json stride/testutil/localstride/state_export/
+cp state_export.json stride/testutil/localstride/state-export/
 ```
 
 6. Build the `local:stride` docker image (select yes if prompted to recursively remove):
