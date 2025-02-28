@@ -20,8 +20,8 @@ class Account:
     address: str
 
 
+# Constants
 BONDED_TOKENS_POOL_MODULE_ADDRESS = "stride1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3ksfndm"
-PROVIDER_FEE_POOL_ADDR = "stride1h2r2k24349gtx7e4kfxxl8gzqz8tn6zyc0sq2a"
 
 config = {
     "governance_voting_period": "180s",
@@ -327,7 +327,9 @@ def main():
 
     # Update provider fee pool addr
     print("🥸  Replace Provider Fee Pool Addr")
-    genesis['app_state']['ccvconsumer']['params']['provider_fee_pool_addr_str'] = PROVIDER_FEE_POOL_ADDR
+    genesis['app_state']['ccvconsumer']['params'][
+        'provider_fee_pool_addr_str'
+    ] = "stride1h2r2k24349gtx7e4kfxxl8gzqz8tn6zyc0sq2a"
     genesis['app_state']['ccvconsumer']['params']['enabled'] = True
 
     print("📝 Writing {}... (it may take a while)".format(args.output_genesis))
