@@ -1,9 +1,16 @@
 # syntax = docker/dockerfile:1
 
 ARG GO_VERSION="1.22"
-ARG RUNNER_IMAGE_VERSION="3.20"
+ARG RUNNER_IMAGE_VERSION="3.18"
 
 FROM golang:${GO_VERSION}-alpine${RUNNER_IMAGE_VERSION} AS builder
+
+WORKDIR /opt
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base curl
+
+# Manually installing 1.22.11 because we need to be on 3.18 to avoid wasm SIGABRT
+# https://github.com/CosmWasm/wasmvm/issues/523
+RUN curl -fsSL https://go.dev/dl/go1.22.11.linux-amd64.tar.gz | tar -C /usr/local -xz
 
 WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base

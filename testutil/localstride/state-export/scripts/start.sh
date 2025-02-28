@@ -2,17 +2,13 @@
 set -e
 set -o pipefail
 
-STRIDE_HOME=$HOME/.stride
+STRIDE_HOME=/home/stride/.stride
 CONFIG_FOLDER=$STRIDE_HOME/config
 
-DEFAULT_MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
-DEFAULT_CHAIN_ID="localstride"
-DEFAULT_MONIKER="val"
+MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
+CHAIN_ID="localstride"
+MONIKER="val"
 
-# Override default values with environment variables
-MNEMONIC=${MNEMONIC:-$DEFAULT_MNEMONIC}
-CHAIN_ID=${CHAIN_ID:-$DEFAULT_CHAIN_ID}
-MONIKER=${MONIKER:-$DEFAULT_MONIKER}
 
 install_prerequisites () {
     sudo apk add -q --no-cache \
@@ -23,19 +19,19 @@ install_prerequisites () {
 edit_config () {
 
     # Remove seeds
-    dasel put string -f $CONFIG_FOLDER/config.toml '.p2p.seeds' ''
+    dasel put -t string -f $CONFIG_FOLDER/config.toml -s '.p2p.seeds' -v ''
 
     # Disable fast_sync
-    dasel put bool -f $CONFIG_FOLDER/config.toml '.fast_sync' 'false'
+    dasel put -t bool -f $CONFIG_FOLDER/config.toml -s '.fast_sync' -v 'false'
 
     # Expose the rpc
-    dasel put string -f $CONFIG_FOLDER/config.toml '.rpc.laddr' "tcp://0.0.0.0:26657"
+    dasel put -t string -f $CONFIG_FOLDER/config.toml -s '.rpc.laddr' -v "tcp://0.0.0.0:26657"
 
     # Update the local client chain ID 
-    dasel put string -f $CONFIG_FOLDER/client.toml '.chain-id' 'localstride'
+    dasel put -t string -f $CONFIG_FOLDER/client.toml -s '.chain-id' -v 'localstride'
 
     # Update the local client keyring backend
-    dasel put string -f $CONFIG_FOLDER/client.toml '.keyring-backend' 'test'
+    dasel put -t string -f $CONFIG_FOLDER/client.toml -s '.keyring-backend' -v 'test'
 }
 
 if [[ ! -d $CONFIG_FOLDER ]]
@@ -49,14 +45,14 @@ then
     echo "STRIDE_HOME: $STRIDE_HOME"
 
     strided init localstride -o --chain-id=$CHAIN_ID --home $STRIDE_HOME
-    
-    echo $MNEMONIC | strided keys add val --recover --keyring-backend test
 
-    ACCOUNT_PUBKEY=$(strided keys show --keyring-backend test val --pubkey | dasel -r json '.key' --plain)
-    ACCOUNT_ADDRESS=$(strided keys show -a --keyring-backend test val --bech acc)
+    echo $MNEMONIC | strided keys add val --recover --keyring-backend test --home $STRIDE_HOME
+
+    ACCOUNT_PUBKEY=$(strided keys show --keyring-backend test val --pubkey --home $STRIDE_HOME | jq -r '.key')
+    ACCOUNT_ADDRESS=$(strided keys show -a --keyring-backend test val --bech acc --home $STRIDE_HOME)
 
     VALIDATOR_PUBKEY_JSON=$(strided tendermint show-validator --home $STRIDE_HOME)
-    VALIDATOR_PUBKEY=$(echo $VALIDATOR_PUBKEY_JSON | dasel -r json '.key' --plain)
+    VALIDATOR_PUBKEY=$(echo $VALIDATOR_PUBKEY_JSON | jq -r '.key')
     VALIDATOR_HEX_ADDRESS=$(strided debug pubkey $VALIDATOR_PUBKEY_JSON 2>&1 --home $STRIDE_HOME | grep Address | cut -d " " -f 2)
     VALIDATOR_ACCOUNT_ADDRESS=$(strided debug addr $VALIDATOR_HEX_ADDRESS 2>&1  --home $STRIDE_HOME | grep Acc | cut -d " " -f 3)
     VALIDATOR_OPERATOR_ADDRESS=$(strided debug addr $VALIDATOR_HEX_ADDRESS 2>&1  --home $STRIDE_HOME | grep Val | cut -d " " -f 3)
@@ -74,6 +70,16 @@ then
     --account-address $ACCOUNT_ADDRESS
 
     edit_config
+
+    strided tendermint show-node-id --home $STRIDE_HOME > $STRIDE_HOME/node_id.txt
+
+    echo "Done setting up node! Please run `make localnet-state-export-stop`"
+    echo "Then, run update_peers.sh and start the node"
+else
+    echo "Config folder already exists - starting node"
+    
+    edit_config
+
+    strided start --home $STRIDE_HOME --x-crisis-skip-assert-invariants --reject-config-defaults
 fi
 
-strided start --home $STRIDE_HOME --x-crisis-skip-assert-invariants
