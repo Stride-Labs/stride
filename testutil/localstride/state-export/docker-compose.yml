@@ -6,22 +6,38 @@ services:
     image: stridezone:localstride
     build:
       context: ../../../
-      args:
-        RUNNER_IMAGE_VERSION: 3.20
-        GO_VERSION: 1.22
     volumes:
       - ./scripts/start.sh:/home/stride/start.sh
       - ./scripts/testnetify.py:/home/stride/testnetify.py
       - ./state_export.json:/home/stride/state_export.json
-      - $HOME/.stride/:/home/stride/.stride/
-    entrypoint:
+      - $HOME/.stride1/:/home/stride/.stride/
+    command:
+      - sudo
+      - /bin/bash
       - /home/stride/start.sh
     environment:
-      - MONIKER=val
-      - CHAIN_ID=localstride
+      - STRIDE_HOME=/home/stride/.stride1
     ports:
       - 26657:26657
       - 26656:26656
       - 1317:1317
       - 9090:9090
       - 9091:9091
+
+  stride2:
+    image: stridezone:localstride
+    build:
+      context: ../../../
+    volumes:
+      - ./scripts/start2.sh:/home/stride/start.sh
+      - ./scripts/testnetify.py:/home/stride/testnetify.py
+      - ./state_export.json:/home/stride/state_export.json
+      - $HOME/.stride2/:/home/stride/.stride2/
+    command:
+      - sudo
+      - /bin/bash
+      - /home/stride/start.sh
+    environment:
+      - STRIDE_HOME=/home/stride/.stride2
+    ports:
+      - 26658:26656
