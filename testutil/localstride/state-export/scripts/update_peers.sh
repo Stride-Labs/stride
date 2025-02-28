@@ -5,11 +5,11 @@ set -eu
 STRIDE1_PORT=26656
 STRIDE2_PORT=26658
 
-STRIDE1_CONFIG=${HOME}/.stride1/config/config.toml
-STRIDE2_CONFIG=${HOME}/.stride2/config/config.toml
+STRIDE1_CONFIG=/home/stride/.stride1/config/config.toml
+STRIDE2_CONFIG=/home/stride/.stride2/config/config.toml
 
-STRIDE1_NODE_ID_FILE=${HOME}/.stride1/node_id.txt
-STRIDE2_NODE_ID_FILE=${HOME}/.stride2/node_id.txt
+STRIDE1_NODE_ID_FILE=/home/stride/.stride1/node_id.txt
+STRIDE2_NODE_ID_FILE=/home/stride/.stride2/node_id.txt
 
 if [[ ! -f $STRIDE1_NODE_ID_FILE || ! -f $STRIDE2_NODE_ID_FILE ]]; then 
     echo "Node ID files do not exist, please start nodes first"

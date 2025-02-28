@@ -68,12 +68,18 @@ then
     --validator-pubkey $VALIDATOR_PUBKEY \
     --account-pubkey $ACCOUNT_PUBKEY \
     --account-address $ACCOUNT_ADDRESS
+
+    edit_config
+
+    strided tendermint show-node-id --home $STRIDE_HOME > $STRIDE_HOME/node_id.txt
+
+    echo "Done setting up node! Please run `make localnet-state-export-stop`"
+    echo "Then, run update_peers.sh and start the node"
+else
+    echo "Config folder already exists - starting node"
+    
+    edit_config
+
+    strided start --home $STRIDE_HOME --x-crisis-skip-assert-invariants --reject-config-defaults
 fi
-
-edit_config
-
-strided tendermint show-node-id --home $STRIDE_HOME > $STRIDE_HOME/node_id.txt
-
-strided start --home $STRIDE_HOME --x-crisis-skip-assert-invariants --reject-config-defaults
-
 

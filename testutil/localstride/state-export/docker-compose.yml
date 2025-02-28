@@ -7,10 +7,10 @@ services:
     build:
       context: ../../../
     volumes:
-      - /home/stride/stride/scripts/start.sh:/home/stride/start.sh
-      - /home/stride/stride/scripts/testnetify.py:/home/stride/testnetify.py
-      - /home/stride/stride//state_export.json:/home/stride/state_export.json
-      - /home/stride/stride/.stride1/:/home/stride/.stride/
+      - /home/stride/stride/testutil/localstride/state-export/scripts/start.sh:/home/stride/start.sh
+      - /home/stride/stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - /home/stride/stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - /home/stride/.stride1/:/home/stride/.stride/
     command:
       - sudo
       - /bin/bash
@@ -27,10 +27,10 @@ services:
     build:
       context: ../../../
     volumes:
-      - /home/stride/stride/scripts/start.sh:/home/stride/start.sh
-      - /home/stride/stride/scripts/testnetify.py:/home/stride/testnetify.py
-      - /home/stride/stride/state_export.json:/home/stride/state_export.json
-      - /home/stride/stride/.stride2/:/home/stride/.stride2/
+      - /home/stride/stride/testutil/localstride/state-export/scripts/start.sh:/home/stride/start.sh
+      - /home/stride/stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - /home/stride/stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - /home/stride/.stride2/:/home/stride/.stride/
     command:
       - sudo
       - /bin/bash
