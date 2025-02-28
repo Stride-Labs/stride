@@ -6,7 +6,6 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	icqoraclekeeper "github.com/Stride-Labs/stride/v26/x/icqoracle/keeper"
-	icqoracletypes "github.com/Stride-Labs/stride/v26/x/icqoracle/types"
 )
 
 var (
@@ -36,12 +35,13 @@ func CreateUpgradeHandler(
 		}
 
 		// Set params after migrations
-		icqoracleKeeper.SetParams(ctx, icqoracletypes.Params{
-			OsmosisChainId:            OsmosisChainId,
-			OsmosisConnectionId:       OsmosisConnectionId,
-			UpdateIntervalSec:         ICQOracleUpdateIntervalSec,
-			PriceExpirationTimeoutSec: ICQOraclePriceExpirationTimeoutSec,
-		})
+		// NOTE: Commented out for testnet, as we don't want ICQ Oracle live there
+		// icqoracleKeeper.SetParams(ctx, icqoracletypes.Params{
+		// 	OsmosisChainId:            OsmosisChainId,
+		// 	OsmosisConnectionId:       OsmosisConnectionId,
+		// 	UpdateIntervalSec:         ICQOracleUpdateIntervalSec,
+		// 	PriceExpirationTimeoutSec: ICQOraclePriceExpirationTimeoutSec,
+		// })
 
 		return versionMap, nil
 	}
