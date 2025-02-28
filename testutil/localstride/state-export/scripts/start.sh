@@ -2,12 +2,7 @@
 set -e
 set -o pipefail
 
-if [[ "$STRIDE_HOME" == "" ]]; then
-    echo "Please set the STRIDE_HOME environment variables"
-    exit 1
-fi
-
-CONFIG_FOLDER=$STRIDE_HOME/config
+CONFIG_FOLDER=/home/stride/config
 
 MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
 CHAIN_ID="localstride"

@@ -15,8 +15,6 @@ services:
       - sudo
       - /bin/bash
       - /home/stride/start.sh
-    environment:
-      - STRIDE_HOME=/home/stride/.stride1
     ports:
       - 26657:26657
       - 26656:26656
@@ -37,7 +35,5 @@ services:
       - sudo
       - /bin/bash
       - /home/stride/start.sh
-    environment:
-      - STRIDE_HOME=/home/stride/.stride2
     ports:
       - 26658:26656
