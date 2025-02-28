@@ -323,6 +323,7 @@ def main():
         {'power': val['power'], 'pub_key': {'ed25519': val['pub_key']['value']}} for val in genesis['validators']
     ]
     genesis['app_state']['ccvconsumer']['initial_val_set'] = init_val_set
+    genesis['app_state']['ccvconsumer']['provider']['initial_val_set'] = init_val_set
 
     # Update provider fee pool addr
     print("🥸  Replace Provider Fee Pool Addr")

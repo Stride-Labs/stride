@@ -2,7 +2,8 @@
 set -e
 set -o pipefail
 
-CONFIG_FOLDER=/home/stride/config
+STRIDE_HOME=/home/stride/.stride
+CONFIG_FOLDER=$STRIDE_HOME/config
 
 MNEMONIC="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment"
 CHAIN_ID="localstride"
@@ -67,12 +68,12 @@ then
     --validator-pubkey $VALIDATOR_PUBKEY \
     --account-pubkey $ACCOUNT_PUBKEY \
     --account-address $ACCOUNT_ADDRESS
-
-else 
-    edit_config
-
-    strided tendermint show-node-id --home $STRIDE_HOME > $STRIDE_HOME/node_id.txt
-
-    strided start --home $STRIDE_HOME --x-crisis-skip-assert-invariants --reject-config-defaults
 fi
+
+edit_config
+
+strided tendermint show-node-id --home $STRIDE_HOME > $STRIDE_HOME/node_id.txt
+
+strided start --home $STRIDE_HOME --x-crisis-skip-assert-invariants --reject-config-defaults
+
 
