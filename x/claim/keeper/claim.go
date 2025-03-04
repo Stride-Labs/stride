@@ -709,7 +709,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, err
 	}
 
-	err = k.bankKeeper.SendCoins(ctx, distributor, addr, claimableAmount)
+	err = utils.SafeSendCoins(k.bankKeeper, ctx, distributor, addr, claimableAmount)
 	if err != nil {
 		return nil, err
 	}

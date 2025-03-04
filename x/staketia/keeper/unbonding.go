@@ -134,6 +134,7 @@ func (k Keeper) RedeemStake(
 	nativeToken = sdk.NewCoin(hostZone.NativeTokenDenom, nativeAmount) // Should it be NativeTokenIbcDenom?
 
 	// Escrow user's stTIA balance before setting either record in the store to verify everything worked
+	// Note: we don't use utils.SafeSendCoins() because escrowAccount is a module
 	redeemCoins := sdk.NewCoins(sdk.NewCoin(stDenom, stTokenAmount))
 	err = k.bankKeeper.SendCoins(ctx, redeemerAccount, escrowAccount, redeemCoins)
 	if err != nil {
@@ -439,7 +440,7 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 		}
 
 		nativeTokens := sdk.NewCoin(hostNativeIbcDenom, redemptionRecord.NativeAmount)
-		if err := k.bankKeeper.SendCoins(ctx, claimAddress, userAddress, sdk.NewCoins(nativeTokens)); err != nil {
+		if err := utils.SafeSendCoins(k.bankKeeper, ctx, claimAddress, userAddress, sdk.NewCoins(nativeTokens)); err != nil {
 			return errorsmod.Wrapf(err, "unable to send %v from claim address to %s",
 				nativeTokens, redemptionRecord.Redeemer)
 		}

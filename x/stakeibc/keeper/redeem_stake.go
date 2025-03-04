@@ -113,6 +113,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 	if err != nil {
 		return nil, fmt.Errorf("could not bech32 decode address %s of zone with id: %s", hostZone.DepositAddress, hostZone.ChainId)
 	}
+	// Note: we don't use utils.SafeSendCoins() because depositAddress is a module
 	err = k.bankKeeper.SendCoins(ctx, sender, depositAddress, redeemCoin)
 	if err != nil {
 		k.Logger(ctx).Error("Failed to send sdk.NewCoins(inCoins) from account to module")

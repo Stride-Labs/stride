@@ -64,6 +64,7 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 	bidder := sdk.MustAccAddressFromBech32(bid.Bidder)
 
 	// Send paymentToken to beneficiary
+	// Note: we don't use utils.SafeSendCoins() because Beneficiary can be a module
 	err = k.bankKeeper.SendCoins(
 		ctx,
 		bidder,

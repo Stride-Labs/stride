@@ -10,6 +10,7 @@ import (
 // BankKeeper defines the banking contract that must be fulfilled when
 // creating a x/claim keeper.
 type BankKeeper interface {
+	BlockedAddr(addr sdk.AccAddress) bool
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
