@@ -89,7 +89,7 @@ func CmdCreateAuction() *cobra.Command {
 			fmt.Sprintf(`Create a new auction for a specific token.
 
 Example:
-  $ %[1]s tx %[2]s create-auction my-auction ibc/DEADBEEF true 0.95 1000000 --from admin
+  $ %[1]s tx %[2]s create-auction my-auction ibc/DEADBEEF ustrd true 0.95 1000000 strideXXX --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(7),
@@ -139,7 +139,7 @@ func CmdUpdateAuction() *cobra.Command {
 			fmt.Sprintf(`Update an existing auction's parameters.
 
 Example:
-  $ %[1]s tx %[2]s update-auction auctionName true 0.97 500000 --from admin
+  $ %[1]s tx %[2]s update-auction auctionName true 0.97 500000 strideXXX --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(5),
