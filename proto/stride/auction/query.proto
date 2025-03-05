@@ -12,7 +12,7 @@ option go_package = "github.com/Stride-Labs/stride/v26/x/auction/types";
 service Query {
   // Auction queries the auction info for a specific token
   rpc Auction(QueryAuctionRequest) returns (QueryAuctionResponse) {
-    option (google.api.http).get = "/stride/auction/{name}";
+    option (google.api.http).get = "/stride/auction/auction/{name}";
   }
 
   // Auctions queries the auction info for a specific token
