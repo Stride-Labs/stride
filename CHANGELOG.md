@@ -42,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v26.0.1](https://github.com/Stride-Labs/stride/releases/tag/v26.0.1) - 2025-03-05
+
+1. REST: Fix auction query conflict ([#1374](https://github.com/Stride-Labs/stride/pull/1374))
+2. CLI: Fix CmdCreateAuction() to correctly parse minBidAmount ([#1375](https://github.com/Stride-Labs/stride/pull/1375))
+
 ## [v26.0.0](https://github.com/Stride-Labs/stride/releases/tag/v26.0.0) - 2025-02-28
 
 ### On-Chain changes
