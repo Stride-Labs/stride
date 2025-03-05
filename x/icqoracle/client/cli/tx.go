@@ -40,7 +40,7 @@ func CmdAddTokenPrice() *cobra.Command {
 			fmt.Sprintf(`Add a token to price tracking.
 
 Example:
-  $ %[1]s tx %[2]s add-token-price uosmo uatom 6 6 123 uosmo ibc/... --from admin
+  $ %[1]s tx %[2]s add-token-price uosmo uatom 123 uosmo ibc/... --from admin
 `, version.AppName, types.ModuleName),
 		),
 		Args: cobra.ExactArgs(5),
