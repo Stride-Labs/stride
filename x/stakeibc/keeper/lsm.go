@@ -334,9 +334,9 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	}
 
 	// Transfer the LSM token to the deposit account
-	// Note: we don't use utils.SafeSendCoins() because hostZoneDepositAddress is a module
+	// Note: checkBlockedAddr=false because hostZoneDepositAddress is a module
 	lsmIBCToken := sdk.NewCoin(lsmTokenDeposit.IbcDenom, lsmTokenDeposit.Amount)
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(lsmIBCToken)); err != nil {
+	if err := utils.SafeSendCoins(false, k.bankKeeper, ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(lsmIBCToken)); err != nil {
 		return errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 

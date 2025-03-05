@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	"github.com/Stride-Labs/stride/v26/x/auction/types"
 )
 
@@ -64,8 +65,10 @@ func fcfsBidHandler(ctx sdk.Context, k Keeper, auction *types.Auction, bid *type
 	bidder := sdk.MustAccAddressFromBech32(bid.Bidder)
 
 	// Send paymentToken to beneficiary
-	// Note: we don't use utils.SafeSendCoins() because Beneficiary can be a module
-	err = k.bankKeeper.SendCoins(
+	// Note: checkBlockedAddr=false because beneficiary can be a module
+	err = utils.SafeSendCoins(
+		false,
+		k.bankKeeper,
 		ctx,
 		bidder,
 		sdk.MustAccAddressFromBech32(auction.Beneficiary),

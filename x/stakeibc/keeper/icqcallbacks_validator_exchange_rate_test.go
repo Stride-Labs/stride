@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
@@ -401,7 +402,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_NoSlash_LiqudS
 	liquidStaker := s.TestAccs[0]
 	recipient := s.TestAccs[1]
 	balance := s.App.BankKeeper.GetBalance(s.Ctx, liquidStaker, tc.initialState.lsmTokenIBCDenom)
-	err := s.App.BankKeeper.SendCoins(s.Ctx, liquidStaker, recipient, sdk.NewCoins(balance))
+	err := utils.SafeSendCoins(true, s.App.BankKeeper, s.Ctx, liquidStaker, recipient, sdk.NewCoins(balance))
 	s.Require().NoError(err, "no error expected when sending liquid staker's LSM tokens")
 
 	// Now when we call the callback, the callback itself should succeed, but the finishing of the liquid stake should fail

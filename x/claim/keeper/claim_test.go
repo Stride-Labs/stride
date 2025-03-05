@@ -22,7 +22,7 @@ import (
 // Test functionality for loading allocation data(csv)
 func (suite *KeeperTestSuite) TestLoadAllocationData() {
 	suite.SetupTest()
-	var allocations = `identifier,address,weight
+	allocations := `identifier,address,weight
 osmosis,osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg,0.5
 osmosis,osmo1h4astdfzjhcwahtfrh24qtvndzzh49xvtm69fg,0.3
 stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7
@@ -142,7 +142,7 @@ func (suite *KeeperTestSuite) TestBalancesAfterAccountConversion() {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
 	initialBal := int64(1000)
-	err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err := utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
 
 	claimRecords := []types.ClaimRecord{
@@ -181,7 +181,7 @@ func (suite *KeeperTestSuite) TestClaimAccountTypes() {
 	suite.app.AccountKeeper.SetAccount(suite.ctx, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
 	initialBal := int64(1000)
-	err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err := utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
 
 	claimRecords := []types.ClaimRecord{
@@ -217,19 +217,19 @@ func (suite *KeeperTestSuite) TestClaimAccountTypes() {
 	// Initialize vesting accounts
 	addr2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr2)
-	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr2, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err = utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, distributors["stride"], addr2, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
 	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewBaseVestingAccount(account.(*authtypes.BaseAccount), nil, 0))
 
 	addr3 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr3)
-	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr3, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err = utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, distributors["stride"], addr3, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
 	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewContinuousVestingAccount(account.(*authtypes.BaseAccount), nil, 0, 0))
 
 	addr4 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr4)
-	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr4, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err = utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, distributors["stride"], addr4, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
 	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewPeriodicVestingAccount(account.(*authtypes.BaseAccount), nil, 0, nil))
 
@@ -265,9 +265,9 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 
 	for _, addr := range []sdk.AccAddress{addr1, addr2, addr3} {
 		initialBal := int64(1000)
-		err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		err := utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 		suite.Require().NoError(err)
-		err = suite.app.BankKeeper.SendCoins(suite.ctx, addr, distributors["stride"], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		err = utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, addr, distributors["stride"], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 		suite.Require().NoError(err)
 	}
 
@@ -367,9 +367,9 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 
 	for _, addr := range []sdk.AccAddress{addr1, addr2} {
 		initialBal := int64(1000)
-		err := suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		err := utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 		suite.Require().NoError(err)
-		err = suite.app.BankKeeper.SendCoins(suite.ctx, addr, distributors["stride"], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+		err = utils.SafeSendCoins(true, suite.app.BankKeeper, suite.ctx, addr, distributors["stride"], sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 		suite.Require().NoError(err)
 	}
 
@@ -616,7 +616,6 @@ func (suite *KeeperTestSuite) TestGetClaimStatus() {
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop ID for %d", i)
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop claimed for %i", i)
 	}
-
 }
 
 func (suite *KeeperTestSuite) TestGetClaimMetadata() {

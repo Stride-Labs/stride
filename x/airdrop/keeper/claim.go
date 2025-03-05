@@ -64,7 +64,7 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	// Update the reward record for to mark the progress
 	k.SetUserAllocation(ctx, userAllocation)
 
-	if err := utils.SafeSendCoins(k.bankKeeper, ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
+	if err := utils.SafeSendCoins(true, k.bankKeeper, ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 		return errorsmod.Wrapf(err, "unable to distribute rewards")
 	}
 
@@ -128,7 +128,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	// Update the reward record for to mark the progress
 	k.SetUserAllocation(ctx, userAllocation)
 
-	if err := utils.SafeSendCoins(k.bankKeeper, ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
+	if err := utils.SafeSendCoins(true, k.bankKeeper, ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 		return errorsmod.Wrapf(err, "unable to distribute rewards")
 	}
 
