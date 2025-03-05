@@ -101,9 +101,9 @@ Example:
 
 			enabled := args[3] == "true"
 
-			minBidAmount, err := strconv.ParseUint(args[3], 10, 64)
+			minBidAmount, err := strconv.ParseUint(args[5], 10, 64)
 			if err != nil {
-				return fmt.Errorf("cannot parse minBidAmount as uint64 from '%s': %w", args[3], err)
+				return fmt.Errorf("cannot parse minBidAmount as uint64 from '%s': %w", args[5], err)
 			}
 
 			msg := types.NewMsgCreateAuction(
