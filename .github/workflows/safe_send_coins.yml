@@ -1,0 +1,21 @@
+name: SafeSendCoins
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+jobs:
+  Gosec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+
+      - name: Fail if SendCoins is being used anywhere instead of SafeSendCoins
+        run: |
+          if grep -Fnr '.SendCoins(' --exclude-dir=deps --exclude={safe_send_coins.go,safe_send_coins.yml} .; then
+            echo "ERROR: Found direct usage of SendCoins(). Please use SafeSendCoins() instead."
+            exit 1
+          else
+            echo "No unsafe SendCoins() usage found. Good job!"
+          fi
