@@ -232,7 +232,7 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 		return err
 	}
 	amount := sdk.NewCoin(Ustrd, sdk.NewInt(STRDProp153SendAmount))
-	if err := k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount)); err != nil {
+	if err := utils.SafeSendCoins(false, k, ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount)); err != nil {
 		return err
 	}
 

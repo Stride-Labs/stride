@@ -5,6 +5,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
 )
 
@@ -63,7 +64,7 @@ func (k Keeper) ClaimDaily(ctx sdk.Context, airdropId, claimer string) error {
 	// Update the reward record for to mark the progress
 	k.SetUserAllocation(ctx, userAllocation)
 
-	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
+	if err := utils.SafeSendCoins(true, k.bankKeeper, ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 		return errorsmod.Wrapf(err, "unable to distribute rewards")
 	}
 
@@ -127,7 +128,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	// Update the reward record for to mark the progress
 	k.SetUserAllocation(ctx, userAllocation)
 
-	if err := k.bankKeeper.SendCoins(ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
+	if err := utils.SafeSendCoins(true, k.bankKeeper, ctx, distributorAccount, claimerAccount, sdk.NewCoins(rewardsCoin)); err != nil {
 		return errorsmod.Wrapf(err, "unable to distribute rewards")
 	}
 

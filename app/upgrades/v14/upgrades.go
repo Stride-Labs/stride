@@ -321,6 +321,7 @@ func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 
 	return nil
 }
+
 func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	// Get account
 	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(Account2))
@@ -340,7 +341,6 @@ func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 }
 
 func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stakeibckeeper.Keeper) error {
-
 	// Pre-upgrade params
 	// "params": {
 	// 		"enabled": false, Set to true
@@ -477,7 +477,7 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 
 	// CHANGE: because we're doing a migration, we don't need to send coins from the funder to the vesting account
 	// Send coins from the funder to vesting account
-	// if err = bk.SendCoins(ctx, funderAddr, vestingAddr, vestingCoins); err != nil {
+	// if err = utils.SafeSendCoins(false, bk, ctx, funderAddr, vestingAddr, vestingCoins); err != nil {
 	// 	return nil, err
 	// }
 
