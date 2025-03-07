@@ -1056,4 +1056,38 @@ describe("buyback and burn", () => {
     expect(baseDenomUnwrapped).toBe(UATOM);
     expect(quoteDenomUnwrapped).toBe(UOSMO);
   });
+
+  test.only("x/auction queries", async () => {
+    const stridejs = strideAccounts.admin;
+
+    // create a bunch of dummy auctions
+    const auctionNames = new Array(5)
+      .fill("")
+      .map(() => `auction${Math.random()}`);
+    await submitTxAndExpectSuccess(
+      stridejs,
+      auctionNames.map((auctionName) =>
+        stride.auction.MessageComposer.withTypeUrl.createAuction({
+          admin: stridejs.address,
+          auctionName,
+          auctionType: stride.auction.AuctionType.AUCTION_TYPE_FCFS,
+          sellingDenom: ATOM_DENOM_ON_STRIDE,
+          paymentDenom: USTRD,
+          enabled: true,
+          minPriceMultiplier: "0.95",
+          minBidAmount: "1",
+          beneficiary: stridejs.address,
+        }),
+      ),
+    );
+
+    const { auctions } = await stridejs.query.stride.auction.auctions({});
+
+    for (const name of auctionNames) {
+      expect(auctions.find((a) => a.name === name)).toBeDefined();
+
+      const { auction } = await stridejs.query.stride.auction.auction({ name });
+      expect(auction.name).toBe(name);
+    }
+  });
 });

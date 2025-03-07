@@ -44,8 +44,8 @@ importers:
         specifier: 3.3.3
         version: 3.3.3
       stridejs:
-        specifier: github:Stride-Labs/stridejs#e4141f7c26490e2354acb6808fc0e1b8fa3d3bb6
-        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e4141f7c26490e2354acb6808fc0e1b8fa3d3bb6
+        specifier: github:Stride-Labs/stridejs#main
+        version: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/784c4390bb2f7bfb23674b8d8ca12375d7f477b1
       typescript:
         specifier: 5.5.3
         version: 5.5.3
@@ -1675,9 +1675,9 @@ packages:
   std-env@3.8.0:
     resolution: {integrity: sha512-Bc3YwwCB+OzldMxOXJIIvC6cPRWr/LxOp48CdQTOkPyk/t4JWWJbrilwBd7RJzKV8QW7tJkcgAmeuLLJugl5/w==}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e4141f7c26490e2354acb6808fc0e1b8fa3d3bb6:
-    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e4141f7c26490e2354acb6808fc0e1b8fa3d3bb6}
-    version: 0.11.4
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/784c4390bb2f7bfb23674b8d8ca12375d7f477b1:
+    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/784c4390bb2f7bfb23674b8d8ca12375d7f477b1}
+    version: 0.13.0
 
   string-length@4.0.2:
     resolution: {integrity: sha512-+l6rNN5fYHNhZZy41RXsYptCjA2Igmq4EG7kZAYFQI1E1VTXarr6ZPXBg6eq7Y6eK4FEhY6AJlyuFIb/v/S0VQ==}
@@ -3853,7 +3853,7 @@ snapshots:
 
   std-env@3.8.0: {}
 
-  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e4141f7c26490e2354acb6808fc0e1b8fa3d3bb6:
+  stridejs@https://codeload.github.com/Stride-Labs/stridejs/tar.gz/784c4390bb2f7bfb23674b8d8ca12375d7f477b1:
     dependencies:
       '@cosmjs/amino': 0.33.0
       '@cosmjs/encoding': 0.33.0
