@@ -42,6 +42,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v26.0.2](https://github.com/Stride-Labs/stride/releases/tag/v26.0.2) - 2025-03-07
+
+1. REST: Fix auction queries paths ([#1378](https://github.com/Stride-Labs/stride/pull/1378))
+
 ## [v26.0.1](https://github.com/Stride-Labs/stride/releases/tag/v26.0.1) - 2025-03-05
 
 1. REST: Fix auction query conflict ([#1374](https://github.com/Stride-Labs/stride/pull/1374))
