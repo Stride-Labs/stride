@@ -398,3 +398,76 @@ func (s *KeeperTestSuite) TestFcfsPlaceBidNotEnoughPaymentTokens() {
 	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
 	s.Require().ErrorContains(err, "failed to send payment tokens from bidder")
 }
+
+func (s *KeeperTestSuite) TestPlaceBidLessThanMinBidAmount() {
+	// Create an auction
+	auction := types.Auction{
+		Type:               types.AuctionType_AUCTION_TYPE_FCFS,
+		Name:               "test-auction",
+		SellingDenom:       "uosmo",
+		PaymentDenom:       "ustrd",
+		Enabled:            true,
+		MinPriceMultiplier: sdkmath.LegacyNewDec(1),
+		MinBidAmount:       sdkmath.NewInt(1000),
+		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
+	}
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
+
+	// Prepare bid with amount lower than min bid amount
+	bidder := s.TestAccs[0]
+	msg := types.MsgPlaceBid{
+		AuctionName:        auction.Name,
+		Bidder:             bidder.String(),
+		SellingTokenAmount: sdkmath.NewInt(1000),
+		PaymentTokenAmount: sdkmath.NewInt(500), // less than min bid amount
+	}
+
+	// Place Bid
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "payment bid amount '500' is less than the minimum bid '1000' amount for auction 'test-auction'")
+}
+
+func (s *KeeperTestSuite) TestPlaceBidExactMinBidAmount() {
+	// Create an auction
+	auction := types.Auction{
+		Type:               types.AuctionType_AUCTION_TYPE_FCFS,
+		Name:               "test-auction",
+		SellingDenom:       "uosmo",
+		PaymentDenom:       "ustrd",
+		Enabled:            true,
+		MinPriceMultiplier: sdkmath.LegacyNewDec(1),
+		MinBidAmount:       sdkmath.NewInt(1000),
+		Beneficiary:        s.App.StrdBurnerKeeper.GetStrdBurnerAddress().String(),
+	}
+	s.App.AuctionKeeper.SetAuction(s.Ctx, &auction)
+
+	// Create a price
+	tokenPrice := icqoracletypes.TokenPrice{
+		BaseDenom:        auction.SellingDenom,
+		QuoteDenom:       auction.PaymentDenom,
+		OsmosisPoolId:    1,
+		SpotPrice:        sdkmath.LegacyNewDec(1),
+		LastResponseTime: s.Ctx.BlockTime(),
+		QueryInProgress:  false,
+	}
+	s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
+
+	// Prepare bid
+	bidder := s.TestAccs[0]
+	msg := types.MsgPlaceBid{
+		AuctionName:        auction.Name,
+		Bidder:             bidder.String(),
+		SellingTokenAmount: sdkmath.NewInt(1000),
+		PaymentTokenAmount: sdkmath.NewInt(1000),
+	}
+
+	// Mint enough selling coins to auction module to sell
+	s.FundModuleAccount(types.ModuleName, sdk.NewCoin(auction.SellingDenom, msg.SellingTokenAmount))
+
+	// Mint enough payment coins to bidder to pay
+	s.FundAccount(bidder, sdk.NewCoin(auction.PaymentDenom, msg.PaymentTokenAmount))
+
+	// Place Bid
+	_, err := s.GetMsgServer().PlaceBid(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when placing bid")
+}
