@@ -3,8 +3,8 @@ package v5_test
 import (
 	"testing"
 
+	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	sdkmath "cosmossdk.io/math"
