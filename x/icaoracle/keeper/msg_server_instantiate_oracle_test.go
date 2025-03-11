@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v26/x/icaoracle/types"

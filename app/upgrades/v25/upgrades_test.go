@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
 	v25 "github.com/Stride-Labs/stride/v26/app/upgrades/v25"

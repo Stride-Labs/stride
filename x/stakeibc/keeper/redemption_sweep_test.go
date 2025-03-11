@@ -4,7 +4,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"

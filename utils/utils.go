@@ -17,7 +17,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	config "github.com/Stride-Labs/stride/v26/cmd/strided/config"
 	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"

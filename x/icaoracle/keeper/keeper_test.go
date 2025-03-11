@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
