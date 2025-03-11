@@ -1274,7 +1274,7 @@ func (app *StrideApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (
 		return nil, err
 	}
 	err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
-if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
@@ -1374,7 +1374,7 @@ func (app *StrideApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.API
 	// Register new tx routes from grpc-gateway.
 	authtx.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	// Register new tendermint queries routes from grpc-gateway.
-	tmservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
+	cmtservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 	nodeservice.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
