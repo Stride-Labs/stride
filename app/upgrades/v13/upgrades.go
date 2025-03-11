@@ -8,9 +8,7 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
 )
 
-var (
-	UpgradeName = "v13"
-)
+var UpgradeName = "v13"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v13
 func CreateUpgradeHandler(

@@ -381,7 +381,6 @@ func (s *KeeperTestSuite) TestBuildTradeAuthzMsg() {
 		_, err = s.App.StakeibcKeeper.BuildTradeAuthzMsg(s.Ctx, tradeRoute, 100, granteeAddress, legacy)
 		s.Require().ErrorContains(err, "invalid permission change")
 	}
-
 }
 
 // --------------------------------------------------------------

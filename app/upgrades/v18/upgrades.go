@@ -92,7 +92,6 @@ func DecrementTerraDelegationChangesInProgress(
 	ctx sdk.Context,
 	sk stakeibckeeper.Keeper,
 ) error {
-
 	// grab the terra host zone
 	hostZone, found := sk.GetHostZone(ctx, TerraChainId)
 	if !found {
@@ -101,7 +100,6 @@ func DecrementTerraDelegationChangesInProgress(
 
 	// iterate the validators
 	for _, val := range hostZone.Validators {
-
 		// subtract 3, flooring at 0
 		if val.DelegationChangesInProgress < 3 {
 			val.DelegationChangesInProgress = 0

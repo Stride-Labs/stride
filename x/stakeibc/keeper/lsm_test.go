@@ -532,7 +532,6 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 			recordstypes.LSMTokenDeposit_TRANSFER_QUEUE,
 			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		} {
-
 			for i, shouldSucceed := range []bool{true, false} {
 				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
 				depositKey := fmt.Sprintf("%s-%s", chainId, denom)
@@ -678,7 +677,6 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 			recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		} {
-
 			for i := 0; i < 2; i++ {
 				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
 				depositKey := fmt.Sprintf("%s-%s", chainId, denom)

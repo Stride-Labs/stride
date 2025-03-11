@@ -110,7 +110,6 @@ func (s *UpgradeTestSuite) CheckRefundAfterUpgrade() {
 	remainingFrac := sdk.NewDec(int64(1)).Sub(refundFrac)
 	expectedNumCoins := remainingFrac.Mul(sdk.NewDec(InitCoins)).TruncateInt64()
 	s.Require().Equal(sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), expectedNumCoins), balance)
-
 }
 
 func (s *UpgradeTestSuite) CheckCcvConsumerParamsAfterUpgrade() {

@@ -342,8 +342,8 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 
 	// Create a host zone with valid addresses to perform the liquid stake
 	hostZone := types.HostZone{
-		ChainId:                           HostChainId,  //GAIA
-		Bech32Prefix:                      Bech32Prefix, //cosmos
+		ChainId:                           HostChainId,  // GAIA
+		Bech32Prefix:                      Bech32Prefix, // cosmos
 		HostDenom:                         Atom,
 		IbcDenom:                          IbcAtom,
 		TransferChannelId:                 ibctesting.FirstChannelID,

@@ -14,10 +14,8 @@ import (
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
-var (
-	// Timeout for the IBC transfer of the LSM Token to the host zone
-	LSMDepositTransferTimeout = time.Hour * 24 // 1 day
-)
+// Timeout for the IBC transfer of the LSM Token to the host zone
+var LSMDepositTransferTimeout = time.Hour * 24 // 1 day
 
 // Transfers native tokens, accumulated from normal liquid stakes, to the host zone
 // This is invoked epochly

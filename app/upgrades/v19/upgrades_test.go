@@ -19,9 +19,7 @@ import (
 	legacyratelimittypes "github.com/Stride-Labs/stride/v26/app/upgrades/v19/legacyratelimit/types"
 )
 
-var (
-	StTiaSupply = sdkmath.NewInt(1000)
-)
+var StTiaSupply = sdkmath.NewInt(1000)
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper

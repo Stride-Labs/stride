@@ -6,9 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-var (
-	UpgradeName = "v11"
-)
+var UpgradeName = "v11"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v11
 func CreateUpgradeHandler(

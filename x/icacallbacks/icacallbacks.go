@@ -35,7 +35,7 @@ func ParseTxMsgData(acknowledgementResult []byte) ([][]byte, error) {
 		return msgResponses, nil
 	default:
 		// for SDK 0.45 and below
-		var msgResponses = make([][]byte, len(txMsgData.Data))
+		msgResponses := make([][]byte, len(txMsgData.Data))
 		for i, msgData := range txMsgData.Data {
 			msgResponses[i] = msgData.Data
 		}

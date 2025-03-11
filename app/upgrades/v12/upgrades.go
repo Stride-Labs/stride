@@ -18,9 +18,7 @@ import (
 	"github.com/spf13/cast"
 )
 
-var (
-	UpgradeName = "v12"
-)
+var UpgradeName = "v12"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v12
 func CreateUpgradeHandler(
@@ -49,7 +47,7 @@ func CreateUpgradeHandler(
 			return fromVM, fmt.Errorf("failed to unmarshal genesis state: %w", err)
 		}
 
-		var consumerGenesis = consumertypes.GenesisState{}
+		consumerGenesis := consumertypes.GenesisState{}
 		cdc.MustUnmarshalJSON(appState[consumertypes.ModuleName], &consumerGenesis)
 
 		consumerGenesis.PreCCV = true

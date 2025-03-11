@@ -13,9 +13,7 @@ import (
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
-var (
-	LSMTokenDenom = "cosmosvaloperxxx/42"
-)
+var LSMTokenDenom = "cosmosvaloperxxx/42"
 
 func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
 	// we need a valid ibc denom here or the transfer will fail

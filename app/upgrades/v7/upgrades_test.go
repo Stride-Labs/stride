@@ -32,31 +32,36 @@ var (
 )
 
 // The block time here is arbitrary, but it's must start at a time that is not at an even hour
-var InitialBlockTime = time.Date(2023, 1, 1, 8, 43, 0, 0, time.UTC) // January 1st 2023 at 8:43 AM
-var EpochStartTime = time.Date(2023, 1, 1, 8, 00, 0, 0, time.UTC)   // January 1st 2023 at 8:00 AM
-var ExpectedHourEpoch = epochstypes.EpochInfo{
-	Identifier:            epochstypes.HOUR_EPOCH,
-	Duration:              time.Hour,
-	CurrentEpoch:          0,
-	StartTime:             EpochStartTime,
-	CurrentEpochStartTime: EpochStartTime,
-}
-var ExpectedJunoUnbondingFrequency = uint64(5)
-var ExpectedEpochProvisions = sdk.NewDec(1_078_767_123)
-var ExpectedAllowMessages = []string{
-	"/cosmos.bank.v1beta1.MsgSend",
-	"/cosmos.bank.v1beta1.MsgMultiSend",
-	"/cosmos.staking.v1beta1.MsgDelegate",
-	"/cosmos.staking.v1beta1.MsgUndelegate",
-	"/cosmos.staking.v1beta1.MsgBeginRedelegate",
-	"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-	"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress",
-	"/ibc.applications.transfer.v1.MsgTransfer",
-	"/cosmos.gov.v1beta1.MsgVote",
-	"/stride.stakeibc.MsgLiquidStake",
-	"/stride.stakeibc.MsgRedeemStake",
-	"/stride.stakeibc.MsgClaimUndelegatedTokens",
-}
+var (
+	InitialBlockTime  = time.Date(2023, 1, 1, 8, 43, 0, 0, time.UTC)  // January 1st 2023 at 8:43 AM
+	EpochStartTime    = time.Date(2023, 1, 1, 8, 0o0, 0, 0, time.UTC) // January 1st 2023 at 8:00 AM
+	ExpectedHourEpoch = epochstypes.EpochInfo{
+		Identifier:            epochstypes.HOUR_EPOCH,
+		Duration:              time.Hour,
+		CurrentEpoch:          0,
+		StartTime:             EpochStartTime,
+		CurrentEpochStartTime: EpochStartTime,
+	}
+)
+
+var (
+	ExpectedJunoUnbondingFrequency = uint64(5)
+	ExpectedEpochProvisions        = sdk.NewDec(1_078_767_123)
+	ExpectedAllowMessages          = []string{
+		"/cosmos.bank.v1beta1.MsgSend",
+		"/cosmos.bank.v1beta1.MsgMultiSend",
+		"/cosmos.staking.v1beta1.MsgDelegate",
+		"/cosmos.staking.v1beta1.MsgUndelegate",
+		"/cosmos.staking.v1beta1.MsgBeginRedelegate",
+		"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+		"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress",
+		"/ibc.applications.transfer.v1.MsgTransfer",
+		"/cosmos.gov.v1beta1.MsgVote",
+		"/stride.stakeibc.MsgLiquidStake",
+		"/stride.stakeibc.MsgRedeemStake",
+		"/stride.stakeibc.MsgClaimUndelegatedTokens",
+	}
+)
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper

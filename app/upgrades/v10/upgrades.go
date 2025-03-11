@@ -117,7 +117,6 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-
 		ctx.Logger().Info("Starting upgrade v10...")
 
 		ctx.Logger().Info("Migrating tendermint consensus params from x/params to x/consensus...")

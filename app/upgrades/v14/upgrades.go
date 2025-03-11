@@ -321,6 +321,7 @@ func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 
 	return nil
 }
+
 func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	// Get account
 	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(Account2))
@@ -340,7 +341,6 @@ func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 }
 
 func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stakeibckeeper.Keeper) error {
-
 	// Pre-upgrade params
 	// "params": {
 	// 		"enabled": false, Set to true
