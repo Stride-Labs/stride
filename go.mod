@@ -26,8 +26,8 @@ require (
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72
 	github.com/cosmos/ibc-go/v8 v8.6.1
 	github.com/cosmos/ics23/go v0.11.0
-	github.com/cosmos/interchain-security/v4 v4.0.0
-	github.com/evmos/vesting v0.0.0-20230818101748-9ea561e4529c
+	github.com/cosmos/interchain-security/v6 v6.4.1
+	github.com/evmos/evmos/v20 v20.0.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
