@@ -39,7 +39,7 @@ func (s *UtilsTestSuite) TestCacheCtxConsumeGas() {
 	}
 	for name, tc := range testcases {
 		s.Run(name, func() {
-			ctx := s.Ctx.WithGasMeter(sdk.NewGasMeter(tc.gasLimit))
+			ctx := s.Ctx.WithGasMeter(types.NewGasMeter(tc.gasLimit))
 			ctx.GasMeter().ConsumeGas(tc.gasUsedPreCtx, "pre ctx")
 			var err error
 			f := func() {
