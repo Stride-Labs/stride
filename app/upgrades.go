@@ -6,7 +6,6 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"

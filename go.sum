@@ -237,12 +237,8 @@ github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWX
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/Stride-Labs/cast v0.0.3 h1:eM3n/t3hSxb+iw9LDo3r/uGBp3w4U7wPv40GKMtJ1dI=
 github.com/Stride-Labs/cast v0.0.3/go.mod h1:SpXXQ5YoyJw6s3/6cMTQuxvgRl3PCJiyaX9p6b155UU=
-github.com/Stride-Labs/cosmos-sdk v0.47.15-stride-distribution-fix-0-mempool-verbose-error-0 h1:ea/B1ZAZvl1PnxFStU+pToMZaJ0d12/atZSjfZRv1NY=
-github.com/Stride-Labs/cosmos-sdk v0.47.15-stride-distribution-fix-0-mempool-verbose-error-0/go.mod h1:TKFtiZ8PhlI1IsGzBiftDQrXZHPtISUjxw3/4Jq1GPk=
-github.com/Stride-Labs/ibc-rate-limiting v1.0.0 h1:Omzd5qcfdaD6mPhMgtL0+B2yBvdovdgAnBzE3P2BLzY=
-github.com/Stride-Labs/ibc-rate-limiting v1.0.0/go.mod h1:cvHY3wI66beMkgeHLYjyAAFfzq4V8tYYtQRxNB6VbVM=
-github.com/Stride-Labs/vesting v1.0.0-check-base-account h1:eFlSH1itTVb0y4DKIlukSzawfwi2XidQ8+gcwZJRxnA=
-github.com/Stride-Labs/vesting v1.0.0-check-base-account/go.mod h1:sR5uUxxee8EhXEyqTmq06y5j2Nku1u9l4GJbxeRjlpw=
+github.com/VictoriaMetrics/fastcache v1.6.0 h1:C/3Oi3EiBCqufydp1neRZkqcwmEiuRT9c3fqvvgKm5o=
+github.com/VictoriaMetrics/fastcache v1.6.0/go.mod h1:0qHz5QP0GMX4pfmMA/zt5RgfNuXJrTP0zS7DqpHGGTw=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/adlio/schema v1.3.6 h1:k1/zc2jNfeiZBA5aFTRy37jlBIuCkXCm0XmvpzCKI9I=

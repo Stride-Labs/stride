@@ -11,7 +11,7 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )

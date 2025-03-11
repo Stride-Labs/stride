@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"

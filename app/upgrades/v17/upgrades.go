@@ -15,9 +15,9 @@ import (
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
-	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"

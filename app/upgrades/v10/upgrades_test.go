@@ -20,7 +20,7 @@ import (
 	v10 "github.com/Stride-Labs/stride/v26/app/upgrades/v10"
 	"github.com/Stride-Labs/stride/v26/utils"
 
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 	recordskeeper "github.com/Stride-Labs/stride/v26/x/records/keeper"
