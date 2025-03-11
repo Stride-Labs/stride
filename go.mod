@@ -13,9 +13,8 @@ require (
 	cosmossdk.io/x/upgrade v0.1.4
 	github.com/CosmWasm/wasmd v0.46.0
 	github.com/CosmWasm/wasmvm v1.5.9
-	github.com/Stride-Labs/ibc-rate-limiting v1.0.0
-	github.com/cometbft/cometbft v0.37.15
-	github.com/cometbft/cometbft-db v0.9.5
+	github.com/cometbft/cometbft v0.38.15
+	github.com/cometbft/cometbft-db v0.14.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.50.12
 	github.com/cosmos/gogoproto v1.7.0
