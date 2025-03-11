@@ -581,7 +581,7 @@ func NewStrideApp(
 
 	// Add wasm keeper and wasm client keeper (must be after IBCKeeper and TransferKeeper)
 	wasmContractMemoryLimit := uint32(32)
-	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4"
+	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0"
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmVmDir := filepath.Join(homePath, "wasm", "wasm")
 	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
