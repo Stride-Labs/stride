@@ -521,6 +521,7 @@ func NewStrideApp(
 		&app.ConsumerKeeper,
 		app.UpgradeKeeper,
 		scopedIBCKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Create IBC Hooks Keeper (must be defined after the wasmKeeper is created)
@@ -574,6 +575,7 @@ func NewStrideApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		scopedTransferKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Set the TransferKeeper reference in the PacketForwardKeeper
@@ -668,7 +670,7 @@ func NewStrideApp(
 		appCodec, keys[icacontrollertypes.StoreKey], app.GetSubspace(icacontrollertypes.SubModuleName),
 		app.IBCKeeper.ChannelKeeper, // may be replaced with middleware such as ics29 fee
 		app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
-		scopedICAControllerKeeper, app.MsgServiceRouter(),
+		scopedICAControllerKeeper, app.MsgServiceRouter(), authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.IcacallbacksKeeper = *icacallbacksmodulekeeper.NewKeeper(
@@ -861,6 +863,7 @@ func NewStrideApp(
 		app.AccountKeeper,
 		scopedICAHostKeeper,
 		app.MsgServiceRouter(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.ICAHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
