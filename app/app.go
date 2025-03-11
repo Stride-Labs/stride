@@ -188,7 +188,6 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		ibcclientclient.UpgradeProposalHandler,
 		stakeibcclient.AddValidatorsProposalHandler,
 		stakeibcclient.ToggleLSMProposalHandler,
-		evmosvestingclient.RegisterClawbackProposalHandler,
 	)
 
 	return govProposalHandlers
