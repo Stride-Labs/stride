@@ -56,12 +56,12 @@ message MsgUpdateInnerRedemptionRateBounds {
   string chain_id = 2;
   string min_inner_redemption_rate = 3 [
     (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   string max_inner_redemption_rate = 4 [
     (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 }
@@ -71,7 +71,7 @@ message MsgUpdateInnerRedemptionRateBoundsResponse {}
 message MsgLiquidStake {
   string creator = 1;
   string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string host_denom = 3;
@@ -86,7 +86,7 @@ message MsgLiquidStakeResponse {
 message MsgLSMLiquidStake {
   string creator = 1;
   string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string lsm_token_ibc_denom = 3;
@@ -97,7 +97,7 @@ message MsgClearBalance {
   string creator = 1;
   string chain_id = 2;
   string amount = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string channel = 4;
@@ -107,7 +107,7 @@ message MsgClearBalanceResponse {}
 message MsgRedeemStake {
   string creator = 1;
   string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string host_zone = 3;
@@ -131,12 +131,12 @@ message MsgRegisterHostZone {
       [ (gogoproto.moretags) = "yaml:\"unbonding_period\"" ];
   string min_redemption_rate = 13 [
     (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   string max_redemption_rate = 14 [
     (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   bool lsm_liquid_stake_enabled = 15;
@@ -271,7 +271,7 @@ message MsgCreateTradeRoute {
   // minimum amount of reward tokens to initate a swap
   // if not provided, defaults to 0
   string min_swap_amount = 15 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // Deprecated, the trades are now executed off-chain via authz
@@ -279,14 +279,14 @@ message MsgCreateTradeRoute {
   // maximum amount of reward tokens in a single swap
   // if not provided, defaults to 10e24
   string max_swap_amount = 16 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 
   // Minimum amount of reward token that must be accumulated before
   // the tokens are transferred to the trade ICA
   string min_transfer_amount = 17 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
@@ -341,7 +341,7 @@ message MsgUpdateTradeRoute {
   // if not provided, defaults to 0
   string min_swap_amount = 6 [
     deprecated = true,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   // Deprecated, the trades are now executed off-chain via authz
@@ -350,14 +350,14 @@ message MsgUpdateTradeRoute {
   // if not provided, defaults to 10e24
   string max_swap_amount = 7 [
     deprecated = true,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 
   // Minimum amount of reward token that must be accumulated before
   // the tokens are transferred to the trade ICA
   string min_transfer_amount = 17 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
@@ -376,12 +376,12 @@ message MsgSetCommunityPoolRebate {
   string chain_id = 2;
   // Rebate percentage represented as a decimal (e.g. 0.2 for 20%)
   string rebate_rate = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // Number of stTokens recieved by the community pool after liquid staking
   string liquid_staked_st_token_amount = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
