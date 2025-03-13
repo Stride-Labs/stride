@@ -8,8 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	"github.com/Stride-Labs/stride/v26/x/autopilot/types"
@@ -41,7 +41,7 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// Verify the amount is valid
-	amount, ok := sdk.NewIntFromString(transferMetadata.Amount)
+	amount, ok := sdkmath.NewIntFromString(transferMetadata.Amount)
 	if !ok {
 		return errors.New("not a parsable amount field")
 	}

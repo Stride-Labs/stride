@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
@@ -444,9 +443,9 @@ func TestMsgUpdateInnerRedemptionRateBounds_ValidateBasic(t *testing.T) {
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
 
-	validUpperBound := sdk.NewDec(2)
-	validLowerBound := sdk.NewDec(1)
-	invalidLowerBound := sdk.NewDec(2)
+	validUpperBound := sdkmath.LegacyNewDec(2)
+	validLowerBound := sdkmath.LegacyNewDec(1)
+	invalidLowerBound := sdkmath.LegacyNewDec(2)
 
 	tests := []struct {
 		name string

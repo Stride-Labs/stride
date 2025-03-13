@@ -6,8 +6,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v26/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
@@ -43,7 +43,7 @@ func (k Keeper) TryRedeemStake(
 
 	hostZoneDenom := stakeibctypes.HostZoneDenomFromStAssetDenom(stAssetDenom)
 
-	amount, ok := sdk.NewIntFromString(transferPacketData.Amount)
+	amount, ok := sdkmath.NewIntFromString(transferPacketData.Amount)
 	if !ok {
 		return fmt.Errorf("not a parsable amount field")
 	}

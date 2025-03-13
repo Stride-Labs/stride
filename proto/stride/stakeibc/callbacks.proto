@@ -12,7 +12,7 @@ option go_package = "github.com/Stride-Labs/stride/v26/x/stakeibc/types";
 message SplitDelegation {
   string validator = 1;
   string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
@@ -20,7 +20,7 @@ message SplitDelegation {
 message SplitUndelegation {
   string validator = 1;
   string native_token_amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
@@ -60,7 +60,7 @@ message Rebalancing {
   string src_validator = 1;
   string dst_validator = 2;
   string amt = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
@@ -85,7 +85,7 @@ message ValidatorSharesToTokensQueryCallback {
 message DelegatorSharesQueryCallback {
   // Validator delegation at the time the query is submitted
   string initial_validator_delegation = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }

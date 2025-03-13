@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/x/auction/types"
 )
@@ -19,7 +18,7 @@ func (s *KeeperTestSuite) createAuctions() []types.Auction {
 			SellingDenom:              fmt.Sprintf("selling-%d", i),
 			PaymentDenom:              fmt.Sprintf("payment-%d", i),
 			Enabled:                   true,
-			MinPriceMultiplier:        sdk.ZeroDec(),
+			MinPriceMultiplier:        sdkmath.LegacyZeroDec(),
 			MinBidAmount:              sdkmath.NewInt(i),
 			TotalPaymentTokenReceived: sdkmath.NewInt(i),
 			TotalSellingTokenSold:     sdkmath.NewInt(i),

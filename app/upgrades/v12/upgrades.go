@@ -1,8 +1,10 @@
 package v12
 
 import (
+	"context"
 	"fmt"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -10,17 +12,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 	"github.com/spf13/cast"
 )
 
-var (
-	UpgradeName = "v12"
-)
+var UpgradeName = "v12"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v12
 func CreateUpgradeHandler(
@@ -32,7 +31,9 @@ func CreateUpgradeHandler(
 	consumerKeeper *ccvconsumerkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
+
 		ctx.Logger().Info("Starting upgrade v12...")
 		ibcKeeper.ConnectionKeeper.SetParams(ctx, ibcconnectiontypes.DefaultParams())
 
@@ -49,7 +50,7 @@ func CreateUpgradeHandler(
 			return fromVM, fmt.Errorf("failed to unmarshal genesis state: %w", err)
 		}
 
-		var consumerGenesis = consumertypes.GenesisState{}
+		consumerGenesis := consumertypes.GenesisState{}
 		cdc.MustUnmarshalJSON(appState[consumertypes.ModuleName], &consumerGenesis)
 
 		consumerGenesis.PreCCV = true

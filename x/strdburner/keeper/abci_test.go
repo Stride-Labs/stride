@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -18,12 +19,12 @@ func (s *KeeperTestSuite) TestEndBlocker() {
 	}{
 		{
 			name:           "burn non-zero balance",
-			initialBalance: sdk.NewCoin("ustrd", sdk.NewInt(1000)),
+			initialBalance: sdk.NewCoin("ustrd", sdkmath.NewInt(1000)),
 			shouldBurn:     true,
 		},
 		{
 			name:           "zero balance - no burn",
-			initialBalance: sdk.NewCoin("ustrd", sdk.NewInt(0)),
+			initialBalance: sdk.NewCoin("ustrd", sdkmath.NewInt(0)),
 			shouldBurn:     false,
 		},
 	}
@@ -43,14 +44,14 @@ func (s *KeeperTestSuite) TestEndBlocker() {
 			require.Equal(t, tc.initialBalance, initialBalance)
 
 			initialTotalBurned := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
-			require.Equal(t, sdk.ZeroInt(), initialTotalBurned)
+			require.Equal(t, sdkmath.ZeroInt(), initialTotalBurned)
 
 			// Run EndBlocker
 			s.App.StrdBurnerKeeper.EndBlocker(s.Ctx)
 
 			// Verify final state
 			finalBalance := s.App.BankKeeper.GetBalance(s.Ctx, burnerAddress, "ustrd")
-			require.Equal(t, sdk.NewCoin("ustrd", sdk.ZeroInt()), finalBalance)
+			require.Equal(t, sdk.NewCoin("ustrd", sdkmath.ZeroInt()), finalBalance)
 
 			finalTotalBurned := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
 			if tc.shouldBurn {
@@ -71,7 +72,7 @@ func (s *KeeperTestSuite) TestEndBlocker() {
 				}
 				require.True(t, found, "burn event should have been emitted")
 			} else {
-				require.Equal(t, sdk.ZeroInt(), finalTotalBurned)
+				require.Equal(t, sdkmath.ZeroInt(), finalTotalBurned)
 			}
 		})
 	}

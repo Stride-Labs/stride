@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/stretchr/testify/require"
 
@@ -39,13 +41,13 @@ func TestGenesis(t *testing.T) {
 		ClaimRecords: []types.ClaimRecord{
 			{
 				Address:           addr1.String(),
-				Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+				Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 				ActionCompleted:   []bool{false, false, false},
 				AirdropIdentifier: types.DefaultAirdropIdentifier,
 			},
 			{
 				Address:           addr2.String(),
-				Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+				Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 				ActionCompleted:   []bool{false, false, false},
 				AirdropIdentifier: "juno",
 			},

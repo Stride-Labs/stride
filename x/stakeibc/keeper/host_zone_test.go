@@ -7,7 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/require"
 
 	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
@@ -20,12 +20,12 @@ func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Host
 	items := make([]types.HostZone, n)
 	for i := range items {
 		items[i].ChainId = strconv.Itoa(i)
-		items[i].RedemptionRate = sdk.NewDec(1)
-		items[i].LastRedemptionRate = sdk.NewDec(1)
-		items[i].MinRedemptionRate = sdk.NewDecWithPrec(5, 1)
-		items[i].MaxRedemptionRate = sdk.NewDecWithPrec(15, 1)
-		items[i].MinInnerRedemptionRate = sdk.NewDecWithPrec(5, 1)
-		items[i].MaxInnerRedemptionRate = sdk.NewDecWithPrec(15, 1)
+		items[i].RedemptionRate = sdkmath.LegacyNewDec(1)
+		items[i].LastRedemptionRate = sdkmath.LegacyNewDec(1)
+		items[i].MinRedemptionRate = sdkmath.LegacyNewDecWithPrec(5, 1)
+		items[i].MaxRedemptionRate = sdkmath.LegacyNewDecWithPrec(15, 1)
+		items[i].MinInnerRedemptionRate = sdkmath.LegacyNewDecWithPrec(5, 1)
+		items[i].MaxInnerRedemptionRate = sdkmath.LegacyNewDecWithPrec(15, 1)
 		items[i].TotalDelegations = sdkmath.ZeroInt()
 		keeper.SetHostZone(ctx, items[i])
 	}

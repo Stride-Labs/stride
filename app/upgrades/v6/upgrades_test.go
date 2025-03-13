@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v26/app"
@@ -69,21 +68,21 @@ func (s *UpgradeTestSuite) SetupClaimStore(codec codec.Codec) func() {
 	claimRecord1 := claimtypes.ClaimRecord{
 		AirdropIdentifier: airdropId,
 		Address:           addr1,
-		Weight:            sdk.NewDec(1000),
+		Weight:            sdkmath.LegacyNewDec(1000),
 		ActionCompleted:   []bool{true, true, false},
 	}
 	claimRecords = append(claimRecords, claimRecord1)
 	claimRecord2 := claimtypes.ClaimRecord{
 		AirdropIdentifier: airdropId,
 		Address:           addr2,
-		Weight:            sdk.NewDec(50),
+		Weight:            sdkmath.LegacyNewDec(50),
 		ActionCompleted:   []bool{true, true, true},
 	}
 	claimRecords = append(claimRecords, claimRecord2)
 	claimRecord3 := claimtypes.ClaimRecord{
 		AirdropIdentifier: airdropId,
 		Address:           addr3,
-		Weight:            sdk.NewDec(100),
+		Weight:            sdkmath.LegacyNewDec(100),
 		ActionCompleted:   []bool{false, false, false},
 	}
 	claimRecords = append(claimRecords, claimRecord3)
@@ -105,12 +104,12 @@ func (s *UpgradeTestSuite) SetupClaimStore(codec codec.Codec) func() {
 		fully_reset_action := []bool{false, false, false}
 		s.Require().Equal(claimRecords[0].ActionCompleted, fully_reset_action, "record 1 reset")
 		s.Require().Equal(claimRecords[0].Address, addr1, "record 1 address")
-		s.Require().Equal(claimRecords[0].Weight, sdk.NewDec(1000), "record 1 weight")
+		s.Require().Equal(claimRecords[0].Weight, sdkmath.LegacyNewDec(1000), "record 1 weight")
 		s.Require().Equal(claimRecords[1].ActionCompleted, fully_reset_action, "record 2 reset")
 		s.Require().Equal(claimRecords[1].Address, addr2, "record 2 address")
-		s.Require().Equal(claimRecords[1].Weight, sdk.NewDec(50), "record 2 weight")
+		s.Require().Equal(claimRecords[1].Weight, sdkmath.LegacyNewDec(50), "record 2 weight")
 		s.Require().Equal(claimRecords[2].ActionCompleted, fully_reset_action, "record 3 reset")
 		s.Require().Equal(claimRecords[2].Address, addr3, "record 3 address")
-		s.Require().Equal(claimRecords[2].Weight, sdk.NewDec(100), "record 3 weight")
+		s.Require().Equal(claimRecords[2].Weight, sdkmath.LegacyNewDec(100), "record 3 weight")
 	}
 }

@@ -27,7 +27,7 @@ type RedeemStakeTestCase struct {
 
 func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	redeemAmount := sdkmath.NewInt(1_000_000)
-	redemptionRate := sdk.MustNewDecFromStr("1.5")
+	redemptionRate := sdkmath.LegacyMustNewDecFromStr("1.5")
 	expectedNativeAmount := sdkmath.NewInt(1_500_000)
 
 	user := Account{
@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) TestRedeemStake_RateAboveMaxThreshold() {
 	tc := s.SetupRedeemStake()
 
 	hz := tc.hostZone
-	hz.RedemptionRate = sdk.NewDec(100)
+	hz.RedemptionRate = sdkmath.LegacyNewDec(100)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)

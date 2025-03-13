@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -108,7 +110,7 @@ func (k Keeper) CheckIfValidatorWasSlashed(
 	//     sharesToTokensRate = numTokens / numShares
 	//  We can use `validator.TokensFromShares`, plug in 1.0 for the number of shares,
 	//    and the returned number of tokens will be equal to the internal sharesToTokens rate
-	currentSharesToTokensRate := queriedValidator.TokensFromShares(sdk.NewDec(1.0))
+	currentSharesToTokensRate := queriedValidator.TokensFromShares(sdkmath.LegacyNewDec(1.0))
 	validator.SharesToTokensRate = currentSharesToTokensRate
 	hostZone.Validators[valIndex] = &validator
 	k.SetHostZone(ctx, hostZone)
@@ -175,7 +177,6 @@ func (k Keeper) LSMSlashQueryCallback(
 		async := true
 		return k.FinishLSMLiquidStake(ctx, lsmLiquidStake, async)
 	})
-
 	// If finishing the transaction failed, emit an event and remove the LSMTokenDeposit
 	if err != nil {
 		k.FailLSMLiquidStake(ctx, hostZone, lsmLiquidStake,

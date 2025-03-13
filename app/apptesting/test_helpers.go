@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -14,24 +15,25 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	appProvider "github.com/cosmos/interchain-security/v4/app/provider"
-	icstestingutils "github.com/cosmos/interchain-security/v4/testutil/ibc_testing"
-	e2e "github.com/cosmos/interchain-security/v4/testutil/integration"
-	testkeeper "github.com/cosmos/interchain-security/v4/testutil/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	"github.com/cosmos/ibc-go/v8/testing/simapp"
+	appProvider "github.com/cosmos/interchain-security/v6/app/provider"
+	icstestingutils "github.com/cosmos/interchain-security/v6/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v6/testutil/integration"
+	testkeeper "github.com/cosmos/interchain-security/v6/testutil/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -588,7 +590,7 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 func (s *AppTestHelper) GetBankStoreKeyPrefix(address, denom string) []byte {
 	_, addressBz, err := bech32.DecodeAndConvert(address)
 	s.Require().NoError(err, "no error expected when bech decoding address")
-	return append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
+	return append(bankv3types.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
 }
 
 // Extracts the address and denom from a bank store prefix

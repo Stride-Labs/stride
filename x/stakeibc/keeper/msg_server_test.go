@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
 	"github.com/Stride-Labs/stride/v26/utils"
@@ -150,7 +150,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	for _, validator := range expectedValidators {
 		validator.Delegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
-		validator.SharesToTokensRate = sdk.OneDec()
+		validator.SharesToTokensRate = sdkmath.LegacyOneDec()
 		validator.SlashQueryCheckpoint = expectedSlashCheckpoint
 	}
 
@@ -347,14 +347,14 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 			Address:            "stride_VAL1",
 			Weight:             0,
 			Delegation:         sdkmath.ZeroInt(),
-			SharesToTokensRate: sdk.OneDec(),
+			SharesToTokensRate: sdkmath.LegacyOneDec(),
 		},
 		{
 			Name:               "val2",
 			Address:            "stride_VAL2",
 			Weight:             0,
 			Delegation:         sdkmath.ZeroInt(),
-			SharesToTokensRate: sdk.OneDec(),
+			SharesToTokensRate: sdkmath.LegacyOneDec(),
 		},
 	}
 
@@ -476,7 +476,7 @@ func (s *KeeperTestSuite) SetupClearBalance() ClearBalanceTestCase {
 		ConnectionId:   ibctesting.FirstConnectionID,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
-		RedemptionRate: sdk.NewDec(1.0),
+		RedemptionRate: sdkmath.LegacyNewDec(1.0),
 		DepositAddress: depositAddress.String(),
 		FeeIcaAddress:  feeAddress,
 	}
@@ -598,7 +598,7 @@ func (s *KeeperTestSuite) SetupLiquidStake() LiquidStakeTestCase {
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
-		RedemptionRate: sdk.NewDec(1.0),
+		RedemptionRate: sdkmath.LegacyNewDec(1.0),
 		DepositAddress: depositAddress.String(),
 	}
 
@@ -679,8 +679,8 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 
 	// Loop over sharesToTokens rates: {0.92, 0.94, ..., 1.2}
 	for i := -8; i <= 10; i += 2 {
-		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdk.NewDec(10)).Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
-		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
+		redemptionDelta := sdkmath.LegacyNewDecWithPrec(1.0, 1).Quo(sdkmath.LegacyNewDec(10)).Mul(sdkmath.LegacyNewDec(int64(i))) // i = 2 => delta = 0.02
+		newRedemptionRate := sdkmath.LegacyNewDec(1.0).Add(redemptionDelta)
 		redemptionRateFloat := newRedemptionRate
 
 		// Update rate in host zone
@@ -695,7 +695,7 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount
 		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
 
-		expectedStAtomMinted := sdk.NewDecFromInt(msg.Amount).Quo(redemptionRateFloat).TruncateInt()
+		expectedStAtomMinted := sdkmath.LegacyNewDecFromInt(msg.Amount).Quo(redemptionRateFloat).TruncateInt()
 		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
 	}
@@ -752,7 +752,7 @@ func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
 
 	// Update rate in host zone to below min threshold
 	hz := tc.initialState.hostZone
-	hz.RedemptionRate = sdk.MustNewDecFromStr("0.8")
+	hz.RedemptionRate = sdkmath.LegacyMustNewDecFromStr("0.8")
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
@@ -765,7 +765,7 @@ func (s *KeeperTestSuite) TestLiquidStake_RateAboveMaxThreshold() {
 
 	// Update rate in host zone to below min threshold
 	hz := tc.initialState.hostZone
-	hz.RedemptionRate = sdk.NewDec(2)
+	hz.RedemptionRate = sdkmath.LegacyNewDec(2)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
@@ -810,7 +810,7 @@ func (s *KeeperTestSuite) TestLiquidStake_ZeroStTokens() {
 	// Adjust redemption rate and liquid stake amount so that the number of stTokens would be zero
 	// stTokens = 1(amount) / 1.1(RR) = rounds down to 0
 	hostZone := tc.initialState.hostZone
-	hostZone.RedemptionRate = sdk.NewDecWithPrec(11, 1)
+	hostZone.RedemptionRate = sdkmath.LegacyNewDecWithPrec(11, 1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	tc.validMsg.Amount = sdkmath.NewInt(1)
 
@@ -892,15 +892,15 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	// Sanity check
-	onePercent := sdk.MustNewDecFromStr("0.01")
-	s.Require().Equal(queryCheckpoint.Int64(), onePercent.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt64(),
+	onePercent := sdkmath.LegacyMustNewDecFromStr("0.01")
+	s.Require().Equal(queryCheckpoint.Int64(), onePercent.Mul(sdkmath.LegacyNewDecFromInt(totalHostZoneStake)).TruncateInt64(),
 		"setup failed - query checkpoint must be 1% of total host zone stake")
 
 	// Add the host zone with a valid zone address as the LSM custodian
 	hostZone := types.HostZone{
 		ChainId:           HostChainId,
 		HostDenom:         Atom,
-		RedemptionRate:    sdk.NewDec(1.0),
+		RedemptionRate:    sdkmath.LegacyNewDec(1.0),
 		DepositAddress:    depositAddress.String(),
 		TransferChannelId: ibctesting.FirstChannelID,
 		ConnectionId:      ibctesting.FirstConnectionID,
@@ -909,7 +909,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 			Address:                   ValAddress,
 			SlashQueryProgressTracker: progressTowardsQuery,
 			SlashQueryCheckpoint:      queryCheckpoint,
-			SharesToTokensRate:        sdk.OneDec(),
+			SharesToTokensRate:        sdkmath.LegacyOneDec(),
 		}},
 		DelegationIcaAddress:  "cosmos_DELEGATION",
 		LsmLiquidStakeEnabled: true,
@@ -982,7 +982,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithSharesToTokensRateQu
 	// Increase the liquid stake size so that it breaks the query checkpoint
 	// queryProgressSlack is the remaining amount that can be staked in one message before a slash query is issued
 	queryProgressSlack := tc.queryCheckpoint.Sub(tc.initialQueryProgress)
-	tc.validMsg.Amount = queryProgressSlack.Add(sdk.NewInt(1000))
+	tc.validMsg.Amount = queryProgressSlack.Add(sdkmath.NewInt(1000))
 
 	// Call LSM Liquid stake
 	msgResponse, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
@@ -1040,13 +1040,13 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithSharesToTokensRateQu
 
 func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 	tc := s.SetupTestLSMLiquidStake()
-	tc.validMsg.Amount = sdk.NewInt(100) // reduce the stake amount to prevent insufficient balance error
+	tc.validMsg.Amount = sdkmath.NewInt(100) // reduce the stake amount to prevent insufficient balance error
 
 	// Loop over sharesToTokens rates: {0.92, 0.94, ..., 1.2}
-	interval := sdk.MustNewDecFromStr("0.01")
+	interval := sdkmath.LegacyMustNewDecFromStr("0.01")
 	for i := -8; i <= 10; i += 2 {
-		redemptionDelta := interval.Mul(sdk.NewDec(int64(i))) // i = 2 => delta = 0.02
-		newRedemptionRate := sdk.NewDec(1.0).Add(redemptionDelta)
+		redemptionDelta := interval.Mul(sdkmath.LegacyNewDec(int64(i))) // i = 2 => delta = 0.02
+		newRedemptionRate := sdkmath.LegacyNewDec(1.0).Add(redemptionDelta)
 		redemptionRateFloat := newRedemptionRate
 
 		// Update rate in host zone
@@ -1061,7 +1061,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.liquidStakerAddress, StAtom).Amount
 		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
 
-		expectedStAtomMinted := sdk.NewDecFromInt(tc.validMsg.Amount).Quo(redemptionRateFloat).TruncateInt()
+		expectedStAtomMinted := sdkmath.LegacyNewDecFromInt(tc.validMsg.Amount).Quo(redemptionRateFloat).TruncateInt()
 		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
 
@@ -1160,7 +1160,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ZeroStTokens() {
 	// Adjust redemption rate and liquid stake amount so that the number of stTokens would be zero
 	// stTokens = 1(amount) / 1.1(RR) = rounds down to 0
 	hostZone := tc.hostZone
-	hostZone.RedemptionRate = sdk.NewDecWithPrec(11, 1)
+	hostZone.RedemptionRate = sdkmath.LegacyNewDecWithPrec(11, 1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	tc.validMsg.Amount = sdkmath.NewInt(1)
 
@@ -1522,7 +1522,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
-		RedemptionRate: sdk.OneDec(), // if not set, the beginblocker invariant panics
+		RedemptionRate: sdkmath.LegacyOneDec(), // if not set, the beginblocker invariant panics
 		Validators: []*types.Validator{
 			{Address: "valA", DelegationChangesInProgress: 1},
 			{Address: "valB", DelegationChangesInProgress: 2},
@@ -1882,9 +1882,9 @@ func (s *KeeperTestSuite) SetupUpdateInnerRedemptionRateBounds() UpdateInnerRede
 		ChainId:           HostChainId,
 		HostDenom:         Atom,
 		IbcDenom:          IbcAtom,
-		RedemptionRate:    sdk.NewDec(1.0),
-		MinRedemptionRate: sdk.NewDec(9).Quo(sdk.NewDec(10)),
-		MaxRedemptionRate: sdk.NewDec(15).Quo(sdk.NewDec(10)),
+		RedemptionRate:    sdkmath.LegacyNewDec(1.0),
+		MinRedemptionRate: sdkmath.LegacyNewDec(9).Quo(sdkmath.LegacyNewDec(10)),
+		MaxRedemptionRate: sdkmath.LegacyNewDec(15).Quo(sdkmath.LegacyNewDec(10)),
 	}
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -1893,8 +1893,8 @@ func (s *KeeperTestSuite) SetupUpdateInnerRedemptionRateBounds() UpdateInnerRede
 		// TODO: does this need to be the admin address?
 		Creator:                s.TestAccs[0].String(),
 		ChainId:                HostChainId,
-		MinInnerRedemptionRate: sdk.NewDec(1),
-		MaxInnerRedemptionRate: sdk.NewDec(11).Quo(sdk.NewDec(10)),
+		MinInnerRedemptionRate: sdkmath.LegacyNewDec(1),
+		MaxInnerRedemptionRate: sdkmath.LegacyNewDec(11).Quo(sdkmath.LegacyNewDec(10)),
 	}
 
 	return UpdateInnerRedemptionRateBoundsTestCase{
@@ -1923,21 +1923,21 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_OutOfBounds() {
 	tc := s.SetupUpdateInnerRedemptionRateBounds()
 
 	// Set the min inner bound to be less than the min outer bound
-	tc.validMsg.MinInnerRedemptionRate = sdk.NewDec(0)
+	tc.validMsg.MinInnerRedemptionRate = sdkmath.LegacyNewDec(0)
 
 	// Set the inner bounds on the host zone
 	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.validMsg)
 	// verify it throws an error
-	errMsg := fmt.Sprintf("inner min safety threshold (%s) is less than outer min safety threshold (%s)", tc.validMsg.MinInnerRedemptionRate, sdk.NewDec(9).Quo(sdk.NewDec(10)))
+	errMsg := fmt.Sprintf("inner min safety threshold (%s) is less than outer min safety threshold (%s)", tc.validMsg.MinInnerRedemptionRate, sdkmath.LegacyNewDec(9).Quo(sdkmath.LegacyNewDec(10)))
 	s.Require().ErrorContains(err, errMsg)
 
 	// Set the min inner bound to be valid, but the max inner bound to be greater than the max outer bound
-	tc.validMsg.MinInnerRedemptionRate = sdk.NewDec(1)
-	tc.validMsg.MaxInnerRedemptionRate = sdk.NewDec(3)
+	tc.validMsg.MinInnerRedemptionRate = sdkmath.LegacyNewDec(1)
+	tc.validMsg.MaxInnerRedemptionRate = sdkmath.LegacyNewDec(3)
 	// Set the inner bounds on the host zone
 	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &tc.validMsg)
 	// verify it throws an error
-	errMsg = fmt.Sprintf("inner max safety threshold (%s) is greater than outer max safety threshold (%s)", tc.validMsg.MaxInnerRedemptionRate, sdk.NewDec(15).Quo(sdk.NewDec(10)))
+	errMsg = fmt.Sprintf("inner max safety threshold (%s) is greater than outer max safety threshold (%s)", tc.validMsg.MaxInnerRedemptionRate, sdkmath.LegacyNewDec(15).Quo(sdkmath.LegacyNewDec(10)))
 	s.Require().ErrorContains(err, errMsg)
 }
 
@@ -1947,7 +1947,7 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds_InvalidMsg() {
 
 	// Set the min inner bound to be greater than than the max inner bound
 	invalidMsg := tc.validMsg
-	invalidMsg.MinInnerRedemptionRate = sdk.NewDec(2)
+	invalidMsg.MinInnerRedemptionRate = sdkmath.LegacyNewDec(2)
 
 	err := invalidMsg.ValidateBasic()
 
@@ -1961,8 +1961,8 @@ func (s *KeeperTestSuite) TestGetInnerSafetyBounds() {
 	tc := s.SetupUpdateInnerRedemptionRateBounds()
 
 	// Set the inner bounds outside the outer bounds on the host zone directly
-	tc.zone.MinInnerRedemptionRate = sdk.NewDec(0)
-	tc.zone.MaxInnerRedemptionRate = sdk.NewDec(3)
+	tc.zone.MinInnerRedemptionRate = sdkmath.LegacyNewDec(0)
+	tc.zone.MaxInnerRedemptionRate = sdkmath.LegacyNewDec(3)
 	// Set the host zone
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.zone)
 
@@ -1987,9 +1987,9 @@ func (s *KeeperTestSuite) SetupResumeHostZone() ResumeHostZoneTestCase {
 		ChainId:           HostChainId,
 		HostDenom:         Atom,
 		IbcDenom:          IbcAtom,
-		RedemptionRate:    sdk.NewDec(1.0),
-		MinRedemptionRate: sdk.NewDec(9).Quo(sdk.NewDec(10)),
-		MaxRedemptionRate: sdk.NewDec(15).Quo(sdk.NewDec(10)),
+		RedemptionRate:    sdkmath.LegacyNewDec(1.0),
+		MinRedemptionRate: sdkmath.LegacyNewDec(9).Quo(sdkmath.LegacyNewDec(10)),
+		MaxRedemptionRate: sdkmath.LegacyNewDec(15).Quo(sdkmath.LegacyNewDec(10)),
 		Halted:            true,
 	}
 
@@ -2065,10 +2065,10 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 // ----------------------------------------------------
 
 func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
-	stTokenSupply := sdk.NewInt(2000)
+	stTokenSupply := sdkmath.NewInt(2000)
 	rebateInfo := types.CommunityPoolRebate{
-		RebateRate:                sdk.MustNewDecFromStr("0.5"),
-		LiquidStakedStTokenAmount: sdk.NewInt(1000),
+		RebateRate:                sdkmath.LegacyMustNewDecFromStr("0.5"),
+		LiquidStakedStTokenAmount: sdkmath.NewInt(1000),
 	}
 
 	// Mint stTokens so the supply is populated
@@ -2097,7 +2097,7 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	// Attempt to update the rebate with a large liquid stake amount, it should fail
 	invalidMsg := types.MsgSetCommunityPoolRebate{
 		ChainId:                   HostChainId,
-		LiquidStakedStTokenAmount: sdk.NewInt(1_000_000),
+		LiquidStakedStTokenAmount: sdkmath.NewInt(1_000_000),
 	}
 	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "liquid staked stToken amount (1000000) is greater than current supply (2000)")
@@ -2105,7 +2105,7 @@ func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	// Submit a 0 LS amount which should delete the rebate
 	removeMsg := types.MsgSetCommunityPoolRebate{
 		ChainId:                   HostChainId,
-		LiquidStakedStTokenAmount: sdk.ZeroInt(),
+		LiquidStakedStTokenAmount: sdkmath.ZeroInt(),
 	}
 	_, err = s.GetMsgServer().SetCommunityPoolRebate(s.Ctx, &removeMsg)
 	s.Require().NoError(err, "no error expected when registering 0 rebate")

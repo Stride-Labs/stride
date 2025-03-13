@@ -14,7 +14,7 @@ import (
 func EpochsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	app := strideapp.InitStrideTestApp(true)
 	epochsKeeper := app.EpochsKeeper
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
+	ctx := app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
 
 	return &epochsKeeper, ctx
 }

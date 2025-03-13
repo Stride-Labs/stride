@@ -3,8 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 )
@@ -16,5 +15,5 @@ type IcqKeeper interface {
 
 // IbcTransferKeeper defines the expected interface needed to convert an ibc token hash to its denom on the source chain.
 type IbcTransferKeeper interface {
-	GetDenomTrace(ctx sdk.Context, denomTraceHash tmbytes.HexBytes) (ibctransfertypes.DenomTrace, bool)
+	GetDenomTrace(ctx sdk.Context, denomTraceHash []byte) (ibctransfertypes.DenomTrace, bool)
 }

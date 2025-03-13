@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"time"
 
+	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	cometbftdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/abci/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
-	"github.com/cometbft/cometbft/libs/log"
 	tmtypes "github.com/cometbft/cometbft/types"
+	cosmosdb "github.com/cosmos/cosmos-db"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
@@ -20,10 +20,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	appconsumer "github.com/cosmos/interchain-security/v4/app/consumer"
-	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	appconsumer "github.com/cosmos/interchain-security/v6/app/consumer"
+	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/v26/cmd/strided/config"
 	testutil "github.com/Stride-Labs/stride/v26/testutil"
@@ -46,7 +46,7 @@ func SetupConfig() {
 
 // Initializes a new StrideApp without IBC functionality
 func InitStrideTestApp(initChain bool) *StrideApp {
-	db := cometbftdb.NewMemDB()
+	db := cosmosdb.NewMemDB()
 	app := NewStrideApp(
 		log.NewNopLogger(),
 		db,
@@ -67,7 +67,7 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 		}
 
 		app.InitChain(
-			abci.RequestInitChain{
+			&abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: simtestutil.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
@@ -115,15 +115,15 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
 			Tokens:            bondAmt,
-			DelegatorShares:   sdk.OneDec(),
+			DelegatorShares:   sdkmath.LegacyOneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
 			MinSelfDelegation: sdkmath.ZeroInt(),
 		}
 		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress().String(), val.Address.String(), sdkmath.LegacyOneDec()))
 
 		// add initial validator powers so consumer InitGenesis runs correctly
 		pub, _ := val.ToProto()

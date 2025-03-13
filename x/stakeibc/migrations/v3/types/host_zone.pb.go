@@ -6,7 +6,7 @@ package types
 import (
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	github_com_cosmos_cosmos_sdk_types "cosmossdk.io/math"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -43,16 +43,16 @@ type HostZone struct {
 	HostDenom string `protobuf:"bytes,9,opt,name=host_denom,json=hostDenom,proto3" json:"host_denom,omitempty"`
 	// TODO(TEST-68): Should we make this an array and store the last n redemption
 	// rates then calculate a TWARR?
-	LastRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,10,opt,name=last_redemption_rate,json=lastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_redemption_rate"`
-	RedemptionRate     github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,11,opt,name=redemption_rate,json=redemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"redemption_rate"`
+	LastRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,10,opt,name=last_redemption_rate,json=lastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_redemption_rate"`
+	RedemptionRate     github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,11,opt,name=redemption_rate,json=redemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"redemption_rate"`
 	// stores how many days we should wait before issuing unbondings
 	UnbondingFrequency uint64 `protobuf:"varint,14,opt,name=unbonding_frequency,json=unbondingFrequency,proto3" json:"unbonding_frequency,omitempty"`
 	// TODO(TEST-101) int to dec
 	StakedBal         github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,13,opt,name=staked_bal,json=stakedBal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"staked_bal"`
 	Address           string                                 `protobuf:"bytes,18,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
 	Halted            bool                                   `protobuf:"varint,19,opt,name=halted,proto3" json:"halted,omitempty"`
-	MinRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,20,opt,name=min_redemption_rate,json=minRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_redemption_rate"`
-	MaxRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,21,opt,name=max_redemption_rate,json=maxRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_redemption_rate"`
+	MinRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,20,opt,name=min_redemption_rate,json=minRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_redemption_rate"`
+	MaxRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,21,opt,name=max_redemption_rate,json=maxRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_redemption_rate"`
 }
 
 func (m *HostZone) Reset()         { *m = HostZone{} }

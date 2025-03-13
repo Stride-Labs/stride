@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -22,7 +22,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
 
 	// Create a logger with accessible output
-	logger := log.NewTMLogger(&s.logBuffer)
+	logger := log.NewLogger(&s.logBuffer)
 	s.Ctx = s.Ctx.WithLogger(logger)
 }
 

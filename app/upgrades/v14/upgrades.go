@@ -1,12 +1,15 @@
 package v14
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -17,11 +20,10 @@ import (
 	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
-	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
-	"github.com/evmos/vesting/x/vesting/types"
-	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
+	evmosvestingkeeper "github.com/evmos/evmos/v20/x/vesting/keeper"
+	"github.com/evmos/evmos/v20/x/vesting/types"
+	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
@@ -95,7 +97,8 @@ func CreateUpgradeHandler(
 	evmosvestingKeeper evmosvestingkeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v14...")
 
 		evk := evmosvestingKeeper
@@ -268,6 +271,10 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 	// - delegatable
 	// - votable
 	// This is the default behavior (without a lockup). So, we don't add LockupPeriods.
+	bondDenom, err := sk.BondDenom(ctx)
+	if err != nil {
+		return fmt.Errorf("MigrateAccount1 BondDenom :%w", err)
+	}
 	fundAccMsg := &types.MsgFundVestingAccount{
 		FunderAddress:  FunderAddress,
 		VestingAddress: Account1,
@@ -275,7 +282,7 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 		VestingPeriods: sdkvesting.Periods{
 			// Period is 3 years
 			// 60*60*24*365*3 seconds
-			{Length: 94608000, Amount: sdk.NewCoins(sdk.NewCoin(sk.BondDenom(ctx), sdk.NewInt(Account1VestingUstrd)))},
+			{Length: 94608000, Amount: sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(Account1VestingUstrd)))},
 		},
 	}
 
@@ -321,6 +328,7 @@ func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 
 	return nil
 }
+
 func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	// Get account
 	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(Account2))
@@ -340,7 +348,6 @@ func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 }
 
 func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stakeibckeeper.Keeper) error {
-
 	// Pre-upgrade params
 	// "params": {
 	// 		"enabled": false, Set to true
@@ -386,13 +393,17 @@ func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stake
 func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, bk bankkeeper.Keeper, ak authkeeper.AccountKeeper, sk stakingkeeper.Keeper) error {
 	// Read account balance of consumer fee account
 	address := sdk.MustAccAddressFromBech32(ConsToSendToProvider)
-	frac, err := sdk.NewDecFromStr(RefundFraction)
+	frac, err := sdkmath.LegacyNewDecFromStr(RefundFraction)
 	if err != nil {
 		// ConsumerRedistributionFrac was already validated when set as a param
 		panic(fmt.Errorf("ConsumerRedistributionFrac is invalid: %w", err))
 	}
 
-	total := bk.GetBalance(ctx, address, sk.BondDenom(ctx))
+	bondDenom, err := sk.BondDenom(ctx)
+	if err != nil {
+		panic(fmt.Errorf("BondDenom :%w", err))
+	}
+	total := bk.GetBalance(ctx, address, bondDenom)
 	totalTokens := sdk.NewDecCoinsFromCoins(total)
 	// truncated decimals are implicitly added to provider
 	refundTokens, _ := totalTokens.MulDec(frac).TruncateDecimal()
@@ -518,10 +529,20 @@ func addGrant(
 	}
 
 	// how much is really delegated?
-	bondedAmt := stakingKeeper.GetDelegatorBonded(ctx, va.GetAddress())
-	unbondingAmt := stakingKeeper.GetDelegatorUnbonding(ctx, va.GetAddress())
+	bondedAmt, err := stakingKeeper.GetDelegatorBonded(ctx, va.GetAddress())
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+	}
+	unbondingAmt, err := stakingKeeper.GetDelegatorUnbonding(ctx, va.GetAddress())
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+	}
 	delegatedAmt := bondedAmt.Add(unbondingAmt)
-	delegated := sdk.NewCoins(sdk.NewCoin(stakingKeeper.BondDenom(ctx), delegatedAmt))
+	bondDenom, err := stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+	}
+	delegated := sdk.NewCoins(sdk.NewCoin(bondDenom, delegatedAmt))
 
 	// modify schedules for the new grant
 	newLockupStart, newLockupEnd, newLockupPeriods := types.DisjunctPeriods(va.GetStartTime(), grantStartTime, va.LockupPeriods, grantLockupPeriods)

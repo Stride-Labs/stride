@@ -3,20 +3,20 @@ package app
 import (
 	"fmt"
 
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
-	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v8/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
-	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
 
 	v10 "github.com/Stride-Labs/stride/v26/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v26/app/upgrades/v11"
@@ -36,6 +36,7 @@ import (
 	v24 "github.com/Stride-Labs/stride/v26/app/upgrades/v24"
 	v25 "github.com/Stride-Labs/stride/v26/app/upgrades/v25"
 	v26 "github.com/Stride-Labs/stride/v26/app/upgrades/v26"
+	v27 "github.com/Stride-Labs/stride/v26/app/upgrades/v27"
 	v3 "github.com/Stride-Labs/stride/v26/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v26/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v26/app/upgrades/v5"
@@ -349,6 +350,16 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.ICQOracleKeeper,
+		),
+	)
+
+	// v27 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v27.UpgradeName,
+		v27.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.ConsumerKeeper,
 		),
 	)
 

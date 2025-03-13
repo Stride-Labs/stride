@@ -8,9 +8,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) SetupLiquidStakeCommunityPoolTokens() LiquidStakeCommu
 		CommunityPoolStakeHoldingAddress: communityPoolHoldingAddress.String(),
 		CommunityPoolReturnIcaAddress:    communityPoolReturnICAAddress.String(),
 		DepositAddress:                   depositAddress.String(),
-		RedemptionRate:                   sdk.OneDec(),
+		RedemptionRate:                   sdkmath.LegacyOneDec(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -226,8 +226,8 @@ func (s *KeeperTestSuite) SetupLiquidStakeCommunityPoolTokens() LiquidStakeCommu
 
 	// Fund the holding address with native tokens (in IBC form) and
 	// some dummy tokens that should not get touched by these functions
-	initialNativeTokens := sdk.NewInt(1000)
-	initialDummyTokens := sdk.NewInt(999)
+	initialNativeTokens := sdkmath.NewInt(1000)
+	initialDummyTokens := sdkmath.NewInt(999)
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(IbcAtom, initialNativeTokens))
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(Atom, initialDummyTokens))   // dummy token
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(StAtom, initialDummyTokens)) // dummy token
@@ -330,8 +330,8 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 	communityPoolReturnICAAddress := HostICAAddress // need an address on HostChain (starts cosmos)
 
 	// stTokens which will be redeemed, dummy tokens which should not be touched
-	initialStTokens := sdk.NewInt(1000)
-	initialDummyTokens := sdk.NewInt(999)
+	initialStTokens := sdkmath.NewInt(1000)
+	initialDummyTokens := sdkmath.NewInt(999)
 
 	// Fund the redeem holding address with stTokens and
 	// some dummy tokens that should not get touched while redeeming
@@ -342,8 +342,8 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 
 	// Create a host zone with valid addresses to perform the liquid stake
 	hostZone := types.HostZone{
-		ChainId:                           HostChainId,  //GAIA
-		Bech32Prefix:                      Bech32Prefix, //cosmos
+		ChainId:                           HostChainId,  // GAIA
+		Bech32Prefix:                      Bech32Prefix, // cosmos
 		HostDenom:                         Atom,
 		IbcDenom:                          IbcAtom,
 		TransferChannelId:                 ibctesting.FirstChannelID,
@@ -351,7 +351,7 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 		CommunityPoolReturnIcaAddress:     communityPoolReturnICAAddress,
 		DepositAddress:                    depositAddress.String(),
 		TotalDelegations:                  initialStTokens, // at least as much as we are trying to redeem
-		RedemptionRate:                    sdk.OneDec(),
+		RedemptionRate:                    sdkmath.LegacyOneDec(),
 		RedemptionsEnabled:                true,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -434,7 +434,7 @@ func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Failure_NotEnoughDelegat
 	tc := s.SetupRedeemCommunityPoolTokens()
 
 	invalidHostZone := tc.hostZone
-	invalidHostZone.TotalDelegations = sdk.ZeroInt()
+	invalidHostZone.TotalDelegations = sdkmath.ZeroInt()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
 	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, invalidHostZone)
@@ -496,7 +496,7 @@ func (s *KeeperTestSuite) TestBuildFundCommunityPoolMsg() {
 			// Define the sending tokens and input host zone struct
 			// If the test case sends to the treasury, we have to set the community pool treasury
 			// address to be non-empty
-			tokens := sdk.NewCoins(sdk.NewCoin(HostDenom, sdk.NewInt(1000)))
+			tokens := sdk.NewCoins(sdk.NewCoin(HostDenom, sdkmath.NewInt(1000)))
 			hostZone := types.HostZone{
 				CommunityPoolReturnIcaAddress: communityPoolReturnICA,
 				WithdrawalIcaAddress:          withdrawalICA,

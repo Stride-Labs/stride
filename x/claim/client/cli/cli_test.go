@@ -33,10 +33,12 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
-var addr1 sdk.AccAddress
-var addr2 sdk.AccAddress
-var distributorMnemonics []string
-var distributorAddrs []string
+var (
+	addr1                sdk.AccAddress
+	addr2                sdk.AccAddress
+	distributorMnemonics []string
+	distributorAddrs     []string
+)
 
 func init() {
 	cmdcfg.SetupConfig()
@@ -70,7 +72,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	claimGenState.ClaimRecords = []types.ClaimRecord{
 		{
 			Address:           addr2.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
 		},
@@ -171,13 +173,13 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 	claimRecords := []claimtypes.ClaimRecord{
 		{
 			Address:           "stride1k8g9sagjpdwreqqf0qgqmd46l37595ea5ft9x6",
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
 		},
 		{
 			Address:           "stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d",
-			Weight:            sdk.NewDecWithPrec(30, 2), // 30%
+			Weight:            sdkmath.LegacyNewDecWithPrec(30, 2), // 30%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
 		},

@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			distributor := s.TestAccs[1]
 
 			// Fund the distributor
-			initialDistributorBalance := sdk.NewInt(1000)
+			initialDistributorBalance := sdkmath.NewInt(1000)
 			s.FundAccount(distributor, sdk.NewCoin(RewardDenom, initialDistributorBalance))
 
 			// Create the initial airdrop config
@@ -214,7 +214,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 	testCases := []struct {
 		name                      string
 		timeOffset                time.Duration
-		penalty                   sdk.Dec
+		penalty                   sdkmath.LegacyDec
 		initialAllocations        []int64
 		initialClaimed            int64
 		expectedClaimed           int64
@@ -228,7 +228,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			// 50% penalty, 15 distributed, 15 forfeited
 			name:                      "claim early the first day",
 			timeOffset:                time.Hour, // one hour into first window
-			penalty:                   sdk.MustNewDecFromStr("0.5"),
+			penalty:                   sdkmath.LegacyMustNewDecFromStr("0.5"),
 			initialAllocations:        []int64{10, 10, 10},
 			initialClaimed:            100,
 			expectedClaimed:           100 + 15,
@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			// 25% penalty, 15 distributed, 5 forfeited
 			name:                      "claim the second day",
 			timeOffset:                time.Hour * 25, // one hour into second window
-			penalty:                   sdk.MustNewDecFromStr("0.25"),
+			penalty:                   sdkmath.LegacyMustNewDecFromStr("0.25"),
 			initialAllocations:        []int64{0, 10, 10},
 			initialClaimed:            100,
 			expectedClaimed:           100 + 15,
@@ -254,7 +254,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			// 10% penalty, 27 distributed, 3 forfeited
 			name:                      "claim with previous claims",
 			timeOffset:                time.Hour * 49, // one hour into third window
-			penalty:                   sdk.MustNewDecFromStr("0.1"),
+			penalty:                   sdkmath.LegacyMustNewDecFromStr("0.1"),
 			initialAllocations:        []int64{0, 0, 10, 20},
 			initialClaimed:            100,
 			expectedClaimed:           100 + 27,
@@ -305,7 +305,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			distributor := s.TestAccs[1]
 
 			// Fund the distributor
-			initialDistributorBalance := sdk.NewInt(1000)
+			initialDistributorBalance := sdkmath.NewInt(1000)
 			s.FundAccount(distributor, sdk.NewCoin(RewardDenom, initialDistributorBalance))
 
 			// Create the initial airdrop config

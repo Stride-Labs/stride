@@ -3,11 +3,13 @@ package types
 import (
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 )
@@ -24,8 +26,8 @@ func NewMsgRegisterHostZone(
 	ibcDenom string,
 	transferChannelId string,
 	unbondingPeriod uint64,
-	minRedemptionRate sdk.Dec,
-	maxRedemptionRate sdk.Dec,
+	minRedemptionRate sdkmath.LegacyDec,
+	maxRedemptionRate sdkmath.LegacyDec,
 	lsmLiquidStakeEnabled bool,
 	communityPoolTreasuryAddress string,
 	maxMessagePerIcaTx uint64,

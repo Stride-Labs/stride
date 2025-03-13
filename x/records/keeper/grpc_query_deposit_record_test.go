@@ -138,14 +138,14 @@ func (s *KeeperTestSuite) TestQueryDepositRecordByHost() {
 	hostChain2 := "chain-2"
 
 	hostDepositRecords1 := []types.DepositRecord{
-		{HostZoneId: hostChain1, Id: 1, Amount: sdk.NewInt(1)},
-		{HostZoneId: hostChain1, Id: 2, Amount: sdk.NewInt(2)},
-		{HostZoneId: hostChain1, Id: 3, Amount: sdk.NewInt(3)},
+		{HostZoneId: hostChain1, Id: 1, Amount: sdkmath.NewInt(1)},
+		{HostZoneId: hostChain1, Id: 2, Amount: sdkmath.NewInt(2)},
+		{HostZoneId: hostChain1, Id: 3, Amount: sdkmath.NewInt(3)},
 	}
 	hostDepositRecords2 := []types.DepositRecord{
-		{HostZoneId: hostChain2, Id: 4, Amount: sdk.NewInt(4)},
-		{HostZoneId: hostChain2, Id: 5, Amount: sdk.NewInt(5)},
-		{HostZoneId: hostChain2, Id: 6, Amount: sdk.NewInt(6)},
+		{HostZoneId: hostChain2, Id: 4, Amount: sdkmath.NewInt(4)},
+		{HostZoneId: hostChain2, Id: 5, Amount: sdkmath.NewInt(5)},
+		{HostZoneId: hostChain2, Id: 6, Amount: sdkmath.NewInt(6)},
 	}
 
 	for _, depositRecord := range append(hostDepositRecords1, hostDepositRecords2...) {

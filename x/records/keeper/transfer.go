@@ -6,7 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
@@ -14,10 +14,8 @@ import (
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
-var (
-	// Timeout for the IBC transfer of the LSM Token to the host zone
-	LSMDepositTransferTimeout = time.Hour * 24 // 1 day
-)
+// Timeout for the IBC transfer of the LSM Token to the host zone
+var LSMDepositTransferTimeout = time.Hour * 24 // 1 day
 
 // Transfers native tokens, accumulated from normal liquid stakes, to the host zone
 // This is invoked epochly
