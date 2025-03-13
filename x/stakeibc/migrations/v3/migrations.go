@@ -12,7 +12,7 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
-func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateHostZone(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	stakeibcStore := prefix.NewStore(store, []byte(stakeibctypes.HostZoneKey))
 
 	iterator := stakeibcStore.Iterator(nil, nil)

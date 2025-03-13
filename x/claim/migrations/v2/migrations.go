@@ -11,7 +11,7 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
-func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {
+func migrateClaimParams(store storetypes.KVStore, cdc codec.Codec) error {
 	// Deserialize with old data type
 	oldParamsBz := store.Get([]byte(claimtypes.ParamsKey))
 	var oldParams oldclaimtypes.Params

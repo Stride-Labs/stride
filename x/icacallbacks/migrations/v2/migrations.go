@@ -11,7 +11,7 @@ import (
 	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 )
 
-func migrateCallbacks(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateCallbacks(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	icacallbackStore := prefix.NewStore(store, []byte(icacallbacktypes.CallbackDataKeyPrefix))
 
 	iter := icacallbackStore.Iterator(nil, nil)
