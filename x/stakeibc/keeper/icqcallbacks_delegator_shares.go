@@ -224,7 +224,7 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 
 	// Get slash percentage
 	slashAmount := validator.Delegation.Sub(delegatedTokens)
-	slashPct := sdk.NewDecFromInt(slashAmount).Quo(sdk.NewDecFromInt(validator.Delegation))
+	slashPct := sdkmath.LegacyNewDecFromInt(slashAmount).Quo(sdkmath.LegacyNewDecFromInt(validator.Delegation))
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Validator was slashed! Validator: %s, Delegator: %s, Delegation in State: %v, Delegation from ICQ %v, Slash Amount: %v, Slash Pct: %v",
 		validator.Address, hostZone.DelegationIcaAddress, validator.Delegation, delegatedTokens, slashAmount, slashPct))
@@ -234,7 +234,7 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrIntCast, "unable to convert validator weight to int64, err: %s", err.Error())
 	}
-	weightAdjustment := sdk.NewDecFromInt(delegatedTokens).Quo(sdk.NewDecFromInt(validator.Delegation))
+	weightAdjustment := sdkmath.LegacyNewDecFromInt(delegatedTokens).Quo(sdkmath.LegacyNewDecFromInt(validator.Delegation))
 
 	validator.Weight = sdkmath.LegacyNewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64()
 	validator.Delegation = validator.Delegation.Sub(slashAmount)

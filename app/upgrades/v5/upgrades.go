@@ -1,6 +1,7 @@
 package v5
 
 import (
+	"context"
 	"fmt"
 
 	storetypes "cosmossdk.io/store/types"
@@ -51,7 +52,8 @@ func CreateUpgradeHandler(
 	recordStoreKey storetypes.StoreKey,
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		currentVersions := mm.GetVersionMap()
 
 		// Remove authz from store as it causes an issue with state sync

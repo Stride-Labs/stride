@@ -679,7 +679,7 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 
 	// Loop over sharesToTokens rates: {0.92, 0.94, ..., 1.2}
 	for i := -8; i <= 10; i += 2 {
-		redemptionDelta := sdk.NewDecWithPrec(1.0, 1).Quo(sdkmath.LegacyNewDec(10)).Mul(sdkmath.LegacyNewDec(int64(i))) // i = 2 => delta = 0.02
+		redemptionDelta := sdkmath.LegacyNewDecWithPrec(1.0, 1).Quo(sdkmath.LegacyNewDec(10)).Mul(sdkmath.LegacyNewDec(int64(i))) // i = 2 => delta = 0.02
 		newRedemptionRate := sdkmath.LegacyNewDec(1.0).Add(redemptionDelta)
 		redemptionRateFloat := newRedemptionRate
 
@@ -695,7 +695,7 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount
 		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
 
-		expectedStAtomMinted := sdk.NewDecFromInt(msg.Amount).Quo(redemptionRateFloat).TruncateInt()
+		expectedStAtomMinted := sdkmath.LegacyNewDecFromInt(msg.Amount).Quo(redemptionRateFloat).TruncateInt()
 		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
 	}
@@ -752,7 +752,7 @@ func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
 
 	// Update rate in host zone to below min threshold
 	hz := tc.initialState.hostZone
-	hz.RedemptionRate = sdk.MustNewDecFromStr("0.8")
+	hz.RedemptionRate = sdkmath.LegacyMustNewDecFromStr("0.8")
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
@@ -810,7 +810,7 @@ func (s *KeeperTestSuite) TestLiquidStake_ZeroStTokens() {
 	// Adjust redemption rate and liquid stake amount so that the number of stTokens would be zero
 	// stTokens = 1(amount) / 1.1(RR) = rounds down to 0
 	hostZone := tc.initialState.hostZone
-	hostZone.RedemptionRate = sdk.NewDecWithPrec(11, 1)
+	hostZone.RedemptionRate = sdkmath.LegacyNewDecWithPrec(11, 1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	tc.validMsg.Amount = sdkmath.NewInt(1)
 
@@ -892,8 +892,8 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
 	// Sanity check
-	onePercent := sdk.MustNewDecFromStr("0.01")
-	s.Require().Equal(queryCheckpoint.Int64(), onePercent.Mul(sdk.NewDecFromInt(totalHostZoneStake)).TruncateInt64(),
+	onePercent := sdkmath.LegacyMustNewDecFromStr("0.01")
+	s.Require().Equal(queryCheckpoint.Int64(), onePercent.Mul(sdkmath.LegacyNewDecFromInt(totalHostZoneStake)).TruncateInt64(),
 		"setup failed - query checkpoint must be 1% of total host zone stake")
 
 	// Add the host zone with a valid zone address as the LSM custodian
@@ -1043,7 +1043,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 	tc.validMsg.Amount = sdkmath.NewInt(100) // reduce the stake amount to prevent insufficient balance error
 
 	// Loop over sharesToTokens rates: {0.92, 0.94, ..., 1.2}
-	interval := sdk.MustNewDecFromStr("0.01")
+	interval := sdkmath.LegacyMustNewDecFromStr("0.01")
 	for i := -8; i <= 10; i += 2 {
 		redemptionDelta := interval.Mul(sdkmath.LegacyNewDec(int64(i))) // i = 2 => delta = 0.02
 		newRedemptionRate := sdkmath.LegacyNewDec(1.0).Add(redemptionDelta)
@@ -1061,7 +1061,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.liquidStakerAddress, StAtom).Amount
 		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
 
-		expectedStAtomMinted := sdk.NewDecFromInt(tc.validMsg.Amount).Quo(redemptionRateFloat).TruncateInt()
+		expectedStAtomMinted := sdkmath.LegacyNewDecFromInt(tc.validMsg.Amount).Quo(redemptionRateFloat).TruncateInt()
 		testDescription := fmt.Sprintf("st atom balance for redemption rate: %v", redemptionRateFloat)
 		s.Require().Equal(expectedStAtomMinted, actualStAtomMinted, testDescription)
 
@@ -1160,7 +1160,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ZeroStTokens() {
 	// Adjust redemption rate and liquid stake amount so that the number of stTokens would be zero
 	// stTokens = 1(amount) / 1.1(RR) = rounds down to 0
 	hostZone := tc.hostZone
-	hostZone.RedemptionRate = sdk.NewDecWithPrec(11, 1)
+	hostZone.RedemptionRate = sdkmath.LegacyNewDecWithPrec(11, 1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	tc.validMsg.Amount = sdkmath.NewInt(1)
 
@@ -2067,7 +2067,7 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 func (s *KeeperTestSuite) TestSetCommunityPoolRebate() {
 	stTokenSupply := sdkmath.NewInt(2000)
 	rebateInfo := types.CommunityPoolRebate{
-		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		RebateRate:                sdkmath.LegacyMustNewDecFromStr("0.5"),
 		LiquidStakedStTokenAmount: sdkmath.NewInt(1000),
 	}
 

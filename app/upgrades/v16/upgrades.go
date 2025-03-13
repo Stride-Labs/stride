@@ -1,11 +1,14 @@
 package v16
 
 import (
+	"context"
+
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
@@ -25,7 +28,8 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	ratelimitKeeper ratelimitkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v16...")
 
 		// unhalt Cosmos Hub host zone

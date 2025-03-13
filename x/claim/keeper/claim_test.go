@@ -34,22 +34,22 @@ stride,stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk,0.5`
 
 	totalWeight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "osmosis")
 	suite.Require().NoError(err)
-	suite.Require().True(totalWeight.Equal(sdk.MustNewDecFromStr("0.8")))
+	suite.Require().True(totalWeight.Equal(sdkmath.LegacyMustNewDecFromStr("0.8")))
 
 	totalWeight, err = suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "stride")
 	suite.Require().NoError(err)
-	suite.Require().True(totalWeight.Equal(sdk.MustNewDecFromStr("1")))
+	suite.Require().True(totalWeight.Equal(sdkmath.LegacyMustNewDecFromStr("1")))
 
 	addr, _ := sdk.AccAddressFromBech32("stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk") // hex(stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk) = hex(osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg)
 	claimRecord, err := suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "osmosis")
 	suite.Require().NoError(err)
 	suite.Require().Equal(claimRecord.Address, "stride1g7yxhuppp5x3yqkah5mw29eqq5s4sv2f222xmk")
-	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.5")))
+	suite.Require().True(claimRecord.Weight.Equal(sdkmath.LegacyMustNewDecFromStr("0.5")))
 	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
 
 	claimRecord, err = suite.app.ClaimKeeper.GetClaimRecord(suite.ctx, addr, "stride")
 	suite.Require().NoError(err)
-	suite.Require().True(claimRecord.Weight.Equal(sdk.MustNewDecFromStr("0.3")))
+	suite.Require().True(claimRecord.Weight.Equal(sdkmath.LegacyMustNewDecFromStr("0.3")))
 	suite.Require().Equal(claimRecord.ActionCompleted, []bool{false, false, false})
 }
 
@@ -99,7 +99,7 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	claimRecords := []types.ClaimRecord{
 		{
 			Address:           addr1.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
@@ -127,7 +127,7 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	suite.app.ClaimKeeper.AfterLiquidStake(suite.ctx.WithBlockTime(airdropStartTime), addr1)
 	balances = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	// Now, it is the time for air drop, so claim module should send the balances to the user after liquid stake.
-	claimableAmountForLiquidStake := sdk.NewDecWithPrec(60, 2).
+	claimableAmountForLiquidStake := sdkmath.LegacyNewDecWithPrec(60, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // 60% for liquid stake
 	suite.Require().Equal(balances.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
@@ -148,7 +148,7 @@ func (suite *KeeperTestSuite) TestBalancesAfterAccountConversion() {
 	claimRecords := []types.ClaimRecord{
 		{
 			Address:           addr.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
@@ -160,7 +160,7 @@ func (suite *KeeperTestSuite) TestBalancesAfterAccountConversion() {
 	// check if original account tokens are not affected after stride vesting
 	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr, types.ACTION_DELEGATE_STAKE, "stride")
 	suite.Require().NoError(err)
-	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
+	claimableAmountForStake := sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000 - initialBal)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 
@@ -187,7 +187,7 @@ func (suite *KeeperTestSuite) TestClaimAccountTypes() {
 	claimRecords := []types.ClaimRecord{
 		{
 			Address:           addr.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
@@ -199,7 +199,7 @@ func (suite *KeeperTestSuite) TestClaimAccountTypes() {
 	// check if original account tokens are not affected after stride vesting
 	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr, types.ACTION_DELEGATE_STAKE, "stride")
 	suite.Require().NoError(err)
-	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
+	claimableAmountForStake := sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000 - initialBal)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 
@@ -238,7 +238,7 @@ func (suite *KeeperTestSuite) TestClaimAccountTypes() {
 		claimRecords := []types.ClaimRecord{
 			{
 				Address:           addr.String(),
-				Weight:            sdk.NewDecWithPrec(50, 2),
+				Weight:            sdkmath.LegacyNewDecWithPrec(50, 2),
 				ActionCompleted:   []bool{false, false, false},
 				AirdropIdentifier: types.DefaultAirdropIdentifier,
 			},
@@ -261,7 +261,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	addr1 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	addr2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	addr3 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	weight := sdk.NewDecWithPrec(50, 2)
+	weight := sdkmath.LegacyNewDecWithPrec(50, 2)
 
 	for _, addr := range []sdk.AccAddress{addr1, addr2, addr3} {
 		initialBal := int64(1000)
@@ -304,7 +304,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	// get rewards amount for free
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_FREE, "stride")
 	suite.Require().NoError(err)
-	claimableAmountForFree := sdk.NewDecWithPrec(20, 2).
+	claimableAmountForFree := sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance is 100000000, claim 20% for free
@@ -313,7 +313,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	// get rewards amount for stake
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_DELEGATE_STAKE, "stride")
 	suite.Require().NoError(err)
-	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
+	claimableAmountForStake := sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance is 90000000, claim 20% for stake
@@ -322,7 +322,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	// get rewards amount for liquid stake
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_LIQUID_STAKE, "stride")
 	suite.Require().NoError(err)
-	claimableAmountForLiquidStake := sdk.NewDecWithPrec(60, 2).
+	claimableAmountForLiquidStake := sdkmath.LegacyNewDecWithPrec(60, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance = 80000000, claim 60% for liquid stake
@@ -343,7 +343,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	suite.Require().NoError(err)
 	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_LIQUID_STAKE, "stride")
 	suite.Require().NoError(err)
-	claimableAmountForLiquidStake2 := sdk.NewDecWithPrec(60, 2).
+	claimableAmountForLiquidStake2 := sdkmath.LegacyNewDecWithPrec(60, 2).
 		Mul(sdkmath.LegacyNewDec(50_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance = 50000000*(60/100), claim 60% for liquid stake
@@ -376,19 +376,19 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	claimRecords := []types.ClaimRecord{
 		{
 			Address:           addr1.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 		{
 			Address:           addr2.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: "juno",
 		},
 		{
 			Address:           addr1.String(),
-			Weight:            sdk.NewDecWithPrec(30, 2), // 30%
+			Weight:            sdkmath.LegacyNewDecWithPrec(30, 2), // 30%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: "osmosis",
 		},
@@ -416,7 +416,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins1, err := suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_FREE, "osmosis")
 	suite.Require().NoError(err)
 
-	claimableAmountForFree := sdk.NewDecWithPrec(20, 2).
+	claimableAmountForFree := sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000, claim 20% for free
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
@@ -429,7 +429,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins1, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_DELEGATE_STAKE, "osmosis")
 	suite.Require().NoError(err)
 
-	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
+	claimableAmountForStake := sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
@@ -442,7 +442,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins1, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_LIQUID_STAKE, "osmosis")
 	suite.Require().NoError(err)
 
-	claimableAmountForLiquidStake := sdk.NewDecWithPrec(60, 2).
+	claimableAmountForLiquidStake := sdkmath.LegacyNewDecWithPrec(60, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance = 100000000*(80/100)*(80/100), claim 60% for liquid stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
@@ -485,7 +485,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	// get rewards amount for stake (juno user)
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour)), addr2, types.ACTION_DELEGATE_STAKE, "juno")
 	suite.Require().NoError(err)
-	claimableAmountForStake = sdk.NewDecWithPrec(20, 2).
+	claimableAmountForStake = sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
@@ -493,7 +493,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	// get rewards amount for liquid stake (juno user)
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour)), addr2, types.ACTION_LIQUID_STAKE, "juno")
 	suite.Require().NoError(err)
-	claimableAmountForLiquidStake = sdk.NewDecWithPrec(60, 2).
+	claimableAmountForLiquidStake = sdkmath.LegacyNewDecWithPrec(60, 2).
 		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance = 100000000*(80/100)*(80/100), claim 60% for liquid stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
@@ -509,7 +509,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr2, types.ACTION_FREE, "juno")
 	suite.Require().NoError(err)
 
-	claimableAmountForFree = sdk.NewDecWithPrec(20, 2).
+	claimableAmountForFree = sdkmath.LegacyNewDecWithPrec(20, 2).
 		Mul(sdkmath.LegacyNewDec(20_000_000)).
 		RoundInt64() // remaining balance = 20000000*(20/100), claim 20% for free
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
@@ -690,7 +690,7 @@ func (suite *KeeperTestSuite) SetupUpdateAirdropAddressChangeTests() UpdateAirdr
 
 	claimRecord := types.ClaimRecord{
 		Address:           recordKeyString,
-		Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+		Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 		ActionCompleted:   []bool{false, false, false},
 		AirdropIdentifier: airdropId,
 	}

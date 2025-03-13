@@ -224,7 +224,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPriceICQ_Errors() {
 // For this function, we'll always return a price of 1.5 for the baseDenom in terms of quote denom
 // However, the assets may be inverted depending on the parameters
 func (s *KeeperTestSuite) createMockTwapData(baseDenom, quoteDenom, asset0Denom, asset1Denom string) []byte {
-	baseAssetPrice := sdk.MustNewDecFromStr("1.5")
+	baseAssetPrice := sdkmath.LegacyMustNewDecFromStr("1.5")
 	quoteAssetPrice := sdkmath.LegacyOneDec().Quo(baseAssetPrice)
 
 	pool := types.OsmosisTwapRecord{
@@ -519,7 +519,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosis() {
 				"ibc/atom", // asset0
 				"ibc/usdc", // asset1
 			),
-			expectedPrice: sdk.MustNewDecFromStr("1.5"), // 1.5 from mock pool data
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("1.5"), // 1.5 from mock pool data
 		},
 		{
 			name: "successful price calculation with assets inverted",
@@ -533,7 +533,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosis() {
 				"ibc/usdc", // asset0
 				"ibc/atom", // asset1
 			),
-			expectedPrice: sdk.MustNewDecFromStr("1.5"), // 1.5 from mock pool data
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("1.5"), // 1.5 from mock pool data
 		},
 		{
 			name: "different denom ordering in pool",

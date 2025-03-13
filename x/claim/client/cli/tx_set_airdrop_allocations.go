@@ -8,8 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
@@ -21,7 +19,7 @@ func CmdSetAirdropAllocations() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argAddresses := strings.Split(args[1], ",")
 			argWeights := strings.Split(args[2], ",")
-			weights := []sdk.Dec{}
+			weights := []sdkmath.LegacyDec{}
 
 			for _, weight := range argWeights {
 				weightDec, err := sdkmath.LegacyNewDecFromStr(weight)

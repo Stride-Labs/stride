@@ -96,7 +96,7 @@ func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochI
 }
 
 // helper to get what share of the curr epoch we're through
-func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
+func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdkmath.LegacyDec, error) {
 	// Get the current stride epoch
 	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {

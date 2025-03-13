@@ -255,8 +255,8 @@ func (s *KeeperTestSuite) TestCalculateLSMStToken() {
 	testCases := []struct {
 		name                        string
 		liquidStakedShares          sdkmath.Int
-		validatorSharesToTokensRate sdk.Dec
-		redemptionRate              sdk.Dec
+		validatorSharesToTokensRate sdkmath.LegacyDec
+		redemptionRate              sdkmath.LegacyDec
 		expectedStAmount            sdkmath.Int
 	}{
 		// stTokenAmount = liquidStakedShares * validatorSharesToTokensRate / redemptionRate
@@ -271,28 +271,28 @@ func (s *KeeperTestSuite) TestCalculateLSMStToken() {
 			name:                        "one sharesToTokens rate, non-one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
 			validatorSharesToTokensRate: sdkmath.LegacyOneDec(),
-			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			redemptionRate:              sdkmath.LegacyMustNewDecFromStr("1.25"),
 			expectedStAmount:            sdkmath.NewInt(800), // 1000 * 1 / 1.25 = 800
 		},
 		{
 			name:                        "non-one sharesToTokens rate, one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
-			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
+			validatorSharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.75"),
 			redemptionRate:              sdkmath.LegacyOneDec(),
 			expectedStAmount:            sdkmath.NewInt(750), // 1000 * 0.75 / 1
 		},
 		{
 			name:                        "non-one sharesToTokens rate, non-one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
-			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
-			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			validatorSharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.75"),
+			redemptionRate:              sdkmath.LegacyMustNewDecFromStr("1.25"),
 			expectedStAmount:            sdkmath.NewInt(600), // 1000 * 0.75 / 1.25 = 600
 		},
 		{
 			name:                        "decimal to integer truncation",
 			liquidStakedShares:          sdkmath.NewInt(3333),
-			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.238498282349"),
-			redemptionRate:              sdk.MustNewDecFromStr("1.979034798243"),
+			validatorSharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.238498282349"),
+			redemptionRate:              sdkmath.LegacyMustNewDecFromStr("1.979034798243"),
 			expectedStAmount:            sdkmath.NewInt(401), // equals 401.667
 		},
 	}

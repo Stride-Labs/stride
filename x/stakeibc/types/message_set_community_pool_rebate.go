@@ -19,7 +19,7 @@ var _ sdk.Msg = &MsgSetCommunityPoolRebate{}
 func NewMsgSetCommunityPoolRebate(
 	creator string,
 	chainId string,
-	rebateRate sdk.Dec,
+	rebateRate sdkmath.LegacyDec,
 	liquidStakedStTokenAmount sdkmath.Int,
 ) *MsgSetCommunityPoolRebate {
 	return &MsgSetCommunityPoolRebate{

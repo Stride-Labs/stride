@@ -3,8 +3,6 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
@@ -26,8 +24,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 	testCases := []struct {
 		name                  string
 		currentDelegation     sdkmath.Int
-		sharesInQueryResponse sdk.Dec
-		sharesToTokensRate    sdk.Dec
+		sharesInQueryResponse sdkmath.LegacyDec
+		sharesToTokensRate    sdkmath.LegacyDec
 		expectedEndDelegation sdkmath.Int
 	}{
 		{
@@ -35,8 +33,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 			// Query response:     13,334 shares * 0.75 sharesToTokens = 10,000 tokens (+0)
 			name:                  "delegation change of 0",
 			currentDelegation:     sdkmath.NewInt(10_000),
-			sharesInQueryResponse: sdk.MustNewDecFromStr("13334"),
-			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("13334"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
 			expectedEndDelegation: sdkmath.NewInt(10_000),
 		},
 		{
@@ -44,8 +42,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-2,500)
 			name:                  "negative delegation change",
 			currentDelegation:     sdkmath.NewInt(10_000),
-			sharesInQueryResponse: sdk.MustNewDecFromStr("10000"),
-			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("10000"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
 			expectedEndDelegation: sdkmath.NewInt(7_500),
 		},
 		{
@@ -53,8 +51,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+2,500)
 			name:                  "positive delegation change",
 			currentDelegation:     sdkmath.NewInt(12_500),
-			sharesInQueryResponse: sdk.MustNewDecFromStr("20000"),
-			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("20000"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
 			expectedEndDelegation: sdkmath.NewInt(15_000),
 		},
 		{
@@ -62,8 +60,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-5,000)
 			name:                  "negative delegation change at threshold boundary",
 			currentDelegation:     sdkmath.NewInt(12_500),
-			sharesInQueryResponse: sdk.MustNewDecFromStr("10000"),
-			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("10000"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
 			expectedEndDelegation: sdkmath.NewInt(7_500),
 		},
 		{
@@ -71,8 +69,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+5,000)
 			name:                  "positive delegation change at threshold boundary",
 			currentDelegation:     sdkmath.NewInt(10_000),
-			sharesInQueryResponse: sdk.MustNewDecFromStr("20000"),
-			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("20000"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
 			expectedEndDelegation: sdkmath.NewInt(15_000),
 		},
 		{
@@ -80,8 +78,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-5,001)
 			name:                  "negative delegation change exceeds threshold",
 			currentDelegation:     sdkmath.NewInt(12_501),
-			sharesInQueryResponse: sdk.MustNewDecFromStr("10000"),
-			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("10000"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
 			expectedEndDelegation: sdkmath.NewInt(12_501), // no change
 		},
 		{
@@ -89,8 +87,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+5,001)
 			name:                  "positive delegation change exceeds threshold",
 			currentDelegation:     sdkmath.NewInt(9_999),
-			sharesInQueryResponse: sdk.MustNewDecFromStr("20000"),
-			sharesToTokensRate:    sdk.MustNewDecFromStr("0.75"),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("20000"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
 			expectedEndDelegation: sdkmath.NewInt(9_999), // no change
 		},
 	}

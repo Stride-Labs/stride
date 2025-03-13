@@ -1,9 +1,11 @@
 package v19
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -36,7 +38,8 @@ func CreateUpgradeHandler(
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	wasmKeeper wasmkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v19...")
 
 		// Run module migrations first to add wasm to the store

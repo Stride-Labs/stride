@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -216,9 +217,9 @@ func (s *UpgradeTestSuite) CheckRedemptionRateSafetyParamsAfterUpgrade() {
 	for _, hostZone := range allHostZones {
 		s.Require().False(hostZone.Halted, "host zone %s should not be halted", hostZone.ChainId)
 
-		s.Require().Equal(hostZone.MinRedemptionRate, sdk.MustNewDecFromStr("0.9"),
+		s.Require().Equal(hostZone.MinRedemptionRate, sdkmath.LegacyMustNewDecFromStr("0.9"),
 			"host zone %s min redemption rate", hostZone.ChainId)
-		s.Require().Equal(hostZone.MaxRedemptionRate, sdk.MustNewDecFromStr("1.5"),
+		s.Require().Equal(hostZone.MaxRedemptionRate, sdkmath.LegacyMustNewDecFromStr("1.5"),
 			"host zone %s max redemption rate", hostZone.ChainId)
 	}
 }

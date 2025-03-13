@@ -26,7 +26,7 @@ type RegisterHostZoneTestCase struct {
 	epochUnbondingRecordNumber uint64
 	strideEpochNumber          uint64
 	unbondingPeriod            uint64
-	defaultRedemptionRate      sdk.Dec
+	defaultRedemptionRate      sdkmath.LegacyDec
 	atomHostZoneChainId        string
 }
 

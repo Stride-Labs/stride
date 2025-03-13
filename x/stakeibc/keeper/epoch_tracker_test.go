@@ -84,7 +84,7 @@ func (s *KeeperTestSuite) SetupEpochElapsedShares(epochDurationSeconds float64, 
 }
 
 // Helper function to create an epoch tracker and check that the elapsed share matches expectations
-func (s *KeeperTestSuite) checkEpochElapsedShare(epochDurationSeconds float64, nextStartTimeSeconds float64, expectedShare sdk.Dec) {
+func (s *KeeperTestSuite) checkEpochElapsedShare(epochDurationSeconds float64, nextStartTimeSeconds float64, expectedShare sdkmath.LegacyDec) {
 	s.SetupEpochElapsedShares(epochDurationSeconds, nextStartTimeSeconds)
 
 	actualShare, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)

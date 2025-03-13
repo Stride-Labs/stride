@@ -1,9 +1,5 @@
 package types
 
-import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
 const (
 	// ModuleName defines the module name
 	ModuleName = "claim"
@@ -32,7 +28,7 @@ const (
 
 var (
 	// Percentages for actions
-	PercentageForFree        = sdk.NewDecWithPrec(20, 2) //20%
-	PercentageForStake       = sdk.NewDecWithPrec(20, 2) //20%
-	PercentageForLiquidStake = sdk.NewDecWithPrec(60, 2) //60%
+	PercentageForFree        = sdkmath.LegacyNewDecWithPrec(20, 2) // 20%
+	PercentageForStake       = sdkmath.LegacyNewDecWithPrec(20, 2) // 20%
+	PercentageForLiquidStake = sdkmath.LegacyNewDecWithPrec(60, 2) // 60%
 )

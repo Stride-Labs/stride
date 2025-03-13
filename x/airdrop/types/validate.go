@@ -17,7 +17,7 @@ func AirdropConfigValidateBasic(
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
 	claimTypeDeadlineDate *time.Time,
-	earlyClaimPenalty sdk.Dec,
+	earlyClaimPenalty sdkmath.LegacyDec,
 	distributorAddress string,
 	allocatorAddress string,
 	linkerAddress string,

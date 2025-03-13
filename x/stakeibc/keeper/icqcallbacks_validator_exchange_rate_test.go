@@ -35,7 +35,7 @@ type ValidatorICQCallbackArgs struct {
 type ValidatorICQCallbackTestCase struct {
 	initialState                ValidatorICQCallbackState
 	validArgs                   ValidatorICQCallbackArgs
-	sharesToTokensRateIfSlashed sdk.Dec
+	sharesToTokensRateIfSlashed sdkmath.LegacyDec
 }
 
 func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens int64, shares int64) []byte {
@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 	// and now has 1000 tokens (after being slashed)
 	numShares := int64(2000)
 	sharesToTokensRate := sdkmath.LegacyNewDec(1)
-	sharesToTokensRateIfSlashed := sdk.MustNewDecFromStr("0.5")
+	sharesToTokensRateIfSlashed := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	// The validator we'll query the sharesToTokens rate for
 	queriedValidator := types.Validator{
@@ -149,7 +149,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 }
 
 // Helper function to check the validator's shares to tokens rate after the query
-func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdk.Dec) {
+func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdkmath.LegacyDec) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),

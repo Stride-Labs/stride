@@ -1,6 +1,8 @@
 package v23
 
 import (
+	"context"
+
 	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,7 +30,8 @@ func CreateUpgradeHandler(
 	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v23...")
 
 		ctx.Logger().Info("Adding wasm client...")

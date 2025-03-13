@@ -60,7 +60,7 @@ func RegisterDenoms() {
 		panic(err)
 	}
 
-	if err := sdk.RegisterDenom(BaseCoinUnit, sdk.NewDecWithPrec(1, 6)); err != nil {
+	if err := sdk.RegisterDenom(BaseCoinUnit, sdkmath.LegacyNewDecWithPrec(1, 6)); err != nil {
 		panic(err)
 	}
 }

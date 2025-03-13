@@ -1,6 +1,8 @@
 package v25
 
 import (
+	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -20,16 +22,16 @@ var (
 	UpgradeName = "v25"
 
 	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
-	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+	RedemptionRateOuterMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.05")
+	RedemptionRateOuterMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("0.10")
 
 	// Osmosis will have a slighly larger buffer with the redemption rate
 	// since their yield is less predictable
 	OsmosisChainId              = "osmosis-1"
-	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
+	OsmosisRedemptionRateBuffer = sdkmath.LegacyMustNewDecFromStr("0.02")
 
 	// Inner redemption rate adjustment variables
-	RedemptionRateInnerAdjustment = sdk.MustNewDecFromStr("0.001")
+	RedemptionRateInnerAdjustment = sdkmath.LegacyMustNewDecFromStr("0.001")
 
 	// Info for failed LSM record
 	CosmosChainId         = "cosmoshub-4"
@@ -52,7 +54,8 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	staketiaKeeper staketiakeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v25...")
 
 		// Migrate staketia to stakeibc

@@ -66,7 +66,7 @@ func (k Keeper) UpdateRedemptionRate(ctx sdk.Context) error {
 	if !nativeTokensLocked.IsPositive() {
 		return errors.New("Non-zero stToken supply, yet the zero delegated and undelegated balance")
 	}
-	redemptionRate := sdk.NewDecFromInt(nativeTokensLocked).Quo(sdk.NewDecFromInt(stTokenSupply))
+	redemptionRate := sdkmath.LegacyNewDecFromInt(nativeTokensLocked).Quo(sdkmath.LegacyNewDecFromInt(stTokenSupply))
 
 	// Set the old and update redemption rate on the host
 	hostZone.LastRedemptionRate = hostZone.RedemptionRate

@@ -27,7 +27,7 @@ type RedeemStakeTestCase struct {
 
 func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
 	redeemAmount := sdkmath.NewInt(1_000_000)
-	redemptionRate := sdk.MustNewDecFromStr("1.5")
+	redemptionRate := sdkmath.LegacyMustNewDecFromStr("1.5")
 	expectedNativeAmount := sdkmath.NewInt(1_500_000)
 
 	user := Account{

@@ -96,7 +96,7 @@ func (s *UpgradeTestSuite) VerifyConsumerRewards() {
 func (s *UpgradeTestSuite) FundConsToSendToProviderModuleAccount() {
 	// Fund the cons_to_send_to_provider module account
 	address := sdk.MustAccAddressFromBech32(v14.ConsToSendToProvider)
-	s.FundAccount(address, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(InitCoins)))
+	s.FundAccount(address, sdk.NewCoin(s.MustBondDenom(s.Ctx), sdkmath.NewInt(InitCoins)))
 }
 
 func (s *UpgradeTestSuite) CheckRefundAfterUpgrade() {
@@ -104,12 +104,12 @@ func (s *UpgradeTestSuite) CheckRefundAfterUpgrade() {
 	// Verify the correct number of tokens were sent out of the cons_to_send_to_provider module account
 	icsFeeAddress := sdk.MustAccAddressFromBech32(v14.ConsToSendToProvider)
 	// Check the account balance
-	balance := s.App.BankKeeper.GetBalance(afterCtx, icsFeeAddress, s.App.StakingKeeper.BondDenom(afterCtx))
+	balance := s.App.BankKeeper.GetBalance(afterCtx, icsFeeAddress, s.MustBondDenom(afterCtx))
 	refundFrac, err := sdkmath.LegacyNewDecFromStr(v14.RefundFraction)
 	s.Require().NoError(err)
 	remainingFrac := sdkmath.LegacyNewDec(int64(1)).Sub(refundFrac)
 	expectedNumCoins := remainingFrac.Mul(sdkmath.LegacyNewDec(InitCoins)).TruncateInt64()
-	s.Require().Equal(sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), expectedNumCoins), balance)
+	s.Require().Equal(sdk.NewInt64Coin(s.MustBondDenom(s.Ctx), expectedNumCoins), balance)
 }
 
 func (s *UpgradeTestSuite) CheckCcvConsumerParamsAfterUpgrade() {
@@ -139,8 +139,8 @@ func (s *UpgradeTestSuite) SetupVestingStoreBeforeUpgrade() {
 	account2 := s.CreateContinuousVestingAccount(address2, v14.VestingStartTimeAccount2, v14.VestingEndTimeAccount2, v14.Account2VestingUstrd)
 
 	// Fund accounts 1 and 2
-	s.FundAccount(address1, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(v14.Account1VestingUstrd)))
-	s.FundAccount(address2, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(v14.Account2VestingUstrd)))
+	s.FundAccount(address1, sdk.NewCoin(s.MustBondDenom(s.Ctx), sdkmath.NewInt(v14.Account1VestingUstrd)))
+	s.FundAccount(address2, sdk.NewCoin(s.MustBondDenom(s.Ctx), sdkmath.NewInt(v14.Account2VestingUstrd)))
 
 	// Store the accounts as ContinuousVestingAccounts
 	s.App.AccountKeeper.SetAccount(s.Ctx, account1)
@@ -160,8 +160,8 @@ func (s *UpgradeTestSuite) CheckVestingStoreAfterUpgrade() {
 	// And that no tokens are vested after the upgrade
 	vestingAccount1 := account1.(*evmosvestingtypes.ClawbackVestingAccount)
 	afterUpgrade := time.Unix(AfterUpgrade, 0)
-	coins := vestingAccount1.GetVestedOnly(afterUpgrade)
-	s.Require().Equal(int64(0), coins.AmountOf(s.App.StakingKeeper.BondDenom(s.Ctx)).Int64())
+	coins := vestingAccount1.GetVestedCoins(afterUpgrade)
+	s.Require().Equal(int64(0), coins.AmountOf(s.MustBondDenom(s.Ctx)).Int64())
 
 	// Verify account2 is still a ContinuousVestingAccount
 	account2 := s.App.AccountKeeper.GetAccount(afterCtx, address2)
@@ -170,7 +170,7 @@ func (s *UpgradeTestSuite) CheckVestingStoreAfterUpgrade() {
 	vestingAccount2 := account2.(*types.ContinuousVestingAccount)
 	coins = vestingAccount2.GetVestedCoins(afterUpgrade)
 	expectedVestedCoins := int64(float64(v14.Account2VestingUstrd)*(float64(AfterUpgrade-v14.VestingStartTimeAccount2)/float64(v14.VestingEndTimeAccount2-v14.VestingStartTimeAccount2))) + 1 // add 1, rounding
-	s.Require().Equal(expectedVestedCoins, coins.AmountOf(s.App.StakingKeeper.BondDenom(s.Ctx)).Int64())
+	s.Require().Equal(expectedVestedCoins, coins.AmountOf(s.MustBondDenom(s.Ctx)).Int64())
 }
 
 func initBaseAccount(address sdk.AccAddress) *authtypes.BaseAccount {
@@ -185,8 +185,9 @@ func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress
 	// init a base account
 	// send tokens to the base account
 	bacc := initBaseAccount(address)
-	origCoins := sdk.Coins{sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), coins)}
-	cva := types.NewContinuousVestingAccount(bacc, origCoins, start, end)
+	origCoins := sdk.Coins{sdk.NewInt64Coin(s.MustBondDenom(s.Ctx), coins)}
+	cva, err := types.NewContinuousVestingAccount(bacc, origCoins, start, end)
+	s.Require().NoError(err)
 
 	// Sanity check the vesting schedule
 	// require no coins vested in the very beginning of the vesting schedule
@@ -200,7 +201,7 @@ func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress
 	// require 50% of coins vested
 	midpoint := time.Unix((start+end)/2, 0)
 	vestedCoins = cva.GetVestedCoins(midpoint)
-	s.Require().Equal(sdk.Coins{sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), coins/2)}, vestedCoins)
+	s.Require().Equal(sdk.Coins{sdk.NewInt64Coin(s.MustBondDenom(s.Ctx), coins/2)}, vestedCoins)
 
 	return cva
 }
@@ -362,4 +363,10 @@ func (s *UpgradeTestSuite) SetupPendingQueries() func() {
 		numQueries := len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
 		s.Require().Zero(numQueries, "number of queres after the upgrade")
 	}
+}
+
+func (s *UpgradeTestSuite) MustBondDenom(ctx sdk.Context) string {
+	bondDenom, err := s.App.StakingKeeper.BondDenom(ctx)
+	s.Require().NoError(err)
+	return bondDenom
 }

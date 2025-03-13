@@ -6,7 +6,7 @@ import (
 
 // NewMinter returns a new Minter object with the given epoch
 // provisions values.
-func NewMinter(epochProvisions sdk.Dec) Minter {
+func NewMinter(epochProvisions sdkmath.LegacyDec) Minter {
 	return Minter{
 		EpochProvisions: epochProvisions,
 	}
@@ -28,7 +28,7 @@ func ValidateMinter(minter Minter) error {
 }
 
 // NextEpochProvisions returns the epoch provisions.
-func (m Minter) NextEpochProvisions(params Params) sdk.Dec {
+func (m Minter) NextEpochProvisions(params Params) sdkmath.LegacyDec {
 	return m.EpochProvisions.Mul(params.ReductionFactor)
 }
 

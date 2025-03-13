@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
@@ -19,12 +18,12 @@ func (s *KeeperTestSuite) initializeHostZone() types.HostZone {
 		DepositAddress:         "stride8abb3e",
 		RedemptionAddress:      "stride3400de1",
 		ClaimAddress:           "stride00b1a83",
-		LastRedemptionRate:     sdk.MustNewDecFromStr("1.0"),
-		RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-		MinRedemptionRate:      sdk.MustNewDecFromStr("0.95"),
-		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.10"),
-		MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.97"),
-		MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.07"),
+		LastRedemptionRate:     sdkmath.LegacyMustNewDecFromStr("1.0"),
+		RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+		MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.95"),
+		MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.10"),
+		MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.97"),
+		MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.07"),
 		DelegatedBalance:       sdkmath.NewInt(1_000_000),
 		Halted:                 false,
 	}
@@ -48,7 +47,7 @@ func (s *KeeperTestSuite) TestRemoveHostZone() {
 func (s *KeeperTestSuite) TestSetHostZone() {
 	hostZone := s.initializeHostZone()
 
-	hostZone.RedemptionRate = hostZone.RedemptionRate.Add(sdk.MustNewDecFromStr("0.1"))
+	hostZone.RedemptionRate = hostZone.RedemptionRate.Add(sdkmath.LegacyMustNewDecFromStr("0.1"))
 	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(sdkmath.NewInt(100_000))
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 

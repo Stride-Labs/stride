@@ -1,9 +1,9 @@
 package types
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 
@@ -13,12 +13,12 @@ import (
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 // Methods imported from account should be defined here
 type AccountKeeper interface {
-	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
-	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
-	GetAllAccounts(ctx sdk.Context) []types.AccountI
-	GetModuleAccount(ctx sdk.Context, moduleName string) types.ModuleAccountI
-	RemoveAccount(ctx sdk.Context, acc authtypes.AccountI)
+	NewAccount(context.Context, sdk.AccountI) sdk.AccountI
+	SetAccount(ctx context.Context, acc sdk.AccountI)
+	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
+	GetAllAccounts(ctx context.Context) []sdk.AccountI
+	GetModuleAccount(ctx context.Context, moduleName string) sdk.ModuleAccountI
+	RemoveAccount(ctx context.Context, acc sdk.AccountI)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.

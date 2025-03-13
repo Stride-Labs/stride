@@ -45,7 +45,7 @@ type ClaimRecord struct {
 	// address of claim user
 	Address string
 	// weight that represent the portion from total allocation
-	Weight sdk.Dec
+	Weight sdkmath.LegacyDec
 	// true if action is completed
 	// index of bool in array refers to action enum #
 	ActionCompleted []bool

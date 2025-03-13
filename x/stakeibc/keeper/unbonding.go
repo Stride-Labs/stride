@@ -28,7 +28,7 @@ type ValidatorUnbondCapacity struct {
 // This represents how proportionally unbalanced each validator is
 // The smaller number means their current delegation is much larger
 // then their fair portion of the current total stake
-func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
+func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdkmath.LegacyDec, error) {
 	// ValidatorUnbondCapaciy structs only exist for validators with positive capacity
 	//   capacity is CurrentDelegation - BalancedDelegation
 	//   positive capacity means CurrentDelegation must be >0
@@ -38,7 +38,7 @@ func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
 		errMsg := fmt.Sprintf("CurrentDelegation should not be 0 inside GetBalanceRatio(), %+v", c)
 		return sdkmath.LegacyZeroDec(), errors.New(errMsg)
 	}
-	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation)), nil
+	return sdkmath.LegacyNewDecFromInt(c.BalancedDelegation).Quo(sdkmath.LegacyNewDecFromInt(c.CurrentDelegation)), nil
 }
 
 // Returns all the host zone unbonding records that should unbond this epoch
@@ -83,7 +83,7 @@ func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 	ctx sdk.Context,
 	chainId string,
 	userRedemptionRecordIds []string,
-	redemptionRate sdk.Dec,
+	redemptionRate sdkmath.LegacyDec,
 ) (totalNativeAmount sdkmath.Int) {
 	// Loop and set the native amount for each record, keeping track of the total
 	totalNativeAmount = sdkmath.ZeroInt()
@@ -95,7 +95,7 @@ func (k Keeper) RefreshUserRedemptionRecordNativeAmounts(
 		}
 
 		// Calculate the number of native tokens using the redemption rate
-		nativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
+		nativeAmount := sdkmath.LegacyNewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
 		totalNativeAmount = totalNativeAmount.Add(nativeAmount)
 
 		// Set the native amount on the record

@@ -19,11 +19,11 @@ type UpdateRedemptionRateTestCase struct {
 	justDepositedNative   sdkmath.Int
 	justDepositedLSM      sdkmath.Int
 	stSupply              sdkmath.Int
-	initialRedemptionRate sdk.Dec
+	initialRedemptionRate sdkmath.LegacyDec
 }
 
 // Helper function to look up the redemption rate and check it against expectations
-func (s *KeeperTestSuite) checkRedemptionRateAfterUpdate(expectedRedemptionRate sdk.Dec) {
+func (s *KeeperTestSuite) checkRedemptionRateAfterUpdate(expectedRedemptionRate sdkmath.LegacyDec) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone should have been found but was not")
 	s.Require().Equal(expectedRedemptionRate, hostZone.RedemptionRate, "redemption rate")
@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
 	// 2 + 3 + 4 + 5 / 10 = 14 / 10 = 1.4
-	expectedNewRate := sdk.MustNewDecFromStr("1.4")
+	expectedNewRate := sdkmath.LegacyMustNewDecFromStr("1.4")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
@@ -144,7 +144,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoDepositAccountRecords() {
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, filteredRecords)
 
 	// 3 + 4 + 6 / 10 = 13 / 10 = 1.3
-	expectedNewRate := sdk.MustNewDecFromStr("1.3")
+	expectedNewRate := sdkmath.LegacyMustNewDecFromStr("1.3")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
@@ -168,7 +168,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoStakeDepositRecords() {
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, filteredRecords)
 
 	// 3 + 5 + 6 / 10 = 14 / 10 = 1.4
-	expectedNewRate := sdk.MustNewDecFromStr("1.4")
+	expectedNewRate := sdkmath.LegacyMustNewDecFromStr("1.4")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
@@ -185,7 +185,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoTotalDelegation() {
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
 	// 3 + 4 + 5 / 10 = 12 / 10 = 1.2
-	expectedNewRate := sdk.MustNewDecFromStr("1.2")
+	expectedNewRate := sdkmath.LegacyMustNewDecFromStr("1.2")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
@@ -212,7 +212,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_RandomInitialRedemptionRate()
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
 	// 2 + 3 + 4 + 5 / 10 = 14 / 10 = 1.4
-	expectedNewRate := sdk.MustNewDecFromStr("1.4")
+	expectedNewRate := sdkmath.LegacyMustNewDecFromStr("1.4")
 	s.checkRedemptionRateAfterUpdate(expectedNewRate)
 }
 
@@ -280,8 +280,8 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 
 	validators := []*types.Validator{
 		{Address: "valA", SharesToTokensRate: sdkmath.LegacyOneDec()},
-		{Address: "valB", SharesToTokensRate: sdk.MustNewDecFromStr("0.75")},
-		{Address: "valC", SharesToTokensRate: sdk.MustNewDecFromStr("0.5")},
+		{Address: "valB", SharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.75")},
+		{Address: "valC", SharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.5")},
 	}
 
 	// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65

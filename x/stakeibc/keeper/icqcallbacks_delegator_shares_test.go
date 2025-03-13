@@ -6,7 +6,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
@@ -25,17 +24,17 @@ type DelegatorSharesICQCallbackTestCase struct {
 	valIndexQueried          int
 	hostZone                 types.HostZone
 	validArgs                DelegatorSharesICQCallbackArgs
-	numShares                sdk.Dec
-	slashPercentage          sdk.Dec
+	numShares                sdkmath.LegacyDec
+	slashPercentage          sdkmath.LegacyDec
 	expectedDelegationAmount sdkmath.Int
 	expectedSlashAmount      sdkmath.Int
 	expectedWeight           uint64
-	sharesToTokensRate       sdk.Dec
+	sharesToTokensRate       sdkmath.LegacyDec
 	retryTimeoutDuration     time.Duration
 }
 
 // Mocks the query response that's returned from an ICQ for the number of shares for a given validator/delegator pair
-func (s *KeeperTestSuite) CreateDelegatorSharesQueryResponse(valAddress string, shares sdk.Dec) []byte {
+func (s *KeeperTestSuite) CreateDelegatorSharesQueryResponse(valAddress string, shares sdkmath.LegacyDec) []byte {
 	delegation := stakingtypes.Delegation{
 		ValidatorAddress: valAddress,
 		DelegatorAddress: "cosmos_DELEGATION",
@@ -59,13 +58,13 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	// 50 slash tokens / 1000 initial tokens = 5% slash
 	expectedTokensAfterSlash := sdkmath.NewInt(950)
 	expectedSlashAmount := tokensBeforeSlash.Sub(expectedTokensAfterSlash)
-	slashPercentage := sdk.MustNewDecFromStr("0.05")
+	slashPercentage := sdkmath.LegacyMustNewDecFromStr("0.05")
 	weightBeforeSlash := uint64(20)
 	expectedWeightAfterSlash := uint64(19)
 	totalDelegation := sdkmath.NewInt(10_000)
 
-	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and sharesToTokens rate aligned")
-	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
+	s.Require().Equal(numShares, sdkmath.LegacyNewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and sharesToTokens rate aligned")
+	s.Require().Equal(slashPercentage, sdkmath.LegacyNewDecFromInt(expectedSlashAmount).Quo(sdkmath.LegacyNewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
 	s.Require().Equal(slashPercentage, sdkmath.LegacyNewDec(int64(weightBeforeSlash-expectedWeightAfterSlash)).Quo(sdkmath.LegacyNewDec(int64(weightBeforeSlash))), "weight reduction")
 
 	hostZone := types.HostZone{
@@ -362,8 +361,8 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 	// than were tracked in state
 	// This should be interpretted as a precision error and our record keeping should be adjusted
 	precisionErrorTokens := sdkmath.NewInt(5)
-	precisionErrorShares := sdk.NewDecFromInt(precisionErrorTokens).Quo(tc.sharesToTokensRate)
-	sharesBeforeSlash := sdk.NewDecFromInt(initialValidator.Delegation).Quo(tc.sharesToTokensRate)
+	precisionErrorShares := sdkmath.LegacyNewDecFromInt(precisionErrorTokens).Quo(tc.sharesToTokensRate)
+	sharesBeforeSlash := sdkmath.LegacyNewDecFromInt(initialValidator.Delegation).Quo(tc.sharesToTokensRate)
 
 	queryShares := sharesBeforeSlash.Add(precisionErrorShares)
 	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
@@ -397,7 +396,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ZeroInternalDelegation() {
 
 	// Update the delegator shares query response so that it shows that there are 5 more tokens delegated
 	queryTokens := sdkmath.NewInt(5)
-	queryShares := sdk.NewDecFromInt(queryTokens).Quo(tc.sharesToTokensRate)
+	queryShares := sdkmath.LegacyNewDecFromInt(queryTokens).Quo(tc.sharesToTokensRate)
 
 	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
 	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, callbackArgs, tc.validArgs.query)

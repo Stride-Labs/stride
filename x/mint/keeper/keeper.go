@@ -141,8 +141,8 @@ func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 }
 
 // GetProportions gets the balance of the `MintedDenom` from minted coins and returns coins according to the `AllocationRatio`.
-func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdk.Dec) sdk.Coin {
-	return sdk.NewCoin(mintedCoin.Denom, sdk.NewDecFromInt(mintedCoin.Amount).Mul(ratio).TruncateInt())
+func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdkmath.LegacyDec) sdk.Coin {
+	return sdk.NewCoin(mintedCoin.Denom, sdkmath.LegacyNewDecFromInt(mintedCoin.Amount).Mul(ratio).TruncateInt())
 }
 
 const (
@@ -193,7 +193,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 	// check: remaining coins should be less than 5% of minted coins
 	remainingBal := remainingCoins.AmountOf(sdk.DefaultBondDenom)
 	thresh := sdkmath.LegacyNewDec(5).Quo(sdkmath.LegacyNewDec(100))
-	if sdk.NewDecFromInt(remainingBal).Quo(sdk.NewDecFromInt(mintedCoin.Amount)).GT(thresh) {
+	if sdkmath.LegacyNewDecFromInt(remainingBal).Quo(sdkmath.LegacyNewDecFromInt(mintedCoin.Amount)).GT(thresh) {
 		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
 			"Failed to divvy up mint module rewards fully -- remaining coins should be LT 5pct of total, instead are %#v/%#v",
 			remainingCoins, remainingBal)

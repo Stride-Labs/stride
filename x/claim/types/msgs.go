@@ -13,7 +13,7 @@ const TypeMsgSetAirdropAllocations = "set_airdrop_allocation"
 
 var _ sdk.Msg = &MsgSetAirdropAllocations{}
 
-func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdk.Dec) *MsgSetAirdropAllocations {
+func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdkmath.LegacyDec) *MsgSetAirdropAllocations {
 	return &MsgSetAirdropAllocations{
 		Allocator:         allocator,
 		AirdropIdentifier: airdropIdentifier,

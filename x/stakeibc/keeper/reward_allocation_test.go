@@ -132,7 +132,7 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	stakeAmount := sdkmath.NewInt(100)
 
 	// create validator with 50% commission
-	commission := sdk.NewDecWithPrec(5, 1)
+	commission := sdkmath.LegacyNewDecWithPrec(5, 1)
 	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdkmath.LegacyNewDec(0))
 	tstaking.CreateValidator(valAddrs[0], pubkeys[0], stakeAmount, true)
 

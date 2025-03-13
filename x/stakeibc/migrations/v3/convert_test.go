@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -71,8 +70,8 @@ func TestConvertToNewHostZone(t *testing.T) {
 
 	redemptionRate := sdkmath.LegacyNewDec(1)
 	lastRedemptionRate := sdkmath.LegacyNewDec(2)
-	minRedemptionRate := sdk.MustNewDecFromStr("0.95")
-	maxRedemptionRate := sdk.MustNewDecFromStr("1.25")
+	minRedemptionRate := sdkmath.LegacyMustNewDecFromStr("0.95")
+	maxRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.25")
 	unbondingFrequency := uint64(4)
 	unbondingPeriod := uint64(21)
 
@@ -83,7 +82,7 @@ func TestConvertToNewHostZone(t *testing.T) {
 	valWeight := uint64(6)
 	totalDelegations := sdkmath.NewInt(1_000_000)
 	slashCheckpoint := sdkmath.NewInt(10_000) // 1% of TVL
-	sharesToTokensRate := sdk.MustNewDecFromStr("0.99")
+	sharesToTokensRate := sdkmath.LegacyMustNewDecFromStr("0.99")
 
 	// The stakedBal field and validators get updated on the host zone
 	oldHostZone := oldstakeibctypes.HostZone{

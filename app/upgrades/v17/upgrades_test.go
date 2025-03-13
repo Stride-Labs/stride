@@ -37,9 +37,9 @@ const (
 
 type UpdateRedemptionRateBounds struct {
 	ChainId                        string
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinOuterRedemptionRate sdk.Dec
-	ExpectedMaxOuterRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinOuterRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxOuterRedemptionRate sdkmath.LegacyDec
 }
 
 type UpdateRateLimits struct {
@@ -121,7 +121,7 @@ func (s *UpgradeTestSuite) checkCommunityPoolICAAccountsRegistered(chainId strin
 	expectedDepositPortId, _ := icatypes.NewControllerPortID(depositOwner)
 	expectedReturnPortId, _ := icatypes.NewControllerPortID(returnOwner)
 
-	depositPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedDepositPortId)
+	depositPortIdRegistered := s.App.ICAControllerKeeper.HasCapability(s.Ctx, expectedDepositPortId)
 	returnPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedReturnPortId)
 
 	s.Require().True(depositPortIdRegistered, "deposit port %s should have been bound", expectedDepositPortId)
@@ -138,7 +138,7 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 				{Address: "val1", SlashQueryInProgress: false},
 				{Address: "val2", SlashQueryInProgress: true},
 			},
-			RedemptionRate: sdk.MustNewDecFromStr("1.1"),
+			RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
 		},
 		{
 			ChainId:      v17.OsmosisChainId,
@@ -148,7 +148,7 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 				{Address: "val3", SlashQueryInProgress: true},
 				{Address: "val4", SlashQueryInProgress: false},
 			},
-			RedemptionRate: sdk.MustNewDecFromStr("1.2"),
+			RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.2"),
 		},
 		{
 			// This host is just added for the rate limit test
@@ -160,7 +160,7 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 				{Address: "val5", SlashQueryInProgress: true},
 				{Address: "val6", SlashQueryInProgress: false},
 			},
-			RedemptionRate: sdk.MustNewDecFromStr("1.0"),
+			RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
 		},
 	}
 
@@ -184,14 +184,14 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v17.GaiaChainId)
 		s.Require().True(found)
 
-		s.Require().Equal(sdk.MustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer") // 1.1 - 5% = 1.045
-		s.Require().Equal(sdk.MustNewDecFromStr("1.210"), gaiaHostZone.MaxRedemptionRate, "gaia max outer") // 1.1 + 10% = 1.21
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer") // 1.1 - 5% = 1.045
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.210"), gaiaHostZone.MaxRedemptionRate, "gaia max outer") // 1.1 + 10% = 1.21
 
 		osmoHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "osmosis-1")
 		s.Require().True(found)
 
-		s.Require().Equal(sdk.MustNewDecFromStr("1.140"), osmoHostZone.MinRedemptionRate, "osmo min outer") // 1.2 - 5% = 1.140
-		s.Require().Equal(sdk.MustNewDecFromStr("1.344"), osmoHostZone.MaxRedemptionRate, "osmo max outer") // 1.2 + 12% = 1.344
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.140"), osmoHostZone.MinRedemptionRate, "osmo min outer") // 1.2 - 5% = 1.140
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.344"), osmoHostZone.MaxRedemptionRate, "osmo max outer") // 1.2 + 12% = 1.344
 
 		// Check that there are no slash queries in progress
 		for _, hostZone := range s.App.StakeibcKeeper.GetAllHostZone(s.Ctx) {
@@ -296,7 +296,7 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 	return func() {
 		// conversionRate is stTokenAmount / nativeTokenAmount
 		conversionRate := sdkmath.LegacyNewDec(stTokenAmount).Quo(sdkmath.LegacyNewDec(nativeTokenAmount))
-		expectedConversionRate := sdk.MustNewDecFromStr("0.5")
+		expectedConversionRate := sdkmath.LegacyMustNewDecFromStr("0.5")
 		s.Require().Equal(expectedConversionRate, conversionRate, "expected conversion rate (1/redemption rate)")
 
 		// stTokenAmount is conversionRate * URRAmount
@@ -424,7 +424,7 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 
 func (s *UpgradeTestSuite) SetupCommunityPoolTaxBeforeUpgrade() func() {
 	// Set initial community pool tax to 2%
-	initialTax := sdk.MustNewDecFromStr("0.02")
+	initialTax := sdkmath.LegacyMustNewDecFromStr("0.02")
 	params := s.App.DistrKeeper.GetParams(s.Ctx)
 	params.CommunityTax = initialTax
 	err := s.App.DistrKeeper.SetParams(s.Ctx, params)
@@ -600,7 +600,7 @@ func (s *UpgradeTestSuite) TestResetSlashQueryInProgress() {
 
 func (s *UpgradeTestSuite) TestExecuteProp223() {
 	// Set initial community pool tax to 2%
-	initialTax := sdk.MustNewDecFromStr("0.02")
+	initialTax := sdkmath.LegacyMustNewDecFromStr("0.02")
 	params := s.App.DistrKeeper.GetParams(s.Ctx)
 	params.CommunityTax = initialTax
 	err := s.App.DistrKeeper.SetParams(s.Ctx, params)
@@ -621,22 +621,22 @@ func (s *UpgradeTestSuite) TestUpdateRedemptionRateBounds() {
 	testCases := []UpdateRedemptionRateBounds{
 		{
 			ChainId:                        "chain-0",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.95"), // 1 - 5% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.10"), // 1 + 10% = 1.1
 		},
 		{
 			ChainId:                        "chain-1",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
 		},
 		{
 			// Max outer for osmo uses 12% instead of 10%
 			ChainId:                        v17.OsmosisChainId,
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.25"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
 		},
 	}
 

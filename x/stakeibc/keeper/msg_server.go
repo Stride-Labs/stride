@@ -252,7 +252,7 @@ func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake)
 	}
 
 	// Determine the amount of stTokens to mint using the redemption rate
-	stAmount := (sdk.NewDecFromInt(msg.Amount).Quo(hostZone.RedemptionRate)).TruncateInt()
+	stAmount := (sdkmath.LegacyNewDecFromInt(msg.Amount).Quo(hostZone.RedemptionRate)).TruncateInt()
 	if stAmount.IsZero() {
 		return nil, errorsmod.Wrapf(types.ErrInsufficientLiquidStake,
 			"Liquid stake of %s%s would return 0 stTokens", msg.Amount.String(), hostZone.HostDenom)

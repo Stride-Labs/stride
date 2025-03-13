@@ -1,10 +1,12 @@
 package v14
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -95,7 +97,8 @@ func CreateUpgradeHandler(
 	evmosvestingKeeper evmosvestingkeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v14...")
 
 		evk := evmosvestingKeeper
@@ -268,6 +271,10 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 	// - delegatable
 	// - votable
 	// This is the default behavior (without a lockup). So, we don't add LockupPeriods.
+	bondDenom, err := sk.BondDenom(ctx)
+	if err != nil {
+		return fmt.Errorf("MigrateAccount1 BondDenom :%w", err)
+	}
 	fundAccMsg := &types.MsgFundVestingAccount{
 		FunderAddress:  FunderAddress,
 		VestingAddress: Account1,
@@ -275,7 +282,7 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 		VestingPeriods: sdkvesting.Periods{
 			// Period is 3 years
 			// 60*60*24*365*3 seconds
-			{Length: 94608000, Amount: sdk.NewCoins(sdk.NewCoin(sk.BondDenom(ctx), sdkmath.NewInt(Account1VestingUstrd)))},
+			{Length: 94608000, Amount: sdk.NewCoins(sdk.NewCoin(bondDenom, sdkmath.NewInt(Account1VestingUstrd)))},
 		},
 	}
 
@@ -392,7 +399,11 @@ func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper
 		panic(fmt.Errorf("ConsumerRedistributionFrac is invalid: %w", err))
 	}
 
-	total := bk.GetBalance(ctx, address, sk.BondDenom(ctx))
+	bondDenom, err := sk.BondDenom(ctx)
+	if err != nil {
+		panic(fmt.Errorf("BondDenom :%w", err))
+	}
+	total := bk.GetBalance(ctx, address, bondDenom)
 	totalTokens := sdk.NewDecCoinsFromCoins(total)
 	// truncated decimals are implicitly added to provider
 	refundTokens, _ := totalTokens.MulDec(frac).TruncateDecimal()
@@ -518,10 +529,20 @@ func addGrant(
 	}
 
 	// how much is really delegated?
-	bondedAmt := stakingKeeper.GetDelegatorBonded(ctx, va.GetAddress())
-	unbondingAmt := stakingKeeper.GetDelegatorUnbonding(ctx, va.GetAddress())
+	bondedAmt, err := stakingKeeper.GetDelegatorBonded(ctx, va.GetAddress())
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+	}
+	unbondingAmt, err := stakingKeeper.GetDelegatorUnbonding(ctx, va.GetAddress())
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+	}
 	delegatedAmt := bondedAmt.Add(unbondingAmt)
-	delegated := sdk.NewCoins(sdk.NewCoin(stakingKeeper.BondDenom(ctx), delegatedAmt))
+	bondDenom, err := stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+	}
+	delegated := sdk.NewCoins(sdk.NewCoin(bondDenom, delegatedAmt))
 
 	// modify schedules for the new grant
 	newLockupStart, newLockupEnd, newLockupPeriods := types.DisjunctPeriods(va.GetStartTime(), grantStartTime, va.LockupPeriods, grantLockupPeriods)

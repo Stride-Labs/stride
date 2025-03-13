@@ -19,8 +19,8 @@ func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	totalDelegations := sdkmath.NewInt(1_000)
 	redemptionRate := sdkmath.LegacyNewDec(2)
 	lastRedemptionRate := sdkmath.LegacyNewDec(1)
-	minInnerRedemptionRate := sdk.MustNewDecFromStr("1.9")
-	maxInnerRedemptionRate := sdk.MustNewDecFromStr("2.1")
+	minInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.9")
+	maxInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr("2.1")
 	legacyHostZone := oldtypes.HostZone{
 		RedemptionRate:         redemptionRate,
 		LastRedemptionRate:     lastRedemptionRate,
@@ -136,10 +136,10 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 		NativeTokenDenom:    HostNativeDenom,
 		NativeTokenIbcDenom: HostIBCDenom,
 		TransferChannelId:   ibctesting.FirstChannelID,
-		MinRedemptionRate:   sdk.MustNewDecFromStr("0.90"),
-		MaxRedemptionRate:   sdk.MustNewDecFromStr("1.5"),
-		RedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-		LastRedemptionRate:  sdk.MustNewDecFromStr("1.1"),
+		MinRedemptionRate:   sdkmath.LegacyMustNewDecFromStr("0.90"),
+		MaxRedemptionRate:   sdkmath.LegacyMustNewDecFromStr("1.5"),
+		RedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
+		LastRedemptionRate:  sdkmath.LegacyMustNewDecFromStr("1.1"),
 		DelegatedBalance:    totalDelegations,
 	}
 	s.App.StaketiaKeeper.SetLegacyHostZone(s.Ctx, legacyHostZone)

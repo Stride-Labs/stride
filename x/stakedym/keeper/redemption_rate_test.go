@@ -13,7 +13,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 	depositAddress := s.TestAccs[0]
 
 	testCases := []struct {
-		expectedRedemptionRate sdk.Dec
+		expectedRedemptionRate sdkmath.LegacyDec
 		depositBalance         sdkmath.Int
 		delegatedBalance       sdkmath.Int
 		stTokenSupply          sdkmath.Int
@@ -22,7 +22,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 		{
 			// Deposit: 250, Undelegated: 500, Delegated: 250, StTokens: 1000
 			// (250 + 500 + 250 / 1000) = 1000 / 1000 = 1.0
-			expectedRedemptionRate: sdk.MustNewDecFromStr("1.0"),
+			expectedRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
 			depositBalance:         sdkmath.NewInt(250),
 			delegatedBalance:       sdkmath.NewInt(250),
 			delegationRecords: []types.DelegationRecord{
@@ -34,7 +34,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 		{
 			// Deposit: 500, Undelegated: 500, Delegated: 250, StTokens: 1000
 			// (500 + 500 + 250 / 1000) = 1250 / 1000 = 1.25
-			expectedRedemptionRate: sdk.MustNewDecFromStr("1.25"),
+			expectedRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.25"),
 			depositBalance:         sdkmath.NewInt(500),
 			delegatedBalance:       sdkmath.NewInt(250),
 			delegationRecords: []types.DelegationRecord{
@@ -46,7 +46,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 		{
 			// Deposit: 250, Undelegated: 500, Delegated: 500, StTokens: 1000
 			// (500 + 500 + 250 / 1000) = 1250 / 1000 = 1.250
-			expectedRedemptionRate: sdk.MustNewDecFromStr("1.25"),
+			expectedRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.25"),
 			depositBalance:         sdkmath.NewInt(250),
 			delegatedBalance:       sdkmath.NewInt(500),
 			delegationRecords: []types.DelegationRecord{
@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 		{
 			// Deposit: 250, Undelegated: 1000, Delegated: 250, StTokens: 1000
 			// (250 + 1000 + 250 / 1000) = 1500 / 1000 = 1.5
-			expectedRedemptionRate: sdk.MustNewDecFromStr("1.5"),
+			expectedRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.5"),
 			depositBalance:         sdkmath.NewInt(250),
 			delegatedBalance:       sdkmath.NewInt(250),
 			delegationRecords: []types.DelegationRecord{
@@ -72,7 +72,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 		{
 			// Deposit: 250, Undelegated: 500, Delegated: 250, StTokens: 2000
 			// (250 + 500 + 250 / 2000) = 1000 / 2000 = 0.5
-			expectedRedemptionRate: sdk.MustNewDecFromStr("0.5"),
+			expectedRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.5"),
 			depositBalance:         sdkmath.NewInt(250),
 			delegatedBalance:       sdkmath.NewInt(250),
 			delegationRecords: []types.DelegationRecord{
@@ -91,7 +91,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 			s.FundAccount(depositAddress, sdk.NewCoin(HostIBCDenom, tc.depositBalance))
 
 			// Create the host zone with the delegated balance and deposit address
-			initialRedemptionRate := sdk.MustNewDecFromStr("0.999")
+			initialRedemptionRate := sdkmath.LegacyMustNewDecFromStr("0.999")
 			s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 				NativeTokenDenom:    HostNativeDenom,
 				NativeTokenIbcDenom: HostIBCDenom,
@@ -165,55 +165,55 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 		{
 			name: "valid bounds",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"), // <--
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"), // <--
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: false,
 		},
 		{
 			name: "outside min inner",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				RedemptionRate:         sdk.MustNewDecFromStr("0.9"), // <--
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("0.9"), // <--
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: true,
 		},
 		{
 			name: "outside max inner",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.1"), // <--
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.1"), // <--
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: true,
 		},
 		{
 			name: "outside min outer",
 			hostZone: types.HostZone{
-				RedemptionRate:         sdk.MustNewDecFromStr("0.8"), // <--
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.9"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("0.8"), // <--
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.9"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: true,
 		},
 		{
 			name: "outside max outer",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.1"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.2"), // <--
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.1"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.2"), // <--
 			},
 			exceedsBounds: true,
 		},

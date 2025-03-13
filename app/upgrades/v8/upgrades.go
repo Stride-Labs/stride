@@ -1,6 +1,7 @@
 package v8
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -37,7 +38,8 @@ func CreateUpgradeHandler(
 	claimKeeper claimkeeper.Keeper,
 	autopilotKeeper autopilotkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v8...")
 
 		// Reset Claims

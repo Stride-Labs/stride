@@ -84,10 +84,10 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 
 	params := k.GetParams(ctx)
 	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
-		msg.MinRedemptionRate = sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
+		msg.MinRedemptionRate = sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
 	}
 	if msg.MaxRedemptionRate.IsNil() || msg.MaxRedemptionRate.IsZero() {
-		msg.MaxRedemptionRate = sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
+		msg.MaxRedemptionRate = sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
 	}
 
 	// Set the max messages per ICA tx to the default value if it's not specified

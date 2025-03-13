@@ -1,10 +1,11 @@
 package v7
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -46,7 +47,8 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v7...")
 
 		// Add an hourly epoch which will be used by the rate limit store
@@ -107,7 +109,7 @@ func SetHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx sdk.
 // GetAllHostZone but with fixed historical stakeibc types
 func GetAllHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx sdk.Context) (list []newstakeibctypes.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(stakeibcStoreKey), stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
@@ -187,8 +189,8 @@ func AddRedemptionRateSafetyChecks(cdc codec.Codec, storeKey storetypes.StoreKey
 	k.SetParams(ctx, params)
 
 	// Get default min/max redemption rate
-	defaultMinRedemptionRate := sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
-	defaultMaxRedemptionRate := sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
+	defaultMinRedemptionRate := sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
+	defaultMaxRedemptionRate := sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
 
 	for _, hostZone := range GetAllHostZone(cdc, storeKey, ctx) {
 

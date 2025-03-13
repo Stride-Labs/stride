@@ -243,8 +243,8 @@ func (k Keeper) UpdateHostZoneUnbondingsAfterUndelegation(
 		if hostZoneUnbonding.NativeTokensToUnbond.IsZero() {
 			stTokensToBurn = hostZoneUnbonding.StTokensToBurn
 		} else {
-			impliedRedemptionRate := sdk.NewDecFromInt(hostZoneUnbonding.NativeTokenAmount).Quo(sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount))
-			stTokensToBurn = sdk.NewDecFromInt(nativeTokensUnbonded).Quo(impliedRedemptionRate).TruncateInt()
+			impliedRedemptionRate := sdkmath.LegacyNewDecFromInt(hostZoneUnbonding.NativeTokenAmount).Quo(sdkmath.LegacyNewDecFromInt(hostZoneUnbonding.StTokenAmount))
+			stTokensToBurn = sdkmath.LegacyNewDecFromInt(nativeTokensUnbonded).Quo(impliedRedemptionRate).TruncateInt()
 		}
 
 		k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,

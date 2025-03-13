@@ -230,7 +230,7 @@ func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_FailedToCheckForReba
 	// Add a rebate to the host zone - since there are no stTokens in supply, the test will fail
 	hostZone := s.MustGetHostZone(HostChainId)
 	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		RebateRate:                sdkmath.LegacyMustNewDecFromStr("0.5"),
 		LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

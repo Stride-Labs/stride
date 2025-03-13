@@ -31,8 +31,8 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 func NewParams(
-	mintDenom string, genesisEpochProvisions sdk.Dec, epochIdentifier string,
-	ReductionFactor sdk.Dec, reductionPeriodInEpochs int64, distrProportions DistributionProportions,
+	mintDenom string, genesisEpochProvisions sdkmath.LegacyDec, epochIdentifier string,
+	ReductionFactor sdkmath.LegacyDec, reductionPeriodInEpochs int64, distrProportions DistributionProportions,
 	mintingRewardsDistributionStartEpoch int64,
 ) Params {
 	return Params{
@@ -55,10 +55,10 @@ func DefaultParams() Params {
 		ReductionPeriodInEpochs: 24 * 365,                                                                                                 // 24hrs*365d = 8760
 		ReductionFactor:         sdkmath.LegacyNewDec(1).QuoInt64(2),
 		DistributionProportions: DistributionProportions{
-			Staking:                     sdk.MustNewDecFromStr("0.2764"),
-			CommunityPoolGrowth:         sdk.MustNewDecFromStr("0.1860"),
-			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
-			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
+			Staking:                     sdkmath.LegacyMustNewDecFromStr("0.2764"),
+			CommunityPoolGrowth:         sdkmath.LegacyMustNewDecFromStr("0.1860"),
+			StrategicReserve:            sdkmath.LegacyMustNewDecFromStr("0.4205"),
+			CommunityPoolSecurityBudget: sdkmath.LegacyMustNewDecFromStr("0.1171"),
 		},
 		MintingRewardsDistributionStartEpoch: 0,
 	}
@@ -127,7 +127,7 @@ func validateMintDenom(i interface{}) error {
 }
 
 func validateGenesisEpochProvisions(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(sdkmath.LegacyDec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -153,7 +153,7 @@ func validateReductionPeriodInEpochs(i interface{}) error {
 }
 
 func validateReductionFactor(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(sdkmath.LegacyDec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}

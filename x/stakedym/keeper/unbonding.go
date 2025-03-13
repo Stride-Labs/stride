@@ -56,7 +56,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 
 	// Estimate a placeholder native amount with current RedemptionRate
 	// this estimate will be updated when the Undelegation record is finalized
-	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(hostZone.RedemptionRate).TruncateInt()
+	nativeAmount := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(hostZone.RedemptionRate).TruncateInt()
 	if nativeAmount.GT(hostZone.DelegatedBalance) {
 		return nativeToken, errorsmod.Wrapf(types.ErrUnbondAmountToLarge,
 			"cannot unstake an amount g.t. total staked balance: %v > %v", nativeAmount, hostZone.DelegatedBalance)
@@ -131,7 +131,7 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 	// Keep track of the total for the unbonding record
 	totalNativeTokens := sdkmath.ZeroInt()
 	for _, redemptionRecord := range k.GetRedemptionRecordsFromUnbondingId(ctx, unbondingRecord.Id) {
-		nativeAmount := sdk.NewDecFromInt(redemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
+		nativeAmount := sdkmath.LegacyNewDecFromInt(redemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
 		redemptionRecord.NativeAmount = nativeAmount
 		k.SetRedemptionRecord(ctx, redemptionRecord)
 		totalNativeTokens = totalNativeTokens.Add(nativeAmount)
@@ -267,7 +267,7 @@ func (k Keeper) VerifyImpliedRedemptionRateFromUnbonding(ctx sdk.Context, stToke
 	}
 
 	// calculate the ratio of delegated balance change to stToken burn - it should be close to the redemption rate
-	ratio := sdk.NewDecFromInt(delegatedBalanceDecremented).Quo(sdk.NewDecFromInt(stTokenSupplyBurned))
+	ratio := sdkmath.LegacyNewDecFromInt(delegatedBalanceDecremented).Quo(sdkmath.LegacyNewDecFromInt(stTokenSupplyBurned))
 
 	// check ratio against bounds
 	if ratio.LT(hostZoneAfter.MinRedemptionRate) || ratio.GT(hostZoneAfter.MaxRedemptionRate) {

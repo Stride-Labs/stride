@@ -87,15 +87,15 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 		stTokens:     sdk.NewInt64Coin(StDenom, 10_000_000),
 	}
 
-	redemptionRate := sdk.MustNewDecFromStr("1.1")
+	redemptionRate := sdkmath.LegacyMustNewDecFromStr("1.1")
 	defaultHostZone := types.HostZone{
 		NativeTokenDenom:       HostNativeDenom,
 		RedemptionAddress:      redemptionAccount.String(),
 		RedemptionRate:         redemptionRate,
-		MinRedemptionRate:      redemptionRate.Sub(sdk.MustNewDecFromStr("0.2")),
-		MinInnerRedemptionRate: redemptionRate.Sub(sdk.MustNewDecFromStr("0.1")),
-		MaxInnerRedemptionRate: redemptionRate.Add(sdk.MustNewDecFromStr("0.1")),
-		MaxRedemptionRate:      redemptionRate.Add(sdk.MustNewDecFromStr("0.2")),
+		MinRedemptionRate:      redemptionRate.Sub(sdkmath.LegacyMustNewDecFromStr("0.2")),
+		MinInnerRedemptionRate: redemptionRate.Sub(sdkmath.LegacyMustNewDecFromStr("0.1")),
+		MaxInnerRedemptionRate: redemptionRate.Add(sdkmath.LegacyMustNewDecFromStr("0.1")),
+		MaxRedemptionRate:      redemptionRate.Add(sdkmath.LegacyMustNewDecFromStr("0.2")),
 		DelegatedBalance:       sdkmath.NewInt(1_000_000_000),
 		Halted:                 false,
 	}
@@ -167,7 +167,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			userAccount: *defaultUA,
 			hostZone: func() *types.HostZone {
 				_, hz, _, _, _ := s.getDefaultTestInputs()
-				hz.RedemptionRate = sdk.MustNewDecFromStr("5.2")
+				hz.RedemptionRate = sdkmath.LegacyMustNewDecFromStr("5.2")
 				return hz
 			}(),
 
@@ -226,7 +226,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
 				_, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
+				nativeDiff := sdkmath.LegacyNewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
 				return ur
 			}(),
@@ -234,7 +234,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 				UnbondingRecordId: defaultUR.Id,
 				Redeemer:          defaultMsg.Redeemer,
 				StTokenAmount:     defaultMsg.StTokenAmount,
-				NativeAmount:      sdk.NewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).TruncateInt(),
+				NativeAmount:      sdkmath.LegacyNewDecFromInt(defaultMsg.StTokenAmount).Mul(defaultHZ.RedemptionRate).TruncateInt(),
 			},
 		},
 		{
@@ -249,14 +249,14 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			expectedUnbondingRecord: func() *types.UnbondingRecord {
 				_, hz, ur, _, msg := s.getDefaultTestInputs()
 				ur.StTokenAmount = ur.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
+				nativeDiff := sdkmath.LegacyNewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				ur.NativeAmount = ur.NativeAmount.Add(nativeDiff)
 				return ur
 			}(),
 			expectedRedemptionRecord: func() *types.RedemptionRecord {
 				_, hz, _, rr, msg := s.getDefaultTestInputs()
 				rr.StTokenAmount = rr.StTokenAmount.Add(msg.StTokenAmount)
-				nativeDiff := sdk.NewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
+				nativeDiff := sdkmath.LegacyNewDecFromInt(msg.StTokenAmount).Mul(hz.RedemptionRate).TruncateInt()
 				rr.NativeAmount = rr.NativeAmount.Add(nativeDiff)
 				return rr
 			}(),
@@ -328,8 +328,8 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 
 	// Set a host zone with a 1.999 redemption rate
 	// (an uneven number is used to test rounding/truncation)
-	oldRedemptionRate := sdk.MustNewDecFromStr("1.9")
-	redemptionRate := sdk.MustNewDecFromStr("1.999")
+	oldRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.9")
+	redemptionRate := sdkmath.LegacyMustNewDecFromStr("1.999")
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		RedemptionRate: redemptionRate,
 	})
@@ -353,7 +353,7 @@ func (s *KeeperTestSuite) TestPrepareUndelegation() {
 	// Create the initial records, setting the native amount to be slightly less than expected
 	for _, expectedUserRedemptionRecord := range expectedRedemptionRecords {
 		initialRedemptionRecord := expectedUserRedemptionRecord
-		initialRedemptionRecord.NativeAmount = sdk.NewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).TruncateInt()
+		initialRedemptionRecord.NativeAmount = sdkmath.LegacyNewDecFromInt(initialRedemptionRecord.StTokenAmount).Mul(oldRedemptionRate).TruncateInt()
 		s.App.StakedymKeeper.SetRedemptionRecord(s.Ctx, initialRedemptionRecord)
 	}
 
@@ -457,9 +457,9 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 		RedemptionAddress:      redemptionAddress.String(),
 		NativeTokenDenom:       HostNativeDenom,
 		UnbondingPeriodSeconds: unbondingPeriodSeconds,
-		MinRedemptionRate:      sdk.MustNewDecFromStr("0.9"),
-		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-		RedemptionRate:         sdk.MustNewDecFromStr("1.1"),
+		MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.9"),
+		MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
+		RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.1"),
 	}
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -469,7 +469,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUndelegation(amountToUndelegate sdkmat
 
 	// create an unbonding record in status UNBONDING_QUEUE
 	// - stToken amount to burn as if the RR is 1.1
-	stTokenAmountToBurn := sdk.NewDecFromInt(amountToUndelegate).Mul(hostZone.RedemptionRate).TruncateInt()
+	stTokenAmountToBurn := sdkmath.LegacyNewDecFromInt(amountToUndelegate).Mul(hostZone.RedemptionRate).TruncateInt()
 	unbondingRecord := types.UnbondingRecord{
 		Id:            1,
 		Status:        types.UNBONDING_QUEUE,
@@ -640,8 +640,8 @@ func (s *KeeperTestSuite) TestBurnRedeemedStTokens_BadRedemptionAddress() {
 }
 
 func (s *KeeperTestSuite) TestVerifyImpliedRedemptionRateFromUnbonding() {
-	minRRBound := sdk.MustNewDecFromStr("0.9")
-	maxRRBound := sdk.MustNewDecFromStr("1.1")
+	minRRBound := sdkmath.LegacyMustNewDecFromStr("0.9")
+	maxRRBound := sdkmath.LegacyMustNewDecFromStr("1.1")
 
 	testCases := []struct {
 		name                   string

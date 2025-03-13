@@ -1,6 +1,7 @@
 package v17
 
 import (
+	"context"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -8,16 +9,13 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	"github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"
@@ -30,11 +28,11 @@ var (
 	UpgradeName = "v17"
 
 	// Community pool tax updated from 2 -> 5%
-	CommunityPoolTax = sdk.MustNewDecFromStr("0.05")
+	CommunityPoolTax = sdkmath.LegacyMustNewDecFromStr("0.05")
 
 	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
-	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+	RedemptionRateOuterMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.05")
+	RedemptionRateOuterMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("0.10")
 
 	// Define the hub chainId for disabling tokenization
 	GaiaChainId = "cosmoshub-4"
@@ -42,7 +40,7 @@ var (
 	// Osmosis will have a slighly larger buffer with the redemption rate
 	// since their yield is less predictable
 	OsmosisChainId              = "osmosis-1"
-	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
+	OsmosisRedemptionRateBuffer = sdkmath.LegacyMustNewDecFromStr("0.02")
 
 	// Rate limits updated according to TVL
 	// Framework:
@@ -85,7 +83,8 @@ func CreateUpgradeHandler(
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v17...")
 
 		ctx.Logger().Info("Migrating stakeibc params...")
@@ -108,7 +107,7 @@ func CreateUpgradeHandler(
 		ResetSlashQueryInProgress(ctx, stakeibcKeeper)
 
 		ctx.Logger().Info("Updating community pool tax...")
-		if err := ExecuteProp223(ctx, distributionkeeper); err != nil {
+		if err := ExecuteProp223(context, distributionkeeper); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to increase community pool tax")
 		}
 
@@ -165,8 +164,8 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 			}
 
 			// Calculate the estimated redemption rate
-			nativeTokenAmountDec := sdk.NewDecFromInt(hostZoneUnbonding.NativeTokenAmount)
-			stTokenAmountDec := sdk.NewDecFromInt(hostZoneUnbonding.StTokenAmount)
+			nativeTokenAmountDec := sdkmath.LegacyNewDecFromInt(hostZoneUnbonding.NativeTokenAmount)
+			stTokenAmountDec := sdkmath.LegacyNewDecFromInt(hostZoneUnbonding.StTokenAmount)
 			// this estimated rate is the amount of stTokens that would be received for 1 native token
 			// e.g. if the rate is 0.5, then 1 native token would be worth 0.5 stTokens
 			// estimatedStTokenConversionRate is 1 / redemption rate
@@ -181,7 +180,7 @@ func MigrateUnbondingRecords(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 					continue
 				}
 
-				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdk.NewDecFromInt(userRedemptionRecord.NativeTokenAmount)).RoundInt()
+				userRedemptionRecord.StTokenAmount = estimatedStTokenConversionRate.Mul(sdkmath.LegacyNewDecFromInt(userRedemptionRecord.NativeTokenAmount)).RoundInt()
 				k.RecordsKeeper.SetUserRedemptionRecord(ctx, userRedemptionRecord)
 			}
 		}
@@ -274,10 +273,13 @@ func ResetSlashQueryInProgress(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 // Increases the community pool tax from 2 to 5%
 // This was from prop 223 which passed, but was deleted due to an ICS blacklist
-func ExecuteProp223(ctx sdk.Context, k distributionkeeper.Keeper) error {
-	params := k.GetParams(ctx)
+func ExecuteProp223(ctx context.Context, k distributionkeeper.Keeper) error {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return err
+	}
 	params.CommunityTax = CommunityPoolTax
-	return k.SetParams(ctx, params)
+	return k.Params.Set(ctx, params)
 }
 
 // Updates the outer redemption rate bounds

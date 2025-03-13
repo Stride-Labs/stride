@@ -344,7 +344,7 @@ func (msg *MsgAdjustDelegatedBalance) ValidateBasic() error {
 //       MsgUpdateInnerRedemptionRateBounds
 // ----------------------------------------------
 
-func NewMsgUpdateInnerRedemptionRateBounds(creator string, minRedemptionRate, maxRedemptionRate sdk.Dec) *MsgUpdateInnerRedemptionRateBounds {
+func NewMsgUpdateInnerRedemptionRateBounds(creator string, minRedemptionRate, maxRedemptionRate sdkmath.LegacyDec) *MsgUpdateInnerRedemptionRateBounds {
 	return &MsgUpdateInnerRedemptionRateBounds{
 		Creator:                creator,
 		MinInnerRedemptionRate: minRedemptionRate,

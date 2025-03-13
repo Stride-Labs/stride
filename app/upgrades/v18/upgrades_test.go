@@ -19,9 +19,9 @@ import (
 
 type UpdateRedemptionRateBounds struct {
 	ChainId                        string
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinOuterRedemptionRate sdk.Dec
-	ExpectedMaxOuterRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinOuterRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxOuterRedemptionRate sdkmath.LegacyDec
 }
 
 type UserRedemptionRecordTestCases struct {
@@ -119,22 +119,22 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 	testCases := []UpdateRedemptionRateBounds{
 		{
 			ChainId:                        "chain-0",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.95"), // 1 - 5% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.10"), // 1 + 10% = 1.1
 		},
 		{
 			ChainId:                        "chain-1",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
 		},
 		{
 			// Max outer for osmo uses 12% instead of 10%
 			ChainId:                        v18.OsmosisChainId,
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.25"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
 		},
 	}
 
@@ -167,28 +167,28 @@ func (s *UpgradeTestSuite) SetupTestUnbondingRecords() func() {
 	stTokenAmount := sdkmath.NewInt(1_000_000)
 
 	// Unbonding #1 (before prop)
-	redemptionRateUnbonded := sdk.MustNewDecFromStr("1.025236900070852") // Rate used when unbonding occurred
-	redemptionRateRecords := sdk.MustNewDecFromStr("1.025136900070852")  // Rate that was on record at the time (+0.0001)
+	redemptionRateUnbonded := sdkmath.LegacyMustNewDecFromStr("1.025236900070852") // Rate used when unbonding occurred
+	redemptionRateRecords := sdkmath.LegacyMustNewDecFromStr("1.025136900070852")  // Rate that was on record at the time (+0.0001)
 
 	s.Require().Equal(redemptionRateUnbonded.String(), v18.RedemptionRatesBeforeProp[chainId][epochNumberBefore].String(),
 		"example redemption rate from before prop does not match constants - update the test")
 
 	// Unbonding #2 (after prop)
-	redemptionRateAtPropTime := sdk.MustNewDecFromStr("1.025900897761638723") // Rate at prop time
-	redemptionRateAtUpgradeTime := sdk.MustNewDecFromStr("1.03")              // Rate at upgrade time
-	estimatedRedemptionRate := sdk.MustNewDecFromStr("1.027950448880819361")  // Estimated rate used to update record
-	unknownRedemptionRate := sdk.MustNewDecFromStr("1.029")                   // Rate that was used in unbonding
+	redemptionRateAtPropTime := sdkmath.LegacyMustNewDecFromStr("1.025900897761638723") // Rate at prop time
+	redemptionRateAtUpgradeTime := sdkmath.LegacyMustNewDecFromStr("1.03")              // Rate at upgrade time
+	estimatedRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.027950448880819361")  // Estimated rate used to update record
+	unknownRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.029")                   // Rate that was used in unbonding
 
 	s.Require().Equal(redemptionRateAtPropTime.String(), v18.RedemptionRatesAtTimeOfProp[chainId].String(),
 		"example redemption rate from time of prop does not match constants - update the test")
 
 	// Calculate native token in the records before the upgrade
-	initialNativeAmount1 := sdk.NewDecFromInt(stTokenAmount).Mul(redemptionRateRecords).TruncateInt()
-	initialNativeAmount2 := sdk.NewDecFromInt(stTokenAmount).Mul(unknownRedemptionRate).TruncateInt()
+	initialNativeAmount1 := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(redemptionRateRecords).TruncateInt()
+	initialNativeAmount2 := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(unknownRedemptionRate).TruncateInt()
 
 	// Calculate expected native amounts after upgrade
-	expectedNativeAmount1 := sdk.NewDecFromInt(stTokenAmount).Mul(redemptionRateUnbonded).TruncateInt()
-	expectedNativeAmount2 := sdk.NewDecFromInt(stTokenAmount).Mul(estimatedRedemptionRate).TruncateInt()
+	expectedNativeAmount1 := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(redemptionRateUnbonded).TruncateInt()
+	expectedNativeAmount2 := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(estimatedRedemptionRate).TruncateInt()
 
 	// Create the host zone with redemption rate at time of upgrade
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
@@ -351,11 +351,11 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 
 	hostZone1 := stakeibctypes.HostZone{
 		ChainId:        chainId1,
-		RedemptionRate: sdk.MustNewDecFromStr("1.4"),
+		RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.4"),
 	}
 	hostZone2 := stakeibctypes.HostZone{
 		ChainId:        chainId2,
-		RedemptionRate: sdk.MustNewDecFromStr("1.9"),
+		RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.9"),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone2)
@@ -363,18 +363,18 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 	// Save down the redemption rates before the prop and at the time of the prop
 	// These are both hard coded in the upgrade handler
 	// For the before rates, use the rate that was actually unbonded (not the one in the record)
-	redemptionRatesAtTimeOfProp := map[string]sdk.Dec{
-		chainId1: sdk.MustNewDecFromStr("1.2"),
-		chainId2: sdk.MustNewDecFromStr("1.8"),
+	redemptionRatesAtTimeOfProp := map[string]sdkmath.LegacyDec{
+		chainId1: sdkmath.LegacyMustNewDecFromStr("1.2"),
+		chainId2: sdkmath.LegacyMustNewDecFromStr("1.8"),
 	}
-	redemptionRatesBeforeProp := map[string]map[uint64]sdk.Dec{
+	redemptionRatesBeforeProp := map[string]map[uint64]sdkmath.LegacyDec{
 		chainId1: {
-			1: sdk.MustNewDecFromStr("1.05"),
-			2: sdk.MustNewDecFromStr("1.10"),
+			1: sdkmath.LegacyMustNewDecFromStr("1.05"),
+			2: sdkmath.LegacyMustNewDecFromStr("1.10"),
 		},
 		chainId2: {
-			1: sdk.MustNewDecFromStr("1.40"),
-			2: sdk.MustNewDecFromStr("1.50"),
+			1: sdkmath.LegacyMustNewDecFromStr("1.40"),
+			2: sdkmath.LegacyMustNewDecFromStr("1.50"),
 		},
 	}
 
@@ -433,13 +433,13 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 
 		// Calculate the native amount from the "record RR" - this is the value that will be in the
 		// store before the upgrade
-		recordRR := sdk.MustNewDecFromStr(userTestCase.RecordRR)
-		recordNativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(recordRR).TruncateInt()
+		recordRR := sdkmath.LegacyMustNewDecFromStr(userTestCase.RecordRR)
+		recordNativeAmount := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(recordRR).TruncateInt()
 
 		// Calculate the native amount from the "unbond RR" - this is the implied RR from the
 		// actual unbonding
-		unbondRR := sdk.MustNewDecFromStr(userTestCase.UnbondedRR)
-		actualUnbondAmount := sdk.NewDecFromInt(stTokenAmount).Mul(unbondRR).TruncateInt()
+		unbondRR := sdkmath.LegacyMustNewDecFromStr(userTestCase.UnbondedRR)
+		actualUnbondAmount := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(unbondRR).TruncateInt()
 
 		// Create the user redmeption record
 		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, recordtypes.UserRedemptionRecord{
@@ -462,13 +462,13 @@ func (s *UpgradeTestSuite) TestUpdateUnbondingRecords() {
 
 			// Calculate the native amount from the "record RR" - this is the value that will be in the
 			// store before the upgrade
-			recordRR := sdk.MustNewDecFromStr(hostTestCase.RecordRR)
-			recordNativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(recordRR).TruncateInt()
+			recordRR := sdkmath.LegacyMustNewDecFromStr(hostTestCase.RecordRR)
+			recordNativeAmount := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(recordRR).TruncateInt()
 
 			// Calculate the native amount from the "unbond RR" - this is the implied RR from the
 			// actual unbonding
-			unbondRR := sdk.MustNewDecFromStr(hostTestCase.UnbondedRR)
-			actualUnbondAmount := sdk.NewDecFromInt(stTokenAmount).Mul(unbondRR).TruncateInt()
+			unbondRR := sdkmath.LegacyMustNewDecFromStr(hostTestCase.UnbondedRR)
+			actualUnbondAmount := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(unbondRR).TruncateInt()
 
 			// Initialize the epoch unbonding record if it hasn't happened already
 			if _, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, epochNumber); !found {

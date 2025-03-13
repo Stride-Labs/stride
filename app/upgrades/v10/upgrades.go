@@ -1,6 +1,7 @@
 package v10
 
 import (
+	"context"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -116,12 +117,13 @@ func CreateUpgradeHandler(
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v10...")
 
 		ctx.Logger().Info("Migrating tendermint consensus params from x/params to x/consensus...")
 		legacyParamSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper)
+		baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper.ParamsStore)
 
 		ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
 		if err := icacontrollermigrations.MigrateICS27ChannelCapability(
@@ -156,7 +158,7 @@ func CreateUpgradeHandler(
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 
 		ctx.Logger().Info("Setting MinInitialDepositRatio...")
-		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
+		if err := SetMinInitialDepositRatio(context, govKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
 		}
 
@@ -186,10 +188,10 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 	minter := minttypes.NewMinter(EpochProvisions)
 	k.SetMinter(ctx, minter)
 
-	stakingProportion := sdk.MustNewDecFromStr(StakingProportion)
-	communityPoolGrowthProportion := sdk.MustNewDecFromStr(CommunityPoolGrowthProportion)
-	strategicReserveProportion := sdk.MustNewDecFromStr(StrategicReserveProportion)
-	communityPoolSecurityBudgetProportion := sdk.MustNewDecFromStr(CommunityPoolSecurityBudgetProportion)
+	stakingProportion := sdkmath.LegacyMustNewDecFromStr(StakingProportion)
+	communityPoolGrowthProportion := sdkmath.LegacyMustNewDecFromStr(CommunityPoolGrowthProportion)
+	strategicReserveProportion := sdkmath.LegacyMustNewDecFromStr(StrategicReserveProportion)
+	communityPoolSecurityBudgetProportion := sdkmath.LegacyMustNewDecFromStr(CommunityPoolSecurityBudgetProportion)
 
 	// Confirm proportions sum to 100
 	totalProportions := stakingProportion.
@@ -216,10 +218,13 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 }
 
 // Set the initial deposit ratio to 25%
-func SetMinInitialDepositRatio(ctx sdk.Context, k govkeeper.Keeper) error {
-	params := k.GetParams(ctx)
+func SetMinInitialDepositRatio(ctx context.Context, k govkeeper.Keeper) error {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return err
+	}
 	params.MinInitialDepositRatio = MinInitialDepositRatio
-	return k.SetParams(ctx, params)
+	return k.Params.Set(ctx, params)
 }
 
 // This likely isn't necessary, but since migrating from google proto to

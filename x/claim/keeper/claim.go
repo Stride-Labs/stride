@@ -78,11 +78,11 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 }
 
 // Remove duplicated airdrops for given params
-func (k Keeper) GetUnallocatedUsers(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
+func (k Keeper) GetUnallocatedUsers(ctx sdk.Context, identifier string, users []string, weights []sdkmath.LegacyDec) ([]string, []sdkmath.LegacyDec) {
 	store := ctx.KVStore(k.storeKey)
 	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(identifier)...))
 	newUsers := []string{}
-	newWeights := []sdk.Dec{}
+	newWeights := []sdkmath.LegacyDec{}
 	for idx, user := range users {
 		strideAddr := utils.ConvertAddressToStrideAddress(user)
 		addr, _ := sdk.AccAddressFromBech32(strideAddr)
@@ -260,7 +260,7 @@ func (k Keeper) clearInitialClaimables(ctx sdk.Context, airdropIdentifier string
 
 func (k Keeper) SetClaimRecordsWithWeights(ctx sdk.Context, claimRecords []types.ClaimRecord) error {
 	// Set total weights
-	weights := make(map[string]sdk.Dec)
+	weights := make(map[string]sdkmath.LegacyDec)
 	for _, record := range claimRecords {
 		if weights[record.AirdropIdentifier].IsNil() {
 			weights[record.AirdropIdentifier] = sdkmath.LegacyZeroDec()
@@ -332,7 +332,7 @@ func (k Keeper) GetClaimRecord(ctx sdk.Context, addr sdk.AccAddress, airdropIden
 }
 
 // SetTotalWeight sets total sum of user weights in store
-func (k Keeper) SetTotalWeight(ctx sdk.Context, totalWeight sdk.Dec, airdropIdentifier string) {
+func (k Keeper) SetTotalWeight(ctx sdk.Context, totalWeight sdkmath.LegacyDec, airdropIdentifier string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...), []byte(totalWeight.String()))
 }
@@ -344,7 +344,7 @@ func (k Keeper) DeleteTotalWeight(ctx sdk.Context, airdropIdentifier string) {
 }
 
 // GetTotalWeight gets total sum of user weights in store
-func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdk.Dec, error) {
+func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdkmath.LegacyDec, error) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...))
 	if b == nil {

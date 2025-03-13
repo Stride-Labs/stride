@@ -20,16 +20,16 @@ import (
 
 type UpdateRedemptionRateBounds struct {
 	ChainId                        string
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinOuterRedemptionRate sdk.Dec
-	ExpectedMaxOuterRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinOuterRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxOuterRedemptionRate sdkmath.LegacyDec
 }
 
 type UpdateRedemptionRateInnerBounds struct {
 	ChainId                        string
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinInnerRedemptionRate sdk.Dec
-	ExpectedMaxInnerRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinInnerRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxInnerRedemptionRate sdkmath.LegacyDec
 }
 
 type UpgradeTestSuite struct {
@@ -81,9 +81,9 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 		NativeTokenIbcDenom: staketiatypes.CelestiaNativeTokenIBCDenom,
 		DepositAddress:      s.TestAccs[1].String(),
 		TransferChannelId:   ibctesting.FirstChannelID,
-		MinRedemptionRate:   sdk.MustNewDecFromStr("0.90"),
-		MaxRedemptionRate:   sdk.MustNewDecFromStr("1.5"),
-		RedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+		MinRedemptionRate:   sdkmath.LegacyMustNewDecFromStr("0.90"),
+		MaxRedemptionRate:   sdkmath.LegacyMustNewDecFromStr("1.5"),
+		RedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 		DelegatedBalance:    delegatedBalance,
 	})
 
@@ -145,22 +145,22 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 	testCases := []UpdateRedemptionRateBounds{
 		{
 			ChainId:                        "chain-0",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.95"), // 1 - 5% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.10"), // 1 + 10% = 1.1
 		},
 		{
 			ChainId:                        "chain-1",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
 		},
 		{
 			// Max outer for osmo uses 12% instead of 10%
 			ChainId:                        v25.OsmosisChainId,
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.25"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
 		},
 	}
 
@@ -192,9 +192,9 @@ func (s *UpgradeTestSuite) SetupTestUpdateInnerRedemptionRateBounds() func() {
 	testCases := []UpdateRedemptionRateInnerBounds{
 		{
 			ChainId:                        "celestia",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.2"),
-			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("1.1988"), // 1.2-(1.2*.001) = 1.1988
-			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.2012"), // 1.2+(1.2*.001) = 1.2012
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.2"),
+			ExpectedMinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1988"), // 1.2-(1.2*.001) = 1.1988
+			ExpectedMaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.2012"), // 1.2+(1.2*.001) = 1.2012
 		},
 	}
 

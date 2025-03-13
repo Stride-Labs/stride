@@ -1,6 +1,7 @@
 package v20
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -27,7 +28,8 @@ func CreateUpgradeHandler(
 	consumerKeeper ccvconsumerkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v20...")
 
 		ctx.Logger().Info("Running module migrations...")

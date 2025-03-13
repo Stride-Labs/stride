@@ -1,6 +1,7 @@
 package v18
 
 import (
+	"context"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -28,7 +29,8 @@ func CreateUpgradeHandler(
 	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v18...")
 
 		ctx.Logger().Info("Updating redemption rate bounds...")
@@ -120,8 +122,8 @@ func UpdateUnbondingRecords(
 	sk stakeibckeeper.Keeper,
 	rk recordskeeper.Keeper,
 	startingEstimateEpoch uint64,
-	redemptionRatesBeforeProp map[string]map[uint64]sdk.Dec,
-	redemptionRatesAtTimeOfProp map[string]sdk.Dec,
+	redemptionRatesBeforeProp map[string]map[uint64]sdkmath.LegacyDec,
+	redemptionRatesAtTimeOfProp map[string]sdkmath.LegacyDec,
 ) error {
 	// loop over host zone unbonding records
 	for _, epochUnbondingRecord := range rk.GetAllEpochUnbondingRecord(ctx) {
@@ -174,7 +176,7 @@ func UpdateUnbondingRecords(
 						"unable to find user redemption record with id %s", userRedemptionRecordId)
 				}
 
-				userNativeAmount := sdk.NewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(recordRedemptionRate).TruncateInt()
+				userNativeAmount := sdkmath.LegacyNewDecFromInt(userRedemptionRecord.StTokenAmount).Mul(recordRedemptionRate).TruncateInt()
 				totalNativeAmount = totalNativeAmount.Add(userNativeAmount)
 
 				userRedemptionRecord.NativeTokenAmount = userNativeAmount
@@ -195,9 +197,9 @@ func UpdateUnbondingRecords(
 // Executes the bank send for prop 228 if it passed
 func ExecuteProp228IfPassed(ctx sdk.Context, bk bankkeeper.Keeper, gk govkeeper.Keeper) error {
 	// Grab proposal from gov store
-	proposal, found := gk.GetProposal(ctx, Prop228ProposalId)
-	if !found {
-		return fmt.Errorf("Prop %d not found", Prop228ProposalId)
+	proposal, err := gk.Proposals.Get(ctx, Prop228ProposalId)
+	if err != nil {
+		return fmt.Errorf("Prop %d not found: %w", Prop228ProposalId, err)
 	}
 
 	// Check if it passed - if it didn't do nothing

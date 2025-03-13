@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -132,7 +133,7 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	return timeoutNanosUint64, nil
 }
 
-func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdkmath.LegacyDec, sdkmath.LegacyDec) {
 	// Fetch the wide bounds
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
 	minSafetyThreshold := sdkmath.LegacyNewDec(utils.UintToInt(minSafetyThresholdInt)).Quo(sdkmath.LegacyNewDec(100))
@@ -151,7 +152,7 @@ func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.
 	return minSafetyThreshold, maxSafetyThreshold
 }
 
-func (k Keeper) GetInnerSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+func (k Keeper) GetInnerSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdkmath.LegacyDec, sdkmath.LegacyDec) {
 	// Fetch the inner bounds
 	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
 

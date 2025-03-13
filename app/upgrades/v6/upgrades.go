@@ -1,6 +1,8 @@
 package v6
 
 import (
+	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -22,7 +24,9 @@ func CreateUpgradeHandler(
 	cdc codec.Codec,
 	claimKeeper claimkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
+
 		// Reset Claims
 		airdropClaimTypes := []string{"stride", "gaia", "osmosis", "juno", "stars"}
 		for _, claimType := range airdropClaimTypes {

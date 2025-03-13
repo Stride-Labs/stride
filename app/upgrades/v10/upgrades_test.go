@@ -90,7 +90,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		proportions.CommunityPoolSecurityBudget.String()[:9], "community pool security")
 
 	// Check initial deposit ratio
-	govParams := s.App.GovKeeper.GetParams(s.Ctx)
+	govParams, err := s.App.GovKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err)
 	s.Require().Equal(v10.MinInitialDepositRatio, govParams.MinInitialDepositRatio, "min initial deposit ratio")
 
 	// Check localhost client was added

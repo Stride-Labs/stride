@@ -82,10 +82,10 @@ func (k Keeper) CalculateRewardsSplit(
 ) (rewardSplit RewardsSplit, err error) {
 	// Get the fee rate and total fees from params (e.g. 0.1 for 10% fee)
 	strideFeeParam := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
-	totalFeeRate := sdk.NewDecFromInt(strideFeeParam).Quo(sdkmath.LegacyNewDec(100))
+	totalFeeRate := sdkmath.LegacyNewDecFromInt(strideFeeParam).Quo(sdkmath.LegacyNewDec(100))
 
 	// Get the total fee amount from the fee percentage
-	totalFeesAmount := sdk.NewDecFromInt(rewardsAmount).Mul(totalFeeRate).TruncateInt()
+	totalFeesAmount := sdkmath.LegacyNewDecFromInt(rewardsAmount).Mul(totalFeeRate).TruncateInt()
 	reinvestAmount := rewardsAmount.Sub(totalFeesAmount)
 
 	// Check if the chain has a rebate
@@ -119,8 +119,8 @@ func (k Keeper) CalculateRewardsSplit(
 
 	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
 	// multiplied by the rebate fee percentage
-	contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdk.NewDecFromInt(stTokenSupply))
-	rebateAmount := sdk.NewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebateRate).TruncateInt()
+	contributionRate := sdkmath.LegacyNewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdkmath.LegacyNewDecFromInt(stTokenSupply))
+	rebateAmount := sdkmath.LegacyNewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebateRate).TruncateInt()
 	strideFeeAmount := totalFeesAmount.Sub(rebateAmount)
 
 	rewardSplit = RewardsSplit{
