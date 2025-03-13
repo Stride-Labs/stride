@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -68,7 +67,7 @@ func CmdLiquidStake() *cobra.Command {
 		Short: "Broadcast message liquid-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAmount, found := sdk.NewIntFromString(args[0])
+			argAmount, found := sdkmath.NewIntFromString(args[0])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
@@ -102,7 +101,7 @@ func CmdLSMLiquidStake() *cobra.Command {
 		Short: "Broadcast message lsm-liquid-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			amount, found := sdk.NewIntFromString(args[0])
+			amount, found := sdkmath.NewIntFromString(args[0])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
@@ -227,7 +226,7 @@ func CmdRedeemStake() *cobra.Command {
 		Short: "Broadcast message redeem-stake",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			argAmount, found := sdk.NewIntFromString(args[0])
+			argAmount, found := sdkmath.NewIntFromString(args[0])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
@@ -643,7 +642,7 @@ func CmdClearBalance() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
-			argAmount, found := sdk.NewIntFromString(args[1])
+			argAmount, found := sdkmath.NewIntFromString(args[1])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}

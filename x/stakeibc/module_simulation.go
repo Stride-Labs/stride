@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
@@ -60,14 +59,14 @@ func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.LegacyParamChange 
 }
 
 // RegisterStoreDecoder registers a decoder
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
+func (am AppModule) RegisterStoreDecoder(_ simtypes.StoreDecoderRegistry) {}
 
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
 
 	var weightMsgRestoreInterchainAccount int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgRestoreInterchainAccount, &weightMsgRestoreInterchainAccount, nil,
+	simState.AppParams.GetOrGenerate(opWeightMsgRestoreInterchainAccount, &weightMsgRestoreInterchainAccount, nil,
 		func(_ *rand.Rand) {
 			weightMsgRestoreInterchainAccount = defaultWeightMsgRestoreInterchainAccount
 		},
@@ -78,7 +77,7 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 	))
 
 	var weightMsgUpdateValidatorSharesExchRate int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgUpdateValidatorSharesExchRate, &weightMsgUpdateValidatorSharesExchRate, nil,
+	simState.AppParams.GetOrGenerate(opWeightMsgUpdateValidatorSharesExchRate, &weightMsgUpdateValidatorSharesExchRate, nil,
 		func(_ *rand.Rand) {
 			weightMsgUpdateValidatorSharesExchRate = defaultWeightMsgUpdateValidatorSharesExchRate
 		},

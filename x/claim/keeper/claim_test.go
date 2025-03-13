@@ -221,19 +221,25 @@ func (suite *KeeperTestSuite) TestClaimAccountTypes() {
 	account := suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr2)
 	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr2, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
-	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewBaseVestingAccount(account.(*authtypes.BaseAccount), nil, 0))
+	baseVestingAccount, err := vestingtypes.NewBaseVestingAccount(account.(*authtypes.BaseAccount), nil, 0)
+	suite.Require().NoError(err)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, baseVestingAccount)
 
 	addr3 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr3)
 	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr3, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
-	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewContinuousVestingAccount(account.(*authtypes.BaseAccount), nil, 0, 0))
+	continuousVestingAccount, err := vestingtypes.NewContinuousVestingAccount(account.(*authtypes.BaseAccount), nil, 0, 0)
+	suite.Require().NoError(err)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, continuousVestingAccount)
 
 	addr4 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account = suite.app.AccountKeeper.NewAccountWithAddress(suite.ctx, addr4)
 	err = suite.app.BankKeeper.SendCoins(suite.ctx, distributors["stride"], addr4, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
 	suite.Require().NoError(err)
-	suite.app.AccountKeeper.SetAccount(suite.ctx, vestingtypes.NewPeriodicVestingAccount(account.(*authtypes.BaseAccount), nil, 0, nil))
+	periodicVestingAccount, err := vestingtypes.NewPeriodicVestingAccount(account.(*authtypes.BaseAccount), nil, 0, nil)
+	suite.Require().NoError(err)
+	suite.app.AccountKeeper.SetAccount(suite.ctx, periodicVestingAccount)
 
 	// Init claim records
 	for _, addr := range []sdk.AccAddress{addr2, addr3, addr4} {
@@ -739,7 +745,7 @@ func (suite *KeeperTestSuite) TestUpdateAirdropAddress() {
 	// verify that we can claim the airdrop with the current airdrop key (which represents the incorrect stride address)
 	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, tc.recordKey, tc.airdropId, false)
 	suite.Require().NoError(err)
-	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(100_000_000))), "parsed evmos address should be allowed to claim")
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewIntFromUint64(100_000_000))), "parsed evmos address should be allowed to claim")
 
 	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, tc.recordKey)
 	suite.Require().NoError(err)
@@ -763,7 +769,7 @@ func (suite *KeeperTestSuite) TestUpdateAirdropAddress() {
 	// verify that the stride address CAN claim after the update
 	coins, err = suite.app.ClaimKeeper.GetUserTotalClaimable(suite.ctx, strideAccAddress, tc.airdropId, false)
 	suite.Require().NoError(err)
-	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(100_000_000))), "stride address should be allowed to claim after update")
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewIntFromUint64(100_000_000))), "stride address should be allowed to claim after update")
 
 	claims, err = suite.app.ClaimKeeper.GetClaimStatus(suite.ctx, strideAccAddress)
 	suite.Require().NoError(err)
@@ -772,16 +778,16 @@ func (suite *KeeperTestSuite) TestUpdateAirdropAddress() {
 	// claim with the Stride address
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, tc.airdropId)
 	suite.Require().NoError(err)
-	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(20_000_000))), "stride address should be allowed to claim after update")
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewIntFromUint64(20_000_000))), "stride address should be allowed to claim after update")
 
 	// verify Stride address can't claim again
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, strideAccAddress, types.ACTION_FREE, tc.airdropId)
 	suite.Require().NoError(err)
-	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdk.NewIntFromUint64(0))), "can't claim twice after update")
+	suite.Require().Equal(coins, sdk.NewCoins(sdk.NewCoin("stake", sdkmath.NewIntFromUint64(0))), "can't claim twice after update")
 
 	// verify Stride address balance went up
 	strideBalance := suite.app.BankKeeper.GetBalance(suite.ctx, strideAccAddress, "stake")
-	suite.Require().Equal(strideBalance.Amount, sdk.NewIntFromUint64(20_000_000), "stride address balance should have increased after claiming")
+	suite.Require().Equal(strideBalance.Amount, sdkmath.NewIntFromUint64(20_000_000), "stride address balance should have increased after claiming")
 }
 
 func (suite *KeeperTestSuite) TestUpdateAirdropAddress_AirdropNotFound() {

@@ -41,7 +41,7 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// Verify the amount is valid
-	amount, ok := sdk.NewIntFromString(transferMetadata.Amount)
+	amount, ok := sdkmath.NewIntFromString(transferMetadata.Amount)
 	if !ok {
 		return errors.New("not a parsable amount field")
 	}
