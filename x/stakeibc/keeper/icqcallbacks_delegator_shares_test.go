@@ -312,7 +312,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_NoSlashOccurred() {
 	// Update the delegator shares query response so that it shows that there was no slash
 	// shares_after_slash = (100% - slash_percentage) * share_if_not_slashed
 	//    => share_if_not_slashed = shares_after_slash / (100% - slash_percentage)
-	validatorSharesIfNotSlashed := tc.numShares.Quo(sdk.OneDec().Sub(tc.slashPercentage))
+	validatorSharesIfNotSlashed := tc.numShares.Quo(sdkmath.LegacyOneDec().Sub(tc.slashPercentage))
 	valAddress := tc.hostZone.Validators[tc.valIndexQueried].Address
 	queryResponse := s.CreateDelegatorSharesQueryResponse(valAddress, validatorSharesIfNotSlashed)
 
@@ -438,7 +438,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ZeroExternalDelegation() {
 	s.Require().Zero(validator.Delegation.Int64(), "validator delegation amount")
 
 	// Run the callback again, and confirm there's no failure (testing the case of 0 internal and external)
-	callbackArgs = s.CreateDelegatorSharesQueryResponse(initialValidator.Address, sdk.ZeroDec())
+	callbackArgs = s.CreateDelegatorSharesQueryResponse(initialValidator.Address, sdkmath.LegacyZeroDec())
 	err = keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, callbackArgs, tc.validArgs.query)
 	s.Require().NoError(err)
 

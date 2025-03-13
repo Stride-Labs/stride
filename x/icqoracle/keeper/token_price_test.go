@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/x/icqoracle/types"
@@ -16,7 +17,7 @@ func (s *KeeperTestSuite) createTokenPrices() []types.TokenPrice {
 		tokenPrice := types.TokenPrice{
 			BaseDenom:  fmt.Sprintf("base-%d", i),
 			QuoteDenom: fmt.Sprintf("quote-%d", i),
-			SpotPrice:  sdk.ZeroDec(),
+			SpotPrice:  sdkmath.LegacyZeroDec(),
 		}
 
 		tokenPrices = append(tokenPrices, tokenPrice)
@@ -146,7 +147,8 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			},
 			expectedErrors: []string{
 				"could not calculate price for baseToken='base'",
-				"could not calculate price for baseToken='quote'"},
+				"could not calculate price for baseToken='quote'",
+			},
 		},
 		{
 			name:       "stale base price through common token",
@@ -190,7 +192,8 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			},
 			expectedErrors: []string{
 				"no price for baseDenom 'base'",
-				"no price for quoteDenom 'base' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='false')"},
+				"no price for quoteDenom 'base' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='false')",
+			},
 		},
 		{
 			name:       "no quote denom",

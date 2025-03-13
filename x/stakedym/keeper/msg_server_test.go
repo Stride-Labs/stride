@@ -179,7 +179,6 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep() {
 // ----------------------------------------------
 
 func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
-
 	safeAddress := "safe"
 
 	// Create the host zone
@@ -233,7 +232,6 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
 	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
-
 }
 
 // ----------------------------------------------
@@ -387,7 +385,7 @@ func (s *KeeperTestSuite) TestRefreshRedemptionRate() {
 	// Create host zone with initial redemption rate of 1
 	// There will be 1000 delegated tokens, and 500 stTokens
 	// implying an updated redemption rate of 2
-	initialRedemptionRate := sdk.OneDec()
+	initialRedemptionRate := sdkmath.LegacyOneDec()
 	expectedRedemptionRate := sdk.NewDec(2)
 
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
@@ -597,7 +595,6 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 
 // Verify that operator address can be set successfully
 func (s *KeeperTestSuite) TestSetOperatorAddress() {
-
 	safeAddress := s.TestAccs[0].String()
 	operatorAddress := s.TestAccs[1].String()
 	nonAdminAddress := s.TestAccs[2].String()

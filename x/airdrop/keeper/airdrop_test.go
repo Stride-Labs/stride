@@ -3,8 +3,6 @@ package keeper_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
 )
 
@@ -12,7 +10,7 @@ func (s *KeeperTestSuite) addAirdrops() (airdrops []types.Airdrop) {
 	for i := 0; i <= 4; i++ {
 		airdrop := types.Airdrop{
 			Id:                fmt.Sprintf("airdrop-%d", i),
-			EarlyClaimPenalty: sdk.ZeroDec(),
+			EarlyClaimPenalty: sdkmath.LegacyZeroDec(),
 		}
 		airdrops = append(airdrops, airdrop)
 		s.App.AirdropKeeper.SetAirdrop(s.Ctx, airdrop)

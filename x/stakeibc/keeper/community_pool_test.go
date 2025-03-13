@@ -204,7 +204,7 @@ func (s *KeeperTestSuite) SetupLiquidStakeCommunityPoolTokens() LiquidStakeCommu
 		CommunityPoolStakeHoldingAddress: communityPoolHoldingAddress.String(),
 		CommunityPoolReturnIcaAddress:    communityPoolReturnICAAddress.String(),
 		DepositAddress:                   depositAddress.String(),
-		RedemptionRate:                   sdk.OneDec(),
+		RedemptionRate:                   sdkmath.LegacyOneDec(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -351,7 +351,7 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 		CommunityPoolReturnIcaAddress:     communityPoolReturnICAAddress,
 		DepositAddress:                    depositAddress.String(),
 		TotalDelegations:                  initialStTokens, // at least as much as we are trying to redeem
-		RedemptionRate:                    sdk.OneDec(),
+		RedemptionRate:                    sdkmath.LegacyOneDec(),
 		RedemptionsEnabled:                true,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

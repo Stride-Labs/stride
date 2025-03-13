@@ -28,14 +28,14 @@ func (s *KeeperTestSuite) SetupTestRewardAllocation() {
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
-		RedemptionRate: sdk.OneDec(),
+		RedemptionRate: sdkmath.LegacyOneDec(),
 		DepositAddress: stakeibctypes.NewHostZoneDepositAddress(HostChainId).String(),
 	}
 	hostZone2 := stakeibctypes.HostZone{
 		ChainId:        OsmoChainId,
 		HostDenom:      Osmo,
 		IbcDenom:       IbcOsmo,
-		RedemptionRate: sdk.OneDec(),
+		RedemptionRate: sdkmath.LegacyOneDec(),
 		DepositAddress: stakeibctypes.NewHostZoneDepositAddress(OsmoChainId).String(),
 	}
 

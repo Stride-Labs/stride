@@ -53,7 +53,7 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	hostZone.SafeAddressOnStride = fillDefaultValue(hostZone.SafeAddressOnStride, validAddress)
 
 	if hostZone.RedemptionRate.IsNil() {
-		hostZone.RedemptionRate = sdk.OneDec()
+		hostZone.RedemptionRate = sdkmath.LegacyOneDec()
 		hostZone.MinRedemptionRate = sdk.MustNewDecFromStr("0.8")
 		hostZone.MinInnerRedemptionRate = sdk.MustNewDecFromStr("0.9")
 		hostZone.MaxInnerRedemptionRate = sdk.MustNewDecFromStr("1.1")
@@ -203,14 +203,14 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 		{
 			name: "invalid redemption rate",
 			hostZone: types.HostZone{
-				RedemptionRate: sdk.OneDec().Neg(),
+				RedemptionRate: sdkmath.LegacyOneDec().Neg(),
 			},
 			expectedError: "redemption rate must be positive",
 		},
 		{
 			name: "invalid redemption rate bounds",
 			hostZone: types.HostZone{
-				RedemptionRate:         sdk.OneDec(),
+				RedemptionRate:         sdkmath.LegacyOneDec(),
 				MinRedemptionRate:      sdk.MustNewDecFromStr("1.1"),
 				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
 			},

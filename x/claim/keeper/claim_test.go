@@ -22,7 +22,7 @@ import (
 // Test functionality for loading allocation data(csv)
 func (suite *KeeperTestSuite) TestLoadAllocationData() {
 	suite.SetupTest()
-	var allocations = `identifier,address,weight
+	allocations := `identifier,address,weight
 osmosis,osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg,0.5
 osmosis,osmo1h4astdfzjhcwahtfrh24qtvndzzh49xvtm69fg,0.3
 stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7
@@ -466,7 +466,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	// for stride
 	weight, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().NoError(err)
-	suite.Require().Equal(weight, sdk.ZeroDec())
+	suite.Require().Equal(weight, sdkmath.LegacyZeroDec())
 
 	records := suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().Equal(0, len(records))
@@ -474,7 +474,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	// for osmosis
 	weight, err = suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "osmosis")
 	suite.Require().NoError(err)
-	suite.Require().Equal(weight, sdk.ZeroDec())
+	suite.Require().Equal(weight, sdkmath.LegacyZeroDec())
 
 	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, "osmosis")
 	suite.Require().Equal(0, len(records))
@@ -525,7 +525,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 
 	weight, err = suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().NoError(err)
-	suite.Require().Equal(weight, sdk.ZeroDec())
+	suite.Require().Equal(weight, sdkmath.LegacyZeroDec())
 
 	records = suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().Equal(0, len(records))
@@ -616,7 +616,6 @@ func (suite *KeeperTestSuite) TestGetClaimStatus() {
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop ID for %d", i)
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop claimed for %i", i)
 	}
-
 }
 
 func (suite *KeeperTestSuite) TestGetClaimMetadata() {

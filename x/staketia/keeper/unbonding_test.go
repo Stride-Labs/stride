@@ -296,7 +296,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			}(),
 			stakeibcHostZone: func() *stakeibctypes.HostZone {
 				_, _, hz, _, _, _ := s.getDefaultTestInputs()
-				hz.RedemptionRate = sdk.OneDec()
+				hz.RedemptionRate = sdkmath.LegacyOneDec()
 				return hz
 			}(),
 			accUnbondRecord: defaultUR,
@@ -398,7 +398,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			}(),
 			stakeibcHostZone: func() *stakeibctypes.HostZone {
 				_, _, hz, _, _, _ := s.getDefaultTestInputs()
-				hz.RedemptionRate = sdk.OneDec()
+				hz.RedemptionRate = sdkmath.LegacyOneDec()
 				return hz
 			}(),
 			accUnbondRecord: defaultUR,
@@ -426,7 +426,6 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			s.checkRedeemStakeTestCase(tc)
 		})
 	}
-
 }
 
 func (s *KeeperTestSuite) checkRedeemStakeTestCase(tc RedeemStakeTestCase) {
@@ -774,7 +773,6 @@ func (s *KeeperTestSuite) TestConfirmUndelegation_Failure_RecordHashAlreadySet()
 }
 
 func (s *KeeperTestSuite) TestBurnRedeemedStTokens_Success() {
-
 	redemptionAddress := s.TestAccs[0]
 	redemptionAccountBalance := sdkmath.NewInt(500)
 
@@ -810,7 +808,6 @@ func (s *KeeperTestSuite) TestBurnRedeemedStTokens_Success() {
 }
 
 func (s *KeeperTestSuite) TestBurnRedeemedStTokens_BadRedemptionAddress() {
-
 	redemptionAddress := "INVALID_ADDRESS"
 
 	// Create a host zone with delegatedBalance and RedemptionAddresses
@@ -973,7 +970,6 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_Successful() {
 	s.Require().True(found)
 	s.Require().Equal(types.CLAIMABLE, loadedUnbondingRecord.Status, "unbonding record should be updated to status CLAIMABLE")
 	s.Require().Equal(ValidTxHashNew, loadedUnbondingRecord.UnbondedTokenSweepTxHash, "unbonding record should be updated with token sweep txHash")
-
 }
 
 func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NotFunded() {

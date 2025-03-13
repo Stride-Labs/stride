@@ -125,7 +125,6 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate() {
 			// Check that the last redemption rate was set
 			s.Require().Equal(initialRedemptionRate, hostZone.LastRedemptionRate, "redemption rate")
 		})
-
 	}
 }
 
@@ -138,7 +137,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoTokens() {
 		NativeTokenIbcDenom: HostIBCDenom,
 		DepositAddress:      depositAddress.String(),
 		DelegatedBalance:    sdkmath.ZeroInt(),
-		RedemptionRate:      sdk.OneDec(),
+		RedemptionRate:      sdkmath.LegacyOneDec(),
 	})
 
 	// Check that the update funtion returns nil, since there are no stTokens
@@ -147,7 +146,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoTokens() {
 
 	// Check that the redemption rate was not updated
 	hostZone := s.MustGetHostZone()
-	s.Require().Equal(sdk.OneDec(), hostZone.RedemptionRate, "redemption rate should not have been updated")
+	s.Require().Equal(sdkmath.LegacyOneDec(), hostZone.RedemptionRate, "redemption rate should not have been updated")
 
 	// Mint stTokens
 	s.FundAccount(s.TestAccs[1], sdk.NewCoin(StDenom, sdkmath.NewInt(1000)))

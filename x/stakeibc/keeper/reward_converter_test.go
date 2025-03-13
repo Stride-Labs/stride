@@ -178,7 +178,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplit() {
 			totalStTokenSupply: sdkmath.NewInt(100),
 			rewardAmount:       sdkmath.NewInt(1000),
 			strideFee:          10,
-			rebateRate:         sdk.ZeroDec(),
+			rebateRate:         sdkmath.LegacyZeroDec(),
 
 			expectedRebateAmount:    sdkmath.NewInt(0),
 			expectedStrideFeeAmount: sdkmath.NewInt(100),
@@ -196,7 +196,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplit() {
 			totalStTokenSupply:       sdkmath.NewInt(100),
 			rewardAmount:             sdkmath.NewInt(1000),
 			strideFee:                10,
-			rebateRate:               sdk.OneDec(),
+			rebateRate:               sdkmath.LegacyOneDec(),
 
 			expectedRebateAmount:    sdkmath.NewInt(10),
 			expectedStrideFeeAmount: sdkmath.NewInt(90),
@@ -244,7 +244,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplit() {
 			totalStTokenSupply:       sdkmath.NewInt(100),
 			rewardAmount:             sdkmath.NewInt(1000),
 			strideFee:                10,
-			rebateRate:               sdk.OneDec(),
+			rebateRate:               sdkmath.LegacyOneDec(),
 
 			expectedRebateAmount:    sdkmath.NewInt(100),
 			expectedStrideFeeAmount: sdkmath.NewInt(0),

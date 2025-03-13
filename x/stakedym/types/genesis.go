@@ -30,8 +30,8 @@ func DefaultGenesis() *GenesisState {
 			SafeAddressOnStride:     SafeAddressOnStride,
 			OperatorAddressOnStride: OperatorAddressOnStride,
 
-			RedemptionRate:         sdk.OneDec(),
-			LastRedemptionRate:     sdk.OneDec(),
+			RedemptionRate:         sdkmath.LegacyOneDec(),
+			LastRedemptionRate:     sdkmath.LegacyOneDec(),
 			MinRedemptionRate:      sdk.MustNewDecFromStr("0.95"),
 			MaxRedemptionRate:      sdk.MustNewDecFromStr("1.1"),
 			MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.95"),

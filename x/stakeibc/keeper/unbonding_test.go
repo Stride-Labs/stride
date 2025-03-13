@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 		DelegationIcaAddress: "cosmos_DELEGATION",
 		Validators:           validators,
 		TotalDelegations:     totalStake,
-		RedemptionRate:       sdk.OneDec(),
+		RedemptionRate:       sdkmath.LegacyOneDec(),
 		MaxMessagesPerIcaTx:  32,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -489,7 +489,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				BalancedDelegation: sdkmath.NewInt(0),
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
-			expectedRatio: sdk.ZeroDec(),
+			expectedRatio: sdkmath.LegacyZeroDec(),
 			errorExpected: false,
 		},
 		{
@@ -1273,7 +1273,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 			DelegationIcaAddress: gaiaDelegationAddr,
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
-			RedemptionRate:       sdk.OneDec(),
+			RedemptionRate:       sdkmath.LegacyOneDec(),
 			MaxMessagesPerIcaTx:  32,
 		},
 		{
@@ -1285,7 +1285,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 			DelegationIcaAddress: osmoDelegationAddr,
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
-			RedemptionRate:       sdk.OneDec(),
+			RedemptionRate:       sdkmath.LegacyOneDec(),
 			MaxMessagesPerIcaTx:  32,
 		},
 	}

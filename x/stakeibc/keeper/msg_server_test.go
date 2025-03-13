@@ -150,7 +150,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	for _, validator := range expectedValidators {
 		validator.Delegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
-		validator.SharesToTokensRate = sdk.OneDec()
+		validator.SharesToTokensRate = sdkmath.LegacyOneDec()
 		validator.SlashQueryCheckpoint = expectedSlashCheckpoint
 	}
 
@@ -347,14 +347,14 @@ func (s *KeeperTestSuite) SetupDeleteValidator() DeleteValidatorTestCase {
 			Address:            "stride_VAL1",
 			Weight:             0,
 			Delegation:         sdkmath.ZeroInt(),
-			SharesToTokensRate: sdk.OneDec(),
+			SharesToTokensRate: sdkmath.LegacyOneDec(),
 		},
 		{
 			Name:               "val2",
 			Address:            "stride_VAL2",
 			Weight:             0,
 			Delegation:         sdkmath.ZeroInt(),
-			SharesToTokensRate: sdk.OneDec(),
+			SharesToTokensRate: sdkmath.LegacyOneDec(),
 		},
 	}
 
@@ -909,7 +909,7 @@ func (s *KeeperTestSuite) SetupTestLSMLiquidStake() LSMLiquidStakeTestCase {
 			Address:                   ValAddress,
 			SlashQueryProgressTracker: progressTowardsQuery,
 			SlashQueryCheckpoint:      queryCheckpoint,
-			SharesToTokensRate:        sdk.OneDec(),
+			SharesToTokensRate:        sdkmath.LegacyOneDec(),
 		}},
 		DelegationIcaAddress:  "cosmos_DELEGATION",
 		LsmLiquidStakeEnabled: true,
@@ -1522,7 +1522,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 	hostZone := types.HostZone{
 		ChainId:        HostChainId,
 		ConnectionId:   ibctesting.FirstConnectionID,
-		RedemptionRate: sdk.OneDec(), // if not set, the beginblocker invariant panics
+		RedemptionRate: sdkmath.LegacyOneDec(), // if not set, the beginblocker invariant panics
 		Validators: []*types.Validator{
 			{Address: "valA", DelegationChangesInProgress: 1},
 			{Address: "valB", DelegationChangesInProgress: 2},

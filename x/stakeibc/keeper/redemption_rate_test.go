@@ -68,7 +68,7 @@ func (s *KeeperTestSuite) SetupUpdateRedemptionRates(tc UpdateRedemptionRateTest
 		HostDenom:        Atom,
 		TotalDelegations: tc.totalDelegation,
 		RedemptionRate:   tc.initialRedemptionRate,
-		Validators:       []*types.Validator{{Address: ValAddress, SharesToTokensRate: sdk.OneDec()}},
+		Validators:       []*types.Validator{{Address: ValAddress, SharesToTokensRate: sdkmath.LegacyOneDec()}},
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -120,7 +120,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_ZeroNativeAssets() {
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
-	expectedRedemptionRate := sdk.ZeroDec()
+	expectedRedemptionRate := sdkmath.LegacyZeroDec()
 	s.checkRedemptionRateAfterUpdate(expectedRedemptionRate)
 }
 
@@ -279,7 +279,7 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 	detokenizationFailed := recordtypes.LSMTokenDeposit_DETOKENIZATION_FAILED
 
 	validators := []*types.Validator{
-		{Address: "valA", SharesToTokensRate: sdk.OneDec()},
+		{Address: "valA", SharesToTokensRate: sdkmath.LegacyOneDec()},
 		{Address: "valB", SharesToTokensRate: sdk.MustNewDecFromStr("0.75")},
 		{Address: "valC", SharesToTokensRate: sdk.MustNewDecFromStr("0.5")},
 	}

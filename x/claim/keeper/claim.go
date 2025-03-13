@@ -263,7 +263,7 @@ func (k Keeper) SetClaimRecordsWithWeights(ctx sdk.Context, claimRecords []types
 	weights := make(map[string]sdk.Dec)
 	for _, record := range claimRecords {
 		if weights[record.AirdropIdentifier].IsNil() {
-			weights[record.AirdropIdentifier] = sdk.ZeroDec()
+			weights[record.AirdropIdentifier] = sdkmath.LegacyZeroDec()
 		}
 
 		weights[record.AirdropIdentifier] = weights[record.AirdropIdentifier].Add(record.Weight)
@@ -348,11 +348,11 @@ func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdk.D
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...))
 	if b == nil {
-		return sdk.ZeroDec(), nil
+		return sdkmath.LegacyZeroDec(), nil
 	}
 	totalWeight, err := sdk.NewDecFromStr(string(b))
 	if err != nil {
-		return sdk.ZeroDec(), types.ErrTotalWeightParse
+		return sdkmath.LegacyZeroDec(), types.ErrTotalWeightParse
 	}
 	return totalWeight, nil
 }

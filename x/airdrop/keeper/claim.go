@@ -107,7 +107,7 @@ func (k Keeper) ClaimEarly(ctx sdk.Context, airdropId, claimer string) error {
 	}
 
 	// Calculate rewards after claim early penalty
-	rewardsRemainingRate := sdk.OneDec().Sub(airdrop.EarlyClaimPenalty)
+	rewardsRemainingRate := sdkmath.LegacyOneDec().Sub(airdrop.EarlyClaimPenalty)
 	distributedRewards := sdk.NewDecFromInt(totalAccruedRewards).Mul(rewardsRemainingRate).TruncateInt()
 
 	// Update the amount claimed on the allocation record by the amount distributed

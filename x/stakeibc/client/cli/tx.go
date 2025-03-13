@@ -159,7 +159,7 @@ func CmdRegisterHostZone() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			minRedemptionRate := sdk.ZeroDec()
+			minRedemptionRate := sdkmath.LegacyZeroDec()
 			if minRedemptionRateStr != "" {
 				minRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
 				if err != nil {
@@ -171,7 +171,7 @@ func CmdRegisterHostZone() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			maxRedemptionRate := sdk.ZeroDec()
+			maxRedemptionRate := sdkmath.LegacyZeroDec()
 			if maxRedemptionRateStr != "" {
 				maxRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
 				if err != nil {

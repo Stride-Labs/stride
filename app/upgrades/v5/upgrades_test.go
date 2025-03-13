@@ -362,8 +362,8 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 			},
 		},
 		StakedBal:          uint64(3000000),
-		LastRedemptionRate: sdk.OneDec(),
-		RedemptionRate:     sdk.OneDec(),
+		LastRedemptionRate: sdkmath.LegacyOneDec(),
+		RedemptionRate:     sdkmath.LegacyOneDec(),
 	}
 	hostZoneBz, err := codec.Marshal(&hostZone)
 	s.Require().NoError(err)

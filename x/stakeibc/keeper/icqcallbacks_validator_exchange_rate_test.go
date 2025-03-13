@@ -378,7 +378,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoP
 
 	// Set the sharesToTokens rate to zero
 	hostZone := tc.initialState.hostZone
-	hostZone.Validators[0].SharesToTokensRate = sdk.ZeroDec()
+	hostZone.Validators[0].SharesToTokensRate = sdkmath.LegacyZeroDec()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)

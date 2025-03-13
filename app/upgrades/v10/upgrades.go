@@ -197,7 +197,7 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 		Add(strategicReserveProportion).
 		Add(communityPoolSecurityBudgetProportion)
 
-	if !totalProportions.Equal(sdk.OneDec()) {
+	if !totalProportions.Equal(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("distribution proportions do not sum to 1 (%v)", totalProportions)
 	}
 

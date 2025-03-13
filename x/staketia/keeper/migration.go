@@ -258,7 +258,7 @@ func GetStakeibcRedemptionRate(
 	// Staketia delegation records are not included in any of the above yet so we must
 	// gather than explicitly
 	// In practice, there will be no records here when the upgrade runs
-	staketiaPendingDelegations := sdk.ZeroDec()
+	staketiaPendingDelegations := sdkmath.LegacyZeroDec()
 	for _, delegationRecord := range staketiaKeeper.GetAllActiveDelegationRecords(ctx) {
 		staketiaPendingDelegations = staketiaPendingDelegations.Add(sdk.NewDecFromInt(delegationRecord.NativeAmount))
 	}

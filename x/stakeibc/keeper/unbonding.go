@@ -36,7 +36,7 @@ func (c *ValidatorUnbondCapacity) GetBalanceRatio() (sdk.Dec, error) {
 	// Therefore the current delegation here should never be zero
 	if c.CurrentDelegation.IsZero() {
 		errMsg := fmt.Sprintf("CurrentDelegation should not be 0 inside GetBalanceRatio(), %+v", c)
-		return sdk.ZeroDec(), errors.New(errMsg)
+		return sdkmath.LegacyZeroDec(), errors.New(errMsg)
 	}
 	return sdk.NewDecFromInt(c.BalancedDelegation).Quo(sdk.NewDecFromInt(c.CurrentDelegation)), nil
 }

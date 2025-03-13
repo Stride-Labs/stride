@@ -66,7 +66,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		Delegation:                  sdkmath.ZeroInt(),
 		SlashQueryProgressTracker:   sdkmath.ZeroInt(),
 		SlashQueryCheckpoint:        checkpoint,
-		SharesToTokensRate:          sdk.OneDec(),
+		SharesToTokensRate:          sdkmath.LegacyOneDec(),
 		DelegationChangesInProgress: 0,
 		SlashQueryInProgress:        false,
 	})

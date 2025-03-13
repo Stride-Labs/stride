@@ -225,7 +225,7 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPriceICQ_Errors() {
 // However, the assets may be inverted depending on the parameters
 func (s *KeeperTestSuite) createMockTwapData(baseDenom, quoteDenom, asset0Denom, asset1Denom string) []byte {
 	baseAssetPrice := sdk.MustNewDecFromStr("1.5")
-	quoteAssetPrice := sdk.OneDec().Quo(baseAssetPrice)
+	quoteAssetPrice := sdkmath.LegacyOneDec().Quo(baseAssetPrice)
 
 	pool := types.OsmosisTwapRecord{
 		Asset0Denom: asset0Denom,

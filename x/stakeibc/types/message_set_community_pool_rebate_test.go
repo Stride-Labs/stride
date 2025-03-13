@@ -91,7 +91,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:                   validAdminAddress,
 				ChainId:                   validChainId,
-				RebateRate:                sdk.OneDec(),
+				RebateRate:                sdkmath.LegacyOneDec(),
 				LiquidStakedStTokenAmount: validLiquidStakedAmount,
 			},
 		},
@@ -110,7 +110,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:                   validAdminAddress,
 				ChainId:                   validChainId,
-				RebateRate:                sdk.ZeroDec(),
+				RebateRate:                sdkmath.LegacyZeroDec(),
 				LiquidStakedStTokenAmount: validLiquidStakedAmount,
 			},
 		},

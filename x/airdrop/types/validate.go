@@ -58,7 +58,7 @@ func AirdropConfigValidateBasic(
 	if earlyClaimPenalty.IsNil() {
 		return errors.New("early claim penalty must be specified")
 	}
-	if earlyClaimPenalty.LT(sdk.ZeroDec()) || earlyClaimPenalty.GT(sdk.OneDec()) {
+	if earlyClaimPenalty.LT(sdkmath.LegacyZeroDec()) || earlyClaimPenalty.GT(sdkmath.LegacyOneDec()) {
 		return errors.New("early claim penalty must be between 0 and 1")
 	}
 

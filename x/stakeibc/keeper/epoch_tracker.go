@@ -100,32 +100,32 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 	// Get the current stride epoch
 	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return sdk.ZeroDec(), errorsmod.Wrapf(sdkerrors.ErrNotFound, "Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(sdkerrors.ErrNotFound, "Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
 	}
 
 	// Get epoch start time, end time, and duration
 	epochDuration, err := cast.ToInt64E(epochTracker.Duration)
 	if err != nil {
-		return sdk.ZeroDec(), errorsmod.Wrap(err, "unable to convert epoch duration to int64")
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, "unable to convert epoch duration to int64")
 	}
 	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
-		return sdk.ZeroDec(), errorsmod.Wrap(err, "unable to convert next epoch start time to int64")
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, "unable to convert next epoch start time to int64")
 	}
 	epochStartTime := epochEndTime - epochDuration
 
 	// Confirm the current block time is inside the current epoch's start and end times
 	currBlockTime := ctx.BlockTime().UnixNano()
 	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch,
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch,
 			"current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
 	}
 
 	// Get elapsed share
 	elapsedTime := currBlockTime - epochStartTime
 	elapsedShare := sdk.NewDec(elapsedTime).Quo(sdk.NewDec(epochDuration))
-	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, "elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
+	if elapsedShare.LT(sdkmath.LegacyZeroDec()) || elapsedShare.GT(sdkmath.LegacyOneDec()) {
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, "elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("Epoch elapsed share: %v (Block Time: %d, Epoch End Time: %d)", elapsedShare, currBlockTime, epochEndTime))

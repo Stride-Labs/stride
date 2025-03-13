@@ -62,7 +62,7 @@ func (msg *MsgSetCommunityPoolRebate) ValidateBasic() error {
 	if msg.ChainId == "" {
 		return errors.New("chain ID must be specified")
 	}
-	if msg.RebateRate.IsNil() || msg.RebateRate.LT(sdk.ZeroDec()) || msg.RebateRate.GT(sdk.OneDec()) {
+	if msg.RebateRate.IsNil() || msg.RebateRate.LT(sdkmath.LegacyZeroDec()) || msg.RebateRate.GT(sdkmath.LegacyOneDec()) {
 		return errors.New("invalid rebate rate, must be a decimal between 0 and 1 (inclusive)")
 	}
 	if msg.LiquidStakedStTokenAmount.IsNil() || msg.LiquidStakedStTokenAmount.LT(sdkmath.ZeroInt()) {
