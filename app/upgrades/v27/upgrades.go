@@ -1,6 +1,7 @@
 package v27
 
 import (
+	"context"
 	"fmt"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -18,7 +19,8 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	consumerKeeper consumerkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s...", UpgradeName))
 
 		// Run migrations first
@@ -39,11 +41,16 @@ func CreateUpgradeHandler(
 // to the consumer id for which the consumer is registered on the provider chain.
 // The consumer id can be obtained in by querying the provider, e.g. by using the
 // QueryConsumerIdFromClientId query.
-func InitializeConsumerId(ctx sdk.Context, consumerKeeper consumerkeeper.Keeper) error {
-	params, err := consumerKeeper.GetParams(ctx)
-	if err != nil {
-		return err
-	}
-	params.ConsumerId = ConsumerId
-	return consumerKeeper.SetParams(ctx, params)
+//
+// Steps to retrieve the Stride consumer chain ID from Cosmos Hub provider:
+//  1. First, obtain the client ID from Stride using the command:
+//     `strided q ccvconsumer provider-info` which returns "07-tendermint-1154"
+//  2. Then, use the Provider's QueryConsumerIdFromClientId endpoint to get the corresponding consumer ID:
+//     - API endpoint: https://rest.cosmos.directory/cosmoshub/interchain_security/ccv/provider/consumer_id/07-tendermint-1154
+//     - This endpoint implements the query defined in the Interchain Security repository at:
+//     https://github.com/cosmos/interchain-security/blob/307b1446/proto/interchain_security/ccv/provider/v1/query.proto#L132-L138
+func InitializeConsumerId(ctx sdk.Context, consumerKeeper consumerkeeper.Keeper) {
+	params := consumerKeeper.GetConsumerParams(ctx)
+	params.ConsumerId = "1"
+	consumerKeeper.SetParams(ctx, params)
 }
