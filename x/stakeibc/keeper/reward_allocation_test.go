@@ -6,10 +6,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -141,7 +141,7 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdkmath.LegacyNewDec(0))
 	tstaking.CreateValidator(valAddrs[1], pubkeys[1], stakeAmount, true)
 
-	s.App.EndBlocker(s.Ctx, abci.RequestEndBlock{})
+	s.App.EndBlocker(s.Ctx)
 	s.Ctx = s.Ctx.WithBlockHeight(s.Ctx.BlockHeight() + 1)
 
 	// Simulate the token distribution from feeCollector to validators
@@ -155,12 +155,12 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	}
 	votes := []abci.VoteInfo{
 		{
-			Validator:       abciValA,
-			SignedLastBlock: true,
+			Validator:   abciValA,
+			BlockIdFlag: cmtproto.BlockIDFlagCommit,
 		},
 		{
-			Validator:       abciValB,
-			SignedLastBlock: true,
+			Validator:   abciValB,
+			BlockIdFlag: cmtproto.BlockIDFlagCommit,
 		},
 	}
 	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, votes)
