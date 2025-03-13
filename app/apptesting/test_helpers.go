@@ -15,7 +15,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
@@ -588,7 +590,7 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 func (s *AppTestHelper) GetBankStoreKeyPrefix(address, denom string) []byte {
 	_, addressBz, err := bech32.DecodeAndConvert(address)
 	s.Require().NoError(err, "no error expected when bech decoding address")
-	return append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
+	return append(bankv3types.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
 }
 
 // Extracts the address and denom from a bank store prefix

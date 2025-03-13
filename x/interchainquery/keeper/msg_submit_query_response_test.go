@@ -7,7 +7,7 @@ import (
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v26/x/interchainquery/types"

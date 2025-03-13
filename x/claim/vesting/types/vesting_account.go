@@ -71,7 +71,7 @@ func (bva *BaseVestingAccount) TrackDelegation(balance, vestingCoins, amount sdk
 		// compute x and y per the specification, where:
 		// X := min(max(V - DV, 0), D)
 		// Y := D - X
-		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), sdkmath.ZeroInt()), coin.Amount)
+		x := sdkmath.MinInt(sdkmath.MaxInt(vestingAmt.Sub(delVestingAmt), sdkmath.ZeroInt()), coin.Amount)
 		y := coin.Amount.Sub(x)
 
 		if !x.IsZero() {
@@ -108,8 +108,8 @@ func (bva *BaseVestingAccount) TrackUndelegation(amount sdk.Coins) {
 		// compute x and y per the specification, where:
 		// X := min(DF, D)
 		// Y := min(DV, D - X)
-		x := sdk.MinInt(delegatedFree, coin.Amount)
-		y := sdk.MinInt(delegatedVesting, coin.Amount.Sub(x))
+		x := sdkmath.MinInt(delegatedFree, coin.Amount)
+		y := sdkmath.MinInt(delegatedVesting, coin.Amount.Sub(x))
 
 		if !x.IsZero() {
 			xCoin := sdk.NewCoin(coin.Denom, x)
@@ -195,8 +195,10 @@ func (bva BaseVestingAccount) MarshalYAML() (interface{}, error) {
 
 // Periodic Vesting Account (only for stride)
 // This vesting account works differently from the core periodic vesting account.
-var _ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
-var _ authtypes.GenesisAccount = (*StridePeriodicVestingAccount)(nil)
+var (
+	_ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
+	_ authtypes.GenesisAccount    = (*StridePeriodicVestingAccount)(nil)
+)
 
 // NewStridePeriodicVestingAccountRaw creates a new StridePeriodicVestingAccount object from BaseVestingAccount
 func NewStridePeriodicVestingAccountRaw(bva *BaseVestingAccount, startTime int64, periods Periods) *StridePeriodicVestingAccount {
