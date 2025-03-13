@@ -192,7 +192,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 
 	// check: remaining coins should be less than 5% of minted coins
 	remainingBal := remainingCoins.AmountOf(sdk.DefaultBondDenom)
-	thresh := sdk.NewDec(5).Quo(sdk.NewDec(100))
+	thresh := sdkmath.LegacyNewDec(5).Quo(sdkmath.LegacyNewDec(100))
 	if sdk.NewDecFromInt(remainingBal).Quo(sdk.NewDecFromInt(mintedCoin.Amount)).GT(thresh) {
 		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
 			"Failed to divvy up mint module rewards fully -- remaining coins should be LT 5pct of total, instead are %#v/%#v",

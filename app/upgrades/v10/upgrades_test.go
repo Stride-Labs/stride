@@ -35,7 +35,7 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
-var initialRateLimitChannelValue = sdk.NewInt(1_000_000)
+var initialRateLimitChannelValue = sdkmath.NewInt(1_000_000)
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -257,7 +257,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "stride-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(4143585840),
+		ClaimedSoFar:       sdkmath.NewInt(4143585840),
 		DistributorAddress: "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
 	}
 
@@ -267,7 +267,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "cosmoshub-4",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(191138794312),
+		ClaimedSoFar:       sdkmath.NewInt(191138794312),
 		DistributorAddress: "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
 	}
 
@@ -277,7 +277,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "osmosis-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(72895369704),
+		ClaimedSoFar:       sdkmath.NewInt(72895369704),
 		DistributorAddress: "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
 	}
 
@@ -287,7 +287,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "juno-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(10967183382),
+		ClaimedSoFar:       sdkmath.NewInt(10967183382),
 		DistributorAddress: "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
 	}
 
@@ -297,7 +297,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "stargaze-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(1013798205),
+		ClaimedSoFar:       sdkmath.NewInt(1013798205),
 		DistributorAddress: "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
 	}
 
@@ -307,7 +307,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   true,
 		ChainId:            "evmos_9001-2",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(13491005333),
+		ClaimedSoFar:       sdkmath.NewInt(13491005333),
 		DistributorAddress: "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
 	}
 

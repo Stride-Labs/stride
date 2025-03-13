@@ -1,6 +1,7 @@
 package v12
 
 import (
+	"context"
 	"fmt"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -30,7 +31,9 @@ func CreateUpgradeHandler(
 	consumerKeeper *ccvconsumerkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
+
 		ctx.Logger().Info("Starting upgrade v12...")
 		ibcKeeper.ConnectionKeeper.SetParams(ctx, ibcconnectiontypes.DefaultParams())
 

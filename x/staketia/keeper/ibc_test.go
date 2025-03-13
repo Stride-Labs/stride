@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
@@ -27,7 +28,7 @@ func (s *KeeperTestSuite) SetupTestHandleRecordUpdatePacket() PacketCallbackTest
 	// Pending delegation record associated with transfer
 	record := types.DelegationRecord{
 		Id:           1,
-		NativeAmount: sdk.NewInt(0),
+		NativeAmount: sdkmath.NewInt(0),
 		Status:       types.TRANSFER_IN_PROGRESS,
 	}
 

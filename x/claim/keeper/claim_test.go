@@ -128,7 +128,7 @@ func (suite *KeeperTestSuite) TestHookBeforeAirdropStart() {
 	balances = suite.app.BankKeeper.GetAllBalances(suite.ctx, addr1)
 	// Now, it is the time for air drop, so claim module should send the balances to the user after liquid stake.
 	claimableAmountForLiquidStake := sdk.NewDecWithPrec(60, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // 60% for liquid stake
 	suite.Require().Equal(balances.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
 }
@@ -161,7 +161,7 @@ func (suite *KeeperTestSuite) TestBalancesAfterAccountConversion() {
 	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr, types.ACTION_DELEGATE_STAKE, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(100_000_000 - initialBal)).
+		Mul(sdkmath.LegacyNewDec(100_000_000 - initialBal)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 
 	coinsBal := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr)
@@ -200,7 +200,7 @@ func (suite *KeeperTestSuite) TestClaimAccountTypes() {
 	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr, types.ACTION_DELEGATE_STAKE, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(100_000_000 - initialBal)).
+		Mul(sdkmath.LegacyNewDec(100_000_000 - initialBal)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 
 	coinsBal := suite.app.BankKeeper.GetAllBalances(suite.ctx, addr)
@@ -305,7 +305,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_FREE, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForFree := sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance is 100000000, claim 20% for free
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
@@ -314,7 +314,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_DELEGATE_STAKE, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance is 90000000, claim 20% for stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
@@ -323,7 +323,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_LIQUID_STAKE, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForLiquidStake := sdk.NewDecWithPrec(60, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance = 80000000, claim 60% for liquid stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
@@ -344,7 +344,7 @@ func (suite *KeeperTestSuite) TestAirdropFlow() {
 	_, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx, addr1, types.ACTION_LIQUID_STAKE, "stride")
 	suite.Require().NoError(err)
 	claimableAmountForLiquidStake2 := sdk.NewDecWithPrec(60, 2).
-		Mul(sdk.NewDec(50_000_000)).
+		Mul(sdkmath.LegacyNewDec(50_000_000)).
 		Mul(weight).
 		RoundInt64() // remaining balance = 50000000*(60/100), claim 60% for liquid stake
 
@@ -417,7 +417,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().NoError(err)
 
 	claimableAmountForFree := sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000, claim 20% for free
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
 	suite.Require().Equal(coins1.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
@@ -430,7 +430,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().NoError(err)
 
 	claimableAmountForStake := sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
 	suite.Require().Equal(coins1.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
@@ -443,7 +443,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().NoError(err)
 
 	claimableAmountForLiquidStake := sdk.NewDecWithPrec(60, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance = 100000000*(80/100)*(80/100), claim 60% for liquid stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
 	suite.Require().Equal(coins1.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
@@ -486,7 +486,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour)), addr2, types.ACTION_DELEGATE_STAKE, "juno")
 	suite.Require().NoError(err)
 	claimableAmountForStake = sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance is 100000000*(80/100), claim 20% for stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForStake)).String())
 
@@ -494,7 +494,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	coins, err = suite.app.ClaimKeeper.ClaimCoinsForAction(suite.ctx.WithBlockTime(time.Now().Add(time.Hour)), addr2, types.ACTION_LIQUID_STAKE, "juno")
 	suite.Require().NoError(err)
 	claimableAmountForLiquidStake = sdk.NewDecWithPrec(60, 2).
-		Mul(sdk.NewDec(100_000_000)).
+		Mul(sdkmath.LegacyNewDec(100_000_000)).
 		RoundInt64() // remaining balance = 100000000*(80/100)*(80/100), claim 60% for liquid stake
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForLiquidStake)).String())
 
@@ -510,7 +510,7 @@ func (suite *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	suite.Require().NoError(err)
 
 	claimableAmountForFree = sdk.NewDecWithPrec(20, 2).
-		Mul(sdk.NewDec(20_000_000)).
+		Mul(sdkmath.LegacyNewDec(20_000_000)).
 		RoundInt64() // remaining balance = 20000000*(20/100), claim 20% for free
 	suite.Require().Equal(coins.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, claimableAmountForFree)).String())
 

@@ -94,32 +94,32 @@ func (s *KeeperTestSuite) checkEpochElapsedShare(epochDurationSeconds float64, n
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_StartOfEpoch() {
 	// 10 second long epoch, with 10 seconds remaining => 0% share
-	s.checkEpochElapsedShare(10.0, 10.0, sdk.NewDec(0))
+	s.checkEpochElapsedShare(10.0, 10.0, sdkmath.LegacyNewDec(0))
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_OneQuarterThroughEpoch() {
 	// 10 second long epoch, with 7.5 seconds remaining => 2.5 seconds elapsed => 25% share
-	s.checkEpochElapsedShare(10.0, 7.5, sdk.NewDec(25).Quo(sdk.NewDec(100)))
+	s.checkEpochElapsedShare(10.0, 7.5, sdkmath.LegacyNewDec(25).Quo(sdkmath.LegacyNewDec(100)))
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_MiddleOfEpoch() {
 	// 10 second long epoch, with 5 seconds remaining => 50% share
-	s.checkEpochElapsedShare(10.0, 5.0, sdk.NewDec(50).Quo(sdk.NewDec(100)))
+	s.checkEpochElapsedShare(10.0, 5.0, sdkmath.LegacyNewDec(50).Quo(sdkmath.LegacyNewDec(100)))
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_ThreeQuartersThroughEpoch() {
 	// 10 second long epoch, with 2.5 seconds remaining => 7.5 seconds elapsed => 75% share
-	s.checkEpochElapsedShare(10.0, 2.5, sdk.NewDec(75).Quo(sdk.NewDec(100)))
+	s.checkEpochElapsedShare(10.0, 2.5, sdkmath.LegacyNewDec(75).Quo(sdkmath.LegacyNewDec(100)))
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_AlmostAtEndOfEpoch() {
 	// 10 second long epoch, with 0.1 seconds remaining => 99% share
-	s.checkEpochElapsedShare(10.0, 0.1, sdk.NewDec(99).Quo(sdk.NewDec(100)))
+	s.checkEpochElapsedShare(10.0, 0.1, sdkmath.LegacyNewDec(99).Quo(sdkmath.LegacyNewDec(100)))
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Successful_EndOfEpoch() {
 	// 10 second long epoch, with 0 seconds remaining => 100% share
-	s.checkEpochElapsedShare(10.0, 0.0, sdk.NewDec(1))
+	s.checkEpochElapsedShare(10.0, 0.0, sdkmath.LegacyNewDec(1))
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_EpochNotFound() {

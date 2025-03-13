@@ -135,14 +135,14 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
 	// Fetch the wide bounds
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
-	minSafetyThreshold := sdk.NewDec(utils.UintToInt(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	minSafetyThreshold := sdkmath.LegacyNewDec(utils.UintToInt(minSafetyThresholdInt)).Quo(sdkmath.LegacyNewDec(100))
 
 	if !zone.MinRedemptionRate.IsNil() && zone.MinRedemptionRate.IsPositive() {
 		minSafetyThreshold = zone.MinRedemptionRate
 	}
 
 	maxSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMaxRedemptionRateThreshold)
-	maxSafetyThreshold := sdk.NewDec(utils.UintToInt(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	maxSafetyThreshold := sdkmath.LegacyNewDec(utils.UintToInt(maxSafetyThresholdInt)).Quo(sdkmath.LegacyNewDec(100))
 
 	if !zone.MaxRedemptionRate.IsNil() && zone.MaxRedemptionRate.IsPositive() {
 		maxSafetyThreshold = zone.MaxRedemptionRate

@@ -72,7 +72,7 @@ func (s *UpgradeTestSuite) SetupStaketiaMigration() func() {
 	s.CreateTransferChannel(staketiatypes.CelestiaChainId)
 
 	// Mint stTIA for the redemption rate
-	s.FundAccount(s.TestAccs[0], sdk.NewCoin("st"+staketiatypes.CelestiaNativeTokenDenom, sdk.NewInt(1000)))
+	s.FundAccount(s.TestAccs[0], sdk.NewCoin("st"+staketiatypes.CelestiaNativeTokenDenom, sdkmath.NewInt(1000)))
 
 	// Store the staketia host zone
 	s.App.StaketiaKeeper.SetLegacyHostZone(s.Ctx, oldstaketiatypes.HostZone{

@@ -226,8 +226,8 @@ func (s *KeeperTestSuite) SetupLiquidStakeCommunityPoolTokens() LiquidStakeCommu
 
 	// Fund the holding address with native tokens (in IBC form) and
 	// some dummy tokens that should not get touched by these functions
-	initialNativeTokens := sdk.NewInt(1000)
-	initialDummyTokens := sdk.NewInt(999)
+	initialNativeTokens := sdkmath.NewInt(1000)
+	initialDummyTokens := sdkmath.NewInt(999)
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(IbcAtom, initialNativeTokens))
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(Atom, initialDummyTokens))   // dummy token
 	s.FundAccount(communityPoolHoldingAddress, sdk.NewCoin(StAtom, initialDummyTokens)) // dummy token
@@ -330,8 +330,8 @@ func (s *KeeperTestSuite) SetupRedeemCommunityPoolTokens() RedeemCommunityPoolTo
 	communityPoolReturnICAAddress := HostICAAddress // need an address on HostChain (starts cosmos)
 
 	// stTokens which will be redeemed, dummy tokens which should not be touched
-	initialStTokens := sdk.NewInt(1000)
-	initialDummyTokens := sdk.NewInt(999)
+	initialStTokens := sdkmath.NewInt(1000)
+	initialDummyTokens := sdkmath.NewInt(999)
 
 	// Fund the redeem holding address with stTokens and
 	// some dummy tokens that should not get touched while redeeming
@@ -434,7 +434,7 @@ func (s *KeeperTestSuite) TestRedeemCommunityPoolTokens_Failure_NotEnoughDelegat
 	tc := s.SetupRedeemCommunityPoolTokens()
 
 	invalidHostZone := tc.hostZone
-	invalidHostZone.TotalDelegations = sdk.ZeroInt()
+	invalidHostZone.TotalDelegations = sdkmath.ZeroInt()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
 	err := s.App.StakeibcKeeper.RedeemCommunityPoolTokens(s.Ctx, invalidHostZone)
@@ -496,7 +496,7 @@ func (s *KeeperTestSuite) TestBuildFundCommunityPoolMsg() {
 			// Define the sending tokens and input host zone struct
 			// If the test case sends to the treasury, we have to set the community pool treasury
 			// address to be non-empty
-			tokens := sdk.NewCoins(sdk.NewCoin(HostDenom, sdk.NewInt(1000)))
+			tokens := sdk.NewCoins(sdk.NewCoin(HostDenom, sdkmath.NewInt(1000)))
 			hostZone := types.HostZone{
 				CommunityPoolReturnIcaAddress: communityPoolReturnICA,
 				WithdrawalIcaAddress:          withdrawalICA,

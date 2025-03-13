@@ -46,7 +46,7 @@ var (
 
 var (
 	ExpectedJunoUnbondingFrequency = uint64(5)
-	ExpectedEpochProvisions        = sdk.NewDec(1_078_767_123)
+	ExpectedEpochProvisions        = sdkmath.LegacyNewDec(1_078_767_123)
 	ExpectedAllowMessages          = []string{
 		"/cosmos.bank.v1beta1.MsgSend",
 		"/cosmos.bank.v1beta1.MsgMultiSend",
@@ -166,12 +166,12 @@ func (s *UpgradeTestSuite) SetupHostZones() {
 	osmosis := oldstakeibctypes.HostZone{
 		ChainId:            OsmosisChainId,
 		UnbondingFrequency: OsmosisUnbondingFrequency,
-		RedemptionRate:     sdk.NewDec(1),
+		RedemptionRate:     sdkmath.LegacyNewDec(1),
 	}
 	juno := oldstakeibctypes.HostZone{
 		ChainId:            JunoChainId,
 		UnbondingFrequency: InitialJunoUnbondingFrequency,
-		RedemptionRate:     sdk.NewDec(1),
+		RedemptionRate:     sdkmath.LegacyNewDec(1),
 	}
 
 	osmosisBz, err := codec.Marshal(&osmosis)
@@ -233,8 +233,8 @@ func (s *UpgradeTestSuite) SetupIncentiveDiversification() {
 
 	// Fund incentive program account with 23M, and stride foundation with 4.1M
 	// (any values can be used here for the test, but these are used to resemble mainnet)
-	initialProgram := sdk.NewCoin(ustrd, sdk.NewInt(23_000_000_000_000))
-	initialFoundation := sdk.NewCoin(ustrd, sdk.NewInt(4_157_085_999_543))
+	initialProgram := sdk.NewCoin(ustrd, sdkmath.NewInt(23_000_000_000_000))
+	initialFoundation := sdk.NewCoin(ustrd, sdkmath.NewInt(4_157_085_999_543))
 	s.FundAccount(incentiveProgramAddress, initialProgram)
 	s.FundAccount(strideFoundationAddress, initialFoundation)
 }
@@ -248,8 +248,8 @@ func (s *UpgradeTestSuite) CheckIncentiveDiversificationAfterUpgrade() {
 	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
 
 	// Confirm 3M were sent from the incentive program accoun to the stride foundation
-	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdk.NewInt(20_000_000_000_000))
-	expectedFoundationBalance := sdk.NewCoin(ustrd, sdk.NewInt(7_157_085_999_543))
+	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdkmath.NewInt(20_000_000_000_000))
+	expectedFoundationBalance := sdk.NewCoin(ustrd, sdkmath.NewInt(7_157_085_999_543))
 	actualIncentiveBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentiveProgramAddress, ustrd)
 	actualFoundationBalance := s.App.BankKeeper.GetBalance(s.Ctx, strideFoundationAddress, ustrd)
 

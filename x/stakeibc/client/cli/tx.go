@@ -161,7 +161,7 @@ func CmdRegisterHostZone() *cobra.Command {
 			}
 			minRedemptionRate := sdkmath.LegacyZeroDec()
 			if minRedemptionRateStr != "" {
-				minRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
+				minRedemptionRate, err = sdkmath.LegacyNewDecFromStr(minRedemptionRateStr)
 				if err != nil {
 					return err
 				}
@@ -173,7 +173,7 @@ func CmdRegisterHostZone() *cobra.Command {
 			}
 			maxRedemptionRate := sdkmath.LegacyZeroDec()
 			if maxRedemptionRateStr != "" {
-				maxRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
+				maxRedemptionRate, err = sdkmath.LegacyNewDecFromStr(maxRedemptionRateStr)
 				if err != nil {
 					return err
 				}
@@ -747,7 +747,7 @@ If a 0.0 rebate or 0 token liquid stake is specified, the rebate will be deleted
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			chainId := args[0]
-			rebatePercentage, err := sdk.NewDecFromStr(args[1])
+			rebatePercentage, err := sdkmath.LegacyNewDecFromStr(args[1])
 			if err != nil {
 				return fmt.Errorf("unable to parse rebate percentage: %s", err.Error())
 			}

@@ -133,7 +133,7 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Failure() {
 		Validators: []*types.Validator{{Address: ValAddress}},
 	})
 	validQuery := icqtypes.Query{ChainId: HostChainId}
-	validQueryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, sdk.NewDec(1000))
+	validQueryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, sdkmath.LegacyNewDec(1000))
 
 	// Atempt the callback with a missing host zone - it should fail
 	invalidQuery := validQuery
@@ -147,7 +147,7 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Failure() {
 	s.Require().ErrorContains(err, "unable to unmarshal delegator shares query response")
 
 	// Attempt the callback with a non-existent validator address - it should fail
-	invalidQueryResponse = s.CreateDelegatorSharesQueryResponse("non-existent validator", sdk.NewDec(1000))
+	invalidQueryResponse = s.CreateDelegatorSharesQueryResponse("non-existent validator", sdkmath.LegacyNewDec(1000))
 	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, invalidQueryResponse, validQuery)
 	s.Require().ErrorContains(err, "validator not found")
 }

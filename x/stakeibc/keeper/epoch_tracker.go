@@ -123,7 +123,7 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
 
 	// Get elapsed share
 	elapsedTime := currBlockTime - epochStartTime
-	elapsedShare := sdk.NewDec(elapsedTime).Quo(sdk.NewDec(epochDuration))
+	elapsedShare := sdkmath.LegacyNewDec(elapsedTime).Quo(sdkmath.LegacyNewDec(epochDuration))
 	if elapsedShare.LT(sdkmath.LegacyZeroDec()) || elapsedShare.GT(sdkmath.LegacyOneDec()) {
 		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, "elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 	}

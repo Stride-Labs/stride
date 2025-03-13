@@ -51,8 +51,8 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	valIndexQueried := 1
 	tokensBeforeSlash := sdkmath.NewInt(1000)
-	sharesToTokensRate := sdk.NewDec(1).Quo(sdk.NewDec(2)) // 0.5
-	numShares := sdk.NewDec(1900)
+	sharesToTokensRate := sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2)) // 0.5
+	numShares := sdkmath.LegacyNewDec(1900)
 
 	// 1900 shares * 0.5 sharesToTokens rate = 950 tokens
 	// 1000 tokens - 950 token = 50 tokens slashed
@@ -66,7 +66,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 
 	s.Require().Equal(numShares, sdk.NewDecFromInt(expectedTokensAfterSlash.Mul(sdkmath.NewInt(2))), "tokens, shares, and sharesToTokens rate aligned")
 	s.Require().Equal(slashPercentage, sdk.NewDecFromInt(expectedSlashAmount).Quo(sdk.NewDecFromInt(tokensBeforeSlash)), "expected slash percentage")
-	s.Require().Equal(slashPercentage, sdk.NewDec(int64(weightBeforeSlash-expectedWeightAfterSlash)).Quo(sdk.NewDec(int64(weightBeforeSlash))), "weight reduction")
+	s.Require().Equal(slashPercentage, sdkmath.LegacyNewDec(int64(weightBeforeSlash-expectedWeightAfterSlash)).Quo(sdkmath.LegacyNewDec(int64(weightBeforeSlash))), "weight reduction")
 
 	hostZone := types.HostZone{
 		ChainId:          HostChainId,
@@ -194,7 +194,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_Retry_DelegationChange() {
 	// Change the validator's delegation in the internal record keeping
 	// to make it look as if a delegation ICA landed while the query was in flight
 	hostZone := tc.hostZone
-	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation.Add(sdk.NewInt(100))
+	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation.Add(sdkmath.NewInt(100))
 	hostZone.Validators[tc.valIndexQueried].Delegation = initialDelegation
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -252,7 +252,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_RetryFailure() {
 	// Change the validator's delegation in the internal record keeping
 	// to make it look as if a delegation ICA landed while the query was in flight
 	hostZone := tc.hostZone
-	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation.Add(sdk.NewInt(100))
+	initialDelegation := hostZone.Validators[tc.valIndexQueried].Delegation.Add(sdkmath.NewInt(100))
 	hostZone.Validators[tc.valIndexQueried].Delegation = initialDelegation
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
@@ -301,7 +301,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ValidatorNotFound() {
 	tc := s.SetupDelegatorSharesICQCallback()
 
 	// Update the callback args to contain a validator address that doesn't exist
-	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", sdk.NewDec(1000)) // 1000 is aribtrary
+	badCallbackArgs := s.CreateDelegatorSharesQueryResponse("fake_val", sdkmath.LegacyNewDec(1000)) // 1000 is aribtrary
 	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
 	s.Require().EqualError(err, "no registered validator for address (fake_val): validator not found")
 }
@@ -329,7 +329,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_InvalidNumTokens() {
 	// than were tracked in state (which shouldn't be possible)
 	// Any large number of shares will work here so we'll use 10_000
 	valAddress := tc.hostZone.Validators[tc.valIndexQueried].Address
-	numShares := sdk.NewDec(10_000)
+	numShares := sdkmath.LegacyNewDec(10_000)
 
 	badCallbackArgs := s.CreateDelegatorSharesQueryResponse(valAddress, numShares)
 	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, badCallbackArgs, tc.validArgs.query)
@@ -361,7 +361,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_PrecisionError() {
 	// Update the delegator shares query response so that it shows that there are 5 more tokens delegated
 	// than were tracked in state
 	// This should be interpretted as a precision error and our record keeping should be adjusted
-	precisionErrorTokens := sdk.NewInt(5)
+	precisionErrorTokens := sdkmath.NewInt(5)
 	precisionErrorShares := sdk.NewDecFromInt(precisionErrorTokens).Quo(tc.sharesToTokensRate)
 	sharesBeforeSlash := sdk.NewDecFromInt(initialValidator.Delegation).Quo(tc.sharesToTokensRate)
 
@@ -392,11 +392,11 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ZeroInternalDelegation() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
 
 	tc.validArgs.query.CallbackData, _ = proto.Marshal(&types.DelegatorSharesQueryCallback{
-		InitialValidatorDelegation: sdk.ZeroInt(),
+		InitialValidatorDelegation: sdkmath.ZeroInt(),
 	})
 
 	// Update the delegator shares query response so that it shows that there are 5 more tokens delegated
-	queryTokens := sdk.NewInt(5)
+	queryTokens := sdkmath.NewInt(5)
 	queryShares := sdk.NewDecFromInt(queryTokens).Quo(tc.sharesToTokensRate)
 
 	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
@@ -420,7 +420,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ZeroExternalDelegation() {
 	initialValidator := tc.hostZone.Validators[tc.valIndexQueried]
 
 	// Update the delegator shares query response so that it shows that there are 0 delegated tokens
-	queryShares := sdk.NewDec(0)
+	queryShares := sdkmath.LegacyNewDec(0)
 
 	callbackArgs := s.CreateDelegatorSharesQueryResponse(initialValidator.Address, queryShares)
 	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, callbackArgs, tc.validArgs.query)

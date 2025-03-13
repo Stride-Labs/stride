@@ -41,7 +41,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Fund the user so they have sufficient balance
 	liquidStaker := s.TestAccs[0]
-	stakeAmount := sdk.NewInt(1_000_000)
+	stakeAmount := sdkmath.NewInt(1_000_000)
 	s.FundAccount(liquidStaker, sdk.NewCoin(ibcDenom, stakeAmount))
 
 	// Prepare a valid message and the expected associated response
@@ -331,8 +331,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 999 / 1000 = Interval #0 (no query)
 			name:                "case #1 - short of checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(900),
-			stakeAmount:         sdk.NewInt(99),
+			progress:            sdkmath.NewInt(900),
+			stakeAmount:         sdkmath.NewInt(99),
 			expectedShouldQuery: false,
 		},
 		{
@@ -342,8 +342,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 1000 / 1000 = Interval #1 (query)
 			name:                "case #1 - at checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(900),
-			stakeAmount:         sdk.NewInt(100),
+			progress:            sdkmath.NewInt(900),
+			stakeAmount:         sdkmath.NewInt(100),
 			expectedShouldQuery: true,
 		},
 		{
@@ -353,8 +353,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 1001 / 1000 = Interval #1 (query)
 			name:                "case #1 - past checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(900),
-			stakeAmount:         sdk.NewInt(101),
+			progress:            sdkmath.NewInt(900),
+			stakeAmount:         sdkmath.NewInt(101),
 			expectedShouldQuery: true,
 		},
 		{
@@ -364,8 +364,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 11,999 / 1000 = Interval #11 (query)
 			name:                "case #2 - short of checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(11_900),
-			stakeAmount:         sdk.NewInt(99),
+			progress:            sdkmath.NewInt(11_900),
+			stakeAmount:         sdkmath.NewInt(99),
 			expectedShouldQuery: false,
 		},
 		{
@@ -375,8 +375,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 12,000 / 1000 = Interval #12 (query)
 			name:                "case #2 - at checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(11_900),
-			stakeAmount:         sdk.NewInt(100),
+			progress:            sdkmath.NewInt(11_900),
+			stakeAmount:         sdkmath.NewInt(100),
 			expectedShouldQuery: true,
 		},
 		{
@@ -386,8 +386,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 12,001 / 1000 = Interval #12 (query)
 			name:                "case #2 - past checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(11_900),
-			stakeAmount:         sdk.NewInt(101),
+			progress:            sdkmath.NewInt(11_900),
+			stakeAmount:         sdkmath.NewInt(101),
 			expectedShouldQuery: true,
 		},
 		{
@@ -397,8 +397,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 41,339 / 6,890 = Interval #5 (no query)
 			name:                "case #3 - short of checkpoint",
 			checkpoint:          sdkmath.NewInt(6890),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(101),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(101),
 			expectedShouldQuery: false,
 		},
 		{
@@ -408,8 +408,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 41,440 / 6,890 = Interval #6 (query)
 			name:                "case #3 - at checkpoint",
 			checkpoint:          sdkmath.NewInt(6890),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(340),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(340),
 			expectedShouldQuery: true,
 		},
 		{
@@ -419,16 +419,16 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 41,441 / 6,890 = Interval #6 (query)
 			name:                "case #3 - past checkpoint",
 			checkpoint:          sdkmath.NewInt(6890),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(341),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(341),
 			expectedShouldQuery: true,
 		},
 		{
 			// Checkpoint of 0 - should not issue query
 			name:                "threshold of 0",
 			checkpoint:          sdkmath.ZeroInt(),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(340),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(340),
 			expectedShouldQuery: false,
 		},
 	}
@@ -603,7 +603,7 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	initalDeposit := recordstypes.LSMTokenDeposit{
 		ChainId: HostChainId,
 		Denom:   denom,
-		Amount:  sdk.NewInt(1000),
+		Amount:  sdkmath.NewInt(1000),
 		Status:  recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 		StToken: sdk.NewCoin(StAtom, sdk.OneInt()),
 	}

@@ -208,10 +208,10 @@ func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) 
 	}
 
 	// calculate the vesting scalar
-	portion := sdk.NewDec(vAt - vStart).Quo(sdk.NewDec(vLength))
+	portion := sdkmath.LegacyNewDec(vAt - vStart).Quo(sdkmath.LegacyNewDec(vLength))
 
 	for _, ovc := range vCoins {
-		vestedAmt := sdk.NewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
+		vestedAmt := sdkmath.LegacyNewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
 		vestedCoins = append(vestedCoins, sdk.NewCoin(ovc.Denom, vestedAmt))
 	}
 

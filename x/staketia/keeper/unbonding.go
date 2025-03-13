@@ -252,7 +252,7 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	}
 
 	// if there are no tokens to unbond (or negative on the record): throw an error!
-	noTokensUnbondedOrNegative := record.NativeAmount.LTE(sdk.ZeroInt()) || record.StTokenAmount.LTE(sdk.ZeroInt())
+	noTokensUnbondedOrNegative := record.NativeAmount.LTE(sdkmath.ZeroInt()) || record.StTokenAmount.LTE(sdkmath.ZeroInt())
 	if noTokensUnbondedOrNegative {
 		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d has no tokens to unbond (or negative)", recordId)
 	}

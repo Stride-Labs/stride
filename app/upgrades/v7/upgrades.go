@@ -142,7 +142,7 @@ func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 func IncreaseStrideInflation(ctx sdk.Context, k mintkeeper.Keeper) {
 	ctx.Logger().Info("Increasing STRD inflation")
 
-	epochProvisions := sdk.NewDec(1_078_767_123)
+	epochProvisions := sdkmath.LegacyNewDec(1_078_767_123)
 	minter := minttypes.NewMinter(epochProvisions)
 	k.SetMinter(ctx, minter)
 }
@@ -231,7 +231,7 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 	if err != nil {
 		return err
 	}
-	amount := sdk.NewCoin(Ustrd, sdk.NewInt(STRDProp153SendAmount))
+	amount := sdk.NewCoin(Ustrd, sdkmath.NewInt(STRDProp153SendAmount))
 	if err := k.SendCoins(ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount)); err != nil {
 		return err
 	}

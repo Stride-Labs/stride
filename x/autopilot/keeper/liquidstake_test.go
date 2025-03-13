@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordstypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
-		Amount:             sdk.ZeroInt(),
+		Amount:             sdkmath.ZeroInt(),
 		HostZoneId:         HostChainId,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 	})
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId:           HostChainId,
 		HostDenom:         HostDenom,
-		RedemptionRate:    sdk.NewDec(1), // used to determine the stAmount
+		RedemptionRate:    sdkmath.LegacyNewDec(1), // used to determine the stAmount
 		DepositAddress:    depositAddress.String(),
 		IbcDenom:          nativeTokenIBCDenom,
 		TransferChannelId: strideToHostChannelId,
@@ -143,7 +143,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 	depositAddress := s.TestAccs[1]
 	forwardRecipientOnHost := HostAddress
 
-	stakeAmount := sdk.NewInt(1000000)
+	stakeAmount := sdkmath.NewInt(1000000)
 
 	testCases := []struct {
 		name                      string
@@ -323,7 +323,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	differentAddress := s.TestAccs[2].String()
 	forwardRecipientOnHost := HostAddress
 
-	stakeAmount := sdk.NewInt(1000000)
+	stakeAmount := sdkmath.NewInt(1000000)
 
 	testCases := []struct {
 		name                      string

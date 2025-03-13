@@ -4,7 +4,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
@@ -48,7 +47,7 @@ func (s *KeeperTestSuite) SetupWithdrawalRewardBalanceCallbackTestCase() Balance
 			Address: "trade-address",
 		},
 
-		MinTransferAmount: sdk.ZeroInt(),
+		MinTransferAmount: sdkmath.ZeroInt(),
 	}
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, route)
 

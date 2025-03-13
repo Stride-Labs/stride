@@ -197,7 +197,7 @@ func (s *KeeperTestSuite) TestRedeemStake_RateAboveMaxThreshold() {
 	tc := s.SetupRedeemStake()
 
 	hz := tc.hostZone
-	hz.RedemptionRate = sdk.NewDec(100)
+	hz.RedemptionRate = sdkmath.LegacyNewDec(100)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
 	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)

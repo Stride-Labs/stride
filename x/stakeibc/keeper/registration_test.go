@@ -34,7 +34,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 	epochUnbondingRecordNumber := uint64(3)
 	strideEpochNumber := uint64(4)
 	unbondingPeriod := uint64(14)
-	defaultRedemptionRate := sdk.NewDec(1)
+	defaultRedemptionRate := sdkmath.LegacyNewDec(1)
 	atomHostZoneChainId := "GAIA"
 
 	s.CreateTransferChannel(HostChainId)
@@ -62,8 +62,8 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 		IbcDenom:          IbcAtom,
 		TransferChannelId: ibctesting.FirstChannelID,
 		UnbondingPeriod:   unbondingPeriod,
-		MinRedemptionRate: sdk.NewDec(0),
-		MaxRedemptionRate: sdk.NewDec(0),
+		MinRedemptionRate: sdkmath.LegacyNewDec(0),
+		MaxRedemptionRate: sdkmath.LegacyNewDec(0),
 	}
 
 	return RegisterHostZoneTestCase{
@@ -126,8 +126,8 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.RedemptionRate, "redemption rate set to default: 1")
 	s.Require().Equal(tc.defaultRedemptionRate, hostZone.LastRedemptionRate, "last redemption rate set to default: 1")
-	defaultMinThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMinRedemptionRateThreshold)).Quo(sdk.NewDec(100))
-	defaultMaxThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdk.NewDec(100))
+	defaultMinThreshold := sdkmath.LegacyNewDec(int64(stakeibctypes.DefaultMinRedemptionRateThreshold)).Quo(sdkmath.LegacyNewDec(100))
+	defaultMaxThreshold := sdkmath.LegacyNewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdkmath.LegacyNewDec(100))
 	s.Require().Equal(defaultMinThreshold, hostZone.MinRedemptionRate, "min redemption rate set to default")
 	s.Require().Equal(defaultMaxThreshold, hostZone.MaxRedemptionRate, "max redemption rate set to default")
 	s.Require().Equal(tc.unbondingPeriod, hostZone.UnbondingPeriod, "unbonding period")

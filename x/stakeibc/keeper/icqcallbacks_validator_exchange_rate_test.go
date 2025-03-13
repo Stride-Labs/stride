@@ -42,7 +42,7 @@ func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens in
 	validator := stakingtypes.Validator{
 		OperatorAddress: address,
 		Tokens:          sdkmath.NewInt(tokens),
-		DelegatorShares: sdk.NewDec(shares),
+		DelegatorShares: sdkmath.LegacyNewDec(shares),
 	}
 	validatorBz := s.App.RecordsKeeper.Cdc.MustMarshal(&validator)
 	return validatorBz
@@ -59,7 +59,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 	// In this example, the validator has 2000 shares, originally had 2000 tokens,
 	// and now has 1000 tokens (after being slashed)
 	numShares := int64(2000)
-	sharesToTokensRate := sdk.NewDec(1)
+	sharesToTokensRate := sdkmath.LegacyNewDec(1)
 	sharesToTokensRateIfSlashed := sdk.MustNewDecFromStr("0.5")
 
 	// The validator we'll query the sharesToTokens rate for
@@ -77,7 +77,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 		TransferChannelId:    ibctesting.FirstChannelID,
 		DelegationIcaAddress: delegatorAddress,
 		DepositAddress:       depositAddress,
-		RedemptionRate:       sdk.NewDec(1),
+		RedemptionRate:       sdkmath.LegacyNewDec(1),
 		Validators: []*types.Validator{
 			&queriedValidator,
 			{Name: "val2"}, // This validator isn't being queried

@@ -71,7 +71,7 @@ var (
 	// Constants for Prop 225
 	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
 	LiquidityReceiver          = "stride1auhjs4zgp3ahvrpkspf088r2psz7wpyrypcnal"
-	Prop225TransferAmount      = sdk.NewInt(31_572_300_000)
+	Prop225TransferAmount      = sdkmath.NewInt(31_572_300_000)
 	Ustrd                      = "ustrd"
 )
 

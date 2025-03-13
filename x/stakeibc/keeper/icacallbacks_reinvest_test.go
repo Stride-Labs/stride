@@ -48,7 +48,7 @@ func (s *KeeperTestSuite) SetupReinvestCallback() ReinvestCallbackTestCase {
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
-		RedemptionRate: sdk.NewDec(1.0),
+		RedemptionRate: sdkmath.LegacyNewDec(1.0),
 		ConnectionId:   ibctesting.FirstConnectionID,
 		FeeIcaAddress:  feeAddress,
 	}

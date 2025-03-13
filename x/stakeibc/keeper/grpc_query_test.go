@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -246,7 +247,7 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "stride.101.strideAddrUserA",
 			Receiver:          "strideAddrUserA",
-			NativeTokenAmount: sdk.NewInt(2000),
+			NativeTokenAmount: sdkmath.NewInt(2000),
 			Denom:             "ustrd",
 			HostZoneId:        "stride",
 			EpochNumber:       uint64(101),
@@ -255,7 +256,7 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "stride.110.strideAddrUserA",
 			Receiver:          "strideAddrUserA",
-			NativeTokenAmount: sdk.NewInt(5000),
+			NativeTokenAmount: sdkmath.NewInt(5000),
 			Denom:             "ustrd",
 			HostZoneId:        "stride",
 			EpochNumber:       uint64(110),
@@ -264,7 +265,7 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "stride.101.strideAddrUserB",
 			Receiver:          "strideAddrUserB",
-			NativeTokenAmount: sdk.NewInt(8500),
+			NativeTokenAmount: sdkmath.NewInt(8500),
 			Denom:             "ustrd",
 			HostZoneId:        "stride",
 			EpochNumber:       uint64(101),
@@ -273,7 +274,7 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "cosmos.101.cosmosAddrUserA",
 			Receiver:          "cosmosAddrUserA",
-			NativeTokenAmount: sdk.NewInt(1200),
+			NativeTokenAmount: sdkmath.NewInt(1200),
 			Denom:             "uatom",
 			HostZoneId:        "cosmos",
 			EpochNumber:       uint64(101),
@@ -316,7 +317,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "cosmosAddrUserA",
 						Receiver:               "cosmosAddrUserA",
-						Amount:                 sdk.NewInt(1200),
+						Amount:                 sdkmath.NewInt(1200),
 						Denom:                  "uatom",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -335,7 +336,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(2000),
+						Amount:                 sdkmath.NewInt(2000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -344,7 +345,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(5000),
+						Amount:                 sdkmath.NewInt(5000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(110),
 						ClaimIsPending:         false,
@@ -363,7 +364,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserB",
 						Receiver:               "strideAddrUserB",
-						Amount:                 sdk.NewInt(8500),
+						Amount:                 sdkmath.NewInt(8500),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -382,7 +383,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(2000),
+						Amount:                 sdkmath.NewInt(2000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -391,7 +392,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "cosmosAddrUserA",
 						Receiver:               "cosmosAddrUserA",
-						Amount:                 sdk.NewInt(1200),
+						Amount:                 sdkmath.NewInt(1200),
 						Denom:                  "uatom",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -400,7 +401,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(5000),
+						Amount:                 sdkmath.NewInt(5000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(110),
 						ClaimIsPending:         false,

@@ -69,7 +69,7 @@ func (k Keeper) GetQueuedHostZoneUnbondingRecords(
 // Loops through each epoch unbonding record and returns the total number of native tokens
 // that should be unbonded
 func (k Keeper) GetTotalUnbondAmount(hostZoneUnbondingRecords map[uint64]recordstypes.HostZoneUnbonding) sdkmath.Int {
-	totalNativeAmount := sdk.ZeroInt()
+	totalNativeAmount := sdkmath.ZeroInt()
 	for _, hostZoneRecord := range hostZoneUnbondingRecords {
 		totalNativeAmount = totalNativeAmount.Add(hostZoneRecord.NativeTokensToUnbond)
 	}

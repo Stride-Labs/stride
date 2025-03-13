@@ -402,7 +402,7 @@ func (msg *MsgUpdateUserAllocation) ValidateBasic() error {
 	}
 
 	for _, allocation := range msg.Allocations {
-		if allocation.IsNil() || allocation.LT(sdk.ZeroInt()) {
+		if allocation.IsNil() || allocation.LT(sdkmath.ZeroInt()) {
 			return errors.New("all allocation amounts must be specified and positive")
 		}
 	}

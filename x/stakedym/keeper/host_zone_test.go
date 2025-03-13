@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
@@ -24,7 +25,7 @@ func (s *KeeperTestSuite) initializeHostZone() types.HostZone {
 		MaxRedemptionRate:      sdk.MustNewDecFromStr("1.10"),
 		MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.97"),
 		MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.07"),
-		DelegatedBalance:       sdk.NewInt(1_000_000),
+		DelegatedBalance:       sdkmath.NewInt(1_000_000),
 		Halted:                 false,
 	}
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
@@ -48,7 +49,7 @@ func (s *KeeperTestSuite) TestSetHostZone() {
 	hostZone := s.initializeHostZone()
 
 	hostZone.RedemptionRate = hostZone.RedemptionRate.Add(sdk.MustNewDecFromStr("0.1"))
-	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(sdk.NewInt(100_000))
+	hostZone.DelegatedBalance = hostZone.DelegatedBalance.Add(sdkmath.NewInt(100_000))
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	loadedHostZone := s.MustGetHostZone()

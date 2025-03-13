@@ -50,7 +50,7 @@ func (s *KeeperTestSuite) SetupAutopilotRedeemStake(featureEnabled bool, redeemA
 			{
 				HostZoneId:            HostChainId,
 				UserRedemptionRecords: []string{},
-				NativeTokenAmount:     sdk.NewInt(1000000),
+				NativeTokenAmount:     sdkmath.NewInt(1000000),
 			},
 		},
 	})
@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) SetupAutopilotRedeemStake(featureEnabled bool, redeemA
 		ChainId:            HostChainId,
 		Bech32Prefix:       HostBechPrefix, // required to validate claim receiver
 		HostDenom:          HostDenom,
-		RedemptionRate:     sdk.NewDec(1), // used to determine native token amount
+		RedemptionRate:     sdkmath.LegacyNewDec(1), // used to determine native token amount
 		DepositAddress:     depositAddress.String(),
 		TotalDelegations:   redeemAmount, // there must be enough stake to cover the redemption
 		RedemptionsEnabled: true,
@@ -90,7 +90,7 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 	depositAddress := s.TestAccs[1]
 	redeemerOnHost := HostAddress
 
-	redeemAmount := sdk.NewInt(1000000)
+	redeemAmount := sdkmath.NewInt(1000000)
 
 	strideToHubChannel := "channel-0"
 	hubToStrideChannel := "channel-1"
@@ -301,7 +301,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 	differentAddress := s.TestAccs[2].String()
 	redeemerOnHost := HostAddress
 
-	redeemAmount := sdk.NewInt(1000000)
+	redeemAmount := sdkmath.NewInt(1000000)
 
 	strideToHubChannel := "channel-0"
 	hubToStrideChannel := "channel-1"

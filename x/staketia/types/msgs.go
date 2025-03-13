@@ -555,7 +555,7 @@ func (msg *MsgOverwriteDelegationRecord) ValidateBasic() error {
 
 	// Check the record's attributes
 	// - assert the nativeAmount is non-negative (zero is acceptable)
-	if msg.DelegationRecord.NativeAmount.LT(sdk.ZeroInt()) {
+	if msg.DelegationRecord.NativeAmount.LT(sdkmath.ZeroInt()) {
 		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount < 0")
 	}
 
@@ -607,11 +607,11 @@ func (msg *MsgOverwriteUnbondingRecord) ValidateBasic() error {
 
 	// Check the record's attributes
 	// - assert the nativeAmount is non-negative (zero is acceptable)
-	if msg.UnbondingRecord.NativeAmount.LT(sdk.ZeroInt()) {
+	if msg.UnbondingRecord.NativeAmount.LT(sdkmath.ZeroInt()) {
 		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "native amount < 0")
 	}
 	// - assert the stTokenAmount is non-negative (zero is acceptable)
-	if msg.UnbondingRecord.StTokenAmount.LT(sdk.ZeroInt()) {
+	if msg.UnbondingRecord.StTokenAmount.LT(sdkmath.ZeroInt()) {
 		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "sttoken amount < 0")
 	}
 
@@ -668,11 +668,11 @@ func (msg *MsgOverwriteRedemptionRecord) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
 	// - assert the nativeAmount is non-negative (zero is acceptable)
-	if msg.RedemptionRecord.NativeAmount.LT(sdk.ZeroInt()) {
+	if msg.RedemptionRecord.NativeAmount.LT(sdkmath.ZeroInt()) {
 		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount < 0")
 	}
 	// - assert the stTokenAmount is non-negative (zero is acceptable)
-	if msg.RedemptionRecord.StTokenAmount.LT(sdk.ZeroInt()) {
+	if msg.RedemptionRecord.StTokenAmount.LT(sdkmath.ZeroInt()) {
 		return errorsmod.Wrapf(ErrInvalidAmountBelowMinimum, "amount < 0")
 	}
 

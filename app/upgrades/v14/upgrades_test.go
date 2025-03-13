@@ -105,10 +105,10 @@ func (s *UpgradeTestSuite) CheckRefundAfterUpgrade() {
 	icsFeeAddress := sdk.MustAccAddressFromBech32(v14.ConsToSendToProvider)
 	// Check the account balance
 	balance := s.App.BankKeeper.GetBalance(afterCtx, icsFeeAddress, s.App.StakingKeeper.BondDenom(afterCtx))
-	refundFrac, err := sdk.NewDecFromStr(v14.RefundFraction)
+	refundFrac, err := sdkmath.LegacyNewDecFromStr(v14.RefundFraction)
 	s.Require().NoError(err)
-	remainingFrac := sdk.NewDec(int64(1)).Sub(refundFrac)
-	expectedNumCoins := remainingFrac.Mul(sdk.NewDec(InitCoins)).TruncateInt64()
+	remainingFrac := sdkmath.LegacyNewDec(int64(1)).Sub(refundFrac)
+	expectedNumCoins := remainingFrac.Mul(sdkmath.LegacyNewDec(InitCoins)).TruncateInt64()
 	s.Require().Equal(sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), expectedNumCoins), balance)
 }
 
@@ -299,7 +299,7 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 				{
 					Address: fmt.Sprintf("val-%d", i),
 					InternalExchangeRate: &oldstakeibctypes.ValidatorExchangeRate{
-						InternalTokensToSharesRate: sdk.NewDec(int64(i)),
+						InternalTokensToSharesRate: sdkmath.LegacyNewDec(int64(i)),
 					},
 					DelegationAmt: sdkmath.NewInt(int64(i)),
 				},
@@ -334,10 +334,10 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
 			// Check new validator attributes
 			validator := hostZone.Validators[0]
 			s.Require().Equal(fmt.Sprintf("val-%d", i), validator.Address, "validator address")
-			s.Require().Equal(sdk.NewDec(int64(i)), validator.SharesToTokensRate, "validator shares to tokens rate")
+			s.Require().Equal(sdkmath.LegacyNewDec(int64(i)), validator.SharesToTokensRate, "validator shares to tokens rate")
 			s.Require().Equal(false, validator.SlashQueryInProgress, "validator slash query in progress")
 			s.Require().Equal(int64(0), validator.DelegationChangesInProgress, "validator delegations in progress")
-			s.Require().Equal(sdk.ZeroInt(), validator.SlashQueryProgressTracker, "validator delegations in progress")
+			s.Require().Equal(sdkmath.ZeroInt(), validator.SlashQueryProgressTracker, "validator delegations in progress")
 		}
 
 		// Finally check that the new params were set

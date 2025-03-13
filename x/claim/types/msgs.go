@@ -78,7 +78,7 @@ func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	}
 
 	for _, weight := range msg.Weights {
-		if weight.Equal(sdk.NewDec(0)) {
+		if weight.Equal(sdkmath.LegacyNewDec(0)) {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid user weight")
 		}
 	}
@@ -119,7 +119,6 @@ func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
-
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)

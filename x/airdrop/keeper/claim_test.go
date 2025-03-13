@@ -158,7 +158,7 @@ func (s *KeeperTestSuite) TestClaimDaily() {
 			distributor := s.TestAccs[1]
 
 			// Fund the distributor
-			initialDistributorBalance := sdk.NewInt(1000)
+			initialDistributorBalance := sdkmath.NewInt(1000)
 			s.FundAccount(distributor, sdk.NewCoin(RewardDenom, initialDistributorBalance))
 
 			// Create the initial airdrop config
@@ -305,7 +305,7 @@ func (s *KeeperTestSuite) TestClaimEarly() {
 			distributor := s.TestAccs[1]
 
 			// Fund the distributor
-			initialDistributorBalance := sdk.NewInt(1000)
+			initialDistributorBalance := sdkmath.NewInt(1000)
 			s.FundAccount(distributor, sdk.NewCoin(RewardDenom, initialDistributorBalance))
 
 			// Create the initial airdrop config

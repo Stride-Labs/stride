@@ -105,8 +105,8 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start sharesToTokens rate at 1 upon registration
-		RedemptionRate:                    sdk.NewDec(1),
-		LastRedemptionRate:                sdk.NewDec(1),
+		RedemptionRate:                    sdkmath.LegacyNewDec(1),
+		LastRedemptionRate:                sdkmath.LegacyNewDec(1),
 		UnbondingPeriod:                   msg.UnbondingPeriod,
 		DepositAddress:                    depositAddress.String(),
 		CommunityPoolStakeHoldingAddress:  communityPoolStakeAddress.String(),

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
@@ -52,7 +51,7 @@ func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {
 			RewardToTradeChannelId: fmt.Sprintf("channel-1%d", i),
 			TradeToHostChannelId:   fmt.Sprintf("channel-2%d", i),
 
-			MinTransferAmount: sdk.ZeroInt(),
+			MinTransferAmount: sdkmath.ZeroInt(),
 
 			// TradeConfig is deprecated but we include it so that we can compare with Equals
 			// which would fail otherwise due to uninitialized types

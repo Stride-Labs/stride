@@ -275,7 +275,7 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 		VestingPeriods: sdkvesting.Periods{
 			// Period is 3 years
 			// 60*60*24*365*3 seconds
-			{Length: 94608000, Amount: sdk.NewCoins(sdk.NewCoin(sk.BondDenom(ctx), sdk.NewInt(Account1VestingUstrd)))},
+			{Length: 94608000, Amount: sdk.NewCoins(sdk.NewCoin(sk.BondDenom(ctx), sdkmath.NewInt(Account1VestingUstrd)))},
 		},
 	}
 
@@ -386,7 +386,7 @@ func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stake
 func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, bk bankkeeper.Keeper, ak authkeeper.AccountKeeper, sk stakingkeeper.Keeper) error {
 	// Read account balance of consumer fee account
 	address := sdk.MustAccAddressFromBech32(ConsToSendToProvider)
-	frac, err := sdk.NewDecFromStr(RefundFraction)
+	frac, err := sdkmath.LegacyNewDecFromStr(RefundFraction)
 	if err != nil {
 		// ConsumerRedistributionFrac was already validated when set as a param
 		panic(fmt.Errorf("ConsumerRedistributionFrac is invalid: %w", err))

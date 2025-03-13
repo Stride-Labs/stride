@@ -134,7 +134,7 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 	}
 
 	// Set the escrow'd tokens to 0 (all the escrowed tokens should have been burned from the above)
-	k.RecordsKeeper.TransferKeeper.SetTotalEscrowForDenom(ctx, sdk.NewCoin(stTokenDenom, sdk.ZeroInt()))
+	k.RecordsKeeper.TransferKeeper.SetTotalEscrowForDenom(ctx, sdk.NewCoin(stTokenDenom, sdkmath.ZeroInt()))
 
 	// Remove module accounts
 	depositAddress := types.NewHostZoneDepositAddress(chainId)

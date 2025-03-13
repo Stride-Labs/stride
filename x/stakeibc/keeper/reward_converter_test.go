@@ -253,7 +253,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplit() {
 		{
 			// No tvl - should error
 			name:                     "no tvl",
-			communityPoolLiquidStake: sdk.NewInt(10),
+			communityPoolLiquidStake: sdkmath.NewInt(10),
 			totalStTokenSupply:       sdkmath.NewInt(0),
 			rewardAmount:             sdkmath.NewInt(1000),
 			strideFee:                10,
@@ -264,7 +264,7 @@ func (s *KeeperTestSuite) TestCalculateRewardsSplit() {
 		{
 			// Liquid staked amount is greater than the TVL - should error
 			name:                     "liquid staked more than tvl",
-			communityPoolLiquidStake: sdk.NewInt(1001),
+			communityPoolLiquidStake: sdkmath.NewInt(1001),
 			totalStTokenSupply:       sdkmath.NewInt(1000),
 			rewardAmount:             sdkmath.NewInt(100),
 			strideFee:                10,
@@ -403,9 +403,9 @@ func (s *KeeperTestSuite) SetupTransferRewardTokensHostToTradeTestCase() Transfe
 	unwindAddress := "unwind_address"
 	tradeAddress := "trade_address"
 
-	transferAmount := sdk.NewInt(1000)
+	transferAmount := sdkmath.NewInt(1000)
 	transferToken := sdk.NewCoin(rewardDenomOnHostZone, transferAmount)
-	minTransferAmount := sdk.NewInt(500)
+	minTransferAmount := sdkmath.NewInt(500)
 
 	currentTime := s.Ctx.BlockTime()
 	epochLength := time.Second * 10                               // 10 seconds

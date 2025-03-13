@@ -83,8 +83,8 @@ func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
 func AddStTiaRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 	addRateLimitMsgTemplate := ratelimittypes.MsgAddRateLimit{
 		Denom:          StTiaDenom,
-		MaxPercentSend: sdk.NewInt(10),
-		MaxPercentRecv: sdk.NewInt(10),
+		MaxPercentSend: sdkmath.NewInt(10),
+		MaxPercentRecv: sdkmath.NewInt(10),
 		DurationHours:  RateLimitDurationHours,
 	}
 

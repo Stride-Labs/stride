@@ -82,7 +82,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRatesSuccessful() {
 		justDepositedNative:   sdkmath.NewInt(4),
 		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.NewInt(10),
-		initialRedemptionRate: sdk.NewDec(1),
+		initialRedemptionRate: sdkmath.LegacyNewDec(1),
 	})
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
@@ -99,12 +99,12 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_ZeroStAssets() {
 		justDepositedNative:   sdkmath.NewInt(4),
 		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.ZeroInt(),
-		initialRedemptionRate: sdk.NewDec(1),
+		initialRedemptionRate: sdkmath.LegacyNewDec(1),
 	})
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
 
-	expectedRedemptionRate := sdk.NewDec(1)
+	expectedRedemptionRate := sdkmath.LegacyNewDec(1)
 	s.checkRedemptionRateAfterUpdate(expectedRedemptionRate)
 }
 
@@ -115,7 +115,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_ZeroNativeAssets() {
 		justDepositedNative:   sdkmath.ZeroInt(),
 		justDepositedLSM:      sdkmath.ZeroInt(),
 		stSupply:              sdkmath.NewInt(10),
-		initialRedemptionRate: sdk.NewDec(1),
+		initialRedemptionRate: sdkmath.LegacyNewDec(1),
 	})
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
@@ -131,7 +131,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoDepositAccountRecords() {
 		justDepositedNative:   sdkmath.NewInt(5), // should be ignored from filter below
 		justDepositedLSM:      sdkmath.NewInt(6),
 		stSupply:              sdkmath.NewInt(10),
-		initialRedemptionRate: sdk.NewDec(1),
+		initialRedemptionRate: sdkmath.LegacyNewDec(1),
 	})
 
 	// filter out the TRANSFER_QUEUE record from the records when updating the redemption rate
@@ -155,7 +155,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoStakeDepositRecords() {
 		justDepositedNative:   sdkmath.NewInt(5),
 		justDepositedLSM:      sdkmath.NewInt(6),
 		stSupply:              sdkmath.NewInt(10),
-		initialRedemptionRate: sdk.NewDec(1),
+		initialRedemptionRate: sdkmath.LegacyNewDec(1),
 	})
 
 	// filter out the DELEGATION_QUEUE record from the records when updating the redemption rate
@@ -179,7 +179,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_NoTotalDelegation() {
 		justDepositedNative:   sdkmath.NewInt(4),
 		justDepositedLSM:      sdkmath.NewInt(5),
 		stSupply:              sdkmath.NewInt(10),
-		initialRedemptionRate: sdk.NewDec(1),
+		initialRedemptionRate: sdkmath.LegacyNewDec(1),
 	})
 
 	s.App.StakeibcKeeper.UpdateRedemptionRates(s.Ctx, depositRecords)
@@ -198,7 +198,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRate_RandomInitialRedemptionRate()
 
 	// redemption rate random number, biased to be [1,2)
 	max := 1_000_000
-	initialRedemptionRate := sdk.NewDec(genRandUintBelowMax(max)).Quo(sdk.NewDec(genRandUintBelowMax(max / 2)))
+	initialRedemptionRate := sdkmath.LegacyNewDec(genRandUintBelowMax(max)).Quo(sdkmath.LegacyNewDec(genRandUintBelowMax(max / 2)))
 
 	depositRecords := s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
 		totalDelegation:       sdkmath.NewInt(2),
@@ -221,40 +221,40 @@ func (s *KeeperTestSuite) TestGetRedemptionRate_DepositRecords() {
 	// Build combinations of transfer deposit records
 	toBeTransferedDepositRecords := []recordtypes.DepositRecord{
 		// TRANSFER_QUEUE Total: 1 + 2 + 3 = 6
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(1)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(2)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(3)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdkmath.NewInt(1)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdkmath.NewInt(2)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdkmath.NewInt(3)},
 
 		// TRANSFER_IN_PROGRESS Total: 4 + 5 + 6 = 15
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(4)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(5)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(6)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdkmath.NewInt(4)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdkmath.NewInt(5)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdkmath.NewInt(6)},
 
 		// Different host zone ID - should be ignored
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(1)},
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdk.NewInt(2)},
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(4)},
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdk.NewInt(5)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdkmath.NewInt(1)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_QUEUE, Amount: sdkmath.NewInt(2)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdkmath.NewInt(4)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, Amount: sdkmath.NewInt(5)},
 	}
 	expectedJustDepositedBalance := int64(1 + 2 + 3 + 4 + 5 + 6) // 6 + 15 = 21
 
 	// Build combinations of delegation deposit records
 	toBeStakedDepositRecords := []recordtypes.DepositRecord{
 		// DELEGATION_QUEUE Total: 7 + 8 + 9 = 24
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(7)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(8)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(9)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdkmath.NewInt(7)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdkmath.NewInt(8)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdkmath.NewInt(9)},
 
 		// DELEGATION_IN_PROGRESS Total: 10 + 11 + 12 = 33
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(10)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(11)},
-		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(12)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdkmath.NewInt(10)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdkmath.NewInt(11)},
+		{HostZoneId: HostChainId, Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdkmath.NewInt(12)},
 
 		// Different host zone ID - should be ignored
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(7)},
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdk.NewInt(8)},
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(10)},
-		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdk.NewInt(11)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdkmath.NewInt(7)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_QUEUE, Amount: sdkmath.NewInt(8)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdkmath.NewInt(10)},
+		{HostZoneId: "different", Status: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS, Amount: sdkmath.NewInt(11)},
 	}
 	expectedUndelegatedBalance := int64(7 + 8 + 9 + 10 + 11 + 12) // 24 + 33 = 57
 
@@ -287,43 +287,43 @@ func (s *KeeperTestSuite) TestGetTokenizedDelegation() {
 	// Total: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 65
 	lsmDeposits := []recordtypes.LSMTokenDeposit{
 		// ValidatorA SharesToTokens Rate 1.0
-		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(1), ValidatorAddress: "valA"}, // 1 * 1.0 = 1
-		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(2), ValidatorAddress: "valA"}, // 2 * 1.0 = 2
+		{ChainId: HostChainId, Status: transferInProgress, Amount: sdkmath.NewInt(1), ValidatorAddress: "valA"}, // 1 * 1.0 = 1
+		{ChainId: HostChainId, Status: transferInProgress, Amount: sdkmath.NewInt(2), ValidatorAddress: "valA"}, // 2 * 1.0 = 2
 
-		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(3), ValidatorAddress: "valA"}, // 3 * 1.0 = 3
-		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(4), ValidatorAddress: "valA"}, // 4 * 1.0 = 4
+		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdkmath.NewInt(3), ValidatorAddress: "valA"}, // 3 * 1.0 = 3
+		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdkmath.NewInt(4), ValidatorAddress: "valA"}, // 4 * 1.0 = 4
 
 		// ValidatorB SharesToTokens Rate 0.75
-		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(7), ValidatorAddress: "valB"}, // 7 * 0.75 = 5.25 (5)
-		{ChainId: HostChainId, Status: transferQueue, Amount: sdk.NewInt(9), ValidatorAddress: "valB"}, // 9 * 0.75 = 6.75 (6)
+		{ChainId: HostChainId, Status: transferQueue, Amount: sdkmath.NewInt(7), ValidatorAddress: "valB"}, // 7 * 0.75 = 5.25 (5)
+		{ChainId: HostChainId, Status: transferQueue, Amount: sdkmath.NewInt(9), ValidatorAddress: "valB"}, // 9 * 0.75 = 6.75 (6)
 
-		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(10), ValidatorAddress: "valB"}, // 10 * 0.75 = 7.5 (7)
-		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(11), ValidatorAddress: "valB"}, // 11 * 0.75 = 8.25 (8)
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdkmath.NewInt(10), ValidatorAddress: "valB"}, // 10 * 0.75 = 7.5 (7)
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdkmath.NewInt(11), ValidatorAddress: "valB"}, // 11 * 0.75 = 8.25 (8)
 
 		// ValidatorC SharesToTokens Rate 0.50
-		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(18), ValidatorAddress: "valC"}, // 18 * 0.5 = 9
-		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(20), ValidatorAddress: "valC"}, // 20 * 0.5 = 10
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdkmath.NewInt(18), ValidatorAddress: "valC"}, // 18 * 0.5 = 9
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdkmath.NewInt(20), ValidatorAddress: "valC"}, // 20 * 0.5 = 10
 
-		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(22), ValidatorAddress: "valC"}, // 22 * 0.5 = 11
-		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(24), ValidatorAddress: "valC"}, // 24 * 0.5 = 12
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdkmath.NewInt(22), ValidatorAddress: "valC"}, // 22 * 0.5 = 11
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdkmath.NewInt(24), ValidatorAddress: "valC"}, // 24 * 0.5 = 12
 
 		// Status DEPOSIT_PENDING - should be ignored
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdk.NewInt(11)},
-		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdk.NewInt(12)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdkmath.NewInt(11)},
+		{ChainId: HostChainId, Status: recordtypes.LSMTokenDeposit_DEPOSIT_PENDING, Amount: sdkmath.NewInt(12)},
 
 		// Different chain ID - should be ignored
-		{ChainId: "different", Status: transferInProgress, Amount: sdk.NewInt(1)},
-		{ChainId: "different", Status: detokenizationQueue, Amount: sdk.NewInt(3)},
-		{ChainId: "different", Status: detokenizationInProgress, Amount: sdk.NewInt(5)},
-		{ChainId: "different", Status: transferFailed, Amount: sdk.NewInt(7)},
-		{ChainId: "different", Status: detokenizationFailed, Amount: sdk.NewInt(9)},
+		{ChainId: "different", Status: transferInProgress, Amount: sdkmath.NewInt(1)},
+		{ChainId: "different", Status: detokenizationQueue, Amount: sdkmath.NewInt(3)},
+		{ChainId: "different", Status: detokenizationInProgress, Amount: sdkmath.NewInt(5)},
+		{ChainId: "different", Status: transferFailed, Amount: sdkmath.NewInt(7)},
+		{ChainId: "different", Status: detokenizationFailed, Amount: sdkmath.NewInt(9)},
 
 		// Non-existent validator  - should be ignored
-		{ChainId: HostChainId, Status: transferInProgress, Amount: sdk.NewInt(1)},
-		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdk.NewInt(3)},
-		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdk.NewInt(5)},
-		{ChainId: HostChainId, Status: transferFailed, Amount: sdk.NewInt(7)},
-		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdk.NewInt(9)},
+		{ChainId: HostChainId, Status: transferInProgress, Amount: sdkmath.NewInt(1)},
+		{ChainId: HostChainId, Status: detokenizationQueue, Amount: sdkmath.NewInt(3)},
+		{ChainId: HostChainId, Status: detokenizationInProgress, Amount: sdkmath.NewInt(5)},
+		{ChainId: HostChainId, Status: transferFailed, Amount: sdkmath.NewInt(7)},
+		{ChainId: HostChainId, Status: detokenizationFailed, Amount: sdkmath.NewInt(9)},
 	}
 	expectedTokenizedDelegation := int64(1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12)
 

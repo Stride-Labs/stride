@@ -142,8 +142,8 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 	defaultAccUnbondingRecord := types.UnbondingRecord{
 		Id:            uint64(105),
 		Status:        types.ACCUMULATING_REDEMPTIONS,
-		StTokenAmount: sdk.NewInt(700_000),
-		NativeAmount:  sdk.NewInt(770_000),
+		StTokenAmount: sdkmath.NewInt(700_000),
+		NativeAmount:  sdkmath.NewInt(770_000),
 	}
 
 	// RR as it would exist for this default user and UnbondingRecord if had previously
@@ -151,13 +151,13 @@ func (s *KeeperTestSuite) getDefaultTestInputs() (
 	defaultRedemptionRecord := types.RedemptionRecord{
 		UnbondingRecordId: defaultAccUnbondingRecord.Id,
 		Redeemer:          redeemerAccount.String(),
-		StTokenAmount:     sdk.NewInt(400_000),
-		NativeAmount:      sdk.NewInt(440_000),
+		StTokenAmount:     sdkmath.NewInt(400_000),
+		NativeAmount:      sdkmath.NewInt(440_000),
 	}
 
 	defaultMsg := types.MsgRedeemStake{
 		Redeemer:      redeemerAccount.String(),
-		StTokenAmount: sdk.NewInt(1_000_000),
+		StTokenAmount: sdkmath.NewInt(1_000_000),
 		Receiver:      receiverAddress,
 	}
 
@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 
 			userAccount: func() Account {
 				acc, _, _, _, _, _ := s.getDefaultTestInputs()
-				acc.stTokens.Amount = sdk.NewInt(500_000)
+				acc.stTokens.Amount = sdkmath.NewInt(500_000)
 				return *acc
 			}(),
 			hostZone:         defaultMsHZ,
@@ -256,7 +256,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 
 			userAccount: func() Account {
 				acc, _, _, _, _, _ := s.getDefaultTestInputs()
-				acc.stTokens.Amount = sdk.NewInt(5_000_000_000)
+				acc.stTokens.Amount = sdkmath.NewInt(5_000_000_000)
 				return *acc
 			}(),
 			hostZone:         defaultMsHZ, // 1_000_000_000 total delegation
@@ -264,7 +264,7 @@ func (s *KeeperTestSuite) TestRedeemStake() {
 			accUnbondRecord:  defaultUR,
 			redeemMsg: func() types.MsgRedeemStake {
 				_, _, _, _, _, msg := s.getDefaultTestInputs()
-				msg.StTokenAmount = sdk.NewInt(5_000_000_000)
+				msg.StTokenAmount = sdkmath.NewInt(5_000_000_000)
 				return *msg
 			}(),
 
@@ -834,8 +834,8 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		{
 			Id:                             1,
 			Status:                         types.UNBONDING_QUEUE,
-			StTokenAmount:                  sdk.NewInt(100),
-			NativeAmount:                   sdk.NewInt(200),
+			StTokenAmount:                  sdkmath.NewInt(100),
+			NativeAmount:                   sdkmath.NewInt(200),
 			UnbondingCompletionTimeSeconds: 0,
 			UndelegationTxHash:             "",
 			UnbondedTokenSweepTxHash:       "",
@@ -843,8 +843,8 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		{
 			Id:                             7,
 			Status:                         types.CLAIMABLE,
-			StTokenAmount:                  sdk.NewInt(200),
-			NativeAmount:                   sdk.NewInt(400),
+			StTokenAmount:                  sdkmath.NewInt(200),
+			NativeAmount:                   sdkmath.NewInt(400),
 			UnbondingCompletionTimeSeconds: 10,
 			UndelegationTxHash:             ValidTxHashDefault,
 			UnbondedTokenSweepTxHash:       ValidTxHashDefault,
@@ -852,8 +852,8 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		{
 			Id:                             5,
 			Status:                         types.UNBONDING_IN_PROGRESS,
-			StTokenAmount:                  sdk.NewInt(500),
-			NativeAmount:                   sdk.NewInt(1000),
+			StTokenAmount:                  sdkmath.NewInt(500),
+			NativeAmount:                   sdkmath.NewInt(1000),
 			UnbondingCompletionTimeSeconds: 20,
 			UndelegationTxHash:             ValidTxHashDefault,
 			UnbondedTokenSweepTxHash:       "",
@@ -861,8 +861,8 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		{
 			Id:                             3,
 			Status:                         types.ACCUMULATING_REDEMPTIONS,
-			StTokenAmount:                  sdk.NewInt(300),
-			NativeAmount:                   sdk.NewInt(600),
+			StTokenAmount:                  sdkmath.NewInt(300),
+			NativeAmount:                   sdkmath.NewInt(600),
 			UnbondingCompletionTimeSeconds: 0,
 			UndelegationTxHash:             "",
 			UnbondedTokenSweepTxHash:       "",
@@ -870,8 +870,8 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		{
 			Id:                             6,
 			Status:                         types.UNBONDED,
-			StTokenAmount:                  sdk.NewInt(600),
-			NativeAmount:                   sdk.NewInt(1200),
+			StTokenAmount:                  sdkmath.NewInt(600),
+			NativeAmount:                   sdkmath.NewInt(1200),
 			UnbondingCompletionTimeSeconds: 15,
 			UndelegationTxHash:             ValidTxHashDefault,
 			UnbondedTokenSweepTxHash:       "",
@@ -879,8 +879,8 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		{
 			Id:                             4,
 			Status:                         types.CLAIMABLE,
-			StTokenAmount:                  sdk.NewInt(400),
-			NativeAmount:                   sdk.NewInt(800),
+			StTokenAmount:                  sdkmath.NewInt(400),
+			NativeAmount:                   sdkmath.NewInt(800),
 			UnbondingCompletionTimeSeconds: 5,
 			UndelegationTxHash:             ValidTxHashDefault,
 			UnbondedTokenSweepTxHash:       ValidTxHashDefault,
@@ -888,8 +888,8 @@ func (s *KeeperTestSuite) GetDefaultUnbondingRecords() []types.UnbondingRecord {
 		{
 			Id:                             2,
 			Status:                         types.UNBONDED,
-			StTokenAmount:                  sdk.NewInt(700),
-			NativeAmount:                   sdk.NewInt(1400),
+			StTokenAmount:                  sdkmath.NewInt(700),
+			NativeAmount:                   sdkmath.NewInt(1400),
 			UnbondingCompletionTimeSeconds: 18,
 			UndelegationTxHash:             ValidTxHashDefault,
 			UnbondedTokenSweepTxHash:       "",
@@ -916,7 +916,7 @@ func (s *KeeperTestSuite) SetupTestConfirmUnbondingTokens(amount int64) {
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// fund claim address
-	liquidStakeToken := sdk.NewCoin(hostZone.NativeTokenIbcDenom, sdk.NewInt(amount))
+	liquidStakeToken := sdk.NewCoin(hostZone.NativeTokenIbcDenom, sdkmath.NewInt(amount))
 	s.FundAccount(claimAddress, liquidStakeToken)
 }
 
@@ -1017,7 +1017,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_ZeroSweepAmount() {
 	// update the sweep record so that the native amount is zero
 	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
 	s.Require().True(found)
-	unbondingRecord.NativeAmount = sdk.NewInt(0)
+	unbondingRecord.NativeAmount = sdkmath.NewInt(0)
 	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 
 	// try confirming with zero token amount on record
@@ -1031,7 +1031,7 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep_NegativeSweepAmount() {
 	// update the sweep record so that the native amount is negative
 	unbondingRecord, found := s.App.StaketiaKeeper.GetUnbondingRecord(s.Ctx, 6)
 	s.Require().True(found)
-	unbondingRecord.StTokenAmount = sdk.NewInt(-10)
+	unbondingRecord.StTokenAmount = sdkmath.NewInt(-10)
 	s.App.StaketiaKeeper.SetUnbondingRecord(s.Ctx, unbondingRecord)
 
 	// try confirming with negative token amount on record

@@ -14,7 +14,7 @@ func NewMinter(epochProvisions sdk.Dec) Minter {
 
 // InitialMinter returns an initial Minter object.
 func InitialMinter() Minter {
-	return NewMinter(sdk.NewDec(0))
+	return NewMinter(sdkmath.LegacyNewDec(0))
 }
 
 // DefaultInitialMinter returns a default initial Minter object for a new chain.

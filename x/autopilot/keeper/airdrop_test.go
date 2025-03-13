@@ -328,7 +328,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			oldClaimRecord := claimtypes.ClaimRecord{
 				AirdropIdentifier: evmosAirdropId,
 				Address:           evmosAddressKeyString,
-				Weight:            sdk.NewDec(10),
+				Weight:            sdkmath.LegacyNewDec(10),
 				ActionCompleted:   []bool{false, false, false},
 			}
 			err = s.App.ClaimKeeper.SetClaimRecord(s.Ctx, oldClaimRecord)

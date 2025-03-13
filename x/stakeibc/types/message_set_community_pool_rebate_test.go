@@ -21,7 +21,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 
 	validChainId := "chain-0"
 	validRebateRate := sdk.MustNewDecFromStr("0.1")
-	validLiquidStakedAmount := sdk.NewInt(1000)
+	validLiquidStakedAmount := sdkmath.NewInt(1000)
 
 	tests := []struct {
 		name string

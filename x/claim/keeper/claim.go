@@ -47,7 +47,7 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 		}
 
 		weightStr := fmt.Sprintf("%.10f", weightFloat64)
-		weight, err := sdk.NewDecFromStr(weightStr)
+		weight, err := sdkmath.LegacyNewDecFromStr(weightStr)
 		if weight.IsNegative() || weight.IsZero() {
 			continue
 		}
@@ -350,7 +350,7 @@ func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdk.D
 	if b == nil {
 		return sdkmath.LegacyZeroDec(), nil
 	}
-	totalWeight, err := sdk.NewDecFromStr(string(b))
+	totalWeight, err := sdkmath.LegacyNewDecFromStr(string(b))
 	if err != nil {
 		return sdkmath.LegacyZeroDec(), types.ErrTotalWeightParse
 	}
@@ -443,7 +443,7 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 
 	poolBal := distributorAccountBalance.AddAmount(airdrop.ClaimedSoFar)
 
-	claimableAmount := sdk.NewDec(poolBal.Amount.Int64()).
+	claimableAmount := sdkmath.LegacyNewDec(poolBal.Amount.Int64()).
 		Mul(percentageForAction).
 		Mul(claimRecord.Weight).
 		Quo(totalWeight).RoundInt()

@@ -39,7 +39,7 @@ var (
 var (
 	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
 	BnocsCustodian             = "stride1ff875h5plrnyumhm3cezn85dj4hzjzjqpz99mg"
-	BnocsProposalAmount        = sdk.NewInt(17_857_000_000)
+	BnocsProposalAmount        = sdkmath.NewInt(17_857_000_000)
 	Ustrd                      = "ustrd"
 )
 

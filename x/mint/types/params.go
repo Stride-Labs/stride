@@ -50,10 +50,10 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               sdk.DefaultBondDenom,
-		GenesisEpochProvisions:  sdk.NewDec(2_500_000).Mul(sdk.NewDec(1_000_000)).Quo(sdk.NewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
-		EpochIdentifier:         "mint",                                                                     // 1 hour
-		ReductionPeriodInEpochs: 24 * 365,                                                                   // 24hrs*365d = 8760
-		ReductionFactor:         sdk.NewDec(1).QuoInt64(2),
+		GenesisEpochProvisions:  sdkmath.LegacyNewDec(2_500_000).Mul(sdkmath.LegacyNewDec(1_000_000)).Quo(sdkmath.LegacyNewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
+		EpochIdentifier:         "mint",                                                                                                   // 1 hour
+		ReductionPeriodInEpochs: 24 * 365,                                                                                                 // 24hrs*365d = 8760
+		ReductionFactor:         sdkmath.LegacyNewDec(1).QuoInt64(2),
 		DistributionProportions: DistributionProportions{
 			Staking:                     sdk.MustNewDecFromStr("0.2764"),
 			CommunityPoolGrowth:         sdk.MustNewDecFromStr("0.1860"),
@@ -158,7 +158,7 @@ func validateReductionFactor(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v.GT(sdk.NewDec(1)) {
+	if v.GT(sdkmath.LegacyNewDec(1)) {
 		return fmt.Errorf("reduction factor cannot be greater than 1")
 	}
 
@@ -193,7 +193,7 @@ func validateDistributionProportions(i interface{}) error {
 
 	totalProportions := v.Staking.Add(v.CommunityPoolGrowth).Add(v.CommunityPoolSecurityBudget).Add(v.StrategicReserve)
 
-	if !totalProportions.Equal(sdk.NewDec(1)) {
+	if !totalProportions.Equal(sdkmath.LegacyNewDec(1)) {
 		return fmt.Errorf("total distributions ratio should be 1, instead got %s", totalProportions.String())
 	}
 

@@ -295,12 +295,12 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 
 	return func() {
 		// conversionRate is stTokenAmount / nativeTokenAmount
-		conversionRate := sdk.NewDec(stTokenAmount).Quo(sdk.NewDec(nativeTokenAmount))
+		conversionRate := sdkmath.LegacyNewDec(stTokenAmount).Quo(sdkmath.LegacyNewDec(nativeTokenAmount))
 		expectedConversionRate := sdk.MustNewDecFromStr("0.5")
 		s.Require().Equal(expectedConversionRate, conversionRate, "expected conversion rate (1/redemption rate)")
 
 		// stTokenAmount is conversionRate * URRAmount
-		stTokenAmount := conversionRate.Mul(sdk.NewDec(URRAmount)).RoundInt()
+		stTokenAmount := conversionRate.Mul(sdkmath.LegacyNewDec(URRAmount)).RoundInt()
 		expectedStTokenAmount := sdkmath.NewInt(250)
 		s.Require().Equal(stTokenAmount, expectedStTokenAmount, "expected st token amount")
 
@@ -319,7 +319,7 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 			mockURR, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, mockURRId)
 			s.Require().True(found)
 			// verify the amount was not updated
-			s.Require().Equal(sdk.NewInt(0), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
+			s.Require().Equal(sdkmath.NewInt(0), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
 		}
 	}
 }
@@ -757,7 +757,7 @@ func (s *UpgradeTestSuite) TestAddRateLimitToOsmosis() {
 	initialThreshold := sdkmath.OneInt()
 	initialFlow := sdkmath.NewInt(100)
 	initialDuration := uint64(24)
-	initialChannelValue := sdk.NewInt(1000)
+	initialChannelValue := sdkmath.NewInt(1000)
 
 	// Define the test cases for adding new rate limits
 	testCases := map[string]AddRateLimits{

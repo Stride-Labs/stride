@@ -22,7 +22,7 @@ func (s *KeeperTestSuite) createNLSMTokenDeposit(n int) []types.LSMTokenDeposit 
 		deposits[i].ChainId = strconv.Itoa(i)
 		deposits[i].Amount = sdkmath.NewIntFromUint64(1000)
 		deposits[i].Status = types.LSMTokenDeposit_DEPOSIT_PENDING
-		deposits[i].StToken = sdk.NewCoin("sttoken", sdk.NewInt(int64(i)))
+		deposits[i].StToken = sdk.NewCoin("sttoken", sdkmath.NewInt(int64(i)))
 	}
 	return deposits
 }

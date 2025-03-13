@@ -123,22 +123,22 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	// Set up validators & delegators on Stride
 	addrs := s.TestAccs
 	for _, acc := range addrs {
-		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
+		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1000000)))
 	}
 	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)
 	tstaking := teststaking.NewHelper(s.T(), s.Ctx, &s.App.StakingKeeper)
 
 	pubkeys := simtestutil.CreateTestPubKeys(2)
-	stakeAmount := sdk.NewInt(100)
+	stakeAmount := sdkmath.NewInt(100)
 
 	// create validator with 50% commission
 	commission := sdk.NewDecWithPrec(5, 1)
-	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdk.NewDec(0))
+	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdkmath.LegacyNewDec(0))
 	tstaking.CreateValidator(valAddrs[0], pubkeys[0], stakeAmount, true)
 
 	// create second validator with 0% commission
-	commission = sdk.NewDec(0)
-	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdk.NewDec(0))
+	commission = sdkmath.LegacyNewDec(0)
+	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdkmath.LegacyNewDec(0))
 	tstaking.CreateValidator(valAddrs[1], pubkeys[1], stakeAmount, true)
 
 	s.App.EndBlocker(s.Ctx, abci.RequestEndBlock{})

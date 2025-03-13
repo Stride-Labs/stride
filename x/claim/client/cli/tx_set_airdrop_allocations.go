@@ -24,7 +24,7 @@ func CmdSetAirdropAllocations() *cobra.Command {
 			weights := []sdk.Dec{}
 
 			for _, weight := range argWeights {
-				weightDec, err := sdk.NewDecFromStr(weight)
+				weightDec, err := sdkmath.LegacyNewDecFromStr(weight)
 				if err != nil {
 					return err
 				}

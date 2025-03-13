@@ -57,7 +57,7 @@ func (s *IntegrationTestSuite) TestQueryGRPC() {
 			map[string]string{},
 			&minttypes.QueryParamsResponse{},
 			&minttypes.QueryParamsResponse{
-				Params: minttypes.NewParams("stake", sdk.NewDec(5000000), "week", sdk.MustNewDecFromStr("0.5"), 156,
+				Params: minttypes.NewParams("stake", sdkmath.LegacyNewDec(5000000), "week", sdk.MustNewDecFromStr("0.5"), 156,
 					minttypes.DefaultParams().DistributionProportions, []minttypes.WeightedAddress{}, 0),
 			},
 		},
@@ -69,7 +69,7 @@ func (s *IntegrationTestSuite) TestQueryGRPC() {
 			},
 			&minttypes.QueryEpochProvisionsResponse{},
 			&minttypes.QueryEpochProvisionsResponse{
-				EpochProvisions: sdk.NewDec(5000000),
+				EpochProvisions: sdkmath.LegacyNewDec(5000000),
 			},
 		},
 	}

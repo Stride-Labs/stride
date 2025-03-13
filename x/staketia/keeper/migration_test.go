@@ -16,9 +16,9 @@ import (
 func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	// Create a host zone with a delegated balance of 1000
 	halted := true
-	totalDelegations := sdk.NewInt(1_000)
-	redemptionRate := sdk.NewDec(2)
-	lastRedemptionRate := sdk.NewDec(1)
+	totalDelegations := sdkmath.NewInt(1_000)
+	redemptionRate := sdkmath.LegacyNewDec(2)
+	lastRedemptionRate := sdkmath.LegacyNewDec(1)
 	minInnerRedemptionRate := sdk.MustNewDecFromStr("1.9")
 	maxInnerRedemptionRate := sdk.MustNewDecFromStr("2.1")
 	legacyHostZone := oldtypes.HostZone{
@@ -122,12 +122,12 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 	// Fund the staketia deposit and fee accounts
 	depositBalance := sdkmath.NewInt(1000)
 	feeBalance := sdkmath.NewInt(2000)
-	totalDelegations := sdk.NewInt(1000)
+	totalDelegations := sdkmath.NewInt(1000)
 	s.FundAccount(staketiaDepositAccount, sdk.NewCoin(HostIBCDenom, depositBalance))
 	s.FundModuleAccount(staketiaFeeModuleName, sdk.NewCoin(HostIBCDenom, feeBalance))
 
 	// Mint stTIA for the redemption rate calculation
-	s.FundAccount(s.TestAccs[1], sdk.NewCoin("st"+HostNativeDenom, sdk.NewInt(1000)))
+	s.FundAccount(s.TestAccs[1], sdk.NewCoin("st"+HostNativeDenom, sdkmath.NewInt(1000)))
 
 	// Store the legacy host zone
 	legacyHostZone := oldtypes.HostZone{

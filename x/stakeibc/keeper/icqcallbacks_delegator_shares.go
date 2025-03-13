@@ -236,7 +236,7 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 	}
 	weightAdjustment := sdk.NewDecFromInt(delegatedTokens).Quo(sdk.NewDecFromInt(validator.Delegation))
 
-	validator.Weight = sdk.NewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64()
+	validator.Weight = sdkmath.LegacyNewDec(weight).Mul(weightAdjustment).TruncateInt().Uint64()
 	validator.Delegation = validator.Delegation.Sub(slashAmount)
 
 	// Update the validator on the host zone

@@ -27,9 +27,9 @@ var (
 		"stride1uc8ccxy5s2hw55fn8963ukfdycaamq95jqcfnr",
 	}
 	weights = []sdk.Dec{
-		sdk.NewDec(1000),
-		sdk.NewDec(2000),
-		sdk.NewDec(3000),
+		sdkmath.LegacyNewDec(1000),
+		sdkmath.LegacyNewDec(2000),
+		sdkmath.LegacyNewDec(3000),
 	}
 )
 

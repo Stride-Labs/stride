@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v26/x/staketia/types"
 )
@@ -18,7 +18,7 @@ func (s *KeeperTestSuite) initializeHostZone() types.HostZone {
 		DepositAddress:            "stride8abb3e",
 		RedemptionAddress:         "stride3400de1",
 		ClaimAddress:              "stride00b1a83",
-		RemainingDelegatedBalance: sdk.NewInt(1_000_000),
+		RemainingDelegatedBalance: sdkmath.NewInt(1_000_000),
 		Halted:                    false,
 	}
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
@@ -41,7 +41,7 @@ func (s *KeeperTestSuite) TestRemoveHostZone() {
 func (s *KeeperTestSuite) TestSetHostZone() {
 	hostZone := s.initializeHostZone()
 
-	hostZone.RemainingDelegatedBalance = hostZone.RemainingDelegatedBalance.Add(sdk.NewInt(100_000))
+	hostZone.RemainingDelegatedBalance = hostZone.RemainingDelegatedBalance.Add(sdkmath.NewInt(100_000))
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, hostZone)
 
 	loadedHostZone := s.MustGetHostZone()

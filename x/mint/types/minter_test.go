@@ -3,8 +3,6 @@ package types
 import (
 	"math/rand"
 	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Benchmarking :)
@@ -20,7 +18,7 @@ func BenchmarkEpochProvision(b *testing.B) {
 
 	s1 := rand.NewSource(100)
 	r1 := rand.New(s1)
-	minter.EpochProvisions = sdk.NewDec(r1.Int63n(1000000))
+	minter.EpochProvisions = sdkmath.LegacyNewDec(r1.Int63n(1000000))
 
 	// run the EpochProvision function b.N times
 	for n := 0; n < b.N; n++ {

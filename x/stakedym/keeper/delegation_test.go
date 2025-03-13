@@ -71,10 +71,10 @@ func (s *KeeperTestSuite) DefaultSetupTestLiquidStake() LiquidStakeTestCase {
 
 // Helper function to confirm balances after a successful liquid stake
 func (s *KeeperTestSuite) ConfirmLiquidStakeTokenTransfer(tc LiquidStakeTestCase) {
-	zeroNativeTokens := sdk.NewCoin(HostIBCDenom, sdk.ZeroInt())
+	zeroNativeTokens := sdk.NewCoin(HostIBCDenom, sdkmath.ZeroInt())
 	liquidStakedNativeTokens := sdk.NewCoin(HostIBCDenom, tc.liquidStakeAmount)
 
-	zeroStTokens := sdk.NewCoin(StDenom, sdk.ZeroInt())
+	zeroStTokens := sdk.NewCoin(StDenom, sdkmath.ZeroInt())
 	liquidStakedStTokens := sdk.NewCoin(StDenom, tc.expectedStAmount)
 
 	// Confirm native tokens were escrowed
@@ -322,37 +322,37 @@ func (s *KeeperTestSuite) GetDefaultDelegationRecords() []types.DelegationRecord
 	delegationRecords := []types.DelegationRecord{
 		{
 			Id:           1,
-			NativeAmount: sdk.NewInt(1000),
+			NativeAmount: sdkmath.NewInt(1000),
 			Status:       types.TRANSFER_IN_PROGRESS,
 			TxHash:       "",
 		},
 		{
 			Id:           6, // out of order to make sure this won't break anything
-			NativeAmount: sdk.NewInt(6000),
+			NativeAmount: sdkmath.NewInt(6000),
 			Status:       types.DELEGATION_QUEUE, // to be set
 			TxHash:       "",
 		},
 		{
 			Id:           5, // out of order to make sure this won't break anything
-			NativeAmount: sdk.NewInt(5000),
+			NativeAmount: sdkmath.NewInt(5000),
 			Status:       types.TRANSFER_IN_PROGRESS,
 			TxHash:       "",
 		},
 		{
 			Id:           3,
-			NativeAmount: sdk.NewInt(3000),
+			NativeAmount: sdkmath.NewInt(3000),
 			Status:       types.TRANSFER_FAILED,
 			TxHash:       "",
 		},
 		{
 			Id:           2,
-			NativeAmount: sdk.NewInt(2000),
+			NativeAmount: sdkmath.NewInt(2000),
 			Status:       types.DELEGATION_QUEUE, // to be set
 			TxHash:       "",
 		},
 		{
 			Id:           7,
-			NativeAmount: sdk.NewInt(7000),
+			NativeAmount: sdkmath.NewInt(7000),
 			Status:       types.TRANSFER_FAILED,
 			TxHash:       ValidTxHashDefault,
 		},
@@ -448,7 +448,7 @@ func (s *KeeperTestSuite) TestConfirmDelegation_DelegationZero() {
 	// try setting delegation queue with zero delegation
 	delegationRecord, found := s.App.StakedymKeeper.GetDelegationRecord(s.Ctx, 6)
 	s.Require().True(found)
-	delegationRecord.NativeAmount = sdk.NewInt(0)
+	delegationRecord.NativeAmount = sdkmath.NewInt(0)
 	s.App.StakedymKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
 	err := s.App.StakedymKeeper.ConfirmDelegation(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorIs(err, types.ErrDelegationRecordInvalidState, "not allowed to confirm zero delegation")
@@ -460,7 +460,7 @@ func (s *KeeperTestSuite) TestConfirmDelegation_DelegationNegative() {
 	// try setting delegation queue with negative delegation
 	delegationRecord, found := s.App.StakedymKeeper.GetDelegationRecord(s.Ctx, 6)
 	s.Require().True(found)
-	delegationRecord.NativeAmount = sdk.NewInt(-10)
+	delegationRecord.NativeAmount = sdkmath.NewInt(-10)
 	s.App.StakedymKeeper.SetDelegationRecord(s.Ctx, delegationRecord)
 	err := s.App.StakedymKeeper.ConfirmDelegation(s.Ctx, 6, ValidTxHashNew, ValidOperator)
 	s.Require().ErrorIs(err, types.ErrDelegationRecordInvalidState, "not allowed to confirm negative delegation")
@@ -501,7 +501,7 @@ func (s *KeeperTestSuite) TestLiquidStakeAndDistributeFees() {
 
 	// Liquid stake 1000 with a RR of 2, should return 500 tokens
 	liquidStakeAmount := sdkmath.NewInt(1000)
-	redemptionRate := sdk.NewDec(2)
+	redemptionRate := sdkmath.LegacyNewDec(2)
 	expectedStTokens := sdkmath.NewInt(500)
 
 	// Create a host zone with relevant denom's and addresses
