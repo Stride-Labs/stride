@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/stretchr/testify/require"
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
@@ -118,7 +119,7 @@ func (k Keeper) GetQueryUID(ctx sdk.Context) []byte {
 // IterateQueries iterate through queries
 func (k Keeper) IterateQueries(ctx sdk.Context, fn func(index int64, queryInfo types.Query) (stop bool)) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixQuery)
-	iterator := sdk.KVStorePrefixIterator(store, nil)
+	iterator := storetypes.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	i := int64(0)

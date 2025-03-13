@@ -1,5 +1,7 @@
 package types
 
+import sdkmath "cosmossdk.io/math"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "claim"

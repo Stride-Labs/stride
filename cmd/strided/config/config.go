@@ -2,6 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"

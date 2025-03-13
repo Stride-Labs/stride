@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
@@ -59,7 +60,7 @@ func (k Keeper) GetAllUserAllocations(ctx sdk.Context) (userAllocations []types.
 func (k Keeper) GetUserAllocationsForAirdrop(ctx sdk.Context, airdropId string) (userAllocations []types.UserAllocation) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserAllocationKeyPrefix)
 
-	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(airdropId))
+	iterator := storetypes.KVStorePrefixIterator(store, types.KeyPrefix(airdropId))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

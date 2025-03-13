@@ -34,7 +34,7 @@ func (k Keeper) RemoveUserRedemptionRecord(ctx sdk.Context, id string) {
 // GetAllUserRedemptionRecord returns all userRedemptionRecord
 func (k Keeper) GetAllUserRedemptionRecord(ctx sdk.Context) (list []types.UserRedemptionRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.UserRedemptionRecordKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
@@ -53,7 +53,7 @@ func (k Keeper) IterateUserRedemptionRecords(ctx sdk.Context,
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.UserRedemptionRecordKey))
 
-	iterator := sdk.KVStorePrefixIterator(store, nil)
+	iterator := storetypes.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	i := int64(0)

@@ -3,6 +3,8 @@ package types
 import (
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 )
 
 // Benchmarking :)

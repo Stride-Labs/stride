@@ -3,6 +3,8 @@ package cli
 import (
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"

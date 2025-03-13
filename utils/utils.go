@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"

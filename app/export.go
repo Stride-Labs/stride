@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 
+	storetypes "cosmossdk.io/store/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -176,7 +176,7 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 	// Iterate through validators by power descending, reset bond heights, and
 	// update bond intra-tx counters.
 	store := ctx.KVStore(app.GetKey(stakingtypes.StoreKey))
-	iter := sdk.KVStoreReversePrefixIterator(store, stakingtypes.ValidatorsKey)
+	iter := storetypes.KVStoreReversePrefixIterator(store, stakingtypes.ValidatorsKey)
 	counter := int16(0)
 
 	for ; iter.Valid(); iter.Next() {

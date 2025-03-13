@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 

@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
 )
 

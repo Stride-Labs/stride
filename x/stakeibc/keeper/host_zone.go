@@ -7,6 +7,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -100,7 +101,7 @@ func (k Keeper) RemoveHostZone(ctx sdk.Context, chainId string) {
 // GetAllHostZone returns all hostZone
 func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
@@ -191,7 +192,7 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 // GetAllActiveHostZone returns all hostZones that are active (halted = false)
 func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
@@ -221,7 +222,7 @@ func (k Keeper) CheckIsStToken(ctx sdk.Context, denom string) bool {
 func (k Keeper) IterateHostZones(ctx sdk.Context, fn func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
 
-	iterator := sdk.KVStorePrefixIterator(store, nil)
+	iterator := storetypes.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	i := int64(0)

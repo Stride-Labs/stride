@@ -3,6 +3,8 @@ package types_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 

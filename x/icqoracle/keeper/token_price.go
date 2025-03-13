@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
@@ -74,7 +75,7 @@ func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[st
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 
 	// Create prefix iterator for all keys starting with baseDenom
-	iterator := sdk.KVStorePrefixIterator(store, types.TokenPriceByDenomKey(baseDenom))
+	iterator := storetypes.KVStorePrefixIterator(store, types.TokenPriceByDenomKey(baseDenom))
 	defer iterator.Close()
 
 	prices := make(map[string]*types.TokenPrice)
@@ -237,7 +238,7 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 
 // GetAllTokenPrices retrieves all stored token prices
 func (k Keeper) GetAllTokenPrices(ctx sdk.Context) []types.TokenPrice {
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
+	iterator := storetypes.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	defer iterator.Close()
 
 	prices := []types.TokenPrice{}

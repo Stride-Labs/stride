@@ -9,10 +9,10 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	cometbftdb "github.com/cometbft/cometbft-db"
 	types1 "github.com/cometbft/cometbft/abci/types"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
 	tmtypes "github.com/cometbft/cometbft/types"
+	cosmosdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -80,7 +80,7 @@ func DefaultConfig() network.Config {
 
 			return app.NewStrideApp(
 				val.GetCtx().Logger,
-				cometbftdb.NewMemDB(),
+				cosmosdb.NewMemDB(),
 				nil,
 				true,
 				map[int64]bool{},

@@ -327,7 +327,7 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 	gaiaChannelId := "channel-0"
 
-	initialThreshold := sdk.OneInt()
+	initialThreshold := sdkmath.OneInt()
 	initialFlow := sdkmath.NewInt(10)
 	initialChannelValue := sdkmath.NewInt(100)
 	updatedChannelValue := sdkmath.NewInt(200)

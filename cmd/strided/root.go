@@ -15,14 +15,15 @@ import (
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/snapshots"
 	snapshottypes "cosmossdk.io/store/snapshots/types"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	cometbftdb "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/cli"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmtypes "github.com/cometbft/cometbft/types"
+	cosmosdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	config "github.com/cosmos/cosmos-sdk/client/config"
@@ -400,8 +401,8 @@ type appCreator struct {
 }
 
 // newApp is an AppCreator
-func (a appCreator) newApp(logger log.Logger, db cometbftdb.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
-	var cache sdk.MultiStorePersistentCache
+func (a appCreator) newApp(logger log.Logger, db cosmosdb.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+	var cache storetypes.MultiStorePersistentCache
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
 		cache = store.NewCommitKVStoreCacheManager()
@@ -422,7 +423,7 @@ func (a appCreator) newApp(logger log.Logger, db cometbftdb.DB, traceStore io.Wr
 	}
 
 	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
-	snapshotDB, err := cometbftdb.NewDB("metadata", cometbftdb.GoLevelDBBackend, snapshotDir)
+	snapshotDB, err := cosmosdb.NewDB("metadata", cosmosdb.GoLevelDBBackend, snapshotDir)
 	if err != nil {
 		panic(err)
 	}
@@ -477,7 +478,7 @@ func (a appCreator) newApp(logger log.Logger, db cometbftdb.DB, traceStore io.Wr
 
 // appExport creates a new simapp (optionally at a given height)
 func (a appCreator) appExport(
-	logger log.Logger, db cometbftdb.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
+	logger log.Logger, db cosmosdb.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
 	appOpts servertypes.AppOptions, modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
 	var anApp *app.StrideApp

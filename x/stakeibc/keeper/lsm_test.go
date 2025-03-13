@@ -605,7 +605,7 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 		Denom:   denom,
 		Amount:  sdkmath.NewInt(1000),
 		Status:  recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
-		StToken: sdk.NewCoin(StAtom, sdk.OneInt()),
+		StToken: sdk.NewCoin(StAtom, sdkmath.OneInt()),
 	}
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, initalDeposit)
 

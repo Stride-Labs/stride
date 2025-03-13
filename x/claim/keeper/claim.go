@@ -9,6 +9,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -250,7 +251,7 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) erro
 // ClearClaimables clear claimable amounts
 func (k Keeper) clearInitialClaimables(ctx sdk.Context, airdropIdentifier string) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropIdentifier)...))
+	iterator := storetypes.KVStorePrefixIterator(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropIdentifier)...))
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		key := iterator.Key()

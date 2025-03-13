@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
@@ -54,7 +56,7 @@ func (k Keeper) RemoveEpochTracker(
 // GetAllEpochTracker returns all epochTracker
 func (k Keeper) GetAllEpochTracker(ctx sdk.Context) (list []types.EpochTracker) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochTrackerKeyPrefix))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
