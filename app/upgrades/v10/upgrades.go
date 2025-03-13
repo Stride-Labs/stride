@@ -28,6 +28,7 @@ import (
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v26/x/icacallbacks/keeper"
@@ -117,7 +118,6 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-
 		ctx.Logger().Info("Starting upgrade v10...")
 
 		ctx.Logger().Info("Migrating tendermint consensus params from x/params to x/consensus...")
@@ -302,7 +302,7 @@ func ExecuteProp205(ctx sdk.Context, k bankkeeper.Keeper) error {
 	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
 	badKidsCustodianAddress := sdk.MustAccAddressFromBech32(BadKidsCustodian)
 	transferCoin := sdk.NewCoin(Ustrd, BadKidsTransferAmount)
-	return k.SendCoins(ctx, communityPoolGrowthAddress, badKidsCustodianAddress, sdk.NewCoins(transferCoin))
+	return utils.SafeSendCoins(false, k, ctx, communityPoolGrowthAddress, badKidsCustodianAddress, sdk.NewCoins(transferCoin))
 }
 
 // Enable the following rate limits:

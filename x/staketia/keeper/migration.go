@@ -80,7 +80,8 @@ func (k Keeper) MigrateProtocolOwnedAccounts(
 	}
 
 	depositBalance := k.bankKeeper.GetBalance(ctx, staketiaDepositAddress, legacyHostZone.NativeTokenIbcDenom)
-	err = k.bankKeeper.SendCoins(ctx, staketiaDepositAddress, stakeibcDepositAddress, sdk.NewCoins(depositBalance))
+	// Note: checkBlockedAddr=false because stakeibcDepositAddress is a module
+	err = utils.SafeSendCoins(false, k.bankKeeper, ctx, staketiaDepositAddress, stakeibcDepositAddress, sdk.NewCoins(depositBalance))
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to transfer deposit accounts")
 	}

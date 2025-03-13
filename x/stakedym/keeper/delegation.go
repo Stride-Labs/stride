@@ -56,7 +56,8 @@ func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount s
 	}
 
 	// Transfer the native tokens from the user to module account
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(nativeToken)); err != nil {
+	// Note: checkBlockedAddr=false because hostZoneDepositAddress is a module
+	if err := utils.SafeSendCoins(false, k.bankKeeper, ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(nativeToken)); err != nil {
 		return stToken, errorsmod.Wrapf(err, "failed to send tokens from liquid staker %s to deposit address", liquidStaker)
 	}
 
