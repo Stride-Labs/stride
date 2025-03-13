@@ -121,7 +121,7 @@ func (s *UpgradeTestSuite) checkCommunityPoolICAAccountsRegistered(chainId strin
 	expectedDepositPortId, _ := icatypes.NewControllerPortID(depositOwner)
 	expectedReturnPortId, _ := icatypes.NewControllerPortID(returnOwner)
 
-	depositPortIdRegistered := s.App.ICAControllerKeeper.HasCapability(s.Ctx, expectedDepositPortId)
+	depositPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedDepositPortId)
 	returnPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedReturnPortId)
 
 	s.Require().True(depositPortIdRegistered, "deposit port %s should have been bound", expectedDepositPortId)
