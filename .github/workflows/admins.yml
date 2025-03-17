@@ -19,7 +19,7 @@ jobs:
 
       - name: Check if admins.go changed
         id: admin-go-changed
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v46
         with:
           files: |
             utils/admins.go
