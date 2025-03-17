@@ -29,7 +29,7 @@ var distributors map[string]sdk.AccAddress
 
 func (suite *KeeperTestSuite) SetupTest() {
 	suite.app = app.InitStrideTestApp(true)
-	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
+	suite.ctx = suite.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
 	distributors = make(map[string]sdk.AccAddress)
 
 	// Initiate a distributor account for stride user airdrop

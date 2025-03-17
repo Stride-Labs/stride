@@ -20,6 +20,8 @@ import (
 // Note: The hourly processes are meant for actions that should run ASAP,
 // but the hourly buffer makes it less expensive
 func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	epochNumber := utils.IntToUint(epochInfo.CurrentEpoch)
 
 	// Every day, refresh the redemption rate and prepare delegations

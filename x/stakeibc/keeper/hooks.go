@@ -16,6 +16,8 @@ import (
 const StrideEpochsPerDayEpoch = uint64(4)
 
 func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	// Update the stakeibc epoch tracker
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
 	if err != nil {
