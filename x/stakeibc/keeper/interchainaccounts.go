@@ -183,7 +183,7 @@ func (k Keeper) SubmitTxs(
 		return 0, errorsmod.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
 
-	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs)
+	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs, icatypes.EncodingProtobuf)
 	if err != nil {
 		return 0, err
 	}
@@ -228,7 +228,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 	timeoutTimestamp uint64,
 ) error {
 	// Serialize tx messages
-	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs, icatypes.EncodingProtobuf)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to serialize cosmos transaction")
 	}

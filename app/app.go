@@ -1274,7 +1274,7 @@ func NewStrideApp(
 			IBCKeeper:         app.IBCKeeper,
 			ConsumerKeeper:    app.ConsumerKeeper,
 			WasmConfig:        &wasmConfig,
-			TXCounterStoreKey: keys[wasmtypes.StoreKey],
+			TXCounterStoreKey: *keys[wasmtypes.StoreKey],
 			WasmKeeper:        &app.WasmKeeper,
 		},
 	)

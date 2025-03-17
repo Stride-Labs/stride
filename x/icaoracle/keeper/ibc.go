@@ -59,7 +59,7 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	}
 
 	// Serialize tx messages
-	txBz, err := icatypes.SerializeCosmosTx(k.cdc, tx.Messages)
+	txBz, err := icatypes.SerializeCosmosTx(k.cdc, tx.Messages, icatypes.EncodingProtobuf)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to serialize cosmos transaction")
 	}

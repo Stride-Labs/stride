@@ -1,34 +1,27 @@
 package cli_test
 
 import (
-	// "fmt"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-
-	strideclitestutil "github.com/Stride-Labs/stride/v26/testutil/cli"
-
-	"github.com/Stride-Labs/stride/v26/testutil/network"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	tmcli "github.com/cometbft/cometbft/libs/cli"
-
-	"github.com/Stride-Labs/stride/v26/x/claim/client/cli"
-
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/Stride-Labs/stride/v26/app"
 	cmdcfg "github.com/Stride-Labs/stride/v26/cmd/strided/config"
+	strideclitestutil "github.com/Stride-Labs/stride/v26/testutil/cli"
+	"github.com/Stride-Labs/stride/v26/testutil/network"
+	"github.com/Stride-Labs/stride/v26/x/claim/client/cli"
 	"github.com/Stride-Labs/stride/v26/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 )
@@ -96,7 +89,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			val.ClientCtx,
 			val.Address,
 			distributorAddr,
-			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)),
+			addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+			fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)

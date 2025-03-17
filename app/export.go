@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 
@@ -54,7 +55,9 @@ func (app *StrideApp) ExportAppStateAndValidators(
 // NOTE zero height genesis is a temporary feature which will be deprecated
 //
 //	in favour of export at a block height
-func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []string) {
+func (app *StrideApp) prepForZeroHeightGenesis(context context.Context, jailAllowedAddrs []string) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	applyAllowedAddrs := false
 
 	// check if there is a allowed address list
@@ -79,11 +82,17 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 
 	// withdraw all validator commission
 	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
-		_, err := app.DistrKeeper.WithdrawValidatorCommission(ctx, val.GetOperator())
+		operAddr := val.GetOperator()
+
+		valAddr, err := sdk.ValAddressFromBech32(operAddr)
 		if err != nil {
 			panic(err)
 		}
 
+		_, err = app.DistrKeeper.WithdrawValidatorCommission(ctx, valAddr)
+		if err != nil {
+			panic(err)
+		}
 		return false
 	})
 
@@ -118,12 +127,27 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 	// reinitialize all validators
 	app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
 		// donate any unwithdrawn outstanding reward fraction tokens to the community pool
-		scraps := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, val.GetOperator())
-		feePool := app.DistrKeeper.GetFeePool(ctx)
-		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
-		app.DistrKeeper.SetFeePool(ctx, feePool)
+		operAddr := val.GetOperator()
 
-		err := app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
+		valAddr, err := sdk.ValAddressFromBech32(operAddr)
+		if err != nil {
+			panic(err)
+		}
+
+		scraps, err := app.DistrKeeper.GetValidatorOutstandingRewardsCoins(ctx, valAddr)
+		if err != nil {
+			panic(err)
+		}
+		feePool, err := app.DistrKeeper.FeePool.Get(ctx)
+		if err != nil {
+			panic(err)
+		}
+		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
+		err = app.DistrKeeper.FeePool.Set(ctx, feePool)
+		if err != nil {
+			panic(err)
+		}
+		err = app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, valAddr)
 		if err != nil {
 			panic(err)
 		}
@@ -181,9 +205,9 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 
 	for ; iter.Valid(); iter.Next() {
 		addr := sdk.ValAddress(iter.Key()[1:])
-		validator, found := app.StakingKeeper.GetValidator(ctx, addr)
-		if !found {
-			panic("expected validator, not found")
+		validator, err := app.StakingKeeper.GetValidator(ctx, addr)
+		if err != nil {
+			log.Fatalf("expected validator, not found: %w", err)
 		}
 
 		validator.UnbondingHeight = 0
@@ -197,7 +221,7 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 
 	iter.Close()
 
-	_, err := app.StakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
+	_, err = app.StakingKeeper.ApplyAndReturnValidatorSetUpdates(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
