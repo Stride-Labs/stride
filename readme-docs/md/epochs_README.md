@@ -3,6 +3,7 @@ title: "Epochs"
 excerpt: ""
 category: 6392913957c533007128548e
 ---
+
 <!--
 order: 0
 title: "Epochs Overview"
@@ -126,9 +127,9 @@ type Keeper interface {
 
 ```go
   // the first block whose timestamp is after the duration is counted as the end of the epoch
-  AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64)
+  AfterEpochEnd(context context.Context, epochIdentifier string, epochNumber int64)
   // new epoch is next block of epoch end block
-  BeforeEpochStart(ctx sdk.Context, epochIdentifier string, epochNumber int64)
+  BeforeEpochStart(context context.Context, epochIdentifier string, epochNumber int64)
 ```
 
 The `BeforeEpochStart` hook does different things depending on the identifier.

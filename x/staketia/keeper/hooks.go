@@ -1,9 +1,8 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
@@ -18,7 +17,7 @@ import (
 //
 // Note: The hourly processes are meant for actions that should run ASAP,
 // but the hourly buffer makes it less expensive
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
 	epochNumber := utils.IntToUint(epochInfo.CurrentEpoch)
 
 	// Every day, refresh the redemption rate and prepare delegations
@@ -56,8 +55,8 @@ func (k Keeper) Hooks() Hooks {
 	return Hooks{k}
 }
 
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (h Hooks) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.BeforeEpochStart(ctx, epochInfo)
 }
 
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
+func (h Hooks) AfterEpochEnd(context context.Context, epochInfo epochstypes.EpochInfo) {}

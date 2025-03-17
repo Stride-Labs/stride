@@ -9,7 +9,7 @@ import (
 
 type BankKeeper interface {
 	BlockedAddr(addr sdk.AccAddress) bool
-	SendCoins(ctx sdk.Context, senderAddr sdk.AccAddress, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoins(ctx context.Context, senderAddr sdk.AccAddress, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
 type IbcTransferKeeper interface {

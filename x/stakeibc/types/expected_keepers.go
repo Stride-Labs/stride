@@ -44,17 +44,17 @@ type StakeIBCHooks interface {
 }
 
 type ICAOracleKeeper interface {
-	QueueMetricUpdate(ctx context.Context, key, value, metricType, attributes string)
+	QueueMetricUpdate(ctx sdk.Context, key, value, metricType, attributes string)
 }
 
 type RatelimitKeeper interface {
-	AddDenomToBlacklist(ctx context.Context, denom string)
-	RemoveDenomFromBlacklist(ctx context.Context, denom string)
-	SetWhitelistedAddressPair(ctx context.Context, whitelist ratelimittypes.WhitelistedAddressPair)
-	RemoveWhitelistedAddressPair(ctx context.Context, sender, receiver string)
+	AddDenomToBlacklist(ctx sdk.Context, denom string)
+	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
+	SetWhitelistedAddressPair(ctx sdk.Context, whitelist ratelimittypes.WhitelistedAddressPair)
+	RemoveWhitelistedAddressPair(ctx sdk.Context, sender, receiver string)
 }
 
 type ConsumerKeeper interface {
-	GetConsumerParams(ctx context.Context) ccvtypes.ConsumerParams
-	SetParams(ctx context.Context, params ccvtypes.ConsumerParams)
+	GetConsumerParams(ctx sdk.Context) ccvtypes.ConsumerParams
+	SetParams(ctx sdk.Context, params ccvtypes.ConsumerParams)
 }
