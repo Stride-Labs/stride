@@ -425,15 +425,17 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 func (s *UpgradeTestSuite) SetupCommunityPoolTaxBeforeUpgrade() func() {
 	// Set initial community pool tax to 2%
 	initialTax := sdkmath.LegacyMustNewDecFromStr("0.02")
-	params := s.App.DistrKeeper.GetParams(s.Ctx)
+	params, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
 	params.CommunityTax = initialTax
-	err := s.App.DistrKeeper.SetParams(s.Ctx, params)
+	err = s.App.DistrKeeper.Params.Set(s.Ctx, params)
 	s.Require().NoError(err, "no error expected when setting params")
 
 	// Return callback to check store after upgrade
 	return func() {
 		// Confirm the tax increased
-		updatedParams := s.App.DistrKeeper.GetParams(s.Ctx)
+		updatedParams, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+		s.Require().NoError(err, "no error expected when getting params")
 		s.Require().Equal(v17.CommunityPoolTax.String(), updatedParams.CommunityTax.String(),
 			"community pool tax should have been updated")
 	}
@@ -601,9 +603,10 @@ func (s *UpgradeTestSuite) TestResetSlashQueryInProgress() {
 func (s *UpgradeTestSuite) TestExecuteProp223() {
 	// Set initial community pool tax to 2%
 	initialTax := sdkmath.LegacyMustNewDecFromStr("0.02")
-	params := s.App.DistrKeeper.GetParams(s.Ctx)
+	params, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
 	params.CommunityTax = initialTax
-	err := s.App.DistrKeeper.SetParams(s.Ctx, params)
+	err = s.App.DistrKeeper.Params.Set(s.Ctx, params)
 	s.Require().NoError(err, "no error expected when setting params")
 
 	// Increase the tax
@@ -611,7 +614,8 @@ func (s *UpgradeTestSuite) TestExecuteProp223() {
 	s.Require().NoError(err, "no error expected when increasing community pool tax")
 
 	// Confirm it increased
-	updatedParams := s.App.DistrKeeper.GetParams(s.Ctx)
+	updatedParams, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
 	s.Require().Equal(v17.CommunityPoolTax.String(), updatedParams.CommunityTax.String(),
 		"community pool tax should have been updated")
 }

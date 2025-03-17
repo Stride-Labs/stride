@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -82,8 +83,9 @@ func (k Keeper) Hooks() Hooks {
 	return Hooks{k}
 }
 
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (h Hooks) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
+	ctx := sdk.UnwrapSDKContext(context)
 	h.k.BeforeEpochStart(ctx, epochInfo)
 }
 
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
+func (h Hooks) AfterEpochEnd(context context.Context, epochInfo epochstypes.EpochInfo) {}
