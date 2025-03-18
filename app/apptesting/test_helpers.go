@@ -6,7 +6,6 @@ import (
 	"time"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	abci "github.com/cometbft/cometbft/abci/types"
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -15,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/cosmos/cosmos-sdk/types/kv"
 	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -168,28 +168,24 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
 	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
 
-	// create a consumer addition prop
-	// NOTE: the initial height passed to CreateConsumerClient
-	// must be the height on the consumer when InitGenesis is called
-	prop := testkeeper.GetTestConsumerAdditionProp()
-	prop.ChainId = StrideChainID
-	prop.UnbondingPeriod = s.ProviderApp.GetTestStakingKeeper().UnbondingTime(s.ProviderChain.GetContext())
-	prop.InitialHeight = clienttypes.Height{RevisionNumber: 0, RevisionHeight: 3}
-
-	// create a consumer client on the provider chain
-	providerKeeper := s.ProviderApp.GetProviderKeeper()
-	err := providerKeeper.CreateConsumerClient(
-		s.ProviderChain.GetContext(),
-		prop,
-	)
+	// Call method with same arbitrary values as defined above in mock expectations.
+	CONSUMER_ID := "0"
+	s.ProviderApp.GetProviderKeeper().SetConsumerChainId(s.ProviderChain.GetContext(), CONSUMER_ID, StrideChainID)
+	err := s.ProviderApp.GetProviderKeeper().SetConsumerInitializationParameters(s.ProviderChain.GetContext(), CONSUMER_ID, testkeeper.GetTestInitializationParameters())
 	s.Require().NoError(err)
+
+	err = s.ProviderApp.GetProviderKeeper().CreateConsumerClient(s.ProviderChain.GetContext(), CONSUMER_ID, []byte{})
+	s.Require().NoError(err)
+	clientId, found := s.ProviderApp.GetProviderKeeper().GetConsumerClientId(s.ProviderChain.GetContext(), CONSUMER_ID)
+	s.Require().True(found)
+	s.Require().Equal("clientID", clientId)
 
 	// move provider and host chain to next block
 	s.Coordinator.CommitBlock(s.ProviderChain)
 	s.Coordinator.CommitBlock(s.HostChain)
 
 	// initialize the consumer chain with the genesis state stored on the provider
-	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(
+	strideConsumerGenesis, found := s.ProviderApp.GetProviderKeeper().GetConsumerGenesis(
 		s.ProviderChain.GetContext(),
 		StrideChainID,
 	)
@@ -575,13 +571,12 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
-	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
-	s.Require().True(exists)
+	_, err = s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
+	s.Require().NoError(err)
 
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
 	s.Require().NotPanics(func() {
-		beginBlockRequest := abci.RequestBeginBlock{}
-		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
+		s.App.BeginBlocker(s.Ctx)
 	})
 }
 
@@ -597,9 +592,30 @@ func (s *AppTestHelper) GetBankStoreKeyPrefix(address, denom string) []byte {
 // Useful for testing balance ICQs as it can confirm that the serialized query request
 // data has the proper address and denom
 func (s *AppTestHelper) ExtractAddressAndDenomFromBankPrefix(data []byte) (address, denom string) {
-	addressBz, denom, err := banktypes.AddressAndDenomFromBalancesStore(data[1:]) // Remove BalancePrefix byte
+	addressBz, denom, err := AddressAndDenomFromBalancesStore(data[1:]) // Remove BalancePrefix byte
 	s.Require().NoError(err, "no error expected when getting address and denom from balance store")
 	return addressBz.String(), denom
+}
+
+// AddressAndDenomFromBalancesStore returns an account address and denom from a balances prefix
+// store. The key must not contain the prefix BalancesPrefix as the prefix store
+// iterator discards the actual prefix.
+//
+// If invalid key is passed, AddressAndDenomFromBalancesStore returns ErrInvalidKey.
+func AddressAndDenomFromBalancesStore(key []byte) (sdk.AccAddress, string, error) {
+	if len(key) == 0 {
+		return nil, "", banktypes.ErrInvalidKey
+	}
+
+	kv.AssertKeyAtLeastLength(key, 1)
+
+	addrBound := int(key[0])
+
+	if len(key)-1 < addrBound {
+		return nil, "", banktypes.ErrInvalidKey
+	}
+
+	return key[1 : addrBound+1], string(key[addrBound+1:]), nil
 }
 
 // Generates a valid and invalid test address (used for non-keeper tests)

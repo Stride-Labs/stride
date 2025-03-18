@@ -12,6 +12,7 @@ import (
 
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
 	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
@@ -101,7 +102,7 @@ func (s *KeeperTestSuite) checkCommunityPoolQuerySubmission(
 		expectedIcaAddress = tc.hostZone.CommunityPoolReturnIcaAddress
 	}
 	requestData := query.RequestData[1:] // Remove BalancePrefix byte
-	actualAddress, actualDenom, err := banktypes.AddressAndDenomFromBalancesStore(requestData)
+	actualAddress, actualDenom, err := apptesting.AddressAndDenomFromBalancesStore(requestData)
 	s.Require().NoError(err, "no error expected when retrieving address and denom from store key")
 	s.Require().Equal(expectedIcaAddress, actualAddress.String(), "query account address")
 	s.Require().Equal(Atom, actualDenom, "query denom")

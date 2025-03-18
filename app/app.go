@@ -242,11 +242,11 @@ var (
 	)
 
 	// module account permissions
+	// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
+	// strdburner module needs burn access to burn STRD tokens that are sent to it
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName: nil,
-		distrtypes.ModuleName:      nil,
-		// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
-		// strdburner module needs burn access to burn STRD tokens that are sent to it
+		authtypes.FeeCollectorName:                    nil,
+		distrtypes.ModuleName:                         nil,
 		ccvconsumertypes.ConsumerRedistributeName:     nil,
 		ccvconsumertypes.ConsumerToSendToProviderName: nil,
 		minttypes.ModuleName:                          {authtypes.Minter, authtypes.Burner},

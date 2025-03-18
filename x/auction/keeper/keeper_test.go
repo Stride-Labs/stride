@@ -22,7 +22,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
 
 	// Create a logger with accessible output
-	logger := log.NewTMLogger(&s.logBuffer)
+	logger := log.NewLogger(&s.logBuffer)
 	s.Ctx = s.Ctx.WithLogger(logger)
 }
 
