@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+
+	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
 
 	"github.com/Stride-Labs/stride/v26/x/icaoracle/types"
 )
@@ -33,8 +36,9 @@ func (s *KeeperTestSuite) TestAddOracle_Successful() {
 
 	// Confirm the ICA registration was initiated
 	// We can verify this by checking that the ICAController module is bound to the oracle port
+	scopedICAControllerKeeper := s.App.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	expectedOraclePort := fmt.Sprintf("icacontroller-%s.ORACLE", HostChainId)
-	isBound := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedOraclePort)
+	_, isBound := scopedICAControllerKeeper.GetCapability(s.Ctx, host.PortPath(expectedOraclePort))
 	s.Require().True(isBound, "oracle ICA port %s should have been bound to the ICAController module", expectedOraclePort)
 }
 

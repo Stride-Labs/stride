@@ -7,7 +7,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/suite"
 
@@ -121,8 +123,10 @@ func (s *UpgradeTestSuite) checkCommunityPoolICAAccountsRegistered(chainId strin
 	expectedDepositPortId, _ := icatypes.NewControllerPortID(depositOwner)
 	expectedReturnPortId, _ := icatypes.NewControllerPortID(returnOwner)
 
-	depositPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedDepositPortId)
-	returnPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedReturnPortId)
+	scopedICAControllerKeeper := s.App.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
+
+	_, depositPortIdRegistered := scopedICAControllerKeeper.GetCapability(s.Ctx, host.PortPath(expectedDepositPortId))
+	_, returnPortIdRegistered := scopedICAControllerKeeper.GetCapability(s.Ctx, host.PortPath(expectedReturnPortId))
 
 	s.Require().True(depositPortIdRegistered, "deposit port %s should have been bound", expectedDepositPortId)
 	s.Require().True(returnPortIdRegistered, "return port %s should have been bound", expectedReturnPortId)
