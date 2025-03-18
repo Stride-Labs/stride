@@ -20,7 +20,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvm "github.com/CosmWasm/wasmvm"
+	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	tmos "github.com/cometbft/cometbft/libs/os"
@@ -647,10 +647,21 @@ func NewStrideApp(
 
 	// Add wasm keeper and wasm client keeper (must be after IBCKeeper and TransferKeeper)
 	wasmContractMemoryLimit := uint32(32)
-	wasmCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,cosmwasm_1_3,cosmwasm_1_4,cosmwasm_2_0"
+	wasmCapabilities := []string{
+		"iterator",
+		"staking",
+		"stargate",
+		"cosmwasm_1_1",
+		"cosmwasm_1_2",
+		"cosmwasm_1_3",
+		"cosmwasm_1_4",
+		"cosmwasm_2_0",
+		"cosmwasm_2_1",
+		"cosmwasm_2_2",
+	}
 	wasmDir := filepath.Join(homePath, "wasm")
 	wasmVmDir := filepath.Join(homePath, "wasm", "wasm")
-	wasmConfig, err := wasm.ReadWasmConfig(appOpts)
+	wasmNodeConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
@@ -659,8 +670,8 @@ func NewStrideApp(
 		wasmVmDir,
 		wasmCapabilities,
 		wasmContractMemoryLimit,
-		wasmConfig.ContractDebugMode,
-		wasmConfig.MemoryCacheSize,
+		wasmNodeConfig.ContractDebugMode,
+		wasmNodeConfig.MemoryCacheSize,
 	)
 	if err != nil {
 		panic(err)
@@ -670,20 +681,21 @@ func NewStrideApp(
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasmtypes.StoreKey],
+		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper,
+		app.IBCKeeper.PortKeeper,
 		scopedWasmKeeper,
 		app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasmConfig,
+		wasmNodeConfig,
+		wasmtypes.VMConfig{},
 		wasmCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
@@ -1273,7 +1285,7 @@ func NewStrideApp(
 			},
 			IBCKeeper:         app.IBCKeeper,
 			ConsumerKeeper:    app.ConsumerKeeper,
-			WasmConfig:        &wasmConfig,
+			WasmConfig:        &wasmNodeConfig,
 			TXCounterStoreKey: *keys[wasmtypes.StoreKey],
 			WasmKeeper:        &app.WasmKeeper,
 		},

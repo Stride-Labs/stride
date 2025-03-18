@@ -22,7 +22,7 @@ type HandlerOptions struct {
 
 	IBCKeeper         *ibckeeper.Keeper
 	ConsumerKeeper    ccvconsumerkeeper.Keeper
-	WasmConfig        *wasmtypes.WasmConfig
+	WasmConfig        *wasmtypes.NodeConfig
 	WasmKeeper        *wasmkeeper.Keeper
 	TXCounterStoreKey storetypes.KVStoreKey
 }
