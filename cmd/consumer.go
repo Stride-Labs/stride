@@ -216,11 +216,11 @@ func (d DefaultGenesisReader) ReadGenesis(cmd *cobra.Command) (*GenesisData, err
 
 type GenesisData struct {
 	GenesisFile         string
-	GenDoc              *tmtypes.GenesisDoc
+	GenDoc              *genutiltypes.AppGenesis
 	AppState            map[string]json.RawMessage
 	ConsumerModuleState *ccvtypes.ConsumerGenesisState
 }
 
-func NewGenesisData(genesisFile string, genDoc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, consumerModuleState *ccvtypes.ConsumerGenesisState) *GenesisData {
+func NewGenesisData(genesisFile string, genDoc *genutiltypes.AppGenesis, appState map[string]json.RawMessage, consumerModuleState *ccvtypes.ConsumerGenesisState) *GenesisData {
 	return &GenesisData{GenesisFile: genesisFile, GenDoc: genDoc, AppState: appState, ConsumerModuleState: consumerModuleState}
 }
