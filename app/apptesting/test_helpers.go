@@ -83,11 +83,12 @@ type AppTestHelper struct {
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
 	s.App = app.InitStrideTestApp(true)
-	s.Ctx = s.App.BaseApp.NewContextLegacy(false, tmtypesproto.Header{
-		Height:  1,
-		ChainID: StrideChainID,
-		Time:    time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
-	})
+	s.Ctx = s.App.BaseApp.NewContext(false).
+		WithBlockHeader(tmtypesproto.Header{
+			Height:  1,
+			ChainID: StrideChainID,
+			Time:    time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+		})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
@@ -117,7 +118,8 @@ func (s *AppTestHelper) Setup() {
 func SetupSuitelessTestHelper() SuitelessAppTestHelper {
 	s := SuitelessAppTestHelper{}
 	s.App = app.InitStrideTestApp(true)
-	s.Ctx = s.App.BaseApp.NewContextLegacy(false, tmtypesproto.Header{Height: 1, ChainID: StrideChainID})
+	s.Ctx = s.App.BaseApp.NewContext(false).
+		WithBlockHeader(tmtypesproto.Header{Height: 1, ChainID: StrideChainID})
 	return s
 }
 

@@ -14,7 +14,8 @@ import (
 func StakeibcKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	app := strideapp.InitStrideTestApp(true)
 	stakeibcKeeper := app.StakeibcKeeper
-	ctx := app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
+	ctx := app.BaseApp.NewContext(false).
+		WithBlockHeader(tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
 
 	return &stakeibcKeeper, ctx
 }
