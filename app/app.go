@@ -113,7 +113,6 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	ibctestingtypes "github.com/cosmos/ibc-go/v8/testing/types"
 	ccvconsumer "github.com/cosmos/interchain-security/v6/x/ccv/consumer"
@@ -197,54 +196,6 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 var (
 	// DefaultNodeHome default home directories for the application daemon
 	DefaultNodeHome string
-
-	// ModuleBasics defines the module BasicManager is in charge of setting up basic,
-	// non-dependant module elements, such as codec registration
-	// and genesis verification.
-	ModuleBasics = module.NewBasicManager(
-		auth.AppModuleBasic{},
-		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
-		bank.AppModuleBasic{},
-		capability.AppModuleBasic{},
-		ccvstaking.AppModuleBasic{},
-		mint.AppModuleBasic{},
-		ccvdistr.AppModuleBasic{},
-		gov.NewAppModuleBasic(getGovProposalHandlers()),
-		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
-		slashing.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
-		ibc.AppModuleBasic{},
-		upgrade.AppModuleBasic{},
-		evidence.AppModuleBasic{},
-		transfer.AppModuleBasic{},
-		consensus.AppModuleBasic{},
-		vesting.AppModuleBasic{},
-		claimvesting.AppModuleBasic{},
-		stakeibcmodule.AppModuleBasic{},
-		epochsmodule.AppModuleBasic{},
-		interchainquery.AppModuleBasic{},
-		ica.AppModuleBasic{},
-		recordsmodule.AppModuleBasic{},
-		ratelimit.AppModuleBasic{},
-		icacallbacksmodule.AppModuleBasic{},
-		claim.AppModuleBasic{},
-		ccvconsumer.AppModuleBasic{},
-		autopilot.AppModuleBasic{},
-		icaoracle.AppModuleBasic{},
-		tendermint.AppModuleBasic{},
-		packetforward.AppModuleBasic{},
-		evmosvesting.AppModuleBasic{},
-		staketia.AppModuleBasic{},
-		stakedym.AppModuleBasic{},
-		wasm.AppModuleBasic{},
-		ibchooks.AppModuleBasic{},
-		ibcwasm.AppModuleBasic{},
-		airdrop.AppModuleBasic{},
-		icqoracle.AppModuleBasic{},
-		auction.AppModuleBasic{},
-		strdburner.AppModuleBasic{},
-	)
 
 	// module account permissions
 	// mint module needs burn access to remove excess validator tokens (it overallocates, then burns)
@@ -364,7 +315,7 @@ type StrideApp struct {
 	AuctionKeeper         auctionkeeper.Keeper
 	StrdBurnerKeeper      strdburnerkeeper.Keeper
 
-	mm                 *module.Manager
+	ModuleManager      *module.Manager
 	BasicModuleManager module.BasicManager
 	sm                 *module.SimulationManager
 	configurator       module.Configurator
@@ -1066,7 +1017,7 @@ func NewStrideApp(
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
-	app.mm = module.NewManager(
+	app.ModuleManager = module.NewManager(
 		genutil.NewAppModule(app.AccountKeeper, app.StakingKeeper, app, txConfig),
 		evmosvesting.NewAppModule(app.VestingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
@@ -1117,7 +1068,7 @@ func NewStrideApp(
 	// By default it is composed of all the module from the module manager.
 	// Additionally, app module basics can be overwritten by passing them as argument.
 	app.BasicModuleManager = module.NewBasicManagerFromManager(
-		app.mm,
+		app.ModuleManager,
 		map[string]module.AppModuleBasic{
 			genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 			govtypes.ModuleName: gov.NewAppModuleBasic(
@@ -1129,7 +1080,7 @@ func NewStrideApp(
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
 
-	app.mm.SetOrderPreBlockers(
+	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
 	)
 
@@ -1139,7 +1090,7 @@ func NewStrideApp(
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
-	app.mm.SetOrderBeginBlockers(
+	app.ModuleManager.SetOrderBeginBlockers(
 		capabilitytypes.ModuleName,
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
@@ -1182,7 +1133,7 @@ func NewStrideApp(
 		strdburnertypes.ModuleName,
 	)
 
-	app.mm.SetOrderEndBlockers(
+	app.ModuleManager.SetOrderEndBlockers(
 		crisistypes.ModuleName,
 		genutiltypes.ModuleName,
 		govtypes.ModuleName,
@@ -1231,7 +1182,7 @@ func NewStrideApp(
 	// NOTE: Capability module must occur first so that it can initialize any capabilities
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
-	app.mm.SetOrderInitGenesis(
+	app.ModuleManager.SetOrderInitGenesis(
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
@@ -1275,9 +1226,9 @@ func NewStrideApp(
 		strdburnertypes.ModuleName,
 	)
 
-	app.mm.RegisterInvariants(app.CrisisKeeper)
+	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	err = app.mm.RegisterServices(app.configurator)
+	err = app.ModuleManager.RegisterServices(app.configurator)
 	if err != nil {
 		return nil
 	}
@@ -1418,12 +1369,12 @@ func (app *StrideApp) GetTxConfig() client.TxConfig {
 
 // BeginBlocker application updates every begin block
 func (app *StrideApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
-	return app.mm.BeginBlock(ctx)
+	return app.ModuleManager.BeginBlock(ctx)
 }
 
 // EndBlocker application updates every end block
 func (app *StrideApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
-	return app.mm.EndBlock(ctx)
+	return app.ModuleManager.EndBlock(ctx)
 }
 
 // InitChainer application update at chain initialization
@@ -1432,11 +1383,11 @@ func (app *StrideApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		return nil, err
 	}
-	err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+	err := app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
 	if err != nil {
 		return nil, err
 	}
-	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
 // LoadHeight loads a particular height
@@ -1561,7 +1512,7 @@ func (app *StrideApp) RegisterNodeService(clientCtx client.Context, cfg config.C
 }
 
 func (app *StrideApp) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
-	return app.mm.PreBlock(ctx)
+	return app.ModuleManager.PreBlock(ctx)
 }
 
 // GetMaccPerms returns a copy of the module account permissions
