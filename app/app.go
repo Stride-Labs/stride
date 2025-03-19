@@ -29,6 +29,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -252,14 +253,13 @@ type StrideApp struct {
 	appCodec          codec.Codec
 	interfaceRegistry types.InterfaceRegistry
 
-	invCheckPeriod uint
-
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
 
-	// keepers
+	// Dependency keepers
+	// Note: IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	VestingKeeper         evmosvestingkeeper.Keeper
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
@@ -273,7 +273,7 @@ type StrideApp struct {
 	CrisisKeeper          *crisiskeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
-	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCKeeper             *ibckeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
 	TransferKeeper        ibctransferkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
@@ -291,7 +291,8 @@ type StrideApp struct {
 	Ics20WasmHooks   *ibchooks.WasmHooks
 	HooksICS4Wrapper ibchooks.ICS4Middleware
 
-	// make scoped keepers public for test purposes
+	// Scoped keepers (for ICA)
+	// TODO: See if we can get rid of these
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
@@ -299,8 +300,8 @@ type StrideApp struct {
 	ScopedCCVConsumerKeeper   capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
-	StakeibcKeeper stakeibcmodulekeeper.Keeper
-
+	// Stride keepers
+	StakeibcKeeper        stakeibcmodulekeeper.Keeper
 	EpochsKeeper          epochsmodulekeeper.Keeper
 	InterchainqueryKeeper interchainquerykeeper.Keeper
 	ScopedRecordsKeeper   capabilitykeeper.ScopedKeeper
@@ -317,10 +318,15 @@ type StrideApp struct {
 	AuctionKeeper         auctionkeeper.Keeper
 	StrdBurnerKeeper      strdburnerkeeper.Keeper
 
+	// Module managers
 	ModuleManager      *module.Manager
 	BasicModuleManager module.BasicManager
-	sm                 *module.SimulationManager
-	configurator       module.Configurator
+
+	// simulation manager
+	sm *module.SimulationManager
+
+	// module configurator
+	configurator module.Configurator
 }
 
 // RUN GOSEC
@@ -330,9 +336,6 @@ func NewStrideApp(
 	db dbm.DB,
 	traceStore io.Writer,
 	loadLatest bool,
-	skipUpgradeHeights map[int64]bool,
-	homePath string,
-	invCheckPeriod uint,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
@@ -424,7 +427,6 @@ func NewStrideApp(
 		legacyAmino:       legacyAmino,
 		appCodec:          appCodec,
 		interfaceRegistry: interfaceRegistry,
-		invCheckPeriod:    invCheckPeriod,
 		keys:              keys,
 		tkeys:             tkeys,
 		memKeys:           memKeys,
@@ -510,6 +512,8 @@ func NewStrideApp(
 		&app.ConsumerKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
 	app.CrisisKeeper = crisiskeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
@@ -535,7 +539,14 @@ func NewStrideApp(
 		runtime.NewKVStoreService(keys[feegrant.StoreKey]),
 		app.AccountKeeper,
 	)
-	app.UpgradeKeeper = upgradekeeper.NewKeeper(skipUpgradeHeights,
+
+	skipUpgradeHeights := map[int64]bool{}
+	for _, h := range cast.ToIntSlice(appOpts.Get(server.FlagUnsafeSkipUpgrades)) {
+		skipUpgradeHeights[int64(h)] = true
+	}
+	homePath := cast.ToString(appOpts.Get(flags.FlagHome))
+	app.UpgradeKeeper = upgradekeeper.NewKeeper(
+		skipUpgradeHeights,
 		runtime.NewKVStoreService(keys[upgradetypes.StoreKey]),
 		appCodec,
 		homePath,
@@ -1234,30 +1245,6 @@ func NewStrideApp(
 	}
 	app.setupUpgradeHandlers(appOpts)
 
-	// create the simulation manager and define the order of the modules for deterministic simulations
-	// app.sm = module.NewSimulationManager(
-	// 	auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-	// 	bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-	// 	capability.NewAppModule(appCodec, *app.CapabilityKeeper),
-	// 	feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-	// 	gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
-	// 	mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
-	// 	staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
-	// 	distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-	// 	slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-	// 	params.NewAppModule(app.ParamsKeeper),
-	// 	evidence.NewAppModule(app.EvidenceKeeper),
-	// 	ibc.NewAppModule(app.IBCKeeper),
-	// 	transferModule,
-	// 	// monitoringModule,
-	// 	stakeibcModule,
-	// 	epochsModule,
-	// 	interchainQueryModule,
-	// 	recordsModule,
-	// icacallbacksModule,
-	// )
-	// app.sm.RegisterStoreDecoders()
-
 	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
@@ -1602,7 +1589,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 // SimulationManager implements the SimulationApp interface
 func (app *StrideApp) SimulationManager() *module.SimulationManager {
-	return app.sm
+	return nil
 }
 
 // ConsumerApp interface implementations for e2e tests
