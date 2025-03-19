@@ -11,7 +11,7 @@ func isOperatorAddress(hostZone types.HostZone, address string) bool {
 	return address == hostZone.OperatorAddressOnStride
 }
 
-// CheckIsSafeAddress checks if the given address is the safe address
+// isSafeAddress checks if the given address is the safe address
 func isSafeAddress(hostZone types.HostZone, address string) bool {
 	return address == hostZone.SafeAddressOnStride
 }

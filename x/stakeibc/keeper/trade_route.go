@@ -36,7 +36,7 @@ func (k Keeper) RemoveTradeRoute(ctx sdk.Context, rewardDenom string, hostDenom 
 	store.Delete(key)
 }
 
-// GetAllTradeRoute returns all tradeRoutes
+// GetAllTradeRoutes returns all tradeRoutes
 func (k Keeper) GetAllTradeRoutes(ctx sdk.Context) (list []types.TradeRoute) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKeyPrefix))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
