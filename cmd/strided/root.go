@@ -474,7 +474,6 @@ func (a appCreator) newApp(logger log.Logger, db cosmosdb.DB, traceStore io.Writ
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		a.encCfg,
 		// this line is used by starport scaffolding # stargate/root/appArgument
 		appOpts,
 		wasmOpts,
@@ -514,7 +513,6 @@ func (a appCreator) appExport(
 			map[int64]bool{},
 			homePath,
 			uint(1),
-			a.encCfg,
 			appOpts,
 			[]wasmkeeper.Option{},
 		)
@@ -531,7 +529,6 @@ func (a appCreator) appExport(
 			map[int64]bool{},
 			homePath,
 			uint(1),
-			a.encCfg,
 			appOpts,
 			[]wasmkeeper.Option{},
 		)

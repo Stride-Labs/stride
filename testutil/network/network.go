@@ -86,7 +86,6 @@ func DefaultConfig() network.Config {
 				map[int64]bool{},
 				val.GetCtx().Config.RootDir,
 				0,
-				encoding,
 				simtestutil.EmptyAppOptions{},
 				[]wasmkeeper.Option{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),

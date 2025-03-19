@@ -61,7 +61,6 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 		map[int64]bool{},
 		tempDir,
 		5,
-		MakeEncodingConfig(),
 		simtestutil.EmptyAppOptions{},
 		[]wasmkeeper.Option{},
 	)
