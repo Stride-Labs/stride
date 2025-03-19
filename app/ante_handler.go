@@ -1,11 +1,10 @@
 package app
 
 import (
+	corestoretypes "cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -24,7 +23,7 @@ type HandlerOptions struct {
 	ConsumerKeeper    ccvconsumerkeeper.Keeper
 	WasmConfig        *wasmtypes.NodeConfig
 	WasmKeeper        *wasmkeeper.Keeper
-	TXCounterStoreKey storetypes.KVStoreKey
+	TXCounterStoreKey corestoretypes.KVStoreService
 }
 
 func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
@@ -49,7 +48,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 	anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
 		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit),
-		wasmkeeper.NewCountTXDecorator(runtime.NewKVStoreService(&options.TXCounterStoreKey)),
+		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreKey),
 		wasmkeeper.NewGasRegisterDecorator(options.WasmKeeper.GetGasRegister()),
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		// temporarily disabled so that chain can be tested locally without the provider chain running
