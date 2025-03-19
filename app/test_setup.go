@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"os"
 	"time"
 
 	"cosmossdk.io/log"
@@ -47,13 +48,18 @@ func SetupConfig() {
 // Initializes a new StrideApp without IBC functionality
 func InitStrideTestApp(initChain bool) *StrideApp {
 	db := cosmosdb.NewMemDB()
+	tempDir, err := os.MkdirTemp("", "stride-unit-test")
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
 	app := NewStrideApp(
 		log.NewNopLogger(),
 		db,
 		nil,
 		true,
 		map[int64]bool{},
-		DefaultNodeHome,
+		tempDir,
 		5,
 		MakeEncodingConfig(),
 		simtestutil.EmptyAppOptions{},
