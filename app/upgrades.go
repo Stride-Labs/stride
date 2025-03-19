@@ -11,6 +11,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
@@ -36,6 +37,7 @@ import (
 	v24 "github.com/Stride-Labs/stride/v26/app/upgrades/v24"
 	v25 "github.com/Stride-Labs/stride/v26/app/upgrades/v25"
 	v26 "github.com/Stride-Labs/stride/v26/app/upgrades/v26"
+	v27 "github.com/Stride-Labs/stride/v26/app/upgrades/v27"
 	v3 "github.com/Stride-Labs/stride/v26/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v26/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v26/app/upgrades/v5"
@@ -352,6 +354,16 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v27 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v27.UpgradeName,
+		v27.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.DistrKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -416,6 +428,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v26":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{icqoracletypes.ModuleName, strdburnertypes.ModuleName, auctiontypes.ModuleName},
+		}
+	case "v27":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{distributiontypes.ModuleName},
 		}
 	}
 
