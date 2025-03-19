@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
@@ -18,7 +17,7 @@ import (
 
 func TestUserRedemptionRecordQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
+
 	msgs := createNUserRedemptionRecord(keeper, ctx, 2)
 	for _, tc := range []struct {
 		desc     string
@@ -47,7 +46,7 @@ func TestUserRedemptionRecordQuerySingle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.UserRedemptionRecord(wctx, tc.request)
+			response, err := keeper.UserRedemptionRecord(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -63,7 +62,7 @@ func TestUserRedemptionRecordQuerySingle(t *testing.T) {
 
 func TestUserRedemptionRecordQueryPaginated(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
+
 	msgs := createNUserRedemptionRecord(keeper, ctx, 5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllUserRedemptionRecordRequest {
@@ -79,7 +78,7 @@ func TestUserRedemptionRecordQueryPaginated(t *testing.T) {
 	t.Run("ByOffset", func(t *testing.T) {
 		step := 2
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.UserRedemptionRecordAll(wctx, request(nil, uint64(i), uint64(step), false))
+			resp, err := keeper.UserRedemptionRecordAll(ctx, request(nil, uint64(i), uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.UserRedemptionRecord), step)
 			require.Subset(t,
@@ -92,7 +91,7 @@ func TestUserRedemptionRecordQueryPaginated(t *testing.T) {
 		step := 2
 		var next []byte
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.UserRedemptionRecordAll(wctx, request(next, 0, uint64(step), false))
+			resp, err := keeper.UserRedemptionRecordAll(ctx, request(next, 0, uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.UserRedemptionRecord), step)
 			require.Subset(t,
@@ -103,7 +102,7 @@ func TestUserRedemptionRecordQueryPaginated(t *testing.T) {
 		}
 	})
 	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.UserRedemptionRecordAll(wctx, request(nil, 0, 0, true))
+		resp, err := keeper.UserRedemptionRecordAll(ctx, request(nil, 0, 0, true))
 		require.NoError(t, err)
 		require.Equal(t, len(msgs), int(resp.Pagination.Total))
 		require.ElementsMatch(t,
@@ -112,7 +111,7 @@ func TestUserRedemptionRecordQueryPaginated(t *testing.T) {
 		)
 	})
 	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.UserRedemptionRecordAll(wctx, nil)
+		_, err := keeper.UserRedemptionRecordAll(ctx, nil)
 		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 }

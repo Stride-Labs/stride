@@ -33,7 +33,7 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 	}
 
 	for _, record := range allocations {
-		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(suite.ctx, &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
@@ -62,7 +62,7 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 	}
 
 	for _, record := range allocations2 {
-		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(suite.ctx, &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
@@ -102,7 +102,7 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 		},
 	}
 	for _, record := range allocations3 {
-		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(suite.ctx, &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
@@ -136,7 +136,7 @@ func (suite *KeeperTestSuite) TestCreateAirdrop_Successful() {
 
 	// Successfully create a new airdrop
 	validMsg := getValidCreateEvmosAirdropMsg(suite.ctx)
-	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &validMsg)
+	_, err := msgServer.CreateAirdrop(suite.ctx, &validMsg)
 	suite.Require().NoError(err, "no error expected when adding evmos airdrop")
 
 	// Check that it matches the evmos airdrop
@@ -155,7 +155,7 @@ func (suite *KeeperTestSuite) TestCreateAirdrop_IdentifierAlreadyExists() {
 	invalidMsg := validMsg
 	invalidMsg.Identifier = types.DefaultAirdropIdentifier
 
-	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &invalidMsg)
+	_, err := msgServer.CreateAirdrop(suite.ctx, &invalidMsg)
 	suite.Require().ErrorContains(err, "airdrop with same identifier already exists")
 }
 
@@ -168,6 +168,6 @@ func (suite *KeeperTestSuite) TestCreateAirdrop_ChainIdAlreadyExists() {
 	invalidMsg := validMsg
 	invalidMsg.ChainId = "stride-1"
 
-	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &invalidMsg)
+	_, err := msgServer.CreateAirdrop(suite.ctx, &invalidMsg)
 	suite.Require().ErrorContains(err, "airdrop with same chain-id already exists")
 }

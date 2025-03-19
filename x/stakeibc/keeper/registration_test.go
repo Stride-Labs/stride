@@ -118,7 +118,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
 	msg := tc.validMsg
 
 	// Register host zone
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().NoError(err, "able to successfully register host zone")
 
 	// Confirm host zone unbonding was added
@@ -174,7 +174,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryA
 	msg := tc.validMsg
 	msg.CommunityPoolTreasuryAddress = ValidHostAddress
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when registering host with valid treasury address")
 
 	// Confirm treasury address was set
@@ -190,7 +190,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetMaxIcaMessagesPerTx() 
 	msg := tc.validMsg
 	msg.MaxMessagesPerIcaTx = maxMessages
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when registering host with max messages")
 
 	// Confirm max number of messages was set
@@ -203,7 +203,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_Unregister() {
 	msg := tc.validMsg
 
 	// Register the host zone with the valid message
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when registering host")
 
 	// Confirm accounts were created
@@ -248,7 +248,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_Success_Unregister() {
 	s.Require().Empty(epochUnbondingRecords[0].HostZoneUnbondings, "host zone unbonding record should have been deleted")
 
 	// Attempt to re-register, it should succeed
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err = s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when re-registering host")
 }
 
@@ -257,7 +257,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
 	msg := tc.validMsg
 	msg.ConnectionId = "connection-10" // an invalid connection ID
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "connection-id connection-10 does not exist")
 }
 
@@ -267,7 +267,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState()
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().NoError(err, "able to successfully register host zone once")
 
 	// now all attributes are different, EXCEPT the connection ID
@@ -275,7 +275,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState()
 	msg.HostDenom = "atom-different"      // a different host denom
 	msg.IbcDenom = "ibc-atom-different"   // a different IBC denom
 
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err = s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "host zone already registered for chain-id GAIA")
 }
 
@@ -285,7 +285,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInStakeibcSt
 	tc := s.SetupRegisterHostZone()
 	msg := tc.validMsg
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().NoError(err, "able to successfully register host zone once")
 
 	// Create the message for a brand new host zone
@@ -300,7 +300,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInStakeibcSt
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, newHostZone)
 
 	// Registering should fail with a duplicate connection ID
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &newHostZoneMsg)
+	_, err = s.GetMsgServer().RegisterHostZone(s.Ctx, &newHostZoneMsg)
 	s.Require().ErrorContains(err, "connection-id connection-1 already registered")
 }
 
@@ -309,7 +309,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
 	tc := s.SetupRegisterHostZone()
 
 	// Register host zones successfully
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "able to successfully register host zone once")
 
 	// Create the message for a brand new host zone
@@ -320,7 +320,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
 	invalidMsg := newHostZoneMsg
 	invalidMsg.HostDenom = tc.validMsg.HostDenom
 
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RegisterHostZone(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "host denom uatom already registered")
 }
 
@@ -329,7 +329,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
 	tc := s.SetupRegisterHostZone()
 
 	// Register host zones successfully
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "able to successfully register host zone once")
 
 	// Create the message for a brand new host zone
@@ -340,7 +340,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
 	invalidMsg := newHostZoneMsg
 	invalidMsg.TransferChannelId = tc.validMsg.TransferChannelId
 
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RegisterHostZone(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel channel-0 already registered")
 }
 
@@ -349,7 +349,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
 	tc := s.SetupRegisterHostZone()
 
 	// Register host zones successfully
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "able to successfully register host zone once")
 
 	// Create the message for a brand new host zone
@@ -360,7 +360,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
 	invalidMsg := newHostZoneMsg
 	invalidMsg.Bech32Prefix = tc.validMsg.Bech32Prefix
 
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RegisterHostZone(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "bech32 prefix cosmos already registered")
 }
 
@@ -372,7 +372,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindDayEpochTracker() {
 	// delete the epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.DAY_EPOCH)
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	expectedErrMsg := "epoch tracker (day) not found: epoch not found"
 	s.Require().EqualError(err, expectedErrMsg, "day epoch tracker not found")
 }
@@ -385,7 +385,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindStrideEpochTracker() {
 	// delete the epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	expectedErrMsg := "epoch tracker (stride_epoch) not found: epoch not found"
 	s.Require().EqualError(err, expectedErrMsg, "stride epoch tracker not found")
 }
@@ -398,7 +398,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() 
 	// delete the epoch unbonding record
 	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "epoch unbonding record not found for epoch 3")
 }
 
@@ -409,7 +409,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount()
 	// Create channel on delegation port
 	s.createActiveChannelOnICAPort("DELEGATION", "channel-1")
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "failed to register delegation ICA")
 }
 
@@ -420,7 +420,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
 	// Create channel on fee port
 	s.createActiveChannelOnICAPort("FEE", "channel-1")
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "failed to register fee ICA")
 }
 
@@ -431,7 +431,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount()
 	// Create channel on withdrawal port
 	s.createActiveChannelOnICAPort("WITHDRAWAL", "channel-1")
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "failed to register withdrawal ICA")
 }
 
@@ -442,7 +442,7 @@ func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount()
 	// Create channel on redemption port
 	s.createActiveChannelOnICAPort("REDEMPTION", "channel-1")
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "failed to register redemption ICA")
 }
 
@@ -453,6 +453,6 @@ func (s *KeeperTestSuite) TestRegisterHostZone_InvalidCommunityPoolTreasuryAddre
 	invalidMsg := tc.validMsg
 	invalidMsg.CommunityPoolTreasuryAddress = "invalid_address"
 
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "invalid community pool treasury address")
 }

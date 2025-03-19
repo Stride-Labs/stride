@@ -117,10 +117,10 @@ func (s *KeeperTestSuite) TestRedeemStake_Successful() {
 	msg2 := msg
 	msg2.Amount = msg.Amount.Sub(msg1.Amount) // remaining half
 
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg1)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &msg1)
 	s.Require().NoError(err, "no error expected during first redemption")
 
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg2)
+	_, err = s.GetMsgServer().RedeemStake(s.Ctx, &msg2)
 	s.Require().NoError(err, "no error expected during second redemption")
 
 	// User STUATOM balance should have DECREASED by the amount to be redeemed
@@ -164,22 +164,22 @@ func (s *KeeperTestSuite) TestRedeemStake_InvalidCreatorAddress() {
 
 	// cosmos instead of stride address
 	invalidMsg.Creator = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: invalid Bech32 prefix; expected stride, got cosmos: invalid address", invalidMsg.Creator))
 
 	// invalid stride address
 	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid checksum (expected 8dpmg9 got yxp8uf): invalid address", invalidMsg.Creator))
 
 	// empty address
 	invalidMsg.Creator = ""
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: empty address string is not allowed: invalid address", invalidMsg.Creator))
 
 	// wrong len address
 	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufabc"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid character not part of charset: 98: invalid address", invalidMsg.Creator))
 }
 
@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) TestRedeemStake_HostZoneNotFound() {
 
 	invalidMsg := tc.validMsg
 	invalidMsg.HostZone = "fake_host_zone"
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 
 	s.Require().EqualError(err, "host zone fake_host_zone not found: host zone not found")
 }
@@ -200,7 +200,7 @@ func (s *KeeperTestSuite) TestRedeemStake_RateAboveMaxThreshold() {
 	hz.RedemptionRate = sdkmath.LegacyNewDec(100)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &tc.validMsg)
 	s.Require().Error(err)
 }
 
@@ -211,22 +211,22 @@ func (s *KeeperTestSuite) TestRedeemStake_InvalidReceiverAddress() {
 
 	// stride instead of cosmos address
 	invalidMsg.Receiver = "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, "invalid receiver address (invalid Bech32 prefix; expected cosmos, got stride): invalid address")
 
 	// invalid cosmos address
 	invalidMsg.Receiver = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ua"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, "invalid receiver address (decoding bech32 failed: invalid checksum (expected yxp8uf got yxp8ua)): invalid address")
 
 	// empty address
 	invalidMsg.Receiver = ""
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, "invalid receiver address (empty address string is not allowed): invalid address")
 
 	// wrong len address
 	invalidMsg.Receiver = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufa"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, "invalid receiver address (decoding bech32 failed: invalid checksum (expected xp8ugp got xp8ufa)): invalid address")
 }
 
@@ -235,7 +235,7 @@ func (s *KeeperTestSuite) TestRedeemStake_RedeemMoreThanStaked() {
 
 	invalidMsg := tc.validMsg
 	invalidMsg.Amount = sdkmath.NewInt(1_000_000_000_000_000)
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
 }
@@ -245,7 +245,7 @@ func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
 
 	invalidMsg := tc.validMsg
 	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 
 	s.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
 }
@@ -266,7 +266,7 @@ func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {
 	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
 
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &invalidMsg)
 
 	s.Require().EqualError(err, "host zone not found in unbondings: GAIA: host zone not registered")
 }
@@ -279,7 +279,7 @@ func (s *KeeperTestSuite) TestRedeemStake_InvalidHostAddress() {
 	badHostZone.DepositAddress = "cosmosXXX"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
 }
 
@@ -291,7 +291,7 @@ func (s *KeeperTestSuite) TestRedeemStake_HaltedZone() {
 	haltedHostZone.Halted = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
 
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "host zone GAIA is halted: Halted host zone found")
 }
 
@@ -303,6 +303,6 @@ func (s *KeeperTestSuite) TestRedeemStake_RedemptionsDisabled() {
 	haltedHostZone.RedemptionsEnabled = false
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
 
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RedeemStake(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "redemptions disabled")
 }

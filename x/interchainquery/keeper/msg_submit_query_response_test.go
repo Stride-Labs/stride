@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	_ "github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 	s.CreateTransferChannel(HostChainId)
 
 	// define the query
-	goCtx := sdk.WrapSDKContext(s.Ctx)
+	goCtx := s.Ctx
 	h, err := s.App.StakeibcKeeper.GetLightClientHeight(s.Ctx, s.TransferPath.EndpointA.ConnectionID)
 	s.Require().NoError(err)
 	height := int64(h - 1) // start at the (LC height) - 1  height, which is the height the query executes at!

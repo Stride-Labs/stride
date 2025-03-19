@@ -21,7 +21,7 @@ var LSMDepositTransferTimeout = time.Hour * 24 // 1 day
 // This is invoked epochly
 func (k Keeper) IBCTransferNativeTokens(ctx sdk.Context, msg *transfertypes.MsgTransfer, depositRecord types.DepositRecord) error {
 	// Submit IBC transfer
-	msgTransferResponse, err := k.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
+	msgTransferResponse, err := k.TransferKeeper.Transfer(ctx, msg)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (k Keeper) IBCTransferLSMToken(
 	}
 
 	// Send LSM Token to host zone via IBC transfer
-	msgTransferResponse, err := k.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), &transferMsg)
+	msgTransferResponse, err := k.TransferKeeper.Transfer(ctx, &transferMsg)
 	if err != nil {
 		return err
 	}

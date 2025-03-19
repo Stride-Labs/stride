@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
@@ -52,7 +51,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Successful() {
 	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + oracle)")
 
 	// Submit the restore message
-	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().RestoreOracleICA(s.Ctx, &tc.ValidMsg)
 	s.Require().NoError(err, "no error expected when restoring an oracle ICA")
 
 	// Confirm the new channel was created
@@ -76,7 +75,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_OracleDoesNotExist() {
 	// Submit the oracle with an invalid host zone, it should fail
 	invalidMsg := tc.ValidMsg
 	invalidMsg.OracleChainId = "fake_chain"
-	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RestoreOracleICA(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "oracle not found")
 }
 
@@ -89,7 +88,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_IcaNotRegistered() {
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracle)
 
 	// Submit the restore message - it should fail
-	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().RestoreOracleICA(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, fmt.Sprintf("the oracle (%s) has never had an registered ICA", HostChainId))
 }
 
@@ -102,7 +101,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_ConnectionDoesNotExist() {
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracle)
 
 	// Submit the rsetore message - it should fail
-	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().RestoreOracleICA(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, "connection (fake_connection) not found")
 }
 
@@ -120,7 +119,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_IcaDoesNotExist() {
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, oracle)
 
 	// Submit the restore message - it should fail
-	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().RestoreOracleICA(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, "cannot find ICA account for connection")
 }
 
@@ -131,7 +130,7 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_ChannelOpen() {
 	s.UpdateChannelState(tc.Oracle.PortId, tc.Oracle.ChannelId, channeltypes.OPEN)
 
 	// Since the channel already OPEN, the restore should fail
-	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().RestoreOracleICA(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, "channel already open")
 }
 
@@ -144,6 +143,6 @@ func (s *KeeperTestSuite) TestRestoreOracleICA_Failure_RegisterAccountFailure() 
 	// Disable middleware so the ICA registration fails
 	s.App.ICAControllerKeeper.SetMiddlewareDisabled(s.Ctx, tc.Oracle.PortId, tc.Oracle.ConnectionId)
 
-	_, err := s.GetMsgServer().RestoreOracleICA(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().RestoreOracleICA(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, "unable to register oracle interchain account")
 }

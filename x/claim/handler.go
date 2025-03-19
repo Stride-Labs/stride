@@ -20,13 +20,13 @@ func NewHandler(k keeper.Keeper) baseapp.MsgServiceHandler {
 
 		switch msg := msg.(type) {
 		case *types.MsgSetAirdropAllocations:
-			res, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.SetAirdropAllocations(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClaimFreeAmount:
-			res, err := msgServer.ClaimFreeAmount(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.ClaimFreeAmount(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDeleteAirdrop:
-			res, err := msgServer.DeleteAirdrop(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.DeleteAirdrop(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)

@@ -90,7 +90,7 @@ func (k Keeper) RunLiquidStake(
 
 	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
 	msgResponse, err := msgServer.LiquidStake(
-		sdk.WrapSDKContext(ctx),
+		ctx,
 		msg,
 	)
 	if err != nil {
@@ -139,7 +139,7 @@ func (k Keeper) IBCTransferStToken(
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
 
-	transferResponse, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	transferResponse, err := k.transferKeeper.Transfer(ctx, transferMsg)
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to submit transfer during autopilot liquid stake and forward")
 	}

@@ -72,7 +72,7 @@ func (k Keeper) RunRedeemStake(ctx sdk.Context, strideAddress string, redemption
 	}
 
 	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
-	if _, err = msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg); err != nil {
+	if _, err = msgServer.RedeemStake(ctx, msg); err != nil {
 		return errorsmod.Wrapf(err, "redeem stake failed")
 	}
 

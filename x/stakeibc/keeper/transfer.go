@@ -189,7 +189,7 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 		memo,
 	)
 
-	msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
+	msgTransferResponse, err := k.RecordsKeeper.TransferKeeper.Transfer(ctx, msg)
 	if err != nil {
 		return errorsmod.Wrapf(err, "Error submitting ibc transfer for %+v", coin)
 	}

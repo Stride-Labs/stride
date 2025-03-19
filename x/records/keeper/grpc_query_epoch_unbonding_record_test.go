@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
@@ -17,7 +16,7 @@ import (
 
 func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
+
 	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 2)
 	for _, tc := range []struct {
 		desc     string
@@ -46,7 +45,7 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.EpochUnbondingRecord(wctx, tc.request)
+			response, err := keeper.EpochUnbondingRecord(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -62,7 +61,7 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 
 func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 	keeper, ctx := keepertest.RecordsKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
+
 	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllEpochUnbondingRecordRequest {
@@ -78,7 +77,7 @@ func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 	t.Run("ByOffset", func(t *testing.T) {
 		step := 2
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.EpochUnbondingRecordAll(wctx, request(nil, uint64(i), uint64(step), false))
+			resp, err := keeper.EpochUnbondingRecordAll(ctx, request(nil, uint64(i), uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.EpochUnbondingRecord), step)
 			require.Subset(t,
@@ -91,7 +90,7 @@ func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 		step := 2
 		var next []byte
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.EpochUnbondingRecordAll(wctx, request(next, 0, uint64(step), false))
+			resp, err := keeper.EpochUnbondingRecordAll(ctx, request(next, 0, uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.EpochUnbondingRecord), step)
 			require.Subset(t,
@@ -102,7 +101,7 @@ func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 		}
 	})
 	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.EpochUnbondingRecordAll(wctx, request(nil, 0, 0, true))
+		resp, err := keeper.EpochUnbondingRecordAll(ctx, request(nil, 0, 0, true))
 		require.NoError(t, err)
 		require.Equal(t, len(msgs), int(resp.Pagination.Total))
 		require.ElementsMatch(t,
@@ -111,7 +110,7 @@ func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 		)
 	})
 	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.EpochUnbondingRecordAll(wctx, nil)
+		_, err := keeper.EpochUnbondingRecordAll(ctx, nil)
 		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 }

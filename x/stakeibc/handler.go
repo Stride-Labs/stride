@@ -25,64 +25,64 @@ func NewMessageHandler(k keeper.Keeper) baseapp.MsgServiceHandler {
 
 		switch msg := msg.(type) {
 		case *types.MsgLiquidStake:
-			res, err := msgServer.LiquidStake(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.LiquidStake(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgLSMLiquidStake:
-			res, err := msgServer.LSMLiquidStake(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.LSMLiquidStake(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClearBalance:
-			res, err := msgServer.ClearBalance(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.ClearBalance(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRegisterHostZone:
-			res, err := msgServer.RegisterHostZone(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RegisterHostZone(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRedeemStake:
-			res, err := msgServer.RedeemStake(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RedeemStake(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgClaimUndelegatedTokens:
-			res, err := msgServer.ClaimUndelegatedTokens(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.ClaimUndelegatedTokens(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRebalanceValidators:
-			res, err := msgServer.RebalanceValidators(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RebalanceValidators(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgAddValidators:
-			res, err := msgServer.AddValidators(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.AddValidators(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgChangeValidatorWeights:
-			res, err := msgServer.ChangeValidatorWeight(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.ChangeValidatorWeight(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDeleteValidator:
-			res, err := msgServer.DeleteValidator(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.DeleteValidator(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgRestoreInterchainAccount:
-			res, err := msgServer.RestoreInterchainAccount(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.RestoreInterchainAccount(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgUpdateValidatorSharesExchRate:
-			res, err := msgServer.UpdateValidatorSharesExchRate(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.UpdateValidatorSharesExchRate(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgCalibrateDelegation:
-			res, err := msgServer.CalibrateDelegation(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.CalibrateDelegation(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgUpdateInnerRedemptionRateBounds:
-			res, err := msgServer.UpdateInnerRedemptionRateBounds(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.UpdateInnerRedemptionRateBounds(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgResumeHostZone:
-			res, err := msgServer.ResumeHostZone(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.ResumeHostZone(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgCreateTradeRoute:
-			res, err := msgServer.CreateTradeRoute(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.CreateTradeRoute(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgDeleteTradeRoute:
-			res, err := msgServer.DeleteTradeRoute(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.DeleteTradeRoute(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgUpdateTradeRoute:
-			res, err := msgServer.UpdateTradeRoute(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.UpdateTradeRoute(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgSetCommunityPoolRebate:
-			res, err := msgServer.SetCommunityPoolRebate(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.SetCommunityPoolRebate(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		case *types.MsgToggleTradeController:
-			res, err := msgServer.ToggleTradeController(sdk.WrapSDKContext(ctx), msg)
+			res, err := msgServer.ToggleTradeController(ctx, msg)
 			return sdk.WrapServiceResult(ctx, res, err)
 		default:
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
