@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	storetypes "cosmossdk.io/store/types"
@@ -17,7 +18,9 @@ import (
 // ExportAppStateAndValidators exports the state of the application for a genesis
 // file.
 func (app *StrideApp) ExportAppStateAndValidators(
-	forZeroHeight bool, jailAllowedAddrs []string,
+	forZeroHeight bool,
+	jailAllowedAddrs []string,
+	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
 	// as if they could withdraw from the start of the next block
 	ctx := app.NewContextLegacy(true, tmproto.Header{Height: app.LastBlockHeight()})
@@ -30,7 +33,7 @@ func (app *StrideApp) ExportAppStateAndValidators(
 		app.prepForZeroHeightGenesis(ctx, jailAllowedAddrs)
 	}
 
-	genState, err := app.mm.ExportGenesis(ctx, app.appCodec)
+	genState, err := app.ModuleManager.ExportGenesisForModules(ctx, app.appCodec, modulesToExport)
 	if err != nil {
 		return servertypes.ExportedApp{}, err
 	}
@@ -53,8 +56,7 @@ func (app *StrideApp) ExportAppStateAndValidators(
 
 // prepare for fresh start at zero height
 // NOTE zero height genesis is a temporary feature which will be deprecated
-//
-//	in favour of export at a block height
+// in favour of export at a block height
 func (app *StrideApp) prepForZeroHeightGenesis(context context.Context, jailAllowedAddrs []string) {
 	ctx := sdk.UnwrapSDKContext(context)
 
@@ -107,10 +109,8 @@ func (app *StrideApp) prepForZeroHeightGenesis(context context.Context, jailAllo
 			panic(err)
 		}
 
-		delAddr, err := sdk.AccAddressFromBech32(delegation.DelegatorAddress)
-		if err != nil {
-			panic(err)
-		}
+		delAddr := sdk.MustAccAddressFromBech32(delegation.DelegatorAddress)
+
 		_, _ = app.DistrKeeper.WithdrawDelegationRewards(ctx, delAddr, valAddr)
 	}
 
@@ -143,12 +143,10 @@ func (app *StrideApp) prepForZeroHeightGenesis(context context.Context, jailAllo
 			panic(err)
 		}
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
-		err = app.DistrKeeper.FeePool.Set(ctx, feePool)
-		if err != nil {
+		if err = app.DistrKeeper.FeePool.Set(ctx, feePool); err != nil {
 			panic(err)
 		}
-		err = app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, valAddr)
-		if err != nil {
+		if err = app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, valAddr); err != nil {
 			panic(err)
 		}
 		return false
@@ -160,17 +158,15 @@ func (app *StrideApp) prepForZeroHeightGenesis(context context.Context, jailAllo
 		if err != nil {
 			panic(err)
 		}
-		delAddr, err := sdk.AccAddressFromBech32(del.DelegatorAddress)
-		if err != nil {
-			panic(err)
+		delAddr := sdk.MustAccAddressFromBech32(del.DelegatorAddress)
+		if err := app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, delAddr, valAddr); err != nil {
+			// never called as BeforeDelegationCreated always returns nil
+			panic(fmt.Errorf("error while incrementing period: %w", err))
 		}
-		err = app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, delAddr, valAddr)
-		if err != nil {
-			panic(err)
-		}
-		err = app.DistrKeeper.Hooks().AfterDelegationModified(ctx, delAddr, valAddr)
-		if err != nil {
-			panic(err)
+
+		if err := app.DistrKeeper.Hooks().AfterDelegationModified(ctx, delAddr, valAddr); err != nil {
+			// never called as AfterDelegationModified always returns nil
+			panic(fmt.Errorf("error while creating a new delegation period record: %w", err))
 		}
 	}
 

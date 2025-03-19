@@ -11,7 +11,7 @@ import (
 // This data structure (EncodingConfig) is heavily inspired by Quicksilver. https://github.com/ingenuity-build/quicksilver/blob/main/app/encoding.go
 type EncodingConfig struct {
 	InterfaceRegistry types.InterfaceRegistry
-	Marshaler         codec.Codec
+	Codec             codec.Codec
 	TxConfig          client.TxConfig
 	Amino             *codec.LegacyAmino
 }
@@ -20,12 +20,12 @@ type EncodingConfig struct {
 func MakeEncodingConfig() EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()
-	marshaler := codec.NewProtoCodec(interfaceRegistry)
-	txCfg := tx.NewTxConfig(marshaler, tx.DefaultSignModes)
+	codec := codec.NewProtoCodec(interfaceRegistry)
+	txCfg := tx.NewTxConfig(codec, tx.DefaultSignModes)
 
 	encodingConfig := EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
-		Marshaler:         marshaler,
+		Codec:             codec,
 		TxConfig:          txCfg,
 		Amino:             amino,
 	}

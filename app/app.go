@@ -251,6 +251,7 @@ type StrideApp struct {
 
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
+	txConfig          client.TxConfig
 	interfaceRegistry types.InterfaceRegistry
 
 	// keys to access the substores
@@ -1373,8 +1374,7 @@ func (app *StrideApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 
 // GetTxConfig implements the TestingApp interface.
 func (app *StrideApp) GetTxConfig() client.TxConfig {
-	cfg := MakeEncodingConfig()
-	return cfg.TxConfig
+	return app.txConfig
 }
 
 // PreBlocker application updates every pre block
