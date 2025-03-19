@@ -56,7 +56,7 @@ func (s *UpgradeTestSuite) SetupAirdropsBeforeUpgrade() {
 	})
 
 	// Store the airdrops using the old schema
-	codec := app.MakeEncodingConfig().Marshaler
+	codec := app.MakeEncodingConfig().Codec
 	claimStore := s.Ctx.KVStore(s.App.GetKey(claimtypes.StoreKey))
 
 	paramsBz, err := codec.MarshalJSON(&oldclaimtypes.Params{Airdrops: airdrops})

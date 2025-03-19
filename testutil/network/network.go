@@ -61,7 +61,7 @@ func DefaultConfig() network.Config {
 	encoding := app.MakeEncodingConfig()
 	chainId := "stride-" + cometbftrand.NewRand().Str(6)
 	return network.Config{
-		Codec:             encoding.Marshaler,
+		Codec:             encoding.Codec,
 		TxConfig:          encoding.TxConfig,
 		LegacyAmino:       encoding.Amino,
 		InterfaceRegistry: encoding.InterfaceRegistry,
@@ -83,9 +83,6 @@ func DefaultConfig() network.Config {
 				cosmosdb.NewMemDB(),
 				nil,
 				true,
-				map[int64]bool{},
-				val.GetCtx().Config.RootDir,
-				0,
 				simtestutil.EmptyAppOptions{},
 				[]wasmkeeper.Option{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
@@ -93,7 +90,7 @@ func DefaultConfig() network.Config {
 				baseapp.SetChainID(chainId),
 			)
 		},
-		GenesisState:    app.ModuleBasics.DefaultGenesis(encoding.Marshaler),
+		GenesisState:    app.ModuleBasics.DefaultGenesis(encoding.Codec),
 		TimeoutCommit:   2 * time.Second,
 		ChainID:         chainId,
 		NumValidators:   1,
