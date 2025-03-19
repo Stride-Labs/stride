@@ -1094,8 +1094,6 @@ func NewStrideApp(
 		upgradetypes.ModuleName,
 	)
 
-	app.SetPreBlocker(app.PreBlocker)
-
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
@@ -1275,6 +1273,7 @@ func NewStrideApp(
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
+	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
 
 	anteHandler, err := NewAnteHandler(
@@ -1299,6 +1298,8 @@ func NewStrideApp(
 
 	app.SetAnteHandler(anteHandler)
 	app.SetEndBlocker(app.EndBlocker)
+	app.SetPrecommiter(app.Precommitter)
+	app.SetPrepareCheckStater(app.PrepareCheckStater)
 
 	// Register snapshot extensions to enable state-sync for wasm.
 	if manager := app.SnapshotManager(); manager != nil {
@@ -1372,6 +1373,19 @@ func (app *StrideApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 // EndBlocker application updates every end block
 func (app *StrideApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 	return app.mm.EndBlock(ctx)
+}
+
+// Precommitter application updates before the commital of a block after all transactions have been delivered.
+func (app *StrideApp) Precommitter(ctx sdk.Context) {
+	if err := app.mm.Precommit(ctx); err != nil {
+		panic(err)
+	}
+}
+
+func (app *StrideApp) PrepareCheckStater(ctx sdk.Context) {
+	if err := app.mm.PrepareCheckState(ctx); err != nil {
+		panic(err)
+	}
 }
 
 // InitChainer application update at chain initialization

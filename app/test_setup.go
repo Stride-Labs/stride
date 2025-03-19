@@ -50,7 +50,6 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 	db := cosmosdb.NewMemDB()
 	tempDir, err := os.MkdirTemp("", "stride-unit-test")
 	if err != nil {
-		// Handle error
 		panic(err)
 	}
 	app := NewStrideApp(
