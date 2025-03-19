@@ -207,7 +207,7 @@ func (app *StrideApp) prepForZeroHeightGenesis(context context.Context, jailAllo
 		addr := sdk.ValAddress(iter.Key()[1:])
 		validator, err := app.StakingKeeper.GetValidator(ctx, addr)
 		if err != nil {
-			log.Fatalf("expected validator, not found: %w", err)
+			log.Fatalf("expected validator, not found: %s", err)
 		}
 
 		validator.UnbondingHeight = 0
