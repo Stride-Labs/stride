@@ -51,7 +51,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkStaketiaMigration := s.SetupStaketiaMigration()
 	checkProp256 := s.SetupProp256()
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
-	checkInnerRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
+	checkInnerRedemptionRatesAfterUpgrade := s.SetupTestUpdateInnerRedemptionRateBounds()
 	checkLSMRecord := s.SetupLSMRecord()
 
 	// Run upgrade
