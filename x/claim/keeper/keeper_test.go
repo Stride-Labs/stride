@@ -13,6 +13,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v26/app"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
 	"github.com/Stride-Labs/stride/v26/x/claim/types"
 	minttypes "github.com/Stride-Labs/stride/v26/x/mint/types"
 )
@@ -23,6 +24,7 @@ type KeeperTestSuite struct {
 	ctx sdk.Context
 	// querier sdk.Querier
 	app *app.StrideApp
+	apptesting.AppTestHelper
 }
 
 var distributors map[string]sdk.AccAddress

@@ -1,22 +1,19 @@
-package claim_test
+package keeper_test
 
 import (
-	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
-	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
 	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
-func TestGenesis(t *testing.T) {
+func (s *KeeperTestSuite) TestGenesis() {
 	pub1 := secp256k1.GenPrivKey().PubKey()
 	addr1 := sdk.AccAddress(pub1.Address())
 
@@ -54,22 +51,21 @@ func TestGenesis(t *testing.T) {
 		},
 	}
 
-	k, ctx := keepertest.ClaimKeeper(t)
-	k.InitGenesis(ctx, genesisState)
-	got := k.ExportGenesis(ctx)
-	require.NotNil(t, got)
+	s.App.ClaimKeeper.InitGenesis(s.Ctx, genesisState)
+	got := s.App.ClaimKeeper.ExportGenesis(s.Ctx)
+	s.Require().NotNil(got)
 
-	totalWeightStride, err := k.GetTotalWeight(ctx, types.DefaultAirdropIdentifier)
-	require.NoError(t, err)
-	require.Equal(t, totalWeightStride, genesisState.ClaimRecords[0].Weight)
+	totalWeightStride, err := s.App.ClaimKeeper.GetTotalWeight(s.Ctx, types.DefaultAirdropIdentifier)
+	s.Require().NoError(err)
+	s.Require().Equal(totalWeightStride, genesisState.ClaimRecords[0].Weight)
 
-	totalWeightJuno, err := k.GetTotalWeight(ctx, types.DefaultAirdropIdentifier)
-	require.NoError(t, err)
-	require.Equal(t, totalWeightJuno, genesisState.ClaimRecords[1].Weight)
+	totalWeightJuno, err := s.App.ClaimKeeper.GetTotalWeight(s.Ctx, types.DefaultAirdropIdentifier)
+	s.Require().NoError(err)
+	s.Require().Equal(totalWeightJuno, genesisState.ClaimRecords[1].Weight)
 
 	nullify.Fill(&genesisState)
 	nullify.Fill(got)
 
-	require.Equal(t, genesisState.Params, got.Params)
-	require.Equal(t, genesisState.ClaimRecords, got.ClaimRecords)
+	s.Require().Equal(genesisState.Params, got.Params)
+	s.Require().Equal(genesisState.ClaimRecords, got.ClaimRecords)
 }
