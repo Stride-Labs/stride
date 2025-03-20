@@ -8,7 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgUpdateValidatorSharesExchRate = "update_val_shares_exch_rate"
+const TypeMsgUpdateValidatorSharesExchRate = "update_validator_shares_exch_rate"
 
 var _ sdk.Msg = &MsgUpdateValidatorSharesExchRate{}
 

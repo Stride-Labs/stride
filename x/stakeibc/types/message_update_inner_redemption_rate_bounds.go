@@ -8,7 +8,7 @@ import (
 	"github.com/Stride-Labs/stride/v26/utils"
 )
 
-const TypeMsgUpdateInnerRedemptionRateBounds = "update_redemption_rate_bounds"
+const TypeMsgUpdateInnerRedemptionRateBounds = "update_inner_redemption_rate_bounds"
 
 var _ sdk.Msg = &MsgUpdateInnerRedemptionRateBounds{}
 
