@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
@@ -22,18 +21,16 @@ import (
 
 func TestParamsQuery(t *testing.T) {
 	keeper, ctx := testkeeper.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()
 	keeper.SetParams(ctx, params)
 
-	response, err := keeper.Params(wctx, &types.QueryParamsRequest{})
+	response, err := keeper.Params(ctx, &types.QueryParamsRequest{})
 	require.NoError(t, err)
 	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
 }
 
 func TestHostZoneQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNHostZone(keeper, ctx, 2)
 	for _, tc := range []struct {
 		desc     string
@@ -62,7 +59,7 @@ func TestHostZoneQuerySingle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.HostZone(wctx, tc.request)
+			response, err := keeper.HostZone(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -78,7 +75,6 @@ func TestHostZoneQuerySingle(t *testing.T) {
 
 func TestHostZoneQueryPaginated(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNHostZone(keeper, ctx, 5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllHostZoneRequest {
@@ -94,7 +90,7 @@ func TestHostZoneQueryPaginated(t *testing.T) {
 	t.Run("ByOffset", func(t *testing.T) {
 		step := 2
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.HostZoneAll(wctx, request(nil, uint64(i), uint64(step), false))
+			resp, err := keeper.HostZoneAll(ctx, request(nil, uint64(i), uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.HostZone), step)
 			require.Subset(t,
@@ -107,7 +103,7 @@ func TestHostZoneQueryPaginated(t *testing.T) {
 		step := 2
 		var next []byte
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.HostZoneAll(wctx, request(next, 0, uint64(step), false))
+			resp, err := keeper.HostZoneAll(ctx, request(next, 0, uint64(step), false))
 			require.NoError(t, err)
 			require.LessOrEqual(t, len(resp.HostZone), step)
 			require.Subset(t,
@@ -118,7 +114,7 @@ func TestHostZoneQueryPaginated(t *testing.T) {
 		}
 	})
 	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.HostZoneAll(wctx, request(nil, 0, 0, true))
+		resp, err := keeper.HostZoneAll(ctx, request(nil, 0, 0, true))
 		require.NoError(t, err)
 		require.Equal(t, len(msgs), int(resp.Pagination.Total))
 		require.ElementsMatch(t,
@@ -127,14 +123,13 @@ func TestHostZoneQueryPaginated(t *testing.T) {
 		)
 	})
 	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.HostZoneAll(wctx, nil)
+		_, err := keeper.HostZoneAll(ctx, nil)
 		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 }
 
 func TestValidatorQuery(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
 
 	validatorsByHostZone := make(map[string][]*types.Validator)
 	validators := []*types.Validator{}
@@ -166,7 +161,7 @@ func TestValidatorQuery(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Validators(wctx, tc.request)
+			response, err := keeper.Validators(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -182,7 +177,6 @@ func TestValidatorQuery(t *testing.T) {
 
 func TestAddressUnbondings(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
 
 	// Setup DayEpoch Tracker for current epoch 100
 	const nanosecondsInDay = 86400000000000
@@ -420,7 +414,7 @@ func TestAddressUnbondings(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.AddressUnbondings(wctx, tc.request)
+			response, err := keeper.AddressUnbondings(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -436,7 +430,6 @@ func TestAddressUnbondings(t *testing.T) {
 
 func TestEpochTrackerQuerySingle(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNEpochTracker(keeper, ctx, 2)
 	for _, tc := range []struct {
 		desc     string
@@ -471,7 +464,7 @@ func TestEpochTrackerQuerySingle(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.EpochTracker(wctx, tc.request)
+			response, err := keeper.EpochTracker(ctx, tc.request)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
 			} else {
@@ -487,10 +480,9 @@ func TestEpochTrackerQuerySingle(t *testing.T) {
 
 func TestAllEpochTrackerQuery(t *testing.T) {
 	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNEpochTracker(keeper, ctx, 5)
 
-	resp, err := keeper.EpochTrackerAll(wctx, &types.QueryAllEpochTrackerRequest{})
+	resp, err := keeper.EpochTrackerAll(ctx, &types.QueryAllEpochTrackerRequest{})
 	require.NoError(t, err)
 	require.Len(t, resp.EpochTracker, 5)
 	require.Subset(t,
@@ -503,7 +495,7 @@ func (s *KeeperTestSuite) TestNextPacketSequenceQuery() {
 	portId := "transfer"
 	channelId := "channel-0"
 	sequence := uint64(10)
-	context := sdk.WrapSDKContext(s.Ctx)
+	context := s.Ctx
 
 	// Set a channel sequence
 	s.App.IBCKeeper.ChannelKeeper.SetNextSequenceSend(s.Ctx, portId, channelId, sequence)

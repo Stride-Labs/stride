@@ -52,6 +52,9 @@ Where proposal.json contains:
 			if err != nil {
 				return err
 			}
+			if err := proposal.ValidateBasic(); err != nil {
+				return err
+			}
 
 			from := clientCtx.GetFromAddress()
 
@@ -120,6 +123,9 @@ Where proposal.json contains:
 
 			proposal, err := parseToggleLSMProposalFile(clientCtx.Codec, args[0])
 			if err != nil {
+				return err
+			}
+			if err := proposal.ValidateBasic(); err != nil {
 				return err
 			}
 

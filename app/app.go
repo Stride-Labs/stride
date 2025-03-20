@@ -1262,6 +1262,8 @@ func NewStrideApp(
 	app.SetEndBlocker(app.EndBlocker)
 	app.setAnteHandler(txConfig, wasmNodeConfig, keys[wasmtypes.StoreKey])
 	app.setPostHandler()
+	app.SetPrecommiter(app.Precommitter)
+	app.SetPrepareCheckStater(app.PrepareCheckStater)
 
 	// At startup, after all modules have been registered, check that all proto
 	// annotations are correct.
@@ -1415,6 +1417,19 @@ func (app *StrideApp) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 // EndBlocker application updates every end block
 func (app *StrideApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 	return app.ModuleManager.EndBlock(ctx)
+}
+
+// Precommitter application updates before the commital of a block after all transactions have been delivered.
+func (app *StrideApp) Precommitter(ctx sdk.Context) {
+	if err := app.ModuleManager.Precommit(ctx); err != nil {
+		panic(err)
+	}
+}
+
+func (app *StrideApp) PrepareCheckStater(ctx sdk.Context) {
+	if err := app.ModuleManager.PrepareCheckState(ctx); err != nil {
+		panic(err)
+	}
 }
 
 // InitChainer application update at chain initialization

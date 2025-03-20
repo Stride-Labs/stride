@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
@@ -50,7 +48,7 @@ func (s *KeeperTestSuite) TestInstantiateOracle_Successful() {
 	tc := s.SetupTestInstantiateOracle()
 
 	// Submit the instantiate message
-	_, err := s.GetMsgServer().InstantiateOracle(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().InstantiateOracle(s.Ctx, &tc.ValidMsg)
 	s.Require().NoError(err, "no error expected when instantiating an oracle")
 
 	// Confirm the callback data was stored
@@ -66,7 +64,7 @@ func (s *KeeperTestSuite) TestInstantiateOracle_Failure_OracleNotFound() {
 	s.App.ICAOracleKeeper.RemoveOracle(s.Ctx, HostChainId)
 
 	// Submit the instantiate message - it should fail
-	_, err := s.GetMsgServer().InstantiateOracle(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().InstantiateOracle(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, "oracle not found")
 }
 
@@ -79,7 +77,7 @@ func (s *KeeperTestSuite) TestInstantiateOracle_Failure_OracleAlreadyInstantiate
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, instantiatedOracle)
 
 	// Submit the instantiate message - it should fail
-	_, err := s.GetMsgServer().InstantiateOracle(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().InstantiateOracle(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, "oracle already instantiated")
 }
 
@@ -92,6 +90,6 @@ func (s *KeeperTestSuite) TestInstantiateOracle_Failure_InvalidICASetup() {
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, instantiatedOracle)
 
 	// Submit the instantiate message - it should fail
-	_, err := s.GetMsgServer().InstantiateOracle(sdk.WrapSDKContext(s.Ctx), &tc.ValidMsg)
+	_, err := s.GetMsgServer().InstantiateOracle(s.Ctx, &tc.ValidMsg)
 	s.Require().ErrorContains(err, "oracle ICA channel has not been registered")
 }

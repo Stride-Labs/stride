@@ -255,7 +255,7 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 		VestingAddress:    Account1,
 		EnableGovClawback: false,
 	}
-	_, err := evk.CreateClawbackVestingAccount(sdk.WrapSDKContext(ctx), createClawbackMsg)
+	_, err := evk.CreateClawbackVestingAccount(ctx, createClawbackMsg)
 	if err != nil {
 		return err
 	}

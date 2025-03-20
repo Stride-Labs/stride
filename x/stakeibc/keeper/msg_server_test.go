@@ -44,7 +44,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneParams() {
 		ChainId:             HostChainId,
 		MaxMessagesPerIcaTx: updatedMessages,
 	}
-	_, err := s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &validUpdateMsg)
+	_, err := s.GetMsgServer().UpdateHostZoneParams(s.Ctx, &validUpdateMsg)
 	s.Require().NoError(err, "no error expected when updating host zone params")
 
 	// Check that the max messages was updated
@@ -57,7 +57,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneParams() {
 		ChainId:             HostChainId,
 		MaxMessagesPerIcaTx: 0,
 	}
-	_, err = s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &validUpdateMsg)
+	_, err = s.GetMsgServer().UpdateHostZoneParams(s.Ctx, &validUpdateMsg)
 	s.Require().NoError(err, "no error expected when updating host zone params again")
 
 	// Check that the max messages was updated
@@ -70,7 +70,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneParams() {
 		ChainId:             "missing-host",
 		MaxMessagesPerIcaTx: updatedMessages,
 	}
-	_, err = s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &invalidUpdateMsg)
+	_, err = s.GetMsgServer().UpdateHostZoneParams(s.Ctx, &invalidUpdateMsg)
 	s.Require().ErrorContains(err, "host zone not found")
 
 	// Finally attempt again with an invalid authority, it should also fail
@@ -79,7 +79,7 @@ func (s *KeeperTestSuite) TestUpdateHostZoneParams() {
 		ChainId:             HostChainId,
 		MaxMessagesPerIcaTx: updatedMessages,
 	}
-	_, err = s.GetMsgServer().UpdateHostZoneParams(sdk.WrapSDKContext(s.Ctx), &invalidUpdateMsg)
+	_, err = s.GetMsgServer().UpdateHostZoneParams(s.Ctx, &invalidUpdateMsg)
 	s.Require().ErrorContains(err, "invalid authority")
 }
 
@@ -171,7 +171,7 @@ func (s *KeeperTestSuite) TestAddValidators_Successful() {
 	tc := s.SetupAddValidators()
 
 	// Add validators
-	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().AddValidators(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err)
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
@@ -209,7 +209,7 @@ func (s *KeeperTestSuite) TestAddValidators_HostZoneNotFound() {
 	// Replace hostzone in msg to a host zone that doesn't exist
 	badHostZoneMsg := tc.validMsg
 	badHostZoneMsg.HostZone = "gaia"
-	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
+	_, err := s.GetMsgServer().AddValidators(s.Ctx, &badHostZoneMsg)
 	s.Require().EqualError(err, "Host Zone (gaia) not found: host zone not found")
 }
 
@@ -225,7 +225,7 @@ func (s *KeeperTestSuite) TestAddValidators_AddressAlreadyExists() {
 
 	// Change the validator address to val1 so that the message errors
 	expectedError := fmt.Sprintf("Validator address (%s) already exists on Host Zone (GAIA)", duplicateAddress)
-	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().AddValidators(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, expectedError)
 }
 
@@ -241,7 +241,7 @@ func (s *KeeperTestSuite) TestAddValidators_NameAlreadyExists() {
 
 	// Change the validator name to val1 so that the message errors
 	expectedError := fmt.Sprintf("Validator name (%s) already exists on Host Zone (GAIA)", duplicateName)
-	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().AddValidators(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, expectedError)
 }
 
@@ -285,7 +285,7 @@ func (s *KeeperTestSuite) TestAddValidators_SuccessfulManyValidators() {
 		HostZone:   HostChainId,
 		Validators: validators,
 	}
-	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &addValidatorMsg)
+	_, err := s.GetMsgServer().AddValidators(s.Ctx, &addValidatorMsg)
 	s.Require().NoError(err, "no error expected when adding validators")
 }
 
@@ -326,7 +326,7 @@ func (s *KeeperTestSuite) TestAddValidators_ValidatorWeightCapExceeded() {
 		HostZone:   HostChainId,
 		Validators: validators,
 	}
-	_, err := s.GetMsgServer().AddValidators(sdk.WrapSDKContext(s.Ctx), &addValidatorMsg)
+	_, err := s.GetMsgServer().AddValidators(s.Ctx, &addValidatorMsg)
 	s.Require().ErrorContains(err, "validator exceeds weight cap")
 }
 
@@ -388,7 +388,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_Successful() {
 	tc := s.SetupDeleteValidator()
 
 	// Delete first validator
-	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
+	_, err := s.GetMsgServer().DeleteValidator(s.Ctx, &tc.validMsgs[0])
 	s.Require().NoError(err)
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
@@ -397,7 +397,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_Successful() {
 	s.Require().Equal(tc.initialValidators[1:], hostZone.Validators, "validators list after removing 1 validator")
 
 	// Delete second validator
-	_, err = s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[1])
+	_, err = s.GetMsgServer().DeleteValidator(s.Ctx, &tc.validMsgs[1])
 	s.Require().NoError(err)
 
 	hostZone, found = s.App.StakeibcKeeper.GetHostZone(s.Ctx, "GAIA")
@@ -411,7 +411,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_HostZoneNotFound() {
 	// Replace hostzone in msg to a host zone that doesn't exist
 	badHostZoneMsg := tc.validMsgs[0]
 	badHostZoneMsg.HostZone = "gaia"
-	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
+	_, err := s.GetMsgServer().DeleteValidator(s.Ctx, &badHostZoneMsg)
 	s.Require().ErrorContains(err, "host zone gaia not found")
 }
 
@@ -421,7 +421,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_AddressNotFound() {
 	// Build message with a validator address that does not exist
 	badAddressMsg := tc.validMsgs[0]
 	badAddressMsg.ValAddr = "stride_VAL5"
-	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &badAddressMsg)
+	_, err := s.GetMsgServer().DeleteValidator(s.Ctx, &badAddressMsg)
 
 	s.Require().ErrorContains(err, "failed to remove validator stride_VAL5 from host zone GAIA")
 }
@@ -434,7 +434,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 	hostZone.Validators[0].Delegation = sdkmath.NewInt(1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
+	_, err := s.GetMsgServer().DeleteValidator(s.Ctx, &tc.validMsgs[0])
 	s.Require().ErrorContains(err, "Validator (stride_VAL1) has non-zero delegation (1) or weight (0)")
 }
 
@@ -446,7 +446,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
 	hostZone.Validators[0].Weight = 1
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
+	_, err := s.GetMsgServer().DeleteValidator(s.Ctx, &tc.validMsgs[0])
 	s.Require().ErrorContains(err, "Validator (stride_VAL1) has non-zero delegation (0) or weight (1)")
 }
 
@@ -517,7 +517,7 @@ func (s *KeeperTestSuite) TestClearBalance_Successful() {
 	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, feePortId, feeChannelId)
 	s.Require().True(found, "sequence number not found before clear balance")
 
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClearBalance(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "balance clears")
 
 	// Confirm the sequence number was incremented
@@ -530,7 +530,7 @@ func (s *KeeperTestSuite) TestClearBalance_HostChainMissing() {
 	tc := s.SetupClearBalance()
 	// remove the host zone
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClearBalance(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "chainId: GAIA: host zone not registered")
 }
 
@@ -539,7 +539,7 @@ func (s *KeeperTestSuite) TestClearBalance_FeeAccountMissing() {
 	// no fee account
 	tc.initialState.hz.FeeIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClearBalance(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "fee acount not found for chainId: GAIA: ICA acccount not found on host zone")
 }
 
@@ -548,7 +548,7 @@ func (s *KeeperTestSuite) TestClearBalance_ParseCoinError() {
 	// invalid denom
 	tc.initialState.hz.HostDenom = ":"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.initialState.hz)
-	_, err := s.GetMsgServer().ClearBalance(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClearBalance(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "failed to parse coin (1000000:): invalid decimal coin expression: 1000000:")
 }
 
@@ -641,7 +641,7 @@ func (s *KeeperTestSuite) TestLiquidStake_Successful() {
 	msg := tc.validMsg
 	initialStAtomSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom)
 
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &msg)
 	s.Require().NoError(err)
 
 	// Confirm balances
@@ -690,7 +690,7 @@ func (s *KeeperTestSuite) TestLiquidStake_DifferentRedemptionRates() {
 
 		// Liquid stake for each balance and confirm stAtom minted
 		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount
-		_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+		_, err := s.GetMsgServer().LiquidStake(s.Ctx, &msg)
 		s.Require().NoError(err)
 		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, StAtom).Amount
 		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
@@ -706,7 +706,7 @@ func (s *KeeperTestSuite) TestLiquidStake_HostZoneNotFound() {
 	// Update message with invalid denom
 	invalidMsg := tc.validMsg
 	invalidMsg.HostDenom = "ufakedenom"
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &invalidMsg)
 
 	s.Require().EqualError(err, "no host zone found for denom (ufakedenom): invalid token denom")
 }
@@ -719,7 +719,7 @@ func (s *KeeperTestSuite) TestLiquidStake_HostZoneHalted() {
 	badHostZone.Halted = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "halted host zone found for denom (uatom): Halted host zone found")
 }
 
@@ -730,7 +730,7 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidUserAddress() {
 	invalidMsg := tc.validMsg
 	invalidMsg.Creator = "cosmosXXX"
 
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &invalidMsg)
 	s.Require().EqualError(err, "user's address is invalid: decoding bech32 failed: string not all lowercase or all uppercase")
 }
 
@@ -742,7 +742,7 @@ func (s *KeeperTestSuite) TestLiquidStake_InvalidHostAddress() {
 	badHostZone.DepositAddress = "cosmosXXX"
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "host zone address is invalid: decoding bech32 failed: string not all lowercase or all uppercase")
 }
 
@@ -755,7 +755,7 @@ func (s *KeeperTestSuite) TestLiquidStake_RateBelowMinThreshold() {
 	hz.RedemptionRate = sdkmath.LegacyMustNewDecFromStr("0.8")
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &msg)
 	s.Require().Error(err)
 }
 
@@ -768,7 +768,7 @@ func (s *KeeperTestSuite) TestLiquidStake_RateAboveMaxThreshold() {
 	hz.RedemptionRate = sdkmath.LegacyNewDec(2)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
 
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &msg)
 	s.Require().Error(err)
 }
 
@@ -776,7 +776,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoEpochTracker() {
 	tc := s.SetupLiquidStake()
 	// Remove epoch tracker
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("no epoch number for epoch (%s): not found", epochtypes.STRIDE_EPOCH))
 }
@@ -785,7 +785,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NoDepositRecord() {
 	tc := s.SetupLiquidStake()
 	// Remove deposit record
 	s.App.RecordsKeeper.RemoveDepositRecord(s.Ctx, 1)
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("no deposit record for epoch (%d): not found", 1))
 }
@@ -799,7 +799,7 @@ func (s *KeeperTestSuite) TestLiquidStake_NotIbcDenom() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
 	// Fund the user with the non-ibc denom
 	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(badDenom, 1000000000))
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("denom is not an IBC token (%s): invalid token denom", badHostZone.IbcDenom))
 }
@@ -815,7 +815,7 @@ func (s *KeeperTestSuite) TestLiquidStake_ZeroStTokens() {
 	tc.validMsg.Amount = sdkmath.NewInt(1)
 
 	// The liquid stake should fail
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &tc.validMsg)
 	s.Require().EqualError(err, "Liquid stake of 1uatom would return 0 stTokens: Liquid staked amount is too small")
 }
 
@@ -825,7 +825,7 @@ func (s *KeeperTestSuite) TestLiquidStake_InsufficientBalance() {
 	invalidMsg := tc.validMsg
 	balance := tc.user.atomBalance.Amount
 	invalidMsg.Amount = balance.Add(sdkmath.NewInt(1000))
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &invalidMsg)
 
 	expectedErr := fmt.Sprintf("balance is lower than staking amount. staking amount: %v, balance: %v: insufficient funds", balance.Add(sdkmath.NewInt(1000)), balance)
 	s.Require().EqualError(err, expectedErr)
@@ -837,7 +837,7 @@ func (s *KeeperTestSuite) TestLiquidStake_HaltedZone() {
 	haltedHostZone.Halted = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
 	s.FundAccount(tc.user.acc, sdk.NewInt64Coin(haltedHostZone.IbcDenom, 1000000000))
-	_, err := s.GetMsgServer().LiquidStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().LiquidStake(s.Ctx, &tc.validMsg)
 
 	s.Require().EqualError(err, fmt.Sprintf("halted host zone found for denom (%s): Halted host zone found", haltedHostZone.HostDenom))
 }
@@ -939,7 +939,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_NoSharesToTokensRateQuer
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Call LSM Liquid stake with a valid message
-	msgResponse, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	msgResponse, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, tc.validMsg)
 	s.Require().NoError(err, "no error expected when calling lsm liquid stake")
 	s.Require().True(msgResponse.TransactionComplete, "transaction should be complete")
 
@@ -985,7 +985,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_Successful_WithSharesToTokensRateQu
 	tc.validMsg.Amount = queryProgressSlack.Add(sdkmath.NewInt(1000))
 
 	// Call LSM Liquid stake
-	msgResponse, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	msgResponse, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, tc.validMsg)
 	s.Require().NoError(err, "no error expected when calling lsm liquid stake")
 	s.Require().False(msgResponse.TransactionComplete, "transaction should still be pending")
 
@@ -1056,7 +1056,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStake_DifferentRedemptionRates() {
 
 		// Liquid stake for each balance and confirm stAtom minted
 		startingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.liquidStakerAddress, StAtom).Amount
-		_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+		_, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, tc.validMsg)
 		s.Require().NoError(err)
 		endingStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.liquidStakerAddress, StAtom).Amount
 		actualStAtomMinted := endingStAtomBalance.Sub(startingStAtomBalance)
@@ -1081,7 +1081,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_NotIBCDenom() {
 	invalidMsg := tc.validMsg
 	invalidMsg.LsmTokenIbcDenom = "fake_ibc_denom"
 
-	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), invalidMsg)
+	_, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "lsm token is not an IBC token (fake_ibc_denom)")
 }
 
@@ -1097,7 +1097,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_HostZoneNotFound() {
 	invalidMsg := tc.validMsg
 	invalidMsg.LsmTokenIbcDenom = lsmTokenDenomTrace.IBCDenom()
 
-	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), invalidMsg)
+	_, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-1) does not match any registered host zone")
 }
 
@@ -1113,7 +1113,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ValidatorNotFound() {
 	invalidMsg := tc.validMsg
 	invalidMsg.LsmTokenIbcDenom = lsmTokenDenomTrace.IBCDenom()
 
-	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), invalidMsg)
+	_, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "validator (cosmosvaloperXXX) is not registered in the Stride validator set")
 }
 
@@ -1126,7 +1126,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_DepositAlreadyExists() {
 		Denom:   LSMTokenBaseDenom,
 	})
 
-	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	_, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, tc.validMsg)
 	s.Require().ErrorContains(err, "there is already a previous record with this denom being processed")
 }
 
@@ -1138,7 +1138,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_InvalidDepositAddress() {
 	invalidHostZone.DepositAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
-	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	_, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, tc.validMsg)
 	s.Require().ErrorContains(err, "host zone address is invalid")
 }
 
@@ -1150,7 +1150,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_InsufficientBalance() {
 	err := s.App.BankKeeper.SendCoins(s.Ctx, tc.liquidStakerAddress, s.TestAccs[1], initialBalanceCoin)
 	s.Require().NoError(err)
 
-	_, err = s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	_, err = s.GetMsgServer().LSMLiquidStake(s.Ctx, tc.validMsg)
 	s.Require().ErrorContains(err, "insufficient funds")
 }
 
@@ -1165,7 +1165,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ZeroStTokens() {
 	tc.validMsg.Amount = sdkmath.NewInt(1)
 
 	// The liquid stake should fail
-	_, err := s.GetMsgServer().LSMLiquidStake(sdk.WrapSDKContext(s.Ctx), tc.validMsg)
+	_, err := s.GetMsgServer().LSMLiquidStake(s.Ctx, tc.validMsg)
 	s.Require().EqualError(err, "Liquid stake of 1uatom would return 0 stTokens: Liquid staked amount is too small")
 }
 
@@ -1191,7 +1191,7 @@ func (s *KeeperTestSuite) TestDeleteTradeRoute() {
 	s.Require().True(found, "trade route should have been found before delete message")
 
 	// Delete the trade route
-	_, err := s.GetMsgServer().DeleteTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().DeleteTradeRoute(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when deleting trade route")
 
 	// Confirm it was deleted
@@ -1199,14 +1199,14 @@ func (s *KeeperTestSuite) TestDeleteTradeRoute() {
 	s.Require().False(found, "trade route should have been deleted")
 
 	// Attempt to delete it again, it should fail since it doesn't exist
-	_, err = s.GetMsgServer().DeleteTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err = s.GetMsgServer().DeleteTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "trade route not found")
 
 	// Attempt to delete with the wrong authority - it should fail
 	invalidMsg := msg
 	invalidMsg.Authority = "not-gov-address"
 
-	_, err = s.GetMsgServer().DeleteTradeRoute(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().DeleteTradeRoute(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "invalid authority")
 }
 
@@ -1313,7 +1313,7 @@ func (s *KeeperTestSuite) SetupTestCreateTradeRoute() (msg types.MsgCreateTradeR
 
 // Helper function to create a trade route and check the created route matched expectations
 func (s *KeeperTestSuite) submitCreateTradeRouteAndValidate(msg types.MsgCreateTradeRoute, expectedRoute types.TradeRoute) {
-	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when creating trade route")
 
 	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, msg.RewardDenomOnReward, msg.HostDenomOnHost)
@@ -1348,7 +1348,7 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_Authority() {
 
 	msg.Authority = "not-gov-address"
 
-	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "invalid authority")
 }
 
@@ -1362,7 +1362,7 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_DuplicateTradeRoute() {
 		HostDenomOnHostZone:     HostDenom,
 	})
 
-	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "Trade route already exists")
 }
 
@@ -1375,13 +1375,13 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_HostZoneNotRegistered() {
 	invalidHostZone.WithdrawalIcaAddress = ""
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, invalidHostZone)
 
-	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "withdrawal account not initialized on host zone")
 
 	// Remove the host zone completely and check that that also fails
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	_, err = s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err = s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "host zone not found")
 }
 
@@ -1393,14 +1393,14 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_ConnectionNotFound() {
 	msg.StrideToRewardConnectionId = "connection-X"
 
 	// Remove the host zone completely and check that that also fails
-	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "unable to register the unwind ICA account: connection connection-X not found")
 
 	// Setup again, but this time use a non-existent trade connection
 	msg, _ = s.SetupTestCreateTradeRoute()
 	msg.StrideToTradeConnectionId = "connection-Y"
 
-	_, err = s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err = s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "unable to register the trade ICA account: connection connection-Y not found")
 }
 
@@ -1414,7 +1414,7 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_UnableToRegisterICA() {
 	tradePortId, _ := icatypes.NewControllerPortID(tradeOwner)
 	s.App.ICAControllerKeeper.SetMiddlewareDisabled(s.Ctx, tradePortId, tradeAccount.ConnectionId)
 
-	_, err := s.GetMsgServer().CreateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().CreateTradeRoute(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "unable to register the trade ICA account")
 }
 
@@ -1424,7 +1424,7 @@ func (s *KeeperTestSuite) TestCreateTradeRoute_Failure_UnableToRegisterICA() {
 
 // Helper function to update a trade route and check the updated route matched expectations
 func (s *KeeperTestSuite) submitUpdateTradeRouteAndValidate(msg types.MsgUpdateTradeRoute, expectedRoute types.TradeRoute) {
-	_, err := s.GetMsgServer().UpdateTradeRoute(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().UpdateTradeRoute(s.Ctx, &msg)
 	s.Require().NoError(err, "no error expected when updating trade route")
 
 	actualRoute, found := s.App.StakeibcKeeper.GetTradeRoute(s.Ctx, RewardDenom, HostDenom)
@@ -1463,14 +1463,14 @@ func (s *KeeperTestSuite) TestUpdateTradeRoute() {
 	invalidMsg := msg
 	invalidMsg.Authority = "not-gov-address"
 
-	_, err := s.GetMsgServer().UpdateTradeRoute(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().UpdateTradeRoute(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "invalid authority")
 
 	// Test that an error is thrown if the route doesn't exist
 	invalidMsg = msg
 	invalidMsg.RewardDenom = "invalid-reward-denom"
 
-	_, err = s.GetMsgServer().UpdateTradeRoute(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err = s.GetMsgServer().UpdateTradeRoute(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "trade route not found")
 }
 
@@ -1676,7 +1676,7 @@ func (s *KeeperTestSuite) closeICAChannel(portId, channelID string) {
 // Helper function to call RestoreChannel and check that a new channel was created and opened
 func (s *KeeperTestSuite) restoreChannelAndVerifySuccess(msg types.MsgRestoreInterchainAccount, portID string, channelID string) {
 	// Restore the channel
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(s.Ctx, &msg)
 	s.Require().NoError(err, "registered ica account successfully")
 
 	// Confirm channel was created
@@ -1804,7 +1804,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
 	invalidMsg := tc.validMsg
 	invalidMsg.ConnectionId = "fake_connection"
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "connection fake_connection not found")
 }
 
@@ -1815,7 +1815,7 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_CannotRestoreNonExistentA
 	msg := tc.validMsg
 	msg.AccountOwner = types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_WITHDRAWAL)
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &msg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(s.Ctx, &msg)
 	s.Require().ErrorContains(err, "ICA controller account address not found: GAIA.WITHDRAWAL")
 }
 
@@ -1827,14 +1827,14 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_HostZoneNotFound() {
 	// (this check only runs for the delegation channel)
 	s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, HostChainId)
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "delegation ICA supplied, but no associated host zone")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_RevertDepositRecords_Failure() {
 	tc := s.SetupRestoreInterchainAccount(true)
 
-	_, err := s.GetMsgServer().RestoreInterchainAccount(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RestoreInterchainAccount(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION")
 
 	// Verify the record status' were NOT reverted
