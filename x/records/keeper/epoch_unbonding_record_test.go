@@ -1,16 +1,9 @@
 package keeper_test
 
 import (
-	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
 	sdkmath "cosmossdk.io/math"
 
-	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
 	"github.com/Stride-Labs/stride/v26/testutil/nullify"
-	"github.com/Stride-Labs/stride/v26/x/records/keeper"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
@@ -28,7 +21,7 @@ func newHostZoneUnbonding(chainId string, status types.HostZoneUnbonding_Status)
 	}
 }
 
-func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
+func (s *KeeperTestSuite) createNEpochUnbondingRecord(n int) ([]types.EpochUnbondingRecord, map[string]types.HostZoneUnbonding) {
 	hostZoneUnbondingsList := []types.HostZoneUnbonding{
 		newHostZoneUnbonding("host-A", types.HostZoneUnbonding_UNBONDING_QUEUE),
 		newHostZoneUnbonding("host-B", types.HostZoneUnbonding_UNBONDING_QUEUE),
@@ -50,70 +43,65 @@ func createNEpochUnbondingRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) 
 		}
 
 		epochUnbondingRecords[epochNumber] = epochUnbondingRecord
-		keeper.SetEpochUnbondingRecord(ctx, epochUnbondingRecord)
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
 	}
 	return epochUnbondingRecords, hostZoneUnbondingsMap
 }
 
-func TestEpochUnbondingRecordGet(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestEpochUnbondingRecordGet() {
+	items, _ := s.createNEpochUnbondingRecord(10)
 	for _, item := range items {
-		got, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
-		require.True(t, found)
-		require.Equal(t,
+		got, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, item.EpochNumber)
+		s.Require().True(found)
+		s.Require().Equal(
 			nullify.Fill(&item),
 			nullify.Fill(&got),
 		)
 	}
 }
 
-func TestEpochUnbondingRecordRemove(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestEpochUnbondingRecordRemove() {
+	items, _ := s.createNEpochUnbondingRecord(10)
 	for _, item := range items {
-		keeper.RemoveEpochUnbondingRecord(ctx, item.EpochNumber)
-		_, found := keeper.GetEpochUnbondingRecord(ctx, item.EpochNumber)
-		require.False(t, found)
+		s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, item.EpochNumber)
+		_, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, item.EpochNumber)
+		s.Require().False(found)
 	}
 }
 
-func TestEpochUnbondingRecordGetAll(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
-	require.ElementsMatch(t,
+func (s *KeeperTestSuite) TestEpochUnbondingRecordGetAll() {
+	items, _ := s.createNEpochUnbondingRecord(10)
+	s.Require().ElementsMatch(
 		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllEpochUnbondingRecord(ctx)),
+		nullify.Fill(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)),
 	)
 }
 
-func TestGetAllPreviousEpochUnbondingRecords(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items, _ := createNEpochUnbondingRecord(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestGetAllPreviousEpochUnbondingRecords() {
+	items, _ := s.createNEpochUnbondingRecord(10)
 	currentEpoch := uint64(8)
 	fetchedItems := items[:currentEpoch]
-	require.ElementsMatch(t,
+	s.Require().ElementsMatch(
 		nullify.Fill(fetchedItems),
-		nullify.Fill(keeper.GetAllPreviousEpochUnbondingRecords(ctx, currentEpoch)),
+		nullify.Fill(s.App.RecordsKeeper.GetAllPreviousEpochUnbondingRecords(s.Ctx, currentEpoch)),
 	)
 }
 
-func TestGetHostZoneUnbondingByChainId(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	_, hostZoneUnbondings := createNEpochUnbondingRecord(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestGetHostZoneUnbondingByChainId() {
+	_, hostZoneUnbondings := s.createNEpochUnbondingRecord(10)
 
 	expectedHostZoneUnbonding := hostZoneUnbondings["host-B"]
-	actualHostZoneUnbonding, found := keeper.GetHostZoneUnbondingByChainId(ctx, 1, "host-B")
+	actualHostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, 1, "host-B")
 
-	require.True(t, found)
-	require.Equal(t,
+	s.Require().True(found)
+	s.Require().Equal(
 		*actualHostZoneUnbonding,
 		expectedHostZoneUnbonding,
 	)
 }
 
 func (s *KeeperTestSuite) TestAddHostZoneToEpochUnbondingRecord() {
-	epochUnbondingRecords, _ := createNEpochUnbondingRecord(&s.App.RecordsKeeper, s.Ctx, 3)
+	epochUnbondingRecords, _ := s.createNEpochUnbondingRecord(3)
 
 	epochNumber := uint64(0)
 	initialEpochUnbondingRecord := epochUnbondingRecords[int(epochNumber)]
@@ -142,10 +130,8 @@ func (s *KeeperTestSuite) TestAddHostZoneToEpochUnbondingRecord() {
 	s.Require().Equal(expectedEpochUnbondingRecord, updatedEpochUnbonding, "EUR after host-D addition")
 }
 
-func TestSetHostZoneUnbondingStatus(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-
-	initialEpochUnbondingRecords, _ := createNEpochUnbondingRecord(keeper, ctx, 4)
+func (s *KeeperTestSuite) TestSetHostZoneUnbondingStatus() {
+	initialEpochUnbondingRecords, _ := s.createNEpochUnbondingRecord(4)
 
 	epochsToUpdate := []uint64{1, 3}
 	hostIdToUpdate := "host-B"
@@ -166,11 +152,11 @@ func TestSetHostZoneUnbondingStatus(t *testing.T) {
 		}
 	}
 
-	err := keeper.SetHostZoneUnbondingStatus(ctx, hostIdToUpdate, epochsToUpdate, newStatus)
-	require.Nil(t, err)
+	err := s.App.RecordsKeeper.SetHostZoneUnbondingStatus(s.Ctx, hostIdToUpdate, epochsToUpdate, newStatus)
+	s.Require().Nil(err)
 
-	actualEpochUnbondingRecord := keeper.GetAllEpochUnbondingRecord(ctx)
-	require.ElementsMatch(t,
+	actualEpochUnbondingRecord := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
+	s.Require().ElementsMatch(
 		expectedEpochUnbondingRecords,
 		actualEpochUnbondingRecord,
 	)

@@ -1,38 +1,30 @@
 package keeper_test
 
 import (
-	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
 	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v26/x/records/keeper"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
-func createNDepositRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.DepositRecord {
+func (s *KeeperTestSuite) createNDepositRecord(n int) []types.DepositRecord {
 	items := make([]types.DepositRecord, n)
 	for i := range items {
 		items[i].Id = uint64(i)
 		items[i].Amount = sdkmath.NewInt(int64(i))
-		keeper.AppendDepositRecord(ctx, items[i])
+		s.App.RecordsKeeper.AppendDepositRecord(s.Ctx, items[i])
 	}
 	return items
 }
 
-func TestDepositRecordQuerySingle(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-
-	msgs := createNDepositRecord(keeper, ctx, 2)
+func (s *KeeperTestSuite) TestDepositRecordQuerySingle() {
+	msgs := s.createNDepositRecord(2)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetDepositRecordRequest
@@ -59,13 +51,13 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 			err:  status.Error(codes.InvalidArgument, "invalid request"),
 		},
 	} {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.DepositRecord(ctx, tc.request)
+		s.Run(tc.desc, func() {
+			response, err := s.App.RecordsKeeper.DepositRecord(s.Ctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t,
+				s.Require().NoError(err)
+				s.Require().Equal(
 					nullify.Fill(tc.response),
 					nullify.Fill(response),
 				)
@@ -74,10 +66,8 @@ func TestDepositRecordQuerySingle(t *testing.T) {
 	}
 }
 
-func TestDepositRecordQueryPaginated(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-
-	msgs := createNDepositRecord(keeper, ctx, 5)
+func (s *KeeperTestSuite) TestDepositRecordQueryPaginated() {
+	msgs := s.createNDepositRecord(5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllDepositRecordRequest {
 		return &types.QueryAllDepositRecordRequest{
@@ -89,50 +79,48 @@ func TestDepositRecordQueryPaginated(t *testing.T) {
 			},
 		}
 	}
-	t.Run("ByOffset", func(t *testing.T) {
+	s.Run("ByOffset", func() {
 		step := 2
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.DepositRecordAll(ctx, request(nil, uint64(i), uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.DepositRecord), step)
-			require.Subset(t,
+			resp, err := s.App.RecordsKeeper.DepositRecordAll(s.Ctx, request(nil, uint64(i), uint64(step), false))
+			s.Require().NoError(err)
+			s.Require().LessOrEqual(len(resp.DepositRecord), step)
+			s.Require().Subset(
 				nullify.Fill(msgs),
 				nullify.Fill(resp.DepositRecord),
 			)
 		}
 	})
-	t.Run("ByKey", func(t *testing.T) {
+	s.Run("ByKey", func() {
 		step := 2
 		var next []byte
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.DepositRecordAll(ctx, request(next, 0, uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.DepositRecord), step)
-			require.Subset(t,
+			resp, err := s.App.RecordsKeeper.DepositRecordAll(s.Ctx, request(next, 0, uint64(step), false))
+			s.Require().NoError(err)
+			s.Require().LessOrEqual(len(resp.DepositRecord), step)
+			s.Require().Subset(
 				nullify.Fill(msgs),
 				nullify.Fill(resp.DepositRecord),
 			)
 			next = resp.Pagination.NextKey
 		}
 	})
-	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.DepositRecordAll(ctx, request(nil, 0, 0, true))
-		require.NoError(t, err)
-		require.Equal(t, len(msgs), int(resp.Pagination.Total))
-		require.ElementsMatch(t,
+	s.Run("Total", func() {
+		resp, err := s.App.RecordsKeeper.DepositRecordAll(s.Ctx, request(nil, 0, 0, true))
+		s.Require().NoError(err)
+		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
+		s.Require().ElementsMatch(
 			nullify.Fill(msgs),
 			nullify.Fill(resp.DepositRecord),
 		)
 	})
-	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.DepositRecordAll(ctx, nil)
-		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
+	s.Run("InvalidRequest", func() {
+		_, err := s.App.RecordsKeeper.DepositRecordAll(s.Ctx, nil)
+		s.Require().ErrorIs(err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 }
 
 func (s *KeeperTestSuite) TestQueryDepositRecordByHost() {
-	ctx := s.Ctx
-
 	// Store deposit records across two hosts
 	hostChain1 := "chain-1"
 	hostChain2 := "chain-2"
@@ -153,20 +141,20 @@ func (s *KeeperTestSuite) TestQueryDepositRecordByHost() {
 	}
 
 	// Fetch each list through a host zone id query
-	actualHostDepositRecords1, err := s.App.RecordsKeeper.DepositRecordByHost(ctx, &types.QueryDepositRecordByHostRequest{
+	actualHostDepositRecords1, err := s.App.RecordsKeeper.DepositRecordByHost(s.Ctx, &types.QueryDepositRecordByHostRequest{
 		HostZoneId: hostChain1,
 	})
 	s.Require().NoError(err, "no error expected when querying by host %s", hostChain1)
 	s.Require().ElementsMatch(hostDepositRecords1, actualHostDepositRecords1.DepositRecord, "deposit records for %s", hostChain1)
 
-	actualHostDepositRecords2, err := s.App.RecordsKeeper.DepositRecordByHost(ctx, &types.QueryDepositRecordByHostRequest{
+	actualHostDepositRecords2, err := s.App.RecordsKeeper.DepositRecordByHost(s.Ctx, &types.QueryDepositRecordByHostRequest{
 		HostZoneId: hostChain2,
 	})
 	s.Require().NoError(err, "no error expected when querying by host %s", hostChain2)
 	s.Require().ElementsMatch(hostDepositRecords2, actualHostDepositRecords2.DepositRecord, "deposit records for %s", hostChain2)
 
 	// Finally, fetch a non-existent chain-id and it should return an empty list
-	fakeHostDepositRecords, err := s.App.RecordsKeeper.DepositRecordByHost(ctx, &types.QueryDepositRecordByHostRequest{
+	fakeHostDepositRecords, err := s.App.RecordsKeeper.DepositRecordByHost(s.Ctx, &types.QueryDepositRecordByHostRequest{
 		HostZoneId: "fake_host",
 	})
 	s.Require().NoError(err, "no error expected when querying by host %s", hostChain1)

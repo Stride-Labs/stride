@@ -1,23 +1,17 @@
 package keeper_test
 
 import (
-	"testing"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
 	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
-func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-
-	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 2)
+func (s *KeeperTestSuite) TestEpochUnbondingRecordQuerySingle() {
+	msgs, _ := s.createNEpochUnbondingRecord(2)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetEpochUnbondingRecordRequest
@@ -44,13 +38,13 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 			err:  status.Error(codes.InvalidArgument, "invalid request"),
 		},
 	} {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.EpochUnbondingRecord(ctx, tc.request)
+		s.Run(tc.desc, func() {
+			response, err := s.App.RecordsKeeper.EpochUnbondingRecord(s.Ctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t,
+				s.Require().NoError(err)
+				s.Require().Equal(
 					nullify.Fill(tc.response),
 					nullify.Fill(response),
 				)
@@ -59,10 +53,8 @@ func TestEpochUnbondingRecordQuerySingle(t *testing.T) {
 	}
 }
 
-func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-
-	msgs, _ := createNEpochUnbondingRecord(keeper, ctx, 5)
+func (s *KeeperTestSuite) TestEpochUnbondingRecordQueryPaginated() {
+	msgs, _ := s.createNEpochUnbondingRecord(5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllEpochUnbondingRecordRequest {
 		return &types.QueryAllEpochUnbondingRecordRequest{
@@ -74,43 +66,43 @@ func TestEpochUnbondingRecordQueryPaginated(t *testing.T) {
 			},
 		}
 	}
-	t.Run("ByOffset", func(t *testing.T) {
+	s.Run("ByOffset", func() {
 		step := 2
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.EpochUnbondingRecordAll(ctx, request(nil, uint64(i), uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.EpochUnbondingRecord), step)
-			require.Subset(t,
+			resp, err := s.App.RecordsKeeper.EpochUnbondingRecordAll(s.Ctx, request(nil, uint64(i), uint64(step), false))
+			s.Require().NoError(err)
+			s.Require().LessOrEqual(len(resp.EpochUnbondingRecord), step)
+			s.Require().Subset(
 				nullify.Fill(msgs),
 				nullify.Fill(resp.EpochUnbondingRecord),
 			)
 		}
 	})
-	t.Run("ByKey", func(t *testing.T) {
+	s.Run("ByKey", func() {
 		step := 2
 		var next []byte
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.EpochUnbondingRecordAll(ctx, request(next, 0, uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.EpochUnbondingRecord), step)
-			require.Subset(t,
+			resp, err := s.App.RecordsKeeper.EpochUnbondingRecordAll(s.Ctx, request(next, 0, uint64(step), false))
+			s.Require().NoError(err)
+			s.Require().LessOrEqual(len(resp.EpochUnbondingRecord), step)
+			s.Require().Subset(
 				nullify.Fill(msgs),
 				nullify.Fill(resp.EpochUnbondingRecord),
 			)
 			next = resp.Pagination.NextKey
 		}
 	})
-	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.EpochUnbondingRecordAll(ctx, request(nil, 0, 0, true))
-		require.NoError(t, err)
-		require.Equal(t, len(msgs), int(resp.Pagination.Total))
-		require.ElementsMatch(t,
+	s.Run("Total", func() {
+		resp, err := s.App.RecordsKeeper.EpochUnbondingRecordAll(s.Ctx, request(nil, 0, 0, true))
+		s.Require().NoError(err)
+		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
+		s.Require().ElementsMatch(
 			nullify.Fill(msgs),
 			nullify.Fill(resp.EpochUnbondingRecord),
 		)
 	})
-	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.EpochUnbondingRecordAll(ctx, nil)
-		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
+	s.Run("InvalidRequest", func() {
+		_, err := s.App.RecordsKeeper.EpochUnbondingRecordAll(s.Ctx, nil)
+		s.Require().ErrorIs(err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 }

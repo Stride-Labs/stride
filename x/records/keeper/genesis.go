@@ -1,15 +1,14 @@
-package records
+package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/records/keeper"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	// Set all the userRedemptionRecord
 	for _, elem := range genState.UserRedemptionRecordList {
 		k.SetUserRedemptionRecord(ctx, elem)
@@ -38,7 +37,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 }
 
 // ExportGenesis returns the capability module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
 	genesis.DepositRecordList = k.GetAllDepositRecord(ctx)

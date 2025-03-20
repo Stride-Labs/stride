@@ -2,57 +2,48 @@ package keeper_test
 
 import (
 	"strconv"
-	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 
-	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
 	"github.com/Stride-Labs/stride/v26/testutil/nullify"
-	"github.com/Stride-Labs/stride/v26/x/records/keeper"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
 // TODO [cleanup]: Migrate to new KeeperTestSuite framework and remove use of nullify
-func createNUserRedemptionRecord(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.UserRedemptionRecord {
+func (s *KeeperTestSuite) createNUserRedemptionRecord(n int) []types.UserRedemptionRecord {
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
 		items[i].Id = strconv.Itoa(i)
 		items[i].NativeTokenAmount = sdkmath.NewInt(int64(i))
 		items[i].StTokenAmount = sdkmath.NewInt(int64(i))
-		keeper.SetUserRedemptionRecord(ctx, items[i])
+		s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, items[i])
 	}
 	return items
 }
 
-func TestUserRedemptionRecordGet(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items := createNUserRedemptionRecord(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestUserRedemptionRecordGet() {
+	items := s.createNUserRedemptionRecord(10)
 	for _, item := range items {
-		got, found := keeper.GetUserRedemptionRecord(ctx, item.Id)
-		require.True(t, found)
-		require.Equal(t,
+		got, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, item.Id)
+		s.Require().True(found)
+		s.Require().Equal(
 			nullify.Fill(&item),
 			nullify.Fill(&got),
 		)
 	}
 }
 
-func TestUserRedemptionRecordRemove(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items := createNUserRedemptionRecord(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestUserRedemptionRecordRemove() {
+	items := s.createNUserRedemptionRecord(10)
 	for _, item := range items {
-		keeper.RemoveUserRedemptionRecord(ctx, item.Id)
-		_, found := keeper.GetUserRedemptionRecord(ctx, item.Id)
-		require.False(t, found)
+		s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, item.Id)
+		_, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, item.Id)
+		s.Require().False(found)
 	}
 }
 
-func TestUserRedemptionRecordGetAll(t *testing.T) {
-	keeper, ctx := keepertest.RecordsKeeper(t)
-	items := createNUserRedemptionRecord(keeper, ctx, 10)
-	actual := keeper.GetAllUserRedemptionRecord(ctx)
-	require.Equal(t, len(items), len(actual))
+func (s *KeeperTestSuite) TestUserRedemptionRecordGetAll() {
+	items := s.createNUserRedemptionRecord(10)
+	actual := s.App.RecordsKeeper.GetAllUserRedemptionRecord(s.Ctx)
+	s.Require().Equal(len(items), len(actual))
 }
