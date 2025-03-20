@@ -51,7 +51,7 @@ IBCTransferTimeoutNanos (default uint64 = 1800000000000)
 - `RegisterHostZone()`
 - `ClearBalance()`
 - `RestoreInterchainAccount()`
-- `UpdateValSharesExchRate()`
+- `UpdateValidatorSharesExchRate()`
 
 ## State
 

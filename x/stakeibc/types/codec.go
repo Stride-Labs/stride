@@ -25,7 +25,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&ToggleLSMProposal{}, "stakeibc/ToggleLSMProposal", nil)
 	legacy.RegisterAminoMsg(cdc, &MsgRestoreInterchainAccount{}, "stakeibc/MsgRestoreInterchainAccount")
 	legacy.RegisterAminoMsg(cdc, &MsgCloseDelegationChannel{}, "stakeibc/MsgCloseDelegationChannel")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateValSharesExchRate{}, "stakeibc/MsgUpdateValSharesExchRate")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateValidatorSharesExchRate{}, "stakeibc/MsgUpdateValSharesExchRate")
 	legacy.RegisterAminoMsg(cdc, &MsgCalibrateDelegation{}, "stakeibc/MsgCalibrateDelegation")
 	legacy.RegisterAminoMsg(cdc, &MsgCreateTradeRoute{}, "stakeibc/MsgCreateTradeRoute")
 	legacy.RegisterAminoMsg(cdc, &MsgDeleteTradeRoute{}, "stakeibc/MsgDeleteTradeRoute")

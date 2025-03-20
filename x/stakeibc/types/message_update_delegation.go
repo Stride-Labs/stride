@@ -8,27 +8,27 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgUpdateValSharesExchRate = "update_val_shares_exch_rate"
+const TypeMsgUpdateValidatorSharesExchRate = "update_val_shares_exch_rate"
 
-var _ sdk.Msg = &MsgUpdateValSharesExchRate{}
+var _ sdk.Msg = &MsgUpdateValidatorSharesExchRate{}
 
-func NewMsgUpdateValSharesExchRate(creator string, chainid string, valoper string) *MsgUpdateValSharesExchRate {
-	return &MsgUpdateValSharesExchRate{
+func NewMsgUpdateValidatorSharesExchRate(creator string, chainid string, valoper string) *MsgUpdateValidatorSharesExchRate {
+	return &MsgUpdateValidatorSharesExchRate{
 		Creator: creator,
 		ChainId: chainid,
 		Valoper: valoper,
 	}
 }
 
-func (msg *MsgUpdateValSharesExchRate) Route() string {
+func (msg *MsgUpdateValidatorSharesExchRate) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgUpdateValSharesExchRate) Type() string {
-	return TypeMsgUpdateValSharesExchRate
+func (msg *MsgUpdateValidatorSharesExchRate) Type() string {
+	return TypeMsgUpdateValidatorSharesExchRate
 }
 
-func (msg *MsgUpdateValSharesExchRate) GetSigners() []sdk.AccAddress {
+func (msg *MsgUpdateValidatorSharesExchRate) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -36,12 +36,12 @@ func (msg *MsgUpdateValSharesExchRate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgUpdateValSharesExchRate) GetSignBytes() []byte {
+func (msg *MsgUpdateValidatorSharesExchRate) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgUpdateValSharesExchRate) ValidateBasic() error {
+func (msg *MsgUpdateValidatorSharesExchRate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

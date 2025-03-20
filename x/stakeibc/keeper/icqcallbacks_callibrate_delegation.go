@@ -13,7 +13,7 @@ import (
 // CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations
 var CalibrationThreshold = sdk.NewInt(5000)
 
-// DelegatorSharesCallback is a callback handler for UpdateValSharesExchRate queries.
+// DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
 //  1. the validator's internal shares to tokens rate

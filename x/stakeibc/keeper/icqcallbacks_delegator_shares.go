@@ -17,7 +17,7 @@ import (
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
-// DelegatorSharesCallback is a callback handler for UpdateValSharesExchRate queries.
+// DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
 // In an attempt to get the ICA's delegation amount on a given validator, we have to query:
 //  1. the validator's internal shares to tokens rate

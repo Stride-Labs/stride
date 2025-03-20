@@ -29,9 +29,9 @@ const (
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgRestoreInterchainAccount int = 100
 
-	opWeightMsgUpdateValSharesExchRate = "op_weight_msg_update_validator_shares_exch_rate" // #nosec
+	opWeightMsgUpdateValidatorSharesExchRate = "op_weight_msg_update_validator_shares_exch_rate" // #nosec
 	// TODO: Determine the simulation weight value
-	defaultWeightMsgUpdateValSharesExchRate int = 100
+	defaultWeightMsgUpdateValidatorSharesExchRate int = 100
 
 	// this line is used by starport scaffolding # simapp/module/const
 )
@@ -77,15 +77,15 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 		stakeibcsimulation.SimulateMsgRestoreInterchainAccount(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
-	var weightMsgUpdateValSharesExchRate int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgUpdateValSharesExchRate, &weightMsgUpdateValSharesExchRate, nil,
+	var weightMsgUpdateValidatorSharesExchRate int
+	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgUpdateValidatorSharesExchRate, &weightMsgUpdateValidatorSharesExchRate, nil,
 		func(_ *rand.Rand) {
-			weightMsgUpdateValSharesExchRate = defaultWeightMsgUpdateValSharesExchRate
+			weightMsgUpdateValidatorSharesExchRate = defaultWeightMsgUpdateValidatorSharesExchRate
 		},
 	)
 	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgUpdateValSharesExchRate,
-		stakeibcsimulation.SimulateMsgUpdateValSharesExchRate(am.accountKeeper, am.bankKeeper, am.keeper),
+		weightMsgUpdateValidatorSharesExchRate,
+		stakeibcsimulation.SimulateMsgUpdateValidatorSharesExchRate(am.accountKeeper, am.bankKeeper, am.keeper),
 	))
 
 	// this line is used by starport scaffolding # simapp/module/operation

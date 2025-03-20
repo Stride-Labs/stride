@@ -54,7 +54,7 @@ ValidatorSlashQueryThreshold (default uint64 = 1)
 - `RegisterHostZone()`
 - `ClearBalance()`
 - `RestoreInterchainAccount()`
-- `UpdateValSharesExchRate()`
+- `UpdateValidatorSharesExchRate()`
 
 ## State
 
