@@ -327,9 +327,6 @@ type StrideApp struct {
 	ModuleManager      *module.Manager
 	BasicModuleManager module.BasicManager
 
-	// simulation manager
-	sm *module.SimulationManager
-
 	// module configurator
 	configurator module.Configurator
 }
@@ -362,6 +359,9 @@ func NewStrideApp(
 	appCodec := codec.NewProtoCodec(interfaceRegistry)
 	legacyAmino := codec.NewLegacyAmino()
 	txConfig := authtx.NewTxConfig(appCodec, authtx.DefaultSignModes)
+
+	std.RegisterLegacyAminoCodec(legacyAmino)
+	std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -1090,8 +1090,6 @@ func NewStrideApp(
 			),
 		})
 
-	std.RegisterLegacyAminoCodec(legacyAmino)
-	std.RegisterInterfaces(interfaceRegistry)
 	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
 
