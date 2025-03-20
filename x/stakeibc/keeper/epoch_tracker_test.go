@@ -3,17 +3,11 @@ package keeper_test
 import (
 	"math"
 	"strconv"
-	"testing"
 
 	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
-	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
 	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
@@ -25,50 +19,47 @@ const (
 	ToNanoSeconds               = 1_000_000_000
 )
 
-func createNEpochTracker(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.EpochTracker {
+func (s *KeeperTestSuite) createNEpochTracker(n int) []types.EpochTracker {
 	items := make([]types.EpochTracker, n)
 	for i := range items {
 		items[i].EpochIdentifier = strconv.Itoa(i)
-		keeper.SetEpochTracker(ctx, items[i])
+		s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, items[i])
 	}
 	return items
 }
 
-func TestEpochTrackerGet(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNEpochTracker(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestEpochTrackerGet() {
+	items := s.createNEpochTracker(10)
 	for _, item := range items {
-		rst, found := keeper.GetEpochTracker(ctx,
+		rst, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx,
 			item.EpochIdentifier,
 		)
-		require.True(t, found)
-		require.Equal(t,
+		s.Require().True(found)
+		s.Require().Equal(
 			nullify.Fill(&item),
 			nullify.Fill(&rst),
 		)
 	}
 }
 
-func TestEpochTrackerRemove(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNEpochTracker(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestEpochTrackerRemove() {
+	items := s.createNEpochTracker(10)
 	for _, item := range items {
-		keeper.RemoveEpochTracker(ctx,
+		s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx,
 			item.EpochIdentifier,
 		)
-		_, found := keeper.GetEpochTracker(ctx,
+		_, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx,
 			item.EpochIdentifier,
 		)
-		require.False(t, found)
+		s.Require().False(found)
 	}
 }
 
-func TestEpochTrackerGetAll(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNEpochTracker(keeper, ctx, 10)
-	require.ElementsMatch(t,
+func (s *KeeperTestSuite) TestEpochTrackerGetAll() {
+	items := s.createNEpochTracker(10)
+	s.Require().ElementsMatch(
 		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllEpochTracker(ctx)),
+		nullify.Fill(s.App.StakeibcKeeper.GetAllEpochTracker(s.Ctx)),
 	)
 }
 
