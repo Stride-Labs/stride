@@ -42,7 +42,7 @@ func GetTxCmd() *cobra.Command {
 		CmdConfirmUndelegation(),
 		CmdConfirmUnbondedTokensSwept(),
 		CmdAdjustDelegatedBalance(),
-		CmdUpdateRedemptionRateBounds(),
+		CmdUpdateInnerRedemptionRateBounds(),
 		CmdResumeHostZone(),
 		CmdOverwriteRecord(),
 		CmdRefreshRedemptionRate(),
@@ -326,7 +326,7 @@ Example:
 }
 
 // Adjusts the inner redemption rate bounds on the host zone
-func CmdUpdateRedemptionRateBounds() *cobra.Command {
+func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-redemption-rate-bounds [min-bound] [max-bound]",
 		Short: "Sets the inner redemption rate bounds",
@@ -347,7 +347,7 @@ Example:
 				return err
 			}
 
-			msg := types.NewMsgUpdateRedemptionRateBounds(
+			msg := types.NewMsgUpdateInnerRedemptionRateBounds(
 				clientCtx.GetFromAddress().String(),
 				minInnerRedemptionRate,
 				maxInnerRedemptionRate,

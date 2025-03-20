@@ -8,12 +8,12 @@ import (
 	"github.com/Stride-Labs/stride/v26/utils"
 )
 
-const TypeMsgUpdateRedemptionRateBounds = "update_redemption_rate_bounds"
+const TypeMsgUpdateInnerRedemptionRateBounds = "update_redemption_rate_bounds"
 
-var _ sdk.Msg = &MsgUpdateRedemptionRateBounds{}
+var _ sdk.Msg = &MsgUpdateInnerRedemptionRateBounds{}
 
-func NewMsgUpdateRedemptionRateBounds(creator string, chainId string, minInnerRedemptionRate sdk.Dec, maxInnerRedemptionRate sdk.Dec) *MsgUpdateRedemptionRateBounds {
-	return &MsgUpdateRedemptionRateBounds{
+func NewMsgUpdateInnerRedemptionRateBoundsounds(creator string, chainId string, minInnerRedemptionRate sdk.Dec, maxInnerRedemptionRate sdk.Dec) *MsgUpdateInnerRedemptionRateBounds {
+	return &MsgUpdateInnerRedemptionRateBounds{
 		Creator:                creator,
 		ChainId:                chainId,
 		MinInnerRedemptionRate: minInnerRedemptionRate,
@@ -21,15 +21,15 @@ func NewMsgUpdateRedemptionRateBounds(creator string, chainId string, minInnerRe
 	}
 }
 
-func (msg *MsgUpdateRedemptionRateBounds) Route() string {
+func (msg *MsgUpdateInnerRedemptionRateBounds) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgUpdateRedemptionRateBounds) Type() string {
-	return TypeMsgUpdateRedemptionRateBounds
+func (msg *MsgUpdateInnerRedemptionRateBounds) Type() string {
+	return TypeMsgUpdateInnerRedemptionRateBounds
 }
 
-func (msg *MsgUpdateRedemptionRateBounds) GetSigners() []sdk.AccAddress {
+func (msg *MsgUpdateInnerRedemptionRateBounds) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -37,12 +37,12 @@ func (msg *MsgUpdateRedemptionRateBounds) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgUpdateRedemptionRateBounds) GetSignBytes() []byte {
+func (msg *MsgUpdateInnerRedemptionRateBounds) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgUpdateRedemptionRateBounds) ValidateBasic() error {
+func (msg *MsgUpdateInnerRedemptionRateBounds) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

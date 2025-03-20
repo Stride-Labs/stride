@@ -48,8 +48,8 @@ service Msg {
       returns (MsgAdjustDelegatedBalanceResponse);
 
   // Adjusts the inner redemption rate bounds on the host zone
-  rpc UpdateRedemptionRateBounds(MsgUpdateRedemptionRateBounds)
-      returns (MsgUpdateRedemptionRateBoundsResponse);
+  rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
+      returns (MsgUpdateInnerRedemptionRateBoundsResponse);
 
   // Unhalts the host zone if redemption rates were exceeded
   rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
@@ -159,7 +159,7 @@ message MsgAdjustDelegatedBalance {
 message MsgAdjustDelegatedBalanceResponse {}
 
 // UpdateInnerRedemptionRate
-message MsgUpdateRedemptionRateBounds {
+message MsgUpdateInnerRedemptionRateBounds {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakedym/MsgUpdateRedemptionRateBounds";
 
@@ -175,7 +175,7 @@ message MsgUpdateRedemptionRateBounds {
     (gogoproto.nullable) = false
   ];
 }
-message MsgUpdateRedemptionRateBoundsResponse {}
+message MsgUpdateInnerRedemptionRateBoundsResponse {}
 
 // ResumeHostZone
 message MsgResumeHostZone {

@@ -133,7 +133,7 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 }
 
 // Adjusts the inner redemption rate bounds on the host zone
-func (k msgServer) UpdateRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateRedemptionRateBounds) (*types.MsgUpdateRedemptionRateBoundsResponse, error) {
+func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// gate this transaction to the BOUNDS address
@@ -168,7 +168,7 @@ func (k msgServer) UpdateRedemptionRateBounds(goCtx context.Context, msg *types.
 	// Update the host zone
 	k.SetHostZone(ctx, zone)
 
-	return &types.MsgUpdateRedemptionRateBoundsResponse{}, nil
+	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
 }
 
 // Unhalts the host zone if redemption rates were exceeded

@@ -235,10 +235,10 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 }
 
 // ----------------------------------------------
-//      MsgUpdateRedemptionRateBounds
+//      MsgUpdateInnerRedemptionRateBounds
 // ----------------------------------------------
 
-func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds() {
+func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	adminAddress, ok := apptesting.GetAdminAddress()
 	s.Require().True(ok)
 
@@ -255,32 +255,32 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds() {
 	// we're halting the zone to test that the tx works even when the host zone is halted
 	s.App.StakedymKeeper.HaltZone(s.Ctx)
 
-	initialMsg := types.MsgUpdateRedemptionRateBounds{
+	initialMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(90).Quo(sdk.NewDec(100)),
 		MaxInnerRedemptionRate: sdk.NewDec(105).Quo(sdk.NewDec(100)),
 	}
 
-	updateMsg := types.MsgUpdateRedemptionRateBounds{
+	updateMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(95).Quo(sdk.NewDec(100)),
 		MaxInnerRedemptionRate: sdk.NewDec(11).Quo(sdk.NewDec(10)),
 	}
 
-	invalidMsg := types.MsgUpdateRedemptionRateBounds{
+	invalidMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
 		MinInnerRedemptionRate: sdk.NewDec(0),
 		MaxInnerRedemptionRate: sdk.NewDec(2),
 	}
 
-	nonAdminMsg := types.MsgUpdateRedemptionRateBounds{
+	nonAdminMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                "non-admin",
 		MinInnerRedemptionRate: sdk.NewDec(0),
 		MaxInnerRedemptionRate: sdk.NewDec(2),
 	}
 
 	// Set the inner bounds on the host zone for the first time
-	_, err := s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &initialMsg)
+	_, err := s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &initialMsg)
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the inner bounds were set
@@ -289,7 +289,7 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds() {
 	s.Require().Equal(initialMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
 
 	// Update the inner bounds on the host zone
-	_, err = s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &updateMsg)
+	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &updateMsg)
 	s.Require().NoError(err, "should not throw an error")
 
 	// Confirm the inner bounds were set
@@ -298,11 +298,11 @@ func (s *KeeperTestSuite) TestUpdateRedemptionRateBounds() {
 	s.Require().Equal(updateMsg.MaxInnerRedemptionRate, zone.MaxInnerRedemptionRate, "max inner redemption rate should be set")
 
 	// Set the inner bounds on the host zone for the first time
-	_, err = s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &invalidMsg)
+	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "invalid host zone redemption rate inner bounds")
 
 	// Attempt to update bounds with a non-admin address, it should fail
-	_, err = s.GetMsgServer().UpdateRedemptionRateBounds(s.Ctx, &nonAdminMsg)
+	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &nonAdminMsg)
 	s.Require().ErrorContains(err, "signer is not an admin")
 }
 

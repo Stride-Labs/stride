@@ -34,8 +34,8 @@ service Msg {
   rpc CalibrateDelegation(MsgCalibrateDelegation)
       returns (MsgCalibrateDelegationResponse);
   rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
-  rpc UpdateRedemptionRateBounds(MsgUpdateRedemptionRateBounds)
-      returns (MsgUpdateRedemptionRateBoundsResponse);
+  rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
+      returns (MsgUpdateInnerRedemptionRateBoundsResponse);
   rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
   rpc CreateTradeRoute(MsgCreateTradeRoute)
       returns (MsgCreateTradeRouteResponse);
@@ -51,7 +51,7 @@ service Msg {
       returns (MsgUpdateHostZoneParamsResponse);
 }
 
-message MsgUpdateRedemptionRateBounds {
+message MsgUpdateInnerRedemptionRateBounds {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakeibc/MsgUpdateRedemptionRateBounds";
 
@@ -69,7 +69,7 @@ message MsgUpdateRedemptionRateBounds {
   ];
 }
 
-message MsgUpdateRedemptionRateBoundsResponse {}
+message MsgUpdateInnerRedemptionRateBoundsResponse {}
 
 message MsgLiquidStake {
   option (cosmos.msg.v1.signer) = "creator";

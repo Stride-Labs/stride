@@ -422,10 +422,10 @@ func TestMsgAdjustDelegatedBalance_ValidateBasic(t *testing.T) {
 }
 
 // ----------------------------------------------
-//        MsgUpdateRedemptionRateBounds
+//        MsgUpdateInnerRedemptionRateBounds
 // ----------------------------------------------
 
-func TestMsgUpdateRedemptionRateBounds_ValidateBasic(t *testing.T) {
+func TestMsgUpdateInnerRedemptionRateBounds_ValidateBasic(t *testing.T) {
 	apptesting.SetupConfig()
 
 	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
@@ -438,12 +438,12 @@ func TestMsgUpdateRedemptionRateBounds_ValidateBasic(t *testing.T) {
 
 	tests := []struct {
 		name string
-		msg  types.MsgUpdateRedemptionRateBounds
+		msg  types.MsgUpdateInnerRedemptionRateBounds
 		err  string
 	}{
 		{
 			name: "successful message",
-			msg: types.MsgUpdateRedemptionRateBounds{
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
 				Creator:                validAdminAddress,
 				MaxInnerRedemptionRate: validUpperBound,
 				MinInnerRedemptionRate: validLowerBound,
@@ -451,7 +451,7 @@ func TestMsgUpdateRedemptionRateBounds_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid creator address",
-			msg: types.MsgUpdateRedemptionRateBounds{
+			msg: types.MsgUpdateInnerRedemptionRateBoundsoundsounds{
 				Creator:                invalidAddress,
 				MaxInnerRedemptionRate: validUpperBound,
 				MinInnerRedemptionRate: validLowerBound,
@@ -460,7 +460,7 @@ func TestMsgUpdateRedemptionRateBounds_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid admin address",
-			msg: types.MsgUpdateRedemptionRateBounds{
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
 				Creator:                validNotAdminAddress,
 				MaxInnerRedemptionRate: validUpperBound,
 				MinInnerRedemptionRate: validLowerBound,
@@ -469,7 +469,7 @@ func TestMsgUpdateRedemptionRateBounds_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid bounds",
-			msg: types.MsgUpdateRedemptionRateBounds{
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
 				Creator:                validAdminAddress,
 				MaxInnerRedemptionRate: validUpperBound,
 				MinInnerRedemptionRate: invalidLowerBound,
