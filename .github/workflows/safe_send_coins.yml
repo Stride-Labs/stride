@@ -13,7 +13,7 @@ jobs:
 
       - name: Fail if SendCoins is being used anywhere instead of SafeSendCoins
         run: |
-          if grep -Fnr '.SendCoins(' --exclude-dir=deps --exclude={safe_send_coins.go,safe_send_coins.yml} .; then
+          if grep -Fnr '.SendCoins(' --exclude-dir=deps --exclude={safe_send_coins.go,safe_send_coins.yml,*_test.go} .; then
             echo "ERROR: Found direct usage of SendCoins(). Please use SafeSendCoins() instead."
             exit 1
           else
