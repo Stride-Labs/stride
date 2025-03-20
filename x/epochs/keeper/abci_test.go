@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Stride-Labs/stride/v26/x/epochs"
 	"github.com/Stride-Labs/stride/v26/x/epochs/types"
 )
 
@@ -105,7 +104,7 @@ func (suite *KeeperTestSuite) TestEpochInfoChangesBeginBlockerAndInitGenesis() {
 
 			// check init genesis
 			ctx = ctx.WithBlockHeight(1).WithBlockTime(now)
-			epochs.InitGenesis(ctx, suite.App.EpochsKeeper, types.GenesisState{
+			suite.App.EpochsKeeper.InitGenesis(ctx, types.GenesisState{
 				Epochs: []types.EpochInfo{
 					{
 						Identifier:              "monthly",
@@ -147,7 +146,7 @@ func (suite *KeeperTestSuite) TestEpochStartingOneMonthAfterInitGenesis() {
 	initialBlockHeight := int64(1)
 	ctx = ctx.WithBlockHeight(initialBlockHeight).WithBlockTime(now)
 
-	epochs.InitGenesis(ctx, suite.App.EpochsKeeper, types.GenesisState{
+	suite.App.EpochsKeeper.InitGenesis(ctx, types.GenesisState{
 		Epochs: []types.EpochInfo{
 			{
 				Identifier:              "monthly",
