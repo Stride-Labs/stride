@@ -1,7 +1,9 @@
 syntax = "proto3";
 package stride.interchainquery.v1;
 
+import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "tendermint/crypto/proof.proto";
@@ -11,7 +13,7 @@ option go_package = "github.com/Stride-Labs/stride/v26/x/interchainquery/types";
 // Msg defines the interchainquery Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
-  
+
   // SubmitQueryResponse defines a method for submit query responses.
   rpc SubmitQueryResponse(MsgSubmitQueryResponse)
       returns (MsgSubmitQueryResponseResponse) {
@@ -24,6 +26,9 @@ service Msg {
 
 // MsgSubmitQueryResponse represents a message type to fulfil a query request.
 message MsgSubmitQueryResponse {
+  option (cosmos.msg.v1.signer) = "from_address";
+  option (amino.name) = "interchainquery/MsgSubmitQueryResponse";
+
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
   option (gogoproto.goproto_stringer) = true;
