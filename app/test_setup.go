@@ -91,7 +91,7 @@ func GenesisStateWithValSet(app *StrideApp) GenesisState {
 
 	//////////////////////
 	balances := []banktypes.Balance{balance}
-	genesisState := NewDefaultGenesisState()
+	genesisState := app.DefaultGenesis()
 	genAccs := []authtypes.GenesisAccount{acc}
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)
@@ -178,7 +178,7 @@ func InitStrideIBCTestingApp(initValPowers []types.ValidatorUpdate) func() (ibct
 	return func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		encoding := appconsumer.MakeTestEncodingConfig()
 		app := InitStrideTestApp(false)
-		genesisState := NewDefaultGenesisState()
+		genesisState := app.DefaultGenesis()
 
 		// Feed consumer genesis with provider validators
 		var consumerGenesis ccvtypes.ConsumerGenesisState
