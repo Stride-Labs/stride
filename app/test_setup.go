@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"os"
 	"time"
 
 	"cosmossdk.io/log"
@@ -47,14 +48,23 @@ func SetupConfig() {
 // Initializes a new StrideApp without IBC functionality
 func InitStrideTestApp(initChain bool) *StrideApp {
 	db := cosmosdb.NewMemDB()
+
+	// A custom home directory is needed for wasm tests since wasmvm locks the directory
+	tempHomeDir, err := os.MkdirTemp("", "stride-unit-test")
+	if err != nil {
+		panic(err)
+	}
+	appopts := simtestutil.NewAppOptionsWithFlagHome(tempHomeDir)
+
 	app := NewStrideApp(
 		log.NewNopLogger(),
 		db,
 		nil,
 		true,
-		simtestutil.EmptyAppOptions{},
+		appopts,
 		[]wasmkeeper.Option{},
 	)
+
 	if initChain {
 		genesisState := GenesisStateWithValSet(app)
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
