@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"testing"
@@ -7,18 +7,19 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v26/testutil/sample"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgLiquidStake
+		msg  types.MsgLiquidStake
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgLiquidStake{
+			msg: types.MsgLiquidStake{
 				Creator:   "invalid_address",
 				Amount:    sdkmath.NewInt(1),
 				HostDenom: "uatom",
@@ -27,7 +28,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid address: wrong chain's bech32prefix",
-			msg: MsgLiquidStake{
+			msg: types.MsgLiquidStake{
 				Creator:   "osmo1yjq0n2ewufluenyyvj2y9sead9jfstpxnqv2xz",
 				Amount:    sdkmath.NewInt(1),
 				HostDenom: "uatom",
@@ -36,29 +37,29 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "valid inputs",
-			msg: MsgLiquidStake{
-				Creator:   sample.AccAddress(),
+			msg: types.MsgLiquidStake{
+				Creator:   apptesting.SampleStrideAddress(),
 				Amount:    sdkmath.NewInt(1),
 				HostDenom: "uatom",
 			},
 		},
 		{
 			name: "zero amount",
-			msg: MsgLiquidStake{
-				Creator:   sample.AccAddress(),
+			msg: types.MsgLiquidStake{
+				Creator:   apptesting.SampleStrideAddress(),
 				Amount:    sdkmath.ZeroInt(),
 				HostDenom: "uatom",
 			},
-			err: ErrInvalidAmount,
+			err: types.ErrInvalidAmount,
 		},
 		{
 			name: "empty host denom",
-			msg: MsgLiquidStake{
-				Creator:   sample.AccAddress(),
+			msg: types.MsgLiquidStake{
+				Creator:   apptesting.SampleStrideAddress(),
 				Amount:    sdkmath.NewInt(1),
 				HostDenom: "",
 			},
-			err: ErrRequiredFieldEmpty,
+			err: types.ErrRequiredFieldEmpty,
 		},
 	}
 	for _, tt := range tests {
@@ -78,7 +79,7 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 
 func TestMsgLiquidStake_GetSignBytes(t *testing.T) {
 	addr := "cosmos1v9jxgu33kfsgr5"
-	msg := NewMsgLiquidStake(addr, sdkmath.NewInt(1000), "ustrd")
+	msg := types.NewMsgLiquidStake(addr, sdkmath.NewInt(1000), "ustrd")
 	res := msg.GetSignBytes()
 
 	expected := `{"type":"stakeibc/LiquidStake","value":{"amount":"1000","creator":"cosmos1v9jxgu33kfsgr5","host_denom":"ustrd"}}`

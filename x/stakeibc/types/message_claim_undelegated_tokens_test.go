@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"math"
@@ -7,29 +7,30 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v26/testutil/sample"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgClaimUndelegatedTokens
+		msg  types.MsgClaimUndelegatedTokens
 		err  error
 	}{
 		{
 			name: "success",
-			msg: MsgClaimUndelegatedTokens{
-				Creator:    sample.AccAddress(),
-				Receiver:   sample.HostAddress(),
+			msg: types.MsgClaimUndelegatedTokens{
+				Creator:    apptesting.SampleStrideAddress(),
+				Receiver:   apptesting.SampleHostAddress(),
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
 		},
 		{
 			name: "invalid address",
-			msg: MsgClaimUndelegatedTokens{
+			msg: types.MsgClaimUndelegatedTokens{
 				Creator:    "invalid_address",
-				Receiver:   sample.HostAddress(),
+				Receiver:   apptesting.SampleHostAddress(),
 				HostZoneId: "GAIA",
 				Epoch:      uint64(1),
 			},
@@ -37,22 +38,22 @@ func TestMsgClaimUndelegatedTokens_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "no host zone",
-			msg: MsgClaimUndelegatedTokens{
-				Creator:  sample.AccAddress(),
-				Receiver: sample.HostAddress(),
+			msg: types.MsgClaimUndelegatedTokens{
+				Creator:  apptesting.SampleStrideAddress(),
+				Receiver: apptesting.SampleHostAddress(),
 				Epoch:    uint64(1),
 			},
-			err: ErrRequiredFieldEmpty,
+			err: types.ErrRequiredFieldEmpty,
 		},
 		{
 			name: "epoch max int",
-			msg: MsgClaimUndelegatedTokens{
-				Creator:    sample.AccAddress(),
-				Receiver:   sample.HostAddress(),
+			msg: types.MsgClaimUndelegatedTokens{
+				Creator:    apptesting.SampleStrideAddress(),
+				Receiver:   apptesting.SampleHostAddress(),
 				HostZoneId: "GAIA",
 				Epoch:      math.MaxUint64,
 			},
-			err: ErrInvalidAmount,
+			err: types.ErrInvalidAmount,
 		},
 	}
 	for _, tt := range tests {

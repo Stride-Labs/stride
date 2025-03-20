@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
-	"github.com/Stride-Labs/stride/v26/testutil/sample"
 	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
 
@@ -17,6 +16,8 @@ import (
 // ----------------------------------------------
 
 func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
+	validAddress, _ := apptesting.GenerateTestAddrs()
+
 	tests := []struct {
 		name string
 		msg  types.MsgLiquidStake
@@ -41,14 +42,14 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 		{
 			name: "valid inputs",
 			msg: types.MsgLiquidStake{
-				Staker:       sample.AccAddress(),
+				Staker:       validAddress,
 				NativeAmount: sdkmath.NewInt(1200000),
 			},
 		},
 		{
 			name: "amount below threshold",
 			msg: types.MsgLiquidStake{
-				Staker:       sample.AccAddress(),
+				Staker:       validAddress,
 				NativeAmount: sdkmath.NewInt(20000),
 			},
 			err: types.ErrInvalidAmountBelowMinimum,
@@ -81,6 +82,8 @@ func TestMsgLiquidStake_GetSignBytes(t *testing.T) {
 // ----------------------------------------------
 
 func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
+	validAddress, _ := apptesting.GenerateTestAddrs()
+
 	tests := []struct {
 		name string
 		msg  types.MsgRedeemStake
@@ -89,7 +92,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 		{
 			name: "success",
 			msg: types.MsgRedeemStake{
-				Redeemer:      sample.AccAddress(),
+				Redeemer:      validAddress,
 				StTokenAmount: sdkmath.NewInt(1000000),
 			},
 		},
@@ -104,7 +107,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 		{
 			name: "amount below threshold",
 			msg: types.MsgRedeemStake{
-				Redeemer:      sample.AccAddress(),
+				Redeemer:      validAddress,
 				StTokenAmount: sdkmath.NewInt(20000),
 			},
 			err: types.ErrInvalidAmountBelowMinimum,
@@ -138,7 +141,7 @@ func TestMsgRedeemStake_GetSignBytes(t *testing.T) {
 func TestMsgConfirmDelegation_ValidateBasic(t *testing.T) {
 	validTxHash := "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9"
 	validRecordId := uint64(35)
-	validAddress := sample.AccAddress()
+	validAddress, _ := apptesting.GenerateTestAddrs()
 
 	tests := []struct {
 		name          string
@@ -210,7 +213,7 @@ func TestMsgConfirmDelegation_GetSignBytes(t *testing.T) {
 func TestMsgConfirmUndelegation_ValidateBasic(t *testing.T) {
 	validTxHash := "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9"
 	validRecordId := uint64(35)
-	validAddress := sample.AccAddress()
+	validAddress, _ := apptesting.GenerateTestAddrs()
 
 	tests := []struct {
 		name          string
@@ -280,6 +283,8 @@ func TestMsgConfirmUndelegation_GetSignBytes(t *testing.T) {
 // ----------------------------------------------
 
 func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
+	validAddress, _ := apptesting.GenerateTestAddrs()
+
 	tests := []struct {
 		name string
 		msg  types.MsgConfirmUnbondedTokenSweep
@@ -288,7 +293,7 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 		{
 			name: "success",
 			msg: types.MsgConfirmUnbondedTokenSweep{
-				Operator: sample.AccAddress(),
+				Operator: validAddress,
 				RecordId: 35,
 				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
 			},
@@ -296,7 +301,7 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 		{
 			name: "empty tx hash",
 			msg: types.MsgConfirmUnbondedTokenSweep{
-				Operator: sample.AccAddress(),
+				Operator: validAddress,
 				RecordId: 35,
 				TxHash:   "",
 			},
@@ -305,7 +310,7 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid tx hash",
 			msg: types.MsgConfirmUnbondedTokenSweep{
-				Operator: sample.AccAddress(),
+				Operator: validAddress,
 				RecordId: 35,
 				TxHash:   "invalid_tx-hash",
 			},
