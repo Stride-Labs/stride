@@ -17,7 +17,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v26/app"
+	strideapp "github.com/Stride-Labs/stride/v26/app"
 	cmdcfg "github.com/Stride-Labs/stride/v26/cmd/strided/config"
 	strideclitestutil "github.com/Stride-Labs/stride/v26/testutil/cli"
 	"github.com/Stride-Labs/stride/v26/testutil/network"
@@ -60,7 +60,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg = network.DefaultConfig()
 
-	genState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+	app := strideapp.InitStrideTestApp(false)
+	genState := app.DefaultGenesis()
+
 	claimGenState := claimtypes.DefaultGenesis()
 	claimGenState.ClaimRecords = []types.ClaimRecord{
 		{

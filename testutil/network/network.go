@@ -27,6 +27,7 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
 	"github.com/Stride-Labs/stride/v26/app"
+
 	testutil "github.com/Stride-Labs/stride/v26/testutil"
 )
 
@@ -57,8 +58,11 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
-	app.ModuleBasics[genutiltypes.ModuleName] = genutil.AppModuleBasic{}
+	genState := app.InitStrideTestApp(false).DefaultGenesis()
 	encoding := app.MakeEncodingConfig()
+
+	// app.ModuleBasics[genutiltypes.ModuleName] = genutil.AppModuleBasic{}
+
 	chainId := "stride-" + cometbftrand.NewRand().Str(6)
 	return network.Config{
 		Codec:             encoding.Codec,
@@ -90,7 +94,7 @@ func DefaultConfig() network.Config {
 				baseapp.SetChainID(chainId),
 			)
 		},
-		GenesisState:    app.ModuleBasics.DefaultGenesis(encoding.Codec),
+		GenesisState:    genState,
 		TimeoutCommit:   2 * time.Second,
 		ChainID:         chainId,
 		NumValidators:   1,
