@@ -12,7 +12,7 @@ const TypeMsgUpdateInnerRedemptionRateBounds = "update_redemption_rate_bounds"
 
 var _ sdk.Msg = &MsgUpdateInnerRedemptionRateBounds{}
 
-func NewMsgUpdateInnerRedemptionRateBoundsounds(creator string, chainId string, minInnerRedemptionRate sdk.Dec, maxInnerRedemptionRate sdk.Dec) *MsgUpdateInnerRedemptionRateBounds {
+func NewMsgUpdateInnerRedemptionRateBounds(creator string, chainId string, minInnerRedemptionRate sdk.Dec, maxInnerRedemptionRate sdk.Dec) *MsgUpdateInnerRedemptionRateBounds {
 	return &MsgUpdateInnerRedemptionRateBounds{
 		Creator:                creator,
 		ChainId:                chainId,

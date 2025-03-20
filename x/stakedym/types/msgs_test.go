@@ -451,7 +451,7 @@ func TestMsgUpdateInnerRedemptionRateBounds_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid creator address",
-			msg: types.MsgUpdateInnerRedemptionRateBoundsoundsounds{
+			msg: types.MsgUpdateInnerRedemptionRateBounds{
 				Creator:                invalidAddress,
 				MaxInnerRedemptionRate: validUpperBound,
 				MinInnerRedemptionRate: validLowerBound,

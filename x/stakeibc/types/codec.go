@@ -50,7 +50,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgDeleteValidator{},
 		&MsgRestoreInterchainAccount{},
 		&MsgCloseDelegationChannel{},
-		&MsgUpdateValSharesExchRate{},
+		&MsgUpdateValidatorSharesExchRate{},
 		&MsgCalibrateDelegation{},
 		&MsgUpdateInnerRedemptionRateBounds{},
 		&MsgResumeHostZone{},
