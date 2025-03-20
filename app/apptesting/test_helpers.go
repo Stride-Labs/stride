@@ -620,6 +620,16 @@ func AddressAndDenomFromBalancesStore(key []byte) (sdk.AccAddress, string, error
 	return key[1 : addrBound+1], string(key[addrBound+1:]), nil
 }
 
+// Returns a valid stride address
+func SampleStrideAddress() string {
+	return "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+}
+
+// Returns a valid host address
+func SampleHostAddress() string {
+	return "cosmos1rq3pjmk9hr4xq99e8jx683rukjmxhcp4vtjhmy"
+}
+
 // Generates a valid and invalid test address (used for non-keeper tests)
 func GenerateTestAddrs() (string, string) {
 	pk1 := secp256k1.GenPrivKey().PubKey()

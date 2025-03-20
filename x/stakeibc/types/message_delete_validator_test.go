@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"testing"
@@ -6,25 +6,26 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v26/testutil/sample"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 func TestMsgDeleteValidator_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgDeleteValidator
+		msg  types.MsgDeleteValidator
 		err  error
 	}{
 		{
 			name: "invalid address",
-			msg: MsgDeleteValidator{
+			msg: types.MsgDeleteValidator{
 				Creator: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address but not whitelisted",
-			msg: MsgDeleteValidator{
-				Creator: sample.AccAddress(),
+			msg: types.MsgDeleteValidator{
+				Creator: apptesting.SampleStrideAddress(),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		},
