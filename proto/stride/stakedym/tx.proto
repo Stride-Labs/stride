@@ -2,11 +2,11 @@
 syntax = "proto3";
 package stride.stakedym;
 
-import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
-import "gogoproto/gogo.proto";
-import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
 import "stride/stakedym/stakedym.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/stakedym/types";
@@ -82,7 +82,7 @@ message MsgLiquidStake {
   option (cosmos.msg.v1.signer) = "staker";
   option (amino.name) = "stakedym/MsgLiquidStake";
 
-  string staker = 1;
+  string staker = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string native_amount = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
@@ -100,7 +100,7 @@ message MsgRedeemStake {
   option (cosmos.msg.v1.signer) = "redeemer";
   option (amino.name) = "stakedym/MsgRedeemStake";
 
-  string redeemer = 1;
+  string redeemer = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string st_token_amount = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
@@ -118,7 +118,7 @@ message MsgConfirmDelegation {
   option (cosmos.msg.v1.signer) = "operator";
   option (amino.name) = "stakedym/MsgConfirmDelegation";
 
-  string operator = 1;
+  string operator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   uint64 record_id = 2;
   string tx_hash = 3;
 }
@@ -129,7 +129,7 @@ message MsgConfirmUndelegation {
   option (cosmos.msg.v1.signer) = "operator";
   option (amino.name) = "stakedym/MsgConfirmUndelegation";
 
-  string operator = 1;
+  string operator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   uint64 record_id = 2;
   string tx_hash = 3;
 }
@@ -140,7 +140,7 @@ message MsgConfirmUnbondedTokenSweep {
   option (cosmos.msg.v1.signer) = "operator";
   option (amino.name) = "stakedym/MsgConfirmUnbondedTokenSweep";
 
-  string operator = 1;
+  string operator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   uint64 record_id = 2;
   string tx_hash = 3;
 }
@@ -151,7 +151,7 @@ message MsgAdjustDelegatedBalance {
   option (cosmos.msg.v1.signer) = "operator";
   option (amino.name) = "stakedym/MsgAdjustDelegatedBalance";
 
-  string operator = 1;
+  string operator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string delegation_offset = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
@@ -165,7 +165,7 @@ message MsgUpdateInnerRedemptionRateBounds {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakedym/MsgUpdateRedemptionRateBounds";
 
-  string creator = 1;
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string min_inner_redemption_rate = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
@@ -184,7 +184,7 @@ message MsgResumeHostZone {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakedym/MsgResumeHostZone";
 
-  string creator = 1;
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 message MsgResumeHostZoneResponse {}
 
@@ -193,7 +193,7 @@ message MsgRefreshRedemptionRate {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakedym/MsgRefreshRedemptionRate";
 
-  string creator = 1;
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 message MsgRefreshRedemptionRateResponse {}
 
@@ -202,7 +202,7 @@ message MsgOverwriteDelegationRecord {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakedym/MsgOverwriteDelegationRecord";
 
-  string creator = 1;
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   DelegationRecord delegation_record = 2;
 }
 message MsgOverwriteDelegationRecordResponse {}
@@ -212,7 +212,7 @@ message MsgOverwriteUnbondingRecord {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakedym/MsgOverwriteUnbondingRecord";
 
-  string creator = 1;
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   UnbondingRecord unbonding_record = 2;
 }
 message MsgOverwriteUnbondingRecordResponse {}
@@ -222,7 +222,7 @@ message MsgOverwriteRedemptionRecord {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakedym/MsgOverwriteRedemptionRecord";
 
-  string creator = 1;
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   RedemptionRecord redemption_record = 2;
 }
 message MsgOverwriteRedemptionRecordResponse {}
@@ -232,7 +232,7 @@ message MsgSetOperatorAddress {
   option (cosmos.msg.v1.signer) = "signer";
   option (amino.name) = "stakedym/MsgSetOperatorAddress";
 
-  string signer = 1;
+  string signer = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string operator = 2;
 }
 message MsgSetOperatorAddressResponse {}

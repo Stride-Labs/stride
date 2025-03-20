@@ -2,10 +2,10 @@
 syntax = "proto3";
 package stride.stakedym;
 
-import "stride/stakedym/stakedym.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
+import "stride/stakedym/stakedym.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/stakedym/types";
 

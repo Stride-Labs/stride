@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	recordskeeper "github.com/Stride-Labs/stride/v26/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
@@ -116,7 +117,7 @@ func ExecuteProp256(ctx sdk.Context, k bankkeeper.Keeper) error {
 	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
 	bnocsCuostidanAddress := sdk.MustAccAddressFromBech32(BnocsCustodian)
 	transferCoin := sdk.NewCoin(Ustrd, BnocsProposalAmount)
-	return k.SendCoins(ctx, communityPoolGrowthAddress, bnocsCuostidanAddress, sdk.NewCoins(transferCoin))
+	return utils.SafeSendCoins(false, k, ctx, communityPoolGrowthAddress, bnocsCuostidanAddress, sdk.NewCoins(transferCoin))
 }
 
 // Updates the outer redemption rate bounds

@@ -9,6 +9,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	"github.com/Stride-Labs/stride/v26/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 )
@@ -40,7 +41,7 @@ func (k Keeper) SendToFallbackAddress(ctx sdk.Context, packetData []byte, fallba
 	token := sdk.NewCoin(transferMetadata.Denom, amount)
 
 	// Finally send to the fallback account
-	if err := k.bankKeeper.SendCoins(ctx, senderAccount, fallbackAccount, sdk.NewCoins(token)); err != nil {
+	if err := utils.SafeSendCoins(true, k.bankKeeper, ctx, senderAccount, fallbackAccount, sdk.NewCoins(token)); err != nil {
 		return err
 	}
 

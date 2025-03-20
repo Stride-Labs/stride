@@ -29,6 +29,7 @@ import (
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v26/x/icacallbacks/keeper"
@@ -306,7 +307,7 @@ func ExecuteProp205(ctx sdk.Context, k bankkeeper.Keeper) error {
 	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
 	badKidsCustodianAddress := sdk.MustAccAddressFromBech32(BadKidsCustodian)
 	transferCoin := sdk.NewCoin(Ustrd, BadKidsTransferAmount)
-	return k.SendCoins(ctx, communityPoolGrowthAddress, badKidsCustodianAddress, sdk.NewCoins(transferCoin))
+	return utils.SafeSendCoins(false, k, ctx, communityPoolGrowthAddress, badKidsCustodianAddress, sdk.NewCoins(transferCoin))
 }
 
 // Enable the following rate limits:

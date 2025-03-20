@@ -15,6 +15,7 @@ type AccountKeeper interface {
 
 // Required BankKeeper functions
 type BankKeeper interface {
+	BlockedAddr(addr sdk.AccAddress) bool
 	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	SendCoins(ctx context.Context, from, to sdk.AccAddress, amt sdk.Coins) error
 	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error

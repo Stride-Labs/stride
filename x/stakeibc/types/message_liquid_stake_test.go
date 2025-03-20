@@ -82,6 +82,6 @@ func TestMsgLiquidStake_GetSignBytes(t *testing.T) {
 	msg := types.NewMsgLiquidStake(addr, sdkmath.NewInt(1000), "ustrd")
 	res := msg.GetSignBytes()
 
-	expected := `{"type":"stakeibc/LiquidStake","value":{"amount":"1000","creator":"cosmos1v9jxgu33kfsgr5","host_denom":"ustrd"}}`
+	expected := `{"type":"stakeibc/MsgLiquidStake","value":{"amount":"1000","creator":"cosmos1v9jxgu33kfsgr5","host_denom":"ustrd"}}`
 	require.Equal(t, expected, string(res))
 }

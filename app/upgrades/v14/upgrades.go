@@ -488,7 +488,7 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 
 	// CHANGE: because we're doing a migration, we don't need to send coins from the funder to the vesting account
 	// Send coins from the funder to vesting account
-	// if err = bk.SendCoins(ctx, funderAddr, vestingAddr, vestingCoins); err != nil {
+	// if err = utils.SafeSendCoins(false, bk, ctx, funderAddr, vestingAddr, vestingCoins); err != nil {
 	// 	return nil, err
 	// }
 

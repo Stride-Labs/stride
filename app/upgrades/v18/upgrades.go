@@ -13,6 +13,7 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	recordskeeper "github.com/Stride-Labs/stride/v26/x/records/keeper"
 	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
@@ -220,5 +221,5 @@ func ExecuteProp228IfPassed(ctx sdk.Context, bk bankkeeper.Keeper, gk govkeeper.
 		return errorsmod.Wrap(err, "invalid prop recipient address")
 	}
 
-	return bk.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(sdk.NewCoin(Strd, Prop228SendAmount)))
+	return utils.SafeSendCoins(false, bk, ctx, fromAddress, toAddress, sdk.NewCoins(sdk.NewCoin(Strd, Prop228SendAmount)))
 }

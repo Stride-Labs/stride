@@ -2,12 +2,12 @@
 syntax = "proto3";
 package stride.airdrop;
 
-import "stride/airdrop/airdrop.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "cosmos_proto/cosmos.proto";
 import "google/protobuf/timestamp.proto";
+import "stride/airdrop/airdrop.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/airdrop/types";
 
