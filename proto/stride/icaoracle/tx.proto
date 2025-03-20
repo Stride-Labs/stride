@@ -1,9 +1,9 @@
 syntax = "proto3";
 package stride.icaoracle;
 
+import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
-import "amino/amino.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/icaoracle/types";
 
@@ -26,7 +26,7 @@ service Msg {
 // Adds a new oracle
 message MsgAddOracle {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/x/icaoracle/MsgAddOracle";
+  option (amino.name) = "icaoracle/MsgAddOracle";
 
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string connection_id = 2;
@@ -36,7 +36,7 @@ message MsgAddOracleResponse {}
 // Instantiates the oracle's CW contract
 message MsgInstantiateOracle {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/x/icaoracle/MsgInstantiateOracle";
+  option (amino.name) = "icaoracle/MsgInstantiateOracle";
 
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string oracle_chain_id = 2;
@@ -48,7 +48,7 @@ message MsgInstantiateOracleResponse {}
 // Restore's a closed ICA channel for a given oracle
 message MsgRestoreOracleICA {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/x/icaoracle/MsgRestoreOracleICA";
+  option (amino.name) = "icaoracle/MsgRestoreOracleICA";
 
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string oracle_chain_id = 2;
@@ -58,7 +58,7 @@ message MsgRestoreOracleICAResponse {}
 // Toggle's whether an oracle is active and should receive metric updates
 message MsgToggleOracle {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "stride/x/icaoracle/MsgToggleOracle";
+  option (amino.name) = "icaoracle/MsgToggleOracle";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
@@ -71,7 +71,7 @@ message MsgToggleOracleResponse {}
 // Removes an oracle completely
 message MsgRemoveOracle {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "stride/x/icaoracle/MsgRemoveOracle";
+  option (amino.name) = "icaoracle/MsgRemoveOracle";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).

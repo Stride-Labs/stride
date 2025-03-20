@@ -2,9 +2,9 @@ syntax = "proto3";
 package stride.stakeibc;
 
 import "gogoproto/gogo.proto";
-import "stride/stakeibc/params.proto";
-import "stride/stakeibc/host_zone.proto";
 import "stride/stakeibc/epoch_tracker.proto";
+import "stride/stakeibc/host_zone.proto";
+import "stride/stakeibc/params.proto";
 import "stride/stakeibc/trade_route.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/stakeibc/types";

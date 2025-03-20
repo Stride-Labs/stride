@@ -441,7 +441,6 @@ Redemption Record (recordtype=redemption)
 			`, version.AppName)),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-
 			recordType := args[0]
 			recordContents := args[1]
 

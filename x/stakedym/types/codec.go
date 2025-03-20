@@ -24,7 +24,6 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgOverwriteUnbondingRecord{}, "stakedym/MsgOverwriteUnbondingRecord")
 	legacy.RegisterAminoMsg(cdc, &MsgOverwriteRedemptionRecord{}, "stakedym/MsgOverwriteRedemptionRecord")
 	legacy.RegisterAminoMsg(cdc, &MsgSetOperatorAddress{}, "stakedym/MsgSetOperatorAddress")
-
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
