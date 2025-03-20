@@ -578,10 +578,11 @@ func (s *UpgradeTestSuite) TestExecuteProp228IfPassed() {
 	s.Require().ErrorContains(err, "Prop 228 not found")
 
 	// Store the prop in status rejected
-	s.App.GovKeeper.SetProposal(s.Ctx, govtypes.Proposal{
+	err = s.App.GovKeeper.SetProposal(s.Ctx, govtypes.Proposal{
 		Id:     v18.Prop228ProposalId,
 		Status: govtypes.ProposalStatus_PROPOSAL_STATUS_REJECTED,
 	})
+	s.Require().NoError(err)
 
 	// Attempt to run when it's been rejected, it should not error but no funds
 	// should be sent
@@ -596,10 +597,11 @@ func (s *UpgradeTestSuite) TestExecuteProp228IfPassed() {
 		"sender balance should not have changed")
 
 	// Update the prop to be successful
-	s.App.GovKeeper.SetProposal(s.Ctx, govtypes.Proposal{
+	err = s.App.GovKeeper.SetProposal(s.Ctx, govtypes.Proposal{
 		Id:     v18.Prop228ProposalId,
 		Status: govtypes.ProposalStatus_PROPOSAL_STATUS_PASSED,
 	})
+	s.Require().NoError(err)
 
 	// Execute the prop again and confirm balances were updated
 	err = v18.ExecuteProp228IfPassed(s.Ctx, s.App.BankKeeper, s.App.GovKeeper)

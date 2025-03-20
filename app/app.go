@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
@@ -1253,8 +1252,11 @@ func NewStrideApp(
 	app.SetPrecommiter(app.Precommitter)
 	app.SetPrepareCheckStater(app.PrepareCheckStater)
 
-	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
+	// Register AutoCLI query service to automatically generate query endpoints for all modules
+	// TODO: Enable when we start using autocli
+	// autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
 
+	// Setup gRPC reflection, enabling runtime service/method discovery for clients
 	reflectionSvc, err := runtimeservices.NewReflectionService()
 	if err != nil {
 		panic(err)

@@ -5,6 +5,7 @@ go 1.23.1
 toolchain go1.23.6
 
 require (
+	cosmossdk.io/api v0.7.6
 	cosmossdk.io/client/v2 v2.0.0-beta.7
 	cosmossdk.io/core v0.12.0
 	cosmossdk.io/errors v1.0.1
@@ -54,7 +55,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	cloud.google.com/go/iam v1.1.9 // indirect
 	cloud.google.com/go/storage v1.41.0 // indirect
-	cosmossdk.io/api v0.7.6 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
 	cosmossdk.io/depinject v1.1.0 // indirect
 	cosmossdk.io/x/circuit v0.1.1 // indirect

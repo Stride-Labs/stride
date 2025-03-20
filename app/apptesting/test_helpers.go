@@ -578,7 +578,8 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
 	s.Require().NotPanics(func() {
-		s.App.BeginBlocker(s.Ctx)
+		_, err := s.App.BeginBlocker(s.Ctx)
+		s.Require().NoError(err)
 	})
 }
 
