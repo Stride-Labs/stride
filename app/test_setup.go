@@ -2,8 +2,8 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
-	"time"
 
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
@@ -13,14 +13,11 @@ import (
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	tmtypes "github.com/cometbft/cometbft/types"
 	cosmosdb "github.com/cosmos/cosmos-db"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	appconsumer "github.com/cosmos/interchain-security/v6/app/consumer"
 	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
@@ -66,116 +63,69 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 	)
 
 	if initChain {
-		genesisState := GenesisStateWithValSet(app)
+		genesisState := GenesisStateWithConsumerValSet(app)
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 		if err != nil {
 			panic(err)
 		}
 
-		app.InitChain(
-			&abci.RequestInitChain{
-				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: simtestutil.DefaultConsensusParams,
-				AppStateBytes:   stateBytes,
-			},
-		)
+		reqInitChain := &abci.RequestInitChain{
+			Validators:      []abci.ValidatorUpdate{},
+			ConsensusParams: simtestutil.DefaultConsensusParams,
+			AppStateBytes:   stateBytes,
+		}
+		if _, err := app.InitChain(reqInitChain); err != nil {
+			panic(err)
+		}
 	}
 
 	return app
 }
 
-func GenesisStateWithValSet(app *StrideApp) GenesisState {
+// Iniitalize default genesis state as a consumer chain with 1 validator
+func GenesisStateWithConsumerValSet(app *StrideApp) GenesisState {
+	// Create the default genesis state
+	genesisState := app.DefaultGenesis()
+
+	// Create a new validator and base account
 	privVal := mock.NewPV()
 	pubKey, _ := privVal.GetPubKey()
 	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	account := authtypes.NewBaseAccountWithAddress(secp256k1.GenPrivKey().PubKey().Address().Bytes())
 
-	// generate genesis account
-	senderPrivKey := secp256k1.GenPrivKey()
-	senderPrivKey.PubKey().Address()
-	acc := authtypes.NewBaseAccountWithAddress(senderPrivKey.PubKey().Address().Bytes())
-	balance := banktypes.Balance{
-		Address: acc.GetAddress().String(),
+	// Prepare the list of 1 validator and 1 account for the initial genesis state
+	validatorSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	genesisAccounts := []authtypes.GenesisAccount{account}
+	accountBalance := banktypes.Balance{
+		Address: account.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 	}
 
-	//////////////////////
-	balances := []banktypes.Balance{balance}
-	genesisState := app.DefaultGenesis()
-	genAccs := []authtypes.GenesisAccount{acc}
-	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
-	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)
-
-	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
-	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
-
-	bondAmt := sdk.DefaultPowerReduction
-	initValPowers := []abci.ValidatorUpdate{}
-
-	for _, val := range valSet.Validators {
-		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
-		pkAny, _ := codectypes.NewAnyWithValue(pk)
-		validator := stakingtypes.Validator{
-			OperatorAddress:   sdk.ValAddress(val.Address).String(),
-			ConsensusPubkey:   pkAny,
-			Jailed:            false,
-			Status:            stakingtypes.Bonded,
-			Tokens:            bondAmt,
-			DelegatorShares:   sdkmath.LegacyOneDec(),
-			Description:       stakingtypes.Description{},
-			UnbondingHeight:   int64(0),
-			UnbondingTime:     time.Unix(0, 0).UTC(),
-			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
-			MinSelfDelegation: sdkmath.ZeroInt(),
-		}
-		validators = append(validators, validator)
-		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress().String(), validator.OperatorAddress, sdkmath.LegacyOneDec()))
-
-		// add initial validator powers so consumer InitGenesis runs correctly
-		pub, _ := val.ToProto()
-		initValPowers = append(initValPowers, abci.ValidatorUpdate{
-			Power:  val.VotingPower,
-			PubKey: pub.PubKey,
-		})
-	}
-	// set validators and delegations
-	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
-	genesisState[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
-
-	totalSupply := sdk.NewCoins()
-	for _, b := range balances {
-		// add genesis acc tokens to total supply
-		totalSupply = totalSupply.Add(b.Coins...)
-	}
-
-	for range delegations {
-		// add delegated tokens to total supply
-		totalSupply = totalSupply.Add(sdk.NewCoin(sdk.DefaultBondDenom, bondAmt))
-	}
-
-	// add bonded amount to bonded pool module account
-	balances = append(balances, banktypes.Balance{
-		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
-		Coins:   sdk.Coins{sdk.NewCoin(sdk.DefaultBondDenom, bondAmt)},
-	})
-
-	// update total supply
-	bankGenesis := banktypes.NewGenesisState(
-		banktypes.DefaultGenesisState().Params,
-		balances,
-		totalSupply,
-		[]banktypes.Metadata{},
-		[]banktypes.SendEnabled{},
+	// Initialize the genesis state with the validator and account
+	genesisState, err := simtestutil.GenesisStateWithValSet(
+		app.appCodec,
+		genesisState,
+		validatorSet,
+		genesisAccounts,
+		accountBalance,
 	)
-	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
-
-	vals, err := tmtypes.PB2TM.ValidatorUpdates(initValPowers)
 	if err != nil {
-		panic("failed to get vals")
+		panic(err)
+	}
+
+	// Set the consumer state
+	validatorProto, _ := validator.ToProto()
+	initialValidatorPowers := []abci.ValidatorUpdate{{
+		Power:  validator.VotingPower,
+		PubKey: validatorProto.PubKey,
+	}}
+	vals, err := tmtypes.PB2TM.ValidatorUpdates(initialValidatorPowers)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get vals: %s", err.Error()))
 	}
 
 	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.Provider.InitialValSet = initValPowers
+	consumerGenesisState.Provider.InitialValSet = initialValidatorPowers
 	consumerGenesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 	consumerGenesisState.Params.Enabled = true
 	genesisState[consumertypes.ModuleName] = app.AppCodec().MustMarshalJSON(consumerGenesisState)
