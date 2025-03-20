@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -51,14 +52,14 @@ Example:
 				return err
 			}
 
-			sellingTokenAmount, err := strconv.ParseUint(args[1], 10, 64)
-			if err != nil {
-				return fmt.Errorf("cannot parse sellingTokenAmount as uint64 from '%s': %w", args[1], err)
+			sellingTokenAmount, ok := math.NewIntFromString(args[1])
+			if !ok {
+				return fmt.Errorf("cannot parse sellingTokenAmount as math.Int from '%s'", args[2])
 			}
 
-			paymentTokenAmount, err := strconv.ParseUint(args[2], 10, 64)
-			if err != nil {
-				return fmt.Errorf("cannot parse paymentTokenAmount as uint64 from '%s': %w", args[2], err)
+			paymentTokenAmount, ok := math.NewIntFromString(args[2])
+			if !ok {
+				return fmt.Errorf("cannot parse paymentTokenAmount as math.Int from '%s'", args[2])
 			}
 
 			msg := types.NewMsgPlaceBid(

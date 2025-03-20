@@ -37,14 +37,14 @@ var (
 func NewMsgPlaceBid(
 	bidder string,
 	AuctionName string,
-	sellingTokenAmount uint64,
-	paymentTokenAmount uint64,
+	sellingTokenAmount math.Int,
+	paymentTokenAmount math.Int,
 ) *MsgPlaceBid {
 	return &MsgPlaceBid{
 		Bidder:             bidder,
 		AuctionName:        AuctionName,
-		SellingTokenAmount: math.NewIntFromUint64(sellingTokenAmount),
-		PaymentTokenAmount: math.NewIntFromUint64(paymentTokenAmount),
+		SellingTokenAmount: sellingTokenAmount,
+		PaymentTokenAmount: paymentTokenAmount,
 	}
 }
 
