@@ -124,7 +124,9 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Migrating tendermint consensus params from x/params to x/consensus...")
 		legacyParamSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper.ParamsStore)
+		if err := baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper.ParamsStore); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to migrate params")
+		}
 
 		ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
 		if err := icacontrollermigrations.MigrateICS27ChannelCapability(
