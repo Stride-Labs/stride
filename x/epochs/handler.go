@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v25/x/epochs/keeper"
-	"github.com/Stride-Labs/stride/v25/x/epochs/types"
+	"github.com/Stride-Labs/stride/v26/x/epochs/keeper"
+	"github.com/Stride-Labs/stride/v26/x/epochs/types"
 )
 
 // NewHandler returns a handler for epochs module messages

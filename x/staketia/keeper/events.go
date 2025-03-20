@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/x/staketia/types"
+	"github.com/Stride-Labs/stride/v26/x/staketia/types"
 )
 
 // Emits a successful liquid stake event, and displays metadata such as the stToken amount

@@ -4,7 +4,7 @@ package stride.auction;
 import "gogoproto/gogo.proto";
 import "stride/auction/auction.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v25/x/auction/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/auction/types";
 
 // GenesisState defines the auction module's genesis state
 message GenesisState {

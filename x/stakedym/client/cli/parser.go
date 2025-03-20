@@ -10,7 +10,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v25/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
 
 //////////////////////////////////////////////

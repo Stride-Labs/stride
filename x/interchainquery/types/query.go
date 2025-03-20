@@ -4,7 +4,7 @@ import (
 	fmt "fmt"
 	time "time"
 
-	"github.com/Stride-Labs/stride/v25/utils"
+	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 // Check if a query has timed-out by checking whether the block time is after

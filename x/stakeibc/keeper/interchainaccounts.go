@@ -13,10 +13,10 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 
-	"github.com/Stride-Labs/stride/v25/utils"
-	epochstypes "github.com/Stride-Labs/stride/v25/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v25/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 const (

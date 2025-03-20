@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
 func (s *KeeperTestSuite) createNLSMTokenDeposit(n int) []types.LSMTokenDeposit {

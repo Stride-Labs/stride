@@ -8,10 +8,10 @@ import (
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v25/app/apptesting"
-	v23 "github.com/Stride-Labs/stride/v25/app/upgrades/v23"
-	recordstypes "github.com/Stride-Labs/stride/v25/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v25/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	v23 "github.com/Stride-Labs/stride/v26/app/upgrades/v23"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {

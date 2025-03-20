@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v26/x/strdburner/types"
 )
 
 func EndBlocker(ctx sdk.Context, k Keeper) {

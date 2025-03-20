@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v25/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 )
 
 var _ types.QueryServiceServer = Keeper{}
