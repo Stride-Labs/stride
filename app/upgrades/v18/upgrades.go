@@ -12,6 +12,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/Stride-Labs/stride/v26/utils"
 	recordskeeper "github.com/Stride-Labs/stride/v26/x/records/keeper"
 	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
@@ -92,7 +93,6 @@ func DecrementTerraDelegationChangesInProgress(
 	ctx sdk.Context,
 	sk stakeibckeeper.Keeper,
 ) error {
-
 	// grab the terra host zone
 	hostZone, found := sk.GetHostZone(ctx, TerraChainId)
 	if !found {
@@ -101,7 +101,6 @@ func DecrementTerraDelegationChangesInProgress(
 
 	// iterate the validators
 	for _, val := range hostZone.Validators {
-
 		// subtract 3, flooring at 0
 		if val.DelegationChangesInProgress < 3 {
 			val.DelegationChangesInProgress = 0
@@ -220,5 +219,5 @@ func ExecuteProp228IfPassed(ctx sdk.Context, bk bankkeeper.Keeper, gk govkeeper.
 		return errorsmod.Wrap(err, "invalid prop recipient address")
 	}
 
-	return bk.SendCoins(ctx, fromAddress, toAddress, sdk.NewCoins(sdk.NewCoin(Strd, Prop228SendAmount)))
+	return utils.SafeSendCoins(false, bk, ctx, fromAddress, toAddress, sdk.NewCoins(sdk.NewCoin(Strd, Prop228SendAmount)))
 }
