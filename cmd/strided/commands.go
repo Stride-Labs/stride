@@ -172,8 +172,8 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxConfig, basicManager 
 	rootCmd.AddCommand(
 		server.StatusCommand(),
 		genesisCommand(txConfig, basicManager),
-		queryCommand(),
-		txCommand(),
+		queryCommand(basicManager),
+		txCommand(basicManager),
 		versionCommand(),
 		keys.Commands(),
 	)
@@ -190,7 +190,7 @@ func genesisCommand(txConfig client.TxConfig, basicManager module.BasicManager, 
 }
 
 // Commands to query state
-func queryCommand() *cobra.Command {
+func queryCommand(baseManager module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "query",
 		Aliases:                    []string{"q"},
@@ -211,11 +211,13 @@ func queryCommand() *cobra.Command {
 		moduleNameToAddressCommand(),
 	)
 
+	baseManager.AddQueryCommands(cmd)
+
 	return cmd
 }
 
 // Commands to submit transactions state
-func txCommand() *cobra.Command {
+func txCommand(baseManager module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        "tx",
 		Short:                      "Transactions subcommands",
@@ -238,6 +240,8 @@ func txCommand() *cobra.Command {
 		flags.LineBreak,
 		vestingcli.GetTxCmd(address.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix())),
 	)
+
+	baseManager.AddTxCommands(cmd)
 
 	return cmd
 }
