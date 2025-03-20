@@ -383,5 +383,5 @@ func ExecuteProp225(ctx sdk.Context, k bankkeeper.Keeper) error {
 	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
 	liquidityReceiverAddress := sdk.MustAccAddressFromBech32(LiquidityReceiver)
 	transferCoin := sdk.NewCoin(Ustrd, Prop225TransferAmount)
-	return k.SendCoins(ctx, communityPoolGrowthAddress, liquidityReceiverAddress, sdk.NewCoins(transferCoin))
+	return utils.SafeSendCoins(false, k, ctx, communityPoolGrowthAddress, liquidityReceiverAddress, sdk.NewCoins(transferCoin))
 }
