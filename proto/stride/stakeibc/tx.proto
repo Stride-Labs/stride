@@ -198,7 +198,8 @@ message MsgAddValidators {
 message MsgAddValidatorsResponse {}
 
 message ValidatorWeight {
-  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string address = 1
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
   uint64 weight = 2;
 }
 message MsgChangeValidatorWeights {
