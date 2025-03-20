@@ -12,6 +12,8 @@ option go_package = "github.com/Stride-Labs/stride/v26/x/airdrop/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // User transaction to claim all the pending daily airdrop rewards
   rpc ClaimDaily(MsgClaimDaily) returns (MsgClaimDailyResponse);
 

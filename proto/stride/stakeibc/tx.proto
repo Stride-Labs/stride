@@ -12,6 +12,8 @@ import "amino/amino.proto";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
   rpc LSMLiquidStake(MsgLSMLiquidStake) returns (MsgLSMLiquidStakeResponse);
   rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);

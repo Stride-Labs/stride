@@ -3,11 +3,14 @@ package stride.claim;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v26/x/claim/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   rpc SetAirdropAllocations(MsgSetAirdropAllocations)
       returns (MsgSetAirdropAllocationsResponse);
   rpc ClaimFreeAmount(MsgClaimFreeAmount) returns (MsgClaimFreeAmountResponse);

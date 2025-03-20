@@ -21,6 +21,8 @@ enum OverwritableRecordType {
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // User transaction to liquid stake native tokens into stTokens
   rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
 
