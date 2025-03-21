@@ -17,7 +17,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/kv"
 	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
@@ -167,8 +166,12 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.ProviderApp = s.ProviderChain.App.(*appProvider.App)
 
 	// Initialize a host testing app using SimApp -> TestingApp
-	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
-	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
+	// We need to run this with the cosmos bech prefix so that the gov module authority
+	// that's passed into the keepers is a cosmos address
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
+		s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
+	})
 
 	// Call method with same arbitrary values as defined above in mock expectations.
 	CONSUMER_ID := "0"
@@ -729,4 +732,34 @@ func (s *AppTestHelper) CheckEventValueNotEmitted(eventType, attributeKey, expec
 	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
 	s.Require().False(valueFound, "attribute %s with value %s should not have been found in event %s. Values emitted for attribute: %+v",
 		attributeKey, expectedValue, eventType, allValues)
+}
+
+// During setup, it's common to need to change the bech prefix temporarily
+// The prefix is controlled by a global config so we need to update the prefix globally,
+// call our respective function, and then reset it back to stride
+// Note: We disable caching to prevent addresses from using the previously configured prefix
+func RunWithDifferentBechPrefix(bechPrefix string, function func()) {
+	// Grab the initial prefix
+	initialPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+
+	// Disable the cache and update the config with the specified prefix
+	sdk.SetAddrCacheEnabled(false)
+	SetConfigBechPrefix(bechPrefix)
+
+	// Call the respective function
+	function()
+
+	// Reset the prefix and re-enable the cache
+	SetConfigBechPrefix(initialPrefix)
+	sdk.SetAddrCacheEnabled(true)
+}
+
+// Sets the account, validator, and consensus address bech prefixes
+func SetConfigBechPrefix(bechPrefix string) {
+	config := sdk.GetConfig()
+	valOperatorPrefix := bechPrefix + sdk.PrefixValidator + sdk.PrefixOperator
+	valConsensusPrefix := bechPrefix + sdk.PrefixValidator + sdk.PrefixConsensus
+	config.SetBech32PrefixForAccount(bechPrefix, bechPrefix+sdk.PrefixPublic)
+	config.SetBech32PrefixForValidator(valOperatorPrefix, valOperatorPrefix+sdk.PrefixPublic)
+	config.SetBech32PrefixForConsensusNode(valConsensusPrefix, valConsensusPrefix+sdk.PrefixPublic)
 }
