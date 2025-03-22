@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -30,8 +31,9 @@ import (
 	appProvider "github.com/cosmos/interchain-security/v6/app/provider"
 	icstestingutils "github.com/cosmos/interchain-security/v6/testutil/ibc_testing"
 	e2e "github.com/cosmos/interchain-security/v6/testutil/integration"
-	testkeeper "github.com/cosmos/interchain-security/v6/testutil/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	providerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/provider/keeper"
+	providertypes "github.com/cosmos/interchain-security/v6/x/ccv/provider/types"
 	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -41,8 +43,8 @@ import (
 )
 
 var (
-	StrideChainID   = "STRIDE"
-	ProviderChainID = "PROVIDER"
+	StrideChainID   = "stride-test-1"
+	ProviderChainID = "provider-test-1"
 	FirstClientId   = "07-tendermint-0"
 
 	TestIcaVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
@@ -168,32 +170,85 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	// Initialize a host testing app using SimApp -> TestingApp
 	// We need to run this with the cosmos bech prefix so that the gov module authority
 	// that's passed into the keepers is a cosmos address
+	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
 	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
-		ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
 		s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
 	})
 
-	// Call method with same arbitrary values as defined above in mock expectations.
-	CONSUMER_ID := "0"
-	s.ProviderApp.GetProviderKeeper().SetConsumerChainId(s.ProviderChain.GetContext(), CONSUMER_ID, StrideChainID)
-	err := s.ProviderApp.GetProviderKeeper().SetConsumerInitializationParameters(s.ProviderChain.GetContext(), CONSUMER_ID, testkeeper.GetTestInitializationParameters())
+	// Create a new consumer client in the provider chain
+	consumerId := "0"
+	providerContext := s.ProviderChain.GetContext()
+	providerKeeper := s.ProviderApp.GetProviderKeeper()
+	providerSlashingKeeper := s.ProviderApp.GetTestSlashingKeeper()
+	providerMsgServer := providerkeeper.NewMsgServerImpl(&providerKeeper)
+
+	providerKeeper.SetConsumerChainId(providerContext, consumerId, StrideChainID)
+	providerKeeper.SetConsumerPhase(providerContext, consumerId, providertypes.CONSUMER_PHASE_INITIALIZED)
+
+	initializationParams := providertypes.DefaultConsumerInitializationParameters()
+	err := providerKeeper.SetConsumerInitializationParameters(providerContext, consumerId, initializationParams)
+	s.Require().NoError(err)
+	err = providerKeeper.SetConsumerPowerShapingParameters(providerContext, consumerId, providertypes.PowerShapingParameters{})
+	s.Require().NoError(err)
+	err = providerKeeper.CreateConsumerClient(providerContext, consumerId, []byte{})
 	s.Require().NoError(err)
 
-	err = s.ProviderApp.GetProviderKeeper().CreateConsumerClient(s.ProviderChain.GetContext(), CONSUMER_ID, []byte{})
-	s.Require().NoError(err)
-	clientId, found := s.ProviderApp.GetProviderKeeper().GetConsumerClientId(s.ProviderChain.GetContext(), CONSUMER_ID)
+	clientId, found := providerKeeper.GetConsumerClientId(providerContext, consumerId)
 	s.Require().True(found)
-	s.Require().Equal("clientID", clientId)
+	s.Require().Equal(clientId, "07-tendermint-0")
+
+	infractionParams, err := providertypes.DefaultConsumerInfractionParameters(providerContext, providerSlashingKeeper)
+	s.Require().NoError(err)
+	_, err = providerMsgServer.CreateConsumer(providerContext, &providertypes.MsgCreateConsumer{
+		ChainId:                  StrideChainID,
+		InfractionParameters:     &infractionParams,
+		InitializationParameters: &initializationParams,
+		Metadata:                 providertypes.ConsumerMetadata{},
+		PowerShapingParameters: &providertypes.PowerShapingParameters{
+			Top_N: 0,
+		},
+	})
+	s.Require().NoError(err)
+
+	// providerKeeper.SetConsumerChainId(providerContext, consumerId, StrideChainID)
+	// providerKeeper.SetConsumerPhase(providerContext, consumerId, providertypes.CONSUMER_PHASE_INITIALIZED)
+	// err := providerKeeper.SetConsumerInitializationParameters(providerContext, consumerId, testkeeper.GetTestInitializationParameters())
+	// s.Require().NoError(err)
+	// err = providerKeeper.SetConsumerPowerShapingParameters(providerContext, consumerId, providertypes.PowerShapingParameters{
+
+	// })
+	// err = providerKeeper.CreateConsumerClient(providerContext, consumerId, []byte{})
+	// s.Require().NoError(err)
+
+	// clientId, found := providerKeeper.GetConsumerClientId(providerContext, consumerId)
+	// s.Require().True(found)
+	// s.Require().Equal(clientId, "07-tendermint-0")
+
+	// Set the host chain mint params to 0 (otherwise the begin blocker in the next step will fail)
+	// TODO: There must be a better way to do it
+	hostApp := s.HostChain.GetSimApp()
+	hostParams, err := hostApp.MintKeeper.Params.Get(s.HostChain.GetContext())
+	s.Require().NoError(err)
+
+	hostParams.InflationMin = sdkmath.LegacyZeroDec()
+	hostParams.InflationMax = sdkmath.LegacyZeroDec()
+	err = hostApp.MintKeeper.Params.Set(s.HostChain.GetContext(), hostParams)
+	s.Require().NoError(err)
 
 	// move provider and host chain to next block
 	s.Coordinator.CommitBlock(s.ProviderChain)
 	s.Coordinator.CommitBlock(s.HostChain)
 
+	// Launch the consumer
+	bondedValidators, err := providerKeeper.GetLastBondedValidators(providerContext)
+	s.Require().NoError(err)
+	activeValidators, err := providerKeeper.GetLastProviderConsensusActiveValidators(providerContext)
+	s.Require().NoError(err)
+	err = providerKeeper.LaunchConsumer(providerContext, bondedValidators, activeValidators, consumerId)
+	s.Require().NoError(err)
+
 	// initialize the consumer chain with the genesis state stored on the provider
-	strideConsumerGenesis, found := s.ProviderApp.GetProviderKeeper().GetConsumerGenesis(
-		s.ProviderChain.GetContext(),
-		StrideChainID,
-	)
+	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(providerContext, StrideChainID)
 	s.Require().True(found, "consumer genesis not found")
 
 	// use the initial validator set from the consumer genesis as the stride chain's initial set
