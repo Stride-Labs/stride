@@ -9,6 +9,8 @@ option go_package = "github.com/Stride-Labs/stride/v26/x/icaoracle/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // Adds a new oracle given a provided connection
   rpc AddOracle(MsgAddOracle) returns (MsgAddOracleResponse);
   // Instantiates an Oracle CW contract

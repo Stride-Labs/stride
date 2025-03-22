@@ -13,6 +13,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v26/app"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
 	"github.com/Stride-Labs/stride/v26/x/claim/types"
 	minttypes "github.com/Stride-Labs/stride/v26/x/mint/types"
 )
@@ -23,13 +24,15 @@ type KeeperTestSuite struct {
 	ctx sdk.Context
 	// querier sdk.Querier
 	app *app.StrideApp
+	apptesting.AppTestHelper
 }
 
 var distributors map[string]sdk.AccAddress
 
 func (suite *KeeperTestSuite) SetupTest() {
 	suite.app = app.InitStrideTestApp(true)
-	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
+	suite.ctx = suite.app.BaseApp.NewContext(false).
+		WithBlockHeader(tmproto.Header{Height: 1, ChainID: "stride-1", Time: time.Now().UTC()})
 	distributors = make(map[string]sdk.AccAddress)
 
 	// Initiate a distributor account for stride user airdrop

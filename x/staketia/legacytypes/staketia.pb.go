@@ -6,7 +6,7 @@ package types
 import (
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	github_com_cosmos_cosmos_sdk_types "cosmossdk.io/math"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -143,17 +143,17 @@ type HostZone struct {
 	// admin address set upon host zone creation,  on stride
 	SafeAddressOnStride string `protobuf:"bytes,11,opt,name=safe_address_on_stride,json=safeAddressOnStride,proto3" json:"safe_address_on_stride,omitempty"`
 	// Previous redemption rate
-	LastRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,12,opt,name=last_redemption_rate,json=lastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_redemption_rate"`
+	LastRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,12,opt,name=last_redemption_rate,json=lastRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"last_redemption_rate"`
 	// Current redemption rate
-	RedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,13,opt,name=redemption_rate,json=redemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"redemption_rate"`
+	RedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,13,opt,name=redemption_rate,json=redemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"redemption_rate"`
 	// Min outer redemption rate - adjusted by governance
-	MinRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,14,opt,name=min_redemption_rate,json=minRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_redemption_rate"`
+	MinRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,14,opt,name=min_redemption_rate,json=minRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_redemption_rate"`
 	// Max outer redemption rate - adjusted by governance
-	MaxRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,15,opt,name=max_redemption_rate,json=maxRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_redemption_rate"`
+	MaxRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,15,opt,name=max_redemption_rate,json=maxRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_redemption_rate"`
 	// Min inner redemption rate - adjusted by controller
-	MinInnerRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,16,opt,name=min_inner_redemption_rate,json=minInnerRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_inner_redemption_rate"`
+	MinInnerRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,16,opt,name=min_inner_redemption_rate,json=minInnerRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_inner_redemption_rate"`
 	// Max inner redemption rate - adjusted by controller
-	MaxInnerRedemptionRate github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,17,opt,name=max_inner_redemption_rate,json=maxInnerRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_inner_redemption_rate"`
+	MaxInnerRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,17,opt,name=max_inner_redemption_rate,json=maxInnerRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_inner_redemption_rate"`
 	// Total delegated balance on the host zone delegation account
 	DelegatedBalance github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,18,opt,name=delegated_balance,json=delegatedBalance,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"delegated_balance"`
 	// The undelegation period for Celestia in days

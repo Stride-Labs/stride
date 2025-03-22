@@ -7,26 +7,27 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	pruningtypes "cosmossdk.io/store/pruning/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	cometbftdb "github.com/cometbft/cometbft-db"
 	types1 "github.com/cometbft/cometbft/abci/types"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
 	tmtypes "github.com/cometbft/cometbft/types"
+	cosmosdb "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
 	"github.com/Stride-Labs/stride/v26/app"
+
 	testutil "github.com/Stride-Labs/stride/v26/testutil"
 )
 
@@ -57,11 +58,14 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
-	app.ModuleBasics[genutiltypes.ModuleName] = genutil.AppModuleBasic{}
+	genState := app.InitStrideTestApp(false).DefaultGenesis()
 	encoding := app.MakeEncodingConfig()
+
+	// app.ModuleBasics[genutiltypes.ModuleName] = genutil.AppModuleBasic{}
+
 	chainId := "stride-" + cometbftrand.NewRand().Str(6)
 	return network.Config{
-		Codec:             encoding.Marshaler,
+		Codec:             encoding.Codec,
 		TxConfig:          encoding.TxConfig,
 		LegacyAmino:       encoding.Amino,
 		InterfaceRegistry: encoding.InterfaceRegistry,
@@ -80,13 +84,9 @@ func DefaultConfig() network.Config {
 
 			return app.NewStrideApp(
 				val.GetCtx().Logger,
-				cometbftdb.NewMemDB(),
+				cosmosdb.NewMemDB(),
 				nil,
 				true,
-				map[int64]bool{},
-				val.GetCtx().Config.RootDir,
-				0,
-				encoding,
 				simtestutil.EmptyAppOptions{},
 				[]wasmkeeper.Option{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
@@ -94,7 +94,7 @@ func DefaultConfig() network.Config {
 				baseapp.SetChainID(chainId),
 			)
 		},
-		GenesisState:    app.ModuleBasics.DefaultGenesis(encoding.Marshaler),
+		GenesisState:    genState,
 		TimeoutCommit:   2 * time.Second,
 		ChainID:         chainId,
 		NumValidators:   1,

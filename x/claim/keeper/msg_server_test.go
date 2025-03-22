@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -19,24 +20,24 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 	allocations := []types.ClaimRecord{
 		{
 			Address:           addr1.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 		{
 			Address:           addr2.String(),
-			Weight:            sdk.NewDecWithPrec(30, 2), // 30%
+			Weight:            sdkmath.LegacyNewDecWithPrec(30, 2), // 30%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: "juno",
 		},
 	}
 
 	for _, record := range allocations {
-		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(suite.ctx, &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
-			Weights:           []sdk.Dec{record.Weight},
+			Weights:           []sdkmath.LegacyDec{record.Weight},
 		})
 		suite.Require().NoError(err)
 	}
@@ -48,35 +49,35 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 	allocations2 := []types.ClaimRecord{
 		{
 			Address:           addr1.String(),
-			Weight:            sdk.NewDecWithPrec(40, 2), // 40%
+			Weight:            sdkmath.LegacyNewDecWithPrec(40, 2), // 40%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 		{
 			Address:           addr2.String(),
-			Weight:            sdk.NewDecWithPrec(20, 2), // 20%
+			Weight:            sdkmath.LegacyNewDecWithPrec(20, 2), // 20%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: "juno",
 		},
 	}
 
 	for _, record := range allocations2 {
-		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(suite.ctx, &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
-			Weights:           []sdk.Dec{record.Weight},
+			Weights:           []sdkmath.LegacyDec{record.Weight},
 		})
 		suite.Require().NoError(err)
 	}
 
 	totalWeightStride, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().NoError(err)
-	suite.Require().Equal(totalWeightStride, sdk.NewDecWithPrec(90, 2))
+	suite.Require().Equal(totalWeightStride, sdkmath.LegacyNewDecWithPrec(90, 2))
 
 	totalWeightJuno, err := suite.app.ClaimKeeper.GetTotalWeight(suite.ctx, "juno")
 	suite.Require().NoError(err)
-	suite.Require().Equal(totalWeightJuno, sdk.NewDecWithPrec(50, 2))
+	suite.Require().Equal(totalWeightJuno, sdkmath.LegacyNewDecWithPrec(50, 2))
 
 	claimRecords := suite.app.ClaimKeeper.GetClaimRecords(suite.ctx, types.DefaultAirdropIdentifier)
 	suite.Require().Equal(2, len(claimRecords))
@@ -88,24 +89,24 @@ func (suite *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {
 	addr2 = sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	allocations3 := []types.ClaimRecord{
 		{
-			Address:           addr1.String(),            // duplicated airdrop address
-			Weight:            sdk.NewDecWithPrec(40, 2), // 40%
+			Address:           addr1.String(),                      // duplicated airdrop address
+			Weight:            sdkmath.LegacyNewDecWithPrec(40, 2), // 40%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 		{
 			Address:           addr2.String(),
-			Weight:            sdk.NewDecWithPrec(20, 2), // 20%
+			Weight:            sdkmath.LegacyNewDecWithPrec(20, 2), // 20%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: "juno",
 		},
 	}
 	for _, record := range allocations3 {
-		_, err := msgServer.SetAirdropAllocations(sdk.WrapSDKContext(suite.ctx), &types.MsgSetAirdropAllocations{
+		_, err := msgServer.SetAirdropAllocations(suite.ctx, &types.MsgSetAirdropAllocations{
 			Allocator:         distributors[record.AirdropIdentifier].String(),
 			AirdropIdentifier: record.AirdropIdentifier,
 			Users:             []string{record.Address},
-			Weights:           []sdk.Dec{record.Weight},
+			Weights:           []sdkmath.LegacyDec{record.Weight},
 		})
 		suite.Require().NoError(err)
 	}
@@ -135,7 +136,7 @@ func (suite *KeeperTestSuite) TestCreateAirdrop_Successful() {
 
 	// Successfully create a new airdrop
 	validMsg := getValidCreateEvmosAirdropMsg(suite.ctx)
-	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &validMsg)
+	_, err := msgServer.CreateAirdrop(suite.ctx, &validMsg)
 	suite.Require().NoError(err, "no error expected when adding evmos airdrop")
 
 	// Check that it matches the evmos airdrop
@@ -154,7 +155,7 @@ func (suite *KeeperTestSuite) TestCreateAirdrop_IdentifierAlreadyExists() {
 	invalidMsg := validMsg
 	invalidMsg.Identifier = types.DefaultAirdropIdentifier
 
-	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &invalidMsg)
+	_, err := msgServer.CreateAirdrop(suite.ctx, &invalidMsg)
 	suite.Require().ErrorContains(err, "airdrop with same identifier already exists")
 }
 
@@ -167,6 +168,6 @@ func (suite *KeeperTestSuite) TestCreateAirdrop_ChainIdAlreadyExists() {
 	invalidMsg := validMsg
 	invalidMsg.ChainId = "stride-1"
 
-	_, err := msgServer.CreateAirdrop(sdk.WrapSDKContext(suite.ctx), &invalidMsg)
+	_, err := msgServer.CreateAirdrop(suite.ctx, &invalidMsg)
 	suite.Require().ErrorContains(err, "airdrop with same chain-id already exists")
 }

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -18,7 +17,7 @@ func TestConvertToNewValidator(t *testing.T) {
 	commmissionRate := uint64(2)
 	weight := uint64(3)
 	epochNumber := uint64(4)
-	tokensToShares := sdk.NewDec(5)
+	tokensToShares := sdkmath.LegacyNewDec(5)
 
 	// Only the DelegationAmt field of the Validator should change
 	oldValidator := oldstakeibctypes.Validator{
@@ -73,8 +72,8 @@ func TestConvertToNewHostZone(t *testing.T) {
 	redemptionAddress := "redemption"
 	ibcDenom := "ibc"
 	hostDenom := "host"
-	redemptionRate := sdk.NewDec(1)
-	lastRedemptionRate := sdk.NewDec(2)
+	redemptionRate := sdkmath.LegacyNewDec(1)
+	lastRedemptionRate := sdkmath.LegacyNewDec(2)
 	unbondingFrequency := uint64(3)
 	hostAddress := "address"
 

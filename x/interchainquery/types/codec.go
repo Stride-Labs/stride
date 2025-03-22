@@ -16,7 +16,6 @@ var (
 
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgSubmitQueryResponse{}, "interchainquery/MsgSubmitQueryResponse")
-	// this line is used by starport scaffolding # 2
 }
 
 func RegisterInterfaces(registry types.InterfaceRegistry) {

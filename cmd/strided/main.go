@@ -15,7 +15,7 @@ func main() {
 	cmdcfg.SetupConfig()
 	cmdcfg.RegisterDenoms()
 
-	rootCmd, _ := NewRootCmd()
+	rootCmd := NewRootCmd()
 	rootCmd.AddCommand(cmd.AddConsumerSectionCmd(app.DefaultNodeHome))
 
 	if err := svrcmd.Execute(rootCmd, "", app.DefaultNodeHome); err != nil {

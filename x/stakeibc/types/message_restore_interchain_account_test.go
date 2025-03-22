@@ -1,11 +1,12 @@
-package types
+package types_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v26/testutil/sample"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
@@ -16,13 +17,13 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 
 	tests := []struct {
 		name string
-		msg  MsgRestoreInterchainAccount
+		msg  types.MsgRestoreInterchainAccount
 		err  string
 	}{
 		{
 			name: "valid host zone message",
-			msg: MsgRestoreInterchainAccount{
-				Creator:      sample.AccAddress(),
+			msg: types.MsgRestoreInterchainAccount{
+				Creator:      apptesting.SampleStrideAddress(),
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: validHostZoneOwner,
@@ -30,8 +31,8 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "valid trade route message",
-			msg: MsgRestoreInterchainAccount{
-				Creator:      sample.AccAddress(),
+			msg: types.MsgRestoreInterchainAccount{
+				Creator:      apptesting.SampleStrideAddress(),
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: validTradeRouteOwner,
@@ -39,8 +40,8 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "missing chain id",
-			msg: MsgRestoreInterchainAccount{
-				Creator:      sample.AccAddress(),
+			msg: types.MsgRestoreInterchainAccount{
+				Creator:      apptesting.SampleStrideAddress(),
 				ChainId:      "",
 				ConnectionId: validConnectionId,
 				AccountOwner: validHostZoneOwner,
@@ -49,8 +50,8 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "missing connection id",
-			msg: MsgRestoreInterchainAccount{
-				Creator:      sample.AccAddress(),
+			msg: types.MsgRestoreInterchainAccount{
+				Creator:      apptesting.SampleStrideAddress(),
 				ChainId:      validChainId,
 				ConnectionId: "con-0",
 				AccountOwner: validHostZoneOwner,
@@ -59,8 +60,8 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "missing account owner",
-			msg: MsgRestoreInterchainAccount{
-				Creator:      sample.AccAddress(),
+			msg: types.MsgRestoreInterchainAccount{
+				Creator:      apptesting.SampleStrideAddress(),
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: "",
@@ -69,8 +70,8 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "chain id does not match owner",
-			msg: MsgRestoreInterchainAccount{
-				Creator:      sample.AccAddress(),
+			msg: types.MsgRestoreInterchainAccount{
+				Creator:      apptesting.SampleStrideAddress(),
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: "chain-1.reward.host.CONVERTER_TRADE",
@@ -79,7 +80,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		},
 		{
 			name: "invalid address",
-			msg: MsgRestoreInterchainAccount{
+			msg: types.MsgRestoreInterchainAccount{
 				Creator: "invalid_address",
 			},
 			err: "invalid address",

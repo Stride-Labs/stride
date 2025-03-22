@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
@@ -26,10 +24,10 @@ var (
 		"stride1udf2vyj5wyjckl7nzqn5a2vh8fpmmcffey92y8",
 		"stride1uc8ccxy5s2hw55fn8963ukfdycaamq95jqcfnr",
 	}
-	weights = []sdk.Dec{
-		sdk.NewDec(1000),
-		sdk.NewDec(2000),
-		sdk.NewDec(3000),
+	weights = []sdkmath.LegacyDec{
+		sdkmath.LegacyNewDec(1000),
+		sdkmath.LegacyNewDec(2000),
+		sdkmath.LegacyNewDec(3000),
 	}
 )
 

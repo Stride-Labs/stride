@@ -73,7 +73,7 @@ func (k Keeper) RedeemStake(
 
 	// Estimate a placeholder native amount with current RedemptionRate
 	// this estimate will be updated when the Undelegation record is finalized
-	nativeAmount := sdk.NewDecFromInt(stTokenAmount).Mul(stakeibcHostZone.RedemptionRate).TruncateInt()
+	nativeAmount := sdkmath.LegacyNewDecFromInt(stTokenAmount).Mul(stakeibcHostZone.RedemptionRate).TruncateInt()
 
 	// When checking if there's enough delegated TIA to handle the request,
 	// use the value from stakeibc instead of staketia
@@ -158,11 +158,11 @@ func (k Keeper) HandleRedemptionSpillover(
 	requestedNativeAmount sdkmath.Int,
 	requestedStTokenAmount sdkmath.Int,
 	remainingDelegatedBalance sdkmath.Int,
-	redemptionRate sdk.Dec,
+	redemptionRate sdkmath.LegacyDec,
 ) (staketiaNativeAmount, staketiaStTokenAmount sdkmath.Int, err error) {
 	// Converts the spillover amount so that it's denominated in stTokens
 	stakeibcNativeAmount := requestedNativeAmount.Sub(remainingDelegatedBalance)
-	stakeibcStTokenAmount := sdk.NewDecFromInt(stakeibcNativeAmount).Quo(redemptionRate).TruncateInt()
+	stakeibcStTokenAmount := sdkmath.LegacyNewDecFromInt(stakeibcNativeAmount).Quo(redemptionRate).TruncateInt()
 
 	// Call stakeibc's redeem stake for the excess
 	stakeibcRedeemMessage := stakeibctypes.MsgRedeemStake{
@@ -214,7 +214,7 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 	// Keep track of the total for the unbonding record
 	totalNativeTokens := sdkmath.ZeroInt()
 	for _, redemptionRecord := range k.GetRedemptionRecordsFromUnbondingId(ctx, unbondingRecord.Id) {
-		nativeAmount := sdk.NewDecFromInt(redemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
+		nativeAmount := sdkmath.LegacyNewDecFromInt(redemptionRecord.StTokenAmount).Mul(redemptionRate).TruncateInt()
 		redemptionRecord.NativeAmount = nativeAmount
 		k.SetRedemptionRecord(ctx, redemptionRecord)
 		totalNativeTokens = totalNativeTokens.Add(nativeAmount)
@@ -253,7 +253,7 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	}
 
 	// if there are no tokens to unbond (or negative on the record): throw an error!
-	noTokensUnbondedOrNegative := record.NativeAmount.LTE(sdk.ZeroInt()) || record.StTokenAmount.LTE(sdk.ZeroInt())
+	noTokensUnbondedOrNegative := record.NativeAmount.LTE(sdkmath.ZeroInt()) || record.StTokenAmount.LTE(sdkmath.ZeroInt())
 	if noTokensUnbondedOrNegative {
 		return errorsmod.Wrapf(types.ErrInvalidUnbondingRecord, "unbonding record with id: %d has no tokens to unbond (or negative)", recordId)
 	}

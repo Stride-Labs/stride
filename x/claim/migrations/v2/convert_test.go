@@ -7,7 +7,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	oldclaimtypes "github.com/Stride-Labs/stride/v26/x/claim/migrations/v2/types"
@@ -58,7 +57,7 @@ func TestConvertToNewClaimParams(t *testing.T) {
 
 		expectedNewParams.Airdrops = append(expectedNewParams.Airdrops, &claimtypes.Airdrop{
 			AirdropIdentifier: id,
-			ClaimedSoFar:      sdk.NewInt(int64(i)),
+			ClaimedSoFar:      sdkmath.NewInt(int64(i)),
 		})
 	}
 

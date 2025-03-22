@@ -145,7 +145,7 @@ func NewMsgCreateAirdrop(
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
-	earlyClaimPenalty sdk.Dec,
+	earlyClaimPenalty sdkmath.LegacyDec,
 	distributorAddress string,
 	allocatorAddress string,
 	linkerAddress string,
@@ -220,7 +220,7 @@ func NewMsgUpdateAirdrop(
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
-	earlyClaimPenalty sdk.Dec,
+	earlyClaimPenalty sdkmath.LegacyDec,
 	distributorAddress string,
 	allocatorAddress string,
 	linkerAddress string,
@@ -402,7 +402,7 @@ func (msg *MsgUpdateUserAllocation) ValidateBasic() error {
 	}
 
 	for _, allocation := range msg.Allocations {
-		if allocation.IsNil() || allocation.LT(sdk.ZeroInt()) {
+		if allocation.IsNil() || allocation.LT(sdkmath.ZeroInt()) {
 			return errors.New("all allocation amounts must be specified and positive")
 		}
 	}

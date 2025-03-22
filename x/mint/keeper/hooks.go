@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
@@ -10,10 +11,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (k Keeper) AfterEpochEnd(context context.Context, epochInfo epochstypes.EpochInfo) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	epochIdentifier := epochInfo.Identifier
 	epochNumber := epochInfo.CurrentEpoch
 	params := k.GetParams(ctx)
@@ -84,10 +87,10 @@ func (k Keeper) Hooks() Hooks {
 }
 
 // epochs hooks.
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (h Hooks) BeforeEpochStart(ctx context.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.BeforeEpochStart(ctx, epochInfo)
 }
 
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (h Hooks) AfterEpochEnd(ctx context.Context, epochInfo epochstypes.EpochInfo) {
 	h.k.AfterEpochEnd(ctx, epochInfo)
 }

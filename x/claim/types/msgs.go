@@ -2,6 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -13,7 +14,7 @@ const TypeMsgSetAirdropAllocations = "set_airdrop_allocation"
 
 var _ sdk.Msg = &MsgSetAirdropAllocations{}
 
-func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdk.Dec) *MsgSetAirdropAllocations {
+func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdkmath.LegacyDec) *MsgSetAirdropAllocations {
 	return &MsgSetAirdropAllocations{
 		Allocator:         allocator,
 		AirdropIdentifier: airdropIdentifier,
@@ -78,7 +79,7 @@ func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	}
 
 	for _, weight := range msg.Weights {
-		if weight.Equal(sdk.NewDec(0)) {
+		if weight.Equal(sdkmath.LegacyNewDec(0)) {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid user weight")
 		}
 	}
@@ -119,7 +120,6 @@ func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
 }
 
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
-
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)

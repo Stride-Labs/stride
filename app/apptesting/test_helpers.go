@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	sdkmath "cosmossdk.io/math"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -14,24 +15,26 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	"github.com/cosmos/cosmos-sdk/types/kv"
+	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	tendermint "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/cosmos/ibc-go/v7/testing/simapp"
-	appProvider "github.com/cosmos/interchain-security/v4/app/provider"
-	icstestingutils "github.com/cosmos/interchain-security/v4/testutil/ibc_testing"
-	e2e "github.com/cosmos/interchain-security/v4/testutil/integration"
-	testkeeper "github.com/cosmos/interchain-security/v4/testutil/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	"github.com/cosmos/ibc-go/v8/testing/simapp"
+	appProvider "github.com/cosmos/interchain-security/v6/app/provider"
+	icstestingutils "github.com/cosmos/interchain-security/v6/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v6/testutil/integration"
+	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	providerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/provider/keeper"
+	providertypes "github.com/cosmos/interchain-security/v6/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -40,8 +43,8 @@ import (
 )
 
 var (
-	StrideChainID   = "STRIDE"
-	ProviderChainID = "PROVIDER"
+	StrideChainID   = "stride-test-1"
+	ProviderChainID = "provider-test-1"
 	FirstClientId   = "07-tendermint-0"
 
 	TestIcaVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
@@ -81,11 +84,12 @@ type AppTestHelper struct {
 // AppTestHelper Constructor
 func (s *AppTestHelper) Setup() {
 	s.App = app.InitStrideTestApp(true)
-	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{
-		Height:  1,
-		ChainID: StrideChainID,
-		Time:    time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
-	})
+	s.Ctx = s.App.BaseApp.NewContext(false).
+		WithBlockHeader(tmtypesproto.Header{
+			Height:  1,
+			ChainID: StrideChainID,
+			Time:    time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+		})
 	s.QueryHelper = &baseapp.QueryServiceTestHelper{
 		GRPCQueryRouter: s.App.GRPCQueryRouter(),
 		Ctx:             s.Ctx,
@@ -115,7 +119,8 @@ func (s *AppTestHelper) Setup() {
 func SetupSuitelessTestHelper() SuitelessAppTestHelper {
 	s := SuitelessAppTestHelper{}
 	s.App = app.InitStrideTestApp(true)
-	s.Ctx = s.App.BaseApp.NewContext(false, tmtypesproto.Header{Height: 1, ChainID: StrideChainID})
+	s.Ctx = s.App.BaseApp.NewContext(false).
+		WithBlockHeader(tmtypesproto.Header{Height: 1, ChainID: StrideChainID})
 	return s
 }
 
@@ -163,34 +168,87 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.ProviderApp = s.ProviderChain.App.(*appProvider.App)
 
 	// Initialize a host testing app using SimApp -> TestingApp
+	// We need to run this with the cosmos bech prefix so that the gov module authority
+	// that's passed into the keepers is a cosmos address
 	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
-	s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
+	})
 
-	// create a consumer addition prop
-	// NOTE: the initial height passed to CreateConsumerClient
-	// must be the height on the consumer when InitGenesis is called
-	prop := testkeeper.GetTestConsumerAdditionProp()
-	prop.ChainId = StrideChainID
-	prop.UnbondingPeriod = s.ProviderApp.GetTestStakingKeeper().UnbondingTime(s.ProviderChain.GetContext())
-	prop.InitialHeight = clienttypes.Height{RevisionNumber: 0, RevisionHeight: 3}
-
-	// create a consumer client on the provider chain
+	// Create a new consumer client in the provider chain
+	consumerId := "0"
+	providerContext := s.ProviderChain.GetContext()
 	providerKeeper := s.ProviderApp.GetProviderKeeper()
-	err := providerKeeper.CreateConsumerClient(
-		s.ProviderChain.GetContext(),
-		prop,
-	)
+	providerSlashingKeeper := s.ProviderApp.GetTestSlashingKeeper()
+	providerMsgServer := providerkeeper.NewMsgServerImpl(&providerKeeper)
+
+	providerKeeper.SetConsumerChainId(providerContext, consumerId, StrideChainID)
+	providerKeeper.SetConsumerPhase(providerContext, consumerId, providertypes.CONSUMER_PHASE_INITIALIZED)
+
+	initializationParams := providertypes.DefaultConsumerInitializationParameters()
+	err := providerKeeper.SetConsumerInitializationParameters(providerContext, consumerId, initializationParams)
+	s.Require().NoError(err)
+	err = providerKeeper.SetConsumerPowerShapingParameters(providerContext, consumerId, providertypes.PowerShapingParameters{})
+	s.Require().NoError(err)
+	err = providerKeeper.CreateConsumerClient(providerContext, consumerId, []byte{})
+	s.Require().NoError(err)
+
+	clientId, found := providerKeeper.GetConsumerClientId(providerContext, consumerId)
+	s.Require().True(found)
+	s.Require().Equal(clientId, "07-tendermint-0")
+
+	infractionParams, err := providertypes.DefaultConsumerInfractionParameters(providerContext, providerSlashingKeeper)
+	s.Require().NoError(err)
+	_, err = providerMsgServer.CreateConsumer(providerContext, &providertypes.MsgCreateConsumer{
+		ChainId:                  StrideChainID,
+		InfractionParameters:     &infractionParams,
+		InitializationParameters: &initializationParams,
+		Metadata:                 providertypes.ConsumerMetadata{},
+		PowerShapingParameters: &providertypes.PowerShapingParameters{
+			Top_N: 0,
+		},
+	})
+	s.Require().NoError(err)
+
+	// providerKeeper.SetConsumerChainId(providerContext, consumerId, StrideChainID)
+	// providerKeeper.SetConsumerPhase(providerContext, consumerId, providertypes.CONSUMER_PHASE_INITIALIZED)
+	// err := providerKeeper.SetConsumerInitializationParameters(providerContext, consumerId, testkeeper.GetTestInitializationParameters())
+	// s.Require().NoError(err)
+	// err = providerKeeper.SetConsumerPowerShapingParameters(providerContext, consumerId, providertypes.PowerShapingParameters{
+
+	// })
+	// err = providerKeeper.CreateConsumerClient(providerContext, consumerId, []byte{})
+	// s.Require().NoError(err)
+
+	// clientId, found := providerKeeper.GetConsumerClientId(providerContext, consumerId)
+	// s.Require().True(found)
+	// s.Require().Equal(clientId, "07-tendermint-0")
+
+	// Set the host chain mint params to 0 (otherwise the begin blocker in the next step will fail)
+	// TODO: There must be a better way to do it
+	hostApp := s.HostChain.GetSimApp()
+	hostParams, err := hostApp.MintKeeper.Params.Get(s.HostChain.GetContext())
+	s.Require().NoError(err)
+
+	hostParams.InflationMin = sdkmath.LegacyZeroDec()
+	hostParams.InflationMax = sdkmath.LegacyZeroDec()
+	err = hostApp.MintKeeper.Params.Set(s.HostChain.GetContext(), hostParams)
 	s.Require().NoError(err)
 
 	// move provider and host chain to next block
 	s.Coordinator.CommitBlock(s.ProviderChain)
 	s.Coordinator.CommitBlock(s.HostChain)
 
+	// Launch the consumer
+	bondedValidators, err := providerKeeper.GetLastBondedValidators(providerContext)
+	s.Require().NoError(err)
+	activeValidators, err := providerKeeper.GetLastProviderConsensusActiveValidators(providerContext)
+	s.Require().NoError(err)
+	err = providerKeeper.LaunchConsumer(providerContext, bondedValidators, activeValidators, consumerId)
+	s.Require().NoError(err)
+
 	// initialize the consumer chain with the genesis state stored on the provider
-	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(
-		s.ProviderChain.GetContext(),
-		StrideChainID,
-	)
+	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(providerContext, StrideChainID)
 	s.Require().True(found, "consumer genesis not found")
 
 	// use the initial validator set from the consumer genesis as the stride chain's initial set
@@ -573,13 +631,13 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
 	s.Require().NoError(err)
-	_, exists := s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
-	s.Require().True(exists)
+	_, err = s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
+	s.Require().NoError(err)
 
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
 	s.Require().NotPanics(func() {
-		beginBlockRequest := abci.RequestBeginBlock{}
-		s.App.BeginBlocker(s.Ctx, beginBlockRequest)
+		_, err := s.App.BeginBlocker(s.Ctx)
+		s.Require().NoError(err)
 	})
 }
 
@@ -588,16 +646,47 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 func (s *AppTestHelper) GetBankStoreKeyPrefix(address, denom string) []byte {
 	_, addressBz, err := bech32.DecodeAndConvert(address)
 	s.Require().NoError(err, "no error expected when bech decoding address")
-	return append(banktypes.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
+	return append(bankv3types.CreateAccountBalancesPrefix(addressBz), []byte(denom)...)
 }
 
 // Extracts the address and denom from a bank store prefix
 // Useful for testing balance ICQs as it can confirm that the serialized query request
 // data has the proper address and denom
 func (s *AppTestHelper) ExtractAddressAndDenomFromBankPrefix(data []byte) (address, denom string) {
-	addressBz, denom, err := banktypes.AddressAndDenomFromBalancesStore(data[1:]) // Remove BalancePrefix byte
+	addressBz, denom, err := AddressAndDenomFromBalancesStore(data[1:]) // Remove BalancePrefix byte
 	s.Require().NoError(err, "no error expected when getting address and denom from balance store")
 	return addressBz.String(), denom
+}
+
+// AddressAndDenomFromBalancesStore returns an account address and denom from a balances prefix
+// store. The key must not contain the prefix BalancesPrefix as the prefix store
+// iterator discards the actual prefix.
+//
+// If invalid key is passed, AddressAndDenomFromBalancesStore returns ErrInvalidKey.
+func AddressAndDenomFromBalancesStore(key []byte) (sdk.AccAddress, string, error) {
+	if len(key) == 0 {
+		return nil, "", banktypes.ErrInvalidKey
+	}
+
+	kv.AssertKeyAtLeastLength(key, 1)
+
+	addrBound := int(key[0])
+
+	if len(key)-1 < addrBound {
+		return nil, "", banktypes.ErrInvalidKey
+	}
+
+	return key[1 : addrBound+1], string(key[addrBound+1:]), nil
+}
+
+// Returns a valid stride address
+func SampleStrideAddress() string {
+	return "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
+}
+
+// Returns a valid host address
+func SampleHostAddress() string {
+	return "cosmos1rq3pjmk9hr4xq99e8jx683rukjmxhcp4vtjhmy"
 }
 
 // Generates a valid and invalid test address (used for non-keeper tests)
@@ -698,4 +787,34 @@ func (s *AppTestHelper) CheckEventValueNotEmitted(eventType, attributeKey, expec
 	allValues, valueFound := s.checkEventAttributeValueMatch(events, attributeKey, expectedValue)
 	s.Require().False(valueFound, "attribute %s with value %s should not have been found in event %s. Values emitted for attribute: %+v",
 		attributeKey, expectedValue, eventType, allValues)
+}
+
+// During setup, it's common to need to change the bech prefix temporarily
+// The prefix is controlled by a global config so we need to update the prefix globally,
+// call our respective function, and then reset it back to stride
+// Note: We disable caching to prevent addresses from using the previously configured prefix
+func RunWithDifferentBechPrefix(bechPrefix string, function func()) {
+	// Grab the initial prefix
+	initialPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+
+	// Disable the cache and update the config with the specified prefix
+	sdk.SetAddrCacheEnabled(false)
+	SetConfigBechPrefix(bechPrefix)
+
+	// Call the respective function
+	function()
+
+	// Reset the prefix and re-enable the cache
+	SetConfigBechPrefix(initialPrefix)
+	sdk.SetAddrCacheEnabled(true)
+}
+
+// Sets the account, validator, and consensus address bech prefixes
+func SetConfigBechPrefix(bechPrefix string) {
+	config := sdk.GetConfig()
+	valOperatorPrefix := bechPrefix + sdk.PrefixValidator + sdk.PrefixOperator
+	valConsensusPrefix := bechPrefix + sdk.PrefixValidator + sdk.PrefixConsensus
+	config.SetBech32PrefixForAccount(bechPrefix, bechPrefix+sdk.PrefixPublic)
+	config.SetBech32PrefixForValidator(valOperatorPrefix, valOperatorPrefix+sdk.PrefixPublic)
+	config.SetBech32PrefixForConsensusNode(valConsensusPrefix, valConsensusPrefix+sdk.PrefixPublic)
 }

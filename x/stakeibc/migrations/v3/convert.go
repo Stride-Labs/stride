@@ -2,7 +2,6 @@ package v3
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	oldstakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/migrations/v3/types"
@@ -15,7 +14,7 @@ var (
 	ValidatorSlashQueryThreshold uint64 = 1
 	// The exchange rate here does not matter since it will be updated after the slash query
 	// Setting it to this value makes it easier to verify that we've submitted the query
-	DefaultExchangeRate = sdk.MustNewDecFromStr("0.999999999999999999")
+	DefaultExchangeRate = sdkmath.LegacyMustNewDecFromStr("0.999999999999999999")
 )
 
 // Converts an old validator data type to the new schema
@@ -27,8 +26,8 @@ var (
 //   - InternalExchangeRate is now a decimal named SharesToTokensRate
 //   - DelegationAmt renamed to Delegation
 func convertToNewValidator(oldValidator oldstakeibctypes.Validator, totalDelegations sdkmath.Int) newstakeibctypes.Validator {
-	queryThreshold := sdk.NewDecWithPrec(utils.UintToInt(ValidatorSlashQueryThreshold), 2) // percentage
-	slashQueryCheckpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
+	queryThreshold := sdkmath.LegacyNewDecWithPrec(utils.UintToInt(ValidatorSlashQueryThreshold), 2) // percentage
+	slashQueryCheckpoint := queryThreshold.Mul(sdkmath.LegacyNewDecFromInt(totalDelegations)).TruncateInt()
 
 	// Note: The old name of "TokensToShares" was slightly misleading - it represents the conversion of shares to tokens
 	sharesToTokensRate := DefaultExchangeRate

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
@@ -154,7 +153,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 	validClawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
 	validDeadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 
-	validEarlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
+	validEarlyClaimPenalty := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	// Note: the majority of test cases are covered in AirdropConfigValidateBasic
 	tests := []struct {
@@ -255,7 +254,7 @@ func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
 	clawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
 	deadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 
-	earlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
+	earlyClaimPenalty := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	msg := types.NewMsgCreateAirdrop(
 		admin,
@@ -311,7 +310,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 	validClawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
 	validDeadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 
-	validEarlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
+	validEarlyClaimPenalty := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	// Note: the majority of test cases are covered in AirdropConfigValidateBasic
 	tests := []struct {
@@ -412,7 +411,7 @@ func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
 	clawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
 	deadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 
-	earlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
+	earlyClaimPenalty := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	msg := types.NewMsgUpdateAirdrop(
 		admin,

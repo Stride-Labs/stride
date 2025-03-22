@@ -3,20 +3,20 @@ package app
 import (
 	"fmt"
 
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
-	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v7/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v8/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	consumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
-	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
 
 	v10 "github.com/Stride-Labs/stride/v26/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v26/app/upgrades/v11"
@@ -36,6 +36,7 @@ import (
 	v24 "github.com/Stride-Labs/stride/v26/app/upgrades/v24"
 	v25 "github.com/Stride-Labs/stride/v26/app/upgrades/v25"
 	v26 "github.com/Stride-Labs/stride/v26/app/upgrades/v26"
+	v27 "github.com/Stride-Labs/stride/v26/app/upgrades/v27"
 	v3 "github.com/Stride-Labs/stride/v26/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v26/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v26/app/upgrades/v5"
@@ -61,26 +62,26 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	// v2 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v2.UpgradeName,
-		v2.CreateUpgradeHandler(app.mm, app.configurator),
+		v2.CreateUpgradeHandler(app.ModuleManager, app.configurator),
 	)
 
 	// v3 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v3.UpgradeName,
-		v3.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
+		v3.CreateUpgradeHandler(app.ModuleManager, app.configurator, app.ClaimKeeper),
 	)
 
 	// v4 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v4.UpgradeName,
-		v4.CreateUpgradeHandler(app.mm, app.configurator),
+		v4.CreateUpgradeHandler(app.ModuleManager, app.configurator),
 	)
 
 	// v5 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v5.UpgradeName,
 		v5.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			app.InterchainqueryKeeper,
@@ -96,7 +97,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v6.UpgradeName,
 		v6.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			app.ClaimKeeper,
@@ -107,7 +108,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v7.UpgradeName,
 		v7.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			app.AccountKeeper,
@@ -124,7 +125,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v8.UpgradeName,
 		v8.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			app.ClaimKeeper,
@@ -135,14 +136,14 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	// v9 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v9.UpgradeName,
-		v9.CreateUpgradeHandler(app.mm, app.configurator, app.ClaimKeeper),
+		v9.CreateUpgradeHandler(app.ModuleManager, app.configurator, app.ClaimKeeper),
 	)
 
 	// v10 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v10.UpgradeName,
 		v10.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			app.keys[capabilitytypes.ModuleName],
@@ -166,7 +167,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v11.UpgradeName,
 		v11.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 		),
 	)
@@ -175,7 +176,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v12.UpgradeName,
 		v12.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			appOpts,
@@ -189,7 +190,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v13.UpgradeName,
 		v13.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.StakeibcKeeper,
 		),
@@ -199,7 +200,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v14.UpgradeName,
 		v14.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			app.AccountKeeper,
@@ -218,7 +219,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v15.UpgradeName,
 		v15.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.InterchainqueryKeeper,
 			app.StakeibcKeeper,
@@ -229,7 +230,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v16.UpgradeName,
 		v16.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.StakeibcKeeper,
 			app.RatelimitKeeper,
@@ -240,7 +241,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v17.UpgradeName,
 		v17.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.BankKeeper,
 			app.DistrKeeper,
@@ -254,7 +255,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v18.UpgradeName,
 		v18.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.BankKeeper,
 			app.GovKeeper,
@@ -267,7 +268,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v19.UpgradeName,
 		v19.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
 			app.RatelimitKeeper,
@@ -279,7 +280,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v20.UpgradeName,
 		v20.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.ConsumerKeeper,
 			app.StakeibcKeeper,
@@ -290,7 +291,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v21.UpgradeName,
 		v21.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 		),
 	)
@@ -299,7 +300,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v22.UpgradeName,
 		v22.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.StakeibcKeeper,
 		),
@@ -309,7 +310,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v23.UpgradeName,
 		v23.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.IBCKeeper.ClientKeeper,
 			app.RecordsKeeper,
@@ -321,7 +322,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v24.UpgradeName,
 		v24.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.BankKeeper,
 			app.RecordsKeeper,
@@ -333,7 +334,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v25.UpgradeName,
 		v25.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.BankKeeper,
 			app.RecordsKeeper,
@@ -346,9 +347,19 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v26.UpgradeName,
 		v26.CreateUpgradeHandler(
-			app.mm,
+			app.ModuleManager,
 			app.configurator,
 			app.ICQOracleKeeper,
+		),
+	)
+
+	// v27 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v27.UpgradeName,
+		v27.CreateUpgradeHandler(
+			app.ModuleManager,
+			app.configurator,
+			app.ConsumerKeeper,
 		),
 	)
 

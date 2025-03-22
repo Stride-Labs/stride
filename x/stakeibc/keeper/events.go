@@ -106,7 +106,7 @@ func EmitValidatorSharesToTokensRateChangeEvent(
 	chainId string,
 	validatorAddress string,
 	previousSharesToTokensRate,
-	currentSharesToTokensRate sdk.Dec,
+	currentSharesToTokensRate sdkmath.LegacyDec,
 ) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -125,7 +125,7 @@ func EmitValidatorSlashEvent(
 	ctx sdk.Context,
 	hostZone types.HostZone,
 	validatorAddress string,
-	slashPercent sdk.Dec,
+	slashPercent sdkmath.LegacyDec,
 	slashAmount sdkmath.Int,
 	currentDelegation sdkmath.Int,
 ) {

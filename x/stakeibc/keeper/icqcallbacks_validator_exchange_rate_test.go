@@ -5,7 +5,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	"github.com/cosmos/gogoproto/proto"
 
@@ -36,14 +36,14 @@ type ValidatorICQCallbackArgs struct {
 type ValidatorICQCallbackTestCase struct {
 	initialState                ValidatorICQCallbackState
 	validArgs                   ValidatorICQCallbackArgs
-	sharesToTokensRateIfSlashed sdk.Dec
+	sharesToTokensRateIfSlashed sdkmath.LegacyDec
 }
 
 func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens int64, shares int64) []byte {
 	validator := stakingtypes.Validator{
 		OperatorAddress: address,
 		Tokens:          sdkmath.NewInt(tokens),
-		DelegatorShares: sdk.NewDec(shares),
+		DelegatorShares: sdkmath.LegacyNewDec(shares),
 	}
 	validatorBz := s.App.RecordsKeeper.Cdc.MustMarshal(&validator)
 	return validatorBz
@@ -60,8 +60,8 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 	// In this example, the validator has 2000 shares, originally had 2000 tokens,
 	// and now has 1000 tokens (after being slashed)
 	numShares := int64(2000)
-	sharesToTokensRate := sdk.NewDec(1)
-	sharesToTokensRateIfSlashed := sdk.MustNewDecFromStr("0.5")
+	sharesToTokensRate := sdkmath.LegacyNewDec(1)
+	sharesToTokensRateIfSlashed := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	// The validator we'll query the sharesToTokens rate for
 	queriedValidator := types.Validator{
@@ -78,7 +78,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 		TransferChannelId:    ibctesting.FirstChannelID,
 		DelegationIcaAddress: delegatorAddress,
 		DepositAddress:       depositAddress,
-		RedemptionRate:       sdk.NewDec(1),
+		RedemptionRate:       sdkmath.LegacyNewDec(1),
 		Validators: []*types.Validator{
 			&queriedValidator,
 			{Name: "val2"}, // This validator isn't being queried
@@ -150,7 +150,7 @@ func (s *KeeperTestSuite) SetupValidatorICQCallback(validatorSlashed, liquidStak
 }
 
 // Helper function to check the validator's shares to tokens rate after the query
-func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdk.Dec) {
+func (s *KeeperTestSuite) checkValidatorSharesToTokensRate(expectedSharesToTokensRate sdkmath.LegacyDec) {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
 	s.Require().True(found, "host zone found")
 	s.Require().Equal(expectedSharesToTokensRate.String(), hostZone.Validators[0].SharesToTokensRate.String(),
@@ -379,7 +379,7 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_Successful_NoP
 
 	// Set the sharesToTokens rate to zero
 	hostZone := tc.initialState.hostZone
-	hostZone.Validators[0].SharesToTokensRate = sdk.ZeroDec()
+	hostZone.Validators[0].SharesToTokensRate = sdkmath.LegacyZeroDec()
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)

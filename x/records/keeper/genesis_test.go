@@ -1,17 +1,11 @@
-package records_test
+package keeper_test
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-
-	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
 	"github.com/Stride-Labs/stride/v26/testutil/nullify"
-	"github.com/Stride-Labs/stride/v26/x/records"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
-func TestGenesis(t *testing.T) {
+func (s *KeeperTestSuite) TestGenesis() {
 	genesisState := types.GenesisState{
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
@@ -55,18 +49,16 @@ func TestGenesis(t *testing.T) {
 			},
 		},
 	}
-	k, ctx := keepertest.RecordsKeeper(t)
-	records.InitGenesis(ctx, *k, genesisState)
-	got := records.ExportGenesis(ctx, *k)
-	require.NotNil(t, got)
+	s.App.RecordsKeeper.InitGenesis(s.Ctx, genesisState)
+	got := s.App.RecordsKeeper.ExportGenesis(s.Ctx)
+	s.Require().NotNil(got)
 
 	nullify.Fill(&genesisState)
 	nullify.Fill(got)
 
-	require.Equal(t, genesisState.PortId, got.PortId)
+	s.Require().Equal(genesisState.PortId, got.PortId)
 
-	require.ElementsMatch(t, genesisState.DepositRecordList, got.DepositRecordList)
-	require.Equal(t, genesisState.DepositRecordCount, got.DepositRecordCount)
-	require.ElementsMatch(t, genesisState.LsmTokenDepositList, got.LsmTokenDepositList)
-	// this line is used by starport scaffolding # genesis/test/assert
+	s.Require().ElementsMatch(genesisState.DepositRecordList, got.DepositRecordList)
+	s.Require().Equal(genesisState.DepositRecordCount, got.DepositRecordCount)
+	s.Require().ElementsMatch(genesisState.LsmTokenDepositList, got.LsmTokenDepositList)
 }

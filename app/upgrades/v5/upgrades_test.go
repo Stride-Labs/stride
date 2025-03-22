@@ -3,12 +3,12 @@ package v5_test
 import (
 	"testing"
 
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/suite"
 
@@ -47,7 +47,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Note: The max slash safety threshold was deprecated in v14 and was later removed from this unit test
 
 	// Setup stores for migrated modules
-	codec := app.MakeEncodingConfig().Marshaler
+	codec := app.MakeEncodingConfig().Codec
 	checkClaimStoreAfterMigration := s.SetupOldClaimStore(codec)
 	checkIcacallbackStoreAfterMigration := s.SetupOldIcacallbackStore(codec)
 	checkRecordStoreAfterMigration := s.SetupOldRecordStore(codec)
@@ -102,7 +102,7 @@ func (s *UpgradeTestSuite) SetupOldClaimStore(codec codec.Codec) func() {
 // Stores delegate callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (s *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the marshalled callback args
 	delegateValidator := "dval"
 	delegateCallback := oldstakeibctypes.DelegateCallback{
@@ -143,7 +143,7 @@ func (s *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackD
 // Stores undelegate callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (s *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the marshalled callback args
 	undelegateValidator := "uval"
 	undelegateCallback := oldstakeibctypes.UndelegateCallback{
@@ -182,7 +182,7 @@ func (s *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbac
 // Stores rebalance callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (s *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the marshalled callback args
 	rebalanceValidator := "rval"
 	rebalanceCallback := oldstakeibctypes.RebalanceCallback{
@@ -223,7 +223,7 @@ func (s *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callback
 // Stores claim callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should NOT get migrated
-func (s *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the callback data for the claim callback
 	claimKey := "claim_key"
 	oldClaimCallbackData := icacallbacktypes.CallbackData{
@@ -362,8 +362,8 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 			},
 		},
 		StakedBal:          uint64(3000000),
-		LastRedemptionRate: sdk.OneDec(),
-		RedemptionRate:     sdk.OneDec(),
+		LastRedemptionRate: sdkmath.LegacyOneDec(),
+		RedemptionRate:     sdkmath.LegacyOneDec(),
 	}
 	hostZoneBz, err := codec.Marshal(&hostZone)
 	s.Require().NoError(err)
