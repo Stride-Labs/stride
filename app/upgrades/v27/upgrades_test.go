@@ -1,8 +1,11 @@
 package v27_test
 
 import (
+	"fmt"
+	"sort"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -36,6 +39,18 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.Require().Equal(params.ConsumerId, "1")
 }
 
+// SortDelegations sorts delegations by validator address and then delegator address
+func sortDelegations(delegations []stakingtypes.Delegation) {
+	sort.SliceStable(delegations, func(i, j int) bool {
+		// First compare validator addresses
+		if delegations[i].ValidatorAddress != delegations[j].ValidatorAddress {
+			return delegations[i].ValidatorAddress < delegations[j].ValidatorAddress
+		}
+		// If validator addresses are the same, compare delegator addresses
+		return delegations[i].DelegatorAddress < delegations[j].DelegatorAddress
+	})
+}
+
 func (s *UpgradeTestSuite) TestDistributionFix() {
 	jsonDistGenesis := os.MustReadFile("test_dist_genesis.json")
 	jsonStakingGenesis := os.MustReadFile("test_staking_genesis.json")
@@ -45,6 +60,8 @@ func (s *UpgradeTestSuite) TestDistributionFix() {
 	s.App.AppCodec().MustUnmarshalJSON(jsonDistGenesis, &distGenesisState)
 	var stakingGenesisState stakingtypes.GenesisState
 	s.App.AppCodec().MustUnmarshalJSON(jsonStakingGenesis, &stakingGenesisState)
+
+	sortDelegations(stakingGenesisState.Delegations)
 
 	// Align x/bank modules with faulty state
 	for i := range distGenesisState.OutstandingRewards {
@@ -72,16 +89,52 @@ func (s *UpgradeTestSuite) TestDistributionFix() {
 	s.Require().NoError(err)
 
 	// Verify that things are failing
+	s.Ctx = s.Ctx.WithBlockHeight(16925943)
+
 	for _, delegation := range stakingGenesisState.Delegations {
 		delAddr := types.MustAccAddressFromBech32(delegation.DelegatorAddress)
 
-		_, err = s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, delAddr, valAddr)
-		if err != nil {
-			s.Require().ErrorContains(err, "asdasdasd")
+		period, err := s.App.DistrKeeper.GetDelegatorStartingInfo(s.Ctx, valAddr, delAddr)
+		s.Require().NoError(err)
+
+		// All delegators from before 3913 fail
+		// See faulty_state.csv for reference
+		if period.PreviousPeriod < 3913 {
+			s.Require().Panics(func() {
+				_, _ = s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, delAddr, valAddr)
+				fmt.Printf("%s should panic\n", delAddr.String())
+				s.Require().True(false)
+			})
+		} else {
+			// Fork ctx to prevent modifying the state
+			subCtx, _ := s.Ctx.CacheContext()
+
+			_, err := s.App.DistrKeeper.WithdrawDelegationRewards(subCtx, delAddr, valAddr)
+			s.Require().NoError(err)
 		}
+
 	}
 
-	// TODO Fix x/ditribution state
+	// Fix x/ditribution state
 
-	// TODO Verify that things are working
+	// There should be anothre slashing event from before period 168 with slash fraction of 0.01%
+	// See faulty_state.csv for reference
+	slashingEventPeriod := uint64(168)
+	slashingEventFraction := sdkmath.LegacyMustNewDecFromStr("0.0001")
+
+	err = s.App.DistrKeeper.SetValidatorSlashEvent(
+		s.Ctx,
+		valAddr,
+		1,
+		slashingEventPeriod,
+		disttypes.NewValidatorSlashEvent(slashingEventPeriod, slashingEventFraction),
+	)
+	s.Require().NoError(err)
+
+	// Verify that things are working
+	for _, delegation := range stakingGenesisState.Delegations {
+		s.Require().NotPanics(func() {
+			_, _ = s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, types.MustAccAddressFromBech32(delegation.DelegatorAddress), valAddr)
+		})
+	}
 }
