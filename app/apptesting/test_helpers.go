@@ -163,11 +163,21 @@ func CreateRandomAccounts(numAccts int) []sdk.AccAddress {
 func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.Coordinator = ibctesting.NewCoordinator(s.T(), 0)
 
-	// Initialize a provider testing app
-	ibctesting.DefaultTestingAppInit = icstestingutils.ProviderAppIniter
-	s.ProviderChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ProviderChainID)
-	s.ProviderApp = s.ProviderChain.App.(*icsproviderapp.App)
+	// Create a host chain, provider chain, and stride consumer chain
+	hostChain := s.createHostChainTestingApp(hostChainID)
+	providerChain, strideConsumerChain := s.createStrideConsumerICSTestingApp()
 
+	// Update coordinator
+	s.Coordinator.Chains = map[string]*ibctesting.TestChain{
+		ProviderChainID: providerChain,
+		StrideChainID:   strideConsumerChain,
+		hostChainID:     hostChain,
+	}
+	s.IbcEnabled = true
+}
+
+// Creates and stores a new HostChain testing App
+func (s *AppTestHelper) createHostChainTestingApp(hostChainID string) *ibctesting.TestChain {
 	// Initialize a host testing app using SimApp -> TestingApp
 	// We need to run this with the cosmos bech prefix so that the gov module authority
 	// that's passed into the keepers is a cosmos address
@@ -175,6 +185,30 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
 		s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
 	})
+
+	// Set the host chain mint params to 0 (otherwise the begin blocker in the next step will fail)
+	// TODO: There must be a better way to do it
+	hostApp := s.HostChain.GetSimApp()
+	hostParams, err := hostApp.MintKeeper.Params.Get(s.HostChain.GetContext())
+	s.Require().NoError(err)
+
+	hostParams.InflationMin = sdkmath.LegacyZeroDec()
+	hostParams.InflationMax = sdkmath.LegacyZeroDec()
+	err = hostApp.MintKeeper.Params.Set(s.HostChain.GetContext(), hostParams)
+	s.Require().NoError(err)
+
+	// Move host chain to next block
+	s.Coordinator.CommitBlock(s.HostChain)
+
+	return s.HostChain
+}
+
+// Creates and stores a new ICS Provider App and Stride Consumer App
+func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestChain, *ibctesting.TestChain) {
+	// Initialize a provider testing app
+	ibctesting.DefaultTestingAppInit = icstestingutils.ProviderAppIniter
+	s.ProviderChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ProviderChainID)
+	s.ProviderApp = s.ProviderChain.App.(*icsproviderapp.App)
 
 	providerContext := s.ProviderChain.GetContext()
 	providerKeeper := s.ProviderApp.GetProviderKeeper()
@@ -239,20 +273,8 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 		providerKeeper.SetOptedIn(providerContext, consumerId, providertypes.NewProviderConsAddress(consAddr))
 	}
 
-	// Set the host chain mint params to 0 (otherwise the begin blocker in the next step will fail)
-	// TODO: There must be a better way to do it
-	hostApp := s.HostChain.GetSimApp()
-	hostParams, err := hostApp.MintKeeper.Params.Get(s.HostChain.GetContext())
-	s.Require().NoError(err)
-
-	hostParams.InflationMin = sdkmath.LegacyZeroDec()
-	hostParams.InflationMax = sdkmath.LegacyZeroDec()
-	err = hostApp.MintKeeper.Params.Set(s.HostChain.GetContext(), hostParams)
-	s.Require().NoError(err)
-
-	// move provider and host chain to next block
+	// Move host chain to next block
 	s.Coordinator.CommitBlock(s.ProviderChain)
-	s.Coordinator.CommitBlock(s.HostChain)
 
 	// Get the consumer's genesis state on the provider and confirm a client was created
 	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(
@@ -297,13 +319,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
 	s.StrideChain.NextBlock()
 
-	// Update coordinator
-	s.Coordinator.Chains = map[string]*ibctesting.TestChain{
-		StrideChainID:   s.StrideChain,
-		hostChainID:     s.HostChain,
-		ProviderChainID: s.ProviderChain,
-	}
-	s.IbcEnabled = true
+	return s.ProviderChain, s.StrideChain
 }
 
 // Creates clients, connections, and a transfer channel between stride and a host chain
