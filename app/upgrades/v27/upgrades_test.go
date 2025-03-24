@@ -52,6 +52,8 @@ func sortDelegations(delegations []stakingtypes.Delegation) {
 }
 
 func (s *UpgradeTestSuite) TestDistributionFix() {
+	s.Ctx = s.Ctx.WithBlockHeight(16925943) // 2025-03-24T13:30:39.449960913Z
+
 	jsonDistGenesis := os.MustReadFile("test_dist_genesis.json")
 	jsonStakingGenesis := os.MustReadFile("test_staking_genesis.json")
 
@@ -89,20 +91,21 @@ func (s *UpgradeTestSuite) TestDistributionFix() {
 	s.Require().NoError(err)
 
 	// Verify that things are failing
-	s.Ctx = s.Ctx.WithBlockHeight(16925943)
-
+	cutoutHeight := uint64(4300034)
 	for _, delegation := range stakingGenesisState.Delegations {
 		delAddr := types.MustAccAddressFromBech32(delegation.DelegatorAddress)
 
 		period, err := s.App.DistrKeeper.GetDelegatorStartingInfo(s.Ctx, valAddr, delAddr)
 		s.Require().NoError(err)
+		s.Require().Positive(period.PreviousPeriod)
+		s.Require().Positive(period.Height)
 
-		// All delegators from before 3913 fail
+		// All delegators from before height 4300034 fail
 		// See faulty_state.csv for reference
-		if period.PreviousPeriod < 3913 {
+		if period.Height < cutoutHeight {
 			s.Require().Panics(func() {
 				_, _ = s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, delAddr, valAddr)
-				fmt.Printf("%s should panic\n", delAddr.String())
+				fmt.Printf("%s should panic (%d < %d)\n", delAddr.String(), period.Height, 5047518)
 				s.Require().True(false)
 			})
 		} else {
@@ -117,15 +120,16 @@ func (s *UpgradeTestSuite) TestDistributionFix() {
 
 	// Fix x/ditribution state
 
-	// There should be anothre slashing event from before period 168 with slash fraction of 0.01%
+	// There should be anothre slashing event between blocks 4300034-5047517/periods 3893-3912 with slash fraction of 0.01%
 	// See faulty_state.csv for reference
-	slashingEventPeriod := uint64(168)
+	slashingEventBlock := cutoutHeight
+	slashingEventPeriod := uint64(3893)
 	slashingEventFraction := sdkmath.LegacyMustNewDecFromStr("0.0001")
 
 	err = s.App.DistrKeeper.SetValidatorSlashEvent(
 		s.Ctx,
 		valAddr,
-		1,
+		slashingEventBlock,
 		slashingEventPeriod,
 		disttypes.NewValidatorSlashEvent(slashingEventPeriod, slashingEventFraction),
 	)
