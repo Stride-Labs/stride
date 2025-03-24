@@ -46,7 +46,6 @@ import (
 var (
 	StrideChainID   = "stride-test-1"
 	ProviderChainID = "provider-test-1"
-	FirstClientId   = "07-tendermint-0"
 
 	TestIcaVersion = string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
 		Version:                icatypes.Version,
@@ -341,7 +340,7 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.Ctx = s.StrideChain.GetContext()
 
 	// Finally confirm the channel was setup properly
-	s.Require().Equal("07-tendermint-0", s.TransferPath.EndpointA.ClientID, "stride clientID")
+	s.Require().Equal(ibctesting.FirstClientID, s.TransferPath.EndpointA.ClientID, "stride clientID")
 	s.Require().Equal(ibctesting.FirstConnectionID, s.TransferPath.EndpointA.ConnectionID, "stride connectionID")
 	s.Require().Equal(ibctesting.FirstChannelID, s.TransferPath.EndpointA.ChannelID, "stride transfer channelID")
 }
@@ -606,10 +605,10 @@ func (s *AppTestHelper) MockClientLatestHeight(height uint64) {
 		LatestHeight: clienttypes.NewHeight(1, height),
 	}
 	connection := connectiontypes.ConnectionEnd{
-		ClientId: FirstClientId,
+		ClientId: ibctesting.FirstClientID,
 	}
 	s.App.IBCKeeper.ConnectionKeeper.SetConnection(s.Ctx, ibctesting.FirstConnectionID, connection)
-	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, FirstClientId, &clientState)
+	s.App.IBCKeeper.ClientKeeper.SetClientState(s.Ctx, ibctesting.FirstClientID, &clientState)
 }
 
 // Helper function to mock out a client and connection to test
