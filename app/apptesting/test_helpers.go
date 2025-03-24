@@ -27,12 +27,13 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctestingmock "github.com/cosmos/ibc-go/v8/testing/mock"
 	"github.com/cosmos/ibc-go/v8/testing/simapp"
-	appProvider "github.com/cosmos/interchain-security/v6/app/provider"
+	icsproviderapp "github.com/cosmos/interchain-security/v6/app/provider"
 	icstestingutils "github.com/cosmos/interchain-security/v6/testutil/ibc_testing"
 	e2e "github.com/cosmos/interchain-security/v6/testutil/integration"
+	icstestingkeeper "github.com/cosmos/interchain-security/v6/testutil/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
-	providerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/provider/keeper"
 	providertypes "github.com/cosmos/interchain-security/v6/x/ccv/provider/types"
 	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 	"github.com/stretchr/testify/require"
@@ -165,7 +166,7 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	// Initialize a provider testing app
 	ibctesting.DefaultTestingAppInit = icstestingutils.ProviderAppIniter
 	s.ProviderChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ProviderChainID)
-	s.ProviderApp = s.ProviderChain.App.(*appProvider.App)
+	s.ProviderApp = s.ProviderChain.App.(*icsproviderapp.App)
 
 	// Initialize a host testing app using SimApp -> TestingApp
 	// We need to run this with the cosmos bech prefix so that the gov module authority
@@ -175,54 +176,68 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 		s.HostChain = ibctesting.NewTestChain(s.T(), s.Coordinator, hostChainID)
 	})
 
-	// Create a new consumer client in the provider chain
-	consumerId := "0"
 	providerContext := s.ProviderChain.GetContext()
 	providerKeeper := s.ProviderApp.GetProviderKeeper()
-	providerSlashingKeeper := s.ProviderApp.GetTestSlashingKeeper()
-	providerMsgServer := providerkeeper.NewMsgServerImpl(&providerKeeper)
 
+	// Define and set the consumer initialization params
+	// NOTE: we cannot use the time.Now() because the coordinator chooses a hardcoded start time
+	// using time.Now() could set the spawn time to be too far in the past or too far in the future
+	// And the initial height passed to CreateConsumerClient
+	// must be the height on the consumer when InitGenesis is called
+	initializationParams := providertypes.DefaultConsumerInitializationParameters()
+	initializationParams.SpawnTime = s.Coordinator.CurrentTime
+	initializationParams.InitialHeight = clienttypes.Height{RevisionNumber: 1, RevisionHeight: 2}
+
+	consumerMetadata := providertypes.ConsumerMetadata{Name: "stride"}
+	infractionParams := icstestingkeeper.GetTestInfractionParameters()
+	powerShapingParameters := icstestingkeeper.GetTestPowerShapingParameters()
+	powerShapingParameters.Top_N = 0 // isn't used in CreateConsumerClient
+
+	consumerId := providerKeeper.FetchAndIncrementConsumerId(providerContext)
 	providerKeeper.SetConsumerChainId(providerContext, consumerId, StrideChainID)
+
+	s.Require().NoError(providerKeeper.SetConsumerMetadata(providerContext, consumerId, consumerMetadata))
+	s.Require().NoError(providerKeeper.SetConsumerInitializationParameters(providerContext, consumerId, initializationParams))
+	s.Require().NoError(providerKeeper.SetConsumerPowerShapingParameters(providerContext, consumerId, powerShapingParameters))
+	s.Require().NoError(providerKeeper.SetInfractionParameters(providerContext, consumerId, infractionParams))
+
 	providerKeeper.SetConsumerPhase(providerContext, consumerId, providertypes.CONSUMER_PHASE_INITIALIZED)
 
-	initializationParams := providertypes.DefaultConsumerInitializationParameters()
-	err := providerKeeper.SetConsumerInitializationParameters(providerContext, consumerId, initializationParams)
-	s.Require().NoError(err)
-	err = providerKeeper.SetConsumerPowerShapingParameters(providerContext, consumerId, providertypes.PowerShapingParameters{})
-	s.Require().NoError(err)
-	err = providerKeeper.CreateConsumerClient(providerContext, consumerId, []byte{})
+	// Assigns keys to all provider validators for the consumer with consumerId before a client to the consumer is created
+	for _, val := range s.ProviderChain.Vals.Validators {
+		// get SDK validator
+		valAddr, err := sdk.ValAddressFromHex(val.Address.String())
+		s.Require().NoError(err)
+		validator, err := s.ProviderApp.GetTestStakingKeeper().GetValidator(providerContext, valAddr)
+		s.Require().NoError(err)
+
+		// generate new PrivValidator
+		privVal := ibctestingmock.NewPV()
+		tmPubKey, err := privVal.GetPubKey()
+		s.Require().NoError(err)
+		consumerKey, err := tmencoding.PubKeyToProto(tmPubKey)
+		s.Require().NoError(err)
+
+		// add Signer to the provider chain as there is no consumer chain to add it;
+		// as a result, NewTestChainWithValSet in AddConsumer uses providerChain.Signers
+		s.ProviderChain.Signers[tmPubKey.Address().String()] = privVal
+
+		err = providerKeeper.AssignConsumerKey(providerContext, consumerId, validator, consumerKey)
+		s.Require().NoError(err)
+	}
+
+	// Queue up the consumer launch
+	err := providerKeeper.AppendConsumerToBeLaunched(providerContext, consumerId, s.Coordinator.CurrentTime)
 	s.Require().NoError(err)
 
-	clientId, found := providerKeeper.GetConsumerClientId(providerContext, consumerId)
-	s.Require().True(found)
-	s.Require().Equal(clientId, "07-tendermint-0")
-
-	infractionParams, err := providertypes.DefaultConsumerInfractionParameters(providerContext, providerSlashingKeeper)
-	s.Require().NoError(err)
-	_, err = providerMsgServer.CreateConsumer(providerContext, &providertypes.MsgCreateConsumer{
-		ChainId:                  StrideChainID,
-		InfractionParameters:     &infractionParams,
-		InitializationParameters: &initializationParams,
-		Metadata:                 providertypes.ConsumerMetadata{},
-		PowerShapingParameters: &providertypes.PowerShapingParameters{
-			Top_N: 0,
-		},
-	})
+	// Opt-in all validators
+	lastVals, err := s.ProviderApp.GetProviderKeeper().GetLastBondedValidators(providerContext)
 	s.Require().NoError(err)
 
-	// providerKeeper.SetConsumerChainId(providerContext, consumerId, StrideChainID)
-	// providerKeeper.SetConsumerPhase(providerContext, consumerId, providertypes.CONSUMER_PHASE_INITIALIZED)
-	// err := providerKeeper.SetConsumerInitializationParameters(providerContext, consumerId, testkeeper.GetTestInitializationParameters())
-	// s.Require().NoError(err)
-	// err = providerKeeper.SetConsumerPowerShapingParameters(providerContext, consumerId, providertypes.PowerShapingParameters{
-
-	// })
-	// err = providerKeeper.CreateConsumerClient(providerContext, consumerId, []byte{})
-	// s.Require().NoError(err)
-
-	// clientId, found := providerKeeper.GetConsumerClientId(providerContext, consumerId)
-	// s.Require().True(found)
-	// s.Require().Equal(clientId, "07-tendermint-0")
+	for _, v := range lastVals {
+		consAddr, _ := v.GetConsAddr()
+		providerKeeper.SetOptedIn(providerContext, consumerId, providertypes.NewProviderConsAddress(consAddr))
+	}
 
 	// Set the host chain mint params to 0 (otherwise the begin blocker in the next step will fail)
 	// TODO: There must be a better way to do it
@@ -239,17 +254,18 @@ func (s *AppTestHelper) SetupIBCChains(hostChainID string) {
 	s.Coordinator.CommitBlock(s.ProviderChain)
 	s.Coordinator.CommitBlock(s.HostChain)
 
-	// Launch the consumer
-	bondedValidators, err := providerKeeper.GetLastBondedValidators(providerContext)
-	s.Require().NoError(err)
-	activeValidators, err := providerKeeper.GetLastProviderConsensusActiveValidators(providerContext)
-	s.Require().NoError(err)
-	err = providerKeeper.LaunchConsumer(providerContext, bondedValidators, activeValidators, consumerId)
-	s.Require().NoError(err)
-
-	// initialize the consumer chain with the genesis state stored on the provider
-	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(providerContext, StrideChainID)
+	// Get the consumer's genesis state on the provider and confirm a client was created
+	strideConsumerGenesis, found := providerKeeper.GetConsumerGenesis(
+		providerContext,
+		consumerId,
+	)
 	s.Require().True(found, "consumer genesis not found")
+
+	_, found = providerKeeper.GetConsumerClientId(
+		providerContext,
+		consumerId,
+	)
+	s.Require().True(found, "clientID not found in AddConsumer")
 
 	// use the initial validator set from the consumer genesis as the stride chain's initial set
 	var strideValSet []*tmtypes.Validator
@@ -396,7 +412,7 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain,
 	path.EndpointA.ChannelConfig.Version = transfertypes.Version
 	path.EndpointB.ChannelConfig.Version = transfertypes.Version
 
-	trustingPeriodFraction := providerChain.App.(*appProvider.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
+	trustingPeriodFraction := providerChain.App.(*icsproviderapp.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
 	consumerUnbondingPeriod := path.EndpointA.Chain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
 	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).UnbondingPeriod = consumerUnbondingPeriod
 	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).TrustingPeriod, _ = ccvtypes.CalculateTrustPeriod(consumerUnbondingPeriod, trustingPeriodFraction)
@@ -414,7 +430,7 @@ func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, prov
 	path.EndpointA.ChannelConfig.Version = TestIcaVersion
 	path.EndpointB.ChannelConfig.Version = TestIcaVersion
 
-	trustingPeriodFraction := providerChain.App.(*appProvider.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
+	trustingPeriodFraction := providerChain.App.(*icsproviderapp.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
 	consumerUnbondingPeriod := path.EndpointA.Chain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
 	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).UnbondingPeriod = consumerUnbondingPeriod
 	path.EndpointB.ClientConfig.(*ibctesting.TendermintConfig).TrustingPeriod, _ = ccvtypes.CalculateTrustPeriod(consumerUnbondingPeriod, trustingPeriodFraction)
