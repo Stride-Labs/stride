@@ -11,23 +11,28 @@ func (s *KeeperTestSuite) TestGenesis() {
 		Epochs: []types.EpochInfo{
 			{
 				Identifier:              "A",
-				StartTime:               time.Time{},
+				StartTime:               s.Ctx.BlockTime(),
 				Duration:                time.Hour * 24 * 7,
 				CurrentEpoch:            0,
-				CurrentEpochStartHeight: 0,
-				CurrentEpochStartTime:   time.Time{},
+				CurrentEpochStartHeight: s.Ctx.BlockHeight(),
+				CurrentEpochStartTime:   s.Ctx.BlockTime(),
 				EpochCountingStarted:    false,
 			},
 			{
 				Identifier:              "B",
-				StartTime:               time.Time{},
+				StartTime:               s.Ctx.BlockTime(),
 				Duration:                time.Hour * 24 * 7,
-				CurrentEpoch:            0,
-				CurrentEpochStartHeight: 0,
-				CurrentEpochStartTime:   time.Time{},
+				CurrentEpoch:            1,
+				CurrentEpochStartHeight: s.Ctx.BlockHeight(),
+				CurrentEpochStartTime:   s.Ctx.BlockTime(),
 				EpochCountingStarted:    false,
 			},
 		},
+	}
+
+	// Clear all epochs registered by default
+	for _, epochInfo := range s.App.EpochsKeeper.AllEpochInfos(s.Ctx) {
+		s.App.EpochsKeeper.DeleteEpochInfo(s.Ctx, epochInfo.Identifier)
 	}
 
 	s.App.EpochsKeeper.InitGenesis(s.Ctx, genesisState)
