@@ -5,7 +5,6 @@ import (
 	"sort"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -53,12 +52,6 @@ func (s *UpgradeTestSuite) TestDistributionFix() {
 	valAddr, _ := types.ValAddressFromBech32("stridevaloper1tlz6ksce084ndhwlq2usghamvh0dut9q4z2gxd")
 	bondedPoolMissingStake := types.NewInt64Coin("stake", 1038549945)
 	notBondedPoolMissingStake := types.NewInt64Coin("stake", 220000)
-
-	// Define periods for slashing event to be inserted
-	upperBoundPeriod := uint64(3913)
-	slashingEventPeriod := uint64(3902)
-	slashingEventBlock := uint64(4673775)
-	slashingEventFraction := sdkmath.LegacyMustNewDecFromStr("0.0001") // 0.01% slash
 
 	// Load faulty distribution state from mainnet export file
 	jsonDistGenesis := os.MustReadFile("test_dist_genesis.json")
@@ -118,27 +111,7 @@ func (s *UpgradeTestSuite) TestDistributionFix() {
 	}
 
 	// Apply Fix
-	// Insert the missing slashing event between blocks 4300034-5047517 (periods 3893-3912)
-	// The slashing event represents a 0.01% slash that occurred but wasn't properly recorded
-	err := s.App.DistrKeeper.SetValidatorSlashEvent(
-		s.Ctx,
-		valAddr,
-		slashingEventBlock,
-		slashingEventPeriod,
-		disttypes.NewValidatorSlashEvent(slashingEventPeriod, slashingEventFraction),
-	)
-	s.Require().NoError(err)
-
-	// Copy historical rewards data from upper bound period to the slashing event period
-	// Note: By using the same historical rewards from the upper bound period, we're effectively
-	// not accounting for rewards that accrued on approximately half the blocks between 4300034-5047517.
-	// The reward amounts are extremely small as of 2025-03-25:
-	// - 0.000000000055967683 INJ   (≈ $0.0000000005910187 USD)
-	// - 0.000000006094164748 EVMOS (≈ $0.0000000000284597 USD)
-	// At these microscopic values, the simplification has virtually no impact on users.
-	hisoricalRewards, err := s.App.DistrKeeper.GetValidatorHistoricalRewards(s.Ctx, valAddr, upperBoundPeriod)
-	s.Require().NoError(err)
-	err = s.App.DistrKeeper.SetValidatorHistoricalRewards(s.Ctx, valAddr, slashingEventPeriod, hisoricalRewards)
+	err := v27.ApplyDistributionFix(s.Ctx, s.App.DistrKeeper)
 	s.Require().NoError(err)
 
 	// After applying the fix, all delegations should be able to withdraw rewards without panics
