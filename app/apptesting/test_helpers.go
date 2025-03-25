@@ -16,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/cosmos/cosmos-sdk/types/kv"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -771,6 +772,12 @@ func GetAdminAddress() (address string, ok bool) {
 		return address, true
 	}
 	return "", false
+}
+
+func (s *AppTestHelper) SetNewAccount(addr sdk.AccAddress) {
+	nextAccountNumber, err := s.App.AccountKeeper.AccountNumber.Next(s.Ctx)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccount(addr, nil, nextAccountNumber, 0))
 }
 
 // Modifies sdk config to have stride address prefixes (used for non-keeper tests)
