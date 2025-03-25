@@ -62,7 +62,7 @@ func (s *KeeperTestSuite) TestHookOfUnclaimableAccount() {
 	// Set a normal user account
 	pub1 := secp256k1.GenPrivKey().PubKey()
 	addr1 := sdk.AccAddress(pub1.Address())
-	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
+	s.SetNewAccount(addr1)
 
 	claim, err := s.App.ClaimKeeper.GetClaimRecord(s.Ctx, addr1, "stride")
 	s.NoError(err)
@@ -106,7 +106,7 @@ func (s *KeeperTestSuite) TestHookBeforeAirdropStart() {
 			AirdropIdentifier: types.DefaultAirdropIdentifier,
 		},
 	}
-	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccount(addr1, nil, 0, 0))
+	s.SetNewAccount(addr1)
 	err = s.App.ClaimKeeper.SetClaimRecordsWithWeights(s.Ctx, claimRecords)
 	s.Require().NoError(err)
 
@@ -141,7 +141,7 @@ func (s *KeeperTestSuite) TestBalancesAfterAccountConversion() {
 
 	// set a normal account
 	addr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
-	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccount(addr, nil, 0, 0))
+	s.SetNewAccount(addr)
 
 	initialBal := int64(1000)
 	err := s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
@@ -180,10 +180,11 @@ func (s *KeeperTestSuite) TestClaimAccountTypes() {
 	// set a normal account
 	addr := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	// Base Account can claim
-	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccount(addr, nil, 0, 0))
+	s.SetNewAccount(addr)
 
 	initialBal := int64(1000)
-	err := s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	initialCoins := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal))
+	err := s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr, initialCoins)
 	s.Require().NoError(err)
 
 	claimRecords := []types.ClaimRecord{
@@ -209,7 +210,7 @@ func (s *KeeperTestSuite) TestClaimAccountTypes() {
 	s.Require().Equal(coinsBal.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal+claimableAmountForStake)).String())
 
 	spendableCoinsBal := s.App.BankKeeper.SpendableCoins(s.Ctx, addr)
-	s.Require().Equal(spendableCoinsBal.String(), sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)).String())
+	s.Require().Equal(spendableCoinsBal.String(), initialCoins.String())
 
 	// Verify the account type has changed to stride vesting account
 	acc := s.App.AccountKeeper.GetAccount(s.Ctx, addr)
@@ -219,25 +220,28 @@ func (s *KeeperTestSuite) TestClaimAccountTypes() {
 	// Initialize vesting accounts
 	addr2 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account := s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, addr2)
-	err = s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr2, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err = s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr2, initialCoins)
 	s.Require().NoError(err)
-	baseVestingAccount, err := vestingtypes.NewBaseVestingAccount(account.(*authtypes.BaseAccount), nil, 0)
+	baseVestingAccount, err := vestingtypes.NewBaseVestingAccount(account.(*authtypes.BaseAccount), initialCoins, 0)
 	s.Require().NoError(err)
 	s.App.AccountKeeper.SetAccount(s.Ctx, baseVestingAccount)
 
 	addr3 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account = s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, addr3)
-	err = s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr3, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err = s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr3, initialCoins)
 	s.Require().NoError(err)
-	continuousVestingAccount, err := vestingtypes.NewContinuousVestingAccount(account.(*authtypes.BaseAccount), nil, 0, 0)
+	continuousVestingAccount, err := vestingtypes.NewContinuousVestingAccount(account.(*authtypes.BaseAccount), initialCoins, 0, 1)
 	s.Require().NoError(err)
 	s.App.AccountKeeper.SetAccount(s.Ctx, continuousVestingAccount)
 
 	addr4 := sdk.AccAddress(secp256k1.GenPrivKey().PubKey().Address())
 	account = s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, addr4)
-	err = s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr4, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, initialBal)))
+	err = s.App.BankKeeper.SendCoins(s.Ctx, distributors["stride"], addr4, initialCoins)
 	s.Require().NoError(err)
-	periodicVestingAccount, err := vestingtypes.NewPeriodicVestingAccount(account.(*authtypes.BaseAccount), nil, 0, nil)
+	periodicVestingAccount, err := vestingtypes.NewPeriodicVestingAccount(account.(*authtypes.BaseAccount), initialCoins, 1, []vestingtypes.Period{{
+		Length: 1,
+		Amount: initialCoins,
+	}})
 	s.Require().NoError(err)
 	s.App.AccountKeeper.SetAccount(s.Ctx, periodicVestingAccount)
 

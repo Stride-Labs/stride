@@ -16,14 +16,15 @@ import (
 )
 
 type KeeperTestSuite struct {
-	suite.Suite
-
 	apptesting.AppTestHelper
 }
 
 var distributors map[string]sdk.AccAddress
 
 func (s *KeeperTestSuite) SetupTest() {
+	s.SetT(s.T())
+	s.Setup()
+
 	distributors = make(map[string]sdk.AccAddress)
 
 	// Initiate a distributor account for stride user airdrop

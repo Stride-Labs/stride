@@ -247,18 +247,18 @@ func TestStridePeriodicVestingAccountMarshal(t *testing.T) {
 	now := tmtime.Now()
 	acc := types.NewStridePeriodicVestingAccount(baseAcc, coins, types.Periods{types.Period{now.Unix(), 3600, coins, 0}})
 
-	bz, err := app.AppCodec().MarshalInterface(acc)
+	bz, err := app.AppCodec().Marshal(acc)
 	require.NoError(t, err)
 
 	var acc2 types.StridePeriodicVestingAccount
-	err = app.AppCodec().UnmarshalInterface(bz, &acc2)
+	err = app.AppCodec().Unmarshal(bz, &acc2)
 	require.NoError(t, err)
-	require.IsType(t, &types.StridePeriodicVestingAccount{}, acc2)
+	require.IsType(t, &types.StridePeriodicVestingAccount{}, &acc2)
 	require.Equal(t, acc.String(), acc2.String())
 
 	// error on bad bytes
 	var acc3 types.StridePeriodicVestingAccount
-	err = app.AppCodec().UnmarshalInterface(bz[:len(bz)/2], &acc3)
+	err = app.AppCodec().Unmarshal(bz[:len(bz)/2], &acc3)
 	require.Error(t, err)
 }
 

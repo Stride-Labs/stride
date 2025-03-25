@@ -4,13 +4,11 @@ import (
 	"errors"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
-
+	sdkmath "cosmossdk.io/math"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	sdkmath "cosmossdk.io/math"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 	vestexported "github.com/Stride-Labs/stride/v26/x/claim/vesting/exported"
@@ -18,7 +16,7 @@ import (
 
 // Compile-time type assertions
 var (
-	_ authtypes.AccountI          = (*BaseVestingAccount)(nil)
+	_ sdk.AccountI                = (*BaseVestingAccount)(nil)
 	_ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
 )
 
