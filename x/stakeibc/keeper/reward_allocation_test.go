@@ -141,7 +141,8 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdkmath.LegacyNewDec(0))
 	tstaking.CreateValidator(valAddrs[1], pubkeys[1], stakeAmount, true)
 
-	s.App.EndBlocker(s.Ctx)
+	_, err := s.App.EndBlocker(s.Ctx)
+	s.Require().NoError(err)
 	s.Ctx = s.Ctx.WithBlockHeight(s.Ctx.BlockHeight() + 1)
 
 	// Simulate the token distribution from feeCollector to validators
@@ -163,7 +164,8 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 			BlockIdFlag: cmtproto.BlockIDFlagCommit,
 		},
 	}
-	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, votes)
+	err = s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, votes)
+	s.Require().NoError(err)
 
 	// Withdraw rewards
 	rewards1, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[0]), valAddrs[0])

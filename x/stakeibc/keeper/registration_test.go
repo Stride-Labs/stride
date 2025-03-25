@@ -79,22 +79,16 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 // Helper function to test registering a duplicate host zone
 // If there's a duplicate connection ID, register_host_zone will error before checking other fields for duplicates
 // In order to test those cases, we need to first create a new host zone,
-//
-//	and then attempt to register with duplicate fields in the message
-//
+// and then attempt to register with duplicate fields in the message
 // This function 1) creates a new host zone and 2) returns what would be a successful register message
 func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
-	// Create a new test chain and connection ID
-	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
-	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, chainID)
-	path := ibctesting.NewPath(s.StrideChain, osmoChain)
-	s.Coordinator.SetupConnections(path)
-	connectionId := path.EndpointA.ConnectionID
+	newConnectionID := "connection-1"
+	s.MockClientAndConnection(chainID, "07-tendermint-1", newConnectionID)
 
 	// Build what would be a successful message to register the host zone
 	// Note: this is purposefully missing fields because it is used in failure cases that short circuit
 	return stakeibctypes.MsgRegisterHostZone{
-		ConnectionId: connectionId,
+		ConnectionId: newConnectionID,
 		Bech32Prefix: prefix,
 		HostDenom:    denom,
 	}

@@ -16,6 +16,8 @@ func (s *KeeperTestSuite) TestGenesis() {
 				TotalDelegations:       sdkmath.OneInt(),
 				RedemptionRate:         sdkmath.LegacyOneDec(),
 				LastRedemptionRate:     sdkmath.LegacyOneDec(),
+				MinRedemptionRate:      sdkmath.LegacyOneDec(),
+				MaxRedemptionRate:      sdkmath.LegacyOneDec(),
 				MinInnerRedemptionRate: sdkmath.LegacyOneDec(),
 				MaxInnerRedemptionRate: sdkmath.LegacyOneDec(),
 			},
@@ -27,7 +29,7 @@ func (s *KeeperTestSuite) TestGenesis() {
 	}
 
 	s.App.StakeibcKeeper.InitGenesis(s.Ctx, genesisState)
-	exported := s.App.ICAOracleKeeper.ExportGenesis(s.Ctx)
+	exported := s.App.StakeibcKeeper.ExportGenesis(s.Ctx)
 
 	s.Require().Equal(genesisState, *exported)
 }

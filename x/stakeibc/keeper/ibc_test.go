@@ -307,10 +307,10 @@ func (s *KeeperTestSuite) SetupGetLightClient() GetLightClientTestCase {
 	s.CreateTransferChannel("GAIA")
 
 	// note this time is Jan 2020, set in the ibc test setup
-	expectedLightClientTime := int64(1577923355000000000)
+	expectedLightClientTime := int64(1577923330000000000)
 	// note this is the block height post-setup in the ibc test setup (creating connections, channels etc advances the block)
-	//        this may change as we ament the setup, please update accordingly!
-	expectedLightClientHeight := int64(17)
+	// this may change as we amend the setup, please update accordingly!
+	expectedLightClientHeight := int64(16)
 
 	return GetLightClientTestCase{
 		connectionId:              connectionId,
@@ -358,7 +358,7 @@ func (s *KeeperTestSuite) TestGetLightClientHeight_Successful() {
 	s.Require().NoError(err, "light client time could be fetched")
 
 	s.Require().Greater(int(actualLightClientHeight), 0, "light client height g.t. 0")
-	s.Require().Equal(int64(actualLightClientHeight), tc.expectedLightClientHeight, "light client height matches expected height")
+	s.Require().Equal(tc.expectedLightClientHeight, int64(actualLightClientHeight), "light client height matches expected height")
 
 	// update LC to new block on host chain
 	//   NOTE this advances the block height!
@@ -368,5 +368,5 @@ func (s *KeeperTestSuite) TestGetLightClientHeight_Successful() {
 	actualLightClientHeightNextBlock, err := s.App.StakeibcKeeper.GetLightClientHeight(s.Ctx, tc.connectionId)
 	s.Require().NoError(err, "light client time could be fetched")
 
-	s.Require().Equal(int64(actualLightClientHeightNextBlock), int64(actualLightClientHeight+1), "light client height matches expected height")
+	s.Require().Equal(int64(actualLightClientHeight+1), int64(actualLightClientHeightNextBlock), "light client height matches expected height")
 }

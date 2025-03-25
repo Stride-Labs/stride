@@ -70,6 +70,7 @@ func (s *KeeperTestSuite) SetupDelegatorSharesICQCallback() DelegatorSharesICQCa
 	hostZone := types.HostZone{
 		ChainId:          HostChainId,
 		TotalDelegations: totalDelegation,
+		HostDenom:        Atom,
 		Validators: []*types.Validator{
 			// This validator isn't being queried
 			{
