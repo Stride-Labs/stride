@@ -7,17 +7,18 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
 )
 
 var UpgradeName = "v27"
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v23
+// CreateUpgradeHandler creates an SDK upgrade handler for v27
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	consumerKeeper consumerkeeper.Keeper,
+	distrKeeper distrkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
@@ -30,8 +31,19 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		// Initialize consumer ID
 		// https://github.com/cosmos/interchain-security/blob/v6.4.1/UPGRADING.md#consumer
+		ctx.Logger().Info("Setting consumer ID parameter...")
 		InitializeConsumerId(ctx, consumerKeeper)
+
+		// Apply distribution fix
+		ctx.Logger().Info("Applying distribution module fix...")
+		if err := ApplyDistributionFix(ctx, distrKeeper); err != nil {
+			// Log warning but continue with upgrade (non-critical)
+			ctx.Logger().Warn("Failed to apply distribution fix, continuing...", "warning", err.Error())
+		} else {
+			ctx.Logger().Info("Distribution fix successfully applied")
+		}
 
 		return versionMap, nil
 	}

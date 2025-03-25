@@ -360,6 +360,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ModuleManager,
 			app.configurator,
 			app.ConsumerKeeper,
+			app.DistrKeeper,
 		),
 	)
 

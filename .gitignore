@@ -46,4 +46,4 @@ node_modules
 integration-tests/state
 integration-tests/storage
 
-/debug__*
+/__debug
