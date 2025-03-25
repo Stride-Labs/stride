@@ -322,6 +322,12 @@ func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestCha
 }
 
 // Creates clients, connections, and a transfer channel between stride and a host chain
+// NOTE: This was previously done by calling s.Coordinator.Setup(path)
+// However since SDK 50, that wont work as it requires that the bech prefix for the
+// host chain to be "cosmos", and will fail during each transaction if it's not (and
+// the prefix for unit tests is "stride")
+// To get around this, instead of calling s.Coordinator.Setup(path), we call each
+// handshake function explicitly and override the bech prefix on the relevant txs
 func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	// If we have yet to create the host chain, do that here
 	if !s.IbcEnabled {
@@ -330,9 +336,40 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 	s.Require().Equal(s.HostChain.ChainID, hostChainID,
 		"The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID)
 
-	// Create clients, connections, and a transfer channel
+	// Define the new transfer path between Stride and the host chain
 	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain, s.ProviderChain)
-	s.Coordinator.Setup(s.TransferPath)
+
+	// Create clients
+	s.Require().NoError(s.TransferPath.EndpointA.CreateClient())
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.Require().NoError(s.TransferPath.EndpointB.CreateClient())
+	})
+
+	// Create connections
+	s.Require().NoError(s.TransferPath.EndpointA.ConnOpenInit())
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.Require().NoError(s.TransferPath.EndpointB.ConnOpenTry())
+	})
+
+	s.Require().NoError(s.TransferPath.EndpointA.ConnOpenAck())
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.Require().NoError(s.TransferPath.EndpointB.ConnOpenConfirm())
+	})
+
+	s.Require().NoError(s.TransferPath.EndpointA.UpdateClient())
+
+	// Create channels
+	s.Require().NoError(s.TransferPath.EndpointA.ChanOpenInit())
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.Require().NoError(s.TransferPath.EndpointB.ChanOpenTry())
+	})
+
+	s.Require().NoError(s.TransferPath.EndpointA.ChanOpenAck())
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.Require().NoError(s.TransferPath.EndpointB.ChanOpenConfirm())
+	})
+
+	s.Require().NoError(s.TransferPath.EndpointA.UpdateClient())
 
 	// Replace stride and host apps with those from TestingApp
 	s.App = s.StrideChain.App.(*app.StrideApp)
