@@ -405,14 +405,14 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	// Register the ICA and complete the handshake
 	s.RegisterInterchainAccountWithOrdering(icaPath.EndpointA, owner)
 
-	err := icaPath.EndpointB.ChanOpenTry()
-	s.Require().NoError(err, "ChanOpenTry error")
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.Require().NoError(icaPath.EndpointB.ChanOpenTry())
+	})
+	s.Require().NoError(icaPath.EndpointA.ChanOpenAck())
 
-	err = icaPath.EndpointA.ChanOpenAck()
-	s.Require().NoError(err, "ChanOpenAck error")
-
-	err = icaPath.EndpointB.ChanOpenConfirm()
-	s.Require().NoError(err, "ChanOpenConfirm error")
+	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+		s.Require().NoError(icaPath.EndpointB.ChanOpenConfirm())
+	})
 
 	s.Ctx = s.StrideChain.GetContext()
 
