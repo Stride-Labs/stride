@@ -1,15 +1,13 @@
 package v6
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
+	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
 )
 
 // Note: ensure these values are properly set before running upgrade
@@ -29,7 +27,7 @@ func CreateUpgradeHandler(
 		airdropClaimTypes := []string{"stride", "gaia", "osmosis", "juno", "stars"}
 		for _, claimType := range airdropClaimTypes {
 			if err := claimKeeper.ResetClaimStatus(ctx, claimType); err != nil {
-				return vm, errorsmod.Wrapf(err, fmt.Sprintf("unable to reset %s claim status", claimType))
+				return vm, errorsmod.Wrapf(err, "unable to reset %s claim status", claimType)
 			}
 		}
 		return mm.RunMigrations(ctx, configurator, vm)

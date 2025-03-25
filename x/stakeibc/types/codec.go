@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,25 +11,30 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgLiquidStake{}, "stakeibc/LiquidStake", nil)
-	cdc.RegisterConcrete(&MsgLSMLiquidStake{}, "stakeibc/LSMLiquidStake", nil)
-	cdc.RegisterConcrete(&MsgRegisterHostZone{}, "stakeibc/RegisterHostZone", nil)
-	cdc.RegisterConcrete(&MsgRedeemStake{}, "stakeibc/RedeemStake", nil)
-	cdc.RegisterConcrete(&MsgClaimUndelegatedTokens{}, "stakeibc/ClaimUndelegatedTokens", nil)
-	cdc.RegisterConcrete(&MsgRebalanceValidators{}, "stakeibc/RebalanceValidators", nil)
-	cdc.RegisterConcrete(&MsgAddValidators{}, "stakeibc/AddValidators", nil)
-	cdc.RegisterConcrete(&MsgChangeValidatorWeights{}, "stakeibc/ChangeValidatorWeights", nil)
-	cdc.RegisterConcrete(&MsgDeleteValidator{}, "stakeibc/DeleteValidator", nil)
+	legacy.RegisterAminoMsg(cdc, &MsgLiquidStake{}, "stakeibc/MsgLiquidStake")
+	legacy.RegisterAminoMsg(cdc, &MsgLSMLiquidStake{}, "stakeibc/MsgLSMLiquidStake")
+	legacy.RegisterAminoMsg(cdc, &MsgClearBalance{}, "stakeibc/MsgClearBalance")
+	legacy.RegisterAminoMsg(cdc, &MsgRegisterHostZone{}, "stakeibc/MsgRegisterHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgRedeemStake{}, "stakeibc/MsgRedeemStake")
+	legacy.RegisterAminoMsg(cdc, &MsgClaimUndelegatedTokens{}, "stakeibc/MsgClaimUndelegatedTokens")
+	legacy.RegisterAminoMsg(cdc, &MsgRebalanceValidators{}, "stakeibc/MsgRebalanceValidators")
+	legacy.RegisterAminoMsg(cdc, &MsgAddValidators{}, "stakeibc/MsgAddValidators")
+	legacy.RegisterAminoMsg(cdc, &MsgChangeValidatorWeights{}, "stakeibc/MsgChangeValidatorWeights")
+	legacy.RegisterAminoMsg(cdc, &MsgDeleteValidator{}, "stakeibc/MsgDeleteValidator")
 	cdc.RegisterConcrete(&AddValidatorsProposal{}, "stakeibc/AddValidatorsProposal", nil)
 	cdc.RegisterConcrete(&ToggleLSMProposal{}, "stakeibc/ToggleLSMProposal", nil)
-	cdc.RegisterConcrete(&MsgRestoreInterchainAccount{}, "stakeibc/RestoreInterchainAccount", nil)
-	cdc.RegisterConcrete(&MsgUpdateValidatorSharesExchRate{}, "stakeibc/UpdateValidatorSharesExchRate", nil)
-	cdc.RegisterConcrete(&MsgCalibrateDelegation{}, "stakeibc/CalibrateDelegation", nil)
-	cdc.RegisterConcrete(&MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/UpdateInnerRedemptionRateBounds", nil)
-	cdc.RegisterConcrete(&MsgResumeHostZone{}, "stakeibc/ResumeHostZone", nil)
-	cdc.RegisterConcrete(&MsgSetCommunityPoolRebate{}, "stakeibc/SetCommunityPoolRebate", nil)
-	cdc.RegisterConcrete(&MsgToggleTradeController{}, "stakeibc/ToggleTradeController", nil)
-	cdc.RegisterConcrete(&MsgUpdateHostZoneParams{}, "stakeibc/MsgUpdateHostZoneParams", nil)
+	legacy.RegisterAminoMsg(cdc, &MsgRestoreInterchainAccount{}, "stakeibc/MsgRestoreInterchainAccount")
+	legacy.RegisterAminoMsg(cdc, &MsgCloseDelegationChannel{}, "stakeibc/MsgCloseDelegationChannel")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateValidatorSharesExchRate{}, "stakeibc/MsgUpdateValSharesExchRate")
+	legacy.RegisterAminoMsg(cdc, &MsgCalibrateDelegation{}, "stakeibc/MsgCalibrateDelegation")
+	legacy.RegisterAminoMsg(cdc, &MsgCreateTradeRoute{}, "stakeibc/MsgCreateTradeRoute")
+	legacy.RegisterAminoMsg(cdc, &MsgDeleteTradeRoute{}, "stakeibc/MsgDeleteTradeRoute")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateTradeRoute{}, "stakeibc/MsgUpdateTradeRoute")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateInnerRedemptionRateBounds{}, "stakeibc/MsgUpdateRedemptionRateBounds")
+	legacy.RegisterAminoMsg(cdc, &MsgResumeHostZone{}, "stakeibc/MsgResumeHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgSetCommunityPoolRebate{}, "stakeibc/MsgSetCommunityPoolRebate")
+	legacy.RegisterAminoMsg(cdc, &MsgToggleTradeController{}, "stakeibc/MsgToggleTradeController")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateHostZoneParams{}, "stakeibc/MsgUpdateHostZoneParams")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -43,6 +49,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgChangeValidatorWeights{},
 		&MsgDeleteValidator{},
 		&MsgRestoreInterchainAccount{},
+		&MsgCloseDelegationChannel{},
 		&MsgUpdateValidatorSharesExchRate{},
 		&MsgCalibrateDelegation{},
 		&MsgUpdateInnerRedemptionRateBounds{},

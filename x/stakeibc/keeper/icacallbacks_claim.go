@@ -3,15 +3,15 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v26/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // Marshal claim callback args
@@ -28,8 +28,7 @@ func (k Keeper) MarshalClaimCallbackArgs(ctx sdk.Context, claimCallback types.Cl
 func (k Keeper) UnmarshalClaimCallbackArgs(ctx sdk.Context, claimCallback []byte) (*types.ClaimCallback, error) {
 	unmarshalledDelegateCallback := types.ClaimCallback{}
 	if err := proto.Unmarshal(claimCallback, &unmarshalledDelegateCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalClaimCallbackArgs %v", err.Error()))
-		return nil, err
+		return nil, errorsmod.Wrap(err, "unable to unmarshal claim callback args")
 	}
 	return &unmarshalledDelegateCallback, nil
 }
@@ -41,7 +40,7 @@ func (k Keeper) ClaimCallback(ctx sdk.Context, packet channeltypes.Packet, ackRe
 	// Fetch callback args
 	claimCallback, err := k.UnmarshalClaimCallbackArgs(ctx, args)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal claim callback args: %s", err.Error()))
+		return err
 	}
 	chainId := claimCallback.ChainId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Claim,
@@ -100,13 +99,8 @@ func (k Keeper) DecrementHostZoneUnbonding(ctx sdk.Context, userRedemptionRecord
 	}
 
 	// decrement the hzu by the amount claimed
-	hostZoneUnbonding.NativeTokenAmount = hostZoneUnbonding.NativeTokenAmount.Sub(userRedemptionRecord.NativeTokenAmount)
+	hostZoneUnbonding.ClaimableNativeTokens = hostZoneUnbonding.ClaimableNativeTokens.Sub(userRedemptionRecord.NativeTokenAmount)
 
 	// save the updated hzu on the epoch unbonding record
-	epochUnbondingRecord, success := k.RecordsKeeper.AddHostZoneToEpochUnbondingRecord(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId, hostZoneUnbonding)
-	if !success {
-		return errorsmod.Wrapf(types.ErrRecordNotFound, "epoch unbonding record not found %s", callbackArgs.ChainId)
-	}
-	k.RecordsKeeper.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
-	return nil
+	return k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, callbackArgs.EpochNumber, callbackArgs.ChainId, *hostZoneUnbonding)
 }

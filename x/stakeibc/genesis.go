@@ -3,8 +3,8 @@ package stakeibc
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis
@@ -15,6 +15,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 	for _, epochTracker := range genState.EpochTrackerList {
 		k.SetEpochTracker(ctx, epochTracker)
+	}
+	for _, tradeRoute := range genState.TradeRoutes {
+		k.SetTradeRoute(ctx, tradeRoute)
 	}
 
 	k.SetParams(ctx, genState.Params)
@@ -27,6 +30,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.Params = k.GetParams(ctx)
 	genesis.HostZoneList = k.GetAllHostZone(ctx)
 	genesis.EpochTrackerList = k.GetAllEpochTracker(ctx)
+	genesis.TradeRoutes = k.GetAllTradeRoutes(ctx)
 
 	return genesis
 }

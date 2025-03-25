@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/v22/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v22/x/records/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/x/records/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

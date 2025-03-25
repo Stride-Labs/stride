@@ -7,7 +7,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v22/testutil/sample"
+	"github.com/Stride-Labs/stride/v26/testutil/sample"
 )
 
 func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
@@ -81,6 +81,6 @@ func TestMsgLiquidStake_GetSignBytes(t *testing.T) {
 	msg := NewMsgLiquidStake(addr, sdkmath.NewInt(1000), "ustrd")
 	res := msg.GetSignBytes()
 
-	expected := `{"type":"stakeibc/LiquidStake","value":{"amount":"1000","creator":"cosmos1v9jxgu33kfsgr5","host_denom":"ustrd"}}`
+	expected := `{"type":"stakeibc/MsgLiquidStake","value":{"amount":"1000","creator":"cosmos1v9jxgu33kfsgr5","host_denom":"ustrd"}}`
 	require.Equal(t, expected, string(res))
 }

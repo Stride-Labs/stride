@@ -12,11 +12,12 @@ import (
 	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 const (
@@ -194,7 +195,7 @@ func (k Keeper) SubmitTxs(
 
 	// Submit ICA tx
 	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
-	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+	relativeTimeoutOffset := timeoutTimestamp - utils.IntToUint(ctx.BlockTime().UnixNano())
 	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
 	res, err := msgServer.SendTx(ctx, msgSendTx)
 	if err != nil {
@@ -235,7 +236,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 		Type: icatypes.EXECUTE_TX,
 		Data: txBz,
 	}
-	relativeTimeoutOffset := timeoutTimestamp - uint64(ctx.BlockTime().UnixNano())
+	relativeTimeoutOffset := timeoutTimestamp - utils.IntToUint(ctx.BlockTime().UnixNano())
 
 	// Submit ICA, no need to store callback data or register callback function
 	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
@@ -304,7 +305,7 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 	}
 
 	// Otherwise, if there's no account already, register a new one
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, owner, appVersion); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
 		return account, err
 	}
 

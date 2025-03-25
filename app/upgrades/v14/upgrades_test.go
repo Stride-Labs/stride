@@ -13,13 +13,13 @@ import (
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v22/app"
-	"github.com/Stride-Labs/stride/v22/app/apptesting"
-	v14 "github.com/Stride-Labs/stride/v22/app/upgrades/v14"
-	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
-	interchainquerytypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/migrations/v3/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/app"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	v14 "github.com/Stride-Labs/stride/v26/app/upgrades/v14"
+	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
+	interchainquerytypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 var (
@@ -271,7 +271,7 @@ func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtype
 	// Check that an epoch was created
 	epochInfo, found := s.App.EpochsKeeper.GetEpochInfo(ctx, fmt.Sprintf("airdrop-%s", identifier))
 	s.Require().True(found, "epoch tracker should be found")
-	s.Require().Zero(epochInfo.CurrentEpoch, "epoch should be zero")
+	s.Require().Equal(epochInfo.CurrentEpoch, int64(1), "epoch should be one")
 	s.Require().Equal(epochInfo.Duration, claimtypes.DefaultEpochDuration, "epoch duration should be equal to airdrop duration")
 }
 

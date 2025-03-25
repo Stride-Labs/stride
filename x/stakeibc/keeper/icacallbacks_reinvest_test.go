@@ -9,16 +9,16 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v22/app/apptesting"
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
+	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
 
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {
@@ -136,7 +136,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_Successful() {
 	s.Require().Equal(tc.initialState.durationUntilNextEpoch, query.TimeoutDuration, "query timeout duration")
 }
 
-func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed(tc ReinvestCallbackTestCase) {
+func (s *KeeperTestSuite) checkReinvestStateIfCallbackFailed() {
 	// Confirm deposit record has not been added
 	records := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
 	s.Require().Len(records, 0, "number of deposit records")
@@ -151,7 +151,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackTimeout() {
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
-	s.checkReinvestStateIfCallbackFailed(tc)
+	s.checkReinvestStateIfCallbackFailed()
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
@@ -163,7 +163,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_ReinvestCallbackErrorOnHost() {
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 	s.Require().NoError(err)
-	s.checkReinvestStateIfCallbackFailed(tc)
+	s.checkReinvestStateIfCallbackFailed()
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
@@ -174,7 +174,7 @@ func (s *KeeperTestSuite) TestReinvestCallback_WrongCallbackArgs() {
 	invalidCallbackArgs := []byte("random bytes")
 
 	err := s.App.StakeibcKeeper.ReinvestCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal reinvest callback args: unexpected EOF: unable to unmarshal data structure")
+	s.Require().ErrorContains(err, "unable to unmarshal reinvest callback args")
 }
 
 func (s *KeeperTestSuite) TestReinvestCallback_HostZoneNotFound() {

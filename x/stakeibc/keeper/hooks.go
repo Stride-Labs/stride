@@ -7,8 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 const StrideEpochsPerDayEpoch = uint64(4)
@@ -25,8 +26,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
 		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
-		// Check previous epochs to see if unbondings finished, and sweep the tokens if so
-		k.SweepAllUnbondedTokens(ctx)
 		// Cleanup any records that are no longer needed
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
@@ -80,6 +79,10 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 			k.RebalanceAllHostZones(ctx)
 		}
 
+		// Check previous epochs to see if unbondings finished, and sends the relevant tokens
+		// to the redemption account
+		k.SweepUnbondedTokensAllHostZones(ctx)
+
 		// Transfers in and out of tokens for hostZones which have community pools
 		k.ProcessAllCommunityPoolTokens(ctx)
 
@@ -87,7 +90,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		k.TransferAllRewardTokens(ctx)
 	}
 	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
-		k.AllocateHostZoneReward(ctx)
+		k.AuctionOffRewardCollectorBalance(ctx)
 	}
 }
 
@@ -155,7 +158,7 @@ func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
 	})
 
 	// Send the ICA tx to disable tokenization
-	timeoutTimestamp := uint64(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(24 * time.Hour).UnixNano())
 	delegationOwner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
 	err := k.SubmitICATxWithoutCallback(ctx, hostZone.ConnectionId, delegationOwner, msgs, timeoutTimestamp)
 	if err != nil {

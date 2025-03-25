@@ -28,6 +28,9 @@ STAKE_TOKENS=${STAKE_TOKENS}${MICRO_DENOM_UNITS}
 ADMIN_TOKENS=${ADMIN_TOKENS}${MICRO_DENOM_UNITS}
 USER_TOKENS=${USER_TOKENS}${MICRO_DENOM_UNITS}
 
+FEES=1000000000ufee
+GENESIS_CMD=$($BINARY 2>&1 | grep -q "genesis-related subcommands" && echo "genesis" || echo "")
+
 set_stride_epochs() {
     genesis_config=$1
 
@@ -77,15 +80,19 @@ set_stride_genesis() {
     jq '.app_state.staketia.host_zone.delegation_address = $newVal' --arg newVal "$DELEGATION_ADDRESS" $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.reward_address = $newVal'     --arg newVal "$REWARD_ADDRESS"     $genesis_config > json.tmp && mv json.tmp $genesis_config
 
-    host_chain="${HOST_CHAINS[0]}"
-    host_denom=$(GET_VAR_VALUE     ${host_chain}_DENOM)
-    host_chain_id=$(GET_VAR_VALUE  ${host_chain}_CHAIN_ID)
-    host_ibc_denom=$(GET_VAR_VALUE IBC_${host_chain}_CHANNEL_0_DENOM)
-    jq '.app_state.staketia.host_zone.chain_id = $newVal' --arg newVal "${host_chain_id}" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.unbonding_period_seconds = $newVal' --arg newVal "${UNBONDING_TIME//s/}" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.transfer_channel_id = $newVal' --arg newVal "channel-0" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.native_token_denom = $newVal' --arg newVal "${host_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
-    jq '.app_state.staketia.host_zone.native_token_ibc_denom = $newVal' --arg newVal "${host_ibc_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    host_chain="${HOST_CHAINS[0]:-}"
+    if [[ "$host_chain" != "" ]]; then 
+        host_denom=$(GET_VAR_VALUE     ${host_chain}_DENOM)
+        host_chain_id=$(GET_VAR_VALUE  ${host_chain}_CHAIN_ID)
+        host_ibc_denom=$(GET_VAR_VALUE IBC_${host_chain}_CHANNEL_0_DENOM)
+        jq '.app_state.staketia.host_zone.chain_id = $newVal' --arg newVal "${host_chain_id}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.unbonding_period_seconds = $newVal' --arg newVal "${UNBONDING_TIME//s/}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.transfer_channel_id = $newVal' --arg newVal "channel-0" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.native_token_denom = $newVal' --arg newVal "${host_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+        jq '.app_state.staketia.host_zone.native_token_ibc_denom = $newVal' --arg newVal "${host_ibc_denom}" $genesis_config > json.tmp && mv json.tmp $genesis_config
+    fi
+
+    jq '.app_state.airdrop.params.period_length_seconds = $newVal' --arg newVal "${AIRDROP_PERIOD_LENGTH}" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
 set_host_genesis() {
@@ -123,11 +130,13 @@ set_host_genesis() {
     sed -i -E 's|"downtime_jail_duration": "600s"|"downtime_jail_duration": "10s"|g' $genesis_config
     sed -i -E 's|"slash_fraction_downtime": "0.010000000000000000"|"slash_fraction_downtime": "0.050000000000000000"|g' $genesis_config
 
-    # LSM params
+    # LSM and feemarket params
     if [[ "$CHAIN" == "GAIA" ]]; then
         jq '.app_state.staking.params.validator_bond_factor = $newVal' --arg newVal "$LSM_VALIDATOR_BOND_FACTOR" $genesis_config > json.tmp && mv json.tmp $genesis_config
         jq '.app_state.staking.params.validator_liquid_staking_cap = $newVal' --arg newVal "$LSM_VALIDATOR_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
         jq '.app_state.staking.params.global_liquid_staking_cap = $newVal' --arg newVal "$LSM_GLOBAL_LIQUID_STAKING_CAP" $genesis_config > json.tmp && mv json.tmp $genesis_config
+
+        jq '.app_state.feemarket.params.fee_denom = $newVal' --arg newVal "ufee" $genesis_config > json.tmp && mv json.tmp $genesis_config
     fi
 }
 
@@ -135,7 +144,12 @@ set_consumer_genesis() {
     genesis_config=$1
 
     # add consumer genesis
-    $MAIN_CMD add-consumer-section $NUM_NODES
+    home_directories=""
+    for (( i=1; i <= $NUM_NODES; i++ )); do
+        home_directories+="${STATE}/${NODE_PREFIX}${i},"
+    done
+
+    $MAIN_CMD add-consumer-section --validator-home-directories $home_directories
     jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_config > json.tmp && mv json.tmp $genesis_config
 }
 
@@ -152,7 +166,7 @@ add_genesis_account() {
 
     create_account "$account_name" "$mnemonic"
     address=$($MAIN_CMD keys show $account_name --keyring-backend test -a | tr -cd '[:alnum:]._-')
-    $MAIN_CMD add-genesis-account ${address} ${amount}${DENOM}
+    $MAIN_CMD $GENESIS_CMD add-genesis-account ${address} ${amount}${DENOM},${FEES}
 }
 
 MAIN_ID=1 # Node responsible for genesis and persistent_peers
@@ -216,7 +230,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     if [[ "$CHAIN" == "NOBLE" ]]; then
         genesis_coins=${genesis_coins},${VAL_TOKENS}${USDC_DENOM}
     fi
-    $cmd add-genesis-account ${val_addr} ${genesis_coins}
+    $cmd $GENESIS_CMD add-genesis-account ${val_addr} ${genesis_coins},${FEES}
 
     # Copy over the provider stride validator keys to the provider (in the event
     # that we are testing ICS)
@@ -229,7 +243,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     # Only generate the validator txs for host chains
     if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
-        $cmd gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
+        $cmd $GENESIS_CMD gentx $val_acct ${STAKE_TOKENS}${DENOM} --chain-id $CHAIN_ID --keyring-backend test &> /dev/null
     fi
     
     # Get the endpoint and node ID
@@ -248,7 +262,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
         MAIN_GENESIS=$genesis_json
     else
         # also add this account and it's genesis tx to the main node
-        $MAIN_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM}
+        $MAIN_CMD $GENESIS_CMD add-genesis-account ${val_addr} ${VAL_TOKENS}${DENOM},${FEES}
         if [ -d "${STATE}/${node_name}/config/gentx" ]; then
             cp ${STATE}/${node_name}/config/gentx/*.json ${STATE}/${MAIN_NODE_NAME}/config/gentx/
         fi
@@ -286,7 +300,7 @@ else
     # add a relayer account if the chain is a HOST_CHAIN
     # if it's only an accessory chain, the account will be added after the network is started
     is_host_chain=false
-    for host_chain in ${HOST_CHAINS[@]}; do
+    for host_chain in ${HOST_CHAINS[@]:-}; do
         if [ "$CHAIN" == "$host_chain" ]; then 
             relayer_acct=$(GET_VAR_VALUE     RELAYER_${CHAIN}_ACCT)
             relayer_mnemonic=$(GET_VAR_VALUE RELAYER_${CHAIN}_MNEMONIC)
@@ -310,7 +324,7 @@ else
     if [ "$CHAIN" == "NOBLE" ]; then
         echo "$NOBLE_AUTHORITHY_MNEMONIC" | $MAIN_CMD keys add authority --recover --keyring-backend test >> $KEYS_LOGS 2>&1
         AUTHORITHY_ADDRESS=$($MAIN_CMD keys show authority --keyring-backend test -a | tr -cd '[:alnum:]._-')
-        $MAIN_CMD add-genesis-account ${AUTHORITHY_ADDRESS} ${VAL_TOKENS}${DENOM},${VAL_TOKENS}${USDC_DENOM}
+        $MAIN_CMD $GENESIS_CMD add-genesis-account ${AUTHORITHY_ADDRESS} ${VAL_TOKENS}${DENOM},${VAL_TOKENS}${USDC_DENOM}
 
         sed -i -E 's|"authority": ""|"authority":"'${AUTHORITHY_ADDRESS}'"|g' $genesis_json 
         sed -i -E 's|"mintingDenom": null|"mintingDenom":{"denom":"'${DENOM}'"}|g' $genesis_json  
@@ -326,12 +340,12 @@ fi
 # the account should live on both stride and the host chain
 echo "$USER_MNEMONIC" | $MAIN_CMD keys add $USER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
 USER_ADDRESS=$($MAIN_CMD keys show $USER_ACCT --keyring-backend test -a)
-$MAIN_CMD add-genesis-account ${USER_ADDRESS} ${USER_TOKENS}${DENOM}
+$MAIN_CMD $GENESIS_CMD add-genesis-account ${USER_ADDRESS} ${USER_TOKENS}${DENOM},${FEES}
 
 # Only collect the validator genesis txs for host chains
 if [[ "$CHAIN" != "STRIDE" && "$CHAIN" != "HOST" ]]; then 
     # now we process gentx txs on the main node
-    $MAIN_CMD collect-gentxs &> /dev/null
+    $MAIN_CMD $GENESIS_CMD collect-gentxs &> /dev/null
 fi
 
 # wipe out the persistent peers for the main node (these are incorrectly autogenerated for each validator during collect-gentxs)

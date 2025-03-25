@@ -3,13 +3,11 @@ package keeper
 // DONTCOVER
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // RegisterInvariants registers all governance invariants.
@@ -41,6 +39,7 @@ func (k Keeper) AssertStrideAndDayEpochRelationship(ctx sdk.Context) {
 	}
 }
 
+// TODO [cleanup]: Update to be CheckRedemptionRateWithinSafetyBound and only throw an error (instead of a bool)
 // safety check: ensure the redemption rate is NOT below our min safety threshold && NOT above our max safety threshold on host zone
 func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.HostZone) (bool, error) {
 	// Get the wide bounds
@@ -49,9 +48,8 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	redemptionRate := zone.RedemptionRate
 
 	if redemptionRate.LT(minSafetyThreshold) || redemptionRate.GT(maxSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside safety bounds [%s, %s]", redemptionRate.String(), minSafetyThreshold.String(), maxSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds,
+			"redemption rate %v is outside safety bounds [%v, %v]", redemptionRate, minSafetyThreshold, maxSafetyThreshold)
 	}
 
 	// Verify the redemption rate is within the inner safety bounds
@@ -60,9 +58,8 @@ func (k Keeper) IsRedemptionRateWithinSafetyBounds(ctx sdk.Context, zone types.H
 	// There is also one scenario where the outer bounds go within the inner bounds - if they're updated as part of a param change proposal.
 	minInnerSafetyThreshold, maxInnerSafetyThreshold := k.GetInnerSafetyBounds(ctx, zone)
 	if redemptionRate.LT(minInnerSafetyThreshold) || redemptionRate.GT(maxInnerSafetyThreshold) {
-		errMsg := fmt.Sprintf("IsRedemptionRateWithinSafetyBounds check failed %s is outside inner safety bounds [%s, %s]", redemptionRate.String(), minInnerSafetyThreshold.String(), maxInnerSafetyThreshold.String())
-		k.Logger(ctx).Error(errMsg)
-		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds, errMsg)
+		return false, errorsmod.Wrapf(types.ErrRedemptionRateOutsideSafetyBounds,
+			"redemption rate %v is outside inner safety bounds [%v, %v]", redemptionRate, minInnerSafetyThreshold, maxInnerSafetyThreshold)
 	}
 
 	return true, nil

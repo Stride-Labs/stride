@@ -1,7 +1,7 @@
 package cli_test
 
 import (
-	"github.com/Stride-Labs/stride/v22/x/icaoracle/client/cli"
+	"github.com/Stride-Labs/stride/v26/x/icaoracle/client/cli"
 )
 
 func (s *ClientTestSuite) TestCmdRestoreOracleICA() {

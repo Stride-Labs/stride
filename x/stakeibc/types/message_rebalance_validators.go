@@ -1,13 +1,11 @@
 package types
 
 import (
-	fmt "fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v22/utils"
+	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 const (
@@ -57,7 +55,7 @@ func (msg *MsgRebalanceValidators) ValidateBasic() error {
 		return err
 	}
 	if (msg.NumRebalance < MinNumRebalanceValidators) || (msg.NumRebalance > MaxNumRebalanceValidators) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, fmt.Sprintf("invalid number of validators to rebalance (%d)", msg.NumRebalance))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid number of validators to rebalance (%d)", msg.NumRebalance)
 	}
 	return nil
 }

@@ -1,0 +1,15 @@
+syntax = "proto3";
+package stride.strdburner;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v26/x/strdburner/types";
+
+// GenesisState defines the strdburner module's genesis state
+message GenesisState {
+  // Total amount of ustrd burned
+  string total_ustrd_burned = 9 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

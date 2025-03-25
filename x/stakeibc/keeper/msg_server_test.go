@@ -13,476 +13,16 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	"github.com/Stride-Labs/stride/v22/app/apptesting"
-	"github.com/Stride-Labs/stride/v22/utils"
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
-
-// ----------------------------------------------------
-//	               RegisterHostZone
-// ----------------------------------------------------
-
-type RegisterHostZoneTestCase struct {
-	validMsg                   stakeibctypes.MsgRegisterHostZone
-	epochUnbondingRecordNumber uint64
-	strideEpochNumber          uint64
-	unbondingPeriod            uint64
-	defaultRedemptionRate      sdk.Dec
-	atomHostZoneChainId        string
-}
-
-func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
-	epochUnbondingRecordNumber := uint64(3)
-	strideEpochNumber := uint64(4)
-	unbondingPeriod := uint64(14)
-	defaultRedemptionRate := sdk.NewDec(1)
-	atomHostZoneChainId := "GAIA"
-
-	s.CreateTransferChannel(HostChainId)
-
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
-		EpochIdentifier: epochtypes.DAY_EPOCH,
-		EpochNumber:     epochUnbondingRecordNumber,
-	})
-
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
-		EpochIdentifier: epochtypes.STRIDE_EPOCH,
-		EpochNumber:     strideEpochNumber,
-	})
-
-	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        epochUnbondingRecordNumber,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
-	}
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-
-	defaultMsg := stakeibctypes.MsgRegisterHostZone{
-		ConnectionId:      ibctesting.FirstConnectionID,
-		Bech32Prefix:      GaiaPrefix,
-		HostDenom:         Atom,
-		IbcDenom:          IbcAtom,
-		TransferChannelId: ibctesting.FirstChannelID,
-		UnbondingPeriod:   unbondingPeriod,
-		MinRedemptionRate: sdk.NewDec(0),
-		MaxRedemptionRate: sdk.NewDec(0),
-	}
-
-	return RegisterHostZoneTestCase{
-		validMsg:                   defaultMsg,
-		epochUnbondingRecordNumber: epochUnbondingRecordNumber,
-		strideEpochNumber:          strideEpochNumber,
-		unbondingPeriod:            unbondingPeriod,
-		defaultRedemptionRate:      defaultRedemptionRate,
-		atomHostZoneChainId:        atomHostZoneChainId,
-	}
-}
-
-// Helper function to test registering a duplicate host zone
-// If there's a duplicate connection ID, register_host_zone will error before checking other fields for duplicates
-// In order to test those cases, we need to first create a new host zone,
-//
-//	and then attempt to register with duplicate fields in the message
-//
-// This function 1) creates a new host zone and 2) returns what would be a successful register message
-func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
-	// Create a new test chain and connection ID
-	ibctesting.DefaultTestingAppInit = ibctesting.SetupTestingApp
-	osmoChain := ibctesting.NewTestChain(s.T(), s.Coordinator, chainID)
-	path := ibctesting.NewPath(s.StrideChain, osmoChain)
-	s.Coordinator.SetupConnections(path)
-	connectionId := path.EndpointA.ConnectionID
-
-	// Build what would be a successful message to register the host zone
-	// Note: this is purposefully missing fields because it is used in failure cases that short circuit
-	return stakeibctypes.MsgRegisterHostZone{
-		ConnectionId: connectionId,
-		Bech32Prefix: prefix,
-		HostDenom:    denom,
-	}
-}
-
-// Helper function to assist in testing a failure to create an ICA account
-// This function will occupy one of the specified port with the specified channel
-//
-//	so that the registration fails
-func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
-	portID := fmt.Sprintf("%s%s.%s", icatypes.ControllerPortPrefix, HostChainId, accountName)
-	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
-
-	// The channel ID doesn't matter here - all that matters is that theres an open channel on the port
-	s.App.IBCKeeper.ChannelKeeper.SetChannel(s.Ctx, portID, channelID, openChannel)
-	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, ibctesting.FirstConnectionID, portID, channelID)
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_Success() {
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	// Register host zone
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "able to successfully register host zone")
-
-	// Confirm host zone unbonding was added
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	s.Require().True(found, "host zone found")
-	s.Require().Equal(tc.defaultRedemptionRate, hostZone.RedemptionRate, "redemption rate set to default: 1")
-	s.Require().Equal(tc.defaultRedemptionRate, hostZone.LastRedemptionRate, "last redemption rate set to default: 1")
-	defaultMinThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMinRedemptionRateThreshold)).Quo(sdk.NewDec(100))
-	defaultMaxThreshold := sdk.NewDec(int64(stakeibctypes.DefaultMaxRedemptionRateThreshold)).Quo(sdk.NewDec(100))
-	s.Require().Equal(defaultMinThreshold, hostZone.MinRedemptionRate, "min redemption rate set to default")
-	s.Require().Equal(defaultMaxThreshold, hostZone.MaxRedemptionRate, "max redemption rate set to default")
-	s.Require().Equal(tc.unbondingPeriod, hostZone.UnbondingPeriod, "unbonding period")
-
-	// Confirm host zone unbonding record was created
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
-	s.Require().True(found, "epoch unbonding record found")
-	s.Require().Len(epochUnbondingRecord.HostZoneUnbondings, 1, "host zone unbonding record has one entry")
-
-	// Confirm host zone unbonding was added
-	hostZoneUnbonding := epochUnbondingRecord.HostZoneUnbondings[0]
-	s.Require().Equal(HostChainId, hostZoneUnbonding.HostZoneId, "host zone unbonding set for this host zone")
-	s.Require().Equal(sdkmath.ZeroInt(), hostZoneUnbonding.NativeTokenAmount, "host zone unbonding set to 0 tokens")
-	s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_QUEUE, hostZoneUnbonding.Status, "host zone unbonding set to bonded")
-
-	// Confirm a module account was created
-	hostZoneModuleAccount, err := sdk.AccAddressFromBech32(hostZone.DepositAddress)
-	s.Require().NoError(err, "converting module address to account")
-	acc := s.App.AccountKeeper.GetAccount(s.Ctx, hostZoneModuleAccount)
-	s.Require().NotNil(acc, "host zone module account found in account keeper")
-
-	// Confirm an empty deposit record was created
-	expectedDepositRecord := recordstypes.DepositRecord{
-		Id:                 uint64(0),
-		Amount:             sdkmath.ZeroInt(),
-		HostZoneId:         hostZone.ChainId,
-		Denom:              hostZone.HostDenom,
-		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-		DepositEpochNumber: tc.strideEpochNumber,
-	}
-
-	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	s.Require().Len(depositRecords, 1, "number of deposit records")
-	s.Require().Equal(expectedDepositRecord, depositRecords[0], "deposit record")
-
-	// Confirm max ICA messages was set to default
-	s.Require().Equal(keeper.DefaultMaxMessagesPerIcaTx, hostZone.MaxMessagesPerIcaTx, "max messages per ica tx")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetCommunityPoolTreasuryAddress() {
-	tc := s.SetupRegisterHostZone()
-
-	// Sets the community pool treasury address to a valid address
-	msg := tc.validMsg
-	msg.CommunityPoolTreasuryAddress = ValidHostAddress
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "no error expected when registering host with valid treasury address")
-
-	// Confirm treasury address was set
-	hostZone := s.MustGetHostZone(HostChainId)
-	s.Require().Equal(ValidHostAddress, hostZone.CommunityPoolTreasuryAddress, "treasury address")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_Success_SetMaxIcaMessagesPerTx() {
-	tc := s.SetupRegisterHostZone()
-
-	// Set the max number of ICA messages
-	maxMessages := uint64(100)
-	msg := tc.validMsg
-	msg.MaxMessagesPerIcaTx = maxMessages
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "no error expected when registering host with max messages")
-
-	// Confirm max number of messages was set
-	hostZone := s.MustGetHostZone(HostChainId)
-	s.Require().Equal(maxMessages, hostZone.MaxMessagesPerIcaTx, "max messages per ica tx")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_Success_Unregister() {
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	// Register the host zone with the valid message
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "no error expected when registering host")
-
-	// Confirm accounts were created
-	depositAddress := types.NewHostZoneDepositAddress(chainId)
-	communityPoolStakeAddress := types.NewHostZoneModuleAddress(chainId, keeper.CommunityPoolStakeHoldingAddressKey)
-	communityPoolRedeemAddress := types.NewHostZoneModuleAddress(chainId, keeper.CommunityPoolRedeemHoldingAddressKey)
-
-	depositAccount := s.App.AccountKeeper.GetAccount(s.Ctx, depositAddress)
-	communityPoolStakeAccount := s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolStakeAddress)
-	communityPoolRedeemAccount := s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolRedeemAddress)
-
-	s.Require().NotNil(depositAccount, "deposit account should exist")
-	s.Require().NotNil(communityPoolStakeAccount, "community pool stake account should exist")
-	s.Require().NotNil(communityPoolRedeemAccount, "community pool redeem account should exist")
-
-	// Confirm records were created
-	depositRecords := s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	s.Require().Len(depositRecords, 1, "there should be one deposit record")
-
-	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	s.Require().Len(epochUnbondingRecords, 1, "there should be one epoch unbonding record")
-	s.Require().Len(epochUnbondingRecords[0].HostZoneUnbondings, 1, "there should be one host zone unbonding record")
-
-	// Unregister the host zone
-	err = s.App.StakeibcKeeper.UnregisterHostZone(s.Ctx, HostChainId)
-	s.Require().NoError(err, "no error expected when unregistering host zone")
-
-	// Confirm accounts were deleted
-	depositAccount = s.App.AccountKeeper.GetAccount(s.Ctx, depositAddress)
-	communityPoolStakeAccount = s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolStakeAddress)
-	communityPoolRedeemAccount = s.App.AccountKeeper.GetAccount(s.Ctx, communityPoolRedeemAddress)
-
-	s.Require().Nil(depositAccount, "deposit account should have been deleted")
-	s.Require().Nil(communityPoolStakeAccount, "community pool stake account should have been deleted")
-	s.Require().Nil(communityPoolRedeemAccount, "community pool redeem account should have been deleted")
-
-	// Confirm records were deleted
-	depositRecords = s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx)
-	s.Require().Empty(depositRecords, "deposit records should have been deleted")
-
-	epochUnbondingRecords = s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
-	s.Require().Empty(epochUnbondingRecords[0].HostZoneUnbondings, "host zone unbonding record should have been deleted")
-
-	// Attempt to re-register, it should succeed
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "no error expected when re-registering host")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_InvalidConnectionId() {
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-	msg.ConnectionId = "connection-10" // an invalid connection ID
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().EqualError(err, "invalid connection id, connection-10 not found: failed to register host zone")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInIBCState() {
-	// tests for a failure if we register the same host zone twice
-	// (with a duplicate connectionId stored in the IBCKeeper's state)
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "able to successfully register host zone once")
-
-	// now all attributes are different, EXCEPT the connection ID
-	msg.Bech32Prefix = "cosmos-different" // a different Bech32 prefix
-	msg.HostDenom = "atom-different"      // a different host denom
-	msg.IbcDenom = "ibc-atom-different"   // a different IBC denom
-
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "invalid chain id, zone for GAIA already registered: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate connection ID should fail")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateConnectionIdInStakeibcState() {
-	// tests for a failure if we register the same host zone twice
-	// (with a duplicate connectionId stored in a different host zone in stakeibc)
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	s.Require().NoError(err, "able to successfully register host zone once")
-
-	// Create the message for a brand new host zone
-	// (without modifications, you would expect this to be successful)
-	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
-
-	// Add a different host zone with the same connection Id as OSMO
-	newHostZone := stakeibctypes.HostZone{
-		ChainId:      "JUNO",
-		ConnectionId: newHostZoneMsg.ConnectionId,
-	}
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, newHostZone)
-
-	// Registering should fail with a duplicate connection ID
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &newHostZoneMsg)
-	expectedErrMsg := "connectionId connection-1 already registered: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate connection ID should fail")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateHostDenom() {
-	// tests for a failure if we register the same host zone twice (with a duplicate host denom)
-	tc := s.SetupRegisterHostZone()
-
-	// Register host zones successfully
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().NoError(err, "able to successfully register host zone once")
-
-	// Create the message for a brand new host zone
-	// (without modifications, you would expect this to be successful)
-	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
-
-	// Try to register with a duplicate host denom - it should fail
-	invalidMsg := newHostZoneMsg
-	invalidMsg.HostDenom = tc.validMsg.HostDenom
-
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	expectedErrMsg := "host denom uatom already registered: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateTransferChannel() {
-	// tests for a failure if we register the same host zone twice (with a duplicate transfer)
-	tc := s.SetupRegisterHostZone()
-
-	// Register host zones successfully
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().NoError(err, "able to successfully register host zone once")
-
-	// Create the message for a brand new host zone
-	// (without modifications, you would expect this to be successful)
-	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
-
-	// Try to register with a duplicate transfer channel - it should fail
-	invalidMsg := newHostZoneMsg
-	invalidMsg.TransferChannelId = tc.validMsg.TransferChannelId
-
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	expectedErrMsg := "transfer channel channel-0 already registered: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate host denom should fail")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_DuplicateBech32Prefix() {
-	// tests for a failure if we register the same host zone twice (with a duplicate bech32 prefix)
-	tc := s.SetupRegisterHostZone()
-
-	// Register host zones successfully
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().NoError(err, "able to successfully register host zone once")
-
-	// Create the message for a brand new host zone
-	// (without modifications, you would expect this to be successful)
-	newHostZoneMsg := s.createNewHostZoneMessage("OSMO", "osmo", "osmo")
-
-	// Try to register with a duplicate bech32prefix - it should fail
-	invalidMsg := newHostZoneMsg
-	invalidMsg.Bech32Prefix = tc.validMsg.Bech32Prefix
-
-	_, err = s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	expectedErrMsg := "bech32prefix cosmos already registered: failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "registering host zone with duplicate bech32 prefix should fail")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindDayEpochTracker() {
-	// tests for a failure if the epoch tracker cannot be found
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	// delete the epoch tracker
-	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.DAY_EPOCH)
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "epoch tracker (day) not found: epoch not found"
-	s.Require().EqualError(err, expectedErrMsg, "day epoch tracker not found")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindStrideEpochTracker() {
-	// tests for a failure if the epoch tracker cannot be found
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	// delete the epoch tracker
-	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "epoch tracker (stride_epoch) not found: epoch not found"
-	s.Require().EqualError(err, expectedErrMsg, "stride epoch tracker not found")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotFindEpochUnbondingRecord() {
-	// tests for a failure if the epoch unbonding record cannot be found
-	tc := s.SetupRegisterHostZone()
-	msg := tc.validMsg
-
-	// delete the epoch unbonding record
-	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.epochUnbondingRecordNumber)
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &msg)
-	expectedErrMsg := "unable to find latest epoch unbonding record: epoch unbonding record not found"
-	s.Require().EqualError(err, expectedErrMsg, " epoch unbonding record not found")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterDelegationAccount() {
-	// tests for a failure if the epoch unbonding record cannot be found
-	tc := s.SetupRegisterHostZone()
-
-	// Create channel on delegation port
-	s.createActiveChannelOnICAPort("DELEGATION", "channel-1")
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register delegation account, err: existing active channel channel-1 for portID icacontroller-GAIA.DELEGATION "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register delegation account")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterFeeAccount() {
-	// tests for a failure if the epoch unbonding record cannot be found
-	tc := s.SetupRegisterHostZone()
-
-	// Create channel on fee port
-	s.createActiveChannelOnICAPort("FEE", "channel-1")
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register fee account, err: existing active channel channel-1 for portID icacontroller-GAIA.FEE "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterWithdrawalAccount() {
-	// tests for a failure if the epoch unbonding record cannot be found
-	tc := s.SetupRegisterHostZone()
-
-	// Create channel on withdrawal port
-	s.createActiveChannelOnICAPort("WITHDRAWAL", "channel-1")
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register withdrawal account, err: existing active channel channel-1 for portID icacontroller-GAIA.WITHDRAWAL "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_CannotRegisterRedemptionAccount() {
-	// tests for a failure if the epoch unbonding record cannot be found
-	tc := s.SetupRegisterHostZone()
-
-	// Create channel on redemption port
-	s.createActiveChannelOnICAPort("REDEMPTION", "channel-1")
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	expectedErrMsg := "unable to register redemption account, err: existing active channel channel-1 for portID icacontroller-GAIA.REDEMPTION "
-	expectedErrMsg += "on connection connection-0: active channel already set for this owner: "
-	expectedErrMsg += "failed to register host zone"
-	s.Require().EqualError(err, expectedErrMsg, "can't register redemption account")
-}
-
-func (s *KeeperTestSuite) TestRegisterHostZone_InvalidCommunityPoolTreasuryAddress() {
-	// tests for a failure if the community pool treasury address is invalid
-	tc := s.SetupRegisterHostZone()
-
-	invalidMsg := tc.validMsg
-	invalidMsg.CommunityPoolTreasuryAddress = "invalid_address"
-
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().ErrorContains(err, "invalid community pool treasury address")
-}
 
 // ----------------------------------------------------
 //	             UpdateHostZoneParams
@@ -610,7 +150,7 @@ func (s *KeeperTestSuite) SetupAddValidators() AddValidatorsTestCase {
 	for _, validator := range expectedValidators {
 		validator.Delegation = sdkmath.ZeroInt()
 		validator.SlashQueryProgressTracker = sdkmath.ZeroInt()
-		validator.SharesToTokensRate = sdk.ZeroDec()
+		validator.SharesToTokensRate = sdk.OneDec()
 		validator.SlashQueryCheckpoint = expectedSlashCheckpoint
 	}
 
@@ -872,9 +412,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_HostZoneNotFound() {
 	badHostZoneMsg := tc.validMsgs[0]
 	badHostZoneMsg.HostZone = "gaia"
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &badHostZoneMsg)
-	errMsg := "Validator (stride_VAL1) not removed from host zone (gaia) "
-	errMsg += "| err: HostZone (gaia) not found: host zone not found: validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "host zone gaia not found")
 }
 
 func (s *KeeperTestSuite) TestDeleteValidator_AddressNotFound() {
@@ -885,10 +423,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_AddressNotFound() {
 	badAddressMsg.ValAddr = "stride_VAL5"
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &badAddressMsg)
 
-	errMsg := "Validator (stride_VAL5) not removed from host zone (GAIA) "
-	errMsg += "| err: Validator address (stride_VAL5) not found on host zone (GAIA): "
-	errMsg += "validator not found: validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "failed to remove validator stride_VAL5 from host zone GAIA")
 }
 
 func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
@@ -900,10 +435,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroDelegation() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
-	errMsg := "Validator (stride_VAL1) not removed from host zone (GAIA) "
-	errMsg += "| err: Validator (stride_VAL1) has non-zero delegation (1) or weight (0): "
-	errMsg += "validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "Validator (stride_VAL1) has non-zero delegation (1) or weight (0)")
 }
 
 func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
@@ -915,10 +447,7 @@ func (s *KeeperTestSuite) TestDeleteValidator_NonZeroWeight() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	_, err := s.GetMsgServer().DeleteValidator(sdk.WrapSDKContext(s.Ctx), &tc.validMsgs[0])
-	errMsg := "Validator (stride_VAL1) not removed from host zone (GAIA) "
-	errMsg += "| err: Validator (stride_VAL1) has non-zero delegation (0) or weight (1): "
-	errMsg += "validator not removed"
-	s.Require().EqualError(err, errMsg)
+	s.Require().ErrorContains(err, "Validator (stride_VAL1) has non-zero delegation (0) or weight (1)")
 }
 
 // ----------------------------------------------------
@@ -1314,291 +843,8 @@ func (s *KeeperTestSuite) TestLiquidStake_HaltedZone() {
 }
 
 // ----------------------------------------------------
-//	                 RedeemStake
+//	                LSMLiquidStake
 // ----------------------------------------------------
-
-type RedeemStakeState struct {
-	epochNumber                        uint64
-	initialNativeEpochUnbondingAmount  sdkmath.Int
-	initialStTokenEpochUnbondingAmount sdkmath.Int
-}
-type RedeemStakeTestCase struct {
-	user                 Account
-	hostZone             stakeibctypes.HostZone
-	zoneAccount          Account
-	initialState         RedeemStakeState
-	validMsg             stakeibctypes.MsgRedeemStake
-	expectedNativeAmount sdkmath.Int
-}
-
-func (s *KeeperTestSuite) SetupRedeemStake() RedeemStakeTestCase {
-	redeemAmount := sdkmath.NewInt(1_000_000)
-	redemptionRate := sdk.MustNewDecFromStr("1.5")
-	expectedNativeAmount := sdkmath.NewInt(1_500_000)
-
-	user := Account{
-		acc:           s.TestAccs[0],
-		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin("stuatom", 10_000_000),
-	}
-	s.FundAccount(user.acc, user.atomBalance)
-	s.FundAccount(user.acc, user.stAtomBalance)
-
-	depositAddress := stakeibctypes.NewHostZoneDepositAddress(HostChainId)
-
-	zoneAccount := Account{
-		acc:           depositAddress,
-		atomBalance:   sdk.NewInt64Coin("ibc/uatom", 10_000_000),
-		stAtomBalance: sdk.NewInt64Coin("stuatom", 10_000_000),
-	}
-	s.FundAccount(zoneAccount.acc, zoneAccount.atomBalance)
-	s.FundAccount(zoneAccount.acc, zoneAccount.stAtomBalance)
-
-	// TODO define the host zone with total delegation and validators with staked amounts
-	hostZone := stakeibctypes.HostZone{
-		ChainId:          HostChainId,
-		HostDenom:        "uatom",
-		Bech32Prefix:     "cosmos",
-		RedemptionRate:   redemptionRate,
-		TotalDelegations: sdkmath.NewInt(1234567890),
-		DepositAddress:   depositAddress.String(),
-	}
-
-	epochTrackerDay := stakeibctypes.EpochTracker{
-		EpochIdentifier: epochtypes.DAY_EPOCH,
-		EpochNumber:     1,
-	}
-
-	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        1,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
-	}
-
-	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
-		NativeTokenAmount: sdkmath.ZeroInt(),
-		Denom:             "uatom",
-		HostZoneId:        HostChainId,
-		Status:            recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
-	}
-	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
-
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, epochTrackerDay)
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-
-	return RedeemStakeTestCase{
-		user:                 user,
-		hostZone:             hostZone,
-		zoneAccount:          zoneAccount,
-		expectedNativeAmount: expectedNativeAmount,
-		initialState: RedeemStakeState{
-			epochNumber:                        epochTrackerDay.EpochNumber,
-			initialNativeEpochUnbondingAmount:  sdkmath.ZeroInt(),
-			initialStTokenEpochUnbondingAmount: sdkmath.ZeroInt(),
-		},
-		validMsg: stakeibctypes.MsgRedeemStake{
-			Creator:  user.acc.String(),
-			Amount:   redeemAmount,
-			HostZone: HostChainId,
-			// TODO set this dynamically through test helpers for host zone
-			Receiver: "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf",
-		},
-	}
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_Successful() {
-	tc := s.SetupRedeemStake()
-	initialState := tc.initialState
-
-	msg := tc.validMsg
-	user := tc.user
-	redeemAmount := msg.Amount
-
-	// Split the message amount in 2, and call redeem stake twice (each with half the amount)
-	// This will check that the same user can redeem multiple times
-	msg1 := msg
-	msg1.Amount = msg1.Amount.Quo(sdkmath.NewInt(2)) // half the amount
-
-	msg2 := msg
-	msg2.Amount = msg.Amount.Sub(msg1.Amount) // remaining half
-
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg1)
-	s.Require().NoError(err, "no error expected during first redemption")
-
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &msg2)
-	s.Require().NoError(err, "no error expected during second redemption")
-
-	// User STUATOM balance should have DECREASED by the amount to be redeemed
-	expectedUserStAtomBalance := user.stAtomBalance.SubAmount(redeemAmount)
-	actualUserStAtomBalance := s.App.BankKeeper.GetBalance(s.Ctx, user.acc, "stuatom")
-	s.CompareCoins(expectedUserStAtomBalance, actualUserStAtomBalance, "user stuatom balance")
-
-	// Gaia's hostZoneUnbonding NATIVE TOKEN amount should have INCREASED from 0 to the amount redeemed multiplied by the redemption rate
-	// Gaia's hostZoneUnbonding STTOKEN amount should have INCREASED from 0 to be amount redeemed
-	epochTracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, "day")
-	s.Require().True(found, "epoch tracker")
-	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, epochTracker.EpochNumber)
-	s.Require().True(found, "epoch unbonding record")
-	hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochUnbondingRecord.EpochNumber, HostChainId)
-	s.Require().True(found, "host zone unbondings by chain ID")
-
-	expectedHostZoneUnbondingNativeAmount := initialState.initialNativeEpochUnbondingAmount.Add(tc.expectedNativeAmount)
-	expectedHostZoneUnbondingStTokenAmount := initialState.initialStTokenEpochUnbondingAmount.Add(redeemAmount)
-
-	s.Require().Equal(expectedHostZoneUnbondingNativeAmount, hostZoneUnbonding.NativeTokenAmount, "host zone native unbonding amount")
-	s.Require().Equal(expectedHostZoneUnbondingStTokenAmount, hostZoneUnbonding.StTokenAmount, "host zone stToken burn amount")
-
-	// UserRedemptionRecord should have been created with correct amount, sender, receiver, host zone, claimIsPending
-	userRedemptionRecords := hostZoneUnbonding.UserRedemptionRecords
-	s.Require().Equal(len(userRedemptionRecords), 1)
-	userRedemptionRecordId := userRedemptionRecords[0]
-	userRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, userRedemptionRecordId)
-	s.Require().True(found)
-
-	s.Require().Equal(msg.Amount, userRedemptionRecord.StTokenAmount, "redemption record sttoken amount")
-	s.Require().Equal(tc.expectedNativeAmount, userRedemptionRecord.NativeTokenAmount, "redemption record native amount")
-	s.Require().Equal(msg.Receiver, userRedemptionRecord.Receiver, "redemption record receiver")
-	s.Require().Equal(msg.HostZone, userRedemptionRecord.HostZoneId, "redemption record host zone")
-	s.Require().False(userRedemptionRecord.ClaimIsPending, "redemption record is not claimable")
-	s.Require().NotEqual(hostZoneUnbonding.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "host zone unbonding should NOT be marked as CLAIMABLE")
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_InvalidCreatorAddress() {
-	tc := s.SetupRedeemStake()
-	invalidMsg := tc.validMsg
-
-	// cosmos instead of stride address
-	invalidMsg.Creator = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: invalid Bech32 prefix; expected stride, got cosmos: invalid address", invalidMsg.Creator))
-
-	// invalid stride address
-	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8uf"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid checksum (expected 8dpmg9 got yxp8uf): invalid address", invalidMsg.Creator))
-
-	// empty address
-	invalidMsg.Creator = ""
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: empty address string is not allowed: invalid address", invalidMsg.Creator))
-
-	// wrong len address
-	invalidMsg.Creator = "stride1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufabc"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, fmt.Sprintf("creator address is invalid: %s. err: decoding bech32 failed: invalid character not part of charset: 98: invalid address", invalidMsg.Creator))
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_HostZoneNotFound() {
-	tc := s.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	invalidMsg.HostZone = "fake_host_zone"
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-
-	s.Require().EqualError(err, "host zone is invalid: fake_host_zone: host zone not registered")
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_RateAboveMaxThreshold() {
-	tc := s.SetupRedeemStake()
-
-	hz := tc.hostZone
-	hz.RedemptionRate = sdk.NewDec(100)
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hz)
-
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().Error(err)
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_InvalidReceiverAddress() {
-	tc := s.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-
-	// stride instead of cosmos address
-	invalidMsg.Receiver = "stride159atdlc3ksl50g0659w5tq42wwer334ajl7xnq"
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, "invalid receiver address (invalid Bech32 prefix; expected cosmos, got stride): invalid address")
-
-	// invalid cosmos address
-	invalidMsg.Receiver = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ua"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, "invalid receiver address (decoding bech32 failed: invalid checksum (expected yxp8uf got yxp8ua)): invalid address")
-
-	// empty address
-	invalidMsg.Receiver = ""
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, "invalid receiver address (empty address string is not allowed): invalid address")
-
-	// wrong len address
-	invalidMsg.Receiver = "cosmos1g6qdx6kdhpf000afvvpte7hp0vnpzapuyxp8ufa"
-	_, err = s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-	s.Require().EqualError(err, "invalid receiver address (decoding bech32 failed: invalid checksum (expected xp8ugp got xp8ufa)): invalid address")
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_RedeemMoreThanStaked() {
-	tc := s.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	invalidMsg.Amount = sdkmath.NewInt(1_000_000_000_000_000)
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-
-	s.Require().EqualError(err, fmt.Sprintf("cannot unstake an amount g.t. staked balance on host zone: %v: invalid amount", invalidMsg.Amount))
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_NoEpochTrackerDay() {
-	tc := s.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	s.App.RecordsKeeper.RemoveEpochUnbondingRecord(s.Ctx, tc.initialState.epochNumber)
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-
-	s.Require().EqualError(err, "latest epoch unbonding record not found: epoch unbonding record not found")
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_HostZoneNoUnbondings() {
-	tc := s.SetupRedeemStake()
-
-	invalidMsg := tc.validMsg
-	epochUnbondingRecord := recordtypes.EpochUnbondingRecord{
-		EpochNumber:        1,
-		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{},
-	}
-	hostZoneUnbonding := &recordtypes.HostZoneUnbonding{
-		NativeTokenAmount: sdkmath.ZeroInt(),
-		Denom:             "uatom",
-		HostZoneId:        "NOT_GAIA",
-	}
-	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, hostZoneUnbonding)
-
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
-
-	s.Require().EqualError(err, "host zone not found in unbondings: GAIA: host zone not registered")
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_InvalidHostAddress() {
-	tc := s.SetupRedeemStake()
-
-	// Update hostzone with invalid address
-	badHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
-	badHostZone.DepositAddress = "cosmosXXX"
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, badHostZone)
-
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "could not bech32 decode address cosmosXXX of zone with id: GAIA")
-}
-
-func (s *KeeperTestSuite) TestRedeemStake_HaltedZone() {
-	tc := s.SetupRedeemStake()
-
-	// Update hostzone with halted
-	haltedHostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.validMsg.HostZone)
-	haltedHostZone.Halted = true
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haltedHostZone)
-
-	_, err := s.GetMsgServer().RedeemStake(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
-	s.Require().EqualError(err, "halted host zone found for zone (GAIA): Halted host zone found")
-}
 
 type LSMLiquidStakeTestCase struct {
 	hostZone             types.HostZone
@@ -2233,9 +1479,11 @@ func (s *KeeperTestSuite) TestUpdateTradeRoute() {
 // ----------------------------------------------------
 
 type DepositRecordStatusUpdate struct {
-	chainId        string
-	initialStatus  recordtypes.DepositRecord_Status
-	revertedStatus recordtypes.DepositRecord_Status
+	chainId                         string
+	initialStatus                   recordtypes.DepositRecord_Status
+	revertedStatus                  recordtypes.DepositRecord_Status
+	initialDelegationTxsInProgress  uint64
+	revertedDelegationTxsInProgress uint64
 }
 
 type HostZoneUnbondingStatusUpdate struct {
@@ -2287,28 +1535,35 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 	depositRecords := []DepositRecordStatusUpdate{
 		{
 			// Status doesn't change
-			chainId:        HostChainId,
-			initialStatus:  recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
-			revertedStatus: recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			chainId:                         HostChainId,
+			initialStatus:                   recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			revertedStatus:                  recordtypes.DepositRecord_TRANSFER_IN_PROGRESS,
+			initialDelegationTxsInProgress:  2,
+			revertedDelegationTxsInProgress: 2,
 		},
 		{
 			// Status gets reverted from IN_PROGRESS to QUEUE
-			chainId:        HostChainId,
-			initialStatus:  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
-			revertedStatus: recordtypes.DepositRecord_DELEGATION_QUEUE,
+			chainId:                         HostChainId,
+			initialStatus:                   recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			revertedStatus:                  recordtypes.DepositRecord_DELEGATION_QUEUE,
+			initialDelegationTxsInProgress:  2,
+			revertedDelegationTxsInProgress: 0,
 		},
 		{
 			// Status doesn't get reveted because it's a different host zone
-			chainId:        "different_host_zone",
-			initialStatus:  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
-			revertedStatus: recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			chainId:                         "different_host_zone",
+			initialStatus:                   recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			revertedStatus:                  recordtypes.DepositRecord_DELEGATION_IN_PROGRESS,
+			initialDelegationTxsInProgress:  2,
+			revertedDelegationTxsInProgress: 2,
 		},
 	}
 	for i, depositRecord := range depositRecords {
 		s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordtypes.DepositRecord{
-			Id:         uint64(i),
-			HostZoneId: depositRecord.chainId,
-			Status:     depositRecord.initialStatus,
+			Id:                      uint64(i),
+			HostZoneId:              depositRecord.chainId,
+			Status:                  depositRecord.initialStatus,
+			DelegationTxsInProgress: depositRecord.initialDelegationTxsInProgress,
 		})
 	}
 
@@ -2322,7 +1577,7 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 		{
 			// Status gets reverted from IN_PROGRESS to QUEUE
 			initialStatus:  recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS,
-			revertedStatus: recordtypes.HostZoneUnbonding_UNBONDING_QUEUE,
+			revertedStatus: recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
 		},
 		{
 			// Status doesn't change
@@ -2341,12 +1596,14 @@ func (s *KeeperTestSuite) SetupRestoreInterchainAccount(createDelegationICAChann
 			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
 				// The first unbonding record will get reverted, the other one will not
 				{
-					HostZoneId: HostChainId,
-					Status:     hostZoneUnbonding.initialStatus,
+					HostZoneId:                HostChainId,
+					Status:                    hostZoneUnbonding.initialStatus,
+					UndelegationTxsInProgress: 4,
 				},
 				{
-					HostZoneId: "different_host_zone",
-					Status:     hostZoneUnbonding.initialStatus,
+					HostZoneId:                "different_host_zone",
+					Status:                    hostZoneUnbonding.initialStatus,
+					UndelegationTxsInProgress: 5,
 				},
 			},
 		})
@@ -2485,13 +1742,37 @@ func (s *KeeperTestSuite) verifyLSMDepositStatus(expectedLSMDeposits []LSMTokenD
 }
 
 // Helper function to check that the delegation changes in progress field was reset to 0 for each validator
-func (s *KeeperTestSuite) verifyDelegationChangeInProgressReset() {
+// and the delegation txs in progress was set to 0 on each deposit record
+func (s *KeeperTestSuite) verifyDelegationChangeInProgressReset(expectedDepositRecords []DepositRecordStatusUpdate) {
 	hostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Len(hostZone.Validators, 3, "there should be 3 validators on this host zone")
 
 	for _, validator := range hostZone.Validators {
 		s.Require().Zero(validator.DelegationChangesInProgress,
 			"delegation change in progress should have been reset for validator %s", validator.Address)
+	}
+
+	for i, expectedRecord := range expectedDepositRecords {
+		actualRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, uint64(i))
+		s.Require().True(found, "deposit record %d should have been found", i)
+		s.Require().Equal(expectedRecord.revertedDelegationTxsInProgress, actualRecord.DelegationTxsInProgress,
+			"delegation txs in progress fro record %d", i)
+	}
+}
+
+// Helper function to check that the undelegation changes in progress field was reset to 0
+// for each host zone unbonding record
+func (s *KeeperTestSuite) verifyUndelegationChangeInProgressReset() {
+	for _, epochUnbondingRecord := range s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx) {
+		for _, hostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			if hostZoneUnbondingRecord.HostZoneId == HostChainId {
+				s.Require().Zero(hostZoneUnbondingRecord.UndelegationTxsInProgress,
+					"undelegation changes should have been reset for epoch %d", epochUnbondingRecord.EpochNumber)
+			} else {
+				s.Require().NotZero(hostZoneUnbondingRecord.UndelegationTxsInProgress,
+					"undelegation changes should not have been reset for epoch %d", epochUnbondingRecord.EpochNumber)
+			}
+		}
 	}
 }
 
@@ -2512,7 +1793,8 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	s.verifyDepositRecordsStatus(tc.depositRecordStatusUpdates, true)
 	s.verifyHostZoneUnbondingStatus(tc.unbondingRecordStatusUpdate, true)
 	s.verifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, true)
-	s.verifyDelegationChangeInProgressReset()
+	s.verifyDelegationChangeInProgressReset(tc.depositRecordStatusUpdates)
+	s.verifyUndelegationChangeInProgressReset()
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {
@@ -2760,10 +2042,7 @@ func (s *KeeperTestSuite) TestResumeHostZone_MissingZones() {
 
 	// Set the inner bounds on the host zone
 	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &invalidMsg)
-
-	s.Require().Error(err, "shouldn't be able to call tx on missing zones")
-	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not found: host zone not found", invalidChainId)
-	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
+	s.Require().ErrorContains(err, "host zone invalid-chain not found")
 }
 
 // verify that the function can't be called on unhalted zones
@@ -2778,9 +2057,7 @@ func (s *KeeperTestSuite) TestResumeHostZone_UnhaltedZones() {
 
 	// Set the inner bounds on the host zone
 	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &tc.validMsg)
-	s.Require().Error(err, "shouldn't be able to call tx on unhalted zones")
-	expectedErrorMsg := fmt.Sprintf("invalid chain id, zone for %s not halted: host zone is not halted", HostChainId)
-	s.Require().Equal(expectedErrorMsg, err.Error(), "should return correct error msg")
+	s.Require().Error(err, "host zone GAIA is not halted")
 }
 
 // ----------------------------------------------------

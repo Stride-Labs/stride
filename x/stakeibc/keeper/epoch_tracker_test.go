@@ -2,19 +2,18 @@ package keeper_test
 
 import (
 	"math"
-	"regexp"
 	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v22/testutil/keeper"
-	"github.com/Stride-Labs/stride/v22/testutil/nullify"
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
+	"github.com/Stride-Labs/stride/v26/testutil/nullify"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // These are used to indicate that the value does not matter for the sake of the test
@@ -135,10 +134,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_DurationOverflow() {
 	s.SetupEpochElapsedShares(maxDurationSeconds, DefaultNextStartTimeSeconds)
 
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
-
-	expectedErrMsg := `unable to convert epoch duration to int64, err: overflow: `
-	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
+	s.Require().ErrorContains(err, "unable to convert epoch duration to int64")
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_NextStartTimeOverflow() {
@@ -147,9 +143,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_NextStartTimeOverflow() {
 	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
 
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
-	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
-	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
+	s.Require().ErrorContains(err, "unable to convert next epoch start time to int64")
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_CurrentBlockTimeOverflow() {
@@ -158,9 +152,7 @@ func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_CurrentBlockTimeOverflow(
 	s.SetupEpochElapsedShares(DefaultEpochDurationSeconds, maxNextStartTimeSeconds)
 
 	_, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)
-	expectedErrMsg := `unable to convert next epoch start time to int64, err: overflow: `
-	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
-	s.Require().Regexp(regexp.MustCompile(expectedErrMsg), err.Error())
+	s.Require().ErrorContains(err, "unable to convert next epoch start time to int64")
 }
 
 func (s *KeeperTestSuite) TestEpochElapsedShare_Failed_BlockTimeOutsideEpoch() {

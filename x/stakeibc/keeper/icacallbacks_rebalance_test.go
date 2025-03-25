@@ -6,9 +6,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 type RebalanceCallbackState struct {
@@ -205,7 +205,7 @@ func (s *KeeperTestSuite) TestRebalanceCallback_WrongCallbackArgs() {
 	invalidCallbackArgs := []byte("random bytes")
 
 	err := s.App.StakeibcKeeper.RebalanceCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal rebalance callback args: unexpected EOF: unable to unmarshal data structure")
+	s.Require().ErrorContains(err, "unable to unmarshal rebalance callback args")
 }
 
 func (s *KeeperTestSuite) TestRebalanceCallback_WrongValidator() {

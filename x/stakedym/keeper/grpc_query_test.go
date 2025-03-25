@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
 
 func (s *KeeperTestSuite) TestQueryHostZone() {

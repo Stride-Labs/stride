@@ -23,13 +23,13 @@ import (
 	"github.com/evmos/vesting/x/vesting/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
-	icqkeeper "github.com/Stride-Labs/stride/v22/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	stakeibcmigration "github.com/Stride-Labs/stride/v22/x/stakeibc/migrations/v3"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
+	icqkeeper "github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v26/x/stakeibc/migrations/v3"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 var (
@@ -171,7 +171,7 @@ func CreateUpgradeHandler(
 
 func InitAirdrops(ctx sdk.Context, claimKeeper claimkeeper.Keeper) error {
 	duration := uint64(AirdropDuration.Seconds())
-	startTime := uint64(AirdropStartTime.Unix())
+	startTime := utils.IntToUint(AirdropStartTime.Unix())
 
 	// Add the Injective Airdrop
 	ctx.Logger().Info("Adding Injective airdrop...")
@@ -313,7 +313,7 @@ func ClearPendingQueries(ctx sdk.Context, k icqkeeper.Keeper) {
 func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 	hostZone, found := k.GetHostZone(ctx, GaiaChainId)
 	if !found {
-		return stakeibctypes.ErrHostZoneNotFound.Wrapf(GaiaChainId)
+		return stakeibctypes.ErrHostZoneNotFound.Wrap(GaiaChainId)
 	}
 
 	hostZone.LsmLiquidStakeEnabled = true
@@ -321,6 +321,7 @@ func EnableLSMForGaia(ctx sdk.Context, k stakeibckeeper.Keeper) error {
 
 	return nil
 }
+
 func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	// Get account
 	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(Account2))
@@ -340,7 +341,6 @@ func MigrateAccount2(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 }
 
 func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stakeibckeeper.Keeper) error {
-
 	// Pre-upgrade params
 	// "params": {
 	// 		"enabled": false, Set to true
@@ -477,7 +477,7 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 
 	// CHANGE: because we're doing a migration, we don't need to send coins from the funder to the vesting account
 	// Send coins from the funder to vesting account
-	// if err = bk.SendCoins(ctx, funderAddr, vestingAddr, vestingCoins); err != nil {
+	// if err = utils.SafeSendCoins(false, bk, ctx, funderAddr, vestingAddr, vestingCoins); err != nil {
 	// 	return nil, err
 	// }
 

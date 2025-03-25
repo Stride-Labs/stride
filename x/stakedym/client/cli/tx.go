@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
 
 const (
@@ -441,7 +441,6 @@ Redemption Record (recordtype=redemption)
 			`, version.AppName)),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-
 			recordType := args[0]
 			recordContents := args[1]
 

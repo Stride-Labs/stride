@@ -1,17 +1,17 @@
 syntax = "proto3";
 package stride.stakeibc;
 
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "stride/stakeibc/params.proto";
-import "stride/stakeibc/validator.proto";
-import "stride/stakeibc/host_zone.proto";
-import "stride/stakeibc/epoch_tracker.proto";
 import "stride/stakeibc/address_unbonding.proto";
+import "stride/stakeibc/epoch_tracker.proto";
+import "stride/stakeibc/host_zone.proto";
+import "stride/stakeibc/params.proto";
 import "stride/stakeibc/trade_route.proto";
+import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/stakeibc/types";
 
 // Query defines the gRPC querier service.
 service Query {

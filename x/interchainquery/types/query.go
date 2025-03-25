@@ -3,12 +3,14 @@ package types
 import (
 	fmt "fmt"
 	time "time"
+
+	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 // Check if a query has timed-out by checking whether the block time is after
 // the timeout timestamp
 func (q Query) HasTimedOut(currentBlockTime time.Time) bool {
-	return q.TimeoutTimestamp < uint64(currentBlockTime.UnixNano())
+	return q.TimeoutTimestamp < utils.IntToUint(currentBlockTime.UnixNano())
 }
 
 // Prints an abbreviated query description for logging purposes

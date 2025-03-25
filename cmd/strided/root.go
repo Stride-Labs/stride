@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,6 +34,7 @@ import (
 	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -47,8 +50,8 @@ import (
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v22/app"
-	"github.com/Stride-Labs/stride/v22/utils"
+	"github.com/Stride-Labs/stride/v26/app"
+	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 var ChainID string
@@ -149,7 +152,7 @@ func initAppConfig() (string, interface{}) {
 	srvCfg.GRPCWeb.EnableUnsafeCORS = true
 
 	// This ensures that upgraded nodes will use iavl fast node.
-	//srvCfg.IAVLDisableFastNode = false
+	// srvCfg.IAVLDisableFastNode = false
 
 	// TODO [CW]: Confirm these defaults are fine
 	customAppConfig := CustomAppConfig{
@@ -189,6 +192,43 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 	a := appCreator{encodingConfig}
 	server.AddCommands(rootCmd, app.DefaultNodeHome, a.newApp, a.appExport, addModuleInitFlags)
 
+	// this code is taken from the Osmosis repo here:
+	// https://github.com/osmosis-labs/osmosis/blob/e5895ce4a460a585c0afb29873de9c7de826b690/cmd/osmosisd/cmd/root.go#L777
+	for i, cmd := range rootCmd.Commands() {
+		if cmd.Name() == "start" {
+			startRunE := cmd.RunE
+
+			// Instrument start command pre run hook with custom logic
+			cmd.RunE = func(cmd *cobra.Command, args []string) error {
+				serverCtx := server.GetServerContextFromCmd(cmd)
+
+				// Get flag value for rejecting config defaults
+				rejectConfigDefaults := serverCtx.Viper.GetBool(FlagRejectConfigDefaults)
+
+				// overwrite config.toml and app.toml values, if rejectConfigDefaults is false
+				if !rejectConfigDefaults {
+					// Add ctx logger line to indicate that config.toml and app.toml values are being overwritten
+					serverCtx.Logger.Info("Overwriting config.toml and app.toml values with some recommended defaults. To prevent this, set the --reject-config-defaults flag to true.")
+
+					err := overwriteConfigTomlValues(serverCtx)
+					if err != nil {
+						return err
+					}
+
+					err = overwriteAppTomlValues(serverCtx)
+					if err != nil {
+						return err
+					}
+				}
+
+				return startRunE(cmd, args)
+			}
+
+			rootCmd.Commands()[i] = cmd
+			break
+		}
+	}
+
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
@@ -202,6 +242,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig app.EncodingConfig) {
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
 	wasm.AddModuleInitFlags(startCmd)
+	startCmd.Flags().Bool(FlagRejectConfigDefaults, false, "Reject some select recommended default values from being automatically set in the config.toml and app.toml")
 }
 
 func queryCommand() *cobra.Command {
@@ -245,7 +286,7 @@ func txCommand() *cobra.Command {
 		flags.LineBreak,
 		authcmd.GetBroadcastCommand(),
 		authcmd.GetEncodeCommand(),
-		authcmd.GetDecodeCommand(),
+		GetDecodeCommand(),
 		flags.LineBreak,
 		vestingcli.GetTxCmd(),
 	)
@@ -253,6 +294,60 @@ func txCommand() *cobra.Command {
 	app.ModuleBasics.AddTxCommands(cmd)
 	cmd.PersistentFlags().String(flags.FlagChainID, "", "The network chain ID")
 	cmd.PersistentFlags().String(flags.FlagFrom, "", "Name or address of private key with which to sign")
+
+	return cmd
+}
+
+func decodeTxAndGetJSON(clientCtx client.Context, txBytes []byte) ([]byte, error) {
+	// First try decoding with TxDecoder
+	tx, err := clientCtx.TxConfig.TxDecoder()(txBytes)
+	if err == nil {
+		return clientCtx.TxConfig.TxJSONEncoder()(tx)
+	}
+
+	// Fallback to direct unmarshaling
+	var sdkTx sdktx.Tx
+	if err := clientCtx.Codec.Unmarshal(txBytes, &sdkTx); err != nil {
+		return nil, err
+	}
+
+	return clientCtx.TxConfig.TxJSONEncoder()(&sdkTx)
+}
+
+// GetDecodeCommand returns the decode command to take serialized bytes and turn
+// it into a JSON-encoded transaction.
+func GetDecodeCommand() *cobra.Command {
+	flagHex := "hex"
+
+	cmd := &cobra.Command{
+		Use:   "decode [protobuf-byte-string]",
+		Short: "Decode a binary encoded transaction string",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			var txBytes []byte
+
+			if useHex, _ := cmd.Flags().GetBool(flagHex); useHex {
+				txBytes, err = hex.DecodeString(args[0])
+			} else {
+				txBytes, err = base64.StdEncoding.DecodeString(args[0])
+			}
+			if err != nil {
+				return err
+			}
+
+			json, err := decodeTxAndGetJSON(clientCtx, txBytes)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintBytes(json)
+		},
+	}
+
+	cmd.Flags().BoolP(flagHex, "x", false, "Treat input as hexadecimal instead of base64")
+	flags.AddTxFlagsToCmd(cmd)
+	_ = cmd.Flags().MarkHidden(flags.FlagOutput) // decoding makes sense to output only json
 
 	return cmd
 }

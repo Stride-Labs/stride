@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v22/x/claim/types"
+	"github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
 func CmdCreateAirdrop() *cobra.Command {
@@ -20,11 +20,11 @@ func CmdCreateAirdrop() *cobra.Command {
 			identifier := args[0]
 			chainId := args[1]
 			denom := args[2]
-			argStartTime, err := strconv.Atoi(args[3])
+			argStartTime, err := strconv.ParseUint(args[3], 10, 64)
 			if err != nil {
 				return err
 			}
-			argDuration, err := strconv.Atoi(args[4])
+			argDuration, err := strconv.ParseUint(args[4], 10, 64)
 			if err != nil {
 				return err
 			}
@@ -43,8 +43,8 @@ func CmdCreateAirdrop() *cobra.Command {
 				identifier,
 				chainId,
 				denom,
-				uint64(argStartTime),
-				uint64(argDuration),
+				argStartTime,
+				argDuration,
 				autopilotEnabled,
 			)
 

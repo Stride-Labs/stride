@@ -11,9 +11,9 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // Attempt to link a host address with a stride address to enable airdrop claims
@@ -40,7 +40,7 @@ func (k Keeper) TryUpdateAirdropClaim(
 	// grab relevant addresses
 	senderStrideAddress := utils.ConvertAddressToStrideAddress(transferMetadata.Sender)
 	if senderStrideAddress == "" {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid sender address (%s)", transferMetadata.Sender))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid sender address (%s)", transferMetadata.Sender)
 	}
 	newStrideAddress := transferMetadata.Receiver
 

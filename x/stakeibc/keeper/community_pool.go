@@ -15,10 +15,10 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // For each hostZone with a valid community pool, trigger the ICQs and ICAs to transfer tokens from DepositICA or back to ReturnICA
@@ -132,9 +132,9 @@ func (k Keeper) QueryCommunityPoolIcaBalance(
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, "epoch %s not found", epochstypes.STRIDE_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, utils.UintToInt(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
 	// Submit the ICQ for the withdrawal account balance
@@ -184,7 +184,7 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	}
 	resp, err := msgServer.LiquidStake(ctx, &liquidStakeRequest)
 	if err != nil {
-		return types.ErrFailedToLiquidStake.Wrapf(err.Error())
+		return errorsmod.Wrap(err, "failed to liquid stake community pool tokens")
 	}
 
 	// If the liquid stake was successful, transfer the stTokens to the return ICA
@@ -220,7 +220,7 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 		Receiver: hostZone.CommunityPoolReturnIcaAddress,
 	}
 	if _, err := msgServer.RedeemStake(ctx, &redeemStakeRequest); err != nil {
-		return types.ErrUnableToRedeemStake.Wrapf(err.Error())
+		return errorsmod.Wrap(err, "failed to redeem community pool tokens")
 	}
 
 	return nil
@@ -286,7 +286,7 @@ func (k Keeper) FundCommunityPool(
 	// Timeout the ICA at the end of the epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrapf(types.ErrEpochNotFound, "epoch %s not found", epochstypes.STRIDE_EPOCH)
 	}
 	timeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
 

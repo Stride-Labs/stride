@@ -14,10 +14,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	"github.com/Stride-Labs/stride/v22/x/claim/types"
-	vestingtypes "github.com/Stride-Labs/stride/v22/x/claim/vesting/types"
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v26/x/claim/types"
+	vestingtypes "github.com/Stride-Labs/stride/v26/x/claim/vesting/types"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 )
 
 func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool {
@@ -581,7 +581,7 @@ func (k Keeper) GetUserTotalClaimable(ctx sdk.Context, addr sdk.AccAddress, aird
 
 	totalClaimable := sdk.Coins{}
 
-	for action := range utils.Int32MapKeys(types.Action_name) {
+	for _, action := range utils.Int32MapKeys(types.Action_name) {
 		claimableForAction, err := k.GetClaimableAmountForAction(ctx, addr, types.Action(action), airdropIdentifier, includeClaimed)
 		if err != nil {
 			return sdk.Coins{}, err
@@ -709,7 +709,7 @@ func (k Keeper) ClaimCoinsForAction(ctx sdk.Context, addr sdk.AccAddress, action
 		return nil, err
 	}
 
-	err = k.bankKeeper.SendCoins(ctx, distributor, addr, claimableAmount)
+	err = utils.SafeSendCoins(true, k.bankKeeper, ctx, distributor, addr, claimableAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -765,10 +765,10 @@ func (k Keeper) CreateAirdropAndEpoch(ctx sdk.Context, msg types.MsgCreateAirdro
 	airdrop := types.Airdrop{
 		AirdropIdentifier:  msg.Identifier,
 		ChainId:            msg.ChainId,
-		AirdropDuration:    time.Duration(msg.Duration * uint64(time.Second)),
+		AirdropDuration:    time.Duration(utils.UintToInt(msg.Duration) * int64(time.Second)),
 		ClaimDenom:         msg.Denom,
 		DistributorAddress: msg.Distributor,
-		AirdropStartTime:   time.Unix(int64(msg.StartTime), 0),
+		AirdropStartTime:   time.Unix(utils.UintToInt(msg.StartTime), 0),
 		AutopilotEnabled:   msg.AutopilotEnabled,
 	}
 
@@ -849,13 +849,13 @@ func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error 
 func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress string, newStrideAddress string, airdropId string) error {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropId)
 	if airdrop == nil {
-		return errorsmod.Wrapf(types.ErrAirdropNotFound, fmt.Sprintf("airdrop not found for identifier %s", airdropId))
+		return errorsmod.Wrapf(types.ErrAirdropNotFound, "airdrop not found for identifier %s", airdropId)
 	}
 
 	// verify that the strideAddress is valid
 	_, err := sdk.AccAddressFromBech32(newStrideAddress)
 	if err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("invalid stride address %s", newStrideAddress))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid stride address %s", newStrideAddress)
 	}
 
 	// note: existingAccAddress will be a STRIDE address with the same coin type as existingAddress
@@ -865,26 +865,26 @@ func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress stri
 	existingAccAddress, err := sdk.AccAddressFromBech32(existingStrideAddress)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrClaimNotFound,
-			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+			"error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
 	}
 	claimRecord, err := k.GetClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
 	if (err != nil) || (claimRecord.Address == "") {
 		return errorsmod.Wrapf(types.ErrClaimNotFound,
-			fmt.Sprintf("error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+			"error getting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
 	}
 
 	claimRecord.Address = newStrideAddress
 	err = k.SetClaimRecord(ctx, claimRecord) // this does NOT delete the old record, because claims are indexed by address
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
-			fmt.Sprintf("error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId))
+			"error setting claim record from address %s to address %s on airdrop %s", existingStrideAddress, newStrideAddress, airdropId)
 	}
 
 	// this deletes the old record
 	err = k.DeleteClaimRecord(ctx, existingAccAddress, airdrop.AirdropIdentifier)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrModifyingClaimRecord,
-			fmt.Sprintf("error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId))
+			"error deleting claim record for address %s on airdrop %s", existingStrideAddress, airdropId)
 	}
 
 	return nil

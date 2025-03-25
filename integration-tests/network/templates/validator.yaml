@@ -1,0 +1,183 @@
+{{- $root := .Values -}}
+
+{{- define "chain.env" -}}
+- name: CHAIN_NAME
+  value: {{ .name }}
+- name: CHAIN_HOME
+  value: {{ printf "/home/validator/%s" .home }}
+- name: BINARY
+  value: {{ .binary }}
+- name: DENOM
+  value: {{ .denom }}
+- name: DENOM_DECIMALS
+  value: "{{ .decimals }}"
+- name: NUM_VALIDATORS
+  value: "{{ .numValidators }}"
+- name: NAMESPACE
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.namespace
+{{- end -}}
+
+{{- range $chain := .Values.chains }}
+  {{- $appName := printf "%s-validator" $chain.name  -}}
+  {{- $chainHomeDirectory := printf "/home/validator/%s" $chain.home  -}}
+  {{- $image := printf "%s/%s:%s" $root.images.chains $chain.name $chain.version -}}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $root.namespace }}
+spec:
+  replicas: {{ $chain.numValidators }}
+  selector:
+    matchLabels:
+      app: {{ $appName }}
+  serviceName: {{ $appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $appName }}
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: init
+          image: {{ $image }}
+          imagePullPolicy: Always
+          command:
+            - bash
+            - "-c"
+            - |
+              POD_INDEX=${HOSTNAME##*-}
+              if [[ "$POD_INDEX" == "0" ]]; then
+                bash scripts/init-chain.sh
+              fi
+              bash scripts/init-node.sh
+          env: 
+            {{- include "chain.env" $chain | nindent 10 }}
+          volumeMounts:
+            - name: state
+              mountPath: {{ $chainHomeDirectory }}
+            - name: scripts
+              mountPath: /home/validator/scripts
+            - name: configs
+              mountPath: /home/validator/configs
+            - name: logs
+              mountPath: /home/validator/logs
+      containers:
+        - name: validator
+          image: {{ $image }}
+          imagePullPolicy: Always
+          command: {{ toYaml $chain.command | nindent 10 }}
+          lifecycle:
+            postStart:
+              exec:
+                command: ["bash", "scripts/create-validator.sh"]
+          readinessProbe:
+            exec:
+              command: ["bash", "scripts/node-readiness.sh"]
+            periodSeconds: 10
+            timeoutSeconds: 10
+          env: 
+            {{- include "chain.env" $chain | nindent 10 }}
+          ports:
+            - name: rpc
+              containerPort: 26657
+              protocol: TCP
+            - name: peer
+              containerPort: 26656
+              protocol: TCP
+            - name: api
+              containerPort: 1317
+              protocol: TCP
+            - name: grpc
+              containerPort: 9090
+              protocol: TCP
+          volumeMounts:
+            - name: state
+              mountPath: {{ $chainHomeDirectory }}
+            - name: scripts
+              mountPath: /home/validator/scripts
+            - name: configs
+              mountPath: /home/validator/configs
+            - name: logs
+              mountPath: /home/validator/logs
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+      volumes:
+        - name: state
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+        - name: scripts
+          configMap:
+            name: scripts
+        - name: configs
+          configMap:
+            name: configs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $root.namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ $appName }}
+  ports:
+    - port: 26657
+      name: rpc
+      protocol: TCP
+    - port: 26656
+      name: peer
+      protocol: TCP
+    - port: 1317
+      name: api
+      protocol: TCP
+    - port: 9090
+      name: grpc
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $root.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "360"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "360"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "360"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ $chain.name }}-api.internal.stridenet.co
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ $appName }}
+                port:
+                  number: 1317
+            path: /(.*)
+    - host: {{ $chain.name }}-rpc.internal.stridenet.co
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ $appName }}
+                port:
+                  number: 26657
+            path: /(.*)
+---
+{{- end }}

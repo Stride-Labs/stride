@@ -1,17 +1,26 @@
 syntax = "proto3";
 package stride.stakeibc;
-import "gogoproto/gogo.proto";
+
 import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
 import "stride/records/records.proto";
 import "stride/stakeibc/host_zone.proto";
-import "stride/stakeibc/validator.proto";
 import "stride/stakeibc/ica_account.proto";
+import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/stakeibc/types";
 
 message SplitDelegation {
   string validator = 1;
   string amount = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message SplitUndelegation {
+  string validator = 1;
+  string native_token_amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
@@ -39,7 +48,7 @@ message ReinvestCallback {
 
 message UndelegateCallback {
   string host_zone_id = 1;
-  repeated SplitDelegation split_delegations = 2;
+  repeated SplitUndelegation split_undelegations = 2;
   repeated uint64 epoch_unbonding_record_ids = 3;
 }
 

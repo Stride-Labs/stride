@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/x/staketia/types"
+	"github.com/Stride-Labs/stride/v26/x/staketia/types"
 )
 
 // Emits a successful liquid stake event, and displays metadata such as the stToken amount
@@ -90,7 +90,6 @@ func EmitHaltZoneEvent(ctx sdk.Context, hostZone types.HostZone) {
 		sdk.NewEvent(
 			types.EventTypeHostZoneHalt,
 			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
-			sdk.NewAttribute(types.AttributeKeyRedemptionRate, hostZone.RedemptionRate.String()),
 		),
 	)
 }

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package stride.icaoracle;
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/icaoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/icaoracle/types";
 
 // InstanitateOracleContract is the contract-specific instantiate message
 message MsgInstantiateOracleContract {

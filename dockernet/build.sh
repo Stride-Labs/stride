@@ -49,11 +49,12 @@ build_local_and_docker() {
 
    echo "Building $title Docker...  "
    if [[ "$module" == "stride" ]]; then
-      image=Dockerfile
-   else
-      image=dockernet/dockerfiles/Dockerfile.$module
+      # First build stride with the main image, then use the override 
+      # in the dockerfiles folder below
+      DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f Dockerfile .
    fi
-
+      
+   image=dockernet/dockerfiles/Dockerfile.$module
    DOCKER_BUILDKIT=1 docker build --tag stridezone:$module -f $image .
    docker_build_succeeded=${PIPESTATUS[0]}
 
@@ -105,11 +106,5 @@ while getopts sgojtednhrz flag; do
       r) build_local_and_docker relayer deps/relayer ;;  
       h) echo "Building Hermes Docker... ";
          docker build --tag stridezone:hermes -f dockernet/dockerfiles/Dockerfile.hermes . ;
-
-         printf '%s' "Building Hermes Locally... ";
-         cd deps/hermes; 
-         cargo build --release --target-dir $BUILDDIR/hermes; 
-         cd ../..
-         echo "Done" ;;
    esac
 done

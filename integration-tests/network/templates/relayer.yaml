@@ -1,0 +1,96 @@
+{{- $root := .Values -}}
+{{- range $index, $relayer := .Values.relayers }}
+  {{- $appName := printf "%s-%s" $relayer.type $relayer.name  -}}
+
+  {{- $prevRelayerName := "" -}}
+  {{- if gt $index 0 -}}
+    {{- $prevRelayer := index $root.relayers (sub $index 1) -}}
+    {{- $prevRelayerName = printf "%s-%s" $prevRelayer.type $prevRelayer.name -}}
+  {{- end -}}
+
+  {{- $image := "" -}}
+  {{- if eq $relayer.type "relayer" -}}
+    {{- $image = $root.images.relayer -}}
+  {{- else if eq $relayer.type "hermes" -}}
+    {{- $image = $root.images.hermes -}}
+  {{- else -}}
+    {{- fail (printf "Unknown relayer type: %s" $relayer.type) -}}
+  {{- end -}}
+
+  {{- $chainMnemonicIndexA := mul $index 2 }}
+  {{- $chainMnemonicIndexB := add $chainMnemonicIndexA 1 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $root.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $appName }}
+    spec:
+      containers:
+        - name: {{ $appName }}
+          image: {{ $image }}
+          imagePullPolicy: Always
+          env:
+            - name: PATH_NAME
+              value: {{ $relayer.name }}
+            - name: CHAIN_NAME_A
+              value: {{ $relayer.chainA }}
+            - name: CHAIN_NAME_B
+              value: {{ $relayer.chainB }}
+            - name: CHAIN_A_MNEMONIC_INDEX
+              value: "{{ $chainMnemonicIndexA }}"
+            - name: CHAIN_B_MNEMONIC_INDEX
+              value: "{{ $chainMnemonicIndexB }}"
+            - name: NAMESPACE
+              value: {{ $root.namespace }}
+            - name: RELAYER_DEPENDENCY
+              value: {{ $prevRelayerName }}
+          readinessProbe:
+            exec:
+              command: ["bash", "scripts/relayer-readiness.sh", "{{ $relayer.type }}"]
+            periodSeconds: 2
+            initialDelaySeconds: 30
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "1000M"
+            requests:
+              cpu: "200m"
+              memory: "1000M"
+          volumeMounts:
+            - name: configs
+              mountPath: "/home/{{ $relayer.type }}/configs"
+            - name: scripts
+              mountPath: "/home/{{ $relayer.type }}/scripts"
+      volumes:
+        - name: configs
+          configMap:
+            name: configs
+        - name: scripts
+          configMap:
+            name: scripts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $root.namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ $appName }}
+  ports:
+    - port: 5183
+      name: rpc
+      protocol: TCP
+{{- end }}

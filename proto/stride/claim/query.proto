@@ -1,15 +1,15 @@
 syntax = "proto3";
 package stride.claim;
 
+import "cosmos/base/v1beta1/coin.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/v1beta1/coin.proto";
+import "google/protobuf/timestamp.proto";
 import "stride/claim/claim.proto";
 import "stride/claim/params.proto";
 import "stride/vesting/vesting.proto";
-import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/claim/types";
 
 // Query defines the gRPC querier service.
 service Query {

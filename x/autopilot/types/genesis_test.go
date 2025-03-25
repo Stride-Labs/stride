@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v22/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v26/x/autopilot/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {

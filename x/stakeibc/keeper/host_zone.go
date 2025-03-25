@@ -10,9 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 const (
@@ -179,6 +179,9 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.CommunityPoolDepositIcaAddress, hostZone.CommunityPoolRedeemHoldingAddress)
 	k.RatelimitKeeper.RemoveWhitelistedAddressPair(ctx, hostZone.CommunityPoolStakeHoldingAddress, hostZone.CommunityPoolReturnIcaAddress)
 
+	// Remove any blacklisted denoms from the rate limit module (may not be applicable)
+	k.RatelimitKeeper.RemoveDenomFromBlacklist(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom))
+
 	// Finally, remove the host zone struct
 	k.RemoveHostZone(ctx, chainId)
 
@@ -287,4 +290,17 @@ func (k Keeper) GetTargetValAmtsForHostZone(ctx sdk.Context, hostZone types.Host
 	}
 
 	return targetUnbondingsByValidator, nil
+}
+
+// Enables redemptions by setting the parameter on the host zone to true
+// This is used during the staketia/stakedym migrations
+func (k Keeper) EnableRedemptions(ctx sdk.Context, chainId string) error {
+	hostZone, found := k.GetHostZone(ctx, chainId)
+	if !found {
+		return types.ErrHostZoneNotFound.Wrap(chainId)
+	}
+
+	hostZone.RedemptionsEnabled = true
+	k.SetHostZone(ctx, hostZone)
+	return nil
 }

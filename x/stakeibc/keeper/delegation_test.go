@@ -6,14 +6,16 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	sdkmath "cosmossdk.io/math"
 
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 type TestDepositRecords struct {
@@ -42,7 +44,7 @@ type Channel struct {
 type DepositRecordsTestCase struct {
 	initialDepositRecords       TestDepositRecords
 	initialModuleAccountBalance sdk.Coin
-	hostZone                    stakeibctypes.HostZone
+	hostZone                    types.HostZone
 	hostZoneDepositAddress      sdk.AccAddress
 	epochNumber                 uint64
 	TransferChannel             Channel
@@ -53,79 +55,87 @@ func (s *KeeperTestSuite) GetInitialDepositRecords(currentEpoch uint64) TestDepo
 	priorEpoch := currentEpoch - 1
 	emptyDepositRecords := []recordstypes.DepositRecord{
 		{
-			Id:                 1,
-			Amount:             sdkmath.ZeroInt(),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      1,
+			Amount:                  sdkmath.ZeroInt(),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 2,
-			Amount:             sdkmath.ZeroInt(),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      2,
+			Amount:                  sdkmath.ZeroInt(),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 
 	recordsToBeTransfered := []recordstypes.DepositRecord{
 		{
-			Id:                 3,
-			Amount:             sdkmath.NewInt(3000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      3,
+			Amount:                  sdkmath.NewInt(3000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 4,
-			Amount:             sdkmath.NewInt(4000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      4,
+			Amount:                  sdkmath.NewInt(4000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_TRANSFER_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 	transferAmount := sdkmath.NewInt(3000 + 4000)
 
 	recordsToBeStaked := []recordstypes.DepositRecord{
 		{
-			Id:                 5,
-			Amount:             sdkmath.NewInt(5000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      5,
+			Amount:                  sdkmath.NewInt(5000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 6,
-			Amount:             sdkmath.NewInt(6000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: priorEpoch,
+			Id:                      6,
+			Amount:                  sdkmath.NewInt(6000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      priorEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 	stakeAmount := sdkmath.NewInt(5000 + 6000)
 
 	recordsInCurrentEpoch := []recordstypes.DepositRecord{
 		{
-			Id:                 7,
-			Amount:             sdkmath.NewInt(7000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: currentEpoch,
+			Id:                      7,
+			Amount:                  sdkmath.NewInt(7000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      currentEpoch,
+			DelegationTxsInProgress: 0,
 		},
 		{
-			Id:                 8,
-			Amount:             sdkmath.NewInt(8000),
-			Denom:              Atom,
-			HostZoneId:         HostChainId,
-			Status:             recordstypes.DepositRecord_DELEGATION_QUEUE,
-			DepositEpochNumber: currentEpoch,
+			Id:                      8,
+			Amount:                  sdkmath.NewInt(8000),
+			Denom:                   Atom,
+			HostZoneId:              HostChainId,
+			Status:                  recordstypes.DepositRecord_DELEGATION_QUEUE,
+			DepositEpochNumber:      currentEpoch,
+			DelegationTxsInProgress: 0,
 		},
 	}
 
@@ -145,13 +155,13 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 	delegationAddress := s.IcaAddresses[delegationAccountOwner]
 
 	ibcDenomTrace := s.GetIBCDenomTrace(Atom) // we need a true IBC denom here
-	depositAddress := stakeibctypes.NewHostZoneDepositAddress(HostChainId)
+	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
 	s.App.TransferKeeper.SetDenomTrace(s.Ctx, ibcDenomTrace)
 
 	initialModuleAccountBalance := sdk.NewCoin(ibcDenomTrace.IBCDenom(), sdkmath.NewInt(15_000))
 	s.FundAccount(depositAddress, initialModuleAccountBalance)
 
-	validators := []*stakeibctypes.Validator{
+	validators := []*types.Validator{
 		{
 			Name:    "val1",
 			Address: "gaia_VAL1",
@@ -164,7 +174,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		},
 	}
 
-	hostZone := stakeibctypes.HostZone{
+	hostZone := types.HostZone{
 		ChainId:              HostChainId,
 		DepositAddress:       depositAddress.String(),
 		DelegationIcaAddress: delegationAddress,
@@ -173,11 +183,12 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 		HostDenom:            Atom,
 		IbcDenom:             ibcDenomTrace.IBCDenom(),
 		Validators:           validators,
+		MaxMessagesPerIcaTx:  10,
 	}
 
 	currentEpoch := uint64(2)
-	strideEpochTracker := stakeibctypes.EpochTracker{
-		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+	strideEpochTracker := types.EpochTracker{
+		EpochIdentifier:    epochstypes.STRIDE_EPOCH,
 		EpochNumber:        currentEpoch,
 		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeouts
 	}
@@ -213,8 +224,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	// Get tx seq number before transfer to confirm that it gets incremented
 	transferPortID := tc.TransferChannel.PortID
 	transferChannelID := tc.TransferChannel.ChannelID
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transferPortID, transferChannelID)
-	s.Require().True(found, "sequence number not found before transfer")
+	startSequence := s.MustGetNextSequenceNumber(transferPortID, transferChannelID)
 
 	// Transfer deposit records
 	s.App.StakeibcKeeper.TransferExistingDepositsToHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
@@ -223,8 +233,7 @@ func (s *KeeperTestSuite) CheckStateAfterTransferringDepositRecords(tc DepositRe
 	numTransferAttempts := len(tc.initialDepositRecords.recordsToBeTransfered)
 	numSuccessfulTransfers := uint64(numTransferAttempts - numTransfersFailed)
 
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, transferPortID, transferChannelID)
-	s.Require().True(found, "sequence number not found after transfer")
+	endSequence := s.MustGetNextSequenceNumber(transferPortID, transferChannelID)
 	s.Require().Equal(startSequence+numSuccessfulTransfers, endSequence, "tx sequence number after transfer")
 
 	// Confirm the callback data was stored for each transfer packet EXCLUDING the failed packets
@@ -304,8 +313,7 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	// Get tx seq number before delegation to confirm it incremented
 	delegationPortID := tc.DelegationChannel.PortID
 	delegationChannelID := tc.DelegationChannel.ChannelID
-	startSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, delegationPortID, delegationChannelID)
-	s.Require().True(found, "sequence number not found before delegation")
+	startSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
 
 	// Stake deposit records
 	s.App.StakeibcKeeper.StakeExistingDepositsOnHostZones(s.Ctx, tc.epochNumber, tc.initialDepositRecords.GetAllRecords())
@@ -314,8 +322,7 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 	numDelegationAttempts := len(tc.initialDepositRecords.recordsToBeStaked)
 	numSuccessfulDelegations := uint64(numDelegationAttempts - numDelegationsFailed)
 
-	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, delegationPortID, delegationChannelID)
-	s.Require().True(found, "sequence number not found after delegation")
+	endSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
 	s.Require().Equal(startSequence+numSuccessfulDelegations, endSequence, "tx sequence number after delegation")
 
 	// Confirm the callback data was stored for each delegation packet EXCLUDING the failed packets
@@ -331,7 +338,8 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 		s.Require().Equal("delegate", callbackData.CallbackId, "callback ID")
 
 		// Confirm callback args
-		callbackArgs, err := s.App.StakeibcKeeper.UnmarshalDelegateCallbackArgs(s.Ctx, callbackData.CallbackArgs)
+		callbackArgs := types.DelegateCallback{}
+		err := proto.Unmarshal(callbackData.CallbackArgs, &callbackArgs)
 		s.Require().NoError(err, "unmarshalling callback args error for callback key (%s)", callbackKey)
 		s.Require().Equal(depositRecord.Id, callbackArgs.DepositRecordId, "deposit record ID in callback args (%s)", callbackKey)
 		s.Require().Equal(tc.hostZone.ChainId, callbackArgs.HostZoneId, "host zone in callback args (%s)", callbackKey)
@@ -344,7 +352,7 @@ func (s *KeeperTestSuite) CheckStateAfterStakingDepositRecords(tc DepositRecords
 		val1Delegation := depositRecord.Amount.Mul(sdkmath.NewIntFromUint64(val1.Weight)).Quo(sdkmath.NewIntFromUint64(totalWeight))
 		val2Delegation := depositRecord.Amount.Mul(sdkmath.NewIntFromUint64(val2.Weight)).Quo(sdkmath.NewIntFromUint64(totalWeight))
 
-		expectedDelegations := []*stakeibctypes.SplitDelegation{
+		expectedDelegations := []*types.SplitDelegation{
 			{Validator: val1.Address, Amount: val1Delegation},
 			{Validator: val2.Address, Amount: val2Delegation},
 		}
@@ -362,19 +370,6 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_Successful() {
 	tc := s.SetupDepositRecords()
 
 	numFailures := 0
-	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
-}
-
-func (s *KeeperTestSuite) TestStakeDepositRecords_SuccessfulCapped() {
-	tc := s.SetupDepositRecords()
-
-	// Set the cap on the number of deposit records processed to 1
-	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.MaxStakeIcaCallsPerEpoch = 1
-	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
-
-	// The cap should cause the last record to not get processed
-	numFailures := 1
 	s.CheckStateAfterStakingDepositRecords(tc, numFailures)
 }
 
@@ -402,4 +397,229 @@ func (s *KeeperTestSuite) TestStakeDepositRecords_NoDelegationAccount() {
 
 	numFailed := len(tc.initialDepositRecords.recordsToBeStaked)
 	s.CheckStateAfterStakingDepositRecords(tc, numFailed)
+}
+
+func (s *KeeperTestSuite) TestGetDelegationICAMessages() {
+	delegationAddress := "cosmos_DELEGATION"
+
+	testCases := []struct {
+		name                string
+		totalDelegated      sdkmath.Int
+		validators          []*types.Validator
+		expectedDelegations []types.SplitDelegation
+		expectedError       string
+	}{
+		{
+			name:           "one validator",
+			totalDelegated: sdkmath.NewInt(50),
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 1},
+			},
+			expectedDelegations: []types.SplitDelegation{
+				{Validator: "val1", Amount: sdkmath.NewInt(50)},
+			},
+		},
+		{
+			name:           "two validators",
+			totalDelegated: sdkmath.NewInt(100),
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 1},
+				{Address: "val2", Weight: 1},
+			},
+			expectedDelegations: []types.SplitDelegation{
+				{Validator: "val1", Amount: sdkmath.NewInt(50)},
+				{Validator: "val2", Amount: sdkmath.NewInt(50)},
+			},
+		},
+		{
+			name:           "three validators",
+			totalDelegated: sdkmath.NewInt(100),
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 25},
+				{Address: "val2", Weight: 50},
+				{Address: "val3", Weight: 25},
+			},
+			expectedDelegations: []types.SplitDelegation{
+				{Validator: "val1", Amount: sdkmath.NewInt(25)},
+				{Validator: "val2", Amount: sdkmath.NewInt(50)},
+				{Validator: "val3", Amount: sdkmath.NewInt(25)},
+			},
+		},
+		{
+			name:           "zero weight validator",
+			totalDelegated: sdkmath.NewInt(100),
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 25},
+				{Address: "val2", Weight: 0},
+				{Address: "val3", Weight: 25},
+			},
+			expectedDelegations: []types.SplitDelegation{
+				{Validator: "val1", Amount: sdkmath.NewInt(50)},
+				{Validator: "val3", Amount: sdkmath.NewInt(50)},
+			},
+		},
+		{
+			name:           "zero weight validators",
+			totalDelegated: sdkmath.NewInt(100),
+			validators: []*types.Validator{
+				{Address: "val1", Weight: 0},
+				{Address: "val2", Weight: 0},
+				{Address: "val3", Weight: 0},
+			},
+			expectedError: "No non-zero validators found",
+		},
+		{
+			name:           "no validators",
+			totalDelegated: sdkmath.NewInt(100),
+			validators:     []*types.Validator{},
+			expectedError:  "No non-zero validators found",
+		},
+		{
+			name:           "zero total delegations",
+			totalDelegated: sdkmath.NewInt(0),
+			validators:     []*types.Validator{},
+			expectedError:  "Cannot calculate target delegation if final amount is less than or equal to zero",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			// Create the host zone and deposit record for the given test case
+			hostZone := types.HostZone{
+				ChainId:              HostChainId,
+				HostDenom:            Atom,
+				DelegationIcaAddress: delegationAddress,
+				Validators:           tc.validators,
+			}
+
+			depositRecord := recordstypes.DepositRecord{
+				Amount: tc.totalDelegated,
+			}
+
+			// Build the delegation ICA messages
+			actualMessages, actualSplits, actualError := s.App.StakeibcKeeper.GetDelegationICAMessages(
+				s.Ctx,
+				hostZone,
+				depositRecord,
+			)
+
+			// If this is an error test case, check the error message
+			if tc.expectedError != "" {
+				s.Require().ErrorContains(actualError, tc.expectedError, "error expected")
+				return
+			}
+
+			// For the success case, check the error number of delegations
+			s.Require().NoError(actualError, "no error expected when delegating %v", tc.expectedDelegations)
+			s.Require().Len(actualMessages, len(tc.expectedDelegations), "number of undelegate messages")
+			s.Require().Len(actualSplits, len(tc.expectedDelegations), "number of validator splits")
+
+			// Check each delegation
+			for i, expected := range tc.expectedDelegations {
+				valAddress := expected.Validator
+				actualMsg := actualMessages[i].(*stakingtypes.MsgDelegate)
+				actualSplit := actualSplits[i]
+
+				// Check the ICA message
+				s.Require().Equal(valAddress, actualMsg.ValidatorAddress, "ica message validator")
+				s.Require().Equal(delegationAddress, actualMsg.DelegatorAddress, "ica message delegator for %s", valAddress)
+				s.Require().Equal(Atom, actualMsg.Amount.Denom, "ica message denom for %s", valAddress)
+				s.Require().Equal(expected.Amount.Int64(), actualMsg.Amount.Amount.Int64(),
+					"ica message amount for %s", valAddress)
+
+				// Check the callback
+				s.Require().Equal(expected.Validator, actualSplit.Validator, "callback validator for %s", valAddress)
+				s.Require().Equal(expected.Amount.Int64(), actualSplit.Amount.Int64(), "callback amount %s", valAddress)
+			}
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestBatchSubmitDelegationICAMessages() {
+	// The test will submit ICA's across 10 validators, in batches of 3
+	// There should be 4 ICA's submitted
+	batchSize := 3
+	numValidators := 10
+	expectedNumberOfIcas := 4
+	depositRecord := recordstypes.DepositRecord{}
+
+	// Create the delegation ICA channel
+	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
+
+	// Create a host zone
+	hostZone := types.HostZone{
+		ChainId:              HostChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		HostDenom:            Atom,
+		DelegationIcaAddress: "cosmos_DELEGATION",
+	}
+
+	// Build the ICA messages and callback for each validator
+	var validators []*types.Validator
+	var undelegateMsgs []proto.Message
+	var delegations []*types.SplitDelegation
+	for i := 0; i < numValidators; i++ {
+		validatorAddress := fmt.Sprintf("val%d", i)
+		validators = append(validators, &types.Validator{Address: validatorAddress})
+
+		undelegateMsgs = append(undelegateMsgs, &stakingtypes.MsgDelegate{
+			DelegatorAddress: hostZone.DelegationIcaAddress,
+			ValidatorAddress: validatorAddress,
+			Amount:           sdk.NewCoin(hostZone.HostDenom, sdkmath.NewInt(100)),
+		})
+
+		delegations = append(delegations, &types.SplitDelegation{
+			Validator: validatorAddress,
+			Amount:    sdkmath.NewInt(100),
+		})
+	}
+
+	// Store the validators on the host zone
+	hostZone.Validators = validators
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Mock the epoch tracker to timeout 90% through the epoch
+	strideEpochTracker := types.EpochTracker{
+		EpochIdentifier:    epochstypes.STRIDE_EPOCH,
+		Duration:           10_000_000_000,                                                // 10 second epochs
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000), // dictates timeout
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
+
+	// Get tx seq number before the ICA was submitted to check whether an ICA was submitted
+	startSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
+
+	// Submit the delegations
+	numTxsSubmitted, err := s.App.StakeibcKeeper.BatchSubmitDelegationICAMessages(
+		s.Ctx,
+		hostZone,
+		depositRecord,
+		undelegateMsgs,
+		delegations,
+		batchSize,
+	)
+	s.Require().NoError(err, "no error expected when submitting batches")
+	s.Require().Equal(numTxsSubmitted, uint64(expectedNumberOfIcas), "returned number of txs submitted")
+
+	// Confirm the sequence number iterated by the expected number of ICAs
+	endSequence := s.MustGetNextSequenceNumber(delegationPortID, delegationChannelID)
+	s.Require().Equal(startSequence+uint64(expectedNumberOfIcas), endSequence, "expected number of ICA submissions")
+
+	// Confirm the number of callback data's matches the expected number of ICAs
+	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Equal(expectedNumberOfIcas, len(callbackData), "number of callback datas")
+
+	// Remove the connection ID from the host zone and try again, it should fail
+	invalidHostZone := hostZone
+	invalidHostZone.ConnectionId = ""
+	_, err = s.App.StakeibcKeeper.BatchSubmitDelegationICAMessages(
+		s.Ctx,
+		invalidHostZone,
+		depositRecord,
+		undelegateMsgs,
+		delegations,
+		batchSize,
+	)
+	s.Require().ErrorContains(err, "failed to submit delegation ICAs")
 }

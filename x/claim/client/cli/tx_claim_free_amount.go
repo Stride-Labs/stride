@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v22/x/claim/types"
+	"github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
 func CmdClaimFreeAmount() *cobra.Command {

@@ -11,6 +11,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	"github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
@@ -18,11 +19,11 @@ import (
 
 	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v22/x/interchainquery/keeper"
-	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"
+	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 var (
@@ -238,12 +239,12 @@ func RegisterCommunityPoolAddresses(ctx sdk.Context, k stakeibckeeper.Keeper) er
 		}))
 
 		depositAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
-		if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, depositAccount, appVersion); err != nil {
+		if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, depositAccount, appVersion, types.ORDERED); err != nil {
 			return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool deposit ICA")
 		}
 
 		returnAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_RETURN)
-		if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, returnAccount, appVersion); err != nil {
+		if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, returnAccount, appVersion, types.ORDERED); err != nil {
 			return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool return ICA")
 		}
 	}
@@ -382,5 +383,5 @@ func ExecuteProp225(ctx sdk.Context, k bankkeeper.Keeper) error {
 	communityPoolGrowthAddress := sdk.MustAccAddressFromBech32(CommunityPoolGrowthAddress)
 	liquidityReceiverAddress := sdk.MustAccAddressFromBech32(LiquidityReceiver)
 	transferCoin := sdk.NewCoin(Ustrd, Prop225TransferAmount)
-	return k.SendCoins(ctx, communityPoolGrowthAddress, liquidityReceiverAddress, sdk.NewCoins(transferCoin))
+	return utils.SafeSendCoins(false, k, ctx, communityPoolGrowthAddress, liquidityReceiverAddress, sdk.NewCoins(transferCoin))
 }

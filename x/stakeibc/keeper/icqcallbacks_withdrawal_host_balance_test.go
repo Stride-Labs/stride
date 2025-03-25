@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 type WithdrawalBalanceICQCallbackState struct {
@@ -69,11 +69,7 @@ func (s *KeeperTestSuite) SetupWithdrawalHostBalanceCallbackTest() WithdrawalBal
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, strideEpochTracker)
 
 	withdrawalBalance := int64(1000)
-	commission := uint64(10)
 	expectedReinvestment := sdk.NewCoin(Atom, sdkmath.NewInt(int64(900)))
-
-	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
-	params.StrideCommission = uint64(commission)
 
 	queryResponse := s.CreateBalanceQueryResponse(withdrawalBalance, Atom)
 

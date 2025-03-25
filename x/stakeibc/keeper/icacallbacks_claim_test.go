@@ -7,9 +7,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 type ClaimCallbackState struct {
@@ -58,24 +58,24 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 		HostZoneId:            HostChainId,
 		Status:                recordtypes.HostZoneUnbonding_CLAIMABLE,
 		UserRedemptionRecords: []string{recordId1, recordId2},
-		NativeTokenAmount:     sdkmath.NewInt(1_000_000),
+		ClaimableNativeTokens: sdkmath.NewInt(1_000_000),
 	}
 	hostZoneUnbonding2 := recordtypes.HostZoneUnbonding{
 		HostZoneId:            "not_gaia",
 		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
 		UserRedemptionRecords: []string{recordId3},
-		NativeTokenAmount:     sdkmath.NewInt(1_000_000),
+		ClaimableNativeTokens: sdkmath.NewInt(1_000_000),
 	}
 	// some other hzus in the future
 	hostZoneUnbonding3 := recordtypes.HostZoneUnbonding{
-		HostZoneId:        "not_gaia",
-		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-		NativeTokenAmount: sdkmath.NewInt(1_000_000),
+		HostZoneId:            "not_gaia",
+		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+		ClaimableNativeTokens: sdkmath.NewInt(1_000_000),
 	}
 	hostZoneUnbonding4 := recordtypes.HostZoneUnbonding{
-		HostZoneId:        HostChainId,
-		Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
-		NativeTokenAmount: sdkmath.NewInt(1_000_000),
+		HostZoneId:            HostChainId,
+		Status:                recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+		ClaimableNativeTokens: sdkmath.NewInt(1_000_000),
 	}
 	epochUnbondingRecord1 := recordtypes.EpochUnbondingRecord{
 		EpochNumber:        epochNumber,
@@ -106,7 +106,7 @@ func (s *KeeperTestSuite) SetupClaimCallback() ClaimCallbackTestCase {
 			callbackArgs:    callbackArgs,
 			epochNumber:     epochNumber,
 			decrementAmount: decrementAmount,
-			hzu1TokenAmount: hostZoneUnbonding1.NativeTokenAmount,
+			hzu1TokenAmount: hostZoneUnbonding1.ClaimableNativeTokens,
 		},
 		validArgs: ClaimCallbackArgs{
 			packet:      packet,
@@ -140,14 +140,14 @@ func (s *KeeperTestSuite) TestClaimCallback_Successful() {
 	hzu4 := epochUnbondingRecord2.HostZoneUnbondings[1]
 
 	// check that hzu1 has a decremented amount
-	s.Require().Equal(hzu1.NativeTokenAmount, tc.initialState.hzu1TokenAmount.Sub(tc.initialState.decrementAmount), "hzu1 amount decremented")
+	s.Require().Equal(hzu1.ClaimableNativeTokens, tc.initialState.hzu1TokenAmount.Sub(tc.initialState.decrementAmount), "hzu1 amount decremented")
 	s.Require().Equal(hzu1.Status, recordtypes.HostZoneUnbonding_CLAIMABLE, "hzu1 status set to transferred")
 	// verify the other hzus are unchanged
-	s.Require().Equal(hzu2.NativeTokenAmount, hzu2.NativeTokenAmount, "hzu2 amount unchanged")
+	s.Require().Equal(hzu2.ClaimableNativeTokens, hzu2.ClaimableNativeTokens, "hzu2 amount unchanged")
 	s.Require().Equal(hzu2.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu2 status set to transferred")
-	s.Require().Equal(hzu3.NativeTokenAmount, hzu3.NativeTokenAmount, "hzu3 amount unchanged")
+	s.Require().Equal(hzu3.ClaimableNativeTokens, hzu3.ClaimableNativeTokens, "hzu3 amount unchanged")
 	s.Require().Equal(hzu3.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu3 status set to transferred")
-	s.Require().Equal(hzu4.NativeTokenAmount, hzu4.NativeTokenAmount, "hzu4 amount unchanged")
+	s.Require().Equal(hzu4.ClaimableNativeTokens, hzu4.ClaimableNativeTokens, "hzu4 amount unchanged")
 	s.Require().Equal(hzu4.Status, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, "hzu4 status set to transferred")
 }
 
@@ -188,7 +188,7 @@ func (s *KeeperTestSuite) TestClaimCallback_WrongCallbackArgs() {
 	invalidCallbackArgs := []byte("random bytes")
 
 	err := s.App.StakeibcKeeper.ClaimCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, invalidCallbackArgs)
-	s.Require().EqualError(err, "Unable to unmarshal claim callback args: unexpected EOF: unable to unmarshal data structure")
+	s.Require().ErrorContains(err, "unable to unmarshal claim callback args")
 }
 
 func (s *KeeperTestSuite) TestClaimCallback_RecordNotFound() {
@@ -220,7 +220,7 @@ func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_Success() {
 	hzu1 := epochUnbondingRecord1.HostZoneUnbondings[0]
 
 	// check that hzu1 has a decremented amount
-	s.Require().Equal(hzu1.NativeTokenAmount.Sub(userRedemptionRecord.NativeTokenAmount), hzu1.NativeTokenAmount, "hzu1 amount decremented")
+	s.Require().Equal(hzu1.ClaimableNativeTokens.Sub(userRedemptionRecord.NativeTokenAmount), hzu1.ClaimableNativeTokens, "hzu1 amount decremented")
 }
 
 func (s *KeeperTestSuite) TestDecrementHostZoneUnbonding_HzuNotFound() {

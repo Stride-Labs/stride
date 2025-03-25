@@ -4,7 +4,7 @@ package stride.stakedym;
 import "gogoproto/gogo.proto";
 import "stride/stakedym/stakedym.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/stakedym/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/stakedym/types";
 
 // Params defines the stakedym module parameters.
 message Params {}

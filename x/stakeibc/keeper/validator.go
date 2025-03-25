@@ -9,8 +9,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // Get a validator and its index from a list of validators, by address
@@ -60,12 +60,15 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 
 	// Finally, add the validator to the host
 	hostZone.Validators = append(hostZone.Validators, &types.Validator{
-		Name:                      validator.Name,
-		Address:                   validator.Address,
-		Weight:                    valWeight,
-		Delegation:                sdkmath.ZeroInt(),
-		SlashQueryProgressTracker: sdkmath.ZeroInt(),
-		SlashQueryCheckpoint:      checkpoint,
+		Name:                        validator.Name,
+		Address:                     validator.Address,
+		Weight:                      valWeight,
+		Delegation:                  sdkmath.ZeroInt(),
+		SlashQueryProgressTracker:   sdkmath.ZeroInt(),
+		SlashQueryCheckpoint:        checkpoint,
+		SharesToTokensRate:          sdk.OneDec(),
+		DelegationChangesInProgress: 0,
+		SlashQueryInProgress:        false,
 	})
 
 	k.SetHostZone(ctx, hostZone)
@@ -79,9 +82,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, validatorAddress string) error {
 	hostZone, found := k.GetHostZone(ctx, chainId)
 	if !found {
-		errMsg := fmt.Sprintf("HostZone (%s) not found", chainId)
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(types.ErrHostZoneNotFound, errMsg)
+		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", chainId)
 	}
 
 	// Check for LSMTokenDeposit records with this specific validator address
@@ -104,9 +105,7 @@ func (k Keeper) RemoveValidatorFromHostZone(ctx sdk.Context, chainId string, val
 			return errors.New(errMsg)
 		}
 	}
-	errMsg := fmt.Sprintf("Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
-	k.Logger(ctx).Error(errMsg)
-	return errorsmod.Wrapf(types.ErrValidatorNotFound, errMsg)
+	return errorsmod.Wrapf(types.ErrValidatorNotFound, "Validator address (%s) not found on host zone (%s)", validatorAddress, chainId)
 }
 
 // Updates a validator's individual delegation, and the corresponding total delegation on the host zone

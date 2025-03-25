@@ -4,8 +4,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/migrations/v3/types"
-	newstakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/migrations/v3/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 //   - InternalExchangeRate is now a decimal named SharesToTokensRate
 //   - DelegationAmt renamed to Delegation
 func convertToNewValidator(oldValidator oldstakeibctypes.Validator, totalDelegations sdkmath.Int) newstakeibctypes.Validator {
-	queryThreshold := sdk.NewDecWithPrec(int64(ValidatorSlashQueryThreshold), 2) // percentage
+	queryThreshold := sdk.NewDecWithPrec(utils.UintToInt(ValidatorSlashQueryThreshold), 2) // percentage
 	slashQueryCheckpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
 
 	// Note: The old name of "TokensToShares" was slightly misleading - it represents the conversion of shares to tokens

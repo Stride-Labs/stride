@@ -10,9 +10,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // Liquid stakes native tokens and returns stTokens to the user
@@ -56,7 +56,8 @@ func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount s
 	}
 
 	// Transfer the native tokens from the user to module account
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(nativeToken)); err != nil {
+	// Note: checkBlockedAddr=false because hostZoneDepositAddress is a module
+	if err := utils.SafeSendCoins(false, k.bankKeeper, ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(nativeToken)); err != nil {
 		return stToken, errorsmod.Wrapf(err, "failed to send tokens from liquid staker %s to deposit address", liquidStaker)
 	}
 
@@ -117,7 +118,7 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 	}
 
 	// Timeout the transfer at the end of the epoch
-	timeoutTimestamp := uint64(ctx.BlockTime().Add(epochDuration).UnixNano())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(epochDuration).UnixNano())
 
 	// Transfer the native tokens to the host chain
 	transferMsgDepositToDelegation := transfertypes.MsgTransfer{

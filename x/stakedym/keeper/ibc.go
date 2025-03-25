@@ -5,10 +5,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 
-	"github.com/Stride-Labs/stride/v22/x/icacallbacks"
+	"github.com/Stride-Labs/stride/v26/x/icacallbacks"
 )
 
 func (k Keeper) ArchiveFailedTransferRecord(ctx sdk.Context, recordId uint64) error {

@@ -11,9 +11,10 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v22/x/autopilot/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v26/x/autopilot/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 const (
@@ -125,7 +126,7 @@ func (k Keeper) IBCTransferStToken(
 	}
 
 	// Use a long timeout for the transfer
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().UnixNano() + LiquidStakeForwardTransferTimeout.Nanoseconds())
 
 	// Submit the transfer from the hashed address
 	transferMsg := &transfertypes.MsgTransfer{
@@ -147,6 +148,9 @@ func (k Keeper) IBCTransferStToken(
 	// autopilotMetadata.StrideAddress is never the hashed address, because the autopilotMetadata struct
 	// is parsed upstream of hashing the receiver
 	// So StrideAddress is used as the fallback (which is always the original receiver)
+	if k.bankKeeper.BlockedAddr(sdk.MustAccAddressFromBech32(autopilotMetadata.StrideAddress)) {
+		return errorsmod.Wrapf(types.ErrBlockedFallbackAddress, "fallback address %s is blocked", autopilotMetadata.StrideAddress)
+	}
 	k.SetTransferFallbackAddress(ctx, channelId, transferResponse.Sequence, autopilotMetadata.StrideAddress)
 
 	return err

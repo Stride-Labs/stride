@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,9 +19,9 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	config "github.com/Stride-Labs/stride/v22/cmd/strided/config"
-	icacallbacktypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
+	config "github.com/Stride-Labs/stride/v26/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {
@@ -38,7 +39,7 @@ func Int64ToCoinString(amount int64, denom string) string {
 
 func ValidateAdminAddress(address string) error {
 	if !Admins[address] {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, fmt.Sprintf("address (%s) is not an admin", address))
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "address (%s) is not an admin", address)
 	}
 	return nil
 }
@@ -66,6 +67,37 @@ func Int32MapKeys[V any](m map[int32]V) []int32 {
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	return keys
+}
+
+func Uint64MapKeys[V any](m map[uint64]V) []uint64 {
+	keys := make([]uint64, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	return keys
+}
+
+// Converts from uint64 -> int64 with a panic check for overflow
+// This should only be used on values where it is known that overflow
+// is not possible (e.g. params, block times, etc.), as in those scenarios
+// we want to make sure we don't silently fail
+func UintToInt(u uint64) int64 {
+	if u > math.MaxInt64 {
+		panic(fmt.Sprintf("uint64 value %d too large for int64", u))
+	}
+	return int64(u)
+}
+
+// Converts from int64 -> uint64 with a panic check for underflow
+// This should only be used on values where it is known that underflow
+// is not possible (e.g. params, block times, etc.), as in those scenarios
+// we want to make sure we don't silently fail
+func IntToUint(i int64) uint64 {
+	if i < 0 {
+		panic(fmt.Sprintf("int64 value %d is negative and can't be converted to uint64", i))
+	}
+	return uint64(i)
 }
 
 //==============================  ADDRESS VERIFICATION UTILS  ================================

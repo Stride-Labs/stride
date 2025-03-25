@@ -16,10 +16,11 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 var (
@@ -208,7 +209,7 @@ func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidSta
 // Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL
 func (k Keeper) GetUpdatedSlashQueryCheckpoint(ctx sdk.Context, totalDelegations sdkmath.Int) sdkmath.Int {
 	params := k.GetParams(ctx)
-	queryThreshold := sdk.NewDecWithPrec(int64(params.ValidatorSlashQueryThreshold), 2) // percentage
+	queryThreshold := sdk.NewDecWithPrec(utils.UintToInt(params.ValidatorSlashQueryThreshold), 2) // percentage
 	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
 	return checkpoint
 }
@@ -333,8 +334,9 @@ func (k Keeper) FinishLSMLiquidStake(ctx sdk.Context, lsmLiquidStake types.LSMLi
 	}
 
 	// Transfer the LSM token to the deposit account
+	// Note: checkBlockedAddr=false because hostZoneDepositAddress is a module
 	lsmIBCToken := sdk.NewCoin(lsmTokenDeposit.IbcDenom, lsmTokenDeposit.Amount)
-	if err := k.bankKeeper.SendCoins(ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(lsmIBCToken)); err != nil {
+	if err := utils.SafeSendCoins(false, k.bankKeeper, ctx, liquidStakerAddress, hostZoneDepositAddress, sdk.NewCoins(lsmIBCToken)); err != nil {
 		return errorsmod.Wrap(err, "failed to send tokens from Account to Module")
 	}
 
@@ -442,7 +444,7 @@ func (k Keeper) DetokenizeLSMDeposit(ctx sdk.Context, hostZone types.HostZone, d
 	}
 
 	// Submit the ICA with a coonservative timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
+	timeout := utils.IntToUint(ctx.BlockTime().UnixNano() + (DetokenizationTimeout).Nanoseconds())
 	if _, err := k.SubmitTxs(
 		ctx,
 		hostZone.ConnectionId,

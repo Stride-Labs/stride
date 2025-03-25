@@ -8,13 +8,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	epochtypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,8 +36,7 @@ func (k Keeper) MarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback ty
 func (k Keeper) UnmarshalReinvestCallbackArgs(ctx sdk.Context, reinvestCallback []byte) (*types.ReinvestCallback, error) {
 	unmarshalledReinvestCallback := types.ReinvestCallback{}
 	if err := proto.Unmarshal(reinvestCallback, &unmarshalledReinvestCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalReinvestCallbackArgs %s", err.Error()))
-		return nil, err
+		return nil, errorsmod.Wrap(err, "unable to unmarshal reinvest callback args")
 	}
 	return &unmarshalledReinvestCallback, nil
 }
@@ -53,7 +52,7 @@ func (k Keeper) ReinvestCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	// Fetch callback args
 	reinvestCallback, err := k.UnmarshalReinvestCallbackArgs(ctx, args)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal reinvest callback args: %s", err.Error()))
+		return err
 	}
 	chainId := reinvestCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Starting reinvest callback"))
@@ -115,7 +114,7 @@ func (k Keeper) ReinvestCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	// Submit an ICQ for the rewards balance in the fee account
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Reinvest, "Submitting ICQ for fee account balance"))
 
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, utils.UintToInt(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
 	query := icqtypes.Query{

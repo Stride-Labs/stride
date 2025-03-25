@@ -1,7 +1,6 @@
 package v8
 
 import (
-	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -12,12 +11,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	autopilotkeeper "github.com/Stride-Labs/stride/v22/x/autopilot/keeper"
-	autopilottypes "github.com/Stride-Labs/stride/v22/x/autopilot/types"
-	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v22/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	autopilotkeeper "github.com/Stride-Labs/stride/v26/x/autopilot/keeper"
+	autopilottypes "github.com/Stride-Labs/stride/v26/x/autopilot/types"
+	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v26/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
 var (
@@ -45,7 +44,7 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Resetting airdrop claims...")
 		for _, claimType := range ResetAirdropIdentifiers {
 			if err := claimKeeper.ResetClaimStatus(ctx, claimType); err != nil {
-				return vm, errorsmod.Wrapf(err, fmt.Sprintf("unable to reset %s claim status", claimType))
+				return vm, errorsmod.Wrapf(err, "unable to reset %s claim status", claimType)
 			}
 		}
 
@@ -77,7 +76,7 @@ func CreateUpgradeHandler(
 			Identifier:       EvmosAirdropIdentifier,
 			ChainId:          EvmosChainId,
 			Denom:            claimtypes.DefaultClaimDenom,
-			StartTime:        uint64(AirdropStartTime.Unix()),
+			StartTime:        utils.IntToUint(AirdropStartTime.Unix()),
 			Duration:         duration,
 			AutopilotEnabled: true,
 		}); err != nil {

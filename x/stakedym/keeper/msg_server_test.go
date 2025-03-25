@@ -4,8 +4,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v22/app/apptesting"
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
 
 // ----------------------------------------------
@@ -179,7 +179,6 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep() {
 // ----------------------------------------------
 
 func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
-
 	safeAddress := "safe"
 
 	// Create the host zone
@@ -233,7 +232,6 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
 	_, err = s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{})
 	s.Require().ErrorContains(err, "host zone not found")
-
 }
 
 // ----------------------------------------------
@@ -597,7 +595,6 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 
 // Verify that operator address can be set successfully
 func (s *KeeperTestSuite) TestSetOperatorAddress() {
-
 	safeAddress := s.TestAccs[0].String()
 	operatorAddress := s.TestAccs[1].String()
 	nonAdminAddress := s.TestAccs[2].String()

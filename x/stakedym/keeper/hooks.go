@@ -5,7 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 )
 
 // This module has the following epochly triggers
@@ -18,7 +19,7 @@ import (
 // Note: The hourly processes are meant for actions that should run ASAP,
 // but the hourly buffer makes it less expensive
 func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
-	epochNumber := uint64(epochInfo.CurrentEpoch)
+	epochNumber := utils.IntToUint(epochInfo.CurrentEpoch)
 
 	// Every day, refresh the redemption rate and prepare delegations
 	// Every 4 days, prepare undelegations

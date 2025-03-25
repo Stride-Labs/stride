@@ -11,18 +11,18 @@ import (
 
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/Stride-Labs/stride/v22/app/apptesting"
-	"github.com/Stride-Labs/stride/v22/utils"
-	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	"github.com/Stride-Labs/stride/v26/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
 
-	"github.com/Stride-Labs/stride/v22/x/claim/types"
-	stridevestingtypes "github.com/Stride-Labs/stride/v22/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v26/x/claim/types"
+	stridevestingtypes "github.com/Stride-Labs/stride/v26/x/claim/vesting/types"
 )
 
 // Test functionality for loading allocation data(csv)
 func (suite *KeeperTestSuite) TestLoadAllocationData() {
 	suite.SetupTest()
-	var allocations = `identifier,address,weight
+	allocations := `identifier,address,weight
 osmosis,osmo1g7yxhuppp5x3yqkah5mw29eqq5s4sv2fp6e2eg,0.5
 osmosis,osmo1h4astdfzjhcwahtfrh24qtvndzzh49xvtm69fg,0.3
 stride,stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d,0.7
@@ -616,7 +616,6 @@ func (suite *KeeperTestSuite) TestGetClaimStatus() {
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop ID for %d", i)
 		suite.Require().Equal(expectedClaimStatus[i].AirdropIdentifier, status[i].AirdropIdentifier, "airdrop claimed for %i", i)
 	}
-
 }
 
 func (suite *KeeperTestSuite) TestGetClaimMetadata() {

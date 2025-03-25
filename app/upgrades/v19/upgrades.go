@@ -12,6 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
+	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 const (
@@ -71,7 +73,7 @@ func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
 	// the current hour and the start time is precisely on the hour
 	genesisState := ratelimittypes.DefaultGenesis()
 	hourEpoch := genesisState.HourEpoch
-	hourEpoch.EpochNumber = uint64(ctx.BlockTime().Hour())
+	hourEpoch.EpochNumber = utils.IntToUint(int64(ctx.BlockTime().Hour()))
 	hourEpoch.EpochStartTime = ctx.BlockTime().Truncate(time.Hour)
 	hourEpoch.EpochStartHeight = ctx.BlockHeight()
 	k.SetHourEpoch(ctx, hourEpoch)

@@ -1,11 +1,11 @@
 syntax = "proto3";
 package stride.records;
 
+import "gogoproto/gogo.proto";
 import "stride/records/params.proto";
 import "stride/records/records.proto";
-import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/records/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/records/types";
 
 // GenesisState defines the records module's genesis state.
 message GenesisState {

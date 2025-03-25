@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,8 +29,7 @@ func (k Keeper) MarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallbac
 func (k Keeper) UnmarshalRedemptionCallbackArgs(ctx sdk.Context, redemptionCallback []byte) (types.RedemptionCallback, error) {
 	unmarshalledRedemptionCallback := types.RedemptionCallback{}
 	if err := proto.Unmarshal(redemptionCallback, &unmarshalledRedemptionCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalRedemptionCallbackArgs | %s", err.Error()))
-		return unmarshalledRedemptionCallback, err
+		return unmarshalledRedemptionCallback, errorsmod.Wrap(err, "unable to unmarshal redemption callback args")
 	}
 	return unmarshalledRedemptionCallback, nil
 }
@@ -43,7 +42,7 @@ func (k Keeper) RedemptionCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	// Fetch callback args
 	redemptionCallback, err := k.UnmarshalRedemptionCallbackArgs(ctx, args)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal redemption callback args: %s", err.Error()))
+		return err
 	}
 	chainId := redemptionCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Redemption,
@@ -80,10 +79,20 @@ func (k Keeper) RedemptionCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", chainId)
 	}
 
-	// Upon success, update the unbonding record status to CLAIMABLE
-	err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_CLAIMABLE)
-	if err != nil {
-		return err
+	// Upon success, update the unbonding record status to CLAIMABLE and set the number of
+	// claimable tokens for each epoch unbonding record
+	for _, epochNumber := range redemptionCallback.EpochUnbondingRecordIds {
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, chainId)
+		if !found {
+			return recordstypes.ErrHostUnbondingRecordNotFound.Wrapf("unbonding record not found for epoch %d and chain %s",
+				epochNumber, chainId)
+		}
+
+		hostZoneUnbonding.ClaimableNativeTokens = hostZoneUnbonding.NativeTokenAmount
+		hostZoneUnbonding.Status = recordstypes.HostZoneUnbonding_CLAIMABLE
+		if err := k.RecordsKeeper.SetHostZoneUnbondingRecord(ctx, epochNumber, chainId, *hostZoneUnbonding); err != nil {
+			return err
+		}
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("[REDEMPTION] completed on %s", chainId))

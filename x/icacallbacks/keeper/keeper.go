@@ -13,7 +13,7 @@ import (
 
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
@@ -86,9 +86,7 @@ func (k Keeper) CallRegisteredICACallback(ctx sdk.Context, packet channeltypes.P
 		return nil
 	}
 	if err := callback.CallbackFunc(ctx, packet, ackResponse, callbackData.CallbackArgs); err != nil {
-		errMsg := fmt.Sprintf("Error occured while calling ICACallback (%s) | err: %s", callbackData.CallbackId, err.Error())
-		k.Logger(ctx).Error(errMsg)
-		return errorsmod.Wrapf(types.ErrCallbackFailed, errMsg)
+		return errorsmod.Wrapf(err, "failed to invoke icacallback %s", callbackData.CallbackId)
 	}
 
 	// remove the callback data

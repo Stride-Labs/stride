@@ -4,8 +4,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 // Emits a successful liquid stake event, and displays metadata such as the stToken amount
@@ -152,6 +152,19 @@ func EmitUndelegationEvent(ctx sdk.Context, hostZone types.HostZone, totalUnbond
 			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
 			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
 			sdk.NewAttribute(types.AttributeKeyTotalUnbondAmount, totalUnbondAmount.String()),
+		),
+	)
+}
+
+// Emits an event if an redemption sweep ICA was submitted for a host zone
+func EmitRedemptionSweepEvent(ctx sdk.Context, hostZone types.HostZone, sweptAmount sdkmath.Int) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeRedemptionSweep,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeyHostZone, hostZone.ChainId),
+			sdk.NewAttribute(types.AttributeKeyNativeBaseDenom, hostZone.HostDenom),
+			sdk.NewAttribute(types.AttributeKeySweptAmount, sweptAmount.String()),
 		),
 	)
 }

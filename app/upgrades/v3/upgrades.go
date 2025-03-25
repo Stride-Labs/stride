@@ -7,9 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	claimkeeper "github.com/Stride-Labs/stride/v22/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v22/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v22/x/claim/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v26/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
 // Note: ensure these values are properly set before running upgrade
@@ -47,7 +48,7 @@ func CreateUpgradeHandler(
 					Identifier:  airdropIdentifiers[idx],
 					ChainId:     airdropChainIds[idx],
 					Denom:       claimtypes.DefaultClaimDenom,
-					StartTime:   uint64(ctx.BlockTime().Unix()),
+					StartTime:   utils.IntToUint(ctx.BlockTime().Unix()),
 					Duration:    uint64(airdropDuration.Seconds()),
 				})
 				if err != nil {

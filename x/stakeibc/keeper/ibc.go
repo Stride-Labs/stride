@@ -13,7 +13,7 @@ import (
 
 	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {
@@ -198,52 +198,38 @@ func (k Keeper) StoreTradeRouteIcaAddress(ctx sdk.Context, callbackChainId, call
 	return nil
 }
 
-// TODO [cleanup]: Cleanup error messages, and rename to GetLightClientTime
-// Retrieves the light client time for a given connection
-func (k Keeper) GetLightClientTimeSafely(ctx sdk.Context, connectionID string) (uint64, error) {
-	// get light client's latest height
-	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+// Given a connection ID, returns the light client time
+func (k Keeper) GetLightClientTime(ctx sdk.Context, connectionID string) (clientTime uint64, err error) {
+	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return 0, fmt.Errorf(errMsg)
+		return 0, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection-id: %s", connectionID)
 	}
-	// TODO(TEST-112) make sure to update host LCs here!
-	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, conn.ClientId)
+
+	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, connection.ClientId)
 	if !found {
-		errMsg := fmt.Sprintf("client id %s not found for connection %s", conn.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return 0, fmt.Errorf(errMsg)
-	} else {
-		latestTime := latestConsensusClientState.GetTimestamp()
-		return latestTime, nil
+		return 0, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "client-id: %s", connection.ClientId)
 	}
+
+	return latestConsensusClientState.GetTimestamp(), nil
 }
 
-// TODO [cleanup]: Cleanup error messages, and rename to GetLightClientHeight
-// Retrieves the light client time for a given connection
-func (k Keeper) GetLightClientHeightSafely(ctx sdk.Context, connectionID string) (uint64, error) {
-	// get light client's latest height
-	conn, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
+// Given a connection ID, returns the light client height
+func (k Keeper) GetLightClientHeight(ctx sdk.Context, connectionID string) (height uint64, err error) {
+	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionID)
 	if !found {
-		errMsg := fmt.Sprintf("invalid connection id, %s not found", connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return 0, fmt.Errorf(errMsg)
+		return 0, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection-id: %s", connectionID)
 	}
-	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, conn.ClientId)
+
+	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
-		errMsg := fmt.Sprintf("client id %s not found for connection %s", conn.ClientId, connectionID)
-		k.Logger(ctx).Error(errMsg)
-		return 0, fmt.Errorf(errMsg)
-	} else {
-		latestHeightHostZone, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
-		if err != nil {
-			errMsg := fmt.Sprintf("error casting latest height to int64: %s", err.Error())
-			k.Logger(ctx).Error(errMsg)
-			return 0, fmt.Errorf(errMsg)
-		}
-		return latestHeightHostZone, nil
+		return 0, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "client-id: %s", connection.ClientId)
 	}
+
+	latestHeight, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+	if err != nil {
+		return 0, err
+	}
+	return latestHeight, nil
 }
 
 // Lookup a chain ID from a connection ID by looking up the client state

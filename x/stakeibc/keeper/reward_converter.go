@@ -16,10 +16,15 @@ import (
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	epochstypes "github.com/Stride-Labs/stride/v22/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v22/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	epochstypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+)
+
+const (
+	OsmosisSwapTypeUrl       = "/osmosis.poolmanager.v1beta1.MsgSwapExactAmountIn"
+	LegacyOsmosisSwapTypeUrl = "/osmosis.gamm.v1beta1.MsgSwapExactAmountIn"
 )
 
 // JSON Memo for PFM transfers
@@ -133,12 +138,16 @@ func (k Keeper) BuildTradeAuthzMsg(
 	tradeRoute types.TradeRoute,
 	permissionChange types.AuthzPermissionChange,
 	grantee string,
+	legacy bool,
 ) (authzMsg []proto.Message, err error) {
-	swapMsgTypeUrl := "/" + proto.MessageName(&types.MsgSwapExactAmountIn{})
+	messageTypeUrl := OsmosisSwapTypeUrl
+	if legacy {
+		messageTypeUrl = LegacyOsmosisSwapTypeUrl
+	}
 
 	switch permissionChange {
 	case types.AuthzPermissionChange_GRANT:
-		authorization := authz.NewGenericAuthorization(swapMsgTypeUrl)
+		authorization := authz.NewGenericAuthorization(messageTypeUrl)
 		expiration := ctx.BlockTime().Add(time.Hour * 24 * 365 * 100) // 100 years
 
 		grant, err := authz.NewGrant(ctx.BlockTime(), authorization, &expiration)
@@ -155,7 +164,7 @@ func (k Keeper) BuildTradeAuthzMsg(
 		authzMsg = []proto.Message{&authz.MsgRevoke{
 			Granter:    tradeRoute.TradeAccount.Address,
 			Grantee:    grantee,
-			MsgTypeUrl: swapMsgTypeUrl,
+			MsgTypeUrl: messageTypeUrl,
 		}}
 
 	default:
@@ -175,7 +184,7 @@ func (k Keeper) BuildHostToTradeTransferMsg(
 	// Get the epoch tracker to determine the timeouts
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return msg, errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return msg, errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
 
 	// Timeout the first transfer halfway through the epoch, and the second transfer at the end of the epoch
@@ -271,7 +280,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 	// Timeout for ica tx and the transfer msgs is at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
 	timeout := uint64(strideEpochTracker.NextEpochStartTime)
 
@@ -339,9 +348,9 @@ func (k Keeper) WithdrawalRewardBalanceQuery(ctx sdk.Context, route types.TradeR
 	// in the pfm sequence will timeout)
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeoutDuration := time.Duration(strideEpochTracker.Duration) / 2
+	timeoutDuration := time.Duration(utils.UintToInt(strideEpochTracker.Duration)) / 2
 
 	// We need the trade route keys in the callback to look up the tradeRoute struct
 	callbackData := types.TradeRouteCallback{
@@ -389,9 +398,9 @@ func (k Keeper) TradeConvertedBalanceQuery(ctx sdk.Context, route types.TradeRou
 	// Timeout query at end of epoch
 	strideEpochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return errorsmod.Wrapf(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
+		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeout := time.Unix(0, int64(strideEpochTracker.NextEpochStartTime))
+	timeout := time.Unix(0, utils.UintToInt(strideEpochTracker.NextEpochStartTime))
 	timeoutDuration := timeout.Sub(ctx.BlockTime())
 
 	// We need the trade route keys in the callback to look up the tradeRoute struct

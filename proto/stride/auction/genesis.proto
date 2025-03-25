@@ -1,0 +1,16 @@
+syntax = "proto3";
+package stride.auction;
+
+import "gogoproto/gogo.proto";
+import "stride/auction/auction.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v26/x/auction/types";
+
+// GenesisState defines the auction module's genesis state
+message GenesisState {
+  // Module parameters
+  Params params = 1 [ (gogoproto.nullable) = false ];
+
+  // List of token auctions
+  repeated Auction auctions = 2 [ (gogoproto.nullable) = false ];
+}

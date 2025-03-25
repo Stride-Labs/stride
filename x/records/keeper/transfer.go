@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v22/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
 var (
@@ -68,7 +68,7 @@ func (k Keeper) IBCTransferLSMToken(
 	hostZoneDelegationICAAddress string,
 ) error {
 	// Build transfer message with a conservative timeout
-	timeout := uint64(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds())
+	timeout := utils.IntToUint(ctx.BlockTime().UnixNano() + (LSMDepositTransferTimeout).Nanoseconds())
 	ibcToken := sdk.NewCoin(lsmTokenDeposit.IbcDenom, lsmTokenDeposit.Amount)
 	transferMsg := transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,

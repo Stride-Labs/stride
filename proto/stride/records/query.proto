@@ -1,14 +1,13 @@
 syntax = "proto3";
 package stride.records;
 
-import "stride/records/records.proto";
-import "stride/records/params.proto";
-
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
+import "stride/records/params.proto";
+import "stride/records/records.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/records/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/records/types";
 
 // Query defines the gRPC querier service.
 service Query {

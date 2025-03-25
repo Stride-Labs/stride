@@ -1,9 +1,16 @@
 # syntax = docker/dockerfile:1
 
-ARG GO_VERSION="1.21"
-ARG RUNNER_IMAGE_VERSION="3.17"
+ARG GO_VERSION="1.22"
+ARG RUNNER_IMAGE_VERSION="3.18"
 
-FROM golang:${GO_VERSION}-alpine${RUNNER_IMAGE_VERSION} as builder
+FROM golang:${GO_VERSION}-alpine${RUNNER_IMAGE_VERSION} AS builder
+
+WORKDIR /opt
+RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base curl
+
+# Manually installing 1.22.11 because we need to be on 3.18 to avoid wasm SIGABRT
+# https://github.com/CosmWasm/wasmvm/issues/523
+RUN curl -fsSL https://go.dev/dl/go1.22.11.linux-amd64.tar.gz | tar -C /usr/local -xz
 
 WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base
@@ -27,7 +34,7 @@ RUN BUILD_TAGS=muslc LINK_STATICALLY=true make build
 FROM alpine:${RUNNER_IMAGE_VERSION}
 
 COPY --from=builder /opt/build/strided /usr/local/bin/strided
-RUN apk add bash vim sudo dasel jq \
+RUN apk add bash vim sudo dasel jq curl \
     && addgroup -g 1000 stride \
     && adduser -S -h /home/stride -D stride -u 1000 -G stride 
 
@@ -37,7 +44,7 @@ RUN mkdir -p /etc/sudoers.d \
     && adduser stride wheel 
 
 USER 1000
-ENV HOME /home/stride
+ENV HOME=/home/stride
 WORKDIR $HOME
 
 EXPOSE 26657 26656 1317 9090

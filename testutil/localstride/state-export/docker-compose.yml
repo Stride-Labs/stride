@@ -6,22 +6,34 @@ services:
     image: stridezone:localstride
     build:
       context: ../../../
-      args:
-        RUNNER_IMAGE_VERSION: 3.17
-        GO_VERSION: 1.21
     volumes:
-      - ./scripts/start.sh:/home/stride/start.sh
-      - ./scripts/testnetify.py:/home/stride/testnetify.py
-      - ./state_export.json:/home/stride/state_export.json
-      - $HOME/.stride/:/home/stride/.stride/
-    entrypoint:
+      - /home/stride/stride/testutil/localstride/state-export/scripts/start.sh:/home/stride/start.sh
+      - /home/stride/stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - /home/stride/stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - /home/stride/.stride1/:/home/stride/.stride/
+    command:
+      - sudo
+      - /bin/bash
       - /home/stride/start.sh
-    environment:
-      - MONIKER=val
-      - CHAIN_ID=localstride
     ports:
       - 26657:26657
       - 26656:26656
       - 1317:1317
       - 9090:9090
       - 9091:9091
+
+  stride2:
+    image: stridezone:localstride
+    build:
+      context: ../../../
+    volumes:
+      - /home/stride/stride/testutil/localstride/state-export/scripts/start.sh:/home/stride/start.sh
+      - /home/stride/stride/testutil/localstride/state-export/scripts/testnetify.py:/home/stride/testnetify.py
+      - /home/stride/stride/testutil/localstride/state-export/state_export.json:/home/stride/state_export.json
+      - /home/stride/.stride2/:/home/stride/.stride/
+    command:
+      - sudo
+      - /bin/bash
+      - /home/stride/start.sh
+    ports:
+      - 26658:26656

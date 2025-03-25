@@ -9,8 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	"github.com/Stride-Labs/stride/v22/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
 )
 
 // Takes custody of staked tokens in an escrow account, updates the current
@@ -84,8 +84,9 @@ func (k Keeper) RedeemStake(ctx sdk.Context, redeemer string, stTokenAmount sdkm
 	nativeToken = sdk.NewCoin(hostZone.NativeTokenDenom, nativeAmount) // Should it be NativeTokenIbcDenom?
 
 	// Escrow user's stTIA balance before setting either record in the store to verify everything worked
+	// Note: checkBlockedAddr=false because escrowAccount is a module
 	redeemCoins := sdk.NewCoins(sdk.NewCoin(stDenom, stTokenAmount))
-	err = k.bankKeeper.SendCoins(ctx, redeemerAccount, escrowAccount, redeemCoins)
+	err = utils.SafeSendCoins(false, k.bankKeeper, ctx, redeemerAccount, escrowAccount, redeemCoins)
 	if err != nil {
 		return nativeToken, errorsmod.Wrapf(err, "couldn't send %v stadym. err: %s", stTokenAmount, err.Error())
 	}
@@ -187,8 +188,8 @@ func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash str
 	delegatedBalanceBefore := hostZone.DelegatedBalance
 
 	// update the record's txhash, status, and unbonding completion time
-	unbondingLength := time.Duration(hostZone.UnbondingPeriodSeconds) * time.Second // 21 days
-	unbondingCompletionTime := uint64(ctx.BlockTime().Add(unbondingLength).Unix())  // now + 21 days
+	unbondingLength := time.Duration(utils.UintToInt(hostZone.UnbondingPeriodSeconds)) * time.Second // 21 days
+	unbondingCompletionTime := utils.IntToUint(ctx.BlockTime().Add(unbondingLength).Unix())          // now + 21 days
 
 	record.UndelegationTxHash = txHash
 	record.Status = types.UNBONDING_IN_PROGRESS
@@ -282,7 +283,7 @@ func (k Keeper) VerifyImpliedRedemptionRateFromUnbonding(ctx sdk.Context, stToke
 // Records are annotated with a new status UNBONDED
 func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
 	for _, unbondingRecord := range k.GetAllUnbondingRecordsByStatus(ctx, types.UNBONDING_IN_PROGRESS) {
-		if ctx.BlockTime().Unix() > int64(unbondingRecord.UnbondingCompletionTimeSeconds) {
+		if ctx.BlockTime().Unix() > utils.UintToInt(unbondingRecord.UnbondingCompletionTimeSeconds) {
 			unbondingRecord.Status = types.UNBONDED
 			k.SetUnbondingRecord(ctx, unbondingRecord)
 		}
@@ -386,7 +387,7 @@ func (k Keeper) DistributeClaimsForUnbondingRecord(
 		}
 
 		nativeTokens := sdk.NewCoin(hostNativeIbcDenom, redemptionRecord.NativeAmount)
-		if err := k.bankKeeper.SendCoins(ctx, claimAddress, userAddress, sdk.NewCoins(nativeTokens)); err != nil {
+		if err := utils.SafeSendCoins(true, k.bankKeeper, ctx, claimAddress, userAddress, sdk.NewCoins(nativeTokens)); err != nil {
 			return errorsmod.Wrapf(err, "unable to send %v from claim address to %s",
 				nativeTokens, redemptionRecord.Redeemer)
 		}

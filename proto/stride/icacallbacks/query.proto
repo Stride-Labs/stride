@@ -1,14 +1,13 @@
 syntax = "proto3";
 package stride.icacallbacks;
 
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "stride/icacallbacks/params.proto";
 import "stride/icacallbacks/callback_data.proto";
-// this line is used by starport scaffolding # 1
+import "stride/icacallbacks/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v22/x/icacallbacks/types";
+option go_package = "github.com/Stride-Labs/stride/v26/x/icacallbacks/types";
 
 // Query defines the gRPC querier service.
 service Query {
@@ -29,8 +28,6 @@ service Query {
     option (google.api.http).get =
         "/Stride-Labs/stride/icacallbacks/callback_data";
   }
-
-  // this line is used by starport scaffolding # 2
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -56,5 +53,3 @@ message QueryAllCallbackDataResponse {
   repeated CallbackData callback_data = 1 [ (gogoproto.nullable) = false ];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
-
-// this line is used by starport scaffolding # 3

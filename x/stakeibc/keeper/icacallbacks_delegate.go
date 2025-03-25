@@ -3,40 +3,18 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/spf13/cast"
-
-	"github.com/Stride-Labs/stride/v22/utils"
-	recordstypes "github.com/Stride-Labs/stride/v22/x/records/types"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
-
-	icacallbackstypes "github.com/Stride-Labs/stride/v22/x/icacallbacks/types"
-
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+
+	"github.com/Stride-Labs/stride/v26/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
-
-// Marshalls delegate callback arguments
-func (k Keeper) MarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback types.DelegateCallback) ([]byte, error) {
-	out, err := proto.Marshal(&delegateCallback)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("MarshalDelegateCallbackArgs %v", err.Error()))
-		return nil, err
-	}
-	return out, nil
-}
-
-// Unmarshalls delegate callback arguments into a DelegateCallback struct
-func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback []byte) (*types.DelegateCallback, error) {
-	unmarshalledDelegateCallback := types.DelegateCallback{}
-	if err := proto.Unmarshal(delegateCallback, &unmarshalledDelegateCallback); err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("UnmarshalDelegateCallbackArgs %v", err.Error()))
-		return nil, err
-	}
-	return &unmarshalledDelegateCallback, nil
-}
 
 // ICA Callback after delegating deposit records
 // * If successful: Updates deposit record status and records delegation changes on the host zone and validators
@@ -44,9 +22,9 @@ func (k Keeper) UnmarshalDelegateCallbackArgs(ctx sdk.Context, delegateCallback 
 // * If failure:    Reverts deposit record status
 func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Deserialize the callback args
-	delegateCallback, err := k.UnmarshalDelegateCallbackArgs(ctx, args)
-	if err != nil {
-		return errorsmod.Wrapf(types.ErrUnmarshalFailure, fmt.Sprintf("Unable to unmarshal delegate callback args: %s", err.Error()))
+	delegateCallback := types.DelegateCallback{}
+	if err := proto.Unmarshal(args, &delegateCallback); err != nil {
+		return errorsmod.Wrapf(err, "unable to unmarshal delegate callback")
 	}
 	chainId := delegateCallback.HostZoneId
 	k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Delegate,
@@ -63,11 +41,21 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "deposit record not found %d", recordId)
 	}
 
-	// Regardless of failure/success/timeout, indicate that this ICA has completed
+	// Regardless of failure/success/timeout, indicate that this ICA has completed on the deposit record
+	if depositRecord.DelegationTxsInProgress == 0 {
+		return types.ErrInvalidDelegationsInProgress.Wrapf("delegation changes in progress is already 0 and can't be decremented")
+	}
+	depositRecord.DelegationTxsInProgress -= 1
+	k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+
+	// Regardless of failure/success/timeout, indicate that this ICA has completed on each validator
+	// Sum up the total delegated in the process
+	totalDelegatedInBatch := sdkmath.ZeroInt()
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		if err := k.DecrementValidatorDelegationChangesInProgress(&hostZone, splitDelegation.Validator); err != nil {
 			return err
 		}
+		totalDelegatedInBatch = totalDelegatedInBatch.Add(splitDelegation.Amount)
 	}
 	k.SetHostZone(ctx, hostZone)
 
@@ -94,7 +82,16 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	k.Logger(ctx).Info(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Delegate,
 		icacallbackstypes.AckResponseStatus_SUCCESS, packet))
 
-	// Update delegations on the host zone
+	// Decrement the amount on the deposit record
+	// If there's nothing left on the deposit record, remove it
+	depositRecord.Amount = depositRecord.Amount.Sub(totalDelegatedInBatch)
+	if depositRecord.Amount.IsZero() {
+		k.RecordsKeeper.RemoveDepositRecord(ctx, recordId)
+	} else {
+		k.RecordsKeeper.SetDepositRecord(ctx, depositRecord)
+	}
+
+	// Update delegations on the validators and host zone
 	for _, splitDelegation := range delegateCallback.SplitDelegations {
 		err := k.AddDelegationToValidator(ctx, &hostZone, splitDelegation.Validator, splitDelegation.Amount, ICACallbackID_Delegate)
 		if err != nil {
@@ -103,7 +100,6 @@ func (k Keeper) DelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ac
 	}
 	k.SetHostZone(ctx, hostZone)
 
-	k.RecordsKeeper.RemoveDepositRecord(ctx, cast.ToUint64(recordId))
 	k.Logger(ctx).Info(fmt.Sprintf("[DELEGATION] success on %s", chainId))
 	return nil
 }

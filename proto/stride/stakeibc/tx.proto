@@ -1,14 +1,14 @@
 syntax = "proto3";
 package stride.stakeibc;
 
-import "stride/stakeibc/validator.proto";
-
-option go_package = "github.com/Stride-Labs/stride/v22/x/stakeibc/types";
-import "gogoproto/gogo.proto";
+import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
-import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "stride/stakeibc/validator.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v26/x/stakeibc/types";
 
 // Msg defines the Msg service.
 service Msg {
@@ -27,6 +27,8 @@ service Msg {
   rpc DeleteValidator(MsgDeleteValidator) returns (MsgDeleteValidatorResponse);
   rpc RestoreInterchainAccount(MsgRestoreInterchainAccount)
       returns (MsgRestoreInterchainAccountResponse);
+  rpc CloseDelegationChannel(MsgCloseDelegationChannel)
+      returns (MsgCloseDelegationChannelResponse);
   rpc UpdateValidatorSharesExchRate(MsgUpdateValidatorSharesExchRate)
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc CalibrateDelegation(MsgCalibrateDelegation)
@@ -50,7 +52,10 @@ service Msg {
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgUpdateRedemptionRateBounds";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
   string min_inner_redemption_rate = 3 [
     (cosmos_proto.scalar) = "cosmos.Dec",
@@ -67,7 +72,10 @@ message MsgUpdateInnerRedemptionRateBounds {
 message MsgUpdateInnerRedemptionRateBoundsResponse {}
 
 message MsgLiquidStake {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgLiquidStake";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -82,7 +90,10 @@ message MsgLiquidStakeResponse {
 }
 
 message MsgLSMLiquidStake {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgLSMLiquidStake";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -92,7 +103,10 @@ message MsgLSMLiquidStake {
 message MsgLSMLiquidStakeResponse { bool transaction_complete = 1; }
 
 message MsgClearBalance {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgClearBalance";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
   string amount = 3 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -103,18 +117,23 @@ message MsgClearBalance {
 message MsgClearBalanceResponse {}
 
 message MsgRedeemStake {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgRedeemStake";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string amount = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   string host_zone = 3;
-  string receiver = 4;
+  string receiver = 4 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }
 message MsgRedeemStakeResponse {}
 
 // next: 15
 message MsgRegisterHostZone {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgRegisterHostZone";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -122,7 +141,7 @@ message MsgRegisterHostZone {
   string bech32prefix = 12;
   string host_denom = 4 [ (gogoproto.moretags) = "yaml:\"host_denom\"" ];
   string ibc_denom = 5 [ (gogoproto.moretags) = "yaml:\"ibc_denom\"" ];
-  string creator = 6;
+  string creator = 6 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string transfer_channel_id = 10
       [ (gogoproto.moretags) = "yaml:\"transfer_channel_id\"" ];
   uint64 unbonding_period = 11
@@ -144,7 +163,10 @@ message MsgRegisterHostZone {
 message MsgRegisterHostZoneResponse {}
 
 message MsgClaimUndelegatedTokens {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgClaimUndelegatedTokens";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // UserUnbondingRecords are keyed on {chain_id}.{epoch}.{receiver}
   string host_zone_id = 2;
   uint64 epoch = 3;
@@ -154,14 +176,20 @@ message MsgClaimUndelegatedTokens {
 message MsgClaimUndelegatedTokensResponse {}
 
 message MsgRebalanceValidators {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgRebalanceValidators";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string host_zone = 2;
   uint64 num_rebalance = 3;
 }
 message MsgRebalanceValidatorsResponse {}
 
 message MsgAddValidators {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgAddValidators";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string host_zone = 2;
   repeated Validator validators = 3;
 }
@@ -172,43 +200,73 @@ message ValidatorWeight {
   uint64 weight = 2;
 }
 message MsgChangeValidatorWeights {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgChangeValidatorWeights";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string host_zone = 2;
   repeated ValidatorWeight validator_weights = 3;
 }
 message MsgChangeValidatorWeightsResponse {}
 
 message MsgDeleteValidator {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgDeleteValidator";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string host_zone = 2;
-  string val_addr = 3 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string val_addr = 3
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
 }
 message MsgDeleteValidatorResponse {}
 
 message MsgRestoreInterchainAccount {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgRestoreInterchainAcco";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
   string connection_id = 3;
   string account_owner = 4;
 }
 message MsgRestoreInterchainAccountResponse {}
 
-message MsgUpdateValidatorSharesExchRate {
-  string creator = 1;
+message MsgCloseDelegationChannel {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgCloseDelegationChanne";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
-  string valoper = 3;
+}
+message MsgCloseDelegationChannelResponse {}
+
+message MsgUpdateValidatorSharesExchRate {
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgUpdateValSharesExchRate";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string chain_id = 2;
+  string valoper = 3
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
 }
 message MsgUpdateValidatorSharesExchRateResponse {}
 
 message MsgCalibrateDelegation {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgCalibrateDelegation";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
-  string valoper = 3;
+  string valoper = 3
+      [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
 }
 message MsgCalibrateDelegationResponse {}
 
 message MsgResumeHostZone {
-  string creator = 1;
+  option (cosmos.msg.v1.signer) = "creator";
+  option (amino.name) = "stakeibc/MsgResumeHostZone";
+
+  string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
 }
 message MsgResumeHostZoneResponse {}
@@ -216,7 +274,7 @@ message MsgResumeHostZoneResponse {}
 // Creates a new trade route
 message MsgCreateTradeRoute {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "stride/x/stakeibc/MsgCreateTradeRoute";
+  option (amino.name) = "stakeibc/MsgCreateTradeRoute";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
@@ -287,7 +345,7 @@ message MsgCreateTradeRouteResponse {}
 // Deletes a trade route
 message MsgDeleteTradeRoute {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "stride/x/stakeibc/MsgDeleteTradeRoute";
+  option (amino.name) = "stakeibc/MsgDeleteTradeRoute";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
@@ -303,7 +361,7 @@ message MsgDeleteTradeRouteResponse {}
 // Updates the config of a trade route
 message MsgUpdateTradeRoute {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "stride/x/stakeibc/MsgUpdateTradeRoute";
+  option (amino.name) = "stakeibc/MsgUpdateTradeRoute";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
@@ -359,7 +417,7 @@ message MsgUpdateTradeRouteResponse {}
 // staked
 message MsgSetCommunityPoolRebate {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/x/stakeibc/MsgSetCommunityPoolRebate";
+  option (amino.name) = "stakeibc/MsgSetCommunityPoolRebate";
 
   // Message signer (admin only)
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
@@ -389,7 +447,7 @@ enum AuthzPermissionChange {
 // Grants or revokes trade permissions to a given address via authz
 message MsgToggleTradeController {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stride/x/stakeibc/MsgToggleTradeController";
+  option (amino.name) = "stakeibc/MsgToggleTradeController";
 
   // Message signer (admin only)
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
@@ -399,13 +457,15 @@ message MsgToggleTradeController {
   AuthzPermissionChange permission_change = 3;
   // Address of trade operator
   string address = 4;
+  // Option to grant/revoke the legacy osmosis swap message
+  bool legacy = 5;
 }
 message MsgToggleTradeControllerResponse {}
 
 // Updates host zone params
 message MsgUpdateHostZoneParams {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "stride/x/stakeibc/MsgUpdateHostZoneParams";
+  option (amino.name) = "stakeibc/MsgUpdateHostZoneParams";
 
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).

@@ -10,10 +10,10 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v22/testutil/keeper"
-	"github.com/Stride-Labs/stride/v22/testutil/nullify"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v22/x/stakeibc/types"
+	keepertest "github.com/Stride-Labs/stride/v26/testutil/keeper"
+	"github.com/Stride-Labs/stride/v26/testutil/nullify"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
 func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.HostZone {
@@ -572,4 +572,17 @@ func (s *KeeperTestSuite) TestGetTargetValAmtsForHostZone() {
 	// Check zero weights throws an error
 	_, err = s.App.StakeibcKeeper.GetTargetValAmtsForHostZone(s.Ctx, types.HostZone{}, sdkmath.NewInt(1))
 	s.Require().ErrorContains(err, "No non-zero validators found for host zone")
+}
+
+func (s *KeeperTestSuite) TestEnableRedemptions() {
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:            HostChainId,
+		RedemptionsEnabled: false,
+	})
+
+	err := s.App.StakeibcKeeper.EnableRedemptions(s.Ctx, HostChainId)
+	s.Require().NoError(err)
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().True(hostZone.RedemptionsEnabled, "redemptions should have been enabled")
 }

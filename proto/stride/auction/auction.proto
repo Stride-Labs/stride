@@ -1,0 +1,60 @@
+syntax = "proto3";
+package stride.auction;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v26/x/auction/types";
+
+enum AuctionType {
+  // Default value - should not be used
+  AUCTION_TYPE_UNSPECIFIED = 0;
+  // First-Come First-Served auction
+  AUCTION_TYPE_FCFS = 1;
+}
+message Params {}
+
+message Auction {
+  // Auction type
+  AuctionType type = 1;
+
+  // A unique auction name
+  string name = 2;
+
+  // Token denom being sold in the auction
+  string selling_denom = 3;
+
+  // Token denom used to place bids
+  string payment_denom = 4;
+
+  // Whether auction is active
+  bool enabled = 5;
+
+  // Minimum price multiplier (e.g. 0.95 for 5% discount off the oracle price)
+  // bids_floor_price = oracle_price * min_price_multiplier
+  string min_price_multiplier = 6 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+
+  // Minimum payment token bid amount
+  string min_bid_amount = 7 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Address to send the auction proceeds to
+  string beneficiary = 8 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // Total amount of payment token received
+  string total_payment_token_received = 9 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // Total amount of selling token sold
+  string total_selling_token_sold = 10 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

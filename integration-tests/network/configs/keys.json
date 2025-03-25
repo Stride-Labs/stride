@@ -1,0 +1,58 @@
+{
+    
+    "admin": {
+      "name": "admin",
+      "address": "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8",
+      "mnemonic": "tone cause tribe this switch near host damage idle fragile antique tail soda alien depth write wool they rapid unfold body scan pledge soft"
+    },
+    "faucet": {
+      "name": "faucet",
+      "mnemonic": "chimney become stuff spoil resource supply picture divorce casual curve check web valid survey zebra various pet sphere timber friend faint blame mansion film"
+    },
+    "validators": [
+      {
+        "name": "val1",
+        "mnemonic": "close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly"
+      },
+      {
+        "name": "val2",
+        "mnemonic": "turkey miss hurry unable embark hospital kangaroo nuclear outside term toy fall buffalo book opinion such moral meadow wing olive camp sad metal banner"
+      },
+      {
+        "name": "val3",
+        "mnemonic": "tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat"
+      },
+      {
+        "name": "val4",
+        "mnemonic": "tail forward era width glory magnet knock shiver cup broken turkey upgrade cigar story agent lake transfer misery sustain fragile parrot also air document"
+      },
+      {
+        "name": "val5",
+        "mnemonic": "crime lumber parrot enforce chimney turtle wing iron scissors jealous indicate peace empty game host protect juice submit motor cause second picture nuclear area"
+      }
+    ],
+    "relayers": [
+      {
+        "name": "rly1",
+        "mnemonic": "fringe secret hair noise royal inform remove release mother fish swamp swim piece later course glimpse sing very clutch velvet prefer hover common mass"
+      },
+      {
+        "name": "rly2",
+        "mnemonic": "floor chicken advance degree paper arch sugar kit torch auction flash fish attitude clay museum treat favorite clinic verify dose safe bright vessel east"
+      },
+      {
+        "name": "rly3",
+        "mnemonic": "belt diet provide fish knee area explain section sword fancy rebel mix fiction urge float chat move device another tourist want tackle drip good"
+      },
+      {
+        "name": "rly4",
+        "mnemonic": "video stereo milk coyote various fantasy attract leaf elevator laundry upper clinic ready recipe wreck asset make before update pitch found board tissue sniff"
+      }
+    ],
+    "users": [
+      {
+        "name": "user1",
+        "mnemonic": "brief play describe burden half aim soccer carbon hope wait output play vacuum joke energy crucial output mimic cruise brother document rail anger leaf"
+      }
+    ]
+  }

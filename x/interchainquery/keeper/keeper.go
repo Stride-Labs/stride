@@ -13,8 +13,8 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/v22/utils"
-	"github.com/Stride-Labs/stride/v22/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.
@@ -59,7 +59,7 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 	}
 
 	// Set the timeout using the block time and timeout duration
-	timeoutTimestamp := uint64(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().UnixNano() + query.TimeoutDuration.Nanoseconds())
 	query.TimeoutTimestamp = timeoutTimestamp
 
 	// Generate and set the query ID - optionally force it to be unique
@@ -70,11 +70,11 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 	// In the query response, this will be used to verify that the query wasn't historical
 	connection, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, query.ConnectionId)
 	if !found {
-		return errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, query.ConnectionId)
+		return errorsmod.Wrap(connectiontypes.ErrConnectionNotFound, query.ConnectionId)
 	}
 	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
 	if !found {
-		return errorsmod.Wrapf(clienttypes.ErrClientNotFound, connection.ClientId)
+		return errorsmod.Wrap(clienttypes.ErrClientNotFound, connection.ClientId)
 	}
 	query.SubmissionHeight = clientState.GetLatestHeight().GetRevisionHeight()
 
@@ -96,7 +96,7 @@ func (k *Keeper) RetryICQRequest(ctx sdk.Context, query types.Query) error {
 
 	// Submit a new query (with a new ID)
 	if err := k.SubmitICQRequest(ctx, query, true); err != nil {
-		return errorsmod.Wrapf(err, types.ErrFailedToRetryQuery.Error())
+		return errorsmod.Wrap(err, types.ErrFailedToRetryQuery.Error())
 	}
 
 	return nil
