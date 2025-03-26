@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 )
 
@@ -22,9 +21,6 @@ func (s *KeeperTestSuite) TestGenesis() {
 	s.App.IcacallbacksKeeper.InitGenesis(s.Ctx, genesisState)
 	got := s.App.IcacallbacksKeeper.ExportGenesis(s.Ctx)
 	s.Require().NotNil(got)
-
-	nullify.Fill(&genesisState)
-	nullify.Fill(got)
 
 	s.Require().Equal(genesisState.PortId, got.PortId)
 

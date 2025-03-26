@@ -35,6 +35,9 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone
 		return val, false
 	}
 	k.cdc.MustUnmarshal(b, &val)
+	if val.Validators == nil {
+		val.Validators = []*types.Validator{}
+	}
 	return val, true
 }
 
@@ -108,6 +111,9 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.HostZone
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		if val.Validators == nil {
+			val.Validators = []*types.Validator{}
+		}
 		list = append(list, val)
 	}
 
@@ -191,19 +197,12 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 
 // GetAllActiveHostZone returns all hostZones that are active (halted = false)
 func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
-
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		var val types.HostZone
-		k.cdc.MustUnmarshal(iterator.Value(), &val)
-		if !val.Halted {
-			list = append(list, val)
+	list = []types.HostZone{}
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if !hostZone.Halted {
+			list = append(list, hostZone)
 		}
 	}
-
 	return
 }
 

@@ -62,6 +62,9 @@ func (k Keeper) HostZoneAll(c context.Context, req *types.QueryAllHostZoneReques
 		if err := k.cdc.Unmarshal(value, &hostZone); err != nil {
 			return err
 		}
+		if hostZone.Validators == nil {
+			hostZone.Validators = []*types.Validator{}
+		}
 
 		hostZones = append(hostZones, hostZone)
 		return nil

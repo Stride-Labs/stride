@@ -7,7 +7,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 )
 
@@ -52,8 +51,8 @@ func (s *KeeperTestSuite) TestCallbackDataQuerySingle() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+					tc.response,
+					response,
 				)
 			}
 		})
@@ -80,8 +79,8 @@ func (s *KeeperTestSuite) TestCallbackDataQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.CallbackData), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.CallbackData),
+				msgs,
+				resp.CallbackData,
 			)
 		}
 	})
@@ -93,8 +92,8 @@ func (s *KeeperTestSuite) TestCallbackDataQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.CallbackData), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.CallbackData),
+				msgs,
+				resp.CallbackData,
 			)
 			next = resp.Pagination.NextKey
 		}
@@ -104,8 +103,8 @@ func (s *KeeperTestSuite) TestCallbackDataQueryPaginated() {
 		s.Require().NoError(err)
 		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
 		s.Require().ElementsMatch(
-			nullify.Fill(msgs),
-			nullify.Fill(resp.CallbackData),
+			msgs,
+			resp.CallbackData,
 		)
 	})
 	s.Run("InvalidRequest", func() {

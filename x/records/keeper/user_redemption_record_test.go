@@ -5,11 +5,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
-// TODO [cleanup]: Migrate to new KeeperTestSuite framework and remove use of nullify
+// TODO [cleanup]: Migrate to new KeeperTestSuite framework
 func (s *KeeperTestSuite) createNUserRedemptionRecord(n int) []types.UserRedemptionRecord {
 	items := make([]types.UserRedemptionRecord, n)
 	for i := range items {
@@ -27,8 +26,8 @@ func (s *KeeperTestSuite) TestUserRedemptionRecordGet() {
 		got, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, item.Id)
 		s.Require().True(found)
 		s.Require().Equal(
-			nullify.Fill(&item),
-			nullify.Fill(&got),
+			&item,
+			&got,
 		)
 	}
 }

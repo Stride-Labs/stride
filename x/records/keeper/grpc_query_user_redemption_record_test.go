@@ -8,7 +8,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
@@ -46,8 +45,9 @@ func (s *KeeperTestSuite) TestUserRedemptionRecordQuerySingle() {
 				s.Require().ErrorIs(err, tc.err)
 			} else {
 				s.Require().NoError(err)
-				s.Require().Equal(nullify.Fill(tc.response),
-					nullify.Fill(response),
+				s.Require().Equal(
+					tc.response,
+					response,
 				)
 			}
 		})
@@ -74,8 +74,8 @@ func (s *KeeperTestSuite) TestUserRedemptionRecordQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.UserRedemptionRecord), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.UserRedemptionRecord),
+				msgs,
+				resp.UserRedemptionRecord,
 			)
 		}
 	})
@@ -87,8 +87,8 @@ func (s *KeeperTestSuite) TestUserRedemptionRecordQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.UserRedemptionRecord), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.UserRedemptionRecord),
+				msgs,
+				resp.UserRedemptionRecord,
 			)
 			next = resp.Pagination.NextKey
 		}
@@ -98,8 +98,8 @@ func (s *KeeperTestSuite) TestUserRedemptionRecordQueryPaginated() {
 		s.Require().NoError(err)
 		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
 		s.Require().ElementsMatch(
-			nullify.Fill(msgs),
-			nullify.Fill(resp.UserRedemptionRecord),
+			msgs,
+			resp.UserRedemptionRecord,
 		)
 	})
 	s.Run("InvalidRequest", func() {

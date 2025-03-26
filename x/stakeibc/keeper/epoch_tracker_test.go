@@ -6,7 +6,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
@@ -36,8 +35,8 @@ func (s *KeeperTestSuite) TestEpochTrackerGet() {
 		)
 		s.Require().True(found)
 		s.Require().Equal(
-			nullify.Fill(&item),
-			nullify.Fill(&rst),
+			&item,
+			&rst,
 		)
 	}
 }
@@ -58,8 +57,8 @@ func (s *KeeperTestSuite) TestEpochTrackerRemove() {
 func (s *KeeperTestSuite) TestEpochTrackerGetAll() {
 	items := s.createNEpochTracker(10)
 	s.Require().ElementsMatch(
-		nullify.Fill(items),
-		nullify.Fill(s.App.StakeibcKeeper.GetAllEpochTracker(s.Ctx)),
+		items,
+		s.App.StakeibcKeeper.GetAllEpochTracker(s.Ctx),
 	)
 }
 
