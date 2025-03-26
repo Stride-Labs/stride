@@ -6,11 +6,13 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -76,10 +78,11 @@ type AppTestHelper struct {
 	ProviderChain *ibctesting.TestChain
 	TransferPath  *ibctesting.Path
 
-	QueryHelper  *baseapp.QueryServiceTestHelper
-	TestAccs     []sdk.AccAddress
-	IcaAddresses map[string]string
-	Ctx          sdk.Context
+	QueryHelper   *baseapp.QueryServiceTestHelper
+	TestAccs      []sdk.AccAddress
+	IcaAddresses  map[string]string
+	Ctx           sdk.Context
+	UpgradeModule upgrade.AppModule
 }
 
 // AppTestHelper Constructor
@@ -98,6 +101,9 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(4)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
+
+	// Upgrade for pre-blocker with upgrade tests
+	s.UpgradeModule = upgrade.NewAppModule(s.App.UpgradeKeeper, addresscodec.NewBech32Codec("osmo"))
 
 	// Remove host zone and accumulating record for staketia, by default,
 	// since the tests will override it directly if needed
@@ -704,8 +710,16 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 	s.Require().NoError(err)
 
 	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
+	s.Ctx = s.Ctx.WithBlockTime(s.Ctx.BlockTime().Add(time.Second))
+
+	headerInfo := s.Ctx.HeaderInfo()
+	headerInfo.Height = s.Ctx.BlockHeight()
+	s.Ctx = s.Ctx.WithHeaderInfo(headerInfo)
+
 	s.Require().NotPanics(func() {
-		_, err := s.App.BeginBlocker(s.Ctx)
+		_, err := s.App.PreBlocker(s.Ctx, nil)
+		s.Require().NoError(err)
+		_, err = s.App.BeginBlocker(s.Ctx)
 		s.Require().NoError(err)
 	})
 }
