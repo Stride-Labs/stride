@@ -7,10 +7,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
-// This data structure (EncodingConfig) is heavily inspired by Quicksilver. https://github.com/ingenuity-build/quicksilver/blob/main/app/encoding.go
+var encodingConfig = initEncodingConfig()
+
+// EncodingConfig specifies the concrete encoding types to use for a given app.
+// This is provided for compatibility between protobuf and amino implementations.
 type EncodingConfig struct {
 	InterfaceRegistry types.InterfaceRegistry
 	Codec             codec.Codec
@@ -18,15 +21,20 @@ type EncodingConfig struct {
 	Amino             *codec.LegacyAmino
 }
 
-// MakeEncodingConfig creates an EncodingConfig for an amino based test configuration.
-func MakeEncodingConfig() EncodingConfig {
+// Returns the EncodingConfig
+func GetEncodingConfig() EncodingConfig {
+	return encodingConfig
+}
+
+// Initializes a new EncodingConfig for an amino based test configuration.
+func initEncodingConfig() EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := testutil.CodecOptions{
 		AccAddressPrefix: AccountAddressPrefix,
 		ValAddressPrefix: AccountAddressPrefix + sdk.PrefixValidator + sdk.PrefixOperator,
 	}.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
-	txCfg := tx.NewTxConfig(codec, tx.DefaultSignModes)
+	txCfg := authtx.NewTxConfig(codec, authtx.DefaultSignModes)
 
 	encodingConfig := EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,

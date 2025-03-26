@@ -278,7 +278,7 @@ func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtype
 // Setups up the stakeibc store with old host zones before the upgrade
 // Returns a callback function that verifies the expected state after the upgrade
 func (s *UpgradeTestSuite) SetupOldStakeibcStore() func() {
-	codec := app.MakeEncodingConfig().Codec
+	codec := app.GetEncodingConfig().Codec
 	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
 	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 

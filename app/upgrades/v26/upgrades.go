@@ -33,7 +33,7 @@ func CreateUpgradeHandler(
 
 		// Run migrations first
 		ctx.Logger().Info("Running module migrations...")
-		versionMap, err := mm.RunMigrations(ctx, configurator, vm)
+		versionMap, err := mm.RunMigrations(context, configurator, vm)
 		if err != nil {
 			return nil, err
 		}

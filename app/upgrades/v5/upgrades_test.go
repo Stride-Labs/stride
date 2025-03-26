@@ -47,7 +47,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Note: The max slash safety threshold was deprecated in v14 and was later removed from this unit test
 
 	// Setup stores for migrated modules
-	codec := app.MakeEncodingConfig().Codec
+	codec := app.GetEncodingConfig().Codec
 	checkClaimStoreAfterMigration := s.SetupOldClaimStore(codec)
 	checkIcacallbackStoreAfterMigration := s.SetupOldIcacallbackStore(codec)
 	checkRecordStoreAfterMigration := s.SetupOldRecordStore(codec)

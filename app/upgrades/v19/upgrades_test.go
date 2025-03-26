@@ -51,7 +51,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
 	rateLimitStore := s.Ctx.KVStore(s.App.GetKey(ratelimittypes.StoreKey))
-	cdc := app.MakeEncodingConfig().Codec
+	cdc := app.GetEncodingConfig().Codec
 
 	denom := "denom"
 	channelId := "channel-0"

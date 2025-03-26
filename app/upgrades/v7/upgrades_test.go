@@ -159,7 +159,7 @@ func (s *UpgradeTestSuite) CheckICAAllowMessagesAfterUpgrade() {
 // Stores an old osmo and juno host zone
 // Juno should have an unbonding frequency of 4 in the old store
 func (s *UpgradeTestSuite) SetupHostZones() {
-	codec := app.MakeEncodingConfig().Codec
+	codec := app.GetEncodingConfig().Codec
 	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
 	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 
@@ -186,7 +186,7 @@ func (s *UpgradeTestSuite) SetupHostZones() {
 
 // Helper function to read in the host zone with the new stakeibc types
 func (s *UpgradeTestSuite) GetNewHostZone(chainId string) newstakeibctypes.HostZone {
-	codec := app.MakeEncodingConfig().Codec
+	codec := app.GetEncodingConfig().Codec
 	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
 	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 
@@ -282,7 +282,7 @@ func (s *UpgradeTestSuite) TestAddICAHostAllowMessages() {
 func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 	s.SetupHostZones()
 
-	codec := app.MakeEncodingConfig().Codec
+	codec := app.GetEncodingConfig().Codec
 	stakeibcStoreKey := s.App.GetKey(stakeibctypes.StoreKey)
 	err := v7.ModifyJunoUnbondingFrequency(codec, stakeibcStoreKey, s.Ctx, s.App.StakeibcKeeper)
 	s.Require().NoError(err)
@@ -293,7 +293,7 @@ func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 func (s *UpgradeTestSuite) TestAddRedemptionRateSafetyChecks() {
 	s.SetupHostZones()
 
-	codec := app.MakeEncodingConfig().Codec
+	codec := app.GetEncodingConfig().Codec
 	stakeibcStoreKey := s.App.GetKey(stakeibctypes.StoreKey)
 	v7.AddRedemptionRateSafetyChecks(codec, stakeibcStoreKey, s.Ctx, s.App.StakeibcKeeper)
 

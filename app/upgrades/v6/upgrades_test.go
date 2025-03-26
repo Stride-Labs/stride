@@ -32,7 +32,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	// Setup stores for migrated modules
-	codec := app.MakeEncodingConfig().Codec
+	codec := app.GetEncodingConfig().Codec
 	checkClaimStoreAfterMigration := s.SetupClaimStore(codec)
 
 	// Run upgrade
