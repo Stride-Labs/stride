@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/testutil"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
@@ -20,7 +21,10 @@ type EncodingConfig struct {
 // MakeEncodingConfig creates an EncodingConfig for an amino based test configuration.
 func MakeEncodingConfig() EncodingConfig {
 	amino := codec.NewLegacyAmino()
-	interfaceRegistry := testutil.CodecOptions{AccAddressPrefix: "stride", ValAddressPrefix: "stridevaloper"}.NewInterfaceRegistry()
+	interfaceRegistry := testutil.CodecOptions{
+		AccAddressPrefix: AccountAddressPrefix,
+		ValAddressPrefix: AccountAddressPrefix + sdk.PrefixValidator + sdk.PrefixOperator,
+	}.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
 	txCfg := tx.NewTxConfig(codec, tx.DefaultSignModes)
 

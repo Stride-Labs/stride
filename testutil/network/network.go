@@ -59,10 +59,12 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
-	genState := app.InitStrideTestApp(false).DefaultGenesis()
+	tempApp := app.InitStrideTestApp(false)
 	encoding := app.MakeEncodingConfig()
-	app.InitStrideTestApp(false).BasicModuleManager.RegisterInterfaces(encoding.InterfaceRegistry)
+	tempApp.BasicModuleManager.RegisterInterfaces(encoding.InterfaceRegistry)
+
 	chainId := fmt.Sprintf("stride-%d", cometbftrand.NewRand().Uint64())
+	genState := tempApp.DefaultGenesis()
 	return network.Config{
 		Codec:             encoding.Codec,
 		TxConfig:          encoding.TxConfig,
