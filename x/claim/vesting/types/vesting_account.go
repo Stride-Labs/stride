@@ -214,7 +214,7 @@ func NewStridePeriodicVestingAccount(baseAcc *authtypes.BaseAccount, originalVes
 
 	endTime := int64(0)
 	for _, p := range periods {
-		endTime = utils.Max64(endTime, p.StartTime+p.Length)
+		endTime = max(endTime, p.StartTime+p.Length)
 	}
 
 	baseVestingAcc := &BaseVestingAccount{
@@ -233,7 +233,7 @@ func NewStridePeriodicVestingAccount(baseAcc *authtypes.BaseAccount, originalVes
 func (pva *StridePeriodicVestingAccount) AddNewGrant(grantedPeriod Period) {
 	// Starting time for new period must be greater than original starting time
 	pva.VestingPeriods = append(pva.VestingPeriods, grantedPeriod)
-	pva.EndTime = utils.Max64(pva.EndTime, grantedPeriod.Length+grantedPeriod.StartTime)
+	pva.EndTime = max(pva.EndTime, grantedPeriod.Length+grantedPeriod.StartTime)
 	pva.OriginalVesting = pva.OriginalVesting.Add(grantedPeriod.Amount...)
 }
 

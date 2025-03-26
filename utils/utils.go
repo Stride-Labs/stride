@@ -44,13 +44,6 @@ func ValidateAdminAddress(address string) error {
 	return nil
 }
 
-func Min(a int, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func StringMapKeys[V any](m map[string]V) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -176,21 +169,6 @@ func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress,
 }
 
 // ==============================  AIRDROP UTILS  ================================
-// max64 returns the maximum of its inputs.
-func Max64(i, j int64) int64 {
-	if i > j {
-		return i
-	}
-	return j
-}
-
-// Min64 returns the minimum of its inputs.
-func Min64(i, j int64) int64 {
-	if i < j {
-		return i
-	}
-	return j
-}
 
 // Compute coin amount for specific period using linear vesting calculation algorithm.
 func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) sdk.Coins {
