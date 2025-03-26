@@ -60,7 +60,7 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
 	tempApp := app.InitStrideTestApp(false)
-	encoding := app.GetEncodingConfig()
+	encoding := app.MakeEncodingConfig()
 	tempApp.BasicModuleManager.RegisterInterfaces(encoding.InterfaceRegistry)
 
 	chainId := fmt.Sprintf("stride-%d", cometbftrand.NewRand().Uint64())
