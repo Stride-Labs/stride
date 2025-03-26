@@ -3,6 +3,7 @@ package network
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -80,12 +81,18 @@ func DefaultConfig() network.Config {
 				panic(err)
 			}
 
+			// A custom home directory is needed for wasm tests since wasmvm locks the directory
+			tempHomeDir, err := os.MkdirTemp("", "stride-unit-test")
+			if err != nil {
+				panic(err)
+			}
+
 			return app.NewStrideApp(
 				val.GetCtx().Logger,
 				cosmosdb.NewMemDB(),
 				nil,
 				true,
-				simtestutil.EmptyAppOptions{},
+				simtestutil.NewAppOptionsWithFlagHome(tempHomeDir),
 				[]wasmkeeper.Option{},
 				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
 				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
