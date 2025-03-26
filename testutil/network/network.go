@@ -60,6 +60,7 @@ func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
 	genState := app.InitStrideTestApp(false).DefaultGenesis()
 	encoding := app.MakeEncodingConfig()
+	app.InitStrideTestApp(false).BasicModuleManager.RegisterInterfaces(encoding.InterfaceRegistry)
 	chainId := fmt.Sprintf("stride-%d", cometbftrand.NewRand().Uint64())
 	return network.Config{
 		Codec:             encoding.Codec,
