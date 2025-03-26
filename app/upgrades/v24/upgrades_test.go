@@ -67,7 +67,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs(v24.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v24.UpgradeName)
 
 	// Confirm the host zone's redemptions enabled were set to true
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)

@@ -34,7 +34,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupAirdropsBeforeUpgrade()
-	s.ConfirmUpgradeSucceededs(v9.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v9.UpgradeName)
 	s.CheckAirdropsAfterUpgrade()
 }
 

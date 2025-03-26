@@ -28,7 +28,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.ConfirmUpgradeSucceededs(v27.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v27.UpgradeName)
 
 	// Confirm consumer ID is set to 1
 	params := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)

@@ -82,7 +82,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupIncentiveDiversification()
 
 	// Run the upgrade and iterate 1 block
-	s.ConfirmUpgradeSucceededs(v7.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v7.UpgradeName)
 
 	// Confirm state after upgrade
 	s.CheckEpochsAfterUpgrade()

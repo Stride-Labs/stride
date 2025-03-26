@@ -53,7 +53,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	})
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs(v23.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v23.UpgradeName)
 
 	// Confirm trade route was migrated
 	for _, tradeRoute := range s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx) {

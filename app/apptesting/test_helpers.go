@@ -697,7 +697,7 @@ func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address s
 	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, connectionId, portId, channelId)
 }
 
-func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string) {
+func (s *AppTestHelper) ConfirmUpgradeSucceeded(upgradeName string) {
 	dummyUpgradeHeight := int64(5)
 
 	s.Ctx = s.Ctx.WithBlockHeight(dummyUpgradeHeight - 1)

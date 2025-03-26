@@ -39,7 +39,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkStTiaRateLimits := s.SetupStTiaRateLimits()
 
 	// Run through upgrade
-	s.ConfirmUpgradeSucceededs(v19.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v19.UpgradeName)
 
 	// Check state after upgrade
 	checkMigratedRateLimits()

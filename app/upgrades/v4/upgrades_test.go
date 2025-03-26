@@ -22,5 +22,5 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.ConfirmUpgradeSucceededs(v4.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v4.UpgradeName)
 }

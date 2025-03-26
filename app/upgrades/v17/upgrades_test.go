@@ -80,7 +80,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkProp225AfterUpgrade := s.SetupProp225BeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
-	s.ConfirmUpgradeSucceededs(v17.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v17.UpgradeName)
 
 	// Check state after upgrade
 	checkHostZonesAfterUpgrade()

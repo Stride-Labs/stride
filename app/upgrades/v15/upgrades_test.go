@@ -41,7 +41,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
 
 	// Run the upgrade to set the bounds and clear pending queries
-	s.ConfirmUpgradeSucceededs(v15.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v15.UpgradeName)
 
 	// Check the store after the upgrade
 	checkRedemptionRatesAfterUpgrade()

@@ -57,7 +57,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// checkMaxSlashParamAdded := s.SetupAddMaxSlashPercentParam()
 
 	// Run upgrade
-	s.ConfirmUpgradeSucceededs(v5.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v5.UpgradeName)
 
 	// Confirm store migrations were successful
 	checkClaimStoreAfterMigration()

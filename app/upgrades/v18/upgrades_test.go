@@ -75,7 +75,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
 
 	// Run through upgrade
-	s.ConfirmUpgradeSucceededs(v18.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v18.UpgradeName)
 
 	// Check store after upgrade
 	checkDelegationsAfterUpgrade()

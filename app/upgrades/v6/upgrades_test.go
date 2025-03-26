@@ -35,7 +35,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkClaimStoreAfterMigration := s.SetupClaimStore(codec)
 
 	// Run upgrade
-	s.ConfirmUpgradeSucceededs(v6.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v6.UpgradeName)
 
 	// Confirm store migrations were successful
 	checkClaimStoreAfterMigration()

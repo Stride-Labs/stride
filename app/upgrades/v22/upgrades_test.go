@@ -37,7 +37,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs(v22.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v22.UpgradeName)
 
 	// Confirm the max ICA messages on each host zone
 	for _, chainId := range chainIds {

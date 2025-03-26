@@ -32,7 +32,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkCosmosHubAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
 
 	// Run the upgrade to set the bounds and clear pending queries
-	s.ConfirmUpgradeSucceededs(v16.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v16.UpgradeName)
 
 	// Check the store after the upgrade
 	checkCosmosHubAfterUpgrade()

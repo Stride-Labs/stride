@@ -53,7 +53,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkLSMRecord := s.SetupLSMRecord()
 
 	// Run upgrade
-	s.ConfirmUpgradeSucceededs(v25.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v25.UpgradeName)
 
 	// Validate state after upgrade
 	checkStaketiaMigration()

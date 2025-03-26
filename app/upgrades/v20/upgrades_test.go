@@ -29,7 +29,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	})
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs(v20.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v20.UpgradeName)
 
 	// Confirm the treasury address was added to dydx
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v20.DydxChainId)
