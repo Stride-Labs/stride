@@ -143,6 +143,10 @@ func (s *UpgradeTestSuite) SetupVestingStoreBeforeUpgrade() {
 	s.FundAccount(address2, sdk.NewCoin(s.MustBondDenom(s.Ctx), sdkmath.NewInt(v14.Account2VestingUstrd)))
 
 	// Store the accounts as ContinuousVestingAccounts
+	nextAccountNumber, err := s.App.AccountKeeper.AccountNumber.Next(s.Ctx)
+	s.Require().NoError(err)
+	account1.BaseAccount.AccountNumber = nextAccountNumber + 10
+	account2.BaseAccount.AccountNumber = nextAccountNumber + 11
 	s.App.AccountKeeper.SetAccount(s.Ctx, account1)
 	s.App.AccountKeeper.SetAccount(s.Ctx, account2)
 }

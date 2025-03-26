@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,6 +71,12 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Create reward collector account for rate limit whitelist
 	rewardCollectorAddress := s.createRewardCollectorModuleAccount()
+
+	// Initialize the min deposit ratio (to prevent an error when the store looks it up)
+	defaultGovParams := govtypesv1.DefaultParams()
+	defaultGovParams.MinInitialDepositRatio = ""
+	err := s.App.GovKeeper.Params.Set(s.Ctx, defaultGovParams)
+	s.Require().NoError(err)
 
 	// Submit upgrade
 	s.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)

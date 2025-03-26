@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
@@ -25,7 +26,8 @@ func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []t
 
 	for i := 0; i < n; i++ {
 		depositRecord := types.DepositRecord{
-			Id: uint64(i),
+			Id:     uint64(i),
+			Amount: sdkmath.NewInt(int64(i)),
 		}
 		nullify.Fill(&depositRecord)
 		state.DepositRecordList = append(state.DepositRecordList, depositRecord)
@@ -140,20 +142,4 @@ func TestListDepositRecord(t *testing.T) {
 			next = resp.Pagination.NextKey
 		}
 	})
-	// TODO: why is this test failing?
-	// t.Run("Total", func(t *testing.T) {
-	// 	args := request(nil, 0, uint64(len(objs)), true)
-	// 	out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdListDepositRecord(), args)
-	// 	require.NoError(t, err)
-	// 	var resp types.QueryAllDepositRecordResponse
-	// 	require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
-	// 	require.NoError(t, err)
-	// 	fmt.Println(fmt.Sprintf("objs 2: %v", objs))
-	// 	fmt.Println(fmt.Sprintf("t: %v", t))
-	// 	require.Equal(t, len(objs), int(resp.Pagination.Total))
-	// 	require.ElementsMatch(t,
-	// 		nullify.Fill(objs),
-	// 		nullify.Fill(resp.DepositRecord),
-	// 	)
-	// })
 }

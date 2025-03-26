@@ -86,7 +86,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.ConfirmUpgradeSucceededs("v7", DummyUpgradeHeight)
 
 	// Confirm state after upgrade
-	s.CheckEpochsAfterUpgrade(true)
+	s.CheckEpochsAfterUpgrade()
 	s.CheckInflationAfterUpgrade()
 	s.CheckICAAllowMessagesAfterUpgrade()
 	s.CheckRedemptionRateSafetyParamsAfterUpgrade()
@@ -117,7 +117,7 @@ func (s *UpgradeTestSuite) SetupEpochs() {
 // Checks that the hour epoch has been added
 // For the unit test that calls the AddHourEpoch function directly, the epoch should not have started yet
 // But for the full upgrade unit test case, a block will be incremented which should start the epoch
-func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade(epochStarted bool) {
+func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade() {
 	// Confirm stride and day epoch are still present
 	allEpochs := s.App.EpochsKeeper.AllEpochInfos(s.Ctx)
 	s.Require().Len(allEpochs, 3, "total number of epochs")
@@ -129,14 +129,8 @@ func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade(epochStarted bool) {
 
 	// If the upgrade passed an a block was incremented, the epoch should be started
 	expectedHourEpoch := ExpectedHourEpoch
-	if epochStarted {
-		expectedHourEpoch.CurrentEpoch = 1
-		expectedHourEpoch.EpochCountingStarted = true
-		expectedHourEpoch.CurrentEpochStartHeight = DummyUpgradeHeight
-	} else {
-		expectedHourEpoch.EpochCountingStarted = false
-		expectedHourEpoch.CurrentEpochStartHeight = s.Ctx.BlockHeight()
-	}
+	expectedHourEpoch.EpochCountingStarted = false
+	expectedHourEpoch.CurrentEpochStartHeight = s.Ctx.BlockHeight()
 
 	actualHourEpoch, found := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, epochstypes.HOUR_EPOCH)
 	s.Require().True(found, "hour epoch should have been found")
@@ -266,7 +260,7 @@ func (s *UpgradeTestSuite) CheckRewardCollectorModuleAccountAfterUpgrade() {
 func (s *UpgradeTestSuite) TestAddHourEpoch() {
 	s.SetupEpochs()
 	v7.AddHourEpoch(s.Ctx, s.App.EpochsKeeper)
-	s.CheckEpochsAfterUpgrade(false)
+	s.CheckEpochsAfterUpgrade()
 }
 
 func (s *UpgradeTestSuite) TestIncreaseStrideInflation() {
