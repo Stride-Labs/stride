@@ -55,6 +55,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+	evmosvestingtypes.RegisterInterfaces(s.App.InterfaceRegistry())
+
 	// Setup
 	s.SetupAirdrops()
 	s.SetupVestingStoreBeforeUpgrade()
