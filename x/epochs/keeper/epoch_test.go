@@ -8,9 +8,8 @@ import (
 	"github.com/Stride-Labs/stride/v26/x/epochs/types"
 )
 
-func (suite *KeeperTestSuite) TestEpochLifeCycle() {
-	suite.SetupTest()
-	ctx := suite.Ctx
+func (s *KeeperTestSuite) TestEpochLifeCycle() {
+	s.SetupTest()
 
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",
@@ -20,16 +19,16 @@ func (suite *KeeperTestSuite) TestEpochLifeCycle() {
 		CurrentEpochStartTime: time.Time{},
 		EpochCountingStarted:  false,
 	}
-	suite.App.EpochsKeeper.SetEpochInfo(ctx, epochInfo)
-	epochInfoSaved, _ := suite.App.EpochsKeeper.GetEpochInfo(ctx, "monthly")
-	suite.Require().Equal(epochInfo, epochInfoSaved)
+	s.App.EpochsKeeper.SetEpochInfo(s.Ctx, epochInfo)
+	epochInfoSaved, _ := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, "monthly")
+	s.Require().Equal(epochInfo, epochInfoSaved)
 
-	allEpochs := suite.App.EpochsKeeper.AllEpochInfos(ctx)
-	suite.Require().Len(allEpochs, 6)
-	suite.Require().Equal(allEpochs[0].Identifier, "day") // alphabetical order
-	suite.Require().Equal(allEpochs[1].Identifier, "hour")
-	suite.Require().Equal(allEpochs[2].Identifier, "mint")
-	suite.Require().Equal(allEpochs[3].Identifier, "monthly")
-	suite.Require().Equal(allEpochs[4].Identifier, "stride_epoch")
-	suite.Require().Equal(allEpochs[5].Identifier, "week")
+	allEpochs := s.App.EpochsKeeper.AllEpochInfos(s.Ctx)
+	s.Require().Len(allEpochs, 6)
+	s.Require().Equal(allEpochs[0].Identifier, "day") // alphabetical order
+	s.Require().Equal(allEpochs[1].Identifier, "hour")
+	s.Require().Equal(allEpochs[2].Identifier, "mint")
+	s.Require().Equal(allEpochs[3].Identifier, "monthly")
+	s.Require().Equal(allEpochs[4].Identifier, "stride_epoch")
+	s.Require().Equal(allEpochs[5].Identifier, "week")
 }
