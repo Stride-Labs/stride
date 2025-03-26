@@ -3,13 +3,13 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 )
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		TotalUstrdBurned: math.ZeroInt(),
+		TotalUstrdBurned: sdkmath.ZeroInt(),
 	}
 }
 

@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	math "cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v26/x/staketia/types"
 )
@@ -10,12 +10,12 @@ import (
 func (s *KeeperTestSuite) createAndSetSlashRecords() []types.SlashRecord {
 	SlashRecords := []types.SlashRecord{}
 	valAddresses := []string{"valA", "valB", "valC", "valD", "valE"}
-	offsets := []math.Int{
-		math.NewInt(-1),
-		math.NewInt(0),
-		math.NewInt(1),
-		math.NewInt(2),
-		math.NewInt(10),
+	offsets := []sdkmath.Int{
+		sdkmath.NewInt(-1),
+		sdkmath.NewInt(0),
+		sdkmath.NewInt(1),
+		sdkmath.NewInt(2),
+		sdkmath.NewInt(10),
 	}
 	for i := 0; i < 5; i++ {
 		slashRecord := types.SlashRecord{
@@ -43,7 +43,7 @@ func (s *KeeperTestSuite) TestSetSlashRecord() {
 	newSlashRecord := types.SlashRecord{
 		Id:               uint64(5),
 		Time:             uint64(s.Ctx.BlockTime().Unix()),
-		NativeAmount:     math.NewInt(1),
+		NativeAmount:     sdkmath.NewInt(1),
 		ValidatorAddress: "valZ",
 	}
 	s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, newSlashRecord)
@@ -55,7 +55,7 @@ func (s *KeeperTestSuite) TestSetSlashRecord() {
 	overwriteSlashRecord := types.SlashRecord{
 		Id:               uint64(0),
 		Time:             uint64(s.Ctx.BlockTime().Unix()),
-		NativeAmount:     math.NewInt(1),
+		NativeAmount:     sdkmath.NewInt(1),
 		ValidatorAddress: "valZ",
 	}
 	s.App.StaketiaKeeper.SetSlashRecord(s.Ctx, overwriteSlashRecord)

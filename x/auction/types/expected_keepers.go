@@ -3,7 +3,7 @@ package types
 import (
 	context "context"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -23,5 +23,5 @@ type BankKeeper interface {
 
 // Required IcqOracleKeeper functions
 type IcqOracleKeeper interface {
-	GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (price math.LegacyDec, err error)
+	GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (price sdkmath.LegacyDec, err error)
 }

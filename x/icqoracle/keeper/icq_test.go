@@ -6,7 +6,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
@@ -262,7 +261,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		OsmosisPoolId:     1,
 		OsmosisBaseDenom:  "ibc/uatom",
 		OsmosisQuoteDenom: "ibc/uusdc",
-		SpotPrice:         math.LegacyNewDec(2),
+		SpotPrice:         sdkmath.LegacyNewDec(2),
 		QueryInProgress:   true,
 	}
 
@@ -497,7 +496,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosis() {
 		name          string
 		tokenPrice    types.TokenPrice
 		twapData      []byte
-		expectedPrice math.LegacyDec
+		expectedPrice sdkmath.LegacyDec
 		expectedError string
 	}{
 		{

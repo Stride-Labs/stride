@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
@@ -37,8 +37,8 @@ var (
 func NewMsgPlaceBid(
 	bidder string,
 	AuctionName string,
-	sellingTokenAmount math.Int,
-	paymentTokenAmount math.Int,
+	sellingTokenAmount sdkmath.Int,
+	paymentTokenAmount sdkmath.Int,
 ) *MsgPlaceBid {
 	return &MsgPlaceBid{
 		Bidder:             bidder,
@@ -101,7 +101,7 @@ func NewMsgCreateAuction(
 	minBidAmount uint64,
 	beneficiary string,
 ) *MsgCreateAuction {
-	minPriceMultiplierDec, err := math.LegacyNewDecFromStr(minPriceMultiplier)
+	minPriceMultiplierDec, err := sdkmath.LegacyNewDecFromStr(minPriceMultiplier)
 	if err != nil {
 		panic(fmt.Sprintf("cannot parse LegacyDecimal from minPriceMultiplier '%s'", minPriceMultiplier))
 	}
@@ -114,7 +114,7 @@ func NewMsgCreateAuction(
 		PaymentDenom:       paymentDenom,
 		Enabled:            enabled,
 		MinPriceMultiplier: minPriceMultiplierDec,
-		MinBidAmount:       math.NewIntFromUint64(minBidAmount),
+		MinBidAmount:       sdkmath.NewIntFromUint64(minBidAmount),
 		Beneficiary:        beneficiary,
 	}
 }
@@ -169,7 +169,7 @@ func NewMsgUpdateAuction(
 	minBidAmount uint64,
 	beneficiary string,
 ) *MsgUpdateAuction {
-	minPriceMultiplierDec, err := math.LegacyNewDecFromStr(minPriceMultiplier)
+	minPriceMultiplierDec, err := sdkmath.LegacyNewDecFromStr(minPriceMultiplier)
 	if err != nil {
 		panic(fmt.Sprintf("cannot parse LegacyDecimal from minPriceMultiplier '%s'", minPriceMultiplier))
 	}
@@ -180,7 +180,7 @@ func NewMsgUpdateAuction(
 		AuctionType:        auctionType,
 		Enabled:            enabled,
 		MinPriceMultiplier: minPriceMultiplierDec,
-		MinBidAmount:       math.NewIntFromUint64(minBidAmount),
+		MinBidAmount:       sdkmath.NewIntFromUint64(minBidAmount),
 		Beneficiary:        beneficiary,
 	}
 }
@@ -219,7 +219,7 @@ func (msg *MsgUpdateAuction) ValidateBasic() error {
 	if msg.MinPriceMultiplier.IsZero() {
 		return errors.New("min-price-multiplier cannot be 0")
 	}
-	if msg.MinBidAmount.LT(math.ZeroInt()) {
+	if msg.MinBidAmount.LT(sdkmath.ZeroInt()) {
 		return errors.New("min-bid-amount must be at least 0")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Beneficiary); err != nil {

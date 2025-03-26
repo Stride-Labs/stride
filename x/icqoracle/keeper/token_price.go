@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,7 +44,7 @@ func (k Keeper) SetQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom
 }
 
 // Updates the token price when a query response is received
-func (k Keeper) SetQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, newSpotPrice math.LegacyDec) {
+func (k Keeper) SetQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, newSpotPrice sdkmath.LegacyDec) {
 	tokenPrice.SpotPrice = newSpotPrice
 	tokenPrice.QueryInProgress = false
 	tokenPrice.LastResponseTime = ctx.BlockTime()
@@ -115,7 +115,7 @@ func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[st
 //   - No prices exist for either token
 //   - No common quote token exists between the two tokens
 //   - All available prices with a common quote token are stale (exceeded the expiration timeout)
-func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (math.LegacyDec, error) {
+func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (sdkmath.LegacyDec, error) {
 	// First attempt: Try to get the price with baseDenom as the base token and quoteDenom as the quote token
 	price, errDirect := k.getTokenPriceForQuoteDenomImpl(ctx, baseDenom, quoteDenom)
 	if errDirect == nil {
@@ -127,13 +127,13 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 	price, errInverted := k.getTokenPriceForQuoteDenomImpl(ctx, quoteDenom, baseDenom)
 	if errInverted == nil {
 		// Invert the price to get the correct exchange rate
-		price = math.LegacyNewDec(1).Quo(price)
+		price = sdkmath.LegacyNewDec(1).Quo(price)
 
 		return price, nil
 	}
 
 	// If both attempts fail, return an error
-	return math.LegacyDec{}, errorsmod.Wrapf(types.ErrQuotePriceNotFound,
+	return sdkmath.LegacyDec{}, errorsmod.Wrapf(types.ErrQuotePriceNotFound,
 		"no price found for baseDenom '%s' in terms of quoteDenom '%s' [%s], and no price found for '%s' in terms of '%s' [%s]",
 		baseDenom, quoteDenom, errDirect, quoteDenom, baseDenom, errInverted)
 }
@@ -141,14 +141,14 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 // getTokenPriceForQuoteDenomImpl is the internal implementation that attempts to get the price
 // for baseDenom in terms of quoteDenom by finding a common quote token. It returns an error
 // if no valid price path can be found.
-func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string, quoteDenom string) (price math.LegacyDec, err error) {
+func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string, quoteDenom string) (price sdkmath.LegacyDec, err error) {
 	// Get all price for baseToken
 	baseTokenPrices, err := k.GetTokenPricesByDenom(ctx, baseDenom)
 	if err != nil {
-		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", baseDenom, err)
+		return sdkmath.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", baseDenom, err)
 	}
 	if len(baseTokenPrices) == 0 {
-		return math.LegacyDec{}, fmt.Errorf("no price for baseDenom '%s'", baseDenom)
+		return sdkmath.LegacyDec{}, fmt.Errorf("no price for baseDenom '%s'", baseDenom)
 	}
 
 	// Get price expiration timeout
@@ -173,15 +173,15 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 	// Get all price for quoteToken
 	quoteTokenPrices, err := k.GetTokenPricesByDenom(ctx, quoteDenom)
 	if err != nil {
-		return math.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
+		return sdkmath.LegacyDec{}, fmt.Errorf("error getting price for '%s': %w", quoteDenom, err)
 	}
 	if len(quoteTokenPrices) == 0 {
-		return math.LegacyDec{}, fmt.Errorf("no price for quoteDenom '%s' (foundAlreadyHasStalePrice='%v', foundHasUninitializedPrice='%v')",
+		return sdkmath.LegacyDec{}, fmt.Errorf("no price for quoteDenom '%s' (foundAlreadyHasStalePrice='%v', foundHasUninitializedPrice='%v')",
 			quoteDenom, foundAlreadyHasStalePrice, foundHasUninitializedPrice)
 	}
 
 	// Init price
-	price = math.LegacyZeroDec()
+	price = sdkmath.LegacyZeroDec()
 
 	// Define flags to allow for better error messages
 	foundCommonQuoteToken := false
@@ -219,7 +219,7 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string
 	}
 
 	if price.IsZero() {
-		return math.LegacyDec{}, fmt.Errorf(
+		return sdkmath.LegacyDec{}, fmt.Errorf(
 			"could not calculate price for baseToken='%s' quoteToken='%s' "+
 				"(foundCommonQuoteToken='%v', foundBaseTokenStalePrice='%v', "+
 				"foundQuoteTokenStalePrice='%v', foundQuoteTokenZeroPrice='%v', foundAlreadyHasStalePrice='%v')",

@@ -3,8 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
-	_ "github.com/stretchr/testify/suite"
+	sdkmath "cosmossdk.io/math"
 
 	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
@@ -25,9 +24,9 @@ func (s *KeeperTestSuite) ClaimAccruedStakingRewardsOnHost() {
 	for i := 0; i < numberGTClaimRewardsBatchSize; i++ {
 
 		// set most delegations to 5, some to 0
-		valDelegation := math.NewInt(5)
+		valDelegation := sdkmath.NewInt(5)
 		if i > (numberGTClaimRewardsBatchSize - numZeroDelegations) {
-			valDelegation = math.NewInt(0)
+			valDelegation = sdkmath.NewInt(0)
 		}
 		validators = append(validators, &types.Validator{
 			Address:    fmt.Sprintf("val-%d", i),

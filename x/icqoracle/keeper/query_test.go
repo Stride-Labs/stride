@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"time"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
@@ -196,7 +195,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomSimple() {
 	}
 	resp, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying inverse token price for quote denom")
-	s.Require().Equal(math.LegacyNewDec(1).Quo(expectedPrice), resp.Price, "inverse token price")
+	s.Require().Equal(sdkmath.LegacyNewDec(1).Quo(expectedPrice), resp.Price, "inverse token price")
 
 	// Query with invalid request
 	_, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(s.Ctx, nil)
@@ -259,7 +258,7 @@ func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenom() {
 	}
 	resp, err = s.App.ICQOracleKeeper.TokenPriceForQuoteDenom(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying inverse token price for quote denom")
-	s.Require().Equal(math.LegacyNewDec(1).Quo(expectedPrice1.Quo(expectedPrice2)), resp.Price, "inverse token price")
+	s.Require().Equal(sdkmath.LegacyNewDec(1).Quo(expectedPrice1.Quo(expectedPrice2)), resp.Price, "inverse token price")
 }
 
 func (s *KeeperTestSuite) TestQueryTokenPriceForQuoteDenomStalePrice() {
