@@ -1179,7 +1179,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
-		strdburnertypes.ModuleName,
+		strdburnertypes.ModuleName, // strdburner should be last
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
