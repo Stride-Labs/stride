@@ -469,9 +469,6 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 	vestingCoins := msg.VestingPeriods.TotalAmount()
 	lockupCoins := msg.LockupPeriods.TotalAmount()
 
-	fmt.Println("vestingCoins: ", vestingCoins)
-	fmt.Println("lockupCoins: ", lockupCoins)
-
 	// If lockup absent, default to an instant unlock schedule
 	if !vestingCoins.IsZero() && len(msg.LockupPeriods) == 0 {
 		msg.LockupPeriods = sdkvesting.Periods{
