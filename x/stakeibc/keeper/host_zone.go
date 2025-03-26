@@ -55,32 +55,20 @@ func (k Keeper) GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone typ
 
 // GetHostZoneFromHostDenom returns a HostZone from a HostDenom
 func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
-	var matchZone types.HostZone
-	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		if zoneInfo.HostDenom == denom {
-			matchZone = zoneInfo
-			return nil
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if hostZone.ChainId != "" && hostZone.HostDenom == denom {
+			return &hostZone, nil
 		}
-		return nil
-	})
-	if matchZone.ChainId != "" {
-		return &matchZone, nil
 	}
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s denom found", denom)
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
 func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
-	var matchZone types.HostZone
-	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		if zoneInfo.IbcDenom == denom {
-			matchZone = zoneInfo
-			return nil
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if hostZone.ChainId != "" && hostZone.IbcDenom == denom {
+			return &hostZone, nil
 		}
-		return nil
-	})
-	if matchZone.ChainId != "" {
-		return &matchZone, nil
 	}
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }

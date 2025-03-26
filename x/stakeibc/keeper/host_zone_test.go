@@ -40,6 +40,56 @@ func (s *KeeperTestSuite) TestHostZoneGet() {
 	}
 }
 
+func (s *KeeperTestSuite) TestGetHostZoneFromHostDenom() {
+	// Create host zones with different denoms
+	hostZones := s.createNHostZone(5)
+	denoms := []string{}
+	for i, hostZone := range hostZones {
+		denom := fmt.Sprintf("denom-%d", i)
+		denoms = append(denoms, denom)
+		hostZone.HostDenom = denom
+
+		hostZones[i] = hostZone
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Search each host zone by the denom
+	for i, denom := range denoms {
+		hostZone, err := s.App.StakeibcKeeper.GetHostZoneFromHostDenom(s.Ctx, denom)
+		s.Require().NoError(err)
+		s.Require().Equal(hostZones[i], *hostZone, "host zone")
+	}
+
+	// Confirm non-existent denom errors
+	_, err := s.App.StakeibcKeeper.GetHostZoneFromHostDenom(s.Ctx, "non-existent")
+	s.Require().ErrorContains(err, "No HostZone for non-existent denom found")
+}
+
+func (s *KeeperTestSuite) TestGetHostZoneFromIBCDenom() {
+	// Create host zones with different denoms
+	hostZones := s.createNHostZone(5)
+	denoms := []string{}
+	for i, hostZone := range hostZones {
+		denom := fmt.Sprintf("denom-%d", i)
+		denoms = append(denoms, denom)
+		hostZone.IbcDenom = denom
+
+		hostZones[i] = hostZone
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Search each host zone by the denom
+	for i, denom := range denoms {
+		hostZone, err := s.App.StakeibcKeeper.GetHostZoneFromIBCDenom(s.Ctx, denom)
+		s.Require().NoError(err)
+		s.Require().Equal(hostZones[i], *hostZone, "host zone")
+	}
+
+	// Confirm non-existent denom errors
+	_, err := s.App.StakeibcKeeper.GetHostZoneFromIBCDenom(s.Ctx, "non-existent")
+	s.Require().ErrorContains(err, "No HostZone for non-existent found")
+}
+
 func (s *KeeperTestSuite) TestHostZoneRemove() {
 	items := s.createNHostZone(10)
 	for _, item := range items {
