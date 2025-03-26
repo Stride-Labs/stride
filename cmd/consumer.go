@@ -64,11 +64,11 @@ func buildPublicKeysFromHomeDirectories(config *config.Config, homeDirectories s
 		if err != nil {
 			return nil, err
 		}
-		sdkPublicKey, err := cryptocodec.FromTmPubKeyInterface(pk)
+		sdkPublicKey, err := cryptocodec.FromCmtPubKeyInterface(pk)
 		if err != nil {
 			return nil, err
 		}
-		tmProtoPublicKey, err := cryptocodec.ToTmProtoPublicKey(sdkPublicKey)
+		tmProtoPublicKey, err := cryptocodec.ToCmtProtoPublicKey(sdkPublicKey)
 		if err != nil {
 			return nil, err
 		}

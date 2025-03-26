@@ -4,17 +4,13 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 const TypeMsgCloseDelegationChannel = "close_delegation_channel"
 
-var (
-	_ sdk.Msg            = &MsgCloseDelegationChannel{}
-	_ legacytx.LegacyMsg = &MsgCloseDelegationChannel{}
-)
+var _ sdk.Msg = &MsgCloseDelegationChannel{}
 
 func NewMsgCloseDelegationChannel(creator, chainId string) *MsgCloseDelegationChannel {
 	return &MsgCloseDelegationChannel{
@@ -37,11 +33,6 @@ func (msg *MsgCloseDelegationChannel) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgCloseDelegationChannel) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgCloseDelegationChannel) ValidateBasic() error {

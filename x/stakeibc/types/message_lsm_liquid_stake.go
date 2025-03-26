@@ -36,11 +36,6 @@ func (msg *MsgLSMLiquidStake) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgLSMLiquidStake) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgLSMLiquidStake) ValidateBasic() error {
 	// check valid creator address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)

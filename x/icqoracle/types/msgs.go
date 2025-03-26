@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 )
@@ -19,11 +18,6 @@ var (
 	_ sdk.Msg = &MsgRegisterTokenPriceQuery{}
 	_ sdk.Msg = &MsgRemoveTokenPriceQuery{}
 	_ sdk.Msg = &MsgUpdateParams{}
-
-	// Implement legacy interface for ledger support
-	_ legacytx.LegacyMsg = &MsgRegisterTokenPriceQuery{}
-	_ legacytx.LegacyMsg = &MsgRemoveTokenPriceQuery{}
-	_ legacytx.LegacyMsg = &MsgUpdateParams{}
 )
 
 // ----------------------------------------------
@@ -59,11 +53,6 @@ func (msg MsgRegisterTokenPriceQuery) Route() string {
 func (msg *MsgRegisterTokenPriceQuery) GetSigners() []sdk.AccAddress {
 	admin, _ := sdk.AccAddressFromBech32(msg.Admin)
 	return []sdk.AccAddress{admin}
-}
-
-func (msg *MsgRegisterTokenPriceQuery) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgRegisterTokenPriceQuery) ValidateBasic() error {
@@ -103,11 +92,6 @@ func (msg MsgRemoveTokenPriceQuery) Route() string {
 func (msg *MsgRemoveTokenPriceQuery) GetSigners() []sdk.AccAddress {
 	admin, _ := sdk.AccAddressFromBech32(msg.Admin)
 	return []sdk.AccAddress{admin}
-}
-
-func (msg *MsgRemoveTokenPriceQuery) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgRemoveTokenPriceQuery) ValidateBasic() error {
@@ -160,11 +144,6 @@ func (msg MsgUpdateParams) Route() string {
 func (msg *MsgUpdateParams) GetSigners() []sdk.AccAddress {
 	authority, _ := sdk.AccAddressFromBech32(msg.Authority)
 	return []sdk.AccAddress{authority}
-}
-
-func (msg *MsgUpdateParams) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgUpdateParams) ValidateBasic() error {

@@ -39,11 +39,6 @@ func (msg *MsgSetAirdropAllocations) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{allocator}
 }
 
-func (msg *MsgSetAirdropAllocations) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Allocator)
 	if err != nil {
@@ -114,11 +109,6 @@ func (msg *MsgClaimFreeAmount) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{allocator}
 }
 
-func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
@@ -159,11 +149,6 @@ func (msg *MsgCreateAirdrop) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{distributor}
-}
-
-func (msg *MsgCreateAirdrop) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgCreateAirdrop) ValidateBasic() error {
@@ -220,11 +205,6 @@ func (msg *MsgDeleteAirdrop) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{distributor}
-}
-
-func (msg *MsgDeleteAirdrop) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgDeleteAirdrop) ValidateBasic() error {

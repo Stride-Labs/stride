@@ -37,11 +37,6 @@ func (msg *MsgRedeemStake) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgRedeemStake) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgRedeemStake) ValidateBasic() error {
 	// check valid creator address
 	_, err := sdk.AccAddressFromBech32(msg.Creator)

@@ -26,6 +26,7 @@ func MakeEncodingConfig() EncodingConfig {
 		ValAddressPrefix: AccountAddressPrefix + sdk.PrefixValidator + sdk.PrefixOperator,
 	}.NewInterfaceRegistry()
 	codec := codec.NewProtoCodec(interfaceRegistry)
+	InitStrideTestApp(false).BasicModuleManager.RegisterInterfaces(interfaceRegistry)
 	txCfg := tx.NewTxConfig(codec, tx.DefaultSignModes)
 
 	encodingConfig := EncodingConfig{
@@ -37,5 +38,6 @@ func MakeEncodingConfig() EncodingConfig {
 
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+
 	return encodingConfig
 }

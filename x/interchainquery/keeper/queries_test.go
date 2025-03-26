@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/Stride-Labs/stride/v26/app"
 	"github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/v26/x/interchainquery/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
@@ -312,6 +313,8 @@ func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {
 		},
 	}
 
+	encoding := app.MakeEncodingConfig()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var args []byte
@@ -327,11 +330,11 @@ func TestUnmarshalAmountFromBalanceQuery(t *testing.T) {
 			require.NoError(t, err)
 
 			if tc.expectedError == "" {
-				actualAmount, err := keeper.UnmarshalAmountFromBalanceQuery(types.ModuleCdc, args)
+				actualAmount, err := keeper.UnmarshalAmountFromBalanceQuery(encoding.Codec, args)
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedAmount.Int64(), actualAmount.Int64())
 			} else {
-				_, err := keeper.UnmarshalAmountFromBalanceQuery(types.ModuleCdc, args)
+				_, err := keeper.UnmarshalAmountFromBalanceQuery(encoding.Codec, args)
 				require.ErrorContains(t, err, tc.expectedError)
 			}
 		})

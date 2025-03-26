@@ -6,17 +6,13 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 )
 
 const TypeMsgInstantiateOracle = "instantiate_oracle"
 
-var (
-	_ sdk.Msg            = &MsgInstantiateOracle{}
-	_ legacytx.LegacyMsg = &MsgInstantiateOracle{}
-)
+var _ sdk.Msg = &MsgInstantiateOracle{}
 
 func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint64, transferChannelId string) *MsgInstantiateOracle {
 	return &MsgInstantiateOracle{
@@ -41,11 +37,6 @@ func (msg *MsgInstantiateOracle) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgInstantiateOracle) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgInstantiateOracle) ValidateBasic() error {

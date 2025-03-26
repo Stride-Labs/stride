@@ -61,7 +61,6 @@ func DefaultConfig() network.Config {
 	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
 	tempApp := app.InitStrideTestApp(false)
 	encoding := app.MakeEncodingConfig()
-	tempApp.BasicModuleManager.RegisterInterfaces(encoding.InterfaceRegistry)
 
 	chainId := fmt.Sprintf("stride-%d", cometbftrand.NewRand().Uint64())
 	genState := tempApp.DefaultGenesis()
@@ -125,7 +124,7 @@ func modifyConsumerGenesis(val network.Validator) error {
 		return errorsmod.Wrap(err, "failed to read genesis from the file")
 	}
 
-	tmProtoPublicKey, err := cryptocodec.ToTmProtoPublicKey(val.PubKey)
+	tmProtoPublicKey, err := cryptocodec.ToCmtProtoPublicKey(val.PubKey)
 	if err != nil {
 		return errorsmod.Wrap(err, "invalid public key")
 	}

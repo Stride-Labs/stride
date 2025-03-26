@@ -68,15 +68,6 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgLiquidStake_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgLiquidStake(addr, sdkmath.NewInt(1000))
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"staketia/MsgLiquidStake","value":{"native_amount":"1000","staker":"stride1v9jxgu33kfsgr5"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgRedeemStake
 // ----------------------------------------------
@@ -135,15 +126,6 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-}
-
-func TestMsgRedeemStake_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgRedeemStake(addr, sdkmath.NewInt(1000000), "receiver")
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"staketia/MsgRedeemStake","value":{"receiver":"receiver","redeemer":"stride1v9jxgu33kfsgr5","st_token_amount":"1000000"}}`
-	require.Equal(t, expected, string(res))
 }
 
 // ----------------------------------------------
@@ -209,15 +191,6 @@ func TestMsgConfirmDelegation_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgConfirmDelegation_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgConfirmDelegation(addr, 100, "valid_hash")
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"staketia/MsgConfirmDelegation","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //           MsgConfirmUndelegation
 // ----------------------------------------------
@@ -281,15 +254,6 @@ func TestMsgConfirmUndelegation_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgConfirmUndelegation_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgConfirmUndelegation(addr, 100, "valid_hash")
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"staketia/MsgConfirmUndelegation","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgConfirmUnbondedTokenSweep
 // ----------------------------------------------
@@ -349,15 +313,6 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-}
-
-func TestMsgConfirmUnbondedTokenSweep_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgConfirmUnbondedTokenSweep(addr, 100, "valid_hash")
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"staketia/MsgConfirmUnbondedTokenSweep","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
-	require.Equal(t, expected, string(res))
 }
 
 // ----------------------------------------------

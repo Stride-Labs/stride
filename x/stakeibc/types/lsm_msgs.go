@@ -12,9 +12,7 @@ const (
 	TypeMsgRedeemTokensForShares = "redeem_tokens_for_shares" // #nosec G101
 )
 
-var (
-	_ sdk.Msg = &MsgRedeemTokensForShares{}
-)
+var _ sdk.Msg = &MsgRedeemTokensForShares{}
 
 // NewMsgRedeemTokensForShares creates a new MsgRedeemTokensForShares instance.
 //
@@ -39,12 +37,6 @@ func (msg MsgRedeemTokensForShares) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{delegator}
-}
-
-// GetSignBytes implements the sdk.Msg interface.
-func (msg MsgRedeemTokensForShares) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(&msg)
-	return sdk.MustSortJSON(bz)
 }
 
 // ValidateBasic implements the sdk.Msg interface.

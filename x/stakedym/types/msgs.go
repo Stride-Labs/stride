@@ -5,7 +5,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 )
@@ -40,21 +39,6 @@ var (
 	_ sdk.Msg = &MsgOverwriteUnbondingRecord{}
 	_ sdk.Msg = &MsgOverwriteRedemptionRecord{}
 	_ sdk.Msg = &MsgSetOperatorAddress{}
-
-	// Implement legacy interface for ledger support
-	_ legacytx.LegacyMsg = &MsgLiquidStake{}
-	_ legacytx.LegacyMsg = &MsgRedeemStake{}
-	_ legacytx.LegacyMsg = &MsgConfirmDelegation{}
-	_ legacytx.LegacyMsg = &MsgConfirmUndelegation{}
-	_ legacytx.LegacyMsg = &MsgConfirmUnbondedTokenSweep{}
-	_ legacytx.LegacyMsg = &MsgAdjustDelegatedBalance{}
-	_ legacytx.LegacyMsg = &MsgUpdateInnerRedemptionRateBounds{}
-	_ legacytx.LegacyMsg = &MsgResumeHostZone{}
-	_ legacytx.LegacyMsg = &MsgRefreshRedemptionRate{}
-	_ legacytx.LegacyMsg = &MsgOverwriteDelegationRecord{}
-	_ legacytx.LegacyMsg = &MsgOverwriteUnbondingRecord{}
-	_ legacytx.LegacyMsg = &MsgOverwriteRedemptionRecord{}
-	_ legacytx.LegacyMsg = &MsgSetOperatorAddress{}
 )
 
 // ----------------------------------------------
@@ -82,11 +66,6 @@ func (msg *MsgLiquidStake) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{staker}
-}
-
-func (msg *MsgLiquidStake) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgLiquidStake) ValidateBasic() error {
@@ -128,11 +107,6 @@ func (msg *MsgRedeemStake) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{redeemer}
-}
-
-func (msg *MsgRedeemStake) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgRedeemStake) ValidateBasic() error {
@@ -177,11 +151,6 @@ func (msg *MsgConfirmDelegation) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{operator}
 }
 
-func (msg *MsgConfirmDelegation) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgConfirmDelegation) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Operator)
 	if err != nil {
@@ -224,11 +193,6 @@ func (msg *MsgConfirmUndelegation) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{operator}
 }
 
-func (msg *MsgConfirmUndelegation) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgConfirmUndelegation) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Operator)
 	if err != nil {
@@ -268,11 +232,6 @@ func (msg *MsgConfirmUnbondedTokenSweep) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{operator}
-}
-
-func (msg *MsgConfirmUnbondedTokenSweep) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgConfirmUnbondedTokenSweep) ValidateBasic() error {
@@ -317,11 +276,6 @@ func (msg *MsgAdjustDelegatedBalance) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{operator}
 }
 
-func (msg *MsgAdjustDelegatedBalance) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgAdjustDelegatedBalance) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Operator)
 	if err != nil {
@@ -362,11 +316,6 @@ func (msg *MsgUpdateInnerRedemptionRateBounds) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgUpdateInnerRedemptionRateBounds) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgUpdateInnerRedemptionRateBounds) ValidateBasic() error {
@@ -412,11 +361,6 @@ func (msg *MsgResumeHostZone) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgResumeHostZone) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgResumeHostZone) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -453,11 +397,6 @@ func (msg *MsgSetOperatorAddress) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgSetOperatorAddress) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgSetOperatorAddress) ValidateBasic() error {
@@ -498,11 +437,6 @@ func (msg *MsgRefreshRedemptionRate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgRefreshRedemptionRate) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgRefreshRedemptionRate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -536,11 +470,6 @@ func (msg *MsgOverwriteDelegationRecord) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgOverwriteDelegationRecord) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgOverwriteDelegationRecord) ValidateBasic() error {
@@ -588,11 +517,6 @@ func (msg *MsgOverwriteUnbondingRecord) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgOverwriteUnbondingRecord) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgOverwriteUnbondingRecord) ValidateBasic() error {
@@ -644,11 +568,6 @@ func (msg *MsgOverwriteRedemptionRecord) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgOverwriteRedemptionRecord) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgOverwriteRedemptionRecord) ValidateBasic() error {

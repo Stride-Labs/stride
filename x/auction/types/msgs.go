@@ -8,7 +8,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/Stride-Labs/stride/v26/utils"
 )
@@ -23,11 +22,6 @@ var (
 	_ sdk.Msg = &MsgPlaceBid{}
 	_ sdk.Msg = &MsgCreateAuction{}
 	_ sdk.Msg = &MsgUpdateAuction{}
-
-	// Implement legacy interface for ledger support
-	_ legacytx.LegacyMsg = &MsgPlaceBid{}
-	_ legacytx.LegacyMsg = &MsgCreateAuction{}
-	_ legacytx.LegacyMsg = &MsgUpdateAuction{}
 )
 
 // ----------------------------------------------
@@ -62,11 +56,6 @@ func (msg *MsgPlaceBid) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{sender}
-}
-
-func (msg *MsgPlaceBid) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgPlaceBid) ValidateBasic() error {
@@ -135,11 +124,6 @@ func (msg *MsgCreateAuction) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sender}
 }
 
-func (msg *MsgCreateAuction) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgCreateAuction) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
 		return err
@@ -199,11 +183,6 @@ func (msg *MsgUpdateAuction) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{sender}
-}
-
-func (msg *MsgUpdateAuction) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgUpdateAuction) ValidateBasic() error {

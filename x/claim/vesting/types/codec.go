@@ -37,10 +37,3 @@ func RegisterInterfaces(registry types.InterfaceRegistry) {
 		&StridePeriodicVestingAccount{},
 	)
 }
-
-var amino = codec.NewLegacyAmino()
-
-func init() {
-	RegisterLegacyAminoCodec(amino)
-	amino.Seal()
-}
