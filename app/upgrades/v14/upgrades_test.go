@@ -9,7 +9,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
 	"github.com/stretchr/testify/suite"
 
@@ -169,9 +169,9 @@ func (s *UpgradeTestSuite) CheckVestingStoreAfterUpgrade() {
 
 	// Verify account2 is still a ContinuousVestingAccount
 	account2 := s.App.AccountKeeper.GetAccount(afterCtx, address2)
-	s.Require().IsType(&types.ContinuousVestingAccount{}, account2)
+	s.Require().IsType(&vestingtypes.ContinuousVestingAccount{}, account2)
 	// Verify the correct number of tokens is vested after the upgrade
-	vestingAccount2 := account2.(*types.ContinuousVestingAccount)
+	vestingAccount2 := account2.(*vestingtypes.ContinuousVestingAccount)
 	coins = vestingAccount2.GetVestedCoins(afterUpgrade)
 	expectedVestedCoins := int64(float64(v14.Account2VestingUstrd)*(float64(AfterUpgrade-v14.VestingStartTimeAccount2)/float64(v14.VestingEndTimeAccount2-v14.VestingStartTimeAccount2))) + 1 // add 1, rounding
 	s.Require().Equal(expectedVestedCoins, coins.AmountOf(s.MustBondDenom(s.Ctx)).Int64())
@@ -182,7 +182,7 @@ func initBaseAccount(address sdk.AccAddress) *authtypes.BaseAccount {
 	return bacc
 }
 
-func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress, start int64, end int64, coins int64) *types.ContinuousVestingAccount {
+func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress, start int64, end int64, coins int64) *vestingtypes.ContinuousVestingAccount {
 	startTime := time.Unix(start, 0)
 	endTime := time.Unix(end, 0)
 
@@ -190,7 +190,7 @@ func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress
 	// send tokens to the base account
 	bacc := initBaseAccount(address)
 	origCoins := sdk.Coins{sdk.NewInt64Coin(s.MustBondDenom(s.Ctx), coins)}
-	cva, err := types.NewContinuousVestingAccount(bacc, origCoins, start, end)
+	cva, err := vestingtypes.NewContinuousVestingAccount(bacc, origCoins, start, end)
 	s.Require().NoError(err)
 
 	// Sanity check the vesting schedule

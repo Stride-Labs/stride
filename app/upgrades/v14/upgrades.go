@@ -22,7 +22,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
 	evmosvestingkeeper "github.com/evmos/evmos/v20/x/vesting/keeper"
-	"github.com/evmos/evmos/v20/x/vesting/types"
 	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
 
 	"github.com/Stride-Labs/stride/v26/utils"
@@ -250,15 +249,29 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 	ak.SetAccount(ctx, baseAcc)
 
 	// Then, create the clawback vesting account. This will reset the account type
-	createClawbackMsg := &types.MsgCreateClawbackVestingAccount{
-		FunderAddress:     FunderAddress,
-		VestingAddress:    Account1,
-		EnableGovClawback: false,
+	// createClawbackMsg := &types.MsgCreateClawbackVestingAccount{
+	// 	FunderAddress:     FunderAddress,
+	// 	VestingAddress:    Account1,
+	// 	EnableGovClawback: false,
+	// }
+	// _, err := evk.CreateClawbackVestingAccount(ctx, createClawbackMsg)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// IMPORTANT: As of Stride v27, the `CreateClawbackVestingAccount` code above no longer works
+	// as the sdk 50 version of evmos vesting added a check that the account was an EthAccount
+	// Ref: https://github.com/evmos/evmos/blob/eca13ef2521a9ef13c32e80b1b147230bdb155b5/x/vesting/keeper/msg_server.go#L64-L70
+	//
+	// We can instead set the account directly as follows, but we forgo any validation
+	//
+	// This code should never be run again (as it was in the v14 upgrade) so this doesn't
+	// matter - but noting it in case we reference this code in the future
+	vestingAcc := &evmosvestingtypes.ClawbackVestingAccount{
+		BaseVestingAccount: baseVestingAcc,
+		FunderAddress:      FunderAddress,
 	}
-	_, err := evk.CreateClawbackVestingAccount(ctx, createClawbackMsg)
-	if err != nil {
-		return err
-	}
+	ak.SetAccount(ctx, vestingAcc)
 
 	// TODO: verify sk.BondDenom(ctx) is ustrd by querying the account after running localstride
 	// NOTE: LockupPeriods adds a transfer restriction. Unvested tokens are also transfer restricted. The behavior we want is
@@ -275,7 +288,7 @@ func MigrateAccount1(ctx sdk.Context, evk evmosvestingkeeper.Keeper, sk stakingk
 	if err != nil {
 		return fmt.Errorf("MigrateAccount1 BondDenom :%w", err)
 	}
-	fundAccMsg := &types.MsgFundVestingAccount{
+	fundAccMsg := &evmosvestingtypes.MsgFundVestingAccount{
 		FunderAddress:  FunderAddress,
 		VestingAddress: Account1,
 		StartTime:      time.Unix(VestingStartTimeAccount1, 0),
@@ -432,7 +445,7 @@ func SendConsumerFeePoolToFeeDistribution(ctx sdk.Context, ck *ccvconsumerkeeper
 //   - both vesting and lockup periods are non-empty
 //   - both lockup and vesting periods contain valid amounts and lengths
 //   - both vesting and lockup periods describe the same total amount
-func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKeeper stakingkeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, msg *types.MsgFundVestingAccount) error {
+func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKeeper stakingkeeper.Keeper, accountKeeper authkeeper.AccountKeeper, bankKeeper bankkeeper.Keeper, msg *evmosvestingtypes.MsgFundVestingAccount) error {
 	ak := accountKeeper
 	bk := bankKeeper
 
@@ -517,7 +530,7 @@ func addGrant(
 	ctx sdk.Context,
 	k evmosvestingkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
-	va *types.ClawbackVestingAccount,
+	va *evmosvestingtypes.ClawbackVestingAccount,
 	grantStartTime int64,
 	grantLockupPeriods, grantVestingPeriods sdkvesting.Periods,
 	grantCoins sdk.Coins,
@@ -531,22 +544,22 @@ func addGrant(
 	// how much is really delegated?
 	bondedAmt, err := stakingKeeper.GetDelegatorBonded(ctx, va.GetAddress())
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+		return errorsmod.Wrapf(evmosvestingtypes.ErrVestingLockup, "%s", err)
 	}
 	unbondingAmt, err := stakingKeeper.GetDelegatorUnbonding(ctx, va.GetAddress())
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+		return errorsmod.Wrapf(evmosvestingtypes.ErrVestingLockup, "%s", err)
 	}
 	delegatedAmt := bondedAmt.Add(unbondingAmt)
 	bondDenom, err := stakingKeeper.BondDenom(ctx)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrVestingLockup, "%s", err)
+		return errorsmod.Wrapf(evmosvestingtypes.ErrVestingLockup, "%s", err)
 	}
 	delegated := sdk.NewCoins(sdk.NewCoin(bondDenom, delegatedAmt))
 
 	// modify schedules for the new grant
-	newLockupStart, newLockupEnd, newLockupPeriods := types.DisjunctPeriods(va.GetStartTime(), grantStartTime, va.LockupPeriods, grantLockupPeriods)
-	newVestingStart, newVestingEnd, newVestingPeriods := types.DisjunctPeriods(
+	newLockupStart, newLockupEnd, newLockupPeriods := evmosvestingtypes.DisjunctPeriods(va.GetStartTime(), grantStartTime, va.LockupPeriods, grantLockupPeriods)
+	newVestingStart, newVestingEnd, newVestingPeriods := evmosvestingtypes.DisjunctPeriods(
 		va.GetStartTime(),
 		grantStartTime,
 		va.GetVestingPeriods(),
@@ -555,14 +568,14 @@ func addGrant(
 
 	if newLockupStart != newVestingStart {
 		return errorsmod.Wrapf(
-			types.ErrVestingLockup,
+			evmosvestingtypes.ErrVestingLockup,
 			"vesting start time calculation should match lockup start (%d ≠ %d)",
 			newVestingStart, newLockupStart,
 		)
 	}
 
 	va.StartTime = time.Unix(newLockupStart, 0).UTC()
-	va.EndTime = types.Max64(newLockupEnd, newVestingEnd)
+	va.EndTime = evmosvestingtypes.Max64(newLockupEnd, newVestingEnd)
 	va.LockupPeriods = newLockupPeriods
 	va.VestingPeriods = newVestingPeriods
 	va.OriginalVesting = va.OriginalVesting.Add(grantCoins...)
