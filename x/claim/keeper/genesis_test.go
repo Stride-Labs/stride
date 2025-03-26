@@ -1,15 +1,12 @@
 package keeper_test
 
 import (
-	"time"
-
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/claim/types"
 )
 
@@ -28,10 +25,11 @@ func (s *KeeperTestSuite) TestGenesis() {
 			Airdrops: []*types.Airdrop{
 				{
 					AirdropIdentifier:  types.DefaultAirdropIdentifier,
-					AirdropStartTime:   time.Now(),
+					AirdropStartTime:   s.Ctx.BlockTime(),
 					AirdropDuration:    types.DefaultAirdropDuration,
 					ClaimDenom:         sdk.DefaultBondDenom,
 					DistributorAddress: addr3.String(),
+					ClaimedSoFar:       sdkmath.ZeroInt(),
 				},
 			},
 		},
@@ -63,9 +61,6 @@ func (s *KeeperTestSuite) TestGenesis() {
 	s.Require().NoError(err)
 	s.Require().Equal(totalWeightJuno, genesisState.ClaimRecords[1].Weight)
 
-	nullify.Fill(&genesisState)
-	nullify.Fill(got)
-
 	s.Require().Equal(genesisState.Params, got.Params)
-	s.Require().Equal(genesisState.ClaimRecords, got.ClaimRecords)
+	s.Require().ElementsMatch(genesisState.ClaimRecords, got.ClaimRecords)
 }

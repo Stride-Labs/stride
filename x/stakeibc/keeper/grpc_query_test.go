@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
@@ -59,8 +58,8 @@ func (s *KeeperTestSuite) TestHostZoneQuerySingle() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+					tc.response,
+					response,
 				)
 			}
 		})
@@ -87,8 +86,8 @@ func (s *KeeperTestSuite) TestHostZoneQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.HostZone), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.HostZone),
+				msgs,
+				resp.HostZone,
 			)
 		}
 	})
@@ -100,8 +99,8 @@ func (s *KeeperTestSuite) TestHostZoneQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.HostZone), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.HostZone),
+				msgs,
+				resp.HostZone,
 			)
 			next = resp.Pagination.NextKey
 		}
@@ -111,8 +110,8 @@ func (s *KeeperTestSuite) TestHostZoneQueryPaginated() {
 		s.Require().NoError(err)
 		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
 		s.Require().ElementsMatch(
-			nullify.Fill(msgs),
-			nullify.Fill(resp.HostZone),
+			msgs,
+			resp.HostZone,
 		)
 	})
 	s.Run("InvalidRequest", func() {
@@ -124,14 +123,12 @@ func (s *KeeperTestSuite) TestHostZoneQueryPaginated() {
 func (s *KeeperTestSuite) TestValidatorQuery() {
 	validatorsByHostZone := make(map[string][]*types.Validator)
 	validators := []*types.Validator{}
-	nullify.Fill(&validators)
 
 	chainId := "GAIA"
 	hostZone := &types.HostZone{
 		ChainId:    chainId,
 		Validators: validators,
 	}
-	nullify.Fill(&hostZone)
 	validatorsByHostZone[chainId] = validators
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, *hostZone)
 
@@ -158,8 +155,8 @@ func (s *KeeperTestSuite) TestValidatorQuery() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+					tc.response,
+					response,
 				)
 			}
 		})
@@ -450,8 +447,8 @@ func (s *KeeperTestSuite) TestEpochTrackerQuerySingle() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+					tc.response,
+					response,
 				)
 			}
 		})
@@ -465,8 +462,8 @@ func (s *KeeperTestSuite) TestAllEpochTrackerQuery() {
 	s.Require().NoError(err)
 	s.Require().Len(resp.EpochTracker, 5)
 	s.Require().Subset(
-		nullify.Fill(msgs),
-		nullify.Fill(resp.EpochTracker),
+		msgs,
+		resp.EpochTracker,
 	)
 }
 

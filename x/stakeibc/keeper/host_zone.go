@@ -35,6 +35,9 @@ func (k Keeper) GetHostZone(ctx sdk.Context, chainId string) (val types.HostZone
 		return val, false
 	}
 	k.cdc.MustUnmarshal(b, &val)
+	if val.Validators == nil {
+		val.Validators = []*types.Validator{}
+	}
 	return val, true
 }
 
@@ -52,32 +55,20 @@ func (k Keeper) GetActiveHostZone(ctx sdk.Context, chainId string) (hostZone typ
 
 // GetHostZoneFromHostDenom returns a HostZone from a HostDenom
 func (k Keeper) GetHostZoneFromHostDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
-	var matchZone types.HostZone
-	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		if zoneInfo.HostDenom == denom {
-			matchZone = zoneInfo
-			return nil
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if hostZone.ChainId != "" && hostZone.HostDenom == denom {
+			return &hostZone, nil
 		}
-		return nil
-	})
-	if matchZone.ChainId != "" {
-		return &matchZone, nil
 	}
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s denom found", denom)
 }
 
 // GetHostZoneFromIBCDenom returns a HostZone from a IBCDenom
 func (k Keeper) GetHostZoneFromIBCDenom(ctx sdk.Context, denom string) (*types.HostZone, error) {
-	var matchZone types.HostZone
-	k.IterateHostZones(ctx, func(ctx sdk.Context, index int64, zoneInfo types.HostZone) error {
-		if zoneInfo.IbcDenom == denom {
-			matchZone = zoneInfo
-			return nil
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if hostZone.ChainId != "" && hostZone.IbcDenom == denom {
+			return &hostZone, nil
 		}
-		return nil
-	})
-	if matchZone.ChainId != "" {
-		return &matchZone, nil
 	}
 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "No HostZone for %s found", denom)
 }
@@ -108,6 +99,9 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.HostZone
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		if val.Validators == nil {
+			val.Validators = []*types.Validator{}
+		}
 		list = append(list, val)
 	}
 
@@ -191,19 +185,12 @@ func (k Keeper) UnregisterHostZone(ctx sdk.Context, chainId string) error {
 
 // GetAllActiveHostZone returns all hostZones that are active (halted = false)
 func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.HostZoneKey))
-	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
-
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		var val types.HostZone
-		k.cdc.MustUnmarshal(iterator.Value(), &val)
-		if !val.Halted {
-			list = append(list, val)
+	list = []types.HostZone{}
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if !hostZone.Halted {
+			list = append(list, hostZone)
 		}
 	}
-
 	return
 }
 

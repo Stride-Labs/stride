@@ -6,7 +6,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
@@ -45,8 +44,8 @@ func (s *KeeperTestSuite) TestEpochUnbondingRecordQuerySingle() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+					tc.response,
+					response,
 				)
 			}
 		})
@@ -73,8 +72,8 @@ func (s *KeeperTestSuite) TestEpochUnbondingRecordQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.EpochUnbondingRecord), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.EpochUnbondingRecord),
+				msgs,
+				resp.EpochUnbondingRecord,
 			)
 		}
 	})
@@ -86,8 +85,8 @@ func (s *KeeperTestSuite) TestEpochUnbondingRecordQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.EpochUnbondingRecord), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.EpochUnbondingRecord),
+				msgs,
+				resp.EpochUnbondingRecord,
 			)
 			next = resp.Pagination.NextKey
 		}
@@ -97,8 +96,8 @@ func (s *KeeperTestSuite) TestEpochUnbondingRecordQueryPaginated() {
 		s.Require().NoError(err)
 		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
 		s.Require().ElementsMatch(
-			nullify.Fill(msgs),
-			nullify.Fill(resp.EpochUnbondingRecord),
+			msgs,
+			resp.EpochUnbondingRecord,
 		)
 	})
 	s.Run("InvalidRequest", func() {

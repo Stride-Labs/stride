@@ -7,7 +7,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
@@ -23,6 +22,7 @@ func (s *KeeperTestSuite) createNHostZone(n int) []types.HostZone {
 		items[i].MinInnerRedemptionRate = sdkmath.LegacyNewDecWithPrec(5, 1)
 		items[i].MaxInnerRedemptionRate = sdkmath.LegacyNewDecWithPrec(15, 1)
 		items[i].TotalDelegations = sdkmath.ZeroInt()
+		items[i].Validators = []*types.Validator{}
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[i])
 	}
 	return items
@@ -34,10 +34,60 @@ func (s *KeeperTestSuite) TestHostZoneGet() {
 		got, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, item.ChainId)
 		s.Require().True(found)
 		s.Require().Equal(
-			nullify.Fill(&item),
-			nullify.Fill(&got),
+			&item,
+			&got,
 		)
 	}
+}
+
+func (s *KeeperTestSuite) TestGetHostZoneFromHostDenom() {
+	// Create host zones with different denoms
+	hostZones := s.createNHostZone(5)
+	denoms := []string{}
+	for i, hostZone := range hostZones {
+		denom := fmt.Sprintf("denom-%d", i)
+		denoms = append(denoms, denom)
+		hostZone.HostDenom = denom
+
+		hostZones[i] = hostZone
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Search each host zone by the denom
+	for i, denom := range denoms {
+		hostZone, err := s.App.StakeibcKeeper.GetHostZoneFromHostDenom(s.Ctx, denom)
+		s.Require().NoError(err)
+		s.Require().Equal(hostZones[i], *hostZone, "host zone")
+	}
+
+	// Confirm non-existent denom errors
+	_, err := s.App.StakeibcKeeper.GetHostZoneFromHostDenom(s.Ctx, "non-existent")
+	s.Require().ErrorContains(err, "No HostZone for non-existent denom found")
+}
+
+func (s *KeeperTestSuite) TestGetHostZoneFromIBCDenom() {
+	// Create host zones with different denoms
+	hostZones := s.createNHostZone(5)
+	denoms := []string{}
+	for i, hostZone := range hostZones {
+		denom := fmt.Sprintf("denom-%d", i)
+		denoms = append(denoms, denom)
+		hostZone.IbcDenom = denom
+
+		hostZones[i] = hostZone
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Search each host zone by the denom
+	for i, denom := range denoms {
+		hostZone, err := s.App.StakeibcKeeper.GetHostZoneFromIBCDenom(s.Ctx, denom)
+		s.Require().NoError(err)
+		s.Require().Equal(hostZones[i], *hostZone, "host zone")
+	}
+
+	// Confirm non-existent denom errors
+	_, err := s.App.StakeibcKeeper.GetHostZoneFromIBCDenom(s.Ctx, "non-existent")
+	s.Require().ErrorContains(err, "No HostZone for non-existent found")
 }
 
 func (s *KeeperTestSuite) TestHostZoneRemove() {
@@ -52,8 +102,8 @@ func (s *KeeperTestSuite) TestHostZoneRemove() {
 func (s *KeeperTestSuite) TestHostZoneGetAll() {
 	items := s.createNHostZone(10)
 	s.Require().ElementsMatch(
-		nullify.Fill(items),
-		nullify.Fill(s.App.StakeibcKeeper.GetAllHostZone(s.Ctx)),
+		items,
+		s.App.StakeibcKeeper.GetAllHostZone(s.Ctx),
 	)
 }
 
@@ -69,8 +119,8 @@ func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase1() {
 	actualActiveHzs := items[:numZones-1]
 	getActiveHzResults := s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx)
 	s.Require().ElementsMatch(
-		nullify.Fill(actualActiveHzs),
-		nullify.Fill(getActiveHzResults),
+		actualActiveHzs,
+		getActiveHzResults,
 	)
 }
 
@@ -79,8 +129,8 @@ func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase2() {
 	numZones := 3
 	items := s.createNHostZone(numZones)
 	s.Require().ElementsMatch(
-		nullify.Fill(items),
-		nullify.Fill(s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx)),
+		items,
+		s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx),
 	)
 }
 
@@ -96,16 +146,16 @@ func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase3() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[1])
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[2])
 	s.Require().ElementsMatch(
-		nullify.Fill(types.HostZone{}),
-		nullify.Fill(s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx)),
+		types.HostZone{},
+		s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx),
 	)
 }
 
 func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase4() {
 	// create no zones, check the output is an empty list
 	s.Require().ElementsMatch(
-		nullify.Fill(types.HostZone{}),
-		nullify.Fill(s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx)),
+		types.HostZone{},
+		s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx),
 	)
 }
 

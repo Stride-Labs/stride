@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
 )
 
@@ -27,8 +26,8 @@ func (s *KeeperTestSuite) TestCallbackDataGet() {
 		)
 		s.Require().True(found)
 		s.Require().Equal(
-			nullify.Fill(&item),
-			nullify.Fill(&rst),
+			&item,
+			&rst,
 		)
 	}
 }
@@ -49,7 +48,7 @@ func (s *KeeperTestSuite) TestCallbackDataRemove() {
 func (s *KeeperTestSuite) TestCallbackDataGetAll() {
 	items := s.createNCallbackData(s.Ctx, 10)
 	s.Require().ElementsMatch(
-		nullify.Fill(items),
-		nullify.Fill(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)),
+		items,
+		s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx),
 	)
 }

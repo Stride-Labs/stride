@@ -6,8 +6,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
-
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v26/x/records/types"
@@ -58,8 +56,8 @@ func (s *KeeperTestSuite) TestDepositRecordQuerySingle() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().Equal(
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+					tc.response,
+					response,
 				)
 			}
 		})
@@ -86,8 +84,8 @@ func (s *KeeperTestSuite) TestDepositRecordQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.DepositRecord), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.DepositRecord),
+				msgs,
+				resp.DepositRecord,
 			)
 		}
 	})
@@ -99,8 +97,8 @@ func (s *KeeperTestSuite) TestDepositRecordQueryPaginated() {
 			s.Require().NoError(err)
 			s.Require().LessOrEqual(len(resp.DepositRecord), step)
 			s.Require().Subset(
-				nullify.Fill(msgs),
-				nullify.Fill(resp.DepositRecord),
+				msgs,
+				resp.DepositRecord,
 			)
 			next = resp.Pagination.NextKey
 		}
@@ -110,8 +108,8 @@ func (s *KeeperTestSuite) TestDepositRecordQueryPaginated() {
 		s.Require().NoError(err)
 		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
 		s.Require().ElementsMatch(
-			nullify.Fill(msgs),
-			nullify.Fill(resp.DepositRecord),
+			msgs,
+			resp.DepositRecord,
 		)
 	})
 	s.Run("InvalidRequest", func() {

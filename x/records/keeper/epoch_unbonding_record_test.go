@@ -3,7 +3,6 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v26/testutil/nullify"
 	"github.com/Stride-Labs/stride/v26/x/records/types"
 )
 
@@ -54,8 +53,8 @@ func (s *KeeperTestSuite) TestEpochUnbondingRecordGet() {
 		got, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, item.EpochNumber)
 		s.Require().True(found)
 		s.Require().Equal(
-			nullify.Fill(&item),
-			nullify.Fill(&got),
+			&item,
+			&got,
 		)
 	}
 }
@@ -72,8 +71,8 @@ func (s *KeeperTestSuite) TestEpochUnbondingRecordRemove() {
 func (s *KeeperTestSuite) TestEpochUnbondingRecordGetAll() {
 	items, _ := s.createNEpochUnbondingRecord(10)
 	s.Require().ElementsMatch(
-		nullify.Fill(items),
-		nullify.Fill(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)),
+		items,
+		s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx),
 	)
 }
 
@@ -82,8 +81,8 @@ func (s *KeeperTestSuite) TestGetAllPreviousEpochUnbondingRecords() {
 	currentEpoch := uint64(8)
 	fetchedItems := items[:currentEpoch]
 	s.Require().ElementsMatch(
-		nullify.Fill(fetchedItems),
-		nullify.Fill(s.App.RecordsKeeper.GetAllPreviousEpochUnbondingRecords(s.Ctx, currentEpoch)),
+		fetchedItems,
+		s.App.RecordsKeeper.GetAllPreviousEpochUnbondingRecords(s.Ctx, currentEpoch),
 	)
 }
 

@@ -20,6 +20,7 @@ func (s *KeeperTestSuite) TestGenesis() {
 				MaxRedemptionRate:      sdkmath.LegacyOneDec(),
 				MinInnerRedemptionRate: sdkmath.LegacyOneDec(),
 				MaxInnerRedemptionRate: sdkmath.LegacyOneDec(),
+				Validators:             []*types.Validator{},
 			},
 		},
 		EpochTrackerList: []types.EpochTracker{
