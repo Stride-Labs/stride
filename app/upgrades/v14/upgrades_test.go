@@ -64,7 +64,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkPendingQueriesRemoved := s.SetupPendingQueries()
 
 	// Upgrade
-	s.ConfirmUpgradeSucceededs("v14", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v14.UpgradeName)
 
 	// Post-upgrade checks
 	s.CheckVestingStoreAfterUpgrade()

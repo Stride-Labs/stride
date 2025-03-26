@@ -35,7 +35,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	chainId := "chain-0"
 	depositRecordId := uint64(1)
 	epochNumber := uint64(1)
-	upgradeHeight := int64(4)
 
 	// Create a host zone with redemptions enabled set to false
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
@@ -68,7 +67,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs(v24.UpgradeName, upgradeHeight)
+	s.ConfirmUpgradeSucceededs(v24.UpgradeName)
 
 	// Confirm the host zone's redemptions enabled were set to true
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)

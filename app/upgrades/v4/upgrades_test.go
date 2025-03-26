@@ -6,9 +6,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	v4 "github.com/Stride-Labs/stride/v26/app/upgrades/v4"
 )
-
-const dummyUpgradeHeight = 5
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -23,5 +22,5 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.ConfirmUpgradeSucceededs("v4", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v4.UpgradeName)
 }

@@ -24,7 +24,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
 	otherHostChainId := "chain-0"
 
 	// Create three host zones
@@ -38,7 +37,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs("v22", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v22.UpgradeName)
 
 	// Confirm the max ICA messages on each host zone
 	for _, chainId := range chainIds {

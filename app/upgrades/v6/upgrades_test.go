@@ -12,11 +12,10 @@ import (
 	"github.com/Stride-Labs/stride/v26/app"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	v6 "github.com/Stride-Labs/stride/v26/app/upgrades/v6"
 	"github.com/Stride-Labs/stride/v26/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 )
-
-const dummyUpgradeHeight = 5
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -36,7 +35,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkClaimStoreAfterMigration := s.SetupClaimStore(codec)
 
 	// Run upgrade
-	s.ConfirmUpgradeSucceededs("v6", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v6.UpgradeName)
 
 	// Confirm store migrations were successful
 	checkClaimStoreAfterMigration()

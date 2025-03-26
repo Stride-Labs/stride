@@ -27,8 +27,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(4)
-
 	minTransferAmount := sdkmath.NewInt(100)
 	initialDetokenizeAmount := sdkmath.NewInt(100)
 	expectedDetokenizeAmount := sdkmath.NewInt(99)
@@ -55,7 +53,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	})
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs(v23.UpgradeName, dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v23.UpgradeName)
 
 	// Confirm trade route was migrated
 	for _, tradeRoute := range s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx) {

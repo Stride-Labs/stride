@@ -16,7 +16,6 @@ import (
 
 var (
 	ustrd               = "ustrd"
-	dummyUpgradeHeight  = int64(5)
 	osmoAirdropId       = "osmosis"
 	unofficialAirdropId = "unofficial-airdrop"
 	addresses           = []string{
@@ -45,7 +44,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupStoreBeforeUpgrade()
-	s.ConfirmUpgradeSucceededs("v8", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v8.UpgradeName)
 	s.CheckStoreAfterUpgrade()
 }
 
@@ -96,8 +95,6 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 }
 
 func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
-	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
-
 	// Check that the evmos airdrop was added and the unofficial airdrop was removed
 	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err, "no error expected when getting params")
@@ -118,7 +115,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	s.Require().Equal(v8.AirdropStartTime, evmosAirdrop.AirdropStartTime, "evmos airdrop start time")
 
 	// Check that the evmos claims records were added
-	evmosClaimRecords := s.App.ClaimKeeper.GetClaimRecords(afterCtx, v8.EvmosAirdropIdentifier)
+	evmosClaimRecords := s.App.ClaimKeeper.GetClaimRecords(s.Ctx, v8.EvmosAirdropIdentifier)
 	s.Require().Positive(len(evmosClaimRecords))
 
 	// Check that the osmo claim actions were reset

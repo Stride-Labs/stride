@@ -697,11 +697,13 @@ func (s *AppTestHelper) MockICAChannel(connectionId, channelId, owner, address s
 	s.App.ICAControllerKeeper.SetActiveChannelID(s.Ctx, connectionId, portId, channelId)
 }
 
-func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeight int64) {
-	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight - 1)
+func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string) {
+	dummyUpgradeHeight := int64(5)
+
+	s.Ctx = s.Ctx.WithBlockHeight(dummyUpgradeHeight - 1)
 	plan := upgradetypes.Plan{
 		Name:   upgradeName,
-		Height: upgradeHeight,
+		Height: dummyUpgradeHeight,
 	}
 
 	err := s.App.UpgradeKeeper.ScheduleUpgrade(s.Ctx, plan)
@@ -709,7 +711,7 @@ func (s *AppTestHelper) ConfirmUpgradeSucceededs(upgradeName string, upgradeHeig
 	_, err = s.App.UpgradeKeeper.GetUpgradePlan(s.Ctx)
 	s.Require().NoError(err)
 
-	s.Ctx = s.Ctx.WithBlockHeight(upgradeHeight)
+	s.Ctx = s.Ctx.WithBlockHeight(dummyUpgradeHeight)
 	s.Ctx = s.Ctx.WithBlockTime(s.Ctx.BlockTime().Add(time.Second))
 
 	headerInfo := s.Ctx.HeaderInfo()

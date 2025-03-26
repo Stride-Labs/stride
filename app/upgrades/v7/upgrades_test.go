@@ -24,7 +24,6 @@ import (
 )
 
 var (
-	DummyUpgradeHeight            = int64(5)
 	JunoChainId                   = "juno-1"
 	OsmosisChainId                = "osmosis-1"
 	OsmosisUnbondingFrequency     = uint64(3)
@@ -83,7 +82,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupIncentiveDiversification()
 
 	// Run the upgrade and iterate 1 block
-	s.ConfirmUpgradeSucceededs("v7", DummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v7.UpgradeName)
 
 	// Confirm state after upgrade
 	s.CheckEpochsAfterUpgrade()

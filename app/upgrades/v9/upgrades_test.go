@@ -33,10 +33,8 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	s.SetupAirdropsBeforeUpgrade()
-	s.ConfirmUpgradeSucceededs("v9", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v9.UpgradeName)
 	s.CheckAirdropsAfterUpgrade()
 }
 

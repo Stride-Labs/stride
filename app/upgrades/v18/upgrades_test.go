@@ -69,15 +69,13 @@ func (s *UpgradeTestSuite) SetupTest() {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Setup store before upgrade
 	checkDelegationsAfterUpgrade := s.SetupTestResetDelegationChanges()
 	checkUnbondingsAfterUpgrade := s.SetupTestUnbondingRecords()
 	checkRedemptionRatesAfterUpgrade := s.SetupTestUpdateRedemptionRateBounds()
 
 	// Run through upgrade
-	s.ConfirmUpgradeSucceededs("v18", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v18.UpgradeName)
 
 	// Check store after upgrade
 	checkDelegationsAfterUpgrade()

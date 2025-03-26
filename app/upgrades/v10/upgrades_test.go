@@ -51,8 +51,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Remove localhost client from client keeper
 	clientParams := s.App.IBCKeeper.ClientKeeper.GetParams(s.Ctx)
 	clientParams.AllowedClients = []string{}
@@ -79,7 +77,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.Require().NoError(err)
 
 	// Submit upgrade
-	s.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v10.UpgradeName)
 
 	// Check mint parameters after upgrade
 	proportions := s.App.MintKeeper.GetParams(s.Ctx).DistributionProportions

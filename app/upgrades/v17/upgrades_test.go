@@ -71,8 +71,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Setup store before upgrade
 	checkHostZonesAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
 	checkMigrateUnbondingRecords := s.SetupMigrateUnbondingRecords()
@@ -82,7 +80,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkProp225AfterUpgrade := s.SetupProp225BeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
-	s.ConfirmUpgradeSucceededs("v17", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v17.UpgradeName)
 
 	// Check state after upgrade
 	checkHostZonesAfterUpgrade()

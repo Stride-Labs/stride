@@ -34,14 +34,12 @@ func (s *UpgradeTestSuite) SetupTest() {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Setup state before upgrade
 	checkMigratedRateLimits := s.SetupRateLimitMigration()
 	checkStTiaRateLimits := s.SetupStTiaRateLimits()
 
 	// Run through upgrade
-	s.ConfirmUpgradeSucceededs("v19", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v19.UpgradeName)
 
 	// Check state after upgrade
 	checkMigratedRateLimits()

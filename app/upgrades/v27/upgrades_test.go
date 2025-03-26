@@ -28,9 +28,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	upgradeHeight := int64(4)
-
-	s.ConfirmUpgradeSucceededs(v27.UpgradeName, upgradeHeight)
+	s.ConfirmUpgradeSucceededs(v27.UpgradeName)
 
 	// Confirm consumer ID is set to 1
 	params := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)

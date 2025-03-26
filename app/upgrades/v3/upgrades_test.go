@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	v3 "github.com/Stride-Labs/stride/v26/app/upgrades/v3"
 )
 
 var (
@@ -27,7 +28,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.ConfirmUpgradeSucceededs("v3", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v3.UpgradeName)
 
 	// make sure claim record was set
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)

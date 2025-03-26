@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
+	v16 "github.com/Stride-Labs/stride/v26/app/upgrades/v16"
 	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
 
@@ -27,13 +28,11 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Setup the store before the upgrade
 	checkCosmosHubAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
 
 	// Run the upgrade to set the bounds and clear pending queries
-	s.ConfirmUpgradeSucceededs("v16", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v16.UpgradeName)
 
 	// Check the store after the upgrade
 	checkCosmosHubAfterUpgrade()

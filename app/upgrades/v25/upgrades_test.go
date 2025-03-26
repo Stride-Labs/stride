@@ -45,8 +45,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	upgradeHeight := int64(4)
-
 	// Setup state before upgrade
 	checkStaketiaMigration := s.SetupStaketiaMigration()
 	checkProp256 := s.SetupProp256()
@@ -55,7 +53,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkLSMRecord := s.SetupLSMRecord()
 
 	// Run upgrade
-	s.ConfirmUpgradeSucceededs(v25.UpgradeName, upgradeHeight)
+	s.ConfirmUpgradeSucceededs(v25.UpgradeName)
 
 	// Validate state after upgrade
 	checkStaketiaMigration()

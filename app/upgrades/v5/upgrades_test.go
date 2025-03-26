@@ -16,6 +16,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v26/app/apptesting"
 	upgradev5 "github.com/Stride-Labs/stride/v26/app/upgrades/v5"
+	v5 "github.com/Stride-Labs/stride/v26/app/upgrades/v5"
 	oldclaimtypes "github.com/Stride-Labs/stride/v26/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
@@ -28,8 +29,6 @@ import (
 	newstakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
 )
-
-const dummyUpgradeHeight = 5
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -58,7 +57,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// checkMaxSlashParamAdded := s.SetupAddMaxSlashPercentParam()
 
 	// Run upgrade
-	s.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceededs(v5.UpgradeName)
 
 	// Confirm store migrations were successful
 	checkClaimStoreAfterMigration()
