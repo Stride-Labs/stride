@@ -36,6 +36,15 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Setting consumer ID parameter...")
 		InitializeConsumerId(ctx, consumerKeeper)
 
+		// Apply distribution fix
+		ctx.Logger().Info("Applying distribution module fix...")
+		if err := ApplyDistributionFix(ctx, distrKeeper); err != nil {
+			// Log warning but continue with upgrade (non-critical)
+			ctx.Logger().Warn("Failed to apply distribution fix, continuing...", "warning", err.Error())
+		} else {
+			ctx.Logger().Info("Distribution fix successfully applied")
+		}
+
 		return versionMap, nil
 	}
 }
