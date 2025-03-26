@@ -1,6 +1,7 @@
 package vesting
 
 import (
+	"context"
 	"encoding/json"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -103,8 +104,10 @@ func (am AppModule) InitGenesis(_ sdk.Context, _ codec.JSONCodec, _ json.RawMess
 	return []abci.ValidatorUpdate{}
 }
 
-// BeginBlock performs a no-op.
-func (am AppModule) BeginBlock(_ sdk.Context) {}
+// BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
+func (am AppModule) BeginBlock(context context.Context) error {
+	return nil
+}
 
 // EndBlock performs a no-op.
 func (am AppModule) EndBlock(_ sdk.Context) []abci.ValidatorUpdate {

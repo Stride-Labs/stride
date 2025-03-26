@@ -146,7 +146,9 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock contains the logic that is automatically triggered at the beginning of each block.
 // The begin block implementation is optional.
-func (am AppModule) BeginBlock(ctx sdk.Context) {}
+func (am AppModule) BeginBlock(context context.Context) error {
+	return nil
+}
 
 // EndBlock contains the logic that is automatically triggered at the end of each block.
 // The end block implementation is optional.

@@ -161,8 +161,10 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 3 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
-func (am AppModule) BeginBlock(ctx sdk.Context) {
+func (am AppModule) BeginBlock(context context.Context) error {
+	ctx := sdk.UnwrapSDKContext(context)
 	am.keeper.BeginBlocker(ctx)
+	return nil
 }
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
