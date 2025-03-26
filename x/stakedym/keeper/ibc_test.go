@@ -97,7 +97,7 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket_NoOp() {
 	tc := s.SetupTestHandleRecordUpdatePacket()
 
 	// Get all delegation records
-	recordsBefore := s.getAllRecords(tc)
+	recordsBefore := s.getAllRecords()
 
 	// Remove the callback data
 	s.App.StakedymKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
@@ -106,7 +106,7 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket_NoOp() {
 	err := s.App.StakedymKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
 	s.Require().NoError(err, "no error expected when calling OnTimeoutPacket")
 
-	s.verifyNoRecordsChanged(tc, recordsBefore)
+	s.verifyNoRecordsChanged(recordsBefore)
 }
 
 // --------------------------------------------------------------
@@ -149,7 +149,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_InvalidAck() {
 	tc := s.SetupTestHandleRecordUpdatePacket()
 
 	// Get all delegation records
-	recordsBefore := s.getAllRecords(tc)
+	recordsBefore := s.getAllRecords()
 
 	// Build an invalid ack to force an error
 	invalidAck := transfertypes.ModuleCdc.MustMarshalJSON(&channeltypes.Acknowledgement{
@@ -163,7 +163,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_InvalidAck() {
 	s.Require().ErrorContains(err, "invalid acknowledgement")
 
 	// Verify store is unchanged
-	s.verifyNoRecordsChanged(tc, recordsBefore)
+	s.verifyNoRecordsChanged(recordsBefore)
 }
 
 // record not found for record id case
@@ -171,7 +171,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	tc := s.SetupTestHandleRecordUpdatePacket()
 
 	// Get all delegation records
-	recordsBefore := s.getAllRecords(tc)
+	recordsBefore := s.getAllRecords()
 
 	// Remove the record id so that there is no action necessary in the callback
 	s.App.StakedymKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
@@ -182,7 +182,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	s.Require().NoError(err, "no error expected during on ack packet")
 
 	// Verify store is unchanged
-	s.verifyNoRecordsChanged(tc, recordsBefore)
+	s.verifyNoRecordsChanged(recordsBefore)
 }
 
 // --------------------------------------------------------------
@@ -226,7 +226,7 @@ func (s *KeeperTestSuite) verifyDelegationRecordArchived(tc PacketCallbackTestCa
 }
 
 // Helper function to grab both active and archived delegation records
-func (s *KeeperTestSuite) getAllRecords(tc PacketCallbackTestCase) (allRecords []types.DelegationRecord) {
+func (s *KeeperTestSuite) getAllRecords() (allRecords []types.DelegationRecord) {
 	// Get all delegation records
 	activeRecords := s.App.StakedymKeeper.GetAllActiveDelegationRecords(s.Ctx)
 	archiveRecords := s.App.StakedymKeeper.GetAllArchivedDelegationRecords(s.Ctx)
@@ -236,9 +236,9 @@ func (s *KeeperTestSuite) getAllRecords(tc PacketCallbackTestCase) (allRecords [
 }
 
 // Helper function to verify no records were updated
-func (s *KeeperTestSuite) verifyNoRecordsChanged(tc PacketCallbackTestCase, recordsBefore []types.DelegationRecord) {
+func (s *KeeperTestSuite) verifyNoRecordsChanged(recordsBefore []types.DelegationRecord) {
 	// Get current records
-	recordsAfter := s.getAllRecords(tc)
+	recordsAfter := s.getAllRecords()
 	// Compare to records before
 	s.Require().Equal(recordsBefore, recordsAfter, "records should be unchanged")
 }

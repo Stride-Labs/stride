@@ -493,7 +493,7 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 	}
 
 	// CHANGE: redefine addGrant below and pass in the vesting/staking keepers
-	err = addGrant(ctx, k, stakingKeeper, vestingAcc, msg.GetStartTime().Unix(), msg.GetLockupPeriods(), msg.GetVestingPeriods(), vestingCoins)
+	err = addGrant(ctx, stakingKeeper, vestingAcc, msg.GetStartTime().Unix(), msg.GetLockupPeriods(), msg.GetVestingPeriods(), vestingCoins)
 	if err != nil {
 		return err
 	}
@@ -528,7 +528,6 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 // ClawbackVestingAccount.
 func addGrant(
 	ctx sdk.Context,
-	k evmosvestingkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
 	va *evmosvestingtypes.ClawbackVestingAccount,
 	grantStartTime int64,
