@@ -325,6 +325,17 @@ func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestCha
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
 	s.StrideChain.NextBlock()
 
+	// When the IBC handshake executes between this stride chain and the host chain,
+	// it alternates the bech prefix from "stride" to "cosmos" during each step
+	// to prevent the host chain's client instantiation from failing
+	// However, the handshake also runs the stride begin blocker while the cosmos prefix
+	// is still set, which runs the stride epoch hook and causes epochs to trigger and fail
+	// We can get around this by just wiping out the epochs after genesis
+	strideApp := s.StrideChain.App.(*app.StrideApp)
+	strideCtx := s.StrideChain.GetContext()
+	for _, epochInfo := range strideApp.EpochsKeeper.AllEpochInfos(strideCtx) {
+		strideApp.EpochsKeeper.DeleteEpochInfo(strideCtx, epochInfo.Identifier)
+	}
 	return s.ProviderChain, s.StrideChain
 }
 

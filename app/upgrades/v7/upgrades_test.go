@@ -85,7 +85,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.ConfirmUpgradeSucceeded(v7.UpgradeName)
 
 	// Confirm state after upgrade
-	s.CheckEpochsAfterUpgrade()
+	s.CheckEpochsAfterUpgrade(true)
 	s.CheckInflationAfterUpgrade()
 	s.CheckICAAllowMessagesAfterUpgrade()
 	s.CheckRedemptionRateSafetyParamsAfterUpgrade()
@@ -116,7 +116,7 @@ func (s *UpgradeTestSuite) SetupEpochs() {
 // Checks that the hour epoch has been added
 // For the unit test that calls the AddHourEpoch function directly, the epoch should not have started yet
 // But for the full upgrade unit test case, a block will be incremented which should start the epoch
-func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade() {
+func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade(epochStarted bool) {
 	// Confirm stride and day epoch are still present
 	allEpochs := s.App.EpochsKeeper.AllEpochInfos(s.Ctx)
 	s.Require().Len(allEpochs, 3, "total number of epochs")
@@ -128,8 +128,14 @@ func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade() {
 
 	// If the upgrade passed an a block was incremented, the epoch should be started
 	expectedHourEpoch := ExpectedHourEpoch
-	expectedHourEpoch.EpochCountingStarted = false
-	expectedHourEpoch.CurrentEpochStartHeight = s.Ctx.BlockHeight()
+	if epochStarted {
+		expectedHourEpoch.CurrentEpoch = 1
+		expectedHourEpoch.EpochCountingStarted = true
+		expectedHourEpoch.CurrentEpochStartHeight = 5
+	} else {
+		expectedHourEpoch.EpochCountingStarted = false
+		expectedHourEpoch.CurrentEpochStartHeight = s.Ctx.BlockHeight()
+	}
 
 	actualHourEpoch, found := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, epochstypes.HOUR_EPOCH)
 	s.Require().True(found, "hour epoch should have been found")
@@ -259,7 +265,7 @@ func (s *UpgradeTestSuite) CheckRewardCollectorModuleAccountAfterUpgrade() {
 func (s *UpgradeTestSuite) TestAddHourEpoch() {
 	s.SetupEpochs()
 	v7.AddHourEpoch(s.Ctx, s.App.EpochsKeeper)
-	s.CheckEpochsAfterUpgrade()
+	s.CheckEpochsAfterUpgrade(false)
 }
 
 func (s *UpgradeTestSuite) TestIncreaseStrideInflation() {

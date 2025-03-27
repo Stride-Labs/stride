@@ -277,7 +277,7 @@ func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtype
 	// Check that an epoch was created
 	epochInfo, found := s.App.EpochsKeeper.GetEpochInfo(ctx, fmt.Sprintf("airdrop-%s", identifier))
 	s.Require().True(found, "epoch tracker should be found")
-	s.Require().Equal(epochInfo.CurrentEpoch, int64(0), "epoch should be one")
+	s.Require().Equal(epochInfo.CurrentEpoch, int64(1), "epoch should be one")
 	s.Require().Equal(epochInfo.Duration, claimtypes.DefaultEpochDuration, "epoch duration should be equal to airdrop duration")
 }
 
