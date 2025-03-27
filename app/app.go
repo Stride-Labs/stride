@@ -648,7 +648,7 @@ func NewStrideApp(
 		wasmConfig.MemoryCacheSize,
 	)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to initialize WasmVM: %v", err))
+		panic(fmt.Sprintf("failed to initialize WasmVM: %v", err))
 	}
 	wasmOpts = append(wasmOpts, wasmkeeper.WithWasmEngine(wasmer))
 
