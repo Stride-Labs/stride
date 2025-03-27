@@ -1,6 +1,7 @@
 package apptesting
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -102,21 +102,29 @@ func (s *AppTestHelper) Setup() {
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
 
-	// Upgrade for pre-blocker with upgrade tests
-	s.UpgradeModule = upgrade.NewAppModule(s.App.UpgradeKeeper, addresscodec.NewBech32Codec("osmo"))
+	s.InitializeStrideTestState(s.App, s.Ctx)
+}
 
+// Helper function to update any genesis defaults after creating a new stride chain
+func (s *AppTestHelper) InitializeStrideTestState(app *app.StrideApp, ctx sdk.Context) {
 	// Remove host zone and accumulating record for staketia, by default,
 	// since the tests will override it directly if needed
-	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
-	for _, unbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
-		s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+	app.StaketiaKeeper.RemoveHostZone(ctx)
+	for _, unbondingRecord := range app.StaketiaKeeper.GetAllActiveUnbondingRecords(ctx) {
+		app.StaketiaKeeper.RemoveUnbondingRecord(ctx, unbondingRecord.Id)
 	}
 
 	// Remove host zone and accumulating record for stakedym, by default,
 	// since the tests will override it directly if needed
-	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
-	for _, unbondingRecord := range s.App.StakedymKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
-		s.App.StakedymKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+	app.StakedymKeeper.RemoveHostZone(ctx)
+	for _, unbondingRecord := range app.StakedymKeeper.GetAllActiveUnbondingRecords(ctx) {
+		app.StakedymKeeper.RemoveUnbondingRecord(ctx, unbondingRecord.Id)
+	}
+
+	// Clear out all the epochs so they don't accidentally trigger when we iterate blocks
+	fmt.Println("REMOVING EPOCHS")
+	for _, epochInfo := range app.EpochsKeeper.AllEpochInfos(ctx) {
+		app.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
 	}
 }
 
@@ -211,6 +219,7 @@ func (s *AppTestHelper) createHostChainTestingApp(hostChainID string) *ibctestin
 
 // Creates and stores a new ICS Provider App and Stride Consumer App
 func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestChain, *ibctesting.TestChain) {
+	fmt.Println("Creating stride consumer app")
 	// Initialize a provider testing app
 	ibctesting.DefaultTestingAppInit = icstestingutils.ProviderAppIniter
 	s.ProviderChain = ibctesting.NewTestChain(s.T(), s.Coordinator, ProviderChainID)
@@ -308,6 +317,8 @@ func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestCha
 		})
 	}
 
+	fmt.Println("Done with ICS setup")
+
 	// Initialize the stride consumer chain, casted as a TestingApp
 	ibctesting.DefaultTestingAppInit = app.InitStrideIBCTestingApp(strideConsumerGenesis.Provider.InitialValSet)
 	s.StrideChain = ibctesting.NewTestChainWithValSet(
@@ -317,12 +328,21 @@ func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestCha
 		tmtypes.NewValidatorSet(strideValSet),
 		s.ProviderChain.Signers,
 	)
+	fmt.Println("Created stride chain")
+
+	fmt.Println("Num epochs", len(s.App.EpochsKeeper.AllEpochInfos(s.StrideChain.GetContext())))
 
 	// Call InitGenesis on the consumer
 	genesisState := consumertypes.DefaultGenesisState()
 	genesisState.Params = strideConsumerGenesis.Params
 	genesisState.Provider = strideConsumerGenesis.Provider
-	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
+
+	strideApp := s.StrideChain.App.(*app.StrideApp)
+	s.InitializeStrideTestState(strideApp, s.StrideChain.GetContext())
+	fmt.Println("Num epochs", len(s.App.EpochsKeeper.AllEpochInfos(s.StrideChain.GetContext())))
+	fmt.Println("COMSUMER INIT GENESIS")
+	strideApp.GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
+	fmt.Println("DONE with consumer init genesis")
 	s.StrideChain.NextBlock()
 
 	return s.ProviderChain, s.StrideChain

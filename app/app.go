@@ -1442,6 +1442,7 @@ func (app *StrideApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("INIT CHAINER")
 	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 

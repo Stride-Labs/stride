@@ -132,6 +132,7 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the capability module's genesis initialization
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
+	fmt.Println("EPOCH INIT GENESIS")
 	var genState types.GenesisState
 	cdc.MustUnmarshalJSON(gs, &genState)
 	am.keeper.InitGenesis(ctx, genState)
@@ -146,8 +147,8 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module
 // The begin block implementation is optional.
 func (am AppModule) BeginBlock(context context.Context) error {
-	// ctx := sdk.UnwrapSDKContext(context)
-	// am.keeper.BeginBlocker(ctx)
+	ctx := sdk.UnwrapSDKContext(context)
+	am.keeper.BeginBlocker(ctx)
 	return nil
 }
 

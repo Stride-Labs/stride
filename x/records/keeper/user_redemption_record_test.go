@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"strconv"
 
 	sdkmath "cosmossdk.io/math"
@@ -33,6 +34,8 @@ func (s *KeeperTestSuite) TestUserRedemptionRecordGet() {
 }
 
 func (s *KeeperTestSuite) TestUserRedemptionRecordRemove() {
+	fmt.Println("--- Done with initial setup")
+	s.CreateTransferChannel("GAIA")
 	items := s.createNUserRedemptionRecord(10)
 	for _, item := range items {
 		s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, item.Id)

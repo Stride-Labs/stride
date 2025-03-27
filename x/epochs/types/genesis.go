@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-func NewGenesisState(epochs []EpochInfo) *GenesisState {
-	return &GenesisState{Epochs: epochs}
-}
-
 var (
 	HOUR_EPOCH   = "hour"
 	DAY_EPOCH    = "day"
@@ -19,7 +15,7 @@ var (
 
 // DefaultGenesis returns the default Capability genesis state
 // The hour epoch was not included in the mainnet genesis config,
-//  but has been included here for local testing
+// but has been included here for local testing
 func DefaultGenesis() *GenesisState {
 	epochs := []EpochInfo{
 		{
@@ -68,7 +64,7 @@ func DefaultGenesis() *GenesisState {
 			EpochCountingStarted:    false,
 		},
 	}
-	return NewGenesisState(epochs)
+	return &GenesisState{Epochs: epochs}
 }
 
 // Validate performs basic genesis state validation returning an error upon any
