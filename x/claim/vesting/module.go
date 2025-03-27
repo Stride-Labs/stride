@@ -1,7 +1,6 @@
 package vesting
 
 import (
-	"context"
 	"encoding/json"
 
 	"cosmossdk.io/core/appmodule"
@@ -23,9 +22,7 @@ var (
 	_ module.AppModuleBasic   = AppModuleBasic{}
 	_ module.HasGenesisBasics = AppModuleBasic{}
 
-	_ appmodule.AppModule       = AppModule{}
-	_ appmodule.HasBeginBlocker = AppModule{}
-	_ appmodule.HasEndBlocker   = AppModule{}
+	_ appmodule.AppModule = AppModule{}
 
 	_ module.HasConsensusVersion = AppModule{}
 	_ module.HasGenesis          = AppModule{}
@@ -109,18 +106,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {}
 
 // InitGenesis performs a no-op.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {}
-
-// BeginBlock contains the logic that is automatically triggered at the beginning of each block.
-// The begin block implementation is optional.
-func (am AppModule) BeginBlock(context context.Context) error {
-	return nil
-}
-
-// EndBlock contains the logic that is automatically triggered at the end of each block.
-// The end block implementation is optional.
-func (am AppModule) EndBlock(context context.Context) error {
-	return nil
-}
 
 // ExportGenesis is always empty, as InitGenesis does nothing either.
 func (am AppModule) ExportGenesis(_ sdk.Context, cdc codec.JSONCodec) json.RawMessage {

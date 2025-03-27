@@ -24,9 +24,7 @@ var (
 	_ module.AppModuleBasic   = AppModuleBasic{}
 	_ module.HasGenesisBasics = AppModuleBasic{}
 
-	_ appmodule.AppModule       = AppModule{}
-	_ appmodule.HasBeginBlocker = AppModule{}
-	_ appmodule.HasEndBlocker   = AppModule{}
+	_ appmodule.AppModule = AppModule{}
 
 	_ module.HasConsensusVersion = AppModule{}
 	_ module.HasGenesis          = AppModule{}
@@ -151,18 +149,6 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // It should be incremented on each consensus-breaking change introduced by the module.
 // To avoid wrong/empty versions, the initial version should be set to 1.
 func (AppModule) ConsensusVersion() uint64 { return 1 }
-
-// BeginBlock contains the logic that is automatically triggered at the beginning of each block.
-// The begin block implementation is optional.
-func (am AppModule) BeginBlock(context context.Context) error {
-	return nil
-}
-
-// EndBlock contains the logic that is automatically triggered at the end of each block.
-// The end block implementation is optional.
-func (am AppModule) EndBlock(context context.Context) error {
-	return nil
-}
 
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
 func (am AppModule) IsOnePerModuleType() {}

@@ -27,7 +27,6 @@ var (
 
 	_ appmodule.AppModule       = AppModule{}
 	_ appmodule.HasBeginBlocker = AppModule{}
-	_ appmodule.HasEndBlocker   = AppModule{}
 
 	_ module.HasConsensusVersion = AppModule{}
 	_ module.HasGenesis          = AppModule{}
@@ -146,14 +145,8 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module
 // The begin block implementation is optional.
 func (am AppModule) BeginBlock(context context.Context) error {
-	// ctx := sdk.UnwrapSDKContext(context)
-	// am.keeper.BeginBlocker(ctx)
-	return nil
-}
-
-// EndBlock contains the logic that is automatically triggered at the end of each block.
-// The end block implementation is optional.
-func (am AppModule) EndBlock(context context.Context) error {
+	ctx := sdk.UnwrapSDKContext(context)
+	am.keeper.BeginBlocker(ctx)
 	return nil
 }
 
