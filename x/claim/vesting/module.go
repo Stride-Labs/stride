@@ -104,14 +104,16 @@ func (am AppModule) InitGenesis(_ sdk.Context, _ codec.JSONCodec, _ json.RawMess
 	return []abci.ValidatorUpdate{}
 }
 
-// BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
+// BeginBlock contains the logic that is automatically triggered at the beginning of each block.
+// The begin block implementation is optional.
 func (am AppModule) BeginBlock(context context.Context) error {
 	return nil
 }
 
-// EndBlock performs a no-op.
-func (am AppModule) EndBlock(_ sdk.Context) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
+// EndBlock contains the logic that is automatically triggered at the end of each block.
+// The end block implementation is optional.
+func (am AppModule) EndBlock(context context.Context) error {
+	return nil
 }
 
 // ExportGenesis is always empty, as InitGenesis does nothing either.
