@@ -26,6 +26,7 @@ config_toml="${STRIDE_HOME}/config/config.toml"
 client_toml="${STRIDE_HOME}/config/client.toml"
 app_toml="${STRIDE_HOME}/config/app.toml"
 genesis_json="${STRIDE_HOME}/config/genesis.json"
+validator_json="${STRIDE_HOME}/validator.json"
 
 rm -rf ${STRIDE_HOME}
 
@@ -67,10 +68,18 @@ sleep 10
 
 # Add a governator
 echo "Adding governator..."
-pub_key=$($STRIDED tendermint show-validator)
-$STRIDED tx staking create-validator --amount 1000000000${DENOM} --from val \
-    --pubkey=$pub_key --commission-rate="0.10" --commission-max-rate="0.20" \
-    --commission-max-change-rate="0.01" --min-self-delegation="1" -y 
+cat > $validator_json << EOF
+{
+  "pubkey": $($STRIDED tendermint show-validator),
+  "amount": "1000000000${DENOM}",
+  "moniker": "val1",
+  "commission-rate": "0.10",
+  "commission-max-rate": "0.20",
+  "commission-max-change-rate": "0.01",
+  "min-self-delegation": "1"
+}
+EOF
+$STRIDED tx staking create-validator $validator_json --from val -y
 
 # Bring the daemon back to the foreground
 wait $pid
