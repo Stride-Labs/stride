@@ -98,19 +98,34 @@ func (s *AppTestHelper) Setup() {
 	s.TestAccs = CreateRandomAccounts(4)
 	s.IbcEnabled = false
 	s.IcaAddresses = make(map[string]string)
+	initializeStrideAppTestingState(s.Ctx, s.App)
+}
 
+// Clears some of the initial state registered from default genesis
+// so the tests can run from scratch
+func initializeStrideAppTestingState(ctx sdk.Context, strideApp *app.StrideApp) {
 	// Remove host zone and accumulating record for staketia, by default,
 	// since the tests will override it directly if needed
-	s.App.StaketiaKeeper.RemoveHostZone(s.Ctx)
-	for _, unbondingRecord := range s.App.StaketiaKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
-		s.App.StaketiaKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+	strideApp.StaketiaKeeper.RemoveHostZone(ctx)
+	for _, unbondingRecord := range strideApp.StaketiaKeeper.GetAllActiveUnbondingRecords(ctx) {
+		strideApp.StaketiaKeeper.RemoveUnbondingRecord(ctx, unbondingRecord.Id)
 	}
 
 	// Remove host zone and accumulating record for stakedym, by default,
 	// since the tests will override it directly if needed
-	s.App.StakedymKeeper.RemoveHostZone(s.Ctx)
-	for _, unbondingRecord := range s.App.StakedymKeeper.GetAllActiveUnbondingRecords(s.Ctx) {
-		s.App.StakedymKeeper.RemoveUnbondingRecord(s.Ctx, unbondingRecord.Id)
+	strideApp.StakedymKeeper.RemoveHostZone(ctx)
+	for _, unbondingRecord := range strideApp.StakedymKeeper.GetAllActiveUnbondingRecords(ctx) {
+		strideApp.StakedymKeeper.RemoveUnbondingRecord(ctx, unbondingRecord.Id)
+	}
+
+	// When the IBC handshake executes between this stride chain and the host chain,
+	// it alternates the bech prefix from "stride" to "cosmos" during each step
+	// to prevent the host chain's client instantiation from failing
+	// However, the handshake also runs the stride begin blocker while the cosmos prefix
+	// is still set, which runs the stride epoch hook and causes epochs to trigger and fail
+	// We can get around this by just wiping out the epochs after genesis
+	for _, epochInfo := range strideApp.EpochsKeeper.AllEpochInfos(ctx) {
+		strideApp.EpochsKeeper.DeleteEpochInfo(ctx, epochInfo.Identifier)
 	}
 }
 
@@ -319,17 +334,11 @@ func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestCha
 	s.StrideChain.App.(*app.StrideApp).GetConsumerKeeper().InitGenesis(s.StrideChain.GetContext(), genesisState)
 	s.StrideChain.NextBlock()
 
-	// When the IBC handshake executes between this stride chain and the host chain,
-	// it alternates the bech prefix from "stride" to "cosmos" during each step
-	// to prevent the host chain's client instantiation from failing
-	// However, the handshake also runs the stride begin blocker while the cosmos prefix
-	// is still set, which runs the stride epoch hook and causes epochs to trigger and fail
-	// We can get around this by just wiping out the epochs after genesis
-	strideApp := s.StrideChain.App.(*app.StrideApp)
+	// Initialize the stride testing state
 	strideCtx := s.StrideChain.GetContext()
-	for _, epochInfo := range strideApp.EpochsKeeper.AllEpochInfos(strideCtx) {
-		strideApp.EpochsKeeper.DeleteEpochInfo(strideCtx, epochInfo.Identifier)
-	}
+	strideApp := s.StrideChain.App.(*app.StrideApp)
+	initializeStrideAppTestingState(strideCtx, strideApp)
+
 	return s.ProviderChain, s.StrideChain
 }
 

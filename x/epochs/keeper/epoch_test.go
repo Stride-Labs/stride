@@ -11,6 +11,12 @@ import (
 func (s *KeeperTestSuite) TestEpochLifeCycle() {
 	s.SetupTest()
 
+	// Set default epochs
+	for _, epochInfo := range types.DefaultGenesis().Epochs {
+		s.App.EpochsKeeper.SetEpochInfo(s.Ctx, epochInfo)
+	}
+
+	// Add the month epoch
 	epochInfo := types.EpochInfo{
 		Identifier:            "monthly",
 		StartTime:             time.Time{},
@@ -20,9 +26,12 @@ func (s *KeeperTestSuite) TestEpochLifeCycle() {
 		EpochCountingStarted:  false,
 	}
 	s.App.EpochsKeeper.SetEpochInfo(s.Ctx, epochInfo)
+
+	// Confirm looking up the monthly epoch
 	epochInfoSaved, _ := s.App.EpochsKeeper.GetEpochInfo(s.Ctx, "monthly")
 	s.Require().Equal(epochInfo, epochInfoSaved)
 
+	// Confirm looking up all epochs
 	allEpochs := s.App.EpochsKeeper.AllEpochInfos(s.Ctx)
 	s.Require().Len(allEpochs, 6)
 	s.Require().Equal(allEpochs[0].Identifier, "day") // alphabetical order
