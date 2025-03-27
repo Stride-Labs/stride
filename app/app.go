@@ -634,8 +634,8 @@ func NewStrideApp(
 	// Add wasm keeper and wasm client keeper (must be after IBCKeeper and TransferKeeper)
 	wasmContractMemoryLimit := uint32(32)
 	wasmDir := filepath.Join(homePath, "wasm")
-	wasmVmDir := filepath.Join(homePath, "wasm", "wasm")
-	wasmNodeConfig, err := wasm.ReadNodeConfig(appOpts)
+	wasmVmDir := filepath.Join(wasmDir, "wasm")
+	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
@@ -644,11 +644,11 @@ func NewStrideApp(
 		wasmVmDir,
 		wasmkeeper.BuiltInCapabilities(),
 		wasmContractMemoryLimit,
-		wasmNodeConfig.ContractDebugMode,
-		wasmNodeConfig.MemoryCacheSize,
+		wasmConfig.ContractDebugMode,
+		wasmConfig.MemoryCacheSize,
 	)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Failed to initialize WasmVM: %v", err))
 	}
 	wasmOpts = append(wasmOpts, wasmkeeper.WithWasmEngine(wasmer))
 
@@ -668,7 +668,7 @@ func NewStrideApp(
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		wasmDir,
-		wasmNodeConfig,
+		wasmConfig,
 		wasmtypes.VMConfig{},
 		wasmkeeper.BuiltInCapabilities(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -1248,7 +1248,7 @@ func NewStrideApp(
 	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.setAnteHandler(txConfig, wasmNodeConfig, keys[wasmtypes.StoreKey])
+	app.setAnteHandler(txConfig, wasmConfig, keys[wasmtypes.StoreKey])
 	app.setPostHandler()
 	app.SetPrecommiter(app.Precommitter)
 	app.SetPrepareCheckStater(app.PrepareCheckStater)
@@ -1312,7 +1312,7 @@ func NewStrideApp(
 // Sets all anti-handlers to run before the tx
 func (app *StrideApp) setAnteHandler(
 	txConfig client.TxConfig,
-	wasmNodeConfig wasmtypes.NodeConfig,
+	wasmConfig wasmtypes.NodeConfig,
 	txCounterStoreKey *storetypes.KVStoreKey,
 ) {
 	anteHandler, err := NewAnteHandler(
@@ -1326,7 +1326,7 @@ func (app *StrideApp) setAnteHandler(
 			},
 			IBCKeeper:         app.IBCKeeper,
 			ConsumerKeeper:    app.ConsumerKeeper,
-			WasmConfig:        &wasmNodeConfig,
+			WasmConfig:        &wasmConfig,
 			TXCounterStoreKey: runtime.NewKVStoreService(txCounterStoreKey),
 			WasmKeeper:        &app.WasmKeeper,
 		},
