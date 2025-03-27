@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
@@ -1254,8 +1255,7 @@ func NewStrideApp(
 	app.SetPrepareCheckStater(app.PrepareCheckStater)
 
 	// Register AutoCLI query service to automatically generate query endpoints for all modules
-	// TODO: Enable when we start using autocli
-	// autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
+	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
 
 	// Setup gRPC reflection, enabling runtime service/method discovery for clients
 	reflectionSvc, err := runtimeservices.NewReflectionService()
@@ -1394,13 +1394,30 @@ func (app *StrideApp) AutoCliOpts() autocli.AppOptions {
 		}
 	}
 
-	return autocli.AppOptions{
+	appOptions := autocli.AppOptions{
 		Modules:               modules,
 		ModuleOptions:         runtimeservices.ExtractAutoCLIOptions(app.ModuleManager.Modules),
 		AddressCodec:          authcodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
 		ValidatorAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		ConsensusAddressCodec: authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	}
+
+	// Disable the autocli command for ICQ SubmitQueryResponse which has a conflict
+	// with the chain-id flag and also doesn't need a CLI function
+	moduleOptions, exists := appOptions.ModuleOptions[interchainquerytypes.ModuleName]
+	if !exists {
+		moduleOptions = &autocliv1.ModuleOptions{}
+		appOptions.ModuleOptions[interchainquerytypes.ModuleName] = moduleOptions
+	}
+	if moduleOptions.Tx == nil {
+		moduleOptions.Tx = &autocliv1.ServiceCommandDescriptor{}
+	}
+	moduleOptions.Tx.RpcCommandOptions = append(moduleOptions.Tx.RpcCommandOptions, &autocliv1.RpcCommandOptions{
+		RpcMethod: "SubmitQueryResponse",
+		Skip:      true,
+	})
+
+	return appOptions
 }
 
 // PreBlocker application updates every pre block

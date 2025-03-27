@@ -102,11 +102,10 @@ func NewRootCmd() *cobra.Command {
 	autoCliOpts.ClientCtx = initClientCtx
 	initClientCtx, _ = config.ReadFromClientConfig(initClientCtx)
 
-	// TODO: We're turning this off for now since we have all cli commands implemented already
 	// But we should switch over to autoCli later
-	// if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-	// 	panic(err)
-	// }
+	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
+		panic(err)
+	}
 
 	overwriteFlagDefaults(rootCmd, map[string]string{
 		flags.FlagChainID:        ChainID,
