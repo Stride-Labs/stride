@@ -55,10 +55,10 @@ jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNB
 rm -rf ~/.stride-loca1
 
 echo "$STRIDE_VAL_MNEMONIC" | $STRIDED keys add val --recover --keyring-backend=test 
-$STRIDED add-genesis-account $($STRIDED keys show val -a) 100000000000${DENOM}
+$STRIDED genesis add-genesis-account $($STRIDED keys show val -a) 100000000000${DENOM}
 
 echo "$STRIDE_ADMIN_MNEMONIC" | $STRIDED keys add admin --recover --keyring-backend=test 
-$STRIDED add-genesis-account $($STRIDED keys show admin -a) 100000000000${DENOM}
+$STRIDED genesis add-genesis-account $($STRIDED keys show admin -a) 100000000000${DENOM}
 
 # Start the daemon in the background
 $STRIDED start & 
