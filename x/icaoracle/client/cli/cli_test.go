@@ -8,6 +8,8 @@ import (
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec/address"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
@@ -29,6 +31,7 @@ type ClientTestSuite struct {
 	cfg     network.Config
 	network *network.Network
 	val     *network.Validator
+	user    sdk.AccAddress
 }
 
 func TestClientTestSuite(t *testing.T) {
@@ -57,6 +60,21 @@ func (s *ClientTestSuite) SetupSuite() {
 
 	s.val = s.network.Validators[0]
 
+	kb := s.val.ClientCtx.Keyring
+	keyringAlgos, _ := kb.SupportedAlgorithms()
+	algo, err := keyring.NewSigningAlgoFromString(s.cfg.SigningAlgo, keyringAlgos)
+	s.Require().NoError(err)
+
+	// stride19hd0ssdqvc3446frx5vlzkvzut4vus5palnt79
+	s.user, _, err = testutil.GenerateSaveCoinKey(
+		kb,
+		"my-key",
+		"simple train chalk armed velvet current loyal abandon cushion again perfect typical",
+		true,
+		algo,
+	)
+	s.Require().NoError(err)
+
 	cmdcfg.RegisterDenoms()
 }
 
@@ -64,12 +82,16 @@ func (s *ClientTestSuite) TestCmdCreateValidator() {
 	addrCodec := address.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix())
 	clientCtx := s.network.Validators[0].ClientCtx
 
+	r, err := clientCtx.Keyring.Key("my-key")
+	s.Require().NoError(err)
+	s.Require().NotNil(r)
+
 	f, err := os.CreateTemp("", "")
 	s.Require().NoError(err)
 	defer f.Close()
 
 	defaultFlags := []string{
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, s.val.Address.String()),
+		fmt.Sprintf("--%s=%s", flags.FlagFrom, "my-key"),
 		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
@@ -95,7 +117,7 @@ func (s *ClientTestSuite) TestCmdCreateValidator() {
 
 	cmd := stakingcli.NewCreateValidatorCmd(addrCodec)
 	_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
-	s.Require().ErrorContains(err, `invalid coin expression`)
+	s.Require().NoError(err)
 }
 
 func (s *ClientTestSuite) ExecuteTxAndCheckSuccessful(cmd *cobra.Command, args []string, description string) {
