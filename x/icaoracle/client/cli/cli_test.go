@@ -23,15 +23,20 @@ import (
 	"github.com/Stride-Labs/stride/v26/x/icaoracle/types"
 )
 
-var HostChainId = "chain-1"
+var (
+	HostChainId  = "chain-1"
+	addrCodec    = address.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix())
+	valAddrCodec = address.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix())
+)
 
 type ClientTestSuite struct {
 	suite.Suite
 
-	cfg     network.Config
-	network *network.Network
-	val     *network.Validator
-	user    sdk.AccAddress
+	cfg          network.Config
+	network      *network.Network
+	val          *network.Validator
+	user         sdk.AccAddress
+	defaultFlags []string
 }
 
 func TestClientTestSuite(t *testing.T) {
@@ -75,11 +80,29 @@ func (s *ClientTestSuite) SetupSuite() {
 	)
 	s.Require().NoError(err)
 
+	s.defaultFlags = []string{
+		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
+		strideclitestutil.DefaultFeeString(s.cfg),
+	}
+
+	_, err = clitestutil.MsgSendExec(
+		s.val.ClientCtx,
+		s.val.Address,
+		s.user,
+		sdk.NewInt64Coin("stake", 1000000),
+		addrCodec,
+		s.defaultFlags...)
+	s.Require().NoError(err)
+
+	err = s.network.WaitForNextBlock()
+	s.Require().NoError(err)
+
 	cmdcfg.RegisterDenoms()
 }
 
 func (s *ClientTestSuite) TestCmdCreateValidator() {
-	addrCodec := address.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix())
 	clientCtx := s.network.Validators[0].ClientCtx
 
 	r, err := clientCtx.Keyring.Key("my-key")
@@ -89,14 +112,6 @@ func (s *ClientTestSuite) TestCmdCreateValidator() {
 	f, err := os.CreateTemp("", "")
 	s.Require().NoError(err)
 	defer f.Close()
-
-	defaultFlags := []string{
-		fmt.Sprintf("--%s=%s", flags.FlagFrom, "my-key"),
-		fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
-		fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-		strideclitestutil.DefaultFeeString(s.cfg),
-	}
 
 	validatorPubkey := `{"@type":"/cosmos.crypto.ed25519.PubKey","key":"efnXQZK3MZ6RM3rCdSA8RQbGh5L5NXoQNC3XX7J5gaY="}`
 	_, err = f.WriteString(`{
@@ -113,10 +128,15 @@ func (s *ClientTestSuite) TestCmdCreateValidator() {
 	args := []string{
 		f.Name(),
 	}
-	args = append(args, defaultFlags...)
+	args = append(args, s.defaultFlags...)
+	args = append(args, "--from=my-key")
 
-	cmd := stakingcli.NewCreateValidatorCmd(addrCodec)
-	_, err = clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+	cmd := stakingcli.NewCreateValidatorCmd(valAddrCodec)
+	out, err := clitestutil.ExecTestCLICmd(clientCtx, cmd, args)
+	s.Require().NoError(err)
+	fmt.Println(out.String())
+
+	err = s.network.WaitForNextBlock()
 	s.Require().NoError(err)
 }
 
