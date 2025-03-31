@@ -16,7 +16,7 @@ $HOST_MAIN_CMD tx distribution withdraw-all-rewards --from delegation -y | TRIM_
 sleep 5
 
 echo -e "\n>>> Querying rewards balance..."
-output=$($HOST_MAIN_CMD q bank balances $reward_address --denom $HOST_DENOM)
+output=$(GET_BALANCE $HOST_CHAIN $reward_address $HOST_DENOM)
 echo $output
 reward_amount=$(echo $output | NUMBERS_ONLY)
 sleep 1

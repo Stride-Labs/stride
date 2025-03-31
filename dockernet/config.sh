@@ -473,9 +473,9 @@ WAIT_FOR_BALANCE_CHANGE() {
   max_blocks=30
 
   main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
+  initial_balance=$(GET_BALANCE $chain $address $denom)
   for i in $(seq $max_blocks); do
-    new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
+    new_balance=$(GET_BALANCE $chain $address $denom)
     balance_change=$(echo "$new_balance - $initial_balance" | bc)
 
     if [[ $(echo "$balance_change >= $minimum_change" | bc -l) == "1" ]]; then
@@ -613,8 +613,19 @@ NUMBERS_ONLY() {
   tr -cd '[:digit:]'
 }
 
-GETBAL() {
-  head -n 1 | grep -o -E '[0-9]+' || echo "0"
+GET_BALANCE() {
+  chain=$1
+  address=$2
+  denom=$3
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  bank_subcommand=$($main_cmd q bank 2>&1 | grep -q "Query an account balance by address and denom" && echo "balance" || echo "balances")
+
+  if [[ "$bank_subcommand" == "balance" ]]; then
+    $main_cmd q bank $bank_subcommand $address $denom | head -n 1 | grep -o -E '[0-9]+' || echo "0"
+  else 
+    $main_cmd q bank $bank_subcommand $address --denom $denom | head -n 1 | grep -o -E '[0-9]+' || echo "0"
+  fi
 }
 
 GETSTAKE() {

@@ -59,13 +59,13 @@ sleep 5
 echo -e "\n>>> Initial Balances:"
 # Distributor account
 echo -e "\n> Distributor Account [100000000ustrd expected]:"
-$STRIDE_MAIN_CMD q bank balances $AIRDROP_DISTRIBUTOR_1 --denom ustrd
+$STRIDE_MAIN_CMD q bank balance $AIRDROP_DISTRIBUTOR_1 ustrd
 # Airdrop recipient evmos account
 echo -e "\n> Airdrop Recipient Account (on Evmos) [1000000000000000000aevmos expected]:"
-$EVMOS_MAIN_CMD q bank balances $AIRDROP_RECIPIENT_1_EVMOS --denom aevmos
+$EVMOS_MAIN_CMD q bank balance $AIRDROP_RECIPIENT_1_EVMOS --denom aevmos
 # Airdrop recipient stride account
 echo -e "\n> Airdrop Recipient Stride (on Stride) [1000000ustrd expected]:"
-$STRIDE_MAIN_CMD q bank balances $AIRDROP_RECIPIENT_1_STRIDE --denom ustrd
+$STRIDE_MAIN_CMD q bank balance $AIRDROP_RECIPIENT_1_STRIDE ustrd
 
 # ### Set up the airdrop
 # create airdrop 1 

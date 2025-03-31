@@ -33,13 +33,13 @@ sleep 5
 
 echo -e "\n>>> Initial Balances:"
 echo "> Distributor1 Account [100ustrd expected]:"
-$STRIDE_MAIN_CMD q bank balances stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl --denom ustrd 
+$STRIDE_MAIN_CMD q bank balance stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl ustrd 
 
 echo "> Distributor2 Account [100ustrd expected]:"
-$STRIDE_MAIN_CMD q bank balances stride1wl22etyhepwmsmycnvt3ragjyv2r5ctrk4emv3 --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1wl22etyhepwmsmycnvt3ragjyv2r5ctrk4emv3 ustrd
 
 echo "> Claim Account [5000000000000ustrd expected]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z ustrd
 
 # ### Test staggered airdrops
 #  airdrop1 is ustrd; airdrop2 is ibc/ATOM. this simplifies telling them apart after testing a reset of airdrop1 before airdrop 2 has a chance to reset.
@@ -102,7 +102,7 @@ echo "> Checking claim record actions [expected: 1 action complete]:"
 $STRIDE_MAIN_CMD q claim claim-record airdrop1 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
 # Check balance
 echo -e "\n> Verifying balance [expected: 5000000000056ustrd]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z ustrd
 
 echo -e "\n...Sleeping 45 more sec to wait for airdrop2 to reset..."
 sleep 45
@@ -123,5 +123,5 @@ echo "> Checking claim record actions [expected: 1 action complete]:"
 $STRIDE_MAIN_CMD q claim claim-record airdrop2 stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z  | grep claim_record -A 4
 # Check balance
 echo -e "\n> Verifying balance [expected: 5000000000072ustrd]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z ustrd
 

@@ -32,10 +32,10 @@ sleep 5
 # Confirm initial balance setup
 echo -e "\n>>> Initial Balances:"
 echo "> Distributor Account [100ustrd expected]:"
-$STRIDE_MAIN_CMD q bank balances stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl --denom ustrd 
+$STRIDE_MAIN_CMD q bank balance stride12lw3587g97lgrwr2fjtr8gg5q6sku33e5yq9wl ustrd 
 
 echo "> Claim Account [5000000000000ustrd expected]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z ustrd
 
 ### Test airdrop reset and multiple claims flow
     #   The Stride airdrop occurs in batches. We need to test three batches. 
@@ -72,7 +72,7 @@ echo -e "\n> Verifying funds are vesting [expected: 20ustrd]:"
 $STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep spendable_coins -A 2
 # Check balance
 echo -e "\n> Verifying balance [expected: 5000000000020ustrd]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z ustrd
 
 
 #    # BATCH 2
@@ -97,7 +97,7 @@ echo -e "\n> Verifying the vesting tokens have not changed [expected: 20ustrd]:"
 $STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep spendable_coins -A 2
 # Check balance
 echo -e "\n> Verifying balance [expected: 5000000000036ustrd]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z ustrd
 
 #     # BATCH 3
 #     # 10. Wait 65 seconds
@@ -121,6 +121,6 @@ echo -e "\n> Verifying the vesting tokens have not changed [expected: 20ustrd]:"
 $STRIDE_MAIN_CMD q claim user-vestings stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z | grep spendable_coins -A 2
 # Check balance
 echo -e "\n> Verifying balance [expected: 5000000000049ustrd]:"
-$STRIDE_MAIN_CMD q bank balances stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z --denom ustrd
+$STRIDE_MAIN_CMD q bank balance stride1kwll0uet4mkj867s4q8dgskp03txgjnswc2u4z ustrd
 
 
