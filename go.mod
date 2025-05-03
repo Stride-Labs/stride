@@ -224,3 +224,6 @@ replace (
 	// stick with compatible version of x/exp in v0.47.x line
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb // indirect
 )
+
+// see. https://github.com/coinbase/mesh-sdk-go/issues/525
+replace github.com/coinbase/rosetta-sdk-go/types => github.com/coinbase/mesh-sdk-go/types v1.0.0
