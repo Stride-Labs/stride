@@ -98,9 +98,6 @@ setup_file() {
   sval_token_balance_start=$(GET_BALANCE STRIDE      $(STRIDE_ADDRESS) $HOST_IBC_DENOM)
   hval_token_balance_start=$(GET_BALANCE $CHAIN_NAME $HOST_VAL_ADDRESS $HOST_DENOM)
 
-  echo $sval_strd_balance_start >> a.txt
-  echo $hval_strd_balance_start >> a.txt
-
   # do IBC transfer
   $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANSFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y 
   $HOST_MAIN_CMD   tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL  $(STRIDE_ADDRESS) ${TRANSFER_AMOUNT}${HOST_DENOM} --from $HOST_VAL -y $HOST_FEES
