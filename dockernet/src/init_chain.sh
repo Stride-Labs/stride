@@ -224,7 +224,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    val_addr=$(GET_ADDRESS $CHAIN $val_acct)
+    val_addr=$($cmd keys show $val_acct -a --keyring-backend test)
     # Add this account to the current node
     genesis_coins=${VAL_TOKENS}${DENOM}
     if [[ "$CHAIN" == "NOBLE" ]]; then
