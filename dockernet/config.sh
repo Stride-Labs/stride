@@ -622,7 +622,7 @@ GET_BALANCE() {
   bank_subcommand=$($main_cmd q bank 2>&1 | grep -q "Query an account balance by address and denom" && echo "balance" || echo "balances")
 
   if [[ "$bank_subcommand" == "balance" ]]; then
-    $main_cmd q bank $bank_subcommand $address $denom | head -n 1 | grep -o -E '[0-9]+' || echo "0"
+    $main_cmd q bank $bank_subcommand $address $denom | head -n 2 | grep -o -E '[0-9]+' || echo "0"
   else 
     $main_cmd q bank $bank_subcommand $address --denom $denom | head -n 1 | grep -o -E '[0-9]+' || echo "0"
   fi
