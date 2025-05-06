@@ -633,8 +633,7 @@ GET_ADDRESS() {
   name=$2
 
   main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  chain_id=$(GET_VAR_VALUE ${chain}_CHAIN_ID)
-  $main_cmd keys show $name -a --keyring-backend test --chain-id $chain_id | tr -cd '[:alnum:]._-'
+  $main_cmd keys show $name -a --keyring-backend test | tr -cd '[:alnum:]._-'
 }
 
 GETSTAKE() {
