@@ -61,11 +61,11 @@ bash $SRC/start_chain.sh
 bash $SRC/start_relayers.sh 
 
 # Create governors for chains running the stride binary
-# for chain in STRIDE ${HOST_CHAINS[@]:-}; do
-#     if [[ "$chain" == "STRIDE" || "$chain" == "HOST" ]]; then
-#         bash $SRC/create_governors.sh $chain
-#     fi
-# done
+for chain in STRIDE ${HOST_CHAINS[@]:-}; do
+    if [[ "$chain" == "STRIDE" || "$chain" == "HOST" ]]; then
+        bash $SRC/create_governors.sh $chain
+    fi
+done
 
 # Register all host zones (except noble)
 for i in ${!HOST_CHAINS[@]}; do
