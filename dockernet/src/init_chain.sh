@@ -65,11 +65,11 @@ set_stride_genesis() {
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # set the staketia accounts in the staketia host zone
-    deposit_address=$($MAIN_CMD    keys show -a deposit)
-    redemption_address=$($MAIN_CMD keys show -a redemption)
-    claim_address=$($MAIN_CMD      keys show -a claim)
-    safe_address=$($MAIN_CMD       keys show -a safe)
-    operator_address=$($MAIN_CMD   keys show -a operator)
+    deposit_address=$(GET_ADDRESS    $CHAIN deposit)
+    redemption_address=$(GET_ADDRESS $CHAIN redemption)
+    claim_address=$(GET_ADDRESS      $CHAIN claim)
+    safe_address=$(GET_ADDRESS       $CHAIN safe)
+    operator_address=$(GET_ADDRESS   $CHAIN operator)
 
     jq '.app_state.staketia.host_zone.deposit_address = $newVal'    --arg newVal "$deposit_address"    $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.redemption_address = $newVal' --arg newVal "$redemption_address" $genesis_config > json.tmp && mv json.tmp $genesis_config
@@ -165,7 +165,7 @@ add_genesis_account() {
     mnemonic="$3"
 
     create_account "$account_name" "$mnemonic"
-    address=$($MAIN_CMD keys show $account_name --keyring-backend test -a | tr -cd '[:alnum:]._-')
+    address=$(GET_ADDRESS $CHAIN $account_name)
     $MAIN_CMD $GENESIS_CMD add-genesis-account ${address} ${amount}${DENOM},${FEES}
 }
 
@@ -224,7 +224,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
     val_acct="${VAL_PREFIX}${i}"
     val_mnemonic="${VAL_MNEMONICS[((i-1))]}"
     echo "$val_mnemonic" | $cmd keys add $val_acct --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-    val_addr=$($cmd keys show $val_acct --keyring-backend test -a | tr -cd '[:alnum:]._-')
+    val_addr=$(GET_ADDRESS $CHAIN $val_acct)
     # Add this account to the current node
     genesis_coins=${VAL_TOKENS}${DENOM}
     if [[ "$CHAIN" == "NOBLE" ]]; then
@@ -323,7 +323,7 @@ else
     # For noble, add a param authority account and set a minting denom so that IBC transfers are allowed
     if [ "$CHAIN" == "NOBLE" ]; then
         echo "$NOBLE_AUTHORITHY_MNEMONIC" | $MAIN_CMD keys add authority --recover --keyring-backend test >> $KEYS_LOGS 2>&1
-        AUTHORITHY_ADDRESS=$($MAIN_CMD keys show authority --keyring-backend test -a | tr -cd '[:alnum:]._-')
+        AUTHORITHY_ADDRESS=$(GET_ADDRESS $CHAIN authority)
         $MAIN_CMD $GENESIS_CMD add-genesis-account ${AUTHORITHY_ADDRESS} ${VAL_TOKENS}${DENOM},${VAL_TOKENS}${USDC_DENOM}
 
         sed -i -E 's|"authority": ""|"authority":"'${AUTHORITHY_ADDRESS}'"|g' $genesis_json 
@@ -339,7 +339,7 @@ fi
 # add a staker account for integration tests
 # the account should live on both stride and the host chain
 echo "$USER_MNEMONIC" | $MAIN_CMD keys add $USER_ACCT --recover --keyring-backend=test >> $KEYS_LOGS 2>&1
-USER_ADDRESS=$($MAIN_CMD keys show $USER_ACCT --keyring-backend test -a)
+USER_ADDRESS=$(GET_ADDRESS $CHAIN $USER_ACCT)
 $MAIN_CMD $GENESIS_CMD add-genesis-account ${USER_ADDRESS} ${USER_TOKENS}${DENOM},${FEES}
 
 # Only collect the validator genesis txs for host chains

@@ -14,7 +14,7 @@ record_id=$($STRIDE_MAIN_CMD q staketia unbonding-records | grep -B 4 "UNBONDED"
 sleep 1
 
 echo -e "\n>>> Sweeping ${unbond_amount}${HOST_DENOM} for record $record_id..."
-claim_address=$($STRIDE_MAIN_CMD keys show -a claim)
+claim_address=$(GET_ADDRESS STRIDE claim)
 output=$($HOST_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $claim_address ${unbond_amount}${HOST_DENOM} \
     --from delegation -y | TRIM_TX)
 echo $output

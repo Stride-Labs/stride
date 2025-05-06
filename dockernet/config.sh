@@ -628,6 +628,15 @@ GET_BALANCE() {
   fi
 }
 
+GET_ADDRESS() {
+  chain=$1
+  name=$2
+
+  main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
+  chain_id=$(GET_VAR_VALUE ${chain}_CHAIN_ID)
+  $main_cmd keys show $name -a --keyring-backend test --chain-id $chain_id | tr -cd '[:alnum:]._-'
+}
+
 GETSTAKE() {
   tail -n 2 | head -n 1 | grep -o -E '[0-9]+' | head -n 1
 }

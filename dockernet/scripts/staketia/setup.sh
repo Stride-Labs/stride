@@ -14,6 +14,6 @@ $HOST_MAIN_CMD tx ibc-transfer transfer transfer channel-0 $(STRIDE_ADDRESS) 100
 sleep 10
 
 echo ">>> Setting withdrawal address..."
-reward_address=$($HOST_MAIN_CMD keys show -a reward)
+reward_address=$(GET_ADDRESS $HOST_CHAIN reward)
 $HOST_MAIN_CMD tx distribution set-withdraw-addr $reward_address --from delegation -y | TRIM_TX
 sleep 10

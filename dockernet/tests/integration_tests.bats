@@ -174,8 +174,8 @@ setup_file() {
     skip "Skipping LSM liquid stake for chains without LSM support" 
   fi
 
-  staker_address_on_host=$($HOST_MAIN_CMD keys show $USER_ACCT -a)
-  staker_address_on_stride=$($STRIDE_MAIN_CMD keys show $USER_ACCT -a)
+  staker_address_on_host=$(GET_ADDRESS $CHAIN_NAME $USER_ACCT)
+  staker_address_on_stride=$(GET_ADDRESS STRIDE $USER_ACCT)
   validator_address=$(GET_VAL_ADDR $CHAIN_NAME 1)
 
   # delegate on the host chain
@@ -233,7 +233,7 @@ setup_file() {
 
   # get staker and validator addresses
   validator_address=$(GET_VAL_ADDR $CHAIN_NAME 1)
-  staker_address_on_stride=$($STRIDE_MAIN_CMD keys show $USER_ACCT -a)
+  staker_address_on_stride=$(GET_ADDRESS STRIDE $USER_ACCT)
 
   # get the LSM token denom
   record_id=$($HOST_MAIN_CMD q staking last-tokenize-share-record-id | awk '{print $2}' | tr -d '"')

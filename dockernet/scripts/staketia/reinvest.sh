@@ -7,8 +7,8 @@ HOST_CHAIN="${HOST_CHAINS[0]}"
 HOST_MAIN_CMD=$(GET_VAR_VALUE   ${HOST_CHAIN}_MAIN_CMD)
 HOST_DENOM=$(GET_VAR_VALUE      ${HOST_CHAIN}_DENOM)
 
-reward_address=$($HOST_MAIN_CMD keys show -a reward)
-deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit)
+reward_address=$(GET_ADDRESS $HOST_CHAIN reward)
+deposit_address=$(GET_ADDRESS STRIDE deposit)
 fee_address=$($STRIDE_MAIN_CMD q auth module-account staketia_fee_address | grep "address:" | awk '{print $2}')
 
 echo ">>> Claiming outstanding rewards..."
