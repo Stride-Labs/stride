@@ -215,7 +215,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 
     sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
     sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
-    sed -i -E "s|node = \".*\"|node = \"tcp://localhost:$RPC_PORT\"|g" $client_toml
+    sed -i -E "s|node = \".*\"|node = \"tcp://127.0.0.1:$RPC_PORT\"|g" $client_toml
 
     sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json 
     sed -i -E "s|\"aphoton\"|\"${DENOM}\"|g" $genesis_json # ethermint default

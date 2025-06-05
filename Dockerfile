@@ -10,7 +10,9 @@ RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certif
 
 # Manually installing 1.22.11 because we need to be on 3.18 to avoid wasm SIGABRT
 # https://github.com/CosmWasm/wasmvm/issues/523
-RUN curl -fsSL https://go.dev/dl/go1.22.11.linux-amd64.tar.gz | tar -C /usr/local -xz
+RUN ARCH=$(uname -m) \
+    && if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; elif [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi \
+    && curl -fsSL https://go.dev/dl/go1.22.11.linux-$ARCH.tar.gz | tar -C /usr/local -xz
 
 WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base
