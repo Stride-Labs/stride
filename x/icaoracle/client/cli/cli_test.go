@@ -11,11 +11,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v26/app"
-	cmdcfg "github.com/Stride-Labs/stride/v26/cmd/strided/config"
-	strideclitestutil "github.com/Stride-Labs/stride/v26/testutil/cli"
-	"github.com/Stride-Labs/stride/v26/testutil/network"
-	"github.com/Stride-Labs/stride/v26/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v27/app"
+	cmdcfg "github.com/Stride-Labs/stride/v27/cmd/strided/config"
+	strideclitestutil "github.com/Stride-Labs/stride/v27/testutil/cli"
+	"github.com/Stride-Labs/stride/v27/testutil/network"
+	"github.com/Stride-Labs/stride/v27/x/icaoracle/types"
 )
 
 var (

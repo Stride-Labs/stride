@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v27/x/stakedym/types"
 )
 
 // Initializes the genesis state in the store

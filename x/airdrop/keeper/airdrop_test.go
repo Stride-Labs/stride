@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v27/x/airdrop/types"
 )
 
 func (s *KeeperTestSuite) addAirdrops() (airdrops []types.Airdrop) {

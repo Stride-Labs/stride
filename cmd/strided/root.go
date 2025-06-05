@@ -50,8 +50,8 @@ import (
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v26/app"
-	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v27/app"
+	"github.com/Stride-Labs/stride/v27/utils"
 )
 
 var ChainID string

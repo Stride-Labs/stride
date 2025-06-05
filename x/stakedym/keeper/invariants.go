@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v27/utils"
 )
 
 func (k Keeper) HaltZone(ctx sdk.Context) {

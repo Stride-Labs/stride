@@ -8,7 +8,7 @@ import (
 
 	proto "github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v27/utils"
 )
 
 const (
