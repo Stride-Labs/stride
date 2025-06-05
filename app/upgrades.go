@@ -36,6 +36,7 @@ import (
 	v24 "github.com/Stride-Labs/stride/v26/app/upgrades/v24"
 	v25 "github.com/Stride-Labs/stride/v26/app/upgrades/v25"
 	v26 "github.com/Stride-Labs/stride/v26/app/upgrades/v26"
+	v27 "github.com/Stride-Labs/stride/v26/app/upgrades/v27"
 	v3 "github.com/Stride-Labs/stride/v26/app/upgrades/v3"
 	v4 "github.com/Stride-Labs/stride/v26/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v26/app/upgrades/v5"
@@ -349,6 +350,16 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.ICQOracleKeeper,
+		),
+	)
+
+	// v27 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v27.UpgradeName,
+		v27.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.StakeibcKeeper,
 		),
 	)
 
