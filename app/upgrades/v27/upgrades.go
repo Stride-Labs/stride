@@ -38,6 +38,11 @@ func CreateUpgradeHandler(
 			return vm, errorsmod.Wrapf(err, "unable to reset delegation changes in progress")
 		}
 
+		ctx.Logger().Info("Enabling LSM...")
+		if err := EnableLSMForGaia(ctx, stakeibcKeeper); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to enable LSM")
+		}
+
 		return versionMap, nil
 	}
 }
