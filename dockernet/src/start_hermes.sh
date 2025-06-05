@@ -25,11 +25,10 @@ for chain in ${HOST_CHAINS[@]:-}; do
     $hermes_exec keys add --chain $chain_id --mnemonic-file /home/hermes/.hermes/mnemonic.txt >> $hermes_logs 2>&1
     echo "Done"
 
-    # Create clients with relayer 
-    # printf "STRIDE <> $chain - Creating client, connection, and transfer channel..." | tee -a $hermes_logs
-    # $hermes_exec create channel --a-chain STRIDE --b-chain $chain_id \
-    #         --a-port transfer --b-port transfer --new-client-connection --yes >> $hermes_logs 2>&1
-    # echo "Done"
+    printf "STRIDE <> $chain - Creating client, connection, and transfer channel..." | tee -a $hermes_logs
+    $hermes_exec create channel --a-chain STRIDE --b-chain $chain_id \
+            --a-port transfer --b-port transfer --new-client-connection --yes >> $hermes_logs 2>&1
+    echo "Done"
 
     $DOCKER_COMPOSE up -d hermes
     SAVE_DOCKER_LOGS hermes $hermes_logs
