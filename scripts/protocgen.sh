@@ -18,7 +18,7 @@ echo "Generating gogo proto code"
 cd proto
 
 generate_protos "./stride"
-generate_protos "./cosmos"
+generate_protos "./gaia"
 generate_protos "./osmosis"
 
 cd ..

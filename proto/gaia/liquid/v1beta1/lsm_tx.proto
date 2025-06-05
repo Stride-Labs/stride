@@ -1,5 +1,5 @@
 syntax = "proto3";
-package cosmos.staking.v1beta1;
+package gaia.liquid.v1beta1;
 
 import "gogoproto/gogo.proto";
 
