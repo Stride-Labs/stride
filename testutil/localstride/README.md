@@ -2,7 +2,7 @@
 
 Inspired by LocalOsmosis, LocalStride is a complete Stride testnet containerized with Docker and orchestrated with a simple docker-compose file. LocalStride comes pre-configured with opinionated, sensible defaults for a standard testing environment.
 
-## 1. LocalStride - No Initial State
+## 1. Localnet - No Initial State
 
 The following commands must be executed from the root folder of the Stride repository.
 
@@ -54,6 +54,24 @@ make localnet-stop
 make localnet-clean
 ```
 
+### LocalStride Accounts
+
+LocalStride is pre-configured with one validator and 10 accounts with stride balances.
+
+| Account   | Address                                                                                                    | Mnemonic                                                                                                                                                                 |
+| --------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| val       | `stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc`<br/>`stridevaloper1wal8dgs7whmykpdaz0chan2f54ynythkp6upwa` | `deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment`             |
+| ls-test1  | `stride1u9klnra0d4zq9ffalpnr3nhz5859yc7ckdk9wt`                                                            | `journey envelope color ensure fruit assault soup air ozone math beyond miracle very bring bid retire cargo exhaust garden helmet spread sentence insect treat`          |
+| ls-test2  | `stride1kwax6g0q2nwny5n43fswexgefedge033t5g95j`                                                            | `update minimum pyramid initial napkin guilt minute spread diamond dinosaur force observe lounge siren region forest annual citizen mule pilot style horse prize trophy` |
+| ls-test3  | `stride1dv0ecm36ywdyc6zjftw0q62zy6v3mndrwxde03`                                                            | `between flight suffer century action army insane position egg napkin tumble silent enemy crisp club february lake push coral rice few patch hockey ostrich`             |
+| ls-test4  | `stride1z3dj2tvqpzy2l5shx98f9k5486tleah5a00fay`                                                            | `muffin brave clinic miss various width depend sand eager mom vicious spoil verb rain leg lunar blossom always silver funny spot frog half coral`                        |
+| ls-test5  | `stride14khzkfs8luaqymdtplrt5uwzrghrndeh4235am`                                                            | `dismiss verb champion ceiling veteran today owner inch field shock dizzy pool creek problem nuclear cage shift romance venue rabbit flower sign bicycle rocket`         |
+| ls-test6  | `stride1qym804u6sa2gvxedfy96c0v9jc0ww7593uechw`                                                            | `until lend canvas brain brief blossom tomato tent drip claw more era click bind shrug surprise universe orchard parrot describe jelly scorpion glove path`              |
+| ls-test7  | `stride1et8cdkxl69yrtmpjhxwey52d88kflwzn5xp4xn`                                                            | `choice holiday audit valley asthma empty visa hood lonely primary aerobic that panda define enrich ankle athlete punch glimpse ridge narrow affair thunder lock`        |
+| ls-test8  | `stride1tcrlyn05q9j590uauncywf26ptfn8se65dvfz6`                                                            | `major eager blame canyon jazz occur curious resemble tragic rack tired choose wolf purity meat dog castle attitude decorate moon echo quote core doctor`                |
+| ls-test9  | `stride14ugekxs6f4rfleg6wj8k0wegv69khfpxkt8yn4`                                                            | `neck devote small animal ready swarm melt ugly bronze opinion fire inmate acquire use mobile party paper clock hour view stool aspect angle demand`                     |
+| ls-test10 | `stride18htv32r83q2wn2knw5wp9m4nkp4xuzyfhmwpqs`                                                            | `almost turtle mobile bullet figure myself dad depart infant vivid view black purity develop kidney cruel seminar outside disorder attack spoil infant sauce blood`      |
+
 ## 2. LocalStride - With Mainnet State
 
 A few things to note before getting started. The below method will only work if you are using the same version as mainnet. In other words,
@@ -65,30 +83,7 @@ if mainnet is on v8.0.0 and you try to do this on a v9.0.0 tag or on main, you w
 
 1. Set up a node on mainnet
 
-2. Ensure your node is caught up to the head of the network, or whatever block you want to start your testnet from
-
-- [Internal Only] If running from Stride GCP:
-  - SSH into `biggie-smalls` as user `stride`
-  - Build the mainnet `strided`
-  ```bash
-  cd stride
-  git fetch --all
-  git checkout {mainnet-version}
-  make install
-  ```
-  - Run the setup script to download snapshots and setup the home directory
-  ```bash
-  cd .. # back into /home/stride
-  bash setup_node.sh
-  ```
-  - Start the node and wait until it's caught up to the head of the network
-  ```
-  strided start
-  ```
-
-3. Stop your Stride daemon
-
-4. Take a state export snapshot with the following command:
+2. Take a state export snapshot with the following command:
 
 ```sh
 strided export > state_export.json
@@ -98,15 +93,16 @@ This will create a file called `state_export.json` which is a snapshot of the cu
 
 ### Use the state export in LocalStride
 
-5. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
+3. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
 
 ```sh
 cp state_export.json stride/testutil/localstride/state-export/
 ```
 
-6. Build the `local:stride` docker image (select yes if prompted to recursively remove):
+4. Build the `local:stride` docker image (select yes if prompted to recursively remove):
 
 ```bash
+cd stride
 make localnet-state-export-init
 ```
 
@@ -115,7 +111,7 @@ The command:
 - Builds a local docker image with the latest changes
 - Cleans the `$HOME/.stride` folder
 
-7. Start LocalStride:
+5. Start LocalStride:
 
 ```bash
 make localnet-state-export-start
@@ -136,7 +132,7 @@ You will then go through the genesis initialization process and hit the first bl
 
 During this process, you may see only p2p logs and no blocks. **This could be the case for the next 30 minutes**, but will eventually start hitting blocks.
 
-9. The following account was added to your machine:
+6. The following account was added to your machine:
 
 ```bash
 Address:
@@ -148,25 +144,25 @@ deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape 
 
 This account represents a validator that has the majority of voting power with the same state as mainnet state (at the time you took the snapshot)
 
-10. On your host machine, you can now query the state-exported testnet:
+7. On your host machine, you can now query the state-exported testnet:
 
 ```sh
 strided status
 ```
 
-11. Here is an example command to ensure complete understanding:
+8. Here is an example command to ensure complete understanding:
 
 ```sh
 strided tx bank send val stride1qym804u6sa2gvxedfy96c0v9jc0ww7593uechw 10000000ustrd --chain-id localstride --keyring-backend test
 ```
 
-12. You can stop chain, keeping the state with
+9. You can stop chain, keeping the state with
 
 ```bash
 make localnet-state-export-stop
 ```
 
-13. When you are done you can clean up the environment with:
+10. When you are done you can clean up the environment. **Do not do this yet if you are testing the upgrade!**
 
 ```bash
 make localnet-state-export-clean
@@ -177,19 +173,118 @@ Note: At some point, all the validators (except yours) will get jailed at the sa
 When this happens, it may take a little bit of time to process. Once all validators are jailed, you will continue to hit blocks as you did before.
 If you are only running the validator for a short time (< 24 hours) you will not experience this.
 
+## 3. LocalStride - Mainnet State Upgrade [Internal Only]
+
+This guide will walk through testing an upgrade on a state exported testnet. This is meant to be run internally from Stride Labs where the infrastructure in GCP has already been initialized.
+
+### Create a mainnet state export
+
+1. Log into GCP and start the Biggie Smalls node. This job requires a lot of memory and cannot be done locally.
+
+2. SSH into `biggie-smalls` as user `stride`
+
+3. Build the mainnet `strided`
+
+```bash
+  cd stride
+  git fetch --all
+  git checkout {mainnet-version}
+  make install
+```
+
+4. Run the setup script to download snapshots and setup the home directory
+
+```bash
+cd .. # back into /home/stride
+bash setup_node.sh
+```
+
+5. Start the node and wait until it's caught up to the head of the network
+
+```
+strided start
+```
+
+6. Stop your Stride daemon
+
+7. Take a state export snapshot with the following command:
+
+```bash
+strided export > state_export.json
+```
+
+This will create a file called `state_export.json` which is a snapshot of the current mainnet state.
+
+### Use the state export in LocalStride
+
+1. Copy the `state_export.json` to the `localstride/state_export` folder within the stride repo
+
+```sh
+cp state_export.json stride/testutil/localstride/state-export/
+```
+
+2. Build the `local:stride` docker image (select yes if prompted to recursively remove):
+
+```bash
+cd stride
+make localnet-state-export-init
+```
+
+The command:
+
+- Builds a local docker image with the latest changes
+- Cleans the stride home directories for the two nodes that will be run in docker
+
+7. Start LocalStride:
+
+- Run the startup command which will setup each node. It will take a few minutes to setup and after the configuration and genesis files have been modified.
+
+```bash
+make localnet-state-export-start
+```
+
+- Peer the two nodes together to finish the setup
+
+```bash
+make localnet-state-export-stop
+make localnet-state-export-peer
+```
+
+- Start up the nodes once more, now that they're peer'd together. It will take a while to start churning blocks!
+
+```bash
+make localnet-state-export-start
+```
+
+If it starts up successfully, you can kill it with `control + C`
+
 ### Testing the upgrade
+
+- Start the network up again in detached mode
+
+```bash
+make localnet-state-export-startd
+```
 
 - Once localstride starts churning blocks, you are ready to test the upgrade. Run the following to submit and vote on the upgrade:
 
 ```bash
-# Check the localstride logs to determine the current block and propose the upgrade at a height at least 75 blocks in the future
-#  Ex: make localnet-state-export-upgrade upgrade_name=v5 upgrade_height=1956500
-make localnet-state-export-upgrade upgrade_name={upgrade_name} upgrade_height={upgrade_height}
+# Check the localstride logs to determine the current block
+docker logs state-export-stride1-1 --tail 100
+
+# Fix permissions so you can run the script
+make localnet-state-export-perms
+
+# Propose and vote on the upgrade
+make localnet-state-export-upgrade upgrade_name={upgrade_name}
 ```
 
 - Wait for the upgrade height and confirm the node crashed. Run the following to take down the container:
 
-```
+```bash
+docker logs state-export-stride1-1 -f --tail 100
+
+# One upgrade height is reached and node crashes:
 make localnet-state-export-stop
 ```
 
@@ -206,28 +301,13 @@ make localnet-state-export-build
 make localnet-state-export-start
 ```
 
-- Check the localstride logs and confirm the upgrade succeeded
-- If the upgrade passes, but then the chain hangs without producing blocks, you may need to add a second "kicker" node to jump start the network. To do this:
-  - Copy the `~/.stride/data` directory over to another machine
-  - Get the node ID of each machine by running `strided tendermint show-node-id`
-  - Add each node as a persistent peer of the other by adding `persistent_peers = "{NODE_ID}@{IP}:26656"` to `~/.stride/config/config.toml`
-  - Start both nodes until they start committing blocks
-  - Once they're rolling, you can shut the second node off
+```bash
+make localnet-state-export-perms
+strided export --home /home/stride/.stride1 > testutil/localstride/state-export/state_export_after.json
+```
 
-## LocalStride Accounts
+### Comparing Exports
 
-LocalStride is pre-configured with one validator and 10 accounts with stride balances.
-
-| Account   | Address                                                                                                    | Mnemonic                                                                                                                                                                 |
-| --------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| val       | `stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc`<br/>`stridevaloper1wal8dgs7whmykpdaz0chan2f54ynythkp6upwa` | `deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment`             |
-| ls-test1  | `stride1u9klnra0d4zq9ffalpnr3nhz5859yc7ckdk9wt`                                                            | `journey envelope color ensure fruit assault soup air ozone math beyond miracle very bring bid retire cargo exhaust garden helmet spread sentence insect treat`          |
-| ls-test2  | `stride1kwax6g0q2nwny5n43fswexgefedge033t5g95j`                                                            | `update minimum pyramid initial napkin guilt minute spread diamond dinosaur force observe lounge siren region forest annual citizen mule pilot style horse prize trophy` |
-| ls-test3  | `stride1dv0ecm36ywdyc6zjftw0q62zy6v3mndrwxde03`                                                            | `between flight suffer century action army insane position egg napkin tumble silent enemy crisp club february lake push coral rice few patch hockey ostrich`             |
-| ls-test4  | `stride1z3dj2tvqpzy2l5shx98f9k5486tleah5a00fay`                                                            | `muffin brave clinic miss various width depend sand eager mom vicious spoil verb rain leg lunar blossom always silver funny spot frog half coral`                        |
-| ls-test5  | `stride14khzkfs8luaqymdtplrt5uwzrghrndeh4235am`                                                            | `dismiss verb champion ceiling veteran today owner inch field shock dizzy pool creek problem nuclear cage shift romance venue rabbit flower sign bicycle rocket`         |
-| ls-test6  | `stride1qym804u6sa2gvxedfy96c0v9jc0ww7593uechw`                                                            | `until lend canvas brain brief blossom tomato tent drip claw more era click bind shrug surprise universe orchard parrot describe jelly scorpion glove path`              |
-| ls-test7  | `stride1et8cdkxl69yrtmpjhxwey52d88kflwzn5xp4xn`                                                            | `choice holiday audit valley asthma empty visa hood lonely primary aerobic that panda define enrich ankle athlete punch glimpse ridge narrow affair thunder lock`        |
-| ls-test8  | `stride1tcrlyn05q9j590uauncywf26ptfn8se65dvfz6`                                                            | `major eager blame canyon jazz occur curious resemble tragic rack tired choose wolf purity meat dog castle attitude decorate moon echo quote core doctor`                |
-| ls-test9  | `stride14ugekxs6f4rfleg6wj8k0wegv69khfpxkt8yn4`                                                            | `neck devote small animal ready swarm melt ugly bronze opinion fire inmate acquire use mobile party paper clock hour view stool aspect angle demand`                     |
-| ls-test10 | `stride18htv32r83q2wn2knw5wp9m4nkp4xuzyfhmwpqs`                                                            | `almost turtle mobile bullet figure myself dad depart infant vivid view black purity develop kidney cruel seminar outside disorder attack spoil infant sauce blood`      |
+- Update the export JSON paths in `compare_before_after_state.py` and run the script
+- For each section of state with a discrepency, manually inspect the difference and ensure that there is a plausible explanation. It is recommended to do this in Jupyter
+- If the diffs check out, the localstride testing is complete!

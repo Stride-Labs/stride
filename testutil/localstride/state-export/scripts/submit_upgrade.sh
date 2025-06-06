@@ -4,14 +4,9 @@ set -eu
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # Confirm an upgrade name and height were provided
-USAGE_INSTRUCTION="  Please provied 'upgrade_name' and 'upgrade_height' as arguments\n  e.g. 'make localnet-state-export-upgrade upgrade_name=v5 upgrade_height=1000'\n"
+USAGE_INSTRUCTION="  Please provide 'upgrade_name' as an argument\n  e.g. 'make localnet-state-export-upgrade upgrade_name=v5'\n"
 if [ -z "${upgrade_name:-}" ]; then
     echo "ERROR: 'upgrade_name' not provided."
-    printf "$USAGE_INSTRUCTION"
-    exit 1
-fi
-if [ -z "${upgrade_height:-}" ]; then
-    echo "ERROR: 'upgrade_height' not provided."
     printf "$USAGE_INSTRUCTION"
     exit 1
 fi
@@ -21,7 +16,10 @@ TRIM_TX() {
   grep -E "code:|txhash:" | sed 's/^/  /'
 }
 
-STRIDE_MAIN_CMD="docker compose -f ${SCRIPT_DIR}/../docker-compose.yml exec -it stride strided"
+STRIDE_MAIN_CMD="docker compose -f ${SCRIPT_DIR}/../docker-compose.yml exec -it stride1 strided"
+
+current_height=$($STRIDE_MAIN_CMD status | jq -r '.SyncInfo.latest_block_height')
+upgrade_height=$((current + 75))
 
 printf "PROPOSAL\n"
 $STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $upgrade_name \
