@@ -42,23 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
-## [v27.0.0](https://github.com/Stride-Labs/stride/releases/tag/v27.0.0) - 2025-06-05
-
-### On-Chain changes
-
-1. add utils.SafeSendCoins() ([#1373](https://github.com/Stride-Labs/stride/pull/1373))
-2. standardize amino names ([#1386](https://github.com/Stride-Labs/stride/pull/1386))
-3. Unit Tests for stakeibc CLI ([#1220](https://github.com/Stride-Labs/stride/pull/1220))
-4. Migrated LSM Liquid stake to x/liquid ([#1407](https://github.com/Stride-Labs/stride/pull/1407))
-5. v27 upgrade handler ([#1408](https://github.com/Stride-Labs/stride/pull/1408))
-6. v27 import paths ([#1409](https://github.com/Stride-Labs/stride/pull/1409))
-
-### Off-Chain changes
-
-1. Fix auction query conflict ([#1374](https://github.com/Stride-Labs/stride/pull/1374))
-2. bump wasmvm ([#1376](https://github.com/Stride-Labs/stride/pull/1376))
-3. Bump tj-actions/changed-files from 41 to 46 in /.github/workflows ([#1384](https://github.com/Stride-Labs/stride/pull/1384))
-
 ## [v26.0.3](https://github.com/Stride-Labs/stride/releases/tag/v26.0.3) - 2025-03-13
 
 1. CLI: Fix `strided tx place-bid` to support big numbers for `[selling-token-amount]` & `[payment-token-amount]`
