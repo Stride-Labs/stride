@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v26/utils"
+	"github.com/Stride-Labs/stride/v27/utils"
 )
 
 func (s *UtilsTestSuite) TestCreateModuleAccount() {

@@ -3,7 +3,7 @@ package stride.strdburner;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v26/x/strdburner/types";
+option go_package = "github.com/Stride-Labs/stride/v27/x/strdburner/types";
 
 // GenesisState defines the strdburner module's genesis state
 message GenesisState {
