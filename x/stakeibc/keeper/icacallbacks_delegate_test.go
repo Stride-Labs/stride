@@ -5,9 +5,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 type DelegateCallbackTestCase struct {

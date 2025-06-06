@@ -9,7 +9,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/claim/types"
+	"github.com/Stride-Labs/stride/v27/x/claim/types"
 )
 
 // Keeper struct

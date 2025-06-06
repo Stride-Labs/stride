@@ -6,7 +6,7 @@ import (
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v27/x/interchainquery/types"
 )
 
 // IcqKeeper defines the expected interface needed to send ICQ requests.

@@ -16,11 +16,11 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v26/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v26/x/icacallbacks/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v26/x/records/keeper"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v27/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v27/x/records/keeper"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 type (

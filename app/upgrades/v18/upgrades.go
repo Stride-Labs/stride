@@ -12,12 +12,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v26/utils"
-	recordskeeper "github.com/Stride-Labs/stride/v26/x/records/keeper"
-	recordtypes "github.com/Stride-Labs/stride/v26/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/utils"
+	recordskeeper "github.com/Stride-Labs/stride/v27/x/records/keeper"
+	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v18

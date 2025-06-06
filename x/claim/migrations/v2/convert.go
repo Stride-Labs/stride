@@ -3,8 +3,8 @@ package v2
 import (
 	sdkmath "cosmossdk.io/math"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v26/x/claim/migrations/v2/types"
-	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v27/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
 )
 
 func convertToNewAirdrop(oldAirdrop oldclaimtypes.Airdrop) claimtypes.Airdrop {
