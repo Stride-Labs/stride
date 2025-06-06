@@ -6,9 +6,9 @@ import (
 	"cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
-	types "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
+	types "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // constant number of zero delegations

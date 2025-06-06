@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

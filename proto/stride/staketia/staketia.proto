@@ -4,7 +4,7 @@ package stride.staketia;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v26/x/staketia/types";
+option go_package = "github.com/Stride-Labs/stride/v27/x/staketia/types";
 
 message HostZone {
   // Chain ID

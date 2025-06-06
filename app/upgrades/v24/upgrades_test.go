@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v26/app/apptesting"
-	v24 "github.com/Stride-Labs/stride/v26/app/upgrades/v24"
-	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/app/apptesting"
+	v24 "github.com/Stride-Labs/stride/v27/app/upgrades/v24"
+	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 type UpdateRedemptionRateBounds struct {
