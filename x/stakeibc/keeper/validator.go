@@ -9,8 +9,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/utils"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/utils"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // Get a validator and its index from a list of validators, by address

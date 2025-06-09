@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	icacallbackstypes "github.com/Stride-Labs/stride/v26/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 )
 
 const (

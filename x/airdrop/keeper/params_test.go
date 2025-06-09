@@ -1,6 +1,6 @@
 package keeper_test
 
-import "github.com/Stride-Labs/stride/v26/x/airdrop/types"
+import "github.com/Stride-Labs/stride/v27/x/airdrop/types"
 
 func (s *KeeperTestSuite) TestParams() {
 	expectedParams := types.Params{PeriodLengthSeconds: 24 * 60 * 60}

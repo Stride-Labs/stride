@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) CreateTradeRoutes() (routes []types.TradeRoute) {

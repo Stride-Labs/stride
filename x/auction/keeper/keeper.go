@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	"github.com/Stride-Labs/stride/v26/x/auction/types"
+	"github.com/Stride-Labs/stride/v27/x/auction/types"
 )
 
 type Keeper struct {

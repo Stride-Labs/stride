@@ -7,8 +7,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	strideapp "github.com/Stride-Labs/stride/v26/app"
-	"github.com/Stride-Labs/stride/v26/x/records/keeper"
+	strideapp "github.com/Stride-Labs/stride/v27/app"
+	"github.com/Stride-Labs/stride/v27/x/records/keeper"
 )
 
 func RecordsKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/client/cli"
 )
 
 func TestCmdAddValidatorsProposal(t *testing.T) {

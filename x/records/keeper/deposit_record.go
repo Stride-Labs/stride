@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
 
 // GetDepositRecordCount get the total number of depositRecord

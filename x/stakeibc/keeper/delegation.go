@@ -9,9 +9,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v26/utils"
-	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/utils"
+	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // Builds the delegation ICA messages for a given deposit record
