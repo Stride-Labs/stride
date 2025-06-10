@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 5. v27 upgrade handler ([#1408](https://github.com/Stride-Labs/stride/pull/1408))
 6. v27 import paths ([#1409](https://github.com/Stride-Labs/stride/pull/1409))
 7. Localstride fixes ([#1410](https://github.com/Stride-Labs/stride/pull/1410))
-8. Relax host zone bounds ([#1414](https://github.com/Stride-Labs/stride/pull/1414))
+8. Updated redemption rate bounds in v27 handler ([#1414](https://github.com/Stride-Labs/stride/pull/1414))
 
 ### Off-Chain changes
 
