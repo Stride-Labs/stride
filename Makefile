@@ -214,7 +214,7 @@ localnet-keys:
 localnet-init: localnet-clean localnet-build
 
 localnet-clean:
-	@rm -rfI $(HOME)/.stride/
+	@sudo rm -rf $(HOME)/.stride1/ $(HOME)/.stride2/
 
 localnet-build:
 	@docker compose -f $(LOCALNET_COMPOSE_FILE) build
@@ -238,6 +238,12 @@ localnet-state-export-start:
 
 localnet-state-export-startd:
 	@docker compose -f $(STATE_EXPORT_COMPOSE_FILE) up -d
+
+localnet-state-export-peer:
+	@bash $(LOCALSTRIDE_HOME)/state-export/scripts/update_peers.sh
+
+localnet-state-export-perms:
+	@sudo chmod -R 777 $(HOME)/.stride1/
 
 localnet-state-export-upgrade:
 	bash $(LOCALSTRIDE_HOME)/state-export/scripts/submit_upgrade.sh
