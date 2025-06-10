@@ -173,6 +173,7 @@ setup_file() {
   if [[ "$CHAIN_NAME" != "GAIA" ]]; then
     skip "Skipping LSM liquid stake for chains without LSM support" 
   fi
+  skip "Skipping because it doesn't work on the older version of GAIA"
 
   staker_address_on_host=$($HOST_MAIN_CMD keys show $USER_ACCT -a)
   staker_address_on_stride=$($STRIDE_MAIN_CMD keys show $USER_ACCT -a)
@@ -230,6 +231,7 @@ setup_file() {
   if [[ "$CHAIN_NAME" != "GAIA" ]]; then
     skip "Skipping LSM liquid stake for chains without LSM support" 
   fi
+  skip "Skipping because it doesn't work on the older version of GAIA"
 
   # get staker and validator addresses
   validator_address=$(GET_VAL_ADDR $CHAIN_NAME 1)
