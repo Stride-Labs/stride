@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 4. Migrated LSM Liquid stake to x/liquid ([#1407](https://github.com/Stride-Labs/stride/pull/1407))
 5. v27 upgrade handler ([#1408](https://github.com/Stride-Labs/stride/pull/1408))
 6. v27 import paths ([#1409](https://github.com/Stride-Labs/stride/pull/1409))
+7. Localstride fixes ([#1410](https://github.com/Stride-Labs/stride/pull/1410))
+8. Relax host zone bounds ([#1414](https://github.com/Stride-Labs/stride/pull/1414))
 
 ### Off-Chain changes
 
