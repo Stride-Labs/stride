@@ -73,8 +73,7 @@ then
 
     strided tendermint show-node-id --home $STRIDE_HOME > $STRIDE_HOME/node_id.txt
 
-    echo "Done setting up node! Please run `make localnet-state-export-stop`"
-    echo "Then, run update_peers.sh and start the node"
+    echo "Done setting up node! Please run 'make localnet-state-export-stop && make localnet-state-export-peer'"
 else
     echo "Config folder already exists - starting node"
     
