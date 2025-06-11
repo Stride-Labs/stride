@@ -1,7 +1,6 @@
 package v27
 
 import (
-	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -46,14 +45,14 @@ func CreateUpgradeHandler(
 		}
 
 		ctx.Logger().Info("Resetting delegation changes in progress...")
-		if err := DecrementEvmosDelegationChangesInProgress(ctx, stakeibcKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to reset delegation changes in progress")
-		}
+		// if err := DecrementEvmosDelegationChangesInProgress(ctx, stakeibcKeeper); err != nil {
+		// 	return vm, errorsmod.Wrapf(err, "unable to reset delegation changes in progress")
+		// }
 
 		ctx.Logger().Info("Enabling LSM...")
-		if err := EnableLSMForGaia(ctx, stakeibcKeeper); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to enable LSM")
-		}
+		// if err := EnableLSMForGaia(ctx, stakeibcKeeper); err != nil {
+		// 	return vm, errorsmod.Wrapf(err, "unable to enable LSM")
+		// }
 
 		ctx.Logger().Info("Update redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
@@ -102,20 +101,8 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	ctx.Logger().Info("Updating redemption rate outer bounds...")
 
 	for _, hostZone := range k.GetAllHostZone(ctx) {
-		// Give osmosis a bit more slack since OSMO stakers collect real yield
-		outerAdjustment := RedemptionRateOuterMaxAdjustment
-		if hostZone.ChainId == OsmosisChainId {
-			outerAdjustment = outerAdjustment.Add(OsmosisRedemptionRateBuffer)
-		}
-
-		outerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMinAdjustment)
-		outerMaxDelta := hostZone.RedemptionRate.Mul(outerAdjustment)
-
-		outerMin := hostZone.RedemptionRate.Sub(outerMinDelta)
-		outerMax := hostZone.RedemptionRate.Add(outerMaxDelta)
-
-		hostZone.MinRedemptionRate = outerMin
-		hostZone.MaxRedemptionRate = outerMax
+		hostZone.MaxInnerRedemptionRate = sdk.MustNewDecFromStr("1.5")
+		hostZone.MaxRedemptionRate = sdk.MustNewDecFromStr("1.51")
 
 		k.SetHostZone(ctx, hostZone)
 	}
