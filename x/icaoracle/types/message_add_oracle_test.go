@@ -73,7 +73,7 @@ func TestMsgAddOracle(t *testing.T) {
 				require.Equal(t, len(signers), 1)
 				require.Equal(t, signers[0].String(), validAdminAddress)
 
-				require.Equal(t, test.msg.ConnectionId, validConnectionId, "connnectionId")
+				require.Equal(t, test.msg.ConnectionId, validConnectionId, "connectionId")
 				require.Equal(t, test.msg.Type(), "add_oracle", "type")
 			} else {
 				require.ErrorContains(t, test.msg.ValidateBasic(), test.err, "test: %v", test.name)
