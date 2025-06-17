@@ -11,7 +11,7 @@ message GenesisState {
   // minter is a space for holding current rewards information.
   Minter minter = 1 [ (gogoproto.nullable) = false ];
 
-  // params defines all the paramaters of the module.
+  // params defines all the parameters of the module.
   Params params = 2 [ (gogoproto.nullable) = false ];
 
   // current reduction period start epoch
