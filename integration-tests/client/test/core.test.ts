@@ -11,6 +11,7 @@ import {
     DirectSecp256k1HdWallet,
     GasPrice,
     sleep,
+    stride,
 } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import {
@@ -27,6 +28,7 @@ import {
     ibcTransfer,
     waitForChain,
     waitForIbc,
+    submitTxAndExpectSuccess,
 } from "./utils";
 import { StrideClient } from "stridejs";
 
@@ -236,4 +238,118 @@ describe("Core Tests", () => {
         expect(gaiaAtomBalanceDiff).toBeGreaterThanOrEqual(BigInt(transferAmount));
         expect(gaiaAtomBalanceDiff).toBeLessThan(BigInt(transferAmount + 1000000)); // increased gas fee limit
     }, 120_000);
+
+    test("Liquid Stake Mint and Transfer", async () => {
+        const stridejs = strideAccounts.user;
+        const gaiajs = gaiaAccounts.user;
+        const stakeAmount = 10000000;
+
+        // Get initial balances
+        const { balance: { amount: strideInitialAtomBalance } = { amount: "0" } } =
+            await stridejs.query.cosmos.bank.v1beta1.balance({
+                address: stridejs.address,
+                denom: ATOM_DENOM_ON_STRIDE,
+            });
+
+        const { balance: { amount: strideInitialStAtomBalance } = { amount: "0" } } =
+            await stridejs.query.cosmos.bank.v1beta1.balance({
+                address: stridejs.address,
+                denom: "stuatom", // stATOM denom
+            });
+
+        // Get delegation address
+        const { hostZone } = await stridejs.query.stride.stakeibc.hostZone({
+            chainId: GAIA_CHAIN_ID,
+        });
+        const delegationAddress = hostZone?.delegationIcaAddress || "";
+
+        // Get initial delegation ICA balance
+        const delegationInitialBalance = await gaiajs.query.bank.balance(delegationAddress, UATOM);
+
+        console.log("Initial balances:");
+        console.log(`Stride ATOM: ${strideInitialAtomBalance}`);
+        console.log(`Stride stATOM: ${strideInitialStAtomBalance}`);
+        console.log(`Delegation ICA ATOM: ${delegationInitialBalance.amount}`);
+
+        // Perform liquid staking
+        const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
+            creator: stridejs.address,
+            amount: String(stakeAmount),
+            hostDenom: UATOM,
+        });
+
+        await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
+
+        // Wait for stTokens to be minted
+        let strideFinalStAtomBalance;
+        let attempts = 0;
+        const maxAttempts = 60; // 30 seconds max wait time
+
+        while (attempts < maxAttempts) {
+            const { balance: { amount: currentStAtomBalance } = { amount: "0" } } =
+                await stridejs.query.cosmos.bank.v1beta1.balance({
+                    address: stridejs.address,
+                    denom: "stuatom",
+                });
+
+            if (BigInt(currentStAtomBalance) > BigInt(strideInitialStAtomBalance)) {
+                strideFinalStAtomBalance = currentStAtomBalance;
+                break;
+            }
+
+            attempts++;
+            await sleep(500);
+        }
+
+        if (attempts >= maxAttempts) {
+            throw new Error("Timed out waiting for stATOM tokens to be minted");
+        }
+
+        // Get final ATOM balance on Stride
+        const { balance: { amount: strideFinalAtomBalance } = { amount: "0" } } =
+            await stridejs.query.cosmos.bank.v1beta1.balance({
+                address: stridejs.address,
+                denom: ATOM_DENOM_ON_STRIDE,
+            });
+
+        // Wait for tokens to be transferred to the delegation account
+        let delegationFinalBalance;
+        let delegationAttempts = 0;
+        const delegationMaxAttempts = 120; // 60 seconds max wait time
+
+        while (delegationAttempts < delegationMaxAttempts) {
+            delegationFinalBalance = await gaiajs.query.bank.balance(delegationAddress, UATOM);
+
+            if (BigInt(delegationFinalBalance.amount) > BigInt(delegationInitialBalance.amount)) {
+                break;
+            }
+
+            delegationAttempts++;
+            await sleep(500);
+        }
+
+        if (delegationAttempts >= delegationMaxAttempts) {
+            throw new Error("Timed out waiting for tokens to be transferred to delegation account");
+        }
+
+        console.log("Final balances:");
+        console.log(`Stride ATOM: ${strideFinalAtomBalance}`);
+        console.log(`Stride stATOM: ${strideFinalStAtomBalance}`);
+        console.log(`Delegation ICA ATOM: ${delegationFinalBalance.amount}`);
+
+        // Calculate balance differences
+        const strideAtomBalanceDiff = BigInt(strideInitialAtomBalance) - BigInt(strideFinalAtomBalance);
+        const strideStAtomBalanceDiff = BigInt(strideFinalStAtomBalance) - BigInt(strideInitialStAtomBalance);
+        const delegationBalanceDiff = BigInt(delegationFinalBalance.amount) - BigInt(delegationInitialBalance.amount);
+
+        console.log("Balance differences:");
+        console.log(`Stride ATOM diff: ${strideAtomBalanceDiff}`);
+        console.log(`Stride stATOM diff: ${strideStAtomBalanceDiff}`);
+        console.log(`Delegation ICA diff: ${delegationBalanceDiff}`);
+
+        // Verify balance changes
+        expect(strideAtomBalanceDiff).toBe(BigInt(stakeAmount)); // ATOM should decrease
+        expect(strideStAtomBalanceDiff).toBe(BigInt(stakeAmount)); // stATOM should increase
+        expect(delegationBalanceDiff).toBe(BigInt(stakeAmount)); // Delegation ICA should receive tokens
+    }, 180_000); // 3 minutes timeout
 });
