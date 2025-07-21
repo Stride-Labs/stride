@@ -142,17 +142,17 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(types.ErrInvalidReceiverLength, "receiver length: %d", len(tokenPacketData.Receiver)))
 	}
 
-	// The receiver must always be a valid address
-	// In the case of autopilot, this address is also duplicated in the autopilot payload
-	if _, err := sdk.AccAddressFromBech32(tokenPacketData.Receiver); err != nil {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(types.ErrInvalidReceiverAddress, tokenPacketData.Receiver))
-	}
-
 	// If a valid receiver address has been provided and no memo,
 	// this is clearly just an normal IBC transfer
 	// Pass down the stack immediately instead of parsing
 	if tokenPacketData.Memo == "" {
 		return im.app.OnRecvPacket(ctx, packet, relayer)
+	}
+
+	// The receiver must always be a valid address
+	// In the case of autopilot, this address is also duplicated in the autopilot payload
+	if _, err := sdk.AccAddressFromBech32(tokenPacketData.Receiver); err != nil {
+		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(types.ErrInvalidReceiverAddress, tokenPacketData.Receiver))
 	}
 
 	// parse out any autopilot forwarding info
