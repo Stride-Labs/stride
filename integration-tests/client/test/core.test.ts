@@ -22,6 +22,7 @@ import {
     TRANSFER_CHANNEL,
     UATOM,
     USTRD,
+    STRD_DENOM_ON_GAIA,
 } from "./consts";
 import { CosmosClient } from "./types";
 import {
@@ -31,6 +32,29 @@ import {
     submitTxAndExpectSuccess,
 } from "./utils";
 import { StrideClient } from "stridejs";
+
+// Utility function to get balance as a string
+async function getBalance({
+                              client,
+                              address,
+                              denom,
+                          }: {
+    client: StrideClient | CosmosClient;
+    address: string;
+    denom: string;
+}): Promise<string> {
+    if (client instanceof StrideClient) {
+        const { balance: { amount } = { amount: "0" } } =
+            await client.query.cosmos.bank.v1beta1.balance({
+                address,
+                denom,
+            });
+        return amount;
+    } else {
+        const balance = await client.query.bank.balance(address, denom);
+        return balance.amount;
+    }
+}
 
 // Initialize accounts
 let strideAccounts: {
@@ -152,25 +176,36 @@ describe("Core Tests", () => {
         const gaiajs = gaiaAccounts.user;
         const transferAmount = 50000000;
 
-        // Get initial balances - only track what we can reliably query
-        const { balance: { amount: strideInitialStrideBalance } = { amount: "0" } } =
-            await stridejs.query.cosmos.bank.v1beta1.balance({
-                address: stridejs.address,
-                denom: USTRD,
-            });
+        // Get initial balances
+        const strideInitialStrdBalance = await getBalance({
+            client: stridejs,
+            address: stridejs.address,
+            denom: USTRD,
+        });
 
-        const { balance: { amount: strideInitialAtomBalance } = { amount: "0" } } =
-            await stridejs.query.cosmos.bank.v1beta1.balance({
-                address: stridejs.address,
-                denom: ATOM_DENOM_ON_STRIDE,
-            });
+        const strideInitialAtomBalance = await getBalance({
+            client: stridejs,
+            address: stridejs.address,
+            denom: ATOM_DENOM_ON_STRIDE,
+        });
 
-        const gaiaInitialAtomBalance = await gaiajs.query.bank.balance(gaiajs.address, UATOM);
+        const gaiaInitialStrdBalance = await getBalance({
+            client: gaiajs,
+            address: gaiajs.address,
+            denom: STRD_DENOM_ON_GAIA,
+        });
+
+        const gaiaInitialAtomBalance = await getBalance({
+            client: gaiajs,
+            address: gaiajs.address,
+            denom: UATOM,
+        });
 
         console.log("Initial balances:");
-        console.log(`Stride USTRD: ${strideInitialStrideBalance}`);
+        console.log(`Stride USTRD: ${strideInitialStrdBalance}`);
         console.log(`Stride ATOM: ${strideInitialAtomBalance}`);
-        console.log(`Gaia ATOM: ${gaiaInitialAtomBalance.amount}`);
+        console.log(`Gaia STRD: ${gaiaInitialStrdBalance}`);
+        console.log(`Gaia ATOM: ${gaiaInitialAtomBalance}`);
 
         // Perform IBC transfers
         console.log("Transferring USTRD from Stride to Gaia...");
@@ -197,46 +232,62 @@ describe("Core Tests", () => {
         await sleep(5000);
 
         // Get final balances
-        const { balance: { amount: strideFinalStrideBalance } = { amount: "0" } } =
-            await stridejs.query.cosmos.bank.v1beta1.balance({
-                address: stridejs.address,
-                denom: USTRD,
-            });
+        const strideFinalStrdBalance = await getBalance({
+            client: stridejs,
+            address: stridejs.address,
+            denom: USTRD,
+        });
 
-        const { balance: { amount: strideFinalAtomBalance } = { amount: "0" } } =
-            await stridejs.query.cosmos.bank.v1beta1.balance({
-                address: stridejs.address,
-                denom: ATOM_DENOM_ON_STRIDE,
-            });
+        const strideFinalAtomBalance = await getBalance({
+            client: stridejs,
+            address: stridejs.address,
+            denom: ATOM_DENOM_ON_STRIDE,
+        });
 
-        const gaiaFinalAtomBalance = await gaiajs.query.bank.balance(gaiajs.address, UATOM);
+        const gaiaFinalStrdBalance = await getBalance({
+            client: gaiajs,
+            address: gaiajs.address,
+            denom: STRD_DENOM_ON_GAIA,
+        });
+
+        const gaiaFinalAtomBalance = await getBalance({
+            client: gaiajs,
+            address: gaiajs.address,
+            denom: UATOM,
+        });
 
         console.log("Final balances:");
-        console.log(`Stride USTRD: ${strideFinalStrideBalance}`);
+        console.log(`Stride USTRD: ${strideFinalStrdBalance}`);
         console.log(`Stride ATOM: ${strideFinalAtomBalance}`);
-        console.log(`Gaia ATOM: ${gaiaFinalAtomBalance.amount}`);
+        console.log(`Gaia STRD: ${gaiaFinalStrdBalance}`);
+        console.log(`Gaia ATOM: ${gaiaFinalAtomBalance}`);
 
         // Calculate and verify balance changes
-        const strideBalanceDiff = BigInt(strideInitialStrideBalance) - BigInt(strideFinalStrideBalance);
+        const strideStrdBalanceDiff = BigInt(strideFinalStrdBalance) - BigInt(strideInitialStrdBalance);
         const strideAtomBalanceDiff = BigInt(strideFinalAtomBalance) - BigInt(strideInitialAtomBalance);
-        const gaiaAtomBalanceDiff = BigInt(gaiaInitialAtomBalance.amount) - BigInt(gaiaFinalAtomBalance.amount);
+        const gaiaStrdBalanceDiff = BigInt(gaiaFinalStrdBalance) - BigInt(gaiaInitialStrdBalance);
+        const gaiaAtomBalanceDiff = BigInt(gaiaFinalAtomBalance) - BigInt(gaiaInitialAtomBalance);
 
         console.log("Balance differences:");
-        console.log(`Stride USTRD diff: ${strideBalanceDiff}`);
+        console.log(`Stride STRD diff: ${strideStrdBalanceDiff}`);
         console.log(`Stride ATOM diff: ${strideAtomBalanceDiff}`);
+        console.log(`Gaia STRD diff: ${gaiaStrdBalanceDiff}`);
         console.log(`Gaia ATOM diff: ${gaiaAtomBalanceDiff}`);
 
-        // Verify the transfers worked (accounting for gas fees)
-        // USTRD should decrease on Stride by at least the transfer amount (plus gas fees)
-        expect(strideBalanceDiff).toBeGreaterThanOrEqual(BigInt(transferAmount));
-        expect(strideBalanceDiff).toBeLessThan(BigInt(transferAmount + 1000000)); // increased gas fee limit
+        // Verify the transfers worked
+        // STRD sent out from Stride → negative balance change
+        expect(strideStrdBalanceDiff).toBeLessThanOrEqual(BigInt(-transferAmount));
+        expect(strideStrdBalanceDiff).toBeGreaterThan(BigInt(-transferAmount - 1000000)); // gas fee limit
 
-        // ATOM should increase on Stride by exactly the transfer amount
+        // ATOM received on Stride → positive balance change
         expect(strideAtomBalanceDiff).toBe(BigInt(transferAmount));
 
-        // ATOM should decrease on Gaia by at least the transfer amount (plus gas fees)
-        expect(gaiaAtomBalanceDiff).toBeGreaterThanOrEqual(BigInt(transferAmount));
-        expect(gaiaAtomBalanceDiff).toBeLessThan(BigInt(transferAmount + 1000000)); // increased gas fee limit
+        // STRD received on Gaia → positive balance change
+        expect(gaiaStrdBalanceDiff).toBe(BigInt(transferAmount));
+
+        // ATOM sent out from Gaia → negative balance change
+        expect(gaiaAtomBalanceDiff).toBeLessThanOrEqual(BigInt(-transferAmount));
+        expect(gaiaAtomBalanceDiff).toBeGreaterThan(BigInt(-transferAmount - 1000000)); // gas fee limit
     }, 120_000);
 
     test("Liquid Stake Mint and Transfer", async () => {
@@ -245,17 +296,17 @@ describe("Core Tests", () => {
         const stakeAmount = 10000000;
 
         // Get initial balances
-        const { balance: { amount: strideInitialAtomBalance } = { amount: "0" } } =
-            await stridejs.query.cosmos.bank.v1beta1.balance({
-                address: stridejs.address,
-                denom: ATOM_DENOM_ON_STRIDE,
-            });
+        const strideInitialAtomBalance = await getBalance({
+            client: stridejs,
+            address: stridejs.address,
+            denom: ATOM_DENOM_ON_STRIDE,
+        });
 
-        const { balance: { amount: strideInitialStAtomBalance } = { amount: "0" } } =
-            await stridejs.query.cosmos.bank.v1beta1.balance({
-                address: stridejs.address,
-                denom: "stuatom", // stATOM denom
-            });
+        const strideInitialStAtomBalance = await getBalance({
+            client: stridejs,
+            address: stridejs.address,
+            denom: "stuatom",
+        });
 
         // Get delegation address
         const { hostZone } = await stridejs.query.stride.stakeibc.hostZone({
@@ -264,12 +315,16 @@ describe("Core Tests", () => {
         const delegationAddress = hostZone?.delegationIcaAddress || "";
 
         // Get initial delegation ICA balance
-        const delegationInitialBalance = await gaiajs.query.bank.balance(delegationAddress, UATOM);
+        const delegationInitialBalance = await getBalance({
+            client: gaiajs,
+            address: delegationAddress,
+            denom: UATOM,
+        });
 
         console.log("Initial balances:");
         console.log(`Stride ATOM: ${strideInitialAtomBalance}`);
         console.log(`Stride stATOM: ${strideInitialStAtomBalance}`);
-        console.log(`Delegation ICA ATOM: ${delegationInitialBalance.amount}`);
+        console.log(`Delegation ICA ATOM: ${delegationInitialBalance}`);
 
         // Perform liquid staking
         const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
@@ -286,11 +341,11 @@ describe("Core Tests", () => {
         const maxAttempts = 60; // 30 seconds max wait time
 
         while (attempts < maxAttempts) {
-            const { balance: { amount: currentStAtomBalance } = { amount: "0" } } =
-                await stridejs.query.cosmos.bank.v1beta1.balance({
-                    address: stridejs.address,
-                    denom: "stuatom",
-                });
+            const currentStAtomBalance = await getBalance({
+                client: stridejs,
+                address: stridejs.address,
+                denom: "stuatom",
+            });
 
             if (BigInt(currentStAtomBalance) > BigInt(strideInitialStAtomBalance)) {
                 strideFinalStAtomBalance = currentStAtomBalance;
@@ -306,11 +361,11 @@ describe("Core Tests", () => {
         }
 
         // Get final ATOM balance on Stride
-        const { balance: { amount: strideFinalAtomBalance } = { amount: "0" } } =
-            await stridejs.query.cosmos.bank.v1beta1.balance({
-                address: stridejs.address,
-                denom: ATOM_DENOM_ON_STRIDE,
-            });
+        const strideFinalAtomBalance = await getBalance({
+            client: stridejs,
+            address: stridejs.address,
+            denom: ATOM_DENOM_ON_STRIDE,
+        });
 
         // Wait for tokens to be transferred to the delegation account
         let delegationFinalBalance;
@@ -318,9 +373,13 @@ describe("Core Tests", () => {
         const delegationMaxAttempts = 120; // 60 seconds max wait time
 
         while (delegationAttempts < delegationMaxAttempts) {
-            delegationFinalBalance = await gaiajs.query.bank.balance(delegationAddress, UATOM);
+            delegationFinalBalance = await getBalance({
+                client: gaiajs,
+                address: delegationAddress,
+                denom: UATOM,
+            });
 
-            if (BigInt(delegationFinalBalance.amount) > BigInt(delegationInitialBalance.amount)) {
+            if (BigInt(delegationFinalBalance) > BigInt(delegationInitialBalance)) {
                 break;
             }
 
@@ -335,12 +394,12 @@ describe("Core Tests", () => {
         console.log("Final balances:");
         console.log(`Stride ATOM: ${strideFinalAtomBalance}`);
         console.log(`Stride stATOM: ${strideFinalStAtomBalance}`);
-        console.log(`Delegation ICA ATOM: ${delegationFinalBalance.amount}`);
+        console.log(`Delegation ICA ATOM: ${delegationFinalBalance}`);
 
         // Calculate balance differences
-        const strideAtomBalanceDiff = BigInt(strideInitialAtomBalance) - BigInt(strideFinalAtomBalance);
+        const strideAtomBalanceDiff = BigInt(strideFinalAtomBalance) - BigInt(strideInitialAtomBalance);
         const strideStAtomBalanceDiff = BigInt(strideFinalStAtomBalance) - BigInt(strideInitialStAtomBalance);
-        const delegationBalanceDiff = BigInt(delegationFinalBalance.amount) - BigInt(delegationInitialBalance.amount);
+        const delegationBalanceDiff = BigInt(delegationFinalBalance) - BigInt(delegationInitialBalance);
 
         console.log("Balance differences:");
         console.log(`Stride ATOM diff: ${strideAtomBalanceDiff}`);
@@ -348,8 +407,8 @@ describe("Core Tests", () => {
         console.log(`Delegation ICA diff: ${delegationBalanceDiff}`);
 
         // Verify balance changes
-        expect(strideAtomBalanceDiff).toBe(BigInt(stakeAmount)); // ATOM should decrease
-        expect(strideStAtomBalanceDiff).toBe(BigInt(stakeAmount)); // stATOM should increase
+        expect(strideAtomBalanceDiff).toBe(BigInt(-stakeAmount)); // ATOM should decrease (sent for staking)
+        expect(strideStAtomBalanceDiff).toBe(BigInt(stakeAmount)); // stATOM should increase (minted)
         expect(delegationBalanceDiff).toBe(BigInt(stakeAmount)); // Delegation ICA should receive tokens
     }, 180_000); // 3 minutes timeout
 });
