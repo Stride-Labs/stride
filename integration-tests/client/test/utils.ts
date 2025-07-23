@@ -229,3 +229,80 @@ export async function moduleAddress(
     ).account as ModuleAccount
   ).baseAccount?.address!;
 }
+
+/**
+ * Generic function to wait for a state change by retrying a function until condition is met
+ */
+export async function waitForStateChange<T>(
+    checkFunction: () => Promise<T>,
+    condition: (result: T) => boolean,
+    maxAttempts: number = 60,
+    intervalMs: number = 500,
+    timeoutErrorMessage: string = "Timed out waiting for state change"
+): Promise<T> {
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    const result = await checkFunction();
+
+    if (condition(result)) {
+      return result;
+    }
+
+    attempts++;
+    await sleep(intervalMs);
+  }
+
+  throw new Error(`${timeoutErrorMessage} after ${maxAttempts} attempts`);
+}
+
+/**
+ * Wait for a balance to change (increase from initial value)
+ */
+export async function waitForBalanceChange({
+                                             client,
+                                             address,
+                                             denom,
+                                             maxAttempts = 60,
+                                             intervalMs = 500,
+                                           }: {
+  client: StrideClient | CosmosClient;
+  address: string;
+  denom: string;
+  maxAttempts?: number;
+  intervalMs?: number;
+}): Promise<string> {
+  // Get initial balance inside the function
+  const initialBalance = await getBalance({ client, address, denom });
+
+  return waitForStateChange(
+      async () => getBalance({ client, address, denom }),
+      (balance) => BigInt(balance) > BigInt(initialBalance),
+      maxAttempts,
+      intervalMs,
+      `Timed out waiting for balance change for ${denom} at ${address}`
+  );
+}
+
+// Utility function to get balance as a string.
+export async function getBalance({
+                                   client,
+                                   address,
+                                   denom,
+                                 }: {
+  client: StrideClient | CosmosClient;
+  address: string;
+  denom: string;
+}): Promise<string> {
+  if (client instanceof StrideClient) {
+    const { balance: { amount } = { amount: "0" } } =
+        await client.query.cosmos.bank.v1beta1.balance({
+          address,
+          denom,
+        });
+    return amount;
+  } else {
+    const balance = await client.query.bank.balance(address, denom);
+    return balance.amount;
+  }
+}
