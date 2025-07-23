@@ -263,17 +263,18 @@ export async function waitForBalanceChange({
                                              client,
                                              address,
                                              denom,
-                                             initialBalance,
                                              maxAttempts = 60,
                                              intervalMs = 500,
                                            }: {
   client: StrideClient | CosmosClient;
   address: string;
   denom: string;
-  initialBalance: string;
   maxAttempts?: number;
   intervalMs?: number;
 }): Promise<string> {
+  // Get initial balance inside the function
+  const initialBalance = await getBalance({ client, address, denom });
+
   return waitForStateChange(
       async () => getBalance({ client, address, denom }),
       (balance) => BigInt(balance) > BigInt(initialBalance),

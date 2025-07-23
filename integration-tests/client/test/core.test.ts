@@ -321,8 +321,7 @@ describe("Core Tests", () => {
             client: stridejs,
             address: stridejs.address,
             denom: "stuatom",
-            initialBalance: strideInitialStAtomBalance,
-            maxAttempts: 60, // 30 seconds
+            maxAttempts: 60,
         });
 
         // Get final ATOM balance on Stride
@@ -337,7 +336,6 @@ describe("Core Tests", () => {
             client: gaiajs,
             address: delegationAddress,
             denom: UATOM,
-            initialBalance: delegationInitialBalance,
             maxAttempts: 120, // 60 seconds
         });
 
