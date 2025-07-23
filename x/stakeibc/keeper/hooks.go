@@ -89,9 +89,6 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// Do transfers for all reward and swapped tokens defined by the trade routes every stride epoch
 		k.TransferAllRewardTokens(ctx)
 	}
-	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
-		k.AuctionOffRewardCollectorBalance(ctx)
-	}
 }
 
 func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
