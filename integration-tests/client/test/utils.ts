@@ -1,4 +1,4 @@
-import { DeliverTxResponse, SigningStargateClient } from "@cosmjs/stargate";
+import { DeliverTxResponse, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import {
   coinsFromString,
   convertBech32Prefix,
@@ -10,8 +10,9 @@ import {
   StrideClient,
 } from "stridejs";
 import { ModuleAccount } from "stridejs/dist/types/codegen/cosmos/auth/v1beta1/auth";
+import { ibc } from "stridejs";
 import { expect } from "vitest";
-import { TRANSFER_CHANNEL } from "./consts";
+import { DEFAULT_FEE, DEFAULT_GAS, TRANSFER_CHANNEL, TRANSFER_PORT, USTRD } from "./consts";
 import { newTransferMsg } from "./msgs";
 import { Chain, CosmosClient } from "./types";
 import { sleep } from "stridejs";
@@ -57,6 +58,7 @@ export async function waitForChain(client: StrideClient | CosmosClient, denom: s
   }
 }
 
+// TODO: Deprecate in favor of assertOpenTransferChannel
 /**
  * Waits for the chain to start by continuously sending transactions until .
  *
@@ -111,15 +113,37 @@ export async function waitForIbc(
 }
 
 /**
+ * Waits for the IBC channels to be open on either side
+ *
+ * @param {StrideClient | CosmosClient} client The client instance.
+ * @param {string} denom The denomination of the coins to send.
+ */
+export async function assertOpenTransferChannel(client: StrideClient | CosmosClient, channelId: string): Promise<void> {
+  const stateOpen = ibc.core.channel.v1.State.STATE_OPEN;
+  if (client instanceof StrideClient) {
+    const { channel } = await client.query.ibc.core.channel.v1.channel({
+      channelId: channelId,
+      portId: TRANSFER_PORT,
+    });
+    expect(channel?.state).to.equal(stateOpen, `Stride transfer ${channelId} should be open`);
+  } else {
+    const channel = await client.query.ibc.channel.channel(TRANSFER_PORT, channelId);
+    expect(channel?.channel?.state).to.equal(stateOpen, `Host transfer ${channelId} should be open`);
+  }
+}
+
+/**
  * Submit a transaction and wait for it to be broadcasted and executed.
  *
  * @param client The Stride or cosmos client
  * @param msgs The message or messages array
  * @param signer The address of the signer. Only required for cosmos client
+ * @param fee Optional fee to use for the transaction
  */
 export async function submitTxAndExpectSuccess(
   client: StrideClient | CosmosClient,
   msgs: EncodeObject | EncodeObject[],
+  fee?: StdFee,
 ): Promise<
   DeliverTxResponse & {
     ibcResponses: Array<Promise<IbcResponse>>;
@@ -127,8 +151,15 @@ export async function submitTxAndExpectSuccess(
 > {
   msgs = Array.isArray(msgs) ? msgs : [msgs];
 
+  const feeDenom = isCosmosClient(client) ? client.denom : USTRD;
+  const defaultFee: StdFee = {
+    amount: [{ amount: DEFAULT_FEE.toString(), denom: feeDenom }],
+    gas: DEFAULT_GAS,
+  };
+  const txFee = fee || defaultFee;
+
   if (isCosmosClient(client)) {
-    const tx = await client.client.signAndBroadcast(client.address, msgs, 2);
+    const tx = await client.client.signAndBroadcast(client.address, msgs, txFee);
 
     if (tx.code !== 0) {
       console.error(tx.rawLog);
@@ -141,7 +172,7 @@ export async function submitTxAndExpectSuccess(
       ibcResponses: getTxIbcResponses(client.client, tx, 30_000, 50),
     };
   } else {
-    const tx = await client.signAndBroadcast(msgs, 2);
+    const tx = await client.signAndBroadcast(msgs, txFee);
 
     if (tx.code !== 0) {
       console.error(tx.rawLog);

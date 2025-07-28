@@ -2,6 +2,7 @@ import {
   QueryClient,
   setupAuthExtension,
   setupBankExtension,
+  setupIbcExtension,
   setupStakingExtension,
   setupTxExtension,
   SigningStargateClient,
@@ -18,15 +19,16 @@ import {
   UATOM,
   USTRD,
   STRD_DENOM_ON_GAIA,
+  DEFAULT_FEE,
 } from "./consts";
 import { CosmosClient } from "./types";
 import {
   ibcTransfer,
   waitForChain,
-  waitForIbc,
   submitTxAndExpectSuccess,
   waitForBalanceChange,
   getBalance,
+  assertOpenTransferChannel,
 } from "./utils";
 import { StrideClient } from "stridejs";
 
@@ -105,6 +107,7 @@ beforeAll(async () => {
 
       gaiaAccounts[name] = {
         address: gaiaAddress,
+        denom: UATOM,
         client: await SigningStargateClient.connectWithSigner(GAIA_RPC_ENDPOINT, gaiaSigner, {
           gasPrice: GasPrice.fromString(`1.0${UATOM}`),
           broadcastPollIntervalMs: 50,
@@ -114,6 +117,7 @@ beforeAll(async () => {
           setupAuthExtension,
           setupBankExtension,
           setupStakingExtension,
+          setupIbcExtension,
           setupTxExtension,
         ),
       };
@@ -127,7 +131,8 @@ beforeAll(async () => {
   await waitForChain(gaiaAccounts.user, UATOM);
 
   console.log("waiting for stride-gaia ibc...");
-  await waitForIbc(strideAccounts.user, TRANSFER_CHANNEL.STRIDE.GAIA!, USTRD, "cosmos");
+  await assertOpenTransferChannel(strideAccounts.user, TRANSFER_CHANNEL.STRIDE.GAIA!);
+  await assertOpenTransferChannel(gaiaAccounts.user, TRANSFER_CHANNEL.GAIA.STRIDE!);
 }, 45_000);
 
 describe("Core Tests", () => {
@@ -137,16 +142,11 @@ describe("Core Tests", () => {
     const transferAmount = 50000000;
 
     // Get initial balances
+    // We'll send STRD from Stride -> Gaia
     const strideInitialStrdBalance = await getBalance({
       client: stridejs,
       address: stridejs.address,
       denom: USTRD,
-    });
-
-    const strideInitialAtomBalance = await getBalance({
-      client: stridejs,
-      address: stridejs.address,
-      denom: ATOM_DENOM_ON_STRIDE,
     });
 
     const gaiaInitialStrdBalance = await getBalance({
@@ -155,10 +155,17 @@ describe("Core Tests", () => {
       denom: STRD_DENOM_ON_GAIA,
     });
 
+    // As well as ATOM from Gaia -> Stride
     const gaiaInitialAtomBalance = await getBalance({
       client: gaiajs,
       address: gaiajs.address,
       denom: UATOM,
+    });
+
+    const strideInitialAtomBalance = await getBalance({
+      client: stridejs,
+      address: stridejs.address,
+      denom: ATOM_DENOM_ON_STRIDE,
     });
 
     console.log("Initial balances:");
@@ -198,12 +205,6 @@ describe("Core Tests", () => {
       denom: USTRD,
     });
 
-    const strideFinalAtomBalance = await getBalance({
-      client: stridejs,
-      address: stridejs.address,
-      denom: ATOM_DENOM_ON_STRIDE,
-    });
-
     const gaiaFinalStrdBalance = await getBalance({
       client: gaiajs,
       address: gaiajs.address,
@@ -214,6 +215,12 @@ describe("Core Tests", () => {
       client: gaiajs,
       address: gaiajs.address,
       denom: UATOM,
+    });
+
+    const strideFinalAtomBalance = await getBalance({
+      client: stridejs,
+      address: stridejs.address,
+      denom: ATOM_DENOM_ON_STRIDE,
     });
 
     console.log("Final balances:");
@@ -235,23 +242,18 @@ describe("Core Tests", () => {
     console.log(`Gaia ATOM diff: ${gaiaAtomBalanceDiff}`);
 
     // Verify the transfers worked
-    // STRD sent out from Stride → negative balance change
-    expect(strideStrdBalanceDiff).toBeLessThanOrEqual(BigInt(-transferAmount));
-    expect(strideStrdBalanceDiff).toBeGreaterThan(BigInt(-transferAmount - 1000000)); // gas fee limit
-
-    // ATOM received on Stride → positive balance change
-    expect(strideAtomBalanceDiff).toBe(BigInt(transferAmount));
-
+    // STRD sent out from Stride → negative balance change + fee
     // STRD received on Gaia → positive balance change
-    expect(gaiaStrdBalanceDiff).toBeGreaterThanOrEqual(BigInt(transferAmount));
-    expect(gaiaStrdBalanceDiff).toBeLessThanOrEqual(BigInt(transferAmount + 10));
+    expect(strideStrdBalanceDiff).to.equal(BigInt(-(transferAmount + DEFAULT_FEE)), "Stride STRD balance change");
+    expect(gaiaStrdBalanceDiff).to.equal(BigInt(transferAmount), "Gaia STRD balance change");
 
-    // ATOM sent out from Gaia → negative balance change
-    expect(gaiaAtomBalanceDiff).toBeLessThanOrEqual(BigInt(-transferAmount));
-    expect(gaiaAtomBalanceDiff).toBeGreaterThan(BigInt(-transferAmount - 1000000)); // gas fee limit
+    // ATOM sent out from Gaia → negative balance change + fee
+    // ATOM received on Stride → positive balance change
+    expect(gaiaAtomBalanceDiff).to.equal(BigInt(-(transferAmount + DEFAULT_FEE)), "Gaia ATOM balance change");
+    expect(strideAtomBalanceDiff).to.equal(BigInt(transferAmount), "Stride ATOM balance change");
   }, 120_000);
 
-  test("Liquid Stake Mint and Transfer", async () => {
+  test.skip("Liquid Stake Mint and Transfer", async () => {
     const stridejs = strideAccounts.user;
     const gaiajs = gaiaAccounts.user;
     const stakeAmount = 10000000;

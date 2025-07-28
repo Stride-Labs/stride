@@ -3,6 +3,7 @@ import {
   QueryClient,
   setupAuthExtension,
   setupBankExtension,
+  setupIbcExtension,
   setupStakingExtension,
   setupTxExtension,
   SigningStargateClient,
@@ -136,6 +137,7 @@ beforeAll(async () => {
 
       gaiaAccounts[name] = {
         address: gaiaAddress,
+        denom: UATOM,
         client: await SigningStargateClient.connectWithSigner(GAIA_RPC_ENDPOINT, gaiaSigner, {
           gasPrice: GasPrice.fromString(`1.0${UATOM}`),
           broadcastPollIntervalMs: 50,
@@ -145,6 +147,7 @@ beforeAll(async () => {
           setupAuthExtension,
           setupBankExtension,
           setupStakingExtension,
+          setupIbcExtension,
           setupTxExtension,
         ),
       };
@@ -157,6 +160,7 @@ beforeAll(async () => {
 
       osmoAccounts[name] = {
         address: osmoAddress,
+        denom: UOSMO,
         client: await SigningStargateClient.connectWithSigner(OSMO_RPC_ENDPOINT, osmoSigner, {
           gasPrice: GasPrice.fromString(`1.0${UOSMO}`),
           broadcastPollIntervalMs: 50,
@@ -167,6 +171,7 @@ beforeAll(async () => {
           setupAuthExtension,
           setupBankExtension,
           setupStakingExtension,
+          setupIbcExtension,
           setupTxExtension,
         ),
       };

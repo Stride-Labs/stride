@@ -13,7 +13,10 @@ export const USTRD = "ustrd";
 export const UATOM = "uatom";
 export const UOSMO = "uosmo";
 
-export const DEFAULT_FEE = "1000000";
+export const DEFAULT_FEE = 2000000;
+export const DEFAULT_GAS = "2000000";
+
+export const TRANSFER_PORT = "transfer";
 
 export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {
   STRIDE: { GAIA: "channel-0", OSMO: "channel-1" },
@@ -30,7 +33,7 @@ export const CONNECTION_ID: Record<Chain, Partial<Record<Chain, string>>> = {
 export const ATOM_DENOM_ON_STRIDE = ibcDenom(
   [
     {
-      incomingPortId: "transfer",
+      incomingPortId: TRANSFER_PORT,
       incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"]!,
     },
   ],
@@ -40,11 +43,11 @@ export const ATOM_DENOM_ON_STRIDE = ibcDenom(
 export const ATOM_DENOM_ON_OSMOSIS = ibcDenom(
   [
     {
-      incomingPortId: "transfer",
+      incomingPortId: TRANSFER_PORT,
       incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"]!,
     },
     {
-      incomingPortId: "transfer",
+      incomingPortId: TRANSFER_PORT,
       incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"]!,
     },
   ],
@@ -54,7 +57,7 @@ export const ATOM_DENOM_ON_OSMOSIS = ibcDenom(
 export const STRD_DENOM_ON_OSMOSIS = ibcDenom(
   [
     {
-      incomingPortId: "transfer",
+      incomingPortId: TRANSFER_PORT,
       incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"]!,
     },
   ],
@@ -64,7 +67,7 @@ export const STRD_DENOM_ON_OSMOSIS = ibcDenom(
 export const STRD_DENOM_ON_GAIA = ibcDenom(
   [
     {
-      incomingPortId: "transfer",
+      incomingPortId: TRANSFER_PORT,
       incomingChannelId: TRANSFER_CHANNEL["GAIA"]["STRIDE"]!,
     },
   ],
@@ -74,7 +77,7 @@ export const STRD_DENOM_ON_GAIA = ibcDenom(
 export const OSMO_DENOM_ON_STRIDE = ibcDenom(
   [
     {
-      incomingPortId: "transfer",
+      incomingPortId: TRANSFER_PORT,
       incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["OSMO"]!,
     },
   ],
