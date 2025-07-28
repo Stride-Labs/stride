@@ -152,7 +152,7 @@ metadata:
   name: {{ $appName }}
   namespace: {{ $root.namespace }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "360"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "360"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "360"
@@ -162,7 +162,7 @@ spec:
     - host: {{ $chain.name }}-api.internal.stridenet.co
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $appName }}
@@ -172,7 +172,7 @@ spec:
     - host: {{ $chain.name }}-rpc.internal.stridenet.co
       http:
         paths:
-          - pathType: Prefix
+          - pathType: ImplementationSpecific
             backend:
               service:
                 name: {{ $appName }}
