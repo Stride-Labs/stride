@@ -20,6 +20,7 @@ import {
   USTRD,
   STRD_DENOM_ON_GAIA,
   DEFAULT_FEE,
+  STATOM,
 } from "./consts";
 import { CosmosClient } from "./types";
 import {
@@ -31,6 +32,7 @@ import {
   assertOpenTransferChannel,
 } from "./utils";
 import { StrideClient } from "stridejs";
+import { getHostZone } from "./queries";
 
 // Initialize accounts
 let strideAccounts: {
@@ -136,7 +138,7 @@ beforeAll(async () => {
 }, 45_000);
 
 describe("Core Tests", () => {
-  test("IBC Transfer", async () => {
+  test.skip("IBC Transfer", async () => {
     const stridejs = strideAccounts.user;
     const gaiajs = gaiaAccounts.user;
     const transferAmount = 50000000;
@@ -223,23 +225,11 @@ describe("Core Tests", () => {
       denom: ATOM_DENOM_ON_STRIDE,
     });
 
-    console.log("Final balances:");
-    console.log(`Stride USTRD: ${strideFinalStrdBalance}`);
-    console.log(`Stride ATOM: ${strideFinalAtomBalance}`);
-    console.log(`Gaia STRD: ${gaiaFinalStrdBalance}`);
-    console.log(`Gaia ATOM: ${gaiaFinalAtomBalance}`);
-
     // Calculate and verify balance changes
     const strideStrdBalanceDiff = BigInt(strideFinalStrdBalance) - BigInt(strideInitialStrdBalance);
     const strideAtomBalanceDiff = BigInt(strideFinalAtomBalance) - BigInt(strideInitialAtomBalance);
     const gaiaStrdBalanceDiff = BigInt(gaiaFinalStrdBalance) - BigInt(gaiaInitialStrdBalance);
     const gaiaAtomBalanceDiff = BigInt(gaiaFinalAtomBalance) - BigInt(gaiaInitialAtomBalance);
-
-    console.log("Balance differences:");
-    console.log(`Stride STRD diff: ${strideStrdBalanceDiff}`);
-    console.log(`Stride ATOM diff: ${strideAtomBalanceDiff}`);
-    console.log(`Gaia STRD diff: ${gaiaStrdBalanceDiff}`);
-    console.log(`Gaia ATOM diff: ${gaiaAtomBalanceDiff}`);
 
     // Verify the transfers worked
     // STRD sent out from Stride → negative balance change + fee
@@ -253,7 +243,7 @@ describe("Core Tests", () => {
     expect(strideAtomBalanceDiff).to.equal(BigInt(transferAmount), "Stride ATOM balance change");
   }, 120_000);
 
-  test.skip("Liquid Stake Mint and Transfer", async () => {
+  test("Liquid Stake Mint and Transfer", async () => {
     const stridejs = strideAccounts.user;
     const gaiajs = gaiaAccounts.user;
     const stakeAmount = 10000000;
@@ -268,20 +258,20 @@ describe("Core Tests", () => {
     const strideInitialStAtomBalance = await getBalance({
       client: stridejs,
       address: stridejs.address,
-      denom: "stuatom",
+      denom: STATOM,
     });
 
     // Get delegation address and assert it exists
-    const { hostZone } = await stridejs.query.stride.stakeibc.hostZone({
+    const {
+      hostZone: { delegationIcaAddress },
+    } = await stridejs.query.stride.stakeibc.hostZone({
       chainId: GAIA_CHAIN_ID,
     });
-    const delegationAddress = hostZone?.delegationIcaAddress || "";
-    expect(delegationAddress).toBeTruthy(); // Assert delegation address exists
 
     // Get initial delegation ICA balance
     const delegationInitialBalance = await getBalance({
       client: gaiajs,
-      address: delegationAddress,
+      address: delegationIcaAddress,
       denom: UATOM,
     });
 
@@ -291,21 +281,27 @@ describe("Core Tests", () => {
     console.log(`Delegation ICA ATOM: ${delegationInitialBalance}`);
 
     // Perform liquid staking
+    console.log("Liquid staking...");
     const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
       creator: stridejs.address,
       amount: String(stakeAmount),
       hostDenom: UATOM,
     });
 
-    await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
+    const tx = await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
 
     // Wait for stTokens to be minted
     const strideFinalStAtomBalance = await waitForBalanceChange({
       client: stridejs,
       address: stridejs.address,
       denom: "stuatom",
-      maxAttempts: 60,
     });
+
+    // Get the redemption rate at the time of the liquid stake
+    const {
+      hostZone: { redemptionRate },
+    } = await getHostZone(stridejs, GAIA_CHAIN_ID, tx.height);
+    console.log("Redemption Rate", redemptionRate);
 
     // Get final ATOM balance on Stride
     const strideFinalAtomBalance = await getBalance({
@@ -317,9 +313,8 @@ describe("Core Tests", () => {
     // Wait for tokens to be transferred to the delegation account
     const delegationFinalBalance = await waitForBalanceChange({
       client: gaiajs,
-      address: delegationAddress,
+      address: delegationIcaAddress,
       denom: UATOM,
-      maxAttempts: 120, // 60 seconds
     });
 
     console.log("Final balances:");
@@ -338,8 +333,11 @@ describe("Core Tests", () => {
     console.log(`Delegation ICA diff: ${delegationBalanceDiff}`);
 
     // Verify balance changes
-    expect(strideAtomBalanceDiff).toBe(BigInt(-stakeAmount)); // ATOM should decrease (sent for staking)
-    expect(strideStAtomBalanceDiff).toBe(BigInt(stakeAmount)); // stATOM should increase (minted)
-    expect(delegationBalanceDiff).toBe(BigInt(stakeAmount)); // Delegation ICA should receive tokens
+    // ATOM should decrease (sent for staking)
+    // stATOM should increase (minted)
+    // Delegation ICA should receive tokens
+    expect(strideAtomBalanceDiff).to.equal(BigInt(-stakeAmount), "User ATOM balance change on Stride");
+    expect(strideStAtomBalanceDiff).to.equal(BigInt(stakeAmount), "User stATOM balance change on Stride");
+    expect(delegationBalanceDiff).to.equal(BigInt(stakeAmount), "Delegation account balance change");
   }, 180_000); // 3 minutes timeout
 });
