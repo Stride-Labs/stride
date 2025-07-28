@@ -88,15 +88,7 @@ export function newRegisterTokenPriceQueryMsg({
  * @param weights - Array of corresponding weights for each token in the pool (e.g. [1, 1])
  * @returns The gamm pool creation message
  */
-export function newGammPoolMsg({
-  sender,
-  tokens,
-  weights,
-}: {
-  sender: string;
-  tokens: string[];
-  weights: number[];
-}) {
+export function newGammPoolMsg({ sender, tokens, weights }: { sender: string; tokens: string[]; weights: number[] }) {
   if (tokens.length !== weights.length) {
     throw new Error("tokens and weights arrays must have the same length");
   }
@@ -106,29 +98,21 @@ export function newGammPoolMsg({
     weight: weights[index].toString(),
   }));
 
-  return osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool(
-    {
-      sender: sender,
-      poolAssets: poolAssets,
-      futurePoolGovernor: "",
-      poolParams: {
-        swapFee: "0.001",
-        exitFee: "0",
-      },
+  return osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool({
+    sender: sender,
+    poolAssets: poolAssets,
+    futurePoolGovernor: "",
+    poolParams: {
+      swapFee: "0.001",
+      exitFee: "0",
     },
-  );
+  });
 }
 
 /**
  * denom1 is always "uosmo"
  */
-export function newConcentratedLiquidityPoolMsg({
-  sender,
-  denom0,
-}: {
-  sender: string;
-  denom0: string;
-}) {
+export function newConcentratedLiquidityPoolMsg({ sender, denom0 }: { sender: string; denom0: string }) {
   return osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
     {
       sender,
@@ -166,15 +150,13 @@ export function addConcentratedLiquidityPositionMsg({
     throw new Error("tokenMinAmount1 bigger than provided");
   }
 
-  return osmosis.concentratedliquidity.v1beta1.MessageComposer.withTypeUrl.createPosition(
-    {
-      sender,
-      poolId,
-      lowerTick: -108000000n,
-      upperTick: 342000000n,
-      tokensProvided,
-      tokenMinAmount0,
-      tokenMinAmount1,
-    },
-  );
+  return osmosis.concentratedliquidity.v1beta1.MessageComposer.withTypeUrl.createPosition({
+    sender,
+    poolId,
+    lowerTick: -108000000n,
+    upperTick: 342000000n,
+    tokensProvided,
+    tokenMinAmount0,
+    tokenMinAmount1,
+  });
 }

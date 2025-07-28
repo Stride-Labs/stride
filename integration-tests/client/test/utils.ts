@@ -17,11 +17,7 @@ import { Chain, CosmosClient } from "./types";
 import { sleep } from "stridejs";
 
 export function isCosmosClient(client: any): client is CosmosClient {
-  return (
-    "address" in client &&
-    "client" in client &&
-    client.client instanceof SigningStargateClient
-  );
+  return "address" in client && "client" in client && client.client instanceof SigningStargateClient;
 }
 
 /**
@@ -30,10 +26,7 @@ export function isCosmosClient(client: any): client is CosmosClient {
  * @param {StrideClient | CosmosClient} client The client instance.
  * @param {string} denom The denomination of the coins to send.
  */
-export async function waitForChain(
-  client: StrideClient | CosmosClient,
-  denom: string,
-): Promise<void> {
+export async function waitForChain(client: StrideClient | CosmosClient, denom: string): Promise<void> {
   // the best way to ensure a chain is up is to successfully send a tx
 
   const msg = cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
@@ -96,11 +89,7 @@ export async function waitForIbc(
         }
         ibcAck = await tx.ibcResponses[0];
       } else if (isCosmosClient(client)) {
-        const tx = await client.client.signAndBroadcast(
-          client.address,
-          [msg],
-          2,
-        );
+        const tx = await client.client.signAndBroadcast(client.address, [msg], 2);
         if (tx.code === 0) {
           break;
         }
@@ -113,9 +102,7 @@ export async function waitForIbc(
       expect(ibcAck.type).toBe("ack");
       expect(ibcAck.tx.code).toBe(0);
 
-      expect(
-        getValueFromEvents(ibcAck.tx.events, "fungible_token_packet.success"),
-      ).toBe("\u0001");
+      expect(getValueFromEvents(ibcAck.tx.events, "fungible_token_packet.success")).toBe("\u0001");
     } catch (e) {
       // signAndBroadcast might throw if the RPC is not up yet
       console.log(e);
@@ -205,22 +192,15 @@ export async function ibcTransfer({
 
   const isStrideClient = "signingStargateClient" in client;
 
-  let ibcAck = isStrideClient
-    ? await tx.ibcResponses[0]
-    : await getTxIbcResponses(client.client, tx, 30_000, 50)[0];
+  let ibcAck = isStrideClient ? await tx.ibcResponses[0] : await getTxIbcResponses(client.client, tx, 30_000, 50)[0];
 
   expect(ibcAck.type).toBe("ack");
   expect(ibcAck.tx.code).toBe(0);
 
-  expect(
-    getValueFromEvents(ibcAck.tx.events, "fungible_token_packet.success"),
-  ).toBe("\u0001");
+  expect(getValueFromEvents(ibcAck.tx.events, "fungible_token_packet.success")).toBe("\u0001");
 }
 
-export async function moduleAddress(
-  client: StrideClient,
-  name: string,
-): Promise<string> {
+export async function moduleAddress(client: StrideClient, name: string): Promise<string> {
   return (
     (
       await client.query.cosmos.auth.v1beta1.moduleAccountByName({
@@ -234,11 +214,11 @@ export async function moduleAddress(
  * Generic function to wait for a state change by retrying a function until condition is met
  */
 export async function waitForStateChange<T>(
-    checkFunction: () => Promise<T>,
-    condition: (result: T) => boolean,
-    maxAttempts: number = 60,
-    intervalMs: number = 500,
-    timeoutErrorMessage: string = "Timed out waiting for state change"
+  checkFunction: () => Promise<T>,
+  condition: (result: T) => boolean,
+  maxAttempts: number = 60,
+  intervalMs: number = 500,
+  timeoutErrorMessage: string = "Timed out waiting for state change",
 ): Promise<T> {
   let attempts = 0;
 
@@ -260,12 +240,12 @@ export async function waitForStateChange<T>(
  * Wait for a balance to change (increase from initial value)
  */
 export async function waitForBalanceChange({
-                                             client,
-                                             address,
-                                             denom,
-                                             maxAttempts = 60,
-                                             intervalMs = 500,
-                                           }: {
+  client,
+  address,
+  denom,
+  maxAttempts = 60,
+  intervalMs = 500,
+}: {
   client: StrideClient | CosmosClient;
   address: string;
   denom: string;
@@ -276,30 +256,29 @@ export async function waitForBalanceChange({
   const initialBalance = await getBalance({ client, address, denom });
 
   return waitForStateChange(
-      async () => getBalance({ client, address, denom }),
-      (balance) => BigInt(balance) > BigInt(initialBalance),
-      maxAttempts,
-      intervalMs,
-      `Timed out waiting for balance change for ${denom} at ${address}`
+    async () => getBalance({ client, address, denom }),
+    (balance) => BigInt(balance) > BigInt(initialBalance),
+    maxAttempts,
+    intervalMs,
+    `Timed out waiting for balance change for ${denom} at ${address}`,
   );
 }
 
 // Utility function to get balance as a string.
 export async function getBalance({
-                                   client,
-                                   address,
-                                   denom,
-                                 }: {
+  client,
+  address,
+  denom,
+}: {
   client: StrideClient | CosmosClient;
   address: string;
   denom: string;
 }): Promise<string> {
   if (client instanceof StrideClient) {
-    const { balance: { amount } = { amount: "0" } } =
-        await client.query.cosmos.bank.v1beta1.balance({
-          address,
-          denom,
-        });
+    const { balance: { amount } = { amount: "0" } } = await client.query.cosmos.bank.v1beta1.balance({
+      address,
+      denom,
+    });
     return amount;
   } else {
     const balance = await client.query.bank.balance(address, denom);

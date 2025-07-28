@@ -7,11 +7,6 @@
     "test": "vitest run",
     "test-watch": "vitest watch"
   },
-  "keywords": [
-    "wow",
-    "much",
-    "liquidity"
-  ],
   "author": "Stride Labs",
   "license": "ISC",
   "dependencies": {

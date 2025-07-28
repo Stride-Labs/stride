@@ -13,6 +13,8 @@ export const USTRD = "ustrd";
 export const UATOM = "uatom";
 export const UOSMO = "uosmo";
 
+export const DEFAULT_FEE = "1000000";
+
 export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {
   STRIDE: { GAIA: "channel-0", OSMO: "channel-1" },
   GAIA: { STRIDE: "channel-0" },
