@@ -4,7 +4,14 @@ This design for this integration test framework is heavily inspired by the Cosmo
 
 ## Setup
 
-Install javascript and python dependencies
+**Before beginning, ensure you're on node 22**
+
+```bash
+nvm install v22
+nvm use v22
+```
+
+Install javascript and python dependencies.
 
 ```bash
 make install
@@ -25,6 +32,31 @@ Run the tests
 ```bash
 make test
 ```
+
+## Integrating Updated Protos
+
+If the stride proto's change, we need to rebuild stridejs:
+
+- Go to https://github.com/Stride-Labs/stridejs
+  - Remove `/dist` from `.gitignore`
+  - Update the config in `scripts/clone_repos.ts` to point to the new `stride/cosmos-sdk/ibc-go` version
+  - Run `pnpm i`
+  - Run `pnpm codegen`
+  - Run `pnpm build`
+  - Run `git commit...`
+  - Run `git push`
+  - Get the current `stridejs` commit using `git rev-parse HEAD`
+- In the integration tests (this project):
+  - Move into the `client` folder (`cd client`)
+  - Update the `stridejs` dependency commit hash in `package.json`
+  - `pnpm i`
+
+## Debugging (VSCode)
+
+- Open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
+- Run the `Debug: Create JavaScript Debug Terminal` command
+- Set breakpoints
+- Run tests
 
 ## Network
 
