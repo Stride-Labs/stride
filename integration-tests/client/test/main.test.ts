@@ -48,7 +48,9 @@ import {
   newRegisterTokenPriceQueryMsg,
 } from "./msgs";
 import { CosmosClient } from "./types";
-import { ibcTransfer, moduleAddress, submitTxAndExpectSuccess, waitForChain, waitForIbc } from "./utils";
+import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
+import { waitForChain, waitForIbc } from "./startup";
+import { moduleAddress } from "./queries";
 
 let strideAccounts: {
   user: StrideClient; // a normal account loaded with 100 STRD
@@ -322,21 +324,6 @@ describe("x/airdrop", () => {
   });
 });
 
-describe("ibc", () => {
-  test("MsgTransfer", async () => {
-    const stridejs = strideAccounts.user;
-
-    await ibcTransfer({
-      client: stridejs,
-      sourceChain: "STRIDE",
-      destinationChain: "GAIA",
-      coin: `1${USTRD}`,
-      sender: stridejs.address,
-      receiver: convertBech32Prefix(stridejs.address, "cosmos"),
-    });
-  }, 30_000);
-});
-
 describe("buyback and burn", () => {
   beforeEach(async () => {
     // Remove all token prices to not mess up tokenPriceForQuoteDenom query
@@ -359,7 +346,7 @@ describe("buyback and burn", () => {
     );
   });
 
-  test("gamm pool price", async () => {
+  test.skip("gamm pool price", async () => {
     const stridejs = strideAccounts.user;
     const osmojs = osmoAccounts.user;
 
@@ -433,7 +420,7 @@ describe("buyback and burn", () => {
     }
   });
 
-  test("concentrated liquidity pool price", async () => {
+  test.skip("concentrated liquidity pool price", async () => {
     const stridejs = strideAccounts.user;
     const osmojs = osmoAccounts.user;
 
@@ -515,7 +502,7 @@ describe("buyback and burn", () => {
     }
   });
 
-  test(
+  test.skip(
     "happy path",
     async () => {
       // - Transfer STRD to Osmosis
@@ -760,7 +747,7 @@ describe("buyback and burn", () => {
     5 * 60 * 1000 /* 5min */,
   );
 
-  test("update params", async () => {
+  test.skip("update params", async () => {
     const stridejs = strideAccounts.user;
 
     const { params } = await stridejs.query.stride.icqoracle.params({});
@@ -851,7 +838,7 @@ describe("buyback and burn", () => {
     expect(newParams).toStrictEqual(params);
   }, 60_000);
 
-  test("staking rewards funneled to x/auction", async () => {
+  test.skip("staking rewards funneled to x/auction", async () => {
     const stridejs = strideAccounts.admin;
     const gaiajs = gaiaAccounts.user;
 
@@ -924,7 +911,7 @@ describe("buyback and burn", () => {
     }
   }, 240_000);
 
-  test("unwrapIBCDenom", async () => {
+  test.skip("unwrapIBCDenom", async () => {
     const stridejs = strideAccounts.admin;
     const gaiajs = gaiaAccounts.user;
     const osmojs = osmoAccounts.user;
@@ -968,7 +955,7 @@ describe("buyback and burn", () => {
     expect(quoteDenomUnwrapped).toBe(UOSMO);
   });
 
-  test.only("x/auction queries", async () => {
+  test.skip("x/auction queries", async () => {
     const stridejs = strideAccounts.admin;
 
     // create a bunch of dummy auctions

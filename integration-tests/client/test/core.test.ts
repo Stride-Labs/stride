@@ -25,22 +25,13 @@ import {
   REMOVED,
 } from "./consts";
 import { CosmosClient } from "./types";
-import {
-  ibcTransfer,
-  waitForChain,
-  submitTxAndExpectSuccess,
-  waitForBalanceChange,
-  getBalance,
-  assertOpenTransferChannel,
-  assertICAChannelsOpen,
-  waitForDepositRecordStatus,
-  getDelegatedBalance,
-  waitForDelegationChange,
-} from "./utils";
+import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
+import { waitForChain, assertICAChannelsOpen, assertOpenTransferChannel } from "./startup";
+import { waitForBalanceChange, waitForDelegationChange, waitForDepositRecordStatus } from "./polling";
+import { getBalance, getDelegatedBalance } from "./queries";
 import { StrideClient } from "stridejs";
 import { Decimal } from "decimal.js";
 import { getAllDepositRecords, getHostZone } from "./queries";
-import { DepositRecord_Status } from "stridejs/dist/types/codegen/stride/records/records";
 
 // Initialize accounts
 let strideAccounts: {
