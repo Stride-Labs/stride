@@ -22,6 +22,8 @@ export const DEFAULT_GAS = "2000000";
 
 export const TRANSFER_PORT = "transfer";
 
+export const REMOVED = "REMOVED";
+
 export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {
   STRIDE: { GAIA: "channel-0", OSMO: "channel-1" },
   GAIA: { STRIDE: "channel-0" },

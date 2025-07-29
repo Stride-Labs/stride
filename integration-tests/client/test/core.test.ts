@@ -22,6 +22,7 @@ import {
   DEFAULT_FEE,
   STATOM,
   CONNECTION_ID,
+  REMOVED,
 } from "./consts";
 import { CosmosClient } from "./types";
 import {
@@ -32,9 +33,14 @@ import {
   getBalance,
   assertOpenTransferChannel,
   assertICAChannelsOpen,
+  waitForDepositRecordStatus,
+  getDelegatedBalance,
+  waitForDelegationChange,
 } from "./utils";
 import { StrideClient } from "stridejs";
 import { Decimal } from "decimal.js";
+import { getAllDepositRecords, getHostZone } from "./queries";
+import { DepositRecord_Status } from "stridejs/dist/types/codegen/stride/records/records";
 
 // Initialize accounts
 let strideAccounts: {
@@ -192,34 +198,24 @@ describe("Core Tests", () => {
     // We'll send STRD from Stride -> Gaia
     const strideInitialStrdBalance = await getBalance({
       client: stridejs,
-      address: stridejs.address,
       denom: USTRD,
     });
 
     const gaiaInitialStrdBalance = await getBalance({
       client: gaiajs,
-      address: gaiajs.address,
       denom: STRD_DENOM_ON_GAIA,
     });
 
     // As well as ATOM from Gaia -> Stride
     const gaiaInitialAtomBalance = await getBalance({
       client: gaiajs,
-      address: gaiajs.address,
       denom: UATOM,
     });
 
     const strideInitialAtomBalance = await getBalance({
       client: stridejs,
-      address: stridejs.address,
       denom: ATOM_DENOM_ON_STRIDE,
     });
-
-    console.log("Initial balances:");
-    console.log(`Stride USTRD: ${strideInitialStrdBalance}`);
-    console.log(`Stride ATOM: ${strideInitialAtomBalance}`);
-    console.log(`Gaia STRD: ${gaiaInitialStrdBalance}`);
-    console.log(`Gaia ATOM: ${gaiaInitialAtomBalance}`);
 
     // Perform IBC transfers
     console.log("Transferring USTRD from Stride to Gaia...");
@@ -243,30 +239,27 @@ describe("Core Tests", () => {
     });
 
     // Wait a bit for transfers to complete.
+    console.log("Waiting for transfers to complete...");
     await sleep(5000);
 
     // Get final balances
     const strideFinalStrdBalance = await getBalance({
       client: stridejs,
-      address: stridejs.address,
       denom: USTRD,
     });
 
     const gaiaFinalStrdBalance = await getBalance({
       client: gaiajs,
-      address: gaiajs.address,
       denom: STRD_DENOM_ON_GAIA,
     });
 
     const gaiaFinalAtomBalance = await getBalance({
       client: gaiajs,
-      address: gaiajs.address,
       denom: UATOM,
     });
 
     const strideFinalAtomBalance = await getBalance({
       client: stridejs,
-      address: stridejs.address,
       denom: ATOM_DENOM_ON_STRIDE,
     });
 
@@ -296,14 +289,23 @@ describe("Core Tests", () => {
     // Get initial balances
     let strideInitialAtomBalance = await getBalance({
       client: stridejs,
-      address: stridejs.address,
       denom: ATOM_DENOM_ON_STRIDE,
     });
 
     const strideInitialStAtomBalance = await getBalance({
       client: stridejs,
-      address: stridejs.address,
       denom: STATOM,
+    });
+
+    // Get the initial delegated balance
+    const {
+      hostZone: { delegationIcaAddress },
+    } = await stridejs.query.stride.stakeibc.hostZone({
+      chainId: GAIA_CHAIN_ID,
+    });
+    const initialDelegatedBalance = await getDelegatedBalance({
+      client: gaiajs,
+      delegator: delegationIcaAddress,
     });
 
     // Ensure there's enough ATOM to liquid stake, if not transfer
@@ -326,25 +328,6 @@ describe("Core Tests", () => {
       });
     }
 
-    // Get delegation address and assert it exists
-    const {
-      hostZone: { delegationIcaAddress },
-    } = await stridejs.query.stride.stakeibc.hostZone({
-      chainId: GAIA_CHAIN_ID,
-    });
-
-    // Get initial delegation ICA balance
-    const delegationInitialBalance = await getBalance({
-      client: gaiajs,
-      address: delegationIcaAddress,
-      denom: UATOM,
-    });
-
-    console.log("Initial balances:");
-    console.log(`Stride ATOM: ${strideInitialAtomBalance}`);
-    console.log(`Stride stATOM: ${strideInitialStAtomBalance}`);
-    console.log(`Delegation ICA ATOM: ${delegationInitialBalance}`);
-
     // Perform liquid staking
     console.log("Liquid staking...");
     const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
@@ -354,63 +337,71 @@ describe("Core Tests", () => {
     });
 
     const tx = await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
+    await sleep(2000); // sleep to make sure block finalized
 
-    // Wait for stTokens to be minted
-    const strideFinalStAtomBalance = await waitForBalanceChange({
-      initialBalance: strideInitialStAtomBalance,
-      client: stridejs,
-      address: stridejs.address,
-      denom: STATOM,
-    });
-
-    // Get the redemption rate at the time of the liquid stake
-    const {
-      hostZone: { redemptionRate },
-    } = await stridejs.query.stride.stakeibc.hostZone({
-      chainId: GAIA_CHAIN_ID,
-    });
-
-    // Get final ATOM balance on Stride
+    // Get final ATOM and stATOM balances
+    const strideFinalStAtomBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: STATOM });
     const strideFinalAtomBalance = await getBalance({
       client: stridejs,
       address: stridejs.address,
       denom: ATOM_DENOM_ON_STRIDE,
     });
 
-    // Wait for tokens to be transferred to the delegation account
-    console.log("Waiting for funds to land in delegation account...");
-    const delegationFinalBalance = await waitForBalanceChange({
-      initialBalance: delegationInitialBalance,
-      minChange: stakeAmount,
-      client: gaiajs,
-      address: delegationIcaAddress,
-      denom: UATOM,
-    });
+    // Get the redemption rate at the time of the liquid stake
+    const {
+      hostZone: { redemptionRate },
+    } = await getHostZone(stridejs, GAIA_CHAIN_ID, tx.height);
 
-    console.log("Final balances:");
-    console.log(`Stride ATOM: ${strideFinalAtomBalance}`);
-    console.log(`Stride stATOM: ${strideFinalStAtomBalance}`);
-    console.log(`Delegation ICA ATOM: ${delegationFinalBalance}`);
-
-    // Calculate balance differences (final - initial for consistent sign tracking)
-    const strideAtomBalanceDiff = strideFinalAtomBalance - strideInitialAtomBalance;
-    const strideStAtomBalanceDiff = strideFinalStAtomBalance - strideInitialStAtomBalance;
-    const delegationBalanceDiff = delegationFinalBalance - delegationInitialBalance;
-
-    console.log("Balance differences:");
-    console.log(`Stride ATOM diff: ${strideAtomBalanceDiff}`);
-    console.log(`Stride stATOM diff: ${strideStAtomBalanceDiff}`);
-    console.log(`Delegation ICA diff: ${delegationBalanceDiff}`);
-
-    // Verify balance changes
+    // Confirm the balance changes
     // ATOM should decrease (sent for staking)
     // stATOM should increase (minted)
     // Delegation ICA should receive tokens
+    const strideAtomBalanceDiff = strideFinalAtomBalance - strideInitialAtomBalance;
+    const strideStAtomBalanceDiff = strideFinalStAtomBalance - strideInitialStAtomBalance;
     const expectedStAtomAmount = BigInt(
       Decimal(stakeAmount.toString()).div(Decimal(redemptionRate)).floor().toString(),
     );
     expect(strideStAtomBalanceDiff).to.equal(expectedStAtomAmount, "User stATOM balance change on Stride");
     expect(strideAtomBalanceDiff).to.equal(BigInt(-stakeAmount), "User ATOM balance change on Stride");
-    expect(delegationBalanceDiff).to.equal(BigInt(stakeAmount), "Delegation account balance change");
+
+    // Get the deposit record that was used for the liquid stake
+    // We grab the latest TRANSFER_QUEUE record
+    const { depositRecord: allDepositRecords } = await getAllDepositRecords(stridejs, GAIA_CHAIN_ID, tx.height);
+    const transferRecords = allDepositRecords
+      .filter((record) => record.status === stride.records.DepositRecord_Status.TRANSFER_QUEUE)
+      .sort((a, b) => Number(b.id - a.id));
+    expect(transferRecords.length).to.be.greaterThan(0, "No transfer queue deposit records");
+
+    const depositRecord = transferRecords[0];
+    const depositRecordId = depositRecord.id;
+    expect(BigInt(depositRecord.amount) >= BigInt(stakeAmount)).to.be.true;
+
+    // Wait for the the transfer to complete by checking for when the deposit record
+    // changes to state DELEGATION_QUEUE
+    console.log("Waiting for transfer to complete...");
+    await waitForDepositRecordStatus({
+      client: stridejs,
+      depositRecordId,
+      status: stride.records.DepositRecord_Status.DELEGATION_QUEUE,
+    });
+
+    // Wait for delegation to complete by checking the ICA account's delegations
+    console.log("Waiting for delegation to complete...");
+    await waitForDepositRecordStatus({
+      client: stridejs,
+      depositRecordId,
+      status: REMOVED,
+    });
+
+    const updatedDelegatedBalance = await waitForDelegationChange({ client: gaiajs, delegator: delegationIcaAddress });
+
+    // Confirm at least our staked amount was delegated (it could be more if there was reinvestment)
+    expect(updatedDelegatedBalance - initialDelegatedBalance >= BigInt(stakeAmount)).to.be.true;
+
+    // Confirm the host zone updated
+    const {
+      hostZone: { totalDelegations },
+    } = await stridejs.query.stride.stakeibc.hostZone({ chainId: GAIA_CHAIN_ID });
+    expect(BigInt(totalDelegations)).to.equal(updatedDelegatedBalance, "Updated delegated balance");
   }, 180_000); // 3 minutes timeout
 });

@@ -7,16 +7,18 @@ import {
   getTxIbcResponses,
   getValueFromEvents,
   IbcResponse,
+  stride,
   StrideClient,
 } from "stridejs";
 import { ModuleAccount } from "stridejs/dist/types/codegen/cosmos/auth/v1beta1/auth";
 import { ibc } from "stridejs";
 import { expect } from "vitest";
-import { DEFAULT_FEE, DEFAULT_GAS, TRANSFER_CHANNEL, TRANSFER_PORT, USTRD } from "./consts";
+import { DEFAULT_FEE, DEFAULT_GAS, REMOVED, TRANSFER_CHANNEL, TRANSFER_PORT, USTRD } from "./consts";
 import { newTransferMsg } from "./msgs";
 import { Chain, CosmosClient } from "./types";
 import { sleep } from "stridejs";
 import { QueryGetHostZoneResponse } from "stridejs/dist/types/codegen/stride/stakeibc/query";
+import { DepositRecord_Status } from "stridejs/dist/types/codegen/stride/records/records";
 
 /**
  * Returns the absolute value of a bigint
@@ -150,24 +152,32 @@ export async function assertOpenTransferChannel(client: StrideClient | CosmosCli
  * @param client Stride client
  * @param chainId The host chain id
  */
-export async function assertICAChannelsOpen(stridejs: StrideClient, chainId: string): Promise<void> {
-  waitForStateChange(
-    async () => {
-      return await stridejs.query.stride.stakeibc.hostZone({
-        chainId: chainId,
-      });
-    },
-    (response: QueryGetHostZoneResponse) => {
-      const hostZone = response.hostZone;
-      return (
-        hostZone.delegationIcaAddress != "" &&
-        hostZone.withdrawalIcaAddress != "" &&
-        hostZone.redemptionIcaAddress != "" &&
-        hostZone.feeIcaAddress != ""
-      );
-    },
-    `Timed out waiting for ICA channel opening`,
-  );
+export async function assertICAChannelsOpen(
+  stridejs: StrideClient,
+  chainId: string,
+  maxAttempts: number = 60,
+): Promise<void> {
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    const { hostZone } = await stridejs.query.stride.stakeibc.hostZone({
+      chainId: chainId,
+    });
+
+    if (
+      hostZone.delegationIcaAddress != "" &&
+      hostZone.withdrawalIcaAddress != "" &&
+      hostZone.redemptionIcaAddress != "" &&
+      hostZone.feeIcaAddress != ""
+    ) {
+      return;
+    }
+
+    attempts++;
+    await sleep(1000); // 1 second
+  }
+
+  throw new Error("Timed out waiting for ICA channel opening");
 }
 
 /**
@@ -280,31 +290,6 @@ export async function moduleAddress(client: StrideClient, name: string): Promise
 }
 
 /**
- * Generic function to wait for a state change by retrying a function until condition is met
- */
-export async function waitForStateChange<T>(
-  checkFunction: () => Promise<T>,
-  condition: (result: T) => boolean,
-  timeoutErrorMessage: string = "Timed out waiting for state change",
-  maxAttempts: number = 60,
-): Promise<T> {
-  let attempts = 0;
-
-  while (attempts < maxAttempts) {
-    const result = await checkFunction();
-
-    if (condition(result)) {
-      return result;
-    }
-
-    attempts++;
-    await sleep(1000); // 1 second
-  }
-
-  throw new Error(`${timeoutErrorMessage} after ${maxAttempts} attempts`);
-}
-
-/**
  * Wait for a balance to change (increase from initial value)
  */
 export async function waitForBalanceChange({
@@ -338,16 +323,98 @@ export async function waitForBalanceChange({
   throw new Error(`Timed out waiting for balance change for ${denom} at ${address}`);
 }
 
-// Utility function to get balance as a string.
-export async function getBalance({
+/**
+ * Wait for a delegation to occur on the host zone
+ * @param client The cosmos client of the host zone
+ * @param delegator The delegator's address
+ * @param minChange The minimum change before returning a success
+ * @param maxAttempts The max number of attempts to try, each spaced by a second
+ */
+export async function waitForDelegationChange({
   client,
-  address,
-  denom,
+  delegator,
+  minChange = 0,
+  maxAttempts = 60,
 }: {
   client: StrideClient | CosmosClient;
-  address: string;
-  denom: string;
+  delegator: string;
+  minChange?: number;
+  maxAttempts?: number;
 }): Promise<bigint> {
+  let attempts = 0;
+  let prevBalance = await getDelegatedBalance({ client, delegator });
+
+  while (attempts < maxAttempts) {
+    const currBalance = await getDelegatedBalance({ client, delegator });
+    if (bigIntAbs(currBalance - prevBalance) >= BigInt(minChange)) {
+      return currBalance;
+    }
+
+    attempts++;
+    await sleep(1000); // 1 second
+  }
+
+  throw new Error(`Timed out waiting for delegated balance change at ${delegator}`);
+}
+
+/**
+ * Wait for the deposit record to change to status DELEGATION_QUEUE
+ */
+export async function waitForDepositRecordStatus({
+  client,
+  depositRecordId,
+  status,
+  maxAttempts = 60,
+}: {
+  client: StrideClient;
+  depositRecordId: bigint;
+  status: any;
+  maxAttempts?: number;
+}): Promise<void> {
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    // If we're checking that the record was removed, query all records and check that the ID is not found
+    if (status === REMOVED) {
+      const { depositRecord } = await client.query.stride.records.depositRecordAll();
+      if (depositRecord.filter((record) => record.id == depositRecordId).length == 0) {
+        return;
+      }
+    } else {
+      // Otherwise, if we're checking for a status, query the record by ID and check the status
+      const { depositRecord } = await client.query.stride.records.depositRecord({ id: depositRecordId });
+      if (depositRecord.status === status) {
+        return;
+      }
+    }
+
+    attempts++;
+    await sleep(1000); // 1 second
+  }
+
+  throw new Error(`Timed out waiting for delegation record to change to status: ${status.toString()}`);
+}
+
+/**
+ * Returns the balance of an account
+ * @param client The stride or cosmos client
+ * @param address The address to query
+ * @param denom The denom
+ * @returns The balance as a bigint
+ */
+export async function getBalance({
+  client,
+  denom,
+  address,
+}: {
+  client: StrideClient | CosmosClient;
+  denom: string;
+  address?: string;
+}): Promise<bigint> {
+  if (address == undefined) {
+    address = client.address;
+  }
+
   if (client instanceof StrideClient) {
     const { balance: { amount } = { amount: "0" } } = await client.query.cosmos.bank.v1beta1.balance({
       address,
@@ -358,4 +425,29 @@ export async function getBalance({
     const balance = await client.query.bank.balance(address, denom);
     return BigInt(balance.amount);
   }
+}
+
+/**
+ * Returns the balance of an account
+ * @param client The stride or cosmos client
+ * @param delegator The address of the delegator
+ * @returns The total delegated balance across all validators
+ */
+export async function getDelegatedBalance({
+  client,
+  delegator,
+}: {
+  client: StrideClient | CosmosClient;
+  delegator: string;
+}): Promise<bigint> {
+  const { delegationResponses } =
+    client instanceof StrideClient
+      ? await client.query.cosmos.staking.v1beta1.delegatorDelegations({
+          delegatorAddr: delegator,
+        })
+      : await client.query.staking.delegatorDelegations(delegator);
+
+  return delegationResponses.reduce((sum, response) => {
+    return sum + BigInt(response.balance.amount);
+  }, BigInt(0));
 }
