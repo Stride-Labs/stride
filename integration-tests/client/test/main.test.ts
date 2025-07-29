@@ -29,12 +29,15 @@ import {
   ATOM_DENOM_ON_OSMOSIS,
   ATOM_DENOM_ON_STRIDE,
   CONNECTION_ID,
+  COSMOSHUB_CHAIN_NAME,
   GAIA_CHAIN_ID,
   GAIA_RPC_ENDPOINT,
   OSMO_CHAIN_ID,
   OSMO_DENOM_ON_STRIDE,
   OSMO_RPC_ENDPOINT,
+  OSMOSIS_CHAIN_NAME,
   STRD_DENOM_ON_OSMOSIS,
+  STRIDE_CHAIN_NAME,
   STRIDE_RPC_ENDPOINT,
   TRANSFER_CHANNEL,
   UATOM,
@@ -120,7 +123,7 @@ beforeAll(async () => {
     // The mempool then converts from direct to amino to verify the signature.
     // Therefore if the signature verification passes, we can be sure that both amino and direct are working properly.
     const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-      prefix: "stride",
+      prefix: STRIDE_CHAIN_NAME,
     });
 
     // get signer address
@@ -155,7 +158,7 @@ beforeAll(async () => {
       };
 
       const osmoSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix: "osmo",
+        prefix: OSMOSIS_CHAIN_NAME,
       });
 
       const [{ address: osmoAddress }] = await osmoSigner.getAccounts();
@@ -189,10 +192,10 @@ beforeAll(async () => {
   await waitForChain(osmoAccounts.user, UOSMO);
 
   console.log("waiting for stride-gaia ibc...");
-  await waitForIbc(strideAccounts.user, TRANSFER_CHANNEL.STRIDE.GAIA!, USTRD, "cosmos");
+  await waitForIbc(strideAccounts.user, TRANSFER_CHANNEL.stride.cosmoshub!, USTRD, "cosmos");
 
   console.log("waiting for stride-osmosis ibc...");
-  await waitForIbc(strideAccounts.user, TRANSFER_CHANNEL.STRIDE.OSMO!, USTRD, "osmo");
+  await waitForIbc(strideAccounts.user, TRANSFER_CHANNEL.stride.osmosis!, USTRD, OSMOSIS_CHAIN_NAME);
 
   console.log("registering host zones...");
 
@@ -205,11 +208,11 @@ beforeAll(async () => {
   if (gaiaHostZoneNotRegistered) {
     const gaiaRegisterHostZoneMsg = stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
       creator: strideAccounts.admin.address,
-      connectionId: CONNECTION_ID.STRIDE.GAIA!,
+      connectionId: CONNECTION_ID.stride.cosmoshub!,
       bech32prefix: "cosmos",
       hostDenom: UATOM,
       ibcDenom: ATOM_DENOM_ON_STRIDE,
-      transferChannelId: TRANSFER_CHANNEL.STRIDE.GAIA!,
+      transferChannelId: TRANSFER_CHANNEL.stride.cosmoshub!,
       unbondingPeriod: BigInt(1),
       minRedemptionRate: "0.9",
       maxRedemptionRate: "1.5",
@@ -241,11 +244,11 @@ beforeAll(async () => {
   if (osmoHostZoneNotRegistered) {
     const osmoRegisterHostZoneMsg = stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
       creator: strideAccounts.admin.address,
-      connectionId: CONNECTION_ID.STRIDE.OSMO!,
-      bech32prefix: "osmo",
+      connectionId: CONNECTION_ID.stride.osmosis!,
+      bech32prefix: OSMOSIS_CHAIN_NAME,
       hostDenom: UOSMO,
       ibcDenom: OSMO_DENOM_ON_STRIDE,
-      transferChannelId: TRANSFER_CHANNEL.STRIDE.OSMO!,
+      transferChannelId: TRANSFER_CHANNEL.stride.osmosis!,
       unbondingPeriod: BigInt(1),
       minRedemptionRate: "0.9",
       maxRedemptionRate: "1.5",
@@ -352,8 +355,8 @@ describe("buyback and burn", () => {
 
     await ibcTransfer({
       client: stridejs,
-      sourceChain: "STRIDE",
-      destinationChain: "OSMO",
+      sourceChain: STRIDE_CHAIN_NAME,
+      destinationChain: OSMOSIS_CHAIN_NAME,
       coin: `1000000${USTRD}`,
       sender: stridejs.address,
       receiver: osmojs.address,
@@ -426,8 +429,8 @@ describe("buyback and burn", () => {
 
     await ibcTransfer({
       client: stridejs,
-      sourceChain: "STRIDE",
-      destinationChain: "OSMO",
+      sourceChain: STRIDE_CHAIN_NAME,
+      destinationChain: OSMOSIS_CHAIN_NAME,
       coin: `1000000${USTRD}`,
       sender: stridejs.address,
       receiver: osmojs.address,
@@ -525,8 +528,8 @@ describe("buyback and burn", () => {
       // Transfer STRD to Osmosis
       await ibcTransfer({
         client: stridejs,
-        sourceChain: "STRIDE",
-        destinationChain: "OSMO",
+        sourceChain: STRIDE_CHAIN_NAME,
+        destinationChain: OSMOSIS_CHAIN_NAME,
         coin: `1000000${USTRD}`,
         sender: stridejs.address,
         receiver: osmojs.address,
@@ -535,8 +538,8 @@ describe("buyback and burn", () => {
       // Transfer ATOM to Osmosis
       await ibcTransfer({
         client: gaiajs,
-        sourceChain: "GAIA",
-        destinationChain: "STRIDE",
+        sourceChain: COSMOSHUB_CHAIN_NAME,
+        destinationChain: STRIDE_CHAIN_NAME,
         coin: `1000000${UATOM}`,
         sender: gaiajs.address,
         receiver: stridejs.address, // needs to be valid but ignored by pfm
@@ -544,7 +547,7 @@ describe("buyback and burn", () => {
           forward: {
             receiver: osmojs.address,
             port: "transfer",
-            channel: TRANSFER_CHANNEL.STRIDE.OSMO,
+            channel: TRANSFER_CHANNEL.stride.osmosis,
           },
         }),
       });
@@ -661,8 +664,8 @@ describe("buyback and burn", () => {
         // 1740472679470067779
         // 1740472677000000000
         client: gaiajs,
-        sourceChain: "GAIA",
-        destinationChain: "STRIDE",
+        sourceChain: COSMOSHUB_CHAIN_NAME,
+        destinationChain: STRIDE_CHAIN_NAME,
         coin: `${rewardAmount}${UATOM}`,
         sender: gaiajs.address,
         receiver: rewardCollectorAddress,
@@ -856,8 +859,8 @@ describe("buyback and burn", () => {
     // Liquid stake 10 ATOM
     await ibcTransfer({
       client: gaiajs,
-      sourceChain: "GAIA",
-      destinationChain: "STRIDE",
+      sourceChain: COSMOSHUB_CHAIN_NAME,
+      destinationChain: STRIDE_CHAIN_NAME,
       coin: `${stakeAmount}${UATOM}`,
       sender: gaiajs.address,
       receiver: stridejs.address,
@@ -919,8 +922,8 @@ describe("buyback and burn", () => {
     // Transfer ATOM & OSMO to Stride to register their ibc denoms on Stride's ibc transfer app
     await ibcTransfer({
       client: gaiajs,
-      sourceChain: "GAIA",
-      destinationChain: "STRIDE",
+      sourceChain: COSMOSHUB_CHAIN_NAME,
+      destinationChain: STRIDE_CHAIN_NAME,
       coin: `1${UATOM}`,
       sender: gaiajs.address,
       receiver: stridejs.address,
@@ -928,8 +931,8 @@ describe("buyback and burn", () => {
 
     await ibcTransfer({
       client: osmojs,
-      sourceChain: "OSMO",
-      destinationChain: "STRIDE",
+      sourceChain: OSMOSIS_CHAIN_NAME,
+      destinationChain: STRIDE_CHAIN_NAME,
       coin: `1${UOSMO}`,
       sender: osmojs.address,
       receiver: stridejs.address,

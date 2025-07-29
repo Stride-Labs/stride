@@ -1,5 +1,5 @@
 import { ibcDenom } from "stridejs";
-import { Chain } from "./types";
+import { Chain, ChainConfigs } from "./types";
 
 export const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 export const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
@@ -24,23 +24,41 @@ export const TRANSFER_PORT = "transfer";
 
 export const REMOVED = "REMOVED";
 
+export const DEFAULT_CONNECTION_ID = "connection-0";
+export const DEFAULT_TRANSFER_CHANNEL_ID = "channel-0";
+
+export const STRIDE_CHAIN_NAME = "stride";
+export const COSMOSHUB_CHAIN_NAME = "cosmoshub";
+export const OSMOSIS_CHAIN_NAME = "osmosis";
+
+export const CHAIN_CONFIGS: ChainConfigs = {
+  cosmoshub: {
+    chainId: GAIA_CHAIN_ID,
+    hostDenom: UATOM,
+    bechPrefix: "cosmos",
+    connectionId: DEFAULT_CONNECTION_ID,
+    transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+    rpcEndpoint: GAIA_RPC_ENDPOINT,
+  },
+};
+
 export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {
-  STRIDE: { GAIA: "channel-0", OSMO: "channel-1" },
-  GAIA: { STRIDE: "channel-0" },
-  OSMO: { STRIDE: "channel-0" },
+  stride: { cosmoshub: "channel-0", osmosis: "channel-1" },
+  cosmoshub: { stride: "channel-0" },
+  osmosis: { stride: "channel-0" },
 };
 
 export const CONNECTION_ID: Record<Chain, Partial<Record<Chain, string>>> = {
-  STRIDE: { GAIA: "connection-0", OSMO: "connection-1" },
-  GAIA: { STRIDE: "connection-0" },
-  OSMO: { STRIDE: "connection-0" },
+  stride: { cosmoshub: "connection-0", osmosis: "connection-1" },
+  cosmoshub: { stride: "connection-0" },
+  osmosis: { stride: "connection-0" },
 };
 
 export const ATOM_DENOM_ON_STRIDE = ibcDenom(
   [
     {
       incomingPortId: TRANSFER_PORT,
-      incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"]!,
+      incomingChannelId: TRANSFER_CHANNEL[STRIDE_CHAIN_NAME][COSMOSHUB_CHAIN_NAME]!,
     },
   ],
   UATOM,
@@ -50,11 +68,11 @@ export const ATOM_DENOM_ON_OSMOSIS = ibcDenom(
   [
     {
       incomingPortId: TRANSFER_PORT,
-      incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["GAIA"]!,
+      incomingChannelId: TRANSFER_CHANNEL[STRIDE_CHAIN_NAME][COSMOSHUB_CHAIN_NAME]!,
     },
     {
       incomingPortId: TRANSFER_PORT,
-      incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"]!,
+      incomingChannelId: TRANSFER_CHANNEL[OSMOSIS_CHAIN_NAME][STRIDE_CHAIN_NAME]!,
     },
   ],
   UATOM,
@@ -64,7 +82,7 @@ export const STRD_DENOM_ON_OSMOSIS = ibcDenom(
   [
     {
       incomingPortId: TRANSFER_PORT,
-      incomingChannelId: TRANSFER_CHANNEL["OSMO"]["STRIDE"]!,
+      incomingChannelId: TRANSFER_CHANNEL[OSMOSIS_CHAIN_NAME][STRIDE_CHAIN_NAME]!,
     },
   ],
   USTRD,
@@ -74,7 +92,7 @@ export const STRD_DENOM_ON_GAIA = ibcDenom(
   [
     {
       incomingPortId: TRANSFER_PORT,
-      incomingChannelId: TRANSFER_CHANNEL["GAIA"]["STRIDE"]!,
+      incomingChannelId: TRANSFER_CHANNEL[COSMOSHUB_CHAIN_NAME][STRIDE_CHAIN_NAME]!,
     },
   ],
   USTRD,
@@ -84,7 +102,7 @@ export const OSMO_DENOM_ON_STRIDE = ibcDenom(
   [
     {
       incomingPortId: TRANSFER_PORT,
-      incomingChannelId: TRANSFER_CHANNEL["STRIDE"]["OSMO"]!,
+      incomingChannelId: TRANSFER_CHANNEL[STRIDE_CHAIN_NAME][OSMOSIS_CHAIN_NAME]!,
     },
   ],
   UOSMO,

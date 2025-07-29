@@ -8,7 +8,7 @@ import {
   IbcExtension,
 } from "@cosmjs/stargate";
 
-export type Chain = "STRIDE" | "GAIA" | "OSMO";
+export type Chain = "stride" | "cosmoshub" | "osmosis";
 
 export type CosmosClient = {
   address: string;
@@ -16,3 +16,14 @@ export type CosmosClient = {
   client: SigningStargateClient;
   query: QueryClient & AuthExtension & BankExtension & StakingExtension & IbcExtension & TxExtension;
 };
+
+export type ChainConfig = {
+  chainId: string;
+  hostDenom: string;
+  bechPrefix: string;
+  connectionId: string;
+  transferChannelId: string;
+  rpcEndpoint: string;
+};
+
+export type ChainConfigs = Record<string, ChainConfig>;

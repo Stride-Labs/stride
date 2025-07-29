@@ -8,21 +8,20 @@ import {
   SigningStargateClient,
 } from "@cosmjs/stargate";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
-import { DirectSecp256k1HdWallet, GasPrice, sleep, stride } from "stridejs";
+import { DirectSecp256k1HdWallet, GasPrice, ibcDenom, sleep, stride } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  ATOM_DENOM_ON_STRIDE,
-  GAIA_CHAIN_ID,
-  GAIA_RPC_ENDPOINT,
   STRIDE_RPC_ENDPOINT,
-  TRANSFER_CHANNEL,
   UATOM,
   USTRD,
-  STRD_DENOM_ON_GAIA,
   DEFAULT_FEE,
   STATOM,
-  CONNECTION_ID,
   REMOVED,
+  DEFAULT_TRANSFER_CHANNEL_ID,
+  DEFAULT_CONNECTION_ID,
+  CHAIN_CONFIGS,
+  TRANSFER_PORT,
+  STRIDE_CHAIN_NAME,
 } from "./consts";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
@@ -32,6 +31,32 @@ import { getBalance, getDelegatedBalance } from "./queries";
 import { StrideClient } from "stridejs";
 import { Decimal } from "decimal.js";
 import { getAllDepositRecords, getHostZone } from "./queries";
+import { newRegisterHostZoneMsg, newValidator } from "./msgs";
+
+const HOST_CHAIN_NAME = "cosmoshub";
+const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
+const HOST_CHAIN_ID = HOST_CONFIG.chainId;
+const HOST_DENOM = HOST_CONFIG.hostDenom;
+
+const HOST_DENOM_ON_STRIDE = ibcDenom(
+  [
+    {
+      incomingPortId: TRANSFER_PORT,
+      incomingChannelId: HOST_CONFIG.transferChannelId,
+    },
+  ],
+  HOST_DENOM,
+);
+
+const STRD_DENOM_ON_HOST = ibcDenom(
+  [
+    {
+      incomingPortId: TRANSFER_PORT,
+      incomingChannelId: HOST_CONFIG.transferChannelId,
+    },
+  ],
+  USTRD,
+);
 
 // Initialize accounts
 let strideAccounts: {
@@ -42,7 +67,7 @@ let strideAccounts: {
   val3: StrideClient;
 };
 
-let gaiaAccounts: {
+let hostAccounts: {
   user: CosmosClient;
   val1: CosmosClient;
 };
@@ -85,12 +110,12 @@ beforeAll(async () => {
   // @ts-expect-error
   strideAccounts = {};
   // @ts-expect-error
-  gaiaAccounts = {};
+  hostAccounts = {};
 
   for (const { name, mnemonic } of mnemonics) {
     // setup signer for Stride
     const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-      prefix: "stride",
+      prefix: STRIDE_CHAIN_NAME,
     });
 
     const [{ address }] = await signer.getAccounts();
@@ -102,19 +127,19 @@ beforeAll(async () => {
     });
 
     if (name === "user" || name === "val1") {
-      // setup signer for Gaia
-      const gaiaSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
-      const [{ address: gaiaAddress }] = await gaiaSigner.getAccounts();
+      // setup signer for host zone
+      const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
+      const [{ address: hostAddress }] = await hostSigner.getAccounts();
 
-      gaiaAccounts[name] = {
-        address: gaiaAddress,
-        denom: UATOM,
-        client: await SigningStargateClient.connectWithSigner(GAIA_RPC_ENDPOINT, gaiaSigner, {
-          gasPrice: GasPrice.fromString(`1.0${UATOM}`),
+      hostAccounts[name] = {
+        address: hostAddress,
+        denom: HOST_DENOM,
+        client: await SigningStargateClient.connectWithSigner(HOST_CONFIG.rpcEndpoint, hostSigner, {
+          gasPrice: GasPrice.fromString(`1.0${HOST_DENOM}`),
           broadcastPollIntervalMs: 50,
         }),
         query: QueryClient.withExtensions(
-          await Comet38Client.connect(GAIA_RPC_ENDPOINT),
+          await Comet38Client.connect(HOST_CONFIG.rpcEndpoint),
           setupAuthExtension,
           setupBankExtension,
           setupStakingExtension,
@@ -128,104 +153,93 @@ beforeAll(async () => {
   console.log("waiting for stride to start...");
   await waitForChain(strideAccounts.user, USTRD);
 
-  console.log("waiting for gaia to start...");
-  await waitForChain(gaiaAccounts.user, UATOM);
+  console.log("waiting for host to start...");
+  await waitForChain(hostAccounts.user, HOST_DENOM);
 
-  console.log("waiting for stride-gaia ibc...");
-  await assertOpenTransferChannel(strideAccounts.user, TRANSFER_CHANNEL.STRIDE.GAIA!);
-  await assertOpenTransferChannel(gaiaAccounts.user, TRANSFER_CHANNEL.GAIA.STRIDE!);
+  console.log("waiting for stride-host ibc...");
+  await assertOpenTransferChannel(strideAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
+  await assertOpenTransferChannel(hostAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
 
   console.log("registering host zones...");
   const { hostZone } = await strideAccounts.admin.query.stride.stakeibc.hostZoneAll({});
-  const gaiaHostZoneNotRegistered = hostZone.find((hz) => hz.chainId === GAIA_CHAIN_ID) === undefined;
+  const hostZoneNotRegistered = hostZone.find((hz) => hz.chainId === HOST_CHAIN_ID) === undefined;
 
-  if (gaiaHostZoneNotRegistered) {
-    const gaiaRegisterHostZoneMsg = stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
-      creator: strideAccounts.admin.address,
-      connectionId: CONNECTION_ID.STRIDE.GAIA!,
-      bech32prefix: "cosmos",
-      hostDenom: UATOM,
-      ibcDenom: ATOM_DENOM_ON_STRIDE,
-      transferChannelId: TRANSFER_CHANNEL.STRIDE.GAIA!,
-      unbondingPeriod: BigInt(1),
-      minRedemptionRate: "0.9",
-      maxRedemptionRate: "1.5",
-      lsmLiquidStakeEnabled: true,
-      communityPoolTreasuryAddress: "",
-      maxMessagesPerIcaTx: BigInt(2),
+  if (hostZoneNotRegistered) {
+    const registerHostZoneMsg = newRegisterHostZoneMsg({
+      sender: strideAccounts.admin.address,
+      connectionId: DEFAULT_CONNECTION_ID,
+      transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+      hostDenom: HOST_DENOM,
+      bechPrefix: HOST_CONFIG.bechPrefix,
     });
 
-    const { validators: gaiaValidators } = await gaiaAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
-    const gaiaAddValidatorsMsg = stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
+    const { validators } = await hostAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
+    const addValidatorsMsg = stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
       creator: strideAccounts.admin.address,
-      hostZone: GAIA_CHAIN_ID,
-      validators: gaiaValidators.map((val) => ({
-        name: val.description.moniker,
-        address: val.operatorAddress,
-        weight: 10n,
-        delegation: "0", // ignored
-        slashQueryProgressTracker: "0", // ignored
-        slashQueryCheckpoint: "0", // ignored
-        sharesToTokensRate: "0", // ignored
-        delegationChangesInProgress: 0n, // ignored
-        slashQueryInProgress: false, // ignored
-      })),
+      hostZone: HOST_CHAIN_ID,
+      validators: validators.map((val) =>
+        newValidator({
+          name: val.description.moniker,
+          address: val.operatorAddress,
+          weight: 10n,
+        }),
+      ),
     });
 
-    await submitTxAndExpectSuccess(strideAccounts.admin, [gaiaRegisterHostZoneMsg, gaiaAddValidatorsMsg]);
+    await submitTxAndExpectSuccess(strideAccounts.admin, [registerHostZoneMsg, addValidatorsMsg]);
   }
 
   console.log("waiting for ICA channels...");
-  await assertICAChannelsOpen(strideAccounts.admin, GAIA_CHAIN_ID);
+  await assertICAChannelsOpen(strideAccounts.admin, HOST_CHAIN_ID);
 }, 45_000);
 
 describe("Core Tests", () => {
   test("IBC Transfer", async () => {
     const stridejs = strideAccounts.user;
-    const gaiajs = gaiaAccounts.user;
+    const hostjs = hostAccounts.user;
     const transferAmount = BigInt(50000000);
 
     // Get initial balances
-    // We'll send STRD from Stride -> Gaia
-    const strideInitialStrdBalance = await getBalance({
+    // We'll send STRD from Stride -> Host Zone
+    const initialStrdBalanceOnStride = await getBalance({
       client: stridejs,
       denom: USTRD,
     });
 
-    const gaiaInitialStrdBalance = await getBalance({
-      client: gaiajs,
-      denom: STRD_DENOM_ON_GAIA,
+    const initialStrdBalanceOnHost = await getBalance({
+      client: hostjs,
+      denom: STRD_DENOM_ON_HOST,
     });
 
-    // As well as ATOM from Gaia -> Stride
-    const gaiaInitialAtomBalance = await getBalance({
-      client: gaiajs,
-      denom: UATOM,
+    // As well as host denom (e.g. ATOM) from Host chain -> Stride
+    const initialHostBalanceOnHost = await getBalance({
+      client: hostjs,
+      denom: HOST_DENOM,
     });
 
-    const strideInitialAtomBalance = await getBalance({
+    const initialHostBalanceOnStride = await getBalance({
       client: stridejs,
-      denom: ATOM_DENOM_ON_STRIDE,
+      denom: HOST_DENOM_ON_STRIDE,
     });
 
     // Perform IBC transfers
-    console.log("Transferring USTRD from Stride to Gaia...");
+    console.log("Transferring USTRD from Stride to host zone...");
     await ibcTransfer({
       client: stridejs,
-      sourceChain: "STRIDE",
-      destinationChain: "GAIA",
+      sourceChain: STRIDE_CHAIN_NAME,
+      destinationChain: HOST_CHAIN_NAME,
       coin: `${transferAmount}${USTRD}`,
       sender: stridejs.address,
-      receiver: gaiajs.address,
+      receiver: hostjs.address,
     });
 
-    console.log("Transferring ATOM from Gaia to Stride...");
+    console.log("Transferring ATOM from host zone to Stride...");
     await ibcTransfer({
-      client: gaiajs,
-      sourceChain: "GAIA",
-      destinationChain: "STRIDE",
+      client: hostjs,
+      sourceChain: HOST_CHAIN_NAME,
+      destinationChain: STRIDE_CHAIN_NAME,
       coin: `${transferAmount}${UATOM}`,
-      sender: gaiajs.address,
+      sender: hostjs.address,
       receiver: stridejs.address,
     });
 
@@ -234,56 +248,56 @@ describe("Core Tests", () => {
     await sleep(5000);
 
     // Get final balances
-    const strideFinalStrdBalance = await getBalance({
+    const finalStrdBalanceOnStride = await getBalance({
       client: stridejs,
       denom: USTRD,
     });
 
-    const gaiaFinalStrdBalance = await getBalance({
-      client: gaiajs,
-      denom: STRD_DENOM_ON_GAIA,
+    const finalStrdBalanceOnHost = await getBalance({
+      client: hostjs,
+      denom: STRD_DENOM_ON_HOST,
     });
 
-    const gaiaFinalAtomBalance = await getBalance({
-      client: gaiajs,
-      denom: UATOM,
+    const finalHostBalanceOnHost = await getBalance({
+      client: hostjs,
+      denom: HOST_DENOM,
     });
 
-    const strideFinalAtomBalance = await getBalance({
+    const finalHostBalanceOnStride = await getBalance({
       client: stridejs,
-      denom: ATOM_DENOM_ON_STRIDE,
+      denom: HOST_DENOM_ON_STRIDE,
     });
 
     // Calculate and verify balance changes
-    const strideStrdBalanceDiff = strideFinalStrdBalance - strideInitialStrdBalance;
-    const strideAtomBalanceDiff = strideFinalAtomBalance - strideInitialAtomBalance;
-    const gaiaStrdBalanceDiff = gaiaFinalStrdBalance - gaiaInitialStrdBalance;
-    const gaiaAtomBalanceDiff = gaiaFinalAtomBalance - gaiaInitialAtomBalance;
+    const strideStrdBalanceDiff = finalStrdBalanceOnStride - initialStrdBalanceOnStride;
+    const strideHostBalanceDiff = finalHostBalanceOnStride - initialHostBalanceOnStride;
+    const hostStrdBalanceDiff = finalStrdBalanceOnHost - initialStrdBalanceOnHost;
+    const hostHostBalanceDiff = finalHostBalanceOnHost - initialHostBalanceOnHost;
 
     // Verify the transfers worked
     // STRD sent out from Stride → negative balance change + fee
-    // STRD received on Gaia → positive balance change
+    // STRD received on host → positive balance change
     expect(strideStrdBalanceDiff).to.equal(-(transferAmount + DEFAULT_FEE), "Stride STRD balance change");
-    expect(gaiaStrdBalanceDiff).to.equal(transferAmount, "Gaia STRD balance change");
+    expect(hostStrdBalanceDiff).to.equal(transferAmount, "Host STRD balance change");
 
-    // ATOM sent out from Gaia → negative balance change + fee
-    // ATOM received on Stride → positive balance change
-    expect(gaiaAtomBalanceDiff).to.equal(-(transferAmount + DEFAULT_FEE), "Gaia ATOM balance change");
-    expect(strideAtomBalanceDiff).to.equal(transferAmount, "Stride ATOM balance change");
+    // Host denom sent out from host zone → negative balance change + fee
+    // Host denom received on Stride → positive balance change
+    expect(hostHostBalanceDiff).to.equal(-(transferAmount + DEFAULT_FEE), "Host native balance change");
+    expect(strideHostBalanceDiff).to.equal(transferAmount, "Stride host denom balance change");
   }, 120_000);
 
   test("Liquid Stake", async () => {
     const stridejs = strideAccounts.user;
-    const gaiajs = gaiaAccounts.user;
+    const hostjs = hostAccounts.user;
     const stakeAmount = 10000000;
 
-    // Get initial balances
-    let strideInitialAtomBalance = await getBalance({
+    // Get initial balances on Stride
+    let initialUserNativeBalance = await getBalance({
       client: stridejs,
-      denom: ATOM_DENOM_ON_STRIDE,
+      denom: HOST_DENOM_ON_STRIDE,
     });
 
-    const strideInitialStAtomBalance = await getBalance({
+    const initialUserStBalance = await getBalance({
       client: stridejs,
       denom: STATOM,
     });
@@ -292,30 +306,30 @@ describe("Core Tests", () => {
     const {
       hostZone: { delegationIcaAddress },
     } = await stridejs.query.stride.stakeibc.hostZone({
-      chainId: GAIA_CHAIN_ID,
+      chainId: HOST_CHAIN_ID,
     });
     const initialDelegatedBalance = await getDelegatedBalance({
-      client: gaiajs,
+      client: hostjs,
       delegator: delegationIcaAddress,
     });
 
-    // Ensure there's enough ATOM to liquid stake, if not transfer
-    if (strideInitialAtomBalance == BigInt(0)) {
-      console.log("Transferring ATOM from Gaia to Stride...");
+    // Ensure there's enough native host tokens to liquid stake, if not transfer
+    if (initialUserNativeBalance == BigInt(0)) {
+      console.log("Transferring host zone token to Stride...");
       await ibcTransfer({
-        client: gaiajs,
-        sourceChain: "GAIA",
-        destinationChain: "STRIDE",
-        coin: `${stakeAmount}${UATOM}`,
-        sender: gaiajs.address,
+        client: hostjs,
+        sourceChain: HOST_CHAIN_NAME,
+        destinationChain: STRIDE_CHAIN_NAME,
+        coin: `${stakeAmount}${HOST_DENOM}`,
+        sender: hostjs.address,
         receiver: stridejs.address,
       });
 
-      strideInitialAtomBalance = await waitForBalanceChange({
-        initialBalance: strideInitialAtomBalance,
+      initialUserNativeBalance = await waitForBalanceChange({
+        initialBalance: initialUserNativeBalance,
         client: stridejs,
         address: stridejs.address,
-        denom: ATOM_DENOM_ON_STRIDE,
+        denom: HOST_DENOM_ON_STRIDE,
       });
     }
 
@@ -324,40 +338,39 @@ describe("Core Tests", () => {
     const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
       creator: stridejs.address,
       amount: String(stakeAmount),
-      hostDenom: UATOM,
+      hostDenom: HOST_DENOM,
     });
 
     const tx = await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
     await sleep(2000); // sleep to make sure block finalized
 
     // Get final ATOM and stATOM balances
-    const strideFinalStAtomBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: STATOM });
-    const strideFinalAtomBalance = await getBalance({
+    const finalUserStBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: STATOM });
+    const finalUserNativeBalance = await getBalance({
       client: stridejs,
       address: stridejs.address,
-      denom: ATOM_DENOM_ON_STRIDE,
+      denom: HOST_DENOM_ON_STRIDE,
     });
 
     // Get the redemption rate at the time of the liquid stake
     const {
       hostZone: { redemptionRate },
-    } = await getHostZone(stridejs, GAIA_CHAIN_ID, tx.height);
+    } = await getHostZone(stridejs, HOST_CHAIN_ID, tx.height);
 
     // Confirm the balance changes
-    // ATOM should decrease (sent for staking)
-    // stATOM should increase (minted)
-    // Delegation ICA should receive tokens
-    const strideAtomBalanceDiff = strideFinalAtomBalance - strideInitialAtomBalance;
-    const strideStAtomBalanceDiff = strideFinalStAtomBalance - strideInitialStAtomBalance;
+    // Native balance should decrease (sent for staking)
+    // StBalance should increase (minted)
+    const nativeBalanceDiff = finalUserNativeBalance - initialUserNativeBalance;
+    const stBalaanceDiff = finalUserStBalance - initialUserStBalance;
     const expectedStAtomAmount = BigInt(
       Decimal(stakeAmount.toString()).div(Decimal(redemptionRate)).floor().toString(),
     );
-    expect(strideStAtomBalanceDiff).to.equal(expectedStAtomAmount, "User stATOM balance change on Stride");
-    expect(strideAtomBalanceDiff).to.equal(BigInt(-stakeAmount), "User ATOM balance change on Stride");
+    expect(stBalaanceDiff).to.equal(expectedStAtomAmount, "User st balance change on Stride");
+    expect(nativeBalanceDiff).to.equal(BigInt(-stakeAmount), "User native balance change on Stride");
 
     // Get the deposit record that was used for the liquid stake
     // We grab the latest TRANSFER_QUEUE record
-    const { depositRecord: allDepositRecords } = await getAllDepositRecords(stridejs, GAIA_CHAIN_ID, tx.height);
+    const { depositRecord: allDepositRecords } = await getAllDepositRecords(stridejs, HOST_CHAIN_ID, tx.height);
     const transferRecords = allDepositRecords
       .filter((record) => record.status === stride.records.DepositRecord_Status.TRANSFER_QUEUE)
       .sort((a, b) => Number(b.id - a.id));
@@ -384,7 +397,7 @@ describe("Core Tests", () => {
       status: REMOVED,
     });
 
-    const updatedDelegatedBalance = await waitForDelegationChange({ client: gaiajs, delegator: delegationIcaAddress });
+    const updatedDelegatedBalance = await waitForDelegationChange({ client: hostjs, delegator: delegationIcaAddress });
 
     // Confirm at least our staked amount was delegated (it could be more if there was reinvestment)
     expect(updatedDelegatedBalance - initialDelegatedBalance >= BigInt(stakeAmount)).to.be.true;
@@ -392,7 +405,7 @@ describe("Core Tests", () => {
     // Confirm the host zone updated
     const {
       hostZone: { totalDelegations },
-    } = await stridejs.query.stride.stakeibc.hostZone({ chainId: GAIA_CHAIN_ID });
+    } = await stridejs.query.stride.stakeibc.hostZone({ chainId: HOST_CHAIN_ID });
     expect(BigInt(totalDelegations)).to.equal(updatedDelegatedBalance, "Updated delegated balance");
   }, 180_000); // 3 minutes timeout
 });
