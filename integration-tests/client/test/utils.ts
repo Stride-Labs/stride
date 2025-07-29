@@ -16,7 +16,20 @@ import { DEFAULT_FEE, DEFAULT_GAS, TRANSFER_CHANNEL, TRANSFER_PORT, USTRD } from
 import { newTransferMsg } from "./msgs";
 import { Chain, CosmosClient } from "./types";
 import { sleep } from "stridejs";
+import { QueryGetHostZoneResponse } from "stridejs/dist/types/codegen/stride/stakeibc/query";
 
+/**
+ * Returns the absolute value of a bigint
+ * @param i The value to take the absolute value of
+ */
+export function bigIntAbs(i: bigint): bigint {
+  return i < BigInt(0) ? -i : i;
+}
+
+/**
+ * Returns true if a client is a cosmos client (rather than a Stride client)
+ * @param client The Stride or Cosmos client
+ */
 export function isCosmosClient(client: any): client is CosmosClient {
   return "address" in client && "client" in client && client.client instanceof SigningStargateClient;
 }
@@ -130,6 +143,31 @@ export async function assertOpenTransferChannel(client: StrideClient | CosmosCli
     const channel = await client.query.ibc.channel.channel(TRANSFER_PORT, channelId);
     expect(channel?.channel?.state).to.equal(stateOpen, `Host transfer ${channelId} should be open`);
   }
+}
+
+/**
+ * Waits for the ICA addresses to be flushed out on the host zone to confirm they're all opened
+ * @param client Stride client
+ * @param chainId The host chain id
+ */
+export async function assertICAChannelsOpen(stridejs: StrideClient, chainId: string): Promise<void> {
+  waitForStateChange(
+    async () => {
+      return await stridejs.query.stride.stakeibc.hostZone({
+        chainId: chainId,
+      });
+    },
+    (response: QueryGetHostZoneResponse) => {
+      const hostZone = response.hostZone;
+      return (
+        hostZone.delegationIcaAddress != "" &&
+        hostZone.withdrawalIcaAddress != "" &&
+        hostZone.redemptionIcaAddress != "" &&
+        hostZone.feeIcaAddress != ""
+      );
+    },
+    `Timed out waiting for ICA channel opening`,
+  );
 }
 
 /**
@@ -247,9 +285,8 @@ export async function moduleAddress(client: StrideClient, name: string): Promise
 export async function waitForStateChange<T>(
   checkFunction: () => Promise<T>,
   condition: (result: T) => boolean,
-  maxAttempts: number = 60,
-  intervalMs: number = 500,
   timeoutErrorMessage: string = "Timed out waiting for state change",
+  maxAttempts: number = 60,
 ): Promise<T> {
   let attempts = 0;
 
@@ -261,7 +298,7 @@ export async function waitForStateChange<T>(
     }
 
     attempts++;
-    await sleep(intervalMs);
+    await sleep(1000); // 1 second
   }
 
   throw new Error(`${timeoutErrorMessage} after ${maxAttempts} attempts`);
@@ -274,25 +311,31 @@ export async function waitForBalanceChange({
   client,
   address,
   denom,
+  initialBalance,
+  minChange = 0,
   maxAttempts = 60,
-  intervalMs = 500,
 }: {
   client: StrideClient | CosmosClient;
   address: string;
   denom: string;
+  initialBalance?: bigint;
+  minChange?: number;
   maxAttempts?: number;
-  intervalMs?: number;
-}): Promise<string> {
-  // Get initial balance inside the function
-  const initialBalance = await getBalance({ client, address, denom });
+}): Promise<bigint> {
+  let attempts = 0;
+  let prevBalance = initialBalance === undefined ? await getBalance({ client, address, denom }) : initialBalance;
 
-  return waitForStateChange(
-    async () => getBalance({ client, address, denom }),
-    (balance) => BigInt(balance) > BigInt(initialBalance),
-    maxAttempts,
-    intervalMs,
-    `Timed out waiting for balance change for ${denom} at ${address}`,
-  );
+  while (attempts < maxAttempts) {
+    const currBalance = await getBalance({ client, address, denom });
+    if (bigIntAbs(currBalance - prevBalance) >= BigInt(minChange)) {
+      return currBalance;
+    }
+
+    attempts++;
+    await sleep(1000); // 1 second
+  }
+
+  throw new Error(`Timed out waiting for balance change for ${denom} at ${address}`);
 }
 
 // Utility function to get balance as a string.
@@ -304,15 +347,15 @@ export async function getBalance({
   client: StrideClient | CosmosClient;
   address: string;
   denom: string;
-}): Promise<string> {
+}): Promise<bigint> {
   if (client instanceof StrideClient) {
     const { balance: { amount } = { amount: "0" } } = await client.query.cosmos.bank.v1beta1.balance({
       address,
       denom,
     });
-    return amount;
+    return BigInt(amount);
   } else {
     const balance = await client.query.bank.balance(address, denom);
-    return balance.amount;
+    return BigInt(balance.amount);
   }
 }

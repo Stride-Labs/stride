@@ -17,7 +17,7 @@ const toStToken = (denom: string) => `st${denom}`;
 export const STATOM = toStToken(UATOM);
 export const STOSMO = toStToken(UOSMO);
 
-export const DEFAULT_FEE = 2000000;
+export const DEFAULT_FEE = BigInt(2000000);
 export const DEFAULT_GAS = "2000000";
 
 export const TRANSFER_PORT = "transfer";
