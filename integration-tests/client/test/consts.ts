@@ -13,7 +13,7 @@ export const USTRD = "ustrd";
 export const UATOM = "uatom";
 export const UOSMO = "uosmo";
 
-const toStToken = (denom: string) => `st${denom}`;
+export const toStToken = (denom: string) => `st${denom}`;
 export const STATOM = toStToken(UATOM);
 export const STOSMO = toStToken(UOSMO);
 

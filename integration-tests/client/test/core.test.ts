@@ -12,16 +12,15 @@ import { DirectSecp256k1HdWallet, GasPrice, ibcDenom, sleep, stride } from "stri
 import { beforeAll, describe, expect, test } from "vitest";
 import {
   STRIDE_RPC_ENDPOINT,
-  UATOM,
   USTRD,
   DEFAULT_FEE,
-  STATOM,
   REMOVED,
   DEFAULT_TRANSFER_CHANNEL_ID,
   DEFAULT_CONNECTION_ID,
   CHAIN_CONFIGS,
   TRANSFER_PORT,
   STRIDE_CHAIN_NAME,
+  toStToken,
 } from "./consts";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
@@ -37,6 +36,7 @@ const HOST_CHAIN_NAME = "cosmoshub";
 const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
 const HOST_CHAIN_ID = HOST_CONFIG.chainId;
 const HOST_DENOM = HOST_CONFIG.hostDenom;
+const ST_DENOM = toStToken(HOST_DENOM);
 
 const HOST_DENOM_ON_STRIDE = ibcDenom(
   [
@@ -187,6 +187,7 @@ beforeAll(async () => {
     });
 
     await submitTxAndExpectSuccess(strideAccounts.admin, [registerHostZoneMsg, addValidatorsMsg]);
+    await sleep(2000);
   }
 
   console.log("waiting for ICA channels...");
@@ -233,12 +234,12 @@ describe("Core Tests", () => {
       receiver: hostjs.address,
     });
 
-    console.log("Transferring ATOM from host zone to Stride...");
+    console.log("Transferring native host token from host zone to Stride...");
     await ibcTransfer({
       client: hostjs,
       sourceChain: HOST_CHAIN_NAME,
       destinationChain: STRIDE_CHAIN_NAME,
-      coin: `${transferAmount}${UATOM}`,
+      coin: `${transferAmount}${HOST_DENOM}`,
       sender: hostjs.address,
       receiver: stridejs.address,
     });
@@ -299,7 +300,7 @@ describe("Core Tests", () => {
 
     const initialUserStBalance = await getBalance({
       client: stridejs,
-      denom: STATOM,
+      denom: ST_DENOM,
     });
 
     // Get the initial delegated balance
@@ -344,8 +345,8 @@ describe("Core Tests", () => {
     const tx = await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
     await sleep(2000); // sleep to make sure block finalized
 
-    // Get final ATOM and stATOM balances
-    const finalUserStBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: STATOM });
+    // Get final native and st balances
+    const finalUserStBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: ST_DENOM });
     const finalUserNativeBalance = await getBalance({
       client: stridejs,
       address: stridejs.address,
@@ -362,10 +363,10 @@ describe("Core Tests", () => {
     // StBalance should increase (minted)
     const nativeBalanceDiff = finalUserNativeBalance - initialUserNativeBalance;
     const stBalaanceDiff = finalUserStBalance - initialUserStBalance;
-    const expectedStAtomAmount = BigInt(
+    const expectedStBalanceAmount = BigInt(
       Decimal(stakeAmount.toString()).div(Decimal(redemptionRate)).floor().toString(),
     );
-    expect(stBalaanceDiff).to.equal(expectedStAtomAmount, "User st balance change on Stride");
+    expect(stBalaanceDiff).to.equal(expectedStBalanceAmount, "User st balance change on Stride");
     expect(nativeBalanceDiff).to.equal(BigInt(-stakeAmount), "User native balance change on Stride");
 
     // Get the deposit record that was used for the liquid stake

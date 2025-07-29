@@ -1,5 +1,6 @@
 import { osmosis } from "osmojs";
-import { Coin, coinFromString, ibc, ibcDenom, stride } from "stridejs";
+import { coinFromString, ibc, ibcDenom, stride } from "stridejs";
+import { Coin } from "@cosmjs/proto-signing";
 import { MsgTransfer } from "stridejs/dist/types/codegen/ibc/applications/transfer/v1/tx";
 import { MsgRegisterTokenPriceQuery } from "stridejs/dist/types/codegen/stride/icqoracle/tx";
 import { TRANSFER_PORT, UOSMO } from "./consts";
