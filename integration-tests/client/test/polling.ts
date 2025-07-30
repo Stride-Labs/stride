@@ -2,7 +2,7 @@ import { StrideClient } from "stridejs";
 import { REMOVED } from "./consts";
 import { CosmosClient } from "./types";
 import { sleep } from "stridejs";
-import { getBalance, getDelegatedBalance } from "./queries";
+import { getBalance, getDelegatedBalance, getHostZone } from "./queries";
 import { bigIntAbs } from "./utils";
 
 /**
@@ -41,36 +41,36 @@ export async function waitForBalanceChange({
 
 /**
  * Wait for a delegation to occur on the host zone
- * @param client The cosmos client of the host zone
- * @param delegator The delegator's address
- * @param minChange The minimum change before returning a success
+ * @param client The stride client
+ * @param chainId The chainId of the host zone
+ * @param minDelegation The minimum delegation before returning a success
  * @param maxAttempts The max number of attempts to try, each spaced by a second
  */
-export async function waitForDelegationChange({
+export async function waitForHostZoneTotalDelegationsChange({
   client,
-  delegator,
-  minChange = 0,
-  maxAttempts = 60,
+  chainId,
+  minDelegation = 0,
+  maxAttempts = 180,
 }: {
-  client: StrideClient | CosmosClient;
-  delegator: string;
-  minChange?: number;
+  client: StrideClient;
+  chainId: string;
+  minDelegation?: number;
   maxAttempts?: number;
-}): Promise<bigint> {
+}): Promise<void> {
   let attempts = 0;
-  let prevBalance = await getDelegatedBalance({ client, delegator });
 
   while (attempts < maxAttempts) {
-    const currBalance = await getDelegatedBalance({ client, delegator });
-    if (bigIntAbs(currBalance - prevBalance) >= BigInt(minChange)) {
-      return currBalance;
+    let { totalDelegations: currDelegations } = await getHostZone({ client, chainId });
+
+    if (BigInt(currDelegations) >= BigInt(minDelegation)) {
+      return;
     }
 
     attempts++;
     await sleep(1000); // 1 second
   }
 
-  throw new Error(`Timed out waiting for delegated balance change at ${delegator}`);
+  throw new Error(`Timed out waiting for the host zone struct's delegated balance to reach ${minDelegation}`);
 }
 
 /**

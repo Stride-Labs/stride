@@ -3,9 +3,9 @@ import { CosmosClient } from "./types";
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { QueryClient } from "@cosmjs/stargate";
 import { ModuleAccount } from "stridejs/dist/types/codegen/cosmos/auth/v1beta1/auth";
-
-type QueryGetHostZoneResponse = ReturnType<typeof stride.stakeibc.QueryGetHostZoneResponse.decode>;
-type QueryDepositRecordByHostResponse = ReturnType<typeof stride.records.QueryDepositRecordByHostResponse.decode>;
+import { HostZone } from "stridejs/dist/types/codegen/stride/stakeibc/host_zone";
+import { expect } from "vitest";
+import { DepositRecord } from "stridejs/dist/types/codegen/stride/records/records";
 
 /**
  * Queryes a module account address from the account name
@@ -87,11 +87,15 @@ export async function getDelegatedBalance({
  * @param blockHeight The block height to query
  * @returns
  */
-export async function getHostZone(
-  client: StrideClient,
-  chainId: string,
-  blockHeight: number = 0,
-): Promise<QueryGetHostZoneResponse> {
+export async function getHostZone({
+  client,
+  chainId,
+  blockHeight = 0,
+}: {
+  client: StrideClient;
+  chainId: string;
+  blockHeight?: number;
+}): Promise<HostZone> {
   const tmClient = await Tendermint37Client.connect(client.rpcEndpoint);
   const queryClient = new QueryClient(tmClient);
 
@@ -100,7 +104,7 @@ export async function getHostZone(
     stride.stakeibc.QueryGetHostZoneRequest.encode({ chainId }).finish(),
     blockHeight,
   );
-  return stride.stakeibc.QueryGetHostZoneResponse.decode(response.value);
+  return stride.stakeibc.QueryGetHostZoneResponse.decode(response.value).hostZone;
 }
 
 /**
@@ -114,7 +118,7 @@ export async function getAllDepositRecords(
   client: StrideClient,
   chainId: string,
   blockHeight: number = 0,
-): Promise<QueryDepositRecordByHostResponse> {
+): Promise<DepositRecord[]> {
   const tmClient = await Tendermint37Client.connect(client.rpcEndpoint);
   const queryClient = new QueryClient(tmClient);
 
@@ -123,5 +127,33 @@ export async function getAllDepositRecords(
     stride.records.QueryDepositRecordByHostRequest.encode({ hostZoneId: chainId }).finish(),
     blockHeight,
   );
-  return stride.records.QueryDepositRecordByHostResponse.decode(response.value);
+  return stride.records.QueryDepositRecordByHostResponse.decode(response.value).depositRecord;
+}
+
+/**
+ * Fetches the latest deposit record with a given status
+ * @param client The stride client
+ * @param chainId The host zone chain ID
+ * @param status The deposit record status to filter for
+ * @param blockHeight The block height to search at
+ * @returns The newest deposit record for the host zone that matches the criteria
+ */
+export async function getLatestDepositRecord({
+  client,
+  chainId,
+  status,
+  blockHeight = 0,
+}: {
+  client: StrideClient;
+  chainId: string;
+  status: any;
+  blockHeight?: number;
+}): Promise<DepositRecord> {
+  const allDepositRecords = await getAllDepositRecords(client, chainId, blockHeight);
+  const filteredRecords = allDepositRecords
+    .filter((record) => record.status === status) // filter by status
+    .sort((a, b) => Number(b.id - a.id)); // sort by ID
+
+  expect(filteredRecords.length).to.be.greaterThan(0, `No deposit records with status: ${status.toString()}`);
+  return filteredRecords[0];
 }
