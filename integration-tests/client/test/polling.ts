@@ -136,14 +136,16 @@ export async function waitForUnbondingRecordStatus({
   epochNumber: bigint;
   status: any;
 }): Promise<void> {
-  const maxAttempts = 300;
+  const maxAttempts = 360;
   let attempt = 0;
 
   while (attempt < maxAttempts) {
     // If we're checking that the record was removed, query all records and check that the ID is not found
     if (status === REMOVED) {
-      const { epochUnbondingRecord } = await client.query.stride.records.epochUnbondingRecordAll();
-      if (epochUnbondingRecord.filter((record) => record.epochNumber == epochNumber).length == 0) {
+      const { epochUnbondingRecord: epochUnbondingRecords } =
+        await client.query.stride.records.epochUnbondingRecordAll();
+
+      if (epochUnbondingRecords.filter((record) => record.epochNumber == epochNumber).length == 0) {
         return;
       }
     } else {
@@ -153,7 +155,7 @@ export async function waitForUnbondingRecordStatus({
         (record) => record.hostZoneId == chainId,
       );
       expect(hostZoneUnbondingRecords.length).to.equal(
-        0,
+        1,
         `No unbonding record found for ${chainId} and epoch ${epochNumber}`,
       );
 
@@ -167,4 +169,32 @@ export async function waitForUnbondingRecordStatus({
   }
 
   throw new Error(`Timed out waiting for unbonding record to change to status: ${status.toString()}`);
+}
+
+/**
+ * Wait for a redemption record to be removed after a claim is complete
+ * @param client The stride client
+ * @param redemptionRecordId The ID of the redemption record
+ */
+export async function waitForRedemptionRecordRemoval({
+  client,
+  redemptionRecordId,
+}: {
+  client: StrideClient;
+  redemptionRecordId: string;
+}): Promise<void> {
+  const maxAttempts = 360;
+  let attempt = 0;
+
+  while (attempt < maxAttempts) {
+    const { userRedemptionRecord: userRedemptionRecords } = await client.query.stride.records.userRedemptionRecordAll();
+    if (userRedemptionRecords.filter((record) => record.id == redemptionRecordId).length == 0) {
+      return;
+    }
+
+    attempt++;
+    await sleep(1000); // 1 second
+  }
+
+  throw new Error(`Timed out waiting for redemption record ${redemptionRecordId} to be removed`);
 }

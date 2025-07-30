@@ -255,6 +255,27 @@ export async function getHostZoneUnbondingRecords({
 }
 
 /**
+ * Queries a specific host zone unbonding record
+ * @param client The stride client
+ * @param chainId The chain ID of the host zone
+ * @param epochNumber The epoch unbonding record epoch number
+ * @returns
+ */
+export async function getHostZoneUnbondingRecord({
+  client,
+  chainId,
+  epochNumber,
+}: {
+  client: StrideClient;
+  chainId: string;
+  epochNumber: bigint;
+}): Promise<HostZoneUnbonding> {
+  const hostZoneUnbondings = (await client.query.stride.records.epochUnbondingRecord({ epochNumber: epochNumber }))
+    .epochUnbondingRecord.hostZoneUnbondings;
+  return hostZoneUnbondings.filter((record) => record.hostZoneId == chainId)[0];
+}
+
+/**
  * Fetches the latest host zone unbonding record with a given status
  * @param client The stride client
  * @param chainId The host zone chain ID

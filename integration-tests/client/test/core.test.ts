@@ -30,11 +30,13 @@ import {
   waitForHostZoneTotalDelegationsChange,
   waitForDepositRecordStatus,
   waitForUnbondingRecordStatus,
+  waitForRedemptionRecordRemoval,
 } from "./polling";
 import {
   getBalance,
   getDelegatedBalance,
   getHostZoneTotalDelegations,
+  getHostZoneUnbondingRecord,
   getHostZoneUnbondingRecords,
   getLatestDepositRecord,
   getLatestHostZoneUnbondingRecord,
@@ -414,7 +416,7 @@ describe("Core Tests", () => {
     expect(hostZoneTotalDelegations).to.equal(updatedDelegatedBalance, "Updated delegated balance");
   }, 180_000); // 3 minutes timeout
 
-  test.only("Redeem Stake", async () => {
+  test("Redeem Stake", async () => {
     const stridejs = strideAccounts.user;
     const hostjs = hostAccounts.user;
     const stakeAmount = 10000000;
@@ -512,7 +514,7 @@ describe("Core Tests", () => {
       Decimal(redeemAmount.toString()).mul(Decimal(redemptionRate)).floor().toString(),
     );
 
-    // Confirm a user redemption record was created
+    // Confirm a user redemption record was created with the proper amounts
     const redemptionRecord = await getUserRedemptionRecord({
       client: stridejs,
       chainId: HOST_CHAIN_ID,
@@ -535,14 +537,36 @@ describe("Core Tests", () => {
     });
 
     // Confirm the delegated balance changed (both on the host zone struct and on the actual host chain)
+    // There should simulateously be reinvestment delegations, so we have to relax the check to within a tolerance
     let updatedTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId: HOST_CHAIN_ID });
     let updatedDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
 
     const expectedDelegationChange = BigInt(unbondingRecord.nativeTokenAmount);
+    const delegationChangeLowerBound = BigInt(Decimal(expectedDelegationChange).mul(0.98).floor().toString()); // within 2%
+    const delegationChangeUpperBound = BigInt(expectedDelegationChange);
+
     const totalDelegationsDiff = initialTotalDelegations - updatedTotalDelegations;
     const delegatedBalanceDiff = initialDelegatedBalance - updatedDelegatedBalance;
-    expect(totalDelegationsDiff).to.equal(expectedDelegationChange, "Total delegations change");
-    expect(delegatedBalanceDiff).to.equal(expectedDelegationChange, "Delegated balance change");
+
+    expect(totalDelegationsDiff >= delegationChangeLowerBound).to.be.true;
+    expect(totalDelegationsDiff <= delegationChangeUpperBound).to.be.true;
+    expect(delegatedBalanceDiff >= delegationChangeLowerBound).to.be.true;
+    expect(delegatedBalanceDiff <= delegationChangeUpperBound).to.be.true;
+
+    // Fetch the unbonding record and user redemption record again
+    // These get updated when the undelegation is submitted with the true number of native tokens owed
+    // (factoring in re-investment that occurs in between redeem and unbond)
+    const updatedUnbondingRecord = await getHostZoneUnbondingRecord({
+      client: stridejs,
+      chainId: HOST_CHAIN_ID,
+      epochNumber: unbondingEpoch,
+    });
+    const updatedRedemptionRecord = await getUserRedemptionRecord({
+      client: stridejs,
+      chainId: HOST_CHAIN_ID,
+      epochNumber: unbondingEpoch,
+      receiver: hostjs.address,
+    });
 
     // Get the initial redemption account balance
     const initialRedemptionICABalance = await getRedemptionAccountBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
@@ -560,7 +584,7 @@ describe("Core Tests", () => {
     const redemptionBalanceAfterSweep = await getRedemptionAccountBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
     const redemptionBalanceDiffAfterSweep = redemptionBalanceAfterSweep - initialRedemptionICABalance;
     expect(redemptionBalanceDiffAfterSweep).to.equal(
-      BigInt(unbondingRecord.nativeTokenAmount),
+      BigInt(updatedUnbondingRecord.nativeTokenAmount),
       "Redemption ICA balance change",
     );
 
@@ -571,6 +595,7 @@ describe("Core Tests", () => {
     });
 
     // Claim the unbonded tokens
+    console.log("Claiming redeemed tokens...");
     const claimMsg = stride.stakeibc.MessageComposer.withTypeUrl.claimUndelegatedTokens({
       creator: stridejs.address,
       hostZoneId: HOST_CHAIN_ID,
@@ -579,16 +604,11 @@ describe("Core Tests", () => {
     });
     await submitTxAndExpectSuccess(stridejs, [claimMsg]);
 
-    // Fetch the user redemption record again, which gets updated during the unbonding with the
-    // true number of native tokens owed (factoring in re-investment that occurs in between redeem and unbond)
-    const updatedRedemptionRecord = await getUserRedemptionRecord({
-      client: stridejs,
-      chainId: HOST_CHAIN_ID,
-      epochNumber: unbondingEpoch,
-      receiver: hostjs.address,
-    });
+    // Wait for the redemption record to be removed after the claim - indicating that the tokens
+    // have been successfully transferred
+    await waitForRedemptionRecordRemoval({ client: stridejs, redemptionRecordId: updatedRedemptionRecord.id });
 
-    // Confirm the redemption record adjustment is reasonable and that the user received those tokens
+    // Confirm the user received those tokens
     const finalUserNativeBalanceOnHost = await getBalance({
       client: hostjs,
       denom: HOST_DENOM,
@@ -597,7 +617,8 @@ describe("Core Tests", () => {
 
     expect(nativeBalanceDiff).to.equal(BigInt(updatedRedemptionRecord.nativeTokenAmount));
     expect(nativeBalanceDiff >= expectedNativeAmount).to.be.true;
-    expect(nativeBalanceDiff <= BigInt(Decimal(expectedNativeAmount.toString()).mul(1.001).toString())).to.be.true;
+    expect(nativeBalanceDiff <= BigInt(Decimal(expectedNativeAmount.toString()).mul(1.001).floor().toString())).to.be
+      .true;
 
     // Confirm the redemption ICA decremented
     const redemptionBalanceAfterClaim = await getRedemptionAccountBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
