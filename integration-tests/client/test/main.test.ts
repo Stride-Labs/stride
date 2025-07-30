@@ -158,7 +158,7 @@ beforeAll(async () => {
       };
 
       const osmoSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix: OSMOSIS_CHAIN_NAME,
+        prefix: "osmo",
       });
 
       const [{ address: osmoAddress }] = await osmoSigner.getAccounts();

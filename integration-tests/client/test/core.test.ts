@@ -22,6 +22,7 @@ import {
   STRIDE_CHAIN_NAME,
   toStToken,
 } from "./consts";
+import { stringToPath } from "@cosmjs/crypto";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
 import { waitForChain, assertICAChannelsOpen, assertOpenTransferChannel } from "./startup";
@@ -32,7 +33,7 @@ import { Decimal } from "decimal.js";
 import { getAllDepositRecords, getHostZone } from "./queries";
 import { newRegisterHostZoneMsg, newValidator } from "./msgs";
 
-const HOST_CHAIN_NAME = "cosmoshub";
+const HOST_CHAIN_NAME = "band";
 const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
 const HOST_CHAIN_ID = HOST_CONFIG.chainId;
 const HOST_DENOM = HOST_CONFIG.hostDenom;
@@ -115,7 +116,7 @@ beforeAll(async () => {
   for (const { name, mnemonic } of mnemonics) {
     // setup signer for Stride
     const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-      prefix: STRIDE_CHAIN_NAME,
+      prefix: "stride",
     });
 
     const [{ address }] = await signer.getAccounts();
@@ -128,7 +129,10 @@ beforeAll(async () => {
 
     if (name === "user" || name === "val1") {
       // setup signer for host zone
-      const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
+      const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+        prefix: HOST_CONFIG.bechPrefix,
+        hdPaths: [stringToPath("m/44'/494'/0'/0/0")],
+      });
       const [{ address: hostAddress }] = await hostSigner.getAccounts();
 
       hostAccounts[name] = {

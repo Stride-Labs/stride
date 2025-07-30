@@ -17,14 +17,13 @@ import { sleep } from "stridejs";
 import { isCosmosClient } from "./utils";
 
 /**
- * Waits for the chain to start by continuously sending transactions until .
+ * Waits for the chain to start by continuously sending transactions until it succeeds
+ * The best way to ensure a chain is up is to successfully send a tx
  *
  * @param {StrideClient | CosmosClient} client The client instance.
  * @param {string} denom The denomination of the coins to send.
  */
 export async function waitForChain(client: StrideClient | CosmosClient, denom: string): Promise<void> {
-  // the best way to ensure a chain is up is to successfully send a tx
-
   const msg = cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
     fromAddress: client.address,
     toAddress: client.address,
@@ -50,6 +49,7 @@ export async function waitForChain(client: StrideClient | CosmosClient, denom: s
       // signAndBroadcast might throw if the RPC is not up yet
       console.log(e);
     }
+    await sleep(1000);
   }
 }
 
