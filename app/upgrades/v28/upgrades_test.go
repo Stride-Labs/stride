@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	v27 "github.com/Stride-Labs/stride/v27/app/upgrades/v27"
 	v28 "github.com/Stride-Labs/stride/v27/app/upgrades/v28"
 	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
@@ -57,21 +56,14 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 		{
 			ChainId:                        "chain-0",
 			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.25"), // 1 + 25% = 1.25
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.5"), // 1 - 50% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("2.0"), // 1 + 100% = 1.25
 		},
 		{
 			ChainId:                        "chain-1",
 			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.375"), // 1.1 + 25% = 1.375
-		},
-		{
-			// Max outer for osmo uses 12% instead of 10%
-			ChainId:                        v27.OsmosisChainId,
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.5875"), // 1.25 + 27% = 1.5875
+			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.55"), // 1.1 - 50% = 0.55
+			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("2.2"),  // 1.1 + 100% = 2.2
 		},
 	}
 
