@@ -1,0 +1,39 @@
+FROM golang:1.19-alpine AS builder
+
+WORKDIR /opt
+
+RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev ca-certificates build-base git gmp gmp-dev
+
+ENV REPO=https://github.com/bandprotocol/chain
+ENV COMMIT_HASH=v2.5.5
+ENV BINARY=bandd
+
+RUN git clone ${REPO} chain \
+    && cd chain \
+    && git checkout $COMMIT_HASH 
+    
+WORKDIR /opt/chain
+
+RUN go mod download
+RUN GO_OWASM_VERSION=$(go list -m github.com/bandprotocol/go-owasm | cut -d ' ' -f 2) && \
+    wget https://github.com/bandprotocol/go-owasm/releases/download/$GO_OWASM_VERSION/libgo_owasm_muslc.x86_64.a -O /lib/libgo_owasm_muslc.x86_64.a
+RUN sha256sum /lib/libgo_owasm_muslc.x86_64.a | grep c56ad7694196175df51585cbc7f2543cfa8ba9a42c62dcfec76ca28a5842d073
+
+# Copy the library you want to the final location that will be found by the linker flag `-lgo_owasm_muslc`
+RUN cp /lib/libgo_owasm_muslc.x86_64.a /lib/libgo_owasm_muslc.a
+
+# force it to use static lib (from above) not standard libgo_owasm.so file
+RUN LEDGER_ENABLED=true BUILD_TAGS=muslc LINK_STATICALLY=true make install \
+    && echo "Ensuring binary is statically linked ..." \
+    && (file /go/bin/bandd | grep "statically linked")
+
+FROM alpine:3.16
+COPY --from=builder /go/bin/$BINARY /usr/local/bin/
+RUN apk add bash vim sudo dasel jq curl \
+    && addgroup -g 1000 validator \
+    && adduser -S -h /home/validator -D validator -u 1000 -G validator
+
+USER 1000
+WORKDIR /home/validator
+
+EXPOSE 26657 26656 1317 9090

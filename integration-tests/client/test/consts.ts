@@ -40,6 +40,14 @@ export const CHAIN_CONFIGS: ChainConfigs = {
     transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
     rpcEndpoint: GAIA_RPC_ENDPOINT,
   },
+  band: {
+    chainId: "band-test-1",
+    hostDenom: "uband",
+    bechPrefix: "band",
+    connectionId: DEFAULT_CONNECTION_ID,
+    transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+    rpcEndpoint: "http://band-rpc.internal.stridenet.co",
+  },
 };
 
 export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {

@@ -54,6 +54,9 @@ build-stride:
 build-cosmoshub:
 	$(call build_and_push_docker,cosmoshub,.,chains/cosmoshub:v22.1.0)
 
+build-band:
+	$(call build_and_push_docker,band,.,chains/band:v2.5.5)
+
 build-osmosis:
 	$(call build_and_push_docker,osmosis,.,chains/osmosis:v28.0.0)
 

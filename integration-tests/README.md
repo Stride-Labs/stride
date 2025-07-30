@@ -60,6 +60,29 @@ If the stride proto's change, we need to rebuild stridejs:
 
 ## Network
 
+## Adding a New Host Zone
+
+- Create a new dockerfile in `dockerfiles/Dockerfile.{chainName}`. You can use one of the existing dockerfiles as a reference, and just modify the `REPO`, `COMMIT_HASH`, and `BINARY` variables.
+- Add a makefile entry to build the dockerfile
+  ```bash
+  build-{chainName}:
+    $(call build_and_push_docker,{chainName},.,chains/{chainName}:{chainVersion})
+  ```
+- Try to build the docker image. You may have to debug here. Use the project's Dockerfile in their repo as a reference.
+- [Internal Only] Add a DNS entry in GCP for the RPC and API endpoints
+  - Go to GCP Cloud DNS (search DNS in the console)
+  - Click on `internal`
+  - Grab the IP Address from the exising host zones
+  - Click `Add Standard`
+  - Set the DNS Name to `{chainName}-api.internal.stridenet.co`
+  - Set the IP Address to same IP as the other host zones
+- Add the new chain **and relayer** to `network/values.yaml`
+- Then start the network as normal
+
+```bash
+make start
+```
+
 ### Validator Startup Lifecycle
 
 **initContainer**
@@ -78,31 +101,6 @@ If the stride proto's change, we need to rebuild stridejs:
 
 - As a `postStart` operation (run after the main thread is kicked off), the `create-validator.sh` script is run which runs the appropriate `staking` module transaction to create the validator using the previously acquired keys
 - This is run after startup because the validator must sign the tx with their key
-
-## Testing Client
-
-### Debugging (VSCode)
-
-- open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
-- run the `Debug: Create JavaScript Debug Terminal` command
-- set breakpoints
-- run `pnpm test`
-
-### Test new protobuf
-
-- go to https://github.com/Stride-Labs/stridejs
-  - remove `/dist` from `.gitignore`
-  - update the config in `scripts/clone_repos.ts` to point to the new `stride/cosmos-sdk/ibc-go` version
-  - run `pnpm i`
-  - run `pnpm codegen`
-  - run `pnpm build`
-  - run `git commit...`
-  - run `git push`
-  - get the current `stridejs` commit using `git rev-parse HEAD`
-- in the integration tests (this project):
-  - update the `stridejs` dependency commit hash in `package.json`
-  - `pnpm i`
-  - `pnpm test`
 
 ## Motivation
 
