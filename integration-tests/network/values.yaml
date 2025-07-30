@@ -17,7 +17,7 @@ chains:
 
   - name: band
     binary: bandd
-    version: v2.5.5
+    version: v3.1.0
     numValidators: 1
     home: .band
     denom: uband

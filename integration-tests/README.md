@@ -77,11 +77,14 @@ If the stride proto's change, we need to rebuild stridejs:
   - Set the DNS Name to `{chainName}-api.internal.stridenet.co`
   - Set the IP Address to same IP as the other host zones
 - Add the new chain **and relayer** to `network/values.yaml`
+- Add the new relayer configs to `network/configs/relayer.yaml` and `network/configs/hermes.toml`
 - Then start the network as normal
 
 ```bash
 make start
 ```
+
+- If running tests, add the chain config to `client/test/consts.ts` and update the `HOST_CHAIN_NAME` in `client/test/core.test.ts`
 
 ### Validator Startup Lifecycle
 
