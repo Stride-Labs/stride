@@ -41,7 +41,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		reinvestInterval := k.GetParam(ctx, types.KeyReinvestInterval)
 
 		// Claim accrued staking rewards at the beginning of the epoch
-		k.ClaimAccruedStakingRewards(ctx)
+		// k.ClaimAccruedStakingRewards(ctx)
 
 		// Create a new deposit record for each host zone and the grab all deposit records
 		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
@@ -67,7 +67,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 
 		// Reinvest staking rewards
 		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			k.ReinvestRewards(ctx)
+			// k.ReinvestRewards(ctx)
 		}
 
 		// Rebalance stake according to validator weights
@@ -76,18 +76,18 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// On mainnet, the stride epoch overlaps the day epoch when `epochNumber % 4 == 1`,
 		//   so this will trigger the epoch before the unbonding
 		if epochNumber%StrideEpochsPerDayEpoch == 0 {
-			k.RebalanceAllHostZones(ctx)
+			// k.RebalanceAllHostZones(ctx)
 		}
 
 		// Check previous epochs to see if unbondings finished, and sends the relevant tokens
 		// to the redemption account
-		k.SweepUnbondedTokensAllHostZones(ctx)
+		// k.SweepUnbondedTokensAllHostZones(ctx)
 
 		// Transfers in and out of tokens for hostZones which have community pools
-		k.ProcessAllCommunityPoolTokens(ctx)
+		// k.ProcessAllCommunityPoolTokens(ctx)
 
 		// Do transfers for all reward and swapped tokens defined by the trade routes every stride epoch
-		k.TransferAllRewardTokens(ctx)
+		// k.TransferAllRewardTokens(ctx)
 	}
 }
 

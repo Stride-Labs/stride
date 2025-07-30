@@ -54,12 +54,14 @@ export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {
   stride: { cosmoshub: "channel-0", osmosis: "channel-1" },
   cosmoshub: { stride: "channel-0" },
   osmosis: { stride: "channel-0" },
+  band: { stride: "channel-0" },
 };
 
 export const CONNECTION_ID: Record<Chain, Partial<Record<Chain, string>>> = {
   stride: { cosmoshub: "connection-0", osmosis: "connection-1" },
   cosmoshub: { stride: "connection-0" },
   osmosis: { stride: "connection-0" },
+  band: { stride: "connection-0" },
 };
 
 export const ATOM_DENOM_ON_STRIDE = ibcDenom(

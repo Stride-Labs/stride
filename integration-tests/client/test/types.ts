@@ -8,7 +8,7 @@ import {
   IbcExtension,
 } from "@cosmjs/stargate";
 
-export type Chain = "stride" | "cosmoshub" | "osmosis";
+export type Chain = "stride" | "cosmoshub" | "osmosis" | "band";
 
 export type CosmosClient = {
   address: string;
