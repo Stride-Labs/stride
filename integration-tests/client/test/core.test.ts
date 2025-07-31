@@ -9,7 +9,7 @@ import {
 } from "@cosmjs/stargate";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
 import { stringToPath } from "@cosmjs/crypto";
-import { DirectSecp256k1HdWallet, GasPrice, ibcDenom, sleep, stride } from "stridejs";
+import { DirectSecp256k1HdWallet, GasPrice, sleep, stride } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import {
   STRIDE_RPC_ENDPOINT,
@@ -19,9 +19,7 @@ import {
   DEFAULT_TRANSFER_CHANNEL_ID,
   DEFAULT_CONNECTION_ID,
   CHAIN_CONFIGS,
-  TRANSFER_PORT,
   STRIDE_CHAIN_NAME,
-  toStToken,
 } from "./consts";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
@@ -51,29 +49,6 @@ import { newRegisterHostZoneMsg, newValidator } from "./msgs";
 
 const HOST_CHAIN_NAME = "cosmoshub";
 const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
-const HOST_CHAIN_ID = HOST_CONFIG.chainId;
-const HOST_DENOM = HOST_CONFIG.hostDenom;
-const ST_DENOM = toStToken(HOST_DENOM);
-
-const HOST_DENOM_ON_STRIDE = ibcDenom(
-  [
-    {
-      incomingPortId: TRANSFER_PORT,
-      incomingChannelId: HOST_CONFIG.transferChannelId,
-    },
-  ],
-  HOST_DENOM,
-);
-
-const STRD_DENOM_ON_HOST = ibcDenom(
-  [
-    {
-      incomingPortId: TRANSFER_PORT,
-      incomingChannelId: HOST_CONFIG.transferChannelId,
-    },
-  ],
-  USTRD,
-);
 
 // Initialize accounts
 let strideAccounts: {
@@ -153,9 +128,9 @@ beforeAll(async () => {
 
       hostAccounts[name] = {
         address: hostAddress,
-        denom: HOST_DENOM,
+        denom: HOST_CONFIG.hostDenom,
         client: await SigningStargateClient.connectWithSigner(HOST_CONFIG.rpcEndpoint, hostSigner, {
-          gasPrice: GasPrice.fromString(`1.0${HOST_DENOM}`),
+          gasPrice: GasPrice.fromString(`1.0${HOST_CONFIG.hostDenom}`),
           broadcastPollIntervalMs: 50,
         }),
         query: QueryClient.withExtensions(
@@ -174,7 +149,7 @@ beforeAll(async () => {
   await waitForChain(strideAccounts.user, USTRD);
 
   console.log("waiting for host to start...");
-  await waitForChain(hostAccounts.user, HOST_DENOM);
+  await waitForChain(hostAccounts.user, HOST_CONFIG.hostDenom);
 
   console.log("waiting for stride-host ibc...");
   await assertOpenTransferChannel(strideAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
@@ -182,21 +157,21 @@ beforeAll(async () => {
 
   console.log("registering host zones...");
   const { hostZone } = await strideAccounts.admin.query.stride.stakeibc.hostZoneAll({});
-  const hostZoneNotRegistered = hostZone.find((hz) => hz.chainId === HOST_CHAIN_ID) === undefined;
+  const hostZoneNotRegistered = hostZone.find((hz) => hz.chainId === HOST_CONFIG.chainId) === undefined;
 
   if (hostZoneNotRegistered) {
     const registerHostZoneMsg = newRegisterHostZoneMsg({
       sender: strideAccounts.admin.address,
       connectionId: DEFAULT_CONNECTION_ID,
       transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
-      hostDenom: HOST_DENOM,
+      hostDenom: HOST_CONFIG.hostDenom,
       bechPrefix: HOST_CONFIG.bechPrefix,
     });
 
     const { validators } = await hostAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
     const addValidatorsMsg = stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
       creator: strideAccounts.admin.address,
-      hostZone: HOST_CHAIN_ID,
+      hostZone: HOST_CONFIG.chainId,
       validators: validators.map((val) =>
         newValidator({
           name: val.description.moniker,
@@ -211,7 +186,7 @@ beforeAll(async () => {
   }
 
   console.log("waiting for ICA channels...");
-  await assertICAChannelsOpen(strideAccounts.admin, HOST_CHAIN_ID);
+  await assertICAChannelsOpen(strideAccounts.admin, HOST_CONFIG.chainId);
 }, 45_000);
 
 describe("Core Tests", () => {
@@ -219,6 +194,8 @@ describe("Core Tests", () => {
     const stridejs = strideAccounts.user;
     const hostjs = hostAccounts.user;
     const transferAmount = BigInt(50000000);
+
+    const { hostDenom, strdDenomOnHost, hostDenomOnStride } = HOST_CONFIG;
 
     // Get initial balances
     // We'll send STRD from Stride -> Host Zone
@@ -229,18 +206,18 @@ describe("Core Tests", () => {
 
     const initialStrdBalanceOnHost = await getBalance({
       client: hostjs,
-      denom: STRD_DENOM_ON_HOST,
+      denom: strdDenomOnHost,
     });
 
     // As well as host denom (e.g. ATOM) from Host chain -> Stride
     const initialHostBalanceOnHost = await getBalance({
       client: hostjs,
-      denom: HOST_DENOM,
+      denom: hostDenom,
     });
 
     const initialHostBalanceOnStride = await getBalance({
       client: stridejs,
-      denom: HOST_DENOM_ON_STRIDE,
+      denom: hostDenomOnStride,
     });
 
     // Perform IBC transfers
@@ -259,7 +236,7 @@ describe("Core Tests", () => {
       client: hostjs,
       sourceChain: HOST_CHAIN_NAME,
       destinationChain: STRIDE_CHAIN_NAME,
-      coin: `${transferAmount}${HOST_DENOM}`,
+      coin: `${transferAmount}${hostDenom}`,
       sender: hostjs.address,
       receiver: stridejs.address,
     });
@@ -276,17 +253,17 @@ describe("Core Tests", () => {
 
     const finalStrdBalanceOnHost = await getBalance({
       client: hostjs,
-      denom: STRD_DENOM_ON_HOST,
+      denom: strdDenomOnHost,
     });
 
     const finalHostBalanceOnHost = await getBalance({
       client: hostjs,
-      denom: HOST_DENOM,
+      denom: hostDenom,
     });
 
     const finalHostBalanceOnStride = await getBalance({
       client: stridejs,
-      denom: HOST_DENOM_ON_STRIDE,
+      denom: hostDenomOnStride,
     });
 
     // Calculate and verify balance changes
@@ -312,22 +289,24 @@ describe("Core Tests", () => {
     const hostjs = hostAccounts.user;
     const stakeAmount = 10000000;
 
+    const { chainId, hostDenom, stDenom, hostDenomOnStride } = HOST_CONFIG;
+
     // Get initial balances on Stride
     let initialUserNativeBalance = await getBalance({
       client: stridejs,
-      denom: HOST_DENOM_ON_STRIDE,
+      denom: hostDenomOnStride,
     });
 
     const initialUserStBalance = await getBalance({
       client: stridejs,
-      denom: ST_DENOM,
+      denom: stDenom,
     });
 
     // Get the initial delegated balance
     const initialDelegatedBalance = await getDelegatedBalance({
       stridejs,
       hostjs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
     });
 
     // Ensure there's enough native host tokens to liquid stake, if not transfer
@@ -337,7 +316,7 @@ describe("Core Tests", () => {
         client: hostjs,
         sourceChain: HOST_CHAIN_NAME,
         destinationChain: STRIDE_CHAIN_NAME,
-        coin: `${stakeAmount}${HOST_DENOM}`,
+        coin: `${stakeAmount}${hostDenom}`,
         sender: hostjs.address,
         receiver: stridejs.address,
       });
@@ -346,7 +325,7 @@ describe("Core Tests", () => {
         initialBalance: initialUserNativeBalance,
         client: stridejs,
         address: stridejs.address,
-        denom: HOST_DENOM_ON_STRIDE,
+        denom: hostDenomOnStride,
       });
     }
 
@@ -355,22 +334,22 @@ describe("Core Tests", () => {
     const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
       creator: stridejs.address,
       amount: String(stakeAmount),
-      hostDenom: HOST_DENOM,
+      hostDenom,
     });
 
     const tx = await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
     await sleep(2000); // sleep to make sure block finalized
 
     // Get final native and st balances
-    const finalUserStBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: ST_DENOM });
+    const finalUserStBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: stDenom });
     const finalUserNativeBalance = await getBalance({
       client: stridejs,
       address: stridejs.address,
-      denom: HOST_DENOM_ON_STRIDE,
+      denom: hostDenomOnStride,
     });
 
     // Get the redemption rate at the time of the liquid stake
-    const { redemptionRate } = await getHostZone({ client: stridejs, chainId: HOST_CHAIN_ID, blockHeight: tx.height });
+    const { redemptionRate } = await getHostZone({ client: stridejs, chainId, blockHeight: tx.height });
 
     // Confirm the balance changes
     // Native balance should decrease (sent for staking)
@@ -387,7 +366,7 @@ describe("Core Tests", () => {
     // We grab the latest TRANSFER_QUEUE record
     const depositRecord = await getLatestDepositRecord({
       client: stridejs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
       blockHeight: tx.height,
       status: stride.records.DepositRecord_Status.TRANSFER_QUEUE,
     });
@@ -412,11 +391,11 @@ describe("Core Tests", () => {
     });
 
     // Confirm at least our staked amount was delegated (it could be more if there was reinvestment)
-    const updatedDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
+    const updatedDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId });
     expect(updatedDelegatedBalance - initialDelegatedBalance >= BigInt(stakeAmount)).to.be.true;
 
     // Confirm the host zone updated
-    const hostZoneTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId: HOST_CHAIN_ID });
+    const hostZoneTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId });
     expect(hostZoneTotalDelegations).to.equal(updatedDelegatedBalance, "Updated delegated balance");
   }, 180_000); // 3 min timeout
 
@@ -426,9 +405,11 @@ describe("Core Tests", () => {
     const stakeAmount = 10000000;
     const redeemAmount = 1000000;
 
+    const { chainId, hostDenom, stDenom, hostDenomOnStride } = HOST_CONFIG;
+
     // Get the initial delegated balance both internally and the ground truth
-    let initialTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId: HOST_CHAIN_ID });
-    let initialDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
+    let initialTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId });
+    let initialDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId });
 
     // If there isn't enough staked to cover the redemption, we need to liquid stake
     if (initialTotalDelegations < BigInt(redeemAmount)) {
@@ -437,7 +418,7 @@ describe("Core Tests", () => {
       // Get initial native balances on Stride
       const initialUserNativeBalanceOnStride = await getBalance({
         client: stridejs,
-        denom: HOST_DENOM_ON_STRIDE,
+        denom: hostDenomOnStride,
       });
 
       // If there's not enough native token on stride to liquid stake, we need to transfer
@@ -447,7 +428,7 @@ describe("Core Tests", () => {
           client: hostjs,
           sourceChain: HOST_CHAIN_NAME,
           destinationChain: STRIDE_CHAIN_NAME,
-          coin: `${stakeAmount}${HOST_DENOM}`,
+          coin: `${stakeAmount}${hostDenom}`,
           sender: hostjs.address,
           receiver: stridejs.address,
         });
@@ -456,7 +437,7 @@ describe("Core Tests", () => {
           initialBalance: initialUserNativeBalanceOnStride,
           client: stridejs,
           address: stridejs.address,
-          denom: HOST_DENOM_ON_STRIDE,
+          denom: hostDenomOnStride,
         });
       }
 
@@ -465,7 +446,7 @@ describe("Core Tests", () => {
       const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
         creator: stridejs.address,
         amount: String(stakeAmount),
-        hostDenom: HOST_DENOM,
+        hostDenom,
       });
 
       await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
@@ -475,16 +456,16 @@ describe("Core Tests", () => {
       console.log("Waiting for delegation on host zone...");
       initialTotalDelegations = await waitForHostZoneTotalDelegationsChange({
         client: stridejs,
-        chainId: HOST_CHAIN_ID,
+        chainId,
         minDelegation: redeemAmount,
       });
-      initialDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
+      initialDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId });
     }
 
     // Before redeeming, get the initial st balance
     const initialUserStBalance = await getBalance({
       client: stridejs,
-      denom: ST_DENOM,
+      denom: stDenom,
     });
 
     // Submit redeem stake tx
@@ -492,7 +473,7 @@ describe("Core Tests", () => {
     const redeemStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.redeemStake({
       creator: stridejs.address,
       amount: String(redeemAmount),
-      hostZone: HOST_CHAIN_ID,
+      hostZone: chainId,
       receiver: hostjs.address,
     });
 
@@ -500,20 +481,20 @@ describe("Core Tests", () => {
     await sleep(2000); // sleep to make sure block finalized
 
     // Confirm the st balance was decremented as the tokens were burned
-    const finalUserStBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: ST_DENOM });
+    const finalUserStBalance = await getBalance({ client: stridejs, address: stridejs.address, denom: stDenom });
     const stBalanceDiff = initialUserStBalance - finalUserStBalance;
     expect(stBalanceDiff).to.equal(BigInt(redeemAmount), "User st balance change after redemption");
 
     // Get the epoch number from the unbonding record that corresponds to this redemption
     const { epochNumber: unbondingEpoch, hostZoneUnbonding: unbondingRecord } = await getLatestHostZoneUnbondingRecord({
       client: stridejs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
       status: stride.records.HostZoneUnbonding_Status.UNBONDING_QUEUE,
       blockHeight: tx.height,
     });
 
     // Get the redemption rate at the time of the claim and calculate the native tokens expected
-    const { redemptionRate } = await getHostZone({ client: stridejs, chainId: HOST_CHAIN_ID, blockHeight: tx.height });
+    const { redemptionRate } = await getHostZone({ client: stridejs, chainId, blockHeight: tx.height });
     const expectedNativeAmount = BigInt(
       Decimal(redeemAmount.toString()).mul(Decimal(redemptionRate)).floor().toString(),
     );
@@ -521,7 +502,7 @@ describe("Core Tests", () => {
     // Confirm a user redemption record was created with the proper amounts
     const redemptionRecord = await getUserRedemptionRecord({
       client: stridejs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
       epochNumber: unbondingEpoch,
       receiver: hostjs.address,
     });
@@ -535,15 +516,15 @@ describe("Core Tests", () => {
     console.log("Waiting for undelegation...");
     await waitForUnbondingRecordStatus({
       client: stridejs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
       epochNumber: unbondingEpoch,
       status: stride.records.HostZoneUnbonding_Status.EXIT_TRANSFER_QUEUE,
     });
 
     // Confirm the delegated balance changed (both on the host zone struct and on the actual host chain)
     // There should simulateously be reinvestment delegations, so we have to relax the check to within a tolerance
-    let updatedTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId: HOST_CHAIN_ID });
-    let updatedDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
+    let updatedTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId });
+    let updatedDelegatedBalance = await getDelegatedBalance({ stridejs, hostjs, chainId });
 
     const expectedDelegationChange = BigInt(unbondingRecord.nativeTokenAmount);
     const delegationChangeLowerBound = BigInt(Decimal(expectedDelegationChange).mul(0.98).floor().toString()); // within 2%
@@ -562,30 +543,30 @@ describe("Core Tests", () => {
     // (factoring in re-investment that occurs in between redeem and unbond)
     const updatedUnbondingRecord = await getHostZoneUnbondingRecord({
       client: stridejs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
       epochNumber: unbondingEpoch,
     });
     const updatedRedemptionRecord = await getUserRedemptionRecord({
       client: stridejs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
       epochNumber: unbondingEpoch,
       receiver: hostjs.address,
     });
 
     // Get the initial redemption account balance
-    const initialRedemptionICABalance = await getRedemptionAccountBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
+    const initialRedemptionICABalance = await getRedemptionAccountBalance({ stridejs, hostjs, chainId });
 
     // Wait for the tokens to be sent to the redemption account
     console.log("Waiting for redemption sweep...");
     await waitForUnbondingRecordStatus({
       client: stridejs,
-      chainId: HOST_CHAIN_ID,
+      chainId,
       epochNumber: unbondingEpoch,
       status: stride.records.HostZoneUnbonding_Status.CLAIMABLE,
     });
 
     // Confirm the redemption account balance increased
-    const redemptionBalanceAfterSweep = await getRedemptionAccountBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
+    const redemptionBalanceAfterSweep = await getRedemptionAccountBalance({ stridejs, hostjs, chainId });
     const redemptionBalanceDiffAfterSweep = redemptionBalanceAfterSweep - initialRedemptionICABalance;
     expect(redemptionBalanceDiffAfterSweep).to.equal(
       BigInt(updatedUnbondingRecord.nativeTokenAmount),
@@ -595,14 +576,14 @@ describe("Core Tests", () => {
     // Get the user's native balance before the claim
     const initialUserNativeBalanceOnHost = await getBalance({
       client: hostjs,
-      denom: HOST_DENOM,
+      denom: hostDenom,
     });
 
     // Claim the unbonded tokens
     console.log("Claiming redeemed tokens...");
     const claimMsg = stride.stakeibc.MessageComposer.withTypeUrl.claimUndelegatedTokens({
       creator: stridejs.address,
-      hostZoneId: HOST_CHAIN_ID,
+      hostZoneId: chainId,
       epoch: unbondingEpoch,
       receiver: hostjs.address,
     });
@@ -615,7 +596,7 @@ describe("Core Tests", () => {
     // Confirm the user received those tokens
     const finalUserNativeBalanceOnHost = await getBalance({
       client: hostjs,
-      denom: HOST_DENOM,
+      denom: hostDenom,
     });
     const nativeBalanceDiff = finalUserNativeBalanceOnHost - initialUserNativeBalanceOnHost;
 
@@ -625,7 +606,7 @@ describe("Core Tests", () => {
       .true;
 
     // Confirm the redemption ICA decremented
-    const redemptionBalanceAfterClaim = await getRedemptionAccountBalance({ stridejs, hostjs, chainId: HOST_CHAIN_ID });
+    const redemptionBalanceAfterClaim = await getRedemptionAccountBalance({ stridejs, hostjs, chainId });
     const redemptionBalanceDiffAfterClaim = redemptionBalanceAfterSweep - redemptionBalanceAfterClaim;
     expect(redemptionBalanceDiffAfterClaim).to.equal(
       BigInt(updatedRedemptionRecord.nativeTokenAmount),
@@ -638,8 +619,10 @@ describe("Core Tests", () => {
     const hostjs = hostAccounts.user;
     const stakeAmount = 1000000;
 
+    const { chainId, hostDenom, hostDenomOnStride } = HOST_CONFIG;
+
     // Get the initial delegated balance both internally and the ground truth
-    const initialTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId: HOST_CHAIN_ID });
+    const initialTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId });
 
     // If there isn't anything staked yet, liquid stake
     if (initialTotalDelegations == BigInt(0)) {
@@ -648,7 +631,7 @@ describe("Core Tests", () => {
       // Get initial native balances on Stride
       const initialUserNativeBalanceOnStride = await getBalance({
         client: stridejs,
-        denom: HOST_DENOM_ON_STRIDE,
+        denom: hostDenomOnStride,
       });
 
       // If there's not enough native token on stride to liquid stake, we need to transfer
@@ -658,7 +641,7 @@ describe("Core Tests", () => {
           client: hostjs,
           sourceChain: HOST_CHAIN_NAME,
           destinationChain: STRIDE_CHAIN_NAME,
-          coin: `${stakeAmount}${HOST_DENOM}`,
+          coin: `${stakeAmount}${hostDenom}`,
           sender: hostjs.address,
           receiver: stridejs.address,
         });
@@ -667,7 +650,7 @@ describe("Core Tests", () => {
           initialBalance: initialUserNativeBalanceOnStride,
           client: stridejs,
           address: stridejs.address,
-          denom: HOST_DENOM_ON_STRIDE,
+          denom: hostDenomOnStride,
         });
       }
 
@@ -676,17 +659,17 @@ describe("Core Tests", () => {
       const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
         creator: stridejs.address,
         amount: String(stakeAmount),
-        hostDenom: HOST_DENOM,
+        hostDenom: hostDenom,
       });
 
       await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
 
       // Wait for the redemption rate to change after the reinvestment kicks off
-      await waitForRedemptionRateChange({ client: stridejs, chainId: HOST_CHAIN_ID });
+      await waitForRedemptionRateChange({ client: stridejs, chainId });
     }
 
     // Check that the redemption rate is greater than 1 - meaning there was reinvestment
-    const { redemptionRate } = await getHostZone({ client: stridejs, chainId: HOST_CHAIN_ID });
+    const { redemptionRate } = await getHostZone({ client: stridejs, chainId });
     expect(Decimal(redemptionRate).greaterThan(Decimal(1))).to.be.true;
-  }, 300_000); // 5 min timeout
+  }, 600_000); // 10 min timeout
 });

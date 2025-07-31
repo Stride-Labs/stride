@@ -1,5 +1,5 @@
 import { ibcDenom } from "stridejs";
-import { Chain, ChainConfigs } from "./types";
+import { Chain, ChainConfig, ChainConfigs } from "./types";
 
 export const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
 export const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
@@ -31,8 +31,56 @@ export const STRIDE_CHAIN_NAME = "stride";
 export const COSMOSHUB_CHAIN_NAME = "cosmoshub";
 export const OSMOSIS_CHAIN_NAME = "osmosis";
 
+// NOTE: This assumes only one host zone is up at a time
+export function newChainConfig({
+  chainId,
+  hostDenom,
+  bechPrefix,
+  coinType,
+  connectionId,
+  transferChannelId,
+  rpcEndpoint,
+}: {
+  chainId: string;
+  hostDenom: string;
+  bechPrefix: string;
+  coinType: number;
+  connectionId: string;
+  transferChannelId: string;
+  rpcEndpoint: string;
+}): ChainConfig {
+  return {
+    chainId,
+    hostDenom,
+    bechPrefix,
+    coinType,
+    connectionId,
+    transferChannelId,
+    rpcEndpoint,
+    stDenom: toStToken(hostDenom),
+    strdDenomOnHost: ibcDenom(
+      [
+        {
+          incomingPortId: TRANSFER_PORT,
+          incomingChannelId: transferChannelId,
+        },
+      ],
+      USTRD,
+    ),
+    hostDenomOnStride: ibcDenom(
+      [
+        {
+          incomingPortId: TRANSFER_PORT,
+          incomingChannelId: transferChannelId,
+        },
+      ],
+      hostDenom,
+    ),
+  };
+}
+
 export const CHAIN_CONFIGS: ChainConfigs = {
-  cosmoshub: {
+  cosmoshub: newChainConfig({
     chainId: GAIA_CHAIN_ID,
     hostDenom: UATOM,
     bechPrefix: "cosmos",
@@ -40,8 +88,8 @@ export const CHAIN_CONFIGS: ChainConfigs = {
     connectionId: DEFAULT_CONNECTION_ID,
     transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
     rpcEndpoint: GAIA_RPC_ENDPOINT,
-  },
-  osmosis: {
+  }),
+  osmosis: newChainConfig({
     chainId: OSMO_CHAIN_ID,
     hostDenom: UOSMO,
     bechPrefix: "osmo",
@@ -49,11 +97,11 @@ export const CHAIN_CONFIGS: ChainConfigs = {
     connectionId: DEFAULT_CONNECTION_ID,
     transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
     rpcEndpoint: OSMO_RPC_ENDPOINT,
-  },
+  }),
 };
 
 export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {
-  stride: { osmosis: "channel-0" },
+  stride: { cosmoshub: "channel-0", osmosis: "channel-1" },
   cosmoshub: { stride: "channel-0" },
   osmosis: { stride: "channel-0" },
 };

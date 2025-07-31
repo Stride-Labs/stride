@@ -20,6 +20,9 @@ export type CosmosClient = {
 export type ChainConfig = {
   chainId: string;
   hostDenom: string;
+  hostDenomOnStride: string;
+  stDenom: string;
+  strdDenomOnHost: string;
   bechPrefix: string;
   coinType: number;
   connectionId: string;
