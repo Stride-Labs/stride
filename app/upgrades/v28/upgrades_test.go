@@ -101,12 +101,10 @@ func (s *UpgradeTestSuite) SetupTestICQStore() func() {
 	// -- create the ICQ Query --
 	icqQueries := []icqtypes.Query{
 		{
-			Id:               "2c39af4c3d2ecb96d8bbf7f3386468c5909e51fe3364b8d1f9d6fce173dd1f7a",
-			TimeoutTimestamp: 1746806832576332815,
+			Id: "2c39af4c3d2ecb96d8bbf7f3386468c5909e51fe3364b8d1f9d6fce173dd1f7a",
 		},
 		{
-			Id:               "some_other_id",
-			TimeoutTimestamp: 1746806832576332816,
+			Id: "some_other_id",
 		},
 	}
 

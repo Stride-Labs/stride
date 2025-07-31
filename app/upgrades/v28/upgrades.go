@@ -14,7 +14,6 @@ var (
 
 	EvmosChainId          = "evmos_9001-2"
 	QueryId               = "2c39af4c3d2ecb96d8bbf7f3386468c5909e51fe3364b8d1f9d6fce173dd1f7a"
-	QueryTimeoutTimestamp = uint64(1746806832576332815)
 	QueryValidatorAddress = "evmosvaloper1tdss4m3x7jy9mlepm2dwy8820l7uv6m2vx6z88"
 
 	// Redemption rate bounds updated to give slack on outer bounds
@@ -77,12 +76,8 @@ func ProcessStaleICQ(ctx sdk.Context, k stakeibckeeper.Keeper, icqKeeper icqkeep
 
 func DeleteStaleICQ(ctx sdk.Context, icqKeeper icqkeeper.Keeper) {
 	ctx.Logger().Info("Deleting stale ICQ...")
-	allQueries := icqKeeper.AllQueries(ctx)
-	for _, query := range allQueries {
-		if query.Id == QueryId && query.TimeoutTimestamp == QueryTimeoutTimestamp {
-			icqKeeper.DeleteQuery(ctx, query.Id)
-		}
-	}
+	icqKeeper.DeleteQuery(ctx, QueryId)
+
 }
 
 func SetValidatorSlashQueryInProgressToFalse(ctx sdk.Context, k stakeibckeeper.Keeper) {
