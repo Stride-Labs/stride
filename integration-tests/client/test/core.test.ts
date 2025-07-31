@@ -614,7 +614,7 @@ describe("Core Tests", () => {
     );
   }, 600_000); // 10 minute timeout
 
-  test.only("Reinvestment", async () => {
+  test("Reinvestment", async () => {
     const stridejs = strideAccounts.user;
     const hostjs = hostAccounts.user;
     const stakeAmount = 1000000;
