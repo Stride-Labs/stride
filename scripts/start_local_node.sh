@@ -32,12 +32,12 @@ rm -rf ${STRIDE_HOME}
 
 $STRIDED init stride-local --chain-id $CHAIN_ID --overwrite
 
+$STRIDED config set client chain-id $CHAIN_ID
+$STRIDED config set client keyring-backend test
+$STRIDED config set client node http://127.0.0.1:26657
+
 sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
 sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
-
-sed -i -E "s|chain-id = \"\"|chain-id = \"${CHAIN_ID}\"|g" $client_toml
-sed -i -E "s|keyring-backend = \"os\"|keyring-backend = \"test\"|g" $client_toml
-sed -i -E "s|node = \".*\"|node = \"tcp://localhost:26657\"|g" $client_toml
 
 sed -i -E "s|\"stake\"|\"${DENOM}\"|g" $genesis_json 
 
@@ -52,8 +52,6 @@ jq ".app_state += $interchain_accts" $genesis_json > json.tmp && mv json.tmp $ge
 
 $STRIDED add-consumer-section --validator-home-directories $STRIDE_HOME
 jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_json > json.tmp && mv json.tmp $genesis_json
-
-rm -rf ~/.stride-loca1
 
 echo "$STRIDE_VAL_MNEMONIC" | $STRIDED keys add val --recover --keyring-backend=test 
 $STRIDED genesis add-genesis-account $($STRIDED keys show val -a) 100000000000${DENOM}
@@ -79,7 +77,7 @@ cat > $validator_json << EOF
   "min-self-delegation": "1"
 }
 EOF
-$STRIDED tx staking create-validator $validator_json --from val -y
+$STRIDED tx staking create-validator $validator_json --from val -y --chain-id $CHAIN_ID --node http://127.0.0.1:26657
 
 # Bring the daemon back to the foreground
 wait $pid
