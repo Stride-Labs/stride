@@ -4,14 +4,23 @@ import (
 	"context"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
+
+	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 )
 
-var UpgradeName = "v28"
+var (
+	UpgradeName = "v28"
+
+	// Redemption rate bounds updated to give slack on outer bounds
+	RedemptionRateOuterMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.50")
+	RedemptionRateOuterMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("1.00")
+)
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
 func CreateUpgradeHandler(
@@ -19,6 +28,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	consumerKeeper consumerkeeper.Keeper,
 	distrKeeper distrkeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
@@ -45,6 +55,10 @@ func CreateUpgradeHandler(
 			ctx.Logger().Info("Distribution fix successfully applied")
 		}
 
+		// Loosen slack from redemption rate bounds
+		ctx.Logger().Info("Update redemption rate bounds...")
+		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+
 		return versionMap, nil
 	}
 }
@@ -65,4 +79,22 @@ func InitializeConsumerId(ctx sdk.Context, consumerKeeper consumerkeeper.Keeper)
 	params := consumerKeeper.GetConsumerParams(ctx)
 	params.ConsumerId = "1"
 	consumerKeeper.SetParams(ctx, params)
+}
+
+// Updates the outer redemption rate bounds
+func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Updating redemption rate outer bounds...")
+
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		outerMinDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMinAdjustment)
+		outerMaxDelta := hostZone.RedemptionRate.Mul(RedemptionRateOuterMaxAdjustment)
+
+		outerMin := hostZone.RedemptionRate.Sub(outerMinDelta)
+		outerMax := hostZone.RedemptionRate.Add(outerMaxDelta)
+
+		hostZone.MinRedemptionRate = outerMin
+		hostZone.MaxRedemptionRate = outerMax
+
+		k.SetHostZone(ctx, hostZone)
+	}
 }

@@ -15,6 +15,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
+	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+
 	auctiontypes "github.com/Stride-Labs/stride/v27/x/auction/types"
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
@@ -41,6 +43,11 @@ func (s *KeeperTestSuite) SetupTestRewardAllocation() {
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone2)
+	// ConsumerRedistributionFraction = how much Stride keeps
+	// Set consumer redistribution fraction to 0.85 (same as mainnet)
+	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	consumerParams.ConsumerRedistributionFraction = "0.85"
+	s.App.ConsumerKeeper.SetParams(s.Ctx, consumerParams)
 
 	// Set epoch tracker and deposit records for liquid stake
 	currentEpoch := uint64(2)
@@ -81,14 +88,20 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcAtom, rewardAmount))
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcOsmo, rewardAmount))
 
-	// Send all rewrds to auction module
+	// Distribute rewards using new logic: 85% liquid staked to ConsumerToSendToProvider, 85% to auction
 	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
 
-	// Check Auction module balance
-	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, rewardAmount)
-	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, rewardAmount)
+	// Check ConsumerToSendToProvider module balance (should have liquid staked stTokens - 15% of original)
+	providerPortion := sdkmath.NewInt(150) // 15% of 1000
+	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StAtom, providerPortion)
+	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StOsmo, providerPortion)
 
-	// Check RewardCollector module balance
+	// Check Auction module balance (should have remainder - 85% of original)
+	auctionPortion := sdkmath.NewInt(850) // 85% of 1000
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, auctionPortion)
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, auctionPortion)
+
+	// Check RewardCollector module balance (should be empty)
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, sdkmath.ZeroInt())
 }
@@ -98,16 +111,20 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_NoRewardsAccrued
 
 	// balances should be 0 before
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StOsmo, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
 
-	// With no IBC tokens in the rewards collector account, the auction off rewards function should do nothing
+	// With no IBC tokens in the rewards collector account, the distribution function should do nothing
 	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
 
 	// balances should be 0 after
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StOsmo, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
 }

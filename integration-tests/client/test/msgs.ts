@@ -1,11 +1,84 @@
 import { osmosis } from "osmojs";
-import { Coin, coinFromString, ibc, stride } from "stridejs";
+import { coinFromString, ibc, ibcDenom, stride } from "stridejs";
+import { Coin } from "@cosmjs/proto-signing";
 import { MsgTransfer } from "stridejs/dist/types/codegen/ibc/applications/transfer/v1/tx";
 import { MsgRegisterTokenPriceQuery } from "stridejs/dist/types/codegen/stride/icqoracle/tx";
-import { UOSMO } from "./consts";
+import { TRANSFER_PORT, UOSMO } from "./consts";
+import { MsgRegisterHostZone } from "stridejs/dist/types/codegen/stride/stakeibc/tx";
+import { Validator } from "stridejs/dist/types/codegen/stride/stakeibc/validator";
 
 function TransferTimeoutSec(sec: number) {
   return BigInt(`${Math.floor(Date.now() / 1000) + sec}000000000`);
+}
+
+/**
+ * Builds a new register host zone message
+ * @param sender The admin account to register the zone
+ * @param connectionId The connectionId to the host zone (on the stride side)
+ * @param transferChannelId The transfer channel ID to the host zone (on the stride side)
+ * @param hostDenom The native token of the host zone
+ * @param bechPrefix The bech prefix for the zone
+ * @returns A register host zone message
+ */
+export function newRegisterHostZoneMsg({
+  sender,
+  connectionId,
+  bechPrefix,
+  hostDenom,
+  transferChannelId,
+}: {
+  sender: string;
+  connectionId: string;
+  transferChannelId: string;
+  hostDenom: string;
+  bechPrefix: string;
+}): {
+  typeUrl: string;
+  value: MsgRegisterHostZone;
+} {
+  const hostIbcDenom = ibcDenom(
+    [
+      {
+        incomingPortId: TRANSFER_PORT,
+        incomingChannelId: transferChannelId,
+      },
+    ],
+    hostDenom,
+  );
+
+  return stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
+    creator: sender,
+    connectionId: connectionId,
+    bech32prefix: bechPrefix,
+    hostDenom: hostDenom,
+    ibcDenom: hostIbcDenom,
+    transferChannelId: transferChannelId,
+    unbondingPeriod: BigInt(1),
+    minRedemptionRate: "0.9",
+    maxRedemptionRate: "1.5",
+    lsmLiquidStakeEnabled: true,
+    communityPoolTreasuryAddress: "",
+    maxMessagesPerIcaTx: BigInt(2),
+  });
+}
+
+/**
+ * Creates a new stride validator struct with default values filled in
+ * This can be used when registering validators
+ * @param param0
+ */
+export function newValidator({ name, address, weight }: { name: string; address: string; weight: bigint }): Validator {
+  return {
+    name,
+    address,
+    weight,
+    delegation: "0", // ignored
+    slashQueryProgressTracker: "0", // ignored
+    slashQueryCheckpoint: "0", // ignored
+    sharesToTokensRate: "0", // ignored
+    delegationChangesInProgress: 0n, // ignored
+    slashQueryInProgress: false, // ignored
+  };
 }
 
 /**
@@ -88,15 +161,7 @@ export function newRegisterTokenPriceQueryMsg({
  * @param weights - Array of corresponding weights for each token in the pool (e.g. [1, 1])
  * @returns The gamm pool creation message
  */
-export function newGammPoolMsg({
-  sender,
-  tokens,
-  weights,
-}: {
-  sender: string;
-  tokens: string[];
-  weights: number[];
-}) {
+export function newGammPoolMsg({ sender, tokens, weights }: { sender: string; tokens: string[]; weights: number[] }) {
   if (tokens.length !== weights.length) {
     throw new Error("tokens and weights arrays must have the same length");
   }
@@ -106,29 +171,21 @@ export function newGammPoolMsg({
     weight: weights[index].toString(),
   }));
 
-  return osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool(
-    {
-      sender: sender,
-      poolAssets: poolAssets,
-      futurePoolGovernor: "",
-      poolParams: {
-        swapFee: "0.001",
-        exitFee: "0",
-      },
+  return osmosis.gamm.poolmodels.balancer.v1beta1.MessageComposer.withTypeUrl.createBalancerPool({
+    sender: sender,
+    poolAssets: poolAssets,
+    futurePoolGovernor: "",
+    poolParams: {
+      swapFee: "0.001",
+      exitFee: "0",
     },
-  );
+  });
 }
 
 /**
  * denom1 is always "uosmo"
  */
-export function newConcentratedLiquidityPoolMsg({
-  sender,
-  denom0,
-}: {
-  sender: string;
-  denom0: string;
-}) {
+export function newConcentratedLiquidityPoolMsg({ sender, denom0 }: { sender: string; denom0: string }) {
   return osmosis.concentratedliquidity.poolmodel.concentrated.v1beta1.MessageComposer.withTypeUrl.createConcentratedPool(
     {
       sender,
@@ -166,15 +223,13 @@ export function addConcentratedLiquidityPositionMsg({
     throw new Error("tokenMinAmount1 bigger than provided");
   }
 
-  return osmosis.concentratedliquidity.v1beta1.MessageComposer.withTypeUrl.createPosition(
-    {
-      sender,
-      poolId,
-      lowerTick: -108000000n,
-      upperTick: 342000000n,
-      tokensProvided,
-      tokenMinAmount0,
-      tokenMinAmount1,
-    },
-  );
+  return osmosis.concentratedliquidity.v1beta1.MessageComposer.withTypeUrl.createPosition({
+    sender,
+    poolId,
+    lowerTick: -108000000n,
+    upperTick: 342000000n,
+    tokensProvided,
+    tokenMinAmount0,
+    tokenMinAmount1,
+  });
 }

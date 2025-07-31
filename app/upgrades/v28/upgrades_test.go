@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -13,7 +14,22 @@ import (
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
 	v28 "github.com/Stride-Labs/stride/v27/app/upgrades/v28"
+	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
+
+type UpdateRedemptionRateBounds struct {
+	ChainId                        string
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinOuterRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxOuterRedemptionRate sdkmath.LegacyDec
+}
+
+type UpdateRedemptionRateInnerBounds struct {
+	ChainId                        string
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinInnerRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxInnerRedemptionRate sdkmath.LegacyDec
+}
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -28,8 +44,57 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+	// Set state before upgrade
+	checkRedemptionRates := s.SetupTestUpdateRedemptionRateBounds()
+
+	// Run upgrade
 	s.ConfirmUpgradeSucceeded(v28.UpgradeName)
 
+	// Confirm state after upgrade
+	checkRedemptionRates()
+	s.checkConsumerParams()
+}
+
+func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
+	// Define test cases consisting of an initial redemption rate and expected bounds
+	testCases := []UpdateRedemptionRateBounds{
+		{
+			ChainId:                        "chain-0",
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.5"), // 1 - 50% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("2.0"), // 1 + 100% = 1.25
+		},
+		{
+			ChainId:                        "chain-1",
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.55"), // 1.1 - 50% = 0.55
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("2.2"),  // 1.1 + 100% = 2.2
+		},
+	}
+
+	// Create a host zone for each test case
+	for _, tc := range testCases {
+		hostZone := stakeibctypes.HostZone{
+			ChainId:        tc.ChainId,
+			RedemptionRate: tc.CurrentRedemptionRate,
+		}
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Return callback to check store after upgrade
+	return func() {
+		// Confirm they were all updated
+		for _, tc := range testCases {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, tc.ChainId)
+			s.Require().True(found)
+
+			s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "%s - min outer", tc.ChainId)
+			s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "%s - max outer", tc.ChainId)
+		}
+	}
+}
+
+func (s *UpgradeTestSuite) checkConsumerParams() {
 	// Confirm consumer ID is set to 1
 	params := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
 	s.Require().Equal(params.ConsumerId, "1")
