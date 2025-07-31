@@ -64,7 +64,8 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 	// Fund account and test sending a tx to mimic mainnet
 	s.FundAccount(deliveryAccountAddress, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(1_000_000)))
 	// Account sends some unlocked tokens
-	s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(500_000))))
+	err = s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(500_000))))
+	s.Require().NoError(err)
 
 	deliveryAccount := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount))
 	// Also needs to be added to the account keeper

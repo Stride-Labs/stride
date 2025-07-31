@@ -50,7 +50,7 @@ func CreateUpgradeHandler(
 
 		// Deliver locked tokens
 		if err := DeliverLockedTokens(ctx, ak); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account 198f9s")
+			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account %s", DeliveryAccount)
 		}
 
 		return versionMap, nil
