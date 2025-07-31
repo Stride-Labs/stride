@@ -8,6 +8,7 @@ import {
   SigningStargateClient,
 } from "@cosmjs/stargate";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
+import { stringToPath } from "@cosmjs/crypto";
 import { DirectSecp256k1HdWallet, GasPrice, ibcDenom, sleep, stride } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import {
@@ -37,7 +38,6 @@ import {
   getDelegatedBalance,
   getHostZoneTotalDelegations,
   getHostZoneUnbondingRecord,
-  getHostZoneUnbondingRecords,
   getLatestDepositRecord,
   getLatestHostZoneUnbondingRecord,
   getRedemptionAccountBalance,
@@ -48,7 +48,7 @@ import { Decimal } from "decimal.js";
 import { getHostZone } from "./queries";
 import { newRegisterHostZoneMsg, newValidator } from "./msgs";
 
-const HOST_CHAIN_NAME = "cosmoshub";
+const HOST_CHAIN_NAME = "osmosis";
 const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
 const HOST_CHAIN_ID = HOST_CONFIG.chainId;
 const HOST_DENOM = HOST_CONFIG.hostDenom;
@@ -144,7 +144,10 @@ beforeAll(async () => {
 
     if (name === "user" || name === "val1") {
       // setup signer for host zone
-      const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
+      const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+        prefix: HOST_CONFIG.bechPrefix,
+        hdPaths: [stringToPath(`m/44'/${HOST_CONFIG.coinType}'/0'/0/0`)],
+      });
       const [{ address: hostAddress }] = await hostSigner.getAccounts();
 
       hostAccounts[name] = {

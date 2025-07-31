@@ -21,6 +21,7 @@ export type ChainConfig = {
   chainId: string;
   hostDenom: string;
   bechPrefix: string;
+  coinType: number;
   connectionId: string;
   transferChannelId: string;
   rpcEndpoint: string;

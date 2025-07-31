@@ -5,8 +5,24 @@ images:
   relayer: gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
   hermes: gcr.io/stride-nodes/integration-tests/hermes:v1.9.0
 
-chains:
-  - name: stride
+activeChains:
+  - stride
+  - osmosis
+  # - cosmoshub
+
+# type can be either "relayer" or "hermes"
+relayers:
+  # - name: stride-cosmoshub
+  #   type: relayer
+  #   chainA: stride
+  #   chainB: cosmoshub
+  - name: stride-osmosis
+    type: relayer
+    chainA: stride
+    chainB: osmosis
+
+chainConfigs:
+  stride:
     binary: strided
     version: latest
     numValidators: 3
@@ -15,7 +31,7 @@ chains:
     decimals: 6
     command: ["strided", "start", "--reject-config-defaults"]
 
-  - name: cosmoshub
+  cosmoshub:
     binary: gaiad
     version: v22.1.0
     numValidators: 1
@@ -24,22 +40,12 @@ chains:
     decimals: 6
     command: ["gaiad", "start"]
 
-  # - name: osmosis
-  #   binary: osmosisd
-  #   version: v28.0.0
-  #   numValidators: 1
-  #   home: .osmosisd
-  #   denom: uosmo
-  #   decimals: 6
-  #   command: ["osmosisd", "start"]
+  osmosis:
+    binary: osmosisd
+    version: v28.0.0
+    numValidators: 1
+    home: .osmosisd
+    denom: uosmo
+    decimals: 6
+    command: ["osmosisd", "start"]
 
-# type can be either "relayer" or "hermes"
-relayers:
-  - name: stride-cosmoshub
-    type: relayer
-    chainA: stride
-    chainB: cosmoshub
-  # - name: stride-osmosis
-  #   type: relayer
-  #   chainA: stride
-  #   chainB: osmosis

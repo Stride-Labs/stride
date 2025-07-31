@@ -2,27 +2,28 @@
 
 {{- define "chain.env" -}}
 - name: CHAIN_NAME
-  value: {{ .name }}
+  value: {{ .chainName }}
 - name: CHAIN_HOME
-  value: {{ printf "/home/validator/%s" .home }}
+  value: {{ printf "/home/validator/%s" .config.home }}
 - name: BINARY
-  value: {{ .binary }}
+  value: {{ .config.binary }}
 - name: DENOM
-  value: {{ .denom }}
+  value: {{ .config.denom }}
 - name: DENOM_DECIMALS
-  value: "{{ .decimals }}"
+  value: "{{ .config.decimals }}"
 - name: NUM_VALIDATORS
-  value: "{{ .numValidators }}"
+  value: "{{ .config.numValidators }}"
 - name: NAMESPACE
   valueFrom:
     fieldRef:
       fieldPath: metadata.namespace
 {{- end -}}
 
-{{- range $chain := .Values.chains }}
-  {{- $appName := printf "%s-validator" $chain.name  -}}
+{{- range $chainName := .Values.activeChains }}
+  {{- $chain := index $.Values.chainConfigs $chainName }}
+  {{- $appName := printf "%s-validator" $chainName  -}}
   {{- $chainHomeDirectory := printf "/home/validator/%s" $chain.home  -}}
-  {{- $image := printf "%s/%s:%s" $root.images.chains $chain.name $chain.version -}}
+  {{- $image := printf "%s/%s:%s" $root.images.chains $chainName $chain.version -}}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -56,7 +57,7 @@ spec:
               fi
               bash scripts/init-node.sh
           env: 
-            {{- include "chain.env" $chain | nindent 10 }}
+            {{- include "chain.env" (dict "chainName" $chainName "config" $chain) | nindent 10 }}
           volumeMounts:
             - name: state
               mountPath: {{ $chainHomeDirectory }}
@@ -81,7 +82,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
           env: 
-            {{- include "chain.env" $chain | nindent 10 }}
+            {{- include "chain.env" (dict "chainName" $chainName "config" $chain) | nindent 10 }}
           ports:
             - name: rpc
               containerPort: 26657
@@ -159,7 +160,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: {{ $chain.name }}-api.internal.stridenet.co
+    - host: {{ $chainName }}-api.internal.stridenet.co
       http:
         paths:
           - pathType: ImplementationSpecific
@@ -169,7 +170,7 @@ spec:
                 port:
                   number: 1317
             path: /(.*)
-    - host: {{ $chain.name }}-rpc.internal.stridenet.co
+    - host: {{ $chainName }}-rpc.internal.stridenet.co
       http:
         paths:
           - pathType: ImplementationSpecific

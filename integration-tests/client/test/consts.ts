@@ -36,20 +36,30 @@ export const CHAIN_CONFIGS: ChainConfigs = {
     chainId: GAIA_CHAIN_ID,
     hostDenom: UATOM,
     bechPrefix: "cosmos",
+    coinType: 118,
     connectionId: DEFAULT_CONNECTION_ID,
     transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
     rpcEndpoint: GAIA_RPC_ENDPOINT,
   },
+  osmosis: {
+    chainId: OSMO_CHAIN_ID,
+    hostDenom: UOSMO,
+    bechPrefix: "osmo",
+    coinType: 118,
+    connectionId: DEFAULT_CONNECTION_ID,
+    transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+    rpcEndpoint: OSMO_RPC_ENDPOINT,
+  },
 };
 
 export const TRANSFER_CHANNEL: Record<Chain, Partial<Record<Chain, string>>> = {
-  stride: { cosmoshub: "channel-0", osmosis: "channel-1" },
+  stride: { osmosis: "channel-0" },
   cosmoshub: { stride: "channel-0" },
   osmosis: { stride: "channel-0" },
 };
 
 export const CONNECTION_ID: Record<Chain, Partial<Record<Chain, string>>> = {
-  stride: { cosmoshub: "connection-0", osmosis: "connection-1" },
+  stride: { osmosis: "connection-0" },
   cosmoshub: { stride: "connection-0" },
   osmosis: { stride: "connection-0" },
 };

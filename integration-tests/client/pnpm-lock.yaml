@@ -16,6 +16,9 @@ importers:
 
   .:
     dependencies:
+      '@cosmjs/crypto':
+        specifier: 0.33.0
+        version: 0.33.0
       '@cosmjs/proto-signing':
         specifier: 0.33.0
         version: 0.33.0
@@ -234,8 +237,8 @@ packages:
   '@cosmjs/amino@0.33.0':
     resolution: {integrity: sha512-a4qnWGzuM2IrlkDTFQmU7bDd+wNIzyvfcRIZ43i00ZHvTEtrCcWopT94rIv/Zy6fdgkhQ3HWrsGVlIPDT/ibRw==}
 
-  '@cosmjs/crypto@0.33.1':
-    resolution: {integrity: sha512-U4kGIj/SNBzlb2FGgA0sMR0MapVgJUg8N+oIAiN5+vl4GZ3aefmoL1RDyTrFS/7HrB+M+MtHsxC0tvEu4ic/zA==}
+  '@cosmjs/crypto@0.33.0':
+    resolution: {integrity: sha512-kkt06t+cFW2XRGDGUZ0cVf5yoQ2OhZnubwbYbz3QXdyhf1qOXYVPRThfFPsko7dssr+e8Yy4OJKlh5SLA8DXTQ==}
 
   '@cosmjs/encoding@0.33.0':
     resolution: {integrity: sha512-9z0g9mM7w5BISVVs8BK1Yp7KSQgNLGz2SBoWYOm4wODB/YcoitODgyRqECcuMZBXtd2sCyy2M1VLs9Z69BPZRQ==}
@@ -2056,12 +2059,12 @@ snapshots:
 
   '@cosmjs/amino@0.33.0':
     dependencies:
-      '@cosmjs/crypto': 0.33.1
+      '@cosmjs/crypto': 0.33.0
       '@cosmjs/encoding': 0.33.0
       '@cosmjs/math': 0.33.0
       '@cosmjs/utils': 0.33.1
 
-  '@cosmjs/crypto@0.33.1':
+  '@cosmjs/crypto@0.33.0':
     dependencies:
       '@cosmjs/encoding': 0.33.0
       '@cosmjs/math': 0.33.0
@@ -2085,7 +2088,7 @@ snapshots:
   '@cosmjs/ledger-amino@0.33.0':
     dependencies:
       '@cosmjs/amino': 0.33.0
-      '@cosmjs/crypto': 0.33.1
+      '@cosmjs/crypto': 0.33.0
       '@cosmjs/encoding': 0.33.0
       '@cosmjs/math': 0.33.0
       '@cosmjs/utils': 0.33.0
@@ -2099,7 +2102,7 @@ snapshots:
   '@cosmjs/proto-signing@0.33.0':
     dependencies:
       '@cosmjs/amino': 0.33.0
-      '@cosmjs/crypto': 0.33.1
+      '@cosmjs/crypto': 0.33.0
       '@cosmjs/encoding': 0.33.0
       '@cosmjs/math': 0.33.0
       '@cosmjs/utils': 0.33.1
@@ -2136,7 +2139,7 @@ snapshots:
 
   '@cosmjs/tendermint-rpc@0.33.0':
     dependencies:
-      '@cosmjs/crypto': 0.33.1
+      '@cosmjs/crypto': 0.33.0
       '@cosmjs/encoding': 0.33.0
       '@cosmjs/json-rpc': 0.33.1
       '@cosmjs/math': 0.33.0
