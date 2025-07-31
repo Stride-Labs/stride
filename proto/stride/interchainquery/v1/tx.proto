@@ -8,7 +8,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "tendermint/crypto/proof.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v26/x/interchainquery/types";
+option go_package = "github.com/Stride-Labs/stride/v27/x/interchainquery/types";
 
 // Msg defines the interchainquery Msg service.
 service Msg {
