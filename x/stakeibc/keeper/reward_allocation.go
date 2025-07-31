@@ -34,6 +34,9 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 	for _, hz := range k.GetAllHostZone(ctx) {
 		// Check if reward collector has this host zone's IBC denom
 		// These are the fees collected from liquid staking rewards
+		if hz.IbcDenom == "" { // prevents panic in balance query if the denom field is not set
+			continue
+		}
 		tokenBalance := k.bankKeeper.GetBalance(ctx, rewardCollectorAddress, hz.IbcDenom)
 		if tokenBalance.IsZero() {
 			continue
