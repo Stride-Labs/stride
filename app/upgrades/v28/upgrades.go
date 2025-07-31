@@ -80,11 +80,12 @@ func ClearStuckEvmosQuery(ctx sdk.Context, k stakeibckeeper.Keeper, icqKeeper ic
 	}
 
 	// find the right validator and set slash_query_in_progress to false
-	validators := hostZone.GetValidators()
-	for _, validator := range validators {
+	for i, validator := range hostZone.Validators {
 		if validator.Address == QueryValidatorAddress {
 			validator.SlashQueryInProgress = false
+			hostZone.Validators[i] = validator
 			k.SetHostZone(ctx, hostZone)
+
 			ctx.Logger().Info("Set validator slash_query_in_progress to false")
 			return
 		}
