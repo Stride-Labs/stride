@@ -124,7 +124,8 @@ func (s *UpgradeTestSuite) SetupTestICQStore() func() {
 	// Create list of Validators to add to the Host Zone
 	validators := []*stakeibctypes.Validator{
 		{
-			Address:              "evmosvaloper1tdss4m3x7jy9mlepm2dwy8820l7uv6m2vx6z88",
+			// Should get set to false
+			Address:              v28.QueryValidatorAddress,
 			SlashQueryInProgress: true,
 		},
 		{
@@ -145,6 +146,7 @@ func (s *UpgradeTestSuite) SetupTestICQStore() func() {
 		/// -- verify SlashQueryInProgress is modified correctly --
 		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "evmos_9001-2")
 		s.Require().True(found)
+		s.Require().Equal(v28.QueryValidatorAddress, hostZone.Validators[0].Address)
 		s.Require().Equal(false, hostZone.Validators[0].SlashQueryInProgress)
 		s.Require().Equal(true, hostZone.Validators[1].SlashQueryInProgress)
 		s.Require().Equal(false, hostZone.Validators[2].SlashQueryInProgress)
