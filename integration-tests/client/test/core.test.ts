@@ -48,7 +48,7 @@ import { Decimal } from "decimal.js";
 import { getHostZone } from "./queries";
 import { newRegisterHostZoneMsg, newValidator } from "./msgs";
 
-const HOST_CHAIN_NAME = "osmosis";
+const HOST_CHAIN_NAME = "cosmoshub";
 const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
 const HOST_CHAIN_ID = HOST_CONFIG.chainId;
 const HOST_DENOM = HOST_CONFIG.hostDenom;
@@ -631,4 +631,11 @@ describe("Core Tests", () => {
       "Redemption balance after claim",
     );
   }, 600_000); // 10 minutes timeout
+
+  test.only("Reinvestment", async () => {
+    // Check that the redemption rate is greater than 1 - meaning there was reinvestmetn
+    const stridejs = strideAccounts.user;
+    const { redemptionRate } = await getHostZone({ client: stridejs, chainId: HOST_CHAIN_ID });
+    expect(Decimal(redemptionRate).greaterThan(Decimal(1))).to.be.true;
+  });
 });
