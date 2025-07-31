@@ -1,0 +1,44 @@
+FROM golang:1.22-alpine 
+
+RUN apk add make git gcc musl-dev openssl-dev linux-headers 
+
+WORKDIR /opt
+
+RUN git clone https://github.com/cosmos/cosmos-sdk \
+    && cd cosmos-sdk \
+    && git checkout cosmovisor/v1.1.0 
+RUN --mount=type=cache,target=/root/.cache/go-build cd /opt/cosmos-sdk \
+    && make cosmovisor \
+    && mv /opt/cosmos-sdk/cosmovisor/cosmovisor /usr/local/bin/cosmovisor    
+
+FROM alpine:3.17
+
+ARG upgrade_name
+
+ENV UPGRADE_NAME=$upgrade_name
+ENV DAEMON_NAME=strided
+ENV DAEMON_HOME=/home/validator/.stride
+ENV DAEMON_RESTART_AFTER_UPGRADE=true
+ENV COSMOVISOR_HOME=/home/validator/cosmovisor
+
+RUN apk add bash vim sudo dasel jq curl make git \
+    && addgroup -g 1000 validator \
+    && adduser -S -h /home/validator -D validator -u 1000 -G validator
+
+COPY --from=core:stride --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided
+COPY --from=core:stride --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided2
+COPY --from=core:stride-upgrade-old --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided1
+
+RUN mkdir -p ${COSMOVISOR_HOME}/genesis/bin \
+    && mkdir -p  ${COSMOVISOR_HOME}/upgrades/${UPGRADE_NAME}/bin/ \
+    && cp /usr/local/bin/strided1 ${COSMOVISOR_HOME}/genesis/bin/strided \
+    && cp /usr/local/bin/strided2 ${COSMOVISOR_HOME}/upgrades/${UPGRADE_NAME}/bin/strided
+
+USER 1000
+WORKDIR /home/validator
+
+EXPOSE 26657 26656 1317 9090
+
+RUN echo "mv ${COSMOVISOR_HOME} ${DAEMON_HOME}/cosmovisor && cosmovisor run start --reject-config-defaults" > start.sh
+
+CMD ["bash", "start.sh" ]

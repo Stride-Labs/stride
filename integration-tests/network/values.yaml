@@ -29,7 +29,6 @@ chainConfigs:
     home: .stride
     denom: ustrd
     decimals: 6
-    command: ["strided", "start", "--reject-config-defaults"]
 
   cosmoshub:
     binary: gaiad
@@ -38,7 +37,6 @@ chainConfigs:
     home: .gaia
     denom: uatom
     decimals: 6
-    command: ["gaiad", "start"]
 
   osmosis:
     binary: osmosisd
@@ -47,5 +45,5 @@ chainConfigs:
     home: .osmosisd
     denom: uosmo
     decimals: 6
-    command: ["osmosisd", "start"]
+
 

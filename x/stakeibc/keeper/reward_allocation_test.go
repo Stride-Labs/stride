@@ -15,7 +15,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
 	auctiontypes "github.com/Stride-Labs/stride/v27/x/auction/types"
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"

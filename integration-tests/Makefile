@@ -51,6 +51,13 @@ build-api:
 build-stride:
 	@bash network/scripts/build.sh stride
 
+build-stride-upgrade:
+	@if [ -z "$$UPGRADE_OLD_VERSION" ]; then \
+		echo "Error: UPGRADE_OLD_VERSION environment variable is not set"; \
+		exit 1; \
+	fi
+	@bash network/scripts/build.sh stride
+
 build-cosmoshub:
 	$(call build_and_push_docker,cosmoshub,.,chains/cosmoshub:v22.1.0)
 

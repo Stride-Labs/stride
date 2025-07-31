@@ -30,3 +30,7 @@ USER 1000
 WORKDIR /home/validator
 
 EXPOSE 26657 26656 1317 9090
+
+RUN echo "$BINARY start" > start.sh
+
+CMD ["bash", "start.sh"]
