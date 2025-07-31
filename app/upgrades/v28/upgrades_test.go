@@ -57,19 +57,16 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 
-	// Init DelayedVestingAccount
+	// Init BaseAccount (which is the type of the account pre-upgrade)
 	deliveryAccountAddress, err := sdk.AccAddressFromBech32(v28.DeliveryAccount)
 	s.Require().NoError(err)
+	deliveryAccount := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount))
+	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
 
 	// Fund account and test sending a tx to mimic mainnet
 	s.FundAccount(deliveryAccountAddress, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(1_000_000)))
-	// Account sends some unlocked tokens
 	err = s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(500_000))))
 	s.Require().NoError(err)
-
-	deliveryAccount := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount))
-	// Also needs to be added to the account keeper
-	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
 
 	// Return callback to check store after upgrade
 	return func() {
