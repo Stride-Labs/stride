@@ -1,10 +1,14 @@
 package v28_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/stretchr/testify/suite"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
 	v28 "github.com/Stride-Labs/stride/v27/app/upgrades/v28"
@@ -150,4 +154,11 @@ func (s *UpgradeTestSuite) SetupTestICQStore() func() {
 		s.Require().Equal(1, len(icqQueries))
 		s.Require().Equal("some_other_id", icqQueries[0].Id)
 	}
+}
+
+func (s *UpgradeTestSuite) TestStuckQueryRequestData() {
+	_, validatorAddressBz, _ := bech32.DecodeAndConvert(v28.QueryValidatorAddress)
+	_, delegatorAddressBz, _ := bech32.DecodeAndConvert(v28.EvmosDelegationIca)
+	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
+	s.Require().Equal(base64.StdEncoding.EncodeToString(queryData), "MSBuvLM8WbdQm7tYvdAu6Bu5OtoAIx8fN3RBNSB6fa911RRbYQruJvSIXf8h2priHOp//cZrag==")
 }
