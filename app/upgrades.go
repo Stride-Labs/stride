@@ -364,16 +364,6 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
-	// v27 upgrade handler
-	app.UpgradeKeeper.SetUpgradeHandler(
-		v27.UpgradeName,
-		v27.CreateUpgradeHandler(
-			app.ModuleManager,
-			app.configurator,
-			app.StakeibcKeeper,
-		),
-	)
-
 	// v28 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v28.UpgradeName,
