@@ -1,8 +1,11 @@
 package v28
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
@@ -14,6 +17,11 @@ var (
 	// Redemption rate bounds updated to give slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.50")
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("1.00")
+
+	DeliveryAccount = "stride198f9skhtnpzpsxtmlkg3ry8yglwqn9pm9ugl28"
+
+	VestingEndTime    = int64(1785988800)        // Thu Aug 06 2026 04:00:00 GMT+0000
+	LockedTokenAmount = int64(4_000_000_000_000) // 4 million STRD
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
@@ -21,9 +29,12 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	accountKeeper authkeeper.AccountKeeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v28...")
+
+		ak := accountKeeper
 
 		// Run migrations first
 		ctx.Logger().Info("Running module migrations...")
@@ -34,6 +45,11 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Update redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+
+		// Deliver locked tokens
+		if err := DeliverLockedTokens(ctx, ak); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account 198f9s")
+		}
 
 		return versionMap, nil
 	}
@@ -55,4 +71,18 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 		k.SetHostZone(ctx, hostZone)
 	}
+}
+
+func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
+	// Get account
+	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(DeliveryAccount))
+	if account == nil {
+		return nil
+	}
+	account.(*vesting.DelayedVestingAccount).EndTime = VestingEndTime
+	// No tokens on the account are staked, so we don't need to set delegated_free / delegated_vesting
+	// Set original_vesting to the total amount of tokens (this would normally be initialized when the account is delivered locked tokens via the CLI)
+	account.(*vesting.DelayedVestingAccount).OriginalVesting = sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(LockedTokenAmount))) // Example amount
+	ak.SetAccount(ctx, account)
+	return nil
 }

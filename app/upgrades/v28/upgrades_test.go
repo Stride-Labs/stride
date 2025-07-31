@@ -3,7 +3,14 @@ package v28_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
@@ -40,14 +47,69 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	upgradeHeight := int64(4)
 
-	// Set state before upgrade
+	// ------- Set state before upgrade -------
 	checkRedemptionRates := s.SetupTestUpdateRedemptionRateBounds()
+	checkLockedTokens := s.SetupTestDeliverLockedTokens()
 
-	// Run upgrade
+	// ------- Run upgrade -------
 	s.ConfirmUpgradeSucceededs(v28.UpgradeName, upgradeHeight)
 
-	// Confirm state after upgrade
+	// ------- Confirm state after upgrade -------
 	checkRedemptionRates()
+	checkLockedTokens()
+}
+
+func (s *UpgradeTestSuite) CreateDelayedVestingAccount(address sdk.AccAddress, end int64, coins int64) *types.DelayedVestingAccount {
+	afterStartTime := time.Unix(1753991194, 0) // late August 2025
+	endTime := time.Unix(end, 0)
+
+	// init a base account
+	bacc := authtypes.NewBaseAccountWithAddress(address)
+
+	// send locked tokens to the base account
+	origCoins := sdk.Coins{sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), coins)}
+	dva := vesting.NewDelayedVestingAccount(bacc, origCoins, end)
+
+	// require no coins vested shortly after the start of the vesting schedule)
+	vestedCoins := dva.GetVestedCoins(afterStartTime)
+	s.Require().Nil(vestedCoins)
+
+	// require all coins vested at the end of the vesting schedule)
+	vestedCoins = dva.GetVestedCoins(endTime)
+	s.Require().Equal(origCoins, vestedCoins)
+
+	return dva
+}
+
+func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
+
+	// Init DelayedVestingAccount
+	deliveryAccountAddress, err := sdk.AccAddressFromBech32(v28.DeliveryAccount)
+	s.Require().NoError(err)
+	deliveryAccount := s.CreateDelayedVestingAccount(deliveryAccountAddress, v28.VestingEndTime, v28.LockedTokenAmount)
+	// Also needs to be added to the account keeper
+	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
+
+	// Fund account and test sending a tx to mimic mainnet
+	s.FundAccount(deliveryAccountAddress, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(1_000_000)))
+	// Account sends some unlocked tokens
+	s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(500_000))))
+
+	// Return callback to check store after upgrade
+	return func() {
+		account := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount))
+
+		// Check that the account is a DelayedVestingAccount
+		delayedVestingAccount, ok := account.(*vesting.DelayedVestingAccount)
+		s.Require().True(ok)
+
+		// Check that the end time is set correctly
+		s.Require().Equal(v28.VestingEndTime, delayedVestingAccount.EndTime)
+
+		// Check that the original vesting amount is set correctly
+		expectedAmount := sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(v28.LockedTokenAmount)))
+		s.Require().Equal(expectedAmount, delayedVestingAccount.OriginalVesting)
+	}
 }
 
 func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
