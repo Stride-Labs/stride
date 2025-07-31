@@ -8,11 +8,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
 
-	"github.com/Stride-Labs/stride/v26/utils"
-	icqtypes "github.com/Stride-Labs/stride/v26/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/utils"
+	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // WithdrawalHostBalanceCallback is a callback handler for WithdrawalBalance queries.

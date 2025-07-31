@@ -17,13 +17,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	strideapp "github.com/Stride-Labs/stride/v26/app"
-	cmdcfg "github.com/Stride-Labs/stride/v26/cmd/strided/config"
-	strideclitestutil "github.com/Stride-Labs/stride/v26/testutil/cli"
-	"github.com/Stride-Labs/stride/v26/testutil/network"
-	"github.com/Stride-Labs/stride/v26/x/claim/client/cli"
-	"github.com/Stride-Labs/stride/v26/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v26/x/claim/types"
+	strideapp "github.com/Stride-Labs/stride/v27/app"
+	cmdcfg "github.com/Stride-Labs/stride/v27/cmd/strided/config"
+	strideclitestutil "github.com/Stride-Labs/stride/v27/testutil/cli"
+	"github.com/Stride-Labs/stride/v27/testutil/network"
+	"github.com/Stride-Labs/stride/v27/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v27/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
 )
 
 var (

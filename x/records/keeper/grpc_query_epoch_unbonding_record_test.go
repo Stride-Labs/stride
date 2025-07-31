@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
 
 func (s *KeeperTestSuite) TestEpochUnbondingRecordQuerySingle() {

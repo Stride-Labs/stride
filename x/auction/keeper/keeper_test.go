@@ -7,9 +7,9 @@ import (
 	"cosmossdk.io/log"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v26/app/apptesting"
-	"github.com/Stride-Labs/stride/v26/x/auction/keeper"
-	"github.com/Stride-Labs/stride/v26/x/auction/types"
+	"github.com/Stride-Labs/stride/v27/app/apptesting"
+	"github.com/Stride-Labs/stride/v27/x/auction/keeper"
+	"github.com/Stride-Labs/stride/v27/x/auction/types"
 )
 
 type KeeperTestSuite struct {

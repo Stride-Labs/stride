@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v27/x/strdburner/types"
 )
 
 type Keeper struct {

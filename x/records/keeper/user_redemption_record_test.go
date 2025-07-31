@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
 
 // TODO [cleanup]: Migrate to new KeeperTestSuite framework

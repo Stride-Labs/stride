@@ -8,8 +8,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v26/x/staketia/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/x/staketia/types"
 )
 
 var InitialDelegation = sdkmath.NewInt(1_000_000)

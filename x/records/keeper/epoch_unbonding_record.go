@@ -10,7 +10,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v26/x/records/types"
+	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
 
 // SetEpochUnbondingRecord set a specific epochUnbondingRecord in the store

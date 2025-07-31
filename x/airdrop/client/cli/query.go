@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v26/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v27/x/airdrop/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module.

@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v27/x/stakedym/types"
 )
 
 // Stores the record ID for a pending outbound transfer of native tokens

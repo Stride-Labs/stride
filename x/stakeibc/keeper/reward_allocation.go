@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	auctiontypes "github.com/Stride-Labs/stride/v26/x/auction/types"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	auctiontypes "github.com/Stride-Labs/stride/v27/x/auction/types"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // AuctionOffRewardCollectorBalance transfers all balances from the reward collector module account

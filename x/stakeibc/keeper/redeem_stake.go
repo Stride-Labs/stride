@@ -8,10 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v26/utils"
-	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
-	"github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/utils"
+	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 // TODO [cleanup]: Cleanup this function (errors, logs, comments, whitespace, operation ordering)

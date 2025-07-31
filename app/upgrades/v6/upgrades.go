@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	claimkeeper "github.com/Stride-Labs/stride/v26/x/claim/keeper"
+	claimkeeper "github.com/Stride-Labs/stride/v27/x/claim/keeper"
 )
 
 // Note: ensure these values are properly set before running upgrade

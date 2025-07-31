@@ -17,7 +17,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	"github.com/Stride-Labs/stride/v26/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v27/x/interchainquery/types"
 )
 
 // Generates a query ID based on the request information

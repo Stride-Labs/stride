@@ -9,8 +9,8 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v26/utils"
-	"github.com/Stride-Labs/stride/v26/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v27/utils"
+	"github.com/Stride-Labs/stride/v27/x/icqoracle/types"
 )
 
 // SetTokenPrice stores price query for a token

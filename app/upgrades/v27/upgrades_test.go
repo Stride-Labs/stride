@@ -11,8 +11,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v26/app/apptesting"
-	v27 "github.com/Stride-Labs/stride/v26/app/upgrades/v27"
+	"github.com/Stride-Labs/stride/v27/app/apptesting"
+	v27 "github.com/Stride-Labs/stride/v27/app/upgrades/v27"
 )
 
 type UpgradeTestSuite struct {

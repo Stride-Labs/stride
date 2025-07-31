@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	icqkeeper "github.com/Stride-Labs/stride/v26/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v26/x/stakeibc/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 )
 
 var (

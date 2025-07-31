@@ -10,12 +10,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	"github.com/Stride-Labs/stride/v26/x/autopilot"
-	"github.com/Stride-Labs/stride/v26/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v26/x/epochs/types"
-	recordsmodule "github.com/Stride-Labs/stride/v26/x/records"
-	recordstypes "github.com/Stride-Labs/stride/v26/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v26/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v27/x/autopilot"
+	"github.com/Stride-Labs/stride/v27/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
+	recordsmodule "github.com/Stride-Labs/stride/v27/x/records"
+	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 var (

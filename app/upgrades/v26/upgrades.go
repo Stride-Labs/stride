@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	icqoraclekeeper "github.com/Stride-Labs/stride/v26/x/icqoracle/keeper"
-	icqoracletypes "github.com/Stride-Labs/stride/v26/x/icqoracle/types"
+	icqoraclekeeper "github.com/Stride-Labs/stride/v27/x/icqoracle/keeper"
+	icqoracletypes "github.com/Stride-Labs/stride/v27/x/icqoracle/types"
 )
 
 var (
