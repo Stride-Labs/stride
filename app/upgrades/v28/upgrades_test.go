@@ -8,6 +8,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
 	v28 "github.com/Stride-Labs/stride/v27/app/upgrades/v28"
+	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
@@ -42,12 +43,16 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 	// Set state before upgrade
 	checkRedemptionRates := s.SetupTestUpdateRedemptionRateBounds()
+	checkICQStore := s.SetupTestICQStore()
 
 	// Run upgrade
 	s.ConfirmUpgradeSucceededs(v28.UpgradeName, upgradeHeight)
 
 	// Confirm state after upgrade
 	checkRedemptionRates()
+
+	// Check ICQ Store
+	checkICQStore()
 }
 
 func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
@@ -86,5 +91,65 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 			s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "%s - min outer", tc.ChainId)
 			s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "%s - max outer", tc.ChainId)
 		}
+	}
+}
+
+func (s *UpgradeTestSuite) SetupTestICQStore() func() {
+	// Create the ICQ Query in the store
+	// And create a mock Host Zone with the relevant validator
+
+	// -- create the ICQ Query --
+	icqQueries := []icqtypes.Query{
+		{
+			Id:               "2c39af4c3d2ecb96d8bbf7f3386468c5909e51fe3364b8d1f9d6fce173dd1f7a",
+			TimeoutTimestamp: 1746806832576332815,
+		},
+		{
+			Id:               "some_other_id",
+			TimeoutTimestamp: 1746806832576332816,
+		},
+	}
+
+	for _, icqQuery := range icqQueries {
+		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqQuery)
+	}
+
+	// -- create the Host Zone --
+	hostZone := stakeibctypes.HostZone{
+		ChainId: "evmos_9001-2",
+	}
+
+	// Create list of Validators to add to the Host Zone
+	validators := []*stakeibctypes.Validator{
+		{
+			Address:              "evmosvaloper1tdss4m3x7jy9mlepm2dwy8820l7uv6m2vx6z88",
+			SlashQueryInProgress: true,
+		},
+		{
+			Address:              "evmosvaloper1tdss4m3x7jy9mlepm2dwy8820l7uv6m2vFIRST",
+			SlashQueryInProgress: true,
+		},
+		{
+			Address:              "evmosvaloper1tdss4m3x7jy9mlepm2dwy8820l7uv6m2vSECND",
+			SlashQueryInProgress: false,
+		},
+	}
+	hostZone.Validators = validators
+
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Return callback to check ICQ store after upgrade
+	return func() {
+		/// -- verify SlashQueryInProgress is modified correctly --
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "evmos_9001-2")
+		s.Require().True(found)
+		s.Require().Equal(false, hostZone.Validators[0].SlashQueryInProgress)
+		s.Require().Equal(true, hostZone.Validators[1].SlashQueryInProgress)
+		s.Require().Equal(false, hostZone.Validators[2].SlashQueryInProgress)
+
+		// -- verify ICQ Query is deleted --
+		icqQueries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+		s.Require().Equal(1, len(icqQueries))
+		s.Require().Equal("some_other_id", icqQueries[0].Id)
 	}
 }

@@ -5,11 +5,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 )
 
 var (
 	UpgradeName = "v28"
+
+	EvmosChainId          = "evmos_9001-2"
+	QueryId               = "2c39af4c3d2ecb96d8bbf7f3386468c5909e51fe3364b8d1f9d6fce173dd1f7a"
+	QueryTimeoutTimestamp = uint64(1746806832576332815)
+	QueryValidatorAddress = "evmosvaloper1tdss4m3x7jy9mlepm2dwy8820l7uv6m2vx6z88"
 
 	// Redemption rate bounds updated to give slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.50")
@@ -21,6 +27,7 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	icqKeeper icqkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v28...")
@@ -34,6 +41,9 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Update redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+
+		ctx.Logger().Info("Processing stale ICQ...")
+		ProcessStaleICQ(ctx, stakeibcKeeper, icqKeeper)
 
 		return versionMap, nil
 	}
@@ -54,5 +64,43 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 		hostZone.MaxRedemptionRate = outerMax
 
 		k.SetHostZone(ctx, hostZone)
+	}
+}
+
+// Cleans up the stale ICQ
+func ProcessStaleICQ(ctx sdk.Context, k stakeibckeeper.Keeper, icqKeeper icqkeeper.Keeper) {
+	ctx.Logger().Info("Processing stale ICQ...")
+
+	DeleteStaleICQ(ctx, icqKeeper)
+	SetValidatorSlashQueryInProgressToFalse(ctx, k)
+}
+
+func DeleteStaleICQ(ctx sdk.Context, icqKeeper icqkeeper.Keeper) {
+	ctx.Logger().Info("Deleting stale ICQ...")
+	allQueries := icqKeeper.AllQueries(ctx)
+	for _, query := range allQueries {
+		if query.Id == QueryId && query.TimeoutTimestamp == QueryTimeoutTimestamp {
+			icqKeeper.DeleteQuery(ctx, query.Id)
+		}
+	}
+	icqKeeper.DeleteQuery(ctx, QueryId)
+}
+
+func SetValidatorSlashQueryInProgressToFalse(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	ctx.Logger().Info("Setting validator slash_query_in_progress to false...")
+	hostZone, found := k.GetHostZone(ctx, EvmosChainId)
+	if !found {
+		ctx.Logger().Error("host zone not found")
+		return
+	}
+	// find the right validator and set slash_query_in_progress to false
+	validators := hostZone.GetValidators()
+	for _, validator := range validators {
+		if validator.Address == QueryValidatorAddress {
+			validator.SlashQueryInProgress = false
+			k.SetHostZone(ctx, hostZone)
+			ctx.Logger().Info("Set validator slash_query_in_progress to false")
+			return
+		}
 	}
 }
