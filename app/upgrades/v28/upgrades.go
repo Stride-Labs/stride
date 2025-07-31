@@ -83,7 +83,6 @@ func DeleteStaleICQ(ctx sdk.Context, icqKeeper icqkeeper.Keeper) {
 			icqKeeper.DeleteQuery(ctx, query.Id)
 		}
 	}
-	icqKeeper.DeleteQuery(ctx, QueryId)
 }
 
 func SetValidatorSlashQueryInProgressToFalse(ctx sdk.Context, k stakeibckeeper.Keeper) {
