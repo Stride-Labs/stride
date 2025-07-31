@@ -83,8 +83,9 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 		// to the redemption account
 		k.SweepUnbondedTokensAllHostZones(ctx)
 
+		// NOTE: Disabled in v28 as this feature is no longer being used. Uncomment to re-enable
 		// Transfers in and out of tokens for hostZones which have community pools
-		k.ProcessAllCommunityPoolTokens(ctx)
+		// k.ProcessAllCommunityPoolTokens(ctx)
 
 		// Do transfers for all reward and swapped tokens defined by the trade routes every stride epoch
 		k.TransferAllRewardTokens(ctx)
