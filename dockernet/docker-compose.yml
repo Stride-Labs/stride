@@ -182,8 +182,7 @@ services:
   hermes:
     image: stridezone:hermes
     volumes:
-      - ~/.hermes:/home/hermes/.hermes
-      - ./state/hermes/config.toml:/home/hermes/.hermes/config.toml
+      - ./state/hermes:/home/hermes/.hermes
     restart: always
 
   # Host zone relayers

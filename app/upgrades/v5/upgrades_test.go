@@ -15,7 +15,6 @@ import (
 	"github.com/Stride-Labs/stride/v27/app"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	upgradev5 "github.com/Stride-Labs/stride/v27/app/upgrades/v5"
 	v5 "github.com/Stride-Labs/stride/v27/app/upgrades/v5"
 	oldclaimtypes "github.com/Stride-Labs/stride/v27/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
@@ -397,16 +396,16 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 // that it was successfully removed after the upgrade
 func (s *UpgradeTestSuite) SetupRemoveStaleQuery() func() {
 	// Add the stale query
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: upgradev5.StaleQueryId})
-	query, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: v5.StaleQueryId})
+	query, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, v5.StaleQueryId)
 
 	// Confirm it was added successfully
 	s.Require().True(found, "stale query successfully added to store")
-	s.Require().Equal(upgradev5.StaleQueryId, query.Id, "query id")
+	s.Require().Equal(v5.StaleQueryId, query.Id, "query id")
 
 	// Callback to check that the query was successfully removed
 	return func() {
-		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, v5.StaleQueryId)
 		s.Require().False(found)
 	}
 }
