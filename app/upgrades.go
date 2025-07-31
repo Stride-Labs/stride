@@ -371,6 +371,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.StakeibcKeeper,
+			app.InterchainqueryKeeper,
 		),
 	)
 
