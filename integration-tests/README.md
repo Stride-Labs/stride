@@ -4,7 +4,14 @@ This design for this integration test framework is heavily inspired by the Cosmo
 
 ## Setup
 
-Install javascript and python dependencies
+**Before beginning, ensure you're on node 22**
+
+```bash
+nvm install v22
+nvm use v22
+```
+
+Install javascript and python dependencies.
 
 ```bash
 make install
@@ -26,7 +33,61 @@ Run the tests
 make test
 ```
 
+## Integrating Updated Protos
+
+If the stride proto's change, we need to rebuild stridejs:
+
+- Go to https://github.com/Stride-Labs/stridejs
+  - Remove `/dist` from `.gitignore`
+  - Update the config in `scripts/clone_repos.ts` to point to the new `stride/cosmos-sdk/ibc-go` version
+  - Run `pnpm i`
+  - Run `pnpm codegen`
+  - Run `pnpm build`
+  - Run `git commit...`
+  - Run `git push`
+  - Get the current `stridejs` commit using `git rev-parse HEAD`
+- In the integration tests (this project):
+  - Move into the `client` folder (`cd client`)
+  - Update the `stridejs` dependency commit hash in `package.json`
+  - `pnpm i`
+
+## Debugging (VSCode)
+
+- Open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
+- Run the `Debug: Create JavaScript Debug Terminal` command
+- Set breakpoints
+- Run tests
+
 ## Network
+
+## Adding a New Host Zone
+
+- Create a new dockerfile in `dockerfiles/Dockerfile.{chainName}`. You can use one of the existing dockerfiles as a reference, and just modify the `REPO`, `COMMIT_HASH`, and `BINARY` variables.
+- Add a makefile entry to build the dockerfile
+  ```bash
+  build-{chainName}:
+    $(call build_and_push_docker,{chainName},.,chains/{chainName}:{chainVersion})
+  ```
+- Try to build the docker image. You may have to debug here. Use the project's Dockerfile in their repo as a reference.
+- [Internal Only] Add a DNS entry in GCP for the RPC and API endpoints
+  - Go to GCP Cloud DNS (search DNS in the console)
+  - Click on `internal`
+  - Grab the IP Address from the exising host zones
+  - Click `Add Standard`
+  - Set the DNS Name to `{chainName}-api.internal.stridenet.co`
+  - Set the IP Address to same IP as the other host zones
+- Add the new chain to `network/values.yaml`, including:
+  - `chainConfig`
+  - `activeChains`
+  - `relayers`
+- Add the new relayer configs to `network/configs/relayer.yaml` and `network/configs/hermes.toml`
+- Then start the network as normal
+
+```bash
+make start
+```
+
+- If running tests, add the chain config to `client/test/consts.ts` and update the `HOST_CHAIN_NAME` in `client/test/core.test.ts`
 
 ### Validator Startup Lifecycle
 
