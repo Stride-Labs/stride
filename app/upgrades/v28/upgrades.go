@@ -1,4 +1,4 @@
-package v27
+package v28
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
 )
 
-var UpgradeName = "v27"
+var UpgradeName = "v28"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
 func CreateUpgradeHandler(

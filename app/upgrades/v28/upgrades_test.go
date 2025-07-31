@@ -1,4 +1,4 @@
-package v27_test
+package v28_test
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	v27 "github.com/Stride-Labs/stride/v27/app/upgrades/v27"
+	v28 "github.com/Stride-Labs/stride/v27/app/upgrades/v28"
 )
 
 type UpgradeTestSuite struct {
@@ -28,7 +28,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.ConfirmUpgradeSucceeded(v27.UpgradeName)
+	s.ConfirmUpgradeSucceeded(v28.UpgradeName)
 
 	// Confirm consumer ID is set to 1
 	params := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
@@ -109,7 +109,7 @@ func (s *UpgradeTestSuite) TestDistributionFix() {
 	}
 
 	// Apply Fix
-	err := v27.ApplyDistributionFix(s.Ctx, s.App.DistrKeeper)
+	err := v28.ApplyDistributionFix(s.Ctx, s.App.DistrKeeper)
 	s.Require().NoError(err)
 
 	// After applying the fix, all delegations should be able to withdraw rewards without panics
