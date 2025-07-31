@@ -1,6 +1,8 @@
 package v28
 
 import (
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -79,10 +81,19 @@ func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	if account == nil {
 		return nil
 	}
-	account.(*vesting.DelayedVestingAccount).EndTime = VestingEndTime
+	baseAccount, isBaseAccount := account.(*authtypes.BaseAccount)
+	if !isBaseAccount {
+		// Maybe return an error here?
+		ctx.Logger().Error("Account at DeliveryAccount is not a BaseAccount, cannot create DelayedVestingAccount")
+		return nil
+	}
+
+	originalVesting := sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(LockedTokenAmount)))
+	dva := vesting.NewDelayedVestingAccount(baseAccount, originalVesting, VestingEndTime)
+
 	// No tokens on the account are staked, so we don't need to set delegated_free / delegated_vesting
 	// Set original_vesting to the total amount of tokens (this would normally be initialized when the account is delivered locked tokens via the CLI)
-	account.(*vesting.DelayedVestingAccount).OriginalVesting = sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(LockedTokenAmount))) // Example amount
-	ak.SetAccount(ctx, account)
+
+	ak.SetAccount(ctx, dva)
 	return nil
 }

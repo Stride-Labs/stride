@@ -5,11 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"time"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/stretchr/testify/suite"
 
@@ -59,28 +55,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkLockedTokens()
 }
 
-func (s *UpgradeTestSuite) CreateDelayedVestingAccount(address sdk.AccAddress, end int64, coins int64) *types.DelayedVestingAccount {
-	afterStartTime := time.Unix(1753991194, 0) // late August 2025
-	endTime := time.Unix(end, 0)
-
-	// init a base account
-	bacc := authtypes.NewBaseAccountWithAddress(address)
-
-	// send locked tokens to the base account
-	origCoins := sdk.Coins{sdk.NewInt64Coin(s.App.StakingKeeper.BondDenom(s.Ctx), coins)}
-	dva := vesting.NewDelayedVestingAccount(bacc, origCoins, end)
-
-	// require no coins vested shortly after the start of the vesting schedule)
-	vestedCoins := dva.GetVestedCoins(afterStartTime)
-	s.Require().Nil(vestedCoins)
-
-	// require all coins vested at the end of the vesting schedule)
-	vestedCoins = dva.GetVestedCoins(endTime)
-	s.Require().Equal(origCoins, vestedCoins)
-
-	return dva
-}
-
 func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 
 	// Init DelayedVestingAccount
@@ -92,7 +66,7 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 	// Account sends some unlocked tokens
 	s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(500_000))))
 
-	deliveryAccount := s.CreateDelayedVestingAccount(deliveryAccountAddress, v28.VestingEndTime, v28.LockedTokenAmount)
+	deliveryAccount := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount))
 	// Also needs to be added to the account keeper
 	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
 
