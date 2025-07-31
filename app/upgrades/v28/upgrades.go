@@ -92,7 +92,6 @@ func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
 	dva := vesting.NewDelayedVestingAccount(baseAccount, originalVesting, VestingEndTime)
 
 	// No tokens on the account are staked, so we don't need to set delegated_free / delegated_vesting
-	// Set original_vesting to the total amount of tokens (this would normally be initialized when the account is delivered locked tokens via the CLI)
 
 	ak.SetAccount(ctx, dva)
 	return nil
