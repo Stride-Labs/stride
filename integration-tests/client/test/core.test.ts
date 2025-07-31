@@ -32,6 +32,7 @@ import {
   waitForDepositRecordStatus,
   waitForUnbondingRecordStatus,
   waitForRedemptionRecordRemoval,
+  waitForRedemptionRateChange,
 } from "./polling";
 import {
   getBalance,
@@ -304,7 +305,7 @@ describe("Core Tests", () => {
     // Host denom received on Stride → positive balance change
     expect(hostHostBalanceDiff).to.equal(-(transferAmount + DEFAULT_FEE), "Host native balance change");
     expect(strideHostBalanceDiff).to.equal(transferAmount, "Stride host denom balance change");
-  }, 120_000);
+  }, 120_000); // 2 min timeout
 
   test("Liquid Stake", async () => {
     const stridejs = strideAccounts.user;
@@ -417,7 +418,7 @@ describe("Core Tests", () => {
     // Confirm the host zone updated
     const hostZoneTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId: HOST_CHAIN_ID });
     expect(hostZoneTotalDelegations).to.equal(updatedDelegatedBalance, "Updated delegated balance");
-  }, 180_000); // 3 minutes timeout
+  }, 180_000); // 3 min timeout
 
   test("Redeem Stake", async () => {
     const stridejs = strideAccounts.user;
@@ -630,12 +631,62 @@ describe("Core Tests", () => {
       BigInt(updatedRedemptionRecord.nativeTokenAmount),
       "Redemption balance after claim",
     );
-  }, 600_000); // 10 minutes timeout
+  }, 600_000); // 10 minute timeout
 
   test.only("Reinvestment", async () => {
-    // Check that the redemption rate is greater than 1 - meaning there was reinvestmetn
     const stridejs = strideAccounts.user;
+    const hostjs = hostAccounts.user;
+    const stakeAmount = 1000000;
+
+    // Get the initial delegated balance both internally and the ground truth
+    const initialTotalDelegations = await getHostZoneTotalDelegations({ client: stridejs, chainId: HOST_CHAIN_ID });
+
+    // If there isn't anything staked yet, liquid stake
+    if (initialTotalDelegations == BigInt(0)) {
+      console.log("No active delegations on host zone");
+
+      // Get initial native balances on Stride
+      const initialUserNativeBalanceOnStride = await getBalance({
+        client: stridejs,
+        denom: HOST_DENOM_ON_STRIDE,
+      });
+
+      // If there's not enough native token on stride to liquid stake, we need to transfer
+      if (initialUserNativeBalanceOnStride == BigInt(0)) {
+        console.log("Transfering native tokens to Stride...");
+        await ibcTransfer({
+          client: hostjs,
+          sourceChain: HOST_CHAIN_NAME,
+          destinationChain: STRIDE_CHAIN_NAME,
+          coin: `${stakeAmount}${HOST_DENOM}`,
+          sender: hostjs.address,
+          receiver: stridejs.address,
+        });
+
+        await waitForBalanceChange({
+          initialBalance: initialUserNativeBalanceOnStride,
+          client: stridejs,
+          address: stridejs.address,
+          denom: HOST_DENOM_ON_STRIDE,
+        });
+      }
+
+      // Then once we know we have native tokens, we can liquid stake
+      console.log("Liquid staking...");
+      const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
+        creator: stridejs.address,
+        amount: String(stakeAmount),
+        hostDenom: HOST_DENOM,
+      });
+
+      await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
+
+      // Wait for the redemption rate to change after the reinvestment kicks off
+      await waitForRedemptionRateChange({ client: stridejs, chainId: HOST_CHAIN_ID });
+    }
+
+    // Check that the redemption rate is greater than 1 - meaning there was reinvestment
     const { redemptionRate } = await getHostZone({ client: stridejs, chainId: HOST_CHAIN_ID });
     expect(Decimal(redemptionRate).greaterThan(Decimal(1))).to.be.true;
-  });
+  }, 300_000); // 5 min timeout
 });

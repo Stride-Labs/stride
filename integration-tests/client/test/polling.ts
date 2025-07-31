@@ -5,6 +5,7 @@ import { sleep } from "stridejs";
 import { getBalance, getDelegatedBalance, getHostZone } from "./queries";
 import { bigIntAbs } from "./utils";
 import { expect } from "vitest";
+import Decimal from "decimal.js";
 
 /**
  * Wait for a balance to change (increase from initial value)
@@ -197,4 +198,33 @@ export async function waitForRedemptionRecordRemoval({
   }
 
   throw new Error(`Timed out waiting for redemption record ${redemptionRecordId} to be removed`);
+}
+
+/**
+ * Wait for redemption rate change
+ * @param client The stride client
+ * @param chainId The chain ID of the host zone
+ */
+export async function waitForRedemptionRateChange({
+  client,
+  chainId,
+}: {
+  client: StrideClient;
+  chainId: string;
+}): Promise<Decimal> {
+  const maxAttempts = 360;
+  let attempt = 0;
+
+  const { redemptionRate: prevRedemptionRate } = await getHostZone({ client, chainId });
+  while (attempt < maxAttempts) {
+    const { redemptionRate: currRedemptionRate } = await getHostZone({ client, chainId });
+    if (prevRedemptionRate != currRedemptionRate) {
+      return Decimal(currRedemptionRate);
+    }
+
+    attempt++;
+    await sleep(1000); // 1 second
+  }
+
+  throw new Error(`Timed out waiting for redemption rate to increase`);
 }
