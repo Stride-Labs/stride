@@ -6,6 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/stretchr/testify/suite"
 
@@ -60,13 +61,20 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 	// Init BaseAccount (which is the type of the account pre-upgrade)
 	deliveryAccountAddress, err := sdk.AccAddressFromBech32(v28.DeliveryAccount)
 	s.Require().NoError(err)
-	deliveryAccount := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount))
+	deliveryAccount := authtypes.NewBaseAccount(deliveryAccountAddress, nil, 0, 0)
 	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
-
 	// Fund account and test sending a tx to mimic mainnet
-	s.FundAccount(deliveryAccountAddress, sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(1_000_000)))
-	err = s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin(s.App.StakingKeeper.BondDenom(s.Ctx), sdkmath.NewInt(500_000))))
+	s.FundAccount(deliveryAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(1_000_000)))
+	err = s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin("ustrd", sdkmath.NewInt(500_000))))
 	s.Require().NoError(err)
+
+	// Init the FromAccount and fund with 4M strd
+	fromAccountAddress, err := sdk.AccAddressFromBech32(v28.FromAccount)
+	s.Require().NoError(err)
+	fromAccount := authtypes.NewBaseAccount(fromAccountAddress, nil, 0, 0)
+	s.App.AccountKeeper.SetAccount(s.Ctx, fromAccount)
+	// Fund account and test sending a tx to mimic mainnet
+	s.FundAccount(fromAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(4_100_000_000_000)))
 
 	// Return callback to check store after upgrade
 	return func() {

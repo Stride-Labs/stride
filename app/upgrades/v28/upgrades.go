@@ -7,7 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
@@ -21,6 +22,7 @@ var (
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("1.00")
 
 	DeliveryAccount = "stride198f9skhtnpzpsxtmlkg3ry8yglwqn9pm9ugl28"
+	FromAccount     = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
 
 	VestingEndTime    = int64(1785988800)        // Thu Aug 06 2026 04:00:00 GMT+0000
 	LockedTokenAmount = int64(4_000_000_000_000) // 4 million STRD
@@ -32,11 +34,13 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
+	bankKeeper bankkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v28...")
 
 		ak := accountKeeper
+		bk := bankKeeper
 
 		// Run migrations first
 		ctx.Logger().Info("Running module migrations...")
@@ -49,7 +53,7 @@ func CreateUpgradeHandler(
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
 		// Deliver locked tokens
-		if err := DeliverLockedTokens(ctx, ak); err != nil {
+		if err := DeliverLockedTokens(ctx, ak, bk); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account %s", DeliveryAccount)
 		}
 
@@ -75,24 +79,28 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	}
 }
 
-func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper) error {
+func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper) error {
 	// Get account
-	account := ak.GetAccount(ctx, sdk.MustAccAddressFromBech32(DeliveryAccount))
-	if account == nil {
-		return nil
-	}
-	baseAccount, isBaseAccount := account.(*authtypes.BaseAccount)
+	from := sdk.MustAccAddressFromBech32(FromAccount)
+	to := sdk.MustAccAddressFromBech32(DeliveryAccount)
+	amt := sdk.NewCoins(sdk.NewInt64Coin("ustrd", LockedTokenAmount))
+
+	// Destination must exist and be a plain BaseAccount.
+	base, isBaseAccount := ak.GetAccount(ctx, to).(*authtypes.BaseAccount)
 	if !isBaseAccount {
 		// Maybe return an error here?
 		ctx.Logger().Error("Account at DeliveryAccount is not a BaseAccount, cannot create DelayedVestingAccount")
 		return nil
 	}
 
-	originalVesting := sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(LockedTokenAmount)))
-	dva := vesting.NewDelayedVestingAccount(baseAccount, originalVesting, VestingEndTime)
+	// Send the 4 000 000 STRD
+	if err := bk.SendCoins(ctx, from, to, amt); err != nil {
+		return err
+	}
 
-	// No tokens on the account are staked, so we don't need to set delegated_free / delegated_vesting
-
+	// Convert the credited account to DelayedVesting.
+	dva := vestingtypes.NewDelayedVestingAccount(base, amt, VestingEndTime)
 	ak.SetAccount(ctx, dva)
+
 	return nil
 }
