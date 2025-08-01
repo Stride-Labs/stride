@@ -53,6 +53,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRedemptionRates := s.SetupTestUpdateRedemptionRateBounds()
 	checkLockedTokens := s.SetupTestDeliverLockedTokens()
 	checkICQStore := s.SetupTestICQStore()
+	checkMaxIcas := s.SetupTestMaxIcasBand()
 
 	// ------- Run upgrade -------
 	s.ConfirmUpgradeSucceededs(v28.UpgradeName, upgradeHeight)
@@ -62,6 +63,22 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkLockedTokens()
 	// Check ICQ Store
 	checkICQStore()
+	checkMaxIcas()
+}
+
+func (s *UpgradeTestSuite) SetupTestMaxIcasBand() func() {
+	// Create a host zone for band
+	hostZone := stakeibctypes.HostZone{
+		ChainId: v28.BandChainId,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// Return callback to check store after upgrade
+	return func() {
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v28.BandChainId)
+		s.Require().True(found)
+		s.Require().Equal(v28.MaxMessagesPerIca, hostZone.MaxMessagesPerIcaTx)
+	}
 }
 
 func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {

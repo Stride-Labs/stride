@@ -33,6 +33,9 @@ var (
 
 	VestingEndTime    = int64(1785988800)        // Thu Aug 06 2026 04:00:00 GMT+0000
 	LockedTokenAmount = int64(4_000_000_000_000) // 4 million STRD
+
+	MaxMessagesPerIca = uint64(5)
+	BandChainId       = "laozi-mainnet"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
@@ -61,6 +64,7 @@ func CreateUpgradeHandler(
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
 		// Deliver locked tokens
+		ctx.Logger().Info("Delivering locked tokens...")
 		if err := DeliverLockedTokens(ctx, ak, bk); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account %s", DeliveryAccount)
 		}
@@ -68,8 +72,24 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Processing stale ICQ...")
 		ClearStuckEvmosQuery(ctx, stakeibcKeeper, icqKeeper)
 
+		ctx.Logger().Info("Setting max icas for band...")
+		SetMaxIcasBand(ctx, stakeibcKeeper)
+
 		return versionMap, nil
 	}
+}
+
+// Add the MaxMessagesPerIcaTx parameter to each host zone
+func SetMaxIcasBand(ctx sdk.Context, k stakeibckeeper.Keeper) {
+
+	// get band
+	bandHostZone, found := k.GetHostZone(ctx, BandChainId)
+	if !found {
+		ctx.Logger().Error("band host zone not found")
+		return
+	}
+	bandHostZone.MaxMessagesPerIcaTx = MaxMessagesPerIca
+	k.SetHostZone(ctx, bandHostZone)
 }
 
 // Updates the outer redemption rate bounds
