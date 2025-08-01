@@ -19,18 +19,20 @@ RUN ARCH=$(uname -m) && WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v
     -O /lib/libwasmvm_muslc.$ARCH.a
 
 RUN BUILD_TAGS=muslc LINK_STATICALLY=true make install
+RUN echo "$BINARY start" > start.sh
 
 FROM alpine:3.17
-COPY --from=builder /go/bin/$BINARY /usr/local/bin/
+
 RUN apk add bash vim sudo dasel jq curl \
     && addgroup -g 1000 validator \
     && adduser -S -h /home/validator -D validator -u 1000 -G validator
+
+COPY --from=builder --chown=validator:validator /go/bin/$BINARY /usr/local/bin/
+COPY --from=builder --chown=validator:validator /opt/chain/start.sh /home/validator/start.sh
 
 USER 1000
 WORKDIR /home/validator
 
 EXPOSE 26657 26656 1317 9090
-
-RUN echo "$BINARY start" > start.sh
 
 CMD ["bash", "start.sh"]
