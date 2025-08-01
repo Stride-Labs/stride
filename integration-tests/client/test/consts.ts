@@ -79,6 +79,8 @@ export function newChainConfig({
   };
 }
 
+export const HOST_CHAIN_NAME = "cosmoshub";
+
 export const CHAIN_CONFIGS: ChainConfigs = {
   cosmoshub: newChainConfig({
     chainId: GAIA_CHAIN_ID,
