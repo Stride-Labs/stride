@@ -243,8 +243,8 @@ github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWX
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/Stride-Labs/cast v0.0.3 h1:eM3n/t3hSxb+iw9LDo3r/uGBp3w4U7wPv40GKMtJ1dI=
 github.com/Stride-Labs/cast v0.0.3/go.mod h1:SpXXQ5YoyJw6s3/6cMTQuxvgRl3PCJiyaX9p6b155UU=
-github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk-50-0 h1:EAwb5Vd6kicQVGzZn0qChNcoXXou020xmqBZSRB2LF0=
-github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk-50-0/go.mod h1:SraOQg+zoBWEKHjyMlvYfAuWwuXtStoWfDyZiFDVLyw=
+github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk50-rc0 h1:IWCtaBlqqmr50V5PXVp6AiLIfkpmfZxEcBgrXN8ToMc=
+github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk50-rc0/go.mod h1:SraOQg+zoBWEKHjyMlvYfAuWwuXtStoWfDyZiFDVLyw=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/adlio/schema v1.3.6 h1:k1/zc2jNfeiZBA5aFTRy37jlBIuCkXCm0XmvpzCKI9I=

@@ -840,13 +840,11 @@ func NewStrideApp(
 
 	app.VestingKeeper = evmosvestingkeeper.NewKeeper(
 		keys[evmosvestingtypes.StoreKey],
-		authtypes.NewModuleAddress(govtypes.ModuleName),
-		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName), appCodec,
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.DistrKeeper,
 		app.StakingKeeper,
-		app.GovKeeper,
 	)
 
 	app.ICQOracleKeeper = *icqoraclekeeper.NewKeeper(

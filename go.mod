@@ -238,7 +238,7 @@ replace (
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
 	// Then later upgraded to SDK 50
-	github.com/evmos/vesting => github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk-50-0
+	github.com/evmos/vesting => github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk50-rc0
 
 	//github.com/evmos/vesting => ../vesting
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
