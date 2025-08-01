@@ -33,7 +33,9 @@ Run the tests
 make test
 ```
 
-## Integrating Updated Protos
+## Making Changes
+
+### Integrating Updated Protos
 
 If the stride proto's change, we need to rebuild stridejs:
 
@@ -51,16 +53,7 @@ If the stride proto's change, we need to rebuild stridejs:
   - Update the `stridejs` dependency commit hash in `package.json`
   - `pnpm i`
 
-## Debugging (VSCode)
-
-- Open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
-- Run the `Debug: Create JavaScript Debug Terminal` command
-- Set breakpoints
-- Run tests
-
-## Network
-
-## Adding a New Host Zone
+### Adding a New Host Zone
 
 - Create a new dockerfile in `dockerfiles/Dockerfile.{chainName}`. You can use one of the existing dockerfiles as a reference, and just modify the `REPO`, `COMMIT_HASH`, and `BINARY` variables.
 - Add a makefile entry to build the dockerfile
@@ -89,6 +82,76 @@ make start
 
 - If running tests, add the chain config to `client/test/consts.ts` and update the `HOST_CHAIN_NAME` in `client/test/core.test.ts`
 
+### Debugging (VSCode)
+
+- Open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
+- Run the `Debug: Create JavaScript Debug Terminal` command
+- Set breakpoints
+- Run tests
+
+## Testing Flows
+
+### Integration Tests
+
+- Ensure the host chain config is in `client/test/consts.ts` and the `HOST_CHAIN_NAME` is set to the desired host zone
+
+- Start the network
+
+```bash
+make stop
+```
+
+- Run the tests
+
+```bash
+make test
+```
+
+- Remember to shut down the network after
+
+```bash
+make stop
+```
+
+### Testing an Upgrade
+
+- To test an upgrade, you'll start the Stride network on an old version, and then run a script to upgrade it to the latest
+- First, build the stride docker file with both the old and the new version (the new version will be whatever is checked out locally)
+
+```bash
+# e.g. UPGRADE_OLD_VERSION=v27.0.0 make build-stride-upgrade
+UPGRADE_OLD_VERSION={old-version-tag} make build-stride-upgrade
+```
+
+- Then start the network normally
+
+```bash
+make start
+```
+
+- Run the script to submit the upgrade proposal
+
+```bash
+make upgrade-stride
+```
+
+- View the chain logs and wait for the upgrade to pass. You should see it crash, switch binaries, and start back up
+
+```bash
+make stride-logs
+```
+
+## Network Architecture
+
+### Motivation
+
+- Move the workflow off local machines to reduce issues from dissimilar setups
+- Run multiple networks in parallel
+- Support multiple nodes per network
+- Support new host chain binaries easily
+- Support for both hermes and go relayer
+- Easy to write new tests (typescript)
+
 ### Validator Startup Lifecycle
 
 **initContainer**
@@ -108,38 +171,9 @@ make start
 - As a `postStart` operation (run after the main thread is kicked off), the `create-validator.sh` script is run which runs the appropriate `staking` module transaction to create the validator using the previously acquired keys
 - This is run after startup because the validator must sign the tx with their key
 
-## Testing Client
+### Design Decisions
 
-### Debugging (VSCode)
-
-- open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
-- run the `Debug: Create JavaScript Debug Terminal` command
-- set breakpoints
-- run `pnpm test`
-
-### Test new protobuf
-
-- go to https://github.com/Stride-Labs/stridejs
-  - remove `/dist` from `.gitignore`
-  - update the config in `scripts/clone_repos.ts` to point to the new `stride/cosmos-sdk/ibc-go` version
-  - run `pnpm i`
-  - run `pnpm codegen`
-  - run `pnpm build`
-  - run `git commit...`
-  - run `git push`
-  - get the current `stridejs` commit using `git rev-parse HEAD`
-- in the integration tests (this project):
-  - update the `stridejs` dependency commit hash in `package.json`
-  - `pnpm i`
-  - `pnpm test`
-
-## Motivation
-
-TODO
-
-## Design Decisions
-
-### API Service to share files during chain setup
+#### API Service to share files during chain setup
 
 In order to start the network as fast as possible, the chain should be initialized with ICS validators at genesis, rather than performing a switchover. However, in order to build the genesis file, the public keys must be gathered from each validator. This adds the constraint that keys must be consoldiated into a single process responsible for creating the genesis file.
 
