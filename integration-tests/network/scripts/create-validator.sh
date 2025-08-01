@@ -8,7 +8,7 @@ wait_for_startup() {
 
     while true; do
         if $BINARY status &> /dev/null; then
-            latest_height=$($BINARY status | jq -r '.sync_info.latest_block_height // "0"')
+            latest_height=$($BINARY status | jq -r 'if .SyncInfo then .SyncInfo.latest_block_height else .sync_info.latest_block_height end // "0"')
             if [[ "$latest_height" -gt "0" ]]; then
                 echo "Node synced"
                 break
