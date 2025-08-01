@@ -64,7 +64,8 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 	deliveryAccount := authtypes.NewBaseAccount(deliveryAccountAddress, nil, 0, 0)
 	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
 	// Fund account and test sending a tx to mimic mainnet
-	s.FundAccount(deliveryAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(1_000_000)))
+	sendAmt := int64(1_000_000)
+	s.FundAccount(deliveryAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(sendAmt)))
 	err = s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin("ustrd", sdkmath.NewInt(500_000))))
 	s.Require().NoError(err)
 
@@ -90,6 +91,10 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 		// Check that the original vesting amount is set correctly
 		expectedAmount := sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(v28.LockedTokenAmount)))
 		s.Require().Equal(expectedAmount, delayedVestingAccount.OriginalVesting)
+
+		// Check that the account has the correct balance
+		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount), "ustrd")
+		s.Require().Equal(sdk.NewCoin("ustrd", sdk.NewInt(v28.LockedTokenAmount+sendAmt)), balance)
 	}
 }
 
