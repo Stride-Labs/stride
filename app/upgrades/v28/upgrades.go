@@ -1,10 +1,17 @@
 package v28
 
 import (
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/Stride-Labs/stride/v27/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 )
@@ -20,6 +27,12 @@ var (
 	// Redemption rate bounds updated to give slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.50")
 	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("1.00")
+
+	DeliveryAccount = "stride198f9skhtnpzpsxtmlkg3ry8yglwqn9pm9ugl28"
+	FromAccount     = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
+
+	VestingEndTime    = int64(1785988800)        // Thu Aug 06 2026 04:00:00 GMT+0000
+	LockedTokenAmount = int64(4_000_000_000_000) // 4 million STRD
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
@@ -27,10 +40,15 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	accountKeeper authkeeper.AccountKeeper,
+	bankKeeper bankkeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v28...")
+
+		ak := accountKeeper
+		bk := bankKeeper
 
 		// Run migrations first
 		ctx.Logger().Info("Running module migrations...")
@@ -41,6 +59,11 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Update redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
+
+		// Deliver locked tokens
+		if err := DeliverLockedTokens(ctx, ak, bk); err != nil {
+			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account %s", DeliveryAccount)
+		}
 
 		ctx.Logger().Info("Processing stale ICQ...")
 		ClearStuckEvmosQuery(ctx, stakeibcKeeper, icqKeeper)
@@ -65,6 +88,32 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 		k.SetHostZone(ctx, hostZone)
 	}
+}
+
+func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper) error {
+	// Get account
+	from := sdk.MustAccAddressFromBech32(FromAccount)
+	to := sdk.MustAccAddressFromBech32(DeliveryAccount)
+	amt := sdk.NewCoins(sdk.NewInt64Coin("ustrd", LockedTokenAmount))
+
+	// Destination must exist and be a plain BaseAccount.
+	base, isBaseAccount := ak.GetAccount(ctx, to).(*authtypes.BaseAccount)
+	if !isBaseAccount {
+		// Maybe return an error here?
+		ctx.Logger().Error("Account at DeliveryAccount is not a BaseAccount, cannot create DelayedVestingAccount")
+		return nil
+	}
+
+	// Send the 4 000 000 STRD
+	if err := utils.SafeSendCoins(false, bk, ctx, from, to, amt); err != nil {
+		return err
+	}
+
+	// Convert the credited account to DelayedVesting.
+	dva := vestingtypes.NewDelayedVestingAccount(base, amt, VestingEndTime)
+	ak.SetAccount(ctx, dva)
+
+	return nil
 }
 
 // Cleans up the stale ICQ
