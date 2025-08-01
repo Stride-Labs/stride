@@ -74,7 +74,7 @@ export function newChainConfig({
   };
 }
 
-export const HOST_CHAIN_NAME = "cosmoshub";
+export const TEST_CHAINS = ["cosmoshub", "osmosis"];
 
 export const CHAIN_CONFIGS: ChainConfigs = {
   cosmoshub: newChainConfig({
@@ -82,8 +82,8 @@ export const CHAIN_CONFIGS: ChainConfigs = {
     hostDenom: "uatom",
     bechPrefix: "cosmos",
     coinType: 118,
-    connectionId: DEFAULT_CONNECTION_ID,
-    transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+    connectionId: "connection-0",
+    transferChannelId: "channel-0",
     rpcEndpoint: "http://cosmoshub-rpc.internal.stridenet.co",
   }),
   osmosis: newChainConfig({
@@ -91,8 +91,8 @@ export const CHAIN_CONFIGS: ChainConfigs = {
     hostDenom: "uosmo",
     bechPrefix: "osmo",
     coinType: 118,
-    connectionId: DEFAULT_CONNECTION_ID,
-    transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+    connectionId: "connection-1",
+    transferChannelId: "channel-1",
     rpcEndpoint: "http://osmosis-rpc.internal.stridenet.co",
   }),
 };

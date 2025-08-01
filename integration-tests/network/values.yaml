@@ -8,7 +8,7 @@ images:
 activeChains:
   - stride
   - cosmoshub
-  # - osmosis
+  - osmosis
 
 # type can be either "relayer" or "hermes"
 relayers:
@@ -16,10 +16,10 @@ relayers:
     type: relayer
     chainA: stride
     chainB: cosmoshub
-  # - name: stride-osmosis
-  #   type: relayer
-  #   chainA: stride
-  #   chainB: osmosis
+  - name: stride-osmosis
+    type: relayer
+    chainA: stride
+    chainB: osmosis
 
 chainConfigs:
   stride:

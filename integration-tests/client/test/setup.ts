@@ -6,7 +6,6 @@ import { waitForBalanceChange, waitForHostZoneTotalDelegationsChange } from "./p
 import { ChainConfig, CosmosClient } from "./types";
 import {
   STRIDE_CHAIN_NAME,
-  HOST_CHAIN_NAME,
   USTRD,
   STRIDE_RPC_ENDPOINT,
   DEFAULT_CONNECTION_ID,
@@ -153,7 +152,7 @@ export async function ensureNativeHostTokensOnStride({
   });
 
   if (currentBalance >= BigInt(minAmount)) {
-    console.log(`Existing balance (${currentBalance}) sufficient, skipping transfer`);
+    console.log(`Existing balance sufficient, skipping transfer`);
     return currentBalance;
   }
 
@@ -209,7 +208,7 @@ export async function ensureLiquidStakeExists({
   });
 
   if (currentTotalDelegations >= BigInt(minAmount)) {
-    console.log(`Existing delegations (${currentTotalDelegations}) sufficient, skipping setup`);
+    console.log(`Existing delegations sufficient, skipping setup`);
     return currentTotalDelegations;
   }
 

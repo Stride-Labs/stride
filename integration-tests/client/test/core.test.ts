@@ -5,10 +5,10 @@ import {
   DEFAULT_FEE,
   REMOVED,
   DEFAULT_TRANSFER_CHANNEL_ID,
-  HOST_CHAIN_NAME,
   CHAIN_CONFIGS,
   STRIDE_CHAIN_NAME,
   MNEMONICS,
+  TEST_CHAINS,
 } from "./consts";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
@@ -40,50 +40,49 @@ import {
   ensureNativeHostTokensOnStride,
 } from "./setup";
 
-const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
+describe.each(TEST_CHAINS)("Core Tests - %s", (hostChainName) => {
+  const HOST_CONFIG = CHAIN_CONFIGS[hostChainName];
 
-// Initialize accounts
-let strideAccounts: {
-  user: StrideClient;
-  admin: StrideClient;
-};
+  let strideAccounts: {
+    user: StrideClient;
+    admin: StrideClient;
+  };
 
-let hostAccounts: {
-  user: CosmosClient;
-};
+  let hostAccounts: {
+    user: CosmosClient;
+  };
 
-// Initialize accounts and wait for the chain to start
-beforeAll(async () => {
-  console.log("setting up accounts...");
+  // Initialize accounts and wait for the chain to start
+  beforeAll(async () => {
+    console.log("setting up accounts...");
 
-  // @ts-expect-error
-  strideAccounts = {};
-  // @ts-expect-error
-  hostAccounts = {};
+    // @ts-expect-error
+    strideAccounts = {};
+    // @ts-expect-error
+    hostAccounts = {};
 
-  const admin = MNEMONICS.admin;
-  const user = MNEMONICS.users[0];
+    const admin = MNEMONICS.admin;
+    const user = MNEMONICS.users[0];
 
-  strideAccounts["admin"] = await createStrideClient(admin.mnemonic);
-  strideAccounts["user"] = await createStrideClient(user.mnemonic);
-  hostAccounts["user"] = await createHostClient(HOST_CONFIG, user.mnemonic);
+    strideAccounts["admin"] = await createStrideClient(admin.mnemonic);
+    strideAccounts["user"] = await createStrideClient(user.mnemonic);
+    hostAccounts["user"] = await createHostClient(HOST_CONFIG, user.mnemonic);
 
-  await waitForChain(STRIDE_CHAIN_NAME, strideAccounts.user, USTRD);
-  await waitForChain(HOST_CONFIG.chainName, hostAccounts.user, HOST_CONFIG.hostDenom);
+    await waitForChain(STRIDE_CHAIN_NAME, strideAccounts.user, USTRD);
+    await waitForChain(HOST_CONFIG.chainName, hostAccounts.user, HOST_CONFIG.hostDenom);
 
-  await assertOpenTransferChannel(STRIDE_CHAIN_NAME, strideAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
-  await assertOpenTransferChannel(HOST_CONFIG.chainName, hostAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
+    await assertOpenTransferChannel(STRIDE_CHAIN_NAME, strideAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
+    await assertOpenTransferChannel(HOST_CONFIG.chainName, hostAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
 
-  await ensureHostZoneRegistered({
-    stridejs: strideAccounts.admin,
-    hostjs: hostAccounts.user,
-    hostConfig: HOST_CONFIG,
-  });
+    await ensureHostZoneRegistered({
+      stridejs: strideAccounts.admin,
+      hostjs: hostAccounts.user,
+      hostConfig: HOST_CONFIG,
+    });
 
-  await assertICAChannelsOpen(strideAccounts.admin, HOST_CONFIG.chainId);
-}, 45_000);
+    await assertICAChannelsOpen(strideAccounts.admin, HOST_CONFIG.chainId);
+  }, 45_000);
 
-describe("Core Tests", () => {
   test("IBC Transfer", async () => {
     const stridejs = strideAccounts.user;
     const hostjs = hostAccounts.user;
@@ -454,7 +453,7 @@ describe("Core Tests", () => {
     );
   }, 600_000); // 10 minute timeout
 
-  test.only("Reinvestment", async () => {
+  test("Reinvestment", async () => {
     const stridejs = strideAccounts.user;
     const hostjs = hostAccounts.user;
     const stakeAmount = 1000000;
