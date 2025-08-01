@@ -34,7 +34,7 @@ var (
 	VestingEndTime    = int64(1785988800)        // Thu Aug 06 2026 04:00:00 GMT+0000
 	LockedTokenAmount = int64(4_000_000_000_000) // 4 million STRD
 
-	MaxMessagesPerIca = uint64(10)
+	MaxMessagesPerIca = uint64(5)
 	BandChainId       = "laozi-mainnet"
 )
 
