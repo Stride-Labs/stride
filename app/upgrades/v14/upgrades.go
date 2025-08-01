@@ -21,8 +21,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
-	evmosvestingkeeper "github.com/evmos/evmos/v20/x/vesting/keeper"
-	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
+	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v27/x/claim/keeper"

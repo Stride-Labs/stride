@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app"

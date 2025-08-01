@@ -131,9 +131,9 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 	ccvdistr "github.com/cosmos/interchain-security/v6/x/ccv/democracy/distribution"
 	ccvstaking "github.com/cosmos/interchain-security/v6/x/ccv/democracy/staking"
-	evmosvesting "github.com/evmos/evmos/v20/x/vesting"
-	evmosvestingkeeper "github.com/evmos/evmos/v20/x/vesting/keeper"
-	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
+	evmosvesting "github.com/evmos/vesting/x/vesting"
+	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v27/utils"

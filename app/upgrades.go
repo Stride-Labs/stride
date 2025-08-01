@@ -16,7 +16,7 @@ import (
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
-	evmosvestingtypes "github.com/evmos/evmos/v20/x/vesting/types"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	v10 "github.com/Stride-Labs/stride/v27/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v27/app/upgrades/v11"
