@@ -11,6 +11,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/Stride-Labs/stride/v27/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 )
@@ -104,7 +105,7 @@ func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankke
 	}
 
 	// Send the 4 000 000 STRD
-	if err := bk.SendCoins(ctx, from, to, amt); err != nil {
+	if err := utils.SafeSendCoins(false, bk, ctx, from, to, amt); err != nil {
 		return err
 	}
 
