@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine 
+FROM golang:1.22-alpine AS cosmovisor
 
 RUN apk add make git gcc musl-dev openssl-dev linux-headers 
 
@@ -25,14 +25,17 @@ RUN apk add bash vim sudo dasel jq curl make git \
     && addgroup -g 1000 validator \
     && adduser -S -h /home/validator -D validator -u 1000 -G validator
 
-COPY --from=core:stride --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided
-COPY --from=core:stride --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided2
+COPY --from=cosmovisor --chown=validator:validator /usr/local/bin/cosmovisor /usr/local/bin/cosmovisor 
+COPY --from=core:stride-upgrade-old --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided
 COPY --from=core:stride-upgrade-old --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided1
+COPY --from=core:stride --chown=validator:validator /usr/local/bin/strided /usr/local/bin/strided2
 
-RUN mkdir -p ${COSMOVISOR_HOME}/genesis/bin \
+RUN mkdir -p ${DAEMON_HOME} \
+    && mkdir -p ${COSMOVISOR_HOME}/genesis/bin \
     && mkdir -p  ${COSMOVISOR_HOME}/upgrades/${UPGRADE_NAME}/bin/ \
     && cp /usr/local/bin/strided1 ${COSMOVISOR_HOME}/genesis/bin/strided \
-    && cp /usr/local/bin/strided2 ${COSMOVISOR_HOME}/upgrades/${UPGRADE_NAME}/bin/strided
+    && cp /usr/local/bin/strided2 ${COSMOVISOR_HOME}/upgrades/${UPGRADE_NAME}/bin/strided \
+    && chown -R validator:validator ${COSMOVISOR_HOME} ${DAEMON_HOME}
 
 USER 1000
 WORKDIR /home/validator

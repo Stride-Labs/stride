@@ -11,6 +11,16 @@ GCR_REPO=gcr.io/stride-nodes/integration-tests
 ADMINS_FILE=${STRIDE_HOME}/utils/admins.go
 KEYS_FILE=${STRIDE_HOME}/integration-tests/network/configs/keys.json
 DOCKERFILES=${STRIDE_HOME}/integration-tests/dockerfiles
+FORCE_OLD_BUILD=false
+
+# Global variables for cleanup
+ORIGINAL_BRANCH=""
+
+# Cleanup admin file changes and make sure we're not on the old branch
+cleanup() {
+    git checkout -- $ADMINS_FILE && rm -f ${ADMINS_FILE}-E
+    git checkout $ORIGINAL_BRANCH
+}
 
 # Builds and pushes a docker image to GCR
 build_and_push_docker() {
@@ -38,22 +48,30 @@ build_and_push_docker() {
 main() {
     # For stride, we have to update the admin address
     if [[ "$CHAIN" == "stride" ]]; then
-        # Trap SIGINT (Control + C) to cleanup admins file
-        trap 'echo "Interrupt received, cleaning up..."; git checkout -- $ADMINS_FILE && rm -f ${ADMINS_FILE}-E; exit' INT
-
         # If an upgrade old version was specified, build that old dockerfile
         if [  "${UPGRADE_OLD_VERSION:-}" != "" ]; then
-            echo "UPGRADE ENABLED: Building old version..."
-            if ! git diff-index --quiet HEAD --; then
-                echo "ERROR: There are uncommitted changes. Please commit all changes in the current branch before proceeding with this script."
-                exit 1
+            echo "UPGRADE ENABLED: Starting chain at $UPGRADE_OLD_VERSION"
+            old_version_tag=core:stride-$UPGRADE_OLD_VERSION
+
+            # If we already built the old version, we can skip that step here
+            if [ "$FORCE_OLD_BUILD" = "false" ] && docker images --format "table {{.Repository}}:{{.Tag}}" | grep -q $old_version_tag; then 
+                echo "Old image previously built, skipping..."
+            else
+                # Otherwise, checkout the old commit and build it
+                if ! git diff-index --quiet HEAD --; then
+                    echo "ERROR: There are uncommitted changes. Please commit all changes in the current branch before proceeding with this script."
+                    exit 1
+                fi
+                ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+                git checkout $UPGRADE_OLD_VERSION
+                docker buildx build --platform linux/amd64 --tag core:stride-$UPGRADE_OLD_VERSION ..
+                
+                git checkout $ORIGINAL_BRANCH
             fi
 
-            current_branch=$(git rev-parse --abbrev-ref HEAD)
-
-            git checkout $UPGRADE_OLD_VERSION
-            docker buildx build --platform linux/amd64 --tag core:stride-upgrade-old ..
-            git checkout $current_branch
+            # Tag the old version with a generic tag so we can identify it later in the pipeline
+            docker tag $old_version_tag core:stride-upgrade-old
         fi
 
         # Update the admin address and build the main dockerfile in the repo root
@@ -70,13 +88,15 @@ main() {
         else
             build_and_push_docker stride . chains/stride:latest
         fi
-
-        # Cleanup the admins file
-        git checkout -- $ADMINS_FILE && rm -f ${ADMINS_FILE}-E
     else
         echo "ERROR: Chain not supported"
         exit 1
     fi
 }
+
+# Cleanup admins file changes if there's a stoppage part of the way through
+if [[ "$CHAIN" == "stride" ]]; then
+    trap cleanup EXIT
+fi
 
 main

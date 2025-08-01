@@ -49,7 +49,7 @@ build-api:
 	$(call build_and_push_docker,api,api,api:latest)
 
 build-stride:
-	@bash network/scripts/build.sh stride
+	@bash network/scripts/build.shs stride
 
 build-stride-upgrade:
 	@if [ -z "$$UPGRADE_OLD_VERSION" ]; then \
@@ -79,6 +79,9 @@ local-init-chain:
 start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 	@$(MAKE) wait-for-startup
+
+upgrade-stride:
+	@bash network/scripts/upgrade.sh
 
 test:
 	@(cd client && npx vitest run test/core.test.ts)
