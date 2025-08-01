@@ -74,7 +74,7 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 	fromAccount := authtypes.NewBaseAccount(fromAccountAddress, nil, 0, 0)
 	s.App.AccountKeeper.SetAccount(s.Ctx, fromAccount)
 	// Fund account and test sending a tx to mimic mainnet
-	s.FundAccount(fromAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(4_100_000_000_000)))
+	s.FundAccount(fromAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(4_000_000_000_000)))
 
 	// Return callback to check store after upgrade
 	return func() {
