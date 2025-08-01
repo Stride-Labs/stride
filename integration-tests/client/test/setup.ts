@@ -1,11 +1,129 @@
-import { StrideClient, sleep } from "stridejs";
+import { DirectSecp256k1HdWallet, GasPrice, StrideClient, sleep } from "stridejs";
 import { stride } from "stridejs";
 import { submitTxAndExpectSuccess } from "./txs";
 import { getBalance, getHostZoneTotalDelegations } from "./queries";
 import { waitForBalanceChange, waitForHostZoneTotalDelegationsChange } from "./polling";
 import { ChainConfig, CosmosClient } from "./types";
-import { STRIDE_CHAIN_NAME, HOST_CHAIN_NAME } from "./consts";
+import {
+  STRIDE_CHAIN_NAME,
+  HOST_CHAIN_NAME,
+  USTRD,
+  STRIDE_RPC_ENDPOINT,
+  DEFAULT_CONNECTION_ID,
+  DEFAULT_TRANSFER_CHANNEL_ID,
+} from "./consts";
 import { ibcTransfer } from "./txs";
+import { stringToPath } from "@cosmjs/crypto";
+import {
+  QueryClient,
+  setupAuthExtension,
+  setupBankExtension,
+  setupIbcExtension,
+  setupStakingExtension,
+  setupTxExtension,
+  SigningStargateClient,
+} from "@cosmjs/stargate";
+import { Comet38Client } from "@cosmjs/tendermint-rpc";
+import { newRegisterHostZoneMsg, newValidator } from "./msgs";
+
+/**
+ * Creates a new stride signer account
+ * @param mnemonic The account mnemonic
+ * @returns The stride client
+ */
+export async function createStrideClient(mnemonic: string): Promise<StrideClient> {
+  const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    prefix: STRIDE_CHAIN_NAME,
+  });
+
+  const [{ address }] = await signer.getAccounts();
+
+  return await StrideClient.create(STRIDE_RPC_ENDPOINT, signer, address, {
+    gasPrice: GasPrice.fromString(`0.025${USTRD}`),
+    broadcastPollIntervalMs: 50,
+    resolveIbcResponsesCheckIntervalMs: 50,
+  });
+}
+
+/**
+ * Creates a new host zone signer account
+ * @param chainConfig The host chain config
+ * @param mnemonic The account mnemonic
+ * @returns The host cosmos client
+ */
+export async function createHostClient(hostConfig: ChainConfig, mnemonic: string): Promise<CosmosClient> {
+  const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+    prefix: hostConfig.bechPrefix,
+    hdPaths: [stringToPath(`m/44'/${hostConfig.coinType}'/0'/0/0`)],
+  });
+  const [{ address: hostAddress }] = await hostSigner.getAccounts();
+
+  return {
+    address: hostAddress,
+    denom: hostConfig.hostDenom,
+    client: await SigningStargateClient.connectWithSigner(hostConfig.rpcEndpoint, hostSigner, {
+      gasPrice: GasPrice.fromString(`1.0${hostConfig.hostDenom}`),
+      broadcastPollIntervalMs: 50,
+    }),
+    query: QueryClient.withExtensions(
+      await Comet38Client.connect(hostConfig.rpcEndpoint),
+      setupAuthExtension,
+      setupBankExtension,
+      setupStakingExtension,
+      setupIbcExtension,
+      setupTxExtension,
+    ),
+  };
+}
+
+/**
+ * Checks if a host zone is registered and registers it if it is not
+ * @param stridejs The admin stride client
+ * @param hostjs A host zone client
+ * @param hostConfig The host chain config
+ */
+export async function ensureHostZoneRegistered({
+  stridejs,
+  hostjs,
+  hostConfig,
+}: {
+  stridejs: StrideClient;
+  hostjs: CosmosClient;
+  hostConfig: ChainConfig;
+}): Promise<void> {
+  const { hostZone } = await stridejs.query.stride.stakeibc.hostZoneAll({});
+  const hostZoneRegistered = hostZone.find((hz) => hz.chainId === hostConfig.chainId) !== undefined;
+
+  if (hostZoneRegistered) {
+    console.log(`Host zone ${hostConfig.chainName} is already registered...`);
+    return;
+  }
+
+  console.log(`Registering host zone: ${hostConfig.chainName}...`);
+  const registerHostZoneMsg = newRegisterHostZoneMsg({
+    sender: stridejs.address,
+    connectionId: DEFAULT_CONNECTION_ID,
+    transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+    hostDenom: hostConfig.hostDenom,
+    bechPrefix: hostConfig.bechPrefix,
+  });
+
+  const { validators } = await hostjs.query.staking.validators("BOND_STATUS_BONDED");
+  const addValidatorsMsg = stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
+    creator: stridejs.address,
+    hostZone: hostConfig.chainId,
+    validators: validators.map((val) =>
+      newValidator({
+        name: val.description.moniker,
+        address: val.operatorAddress,
+        weight: 10n,
+      }),
+    ),
+  });
+
+  await submitTxAndExpectSuccess(stridejs, [registerHostZoneMsg, addValidatorsMsg]);
+  await sleep(2000);
+}
 
 /**
  * Ensures that there are native tokens on stride so that we can liquid stake
@@ -42,7 +160,7 @@ export async function ensureNativeHostTokensOnStride({
   console.log("Transferring native tokens to Stride...");
   await ibcTransfer({
     client: hostjs,
-    sourceChain: HOST_CHAIN_NAME,
+    sourceChain: hostChainConfig.chainName,
     destinationChain: STRIDE_CHAIN_NAME,
     coin: `${minAmount}${hostChainConfig.hostDenom}`,
     sender: hostjs.address,

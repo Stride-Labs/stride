@@ -18,6 +18,7 @@ export type CosmosClient = {
 };
 
 export type ChainConfig = {
+  chainName: string;
   chainId: string;
   hostDenom: string;
   hostDenomOnStride: string;
@@ -31,3 +32,16 @@ export type ChainConfig = {
 };
 
 export type ChainConfigs = Record<string, ChainConfig>;
+
+export type AccountInfo = {
+  name: string;
+  mnemonic: string;
+  address?: string;
+};
+export type Mnemonics = {
+  admin: AccountInfo;
+  faucet: AccountInfo;
+  validators: AccountInfo[];
+  relayers: AccountInfo[];
+  users: AccountInfo[];
+};

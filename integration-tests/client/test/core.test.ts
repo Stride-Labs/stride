@@ -1,26 +1,14 @@
-import {
-  QueryClient,
-  setupAuthExtension,
-  setupBankExtension,
-  setupIbcExtension,
-  setupStakingExtension,
-  setupTxExtension,
-  SigningStargateClient,
-} from "@cosmjs/stargate";
-import { Comet38Client } from "@cosmjs/tendermint-rpc";
-import { stringToPath } from "@cosmjs/crypto";
-import { DirectSecp256k1HdWallet, GasPrice, sleep, stride } from "stridejs";
+import { sleep, stride } from "stridejs";
 import { beforeAll, describe, expect, test } from "vitest";
 import {
-  STRIDE_RPC_ENDPOINT,
   USTRD,
   DEFAULT_FEE,
   REMOVED,
   DEFAULT_TRANSFER_CHANNEL_ID,
-  DEFAULT_CONNECTION_ID,
   HOST_CHAIN_NAME,
   CHAIN_CONFIGS,
   STRIDE_CHAIN_NAME,
+  MNEMONICS,
 } from "./consts";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
@@ -44,8 +32,13 @@ import {
 import { StrideClient } from "stridejs";
 import { Decimal } from "decimal.js";
 import { getHostZone } from "./queries";
-import { newRegisterHostZoneMsg, newValidator } from "./msgs";
-import { ensureLiquidStakeExists, ensureNativeHostTokensOnStride } from "./setup";
+import {
+  createHostClient,
+  createStrideClient,
+  ensureHostZoneRegistered,
+  ensureLiquidStakeExists,
+  ensureNativeHostTokensOnStride,
+} from "./setup";
 
 const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
 
@@ -53,46 +46,11 @@ const HOST_CONFIG = CHAIN_CONFIGS[HOST_CHAIN_NAME];
 let strideAccounts: {
   user: StrideClient;
   admin: StrideClient;
-  val1: StrideClient;
-  val2: StrideClient;
-  val3: StrideClient;
 };
 
 let hostAccounts: {
   user: CosmosClient;
-  val1: CosmosClient;
 };
-
-const mnemonics: {
-  name: "user" | "admin" | "val1" | "val2" | "val3";
-  mnemonic: string;
-}[] = [
-  {
-    name: "user",
-    mnemonic:
-      "brief play describe burden half aim soccer carbon hope wait output play vacuum joke energy crucial output mimic cruise brother document rail anger leaf",
-  },
-  {
-    name: "admin",
-    mnemonic:
-      "tone cause tribe this switch near host damage idle fragile antique tail soda alien depth write wool they rapid unfold body scan pledge soft",
-  },
-  {
-    name: "val1",
-    mnemonic:
-      "close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly",
-  },
-  {
-    name: "val2",
-    mnemonic:
-      "turkey miss hurry unable embark hospital kangaroo nuclear outside term toy fall buffalo book opinion such moral meadow wing olive camp sad metal banner",
-  },
-  {
-    name: "val3",
-    mnemonic:
-      "tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat",
-  },
-];
 
 // Initialize accounts and wait for the chain to start
 beforeAll(async () => {
@@ -103,88 +61,25 @@ beforeAll(async () => {
   // @ts-expect-error
   hostAccounts = {};
 
-  for (const { name, mnemonic } of mnemonics) {
-    // setup signer for Stride
-    const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-      prefix: STRIDE_CHAIN_NAME,
-    });
+  const admin = MNEMONICS.admin;
+  const user = MNEMONICS.users[0];
 
-    const [{ address }] = await signer.getAccounts();
+  strideAccounts["admin"] = await createStrideClient(admin.mnemonic);
+  strideAccounts["user"] = await createStrideClient(user.mnemonic);
+  hostAccounts["user"] = await createHostClient(HOST_CONFIG, user.mnemonic);
 
-    strideAccounts[name] = await StrideClient.create(STRIDE_RPC_ENDPOINT, signer, address, {
-      gasPrice: GasPrice.fromString(`0.025${USTRD}`),
-      broadcastPollIntervalMs: 50,
-      resolveIbcResponsesCheckIntervalMs: 50,
-    });
+  await waitForChain(STRIDE_CHAIN_NAME, strideAccounts.user, USTRD);
+  await waitForChain(HOST_CONFIG.chainName, hostAccounts.user, HOST_CONFIG.hostDenom);
 
-    if (name === "user" || name === "val1") {
-      // setup signer for host zone
-      const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix: HOST_CONFIG.bechPrefix,
-        hdPaths: [stringToPath(`m/44'/${HOST_CONFIG.coinType}'/0'/0/0`)],
-      });
-      const [{ address: hostAddress }] = await hostSigner.getAccounts();
+  await assertOpenTransferChannel(STRIDE_CHAIN_NAME, strideAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
+  await assertOpenTransferChannel(HOST_CONFIG.chainName, hostAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
 
-      hostAccounts[name] = {
-        address: hostAddress,
-        denom: HOST_CONFIG.hostDenom,
-        client: await SigningStargateClient.connectWithSigner(HOST_CONFIG.rpcEndpoint, hostSigner, {
-          gasPrice: GasPrice.fromString(`1.0${HOST_CONFIG.hostDenom}`),
-          broadcastPollIntervalMs: 50,
-        }),
-        query: QueryClient.withExtensions(
-          await Comet38Client.connect(HOST_CONFIG.rpcEndpoint),
-          setupAuthExtension,
-          setupBankExtension,
-          setupStakingExtension,
-          setupIbcExtension,
-          setupTxExtension,
-        ),
-      };
-    }
-  }
+  await ensureHostZoneRegistered({
+    stridejs: strideAccounts.admin,
+    hostjs: hostAccounts.user,
+    hostConfig: HOST_CONFIG,
+  });
 
-  console.log("waiting for stride to start...");
-  await waitForChain(strideAccounts.user, USTRD);
-
-  console.log("waiting for host to start...");
-  await waitForChain(hostAccounts.user, HOST_CONFIG.hostDenom);
-
-  console.log("waiting for stride-host ibc...");
-  await assertOpenTransferChannel(strideAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
-  await assertOpenTransferChannel(hostAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
-
-  console.log("registering host zones...");
-  const { hostZone } = await strideAccounts.admin.query.stride.stakeibc.hostZoneAll({});
-  const hostZoneNotRegistered = hostZone.find((hz) => hz.chainId === HOST_CONFIG.chainId) === undefined;
-
-  if (hostZoneNotRegistered) {
-    const registerHostZoneMsg = newRegisterHostZoneMsg({
-      sender: strideAccounts.admin.address,
-      connectionId: DEFAULT_CONNECTION_ID,
-      transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
-      hostDenom: HOST_CONFIG.hostDenom,
-      bechPrefix: HOST_CONFIG.bechPrefix,
-    });
-
-    const { validators } = await hostAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
-    const addValidatorsMsg = stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
-      creator: strideAccounts.admin.address,
-      hostZone: HOST_CONFIG.chainId,
-      validators: validators.map((val) =>
-        newValidator({
-          name: val.description.moniker,
-          address: val.operatorAddress,
-          weight: 10n,
-        }),
-      ),
-    });
-
-    await submitTxAndExpectSuccess(strideAccounts.admin, [registerHostZoneMsg, addValidatorsMsg]);
-    await sleep(2000);
-  }
-
-  console.log("waiting for ICA channels...");
   await assertICAChannelsOpen(strideAccounts.admin, HOST_CONFIG.chainId);
 }, 45_000);
 
@@ -194,7 +89,7 @@ describe("Core Tests", () => {
     const hostjs = hostAccounts.user;
     const transferAmount = BigInt(50000000);
 
-    const { hostDenom, strdDenomOnHost, hostDenomOnStride } = HOST_CONFIG;
+    const { chainName, hostDenom, strdDenomOnHost, hostDenomOnStride } = HOST_CONFIG;
 
     // Get initial balances
     // We'll send STRD from Stride -> Host Zone
@@ -224,7 +119,7 @@ describe("Core Tests", () => {
     await ibcTransfer({
       client: stridejs,
       sourceChain: STRIDE_CHAIN_NAME,
-      destinationChain: HOST_CHAIN_NAME,
+      destinationChain: chainName,
       coin: `${transferAmount}${USTRD}`,
       sender: stridejs.address,
       receiver: hostjs.address,
@@ -233,7 +128,7 @@ describe("Core Tests", () => {
     console.log("Transferring native host token from host zone to Stride...");
     await ibcTransfer({
       client: hostjs,
-      sourceChain: HOST_CHAIN_NAME,
+      sourceChain: chainName,
       destinationChain: STRIDE_CHAIN_NAME,
       coin: `${transferAmount}${hostDenom}`,
       sender: hostjs.address,

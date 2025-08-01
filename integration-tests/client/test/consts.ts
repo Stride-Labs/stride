@@ -1,21 +1,19 @@
 import { ibcDenom } from "stridejs";
-import { Chain, ChainConfig, ChainConfigs } from "./types";
+import { Chain, ChainConfig, ChainConfigs, Mnemonics } from "./types";
+import keysData from "../../network/configs/keys.json";
+
+export const MNEMONICS = keysData as Mnemonics;
+
+export const STRIDE_CHAIN_NAME = "stride";
+export const COSMOSHUB_CHAIN_NAME = "cosmoshub";
+export const OSMOSIS_CHAIN_NAME = "osmosis";
 
 export const STRIDE_RPC_ENDPOINT = "http://stride-rpc.internal.stridenet.co";
-export const GAIA_RPC_ENDPOINT = "http://cosmoshub-rpc.internal.stridenet.co";
-export const OSMO_RPC_ENDPOINT = "http://osmosis-rpc.internal.stridenet.co";
-
-export const STRIDE_CHAIN_ID = "stride-test-1";
-export const GAIA_CHAIN_ID = "cosmoshub-test-1";
-export const OSMO_CHAIN_ID = "osmosis-test-1";
 
 export const USTRD = "ustrd";
+export const STRD = "ustrd";
 export const UATOM = "uatom";
 export const UOSMO = "uosmo";
-
-export const toStToken = (denom: string) => `st${denom}`;
-export const STATOM = toStToken(UATOM);
-export const STOSMO = toStToken(UOSMO);
 
 export const DEFAULT_FEE = BigInt(2000000);
 export const DEFAULT_GAS = "2000000";
@@ -27,13 +25,9 @@ export const REMOVED = "REMOVED";
 export const DEFAULT_CONNECTION_ID = "connection-0";
 export const DEFAULT_TRANSFER_CHANNEL_ID = "channel-0";
 
-export const STRIDE_CHAIN_NAME = "stride";
-export const COSMOSHUB_CHAIN_NAME = "cosmoshub";
-export const OSMOSIS_CHAIN_NAME = "osmosis";
-
 // NOTE: This assumes only one host zone is up at a time
 export function newChainConfig({
-  chainId,
+  chainName,
   hostDenom,
   bechPrefix,
   coinType,
@@ -41,7 +35,7 @@ export function newChainConfig({
   transferChannelId,
   rpcEndpoint,
 }: {
-  chainId: string;
+  chainName: string;
   hostDenom: string;
   bechPrefix: string;
   coinType: number;
@@ -50,14 +44,15 @@ export function newChainConfig({
   rpcEndpoint: string;
 }): ChainConfig {
   return {
-    chainId,
+    chainName,
+    chainId: `${chainName}-test-1`,
     hostDenom,
     bechPrefix,
     coinType,
     connectionId,
     transferChannelId,
     rpcEndpoint,
-    stDenom: toStToken(hostDenom),
+    stDenom: `st${hostDenom}`,
     strdDenomOnHost: ibcDenom(
       [
         {
@@ -65,7 +60,7 @@ export function newChainConfig({
           incomingChannelId: transferChannelId,
         },
       ],
-      USTRD,
+      STRD,
     ),
     hostDenomOnStride: ibcDenom(
       [
@@ -83,22 +78,22 @@ export const HOST_CHAIN_NAME = "cosmoshub";
 
 export const CHAIN_CONFIGS: ChainConfigs = {
   cosmoshub: newChainConfig({
-    chainId: GAIA_CHAIN_ID,
-    hostDenom: UATOM,
+    chainName: "cosmoshub",
+    hostDenom: "uatom",
     bechPrefix: "cosmos",
     coinType: 118,
     connectionId: DEFAULT_CONNECTION_ID,
     transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
-    rpcEndpoint: GAIA_RPC_ENDPOINT,
+    rpcEndpoint: "http://cosmoshub-rpc.internal.stridenet.co",
   }),
   osmosis: newChainConfig({
-    chainId: OSMO_CHAIN_ID,
-    hostDenom: UOSMO,
+    chainName: "osmosis",
+    hostDenom: "uosmo",
     bechPrefix: "osmo",
     coinType: 118,
     connectionId: DEFAULT_CONNECTION_ID,
     transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
-    rpcEndpoint: OSMO_RPC_ENDPOINT,
+    rpcEndpoint: "http://osmosis-rpc.internal.stridenet.co",
   }),
 };
 
