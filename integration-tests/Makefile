@@ -73,8 +73,14 @@ start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 	@$(MAKE) wait-for-startup
 
-test:
+.PHONY: test
+test: test-core test-auction
+
+test-core:
 	@(cd client && npx vitest run test/core.test.ts)
+
+test-auction:
+	@(cd client && npx vitest run test/auction.test.ts)
 
 startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log

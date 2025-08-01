@@ -31,6 +31,10 @@ import { newRegisterHostZoneMsg, newValidator } from "./msgs";
  * @returns The stride client
  */
 export async function createStrideClient(mnemonic: string): Promise<StrideClient> {
+  // IMPORTANT: We're using Secp256k1HdWallet from @cosmjs/amino because sending amino txs tests both amino and direct.
+  // That's because the tx contains the direct encoding anyway, and also attaches a signature on the amino encoding.
+  // The mempool then converts from direct to amino to verify the signature.
+  // Therefore if the signature verification passes, we can be sure that both amino and direct are working properly.
   const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: STRIDE_CHAIN_NAME,
   });
@@ -101,8 +105,8 @@ export async function ensureHostZoneRegistered({
   console.log(`Registering host zone: ${hostConfig.chainName}...`);
   const registerHostZoneMsg = newRegisterHostZoneMsg({
     sender: stridejs.address,
-    connectionId: DEFAULT_CONNECTION_ID,
-    transferChannelId: DEFAULT_TRANSFER_CHANNEL_ID,
+    connectionId: hostConfig.connectionId,
+    transferChannelId: hostConfig.transferChannelId,
     hostDenom: hostConfig.hostDenom,
     bechPrefix: hostConfig.bechPrefix,
   });

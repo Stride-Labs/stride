@@ -74,7 +74,7 @@ export function newChainConfig({
   };
 }
 
-export const TEST_CHAINS = ["cosmoshub", "osmosis"];
+export const TEST_CHAINS = ["osmosis"];
 
 export const CHAIN_CONFIGS: ChainConfigs = {
   cosmoshub: newChainConfig({

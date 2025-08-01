@@ -4,11 +4,11 @@ import {
   USTRD,
   DEFAULT_FEE,
   REMOVED,
-  DEFAULT_TRANSFER_CHANNEL_ID,
   CHAIN_CONFIGS,
   STRIDE_CHAIN_NAME,
   MNEMONICS,
   TEST_CHAINS,
+  TRANSFER_CHANNEL,
 } from "./consts";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
@@ -54,8 +54,6 @@ describe.each(TEST_CHAINS)("Core Tests - %s", (hostChainName) => {
 
   // Initialize accounts and wait for the chain to start
   beforeAll(async () => {
-    console.log("setting up accounts...");
-
     // @ts-expect-error
     strideAccounts = {};
     // @ts-expect-error
@@ -71,8 +69,10 @@ describe.each(TEST_CHAINS)("Core Tests - %s", (hostChainName) => {
     await waitForChain(STRIDE_CHAIN_NAME, strideAccounts.user, USTRD);
     await waitForChain(HOST_CONFIG.chainName, hostAccounts.user, HOST_CONFIG.hostDenom);
 
-    await assertOpenTransferChannel(STRIDE_CHAIN_NAME, strideAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
-    await assertOpenTransferChannel(HOST_CONFIG.chainName, hostAccounts.user, DEFAULT_TRANSFER_CHANNEL_ID);
+    const strideToHostChannel = TRANSFER_CHANNEL[STRIDE_CHAIN_NAME][HOST_CONFIG.chainName];
+    const hostToStrideChannel = TRANSFER_CHANNEL[HOST_CONFIG.chainName][STRIDE_CHAIN_NAME];
+    await assertOpenTransferChannel(STRIDE_CHAIN_NAME, strideAccounts.user, strideToHostChannel);
+    await assertOpenTransferChannel(HOST_CONFIG.chainName, hostAccounts.user, hostToStrideChannel);
 
     await ensureHostZoneRegistered({
       stridejs: strideAccounts.admin,

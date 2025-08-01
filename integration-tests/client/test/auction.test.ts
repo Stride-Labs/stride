@@ -1,44 +1,16 @@
-import { Registry } from "@cosmjs/proto-signing";
-import {
-  QueryClient,
-  setupAuthExtension,
-  setupBankExtension,
-  setupIbcExtension,
-  setupStakingExtension,
-  setupTxExtension,
-  SigningStargateClient,
-} from "@cosmjs/stargate";
-import { Comet38Client, fromSeconds } from "@cosmjs/tendermint-rpc";
-import { cosmosProtoRegistry, ibcProtoRegistry, osmosisProtoRegistry } from "osmojs";
 import { ProposalStatus, VoteOption } from "osmojs/cosmos/gov/v1beta1/gov";
-import {
-  coinsFromString,
-  convertBech32Prefix,
-  cosmos,
-  decToString,
-  DirectSecp256k1HdWallet,
-  EncodeObject,
-  GasPrice,
-  getValueFromEvents,
-  sleep,
-  stride,
-  StrideClient,
-} from "stridejs";
+import { coinsFromString, cosmos, getValueFromEvents, sleep, stride, StrideClient } from "stridejs";
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import {
   ATOM_DENOM_ON_OSMOSIS,
   ATOM_DENOM_ON_STRIDE,
-  CONNECTION_ID,
+  CHAIN_CONFIGS,
   COSMOSHUB_CHAIN_NAME,
-  GAIA_CHAIN_ID,
-  GAIA_RPC_ENDPOINT,
-  OSMO_CHAIN_ID,
+  MNEMONICS,
   OSMO_DENOM_ON_STRIDE,
-  OSMO_RPC_ENDPOINT,
   OSMOSIS_CHAIN_NAME,
   STRD_DENOM_ON_OSMOSIS,
   STRIDE_CHAIN_NAME,
-  STRIDE_RPC_ENDPOINT,
   TRANSFER_CHANNEL,
   UATOM,
   UOSMO,
@@ -52,282 +24,90 @@ import {
 } from "./msgs";
 import { CosmosClient } from "./types";
 import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
-import { waitForChain, waitForIbc } from "./startup";
+import { assertICAChannelsOpen, assertOpenTransferChannel, waitForChain, waitForIbc } from "./startup";
 import { moduleAddress } from "./queries";
+import { createHostClient, createStrideClient, ensureHostZoneRegistered } from "./setup";
 
-let strideAccounts: {
-  user: StrideClient; // a normal account loaded with 100 STRD
-  admin: StrideClient; // the stride admin account loaded with 1000 STRD
-  val1: StrideClient;
-  val2: StrideClient;
-  val3: StrideClient;
-};
+describe("Buyback and Burn", () => {
+  let strideAccounts: {
+    user: StrideClient; // a normal account loaded with 100 STRD
+    admin: StrideClient; // the stride admin account loaded with 1000 STRD
+    val1: StrideClient;
+    val2: StrideClient;
+    val3: StrideClient;
+  };
 
-let gaiaAccounts: {
-  user: CosmosClient; // a normal account loaded with 100 ATOM
-  val1: CosmosClient;
-};
+  let cosmoshubAccounts: {
+    user: CosmosClient; // a normal account loaded with 100 ATOM
+    val1: CosmosClient;
+  };
 
-let osmoAccounts: {
-  user: CosmosClient; // a normal account loaded with 1,000,000 OSMO
-  val1: CosmosClient;
-};
+  let osmosisAccounts: {
+    user: CosmosClient; // a normal account loaded with 1,000,000 OSMO
+    val1: CosmosClient;
+  };
 
-const mnemonics: {
-  name: "user" | "admin" | "val1" | "val2" | "val3";
-  mnemonic: string;
-}[] = [
-  {
-    name: "user",
-    mnemonic:
-      "brief play describe burden half aim soccer carbon hope wait output play vacuum joke energy crucial output mimic cruise brother document rail anger leaf",
-  },
-  {
-    name: "admin",
-    mnemonic:
-      "tone cause tribe this switch near host damage idle fragile antique tail soda alien depth write wool they rapid unfold body scan pledge soft",
-  },
-  {
-    name: "val1",
-    mnemonic:
-      "close soup mirror crew erode defy knock trigger gather eyebrow tent farm gym gloom base lemon sleep weekend rich forget diagram hurt prize fly",
-  },
-  {
-    name: "val2",
-    mnemonic:
-      "turkey miss hurry unable embark hospital kangaroo nuclear outside term toy fall buffalo book opinion such moral meadow wing olive camp sad metal banner",
-  },
-  {
-    name: "val3",
-    mnemonic:
-      "tenant neck ask season exist hill churn rice convince shock modify evidence armor track army street stay light program harvest now settle feed wheat",
-  },
-];
+  const cosmoshubConfig = CHAIN_CONFIGS[COSMOSHUB_CHAIN_NAME];
+  const osmosisConfig = CHAIN_CONFIGS[OSMOSIS_CHAIN_NAME];
 
-// init accounts and wait for chain to start
-beforeAll(async () => {
-  console.log("setting up accounts...");
+  // init accounts and wait for chain to start
+  beforeAll(async () => {
+    // init {,gaia,osmo}Accounts as an empty object, then add the accounts in the loop
+    // @ts-expect-error
+    strideAccounts = {};
+    // @ts-expect-error
+    cosmoshubAccounts = {};
+    // @ts-expect-error
+    osmosisAccounts = {};
 
-  // init {,gaia,osmo}Accounts as an empty object, then add the accounts in the loop
-  // @ts-expect-error
-  strideAccounts = {};
-  // @ts-expect-error
-  gaiaAccounts = {};
-  // @ts-expect-error
-  osmoAccounts = {};
-  for (const { name, mnemonic } of mnemonics) {
-    // setup signer
-    //
-    // IMPORTANT: We're using Secp256k1HdWallet from @cosmjs/amino because sending amino txs tests both amino and direct.
-    // That's because the tx contains the direct encoding anyway, and also attaches a signature on the amino encoding.
-    // The mempool then converts from direct to amino to verify the signature.
-    // Therefore if the signature verification passes, we can be sure that both amino and direct are working properly.
-    const signer = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-      prefix: STRIDE_CHAIN_NAME,
+    const admin = MNEMONICS.admin;
+    const user = MNEMONICS.users[0];
+    const val1 = MNEMONICS.validators[0];
+    const val2 = MNEMONICS.validators[1];
+    const val3 = MNEMONICS.validators[2];
+
+    strideAccounts["admin"] = await createStrideClient(admin.mnemonic);
+    strideAccounts["user"] = await createStrideClient(user.mnemonic);
+    strideAccounts["val1"] = await createStrideClient(val1.mnemonic);
+    strideAccounts["val2"] = await createStrideClient(val2.mnemonic);
+    strideAccounts["val3"] = await createStrideClient(val3.mnemonic);
+
+    cosmoshubAccounts["user"] = await createHostClient(cosmoshubConfig, user.mnemonic);
+    cosmoshubAccounts["val1"] = await createHostClient(cosmoshubConfig, val1.mnemonic);
+
+    osmosisAccounts["user"] = await createHostClient(osmosisConfig, user.mnemonic);
+    osmosisAccounts["val1"] = await createHostClient(osmosisConfig, val1.mnemonic);
+
+    await waitForChain(STRIDE_CHAIN_NAME, strideAccounts.user, USTRD);
+    await waitForChain(cosmoshubConfig.chainName, cosmoshubAccounts.user, cosmoshubConfig.hostDenom);
+    await waitForChain(osmosisConfig.chainName, osmosisAccounts.user, osmosisConfig.hostDenom);
+
+    const strideToHubChannel = TRANSFER_CHANNEL[STRIDE_CHAIN_NAME][COSMOSHUB_CHAIN_NAME]!;
+    const hubToStrideChannel = TRANSFER_CHANNEL[COSMOSHUB_CHAIN_NAME][STRIDE_CHAIN_NAME]!;
+    await assertOpenTransferChannel(STRIDE_CHAIN_NAME, strideAccounts.user, strideToHubChannel);
+    await assertOpenTransferChannel(cosmoshubConfig.chainName, cosmoshubAccounts.user, hubToStrideChannel);
+
+    const strideToOsmosisChannel = TRANSFER_CHANNEL[STRIDE_CHAIN_NAME][OSMOSIS_CHAIN_NAME]!;
+    const osmosisToStrideChannel = TRANSFER_CHANNEL[OSMOSIS_CHAIN_NAME][STRIDE_CHAIN_NAME]!;
+    await assertOpenTransferChannel(STRIDE_CHAIN_NAME, strideAccounts.user, strideToOsmosisChannel);
+    await assertOpenTransferChannel(osmosisConfig.chainName, osmosisAccounts.user, osmosisToStrideChannel);
+
+    await ensureHostZoneRegistered({
+      stridejs: strideAccounts.admin,
+      hostjs: cosmoshubAccounts.user,
+      hostConfig: cosmoshubConfig,
     });
 
-    // get signer address
-    const [{ address }] = await signer.getAccounts();
-
-    strideAccounts[name] = await StrideClient.create(STRIDE_RPC_ENDPOINT, signer, address, {
-      gasPrice: GasPrice.fromString(`0.025${USTRD}`),
-      broadcastPollIntervalMs: 50,
-      resolveIbcResponsesCheckIntervalMs: 50,
+    await ensureHostZoneRegistered({
+      stridejs: strideAccounts.admin,
+      hostjs: osmosisAccounts.user,
+      hostConfig: osmosisConfig,
     });
 
-    if (name === "user" || name === "val1") {
-      const gaiaSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic);
+    await assertICAChannelsOpen(strideAccounts.admin, cosmoshubConfig.chainId);
+    await assertICAChannelsOpen(strideAccounts.admin, osmosisConfig.chainId);
+  }, 45_000);
 
-      const [{ address: gaiaAddress }] = await gaiaSigner.getAccounts();
-
-      gaiaAccounts[name] = {
-        address: gaiaAddress,
-        denom: UATOM,
-        client: await SigningStargateClient.connectWithSigner(GAIA_RPC_ENDPOINT, gaiaSigner, {
-          gasPrice: GasPrice.fromString(`1.0${UATOM}`),
-          broadcastPollIntervalMs: 50,
-        }),
-        query: QueryClient.withExtensions(
-          await Comet38Client.connect(GAIA_RPC_ENDPOINT),
-          setupAuthExtension,
-          setupBankExtension,
-          setupStakingExtension,
-          setupIbcExtension,
-          setupTxExtension,
-        ),
-      };
-
-      const osmoSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
-        prefix: OSMOSIS_CHAIN_NAME,
-      });
-
-      const [{ address: osmoAddress }] = await osmoSigner.getAccounts();
-
-      osmoAccounts[name] = {
-        address: osmoAddress,
-        denom: UOSMO,
-        client: await SigningStargateClient.connectWithSigner(OSMO_RPC_ENDPOINT, osmoSigner, {
-          gasPrice: GasPrice.fromString(`1.0${UOSMO}`),
-          broadcastPollIntervalMs: 50,
-          registry: new Registry([...osmosisProtoRegistry, ...cosmosProtoRegistry, ...ibcProtoRegistry]),
-        }),
-        query: QueryClient.withExtensions(
-          await Comet38Client.connect(OSMO_RPC_ENDPOINT),
-          setupAuthExtension,
-          setupBankExtension,
-          setupStakingExtension,
-          setupIbcExtension,
-          setupTxExtension,
-        ),
-      };
-    }
-  }
-  console.log("waiting for stride to start...");
-  await waitForChain(strideAccounts.user, USTRD);
-
-  console.log("waiting for gaia to start...");
-  await waitForChain(gaiaAccounts.user, UATOM);
-
-  console.log("waiting for osmosis to start...");
-  await waitForChain(osmoAccounts.user, UOSMO);
-
-  console.log("waiting for stride-gaia ibc...");
-  await waitForIbc(strideAccounts.user, TRANSFER_CHANNEL.stride.cosmoshub!, USTRD, "cosmos");
-
-  console.log("waiting for stride-osmosis ibc...");
-  await waitForIbc(strideAccounts.user, TRANSFER_CHANNEL.stride.osmosis!, USTRD, OSMOSIS_CHAIN_NAME);
-
-  console.log("registering host zones...");
-
-  const registerHostZonesMsgs: EncodeObject[] = [];
-  const { hostZone } = await strideAccounts.admin.query.stride.stakeibc.hostZoneAll({});
-
-  const gaiaHostZoneNotRegistered = hostZone.find((hz) => hz.chainId === GAIA_CHAIN_ID) === undefined;
-  const osmoHostZoneNotRegistered = hostZone.find((hz) => hz.chainId === OSMO_CHAIN_ID) === undefined;
-
-  if (gaiaHostZoneNotRegistered) {
-    const gaiaRegisterHostZoneMsg = stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
-      creator: strideAccounts.admin.address,
-      connectionId: CONNECTION_ID.stride.cosmoshub!,
-      bech32prefix: "cosmos",
-      hostDenom: UATOM,
-      ibcDenom: ATOM_DENOM_ON_STRIDE,
-      transferChannelId: TRANSFER_CHANNEL.stride.cosmoshub!,
-      unbondingPeriod: BigInt(1),
-      minRedemptionRate: "0.9",
-      maxRedemptionRate: "1.5",
-      lsmLiquidStakeEnabled: true,
-      communityPoolTreasuryAddress: "",
-      maxMessagesPerIcaTx: BigInt(2),
-    });
-
-    const { validators: gaiaValidators } = await gaiaAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
-    const gaiaAddValidatorsMsg = stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
-      creator: strideAccounts.admin.address,
-      hostZone: GAIA_CHAIN_ID,
-      validators: gaiaValidators.map((val) => ({
-        name: val.description.moniker,
-        address: val.operatorAddress,
-        weight: 10n,
-        delegation: "0", // ignored
-        slashQueryProgressTracker: "0", // ignored
-        slashQueryCheckpoint: "0", // ignored
-        sharesToTokensRate: "0", // ignored
-        delegationChangesInProgress: 0n, // ignored
-        slashQueryInProgress: false, // ignored
-      })),
-    });
-
-    registerHostZonesMsgs.push(gaiaRegisterHostZoneMsg, gaiaAddValidatorsMsg);
-  }
-
-  if (osmoHostZoneNotRegistered) {
-    const osmoRegisterHostZoneMsg = stride.stakeibc.MessageComposer.withTypeUrl.registerHostZone({
-      creator: strideAccounts.admin.address,
-      connectionId: CONNECTION_ID.stride.osmosis!,
-      bech32prefix: OSMOSIS_CHAIN_NAME,
-      hostDenom: UOSMO,
-      ibcDenom: OSMO_DENOM_ON_STRIDE,
-      transferChannelId: TRANSFER_CHANNEL.stride.osmosis!,
-      unbondingPeriod: BigInt(1),
-      minRedemptionRate: "0.9",
-      maxRedemptionRate: "1.5",
-      lsmLiquidStakeEnabled: true,
-      communityPoolTreasuryAddress: "",
-      maxMessagesPerIcaTx: BigInt(2),
-    });
-
-    const { validators: osmoValidators } = await gaiaAccounts.user.query.staking.validators("BOND_STATUS_BONDED");
-    const osmoAddValidatorsMsg = stride.stakeibc.MessageComposer.withTypeUrl.addValidators({
-      creator: strideAccounts.admin.address,
-      hostZone: OSMO_CHAIN_ID,
-      validators: osmoValidators.map((val) => ({
-        name: val.description.moniker,
-        address: val.operatorAddress,
-        weight: 10n,
-        delegation: "0", // ignored
-        slashQueryProgressTracker: "0", // ignored
-        slashQueryCheckpoint: "0", // ignored
-        sharesToTokensRate: "0", // ignored
-        delegationChangesInProgress: 0n, // ignored
-        slashQueryInProgress: false, // ignored
-      })),
-    });
-
-    registerHostZonesMsgs.push(osmoRegisterHostZoneMsg, osmoAddValidatorsMsg);
-  }
-
-  if (registerHostZonesMsgs.length > 0) {
-    await submitTxAndExpectSuccess(strideAccounts.admin, registerHostZonesMsgs);
-  }
-}, 45_000);
-
-describe("x/airdrop", () => {
-  // time variables in seconds
-  const now = () => Math.floor(Date.now() / 1000);
-  const minute = 60;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-
-  test("MsgCreateAirdrop", async () => {
-    const stridejs = strideAccounts.admin;
-
-    const nowSec = now();
-    const airdropId = String(nowSec);
-
-    const tx = await stridejs.signAndBroadcast(
-      [
-        stride.airdrop.MessageComposer.withTypeUrl.createAirdrop({
-          admin: stridejs.address,
-          airdropId: airdropId,
-          rewardDenom: USTRD,
-          distributionStartDate: fromSeconds(now()),
-          distributionEndDate: fromSeconds(nowSec + 3 * day),
-          clawbackDate: fromSeconds(nowSec + 4 * day),
-          claimTypeDeadlineDate: fromSeconds(nowSec + 2 * day),
-          earlyClaimPenalty: decToString(0.5),
-          allocatorAddress: stridejs.address,
-          distributorAddress: stridejs.address,
-          linkerAddress: stridejs.address,
-        }),
-      ],
-      2,
-    );
-    if (tx.code !== 0) {
-      console.error(tx.rawLog);
-    }
-    expect(tx.code).toBe(0);
-
-    const { id, earlyClaimPenalty } = await stridejs.query.stride.airdrop.airdrop({
-      id: airdropId,
-    });
-
-    expect(id).toBe(airdropId);
-    expect(earlyClaimPenalty).toBe("0.5");
-  });
-});
-
-describe("buyback and burn", () => {
   beforeEach(async () => {
     // Remove all token prices to not mess up tokenPriceForQuoteDenom query
     const { tokenPrices } = await strideAccounts.admin.query.stride.icqoracle.tokenPrices({});
@@ -349,9 +129,9 @@ describe("buyback and burn", () => {
     );
   });
 
-  test.skip("gamm pool price", async () => {
+  test("Gamm Pool Price", async () => {
     const stridejs = strideAccounts.user;
-    const osmojs = osmoAccounts.user;
+    const osmojs = osmosisAccounts.user;
 
     await ibcTransfer({
       client: stridejs,
@@ -423,9 +203,9 @@ describe("buyback and burn", () => {
     }
   });
 
-  test.skip("concentrated liquidity pool price", async () => {
+  test("Concentrated Liquidity Pool Price", async () => {
     const stridejs = strideAccounts.user;
-    const osmojs = osmoAccounts.user;
+    const osmojs = osmosisAccounts.user;
 
     await ibcTransfer({
       client: stridejs,
@@ -505,8 +285,8 @@ describe("buyback and burn", () => {
     }
   });
 
-  test.skip(
-    "happy path",
+  test(
+    "Full Cycle",
     async () => {
       // - Transfer STRD to Osmosis
       // - Transfer ATOM to Osmosis
@@ -522,8 +302,8 @@ describe("buyback and burn", () => {
       // - Verify STRD was burned by x/strdburner and ATOM was sent to user
 
       const stridejs = strideAccounts.user;
-      const gaiajs = gaiaAccounts.val1;
-      const osmojs = osmoAccounts.user;
+      const gaiajs = cosmoshubAccounts.val1;
+      const osmojs = osmosisAccounts.user;
 
       // Transfer STRD to Osmosis
       await ibcTransfer({
@@ -750,7 +530,7 @@ describe("buyback and burn", () => {
     5 * 60 * 1000 /* 5min */,
   );
 
-  test.skip("update params", async () => {
+  test("Update Params", async () => {
     const stridejs = strideAccounts.user;
 
     const { params } = await stridejs.query.stride.icqoracle.params({});
@@ -841,9 +621,9 @@ describe("buyback and burn", () => {
     expect(newParams).toStrictEqual(params);
   }, 60_000);
 
-  test.skip("staking rewards funneled to x/auction", async () => {
+  test("Staking Rewards to x/auction", async () => {
     const stridejs = strideAccounts.admin;
-    const gaiajs = gaiaAccounts.user;
+    const gaiajs = cosmoshubAccounts.user;
 
     const auctionAddress = await moduleAddress(stridejs, "auction");
     const { balance: { amount: auctionBalanceBefore } = { amount: "0" } } =
@@ -887,7 +667,7 @@ describe("buyback and burn", () => {
     const {
       hostZone: { withdrawalIcaAddress },
     } = await stridejs.query.stride.stakeibc.hostZone({
-      chainId: GAIA_CHAIN_ID,
+      chainId: cosmoshubConfig.chainId,
     });
 
     await submitTxAndExpectSuccess(gaiajs, [
@@ -914,10 +694,10 @@ describe("buyback and burn", () => {
     }
   }, 240_000);
 
-  test.skip("unwrapIBCDenom", async () => {
+  test("unwrapIBCDenom", async () => {
     const stridejs = strideAccounts.admin;
-    const gaiajs = gaiaAccounts.user;
-    const osmojs = osmoAccounts.user;
+    const gaiajs = cosmoshubAccounts.user;
+    const osmojs = osmosisAccounts.user;
 
     // Transfer ATOM & OSMO to Stride to register their ibc denoms on Stride's ibc transfer app
     await ibcTransfer({
