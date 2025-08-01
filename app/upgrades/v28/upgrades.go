@@ -11,11 +11,17 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 )
 
 var (
 	UpgradeName = "v28"
+
+	EvmosChainId          = "evmos_9001-2"
+	QueryId               = "2c39af4c3d2ecb96d8bbf7f3386468c5909e51fe3364b8d1f9d6fce173dd1f7a"
+	QueryValidatorAddress = "evmosvaloper1tdss4m3x7jy9mlepm2dwy8820l7uv6m2vx6z88"
+	EvmosDelegationIca    = "evmos1d67tx0zekagfhw6chhgza6qmhyad5qprru0nwazpx5s85ld0wh2sdhhznd"
 
 	// Redemption rate bounds updated to give slack on outer bounds
 	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.50")
@@ -35,6 +41,7 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
+	icqKeeper icqkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade v28...")
@@ -56,6 +63,9 @@ func CreateUpgradeHandler(
 		if err := DeliverLockedTokens(ctx, ak, bk); err != nil {
 			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account %s", DeliveryAccount)
 		}
+
+		ctx.Logger().Info("Processing stale ICQ...")
+		ClearStuckEvmosQuery(ctx, stakeibcKeeper, icqKeeper)
 
 		return versionMap, nil
 	}
@@ -103,4 +113,29 @@ func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankke
 	ak.SetAccount(ctx, dva)
 
 	return nil
+}
+
+// Cleans up the stale ICQ
+func ClearStuckEvmosQuery(ctx sdk.Context, k stakeibckeeper.Keeper, icqKeeper icqkeeper.Keeper) {
+	ctx.Logger().Info("Deleting stale ICQ...")
+	icqKeeper.DeleteQuery(ctx, QueryId)
+
+	ctx.Logger().Info("Setting validator slash_query_in_progress to false...")
+	hostZone, found := k.GetHostZone(ctx, EvmosChainId)
+	if !found {
+		ctx.Logger().Error("host zone not found")
+		return
+	}
+
+	// find the right validator and set slash_query_in_progress to false
+	for i, validator := range hostZone.Validators {
+		if validator.Address == QueryValidatorAddress {
+			validator.SlashQueryInProgress = false
+			hostZone.Validators[i] = validator
+			k.SetHostZone(ctx, hostZone)
+
+			ctx.Logger().Info("Set validator slash_query_in_progress to false")
+			return
+		}
+	}
 }
