@@ -35,6 +35,7 @@ var (
 	LockedTokenAmount = int64(4_000_000_000_000) // 4 million STRD
 
 	MaxMessagesPerIca = uint64(10)
+	BandChainId       = "laozi-mainnet"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
@@ -82,7 +83,7 @@ func CreateUpgradeHandler(
 func SetMaxIcasBand(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 	// get band
-	bandHostZone, found := k.GetHostZone(ctx, "laozi-mainnet")
+	bandHostZone, found := k.GetHostZone(ctx, BandChainId)
 	if !found {
 		ctx.Logger().Error("band host zone not found")
 		return

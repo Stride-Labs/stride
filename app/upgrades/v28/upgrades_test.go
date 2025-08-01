@@ -69,13 +69,13 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 func (s *UpgradeTestSuite) SetupTestMaxIcasBand() func() {
 	// Create a host zone for band
 	hostZone := stakeibctypes.HostZone{
-		ChainId: "laozi-mainnet",
+		ChainId: v28.BandChainId,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// Return callback to check store after upgrade
 	return func() {
-		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "laozi-mainnet")
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v28.BandChainId)
 		s.Require().True(found)
 		s.Require().Equal(v28.MaxMessagesPerIca, hostZone.MaxMessagesPerIcaTx)
 	}
