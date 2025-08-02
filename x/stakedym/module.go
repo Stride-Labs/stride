@@ -15,9 +15,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v27/x/stakedym/client/cli"
-	"github.com/Stride-Labs/stride/v27/x/stakedym/keeper"
-	"github.com/Stride-Labs/stride/v27/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v28/x/stakedym/client/cli"
+	"github.com/Stride-Labs/stride/v28/x/stakedym/keeper"
+	"github.com/Stride-Labs/stride/v28/x/stakedym/types"
 )
 
 var (

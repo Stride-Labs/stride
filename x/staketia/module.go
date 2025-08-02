@@ -15,9 +15,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v27/x/staketia/client/cli"
-	"github.com/Stride-Labs/stride/v27/x/staketia/keeper"
-	"github.com/Stride-Labs/stride/v27/x/staketia/types"
+	"github.com/Stride-Labs/stride/v28/x/staketia/client/cli"
+	"github.com/Stride-Labs/stride/v28/x/staketia/keeper"
+	"github.com/Stride-Labs/stride/v28/x/staketia/types"
 )
 
 var (

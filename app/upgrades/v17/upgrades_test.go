@@ -14,14 +14,14 @@ import (
 
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
-	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
 
-	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	v17 "github.com/Stride-Labs/stride/v27/app/upgrades/v17"
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/app/apptesting"
+	v17 "github.com/Stride-Labs/stride/v28/app/upgrades/v17"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 const (

@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	oldrecordstypes "github.com/Stride-Labs/stride/v27/x/records/migrations/v2/types"
-	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
+	oldrecordstypes "github.com/Stride-Labs/stride/v28/x/records/migrations/v2/types"
+	recordstypes "github.com/Stride-Labs/stride/v28/x/records/types"
 )
 
 func TestConvertDepositRecord(t *testing.T) {

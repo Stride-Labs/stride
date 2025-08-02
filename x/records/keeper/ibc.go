@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v27/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v28/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
 )
 
 // OnAcknowledgementPacket unmarshals the acknowledgement object to determine if the ack was successful and

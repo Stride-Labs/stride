@@ -13,13 +13,13 @@ import (
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v27/app"
-	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	v14 "github.com/Stride-Labs/stride/v27/app/upgrades/v14"
-	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
-	interchainquerytypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/migrations/v3/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/app"
+	"github.com/Stride-Labs/stride/v28/app/apptesting"
+	v14 "github.com/Stride-Labs/stride/v28/app/upgrades/v14"
+	claimtypes "github.com/Stride-Labs/stride/v28/x/claim/types"
+	interchainquerytypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 var (

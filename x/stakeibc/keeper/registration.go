@@ -8,10 +8,10 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v27/utils"
-	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/utils"
+	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v28/x/records/types"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 var (

@@ -9,8 +9,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v27/x/interchainquery/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 const (

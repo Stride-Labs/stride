@@ -5,7 +5,7 @@ import "amino/amino.proto";
 import "gogoproto/gogo.proto";
 import "stride/stakeibc/validator.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v27/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v28/x/stakeibc/types";
 
 message AddValidatorsProposal {
   option (amino.name) = "stakeibc/AddValidatorsProposal";

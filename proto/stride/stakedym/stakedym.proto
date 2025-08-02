@@ -4,7 +4,7 @@ package stride.stakedym;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v27/x/stakedym/types";
+option go_package = "github.com/Stride-Labs/stride/v28/x/stakedym/types";
 
 message HostZone {
   // Chain ID

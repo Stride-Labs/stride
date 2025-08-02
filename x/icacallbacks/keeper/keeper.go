@@ -13,7 +13,7 @@ import (
 
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
 
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 

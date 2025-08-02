@@ -23,7 +23,7 @@ import (
 	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v27/testutil"
+	"github.com/Stride-Labs/stride/v28/testutil"
 )
 
 const (

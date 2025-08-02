@@ -5,9 +5,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	"github.com/Stride-Labs/stride/v27/x/claim/types"
-	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
+	"github.com/Stride-Labs/stride/v28/app/apptesting"
+	"github.com/Stride-Labs/stride/v28/x/claim/types"
+	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
 )
 
 func (s *KeeperTestSuite) TestAfterEpochEnd() {
