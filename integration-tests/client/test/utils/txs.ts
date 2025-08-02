@@ -87,7 +87,7 @@ export async function submitTxAndExpectSuccess(
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
-    sleep(1500);
+    sleep(3000);
 
     return {
       ...tx,
@@ -100,7 +100,7 @@ export async function submitTxAndExpectSuccess(
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
-    sleep(1500);
+    sleep(3000);
 
     return tx;
   }
