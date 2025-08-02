@@ -1,6 +1,6 @@
 import { ibcDenom } from "stridejs";
 import { Chain, ChainConfig, ChainConfigs, Mnemonics } from "./types";
-import keysData from "../../network/configs/keys.json";
+import keysData from "../../../network/configs/keys.json";
 
 export const MNEMONICS = keysData as Mnemonics;
 

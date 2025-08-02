@@ -8,12 +8,12 @@ import {
   TEST_CHAINS,
   TRANSFER_CHANNEL,
   DEFAULT_FEE,
-} from "./consts";
-import { CosmosClient } from "./types";
-import { submitTxAndExpectSuccess } from "./txs";
-import { waitForChain, assertICAChannelsOpen, assertOpenTransferChannel } from "./startup";
-import { waitForBalanceChange } from "./polling";
-import { getBalance, getLatestUserRedemptionRecord } from "./queries";
+} from "./utils/consts";
+import { CosmosClient } from "./utils/types";
+import { submitTxAndExpectSuccess } from "./utils/txs";
+import { waitForChain, assertICAChannelsOpen, assertOpenTransferChannel } from "./utils/startup";
+import { waitForBalanceChange } from "./utils/polling";
+import { getBalance, getLatestUserRedemptionRecord } from "./utils/queries";
 import { StrideClient } from "stridejs";
 import {
   createHostClient,
@@ -21,8 +21,8 @@ import {
   ensureHostZoneRegistered,
   ensureLiquidStakeExists,
   ensureStTokensOnHost,
-} from "./setup";
-import { newTransferMsg } from "./msgs";
+} from "./utils/setup";
+import { newTransferMsg } from "./utils/msgs";
 
 describe.each(TEST_CHAINS)("Autopilot - %s", (hostChainName) => {
   const HOST_CONFIG = CHAIN_CONFIGS[hostChainName];

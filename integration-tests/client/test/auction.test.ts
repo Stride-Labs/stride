@@ -15,18 +15,18 @@ import {
   UATOM,
   UOSMO,
   USTRD,
-} from "./consts";
+} from "./utils/consts";
 import {
   addConcentratedLiquidityPositionMsg,
   newConcentratedLiquidityPoolMsg,
   newGammPoolMsg,
   newRegisterTokenPriceQueryMsg,
-} from "./msgs";
-import { CosmosClient } from "./types";
-import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
-import { assertICAChannelsOpen, assertOpenTransferChannel, waitForChain, waitForIbc } from "./startup";
-import { moduleAddress } from "./queries";
-import { createHostClient, createStrideClient, ensureHostZoneRegistered } from "./setup";
+} from "./utils/msgs";
+import { CosmosClient } from "./utils/types";
+import { ibcTransfer, submitTxAndExpectSuccess } from "./utils/txs";
+import { assertICAChannelsOpen, assertOpenTransferChannel, waitForChain, waitForIbc } from "./utils/startup";
+import { moduleAddress } from "./utils/queries";
+import { createHostClient, createStrideClient, ensureHostZoneRegistered } from "./utils/setup";
 
 describe("Buyback and Burn", () => {
   let strideAccounts: {

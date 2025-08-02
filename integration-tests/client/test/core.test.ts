@@ -9,16 +9,16 @@ import {
   MNEMONICS,
   TEST_CHAINS,
   TRANSFER_CHANNEL,
-} from "./consts";
-import { CosmosClient } from "./types";
-import { ibcTransfer, submitTxAndExpectSuccess } from "./txs";
-import { waitForChain, assertICAChannelsOpen, assertOpenTransferChannel } from "./startup";
+} from "./utils/consts";
+import { CosmosClient } from "./utils/types";
+import { ibcTransfer, submitTxAndExpectSuccess } from "./utils/txs";
+import { waitForChain, assertICAChannelsOpen, assertOpenTransferChannel } from "./utils/startup";
 import {
   waitForDepositRecordStatus,
   waitForUnbondingRecordStatus,
   waitForRedemptionRecordRemoval,
   waitForRedemptionRateChange,
-} from "./polling";
+} from "./utils/polling";
 import {
   getBalance,
   getDelegatedBalance,
@@ -28,17 +28,17 @@ import {
   getLatestHostZoneUnbondingRecord,
   getRedemptionAccountBalance,
   getUserRedemptionRecord,
-} from "./queries";
+} from "./utils/queries";
 import { StrideClient } from "stridejs";
 import { Decimal } from "decimal.js";
-import { getHostZone } from "./queries";
+import { getHostZone } from "./utils/queries";
 import {
   createHostClient,
   createStrideClient,
   ensureHostZoneRegistered,
   ensureLiquidStakeExists,
   ensureNativeHostTokensOnStride,
-} from "./setup";
+} from "./utils/setup";
 
 describe.each(TEST_CHAINS)("Core Liquid Staking - %s", (hostChainName) => {
   const HOST_CONFIG = CHAIN_CONFIGS[hostChainName];
