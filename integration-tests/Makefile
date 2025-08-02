@@ -100,7 +100,7 @@ startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log
 
 stride-logs:
-	@$(KUBECTL) log stride-validator-0 -f
+	@$(KUBECTL) logs stride-validator-0 -f
 
 stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)
