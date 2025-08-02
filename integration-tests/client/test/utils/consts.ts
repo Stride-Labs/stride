@@ -57,7 +57,7 @@ export function newChainConfig({
       [
         {
           incomingPortId: TRANSFER_PORT,
-          incomingChannelId: transferChannelId,
+          incomingChannelId: DEFAULT_TRANSFER_CHANNEL_ID, // assumes each host only has 1 ibc connection (to stride)
         },
       ],
       STRD,
@@ -83,7 +83,7 @@ export function newChainConfig({
   };
 }
 
-export const TEST_CHAINS = ["cosmoshub"];
+export const TEST_CHAINS = ["cosmoshub", "osmosis"];
 
 export const CHAIN_CONFIGS: ChainConfigs = {
   cosmoshub: newChainConfig({
