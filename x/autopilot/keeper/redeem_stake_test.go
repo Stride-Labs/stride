@@ -8,15 +8,15 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v27/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v28/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	router "github.com/Stride-Labs/stride/v27/x/autopilot"
-	"github.com/Stride-Labs/stride/v27/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	router "github.com/Stride-Labs/stride/v28/x/autopilot"
+	"github.com/Stride-Labs/stride/v28/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v28/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 func getRedeemStakeStakeibcPacketMetadata(strideAddress, redemptionReceiver string) string {

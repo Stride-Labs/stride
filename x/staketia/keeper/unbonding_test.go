@@ -7,12 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	"github.com/Stride-Labs/stride/v27/utils"
-	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v27/x/staketia/types"
+	"github.com/Stride-Labs/stride/v28/app/apptesting"
+	"github.com/Stride-Labs/stride/v28/utils"
+	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/x/staketia/types"
 )
 
 const DefaultClaimFundingAmount = 2600 // sum of NativeTokenAmount of records with status UNBONDED

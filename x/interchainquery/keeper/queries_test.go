@@ -10,11 +10,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v27/app"
-	"github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v27/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/app"
+	"github.com/Stride-Labs/stride/v28/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestGetQueryId() {

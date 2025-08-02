@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
-	auctiontypes "github.com/Stride-Labs/stride/v27/x/auction/types"
+	auctiontypes "github.com/Stride-Labs/stride/v28/x/auction/types"
 
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 // AuctionOffRewardCollectorBalance distributes rewards from the reward collector:

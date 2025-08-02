@@ -6,7 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v27/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v28/x/icqoracle/types"
 )
 
 // Helper function to create 5 tokenPrice objects with various attributes

@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v27/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v28/x/autopilot/types"
 )
 
 func (s *KeeperTestSuite) TestGenesis() {

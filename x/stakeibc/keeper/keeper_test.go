@@ -10,11 +10,11 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
-	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/app/apptesting"
+	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 var (

@@ -13,11 +13,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	epochstypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
+	epochstypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
 
-	"github.com/Stride-Labs/stride/v27/utils"
-	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v28/utils"
+	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 // Submit a validator sharesToTokens rate ICQ as triggered either manually or epochly with a conservative timeout

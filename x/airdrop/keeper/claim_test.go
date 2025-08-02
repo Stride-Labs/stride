@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v27/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v28/x/airdrop/types"
 )
 
 // Helper function to cast an array of allocations as int64's into sdkmath.Ints

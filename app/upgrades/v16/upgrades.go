@@ -10,8 +10,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 var (

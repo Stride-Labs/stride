@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v27/x/icqoracle/types"
-	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v28/x/icqoracle/types"
+	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
 )
 
 func (s *KeeperTestSuite) TestBeginBlockerSubmitICQ() {

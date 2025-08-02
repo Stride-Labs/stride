@@ -3,8 +3,8 @@ package keeper_test
 import (
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v27/x/icaoracle/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v28/x/icaoracle/types"
 )
 
 type InstantiateOracleTestCase struct {

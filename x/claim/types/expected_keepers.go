@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
+	epochstypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
 )
 
 // BankKeeper defines the banking contract that must be fulfilled when

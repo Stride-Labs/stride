@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	v4 "github.com/Stride-Labs/stride/v27/app/upgrades/v4"
+	"github.com/Stride-Labs/stride/v28/app/apptesting"
+	v4 "github.com/Stride-Labs/stride/v28/app/upgrades/v4"
 )
 
 type UpgradeTestSuite struct {

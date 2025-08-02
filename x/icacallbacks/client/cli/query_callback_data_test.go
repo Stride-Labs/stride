@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v27/testutil/network"
-	"github.com/Stride-Labs/stride/v27/x/icacallbacks/client/cli"
-	"github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v28/testutil/network"
+	"github.com/Stride-Labs/stride/v28/x/icacallbacks/client/cli"
+	"github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
 )
 
 func networkWithCallbackDataObjects(t *testing.T, n int) (*network.Network, []types.CallbackData) {

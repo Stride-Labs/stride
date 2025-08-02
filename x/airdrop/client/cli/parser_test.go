@@ -7,8 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v27/x/airdrop/client/cli"
-	"github.com/Stride-Labs/stride/v27/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v28/x/airdrop/client/cli"
+	"github.com/Stride-Labs/stride/v28/x/airdrop/types"
 )
 
 func ParseUserAllocations(t *testing.T) {

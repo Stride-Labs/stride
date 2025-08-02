@@ -17,10 +17,10 @@ import (
 
 	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
-	auctiontypes "github.com/Stride-Labs/stride/v27/x/auction/types"
-	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	auctiontypes "github.com/Stride-Labs/stride/v28/x/auction/types"
+	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {

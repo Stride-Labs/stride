@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/Stride-Labs/stride/v27/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v28/x/interchainquery/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module.

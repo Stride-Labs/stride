@@ -10,9 +10,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackArgs struct {
