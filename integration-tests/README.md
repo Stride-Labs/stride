@@ -146,6 +146,7 @@ make stride-logs
 ### Motivation
 
 - Move the workflow off local machines to reduce issues from dissimilar setups
+- Run tests on a stable network
 - Run multiple networks in parallel
 - Support multiple nodes per network
 - Support new host chain binaries easily

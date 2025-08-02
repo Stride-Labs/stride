@@ -84,7 +84,17 @@ upgrade-stride:
 	@bash network/scripts/upgrade.sh
 
 test:
+.PHONY: test
+test: test-core test-auction
+
+test-core:
 	@(cd client && npx vitest run test/core.test.ts)
+
+test-auction:
+	@(cd client && npx vitest run test/auction.test.ts)
+
+test-autopilot:
+	@(cd client && npx vitest run test/autopilot.test.ts)
 
 startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log

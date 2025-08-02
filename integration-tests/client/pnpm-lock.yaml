@@ -417,7 +417,7 @@ packages:
       '@cosmjs/crypto': 0.33.0
       '@cosmjs/encoding': 0.33.0
       '@cosmjs/math': 0.33.0
-      '@cosmjs/utils': 0.33.0
+      '@cosmjs/utils': 0.33.1
       ledger-cosmos-js: 2.1.8
       semver: 7.7.2
     dev: false
