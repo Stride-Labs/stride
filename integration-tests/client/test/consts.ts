@@ -71,10 +71,19 @@ export function newChainConfig({
       ],
       hostDenom,
     ),
+    stDenomOnHost: ibcDenom(
+      [
+        {
+          incomingPortId: TRANSFER_PORT,
+          incomingChannelId: transferChannelId,
+        },
+      ],
+      `st${hostDenom}`,
+    ),
   };
 }
 
-export const TEST_CHAINS = ["osmosis"];
+export const TEST_CHAINS = ["cosmoshub"];
 
 export const CHAIN_CONFIGS: ChainConfigs = {
   cosmoshub: newChainConfig({

@@ -24,6 +24,7 @@ export type ChainConfig = {
   hostDenomOnStride: string;
   stDenom: string;
   strdDenomOnHost: string;
+  stDenomOnHost: string;
   bechPrefix: string;
   coinType: number;
   connectionId: string;

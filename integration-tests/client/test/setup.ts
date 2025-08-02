@@ -4,13 +4,7 @@ import { submitTxAndExpectSuccess } from "./txs";
 import { getBalance, getHostZoneTotalDelegations } from "./queries";
 import { waitForBalanceChange, waitForHostZoneTotalDelegationsChange } from "./polling";
 import { ChainConfig, CosmosClient } from "./types";
-import {
-  STRIDE_CHAIN_NAME,
-  USTRD,
-  STRIDE_RPC_ENDPOINT,
-  DEFAULT_CONNECTION_ID,
-  DEFAULT_TRANSFER_CHANNEL_ID,
-} from "./consts";
+import { STRIDE_CHAIN_NAME, USTRD, STRIDE_RPC_ENDPOINT, TRANSFER_CHANNEL } from "./consts";
 import { ibcTransfer } from "./txs";
 import { stringToPath } from "@cosmjs/crypto";
 import {
@@ -23,7 +17,7 @@ import {
   SigningStargateClient,
 } from "@cosmjs/stargate";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
-import { newRegisterHostZoneMsg, newValidator } from "./msgs";
+import { newRegisterHostZoneMsg, newTransferMsg, newValidator } from "./msgs";
 
 /**
  * Creates a new stride signer account
@@ -178,6 +172,86 @@ export async function ensureNativeHostTokensOnStride({
   });
 
   return finalBalance;
+}
+
+/**
+ * Ensures that there are st tokens on the host zone so that we can autopilot redemption
+ * If there aren't it liquid stakes and transfers them
+ * @param stridejs The stride client
+ * @param hostjs The host client
+ * @param hostChainConfig The host chain config
+ * @param minAmount The amount that needs to be liquid staked
+ * @returns The balance of native tokens after the transfer
+ */
+export async function ensureStTokensOnHost({
+  stridejs,
+  hostjs,
+  hostChainConfig,
+  minAmount,
+}: {
+  stridejs: StrideClient;
+  hostjs: CosmosClient;
+  hostChainConfig: ChainConfig;
+  minAmount: number;
+}): Promise<bigint> {
+  console.log("Confirming st tokens are on the host zone for autopilot redemption...");
+
+  const stBalanceOnHost = await getBalance({
+    client: hostjs,
+    denom: hostChainConfig.stDenomOnHost,
+  });
+
+  if (stBalanceOnHost >= BigInt(minAmount)) {
+    console.log(`Existing balance sufficient, skipping transfer`);
+    return stBalanceOnHost;
+  }
+
+  // If there are stTokens on Stride, just send those
+  const stBalanceOnStride = await getBalance({
+    client: stridejs,
+    denom: hostChainConfig.stDenom,
+  });
+  if (stBalanceOnStride >= BigInt(minAmount)) {
+    console.log("Transferring st tokens to host zone...");
+    await ibcTransfer({
+      client: stridejs,
+      sourceChain: STRIDE_CHAIN_NAME,
+      destinationChain: hostChainConfig.chainName,
+      coin: `${minAmount}${hostChainConfig.stDenom}`,
+      sender: stridejs.address,
+      receiver: hostjs.address,
+    });
+
+    return await waitForBalanceChange({
+      client: hostjs,
+      address: hostjs.address,
+      denom: hostChainConfig.stDenom,
+      initialBalance: stBalanceOnStride,
+      minChange: minAmount,
+    });
+  }
+
+  // Finally if there aren't any stTokens yet, do an autopilot liquid stake and forward
+  const channelId = TRANSFER_CHANNEL[hostChainConfig.chainName][STRIDE_CHAIN_NAME]!;
+  const memo = {
+    autopilot: { receiver: stridejs.address, stakeibc: { action: "LiquidStake", ibc_receiver: hostjs.address } },
+  };
+
+  const autopilotLiquidStake = newTransferMsg({
+    channelId,
+    coin: `${minAmount}${hostChainConfig.hostDenom}`,
+    sender: hostjs.address,
+    receiver: stridejs.address,
+    memo: JSON.stringify(memo),
+  });
+  await submitTxAndExpectSuccess(hostjs, [autopilotLiquidStake]);
+
+  return await waitForBalanceChange({
+    initialBalance: stBalanceOnStride,
+    client: hostjs,
+    address: hostjs.address,
+    denom: hostChainConfig.stDenomOnHost,
+  });
 }
 
 /**

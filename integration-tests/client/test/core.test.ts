@@ -40,7 +40,7 @@ import {
   ensureNativeHostTokensOnStride,
 } from "./setup";
 
-describe.each(TEST_CHAINS)("Core Tests - %s", (hostChainName) => {
+describe.each(TEST_CHAINS)("Core Liquid Staking - %s", (hostChainName) => {
   const HOST_CONFIG = CHAIN_CONFIGS[hostChainName];
 
   let strideAccounts: {
@@ -236,11 +236,11 @@ describe.each(TEST_CHAINS)("Core Tests - %s", (hostChainName) => {
     // Native balance should decrease (sent for staking)
     // StBalance should increase (minted)
     const nativeBalanceDiff = finalUserNativeBalance - initialUserNativeBalance;
-    const stBalaanceDiff = finalUserStBalance - initialUserStBalance;
+    const stBalanceDiff = finalUserStBalance - initialUserStBalance;
     const expectedStTokensMinted = BigInt(
       Decimal(stakeAmount.toString()).div(Decimal(redemptionRate)).floor().toString(),
     );
-    expect(stBalaanceDiff).to.equal(expectedStTokensMinted, "User st balance change on Stride");
+    expect(stBalanceDiff).to.equal(expectedStTokensMinted, "User st balance change on Stride");
     expect(nativeBalanceDiff).to.equal(BigInt(-stakeAmount), "User native balance change on Stride");
 
     // Get the deposit record that was used for the liquid stake

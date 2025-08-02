@@ -143,7 +143,7 @@ export async function assertOpenTransferChannel(
  * @param chainId The host chain id
  */
 export async function assertICAChannelsOpen(stridejs: StrideClient, chainId: string): Promise<void> {
-  console.log(`waiting for ICA channels between stride and ${chainId}...`);
+  console.log(`Waiting for ICA channels between stride and ${chainId}...`);
 
   let attempts = 0;
   const maxAttempts = 60;
