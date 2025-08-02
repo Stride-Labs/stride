@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v27/x/auction/types"
@@ -51,8 +51,8 @@ func (ms msgServer) CreateAuction(goCtx context.Context, msg *types.MsgCreateAuc
 		MinPriceMultiplier:        msg.MinPriceMultiplier,
 		MinBidAmount:              msg.MinBidAmount,
 		Beneficiary:               msg.Beneficiary,
-		TotalPaymentTokenReceived: math.ZeroInt(),
-		TotalSellingTokenSold:     math.ZeroInt(),
+		TotalPaymentTokenReceived: sdkmath.ZeroInt(),
+		TotalSellingTokenSold:     sdkmath.ZeroInt(),
 	}
 	ms.Keeper.SetAuction(ctx, &auction)
 

@@ -1,17 +1,18 @@
 package cli_test
 
 import (
-	// "fmt"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
 	strideclitestutil "github.com/Stride-Labs/stride/v27/testutil/cli"
@@ -21,22 +22,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	tmcli "github.com/cometbft/cometbft/libs/cli"
+	strideapp "github.com/Stride-Labs/stride/v27/app"
+	cmdcfg "github.com/Stride-Labs/stride/v27/cmd/strided/config"
 
 	"github.com/Stride-Labs/stride/v27/x/claim/client/cli"
 
-	sdkmath "cosmossdk.io/math"
-
-	"github.com/Stride-Labs/stride/v27/app"
-	cmdcfg "github.com/Stride-Labs/stride/v27/cmd/strided/config"
 	"github.com/Stride-Labs/stride/v27/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
 )
 
-var addr1 sdk.AccAddress
-var addr2 sdk.AccAddress
-var distributorMnemonics []string
-var distributorAddrs []string
+var (
+	addr1                sdk.AccAddress
+	addr2                sdk.AccAddress
+	distributorMnemonics []string
+	distributorAddrs     []string
+)
 
 func init() {
 	cmdcfg.SetupConfig()
@@ -65,12 +65,14 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	s.cfg = network.DefaultConfig()
 
-	genState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+	app := strideapp.InitStrideTestApp(false)
+	genState := app.DefaultGenesis()
+
 	claimGenState := claimtypes.DefaultGenesis()
 	claimGenState.ClaimRecords = []types.ClaimRecord{
 		{
 			Address:           addr2.String(),
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
 		},
@@ -94,7 +96,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 			val.ClientCtx,
 			val.Address,
 			distributorAddr,
-			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)), fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+			sdk.NewCoins(sdk.NewInt64Coin(s.cfg.BondDenom, 1020)),
+			addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+			fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 			fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 			strideclitestutil.DefaultFeeString(s.cfg),
 		)
@@ -171,13 +175,13 @@ func (s *IntegrationTestSuite) TestCmdTxSetAirdropAllocations() {
 	claimRecords := []claimtypes.ClaimRecord{
 		{
 			Address:           "stride1k8g9sagjpdwreqqf0qgqmd46l37595ea5ft9x6",
-			Weight:            sdk.NewDecWithPrec(50, 2), // 50%
+			Weight:            sdkmath.LegacyNewDecWithPrec(50, 2), // 50%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
 		},
 		{
 			Address:           "stride1av5lwh0msnafn04xkhdyk6mrykxthrawy7uf3d",
-			Weight:            sdk.NewDecWithPrec(30, 2), // 30%
+			Weight:            sdkmath.LegacyNewDecWithPrec(30, 2), // 30%
 			ActionCompleted:   []bool{false, false, false},
 			AirdropIdentifier: claimtypes.DefaultAirdropIdentifier,
 		},

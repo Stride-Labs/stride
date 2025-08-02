@@ -2,6 +2,8 @@ import { ibcDenom } from "stridejs";
 import { Chain, ChainConfig, ChainConfigs, Mnemonics } from "./types";
 import keysData from "../../../network/configs/keys.json";
 
+export const TEST_CHAINS = ["cosmoshub", "osmosis"];
+
 export const MNEMONICS = keysData as Mnemonics;
 
 export const STRIDE_CHAIN_NAME = "stride";
@@ -75,15 +77,13 @@ export function newChainConfig({
       [
         {
           incomingPortId: TRANSFER_PORT,
-          incomingChannelId: transferChannelId,
+          incomingChannelId: DEFAULT_TRANSFER_CHANNEL_ID, // assumes each host only has 1 ibc connection (to stride)
         },
       ],
       `st${hostDenom}`,
     ),
   };
 }
-
-export const TEST_CHAINS = ["cosmoshub", "osmosis"];
 
 export const CHAIN_CONFIGS: ChainConfigs = {
   cosmoshub: newChainConfig({

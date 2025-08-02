@@ -1,6 +1,11 @@
 package v28
 
 import (
+	"context"
+	"fmt"
+
+	sdkmath "cosmossdk.io/math"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -9,7 +14,8 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
@@ -25,8 +31,8 @@ var (
 	EvmosDelegationIca    = "evmos1d67tx0zekagfhw6chhgza6qmhyad5qprru0nwazpx5s85ld0wh2sdhhznd"
 
 	// Redemption rate bounds updated to give slack on outer bounds
-	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.50")
-	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("1.00")
+	RedemptionRateOuterMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.50")
+	RedemptionRateOuterMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("1.00")
 
 	DeliveryAccount = "stride198f9skhtnpzpsxtmlkg3ry8yglwqn9pm9ugl28"
 	FromAccount     = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
@@ -42,13 +48,16 @@ var (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
+	consumerKeeper consumerkeeper.Keeper,
+	distrKeeper distrkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ctx.Logger().Info("Starting upgrade v28...")
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
+		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s...", UpgradeName))
 
 		ak := accountKeeper
 		bk := bankKeeper
@@ -60,6 +69,21 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		// Initialize consumer ID
+		// https://github.com/cosmos/interchain-security/blob/v6.4.1/UPGRADING.md#consumer
+		ctx.Logger().Info("Setting consumer ID parameter...")
+		InitializeConsumerId(ctx, consumerKeeper)
+
+		// Apply distribution fix
+		ctx.Logger().Info("Applying distribution module fix...")
+		if err := ApplyDistributionFix(ctx, distrKeeper); err != nil {
+			// Log warning but continue with upgrade (non-critical)
+			ctx.Logger().Warn("Failed to apply distribution fix, continuing...", "warning", err.Error())
+		} else {
+			ctx.Logger().Info("Distribution fix successfully applied")
+		}
+
+		// Loosen slack from redemption rate bounds
 		ctx.Logger().Info("Update redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
@@ -79,17 +103,22 @@ func CreateUpgradeHandler(
 	}
 }
 
-// Add the MaxMessagesPerIcaTx parameter to each host zone
-func SetMaxIcasBand(ctx sdk.Context, k stakeibckeeper.Keeper) {
-
-	// get band
-	bandHostZone, found := k.GetHostZone(ctx, BandChainId)
-	if !found {
-		ctx.Logger().Error("band host zone not found")
-		return
-	}
-	bandHostZone.MaxMessagesPerIcaTx = MaxMessagesPerIca
-	k.SetHostZone(ctx, bandHostZone)
+// InitializeConsumerId sets the consumer Id parameter in the consumer module,
+// to the consumer id for which the consumer is registered on the provider chain.
+// The consumer id can be obtained in by querying the provider, e.g. by using the
+// QueryConsumerIdFromClientId query.
+//
+// Steps to retrieve the Stride consumer chain ID from Cosmos Hub provider:
+//  1. First, obtain the client ID from Stride using the command:
+//     `strided q ccvconsumer provider-info` which returns "07-tendermint-1154"
+//  2. Then, use the Provider's QueryConsumerIdFromClientId endpoint to get the corresponding consumer ID:
+//     - API endpoint: https://rest.cosmos.directory/cosmoshub/interchain_security/ccv/provider/consumer_id/07-tendermint-1154
+//     - This endpoint implements the query defined in the Interchain Security repository at:
+//     https://github.com/cosmos/interchain-security/blob/307b1446/proto/interchain_security/ccv/provider/v1/query.proto#L132-L138
+func InitializeConsumerId(ctx sdk.Context, consumerKeeper consumerkeeper.Keeper) {
+	params := consumerKeeper.GetConsumerParams(ctx)
+	params.ConsumerId = "1"
+	consumerKeeper.SetParams(ctx, params)
 }
 
 // Updates the outer redemption rate bounds
@@ -130,7 +159,10 @@ func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankke
 	}
 
 	// Convert the credited account to DelayedVesting.
-	dva := vestingtypes.NewDelayedVestingAccount(base, amt, VestingEndTime)
+	dva, err := vestingtypes.NewDelayedVestingAccount(base, amt, VestingEndTime)
+	if err != nil {
+		return err
+	}
 	ak.SetAccount(ctx, dva)
 
 	return nil
@@ -159,4 +191,15 @@ func ClearStuckEvmosQuery(ctx sdk.Context, k stakeibckeeper.Keeper, icqKeeper ic
 			return
 		}
 	}
+}
+
+// Add the MaxMessagesPerIcaTx parameter to each host zone
+func SetMaxIcasBand(ctx sdk.Context, k stakeibckeeper.Keeper) {
+	bandHostZone, found := k.GetHostZone(ctx, BandChainId)
+	if !found {
+		ctx.Logger().Error("band host zone not found")
+		return
+	}
+	bandHostZone.MaxMessagesPerIcaTx = MaxMessagesPerIca
+	k.SetHostZone(ctx, bandHostZone)
 }

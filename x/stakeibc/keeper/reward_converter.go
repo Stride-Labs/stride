@@ -11,10 +11,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/cosmos/cosmos-sdk/x/authz"
-	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	"github.com/cosmos/gogoproto/proto"
 
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	epochstypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
@@ -81,11 +81,11 @@ func (k Keeper) CalculateRewardsSplit(
 	rewardsAmount sdkmath.Int,
 ) (rewardSplit RewardsSplit, err error) {
 	// Get the fee rate and total fees from params (e.g. 0.1 for 10% fee)
-	strideFeeParam := sdk.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
-	totalFeeRate := sdk.NewDecFromInt(strideFeeParam).Quo(sdk.NewDec(100))
+	strideFeeParam := sdkmath.NewIntFromUint64(k.GetParams(ctx).StrideCommission)
+	totalFeeRate := sdkmath.LegacyNewDecFromInt(strideFeeParam).Quo(sdkmath.LegacyNewDec(100))
 
 	// Get the total fee amount from the fee percentage
-	totalFeesAmount := sdk.NewDecFromInt(rewardsAmount).Mul(totalFeeRate).TruncateInt()
+	totalFeesAmount := sdkmath.LegacyNewDecFromInt(rewardsAmount).Mul(totalFeeRate).TruncateInt()
 	reinvestAmount := rewardsAmount.Sub(totalFeesAmount)
 
 	// Check if the chain has a rebate
@@ -119,8 +119,8 @@ func (k Keeper) CalculateRewardsSplit(
 
 	// The rebate amount is determined by the contribution of the community pool stake towards the total TVL,
 	// multiplied by the rebate fee percentage
-	contributionRate := sdk.NewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdk.NewDecFromInt(stTokenSupply))
-	rebateAmount := sdk.NewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebateRate).TruncateInt()
+	contributionRate := sdkmath.LegacyNewDecFromInt(rebateInfo.LiquidStakedStTokenAmount).Quo(sdkmath.LegacyNewDecFromInt(stTokenSupply))
+	rebateAmount := sdkmath.LegacyNewDecFromInt(totalFeesAmount).Mul(contributionRate).Mul(rebateInfo.RebateRate).TruncateInt()
 	strideFeeAmount := totalFeesAmount.Sub(rebateAmount)
 
 	rewardSplit = RewardsSplit{

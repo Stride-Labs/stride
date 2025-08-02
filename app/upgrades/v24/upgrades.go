@@ -1,11 +1,13 @@
 package v24
 
 import (
+	"context"
+
 	sdkmath "cosmossdk.io/math"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	recordskeeper "github.com/Stride-Labs/stride/v27/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
@@ -16,13 +18,13 @@ var (
 	UpgradeName = "v24"
 
 	// Redemption rate bounds updated to give ~3 months of slack on outer bounds
-	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+	RedemptionRateOuterMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.05")
+	RedemptionRateOuterMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("0.10")
 
 	// Osmosis will have a slighly larger buffer with the redemption rate
 	// since their yield is less predictable
 	OsmosisChainId              = "osmosis-1"
-	OsmosisRedemptionRateBuffer = sdk.MustNewDecFromStr("0.02")
+	OsmosisRedemptionRateBuffer = sdkmath.LegacyMustNewDecFromStr("0.02")
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v24
@@ -33,7 +35,8 @@ func CreateUpgradeHandler(
 	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v24...")
 
 		// Migrate data structures

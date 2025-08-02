@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
@@ -16,11 +16,11 @@ import (
 func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {
 	// Create a host zone with a delegated balance of 1000
 	halted := true
-	totalDelegations := sdk.NewInt(1_000)
-	redemptionRate := sdk.NewDec(2)
-	lastRedemptionRate := sdk.NewDec(1)
-	minInnerRedemptionRate := sdk.MustNewDecFromStr("1.9")
-	maxInnerRedemptionRate := sdk.MustNewDecFromStr("2.1")
+	totalDelegations := sdkmath.NewInt(1_000)
+	redemptionRate := sdkmath.LegacyNewDec(2)
+	lastRedemptionRate := sdkmath.LegacyNewDec(1)
+	minInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.9")
+	maxInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr("2.1")
 	legacyHostZone := oldtypes.HostZone{
 		RedemptionRate:         redemptionRate,
 		LastRedemptionRate:     lastRedemptionRate,
@@ -122,12 +122,12 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 	// Fund the staketia deposit and fee accounts
 	depositBalance := sdkmath.NewInt(1000)
 	feeBalance := sdkmath.NewInt(2000)
-	totalDelegations := sdk.NewInt(1000)
+	totalDelegations := sdkmath.NewInt(1000)
 	s.FundAccount(staketiaDepositAccount, sdk.NewCoin(HostIBCDenom, depositBalance))
 	s.FundModuleAccount(staketiaFeeModuleName, sdk.NewCoin(HostIBCDenom, feeBalance))
 
 	// Mint stTIA for the redemption rate calculation
-	s.FundAccount(s.TestAccs[1], sdk.NewCoin("st"+HostNativeDenom, sdk.NewInt(1000)))
+	s.FundAccount(s.TestAccs[1], sdk.NewCoin("st"+HostNativeDenom, sdkmath.NewInt(1000)))
 
 	// Store the legacy host zone
 	legacyHostZone := oldtypes.HostZone{
@@ -136,10 +136,10 @@ func (s *KeeperTestSuite) TestInitiateMigration() {
 		NativeTokenDenom:    HostNativeDenom,
 		NativeTokenIbcDenom: HostIBCDenom,
 		TransferChannelId:   ibctesting.FirstChannelID,
-		MinRedemptionRate:   sdk.MustNewDecFromStr("0.90"),
-		MaxRedemptionRate:   sdk.MustNewDecFromStr("1.5"),
-		RedemptionRate:      sdk.MustNewDecFromStr("1.2"),
-		LastRedemptionRate:  sdk.MustNewDecFromStr("1.1"),
+		MinRedemptionRate:   sdkmath.LegacyMustNewDecFromStr("0.90"),
+		MaxRedemptionRate:   sdkmath.LegacyMustNewDecFromStr("1.5"),
+		RedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
+		LastRedemptionRate:  sdkmath.LegacyMustNewDecFromStr("1.1"),
 		DelegatedBalance:    totalDelegations,
 	}
 	s.App.StaketiaKeeper.SetLegacyHostZone(s.Ctx, legacyHostZone)

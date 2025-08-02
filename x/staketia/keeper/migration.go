@@ -182,7 +182,7 @@ func InitiateMigration(
 		return err
 	}
 
-	if initialRedemptionRate.Sub(finalRedemptionRate).Abs().GT(sdk.MustNewDecFromStr("0.000000001")) {
+	if initialRedemptionRate.Sub(finalRedemptionRate).Abs().GT(sdkmath.LegacyMustNewDecFromStr("0.000000001")) {
 		return errors.New("celestia redemption rate after upgrade did not match redemption rate from staketia ")
 	}
 
@@ -197,7 +197,7 @@ func GetStaketiaRedemptionRate(
 	bankKeeper bankkeeper.Keeper,
 	staketiaKeeper Keeper,
 	hostZone oldtypes.HostZone,
-) (redemptionRate sdk.Dec, err error) {
+) (redemptionRate sdkmath.LegacyDec, err error) {
 	// Get the number of stTokens from the supply
 	stTokenSupply := bankKeeper.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.NativeTokenDenom)).Amount
 	if stTokenSupply.IsZero() {
@@ -228,7 +228,7 @@ func GetStaketiaRedemptionRate(
 	if !nativeTokensLocked.IsPositive() {
 		return redemptionRate, errors.New("Non-zero stToken supply, yet the zero delegated and undelegated balance")
 	}
-	redemptionRate = sdk.NewDecFromInt(nativeTokensLocked).Quo(sdk.NewDecFromInt(stTokenSupply))
+	redemptionRate = sdkmath.LegacyNewDecFromInt(nativeTokensLocked).Quo(sdkmath.LegacyNewDecFromInt(stTokenSupply))
 
 	ctx.Logger().Info(fmt.Sprintf("Staketia Redemption Rate %v", redemptionRate))
 
@@ -244,7 +244,7 @@ func GetStakeibcRedemptionRate(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	staketiaKeeper Keeper,
 	hostZone stakeibctypes.HostZone,
-) (redemptionRate sdk.Dec, err error) {
+) (redemptionRate sdkmath.LegacyDec, err error) {
 	// Gather redemption rate components
 	stSupply := bankKeeper.GetSupply(ctx, utils.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)).Amount
 	if stSupply.IsZero() {
@@ -254,14 +254,14 @@ func GetStakeibcRedemptionRate(
 	depositRecords := recordsKeeper.GetAllDepositRecord(ctx)
 	depositAccountBalance := stakeibcKeeper.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
 	undelegatedBalance := stakeibcKeeper.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
-	nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
+	nativeDelegation := sdkmath.LegacyNewDecFromInt(hostZone.TotalDelegations)
 
 	// Staketia delegation records are not included in any of the above yet so we must
 	// gather than explicitly
 	// In practice, there will be no records here when the upgrade runs
-	staketiaPendingDelegations := sdk.ZeroDec()
+	staketiaPendingDelegations := sdkmath.LegacyZeroDec()
 	for _, delegationRecord := range staketiaKeeper.GetAllActiveDelegationRecords(ctx) {
-		staketiaPendingDelegations = staketiaPendingDelegations.Add(sdk.NewDecFromInt(delegationRecord.NativeAmount))
+		staketiaPendingDelegations = staketiaPendingDelegations.Add(sdkmath.LegacyNewDecFromInt(delegationRecord.NativeAmount))
 	}
 
 	ctx.Logger().Info(fmt.Sprintf("Stakeibc Redemption Rate Components - "+
@@ -271,7 +271,7 @@ func GetStakeibcRedemptionRate(
 
 	// Calculate the redemption rate
 	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(staketiaPendingDelegations).Add(nativeDelegation)
-	redemptionRate = nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
+	redemptionRate = nativeTokensLocked.Quo(sdkmath.LegacyNewDecFromInt(stSupply))
 
 	ctx.Logger().Info(fmt.Sprintf("Stakeibc Redemption Rate %v", redemptionRate))
 

@@ -3,7 +3,8 @@ package keeper
 import (
 	"encoding/binary"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v27/x/records/types"
@@ -81,7 +82,7 @@ func (k Keeper) RemoveDepositRecord(ctx sdk.Context, id uint64) {
 // GetAllDepositRecord returns all depositRecord
 func (k Keeper) GetAllDepositRecord(ctx sdk.Context) (list []types.DepositRecord) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.DepositRecordKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 

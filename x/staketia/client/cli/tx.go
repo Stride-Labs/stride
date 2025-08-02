@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
@@ -298,8 +297,8 @@ Example:
 `, version.AppName, types.ModuleName),
 		),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			minInnerRedemptionRate := sdk.MustNewDecFromStr(args[0])
-			maxInnerRedemptionRate := sdk.MustNewDecFromStr(args[1])
+			minInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr(args[0])
+			maxInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr(args[1])
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

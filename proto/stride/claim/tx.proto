@@ -11,6 +11,8 @@ option go_package = "github.com/Stride-Labs/stride/v27/x/claim/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   rpc SetAirdropAllocations(MsgSetAirdropAllocations)
       returns (MsgSetAirdropAllocationsResponse);
   rpc ClaimFreeAmount(MsgClaimFreeAmount) returns (MsgClaimFreeAmountResponse);
@@ -27,7 +29,7 @@ message MsgSetAirdropAllocations {
       [ (gogoproto.moretags) = "yaml:\"airdrop_identifier\"" ];
   repeated string users = 3;
   repeated string weights = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,
     (gogoproto.moretags) = "yaml:\"weights\""
   ];

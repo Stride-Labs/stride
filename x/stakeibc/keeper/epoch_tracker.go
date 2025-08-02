@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
@@ -54,7 +56,7 @@ func (k Keeper) RemoveEpochTracker(
 // GetAllEpochTracker returns all epochTracker
 func (k Keeper) GetAllEpochTracker(ctx sdk.Context) (list []types.EpochTracker) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.EpochTrackerKeyPrefix))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
@@ -96,36 +98,36 @@ func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochI
 }
 
 // helper to get what share of the curr epoch we're through
-func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdk.Dec, error) {
+func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdkmath.LegacyDec, error) {
 	// Get the current stride epoch
 	epochTracker, found := k.GetEpochTracker(ctx, epochstypes.STRIDE_EPOCH)
 	if !found {
-		return sdk.ZeroDec(), errorsmod.Wrapf(sdkerrors.ErrNotFound, "Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(sdkerrors.ErrNotFound, "Failed to get epoch tracker for %s", epochstypes.STRIDE_EPOCH)
 	}
 
 	// Get epoch start time, end time, and duration
 	epochDuration, err := cast.ToInt64E(epochTracker.Duration)
 	if err != nil {
-		return sdk.ZeroDec(), errorsmod.Wrap(err, "unable to convert epoch duration to int64")
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, "unable to convert epoch duration to int64")
 	}
 	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
-		return sdk.ZeroDec(), errorsmod.Wrap(err, "unable to convert next epoch start time to int64")
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, "unable to convert next epoch start time to int64")
 	}
 	epochStartTime := epochEndTime - epochDuration
 
 	// Confirm the current block time is inside the current epoch's start and end times
 	currBlockTime := ctx.BlockTime().UnixNano()
 	if currBlockTime < epochStartTime || currBlockTime > epochEndTime {
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch,
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch,
 			"current block time %d is not within current epoch (ending at %d)", currBlockTime, epochTracker.NextEpochStartTime)
 	}
 
 	// Get elapsed share
 	elapsedTime := currBlockTime - epochStartTime
-	elapsedShare := sdk.NewDec(elapsedTime).Quo(sdk.NewDec(epochDuration))
-	if elapsedShare.LT(sdk.ZeroDec()) || elapsedShare.GT(sdk.OneDec()) {
-		return sdk.ZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, "elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
+	elapsedShare := sdkmath.LegacyNewDec(elapsedTime).Quo(sdkmath.LegacyNewDec(epochDuration))
+	if elapsedShare.LT(sdkmath.LegacyZeroDec()) || elapsedShare.GT(sdkmath.LegacyOneDec()) {
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(types.ErrInvalidEpoch, "elapsed share (%s) for epoch is not between 0 and 1", elapsedShare)
 	}
 
 	k.Logger(ctx).Info(fmt.Sprintf("Epoch elapsed share: %v (Block Time: %d, Epoch End Time: %d)", elapsedShare, currBlockTime, epochEndTime))

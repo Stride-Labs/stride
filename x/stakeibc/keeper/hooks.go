@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 
 const StrideEpochsPerDayEpoch = uint64(4)
 
-func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	// Update the stakeibc epoch tracker
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
 	if err != nil {
@@ -92,7 +95,7 @@ func (k Keeper) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInf
 	}
 }
 
-func (k Keeper) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {}
+func (k Keeper) AfterEpochEnd(context context.Context, epochInfo epochstypes.EpochInfo) {}
 
 // Hooks wrapper struct for incentives keeper
 type Hooks struct {
@@ -106,16 +109,22 @@ func (k Keeper) Hooks() Hooks {
 }
 
 // epochs hooks
-func (h Hooks) BeforeEpochStart(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (h Hooks) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	h.k.BeforeEpochStart(ctx, epochInfo)
 }
 
-func (h Hooks) AfterEpochEnd(ctx sdk.Context, epochInfo epochstypes.EpochInfo) {
+func (h Hooks) AfterEpochEnd(context context.Context, epochInfo epochstypes.EpochInfo) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	h.k.AfterEpochEnd(ctx, epochInfo)
 }
 
 // Set the withdrawal account address for each host zone
-func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
+func (k Keeper) SetWithdrawalAddress(context context.Context) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	k.Logger(ctx).Info("Setting Withdrawal Addresses...")
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
@@ -127,7 +136,9 @@ func (k Keeper) SetWithdrawalAddress(ctx sdk.Context) {
 }
 
 // Claim staking rewards for each host zone
-func (k Keeper) ClaimAccruedStakingRewards(ctx sdk.Context) {
+func (k Keeper) ClaimAccruedStakingRewards(context context.Context) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	k.Logger(ctx).Info("Claiming Accrued Staking Rewards...")
 
 	for _, hostZone := range k.GetAllActiveHostZone(ctx) {
@@ -139,7 +150,9 @@ func (k Keeper) ClaimAccruedStakingRewards(ctx sdk.Context) {
 }
 
 // TODO [cleanup]: Remove after v17 upgrade
-func (k Keeper) DisableHubTokenization(ctx sdk.Context) {
+func (k Keeper) DisableHubTokenization(context context.Context) {
+	ctx := sdk.UnwrapSDKContext(context)
+
 	k.Logger(ctx).Info("Disabling the ability to tokenize Gaia delegations")
 
 	chainId := "cosmoshub-4"

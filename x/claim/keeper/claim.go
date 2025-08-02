@@ -8,7 +8,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -47,7 +48,7 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 		}
 
 		weightStr := fmt.Sprintf("%.10f", weightFloat64)
-		weight, err := sdk.NewDecFromStr(weightStr)
+		weight, err := sdkmath.LegacyNewDecFromStr(weightStr)
 		if weight.IsNegative() || weight.IsZero() {
 			continue
 		}
@@ -78,11 +79,11 @@ func (k Keeper) LoadAllocationData(ctx sdk.Context, allocationData string) bool 
 }
 
 // Remove duplicated airdrops for given params
-func (k Keeper) GetUnallocatedUsers(ctx sdk.Context, identifier string, users []string, weights []sdk.Dec) ([]string, []sdk.Dec) {
+func (k Keeper) GetUnallocatedUsers(ctx sdk.Context, identifier string, users []string, weights []sdkmath.LegacyDec) ([]string, []sdkmath.LegacyDec) {
 	store := ctx.KVStore(k.storeKey)
 	prefixStore := prefix.NewStore(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(identifier)...))
 	newUsers := []string{}
-	newWeights := []sdk.Dec{}
+	newWeights := []sdkmath.LegacyDec{}
 	for idx, user := range users {
 		strideAddr := utils.ConvertAddressToStrideAddress(user)
 		addr, _ := sdk.AccAddressFromBech32(strideAddr)
@@ -250,7 +251,7 @@ func (k Keeper) ResetClaimStatus(ctx sdk.Context, airdropIdentifier string) erro
 // ClearClaimables clear claimable amounts
 func (k Keeper) clearInitialClaimables(ctx sdk.Context, airdropIdentifier string) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropIdentifier)...))
+	iterator := storetypes.KVStorePrefixIterator(store, append([]byte(types.ClaimRecordsStorePrefix), []byte(airdropIdentifier)...))
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		key := iterator.Key()
@@ -260,10 +261,10 @@ func (k Keeper) clearInitialClaimables(ctx sdk.Context, airdropIdentifier string
 
 func (k Keeper) SetClaimRecordsWithWeights(ctx sdk.Context, claimRecords []types.ClaimRecord) error {
 	// Set total weights
-	weights := make(map[string]sdk.Dec)
+	weights := make(map[string]sdkmath.LegacyDec)
 	for _, record := range claimRecords {
 		if weights[record.AirdropIdentifier].IsNil() {
-			weights[record.AirdropIdentifier] = sdk.ZeroDec()
+			weights[record.AirdropIdentifier] = sdkmath.LegacyZeroDec()
 		}
 
 		weights[record.AirdropIdentifier] = weights[record.AirdropIdentifier].Add(record.Weight)
@@ -332,7 +333,7 @@ func (k Keeper) GetClaimRecord(ctx sdk.Context, addr sdk.AccAddress, airdropIden
 }
 
 // SetTotalWeight sets total sum of user weights in store
-func (k Keeper) SetTotalWeight(ctx sdk.Context, totalWeight sdk.Dec, airdropIdentifier string) {
+func (k Keeper) SetTotalWeight(ctx sdk.Context, totalWeight sdkmath.LegacyDec, airdropIdentifier string) {
 	store := ctx.KVStore(k.storeKey)
 	store.Set(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...), []byte(totalWeight.String()))
 }
@@ -344,15 +345,15 @@ func (k Keeper) DeleteTotalWeight(ctx sdk.Context, airdropIdentifier string) {
 }
 
 // GetTotalWeight gets total sum of user weights in store
-func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdk.Dec, error) {
+func (k Keeper) GetTotalWeight(ctx sdk.Context, airdropIdentifier string) (sdkmath.LegacyDec, error) {
 	store := ctx.KVStore(k.storeKey)
 	b := store.Get(append([]byte(types.TotalWeightKey), []byte(airdropIdentifier)...))
 	if b == nil {
-		return sdk.ZeroDec(), nil
+		return sdkmath.LegacyZeroDec(), nil
 	}
-	totalWeight, err := sdk.NewDecFromStr(string(b))
+	totalWeight, err := sdkmath.LegacyNewDecFromStr(string(b))
 	if err != nil {
-		return sdk.ZeroDec(), types.ErrTotalWeightParse
+		return sdkmath.LegacyZeroDec(), types.ErrTotalWeightParse
 	}
 	return totalWeight, nil
 }
@@ -443,7 +444,7 @@ func (k Keeper) GetClaimableAmountForAction(ctx sdk.Context, addr sdk.AccAddress
 
 	poolBal := distributorAccountBalance.AddAmount(airdrop.ClaimedSoFar)
 
-	claimableAmount := sdk.NewDec(poolBal.Amount.Int64()).
+	claimableAmount := sdkmath.LegacyNewDec(poolBal.Amount.Int64()).
 		Mul(percentageForAction).
 		Mul(claimRecord.Weight).
 		Quo(totalWeight).RoundInt()

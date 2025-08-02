@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/Stride-Labs/stride/v27/testutil/network"
-	"github.com/Stride-Labs/stride/v27/testutil/nullify"
 	"github.com/Stride-Labs/stride/v27/x/records/client/cli"
 	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
@@ -25,68 +23,15 @@ func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []t
 
 	for i := 0; i < n; i++ {
 		depositRecord := types.DepositRecord{
-			Id: uint64(i),
+			Id:     uint64(i),
+			Amount: sdkmath.NewInt(int64(i)),
 		}
-		nullify.Fill(&depositRecord)
 		state.DepositRecordList = append(state.DepositRecordList, depositRecord)
 	}
 	buf, err := cfg.Codec.MarshalJSON(&state)
 	require.NoError(t, err)
 	cfg.GenesisState[types.ModuleName] = buf
 	return network.New(t, cfg), state.DepositRecordList
-}
-
-func TestShowDepositRecord(t *testing.T) {
-	net, objs := networkWithDepositRecordObjects(t, 2)
-
-	ctx := net.Validators[0].ClientCtx
-	_ = ctx
-	common := []string{
-		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-	}
-	for _, tc := range []struct {
-		desc string
-		id   string
-		args []string
-		err  error
-		obj  types.DepositRecord
-	}{
-		{
-			desc: "found",
-			id:   fmt.Sprintf("%d", objs[0].Id),
-			args: common,
-			obj:  objs[0],
-		},
-		{
-			desc: "not found",
-			id:   "not_found",
-			args: common,
-			err:  status.Error(codes.NotFound, "not found"),
-		},
-	} {
-		// TODO why is this test failing?
-		_ = tc
-		// t.Run(tc.desc, func(t *testing.T) {
-		// 	args := []string{tc.id}
-		// 	args = append(args, tc.args...)
-		// 	// fmt.Println(fmt.Sprintf("args: %v", args))
-		// 	out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdShowDepositRecord(), args)
-		// 	if tc.err != nil {
-		// 		stat, ok := status.FromError(tc.err)
-		// 		require.True(t, ok)
-		// 		require.ErrorIs(t, stat.Err(), tc.err)
-		// 	} else {
-		// 		require.NoError(t, err)
-		// 		var resp types.QueryGetDepositRecordResponse
-		// 		require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
-		// 		require.NotNil(t, resp.DepositRecord)
-		// 		require.Equal(t,
-		// 			nullify.Fill(&tc.obj),
-		// 			nullify.Fill(&resp.DepositRecord),
-		// 		)
-		// 	}
-		// })
-	}
 }
 
 func TestListDepositRecord(t *testing.T) {
@@ -118,8 +63,8 @@ func TestListDepositRecord(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.DepositRecord), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.DepositRecord),
+				objs,
+				resp.DepositRecord,
 			)
 		}
 	})
@@ -134,26 +79,10 @@ func TestListDepositRecord(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.DepositRecord), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.DepositRecord),
+				objs,
+				resp.DepositRecord,
 			)
 			next = resp.Pagination.NextKey
 		}
 	})
-	// TODO: why is this test failing?
-	// t.Run("Total", func(t *testing.T) {
-	// 	args := request(nil, 0, uint64(len(objs)), true)
-	// 	out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdListDepositRecord(), args)
-	// 	require.NoError(t, err)
-	// 	var resp types.QueryAllDepositRecordResponse
-	// 	require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
-	// 	require.NoError(t, err)
-	// 	fmt.Println(fmt.Sprintf("objs 2: %v", objs))
-	// 	fmt.Println(fmt.Sprintf("t: %v", t))
-	// 	require.Equal(t, len(objs), int(resp.Pagination.Total))
-	// 	require.ElementsMatch(t,
-	// 		nullify.Fill(objs),
-	// 		nullify.Fill(resp.DepositRecord),
-	// 	)
-	// })
 }

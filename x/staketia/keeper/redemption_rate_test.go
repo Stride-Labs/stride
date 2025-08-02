@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v27/x/staketia/types"
@@ -16,55 +16,55 @@ func (s *KeeperTestSuite) TestCheckRedemptionRateExceedsBounds() {
 		{
 			name: "valid bounds",
 			hostZone: stakeibctypes.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"), // <--
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"), // <--
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: false,
 		},
 		{
 			name: "outside min inner",
 			hostZone: stakeibctypes.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				RedemptionRate:         sdk.MustNewDecFromStr("0.9"), // <--
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("0.9"), // <--
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: true,
 		},
 		{
 			name: "outside max inner",
 			hostZone: stakeibctypes.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.1"), // <--
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.1"), // <--
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: true,
 		},
 		{
 			name: "outside min outer",
 			hostZone: stakeibctypes.HostZone{
-				RedemptionRate:         sdk.MustNewDecFromStr("0.8"), // <--
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.9"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("0.8"), // <--
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.9"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			exceedsBounds: true,
 		},
 		{
 			name: "outside max outer",
 			hostZone: stakeibctypes.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.0"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.1"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.2"), // <--
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.1"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.2"), // <--
 			},
 			exceedsBounds: true,
 		},

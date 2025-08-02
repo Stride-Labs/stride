@@ -52,7 +52,8 @@ func TestGetVestedCoinsPeriodicVestingAcc(t *testing.T) {
 	vestedCoins = pva.GetVestedCoins(now.Add(18 * time.Hour))
 	require.Equal(t,
 		sdk.Coins{
-			sdk.NewInt64Coin(feeDenom, 750), sdk.NewInt64Coin(stakeDenom, 75)}, vestedCoins)
+			sdk.NewInt64Coin(feeDenom, 750), sdk.NewInt64Coin(stakeDenom, 75),
+		}, vestedCoins)
 
 	// require 100% of coins vested
 	vestedCoins = pva.GetVestedCoins(now.Add(48 * time.Hour))
@@ -246,17 +247,19 @@ func TestStridePeriodicVestingAccountMarshal(t *testing.T) {
 	now := tmtime.Now()
 	acc := types.NewStridePeriodicVestingAccount(baseAcc, coins, types.Periods{types.Period{now.Unix(), 3600, coins, 0}})
 
-	bz, err := app.AccountKeeper.MarshalAccount(acc)
-	require.Nil(t, err)
+	bz, err := app.AppCodec().Marshal(acc)
+	require.NoError(t, err)
 
-	acc2, err := app.AccountKeeper.UnmarshalAccount(bz)
-	require.Nil(t, err)
-	require.IsType(t, &types.StridePeriodicVestingAccount{}, acc2)
+	var acc2 types.StridePeriodicVestingAccount
+	err = app.AppCodec().Unmarshal(bz, &acc2)
+	require.NoError(t, err)
+	require.IsType(t, &types.StridePeriodicVestingAccount{}, &acc2)
 	require.Equal(t, acc.String(), acc2.String())
 
 	// error on bad bytes
-	_, err = app.AccountKeeper.UnmarshalAccount(bz[:len(bz)/2])
-	require.NotNil(t, err)
+	var acc3 types.StridePeriodicVestingAccount
+	err = app.AppCodec().Unmarshal(bz[:len(bz)/2], &acc3)
+	require.Error(t, err)
 }
 
 func initBaseAccount() (*authtypes.BaseAccount, sdk.Coins) {

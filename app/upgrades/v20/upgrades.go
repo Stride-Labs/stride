@@ -1,14 +1,15 @@
 package v20
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v4/x/ccv/consumer/keeper"
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
@@ -27,7 +28,8 @@ func CreateUpgradeHandler(
 	consumerKeeper ccvconsumerkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v20...")
 
 		ctx.Logger().Info("Running module migrations...")

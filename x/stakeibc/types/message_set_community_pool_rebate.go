@@ -19,7 +19,7 @@ var _ sdk.Msg = &MsgSetCommunityPoolRebate{}
 func NewMsgSetCommunityPoolRebate(
 	creator string,
 	chainId string,
-	rebateRate sdk.Dec,
+	rebateRate sdkmath.LegacyDec,
 	liquidStakedStTokenAmount sdkmath.Int,
 ) *MsgSetCommunityPoolRebate {
 	return &MsgSetCommunityPoolRebate{
@@ -46,11 +46,6 @@ func (msg *MsgSetCommunityPoolRebate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgSetCommunityPoolRebate) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgSetCommunityPoolRebate) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
@@ -62,7 +57,7 @@ func (msg *MsgSetCommunityPoolRebate) ValidateBasic() error {
 	if msg.ChainId == "" {
 		return errors.New("chain ID must be specified")
 	}
-	if msg.RebateRate.IsNil() || msg.RebateRate.LT(sdk.ZeroDec()) || msg.RebateRate.GT(sdk.OneDec()) {
+	if msg.RebateRate.IsNil() || msg.RebateRate.LT(sdkmath.LegacyZeroDec()) || msg.RebateRate.GT(sdkmath.LegacyOneDec()) {
 		return errors.New("invalid rebate rate, must be a decimal between 0 and 1 (inclusive)")
 	}
 	if msg.LiquidStakedStTokenAmount.IsNil() || msg.LiquidStakedStTokenAmount.LT(sdkmath.ZeroInt()) {

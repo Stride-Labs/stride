@@ -4,9 +4,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
@@ -84,10 +84,10 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 
 	params := k.GetParams(ctx)
 	if msg.MinRedemptionRate.IsNil() || msg.MinRedemptionRate.IsZero() {
-		msg.MinRedemptionRate = sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
+		msg.MinRedemptionRate = sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
 	}
 	if msg.MaxRedemptionRate.IsNil() || msg.MaxRedemptionRate.IsZero() {
-		msg.MaxRedemptionRate = sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
+		msg.MaxRedemptionRate = sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
 	}
 
 	// Set the max messages per ICA tx to the default value if it's not specified
@@ -105,8 +105,8 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 		HostDenom:         msg.HostDenom,
 		TransferChannelId: msg.TransferChannelId,
 		// Start sharesToTokens rate at 1 upon registration
-		RedemptionRate:                    sdk.NewDec(1),
-		LastRedemptionRate:                sdk.NewDec(1),
+		RedemptionRate:                    sdkmath.LegacyNewDec(1),
+		LastRedemptionRate:                sdkmath.LegacyNewDec(1),
 		UnbondingPeriod:                   msg.UnbondingPeriod,
 		DepositAddress:                    depositAddress.String(),
 		CommunityPoolStakeHoldingAddress:  communityPoolStakeAddress.String(),

@@ -22,9 +22,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	upgradeHeight := int64(4)
-
-	s.ConfirmUpgradeSucceededs(v26.UpgradeName, upgradeHeight)
+	s.ConfirmUpgradeSucceeded(v26.UpgradeName)
 
 	params := s.App.ICQOracleKeeper.GetParams(s.Ctx)
 	s.Require().Equal(v26.OsmosisChainId, params.OsmosisChainId, "Osmosis chain ID")

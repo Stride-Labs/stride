@@ -4,16 +4,17 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v27/utils"
@@ -26,7 +27,7 @@ import (
 type (
 	Keeper struct {
 		// *cosmosibckeeper.Keeper
-		cdc                   codec.BinaryCodec
+		cdc                   codec.Codec
 		storeKey              storetypes.StoreKey
 		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
@@ -47,7 +48,7 @@ type (
 )
 
 func NewKeeper(
-	cdc codec.BinaryCodec,
+	cdc codec.Codec,
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
@@ -132,17 +133,17 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 	return timeoutNanosUint64, nil
 }
 
-func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdkmath.LegacyDec, sdkmath.LegacyDec) {
 	// Fetch the wide bounds
 	minSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMinRedemptionRateThreshold)
-	minSafetyThreshold := sdk.NewDec(utils.UintToInt(minSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	minSafetyThreshold := sdkmath.LegacyNewDec(utils.UintToInt(minSafetyThresholdInt)).Quo(sdkmath.LegacyNewDec(100))
 
 	if !zone.MinRedemptionRate.IsNil() && zone.MinRedemptionRate.IsPositive() {
 		minSafetyThreshold = zone.MinRedemptionRate
 	}
 
 	maxSafetyThresholdInt := k.GetParam(ctx, types.KeyDefaultMaxRedemptionRateThreshold)
-	maxSafetyThreshold := sdk.NewDec(utils.UintToInt(maxSafetyThresholdInt)).Quo(sdk.NewDec(100))
+	maxSafetyThreshold := sdkmath.LegacyNewDec(utils.UintToInt(maxSafetyThresholdInt)).Quo(sdkmath.LegacyNewDec(100))
 
 	if !zone.MaxRedemptionRate.IsNil() && zone.MaxRedemptionRate.IsPositive() {
 		maxSafetyThreshold = zone.MaxRedemptionRate
@@ -151,7 +152,7 @@ func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.
 	return minSafetyThreshold, maxSafetyThreshold
 }
 
-func (k Keeper) GetInnerSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdk.Dec, sdk.Dec) {
+func (k Keeper) GetInnerSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdkmath.LegacyDec, sdkmath.LegacyDec) {
 	// Fetch the inner bounds
 	minSafetyThreshold, maxSafetyThreshold := k.GetOuterSafetyBounds(ctx, zone)
 

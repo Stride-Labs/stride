@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
 	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
@@ -9,7 +8,7 @@ import (
 
 func (s *KeeperTestSuite) TestRegisterStTokenDenomsToWhitelist() {
 	tc := s.SetupRegisterHostZone()
-	_, err := s.GetMsgServer().RegisterHostZone(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().RegisterHostZone(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "able to successfully register host zone")
 
 	// RegisterHostZone should have already registered stToken to consumer reward denom whitelist

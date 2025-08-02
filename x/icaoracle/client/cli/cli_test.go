@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v27/app"
+	strideapp "github.com/Stride-Labs/stride/v27/app"
 	cmdcfg "github.com/Stride-Labs/stride/v27/cmd/strided/config"
 	strideclitestutil "github.com/Stride-Labs/stride/v27/testutil/cli"
 	"github.com/Stride-Labs/stride/v27/testutil/network"
@@ -39,7 +39,8 @@ func (s *ClientTestSuite) SetupSuite() {
 
 	s.cfg = network.DefaultConfig()
 
-	genState := app.ModuleBasics.DefaultGenesis(s.cfg.Codec)
+	app := strideapp.InitStrideTestApp(false)
+	genState := app.DefaultGenesis()
 
 	// Add an oracle to the store for the query command
 	icaoracleGenstate := types.DefaultGenesis()

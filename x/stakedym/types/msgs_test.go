@@ -4,12 +4,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	"github.com/Stride-Labs/stride/v27/testutil/sample"
 	"github.com/Stride-Labs/stride/v27/x/stakedym/types"
 )
 
@@ -18,6 +16,8 @@ import (
 // ----------------------------------------------
 
 func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
+	validAddress, _ := apptesting.GenerateTestAddrs()
+
 	tests := []struct {
 		name string
 		msg  types.MsgLiquidStake
@@ -42,14 +42,14 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 		{
 			name: "valid inputs",
 			msg: types.MsgLiquidStake{
-				Staker:       sample.AccAddress(),
+				Staker:       validAddress,
 				NativeAmount: sdkmath.NewInt(1200000),
 			},
 		},
 		{
 			name: "amount below threshold",
 			msg: types.MsgLiquidStake{
-				Staker:       sample.AccAddress(),
+				Staker:       validAddress,
 				NativeAmount: sdkmath.NewInt(20000),
 			},
 			err: types.ErrInvalidAmountBelowMinimum,
@@ -68,20 +68,13 @@ func TestMsgLiquidStake_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgLiquidStake_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgLiquidStake(addr, sdkmath.NewInt(1000))
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"stakedym/MsgLiquidStake","value":{"native_amount":"1000","staker":"stride1v9jxgu33kfsgr5"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgRedeemStake
 // ----------------------------------------------
 
 func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
+	validAddress, _ := apptesting.GenerateTestAddrs()
+
 	tests := []struct {
 		name string
 		msg  types.MsgRedeemStake
@@ -90,7 +83,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 		{
 			name: "success",
 			msg: types.MsgRedeemStake{
-				Redeemer:      sample.AccAddress(),
+				Redeemer:      validAddress,
 				StTokenAmount: sdkmath.NewInt(1000000),
 			},
 		},
@@ -105,7 +98,7 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 		{
 			name: "amount below threshold",
 			msg: types.MsgRedeemStake{
-				Redeemer:      sample.AccAddress(),
+				Redeemer:      validAddress,
 				StTokenAmount: sdkmath.NewInt(20000),
 			},
 			err: types.ErrInvalidAmountBelowMinimum,
@@ -123,15 +116,6 @@ func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgRedeemStake_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgRedeemStake(addr, sdkmath.NewInt(1000000))
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"stakedym/MsgRedeemStake","value":{"redeemer":"stride1v9jxgu33kfsgr5","st_token_amount":"1000000"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //             MsgConfirmDelegation
 // ----------------------------------------------
@@ -139,7 +123,7 @@ func TestMsgRedeemStake_GetSignBytes(t *testing.T) {
 func TestMsgConfirmDelegation_ValidateBasic(t *testing.T) {
 	validTxHash := "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9"
 	validRecordId := uint64(35)
-	validAddress := sample.AccAddress()
+	validAddress, _ := apptesting.GenerateTestAddrs()
 
 	tests := []struct {
 		name          string
@@ -195,15 +179,6 @@ func TestMsgConfirmDelegation_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgConfirmDelegation_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgConfirmDelegation(addr, 100, "valid_hash")
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"stakedym/MsgConfirmDelegation","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //           MsgConfirmUndelegation
 // ----------------------------------------------
@@ -211,7 +186,7 @@ func TestMsgConfirmDelegation_GetSignBytes(t *testing.T) {
 func TestMsgConfirmUndelegation_ValidateBasic(t *testing.T) {
 	validTxHash := "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9"
 	validRecordId := uint64(35)
-	validAddress := sample.AccAddress()
+	validAddress, _ := apptesting.GenerateTestAddrs()
 
 	tests := []struct {
 		name          string
@@ -267,20 +242,13 @@ func TestMsgConfirmUndelegation_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgConfirmUndelegation_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgConfirmUndelegation(addr, 100, "valid_hash")
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"stakedym/MsgConfirmUndelegation","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgConfirmUnbondedTokenSweep
 // ----------------------------------------------
 
 func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
+	validAddress, _ := apptesting.GenerateTestAddrs()
+
 	tests := []struct {
 		name string
 		msg  types.MsgConfirmUnbondedTokenSweep
@@ -289,7 +257,7 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 		{
 			name: "success",
 			msg: types.MsgConfirmUnbondedTokenSweep{
-				Operator: sample.AccAddress(),
+				Operator: validAddress,
 				RecordId: 35,
 				TxHash:   "BBD978ADDBF580AC2981E351A3EA34AA9D7B57631E9CE21C27C2C63A5B13BDA9",
 			},
@@ -297,7 +265,7 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 		{
 			name: "empty tx hash",
 			msg: types.MsgConfirmUnbondedTokenSweep{
-				Operator: sample.AccAddress(),
+				Operator: validAddress,
 				RecordId: 35,
 				TxHash:   "",
 			},
@@ -306,7 +274,7 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 		{
 			name: "invalid tx hash",
 			msg: types.MsgConfirmUnbondedTokenSweep{
-				Operator: sample.AccAddress(),
+				Operator: validAddress,
 				RecordId: 35,
 				TxHash:   "invalid_tx-hash",
 			},
@@ -333,15 +301,6 @@ func TestMsgConfirmUnbondedTokenSweep_ValidateBasic(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-}
-
-func TestMsgConfirmUnbondedTokenSweep_GetSignBytes(t *testing.T) {
-	addr := "stride1v9jxgu33kfsgr5"
-	msg := types.NewMsgConfirmUnbondedTokenSweep(addr, 100, "valid_hash")
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"stakedym/MsgConfirmUnbondedTokenSweep","value":{"operator":"stride1v9jxgu33kfsgr5","record_id":"100","tx_hash":"valid_hash"}}`
-	require.Equal(t, expected, string(res))
 }
 
 // ----------------------------------------------
@@ -432,9 +391,9 @@ func TestMsgUpdateInnerRedemptionRateBounds_ValidateBasic(t *testing.T) {
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
 
-	validUpperBound := sdk.NewDec(2)
-	validLowerBound := sdk.NewDec(1)
-	invalidLowerBound := sdk.NewDec(2)
+	validUpperBound := sdkmath.LegacyNewDec(2)
+	validLowerBound := sdkmath.LegacyNewDec(1)
+	invalidLowerBound := sdkmath.LegacyNewDec(2)
 
 	tests := []struct {
 		name string

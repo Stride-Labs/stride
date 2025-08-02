@@ -20,7 +20,7 @@ specifiers:
   jest: 29.7.0
   osmojs: 16.15.0
   prettier: 3.3.3
-  stridejs: github:Stride-Labs/stridejs#main
+  stridejs: github:Stride-Labs/stridejs#7ea5e6d
   typescript: 5.5.3
   vitest: 2.1.9
 
@@ -36,7 +36,7 @@ dependencies:
   jest: 29.7.0
   osmojs: 16.15.0
   prettier: 3.3.3
-  stridejs: github.com/Stride-Labs/stridejs/e7522d349ae7a2e2a7a370b47d01a2a85e857e7a
+  stridejs: github.com/Stride-Labs/stridejs/7ea5e6d
   typescript: 5.5.3
   vitest: 2.1.9
 
@@ -3552,10 +3552,10 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
-  github.com/Stride-Labs/stridejs/e7522d349ae7a2e2a7a370b47d01a2a85e857e7a:
-    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/e7522d349ae7a2e2a7a370b47d01a2a85e857e7a}
+  github.com/Stride-Labs/stridejs/7ea5e6d:
+    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/7ea5e6d}
     name: stridejs
-    version: 0.14.1
+    version: 0.13.0
     dependencies:
       '@cosmjs/amino': 0.33.0
       '@cosmjs/encoding': 0.33.0

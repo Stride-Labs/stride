@@ -1,21 +1,12 @@
 # syntax = docker/dockerfile:1
 
-ARG GO_VERSION="1.22"
-ARG RUNNER_IMAGE_VERSION="3.18"
+ARG GO_VERSION="1.23"
+ARG RUNNER_IMAGE_VERSION="3.20"
 
 FROM golang:${GO_VERSION}-alpine${RUNNER_IMAGE_VERSION} AS builder
 
 WORKDIR /opt
 RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base curl
-
-# Manually installing 1.22.11 because we need to be on 3.18 to avoid wasm SIGABRT
-# https://github.com/CosmWasm/wasmvm/issues/523
-RUN ARCH=$(uname -m) \
-    && if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; elif [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi \
-    && curl -fsSL https://go.dev/dl/go1.22.11.linux-$ARCH.tar.gz | tar -C /usr/local -xz
-
-WORKDIR /opt
-RUN apk add --no-cache make git gcc musl-dev openssl-dev linux-headers ca-certificates build-base
 
 COPY go.mod .
 COPY go.sum .
@@ -24,9 +15,10 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/go/pkg/mod \
     go mod download
 
-RUN WASMVM_VERSION=$(cat go.mod | grep github.com/CosmWasm/wasmvm | awk '{print $2}') \
-    && wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
-    -O /lib/libwasmvm_muslc.a
+RUN DOWNLOAD_URL=https://github.com/CosmWasm/wasmvm/releases/download \
+    && WASMVM_VERSION=$(cat go.mod | grep github.com/CosmWasm/wasmvm/v2 | awk '{print $2}') \
+    && wget ${DOWNLOAD_URL}/$WASMVM_VERSION/libwasmvm_muslc.x86_64.a -O /lib/libwasmvm_muslc.x86_64.a \
+    && wget ${DOWNLOAD_URL}/$WASMVM_VERSION/libwasmvm_muslc.aarch64.a -O /lib/libwasmvm_muslc.aarch64.a 
 
 COPY . .
 

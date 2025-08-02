@@ -12,9 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
@@ -197,7 +197,7 @@ func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidSta
 	hostZone := lsmLiquidStake.HostZone
 	validator := lsmLiquidStake.Validator
 
-	liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
+	liquidStakedTokens := sdkmath.LegacyNewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
 	stAmount := (liquidStakedTokens.Quo(hostZone.RedemptionRate)).TruncateInt()
 
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
@@ -209,8 +209,8 @@ func (k Keeper) CalculateLSMStToken(liquidStakedShares sdkmath.Int, lsmLiquidSta
 // Determines the new slash query checkpoint, by mulitplying the query threshold percent by the current TVL
 func (k Keeper) GetUpdatedSlashQueryCheckpoint(ctx sdk.Context, totalDelegations sdkmath.Int) sdkmath.Int {
 	params := k.GetParams(ctx)
-	queryThreshold := sdk.NewDecWithPrec(utils.UintToInt(params.ValidatorSlashQueryThreshold), 2) // percentage
-	checkpoint := queryThreshold.Mul(sdk.NewDecFromInt(totalDelegations)).TruncateInt()
+	queryThreshold := sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.ValidatorSlashQueryThreshold), 2) // percentage
+	checkpoint := queryThreshold.Mul(sdkmath.LegacyNewDecFromInt(totalDelegations)).TruncateInt()
 	return checkpoint
 }
 

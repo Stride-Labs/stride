@@ -13,13 +13,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/Stride-Labs/stride/v27/testutil/network"
-	"github.com/Stride-Labs/stride/v27/testutil/nullify"
 	"github.com/Stride-Labs/stride/v27/x/icacallbacks/client/cli"
 	"github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 )
-
-// Prevent strconv unused error
-var _ = strconv.IntSize
 
 func networkWithCallbackDataObjects(t *testing.T, n int) (*network.Network, []types.CallbackData) {
 	t.Helper()
@@ -31,7 +27,6 @@ func networkWithCallbackDataObjects(t *testing.T, n int) (*network.Network, []ty
 		callbackData := types.CallbackData{
 			CallbackKey: strconv.Itoa(i),
 		}
-		nullify.Fill(&callbackData)
 		state.CallbackDataList = append(state.CallbackDataList, callbackData)
 	}
 	buf, err := cfg.Codec.MarshalJSON(&state)
@@ -87,8 +82,8 @@ func TestShowCallbackData(t *testing.T) {
 				require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 				require.NotNil(t, resp.CallbackData)
 				require.Equal(t,
-					nullify.Fill(&tc.obj),
-					nullify.Fill(&resp.CallbackData),
+					&tc.obj,
+					&resp.CallbackData,
 				)
 			}
 		})
@@ -124,8 +119,8 @@ func TestListCallbackData(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.CallbackData), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.CallbackData),
+				objs,
+				resp.CallbackData,
 			)
 		}
 	})
@@ -140,8 +135,8 @@ func TestListCallbackData(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.CallbackData), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.CallbackData),
+				objs,
+				resp.CallbackData,
 			)
 			next = resp.Pagination.NextKey
 		}
@@ -155,8 +150,8 @@ func TestListCallbackData(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(objs), int(resp.Pagination.Total))
 		require.ElementsMatch(t,
-			nullify.Fill(objs),
-			nullify.Fill(resp.CallbackData),
+			objs,
+			resp.CallbackData,
 		)
 	})
 }

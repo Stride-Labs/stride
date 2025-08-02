@@ -2,38 +2,29 @@ package keeper_test
 
 import (
 	"strconv"
-	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/Stride-Labs/stride/v27/testutil/keeper"
-	testkeeper "github.com/Stride-Labs/stride/v27/testutil/keeper"
-	"github.com/Stride-Labs/stride/v27/testutil/nullify"
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
 	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
-func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
+func (s *KeeperTestSuite) TestParamsQuery() {
 	params := types.DefaultParams()
-	keeper.SetParams(ctx, params)
+	s.App.StakeibcKeeper.SetParams(s.Ctx, params)
 
-	response, err := keeper.Params(wctx, &types.QueryParamsRequest{})
-	require.NoError(t, err)
-	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
+	response, err := s.App.StakeibcKeeper.Params(s.Ctx, &types.QueryParamsRequest{})
+	s.Require().NoError(err)
+	s.Require().Equal(&types.QueryParamsResponse{Params: params}, response)
 }
 
-func TestHostZoneQuerySingle(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNHostZone(keeper, ctx, 2)
+func (s *KeeperTestSuite) TestHostZoneQuerySingle() {
+	msgs := s.createNHostZone(2)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetHostZoneRequest
@@ -60,25 +51,23 @@ func TestHostZoneQuerySingle(t *testing.T) {
 			err:  status.Error(codes.InvalidArgument, "invalid request"),
 		},
 	} {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.HostZone(wctx, tc.request)
+		s.Run(tc.desc, func() {
+			response, err := s.App.StakeibcKeeper.HostZone(s.Ctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t,
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+				s.Require().NoError(err)
+				s.Require().Equal(
+					tc.response,
+					response,
 				)
 			}
 		})
 	}
 }
 
-func TestHostZoneQueryPaginated(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNHostZone(keeper, ctx, 5)
+func (s *KeeperTestSuite) TestHostZoneQueryPaginated() {
+	msgs := s.createNHostZone(5)
 
 	request := func(next []byte, offset, limit uint64, total bool) *types.QueryAllHostZoneRequest {
 		return &types.QueryAllHostZoneRequest{
@@ -90,63 +79,58 @@ func TestHostZoneQueryPaginated(t *testing.T) {
 			},
 		}
 	}
-	t.Run("ByOffset", func(t *testing.T) {
+	s.Run("ByOffset", func() {
 		step := 2
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.HostZoneAll(wctx, request(nil, uint64(i), uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.HostZone), step)
-			require.Subset(t,
-				nullify.Fill(msgs),
-				nullify.Fill(resp.HostZone),
+			resp, err := s.App.StakeibcKeeper.HostZoneAll(s.Ctx, request(nil, uint64(i), uint64(step), false))
+			s.Require().NoError(err)
+			s.Require().LessOrEqual(len(resp.HostZone), step)
+			s.Require().Subset(
+				msgs,
+				resp.HostZone,
 			)
 		}
 	})
-	t.Run("ByKey", func(t *testing.T) {
+	s.Run("ByKey", func() {
 		step := 2
 		var next []byte
 		for i := 0; i < len(msgs); i += step {
-			resp, err := keeper.HostZoneAll(wctx, request(next, 0, uint64(step), false))
-			require.NoError(t, err)
-			require.LessOrEqual(t, len(resp.HostZone), step)
-			require.Subset(t,
-				nullify.Fill(msgs),
-				nullify.Fill(resp.HostZone),
+			resp, err := s.App.StakeibcKeeper.HostZoneAll(s.Ctx, request(next, 0, uint64(step), false))
+			s.Require().NoError(err)
+			s.Require().LessOrEqual(len(resp.HostZone), step)
+			s.Require().Subset(
+				msgs,
+				resp.HostZone,
 			)
 			next = resp.Pagination.NextKey
 		}
 	})
-	t.Run("Total", func(t *testing.T) {
-		resp, err := keeper.HostZoneAll(wctx, request(nil, 0, 0, true))
-		require.NoError(t, err)
-		require.Equal(t, len(msgs), int(resp.Pagination.Total))
-		require.ElementsMatch(t,
-			nullify.Fill(msgs),
-			nullify.Fill(resp.HostZone),
+	s.Run("Total", func() {
+		resp, err := s.App.StakeibcKeeper.HostZoneAll(s.Ctx, request(nil, 0, 0, true))
+		s.Require().NoError(err)
+		s.Require().Equal(len(msgs), int(resp.Pagination.Total))
+		s.Require().ElementsMatch(
+			msgs,
+			resp.HostZone,
 		)
 	})
-	t.Run("InvalidRequest", func(t *testing.T) {
-		_, err := keeper.HostZoneAll(wctx, nil)
-		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
+	s.Run("InvalidRequest", func() {
+		_, err := s.App.StakeibcKeeper.HostZoneAll(s.Ctx, nil)
+		s.Require().ErrorIs(err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
 }
 
-func TestValidatorQuery(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-
+func (s *KeeperTestSuite) TestValidatorQuery() {
 	validatorsByHostZone := make(map[string][]*types.Validator)
 	validators := []*types.Validator{}
-	nullify.Fill(&validators)
 
 	chainId := "GAIA"
 	hostZone := &types.HostZone{
 		ChainId:    chainId,
 		Validators: validators,
 	}
-	nullify.Fill(&hostZone)
 	validatorsByHostZone[chainId] = validators
-	keeper.SetHostZone(ctx, *hostZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, *hostZone)
 
 	for _, tc := range []struct {
 		desc     string
@@ -164,25 +148,22 @@ func TestValidatorQuery(t *testing.T) {
 			err:  status.Error(codes.InvalidArgument, "invalid request"),
 		},
 	} {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.Validators(wctx, tc.request)
+		s.Run(tc.desc, func() {
+			response, err := s.App.StakeibcKeeper.Validators(s.Ctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t,
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+				s.Require().NoError(err)
+				s.Require().Equal(
+					tc.response,
+					response,
 				)
 			}
 		})
 	}
 }
 
-func TestAddressUnbondings(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-
+func (s *KeeperTestSuite) TestAddressUnbondings() {
 	// Setup DayEpoch Tracker for current epoch 100
 	const nanosecondsInDay = 86400000000000
 	const testTimeNanos = 1704067200000000000 // 2024-01-01 00:00:00 is start of epoch 100
@@ -192,19 +173,19 @@ func TestAddressUnbondings(t *testing.T) {
 		NextEpochStartTime: testTimeNanos + nanosecondsInDay,
 		Duration:           nanosecondsInDay,
 	}
-	keeper.SetEpochTracker(ctx, dayEpochTracker)
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
 
 	// Setup HostZones with different unbonding periods
 	cosmosZone := types.HostZone{
 		ChainId:         "cosmos",
 		UnbondingPeriod: 21,
 	}
-	keeper.SetHostZone(ctx, cosmosZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, cosmosZone)
 	strideZone := types.HostZone{
 		ChainId:         "stride",
 		UnbondingPeriod: 9, // just so different unbonding period
 	}
-	keeper.SetHostZone(ctx, strideZone)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, strideZone)
 
 	// Setup some epoch unbonding records to test against
 	for _, epochUnbondingRecord := range []*recordtypes.EpochUnbondingRecord{
@@ -238,7 +219,7 @@ func TestAddressUnbondings(t *testing.T) {
 			},
 		},
 	} {
-		keeper.RecordsKeeper.SetEpochUnbondingRecord(ctx, *epochUnbondingRecord)
+		s.App.StakeibcKeeper.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, *epochUnbondingRecord)
 	}
 
 	// Setup corresponding user unbonding records to test with
@@ -246,7 +227,7 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "stride.101.strideAddrUserA",
 			Receiver:          "strideAddrUserA",
-			NativeTokenAmount: sdk.NewInt(2000),
+			NativeTokenAmount: sdkmath.NewInt(2000),
 			Denom:             "ustrd",
 			HostZoneId:        "stride",
 			EpochNumber:       uint64(101),
@@ -255,7 +236,7 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "stride.110.strideAddrUserA",
 			Receiver:          "strideAddrUserA",
-			NativeTokenAmount: sdk.NewInt(5000),
+			NativeTokenAmount: sdkmath.NewInt(5000),
 			Denom:             "ustrd",
 			HostZoneId:        "stride",
 			EpochNumber:       uint64(110),
@@ -264,7 +245,7 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "stride.101.strideAddrUserB",
 			Receiver:          "strideAddrUserB",
-			NativeTokenAmount: sdk.NewInt(8500),
+			NativeTokenAmount: sdkmath.NewInt(8500),
 			Denom:             "ustrd",
 			HostZoneId:        "stride",
 			EpochNumber:       uint64(101),
@@ -273,23 +254,15 @@ func TestAddressUnbondings(t *testing.T) {
 		{
 			Id:                "cosmos.101.cosmosAddrUserA",
 			Receiver:          "cosmosAddrUserA",
-			NativeTokenAmount: sdk.NewInt(1200),
+			NativeTokenAmount: sdkmath.NewInt(1200),
 			Denom:             "uatom",
 			HostZoneId:        "cosmos",
 			EpochNumber:       uint64(101),
 			ClaimIsPending:    false,
 		},
 	} {
-		keeper.RecordsKeeper.SetUserRedemptionRecord(ctx, *userRedemptionRecord)
+		s.App.StakeibcKeeper.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, *userRedemptionRecord)
 	}
-
-	// Test cases:
-	// Single Address --> no redemption records found
-	// Single Address --> single redemption record found
-	// Single Address --> multiple redemption records across different epochs
-	// Multiple Addresses --> find record for only one address but not the others
-	// Multiple Addresses --> find user records for each, more than one for some
-	// Invalid query or address --> expected err case
 
 	for _, tc := range []struct {
 		desc     string
@@ -316,7 +289,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "cosmosAddrUserA",
 						Receiver:               "cosmosAddrUserA",
-						Amount:                 sdk.NewInt(1200),
+						Amount:                 sdkmath.NewInt(1200),
 						Denom:                  "uatom",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -335,7 +308,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(2000),
+						Amount:                 sdkmath.NewInt(2000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -344,7 +317,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(5000),
+						Amount:                 sdkmath.NewInt(5000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(110),
 						ClaimIsPending:         false,
@@ -363,7 +336,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserB",
 						Receiver:               "strideAddrUserB",
-						Amount:                 sdk.NewInt(8500),
+						Amount:                 sdkmath.NewInt(8500),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -382,7 +355,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(2000),
+						Amount:                 sdkmath.NewInt(2000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -391,7 +364,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "cosmosAddrUserA",
 						Receiver:               "cosmosAddrUserA",
-						Amount:                 sdk.NewInt(1200),
+						Amount:                 sdkmath.NewInt(1200),
 						Denom:                  "uatom",
 						EpochNumber:            uint64(101),
 						ClaimIsPending:         false,
@@ -400,7 +373,7 @@ func TestAddressUnbondings(t *testing.T) {
 					{
 						Address:                "strideAddrUserA",
 						Receiver:               "strideAddrUserA",
-						Amount:                 sdk.NewInt(5000),
+						Amount:                 sdkmath.NewInt(5000),
 						Denom:                  "ustrd",
 						EpochNumber:            uint64(110),
 						ClaimIsPending:         false,
@@ -418,13 +391,13 @@ func TestAddressUnbondings(t *testing.T) {
 			err:      status.Error(codes.InvalidArgument, "invalid request"),
 		},
 	} {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.AddressUnbondings(wctx, tc.request)
+		s.Run(tc.desc, func() {
+			response, err := s.App.StakeibcKeeper.AddressUnbondings(s.Ctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t,
+				s.Require().NoError(err)
+				s.Require().Equal(
 					tc.response,
 					response,
 				)
@@ -433,10 +406,8 @@ func TestAddressUnbondings(t *testing.T) {
 	}
 }
 
-func TestEpochTrackerQuerySingle(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNEpochTracker(keeper, ctx, 2)
+func (s *KeeperTestSuite) TestEpochTrackerQuerySingle() {
+	msgs := s.createNEpochTracker(2)
 	for _, tc := range []struct {
 		desc     string
 		request  *types.QueryGetEpochTrackerRequest
@@ -469,32 +440,30 @@ func TestEpochTrackerQuerySingle(t *testing.T) {
 			err:  status.Error(codes.InvalidArgument, "invalid request"),
 		},
 	} {
-		t.Run(tc.desc, func(t *testing.T) {
-			response, err := keeper.EpochTracker(wctx, tc.request)
+		s.Run(tc.desc, func() {
+			response, err := s.App.StakeibcKeeper.EpochTracker(s.Ctx, tc.request)
 			if tc.err != nil {
-				require.ErrorIs(t, err, tc.err)
+				s.Require().ErrorIs(err, tc.err)
 			} else {
-				require.NoError(t, err)
-				require.Equal(t,
-					nullify.Fill(tc.response),
-					nullify.Fill(response),
+				s.Require().NoError(err)
+				s.Require().Equal(
+					tc.response,
+					response,
 				)
 			}
 		})
 	}
 }
 
-func TestAllEpochTrackerQuery(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-	msgs := createNEpochTracker(keeper, ctx, 5)
+func (s *KeeperTestSuite) TestAllEpochTrackerQuery() {
+	msgs := s.createNEpochTracker(5)
 
-	resp, err := keeper.EpochTrackerAll(wctx, &types.QueryAllEpochTrackerRequest{})
-	require.NoError(t, err)
-	require.Len(t, resp.EpochTracker, 5)
-	require.Subset(t,
-		nullify.Fill(msgs),
-		nullify.Fill(resp.EpochTracker),
+	resp, err := s.App.StakeibcKeeper.EpochTrackerAll(s.Ctx, &types.QueryAllEpochTrackerRequest{})
+	s.Require().NoError(err)
+	s.Require().Len(resp.EpochTracker, 5)
+	s.Require().Subset(
+		msgs,
+		resp.EpochTracker,
 	)
 }
 
@@ -502,7 +471,7 @@ func (s *KeeperTestSuite) TestNextPacketSequenceQuery() {
 	portId := "transfer"
 	channelId := "channel-0"
 	sequence := uint64(10)
-	context := sdk.WrapSDKContext(s.Ctx)
+	context := s.Ctx
 
 	// Set a channel sequence
 	s.App.IBCKeeper.ChannelKeeper.SetNextSequenceSend(s.Ctx, portId, channelId, sequence)

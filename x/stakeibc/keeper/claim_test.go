@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	proto "github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
@@ -106,7 +106,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_Successful() {
 	redemptionRecordId := tc.initialState.redemptionRecordId
 	expectedRedemptionRecord := tc.initialState.redemptionRecord
 
-	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClaimUndelegatedTokens(s.Ctx, &tc.validMsg)
 	s.Require().NoError(err, "claim undelegated tokens")
 
 	actualRedemptionRecord, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, redemptionRecordId)
@@ -132,7 +132,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoUserRedemptionRecord() {
 	// Remove the user redemption record
 	s.App.RecordsKeeper.RemoveUserRedemptionRecord(s.Ctx, tc.initialState.redemptionRecordId)
 
-	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClaimUndelegatedTokens(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "unable to find claimable redemption record")
 }
 
@@ -143,7 +143,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotClaimable() {
 	alreadyClaimedRedemptionRecord.ClaimIsPending = true
 	s.App.RecordsKeeper.SetUserRedemptionRecord(s.Ctx, alreadyClaimedRedemptionRecord)
 
-	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClaimUndelegatedTokens(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "user redemption record GAIA.1.cosmos_RECEIVER is not claimable")
 }
 
@@ -153,7 +153,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_RecordNotFound() {
 	invalidMsg := tc.validMsg
 	invalidMsg.HostZoneId = "fake_host_zone"
 
-	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &invalidMsg)
+	_, err := s.GetMsgServer().ClaimUndelegatedTokens(s.Ctx, &invalidMsg)
 	s.Require().ErrorContains(err, "user redemption record fake_host_zone.1.cosmos_RECEIVER not found on host zone fake_host_zone")
 }
 
@@ -187,7 +187,7 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_NoEpochTracker() {
 	tc := s.SetupClaimUndelegatedTokens()
 	s.App.StakeibcKeeper.RemoveEpochTracker(s.Ctx, epochtypes.STRIDE_EPOCH)
 
-	_, err := s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err := s.GetMsgServer().ClaimUndelegatedTokens(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "epoch tracker not found for epoch stride_epoch")
 }
 
@@ -203,6 +203,6 @@ func (s *KeeperTestSuite) TestClaimUndelegatedTokens_HzuNotStatusTransferred() {
 	s.Require().NoError(err, "epoch unbonding record updated")
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, newEpochUnbondingRecord)
 
-	_, err = s.GetMsgServer().ClaimUndelegatedTokens(sdk.WrapSDKContext(s.Ctx), &tc.validMsg)
+	_, err = s.GetMsgServer().ClaimUndelegatedTokens(s.Ctx, &tc.validMsg)
 	s.Require().ErrorContains(err, "host zone unbonding has status: EXIT_TRANSFER_QUEUE, requires status CLAIMABLE")
 }

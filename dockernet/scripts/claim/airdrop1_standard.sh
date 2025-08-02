@@ -45,25 +45,25 @@ sleep 5
 # AIRDROP CLAIMS
 # Check balances before claims
 echo -e "\nInitial balance before claim [1000000000ustrd expected]:"
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+$STRIDE_MAIN_CMD query bank balance stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr ustrd
 # NOTE: You can claim here using the CLI, or from the frontend!
 # Claim 20% of the free tokens
 echo -e "\nClaiming free amount..."
 $STRIDE_MAIN_CMD tx claim claim-free-amount --from airdrop-test --gas 400000 -y | TRIM_TX
 sleep 5
 echo -e "\nBalance after claim [1000120000ustrd expected]:" 
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+$STRIDE_MAIN_CMD query bank balance stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr ustrd
 
 # Stake, to claim another 20%
 echo -e "\nStaking..."
 $STRIDE_MAIN_CMD tx staking delegate stridevaloper1nnurja9zt97huqvsfuartetyjx63tc5zrj5x9f 100ustrd --from airdrop-test --gas 400000 -y | TRIM_TX
 sleep 5
 echo -e "\nBalance after stake [1000239900ustrd expected]:" 
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+$STRIDE_MAIN_CMD query bank balance stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr ustrd
 # Liquid stake, to claim the final 60% of tokens
 echo -e "\nLiquid staking..."
 $STRIDE_MAIN_CMD tx stakeibc liquid-stake 1000 uatom --from airdrop-test --gas 400000 -y | TRIM_TX
 sleep 5
 echo -e "\nBalance after liquid stake [1000599900ustrd expected]:" 
-$STRIDE_MAIN_CMD query bank balances stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr --denom ustrd
+$STRIDE_MAIN_CMD query bank balance stride1nf6v2paty9m22l3ecm7dpakq2c92ueyununayr ustrd
 

@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -8,7 +10,7 @@ import (
 
 type BankKeeper interface {
 	BlockedAddr(addr sdk.AccAddress) bool
-	SendCoins(ctx sdk.Context, senderAddr sdk.AccAddress, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoins(context context.Context, senderAddr sdk.AccAddress, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
 // SafeSendCoins transfers coins from one account to another with additional safety checks.

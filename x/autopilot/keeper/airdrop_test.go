@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -328,7 +330,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			oldClaimRecord := claimtypes.ClaimRecord{
 				AirdropIdentifier: evmosAirdropId,
 				Address:           evmosAddressKeyString,
-				Weight:            sdk.NewDec(10),
+				Weight:            sdkmath.LegacyNewDec(10),
 				ActionCompleted:   []bool{false, false, false},
 			}
 			err = s.App.ClaimKeeper.SetClaimRecord(s.Ctx, oldClaimRecord)

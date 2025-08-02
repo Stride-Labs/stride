@@ -1,6 +1,8 @@
 package types
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -11,7 +13,7 @@ func NewMultiStakeIBCHooks(hooks ...StakeIBCHooks) MultiStakeIBCHooks {
 	return hooks
 }
 
-func (h MultiStakeIBCHooks) AfterLiquidStake(ctx sdk.Context, addr sdk.AccAddress) {
+func (h MultiStakeIBCHooks) AfterLiquidStake(ctx context.Context, addr sdk.AccAddress) {
 	for i := range h {
 		h[i].AfterLiquidStake(ctx, addr)
 	}

@@ -3,7 +3,8 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/cast"
 
 	errorsmod "cosmossdk.io/errors"
@@ -12,8 +13,8 @@ import (
 
 	"github.com/Stride-Labs/stride/v27/x/mint/types"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -141,8 +142,8 @@ func (k Keeper) MintCoins(ctx sdk.Context, newCoins sdk.Coins) error {
 }
 
 // GetProportions gets the balance of the `MintedDenom` from minted coins and returns coins according to the `AllocationRatio`.
-func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdk.Dec) sdk.Coin {
-	return sdk.NewCoin(mintedCoin.Denom, sdk.NewDecFromInt(mintedCoin.Amount).Mul(ratio).TruncateInt())
+func (k Keeper) GetProportions(ctx sdk.Context, mintedCoin sdk.Coin, ratio sdkmath.LegacyDec) sdk.Coin {
+	return sdk.NewCoin(mintedCoin.Denom, sdkmath.LegacyNewDecFromInt(mintedCoin.Amount).Mul(ratio).TruncateInt())
 }
 
 const (
@@ -192,8 +193,8 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 
 	// check: remaining coins should be less than 5% of minted coins
 	remainingBal := remainingCoins.AmountOf(sdk.DefaultBondDenom)
-	thresh := sdk.NewDec(5).Quo(sdk.NewDec(100))
-	if sdk.NewDecFromInt(remainingBal).Quo(sdk.NewDecFromInt(mintedCoin.Amount)).GT(thresh) {
+	thresh := sdkmath.LegacyNewDec(5).Quo(sdkmath.LegacyNewDec(100))
+	if sdkmath.LegacyNewDecFromInt(remainingBal).Quo(sdkmath.LegacyNewDecFromInt(mintedCoin.Amount)).GT(thresh) {
 		return errorsmod.Wrapf(sdkerrors.ErrInsufficientFunds,
 			"Failed to divvy up mint module rewards fully -- remaining coins should be LT 5pct of total, instead are %#v/%#v",
 			remainingCoins, remainingBal)

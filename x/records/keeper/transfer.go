@@ -6,7 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
@@ -14,16 +14,14 @@ import (
 	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
 
-var (
-	// Timeout for the IBC transfer of the LSM Token to the host zone
-	LSMDepositTransferTimeout = time.Hour * 24 // 1 day
-)
+// Timeout for the IBC transfer of the LSM Token to the host zone
+var LSMDepositTransferTimeout = time.Hour * 24 // 1 day
 
 // Transfers native tokens, accumulated from normal liquid stakes, to the host zone
 // This is invoked epochly
 func (k Keeper) IBCTransferNativeTokens(ctx sdk.Context, msg *transfertypes.MsgTransfer, depositRecord types.DepositRecord) error {
 	// Submit IBC transfer
-	msgTransferResponse, err := k.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), msg)
+	msgTransferResponse, err := k.TransferKeeper.Transfer(ctx, msg)
 	if err != nil {
 		return err
 	}
@@ -80,7 +78,7 @@ func (k Keeper) IBCTransferLSMToken(
 	}
 
 	// Send LSM Token to host zone via IBC transfer
-	msgTransferResponse, err := k.TransferKeeper.Transfer(sdk.WrapSDKContext(ctx), &transferMsg)
+	msgTransferResponse, err := k.TransferKeeper.Transfer(ctx, &transferMsg)
 	if err != nil {
 		return err
 	}

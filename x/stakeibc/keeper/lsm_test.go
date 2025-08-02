@@ -5,9 +5,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	recordstypes "github.com/Stride-Labs/stride/v27/x/records/types"
 	"github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 		ChainId:           HostChainId,
 		TransferChannelId: ibctesting.FirstChannelID,
 		Validators: []*types.Validator{
-			{Address: ValAddress, SlashQueryInProgress: false, SharesToTokensRate: sdk.OneDec()},
+			{Address: ValAddress, SlashQueryInProgress: false, SharesToTokensRate: sdkmath.LegacyOneDec()},
 		},
 		LsmLiquidStakeEnabled: true,
 	}
@@ -41,7 +41,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Fund the user so they have sufficient balance
 	liquidStaker := s.TestAccs[0]
-	stakeAmount := sdk.NewInt(1_000_000)
+	stakeAmount := sdkmath.NewInt(1_000_000)
 	s.FundAccount(liquidStaker, sdk.NewCoin(ibcDenom, stakeAmount))
 
 	// Prepare a valid message and the expected associated response
@@ -214,7 +214,7 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	validators := []*types.Validator{{
 		Address:              valAddress,
 		SlashQueryInProgress: false,
-		SharesToTokensRate:   sdk.OneDec(),
+		SharesToTokensRate:   sdkmath.LegacyOneDec(),
 	}}
 
 	// Successful lookup
@@ -237,7 +237,7 @@ func (s *KeeperTestSuite) TestGetValidatorFromLSMTokenDenom() {
 	validatorWithSlashQuery := []*types.Validator{{
 		Address:              valAddress,
 		SlashQueryInProgress: true,
-		SharesToTokensRate:   sdk.OneDec(),
+		SharesToTokensRate:   sdkmath.LegacyOneDec(),
 	}}
 	_, err = s.App.StakeibcKeeper.GetValidatorFromLSMTokenDenom(denom, validatorWithSlashQuery)
 	s.Require().ErrorContains(err, "validator cosmosvaloperXXX was slashed")
@@ -255,44 +255,44 @@ func (s *KeeperTestSuite) TestCalculateLSMStToken() {
 	testCases := []struct {
 		name                        string
 		liquidStakedShares          sdkmath.Int
-		validatorSharesToTokensRate sdk.Dec
-		redemptionRate              sdk.Dec
+		validatorSharesToTokensRate sdkmath.LegacyDec
+		redemptionRate              sdkmath.LegacyDec
 		expectedStAmount            sdkmath.Int
 	}{
 		// stTokenAmount = liquidStakedShares * validatorSharesToTokensRate / redemptionRate
 		{
 			name:                        "one sharesToTokens rate and redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
-			validatorSharesToTokensRate: sdk.OneDec(),
-			redemptionRate:              sdk.OneDec(),
+			validatorSharesToTokensRate: sdkmath.LegacyOneDec(),
+			redemptionRate:              sdkmath.LegacyOneDec(),
 			expectedStAmount:            sdkmath.NewInt(1000),
 		},
 		{
 			name:                        "one sharesToTokens rate, non-one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
-			validatorSharesToTokensRate: sdk.OneDec(),
-			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			validatorSharesToTokensRate: sdkmath.LegacyOneDec(),
+			redemptionRate:              sdkmath.LegacyMustNewDecFromStr("1.25"),
 			expectedStAmount:            sdkmath.NewInt(800), // 1000 * 1 / 1.25 = 800
 		},
 		{
 			name:                        "non-one sharesToTokens rate, one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
-			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
-			redemptionRate:              sdk.OneDec(),
+			validatorSharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.75"),
+			redemptionRate:              sdkmath.LegacyOneDec(),
 			expectedStAmount:            sdkmath.NewInt(750), // 1000 * 0.75 / 1
 		},
 		{
 			name:                        "non-one sharesToTokens rate, non-one redemption rate",
 			liquidStakedShares:          sdkmath.NewInt(1000),
-			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.75"),
-			redemptionRate:              sdk.MustNewDecFromStr("1.25"),
+			validatorSharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.75"),
+			redemptionRate:              sdkmath.LegacyMustNewDecFromStr("1.25"),
 			expectedStAmount:            sdkmath.NewInt(600), // 1000 * 0.75 / 1.25 = 600
 		},
 		{
 			name:                        "decimal to integer truncation",
 			liquidStakedShares:          sdkmath.NewInt(3333),
-			validatorSharesToTokensRate: sdk.MustNewDecFromStr("0.238498282349"),
-			redemptionRate:              sdk.MustNewDecFromStr("1.979034798243"),
+			validatorSharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.238498282349"),
+			redemptionRate:              sdkmath.LegacyMustNewDecFromStr("1.979034798243"),
 			expectedStAmount:            sdkmath.NewInt(401), // equals 401.667
 		},
 	}
@@ -331,8 +331,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 999 / 1000 = Interval #0 (no query)
 			name:                "case #1 - short of checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(900),
-			stakeAmount:         sdk.NewInt(99),
+			progress:            sdkmath.NewInt(900),
+			stakeAmount:         sdkmath.NewInt(99),
 			expectedShouldQuery: false,
 		},
 		{
@@ -342,8 +342,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 1000 / 1000 = Interval #1 (query)
 			name:                "case #1 - at checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(900),
-			stakeAmount:         sdk.NewInt(100),
+			progress:            sdkmath.NewInt(900),
+			stakeAmount:         sdkmath.NewInt(100),
 			expectedShouldQuery: true,
 		},
 		{
@@ -353,8 +353,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 1001 / 1000 = Interval #1 (query)
 			name:                "case #1 - past checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(900),
-			stakeAmount:         sdk.NewInt(101),
+			progress:            sdkmath.NewInt(900),
+			stakeAmount:         sdkmath.NewInt(101),
 			expectedShouldQuery: true,
 		},
 		{
@@ -364,8 +364,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 11,999 / 1000 = Interval #11 (query)
 			name:                "case #2 - short of checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(11_900),
-			stakeAmount:         sdk.NewInt(99),
+			progress:            sdkmath.NewInt(11_900),
+			stakeAmount:         sdkmath.NewInt(99),
 			expectedShouldQuery: false,
 		},
 		{
@@ -375,8 +375,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 12,000 / 1000 = Interval #12 (query)
 			name:                "case #2 - at checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(11_900),
-			stakeAmount:         sdk.NewInt(100),
+			progress:            sdkmath.NewInt(11_900),
+			stakeAmount:         sdkmath.NewInt(100),
 			expectedShouldQuery: true,
 		},
 		{
@@ -386,8 +386,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 12,001 / 1000 = Interval #12 (query)
 			name:                "case #2 - past checkpoint",
 			checkpoint:          sdkmath.NewInt(1000),
-			progress:            sdk.NewInt(11_900),
-			stakeAmount:         sdk.NewInt(101),
+			progress:            sdkmath.NewInt(11_900),
+			stakeAmount:         sdkmath.NewInt(101),
 			expectedShouldQuery: true,
 		},
 		{
@@ -397,8 +397,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 41,339 / 6,890 = Interval #5 (no query)
 			name:                "case #3 - short of checkpoint",
 			checkpoint:          sdkmath.NewInt(6890),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(101),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(101),
 			expectedShouldQuery: false,
 		},
 		{
@@ -408,8 +408,8 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 41,440 / 6,890 = Interval #6 (query)
 			name:                "case #3 - at checkpoint",
 			checkpoint:          sdkmath.NewInt(6890),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(340),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(340),
 			expectedShouldQuery: true,
 		},
 		{
@@ -419,16 +419,16 @@ func (s *KeeperTestSuite) TestShouldCheckIfValidatorWasSlashed() {
 			// New Interval: 41,441 / 6,890 = Interval #6 (query)
 			name:                "case #3 - past checkpoint",
 			checkpoint:          sdkmath.NewInt(6890),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(341),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(341),
 			expectedShouldQuery: true,
 		},
 		{
 			// Checkpoint of 0 - should not issue query
 			name:                "threshold of 0",
 			checkpoint:          sdkmath.ZeroInt(),
-			progress:            sdk.NewInt(41_000),
-			stakeAmount:         sdk.NewInt(340),
+			progress:            sdkmath.NewInt(41_000),
+			stakeAmount:         sdkmath.NewInt(340),
 			expectedShouldQuery: false,
 		},
 	}
@@ -532,7 +532,6 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 			recordstypes.LSMTokenDeposit_TRANSFER_QUEUE,
 			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		} {
-
 			for i, shouldSucceed := range []bool{true, false} {
 				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
 				depositKey := fmt.Sprintf("%s-%s", chainId, denom)
@@ -604,9 +603,9 @@ func (s *KeeperTestSuite) TestDetokenizeLSMDeposit() {
 	initalDeposit := recordstypes.LSMTokenDeposit{
 		ChainId: HostChainId,
 		Denom:   denom,
-		Amount:  sdk.NewInt(1000),
+		Amount:  sdkmath.NewInt(1000),
 		Status:  recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
-		StToken: sdk.NewCoin(StAtom, sdk.OneInt()),
+		StToken: sdk.NewCoin(StAtom, sdkmath.OneInt()),
 	}
 	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, initalDeposit)
 
@@ -678,7 +677,6 @@ func (s *KeeperTestSuite) TestDetokenizeAllLSMDeposits() {
 			recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE,
 			recordstypes.LSMTokenDeposit_TRANSFER_IN_PROGRESS,
 		} {
-
 			for i := 0; i < 2; i++ {
 				denom := fmt.Sprintf("denom-starting-in-status-%s-%d", startingStatus.String(), i)
 				depositKey := fmt.Sprintf("%s-%s", chainId, denom)

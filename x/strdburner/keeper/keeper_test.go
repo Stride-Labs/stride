@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -22,7 +22,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
 
 	// Create a logger with accessible output
-	logger := log.NewTMLogger(&s.logBuffer)
+	logger := log.NewLogger(&s.logBuffer)
 	s.Ctx = s.Ctx.WithLogger(logger)
 }
 
@@ -39,7 +39,7 @@ func (s *KeeperTestSuite) TestGetStrdBurnerAddress() {
 func (s *KeeperTestSuite) TestSetAndGetTotalStrdBurned() {
 	// Test initial state (should be zero)
 	initialAmount := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
-	require.Equal(s.T(), math.ZeroInt(), initialAmount)
+	require.Equal(s.T(), sdkmath.ZeroInt(), initialAmount)
 
 	// Clear any potential existing value to explicitly test nil case
 	store := s.Ctx.KVStore(s.App.GetKey(types.StoreKey))
@@ -47,17 +47,17 @@ func (s *KeeperTestSuite) TestSetAndGetTotalStrdBurned() {
 
 	// Test getting value when none exists (should return zero)
 	nilAmount := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
-	require.Equal(s.T(), math.ZeroInt(), nilAmount)
+	require.Equal(s.T(), sdkmath.ZeroInt(), nilAmount)
 
 	// Test setting and getting a value
-	testAmount := math.NewInt(1000)
+	testAmount := sdkmath.NewInt(1000)
 	s.App.StrdBurnerKeeper.SetTotalStrdBurned(s.Ctx, testAmount)
 
 	storedAmount := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
 	require.Equal(s.T(), testAmount, storedAmount)
 
 	// Test updating the value
-	newAmount := math.NewInt(2000)
+	newAmount := sdkmath.NewInt(2000)
 	s.App.StrdBurnerKeeper.SetTotalStrdBurned(s.Ctx, newAmount)
 
 	updatedAmount := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)

@@ -1,8 +1,9 @@
 package types
 
 import (
+	context "context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
 )
@@ -11,30 +12,30 @@ import (
 // creating a x/claim keeper.
 type BankKeeper interface {
 	BlockedAddr(addr sdk.AccAddress) bool
-	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	SendCoins(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
-	SetModuleAccount(ctx sdk.Context, macc authtypes.ModuleAccountI)
-	GetAccount(sdk.Context, sdk.AccAddress) authtypes.AccountI
-	SetAccount(sdk.Context, authtypes.AccountI)
-	NewAccountWithAddress(sdk.Context, sdk.AccAddress) authtypes.AccountI
+	SetModuleAccount(ctx context.Context, macc sdk.ModuleAccountI)
+	GetAccount(context.Context, sdk.AccAddress) sdk.AccountI
+	SetAccount(context.Context, sdk.AccountI)
+	NewAccountWithAddress(context.Context, sdk.AccAddress) sdk.AccountI
 	// Fetch the sequence of an account at a specified address.
-	GetSequence(sdk.Context, sdk.AccAddress) (uint64, error)
+	GetSequence(context.Context, sdk.AccAddress) (uint64, error)
 }
 
 // DistrKeeper is the keeper of the distribution store
 type DistrKeeper interface {
-	FundCommunityPool(ctx sdk.Context, amount sdk.Coins, sender sdk.AccAddress) error
+	FundCommunityPool(ctx context.Context, amount sdk.Coins, sender sdk.AccAddress) error
 }
 
 // StakingKeeper expected staking keeper (noalias)
 type StakingKeeper interface {
 	// BondDenom - Bondable coin denomination
-	BondDenom(sdk.Context) string
+	BondDenom(context.Context) (string, error)
 }
 
 // EpochsKeeper expected epoch keeper

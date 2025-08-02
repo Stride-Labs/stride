@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -16,10 +15,10 @@ func TestConvertToNewValidator(t *testing.T) {
 	name := "name"
 	address := "address"
 	weight := uint64(3)
-	delegation := sdk.NewInt(4)
-	sharesToTokensRate := sdk.NewDec(5)
-	tvl := sdk.NewInt(1_000_000)
-	slashCheckpoint := sdk.NewInt(10_000) // 1% of TVL
+	delegation := sdkmath.NewInt(4)
+	sharesToTokensRate := sdkmath.LegacyNewDec(5)
+	tvl := sdkmath.NewInt(1_000_000)
+	slashCheckpoint := sdkmath.NewInt(10_000) // 1% of TVL
 
 	// First convert a validator with no exchange rate
 	// It should get filled in with the default
@@ -69,21 +68,21 @@ func TestConvertToNewHostZone(t *testing.T) {
 	delegationAddress := "delegation"
 	redemptionAddress := "redemption"
 
-	redemptionRate := sdk.NewDec(1)
-	lastRedemptionRate := sdk.NewDec(2)
-	minRedemptionRate := sdk.MustNewDecFromStr("0.95")
-	maxRedemptionRate := sdk.MustNewDecFromStr("1.25")
+	redemptionRate := sdkmath.LegacyNewDec(1)
+	lastRedemptionRate := sdkmath.LegacyNewDec(2)
+	minRedemptionRate := sdkmath.LegacyMustNewDecFromStr("0.95")
+	maxRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.25")
 	unbondingFrequency := uint64(4)
 	unbondingPeriod := uint64(21)
 
 	halted := true
 
 	valAddress := "val"
-	valDelegation := sdk.NewInt(5)
+	valDelegation := sdkmath.NewInt(5)
 	valWeight := uint64(6)
-	totalDelegations := sdk.NewInt(1_000_000)
-	slashCheckpoint := sdk.NewInt(10_000) // 1% of TVL
-	sharesToTokensRate := sdk.MustNewDecFromStr("0.99")
+	totalDelegations := sdkmath.NewInt(1_000_000)
+	slashCheckpoint := sdkmath.NewInt(10_000) // 1% of TVL
+	sharesToTokensRate := sdkmath.LegacyMustNewDecFromStr("0.99")
 
 	// The stakedBal field and validators get updated on the host zone
 	oldHostZone := oldstakeibctypes.HostZone{

@@ -19,8 +19,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
 	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v27/testutil"
@@ -64,11 +64,11 @@ func buildPublicKeysFromHomeDirectories(config *config.Config, homeDirectories s
 		if err != nil {
 			return nil, err
 		}
-		sdkPublicKey, err := cryptocodec.FromTmPubKeyInterface(pk)
+		sdkPublicKey, err := cryptocodec.FromCmtPubKeyInterface(pk)
 		if err != nil {
 			return nil, err
 		}
-		tmProtoPublicKey, err := cryptocodec.ToTmProtoPublicKey(sdkPublicKey)
+		tmProtoPublicKey, err := cryptocodec.ToCmtProtoPublicKey(sdkPublicKey)
 		if err != nil {
 			return nil, err
 		}
@@ -216,11 +216,11 @@ func (d DefaultGenesisReader) ReadGenesis(cmd *cobra.Command) (*GenesisData, err
 
 type GenesisData struct {
 	GenesisFile         string
-	GenDoc              *tmtypes.GenesisDoc
+	GenDoc              *genutiltypes.AppGenesis
 	AppState            map[string]json.RawMessage
 	ConsumerModuleState *ccvtypes.ConsumerGenesisState
 }
 
-func NewGenesisData(genesisFile string, genDoc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, consumerModuleState *ccvtypes.ConsumerGenesisState) *GenesisData {
+func NewGenesisData(genesisFile string, genDoc *genutiltypes.AppGenesis, appState map[string]json.RawMessage, consumerModuleState *ccvtypes.ConsumerGenesisState) *GenesisData {
 	return &GenesisData{GenesisFile: genesisFile, GenDoc: genDoc, AppState: appState, ConsumerModuleState: consumerModuleState}
 }

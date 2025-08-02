@@ -10,7 +10,7 @@ message AddressUnbonding {
   string receiver = 2;
   string unbonding_estimated_time = 3;
   string amount = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string denom = 5;

@@ -1,27 +1,28 @@
 package v7
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-
+	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	icahostkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/host/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	icahostkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	epochskeeper "github.com/Stride-Labs/stride/v27/x/epochs/keeper"
@@ -46,7 +47,8 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v7...")
 
 		// Add an hourly epoch which will be used by the rate limit store
@@ -107,7 +109,7 @@ func SetHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx sdk.
 // GetAllHostZone but with fixed historical stakeibc types
 func GetAllHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx sdk.Context) (list []newstakeibctypes.HostZone) {
 	store := prefix.NewStore(ctx.KVStore(stakeibcStoreKey), stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
@@ -142,7 +144,7 @@ func AddHourEpoch(ctx sdk.Context, k epochskeeper.Keeper) {
 func IncreaseStrideInflation(ctx sdk.Context, k mintkeeper.Keeper) {
 	ctx.Logger().Info("Increasing STRD inflation")
 
-	epochProvisions := sdk.NewDec(1_078_767_123)
+	epochProvisions := sdkmath.LegacyNewDec(1_078_767_123)
 	minter := minttypes.NewMinter(epochProvisions)
 	k.SetMinter(ctx, minter)
 }
@@ -187,8 +189,8 @@ func AddRedemptionRateSafetyChecks(cdc codec.Codec, storeKey storetypes.StoreKey
 	k.SetParams(ctx, params)
 
 	// Get default min/max redemption rate
-	defaultMinRedemptionRate := sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
-	defaultMaxRedemptionRate := sdk.NewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
+	defaultMinRedemptionRate := sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMinRedemptionRateThreshold), 2)
+	defaultMaxRedemptionRate := sdkmath.LegacyNewDecWithPrec(utils.UintToInt(params.DefaultMaxRedemptionRateThreshold), 2)
 
 	for _, hostZone := range GetAllHostZone(cdc, storeKey, ctx) {
 
@@ -231,7 +233,7 @@ func ExecuteProp153(ctx sdk.Context, k bankkeeper.Keeper) error {
 	if err != nil {
 		return err
 	}
-	amount := sdk.NewCoin(Ustrd, sdk.NewInt(STRDProp153SendAmount))
+	amount := sdk.NewCoin(Ustrd, sdkmath.NewInt(STRDProp153SendAmount))
 	if err := utils.SafeSendCoins(false, k, ctx, incentiveProgramAddress, strideFoundationAddress, sdk.NewCoins(amount)); err != nil {
 		return err
 	}

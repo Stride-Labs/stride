@@ -5,7 +5,7 @@
 	path = deps/relayer
 	url = https://github.com/cosmos/relayer.git
 [submodule "deps/gaia"]
-	# Commit: v12.0.0-rc0
+	# Commit: v18.1.0
 	path = deps/gaia
 	url = https://github.com/cosmos/gaia.git
 [submodule "deps/juno"]

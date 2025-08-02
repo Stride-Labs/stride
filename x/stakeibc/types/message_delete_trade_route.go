@@ -2,7 +2,6 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -10,10 +9,7 @@ import (
 
 const TypeMsgDeleteTradeRoute = "delete_trade_route"
 
-var (
-	_ sdk.Msg            = &MsgDeleteTradeRoute{}
-	_ legacytx.LegacyMsg = &MsgDeleteTradeRoute{}
-)
+var _ sdk.Msg = &MsgDeleteTradeRoute{}
 
 func (msg *MsgDeleteTradeRoute) Type() string {
 	return TypeMsgDeleteTradeRoute
@@ -21,11 +17,6 @@ func (msg *MsgDeleteTradeRoute) Type() string {
 
 func (msg *MsgDeleteTradeRoute) Route() string {
 	return RouterKey
-}
-
-func (msg *MsgDeleteTradeRoute) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgDeleteTradeRoute) GetSigners() []sdk.AccAddress {

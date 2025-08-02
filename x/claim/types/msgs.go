@@ -2,6 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -13,7 +14,7 @@ const TypeMsgSetAirdropAllocations = "set_airdrop_allocation"
 
 var _ sdk.Msg = &MsgSetAirdropAllocations{}
 
-func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdk.Dec) *MsgSetAirdropAllocations {
+func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdkmath.LegacyDec) *MsgSetAirdropAllocations {
 	return &MsgSetAirdropAllocations{
 		Allocator:         allocator,
 		AirdropIdentifier: airdropIdentifier,
@@ -36,11 +37,6 @@ func (msg *MsgSetAirdropAllocations) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{allocator}
-}
-
-func (msg *MsgSetAirdropAllocations) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
@@ -78,7 +74,7 @@ func (msg *MsgSetAirdropAllocations) ValidateBasic() error {
 	}
 
 	for _, weight := range msg.Weights {
-		if weight.Equal(sdk.NewDec(0)) {
+		if weight.Equal(sdkmath.LegacyNewDec(0)) {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid user weight")
 		}
 	}
@@ -113,13 +109,7 @@ func (msg *MsgClaimFreeAmount) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{allocator}
 }
 
-func (msg *MsgClaimFreeAmount) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgClaimFreeAmount) ValidateBasic() error {
-
 	_, err := sdk.AccAddressFromBech32(msg.User)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid user address (%s)", err)
@@ -159,11 +149,6 @@ func (msg *MsgCreateAirdrop) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{distributor}
-}
-
-func (msg *MsgCreateAirdrop) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgCreateAirdrop) ValidateBasic() error {
@@ -220,11 +205,6 @@ func (msg *MsgDeleteAirdrop) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{distributor}
-}
-
-func (msg *MsgDeleteAirdrop) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgDeleteAirdrop) ValidateBasic() error {

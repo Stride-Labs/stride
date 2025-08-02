@@ -52,6 +52,9 @@ Where proposal.json contains:
 			if err != nil {
 				return err
 			}
+			if err := proposal.ValidateBasic(); err != nil {
+				return err
+			}
 
 			from := clientCtx.GetFromAddress()
 
@@ -80,9 +83,6 @@ Where proposal.json contains:
 
 			msg, err := govtypes.NewMsgSubmitProposal(&proposal, deposit, from)
 			if err != nil {
-				return err
-			}
-			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -125,6 +125,9 @@ Where proposal.json contains:
 			if err != nil {
 				return err
 			}
+			if err := proposal.ValidateBasic(); err != nil {
+				return err
+			}
 
 			from := clientCtx.GetFromAddress()
 
@@ -153,9 +156,6 @@ Where proposal.json contains:
 
 			msg, err := govtypes.NewMsgSubmitProposal(&proposal, deposit, from)
 			if err != nil {
-				return err
-			}
-			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

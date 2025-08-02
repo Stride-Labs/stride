@@ -33,15 +33,6 @@ Run the tests
 make test
 ```
 
-Or run specific tests
-
-```bash
-make test-core
-make test-auction
-make test-autopilot
-make test-lsm
-```
-
 ## Making Changes
 
 ### Integrating Updated Protos
@@ -61,13 +52,6 @@ If the stride proto's change, we need to rebuild stridejs:
   - Move into the `client` folder (`cd client`)
   - Update the `stridejs` dependency commit hash in `package.json`
   - `pnpm i`
-
-### Debugging (VSCode)
-
-- Open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
-- Run the `Debug: Create JavaScript Debug Terminal` command
-- Set breakpoints
-- Run tests
 
 ### Adding a New Host Zone
 
@@ -98,18 +82,76 @@ make start
 
 - If running tests, add the chain config to `client/test/consts.ts` and update the `HOST_CHAIN_NAME` in `client/test/core.test.ts`
 
+### Debugging (VSCode)
+
+- Open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
+- Run the `Debug: Create JavaScript Debug Terminal` command
+- Set breakpoints
+- Run tests
+
+## Testing Flows
+
+### Integration Tests
+
+- Ensure the host chain config is in `client/test/consts.ts` and the `HOST_CHAIN_NAME` is set to the desired host zone
+
+- Start the network
+
+```bash
+make stop
+```
+
+- Run the tests
+
+```bash
+make test
+```
+
+- Remember to shut down the network after
+
+```bash
+make stop
+```
+
+### Testing an Upgrade
+
+- To test an upgrade, you'll start the Stride network on an old version, and then run a script to upgrade it to the latest
+- First, build the stride docker file with both the old and the new version (the new version will be whatever is checked out locally)
+
+```bash
+# e.g. UPGRADE_OLD_VERSION=v27.0.0 make build-stride-upgrade
+UPGRADE_OLD_VERSION={old-version-tag} make build-stride-upgrade
+```
+
+- Then start the network normally
+
+```bash
+make start
+```
+
+- Run the script to submit the upgrade proposal
+
+```bash
+make upgrade-stride
+```
+
+- View the chain logs and wait for the upgrade to pass. You should see it crash, switch binaries, and start back up
+
+```bash
+make stride-logs
+```
+
 ## Network Architecture
 
-### Features
+### Motivation
 
-- Pushes the network to a shared cluster to prevent issues from dissimilar local setups
-- Ability to start multiple networks in parallel
-- Provide a robust network that can double as a temporary testnet
-- Support for multiple nodes per network
-- Support for all host chain binaries with customizable genesis
-- Support for both go relayer
+- Move the workflow off local machines to reduce issues from dissimilar setups
+- Run tests on a stable network
+- Run multiple networks in parallel
+- Support multiple nodes per network
+- Support new host chain binaries easily
+- Support for both hermes and go relayer
 - Easy to write new tests (typescript)
-- Tests are idempotent
 
 ### Validator Startup Lifecycle
 

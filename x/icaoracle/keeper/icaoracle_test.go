@@ -2,8 +2,8 @@ package keeper_test
 
 import (
 	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v27/x/icaoracle/keeper"

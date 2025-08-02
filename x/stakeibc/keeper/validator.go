@@ -66,7 +66,7 @@ func (k Keeper) AddValidatorToHostZone(ctx sdk.Context, chainId string, validato
 		Delegation:                  sdkmath.ZeroInt(),
 		SlashQueryProgressTracker:   sdkmath.ZeroInt(),
 		SlashQueryCheckpoint:        checkpoint,
-		SharesToTokensRate:          sdk.OneDec(),
+		SharesToTokensRate:          sdkmath.LegacyOneDec(),
 		DelegationChangesInProgress: 0,
 		SlashQueryInProgress:        false,
 	})
@@ -262,7 +262,7 @@ func (k Keeper) CheckValidatorWeightsBelowCap(ctx sdk.Context, chainId string) e
 	}
 
 	// Check if any validator exceeds the cap
-	for _, address := range utils.StringMapKeys[float64](weightsByValidator) {
+	for _, address := range utils.StringMapKeys(weightsByValidator) {
 		weightPercentage := weightsByValidator[address] / totalWeight * 100
 		if weightPercentage > validatorWeightCap {
 			return errorsmod.Wrapf(types.ErrValidatorExceedsWeightCap,

@@ -12,7 +12,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -68,7 +67,7 @@ func CmdLiquidStake() *cobra.Command {
 		Short: "Broadcast message liquid-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAmount, found := sdk.NewIntFromString(args[0])
+			argAmount, found := sdkmath.NewIntFromString(args[0])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
@@ -102,7 +101,7 @@ func CmdLSMLiquidStake() *cobra.Command {
 		Short: "Broadcast message lsm-liquid-stake",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			amount, found := sdk.NewIntFromString(args[0])
+			amount, found := sdkmath.NewIntFromString(args[0])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
@@ -159,9 +158,9 @@ func CmdRegisterHostZone() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			minRedemptionRate := sdk.ZeroDec()
+			minRedemptionRate := sdkmath.LegacyZeroDec()
 			if minRedemptionRateStr != "" {
-				minRedemptionRate, err = sdk.NewDecFromStr(minRedemptionRateStr)
+				minRedemptionRate, err = sdkmath.LegacyNewDecFromStr(minRedemptionRateStr)
 				if err != nil {
 					return err
 				}
@@ -171,9 +170,9 @@ func CmdRegisterHostZone() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			maxRedemptionRate := sdk.ZeroDec()
+			maxRedemptionRate := sdkmath.LegacyZeroDec()
 			if maxRedemptionRateStr != "" {
-				maxRedemptionRate, err = sdk.NewDecFromStr(maxRedemptionRateStr)
+				maxRedemptionRate, err = sdkmath.LegacyNewDecFromStr(maxRedemptionRateStr)
 				if err != nil {
 					return err
 				}
@@ -227,7 +226,7 @@ func CmdRedeemStake() *cobra.Command {
 		Short: "Broadcast message redeem-stake",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			argAmount, found := sdk.NewIntFromString(args[0])
+			argAmount, found := sdkmath.NewIntFromString(args[0])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
@@ -652,7 +651,7 @@ func CmdClearBalance() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
-			argAmount, found := sdk.NewIntFromString(args[1])
+			argAmount, found := sdkmath.NewIntFromString(args[1])
 			if !found {
 				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
 			}
@@ -688,8 +687,8 @@ func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
-			minInnerRedemptionRate := sdk.MustNewDecFromStr(args[1])
-			maxInnerRedemptionRate := sdk.MustNewDecFromStr(args[2])
+			minInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr(args[1])
+			maxInnerRedemptionRate := sdkmath.LegacyMustNewDecFromStr(args[2])
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -756,7 +755,7 @@ If a 0.0 rebate or 0 token liquid stake is specified, the rebate will be deleted
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			chainId := args[0]
-			rebatePercentage, err := sdk.NewDecFromStr(args[1])
+			rebatePercentage, err := sdkmath.LegacyNewDecFromStr(args[1])
 			if err != nil {
 				return fmt.Errorf("unable to parse rebate percentage: %s", err.Error())
 			}

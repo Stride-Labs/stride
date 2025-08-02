@@ -8,7 +8,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	"github.com/Stride-Labs/stride/v27/x/stakedym/types"
@@ -49,7 +49,7 @@ func (k Keeper) LiquidStake(ctx sdk.Context, liquidStaker string, nativeAmount s
 	}
 
 	// Determine the amount of stTokens to mint using the redemption rate
-	stAmount := (sdk.NewDecFromInt(nativeAmount).Quo(hostZone.RedemptionRate)).TruncateInt()
+	stAmount := (sdkmath.LegacyNewDecFromInt(nativeAmount).Quo(hostZone.RedemptionRate)).TruncateInt()
 	if stAmount.IsZero() {
 		return stToken, errorsmod.Wrapf(stakeibctypes.ErrInsufficientLiquidStake,
 			"Liquid stake of %s%s would return 0 stTokens", nativeAmount.String(), hostZone.NativeTokenDenom)

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
@@ -61,6 +61,9 @@ func (k Keeper) HostZoneAll(c context.Context, req *types.QueryAllHostZoneReques
 		var hostZone types.HostZone
 		if err := k.cdc.Unmarshal(value, &hostZone); err != nil {
 			return err
+		}
+		if hostZone.Validators == nil {
+			hostZone.Validators = []*types.Validator{}
 		}
 
 		hostZones = append(hostZones, hostZone)

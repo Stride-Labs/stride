@@ -3,8 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
 	auctiontypes "github.com/Stride-Labs/stride/v27/x/auction/types"
 
@@ -21,14 +22,14 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 
 	// Get consumer redistribution fraction from CCV params
 	consumerRedistributionFracStr := k.ConsumerKeeper.GetConsumerParams(ctx).ConsumerRedistributionFraction
-	strideKeepRate, err := sdk.NewDecFromStr(consumerRedistributionFracStr)
+	strideKeepRate, err := sdkmath.LegacyNewDecFromStr(consumerRedistributionFracStr)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid strideKeepRate, cannot send stTokens to ICS provider: %s", err))
 		return
 	}
 
 	// Calculate Hub's keep rate (1 - strideKeepRate)
-	hubKeepRate := sdk.OneDec().Sub(strideKeepRate)
+	hubKeepRate := sdkmath.LegacyOneDec().Sub(strideKeepRate)
 
 	// Get all host zones and process their tokens in reward collector balance
 	for _, hz := range k.GetAllHostZone(ctx) {

@@ -92,6 +92,8 @@ export async function submitTxAndExpectSuccess(
     return {
       ...tx,
       ibcResponses: getTxIbcResponses(client.client, tx, 30_000, 50),
+    } as DeliverTxResponse & {
+      ibcResponses: Array<Promise<IbcResponse>>;
     };
   } else {
     const tx = await client.signAndBroadcast(msgs, txFee);
@@ -102,6 +104,8 @@ export async function submitTxAndExpectSuccess(
     expect(tx.code).toBe(0);
     sleep(3000);
 
-    return tx;
+    return tx as DeliverTxResponse & {
+      ibcResponses: Array<Promise<IbcResponse>>;
+    };
   }
 }

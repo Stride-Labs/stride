@@ -1,17 +1,19 @@
 package v19
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 )
@@ -36,7 +38,8 @@ func CreateUpgradeHandler(
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	wasmKeeper wasmkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v19...")
 
 		// Run module migrations first to add wasm to the store
@@ -83,8 +86,8 @@ func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
 func AddStTiaRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 	addRateLimitMsgTemplate := ratelimittypes.MsgAddRateLimit{
 		Denom:          StTiaDenom,
-		MaxPercentSend: sdk.NewInt(10),
-		MaxPercentRecv: sdk.NewInt(10),
+		MaxPercentSend: sdkmath.NewInt(10),
+		MaxPercentRecv: sdkmath.NewInt(10),
 		DurationHours:  RateLimitDurationHours,
 	}
 

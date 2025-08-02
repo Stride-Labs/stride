@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v27/x/icqoracle/types"
 )
@@ -16,7 +16,7 @@ func (s *KeeperTestSuite) createTokenPrices() []types.TokenPrice {
 		tokenPrice := types.TokenPrice{
 			BaseDenom:  fmt.Sprintf("base-%d", i),
 			QuoteDenom: fmt.Sprintf("quote-%d", i),
-			SpotPrice:  sdk.ZeroDec(),
+			SpotPrice:  sdkmath.LegacyZeroDec(),
 		}
 
 		tokenPrices = append(tokenPrices, tokenPrice)
@@ -61,7 +61,7 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 		baseDenom      string
 		quoteDenom     string
 		tokenPrices    []types.TokenPrice
-		expectedPrice  sdk.Dec
+		expectedPrice  sdkmath.LegacyDec
 		expectedErrors []string // array of errors from each search
 	}{
 		{
@@ -69,46 +69,46 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			baseDenom:  "denomA",
 			quoteDenom: "denomB",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "denomA", QuoteDenom: "denomB", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+				{BaseDenom: "denomA", QuoteDenom: "denomB", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: freshTime},
 			},
-			expectedPrice: sdk.MustNewDecFromStr("4.0"),
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("4.0"),
 		},
 		{
 			name:       "exact price found with inversion",
 			baseDenom:  "denomA",
 			quoteDenom: "denomB",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "denomB", QuoteDenom: "denomA", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+				{BaseDenom: "denomB", QuoteDenom: "denomA", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: freshTime},
 			},
-			expectedPrice: sdk.MustNewDecFromStr("0.25"), // 1 / 4
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("0.25"), // 1 / 4
 		},
 		{
 			name:       "price through common token",
 			baseDenom:  "base",
 			quoteDenom: "quote",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
-				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: freshTime},
 			},
-			expectedPrice: sdk.MustNewDecFromStr("0.5"), // 2 / 4
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("0.5"), // 2 / 4
 		},
 		{
 			name:       "price through common token with inversion",
 			baseDenom:  "quote",
 			quoteDenom: "base",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
-				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: freshTime},
 			},
-			expectedPrice: sdk.MustNewDecFromStr("2.0"), // (1/2) / (1/4)
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("2.0"), // (1/2) / (1/4)
 		},
 		{
 			name:       "no common price",
 			baseDenom:  "quote",
 			quoteDenom: "base",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "common1", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
-				{BaseDenom: "quote", QuoteDenom: "common2", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+				{BaseDenom: "base", QuoteDenom: "common1", SpotPrice: sdkmath.LegacyNewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common2", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: freshTime},
 			},
 			expectedErrors: []string{"foundCommonQuoteToken='false'", "foundCommonQuoteToken='false'"},
 		},
@@ -117,7 +117,7 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			baseDenom:  "base",
 			quoteDenom: "quote",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdk.NewDec(1), LastResponseTime: staleTime},
+				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdkmath.LegacyNewDec(1), LastResponseTime: staleTime},
 			},
 			expectedErrors: []string{
 				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='true', foundHasUninitializedPrice='false')",
@@ -129,7 +129,7 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			baseDenom:  "base",
 			quoteDenom: "quote",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdk.NewDec(0), LastResponseTime: freshTime},
+				{BaseDenom: "base", QuoteDenom: "quote", SpotPrice: sdkmath.LegacyNewDec(0), LastResponseTime: freshTime},
 			},
 			expectedErrors: []string{
 				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='true')",
@@ -141,20 +141,21 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			baseDenom:  "base",
 			quoteDenom: "quote",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(1), LastResponseTime: freshTime},
-				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(0), LastResponseTime: freshTime},
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(1), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(0), LastResponseTime: freshTime},
 			},
 			expectedErrors: []string{
 				"could not calculate price for baseToken='base'",
-				"could not calculate price for baseToken='quote'"},
+				"could not calculate price for baseToken='quote'",
+			},
 		},
 		{
 			name:       "stale base price through common token",
 			baseDenom:  "base",
 			quoteDenom: "quote",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: staleTime},
-				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(2), LastResponseTime: staleTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: freshTime},
 			},
 			expectedErrors: []string{
 				"foundCommonQuoteToken='true', foundBaseTokenStalePrice='true', foundQuoteTokenStalePrice='false'",
@@ -166,8 +167,8 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			baseDenom:  "quote",
 			quoteDenom: "base",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
-				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: staleTime},
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: staleTime},
 			},
 			expectedErrors: []string{
 				"foundCommonQuoteToken='true', foundBaseTokenStalePrice='true', foundQuoteTokenStalePrice='false'",
@@ -186,18 +187,19 @@ func (s *KeeperTestSuite) TestGetTokenPriceForQuoteDenom() {
 			baseDenom:  "base",
 			quoteDenom: "quote",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdk.NewDec(4), LastResponseTime: freshTime},
+				{BaseDenom: "quote", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(4), LastResponseTime: freshTime},
 			},
 			expectedErrors: []string{
 				"no price for baseDenom 'base'",
-				"no price for quoteDenom 'base' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='false')"},
+				"no price for quoteDenom 'base' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='false')",
+			},
 		},
 		{
 			name:       "no quote denom",
 			baseDenom:  "base",
 			quoteDenom: "quote",
 			tokenPrices: []types.TokenPrice{
-				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdk.NewDec(2), LastResponseTime: freshTime},
+				{BaseDenom: "base", QuoteDenom: "common", SpotPrice: sdkmath.LegacyNewDec(2), LastResponseTime: freshTime},
 			},
 			expectedErrors: []string{
 				"no price for quoteDenom 'quote' (foundAlreadyHasStalePrice='false', foundHasUninitializedPrice='false')",

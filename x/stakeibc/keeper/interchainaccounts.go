@@ -8,11 +8,11 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	epochstypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
@@ -183,7 +183,7 @@ func (k Keeper) SubmitTxs(
 		return 0, errorsmod.Wrapf(icatypes.ErrActiveChannelNotFound, "failed to retrieve active channel for port %s", portID)
 	}
 
-	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs)
+	data, err := icatypes.SerializeCosmosTx(k.cdc, protoMsgs, icatypes.EncodingProtobuf)
 	if err != nil {
 		return 0, err
 	}
@@ -228,7 +228,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 	timeoutTimestamp uint64,
 ) error {
 	// Serialize tx messages
-	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs)
+	txBz, err := icatypes.SerializeCosmosTx(k.cdc, msgs, icatypes.EncodingProtobuf)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to serialize cosmos transaction")
 	}

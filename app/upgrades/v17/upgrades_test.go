@@ -7,11 +7,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
+	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"github.com/stretchr/testify/suite"
 
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
 	icqtypes "github.com/Stride-Labs/stride/v27/x/interchainquery/types"
 	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
@@ -37,9 +38,9 @@ const (
 
 type UpdateRedemptionRateBounds struct {
 	ChainId                        string
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinOuterRedemptionRate sdk.Dec
-	ExpectedMaxOuterRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinOuterRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxOuterRedemptionRate sdkmath.LegacyDec
 }
 
 type UpdateRateLimits struct {
@@ -70,8 +71,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Setup store before upgrade
 	checkHostZonesAfterUpgrade := s.SetupHostZonesBeforeUpgrade()
 	checkMigrateUnbondingRecords := s.SetupMigrateUnbondingRecords()
@@ -81,7 +80,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkProp225AfterUpgrade := s.SetupProp225BeforeUpgrade()
 
 	// Submit upgrade and confirm handler succeeds
-	s.ConfirmUpgradeSucceededs("v17", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v17.UpgradeName)
 
 	// Check state after upgrade
 	checkHostZonesAfterUpgrade()
@@ -121,8 +120,8 @@ func (s *UpgradeTestSuite) checkCommunityPoolICAAccountsRegistered(chainId strin
 	expectedDepositPortId, _ := icatypes.NewControllerPortID(depositOwner)
 	expectedReturnPortId, _ := icatypes.NewControllerPortID(returnOwner)
 
-	depositPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedDepositPortId)
-	returnPortIdRegistered := s.App.ICAControllerKeeper.IsBound(s.Ctx, expectedReturnPortId)
+	_, depositPortIdRegistered := s.App.ScopedICAControllerKeeper.GetCapability(s.Ctx, host.PortPath(expectedDepositPortId))
+	_, returnPortIdRegistered := s.App.ScopedICAControllerKeeper.GetCapability(s.Ctx, host.PortPath(expectedReturnPortId))
 
 	s.Require().True(depositPortIdRegistered, "deposit port %s should have been bound", expectedDepositPortId)
 	s.Require().True(returnPortIdRegistered, "return port %s should have been bound", expectedReturnPortId)
@@ -138,7 +137,7 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 				{Address: "val1", SlashQueryInProgress: false},
 				{Address: "val2", SlashQueryInProgress: true},
 			},
-			RedemptionRate: sdk.MustNewDecFromStr("1.1"),
+			RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
 		},
 		{
 			ChainId:      v17.OsmosisChainId,
@@ -148,7 +147,7 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 				{Address: "val3", SlashQueryInProgress: true},
 				{Address: "val4", SlashQueryInProgress: false},
 			},
-			RedemptionRate: sdk.MustNewDecFromStr("1.2"),
+			RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.2"),
 		},
 		{
 			// This host is just added for the rate limit test
@@ -160,7 +159,7 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 				{Address: "val5", SlashQueryInProgress: true},
 				{Address: "val6", SlashQueryInProgress: false},
 			},
-			RedemptionRate: sdk.MustNewDecFromStr("1.0"),
+			RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.0"),
 		},
 	}
 
@@ -184,14 +183,14 @@ func (s *UpgradeTestSuite) SetupHostZonesBeforeUpgrade() func() {
 		gaiaHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v17.GaiaChainId)
 		s.Require().True(found)
 
-		s.Require().Equal(sdk.MustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer") // 1.1 - 5% = 1.045
-		s.Require().Equal(sdk.MustNewDecFromStr("1.210"), gaiaHostZone.MaxRedemptionRate, "gaia max outer") // 1.1 + 10% = 1.21
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.045"), gaiaHostZone.MinRedemptionRate, "gaia min outer") // 1.1 - 5% = 1.045
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.210"), gaiaHostZone.MaxRedemptionRate, "gaia max outer") // 1.1 + 10% = 1.21
 
 		osmoHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, "osmosis-1")
 		s.Require().True(found)
 
-		s.Require().Equal(sdk.MustNewDecFromStr("1.140"), osmoHostZone.MinRedemptionRate, "osmo min outer") // 1.2 - 5% = 1.140
-		s.Require().Equal(sdk.MustNewDecFromStr("1.344"), osmoHostZone.MaxRedemptionRate, "osmo max outer") // 1.2 + 12% = 1.344
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.140"), osmoHostZone.MinRedemptionRate, "osmo min outer") // 1.2 - 5% = 1.140
+		s.Require().Equal(sdkmath.LegacyMustNewDecFromStr("1.344"), osmoHostZone.MaxRedemptionRate, "osmo max outer") // 1.2 + 12% = 1.344
 
 		// Check that there are no slash queries in progress
 		for _, hostZone := range s.App.StakeibcKeeper.GetAllHostZone(s.Ctx) {
@@ -295,12 +294,12 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 
 	return func() {
 		// conversionRate is stTokenAmount / nativeTokenAmount
-		conversionRate := sdk.NewDec(stTokenAmount).Quo(sdk.NewDec(nativeTokenAmount))
-		expectedConversionRate := sdk.MustNewDecFromStr("0.5")
+		conversionRate := sdkmath.LegacyNewDec(stTokenAmount).Quo(sdkmath.LegacyNewDec(nativeTokenAmount))
+		expectedConversionRate := sdkmath.LegacyMustNewDecFromStr("0.5")
 		s.Require().Equal(expectedConversionRate, conversionRate, "expected conversion rate (1/redemption rate)")
 
 		// stTokenAmount is conversionRate * URRAmount
-		stTokenAmount := conversionRate.Mul(sdk.NewDec(URRAmount)).RoundInt()
+		stTokenAmount := conversionRate.Mul(sdkmath.LegacyNewDec(URRAmount)).RoundInt()
 		expectedStTokenAmount := sdkmath.NewInt(250)
 		s.Require().Equal(stTokenAmount, expectedStTokenAmount, "expected st token amount")
 
@@ -319,7 +318,7 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 			mockURR, found := s.App.RecordsKeeper.GetUserRedemptionRecord(s.Ctx, mockURRId)
 			s.Require().True(found)
 			// verify the amount was not updated
-			s.Require().Equal(sdk.NewInt(0), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
+			s.Require().Equal(sdkmath.NewInt(0), mockURR.StTokenAmount, "URR %s - st token amount", mockURRId)
 		}
 	}
 }
@@ -327,7 +326,7 @@ func (s *UpgradeTestSuite) SetupMigrateUnbondingRecords() func() {
 func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 	gaiaChannelId := "channel-0"
 
-	initialThreshold := sdk.OneInt()
+	initialThreshold := sdkmath.OneInt()
 	initialFlow := sdkmath.NewInt(10)
 	initialChannelValue := sdkmath.NewInt(100)
 	updatedChannelValue := sdkmath.NewInt(200)
@@ -424,16 +423,18 @@ func (s *UpgradeTestSuite) SetupRateLimitsBeforeUpgrade() func() {
 
 func (s *UpgradeTestSuite) SetupCommunityPoolTaxBeforeUpgrade() func() {
 	// Set initial community pool tax to 2%
-	initialTax := sdk.MustNewDecFromStr("0.02")
-	params := s.App.DistrKeeper.GetParams(s.Ctx)
+	initialTax := sdkmath.LegacyMustNewDecFromStr("0.02")
+	params, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
 	params.CommunityTax = initialTax
-	err := s.App.DistrKeeper.SetParams(s.Ctx, params)
+	err = s.App.DistrKeeper.Params.Set(s.Ctx, params)
 	s.Require().NoError(err, "no error expected when setting params")
 
 	// Return callback to check store after upgrade
 	return func() {
 		// Confirm the tax increased
-		updatedParams := s.App.DistrKeeper.GetParams(s.Ctx)
+		updatedParams, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+		s.Require().NoError(err, "no error expected when getting params")
 		s.Require().Equal(v17.CommunityPoolTax.String(), updatedParams.CommunityTax.String(),
 			"community pool tax should have been updated")
 	}
@@ -600,10 +601,11 @@ func (s *UpgradeTestSuite) TestResetSlashQueryInProgress() {
 
 func (s *UpgradeTestSuite) TestExecuteProp223() {
 	// Set initial community pool tax to 2%
-	initialTax := sdk.MustNewDecFromStr("0.02")
-	params := s.App.DistrKeeper.GetParams(s.Ctx)
+	initialTax := sdkmath.LegacyMustNewDecFromStr("0.02")
+	params, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
 	params.CommunityTax = initialTax
-	err := s.App.DistrKeeper.SetParams(s.Ctx, params)
+	err = s.App.DistrKeeper.Params.Set(s.Ctx, params)
 	s.Require().NoError(err, "no error expected when setting params")
 
 	// Increase the tax
@@ -611,7 +613,8 @@ func (s *UpgradeTestSuite) TestExecuteProp223() {
 	s.Require().NoError(err, "no error expected when increasing community pool tax")
 
 	// Confirm it increased
-	updatedParams := s.App.DistrKeeper.GetParams(s.Ctx)
+	updatedParams, err := s.App.DistrKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err, "no error expected when getting params")
 	s.Require().Equal(v17.CommunityPoolTax.String(), updatedParams.CommunityTax.String(),
 		"community pool tax should have been updated")
 }
@@ -621,22 +624,22 @@ func (s *UpgradeTestSuite) TestUpdateRedemptionRateBounds() {
 	testCases := []UpdateRedemptionRateBounds{
 		{
 			ChainId:                        "chain-0",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.95"), // 1 - 5% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.10"), // 1 + 10% = 1.1
 		},
 		{
 			ChainId:                        "chain-1",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
 		},
 		{
 			// Max outer for osmo uses 12% instead of 10%
 			ChainId:                        v17.OsmosisChainId,
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.25"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.4000"), // 1.25 + 12% = 1.400
 		},
 	}
 
@@ -757,7 +760,7 @@ func (s *UpgradeTestSuite) TestAddRateLimitToOsmosis() {
 	initialThreshold := sdkmath.OneInt()
 	initialFlow := sdkmath.NewInt(100)
 	initialDuration := uint64(24)
-	initialChannelValue := sdk.NewInt(1000)
+	initialChannelValue := sdkmath.NewInt(1000)
 
 	// Define the test cases for adding new rate limits
 	testCases := map[string]AddRateLimits{

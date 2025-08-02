@@ -4,8 +4,8 @@ import (
 	_ "github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	ibctypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) TestTransfer_Successful() {
 
 func (s *KeeperTestSuite) TestSequence_Equal() {
 	tc := s.SetupTransfer()
-	goCtx := sdk.WrapSDKContext(s.Ctx)
+	goCtx := s.Ctx
 	sequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx,
 		tc.transferMsg.SourcePort, tc.transferMsg.SourceChannel)
 	s.Require().True(found)

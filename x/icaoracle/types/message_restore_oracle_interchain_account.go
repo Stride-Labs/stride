@@ -4,15 +4,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 const TypeMsgRestoreOracleICA = "restore_oracle_ica"
 
-var (
-	_ sdk.Msg            = &MsgRestoreOracleICA{}
-	_ legacytx.LegacyMsg = &MsgRestoreOracleICA{}
-)
+var _ sdk.Msg = &MsgRestoreOracleICA{}
 
 func NewMsgRestoreOracleICA(creator string, oracleChainId string) *MsgRestoreOracleICA {
 	return &MsgRestoreOracleICA{
@@ -35,11 +31,6 @@ func (msg *MsgRestoreOracleICA) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgRestoreOracleICA) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgRestoreOracleICA) ValidateBasic() error {

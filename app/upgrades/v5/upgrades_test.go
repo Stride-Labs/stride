@@ -3,19 +3,19 @@ package v5_test
 import (
 	"testing"
 
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
-	upgradev5 "github.com/Stride-Labs/stride/v27/app/upgrades/v5"
+	v5 "github.com/Stride-Labs/stride/v27/app/upgrades/v5"
 	oldclaimtypes "github.com/Stride-Labs/stride/v27/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
 	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
@@ -28,8 +28,6 @@ import (
 	newstakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/migrations/v3/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
-
-const dummyUpgradeHeight = 5
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -47,7 +45,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Note: The max slash safety threshold was deprecated in v14 and was later removed from this unit test
 
 	// Setup stores for migrated modules
-	codec := app.MakeEncodingConfig().Marshaler
+	codec := app.MakeEncodingConfig().Codec
 	checkClaimStoreAfterMigration := s.SetupOldClaimStore(codec)
 	checkIcacallbackStoreAfterMigration := s.SetupOldIcacallbackStore(codec)
 	checkRecordStoreAfterMigration := s.SetupOldRecordStore(codec)
@@ -58,7 +56,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// checkMaxSlashParamAdded := s.SetupAddMaxSlashPercentParam()
 
 	// Run upgrade
-	s.ConfirmUpgradeSucceededs("v5", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v5.UpgradeName)
 
 	// Confirm store migrations were successful
 	checkClaimStoreAfterMigration()
@@ -102,7 +100,7 @@ func (s *UpgradeTestSuite) SetupOldClaimStore(codec codec.Codec) func() {
 // Stores delegate callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (s *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the marshalled callback args
 	delegateValidator := "dval"
 	delegateCallback := oldstakeibctypes.DelegateCallback{
@@ -143,7 +141,7 @@ func (s *UpgradeTestSuite) SetupOldDelegateCallback(codec codec.Codec, callbackD
 // Stores undelegate callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (s *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the marshalled callback args
 	undelegateValidator := "uval"
 	undelegateCallback := oldstakeibctypes.UndelegateCallback{
@@ -182,7 +180,7 @@ func (s *UpgradeTestSuite) SetupOldUndelegateCallback(codec codec.Codec, callbac
 // Stores rebalance callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should get migrated
-func (s *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the marshalled callback args
 	rebalanceValidator := "rval"
 	rebalanceCallback := oldstakeibctypes.RebalanceCallback{
@@ -223,7 +221,7 @@ func (s *UpgradeTestSuite) SetupOldRebalanceCallback(codec codec.Codec, callback
 // Stores claim callback args in the icacallback store and returns a function used to verify
 // the store was migrated successfully
 // The callback args should NOT get migrated
-func (s *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callbackDataStore sdk.KVStore) func() {
+func (s *UpgradeTestSuite) SetupOldClaimCallback(codec codec.Codec, callbackDataStore storetypes.KVStore) func() {
 	// Create the callback data for the claim callback
 	claimKey := "claim_key"
 	oldClaimCallbackData := icacallbacktypes.CallbackData{
@@ -362,8 +360,8 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 			},
 		},
 		StakedBal:          uint64(3000000),
-		LastRedemptionRate: sdk.OneDec(),
-		RedemptionRate:     sdk.OneDec(),
+		LastRedemptionRate: sdkmath.LegacyOneDec(),
+		RedemptionRate:     sdkmath.LegacyOneDec(),
 	}
 	hostZoneBz, err := codec.Marshal(&hostZone)
 	s.Require().NoError(err)
@@ -398,16 +396,16 @@ func (s *UpgradeTestSuite) SetupOldStakeibcStore(codec codec.Codec) func() {
 // that it was successfully removed after the upgrade
 func (s *UpgradeTestSuite) SetupRemoveStaleQuery() func() {
 	// Add the stale query
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: upgradev5.StaleQueryId})
-	query, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: v5.StaleQueryId})
+	query, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, v5.StaleQueryId)
 
 	// Confirm it was added successfully
 	s.Require().True(found, "stale query successfully added to store")
-	s.Require().Equal(upgradev5.StaleQueryId, query.Id, "query id")
+	s.Require().Equal(v5.StaleQueryId, query.Id, "query id")
 
 	// Callback to check that the query was successfully removed
 	return func() {
-		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, upgradev5.StaleQueryId)
+		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, v5.StaleQueryId)
 		s.Require().False(found)
 	}
 }

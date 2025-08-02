@@ -6,7 +6,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v27/app"
@@ -23,7 +24,6 @@ import (
 )
 
 var (
-	DummyUpgradeHeight            = int64(5)
 	JunoChainId                   = "juno-1"
 	OsmosisChainId                = "osmosis-1"
 	OsmosisUnbondingFrequency     = uint64(3)
@@ -32,31 +32,36 @@ var (
 )
 
 // The block time here is arbitrary, but it's must start at a time that is not at an even hour
-var InitialBlockTime = time.Date(2023, 1, 1, 8, 43, 0, 0, time.UTC) // January 1st 2023 at 8:43 AM
-var EpochStartTime = time.Date(2023, 1, 1, 8, 00, 0, 0, time.UTC)   // January 1st 2023 at 8:00 AM
-var ExpectedHourEpoch = epochstypes.EpochInfo{
-	Identifier:            epochstypes.HOUR_EPOCH,
-	Duration:              time.Hour,
-	CurrentEpoch:          0,
-	StartTime:             EpochStartTime,
-	CurrentEpochStartTime: EpochStartTime,
-}
-var ExpectedJunoUnbondingFrequency = uint64(5)
-var ExpectedEpochProvisions = sdk.NewDec(1_078_767_123)
-var ExpectedAllowMessages = []string{
-	"/cosmos.bank.v1beta1.MsgSend",
-	"/cosmos.bank.v1beta1.MsgMultiSend",
-	"/cosmos.staking.v1beta1.MsgDelegate",
-	"/cosmos.staking.v1beta1.MsgUndelegate",
-	"/cosmos.staking.v1beta1.MsgBeginRedelegate",
-	"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-	"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress",
-	"/ibc.applications.transfer.v1.MsgTransfer",
-	"/cosmos.gov.v1beta1.MsgVote",
-	"/stride.stakeibc.MsgLiquidStake",
-	"/stride.stakeibc.MsgRedeemStake",
-	"/stride.stakeibc.MsgClaimUndelegatedTokens",
-}
+var (
+	InitialBlockTime  = time.Date(2023, 1, 1, 8, 43, 0, 0, time.UTC)  // January 1st 2023 at 8:43 AM
+	EpochStartTime    = time.Date(2023, 1, 1, 8, 0o0, 0, 0, time.UTC) // January 1st 2023 at 8:00 AM
+	ExpectedHourEpoch = epochstypes.EpochInfo{
+		Identifier:            epochstypes.HOUR_EPOCH,
+		Duration:              time.Hour,
+		CurrentEpoch:          0,
+		StartTime:             EpochStartTime,
+		CurrentEpochStartTime: EpochStartTime,
+	}
+)
+
+var (
+	ExpectedJunoUnbondingFrequency = uint64(5)
+	ExpectedEpochProvisions        = sdkmath.LegacyNewDec(1_078_767_123)
+	ExpectedAllowMessages          = []string{
+		"/cosmos.bank.v1beta1.MsgSend",
+		"/cosmos.bank.v1beta1.MsgMultiSend",
+		"/cosmos.staking.v1beta1.MsgDelegate",
+		"/cosmos.staking.v1beta1.MsgUndelegate",
+		"/cosmos.staking.v1beta1.MsgBeginRedelegate",
+		"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+		"/cosmos.distribution.v1beta1.MsgSetWithdrawAddress",
+		"/ibc.applications.transfer.v1.MsgTransfer",
+		"/cosmos.gov.v1beta1.MsgVote",
+		"/stride.stakeibc.MsgLiquidStake",
+		"/stride.stakeibc.MsgRedeemStake",
+		"/stride.stakeibc.MsgClaimUndelegatedTokens",
+	}
+)
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -77,7 +82,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupIncentiveDiversification()
 
 	// Run the upgrade and iterate 1 block
-	s.ConfirmUpgradeSucceededs("v7", DummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v7.UpgradeName)
 
 	// Confirm state after upgrade
 	s.CheckEpochsAfterUpgrade(true)
@@ -126,7 +131,7 @@ func (s *UpgradeTestSuite) CheckEpochsAfterUpgrade(epochStarted bool) {
 	if epochStarted {
 		expectedHourEpoch.CurrentEpoch = 1
 		expectedHourEpoch.EpochCountingStarted = true
-		expectedHourEpoch.CurrentEpochStartHeight = DummyUpgradeHeight
+		expectedHourEpoch.CurrentEpochStartHeight = 5
 	} else {
 		expectedHourEpoch.EpochCountingStarted = false
 		expectedHourEpoch.CurrentEpochStartHeight = s.Ctx.BlockHeight()
@@ -153,7 +158,7 @@ func (s *UpgradeTestSuite) CheckICAAllowMessagesAfterUpgrade() {
 // Stores an old osmo and juno host zone
 // Juno should have an unbonding frequency of 4 in the old store
 func (s *UpgradeTestSuite) SetupHostZones() {
-	codec := app.MakeEncodingConfig().Marshaler
+	codec := app.MakeEncodingConfig().Codec
 	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
 	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 
@@ -161,12 +166,12 @@ func (s *UpgradeTestSuite) SetupHostZones() {
 	osmosis := oldstakeibctypes.HostZone{
 		ChainId:            OsmosisChainId,
 		UnbondingFrequency: OsmosisUnbondingFrequency,
-		RedemptionRate:     sdk.NewDec(1),
+		RedemptionRate:     sdkmath.LegacyNewDec(1),
 	}
 	juno := oldstakeibctypes.HostZone{
 		ChainId:            JunoChainId,
 		UnbondingFrequency: InitialJunoUnbondingFrequency,
-		RedemptionRate:     sdk.NewDec(1),
+		RedemptionRate:     sdkmath.LegacyNewDec(1),
 	}
 
 	osmosisBz, err := codec.Marshal(&osmosis)
@@ -180,7 +185,7 @@ func (s *UpgradeTestSuite) SetupHostZones() {
 
 // Helper function to read in the host zone with the new stakeibc types
 func (s *UpgradeTestSuite) GetNewHostZone(chainId string) newstakeibctypes.HostZone {
-	codec := app.MakeEncodingConfig().Marshaler
+	codec := app.MakeEncodingConfig().Codec
 	stakeibcStore := s.Ctx.KVStore(s.App.GetKey(stakeibctypes.StoreKey))
 	hostzoneStore := prefix.NewStore(stakeibcStore, stakeibctypes.KeyPrefix(stakeibctypes.HostZoneKey))
 
@@ -211,9 +216,9 @@ func (s *UpgradeTestSuite) CheckRedemptionRateSafetyParamsAfterUpgrade() {
 	for _, hostZone := range allHostZones {
 		s.Require().False(hostZone.Halted, "host zone %s should not be halted", hostZone.ChainId)
 
-		s.Require().Equal(hostZone.MinRedemptionRate, sdk.MustNewDecFromStr("0.9"),
+		s.Require().Equal(hostZone.MinRedemptionRate, sdkmath.LegacyMustNewDecFromStr("0.9"),
 			"host zone %s min redemption rate", hostZone.ChainId)
-		s.Require().Equal(hostZone.MaxRedemptionRate, sdk.MustNewDecFromStr("1.5"),
+		s.Require().Equal(hostZone.MaxRedemptionRate, sdkmath.LegacyMustNewDecFromStr("1.5"),
 			"host zone %s max redemption rate", hostZone.ChainId)
 	}
 }
@@ -228,8 +233,8 @@ func (s *UpgradeTestSuite) SetupIncentiveDiversification() {
 
 	// Fund incentive program account with 23M, and stride foundation with 4.1M
 	// (any values can be used here for the test, but these are used to resemble mainnet)
-	initialProgram := sdk.NewCoin(ustrd, sdk.NewInt(23_000_000_000_000))
-	initialFoundation := sdk.NewCoin(ustrd, sdk.NewInt(4_157_085_999_543))
+	initialProgram := sdk.NewCoin(ustrd, sdkmath.NewInt(23_000_000_000_000))
+	initialFoundation := sdk.NewCoin(ustrd, sdkmath.NewInt(4_157_085_999_543))
 	s.FundAccount(incentiveProgramAddress, initialProgram)
 	s.FundAccount(strideFoundationAddress, initialFoundation)
 }
@@ -243,8 +248,8 @@ func (s *UpgradeTestSuite) CheckIncentiveDiversificationAfterUpgrade() {
 	s.Require().NoError(err, "no error expected when converting Stride Foundation address")
 
 	// Confirm 3M were sent from the incentive program accoun to the stride foundation
-	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdk.NewInt(20_000_000_000_000))
-	expectedFoundationBalance := sdk.NewCoin(ustrd, sdk.NewInt(7_157_085_999_543))
+	expectedIncentiveBalance := sdk.NewCoin(ustrd, sdkmath.NewInt(20_000_000_000_000))
+	expectedFoundationBalance := sdk.NewCoin(ustrd, sdkmath.NewInt(7_157_085_999_543))
 	actualIncentiveBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentiveProgramAddress, ustrd)
 	actualFoundationBalance := s.App.BankKeeper.GetBalance(s.Ctx, strideFoundationAddress, ustrd)
 
@@ -276,7 +281,7 @@ func (s *UpgradeTestSuite) TestAddICAHostAllowMessages() {
 func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 	s.SetupHostZones()
 
-	codec := app.MakeEncodingConfig().Marshaler
+	codec := app.MakeEncodingConfig().Codec
 	stakeibcStoreKey := s.App.GetKey(stakeibctypes.StoreKey)
 	err := v7.ModifyJunoUnbondingFrequency(codec, stakeibcStoreKey, s.Ctx, s.App.StakeibcKeeper)
 	s.Require().NoError(err)
@@ -287,7 +292,7 @@ func (s *UpgradeTestSuite) TestModifyJunoUnbondingFrequency() {
 func (s *UpgradeTestSuite) TestAddRedemptionRateSafetyChecks() {
 	s.SetupHostZones()
 
-	codec := app.MakeEncodingConfig().Marshaler
+	codec := app.MakeEncodingConfig().Codec
 	stakeibcStoreKey := s.App.GetKey(stakeibctypes.StoreKey)
 	v7.AddRedemptionRateSafetyChecks(codec, stakeibcStoreKey, s.Ctx, s.App.StakeibcKeeper)
 

@@ -12,6 +12,7 @@ func (s *KeeperTestSuite) TestQueryEpochInfos() {
 	expectedEpochs := map[string]types.EpochInfo{}
 	for _, epoch := range types.DefaultGenesis().Epochs {
 		expectedEpochs[epoch.Identifier] = epoch
+		s.App.EpochsKeeper.SetEpochInfo(s.Ctx, epoch)
 	}
 
 	// Invalid param

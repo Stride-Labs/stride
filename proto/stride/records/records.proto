@@ -10,7 +10,7 @@ message UserRedemptionRecord {
   string id = 1; // {chain_id}.{epoch}.{receiver}
   string receiver = 3;
   string native_token_amount = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string denom = 5;
@@ -19,7 +19,7 @@ message UserRedemptionRecord {
   bool claim_is_pending = 8;
   reserved 2;
   string st_token_amount = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
@@ -27,7 +27,7 @@ message UserRedemptionRecord {
 message DepositRecord {
   uint64 id = 1;
   string amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string denom = 3;
@@ -70,23 +70,23 @@ message HostZoneUnbonding {
     CLAIMABLE = 2;
   }
   string st_token_amount = 1 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string native_token_amount = 2 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string st_tokens_to_burn = 8 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string native_tokens_to_unbond = 9 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string claimable_native_tokens = 10 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   uint64 undelegation_txs_in_progress = 11;
@@ -121,7 +121,7 @@ message LSMTokenDeposit {
   string staker_address = 5;
   string validator_address = 6;
   string amount = 7 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   cosmos.base.v1beta1.Coin st_token = 8 [ (gogoproto.nullable) = false ];

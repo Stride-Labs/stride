@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
@@ -89,7 +88,7 @@ func TestSafelyGetCommunityPoolRebate(t *testing.T) {
 			hostZone: types.HostZone{
 				ChainId: chainId,
 				CommunityPoolRebate: &types.CommunityPoolRebate{
-					RebateRate: sdk.OneDec(),
+					RebateRate: sdkmath.LegacyOneDec(),
 				},
 			},
 			expectedRebate: false,
@@ -99,7 +98,7 @@ func TestSafelyGetCommunityPoolRebate(t *testing.T) {
 			hostZone: types.HostZone{
 				ChainId: chainId,
 				CommunityPoolRebate: &types.CommunityPoolRebate{
-					RebateRate:                sdk.OneDec(),
+					RebateRate:                sdkmath.LegacyOneDec(),
 					LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 				},
 			},

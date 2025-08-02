@@ -154,17 +154,16 @@ func (s *KeeperTestSuite) TestConfirmUnbondingTokenSweep() {
 // ----------------------------------------------
 
 func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
-
 	safeAddress := "safe"
 
 	// Create the host zones
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, types.HostZone{
 		SafeAddressOnStride:       safeAddress,
-		RemainingDelegatedBalance: sdk.NewInt(0),
+		RemainingDelegatedBalance: sdkmath.NewInt(0),
 	})
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId:          types.CelestiaChainId,
-		TotalDelegations: sdk.NewInt(0),
+		TotalDelegations: sdkmath.NewInt(0),
 	})
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
@@ -202,7 +201,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	// Attempt to call it with an amount that would make it negative, it should fail
 	_, err := s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{
 		Operator:         safeAddress,
-		DelegationOffset: sdk.NewInt(-10000),
+		DelegationOffset: sdkmath.NewInt(-10000),
 	})
 	s.Require().ErrorContains(err, "offset would cause the delegated balance to be negative")
 
@@ -396,7 +395,6 @@ func (s *KeeperTestSuite) TestOverwriteRedemptionRecord() {
 
 // Verify that operator address can be set successfully
 func (s *KeeperTestSuite) TestSetOperatorAddress() {
-
 	safeAddress := s.TestAccs[0].String()
 	operatorAddress := s.TestAccs[1].String()
 	nonAdminAddress := s.TestAccs[2].String()

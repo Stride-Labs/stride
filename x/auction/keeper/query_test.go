@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v27/x/auction/types"
@@ -28,19 +27,19 @@ func (s *KeeperTestSuite) TestQueryAuction() {
 	req := &types.QueryAuctionRequest{
 		Name: expectedAuction.Name,
 	}
-	resp, err := s.App.AuctionKeeper.Auction(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AuctionKeeper.Auction(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying auction")
 	s.Require().Equal(expectedAuction, resp.Auction, "auction")
 
 	// Query with invalid request
-	_, err = s.App.AuctionKeeper.Auction(sdk.WrapSDKContext(s.Ctx), nil)
+	_, err = s.App.AuctionKeeper.Auction(s.Ctx, nil)
 	s.Require().Error(err, "error expected when querying with nil request")
 
 	// Query with non-existent auction
 	reqNonExistent := &types.QueryAuctionRequest{
 		Name: "non-existent-auction",
 	}
-	_, err = s.App.AuctionKeeper.Auction(sdk.WrapSDKContext(s.Ctx), reqNonExistent)
+	_, err = s.App.AuctionKeeper.Auction(s.Ctx, reqNonExistent)
 	s.Require().Error(err, "error expected when querying non-existent auction")
 	s.Require().Contains(err.Error(), "auction not found")
 }
@@ -80,12 +79,12 @@ func (s *KeeperTestSuite) TestQueryAuctions() {
 
 	// Query all auctions
 	req := &types.QueryAuctionsRequest{}
-	resp, err := s.App.AuctionKeeper.Auctions(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AuctionKeeper.Auctions(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying all auctions")
 	s.Require().Equal(expectedAuctions, resp.Auctions, "auctions")
 
 	// Query with invalid request
-	_, err = s.App.AuctionKeeper.Auctions(sdk.WrapSDKContext(s.Ctx), nil)
+	_, err = s.App.AuctionKeeper.Auctions(s.Ctx, nil)
 	s.Require().Error(err, "error expected when querying with nil request")
 }
 
@@ -140,7 +139,7 @@ func (s *KeeperTestSuite) TestQueryAuctionsPagination() {
 			Limit: 2,
 		},
 	}
-	resp, err := s.App.AuctionKeeper.Auctions(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AuctionKeeper.Auctions(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying with pagination")
 	s.Require().Len(resp.Auctions, 2, "should return 2 auctions")
 	s.Require().Equal(expectedAuctions[:2], resp.Auctions, "first page auctions")
@@ -152,7 +151,7 @@ func (s *KeeperTestSuite) TestQueryAuctionsPagination() {
 			Key: resp.Pagination.NextKey,
 		},
 	}
-	resp, err = s.App.AuctionKeeper.Auctions(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err = s.App.AuctionKeeper.Auctions(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying second page")
 	s.Require().Len(resp.Auctions, 1, "should return 1 auction")
 	s.Require().Equal(expectedAuctions[2:], resp.Auctions, "second page auctions")

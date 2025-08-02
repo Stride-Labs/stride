@@ -15,7 +15,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v27/testutil/network"
-	"github.com/Stride-Labs/stride/v27/testutil/nullify"
 	"github.com/Stride-Labs/stride/v27/x/records/client/cli"
 	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
@@ -33,7 +32,6 @@ func networkWithUserRedemptionRecordObjects(t *testing.T, n int) (*network.Netwo
 			NativeTokenAmount: sdkmath.NewInt(int64(i)),
 			StTokenAmount:     sdkmath.NewInt(int64(i)),
 		}
-		nullify.Fill(&userRedemptionRecord)
 		state.UserRedemptionRecordList = append(state.UserRedemptionRecordList, userRedemptionRecord)
 	}
 	buf, err := cfg.Codec.MarshalJSON(&state)
@@ -84,8 +82,8 @@ func TestShowUserRedemptionRecord(t *testing.T) {
 				require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 				require.NotNil(t, resp.UserRedemptionRecord)
 				require.Equal(t,
-					nullify.Fill(&tc.obj),
-					nullify.Fill(&resp.UserRedemptionRecord),
+					&tc.obj,
+					&resp.UserRedemptionRecord,
 				)
 			}
 		})
@@ -121,8 +119,8 @@ func TestListUserRedemptionRecord(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.UserRedemptionRecord), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.UserRedemptionRecord),
+				objs,
+				resp.UserRedemptionRecord,
 			)
 		}
 	})
@@ -137,8 +135,8 @@ func TestListUserRedemptionRecord(t *testing.T) {
 			require.NoError(t, net.Config.Codec.UnmarshalJSON(out.Bytes(), &resp))
 			require.LessOrEqual(t, len(resp.UserRedemptionRecord), step)
 			require.Subset(t,
-				nullify.Fill(objs),
-				nullify.Fill(resp.UserRedemptionRecord),
+				objs,
+				resp.UserRedemptionRecord,
 			)
 			next = resp.Pagination.NextKey
 		}
@@ -152,8 +150,8 @@ func TestListUserRedemptionRecord(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, len(objs), int(resp.Pagination.Total))
 		require.ElementsMatch(t,
-			nullify.Fill(objs),
-			nullify.Fill(resp.UserRedemptionRecord),
+			objs,
+			resp.UserRedemptionRecord,
 		)
 	})
 }

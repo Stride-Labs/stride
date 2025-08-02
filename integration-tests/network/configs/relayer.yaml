@@ -1,3 +1,4 @@
+
 global:
   api-listen-addr: :5183
   timeout: 10s
@@ -12,7 +13,7 @@ chains:
       rpc-addr: http://stride-validator.integration.svc:26657
       account-prefix: stride
       keyring-backend: test
-      gas-adjustment: 1.3
+      gas-adjustment: 1.5
       # TODO: investigate why this has to be set so high
       gas-prices: 1ustrd
       coin-type: 118
@@ -29,7 +30,7 @@ chains:
       rpc-addr: http://cosmoshub-validator.integration.svc:26657
       account-prefix: cosmos
       keyring-backend: test
-      gas-adjustment: 1.3
+      gas-adjustment: 1.5
       # TODO: investigate why this has to be set so high
       gas-prices: 1uatom
       coin-type: 118
@@ -46,7 +47,7 @@ chains:
       rpc-addr: http://osmosis-validator.integration.svc:26657
       account-prefix: osmo
       keyring-backend: test
-      gas-adjustment: 1.3
+      gas-adjustment: 1.5
       # TODO: investigate why this has to be set so high
       gas-prices: 1uosmo
       coin-type: 118

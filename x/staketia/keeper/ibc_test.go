@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v27/x/staketia/types"
 )
@@ -27,7 +28,7 @@ func (s *KeeperTestSuite) SetupTestHandleRecordUpdatePacket() PacketCallbackTest
 	// Pending delegation record associated with transfer
 	record := types.DelegationRecord{
 		Id:           1,
-		NativeAmount: sdk.NewInt(0),
+		NativeAmount: sdkmath.NewInt(0),
 		Status:       types.TRANSFER_IN_PROGRESS,
 	}
 
@@ -96,7 +97,7 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket_NoOp() {
 	tc := s.SetupTestHandleRecordUpdatePacket()
 
 	// Get all delegation records
-	recordsBefore := s.getAllRecords(tc)
+	recordsBefore := s.getAllRecords()
 
 	// Remove the callback data
 	s.App.StaketiaKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
@@ -105,7 +106,7 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket_NoOp() {
 	err := s.App.StaketiaKeeper.OnTimeoutPacket(s.Ctx, tc.Packet)
 	s.Require().NoError(err, "no error expected when calling OnTimeoutPacket")
 
-	s.verifyNoRecordsChanged(tc, recordsBefore)
+	s.verifyNoRecordsChanged(recordsBefore)
 }
 
 // --------------------------------------------------------------
@@ -148,7 +149,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_InvalidAck() {
 	tc := s.SetupTestHandleRecordUpdatePacket()
 
 	// Get all delegation records
-	recordsBefore := s.getAllRecords(tc)
+	recordsBefore := s.getAllRecords()
 
 	// Build an invalid ack to force an error
 	invalidAck := transfertypes.ModuleCdc.MustMarshalJSON(&channeltypes.Acknowledgement{
@@ -162,7 +163,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_InvalidAck() {
 	s.Require().ErrorContains(err, "invalid acknowledgement")
 
 	// Verify store is unchanged
-	s.verifyNoRecordsChanged(tc, recordsBefore)
+	s.verifyNoRecordsChanged(recordsBefore)
 }
 
 // record not found for record id case
@@ -170,7 +171,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	tc := s.SetupTestHandleRecordUpdatePacket()
 
 	// Get all delegation records
-	recordsBefore := s.getAllRecords(tc)
+	recordsBefore := s.getAllRecords()
 
 	// Remove the record id so that there is no action necessary in the callback
 	s.App.StaketiaKeeper.RemoveTransferInProgressRecordId(s.Ctx, tc.ChannelId, tc.OriginalSequence)
@@ -181,7 +182,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	s.Require().NoError(err, "no error expected during on ack packet")
 
 	// Verify store is unchanged
-	s.verifyNoRecordsChanged(tc, recordsBefore)
+	s.verifyNoRecordsChanged(recordsBefore)
 }
 
 // --------------------------------------------------------------
@@ -225,7 +226,7 @@ func (s *KeeperTestSuite) verifyDelegationRecordArchived(tc PacketCallbackTestCa
 }
 
 // Helper function to grab both active and archived delegation records
-func (s *KeeperTestSuite) getAllRecords(tc PacketCallbackTestCase) (allRecords []types.DelegationRecord) {
+func (s *KeeperTestSuite) getAllRecords() (allRecords []types.DelegationRecord) {
 	// Get all delegation records
 	activeRecords := s.App.StaketiaKeeper.GetAllActiveDelegationRecords(s.Ctx)
 	archiveRecords := s.App.StaketiaKeeper.GetAllArchivedDelegationRecords(s.Ctx)
@@ -235,9 +236,9 @@ func (s *KeeperTestSuite) getAllRecords(tc PacketCallbackTestCase) (allRecords [
 }
 
 // Helper function to verify no records were updated
-func (s *KeeperTestSuite) verifyNoRecordsChanged(tc PacketCallbackTestCase, recordsBefore []types.DelegationRecord) {
+func (s *KeeperTestSuite) verifyNoRecordsChanged(recordsBefore []types.DelegationRecord) {
 	// Get current records
-	recordsAfter := s.getAllRecords(tc)
+	recordsAfter := s.getAllRecords()
 	// Compare to records before
 	s.Require().Equal(recordsBefore, recordsAfter, "records should be unchanged")
 }
