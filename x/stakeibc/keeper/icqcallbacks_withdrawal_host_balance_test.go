@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
@@ -230,7 +230,7 @@ func (s *KeeperTestSuite) TestWithdrawalHostBalanceCallback_FailedToCheckForReba
 	// Add a rebate to the host zone - since there are no stTokens in supply, the test will fail
 	hostZone := s.MustGetHostZone(HostChainId)
 	hostZone.CommunityPoolRebate = &types.CommunityPoolRebate{
-		RebateRate:                sdk.MustNewDecFromStr("0.5"),
+		RebateRate:                sdkmath.LegacyMustNewDecFromStr("0.5"),
 		LiquidStakedStTokenAmount: sdkmath.NewInt(1),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)

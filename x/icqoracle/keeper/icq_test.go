@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
@@ -224,8 +225,8 @@ func (s *KeeperTestSuite) TestSubmitOsmosisPriceICQ_Errors() {
 // For this function, we'll always return a price of 1.5 for the baseDenom in terms of quote denom
 // However, the assets may be inverted depending on the parameters
 func (s *KeeperTestSuite) createMockTwapData(baseDenom, quoteDenom, asset0Denom, asset1Denom string) []byte {
-	baseAssetPrice := sdk.MustNewDecFromStr("1.5")
-	quoteAssetPrice := sdk.OneDec().Quo(baseAssetPrice)
+	baseAssetPrice := sdkmath.LegacyMustNewDecFromStr("1.5")
+	quoteAssetPrice := sdkmath.LegacyOneDec().Quo(baseAssetPrice)
 
 	pool := types.OsmosisTwapRecord{
 		Asset0Denom: asset0Denom,
@@ -260,7 +261,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		OsmosisPoolId:     1,
 		OsmosisBaseDenom:  "ibc/uatom",
 		OsmosisQuoteDenom: "ibc/uusdc",
-		SpotPrice:         math.LegacyNewDec(2),
+		SpotPrice:         sdkmath.LegacyNewDec(2),
 		QueryInProgress:   true,
 	}
 
@@ -495,7 +496,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosis() {
 		name          string
 		tokenPrice    types.TokenPrice
 		twapData      []byte
-		expectedPrice math.LegacyDec
+		expectedPrice sdkmath.LegacyDec
 		expectedError string
 	}{
 		{
@@ -519,7 +520,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosis() {
 				"ibc/atom", // asset0
 				"ibc/usdc", // asset1
 			),
-			expectedPrice: sdk.MustNewDecFromStr("1.5"), // 1.5 from mock pool data
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("1.5"), // 1.5 from mock pool data
 		},
 		{
 			name: "successful price calculation with assets inverted",
@@ -533,7 +534,7 @@ func (s *KeeperTestSuite) TestUnmarshalSpotPriceFromOsmosis() {
 				"ibc/usdc", // asset0
 				"ibc/atom", // asset1
 			),
-			expectedPrice: sdk.MustNewDecFromStr("1.5"), // 1.5 from mock pool data
+			expectedPrice: sdkmath.LegacyMustNewDecFromStr("1.5"), // 1.5 from mock pool data
 		},
 		{
 			name: "different denom ordering in pool",

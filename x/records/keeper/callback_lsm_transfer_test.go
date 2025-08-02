@@ -5,17 +5,15 @@ import (
 
 	"github.com/cosmos/gogoproto/proto"
 
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v27/x/records/types"
 )
 
-var (
-	LSMTokenDenom = "cosmosvaloperxxx/42"
-)
+var LSMTokenDenom = "cosmosvaloperxxx/42"
 
 func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
 	// we need a valid ibc denom here or the transfer will fail

@@ -2,8 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
@@ -61,7 +60,7 @@ func (s *KeeperTestSuite) SetupRedemptionCallback() RedemptionCallbackTestCase {
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
-		RedemptionRate: sdk.NewDec(1.0),
+		RedemptionRate: sdkmath.LegacyNewDec(1.0),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)

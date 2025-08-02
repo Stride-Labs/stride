@@ -10,7 +10,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 )
@@ -35,16 +34,6 @@ var (
 	_ sdk.Msg = &MsgAddAllocations{}
 	_ sdk.Msg = &MsgUpdateUserAllocation{}
 	_ sdk.Msg = &MsgLinkAddresses{}
-
-	// Implement legacy interface for ledger support
-	_ legacytx.LegacyMsg = &MsgClaimDaily{}
-	_ legacytx.LegacyMsg = &MsgClaimEarly{}
-
-	_ legacytx.LegacyMsg = &MsgCreateAirdrop{}
-	_ legacytx.LegacyMsg = &MsgUpdateAirdrop{}
-	_ legacytx.LegacyMsg = &MsgAddAllocations{}
-	_ legacytx.LegacyMsg = &MsgUpdateUserAllocation{}
-	_ legacytx.LegacyMsg = &MsgLinkAddresses{}
 )
 
 // ----------------------------------------------
@@ -72,11 +61,6 @@ func (msg *MsgClaimDaily) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgClaimDaily) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgClaimDaily) ValidateBasic() error {
@@ -117,11 +101,6 @@ func (msg *MsgClaimEarly) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{claimer}
 }
 
-func (msg *MsgClaimEarly) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgClaimEarly) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Claimer); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
@@ -145,7 +124,7 @@ func NewMsgCreateAirdrop(
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
-	earlyClaimPenalty sdk.Dec,
+	earlyClaimPenalty sdkmath.LegacyDec,
 	distributorAddress string,
 	allocatorAddress string,
 	linkerAddress string,
@@ -179,11 +158,6 @@ func (msg *MsgCreateAirdrop) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgCreateAirdrop) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgCreateAirdrop) ValidateBasic() error {
@@ -220,7 +194,7 @@ func NewMsgUpdateAirdrop(
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
 	claimDeadlineDate *time.Time,
-	earlyClaimPenalty sdk.Dec,
+	earlyClaimPenalty sdkmath.LegacyDec,
 	distributorAddress string,
 	allocatorAddress string,
 	linkerAddress string,
@@ -254,11 +228,6 @@ func (msg *MsgUpdateAirdrop) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgUpdateAirdrop) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgUpdateAirdrop) ValidateBasic() error {
@@ -309,11 +278,6 @@ func (msg *MsgAddAllocations) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgAddAllocations) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgAddAllocations) ValidateBasic() error {
@@ -384,11 +348,6 @@ func (msg *MsgUpdateUserAllocation) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{claimer}
 }
 
-func (msg *MsgUpdateUserAllocation) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgUpdateUserAllocation) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Admin); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
@@ -402,7 +361,7 @@ func (msg *MsgUpdateUserAllocation) ValidateBasic() error {
 	}
 
 	for _, allocation := range msg.Allocations {
-		if allocation.IsNil() || allocation.LT(sdk.ZeroInt()) {
+		if allocation.IsNil() || allocation.LT(sdkmath.ZeroInt()) {
 			return errors.New("all allocation amounts must be specified and positive")
 		}
 	}
@@ -437,11 +396,6 @@ func (msg *MsgLinkAddresses) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{claimer}
-}
-
-func (msg *MsgLinkAddresses) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgLinkAddresses) ValidateBasic() error {

@@ -1,7 +1,0 @@
-syntax = "proto3";
-package stride.icacallbacks;
-
-option go_package = "github.com/Stride-Labs/stride/v27/x/icacallbacks/types";
-
-// Msg defines the Msg service.
-service Msg {}

@@ -6,11 +6,10 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
+	v3 "github.com/Stride-Labs/stride/v27/app/upgrades/v3"
 )
 
-var (
-	airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
-)
+var airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}
 
 const dummyUpgradeHeight = 5
 
@@ -27,7 +26,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	s.ConfirmUpgradeSucceededs("v3", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v3.UpgradeName)
 
 	// make sure claim record was set
 	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)

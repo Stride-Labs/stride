@@ -21,7 +21,7 @@
     "jest": "29.7.0",
     "osmojs": "16.15.0",
     "prettier": "3.3.3",
-    "stridejs": "github:Stride-Labs/stridejs#main",
+    "stridejs": "github:Stride-Labs/stridejs#7ea5e6d",
     "typescript": "5.5.3",
     "vitest": "2.1.9"
   },

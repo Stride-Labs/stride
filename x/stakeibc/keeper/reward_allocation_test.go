@@ -6,16 +6,16 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
-	ccvtypes "github.com/cosmos/interchain-security/v4/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
 	auctiontypes "github.com/Stride-Labs/stride/v27/x/auction/types"
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
@@ -30,14 +30,14 @@ func (s *KeeperTestSuite) SetupTestRewardAllocation() {
 		ChainId:        HostChainId,
 		HostDenom:      Atom,
 		IbcDenom:       IbcAtom,
-		RedemptionRate: sdk.OneDec(),
+		RedemptionRate: sdkmath.LegacyOneDec(),
 		DepositAddress: stakeibctypes.NewHostZoneDepositAddress(HostChainId).String(),
 	}
 	hostZone2 := stakeibctypes.HostZone{
 		ChainId:        OsmoChainId,
 		HostDenom:      Osmo,
 		IbcDenom:       IbcOsmo,
-		RedemptionRate: sdk.OneDec(),
+		RedemptionRate: sdkmath.LegacyOneDec(),
 		DepositAddress: stakeibctypes.NewHostZoneDepositAddress(OsmoChainId).String(),
 	}
 
@@ -140,25 +140,26 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	// Set up validators & delegators on Stride
 	addrs := s.TestAccs
 	for _, acc := range addrs {
-		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
+		s.FundAccount(acc, sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(1000000)))
 	}
 	valAddrs := simtestutil.ConvertAddrsToValAddrs(addrs)
 	tstaking := teststaking.NewHelper(s.T(), s.Ctx, &s.App.StakingKeeper)
 
 	pubkeys := simtestutil.CreateTestPubKeys(2)
-	stakeAmount := sdk.NewInt(100)
+	stakeAmount := sdkmath.NewInt(100)
 
 	// create validator with 50% commission
-	commission := sdk.NewDecWithPrec(5, 1)
-	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdk.NewDec(0))
+	commission := sdkmath.LegacyNewDecWithPrec(5, 1)
+	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdkmath.LegacyNewDec(0))
 	tstaking.CreateValidator(valAddrs[0], pubkeys[0], stakeAmount, true)
 
 	// create second validator with 0% commission
-	commission = sdk.NewDec(0)
-	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdk.NewDec(0))
+	commission = sdkmath.LegacyNewDec(0)
+	tstaking.Commission = stakingtypes.NewCommissionRates(commission, commission, sdkmath.LegacyNewDec(0))
 	tstaking.CreateValidator(valAddrs[1], pubkeys[1], stakeAmount, true)
 
-	s.App.EndBlocker(s.Ctx, abci.RequestEndBlock{})
+	_, err := s.App.EndBlocker(s.Ctx)
+	s.Require().NoError(err)
 	s.Ctx = s.Ctx.WithBlockHeight(s.Ctx.BlockHeight() + 1)
 
 	// Simulate the token distribution from feeCollector to validators
@@ -172,15 +173,16 @@ func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	}
 	votes := []abci.VoteInfo{
 		{
-			Validator:       abciValA,
-			SignedLastBlock: true,
+			Validator:   abciValA,
+			BlockIdFlag: cmtproto.BlockIDFlagCommit,
 		},
 		{
-			Validator:       abciValB,
-			SignedLastBlock: true,
+			Validator:   abciValB,
+			BlockIdFlag: cmtproto.BlockIDFlagCommit,
 		},
 	}
-	s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, votes)
+	err = s.App.DistrKeeper.AllocateTokens(s.Ctx, 200, votes)
+	s.Require().NoError(err)
 
 	// Withdraw rewards
 	rewards1, err := s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, sdk.AccAddress(valAddrs[0]), valAddrs[0])

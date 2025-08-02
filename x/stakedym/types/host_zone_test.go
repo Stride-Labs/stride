@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	sdkmath "cosmossdk.io/math"
+
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
@@ -53,11 +54,11 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	hostZone.SafeAddressOnStride = fillDefaultValue(hostZone.SafeAddressOnStride, validAddress)
 
 	if hostZone.RedemptionRate.IsNil() {
-		hostZone.RedemptionRate = sdk.OneDec()
-		hostZone.MinRedemptionRate = sdk.MustNewDecFromStr("0.8")
-		hostZone.MinInnerRedemptionRate = sdk.MustNewDecFromStr("0.9")
-		hostZone.MaxInnerRedemptionRate = sdk.MustNewDecFromStr("1.1")
-		hostZone.MaxRedemptionRate = sdk.MustNewDecFromStr("1.2")
+		hostZone.RedemptionRate = sdkmath.LegacyOneDec()
+		hostZone.MinRedemptionRate = sdkmath.LegacyMustNewDecFromStr("0.8")
+		hostZone.MinInnerRedemptionRate = sdkmath.LegacyMustNewDecFromStr("0.9")
+		hostZone.MaxInnerRedemptionRate = sdkmath.LegacyMustNewDecFromStr("1.1")
+		hostZone.MaxRedemptionRate = sdkmath.LegacyMustNewDecFromStr("1.2")
 	}
 
 	if hostZone.UnbondingPeriodSeconds == UninitializedInt {
@@ -203,16 +204,16 @@ func TestValidateHostZoneGenesis(t *testing.T) {
 		{
 			name: "invalid redemption rate",
 			hostZone: types.HostZone{
-				RedemptionRate: sdk.OneDec().Neg(),
+				RedemptionRate: sdkmath.LegacyOneDec().Neg(),
 			},
 			expectedError: "redemption rate must be positive",
 		},
 		{
 			name: "invalid redemption rate bounds",
 			hostZone: types.HostZone{
-				RedemptionRate:         sdk.OneDec(),
-				MinRedemptionRate:      sdk.MustNewDecFromStr("1.1"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyOneDec(),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
 			},
 			expectedError: "invalid host zone redemption rate inner bounds",
 		},
@@ -248,88 +249,88 @@ func TestValidateRedemptionRateBoundsInitalized(t *testing.T) {
 		{
 			name: "valid bounds",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			valid: true,
 		},
 		{
 			name: "min outer negative",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8").Neg(),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8").Neg(),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			valid: false,
 		},
 		{
 			name: "min inner negative",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9").Neg(),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9").Neg(),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			valid: false,
 		},
 		{
 			name: "max inner negative",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1").Neg(),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1").Neg(),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			valid: false,
 		},
 		{
 			name: "max outer negative",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2").Neg(),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2").Neg(),
 			},
 			valid: false,
 		},
 		{
 			name: "max inner outside outer",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"),
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.3"), // <--
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"),
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.3"), // <--
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			valid: false,
 		},
 		{
 			name: "min inner outside outer",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.7"), // <--
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.7"), // <--
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			valid: false,
 		},
 		{
 			name: "min inner greater than min outer",
 			hostZone: types.HostZone{
-				MinRedemptionRate:      sdk.MustNewDecFromStr("0.8"),
-				MinInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"), // <--
-				RedemptionRate:         sdk.MustNewDecFromStr("1.0"),
-				MaxInnerRedemptionRate: sdk.MustNewDecFromStr("0.9"), // <--
-				MaxRedemptionRate:      sdk.MustNewDecFromStr("1.2"),
+				MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.8"),
+				MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"), // <--
+				RedemptionRate:         sdkmath.LegacyMustNewDecFromStr("1.0"),
+				MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.9"), // <--
+				MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.2"),
 			},
 			valid: false,
 		},

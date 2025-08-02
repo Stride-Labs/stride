@@ -6,9 +6,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/types"
-	icatypes "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v27/x/icaoracle/types"
@@ -59,7 +59,7 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	}
 
 	// Serialize tx messages
-	txBz, err := icatypes.SerializeCosmosTx(k.cdc, tx.Messages)
+	txBz, err := icatypes.SerializeCosmosTx(k.cdc, tx.Messages, icatypes.EncodingProtobuf)
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to serialize cosmos transaction")
 	}

@@ -1,32 +1,33 @@
 package v10
 
 import (
+	"context"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 
-	icacontrollermigrations "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts/controller/migrations/v6"
-	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
-	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
-	"github.com/cosmos/ibc-go/v7/modules/core/exported"
-	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
+	icacontrollermigrations "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/migrations/v6"
+	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v8/modules/core/04-channel/keeper"
+	"github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibctmmigrations "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint/migrations"
 
-	ratelimitkeeper "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/keeper"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v27/x/claim/keeper"
@@ -45,7 +46,7 @@ import (
 
 var (
 	UpgradeName     = "v10"
-	EpochProvisions = sdk.NewDec(929_681_506)
+	EpochProvisions = sdkmath.LegacyNewDec(929_681_506)
 
 	StakingProportion                     = "0.1603620"
 	CommunityPoolGrowthProportion         = "0.2158275"
@@ -54,7 +55,7 @@ var (
 
 	CommunityPoolGrowthAddress = "stride1lj0m72d70qerts9ksrsphy9nmsd4h0s88ll9gfphmhemh8ewet5qj44jc9"
 	BadKidsCustodian           = "stride17z6yy8vfgklgej9m848jm7rkp270gd9pgaw8zu"
-	BadKidsTransferAmount      = sdk.NewInt(15_000_000_000)
+	BadKidsTransferAmount      = sdkmath.NewInt(15_000_000_000)
 	Ustrd                      = "ustrd"
 
 	MinInitialDepositRatio = "0.50"
@@ -117,12 +118,15 @@ func CreateUpgradeHandler(
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v10...")
 
 		ctx.Logger().Info("Migrating tendermint consensus params from x/params to x/consensus...")
 		legacyParamSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper)
+		if err := baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper.ParamsStore); err != nil {
+			return nil, errorsmod.Wrapf(err, "unable to migrate params")
+		}
 
 		ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
 		if err := icacontrollermigrations.MigrateICS27ChannelCapability(
@@ -157,7 +161,7 @@ func CreateUpgradeHandler(
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 
 		ctx.Logger().Info("Setting MinInitialDepositRatio...")
-		if err := SetMinInitialDepositRatio(ctx, govKeeper); err != nil {
+		if err := SetMinInitialDepositRatio(context, govKeeper); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to set MinInitialDepositRatio")
 		}
 
@@ -187,10 +191,10 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 	minter := minttypes.NewMinter(EpochProvisions)
 	k.SetMinter(ctx, minter)
 
-	stakingProportion := sdk.MustNewDecFromStr(StakingProportion)
-	communityPoolGrowthProportion := sdk.MustNewDecFromStr(CommunityPoolGrowthProportion)
-	strategicReserveProportion := sdk.MustNewDecFromStr(StrategicReserveProportion)
-	communityPoolSecurityBudgetProportion := sdk.MustNewDecFromStr(CommunityPoolSecurityBudgetProportion)
+	stakingProportion := sdkmath.LegacyMustNewDecFromStr(StakingProportion)
+	communityPoolGrowthProportion := sdkmath.LegacyMustNewDecFromStr(CommunityPoolGrowthProportion)
+	strategicReserveProportion := sdkmath.LegacyMustNewDecFromStr(StrategicReserveProportion)
+	communityPoolSecurityBudgetProportion := sdkmath.LegacyMustNewDecFromStr(CommunityPoolSecurityBudgetProportion)
 
 	// Confirm proportions sum to 100
 	totalProportions := stakingProportion.
@@ -198,7 +202,7 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 		Add(strategicReserveProportion).
 		Add(communityPoolSecurityBudgetProportion)
 
-	if !totalProportions.Equal(sdk.OneDec()) {
+	if !totalProportions.Equal(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("distribution proportions do not sum to 1 (%v)", totalProportions)
 	}
 
@@ -217,10 +221,13 @@ func ReduceSTRDStakingRewards(ctx sdk.Context, k mintkeeper.Keeper) error {
 }
 
 // Set the initial deposit ratio to 25%
-func SetMinInitialDepositRatio(ctx sdk.Context, k govkeeper.Keeper) error {
-	params := k.GetParams(ctx)
+func SetMinInitialDepositRatio(ctx context.Context, k govkeeper.Keeper) error {
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		return err
+	}
 	params.MinInitialDepositRatio = MinInitialDepositRatio
-	return k.SetParams(ctx, params)
+	return k.Params.Set(ctx, params)
 }
 
 // This likely isn't necessary, but since migrating from google proto to

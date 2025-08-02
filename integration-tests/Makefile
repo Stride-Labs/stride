@@ -51,6 +51,13 @@ build-api:
 build-stride:
 	@bash network/scripts/build.sh stride
 
+build-stride-upgrade:
+	@if [ -z "$$UPGRADE_OLD_VERSION" ]; then \
+		echo "Error: UPGRADE_OLD_VERSION environment variable is not set"; \
+		exit 1; \
+	fi
+	@bash network/scripts/build.sh stride
+
 build-cosmoshub:
 	$(call build_and_push_docker,cosmoshub,.,chains/cosmoshub:v22.1.0)
 
@@ -73,6 +80,10 @@ start:
 	@$(HELM) install $(HELM_CHART) $(HELM_CHART) --values $(HELM_CHART)/values.yaml -n $(K8S_NAMESPACE)
 	@$(MAKE) wait-for-startup
 
+upgrade-stride:
+	@bash network/scripts/upgrade.sh
+
+test:
 .PHONY: test
 test: test-core test-auction
 
@@ -87,6 +98,9 @@ test-autopilot:
 
 startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log
+
+stride-logs:
+	@$(KUBECTL) logs stride-validator-0 -f
 
 stop:
 	@$(HELM) uninstall $(HELM_CHART) -n $(K8S_NAMESPACE)

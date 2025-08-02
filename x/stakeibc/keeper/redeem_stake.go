@@ -49,7 +49,7 @@ func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.
 	}
 
 	// construct desired unstaking amount from host zone
-	nativeAmount := sdk.NewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).TruncateInt()
+	nativeAmount := sdkmath.LegacyNewDecFromInt(msg.Amount).Mul(hostZone.RedemptionRate).TruncateInt()
 	if nativeAmount.LTE(sdkmath.ZeroInt()) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "amount must be greater than 0. found: %v", msg.Amount)
 	}

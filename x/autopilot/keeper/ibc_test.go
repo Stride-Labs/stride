@@ -3,8 +3,8 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 )
 
 type PacketCallbackTestCase struct {
@@ -24,7 +24,7 @@ func (s *KeeperTestSuite) SetupTestHandleFallbackPacket() PacketCallbackTestCase
 	sequence := uint64(1)
 	channelId := "channel-0"
 	denom := "denom"
-	amount := sdk.NewInt(10000)
+	amount := sdkmath.NewInt(10000)
 	token := sdk.NewCoin(denom, amount)
 
 	// Set a fallback addresses
@@ -64,7 +64,7 @@ func (s *KeeperTestSuite) TestSendToFallbackAddress() {
 	fallbackAccount := s.TestAccs[1]
 
 	denom := "denom"
-	amount := sdk.NewInt(10000)
+	amount := sdkmath.NewInt(10000)
 
 	// Fund the sender
 	zeroCoin := sdk.NewCoin(denom, sdkmath.ZeroInt())
@@ -138,7 +138,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_AckSuccess() {
 	s.Require().False(found, "fallback address should have been removed")
 
 	// Confirm the fallback address has not received any coins
-	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdk.ZeroInt())
+	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdkmath.ZeroInt())
 	fallbackBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.FallbackAccount, tc.Token.Denom)
 	s.CompareCoins(zeroCoin, fallbackBalance, "fallback account should not have received funds")
 }
@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_AckFailure() {
 	s.Require().NoError(err, "no error expected during OnAckPacket")
 
 	// Confirm tokens were sent to the fallback address
-	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdk.ZeroInt())
+	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdkmath.ZeroInt())
 	senderBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.SenderAccount, tc.Token.Denom)
 	fallbackBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.FallbackAccount, tc.Token.Denom)
 	s.CompareCoins(zeroCoin, senderBalance, "sender account should have lost funds")
@@ -194,7 +194,7 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket_NoOp() {
 	s.Require().NoError(err, "no error expected during on ack packet")
 
 	// Check that no funds were moved
-	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdk.ZeroInt())
+	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdkmath.ZeroInt())
 	senderBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.SenderAccount, tc.Token.Denom)
 	fallbackBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.FallbackAccount, tc.Token.Denom)
 	s.CompareCoins(tc.Token, senderBalance, "sender account should have lost funds")
@@ -213,7 +213,7 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket_Successful() {
 	s.Require().NoError(err, "no error expected when calling OnTimeoutPacket")
 
 	// Confirm tokens were sent to the fallback address
-	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdk.ZeroInt())
+	zeroCoin := sdk.NewCoin(tc.Token.Denom, sdkmath.ZeroInt())
 	senderBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.SenderAccount, tc.Token.Denom)
 	fallbackBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.FallbackAccount, tc.Token.Denom)
 	s.CompareCoins(zeroCoin, senderBalance, "sender account should have lost funds")

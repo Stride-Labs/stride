@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
 	v15 "github.com/Stride-Labs/stride/v27/app/upgrades/v15"
@@ -28,22 +28,20 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 type UpdateRedemptionRateBounds struct {
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinOuterRedemptionRate sdk.Dec
-	ExpectedMinInnerRedemptionRate sdk.Dec
-	ExpectedMaxInnerRedemptionRate sdk.Dec
-	ExpectedMaxOuterRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinOuterRedemptionRate sdkmath.LegacyDec
+	ExpectedMinInnerRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxInnerRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxOuterRedemptionRate sdkmath.LegacyDec
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Setup the store before the upgrade
 	checkRedemptionRatesAfterUpgrade := s.SetupRedemptionRatesBeforeUpgrade()
 	checkQueriesAfterUpgrade := s.SetupQueriesBeforeUpgrade()
 
 	// Run the upgrade to set the bounds and clear pending queries
-	s.ConfirmUpgradeSucceededs("v15", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v15.UpgradeName)
 
 	// Check the store after the upgrade
 	checkRedemptionRatesAfterUpgrade()
@@ -54,25 +52,25 @@ func (s *UpgradeTestSuite) SetupRedemptionRatesBeforeUpgrade() func() {
 	// Define test cases consisting of an initial redemption rate and expected bounds
 	testCases := []UpdateRedemptionRateBounds{
 		{
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.95"), // 1 - 5% = 0.95
-			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("0.97"), // 1 - 3% = 0.97
-			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.05"), // 1 + 5% = 1.05
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.10"), // 1 + 10% = 1.1
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.95"), // 1 - 5% = 0.95
+			ExpectedMinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.97"), // 1 - 3% = 0.97
+			ExpectedMaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.05"), // 1 + 5% = 1.05
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.10"), // 1 + 10% = 1.1
 		},
 		{
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
-			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("1.067"), // 1.1 - 3% = 1.067
-			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.155"), // 1.1 + 5% = 1.155
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.045"), // 1.1 - 5% = 1.045
+			ExpectedMinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.067"), // 1.1 - 3% = 1.067
+			ExpectedMaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.155"), // 1.1 + 5% = 1.155
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.210"), // 1.1 + 10% = 1.21
 		},
 		{
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.25"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
-			ExpectedMinInnerRedemptionRate: sdk.MustNewDecFromStr("1.2125"), // 1.25 - 3% = 1.2125
-			ExpectedMaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.3125"), // 1.25 + 5% = 1.3125
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("1.3750"), // 1.25 + 10% = 1.375
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.25"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1875"), // 1.25 - 5% = 1.1875
+			ExpectedMinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.2125"), // 1.25 - 3% = 1.2125
+			ExpectedMaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.3125"), // 1.25 + 5% = 1.3125
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.3750"), // 1.25 + 10% = 1.375
 		},
 	}
 

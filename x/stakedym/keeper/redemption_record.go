@@ -1,7 +1,8 @@
 package keeper
 
 import (
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v27/x/stakedym/types"
@@ -61,7 +62,7 @@ func (k Keeper) GetRedemptionRecordsFromUnbondingId(ctx sdk.Context, unbondingRe
 
 	// Iterate though just the records that match the unbonding record ID prefix
 	unbondingRecordPrefix := types.IntKey(unbondingRecordId)
-	iterator := sdk.KVStorePrefixIterator(store, unbondingRecordPrefix)
+	iterator := storetypes.KVStorePrefixIterator(store, unbondingRecordPrefix)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {

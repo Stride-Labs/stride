@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
@@ -22,7 +22,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.Setup()
 
 	// Create a logger with accessible output
-	logger := log.NewTMLogger(&s.logBuffer)
+	logger := log.NewLogger(&s.logBuffer)
 	s.Ctx = s.Ctx.WithLogger(logger)
 }
 

@@ -1,8 +1,8 @@
 package v2
 
 import (
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -11,7 +11,7 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
 )
 
-func migrateClaimParams(store sdk.KVStore, cdc codec.Codec) error {
+func migrateClaimParams(store storetypes.KVStore, cdc codec.Codec) error {
 	// Deserialize with old data type
 	oldParamsBz := store.Get([]byte(claimtypes.ParamsKey))
 	var oldParams oldclaimtypes.Params

@@ -5,9 +5,8 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/x/interchainquery/types"
@@ -29,7 +28,7 @@ func (s *KeeperTestSuite) SetupMsgSubmitQueryResponse() MsgSubmitQueryResponseTe
 	s.CreateTransferChannel(HostChainId)
 
 	// define the query
-	goCtx := sdk.WrapSDKContext(s.Ctx)
+	goCtx := s.Ctx
 	h, err := s.App.StakeibcKeeper.GetLightClientHeight(s.Ctx, s.TransferPath.EndpointA.ConnectionID)
 	s.Require().NoError(err)
 	height := int64(h - 1) // start at the (LC height) - 1  height, which is the height the query executes at!
@@ -111,7 +110,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_ProofStale() {
 
 	// Attempt to submit the response, it should fail because the response is stale
 	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorContains(err, "Query proof height (16) is older than the submission height (100)")
+	s.Require().ErrorContains(err, "Query proof height (15) is older than the submission height (100)")
 }
 
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_Timeout_RejectQuery() {

@@ -2,6 +2,7 @@
 
 set -eu 
 source scripts/config.sh
+source scripts/constants.sh
 source scripts/utils.sh
 
 # Wait for API server to start
@@ -59,6 +60,15 @@ update_config() {
     download_shared_file ${VALIDATOR_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/priv_validator_key.json 
     download_shared_file ${NODE_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json  ${CHAIN_HOME}/config/node_key.json 
     download_shared_file ${GENESIS_DIR}/${CHAIN_NAME}/genesis.json ${CHAIN_HOME}/config/genesis.json 
+
+    if [[ "$VALIDATOR_INDEX" != "1" ]]; then
+        echo "Recovering base account key..."
+        validator_key=$(jq -r '.validators[$index]' --argjson index "$((VALIDATOR_INDEX-1))" ${KEYS_FILE})
+        
+        name=$(echo $validator_key | jq -r '.name')
+        mnemonic=$(echo $validator_key | jq -r '.mnemonic')
+        echo "$mnemonic" | $BINARY keys add $name --recover
+    fi
 }
 
 # Update the persistent peers conditionally based on which node it is

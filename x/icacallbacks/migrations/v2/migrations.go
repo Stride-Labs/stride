@@ -1,9 +1,9 @@
 package v2
 
 import (
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -11,7 +11,7 @@ import (
 	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 )
 
-func migrateCallbacks(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateCallbacks(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	icacallbackStore := prefix.NewStore(store, []byte(icacallbacktypes.CallbackDataKeyPrefix))
 
 	iter := icacallbackStore.Iterator(nil, nil)

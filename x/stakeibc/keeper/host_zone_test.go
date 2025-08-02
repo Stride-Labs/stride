@@ -3,128 +3,163 @@ package keeper_test
 import (
 	"fmt"
 	"strconv"
-	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-	"github.com/stretchr/testify/require"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	keepertest "github.com/Stride-Labs/stride/v27/testutil/keeper"
-	"github.com/Stride-Labs/stride/v27/testutil/nullify"
 	"github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
-func createNHostZone(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.HostZone {
+func (s *KeeperTestSuite) createNHostZone(n int) []types.HostZone {
 	items := make([]types.HostZone, n)
 	for i := range items {
 		items[i].ChainId = strconv.Itoa(i)
-		items[i].RedemptionRate = sdk.NewDec(1)
-		items[i].LastRedemptionRate = sdk.NewDec(1)
-		items[i].MinRedemptionRate = sdk.NewDecWithPrec(5, 1)
-		items[i].MaxRedemptionRate = sdk.NewDecWithPrec(15, 1)
-		items[i].MinInnerRedemptionRate = sdk.NewDecWithPrec(5, 1)
-		items[i].MaxInnerRedemptionRate = sdk.NewDecWithPrec(15, 1)
+		items[i].RedemptionRate = sdkmath.LegacyNewDec(1)
+		items[i].LastRedemptionRate = sdkmath.LegacyNewDec(1)
+		items[i].MinRedemptionRate = sdkmath.LegacyNewDecWithPrec(5, 1)
+		items[i].MaxRedemptionRate = sdkmath.LegacyNewDecWithPrec(15, 1)
+		items[i].MinInnerRedemptionRate = sdkmath.LegacyNewDecWithPrec(5, 1)
+		items[i].MaxInnerRedemptionRate = sdkmath.LegacyNewDecWithPrec(15, 1)
 		items[i].TotalDelegations = sdkmath.ZeroInt()
-		keeper.SetHostZone(ctx, items[i])
+		items[i].Validators = []*types.Validator{}
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[i])
 	}
 	return items
 }
 
-func TestHostZoneGet(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNHostZone(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestHostZoneGet() {
+	items := s.createNHostZone(10)
 	for _, item := range items {
-		got, found := keeper.GetHostZone(ctx, item.ChainId)
-		require.True(t, found)
-		require.Equal(t,
-			nullify.Fill(&item),
-			nullify.Fill(&got),
+		got, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, item.ChainId)
+		s.Require().True(found)
+		s.Require().Equal(
+			&item,
+			&got,
 		)
 	}
 }
 
-func TestHostZoneRemove(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNHostZone(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestGetHostZoneFromHostDenom() {
+	// Create host zones with different denoms
+	hostZones := s.createNHostZone(5)
+	denoms := []string{}
+	for i, hostZone := range hostZones {
+		denom := fmt.Sprintf("denom-%d", i)
+		denoms = append(denoms, denom)
+		hostZone.HostDenom = denom
+
+		hostZones[i] = hostZone
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Search each host zone by the denom
+	for i, denom := range denoms {
+		hostZone, err := s.App.StakeibcKeeper.GetHostZoneFromHostDenom(s.Ctx, denom)
+		s.Require().NoError(err)
+		s.Require().Equal(hostZones[i], *hostZone, "host zone")
+	}
+
+	// Confirm non-existent denom errors
+	_, err := s.App.StakeibcKeeper.GetHostZoneFromHostDenom(s.Ctx, "non-existent")
+	s.Require().ErrorContains(err, "No HostZone for non-existent denom found")
+}
+
+func (s *KeeperTestSuite) TestGetHostZoneFromIBCDenom() {
+	// Create host zones with different denoms
+	hostZones := s.createNHostZone(5)
+	denoms := []string{}
+	for i, hostZone := range hostZones {
+		denom := fmt.Sprintf("denom-%d", i)
+		denoms = append(denoms, denom)
+		hostZone.IbcDenom = denom
+
+		hostZones[i] = hostZone
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+
+	// Search each host zone by the denom
+	for i, denom := range denoms {
+		hostZone, err := s.App.StakeibcKeeper.GetHostZoneFromIBCDenom(s.Ctx, denom)
+		s.Require().NoError(err)
+		s.Require().Equal(hostZones[i], *hostZone, "host zone")
+	}
+
+	// Confirm non-existent denom errors
+	_, err := s.App.StakeibcKeeper.GetHostZoneFromIBCDenom(s.Ctx, "non-existent")
+	s.Require().ErrorContains(err, "No HostZone for non-existent found")
+}
+
+func (s *KeeperTestSuite) TestHostZoneRemove() {
+	items := s.createNHostZone(10)
 	for _, item := range items {
-		keeper.RemoveHostZone(ctx, item.ChainId)
-		_, found := keeper.GetHostZone(ctx, item.ChainId)
-		require.False(t, found)
+		s.App.StakeibcKeeper.RemoveHostZone(s.Ctx, item.ChainId)
+		_, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, item.ChainId)
+		s.Require().False(found)
 	}
 }
 
-func TestHostZoneGetAll(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-	items := createNHostZone(keeper, ctx, 10)
-	require.ElementsMatch(t,
-		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllHostZone(ctx)),
+func (s *KeeperTestSuite) TestHostZoneGetAll() {
+	items := s.createNHostZone(10)
+	s.Require().ElementsMatch(
+		items,
+		s.App.StakeibcKeeper.GetAllHostZone(s.Ctx),
 	)
 }
 
-func TestHostZoneGetAllActiveCase1(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-
+func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase1() {
 	// Case 1: some active some inactive
 	numZones := 3
-	items := createNHostZone(keeper, ctx, numZones)
+	items := s.createNHostZone(numZones)
 	// set the last host zone as halted
 	items[numZones-1].Halted = true
-	keeper.SetHostZone(ctx, items[numZones-1])
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[numZones-1])
 
 	// only the last host zone is active, so we expect all except that one
 	actualActiveHzs := items[:numZones-1]
-	getActiveHzResults := keeper.GetAllActiveHostZone(ctx)
-	require.ElementsMatch(t,
-		nullify.Fill(actualActiveHzs),
-		nullify.Fill(getActiveHzResults),
+	getActiveHzResults := s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx)
+	s.Require().ElementsMatch(
+		actualActiveHzs,
+		getActiveHzResults,
 	)
 }
 
-func TestHostZoneGetAllActiveCase2(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-
+func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase2() {
 	// Case 2: all active
 	numZones := 3
-	items := createNHostZone(keeper, ctx, numZones)
-	require.ElementsMatch(t,
-		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllActiveHostZone(ctx)),
+	items := s.createNHostZone(numZones)
+	s.Require().ElementsMatch(
+		items,
+		s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx),
 	)
 }
 
-func TestHostZoneGetAllActiveCase3(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-
+func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase3() {
 	// Case 3: all inactive
 	numZones := 3
-	items := createNHostZone(keeper, ctx, numZones)
+	items := s.createNHostZone(numZones)
 	// set the last host zone as halted
 	items[0].Halted = true
 	items[1].Halted = true
 	items[2].Halted = true
-	keeper.SetHostZone(ctx, items[0])
-	keeper.SetHostZone(ctx, items[1])
-	keeper.SetHostZone(ctx, items[2])
-	require.ElementsMatch(t,
-		nullify.Fill(types.HostZone{}),
-		nullify.Fill(keeper.GetAllActiveHostZone(ctx)),
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[0])
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[1])
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, items[2])
+	s.Require().ElementsMatch(
+		types.HostZone{},
+		s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx),
 	)
 }
 
-func TestHostZoneGetAllActiveCase4(t *testing.T) {
-	keeper, ctx := keepertest.StakeibcKeeper(t)
-
+func (s *KeeperTestSuite) TestHostZoneGetAllActiveCase4() {
 	// create no zones, check the output is an empty list
-	require.ElementsMatch(t,
-		nullify.Fill(types.HostZone{}),
-		nullify.Fill(keeper.GetAllActiveHostZone(ctx)),
+	s.Require().ElementsMatch(
+		types.HostZone{},
+		s.App.StakeibcKeeper.GetAllActiveHostZone(s.Ctx),
 	)
 }
 
-func TestGetValidatorFromAddress(t *testing.T) {
+func (s *KeeperTestSuite) TestGetValidatorFromAddress() {
 	numValidators := 3
 
 	// Create list of validators
@@ -142,14 +177,14 @@ func TestGetValidatorFromAddress(t *testing.T) {
 		expectedValidator := *validators[expectedIndex]
 		actualValidator, actualIndex, found := keeper.GetValidatorFromAddress(validators, address)
 
-		require.True(t, found)
-		require.Equal(t, expectedValidator, actualValidator)
-		require.Equal(t, int64(expectedIndex), actualIndex)
+		s.Require().True(found)
+		s.Require().Equal(expectedValidator, actualValidator)
+		s.Require().Equal(int64(expectedIndex), actualIndex)
 	}
 
 	// Test GetValidatorFromAddress for an validator that doesn't exist
 	_, _, found := keeper.GetValidatorFromAddress(validators, "fake_validator")
-	require.False(t, found)
+	s.Require().False(found)
 }
 
 func (s *KeeperTestSuite) TestGetHostZoneFromTransferChannelID() {

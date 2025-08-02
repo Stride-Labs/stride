@@ -15,9 +15,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	config "github.com/Stride-Labs/stride/v27/cmd/strided/config"
 	icacallbacktypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
@@ -208,10 +209,10 @@ func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) 
 	}
 
 	// calculate the vesting scalar
-	portion := sdk.NewDec(vAt - vStart).Quo(sdk.NewDec(vLength))
+	portion := sdkmath.LegacyNewDec(vAt - vStart).Quo(sdkmath.LegacyNewDec(vLength))
 
 	for _, ovc := range vCoins {
-		vestedAmt := sdk.NewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
+		vestedAmt := sdkmath.LegacyNewDec(ovc.Amount.Int64()).Mul(portion).RoundInt()
 		vestedCoins = append(vestedCoins, sdk.NewCoin(ovc.Denom, vestedAmt))
 	}
 

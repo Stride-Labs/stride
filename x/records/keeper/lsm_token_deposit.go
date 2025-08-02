@@ -1,7 +1,8 @@
 package keeper
 
 import (
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v27/x/records/types"
@@ -54,7 +55,7 @@ func (k Keeper) UpdateLSMTokenDepositStatus(ctx sdk.Context, deposit types.LSMTo
 
 func (k Keeper) GetLSMDepositsForHostZone(ctx sdk.Context, chainId string) []types.LSMTokenDeposit {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.LSMTokenDepositKey))
-	iterator := sdk.KVStorePrefixIterator(store, types.KeyPrefix(chainId))
+	iterator := storetypes.KVStorePrefixIterator(store, types.KeyPrefix(chainId))
 	hostZoneLSMTokenDeposits := []types.LSMTokenDeposit{}
 
 	defer iterator.Close()

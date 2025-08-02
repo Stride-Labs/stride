@@ -4,15 +4,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 const TypeMsgToggleOracle = "toggle_oracle"
 
-var (
-	_ sdk.Msg            = &MsgToggleOracle{}
-	_ legacytx.LegacyMsg = &MsgToggleOracle{}
-)
+var _ sdk.Msg = &MsgToggleOracle{}
 
 func (msg MsgToggleOracle) Type() string {
 	return TypeMsgToggleOracle
@@ -20,11 +16,6 @@ func (msg MsgToggleOracle) Type() string {
 
 func (msg MsgToggleOracle) Route() string {
 	return RouterKey
-}
-
-func (msg *MsgToggleOracle) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgToggleOracle) GetSigners() []sdk.AccAddress {

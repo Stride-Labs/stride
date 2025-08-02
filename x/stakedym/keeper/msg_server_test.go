@@ -184,7 +184,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	// Create the host zone
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		SafeAddressOnStride: safeAddress,
-		DelegatedBalance:    sdk.NewInt(0),
+		DelegatedBalance:    sdkmath.NewInt(0),
 	})
 
 	// we're halting the zone to test that the tx works even when the host zone is halted
@@ -218,7 +218,7 @@ func (s *KeeperTestSuite) TestAdjustDelegatedBalance() {
 	// Attempt to call it with an amount that would make it negative, it should fail
 	_, err := s.GetMsgServer().AdjustDelegatedBalance(s.Ctx, &types.MsgAdjustDelegatedBalance{
 		Operator:         safeAddress,
-		DelegationOffset: sdk.NewInt(-10000),
+		DelegationOffset: sdkmath.NewInt(-10000),
 	})
 	s.Require().ErrorContains(err, "offset would cause the delegated balance to be negative")
 
@@ -246,9 +246,9 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	zone := types.HostZone{
 		ChainId: HostChainId,
 		// Upper bound 1.5
-		MaxRedemptionRate: sdk.NewDec(3).Quo(sdk.NewDec(2)),
+		MaxRedemptionRate: sdkmath.LegacyNewDec(3).Quo(sdkmath.LegacyNewDec(2)),
 		// Lower bound 0.9
-		MinRedemptionRate: sdk.NewDec(9).Quo(sdk.NewDec(10)),
+		MinRedemptionRate: sdkmath.LegacyNewDec(9).Quo(sdkmath.LegacyNewDec(10)),
 	}
 
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, zone)
@@ -257,26 +257,26 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 
 	initialMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
-		MinInnerRedemptionRate: sdk.NewDec(90).Quo(sdk.NewDec(100)),
-		MaxInnerRedemptionRate: sdk.NewDec(105).Quo(sdk.NewDec(100)),
+		MinInnerRedemptionRate: sdkmath.LegacyNewDec(90).Quo(sdkmath.LegacyNewDec(100)),
+		MaxInnerRedemptionRate: sdkmath.LegacyNewDec(105).Quo(sdkmath.LegacyNewDec(100)),
 	}
 
 	updateMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
-		MinInnerRedemptionRate: sdk.NewDec(95).Quo(sdk.NewDec(100)),
-		MaxInnerRedemptionRate: sdk.NewDec(11).Quo(sdk.NewDec(10)),
+		MinInnerRedemptionRate: sdkmath.LegacyNewDec(95).Quo(sdkmath.LegacyNewDec(100)),
+		MaxInnerRedemptionRate: sdkmath.LegacyNewDec(11).Quo(sdkmath.LegacyNewDec(10)),
 	}
 
 	invalidMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                adminAddress,
-		MinInnerRedemptionRate: sdk.NewDec(0),
-		MaxInnerRedemptionRate: sdk.NewDec(2),
+		MinInnerRedemptionRate: sdkmath.LegacyNewDec(0),
+		MaxInnerRedemptionRate: sdkmath.LegacyNewDec(2),
 	}
 
 	nonAdminMsg := types.MsgUpdateInnerRedemptionRateBounds{
 		Creator:                "non-admin",
-		MinInnerRedemptionRate: sdk.NewDec(0),
-		MaxInnerRedemptionRate: sdk.NewDec(2),
+		MinInnerRedemptionRate: sdkmath.LegacyNewDec(0),
+		MaxInnerRedemptionRate: sdkmath.LegacyNewDec(2),
 	}
 
 	// Set the inner bounds on the host zone for the first time
@@ -321,7 +321,7 @@ func (s *KeeperTestSuite) TestResumeHostZone() {
 
 	zone := types.HostZone{
 		ChainId:          HostChainId,
-		RedemptionRate:   sdk.NewDec(1),
+		RedemptionRate:   sdkmath.LegacyNewDec(1),
 		Halted:           false,
 		NativeTokenDenom: HostNativeDenom,
 	}
@@ -385,8 +385,8 @@ func (s *KeeperTestSuite) TestRefreshRedemptionRate() {
 	// Create host zone with initial redemption rate of 1
 	// There will be 1000 delegated tokens, and 500 stTokens
 	// implying an updated redemption rate of 2
-	initialRedemptionRate := sdk.OneDec()
-	expectedRedemptionRate := sdk.NewDec(2)
+	initialRedemptionRate := sdkmath.LegacyOneDec()
+	expectedRedemptionRate := sdkmath.LegacyNewDec(2)
 
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, types.HostZone{
 		DelegatedBalance:    sdkmath.NewInt(1000),

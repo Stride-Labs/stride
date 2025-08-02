@@ -5,6 +5,7 @@ package utils
 // Allows the safe creation of module accounts in the event that an account has already been initialized at an address
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -15,9 +16,9 @@ import (
 )
 
 type AccountKeeper interface {
-	NewAccount(sdk.Context, authtypes.AccountI) authtypes.AccountI
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) authtypes.AccountI
-	SetAccount(ctx sdk.Context, acc authtypes.AccountI)
+	NewAccount(context.Context, sdk.AccountI) sdk.AccountI
+	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
+	SetAccount(ctx context.Context, acc sdk.AccountI)
 }
 
 // CanCreateModuleAccountAtAddr tells us if we can safely make a module account at

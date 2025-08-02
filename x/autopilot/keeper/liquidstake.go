@@ -8,8 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	"github.com/Stride-Labs/stride/v27/x/autopilot/types"
@@ -41,7 +41,7 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// Verify the amount is valid
-	amount, ok := sdk.NewIntFromString(transferMetadata.Amount)
+	amount, ok := sdkmath.NewIntFromString(transferMetadata.Amount)
 	if !ok {
 		return errors.New("not a parsable amount field")
 	}
@@ -90,7 +90,7 @@ func (k Keeper) RunLiquidStake(
 
 	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
 	msgResponse, err := msgServer.LiquidStake(
-		sdk.WrapSDKContext(ctx),
+		ctx,
 		msg,
 	)
 	if err != nil {
@@ -139,7 +139,7 @@ func (k Keeper) IBCTransferStToken(
 		Memo:             "autopilot-liquid-stake-and-forward",
 	}
 
-	transferResponse, err := k.transferKeeper.Transfer(sdk.WrapSDKContext(ctx), transferMsg)
+	transferResponse, err := k.transferKeeper.Transfer(ctx, transferMsg)
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to submit transfer during autopilot liquid stake and forward")
 	}

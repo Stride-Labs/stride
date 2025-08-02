@@ -22,7 +22,7 @@ message TradeConfig {
   // This value may be slightly stale as it is updated by an ICQ
   string swap_price = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
   // unix time in seconds that the price was last updated
@@ -34,18 +34,18 @@ message TradeConfig {
   // from the current value
   string max_allowed_swap_loss_rate = 4 [
     (cosmos_proto.scalar) = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
 
   // min and max set boundaries of reward denom on trade chain we will swap
   // min also decides when reward token transfers are worth it (transfer fees)
   string min_swap_amount = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
   string max_swap_amount = 6 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 }
@@ -92,7 +92,7 @@ message TradeRoute {
   // Minimum amount of reward token that must be accumulated before
   // the tokens are transferred to the trade ICA
   string min_transfer_amount = 13 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
 

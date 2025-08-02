@@ -5,10 +5,9 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 )
@@ -23,11 +22,6 @@ var (
 	_ sdk.Msg = &MsgPlaceBid{}
 	_ sdk.Msg = &MsgCreateAuction{}
 	_ sdk.Msg = &MsgUpdateAuction{}
-
-	// Implement legacy interface for ledger support
-	_ legacytx.LegacyMsg = &MsgPlaceBid{}
-	_ legacytx.LegacyMsg = &MsgCreateAuction{}
-	_ legacytx.LegacyMsg = &MsgUpdateAuction{}
 )
 
 // ----------------------------------------------
@@ -37,8 +31,8 @@ var (
 func NewMsgPlaceBid(
 	bidder string,
 	AuctionName string,
-	sellingTokenAmount math.Int,
-	paymentTokenAmount math.Int,
+	sellingTokenAmount sdkmath.Int,
+	paymentTokenAmount sdkmath.Int,
 ) *MsgPlaceBid {
 	return &MsgPlaceBid{
 		Bidder:             bidder,
@@ -62,11 +56,6 @@ func (msg *MsgPlaceBid) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{sender}
-}
-
-func (msg *MsgPlaceBid) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgPlaceBid) ValidateBasic() error {
@@ -101,7 +90,7 @@ func NewMsgCreateAuction(
 	minBidAmount uint64,
 	beneficiary string,
 ) *MsgCreateAuction {
-	minPriceMultiplierDec, err := math.LegacyNewDecFromStr(minPriceMultiplier)
+	minPriceMultiplierDec, err := sdkmath.LegacyNewDecFromStr(minPriceMultiplier)
 	if err != nil {
 		panic(fmt.Sprintf("cannot parse LegacyDecimal from minPriceMultiplier '%s'", minPriceMultiplier))
 	}
@@ -114,7 +103,7 @@ func NewMsgCreateAuction(
 		PaymentDenom:       paymentDenom,
 		Enabled:            enabled,
 		MinPriceMultiplier: minPriceMultiplierDec,
-		MinBidAmount:       math.NewIntFromUint64(minBidAmount),
+		MinBidAmount:       sdkmath.NewIntFromUint64(minBidAmount),
 		Beneficiary:        beneficiary,
 	}
 }
@@ -133,11 +122,6 @@ func (msg *MsgCreateAuction) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{sender}
-}
-
-func (msg *MsgCreateAuction) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgCreateAuction) ValidateBasic() error {
@@ -169,7 +153,7 @@ func NewMsgUpdateAuction(
 	minBidAmount uint64,
 	beneficiary string,
 ) *MsgUpdateAuction {
-	minPriceMultiplierDec, err := math.LegacyNewDecFromStr(minPriceMultiplier)
+	minPriceMultiplierDec, err := sdkmath.LegacyNewDecFromStr(minPriceMultiplier)
 	if err != nil {
 		panic(fmt.Sprintf("cannot parse LegacyDecimal from minPriceMultiplier '%s'", minPriceMultiplier))
 	}
@@ -180,7 +164,7 @@ func NewMsgUpdateAuction(
 		AuctionType:        auctionType,
 		Enabled:            enabled,
 		MinPriceMultiplier: minPriceMultiplierDec,
-		MinBidAmount:       math.NewIntFromUint64(minBidAmount),
+		MinBidAmount:       sdkmath.NewIntFromUint64(minBidAmount),
 		Beneficiary:        beneficiary,
 	}
 }
@@ -201,11 +185,6 @@ func (msg *MsgUpdateAuction) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{sender}
 }
 
-func (msg *MsgUpdateAuction) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgUpdateAuction) ValidateBasic() error {
 	if err := utils.ValidateAdminAddress(msg.Admin); err != nil {
 		return err
@@ -219,7 +198,7 @@ func (msg *MsgUpdateAuction) ValidateBasic() error {
 	if msg.MinPriceMultiplier.IsZero() {
 		return errors.New("min-price-multiplier cannot be 0")
 	}
-	if msg.MinBidAmount.LT(math.ZeroInt()) {
+	if msg.MinBidAmount.LT(sdkmath.ZeroInt()) {
 		return errors.New("min-bid-amount must be at least 0")
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Beneficiary); err != nil {

@@ -6,11 +6,12 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
@@ -217,7 +218,7 @@ Example:
 				return errorsmod.Wrapf(err, "unable to parse claim type deadline date")
 			}
 
-			earlyClaimPenalty, err := sdk.NewDecFromStr(earlyPenaltyString)
+			earlyClaimPenalty, err := sdkmath.LegacyNewDecFromStr(earlyPenaltyString)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early penalty")
 			}
@@ -361,7 +362,7 @@ Example:
 				return errorsmod.Wrapf(err, "unable to parse claim type deadline date")
 			}
 
-			earlyClaimPenalty, err := sdk.NewDecFromStr(earlyPenaltyString)
+			earlyClaimPenalty, err := sdkmath.LegacyNewDecFromStr(earlyPenaltyString)
 			if err != nil {
 				return errorsmod.Wrapf(err, "unable to parse early penalty")
 			}

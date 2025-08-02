@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
@@ -18,7 +16,6 @@ import (
 
 var (
 	ustrd               = "ustrd"
-	dummyUpgradeHeight  = int64(5)
 	osmoAirdropId       = "osmosis"
 	unofficialAirdropId = "unofficial-airdrop"
 	addresses           = []string{
@@ -26,10 +23,10 @@ var (
 		"stride1udf2vyj5wyjckl7nzqn5a2vh8fpmmcffey92y8",
 		"stride1uc8ccxy5s2hw55fn8963ukfdycaamq95jqcfnr",
 	}
-	weights = []sdk.Dec{
-		sdk.NewDec(1000),
-		sdk.NewDec(2000),
-		sdk.NewDec(3000),
+	weights = []sdkmath.LegacyDec{
+		sdkmath.LegacyNewDec(1000),
+		sdkmath.LegacyNewDec(2000),
+		sdkmath.LegacyNewDec(3000),
 	}
 )
 
@@ -47,7 +44,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupStoreBeforeUpgrade()
-	s.ConfirmUpgradeSucceededs("v8", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v8.UpgradeName)
 	s.CheckStoreAfterUpgrade()
 }
 
@@ -98,8 +95,6 @@ func (s *UpgradeTestSuite) SetupStoreBeforeUpgrade() {
 }
 
 func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
-	afterCtx := s.Ctx.WithBlockHeight(dummyUpgradeHeight)
-
 	// Check that the evmos airdrop was added and the unofficial airdrop was removed
 	claimParams, err := s.App.ClaimKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err, "no error expected when getting params")
@@ -120,7 +115,7 @@ func (s *UpgradeTestSuite) CheckStoreAfterUpgrade() {
 	s.Require().Equal(v8.AirdropStartTime, evmosAirdrop.AirdropStartTime, "evmos airdrop start time")
 
 	// Check that the evmos claims records were added
-	evmosClaimRecords := s.App.ClaimKeeper.GetClaimRecords(afterCtx, v8.EvmosAirdropIdentifier)
+	evmosClaimRecords := s.App.ClaimKeeper.GetClaimRecords(s.Ctx, v8.EvmosAirdropIdentifier)
 	s.Require().Positive(len(evmosClaimRecords))
 
 	// Check that the osmo claim actions were reset

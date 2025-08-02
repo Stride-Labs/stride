@@ -2,7 +2,6 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // DefaultGenesis returns the default genesis state
@@ -30,12 +29,12 @@ func DefaultGenesis() *GenesisState {
 			SafeAddressOnStride:     SafeAddressOnStride,
 			OperatorAddressOnStride: OperatorAddressOnStride,
 
-			RedemptionRate:         sdk.OneDec(),
-			LastRedemptionRate:     sdk.OneDec(),
-			MinRedemptionRate:      sdk.MustNewDecFromStr("0.95"),
-			MaxRedemptionRate:      sdk.MustNewDecFromStr("1.1"),
-			MinInnerRedemptionRate: sdk.MustNewDecFromStr("0.95"),
-			MaxInnerRedemptionRate: sdk.MustNewDecFromStr("1.1"),
+			RedemptionRate:         sdkmath.LegacyOneDec(),
+			LastRedemptionRate:     sdkmath.LegacyOneDec(),
+			MinRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("0.95"),
+			MaxRedemptionRate:      sdkmath.LegacyMustNewDecFromStr("1.1"),
+			MinInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.95"),
+			MaxInnerRedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.1"),
 			DelegatedBalance:       sdkmath.ZeroInt(),
 			Halted:                 false,
 		},

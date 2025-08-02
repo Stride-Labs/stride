@@ -45,3 +45,6 @@ node_modules
 
 integration-tests/state
 integration-tests/storage
+
+/__debug
+*.lock

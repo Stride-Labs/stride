@@ -2,64 +2,53 @@ package keeper_test
 
 import (
 	"strconv"
-	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/Stride-Labs/stride/v27/testutil/keeper"
-	"github.com/Stride-Labs/stride/v27/testutil/nullify"
-	"github.com/Stride-Labs/stride/v27/x/icacallbacks/keeper"
 	"github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 )
 
-// Prevent strconv unused error
-var _ = strconv.IntSize
-
-func createNCallbackData(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.CallbackData {
+func (s *KeeperTestSuite) createNCallbackData(ctx sdk.Context, n int) []types.CallbackData {
 	items := make([]types.CallbackData, n)
 	for i := range items {
 		items[i].CallbackKey = strconv.Itoa(i)
 
-		keeper.SetCallbackData(ctx, items[i])
+		s.App.IcacallbacksKeeper.SetCallbackData(ctx, items[i])
 	}
 	return items
 }
 
-func TestCallbackDataGet(t *testing.T) {
-	keeper, ctx := keepertest.IcacallbacksKeeper(t)
-	items := createNCallbackData(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestCallbackDataGet() {
+	items := s.createNCallbackData(s.Ctx, 10)
 	for _, item := range items {
-		rst, found := keeper.GetCallbackData(ctx,
+		rst, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx,
 			item.CallbackKey,
 		)
-		require.True(t, found)
-		require.Equal(t,
-			nullify.Fill(&item),
-			nullify.Fill(&rst),
+		s.Require().True(found)
+		s.Require().Equal(
+			&item,
+			&rst,
 		)
 	}
 }
 
-func TestCallbackDataRemove(t *testing.T) {
-	keeper, ctx := keepertest.IcacallbacksKeeper(t)
-	items := createNCallbackData(keeper, ctx, 10)
+func (s *KeeperTestSuite) TestCallbackDataRemove() {
+	items := s.createNCallbackData(s.Ctx, 10)
 	for _, item := range items {
-		keeper.RemoveCallbackData(ctx,
+		s.App.IcacallbacksKeeper.RemoveCallbackData(s.Ctx,
 			item.CallbackKey,
 		)
-		_, found := keeper.GetCallbackData(ctx,
+		_, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx,
 			item.CallbackKey,
 		)
-		require.False(t, found)
+		s.Require().False(found)
 	}
 }
 
-func TestCallbackDataGetAll(t *testing.T) {
-	keeper, ctx := keepertest.IcacallbacksKeeper(t)
-	items := createNCallbackData(keeper, ctx, 10)
-	require.ElementsMatch(t,
-		nullify.Fill(items),
-		nullify.Fill(keeper.GetAllCallbackData(ctx)),
+func (s *KeeperTestSuite) TestCallbackDataGetAll() {
+	items := s.createNCallbackData(s.Ctx, 10)
+	s.Require().ElementsMatch(
+		items,
+		s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx),
 	)
 }

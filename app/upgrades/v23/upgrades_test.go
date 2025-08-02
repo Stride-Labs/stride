@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
@@ -27,8 +27,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(4)
-
 	minTransferAmount := sdkmath.NewInt(100)
 	initialDetokenizeAmount := sdkmath.NewInt(100)
 	expectedDetokenizeAmount := sdkmath.NewInt(99)
@@ -55,7 +53,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	})
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs(v23.UpgradeName, dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v23.UpgradeName)
 
 	// Confirm trade route was migrated
 	for _, tradeRoute := range s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx) {

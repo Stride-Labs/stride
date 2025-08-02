@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -20,8 +19,8 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 	require.True(t, ok)
 
 	validChainId := "chain-0"
-	validRebateRate := sdk.MustNewDecFromStr("0.1")
-	validLiquidStakedAmount := sdk.NewInt(1000)
+	validRebateRate := sdkmath.LegacyMustNewDecFromStr("0.1")
+	validLiquidStakedAmount := sdkmath.NewInt(1000)
 
 	tests := []struct {
 		name string
@@ -81,7 +80,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:                   validAdminAddress,
 				ChainId:                   validChainId,
-				RebateRate:                sdk.MustNewDecFromStr("0.5").Neg(),
+				RebateRate:                sdkmath.LegacyMustNewDecFromStr("0.5").Neg(),
 				LiquidStakedStTokenAmount: validLiquidStakedAmount,
 			},
 			err: "rebate rate, must be a decimal between 0 and 1 (inclusive)",
@@ -91,7 +90,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:                   validAdminAddress,
 				ChainId:                   validChainId,
-				RebateRate:                sdk.OneDec(),
+				RebateRate:                sdkmath.LegacyOneDec(),
 				LiquidStakedStTokenAmount: validLiquidStakedAmount,
 			},
 		},
@@ -100,7 +99,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:                   validAdminAddress,
 				ChainId:                   validChainId,
-				RebateRate:                sdk.MustNewDecFromStr("1.1"),
+				RebateRate:                sdkmath.LegacyMustNewDecFromStr("1.1"),
 				LiquidStakedStTokenAmount: validLiquidStakedAmount,
 			},
 			err: "rebate rate, must be a decimal between 0 and 1 (inclusive)",
@@ -110,7 +109,7 @@ func TestMsgSetCommunityPoolRebate(t *testing.T) {
 			msg: types.MsgSetCommunityPoolRebate{
 				Creator:                   validAdminAddress,
 				ChainId:                   validChainId,
-				RebateRate:                sdk.ZeroDec(),
+				RebateRate:                sdkmath.LegacyZeroDec(),
 				LiquidStakedStTokenAmount: validLiquidStakedAmount,
 			},
 		},

@@ -4,13 +4,11 @@ import (
 	"errors"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
-
+	sdkmath "cosmossdk.io/math"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	sdkmath "cosmossdk.io/math"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/Stride-Labs/stride/v27/utils"
 	vestexported "github.com/Stride-Labs/stride/v27/x/claim/vesting/exported"
@@ -18,7 +16,7 @@ import (
 
 // Compile-time type assertions
 var (
-	_ authtypes.AccountI          = (*BaseVestingAccount)(nil)
+	_ sdk.AccountI                = (*BaseVestingAccount)(nil)
 	_ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
 )
 
@@ -71,7 +69,7 @@ func (bva *BaseVestingAccount) TrackDelegation(balance, vestingCoins, amount sdk
 		// compute x and y per the specification, where:
 		// X := min(max(V - DV, 0), D)
 		// Y := D - X
-		x := sdk.MinInt(sdk.MaxInt(vestingAmt.Sub(delVestingAmt), sdkmath.ZeroInt()), coin.Amount)
+		x := sdkmath.MinInt(sdkmath.MaxInt(vestingAmt.Sub(delVestingAmt), sdkmath.ZeroInt()), coin.Amount)
 		y := coin.Amount.Sub(x)
 
 		if !x.IsZero() {
@@ -108,8 +106,8 @@ func (bva *BaseVestingAccount) TrackUndelegation(amount sdk.Coins) {
 		// compute x and y per the specification, where:
 		// X := min(DF, D)
 		// Y := min(DV, D - X)
-		x := sdk.MinInt(delegatedFree, coin.Amount)
-		y := sdk.MinInt(delegatedVesting, coin.Amount.Sub(x))
+		x := sdkmath.MinInt(delegatedFree, coin.Amount)
+		y := sdkmath.MinInt(delegatedVesting, coin.Amount.Sub(x))
 
 		if !x.IsZero() {
 			xCoin := sdk.NewCoin(coin.Denom, x)
@@ -195,8 +193,10 @@ func (bva BaseVestingAccount) MarshalYAML() (interface{}, error) {
 
 // Periodic Vesting Account (only for stride)
 // This vesting account works differently from the core periodic vesting account.
-var _ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
-var _ authtypes.GenesisAccount = (*StridePeriodicVestingAccount)(nil)
+var (
+	_ vestexported.VestingAccount = (*StridePeriodicVestingAccount)(nil)
+	_ authtypes.GenesisAccount    = (*StridePeriodicVestingAccount)(nil)
+)
 
 // NewStridePeriodicVestingAccountRaw creates a new StridePeriodicVestingAccount object from BaseVestingAccount
 func NewStridePeriodicVestingAccountRaw(bva *BaseVestingAccount, startTime int64, periods Periods) *StridePeriodicVestingAccount {
@@ -304,7 +304,7 @@ func (pva StridePeriodicVestingAccount) Validate() error {
 	if endTime != pva.EndTime {
 		return errors.New("vesting end time does not match length of all vesting periods")
 	}
-	if !originalVesting.IsEqual(pva.OriginalVesting) {
+	if !originalVesting.Equal(pva.OriginalVesting) {
 		return errors.New("original vesting coins does not match the sum of all coins in vesting periods")
 	}
 

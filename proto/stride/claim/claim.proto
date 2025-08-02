@@ -24,7 +24,7 @@ message ClaimRecord {
 
   // weight that represent the portion from total allocation
   string weight = 3 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false,
     (gogoproto.moretags) = "yaml:\"weight\""
   ];

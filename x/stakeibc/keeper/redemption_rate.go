@@ -48,7 +48,7 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 	depositAccountBalance := k.GetDepositAccountBalance(hostZone.ChainId, depositRecords)
 	undelegatedBalance := k.GetUndelegatedBalance(hostZone.ChainId, depositRecords)
 	tokenizedDelegation := k.GetTotalTokenizedDelegations(ctx, hostZone)
-	nativeDelegation := sdk.NewDecFromInt(hostZone.TotalDelegations)
+	nativeDelegation := sdkmath.LegacyNewDecFromInt(hostZone.TotalDelegations)
 
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"Redemption Rate Components - Deposit Account Balance: %v, Undelegated Balance: %v, "+
@@ -58,7 +58,7 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 
 	// Calculate the redemption rate
 	nativeTokensLocked := depositAccountBalance.Add(undelegatedBalance).Add(tokenizedDelegation).Add(nativeDelegation)
-	redemptionRate := nativeTokensLocked.Quo(sdk.NewDecFromInt(stSupply))
+	redemptionRate := nativeTokensLocked.Quo(sdkmath.LegacyNewDecFromInt(stSupply))
 
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
 		"New Redemption Rate: %v (vs Prev Rate: %v)", redemptionRate, hostZone.RedemptionRate))
@@ -83,7 +83,7 @@ func (k Keeper) UpdateRedemptionRateForHostZone(ctx sdk.Context, hostZone types.
 
 // Determine the deposit account balance, representing native tokens that have been deposited
 // from liquid stakes, but have not yet been transferred to the host
-func (k Keeper) GetDepositAccountBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
+func (k Keeper) GetDepositAccountBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdkmath.LegacyDec {
 	// sum on deposit records with status TRANSFER_QUEUE or TRANSFER_IN_PROGRESS
 	totalAmount := sdkmath.ZeroInt()
 	for _, depositRecord := range depositRecords {
@@ -95,11 +95,11 @@ func (k Keeper) GetDepositAccountBalance(chainId string, depositRecords []record
 		}
 	}
 
-	return sdk.NewDecFromInt(totalAmount)
+	return sdkmath.LegacyNewDecFromInt(totalAmount)
 }
 
 // Determine the undelegated balance from the deposit records queued for staking
-func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdk.Dec {
+func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordstypes.DepositRecord) sdkmath.LegacyDec {
 	// sum on deposit records with status DELEGATION_QUEUE or DELEGATION_IN_PROGRESS
 	totalAmount := sdkmath.ZeroInt()
 	for _, depositRecord := range depositRecords {
@@ -111,7 +111,7 @@ func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordsty
 		}
 	}
 
-	return sdk.NewDecFromInt(totalAmount)
+	return sdkmath.LegacyNewDecFromInt(totalAmount)
 }
 
 // Returns the total delegated balance that's stored in LSM tokens
@@ -124,7 +124,7 @@ func (k Keeper) GetUndelegatedBalance(chainId string, depositRecords []recordsty
 //
 // Each LSM token represents a delegator share so the validator's shares to tokens rate
 // must be used to denominate it's value in native tokens
-func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.HostZone) sdk.Dec {
+func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.HostZone) sdkmath.LegacyDec {
 	total := sdkmath.ZeroInt()
 	for _, deposit := range k.RecordsKeeper.GetLSMDepositsForHostZone(ctx, hostZone.ChainId) {
 		if deposit.Status != recordstypes.LSMTokenDeposit_DEPOSIT_PENDING {
@@ -134,16 +134,16 @@ func (k Keeper) GetTotalTokenizedDelegations(ctx sdk.Context, hostZone types.Hos
 				continue
 			}
 			liquidStakedShares := deposit.Amount
-			liquidStakedTokens := sdk.NewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
+			liquidStakedTokens := sdkmath.LegacyNewDecFromInt(liquidStakedShares).Mul(validator.SharesToTokensRate)
 			total = total.Add(liquidStakedTokens.TruncateInt())
 		}
 	}
 
-	return sdk.NewDecFromInt(total)
+	return sdkmath.LegacyNewDecFromInt(total)
 }
 
 // Pushes a redemption rate update to the ICA oracle
-func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdk.Dec) error {
+func (k Keeper) PostRedemptionRateToOracles(ctx sdk.Context, hostDenom string, redemptionRate sdkmath.LegacyDec) error {
 	stDenom := types.StAssetDenomFromHostZoneDenom(hostDenom)
 	attributes, err := json.Marshal(icaoracletypes.RedemptionRateAttributes{
 		SttokenDenom: stDenom,

@@ -23,15 +23,13 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Create a dydx host zone
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId: v20.DydxChainId,
 	})
 
 	// Run the upgrade
-	s.ConfirmUpgradeSucceededs("v20", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v20.UpgradeName)
 
 	// Confirm the treasury address was added to dydx
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v20.DydxChainId)

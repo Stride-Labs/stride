@@ -4,6 +4,8 @@ import (
 	"errors"
 	time "time"
 
+	sdkmath "cosmossdk.io/math"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -17,7 +19,7 @@ func AirdropConfigValidateBasic(
 	distributionEndDate *time.Time,
 	clawbackDate *time.Time,
 	claimTypeDeadlineDate *time.Time,
-	earlyClaimPenalty sdk.Dec,
+	earlyClaimPenalty sdkmath.LegacyDec,
 	distributorAddress string,
 	allocatorAddress string,
 	linkerAddress string,
@@ -58,7 +60,7 @@ func AirdropConfigValidateBasic(
 	if earlyClaimPenalty.IsNil() {
 		return errors.New("early claim penalty must be specified")
 	}
-	if earlyClaimPenalty.LT(sdk.ZeroDec()) || earlyClaimPenalty.GT(sdk.OneDec()) {
+	if earlyClaimPenalty.LT(sdkmath.LegacyZeroDec()) || earlyClaimPenalty.GT(sdkmath.LegacyOneDec()) {
 		return errors.New("early claim penalty must be between 0 and 1")
 	}
 

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
+
 	yaml "gopkg.in/yaml.v2"
 
 	epochtypes "github.com/Stride-Labs/stride/v27/x/epochs/types"
@@ -31,8 +33,8 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 func NewParams(
-	mintDenom string, genesisEpochProvisions sdk.Dec, epochIdentifier string,
-	ReductionFactor sdk.Dec, reductionPeriodInEpochs int64, distrProportions DistributionProportions,
+	mintDenom string, genesisEpochProvisions sdkmath.LegacyDec, epochIdentifier string,
+	ReductionFactor sdkmath.LegacyDec, reductionPeriodInEpochs int64, distrProportions DistributionProportions,
 	mintingRewardsDistributionStartEpoch int64,
 ) Params {
 	return Params{
@@ -50,15 +52,15 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		MintDenom:               sdk.DefaultBondDenom,
-		GenesisEpochProvisions:  sdk.NewDec(2_500_000).Mul(sdk.NewDec(1_000_000)).Quo(sdk.NewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
-		EpochIdentifier:         "mint",                                                                     // 1 hour
-		ReductionPeriodInEpochs: 24 * 365,                                                                   // 24hrs*365d = 8760
-		ReductionFactor:         sdk.NewDec(1).QuoInt64(2),
+		GenesisEpochProvisions:  sdkmath.LegacyNewDec(2_500_000).Mul(sdkmath.LegacyNewDec(1_000_000)).Quo(sdkmath.LegacyNewDec(24 * 365)), // 2.5MST first year, broken into hours ~= 285ST / hour
+		EpochIdentifier:         "mint",                                                                                                   // 1 hour
+		ReductionPeriodInEpochs: 24 * 365,                                                                                                 // 24hrs*365d = 8760
+		ReductionFactor:         sdkmath.LegacyNewDec(1).QuoInt64(2),
 		DistributionProportions: DistributionProportions{
-			Staking:                     sdk.MustNewDecFromStr("0.2764"),
-			CommunityPoolGrowth:         sdk.MustNewDecFromStr("0.1860"),
-			StrategicReserve:            sdk.MustNewDecFromStr("0.4205"),
-			CommunityPoolSecurityBudget: sdk.MustNewDecFromStr("0.1171"),
+			Staking:                     sdkmath.LegacyMustNewDecFromStr("0.2764"),
+			CommunityPoolGrowth:         sdkmath.LegacyMustNewDecFromStr("0.1860"),
+			StrategicReserve:            sdkmath.LegacyMustNewDecFromStr("0.4205"),
+			CommunityPoolSecurityBudget: sdkmath.LegacyMustNewDecFromStr("0.1171"),
 		},
 		MintingRewardsDistributionStartEpoch: 0,
 	}
@@ -127,12 +129,12 @@ func validateMintDenom(i interface{}) error {
 }
 
 func validateGenesisEpochProvisions(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(sdkmath.LegacyDec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v.LT(sdk.ZeroDec()) {
+	if v.LT(sdkmath.LegacyZeroDec()) {
 		return fmt.Errorf("genesis epoch provision must be non-negative")
 	}
 
@@ -153,12 +155,12 @@ func validateReductionPeriodInEpochs(i interface{}) error {
 }
 
 func validateReductionFactor(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(sdkmath.LegacyDec)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v.GT(sdk.NewDec(1)) {
+	if v.GT(sdkmath.LegacyNewDec(1)) {
 		return fmt.Errorf("reduction factor cannot be greater than 1")
 	}
 
@@ -193,7 +195,7 @@ func validateDistributionProportions(i interface{}) error {
 
 	totalProportions := v.Staking.Add(v.CommunityPoolGrowth).Add(v.CommunityPoolSecurityBudget).Add(v.StrategicReserve)
 
-	if !totalProportions.Equal(sdk.NewDec(1)) {
+	if !totalProportions.Equal(sdkmath.LegacyNewDec(1)) {
 		return fmt.Errorf("total distributions ratio should be 1, instead got %s", totalProportions.String())
 	}
 

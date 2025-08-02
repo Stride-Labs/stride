@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v27/x/airdrop/types"
@@ -36,7 +35,7 @@ func (s *KeeperTestSuite) TestQueryAirdrop() {
 	req := &types.QueryAirdropRequest{
 		Id: expectedAirdrop.Id,
 	}
-	respAirdrop, err := s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	respAirdrop, err := s.App.AirdropKeeper.Airdrop(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying an airdrop")
 
 	// Confirm all the airdrop fields
@@ -59,21 +58,21 @@ func (s *KeeperTestSuite) TestQueryAirdrop() {
 	// Update the block time so the airdrop hasn't started yet
 	// Confirm the current date index is -1
 	s.Ctx = s.Ctx.WithBlockTime(startTime.Add(-1 * time.Hour))
-	respAirdrop, err = s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	respAirdrop, err = s.App.AirdropKeeper.Airdrop(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying an airdrop before it has started")
 	s.Require().Equal(int64(-1), respAirdrop.CurrentDateIndex, "date index before airdrop")
 
 	// Update the block time so the airdrop distribution has ended, but the clawback data hasn't hit
 	// Confirm the current date index is 9 (last index of the 10 day array)
 	s.Ctx = s.Ctx.WithBlockTime(clawbackDate.Add(-1 * time.Hour))
-	respAirdrop, err = s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	respAirdrop, err = s.App.AirdropKeeper.Airdrop(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying an airdrop after distribution ended")
 	s.Require().Equal(int64(9), respAirdrop.CurrentDateIndex, "date index after distribution")
 
 	// Update the block time so the clawback date has passed
 	// Confirm the current date index is -1
 	s.Ctx = s.Ctx.WithBlockTime(clawbackDate.Add(time.Hour))
-	respAirdrop, err = s.App.AirdropKeeper.Airdrop(sdk.WrapSDKContext(s.Ctx), req)
+	respAirdrop, err = s.App.AirdropKeeper.Airdrop(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying an airdrop after the clawback date")
 	s.Require().Equal(int64(-1), respAirdrop.CurrentDateIndex, "date index after clawback")
 }
@@ -83,7 +82,7 @@ func (s *KeeperTestSuite) TestQueryAllAirdrops() {
 	expectedAirdrops := s.addAirdrops()
 
 	req := &types.QueryAllAirdropsRequest{}
-	resp, err := s.App.AirdropKeeper.AllAirdrops(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AirdropKeeper.AllAirdrops(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying all airdrops")
 	s.Require().Equal(expectedAirdrops, resp.Airdrops, "airdrops")
 }
@@ -101,7 +100,7 @@ func (s *KeeperTestSuite) TestQueryAllAllocations() {
 	req := &types.QueryAllAllocationsRequest{
 		AirdropId: AirdropId,
 	}
-	resp, err := s.App.AirdropKeeper.AllAllocations(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AirdropKeeper.AllAllocations(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying all allocations")
 	s.Require().Equal(expectedAllocations, resp.Allocations)
 }
@@ -123,7 +122,7 @@ func (s *KeeperTestSuite) TestQueryAllAllocations_Pagination() {
 			Limit: uint64(pageLimit),
 		},
 	}
-	resp, err := s.App.AirdropKeeper.AllAllocations(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AirdropKeeper.AllAllocations(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying all allocations")
 
 	// Confirm only the first page was returned
@@ -135,7 +134,7 @@ func (s *KeeperTestSuite) TestQueryAllAllocations_Pagination() {
 			Key: resp.Pagination.NextKey,
 		},
 	}
-	resp, err = s.App.AirdropKeeper.AllAllocations(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err = s.App.AirdropKeeper.AllAllocations(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying all allocations on second page")
 	s.Require().Equal(numExcessRecords, len(resp.Allocations), "only the remainder should be returned")
 }
@@ -149,7 +148,7 @@ func (s *KeeperTestSuite) TestQueryUserAllocation() {
 		AirdropId: expectedAllocation.AirdropId,
 		Address:   expectedAllocation.Address,
 	}
-	resp, err := s.App.AirdropKeeper.UserAllocation(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AirdropKeeper.UserAllocation(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying a user allocation")
 	s.Require().Equal(expectedAllocation, *resp.UserAllocation, "user allocation")
 }
@@ -170,7 +169,7 @@ func (s *KeeperTestSuite) TestQueryUserAllocations() {
 	req := &types.QueryUserAllocationsRequest{
 		Address: UserAddress,
 	}
-	resp, err := s.App.AirdropKeeper.UserAllocations(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AirdropKeeper.UserAllocations(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying user allocations")
 	s.Require().Equal(expectedAllocations, resp.UserAllocations, "user allocations")
 }
@@ -209,7 +208,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 		AirdropId: AirdropId,
 		Address:   UserAddress,
 	}
-	resp, err := s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err := s.App.AirdropKeeper.UserSummary(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying user summary")
 	s.Require().Equal(claimed, resp.Claimed, "amount claimed")
 	s.Require().Equal(forfeited, resp.Forfeited, "amount forfeited")
@@ -221,7 +220,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	userAllocation.Forfeited = sdkmath.OneInt()
 	s.App.AirdropKeeper.SetUserAllocation(s.Ctx, userAllocation)
 
-	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err = s.App.AirdropKeeper.UserSummary(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying user summary again")
 	s.Require().Equal(types.CLAIM_EARLY.String(), resp.ClaimType, "claim type")
 
@@ -229,7 +228,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	// Then check that claimable is 0
 	s.Ctx = s.Ctx.WithBlockTime(DistributionStartDate.Add(-1 * time.Hour))
 
-	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err = s.App.AirdropKeeper.UserSummary(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying user summary before airdrop")
 	s.Require().Equal(remaining, resp.Remaining, "remaining")
 	s.Require().Equal(int64(0), resp.Claimable.Int64(), "claimable before airdrop")
@@ -238,7 +237,7 @@ func (s *KeeperTestSuite) TestQueryUserSummary() {
 	// Then check that claimable is 0
 	s.Ctx = s.Ctx.WithBlockTime(ClawbackDate.Add(time.Hour))
 
-	resp, err = s.App.AirdropKeeper.UserSummary(sdk.WrapSDKContext(s.Ctx), req)
+	resp, err = s.App.AirdropKeeper.UserSummary(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying user summary after airdrop")
 	s.Require().Equal(int64(0), resp.Claimable.Int64(), "claimable after airdrop")
 }

@@ -10,7 +10,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 )
 
 const TypeMsgCreateTradeRoute = "create_trade_route"
@@ -21,10 +20,7 @@ const (
 	IBCPrefix         = "ibc/"
 )
 
-var (
-	_ sdk.Msg            = &MsgCreateTradeRoute{}
-	_ legacytx.LegacyMsg = &MsgCreateTradeRoute{}
-)
+var _ sdk.Msg = &MsgCreateTradeRoute{}
 
 func (msg *MsgCreateTradeRoute) Type() string {
 	return TypeMsgCreateTradeRoute
@@ -32,11 +28,6 @@ func (msg *MsgCreateTradeRoute) Type() string {
 
 func (msg *MsgCreateTradeRoute) Route() string {
 	return RouterKey
-}
-
-func (msg *MsgCreateTradeRoute) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
 }
 
 func (msg *MsgCreateTradeRoute) GetSigners() []sdk.AccAddress {

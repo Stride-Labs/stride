@@ -1,9 +1,12 @@
 package v15
 
 import (
+	"context"
+
+	sdkmath "cosmossdk.io/math"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	icqkeeper "github.com/Stride-Labs/stride/v27/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v27/x/stakeibc/keeper"
@@ -13,14 +16,14 @@ var (
 	UpgradeName = "v15"
 
 	EvmosChainId                = "evmos_9001-2"
-	EvmosOuterMinRedemptionRate = sdk.MustNewDecFromStr("1.290")
-	EvmosInnerMinRedemptionRate = sdk.MustNewDecFromStr("1.318")
-	EvmosMaxRedemptionRate      = sdk.MustNewDecFromStr("1.500")
+	EvmosOuterMinRedemptionRate = sdkmath.LegacyMustNewDecFromStr("1.290")
+	EvmosInnerMinRedemptionRate = sdkmath.LegacyMustNewDecFromStr("1.318")
+	EvmosMaxRedemptionRate      = sdkmath.LegacyMustNewDecFromStr("1.500")
 
-	RedemptionRateOuterMinAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateInnerMinAdjustment = sdk.MustNewDecFromStr("0.03")
-	RedemptionRateInnerMaxAdjustment = sdk.MustNewDecFromStr("0.05")
-	RedemptionRateOuterMaxAdjustment = sdk.MustNewDecFromStr("0.10")
+	RedemptionRateOuterMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.05")
+	RedemptionRateInnerMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.03")
+	RedemptionRateInnerMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("0.05")
+	RedemptionRateOuterMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("0.10")
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v15
@@ -30,7 +33,8 @@ func CreateUpgradeHandler(
 	icqKeeper icqkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info("Starting upgrade v15...")
 
 		// Set host zone redemption rate bounds based on a percentage of their current rate

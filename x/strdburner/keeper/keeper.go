@@ -3,11 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v27/x/strdburner/types"
@@ -42,18 +42,18 @@ func (k Keeper) GetStrdBurnerAddress() sdk.AccAddress {
 	return k.accountKeeper.GetModuleAddress(types.ModuleName)
 }
 
-func (k Keeper) SetTotalStrdBurned(ctx sdk.Context, amount math.Int) {
+func (k Keeper) SetTotalStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
 	bz := sdk.Uint64ToBigEndian(amount.Uint64())
 	ctx.KVStore(k.storeKey).Set([]byte(types.TotalStrdBurnedKey), bz)
 }
 
-func (k Keeper) GetTotalStrdBurned(ctx sdk.Context) math.Int {
+func (k Keeper) GetTotalStrdBurned(ctx sdk.Context) sdkmath.Int {
 	bz := ctx.KVStore(k.storeKey).Get([]byte(types.TotalStrdBurnedKey))
 
 	// If no value has been set, return zero
 	if bz == nil {
-		return math.ZeroInt()
+		return sdkmath.ZeroInt()
 	}
 
-	return math.NewIntFromUint64(sdk.BigEndianToUint64(bz))
+	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(bz))
 }

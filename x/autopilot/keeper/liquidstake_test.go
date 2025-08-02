@@ -5,10 +5,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
 	"github.com/Stride-Labs/stride/v27/x/autopilot"
 	"github.com/Stride-Labs/stride/v27/x/autopilot/types"
@@ -80,7 +80,7 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, recordstypes.DepositRecord{
 		Id:                 1,
 		DepositEpochNumber: 1,
-		Amount:             sdk.ZeroInt(),
+		Amount:             sdkmath.ZeroInt(),
 		HostZoneId:         HostChainId,
 		Status:             recordstypes.DepositRecord_TRANSFER_QUEUE,
 	})
@@ -92,7 +92,7 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId:           HostChainId,
 		HostDenom:         HostDenom,
-		RedemptionRate:    sdk.NewDec(1), // used to determine the stAmount
+		RedemptionRate:    sdkmath.LegacyNewDec(1), // used to determine the stAmount
 		DepositAddress:    depositAddress.String(),
 		IbcDenom:          nativeTokenIBCDenom,
 		TransferChannelId: strideToHostChannelId,
@@ -143,7 +143,7 @@ func (s *KeeperTestSuite) TestTryLiquidStake() {
 	depositAddress := s.TestAccs[1]
 	forwardRecipientOnHost := HostAddress
 
-	stakeAmount := sdk.NewInt(1000000)
+	stakeAmount := sdkmath.NewInt(1000000)
 
 	testCases := []struct {
 		name                      string
@@ -323,7 +323,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 	differentAddress := s.TestAccs[2].String()
 	forwardRecipientOnHost := HostAddress
 
-	stakeAmount := sdk.NewInt(1000000)
+	stakeAmount := sdkmath.NewInt(1000000)
 
 	testCases := []struct {
 		name                      string

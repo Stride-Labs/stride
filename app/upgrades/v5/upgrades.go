@@ -1,16 +1,17 @@
 package v5
 
 import (
+	"context"
 	"fmt"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	claimmigration "github.com/Stride-Labs/stride/v27/x/claim/migrations/v2"
 	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
@@ -51,7 +52,8 @@ func CreateUpgradeHandler(
 	recordStoreKey storetypes.StoreKey,
 	stakeibcStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 		currentVersions := mm.GetVersionMap()
 
 		// Remove authz from store as it causes an issue with state sync

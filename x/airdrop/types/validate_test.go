@@ -4,7 +4,8 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
@@ -29,7 +30,7 @@ func TestAirdropConfigValidateBasic(t *testing.T) {
 	endDatePlusDelta := validDistributionEndDate.Add(time.Hour)
 	endDateMinusDelta := validDistributionEndDate.Add(-1 * time.Hour)
 
-	validEarlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
+	validEarlyClaimPenalty := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	testCases := []struct {
 		name                  string
@@ -39,7 +40,7 @@ func TestAirdropConfigValidateBasic(t *testing.T) {
 		distributionEndDate   *time.Time
 		clawbackDate          *time.Time
 		claimTypeDeadlineDate *time.Time
-		earlyClaimPenalty     sdk.Dec
+		earlyClaimPenalty     sdkmath.LegacyDec
 		distributorAddress    string
 		allocatorAddress      string
 		linkerAddress         string
@@ -328,7 +329,7 @@ func TestAirdropConfigValidateBasic(t *testing.T) {
 			distributionEndDate:   &validDistributionEndDate,
 			clawbackDate:          &validClawbackDate,
 			claimTypeDeadlineDate: &validDeadlineDate,
-			earlyClaimPenalty:     sdk.NewDec(-1),
+			earlyClaimPenalty:     sdkmath.LegacyNewDec(-1),
 			distributorAddress:    validDistributorAddress,
 			allocatorAddress:      validAllocatorAddress,
 			linkerAddress:         validLinkerAddress,
@@ -342,7 +343,7 @@ func TestAirdropConfigValidateBasic(t *testing.T) {
 			distributionEndDate:   &validDistributionEndDate,
 			clawbackDate:          &validClawbackDate,
 			claimTypeDeadlineDate: &validDeadlineDate,
-			earlyClaimPenalty:     sdk.NewDec(-1),
+			earlyClaimPenalty:     sdkmath.LegacyNewDec(-1),
 			distributorAddress:    validDistributorAddress,
 			allocatorAddress:      validAllocatorAddress,
 			linkerAddress:         validLinkerAddress,

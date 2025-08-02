@@ -5,7 +5,7 @@ import (
 	fmt "fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -15,8 +15,8 @@ func ValidateCreateAuctionParams(
 	auctionType AuctionType,
 	sellingDenom string,
 	paymentDenom string,
-	minPriceMultiplier math.LegacyDec,
-	minBidAmount math.Int,
+	minPriceMultiplier sdkmath.LegacyDec,
+	minBidAmount sdkmath.Int,
 	beneficiary string,
 ) error {
 	if auctionName == "" {
@@ -31,10 +31,10 @@ func ValidateCreateAuctionParams(
 	if paymentDenom == "" {
 		return errors.New("payment-denom must be specified")
 	}
-	if !(minPriceMultiplier.GT(math.LegacyZeroDec()) && minPriceMultiplier.LTE(math.LegacyOneDec())) {
+	if !(minPriceMultiplier.GT(sdkmath.LegacyZeroDec()) && minPriceMultiplier.LTE(sdkmath.LegacyOneDec())) {
 		return errors.New("min-price-multiplier must be > 0 and <= 1 (0 > minPriceMultiplier >= 1)")
 	}
-	if minBidAmount.LT(math.ZeroInt()) {
+	if minBidAmount.LT(sdkmath.ZeroInt()) {
 		return errors.New("min-bid-amount must be >= 0")
 	}
 	if _, err := sdk.AccAddressFromBech32(beneficiary); err != nil {

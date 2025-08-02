@@ -1,9 +1,9 @@
 package v2
 
 import (
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +12,7 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
-func migrateHostZone(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateHostZone(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	stakeibcStore := prefix.NewStore(store, []byte(stakeibctypes.HostZoneKey))
 
 	iterator := stakeibcStore.Iterator(nil, nil)

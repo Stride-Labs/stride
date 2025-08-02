@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -60,7 +60,7 @@ func (s *KeeperTestSuite) SetupTestUnbondFromHostZone(
 		DelegationIcaAddress: "cosmos_DELEGATION",
 		Validators:           validators,
 		TotalDelegations:     totalStake,
-		RedemptionRate:       sdk.OneDec(),
+		RedemptionRate:       sdkmath.LegacyOneDec(),
 		MaxMessagesPerIcaTx:  32,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
@@ -373,7 +373,7 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_Successful_RefreshedNativeAmoun
 	// Unbond Amount with new redemption rate (RR = 1.5): 150
 	//
 	// Stake After Unbond: 850
-	updatedRedemptionRate := sdk.MustNewDecFromStr("1.5")
+	updatedRedemptionRate := sdkmath.LegacyMustNewDecFromStr("1.5")
 	unbondAmountWithOldRate := sdkmath.NewInt(100)
 	unbondAmountWithNewRate := sdkmath.NewInt(150)
 	totalStake := sdkmath.NewInt(1000)
@@ -481,7 +481,7 @@ func (s *KeeperTestSuite) TestUnbondFromHostZone_ICAFailed() {
 func (s *KeeperTestSuite) TestGetBalanceRatio() {
 	testCases := []struct {
 		unbondCapacity keeper.ValidatorUnbondCapacity
-		expectedRatio  sdk.Dec
+		expectedRatio  sdkmath.LegacyDec
 		errorExpected  bool
 	}{
 		{
@@ -489,7 +489,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				BalancedDelegation: sdkmath.NewInt(0),
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
-			expectedRatio: sdk.ZeroDec(),
+			expectedRatio: sdkmath.LegacyZeroDec(),
 			errorExpected: false,
 		},
 		{
@@ -497,7 +497,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				BalancedDelegation: sdkmath.NewInt(25),
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
-			expectedRatio: sdk.MustNewDecFromStr("0.25"),
+			expectedRatio: sdkmath.LegacyMustNewDecFromStr("0.25"),
 			errorExpected: false,
 		},
 		{
@@ -505,7 +505,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				BalancedDelegation: sdkmath.NewInt(75),
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
-			expectedRatio: sdk.MustNewDecFromStr("0.75"),
+			expectedRatio: sdkmath.LegacyMustNewDecFromStr("0.75"),
 			errorExpected: false,
 		},
 		{
@@ -513,7 +513,7 @@ func (s *KeeperTestSuite) TestGetBalanceRatio() {
 				BalancedDelegation: sdkmath.NewInt(150),
 				CurrentDelegation:  sdkmath.NewInt(100),
 			},
-			expectedRatio: sdk.MustNewDecFromStr("1.5"),
+			expectedRatio: sdkmath.LegacyMustNewDecFromStr("1.5"),
 			errorExpected: false,
 		},
 		{
@@ -670,7 +670,7 @@ func (s *KeeperTestSuite) TestGetTotalUnbondAmount() {
 
 func (s *KeeperTestSuite) TestRefreshUserRedemptionRecordNativeAmounts() {
 	// Define the expected redemption records after the function is called
-	redemptionRate := sdk.MustNewDecFromStr("1.999")
+	redemptionRate := sdkmath.LegacyMustNewDecFromStr("1.999")
 	expectedUserRedemptionRecords := []recordtypes.UserRedemptionRecord{
 		// StTokenAmount: 1000 * 1.999 = 1999 Native
 		{Id: "A", StTokenAmount: sdkmath.NewInt(1000), NativeTokenAmount: sdkmath.NewInt(1999)},
@@ -730,11 +730,11 @@ func (s *KeeperTestSuite) TestRefreshUnbondingNativeTokenAmounts() {
 	// Create two host zones, with different redemption rates
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
 		ChainId:        chainA,
-		RedemptionRate: sdk.MustNewDecFromStr("1.5"),
+		RedemptionRate: sdkmath.LegacyMustNewDecFromStr("1.5"),
 	})
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
 		ChainId:        chainB,
-		RedemptionRate: sdk.MustNewDecFromStr("2.0"),
+		RedemptionRate: sdkmath.LegacyMustNewDecFromStr("2.0"),
 	})
 
 	// Create the user redemption records
@@ -1273,7 +1273,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 			DelegationIcaAddress: gaiaDelegationAddr,
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
-			RedemptionRate:       sdk.OneDec(),
+			RedemptionRate:       sdkmath.LegacyOneDec(),
 			MaxMessagesPerIcaTx:  32,
 		},
 		{
@@ -1285,7 +1285,7 @@ func (s *KeeperTestSuite) SetupInitiateAllHostZoneUnbondings() {
 			DelegationIcaAddress: osmoDelegationAddr,
 			TotalDelegations:     sdkmath.NewInt(5_000_000),
 			ConnectionId:         ibctesting.FirstConnectionID,
-			RedemptionRate:       sdk.OneDec(),
+			RedemptionRate:       sdkmath.LegacyOneDec(),
 			MaxMessagesPerIcaTx:  32,
 		},
 	}
@@ -1404,5 +1404,4 @@ func (s *KeeperTestSuite) TestInitiateAllHostZoneUnbondings_Failed() {
 	// An event should only be emitted for Osmo
 	s.CheckEventValueNotEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
 	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
-
 }

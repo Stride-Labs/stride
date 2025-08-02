@@ -307,6 +307,7 @@ describe("Buyback and Burn", () => {
           metadata: "Update icqoracle params",
           title: "Update icqoracle params",
           summary: "Update icqoracle params",
+          expedited: false,
         }),
       ]);
       const proposalId = BigInt(getValueFromEvents(tx.events, "submit_proposal.proposal_id"));
@@ -699,7 +700,7 @@ describe("Buyback and Burn", () => {
       });
 
       await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
-      sleep(1000);
+      sleep(2000);
 
       // Check st tokens
       const stAtomBalance = await getBalance({

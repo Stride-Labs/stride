@@ -2,17 +2,20 @@ package v28_test
 
 import (
 	"encoding/base64"
+	"fmt"
+	"sort"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-
+	"github.com/cometbft/cometbft/libs/os"
+	"github.com/cosmos/cosmos-sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/stretchr/testify/suite"
-
+	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
 	v28 "github.com/Stride-Labs/stride/v27/app/upgrades/v28"
@@ -22,16 +25,16 @@ import (
 
 type UpdateRedemptionRateBounds struct {
 	ChainId                        string
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinOuterRedemptionRate sdk.Dec
-	ExpectedMaxOuterRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinOuterRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxOuterRedemptionRate sdkmath.LegacyDec
 }
 
 type UpdateRedemptionRateInnerBounds struct {
 	ChainId                        string
-	CurrentRedemptionRate          sdk.Dec
-	ExpectedMinInnerRedemptionRate sdk.Dec
-	ExpectedMaxInnerRedemptionRate sdk.Dec
+	CurrentRedemptionRate          sdkmath.LegacyDec
+	ExpectedMinInnerRedemptionRate sdkmath.LegacyDec
+	ExpectedMaxInnerRedemptionRate sdkmath.LegacyDec
 }
 
 type UpgradeTestSuite struct {
@@ -47,21 +50,19 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	upgradeHeight := int64(4)
-
-	// ------- Set state before upgrade -------
+	// Set state before upgrade
 	checkRedemptionRates := s.SetupTestUpdateRedemptionRateBounds()
 	checkLockedTokens := s.SetupTestDeliverLockedTokens()
 	checkICQStore := s.SetupTestICQStore()
 	checkMaxIcas := s.SetupTestMaxIcasBand()
 
-	// ------- Run upgrade -------
-	s.ConfirmUpgradeSucceededs(v28.UpgradeName, upgradeHeight)
+	// Run upgrade
+	s.ConfirmUpgradeSucceeded(v28.UpgradeName)
 
-	// ------- Confirm state after upgrade -------
+	// Confirm state after upgrade
 	checkRedemptionRates()
+	s.checkConsumerParams()
 	checkLockedTokens()
-	// Check ICQ Store
 	checkICQStore()
 	checkMaxIcas()
 }
@@ -82,12 +83,13 @@ func (s *UpgradeTestSuite) SetupTestMaxIcasBand() func() {
 }
 
 func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
-
 	// Init BaseAccount (which is the type of the account pre-upgrade)
 	deliveryAccountAddress, err := sdk.AccAddressFromBech32(v28.DeliveryAccount)
 	s.Require().NoError(err)
-	deliveryAccount := authtypes.NewBaseAccount(deliveryAccountAddress, nil, 0, 0)
+	nextAccountNumber := s.App.AccountKeeper.NextAccountNumber(s.Ctx)
+	deliveryAccount := authtypes.NewBaseAccount(deliveryAccountAddress, nil, nextAccountNumber, 0)
 	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
+
 	// Fund account and test sending a tx to mimic mainnet
 	sendAmt := int64(1_000_000)
 	s.FundAccount(deliveryAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(sendAmt)))
@@ -97,8 +99,12 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 	// Init the FromAccount and fund with 4M strd
 	fromAccountAddress, err := sdk.AccAddressFromBech32(v28.FromAccount)
 	s.Require().NoError(err)
-	fromAccount := authtypes.NewBaseAccount(fromAccountAddress, nil, 0, 0)
+
+	// Get the next account number to avoid conflicts
+	nextAccountNumber = s.App.AccountKeeper.NextAccountNumber(s.Ctx)
+	fromAccount := authtypes.NewBaseAccount(fromAccountAddress, nil, nextAccountNumber, 0)
 	s.App.AccountKeeper.SetAccount(s.Ctx, fromAccount)
+
 	// Fund account and test sending a tx to mimic mainnet
 	s.FundAccount(fromAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(4_000_000_000_000)))
 
@@ -114,14 +120,13 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 		s.Require().Equal(v28.VestingEndTime, delayedVestingAccount.EndTime)
 
 		// Check that the original vesting amount is set correctly
-		expectedAmount := sdk.NewCoins(sdk.NewCoin("ustrd", sdk.NewInt(v28.LockedTokenAmount)))
+		expectedAmount := sdk.NewCoins(sdk.NewCoin("ustrd", sdkmath.NewInt(v28.LockedTokenAmount)))
 		s.Require().Equal(expectedAmount, delayedVestingAccount.OriginalVesting)
 
 		// Check that the account has the correct balance
 		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount), "ustrd")
-		s.Require().Equal(sdk.NewCoin("ustrd", sdk.NewInt(v28.LockedTokenAmount+sendAmt)), balance)
+		s.Require().Equal(sdk.NewCoin("ustrd", sdkmath.NewInt(v28.LockedTokenAmount+sendAmt)), balance)
 	}
-
 }
 
 func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
@@ -129,15 +134,15 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 	testCases := []UpdateRedemptionRateBounds{
 		{
 			ChainId:                        "chain-0",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.0"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.5"), // 1 - 50% = 0.95
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("2.0"), // 1 + 100% = 1.25
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.0"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.5"), // 1 - 50% = 0.95
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("2.0"), // 1 + 100% = 1.25
 		},
 		{
 			ChainId:                        "chain-1",
-			CurrentRedemptionRate:          sdk.MustNewDecFromStr("1.1"),
-			ExpectedMinOuterRedemptionRate: sdk.MustNewDecFromStr("0.55"), // 1.1 - 50% = 0.55
-			ExpectedMaxOuterRedemptionRate: sdk.MustNewDecFromStr("2.2"),  // 1.1 + 100% = 2.2
+			CurrentRedemptionRate:          sdkmath.LegacyMustNewDecFromStr("1.1"),
+			ExpectedMinOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("0.55"), // 1.1 - 50% = 0.55
+			ExpectedMaxOuterRedemptionRate: sdkmath.LegacyMustNewDecFromStr("2.2"),  // 1.1 + 100% = 2.2
 		},
 	}
 
@@ -160,6 +165,98 @@ func (s *UpgradeTestSuite) SetupTestUpdateRedemptionRateBounds() func() {
 			s.Require().Equal(tc.ExpectedMinOuterRedemptionRate, hostZone.MinRedemptionRate, "%s - min outer", tc.ChainId)
 			s.Require().Equal(tc.ExpectedMaxOuterRedemptionRate, hostZone.MaxRedemptionRate, "%s - max outer", tc.ChainId)
 		}
+	}
+}
+
+func (s *UpgradeTestSuite) checkConsumerParams() {
+	// Confirm consumer ID is set to 1
+	params := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
+	s.Require().Equal(params.ConsumerId, "1")
+}
+
+// SortDelegations sorts delegations by delegator address
+func sortDelegations(delegations []stakingtypes.Delegation) {
+	sort.SliceStable(delegations, func(i, j int) bool {
+		return delegations[i].DelegatorAddress < delegations[j].DelegatorAddress
+	})
+}
+
+func (s *UpgradeTestSuite) TestDistributionFix() {
+	// Set specific block height for deterministic testing
+	s.Ctx = s.Ctx.WithBlockHeight(16925943) // 2025-03-24T13:30:39.449960913Z
+
+	// Define validator address and missing stake amounts
+	valAddr, _ := types.ValAddressFromBech32("stridevaloper1tlz6ksce084ndhwlq2usghamvh0dut9q4z2gxd")
+	bondedPoolMissingStake := types.NewInt64Coin("stake", 1038549945)
+	notBondedPoolMissingStake := types.NewInt64Coin("stake", 220000)
+
+	// Load faulty distribution state from mainnet export file
+	jsonDistGenesis := os.MustReadFile("test_dist_genesis.json")
+	var distGenesisState disttypes.GenesisState
+	s.App.AppCodec().MustUnmarshalJSON(jsonDistGenesis, &distGenesisState)
+
+	// Load matching staking state from mainnet export file
+	jsonStakingGenesis := os.MustReadFile("test_staking_genesis.json")
+	var stakingGenesisState stakingtypes.GenesisState
+	s.App.AppCodec().MustUnmarshalJSON(jsonStakingGenesis, &stakingGenesisState)
+	sortDelegations(stakingGenesisState.Delegations)
+
+	// Fund the distribution module with outstanding rewards
+	// This aligns bank state with distribution
+	for i := range distGenesisState.OutstandingRewards {
+		coins, _ := distGenesisState.OutstandingRewards[i].OutstandingRewards.TruncateDecimal()
+		for _, coin := range coins {
+			s.FundModuleAccount(disttypes.ModuleName, coin)
+		}
+	}
+
+	// Fund the staking pools with missing stake
+	// This aligns bank state with staking
+	s.FundModuleAccount(stakingtypes.BondedPoolName, bondedPoolMissingStake)
+	s.FundModuleAccount(stakingtypes.NotBondedPoolName, notBondedPoolMissingStake)
+
+	// Initialize modules with imported states
+	s.App.StakingKeeper.InitGenesis(s.Ctx, &stakingGenesisState)
+	s.App.DistrKeeper.InitGenesis(s.Ctx, distGenesisState)
+
+	// Confirm that withdrawing rewards fails for delegations created before height 4300034
+	for _, delegation := range stakingGenesisState.Delegations {
+		delAddr := types.MustAccAddressFromBech32(delegation.DelegatorAddress)
+
+		period, err := s.App.DistrKeeper.GetDelegatorStartingInfo(s.Ctx, valAddr, delAddr)
+		s.Require().NoError(err)
+		s.Require().Positive(period.PreviousPeriod)
+		s.Require().Positive(period.Height)
+
+		if period.Height < 4300034 {
+			// Older delegations should panic when attempting to withdraw rewards
+			// due to the missing slashing event
+			s.Require().Panics(func() {
+				_, _ = s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, delAddr, valAddr)
+				fmt.Printf("%s should panic (%d < %d)\n", delAddr.String(), period.Height, 5047518)
+				s.Require().True(false)
+			})
+		} else {
+			// Newer delegations should work fine
+			// Use a cached context to prevent state changes
+			subCtx, _ := s.Ctx.CacheContext()
+
+			_, err := s.App.DistrKeeper.WithdrawDelegationRewards(subCtx, delAddr, valAddr)
+			s.Require().NoError(err)
+		}
+
+	}
+
+	// Apply Fix
+	err := v28.ApplyDistributionFix(s.Ctx, s.App.DistrKeeper)
+	s.Require().NoError(err)
+
+	// After applying the fix, all delegations should be able to withdraw rewards without panics
+	for _, delegation := range stakingGenesisState.Delegations {
+		s.Require().NotPanics(func() {
+			_, err = s.App.DistrKeeper.WithdrawDelegationRewards(s.Ctx, types.MustAccAddressFromBech32(delegation.DelegatorAddress), valAddr)
+			s.Require().NoError(err)
+		})
 	}
 }
 

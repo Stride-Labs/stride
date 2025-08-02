@@ -6,7 +6,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v27/utils"
@@ -157,7 +157,7 @@ func OsmosisPriceCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes
 //
 // To summarize, we check if Asset0 is equal to our quote denom (USDC in the example), and if
 // it is, we store P0; otherwise, we store P1
-func UnmarshalSpotPriceFromOsmosis(k Keeper, tokenPrice types.TokenPrice, queryResponseBz []byte) (price math.LegacyDec, err error) {
+func UnmarshalSpotPriceFromOsmosis(k Keeper, tokenPrice types.TokenPrice, queryResponseBz []byte) (price sdkmath.LegacyDec, err error) {
 	var twapRecord types.OsmosisTwapRecord
 
 	if err := twapRecord.Unmarshal(queryResponseBz); err != nil {

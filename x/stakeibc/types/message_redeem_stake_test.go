@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"testing"
@@ -8,51 +8,52 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v27/testutil/sample"
+	"github.com/Stride-Labs/stride/v27/app/apptesting"
+	"github.com/Stride-Labs/stride/v27/x/stakeibc/types"
 )
 
 func TestMsgRedeemStake_ValidateBasic(t *testing.T) {
 	tests := []struct {
 		name string
-		msg  MsgRedeemStake
+		msg  types.MsgRedeemStake
 		err  error
 	}{
 		{
 			name: "success",
-			msg: MsgRedeemStake{
-				Creator:  sample.AccAddress(),
+			msg: types.MsgRedeemStake{
+				Creator:  apptesting.SampleStrideAddress(),
 				HostZone: "GAIA",
-				Receiver: sample.AccAddress(),
+				Receiver: apptesting.SampleHostAddress(),
 				Amount:   sdkmath.NewInt(1),
 			},
 		},
 		{
 			name: "invalid creator",
-			msg: MsgRedeemStake{
+			msg: types.MsgRedeemStake{
 				Creator:  "invalid_address",
 				HostZone: "GAIA",
-				Receiver: sample.AccAddress(),
+				Receiver: apptesting.SampleHostAddress(),
 				Amount:   sdkmath.NewInt(1),
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		},
 		{
 			name: "no host zone",
-			msg: MsgRedeemStake{
-				Creator:  sample.AccAddress(),
-				Receiver: sample.AccAddress(),
+			msg: types.MsgRedeemStake{
+				Creator:  apptesting.SampleStrideAddress(),
+				Receiver: apptesting.SampleHostAddress(),
 				Amount:   sdkmath.NewInt(1),
 			},
-			err: ErrRequiredFieldEmpty,
+			err: types.ErrRequiredFieldEmpty,
 		},
 		{
 			name: "invalid receiver",
-			msg: MsgRedeemStake{
-				Creator:  sample.AccAddress(),
+			msg: types.MsgRedeemStake{
+				Creator:  apptesting.SampleStrideAddress(),
 				HostZone: "GAIA",
 				Amount:   sdkmath.NewInt(1),
 			},
-			err: ErrRequiredFieldEmpty,
+			err: types.ErrRequiredFieldEmpty,
 		},
 	}
 	for _, tt := range tests {

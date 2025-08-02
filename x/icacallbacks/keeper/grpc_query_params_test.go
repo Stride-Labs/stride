@@ -1,22 +1,14 @@
 package keeper_test
 
 import (
-	"testing"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
-	testkeeper "github.com/Stride-Labs/stride/v27/testutil/keeper"
 	"github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 )
 
-func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.IcacallbacksKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
+func (s *KeeperTestSuite) TestParamsQuery() {
 	params := types.DefaultParams()
-	keeper.SetParams(ctx, params)
+	s.App.IcacallbacksKeeper.SetParams(s.Ctx, params)
 
-	response, err := keeper.Params(wctx, &types.QueryParamsRequest{})
-	require.NoError(t, err)
-	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
+	response, err := s.App.IcacallbacksKeeper.Params(s.Ctx, &types.QueryParamsRequest{})
+	s.Require().NoError(err)
+	s.Require().Equal(&types.QueryParamsResponse{Params: params}, response)
 }

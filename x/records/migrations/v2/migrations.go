@@ -1,9 +1,9 @@
 package v2
 
 import (
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -12,7 +12,7 @@ import (
 	recordtypes "github.com/Stride-Labs/stride/v27/x/records/types"
 )
 
-func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateDepositRecord(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	depositRecordStore := prefix.NewStore(store, []byte(recordtypes.DepositRecordKey))
 
 	iterator := depositRecordStore.Iterator(nil, nil)
@@ -40,7 +40,7 @@ func migrateDepositRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
 	return nil
 }
 
-func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateUserRedemptionRecord(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	redemptionRecordStore := prefix.NewStore(store, []byte(recordtypes.UserRedemptionRecordKey))
 
 	iterator := redemptionRecordStore.Iterator(nil, nil)
@@ -68,7 +68,7 @@ func migrateUserRedemptionRecord(store sdk.KVStore, cdc codec.BinaryCodec) error
 	return nil
 }
 
-func migrateEpochUnbondingRecord(store sdk.KVStore, cdc codec.BinaryCodec) error {
+func migrateEpochUnbondingRecord(store storetypes.KVStore, cdc codec.BinaryCodec) error {
 	epochUnbondingRecordStore := prefix.NewStore(store, []byte(recordtypes.EpochUnbondingRecordKey))
 
 	iterator := epochUnbondingRecordStore.Iterator(nil, nil)

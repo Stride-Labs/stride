@@ -5,12 +5,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
+	"cosmossdk.io/store/prefix"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v27/app"
@@ -19,9 +19,7 @@ import (
 	legacyratelimittypes "github.com/Stride-Labs/stride/v27/app/upgrades/v19/legacyratelimit/types"
 )
 
-var (
-	StTiaSupply = sdkmath.NewInt(1000)
-)
+var StTiaSupply = sdkmath.NewInt(1000)
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -36,14 +34,12 @@ func (s *UpgradeTestSuite) SetupTest() {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Setup state before upgrade
 	checkMigratedRateLimits := s.SetupRateLimitMigration()
 	checkStTiaRateLimits := s.SetupStTiaRateLimits()
 
 	// Run through upgrade
-	s.ConfirmUpgradeSucceededs("v19", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v19.UpgradeName)
 
 	// Check state after upgrade
 	checkMigratedRateLimits()
@@ -53,7 +49,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
 	rateLimitStore := s.Ctx.KVStore(s.App.GetKey(ratelimittypes.StoreKey))
-	cdc := app.MakeEncodingConfig().Marshaler
+	cdc := app.MakeEncodingConfig().Codec
 
 	denom := "denom"
 	channelId := "channel-0"

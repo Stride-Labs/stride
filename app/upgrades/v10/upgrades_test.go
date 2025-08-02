@@ -7,20 +7,21 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
 	v10 "github.com/Stride-Labs/stride/v27/app/upgrades/v10"
 	"github.com/Stride-Labs/stride/v27/utils"
 
-	ratelimittypes "github.com/Stride-Labs/ibc-rate-limiting/ratelimit/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v27/x/icacallbacks/types"
 	recordskeeper "github.com/Stride-Labs/stride/v27/x/records/keeper"
@@ -35,7 +36,7 @@ import (
 	claimtypes "github.com/Stride-Labs/stride/v27/x/claim/types"
 )
 
-var initialRateLimitChannelValue = sdk.NewInt(1_000_000)
+var initialRateLimitChannelValue = sdkmath.NewInt(1_000_000)
 
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
@@ -50,8 +51,6 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	dummyUpgradeHeight := int64(5)
-
 	// Remove localhost client from client keeper
 	clientParams := s.App.IBCKeeper.ClientKeeper.GetParams(s.Ctx)
 	clientParams.AllowedClients = []string{}
@@ -71,8 +70,14 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Create reward collector account for rate limit whitelist
 	rewardCollectorAddress := s.createRewardCollectorModuleAccount()
 
+	// Initialize the min deposit ratio (to prevent an error when the store looks it up)
+	defaultGovParams := govtypesv1.DefaultParams()
+	defaultGovParams.MinInitialDepositRatio = ""
+	err := s.App.GovKeeper.Params.Set(s.Ctx, defaultGovParams)
+	s.Require().NoError(err)
+
 	// Submit upgrade
-	s.ConfirmUpgradeSucceededs("v10", dummyUpgradeHeight)
+	s.ConfirmUpgradeSucceeded(v10.UpgradeName)
 
 	// Check mint parameters after upgrade
 	proportions := s.App.MintKeeper.GetParams(s.Ctx).DistributionProportions
@@ -90,7 +95,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		proportions.CommunityPoolSecurityBudget.String()[:9], "community pool security")
 
 	// Check initial deposit ratio
-	govParams := s.App.GovKeeper.GetParams(s.Ctx)
+	govParams, err := s.App.GovKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err)
 	s.Require().Equal(v10.MinInitialDepositRatio, govParams.MinInitialDepositRatio, "min initial deposit ratio")
 
 	// Check localhost client was added
@@ -257,7 +263,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "stride-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(4143585840),
+		ClaimedSoFar:       sdkmath.NewInt(4143585840),
 		DistributorAddress: "stride1cpvl8yf848karqauyhr5jzw6d9n9lnuuu974ev",
 	}
 
@@ -267,7 +273,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "cosmoshub-4",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(191138794312),
+		ClaimedSoFar:       sdkmath.NewInt(191138794312),
 		DistributorAddress: "stride1fmh0ysk5nt9y2cj8hddms5ffj2dhys55xkkjwz",
 	}
 
@@ -277,7 +283,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "osmosis-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(72895369704),
+		ClaimedSoFar:       sdkmath.NewInt(72895369704),
 		DistributorAddress: "stride1zlu2l3lx5tqvzspvjwsw9u0e907kelhqae3yhk",
 	}
 
@@ -287,7 +293,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "juno-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(10967183382),
+		ClaimedSoFar:       sdkmath.NewInt(10967183382),
 		DistributorAddress: "stride14k9g9zpgaycpey9840nnpa66l4nd6lu7g7t74c",
 	}
 
@@ -297,7 +303,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   false,
 		ChainId:            "stargaze-1",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(1013798205),
+		ClaimedSoFar:       sdkmath.NewInt(1013798205),
 		DistributorAddress: "stride12pum4adk5dhp32d90f8g8gfwujm0gwxqnrdlum",
 	}
 
@@ -307,7 +313,7 @@ func (s *UpgradeTestSuite) TestMigrateDistributorAddress() {
 		AutopilotEnabled:   true,
 		ChainId:            "evmos_9001-2",
 		ClaimDenom:         "ustrd",
-		ClaimedSoFar:       sdk.NewInt(13491005333),
+		ClaimedSoFar:       sdkmath.NewInt(13491005333),
 		DistributorAddress: "stride10dy5pmc2fq7fnmufjfschkfrxaqnpykl6ezy5j",
 	}
 

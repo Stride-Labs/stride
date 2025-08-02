@@ -1,13 +1,10 @@
 package types_test
 
 import (
-	"regexp"
-	"strings"
 	"testing"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v27/app/apptesting"
@@ -65,16 +62,6 @@ func TestMsgClaimDaily_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgClaimDaily_GetSignBytes(t *testing.T) {
-	addr := "strideXXX"
-	airdropId := "airdrop"
-	msg := types.NewMsgClaimDaily(addr, airdropId)
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"airdrop/MsgClaimDaily","value":{"airdrop_id":"airdrop","claimer":"strideXXX"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgClaimEarly
 // ----------------------------------------------
@@ -124,16 +111,6 @@ func TestMsgClaimEarly_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgClaimEarly_GetSignBytes(t *testing.T) {
-	addr := "strideXXX"
-	airdropId := "airdrop"
-	msg := types.NewMsgClaimEarly(addr, airdropId)
-	res := msg.GetSignBytes()
-
-	expected := `{"type":"airdrop/MsgClaimEarly","value":{"airdrop_id":"airdrop","claimer":"strideXXX"}}`
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgCreateAirdrop
 // ----------------------------------------------
@@ -154,7 +131,7 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 	validClawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
 	validDeadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 
-	validEarlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
+	validEarlyClaimPenalty := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	// Note: the majority of test cases are covered in AirdropConfigValidateBasic
 	tests := []struct {
@@ -242,55 +219,6 @@ func TestMsgCreateAirdrop_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgCreateAirdrop_GetSignBytes(t *testing.T) {
-	admin := "admin"
-	airdropId := "airdrop"
-	distributorAddress := "distributor"
-	allocatorAddress := "allocator"
-	linkerAddress := "linker"
-	rewardDenom := "denom"
-
-	distributionStartDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	distributionEndDate := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
-	clawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
-	deadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
-
-	earlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
-
-	msg := types.NewMsgCreateAirdrop(
-		admin,
-		airdropId,
-		rewardDenom,
-		&distributionStartDate,
-		&distributionEndDate,
-		&clawbackDate,
-		&deadlineDate,
-		earlyClaimPenalty,
-		distributorAddress,
-		allocatorAddress,
-		linkerAddress,
-	)
-	res := msg.GetSignBytes()
-
-	expected := strings.TrimSpace(`
-		{"type":"airdrop/MsgCreateAirdrop",
-		"value":{"admin":"admin",
-		"airdrop_id":"airdrop",
-		"allocator_address":"allocator",
-		"claim_type_deadline_date":"2024-02-01T00:00:00Z",
-		"clawback_date":"2024-07-01T00:00:00Z",
-		"distribution_end_date":"2024-06-01T00:00:00Z",
-		"distribution_start_date":"2024-01-01T00:00:00Z",
-		"distributor_address":"distributor",
-		"early_claim_penalty":"0.500000000000000000",
-		"linker_address":"linker",
-		"reward_denom":"denom"}}`)
-
-	re := regexp.MustCompile(`\s+`)
-	expected = re.ReplaceAllString(expected, "")
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgUpdateAirdrop
 // ----------------------------------------------
@@ -311,7 +239,7 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 	validClawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
 	validDeadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
 
-	validEarlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
+	validEarlyClaimPenalty := sdkmath.LegacyMustNewDecFromStr("0.5")
 
 	// Note: the majority of test cases are covered in AirdropConfigValidateBasic
 	tests := []struct {
@@ -397,55 +325,6 @@ func TestMsgUpdateAirdrop_ValidateBasic(t *testing.T) {
 			require.NoError(t, actualError)
 		})
 	}
-}
-
-func TestMsgUpdateAirdrop_GetSignBytes(t *testing.T) {
-	admin := "admin"
-	airdropId := "airdrop"
-	distributorAddress := "distributor"
-	allocatorAddress := "allocator"
-	linkerAddress := "linker"
-	rewardDenom := "denom"
-
-	distributionStartDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	distributionEndDate := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
-	clawbackDate := time.Date(2024, 7, 1, 0, 0, 0, 0, time.UTC)
-	deadlineDate := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
-
-	earlyClaimPenalty := sdk.MustNewDecFromStr("0.5")
-
-	msg := types.NewMsgUpdateAirdrop(
-		admin,
-		airdropId,
-		rewardDenom,
-		&distributionStartDate,
-		&distributionEndDate,
-		&clawbackDate,
-		&deadlineDate,
-		earlyClaimPenalty,
-		distributorAddress,
-		allocatorAddress,
-		linkerAddress,
-	)
-	res := msg.GetSignBytes()
-
-	expected := strings.TrimSpace(`
-		{"type":"airdrop/MsgUpdateAirdrop",
-		"value":{"admin":"admin",
-		"airdrop_id":"airdrop",
-		"allocator_address":"allocator",
-		"claim_type_deadline_date":"2024-02-01T00:00:00Z",
-		"clawback_date":"2024-07-01T00:00:00Z",
-		"distribution_end_date":"2024-06-01T00:00:00Z",
-		"distribution_start_date":"2024-01-01T00:00:00Z",
-		"distributor_address":"distributor",
-		"early_claim_penalty":"0.500000000000000000",
-		"linker_address":"linker",
-		"reward_denom":"denom"}}`)
-
-	re := regexp.MustCompile(`\s+`)
-	expected = re.ReplaceAllString(expected, "")
-	require.Equal(t, expected, string(res))
 }
 
 // ----------------------------------------------
@@ -609,34 +488,6 @@ func TestMsgAddAllocations_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgAddAllocations_GetSignBytes(t *testing.T) {
-	admin := "admin"
-	airdropId := "airdrop"
-	allocations := []types.RawAllocation{
-		{
-			UserAddress: "user-1",
-			Allocations: []sdkmath.Int{sdkmath.NewInt(0)},
-		},
-		{
-			UserAddress: "user-2",
-			Allocations: []sdkmath.Int{sdkmath.NewInt(1)},
-		},
-	}
-
-	msg := types.NewMsgAddAllocations(admin, airdropId, allocations)
-	res := msg.GetSignBytes()
-
-	expected := strings.TrimSpace(`
-		{"type":"airdrop/MsgAddAllocations",
-		"value":{"admin":"admin",
-		"airdrop_id":"airdrop",
-		"allocations":[{"allocations":["0"],"user_address":"user-1"},{"allocations":["1"],"user_address":"user-2"}]}}`)
-
-	re := regexp.MustCompile(`\s+`)
-	expected = re.ReplaceAllString(expected, "")
-	require.Equal(t, expected, string(res))
-}
-
 // ----------------------------------------------
 //               MsgUpdateUserAllocation
 // ----------------------------------------------
@@ -723,27 +574,6 @@ func TestMsgUpdateUserAllocation_ValidateBasic(t *testing.T) {
 			require.NoError(t, actualError)
 		})
 	}
-}
-
-func TestMsgUpdateUserAllocation_GetSignBytes(t *testing.T) {
-	admin := "admin"
-	airdropId := "airdrop"
-	userAddress := "user"
-	allocation := []sdkmath.Int{sdkmath.NewInt(0)}
-
-	msg := types.NewMsgUpdateUserAllocation(admin, airdropId, userAddress, allocation)
-	res := msg.GetSignBytes()
-
-	expected := strings.TrimSpace(`
-		{"type":"airdrop/MsgUpdateUserAllocation",
-		"value":{"admin":"admin",
-		"airdrop_id":"airdrop",
-		"allocations":["0"],
-		"user_address": "user"}}`)
-
-	re := regexp.MustCompile(`\s+`)
-	expected = re.ReplaceAllString(expected, "")
-	require.Equal(t, expected, string(res))
 }
 
 // ----------------------------------------------
@@ -834,25 +664,4 @@ func TestMsgLinkAddresses_ValidateBasic(t *testing.T) {
 			require.NoError(t, actualError)
 		})
 	}
-}
-
-func TestMsgLinkAddresses_GetSignBytes(t *testing.T) {
-	admin := "admin"
-	airdropId := "airdrop"
-	strideAddress := "stride"
-	hostAddress := "host"
-
-	msg := types.NewMsgLinkAddresses(admin, airdropId, strideAddress, hostAddress)
-	res := msg.GetSignBytes()
-
-	expected := strings.TrimSpace(`
-		{"type":"airdrop/MsgLinkAddresses",
-		"value":{"admin":"admin",
-		"airdrop_id":"airdrop",
-		"host_address":"host",
-		"stride_address": "stride"}}`)
-
-	re := regexp.MustCompile(`\s+`)
-	expected = re.ReplaceAllString(expected, "")
-	require.Equal(t, expected, string(res))
 }

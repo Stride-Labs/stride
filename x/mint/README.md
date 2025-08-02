@@ -29,10 +29,10 @@ Minting params are held in the global params store.
 ```go
 type Params struct {
     MintDenom               string                  // type of coin to mint
-    GenesisEpochProvisions  sdk.Dec                 // initial epoch provisions at genesis
+    GenesisEpochProvisions  sdkmath.LegacyDec                 // initial epoch provisions at genesis
     EpochIdentifier         string                  // identifier of epoch
     ReductionPeriodInEpochs int64                   // number of epochs between reward reductions
-    ReductionFactor         sdk.Dec                 // reduction multiplier to execute on each period
+    ReductionFactor         sdkmath.LegacyDec                 // reduction multiplier to execute on each period
  DistributionProportions DistributionProportions // distribution_proportions defines the proportion of the minted denom
  WeightedDeveloperRewardsReceivers    []WeightedAddress // address to receive developer rewards
  MintingRewardsDistributionStartEpoch int64             // start epoch to distribute minting rewards
@@ -90,7 +90,7 @@ to calculate the provisions for the next epoch. Consequently, the rewards of the
 will be lowered by `1 - reduction factor`.
 
 ```go
-func (m Minter) NextEpochProvisions(params Params) sdk.Dec {
+func (m Minter) NextEpochProvisions(params Params) sdkmath.LegacyDec {
     return m.EpochProvisions.Mul(params.ReductionFactor)
 }
 ```
@@ -125,6 +125,6 @@ The minter is a space for holding current rewards information.
 
 ```go
 type Minter struct {
-    EpochProvisions sdk.Dec   // Rewards for the current epoch
+    EpochProvisions sdkmath.LegacyDec   // Rewards for the current epoch
 }
 ```
