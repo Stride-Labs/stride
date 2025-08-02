@@ -1,19 +1,15 @@
 import { ProposalStatus, VoteOption } from "osmojs/cosmos/gov/v1beta1/gov";
 import { coinsFromString, cosmos, getValueFromEvents, sleep, stride, StrideClient } from "stridejs";
+import { cosmosProtoRegistry, ibcProtoRegistry, osmosisProtoRegistry } from "osmojs";
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
 import {
   ATOM_DENOM_ON_OSMOSIS,
-  ATOM_DENOM_ON_STRIDE,
   CHAIN_CONFIGS,
-  COSMOSHUB_CHAIN_NAME,
   MNEMONICS,
-  OSMO_DENOM_ON_STRIDE,
   OSMOSIS_CHAIN_NAME,
-  STRD_DENOM_ON_OSMOSIS,
   STRIDE_CHAIN_NAME,
+  COSMOSHUB_CHAIN_NAME,
   TRANSFER_CHANNEL,
-  UATOM,
-  UOSMO,
   USTRD,
 } from "./utils/consts";
 import {
@@ -27,6 +23,7 @@ import { ibcTransfer, submitTxAndExpectSuccess } from "./utils/txs";
 import { assertICAChannelsOpen, assertOpenTransferChannel, waitForChain, waitForIbc } from "./utils/startup";
 import { moduleAddress } from "./utils/queries";
 import { createHostClient, createStrideClient, ensureHostZoneRegistered } from "./utils/setup";
+import { Registry } from "@cosmjs/proto-signing";
 
 describe("Buyback and Burn", () => {
   let strideAccounts: {
@@ -75,8 +72,9 @@ describe("Buyback and Burn", () => {
     cosmoshubAccounts["user"] = await createHostClient(cosmoshubConfig, user.mnemonic);
     cosmoshubAccounts["val1"] = await createHostClient(cosmoshubConfig, val1.mnemonic);
 
-    osmosisAccounts["user"] = await createHostClient(osmosisConfig, user.mnemonic);
-    osmosisAccounts["val1"] = await createHostClient(osmosisConfig, val1.mnemonic);
+    const osmoRegistry = new Registry([...osmosisProtoRegistry, ...cosmosProtoRegistry, ...ibcProtoRegistry]);
+    osmosisAccounts["user"] = await createHostClient(osmosisConfig, user.mnemonic, osmoRegistry);
+    osmosisAccounts["val1"] = await createHostClient(osmosisConfig, val1.mnemonic, osmoRegistry);
 
     await waitForChain(STRIDE_CHAIN_NAME, strideAccounts.user, USTRD);
     await waitForChain(cosmoshubConfig.chainName, cosmoshubAccounts.user, cosmoshubConfig.hostDenom);
@@ -144,7 +142,7 @@ describe("Buyback and Burn", () => {
 
     const poolMsg = newGammPoolMsg({
       sender: osmojs.address,
-      tokens: [`10${UOSMO}`, `2${STRD_DENOM_ON_OSMOSIS}`],
+      tokens: [`10${osmosisConfig.hostDenom}`, `2${osmosisConfig.strdDenomOnHost}`],
       weights: [1, 1],
     });
     const poolTx = await submitTxAndExpectSuccess(osmojs, poolMsg);
@@ -154,12 +152,13 @@ describe("Buyback and Burn", () => {
     const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
       admin: strideAccounts.admin.address,
       baseDenom: USTRD,
-      quoteDenom: OSMO_DENOM_ON_STRIDE,
-      baseDenomOnOsmosis: STRD_DENOM_ON_OSMOSIS,
-      quoteDenomOnOsmosis: UOSMO,
+      quoteDenom: osmosisConfig.hostDenomOnStride,
+      baseDenomOnOsmosis: osmosisConfig.strdDenomOnHost,
+      quoteDenomOnOsmosis: osmosisConfig.hostDenom,
       poolId: osmoStrdPoolId,
     });
     await submitTxAndExpectSuccess(strideAccounts.admin, registerTokenPriceMsg);
+    await sleep(2000);
 
     while (true) {
       const {
@@ -175,7 +174,7 @@ describe("Buyback and Burn", () => {
         },
       } = await stridejs.query.stride.icqoracle.tokenPrice({
         baseDenom: USTRD,
-        quoteDenom: OSMO_DENOM_ON_STRIDE,
+        quoteDenom: osmosisConfig.hostDenomOnStride,
         poolId: osmoStrdPoolId,
       });
       if (lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
@@ -183,11 +182,11 @@ describe("Buyback and Burn", () => {
 
         // Verify base denom matches
         expect(baseDenom).toBe(USTRD);
-        expect(osmosisBaseDenom).toBe(STRD_DENOM_ON_OSMOSIS);
+        expect(osmosisBaseDenom).toBe(osmosisConfig.strdDenomOnHost);
 
         // Verify quote denom matches
-        expect(quoteDenom).toBe(OSMO_DENOM_ON_STRIDE);
-        expect(osmosisQuoteDenom).toBe(UOSMO);
+        expect(quoteDenom).toBe(osmosisConfig.hostDenomOnStride);
+        expect(osmosisQuoteDenom).toBe(osmosisConfig.hostDenom);
 
         // Verify pool ID
         expect(osmosisPoolId).toBe(osmoStrdPoolId);
@@ -218,7 +217,7 @@ describe("Buyback and Burn", () => {
 
     const poolMsg = newConcentratedLiquidityPoolMsg({
       sender: osmojs.address,
-      denom0: STRD_DENOM_ON_OSMOSIS,
+      denom0: osmosisConfig.strdDenomOnHost,
     });
     const poolTx = await submitTxAndExpectSuccess(osmojs, poolMsg);
 
@@ -227,7 +226,7 @@ describe("Buyback and Burn", () => {
     const addLiquidityMsg = addConcentratedLiquidityPositionMsg({
       sender: osmojs.address,
       poolId: osmoStrdPoolId,
-      tokensProvided: coinsFromString(`5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`),
+      tokensProvided: coinsFromString(`5${osmosisConfig.strdDenomOnHost},10${osmosisConfig.hostDenom}`),
       tokenMinAmount0: "5",
       tokenMinAmount1: "10",
     });
@@ -236,12 +235,13 @@ describe("Buyback and Burn", () => {
     const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
       admin: strideAccounts.admin.address,
       baseDenom: USTRD,
-      quoteDenom: OSMO_DENOM_ON_STRIDE,
-      baseDenomOnOsmosis: STRD_DENOM_ON_OSMOSIS,
-      quoteDenomOnOsmosis: UOSMO,
+      quoteDenom: osmosisConfig.hostDenomOnStride,
+      baseDenomOnOsmosis: osmosisConfig.strdDenomOnHost,
+      quoteDenomOnOsmosis: osmosisConfig.hostDenom,
       poolId: osmoStrdPoolId,
     });
     await submitTxAndExpectSuccess(strideAccounts.admin, registerTokenPriceMsg);
+    await sleep(2000);
 
     while (true) {
       const {
@@ -257,7 +257,7 @@ describe("Buyback and Burn", () => {
         },
       } = await stridejs.query.stride.icqoracle.tokenPrice({
         baseDenom: USTRD,
-        quoteDenom: OSMO_DENOM_ON_STRIDE,
+        quoteDenom: osmosisConfig.hostDenomOnStride,
         poolId: osmoStrdPoolId,
       });
       if (lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
@@ -265,11 +265,11 @@ describe("Buyback and Burn", () => {
 
         // Verify base denom matches
         expect(baseDenom).toBe(USTRD);
-        expect(osmosisBaseDenom).toBe(STRD_DENOM_ON_OSMOSIS);
+        expect(osmosisBaseDenom).toBe(osmosisConfig.strdDenomOnHost);
 
         // Verify quote denom matches
-        expect(quoteDenom).toBe(OSMO_DENOM_ON_STRIDE);
-        expect(osmosisQuoteDenom).toBe(UOSMO);
+        expect(quoteDenom).toBe(osmosisConfig.hostDenomOnStride);
+        expect(osmosisQuoteDenom).toBe(osmosisConfig.hostDenom);
 
         // Verify pool ID
         expect(osmosisPoolId).toBe(osmoStrdPoolId);
@@ -320,7 +320,7 @@ describe("Buyback and Burn", () => {
         client: gaiajs,
         sourceChain: COSMOSHUB_CHAIN_NAME,
         destinationChain: STRIDE_CHAIN_NAME,
-        coin: `1000000${UATOM}`,
+        coin: `1000000${cosmoshubConfig.hostDenom}`,
         sender: gaiajs.address,
         receiver: stridejs.address, // needs to be valid but ignored by pfm
         memo: JSON.stringify({
@@ -337,7 +337,7 @@ describe("Buyback and Burn", () => {
         osmojs,
         newConcentratedLiquidityPoolMsg({
           sender: osmojs.address,
-          denom0: STRD_DENOM_ON_OSMOSIS,
+          denom0: osmosisConfig.strdDenomOnHost,
         }),
       );
 
@@ -348,7 +348,7 @@ describe("Buyback and Burn", () => {
         addConcentratedLiquidityPositionMsg({
           poolId: osmoStrdPoolId,
           sender: osmojs.address,
-          tokensProvided: coinsFromString(`5${STRD_DENOM_ON_OSMOSIS},10${UOSMO}`),
+          tokensProvided: coinsFromString(`5${osmosisConfig.strdDenomOnHost},10${osmosisConfig.hostDenom}`),
           tokenMinAmount0: "5",
           tokenMinAmount1: "10",
         }),
@@ -359,7 +359,7 @@ describe("Buyback and Burn", () => {
         osmojs,
         newGammPoolMsg({
           sender: osmojs.address,
-          tokens: [`10${UOSMO}`, `2${ATOM_DENOM_ON_OSMOSIS}`],
+          tokens: [`10${osmosisConfig.hostDenom}`, `2${ATOM_DENOM_ON_OSMOSIS}`],
           weights: [1, 1],
         }),
       );
@@ -372,9 +372,9 @@ describe("Buyback and Burn", () => {
         stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
           admin: strideAccounts.admin.address,
           baseDenom: USTRD,
-          quoteDenom: OSMO_DENOM_ON_STRIDE,
-          osmosisBaseDenom: STRD_DENOM_ON_OSMOSIS,
-          osmosisQuoteDenom: UOSMO,
+          quoteDenom: osmosisConfig.hostDenomOnStride,
+          osmosisBaseDenom: osmosisConfig.strdDenomOnHost,
+          osmosisQuoteDenom: osmosisConfig.hostDenom,
           osmosisPoolId: osmoStrdPoolId,
         }),
       );
@@ -384,10 +384,10 @@ describe("Buyback and Burn", () => {
         strideAccounts.admin,
         stride.icqoracle.MessageComposer.withTypeUrl.registerTokenPriceQuery({
           admin: strideAccounts.admin.address,
-          baseDenom: ATOM_DENOM_ON_STRIDE,
-          quoteDenom: OSMO_DENOM_ON_STRIDE,
+          baseDenom: cosmoshubConfig.hostDenomOnStride,
+          quoteDenom: osmosisConfig.hostDenomOnStride,
           osmosisBaseDenom: ATOM_DENOM_ON_OSMOSIS,
-          osmosisQuoteDenom: UOSMO,
+          osmosisQuoteDenom: osmosisConfig.hostDenom,
           osmosisPoolId: osmoAtomPoolId,
         }),
       );
@@ -396,7 +396,7 @@ describe("Buyback and Burn", () => {
       while (true) {
         const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
           baseDenom: USTRD,
-          quoteDenom: OSMO_DENOM_ON_STRIDE,
+          quoteDenom: osmosisConfig.hostDenomOnStride,
           poolId: osmoStrdPoolId,
         });
         if (tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
@@ -407,8 +407,8 @@ describe("Buyback and Burn", () => {
       }
       while (true) {
         const { tokenPrice } = await stridejs.query.stride.icqoracle.tokenPrice({
-          baseDenom: ATOM_DENOM_ON_STRIDE,
-          quoteDenom: OSMO_DENOM_ON_STRIDE,
+          baseDenom: cosmoshubConfig.hostDenomOnStride,
+          quoteDenom: osmosisConfig.hostDenomOnStride,
           poolId: osmoAtomPoolId,
         });
         if (tokenPrice.lastResponseTime.toISOString() != "0001-01-01T00:00:00.000Z") {
@@ -420,7 +420,7 @@ describe("Buyback and Burn", () => {
 
       // Query for price of ATOM in STRD
       const { price } = await stridejs.query.stride.icqoracle.tokenPriceForQuoteDenom({
-        baseDenom: ATOM_DENOM_ON_STRIDE,
+        baseDenom: cosmoshubConfig.hostDenomOnStride,
         quoteDenom: USTRD,
       });
 
@@ -446,7 +446,7 @@ describe("Buyback and Burn", () => {
         client: gaiajs,
         sourceChain: COSMOSHUB_CHAIN_NAME,
         destinationChain: STRIDE_CHAIN_NAME,
-        coin: `${rewardAmount}${UATOM}`,
+        coin: `${rewardAmount}${cosmoshubConfig.hostDenom}`,
         sender: gaiajs.address,
         receiver: rewardCollectorAddress,
       });
@@ -459,7 +459,7 @@ describe("Buyback and Burn", () => {
         ({ balance: { amount: auctionAtomBalance } = { amount: "0" } } =
           await stridejs.query.cosmos.bank.v1beta1.balance({
             address: auctionAddress,
-            denom: ATOM_DENOM_ON_STRIDE,
+            denom: cosmoshubConfig.hostDenomOnStride,
           }));
 
         if (BigInt(auctionAtomBalance) > 0n) {
@@ -469,7 +469,7 @@ describe("Buyback and Burn", () => {
         const { balance: { amount: rewardCollectorAtomBalance } = { amount: "0" } } =
           await stridejs.query.cosmos.bank.v1beta1.balance({
             address: rewardCollectorAddress,
-            denom: ATOM_DENOM_ON_STRIDE,
+            denom: cosmoshubConfig.hostDenomOnStride,
           });
 
         await sleep(500);
@@ -485,7 +485,7 @@ describe("Buyback and Burn", () => {
           admin: strideAccounts.admin.address,
           auctionName,
           auctionType: stride.auction.AuctionType.AUCTION_TYPE_FCFS,
-          sellingDenom: ATOM_DENOM_ON_STRIDE,
+          sellingDenom: cosmoshubConfig.hostDenomOnStride,
           paymentDenom: USTRD,
           enabled: true,
           minPriceMultiplier: "0.95",
@@ -499,7 +499,7 @@ describe("Buyback and Burn", () => {
       const { balance: { amount: userAtomBalanceBefore } = { amount: "0" } } =
         await stridejs.query.cosmos.bank.v1beta1.balance({
           address: strideAccounts.user.address,
-          denom: ATOM_DENOM_ON_STRIDE,
+          denom: cosmoshubConfig.hostDenomOnStride,
         });
 
       // price is 2.5 and BigInt doesn't support fractions so we'll multiply by 10 for a price of 25
@@ -521,7 +521,7 @@ describe("Buyback and Burn", () => {
       const { balance: { amount: userAtomBalanceAfter } = { amount: "0" } } =
         await stridejs.query.cosmos.bank.v1beta1.balance({
           address: strideAccounts.user.address,
-          denom: ATOM_DENOM_ON_STRIDE,
+          denom: cosmoshubConfig.hostDenomOnStride,
         });
 
       expect(BigInt(userAtomBalanceAfter)).toBe(BigInt(userAtomBalanceBefore) + atomsToBuy);
@@ -629,7 +629,7 @@ describe("Buyback and Burn", () => {
     const { balance: { amount: auctionBalanceBefore } = { amount: "0" } } =
       await stridejs.query.cosmos.bank.v1beta1.balance({
         address: auctionAddress,
-        denom: ATOM_DENOM_ON_STRIDE,
+        denom: cosmoshubConfig.hostDenomOnStride,
       });
 
     const stakeAmount = 10_000_000;
@@ -641,7 +641,7 @@ describe("Buyback and Burn", () => {
       client: gaiajs,
       sourceChain: COSMOSHUB_CHAIN_NAME,
       destinationChain: STRIDE_CHAIN_NAME,
-      coin: `${stakeAmount}${UATOM}`,
+      coin: `${stakeAmount}${cosmoshubConfig.hostDenom}`,
       sender: gaiajs.address,
       receiver: stridejs.address,
     });
@@ -649,7 +649,7 @@ describe("Buyback and Burn", () => {
     const liquidStakeMsg = stride.stakeibc.MessageComposer.withTypeUrl.liquidStake({
       creator: stridejs.address,
       amount: String(stakeAmount),
-      hostDenom: UATOM,
+      hostDenom: cosmoshubConfig.hostDenom,
     });
 
     await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
@@ -658,7 +658,7 @@ describe("Buyback and Burn", () => {
     // Check st tokens
     const { balance: { amount: stAtomBalance } = { amount: "0" } } = await stridejs.query.cosmos.bank.v1beta1.balance({
       address: stridejs.address,
-      denom: "stuatom",
+      denom: cosmoshubConfig.stDenom,
     });
     expect(BigInt(stAtomBalance)).toBeGreaterThan(0n);
 
@@ -674,7 +674,7 @@ describe("Buyback and Burn", () => {
       cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
         fromAddress: gaiajs.address,
         toAddress: withdrawalIcaAddress,
-        amount: coinsFromString(`${rewardAmount}${UATOM}`),
+        amount: coinsFromString(`${rewardAmount}${cosmoshubConfig.hostDenom}`),
       }),
     ]);
 
@@ -683,7 +683,7 @@ describe("Buyback and Burn", () => {
       const { balance: { amount: auctionBalanceAfter } = { amount: "0" } } =
         await stridejs.query.cosmos.bank.v1beta1.balance({
           address: auctionAddress,
-          denom: ATOM_DENOM_ON_STRIDE,
+          denom: cosmoshubConfig.hostDenomOnStride,
         });
 
       if (BigInt(auctionBalanceAfter) >= BigInt(auctionBalanceBefore) + BigInt(feeAmount)) {
@@ -704,7 +704,7 @@ describe("Buyback and Burn", () => {
       client: gaiajs,
       sourceChain: COSMOSHUB_CHAIN_NAME,
       destinationChain: STRIDE_CHAIN_NAME,
-      coin: `1${UATOM}`,
+      coin: `1${cosmoshubConfig.hostDenom}`,
       sender: gaiajs.address,
       receiver: stridejs.address,
     });
@@ -713,60 +713,28 @@ describe("Buyback and Burn", () => {
       client: osmojs,
       sourceChain: OSMOSIS_CHAIN_NAME,
       destinationChain: STRIDE_CHAIN_NAME,
-      coin: `1${UOSMO}`,
+      coin: `1${osmosisConfig.hostDenom}`,
       sender: osmojs.address,
       receiver: stridejs.address,
     });
 
     const registerTokenPriceMsg = newRegisterTokenPriceQueryMsg({
       admin: strideAccounts.admin.address,
-      baseDenom: ATOM_DENOM_ON_STRIDE,
-      quoteDenom: OSMO_DENOM_ON_STRIDE,
+      baseDenom: cosmoshubConfig.hostDenomOnStride,
+      quoteDenom: osmosisConfig.hostDenomOnStride,
       baseDenomOnOsmosis: ATOM_DENOM_ON_OSMOSIS,
-      quoteDenomOnOsmosis: UOSMO,
+      quoteDenomOnOsmosis: osmosisConfig.hostDenom,
       poolId: 1n, // not important for thie TokenPrice to work for the test to work
     });
     await submitTxAndExpectSuccess(strideAccounts.admin, registerTokenPriceMsg);
 
     const { baseDenomUnwrapped, quoteDenomUnwrapped } = await stridejs.query.stride.icqoracle.tokenPrice({
-      baseDenom: ATOM_DENOM_ON_STRIDE,
-      quoteDenom: OSMO_DENOM_ON_STRIDE,
+      baseDenom: cosmoshubConfig.hostDenomOnStride,
+      quoteDenom: osmosisConfig.hostDenomOnStride,
       poolId: 1n,
     });
 
-    expect(baseDenomUnwrapped).toBe(UATOM);
-    expect(quoteDenomUnwrapped).toBe(UOSMO);
-  });
-
-  test.skip("x/auction queries", async () => {
-    const stridejs = strideAccounts.admin;
-
-    // create a bunch of dummy auctions
-    const auctionNames = new Array(5).fill("").map(() => `auction${Math.random()}`);
-    await submitTxAndExpectSuccess(
-      stridejs,
-      auctionNames.map((auctionName) =>
-        stride.auction.MessageComposer.withTypeUrl.createAuction({
-          admin: stridejs.address,
-          auctionName,
-          auctionType: stride.auction.AuctionType.AUCTION_TYPE_FCFS,
-          sellingDenom: ATOM_DENOM_ON_STRIDE,
-          paymentDenom: USTRD,
-          enabled: true,
-          minPriceMultiplier: "0.95",
-          minBidAmount: "1",
-          beneficiary: stridejs.address,
-        }),
-      ),
-    );
-
-    const { auctions } = await stridejs.query.stride.auction.auctions({});
-
-    for (const name of auctionNames) {
-      expect(auctions.find((a) => a.name === name)).toBeDefined();
-
-      const { auction } = await stridejs.query.stride.auction.auction({ name });
-      expect(auction.name).toBe(name);
-    }
+    expect(baseDenomUnwrapped).toBe(cosmoshubConfig.hostDenom);
+    expect(quoteDenomUnwrapped).toBe(osmosisConfig.hostDenom);
   });
 });

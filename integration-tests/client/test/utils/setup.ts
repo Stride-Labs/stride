@@ -18,6 +18,7 @@ import {
 } from "@cosmjs/stargate";
 import { Comet38Client } from "@cosmjs/tendermint-rpc";
 import { newRegisterHostZoneMsg, newTransferMsg, newValidator } from "./msgs";
+import { Registry } from "@cosmjs/proto-signing";
 
 /**
  * Creates a new stride signer account
@@ -48,7 +49,11 @@ export async function createStrideClient(mnemonic: string): Promise<StrideClient
  * @param mnemonic The account mnemonic
  * @returns The host cosmos client
  */
-export async function createHostClient(hostConfig: ChainConfig, mnemonic: string): Promise<CosmosClient> {
+export async function createHostClient(
+  hostConfig: ChainConfig,
+  mnemonic: string,
+  registry?: Registry,
+): Promise<CosmosClient> {
   const hostSigner = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
     prefix: hostConfig.bechPrefix,
     hdPaths: [stringToPath(`m/44'/${hostConfig.coinType}'/0'/0/0`)],
@@ -61,6 +66,7 @@ export async function createHostClient(hostConfig: ChainConfig, mnemonic: string
     client: await SigningStargateClient.connectWithSigner(hostConfig.rpcEndpoint, hostSigner, {
       gasPrice: GasPrice.fromString(`1.0${hostConfig.hostDenom}`),
       broadcastPollIntervalMs: 50,
+      registry,
     }),
     query: QueryClient.withExtensions(
       await Comet38Client.connect(hostConfig.rpcEndpoint),
