@@ -38,7 +38,6 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 	}
 
 	k.AssertStrideAndDayEpochRelationship(ctx)
-	k.AuctionOffRewardCollectorBalance(ctx)
 }
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
