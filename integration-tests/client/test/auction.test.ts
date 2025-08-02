@@ -700,7 +700,7 @@ describe("Buyback and Burn", () => {
       });
 
       await submitTxAndExpectSuccess(stridejs, [liquidStakeMsg]);
-      sleep(1000);
+      sleep(2000);
 
       // Check st tokens
       const stAtomBalance = await getBalance({
