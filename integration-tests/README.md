@@ -33,7 +33,18 @@ Run the tests
 make test
 ```
 
-## Integrating Updated Protos
+Or run specific tests
+
+```bash
+make test-core
+make test-auction
+make test-autopilot
+make test-lsm
+```
+
+## Making Changes
+
+### Integrating Updated Protos
 
 If the stride proto's change, we need to rebuild stridejs:
 
@@ -51,16 +62,14 @@ If the stride proto's change, we need to rebuild stridejs:
   - Update the `stridejs` dependency commit hash in `package.json`
   - `pnpm i`
 
-## Debugging (VSCode)
+### Debugging (VSCode)
 
 - Open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
 - Run the `Debug: Create JavaScript Debug Terminal` command
 - Set breakpoints
 - Run tests
 
-## Network
-
-## Adding a New Host Zone
+### Adding a New Host Zone
 
 - Create a new dockerfile in `dockerfiles/Dockerfile.{chainName}`. You can use one of the existing dockerfiles as a reference, and just modify the `REPO`, `COMMIT_HASH`, and `BINARY` variables.
 - Add a makefile entry to build the dockerfile
@@ -89,6 +98,19 @@ make start
 
 - If running tests, add the chain config to `client/test/consts.ts` and update the `HOST_CHAIN_NAME` in `client/test/core.test.ts`
 
+## Network Architecture
+
+### Features
+
+- Pushes the network to a shared cluster to prevent issues from dissimilar local setups
+- Ability to start multiple networks in parallel
+- Provide a robust network that can double as a temporary testnet
+- Support for multiple nodes per network
+- Support for all host chain binaries with customizable genesis
+- Support for both go relayer
+- Easy to write new tests (typescript)
+- Tests are idempotent
+
 ### Validator Startup Lifecycle
 
 **initContainer**
@@ -108,38 +130,9 @@ make start
 - As a `postStart` operation (run after the main thread is kicked off), the `create-validator.sh` script is run which runs the appropriate `staking` module transaction to create the validator using the previously acquired keys
 - This is run after startup because the validator must sign the tx with their key
 
-## Testing Client
+### Design Decisions
 
-### Debugging (VSCode)
-
-- open command palette: `Shift + Command + P (Mac) / Ctrl + Shift + P (Windows/Linux)`
-- run the `Debug: Create JavaScript Debug Terminal` command
-- set breakpoints
-- run `pnpm test`
-
-### Test new protobuf
-
-- go to https://github.com/Stride-Labs/stridejs
-  - remove `/dist` from `.gitignore`
-  - update the config in `scripts/clone_repos.ts` to point to the new `stride/cosmos-sdk/ibc-go` version
-  - run `pnpm i`
-  - run `pnpm codegen`
-  - run `pnpm build`
-  - run `git commit...`
-  - run `git push`
-  - get the current `stridejs` commit using `git rev-parse HEAD`
-- in the integration tests (this project):
-  - update the `stridejs` dependency commit hash in `package.json`
-  - `pnpm i`
-  - `pnpm test`
-
-## Motivation
-
-TODO
-
-## Design Decisions
-
-### API Service to share files during chain setup
+#### API Service to share files during chain setup
 
 In order to start the network as fast as possible, the chain should be initialized with ICS validators at genesis, rather than performing a switchover. However, in order to build the genesis file, the public keys must be gathered from each validator. This adds the constraint that keys must be consoldiated into a single process responsible for creating the genesis file.
 
