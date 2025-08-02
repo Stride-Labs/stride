@@ -47,14 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### On-Chain changes
 
 1. Upgrade to sdk v0.50 ([#1381](https://github.com/Stride-Labs/stride/pull/1381))
-2. move AuctionOffRewardCollectorBalance to BeginBlocker ([#1420](https://github.com/Stride-Labs/stride/pull/1420))
-3. disable community pool liquid stake feature ([#1423](https://github.com/Stride-Labs/stride/pull/1423))
-4. v28 Upgrade Handler + Bounds Change ([#1422](https://github.com/Stride-Labs/stride/pull/1422))
-5. Delete Stale ICQ Query ([#1425](https://github.com/Stride-Labs/stride/pull/1425))
-6. Add DelayedVestingAccount ([#1424](https://github.com/Stride-Labs/stride/pull/1424))
-7. Decrease max ICAs per batch ([#1426](https://github.com/Stride-Labs/stride/pull/1426))
-8. v28 Import Paths ([#1428](https://github.com/Stride-Labs/stride/pull/1428))
-9. removed duplicate event emissions in cache context wrapper ([#1415](https://github.com/Stride-Labs/stride/pull/1415))
+2. disable community pool liquid stake feature ([#1423](https://github.com/Stride-Labs/stride/pull/1423))
+3. v28 Upgrade Handler + Bounds Change ([#1422](https://github.com/Stride-Labs/stride/pull/1422))
+4. Delete Stale ICQ Query ([#1425](https://github.com/Stride-Labs/stride/pull/1425))
+5. Add DelayedVestingAccount ([#1424](https://github.com/Stride-Labs/stride/pull/1424))
+6. Decrease max ICAs per batch ([#1426](https://github.com/Stride-Labs/stride/pull/1426))
+7. v28 Import Paths ([#1428](https://github.com/Stride-Labs/stride/pull/1428))
+8. removed duplicate event emissions in cache context wrapper ([#1415](https://github.com/Stride-Labs/stride/pull/1415))
 
 ### Off-Chain changes
 
