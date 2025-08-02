@@ -49,7 +49,7 @@ build-api:
 	$(call build_and_push_docker,api,api,api:latest)
 
 build-stride:
-	@bash network/scripts/build.shs stride
+	@bash network/scripts/build.sh stride
 
 build-stride-upgrade:
 	@if [ -z "$$UPGRADE_OLD_VERSION" ]; then \
