@@ -11,7 +11,7 @@ GCR_REPO=gcr.io/stride-nodes/integration-tests
 ADMINS_FILE=${STRIDE_HOME}/utils/admins.go
 KEYS_FILE=${STRIDE_HOME}/integration-tests/network/configs/keys.json
 DOCKERFILES=${STRIDE_HOME}/integration-tests/dockerfiles
-FORCE_OLD_BUILD=false
+FORCE_OLD_BUILD=${FORCE_OLD_BUILD:-false}
 
 # Global variables for cleanup
 ORIGINAL_BRANCH=""
@@ -48,6 +48,8 @@ build_and_push_docker() {
 main() {
     # For stride, we have to update the admin address
     if [[ "$CHAIN" == "stride" ]]; then
+        admin_address=$(jq -r '.admin.address' $KEYS_FILE)
+
         # If an upgrade old version was specified, build that old dockerfile
         if [  "${UPGRADE_OLD_VERSION:-}" != "" ]; then
             echo "UPGRADE ENABLED: Starting chain at $UPGRADE_OLD_VERSION"
@@ -65,9 +67,10 @@ main() {
                 ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
                 git checkout $UPGRADE_OLD_VERSION
+                sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$admin_address|g" $ADMINS_FILE 
                 docker buildx build --platform linux/amd64 --tag core:stride-$UPGRADE_OLD_VERSION ..
                 
-                git checkout $ORIGINAL_BRANCH
+                cleanup
             fi
 
             # Tag the old version with a generic tag so we can identify it later in the pipeline
@@ -75,9 +78,7 @@ main() {
         fi
 
         # Update the admin address and build the main dockerfile in the repo root
-        admin_address=$(jq -r '.admin.address' $KEYS_FILE)
         sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$admin_address|g" $ADMINS_FILE 
-
         docker buildx build --platform linux/amd64 --tag core:stride ..
 
         # Then build and push the integration test dockerfile
