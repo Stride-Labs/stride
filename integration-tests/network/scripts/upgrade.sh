@@ -49,7 +49,7 @@ $STRIDED0 query gov tally $proposal_id
 
 echo -e "\nProposal Status:\n"
 while true; do
-    status=$($STRIDED0 query gov proposal $proposal_id | grep "status" | awk '{print $2}')
+    status=$($STRIDED0 query gov proposal $proposal_id --output json | jq -r '.status')
     if [[ "$status" == "PROPOSAL_STATUS_VOTING_PERIOD" ]]; then
         echo "Proposal still in progress..."
         sleep 5
