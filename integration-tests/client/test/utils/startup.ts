@@ -22,8 +22,12 @@ import { isCosmosClient } from "./utils";
  * @param {StrideClient | CosmosClient} client The client instance.
  * @param {string} denom The denomination of the coins to send.
  */
-export async function waitForChain(client: StrideClient | CosmosClient, denom: string): Promise<void> {
-  // the best way to ensure a chain is up is to successfully send a tx
+export async function waitForChain(
+  chainName: string,
+  client: StrideClient | CosmosClient,
+  denom: string,
+): Promise<void> {
+  console.log(`Waiting for ${chainName} chain to start...`);
 
   const msg = cosmos.bank.v1beta1.MessageComposer.withTypeUrl.send({
     fromAddress: client.address,
@@ -113,7 +117,13 @@ export async function waitForIbc(
  * @param {StrideClient | CosmosClient} client The client instance.
  * @param {string} denom The denomination of the coins to send.
  */
-export async function assertOpenTransferChannel(client: StrideClient | CosmosClient, channelId: string): Promise<void> {
+export async function assertOpenTransferChannel(
+  chainName: string,
+  client: StrideClient | CosmosClient,
+  channelId: string,
+): Promise<void> {
+  console.log(`Waiting for transfer channel on ${chainName}`);
+
   const stateOpen = ibc.core.channel.v1.State.STATE_OPEN;
   if (client instanceof StrideClient) {
     const { channel } = await client.query.ibc.core.channel.v1.channel({
@@ -132,12 +142,11 @@ export async function assertOpenTransferChannel(client: StrideClient | CosmosCli
  * @param client Stride client
  * @param chainId The host chain id
  */
-export async function assertICAChannelsOpen(
-  stridejs: StrideClient,
-  chainId: string,
-  maxAttempts: number = 60,
-): Promise<void> {
+export async function assertICAChannelsOpen(stridejs: StrideClient, chainId: string): Promise<void> {
+  console.log(`Waiting for ICA channels between stride and ${chainId}...`);
+
   let attempts = 0;
+  const maxAttempts = 60;
 
   while (attempts < maxAttempts) {
     const { hostZone } = await stridejs.query.stride.stakeibc.hostZone({

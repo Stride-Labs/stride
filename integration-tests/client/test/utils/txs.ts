@@ -1,7 +1,7 @@
 import { DeliverTxResponse, getTxIbcResponses, getValueFromEvents, IbcResponse, sleep, StrideClient } from "stridejs";
 import { expect } from "vitest";
 import { newTransferMsg } from "./msgs";
-import { Chain, CosmosClient } from "./types";
+import { CosmosClient } from "./types";
 import { DEFAULT_FEE, DEFAULT_GAS, TRANSFER_CHANNEL, USTRD } from "./consts";
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { isCosmosClient } from "./utils";
@@ -27,8 +27,8 @@ export async function ibcTransfer({
   memo = "",
 }: {
   client: StrideClient | CosmosClient;
-  sourceChain: Chain;
-  destinationChain: Chain;
+  sourceChain: string;
+  destinationChain: string;
   sender: string;
   receiver: string;
   coin: string;
@@ -87,7 +87,7 @@ export async function submitTxAndExpectSuccess(
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
-    sleep(1500);
+    sleep(3000);
 
     return {
       ...tx,
@@ -100,7 +100,7 @@ export async function submitTxAndExpectSuccess(
       console.error(tx.rawLog);
     }
     expect(tx.code).toBe(0);
-    sleep(1500);
+    sleep(3000);
 
     return tx;
   }

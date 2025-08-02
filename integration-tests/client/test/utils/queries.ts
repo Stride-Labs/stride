@@ -328,3 +328,29 @@ export async function getUserRedemptionRecord({
   return (await client.query.stride.records.userRedemptionRecord({ id: `${chainId}.${epochNumber}.${receiver}` }))
     .userRedemptionRecord;
 }
+
+/**
+ * Fetches the lastest user redemption record for a user
+ * @param client The stride client
+ * @param chainId The host zone chain ID
+ * @param receiver The host address of where the redeemed tokens should go
+ * @returns The user redemption record
+ */
+export async function getLatestUserRedemptionRecord({
+  client,
+  chainId,
+  receiver,
+}: {
+  client: StrideClient;
+  chainId: string;
+  receiver: string;
+}): Promise<UserRedemptionRecord> {
+  const allRedemptionRecords = await client.query.stride.records.userRedemptionRecordAll({});
+  const userRedemptionRecords = allRedemptionRecords.userRedemptionRecord.filter(
+    (record) => record.hostZoneId == chainId && record.receiver == receiver,
+  );
+  expect(userRedemptionRecords.length).to.be.greaterThan(0, "No user redemption records found");
+
+  const sortedUserRedemptionRecords = userRedemptionRecords.sort((a, b) => Number(b.epochNumber - a.epochNumber));
+  return sortedUserRedemptionRecords[0];
+}
