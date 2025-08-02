@@ -245,7 +245,7 @@ describe.each(TEST_CHAINS)("Autopilot - %s", (hostChainName) => {
     const stakeAmount = 10000000;
     const redeemAmount = 1000000;
 
-    const { chainName, chainId, hostDenom, stDenomOnHost } = HOST_CONFIG;
+    const { chainName, chainId, stDenomOnHost } = HOST_CONFIG;
 
     // Ensure there's enough liquid stake to cover the redemption
     await ensureLiquidStakeExists({

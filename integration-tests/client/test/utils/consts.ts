@@ -75,7 +75,7 @@ export function newChainConfig({
       [
         {
           incomingPortId: TRANSFER_PORT,
-          incomingChannelId: transferChannelId,
+          incomingChannelId: DEFAULT_TRANSFER_CHANNEL_ID, // assumes each host only has 1 ibc connection (to stride)
         },
       ],
       `st${hostDenom}`,
