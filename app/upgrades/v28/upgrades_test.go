@@ -83,12 +83,13 @@ func (s *UpgradeTestSuite) SetupTestMaxIcasBand() func() {
 }
 
 func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
-
 	// Init BaseAccount (which is the type of the account pre-upgrade)
 	deliveryAccountAddress, err := sdk.AccAddressFromBech32(v28.DeliveryAccount)
 	s.Require().NoError(err)
-	deliveryAccount := authtypes.NewBaseAccount(deliveryAccountAddress, nil, 0, 0)
+	nextAccountNumber := s.App.AccountKeeper.NextAccountNumber(s.Ctx)
+	deliveryAccount := authtypes.NewBaseAccount(deliveryAccountAddress, nil, nextAccountNumber, 0)
 	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
+
 	// Fund account and test sending a tx to mimic mainnet
 	sendAmt := int64(1_000_000)
 	s.FundAccount(deliveryAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(sendAmt)))
@@ -98,8 +99,12 @@ func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
 	// Init the FromAccount and fund with 4M strd
 	fromAccountAddress, err := sdk.AccAddressFromBech32(v28.FromAccount)
 	s.Require().NoError(err)
-	fromAccount := authtypes.NewBaseAccount(fromAccountAddress, nil, 0, 0)
+
+	// Get the next account number to avoid conflicts
+	nextAccountNumber = s.App.AccountKeeper.NextAccountNumber(s.Ctx)
+	fromAccount := authtypes.NewBaseAccount(fromAccountAddress, nil, nextAccountNumber, 0)
 	s.App.AccountKeeper.SetAccount(s.Ctx, fromAccount)
+
 	// Fund account and test sending a tx to mimic mainnet
 	s.FundAccount(fromAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(4_000_000_000_000)))
 
