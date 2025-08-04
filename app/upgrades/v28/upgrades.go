@@ -6,18 +6,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
 
-	"github.com/Stride-Labs/stride/v28/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v28/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
 )
@@ -34,12 +28,6 @@ var (
 	RedemptionRateOuterMinAdjustment = sdkmath.LegacyMustNewDecFromStr("0.50")
 	RedemptionRateOuterMaxAdjustment = sdkmath.LegacyMustNewDecFromStr("1.00")
 
-	DeliveryAccount = "stride198f9skhtnpzpsxtmlkg3ry8yglwqn9pm9ugl28"
-	FromAccount     = "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f"
-
-	VestingEndTime    = int64(1785988800)        // Thu Aug 06 2026 04:00:00 GMT+0000
-	LockedTokenAmount = int64(4_000_000_000_000) // 4 million STRD
-
 	MaxMessagesPerIca = uint64(5)
 	BandChainId       = "laozi-mainnet"
 )
@@ -51,16 +39,11 @@ func CreateUpgradeHandler(
 	consumerKeeper consumerkeeper.Keeper,
 	distrKeeper distrkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
-	accountKeeper authkeeper.AccountKeeper,
-	bankKeeper bankkeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(context)
 		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s...", UpgradeName))
-
-		ak := accountKeeper
-		bk := bankKeeper
 
 		// Run migrations first
 		ctx.Logger().Info("Running module migrations...")
@@ -86,12 +69,6 @@ func CreateUpgradeHandler(
 		// Loosen slack from redemption rate bounds
 		ctx.Logger().Info("Update redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
-
-		// Deliver locked tokens
-		ctx.Logger().Info("Delivering locked tokens...")
-		if err := DeliverLockedTokens(ctx, ak, bk); err != nil {
-			return vm, errorsmod.Wrapf(err, "unable to deliver tokens to account %s", DeliveryAccount)
-		}
 
 		ctx.Logger().Info("Processing stale ICQ...")
 		ClearStuckEvmosQuery(ctx, stakeibcKeeper, icqKeeper)
@@ -137,35 +114,6 @@ func UpdateRedemptionRateBounds(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 		k.SetHostZone(ctx, hostZone)
 	}
-}
-
-func DeliverLockedTokens(ctx sdk.Context, ak authkeeper.AccountKeeper, bk bankkeeper.Keeper) error {
-	// Get account
-	from := sdk.MustAccAddressFromBech32(FromAccount)
-	to := sdk.MustAccAddressFromBech32(DeliveryAccount)
-	amt := sdk.NewCoins(sdk.NewInt64Coin("ustrd", LockedTokenAmount))
-
-	// Destination must exist and be a plain BaseAccount.
-	base, isBaseAccount := ak.GetAccount(ctx, to).(*authtypes.BaseAccount)
-	if !isBaseAccount {
-		// Maybe return an error here?
-		ctx.Logger().Error("Account at DeliveryAccount is not a BaseAccount, cannot create DelayedVestingAccount")
-		return nil
-	}
-
-	// Send the 4 000 000 STRD
-	if err := utils.SafeSendCoins(false, bk, ctx, from, to, amt); err != nil {
-		return err
-	}
-
-	// Convert the credited account to DelayedVesting.
-	dva, err := vestingtypes.NewDelayedVestingAccount(base, amt, VestingEndTime)
-	if err != nil {
-		return err
-	}
-	ak.SetAccount(ctx, dva)
-
-	return nil
 }
 
 // Cleans up the stale ICQ
