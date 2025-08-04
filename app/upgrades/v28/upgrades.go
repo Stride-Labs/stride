@@ -39,6 +39,7 @@ var (
 	IncentivesAddress = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
 	IncentivesAmount  = sdkmath.NewInt(8_000_000_000_000)
 	SecurityAddress   = "stride14p6dyylhlmr445w9shcp36r5qcypc5d7rftpr2v0dt3pcjvy66zq60qfgg"
+        // NOTE: This partially covers the amount in the prop. The actual amount in the prop was higher because it assumed more tokens were in the security address than actually were, and this doesn't include future inflation. Those tokens will need to be transferred in a future upgrade 
 	SecurityAmount    = sdkmath.NewInt(1_481_000_000_000)
 )
 
