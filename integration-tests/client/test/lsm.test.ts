@@ -70,7 +70,7 @@ describe("LSM", () => {
     await assertICAChannelsOpen(strideAccounts.admin, HOST_CONFIG.chainId);
   }, 45_000);
 
-  test("LSM Liquid Stake", async () => {
+  async function runLSMLiquidStakeTest() {
     const stridejs = strideAccounts.user;
     const hostjs = hostAccounts.user;
     const stakeAmount = 10000000;
@@ -140,16 +140,13 @@ describe("LSM", () => {
     console.log("Submitting LSM liquid stakes...");
     const lsmLiquidStakeMsg = newLSMLiquidStakeMsg({
       staker: stridejs.address,
-      amount: stakeAmount / 2, // half total amount
+      amount: stakeAmount,
       lsmTokenIbcDenom: lsmDenomOnStride,
     });
 
-    await submitTxAndExpectSuccess(hostjs, [lsmLiquidStakeMsg]);
-    await sleep(2000);
-
-    // Liquid stake the other half (this one should trigger a slash query)
-    await submitTxAndExpectSuccess(hostjs, [lsmLiquidStakeMsg]);
-    await sleep(2000);
+    // Liquid stake
+    await submitTxAndExpectSuccess(stridejs, [lsmLiquidStakeMsg]);
+    await sleep(3000);
 
     // Get final st and tokenize share record balances
     const finalStBalanceOnStride = await getBalance({ client: stridejs, denom: stDenom });
@@ -167,8 +164,17 @@ describe("LSM", () => {
     // Wait for the LSM shares to get converted to native stake
     await waitForHostZoneTotalDelegationsChange({
       client: stridejs,
-      chainId: COSMOSHUB_CHAIN_NAME,
+      chainId: chainId,
       minDelegation: stakeAmount,
     });
+  }
+
+  test("LSM Liquid Stake", async () => {
+    await runLSMLiquidStakeTest();
+  }, 180_000); // 3 min timeout
+
+  test("LSM Liquid Stake with Slash Query", async () => {
+    // Second LSM Liquid stake will have a slash query
+    await runLSMLiquidStakeTest();
   }, 180_000); // 3 min timeout
 });
