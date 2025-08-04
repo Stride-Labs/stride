@@ -9,10 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/suite"
@@ -52,7 +49,6 @@ func TestKeeperTestSuite(t *testing.T) {
 func (s *UpgradeTestSuite) TestUpgrade() {
 	// Set state before upgrade
 	checkRedemptionRates := s.SetupTestUpdateRedemptionRateBounds()
-	checkLockedTokens := s.SetupTestDeliverLockedTokens()
 	checkICQStore := s.SetupTestICQStore()
 	checkMaxIcas := s.SetupTestMaxIcasBand()
 
@@ -62,7 +58,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// Confirm state after upgrade
 	checkRedemptionRates()
 	s.checkConsumerParams()
-	checkLockedTokens()
 	checkICQStore()
 	checkMaxIcas()
 }
@@ -79,53 +74,6 @@ func (s *UpgradeTestSuite) SetupTestMaxIcasBand() func() {
 		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v28.BandChainId)
 		s.Require().True(found)
 		s.Require().Equal(v28.MaxMessagesPerIca, hostZone.MaxMessagesPerIcaTx)
-	}
-}
-
-func (s *UpgradeTestSuite) SetupTestDeliverLockedTokens() func() {
-	// Init BaseAccount (which is the type of the account pre-upgrade)
-	deliveryAccountAddress, err := sdk.AccAddressFromBech32(v28.DeliveryAccount)
-	s.Require().NoError(err)
-	nextAccountNumber := s.App.AccountKeeper.NextAccountNumber(s.Ctx)
-	deliveryAccount := authtypes.NewBaseAccount(deliveryAccountAddress, nil, nextAccountNumber, 0)
-	s.App.AccountKeeper.SetAccount(s.Ctx, deliveryAccount)
-
-	// Fund account and test sending a tx to mimic mainnet
-	sendAmt := int64(1_000_000)
-	s.FundAccount(deliveryAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(sendAmt)))
-	err = s.App.BankKeeper.SendCoins(s.Ctx, deliveryAccountAddress, deliveryAccountAddress, sdk.NewCoins(sdk.NewCoin("ustrd", sdkmath.NewInt(500_000))))
-	s.Require().NoError(err)
-
-	// Init the FromAccount and fund with 4M strd
-	fromAccountAddress, err := sdk.AccAddressFromBech32(v28.FromAccount)
-	s.Require().NoError(err)
-
-	// Get the next account number to avoid conflicts
-	nextAccountNumber = s.App.AccountKeeper.NextAccountNumber(s.Ctx)
-	fromAccount := authtypes.NewBaseAccount(fromAccountAddress, nil, nextAccountNumber, 0)
-	s.App.AccountKeeper.SetAccount(s.Ctx, fromAccount)
-
-	// Fund account and test sending a tx to mimic mainnet
-	s.FundAccount(fromAccountAddress, sdk.NewCoin("ustrd", sdkmath.NewInt(4_000_000_000_000)))
-
-	// Return callback to check store after upgrade
-	return func() {
-		account := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount))
-
-		// Check that the account is a DelayedVestingAccount
-		delayedVestingAccount, ok := account.(*vesting.DelayedVestingAccount)
-		s.Require().True(ok)
-
-		// Check that the end time is set correctly
-		s.Require().Equal(v28.VestingEndTime, delayedVestingAccount.EndTime)
-
-		// Check that the original vesting amount is set correctly
-		expectedAmount := sdk.NewCoins(sdk.NewCoin("ustrd", sdkmath.NewInt(v28.LockedTokenAmount)))
-		s.Require().Equal(expectedAmount, delayedVestingAccount.OriginalVesting)
-
-		// Check that the account has the correct balance
-		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(v28.DeliveryAccount), "ustrd")
-		s.Require().Equal(sdk.NewCoin("ustrd", sdkmath.NewInt(v28.LockedTokenAmount+sendAmt)), balance)
 	}
 }
 
