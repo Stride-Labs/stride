@@ -200,7 +200,7 @@ func ActionGovProp262(ctx sdk.Context, k stakeibckeeper.Keeper, bankKeeper bankk
 	securityCoins := sdk.NewCoins(sdk.NewCoin("ustrd", SecurityAmount))
 	err = utils.SafeSendCoins(false, bankKeeper, ctx, securityAddress, receivingAddress, securityCoins)
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to send toknes from security to receiving address")
+		return errorsmod.Wrap(err, "failed to send tokens from security to receiving address")
 	}
 
 	return nil
