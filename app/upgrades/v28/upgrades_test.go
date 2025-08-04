@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -34,6 +35,19 @@ type UpdateRedemptionRateInnerBounds struct {
 	ExpectedMaxInnerRedemptionRate sdkmath.LegacyDec
 }
 
+var (
+	// variables for Prop 262 Testing
+	Strd = "ustrd"
+
+	ReceivingInitialBalance  = sdkmath.NewInt(1_000_000)
+	IncentivesInitialBalance = sdkmath.NewInt(11_000_000_000_000)
+	SecurityInitialBalance   = sdkmath.NewInt(1_481_637_000_000)
+
+	ReceivingExpectedBalance  = sdkmath.NewInt(9_481_001_000_000)
+	IncentivesExpectedBalance = sdkmath.NewInt(3_000_000_000_000)
+	SecurityExpectedBalance   = sdkmath.NewInt(637_000_000)
+)
+
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
 }
@@ -51,6 +65,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	checkRedemptionRates := s.SetupTestUpdateRedemptionRateBounds()
 	checkICQStore := s.SetupTestICQStore()
 	checkMaxIcas := s.SetupTestMaxIcasBand()
+	checkActionGovProp262 := s.TestActionGovProp262()
 
 	// Run upgrade
 	s.ConfirmUpgradeSucceeded(v28.UpgradeName)
@@ -60,6 +75,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.checkConsumerParams()
 	checkICQStore()
 	checkMaxIcas()
+	checkActionGovProp262()
 }
 
 func (s *UpgradeTestSuite) SetupTestMaxIcasBand() func() {
@@ -273,4 +289,27 @@ func (s *UpgradeTestSuite) TestStuckQueryRequestData() {
 	_, delegatorAddressBz, _ := bech32.DecodeAndConvert(v28.EvmosDelegationIca)
 	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 	s.Require().Equal(base64.StdEncoding.EncodeToString(queryData), "MSBuvLM8WbdQm7tYvdAu6Bu5OtoAIx8fN3RBNSB6fa911RRbYQruJvSIXf8h2priHOp//cZrag==")
+}
+
+func (s *UpgradeTestSuite) TestActionGovProp262() func() {
+	incentivesAddress := sdk.MustAccAddressFromBech32(v28.IncentivesAddress)
+	receivingAddress262 := sdk.MustAccAddressFromBech32(v28.ReceivingAddress262)
+	securityAddress := sdk.MustAccAddressFromBech32(v28.SecurityAddress)
+
+	// Fund accounts
+	s.FundAccount(incentivesAddress, sdk.NewCoin(Strd, IncentivesInitialBalance))
+	s.FundAccount(receivingAddress262, sdk.NewCoin(Strd, ReceivingInitialBalance))
+	s.FundAccount(securityAddress, sdk.NewCoin(Strd, SecurityInitialBalance))
+
+	// Return callback to check balances
+	return func() {
+		receivingBalance := s.App.BankKeeper.GetBalance(s.Ctx, receivingAddress262, Strd)
+		s.Require().Equal(ReceivingExpectedBalance, receivingBalance.Amount)
+
+		incentivesBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentivesAddress, Strd)
+		s.Require().Equal(IncentivesExpectedBalance, incentivesBalance.Amount)
+
+		securityBalance := s.App.BankKeeper.GetBalance(s.Ctx, securityAddress, Strd)
+		s.Require().Equal(SecurityExpectedBalance, securityBalance.Amount)
+	}
 }
