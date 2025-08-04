@@ -7,6 +7,8 @@ source scripts/constants.sh
 CHAIN_ID_A=${CHAIN_NAME_A}-test-1
 CHAIN_ID_B=${CHAIN_NAME_B}-test-1
 
+CREATE_PATHS=${CREATE_PATHS:-true}
+
 wait_for_node $CHAIN_NAME_A 
 wait_for_node $CHAIN_NAME_B
 
@@ -41,7 +43,13 @@ main() {
     cp configs/hermes.toml ${hermes_config_file}
 
     restore_keys
-    create_path
+
+    # Optionally run the relayer as a backup that doesn't create the paths
+    if [[ "$CREATE_PATHS" == "true" ]]; then
+        create_path
+    else
+        sleep 60
+    fi
 
     echo "Starting hermes..."
     hermes start

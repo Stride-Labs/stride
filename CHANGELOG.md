@@ -42,6 +42,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v28.0.0](https://github.com/Stride-Labs/stride/releases/tag/v28.0.0) - 2025-08-02
+
+### On-Chain changes
+
+1. Upgrade to sdk v0.50 ([#1381](https://github.com/Stride-Labs/stride/pull/1381))
+2. disable community pool liquid stake feature ([#1423](https://github.com/Stride-Labs/stride/pull/1423))
+3. v28 Upgrade Handler + Bounds Change ([#1422](https://github.com/Stride-Labs/stride/pull/1422))
+4. Delete Stale ICQ Query ([#1425](https://github.com/Stride-Labs/stride/pull/1425))
+5. Decrease max ICAs per batch ([#1426](https://github.com/Stride-Labs/stride/pull/1426))
+6. v28 Import Paths ([#1428](https://github.com/Stride-Labs/stride/pull/1428))
+7. removed duplicate event emissions in cache context wrapper ([#1415](https://github.com/Stride-Labs/stride/pull/1415))
+
+### Off-Chain changes
+
+1. [tests] Migrate core integration tests from bats to TypeScript framework ([#1417](https://github.com/Stride-Labs/stride/pull/1417))
+2. Autopilot and BBB integration tests ([#1427](https://github.com/Stride-Labs/stride/pull/1427))
+
 ## [v27.0.0](https://github.com/Stride-Labs/stride/releases/tag/v27.0.0) - 2025-06-05
 
 ### On-Chain changes

@@ -1,5 +1,5 @@
 import { osmosis } from "osmojs";
-import { coinFromString, ibc, ibcDenom, stride } from "stridejs";
+import { coinFromString, ibc, ibcDenom, stride, gaia, cosmos } from "stridejs";
 import { Coin } from "@cosmjs/proto-signing";
 import { MsgTransfer } from "stridejs/dist/types/codegen/ibc/applications/transfer/v1/tx";
 import { MsgRegisterTokenPriceQuery } from "stridejs/dist/types/codegen/stride/icqoracle/tx";
@@ -65,7 +65,9 @@ export function newRegisterHostZoneMsg({
 /**
  * Creates a new stride validator struct with default values filled in
  * This can be used when registering validators
- * @param param0
+ * @param name Validator name
+ * @param address The validator address
+ * @param weight The validator's weight
  */
 export function newValidator({ name, address, weight }: { name: string; address: string; weight: bigint }): Validator {
   return {
@@ -101,7 +103,7 @@ export function newTransferMsg({
   timeout,
 }: {
   channelId: string;
-  coin: string;
+  coin: string | Coin;
   sender: string;
   receiver: string;
   timeout?: BigInt;
@@ -114,7 +116,7 @@ export function newTransferMsg({
   return ibc.applications.transfer.v1.MessageComposer.withTypeUrl.transfer({
     sourcePort: "transfer",
     sourceChannel: channelId,
-    token: coinFromString(coin),
+    token: typeof coin === "string" ? coinFromString(coin) : coin,
     sender: sender,
     receiver: receiver,
     timeoutHeight: {
@@ -126,6 +128,9 @@ export function newTransferMsg({
   });
 }
 
+/**
+ * Builds a new message to register a token price query in ICQoracle
+ */
 export function newRegisterTokenPriceQueryMsg({
   admin,
   baseDenom,
@@ -231,5 +236,80 @@ export function addConcentratedLiquidityPositionMsg({
     tokensProvided,
     tokenMinAmount0,
     tokenMinAmount1,
+  });
+}
+
+/**
+ * Creates a new delegation message for staking tokens to a validator
+ * @param validator The validator address to delegate to
+ * @param delegator The delegator address who is staking the tokens
+ * @param amount The amount of tokens to delegate
+ * @param denom The denomination of the tokens being delegated
+ * @returns The delegation message
+ */
+export function newDelegateMsg({
+  validator,
+  delegator,
+  amount,
+  denom,
+}: {
+  validator: string;
+  delegator: string;
+  amount: number;
+  denom: string;
+}) {
+  return cosmos.staking.v1beta1.MessageComposer.withTypeUrl.delegate({
+    validatorAddress: validator,
+    delegatorAddress: delegator,
+    amount: coinFromString(`${amount}${denom}`),
+  });
+}
+
+/**
+ * Creates a new tokenize shares message for converting staked tokens into liquid staking tokens
+ * @param validator The validator address where the tokens are currently staked
+ * @param delegator The delegator address who owns the staked tokens
+ * @param amount The amount of staked tokens to tokenize
+ * @param denom The denomination of the staked tokens
+ * @returns The tokenize shares message
+ */
+export function newTokenizeSharesMsg({
+  validator,
+  delegator,
+  amount,
+  denom,
+}: {
+  validator: string;
+  delegator: string;
+  amount: number;
+  denom: string;
+}) {
+  return gaia.liquid.v1beta1.MessageComposer.withTypeUrl.tokenizeShares({
+    validatorAddress: validator,
+    delegatorAddress: delegator,
+    amount: coinFromString(`${amount}${denom}`),
+    tokenizedShareOwner: delegator,
+  });
+}
+
+/**
+ * Creates a LSM liquid stake message
+ * @param amount The amount to liquid stake with
+ * @param lsmTokenIbcDenom The IBC denom of the tokenized delegation
+ * @returns The lsm liquid stake message
+ */
+export function newLSMLiquidStakeMsg({
+  staker,
+  amount,
+  lsmTokenIbcDenom,
+}: {
+  staker: string;
+  amount: number;
+  lsmTokenIbcDenom: string;
+}) {
+  return stride.stakeibc.MessageComposer.withTypeUrl.lSMLiquidStake({
+    creator: staker,
+    amount: amount.toString(),
+    lsmTokenIbcDenom,
   });
 }

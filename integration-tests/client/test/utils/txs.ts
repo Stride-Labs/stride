@@ -3,7 +3,7 @@ import { expect } from "vitest";
 import { newTransferMsg } from "./msgs";
 import { CosmosClient } from "./types";
 import { DEFAULT_FEE, DEFAULT_GAS, TRANSFER_CHANNEL, USTRD } from "./consts";
-import { EncodeObject } from "@cosmjs/proto-signing";
+import { Coin, EncodeObject } from "@cosmjs/proto-signing";
 import { isCosmosClient } from "./utils";
 import { StdFee } from "@cosmjs/stargate";
 
@@ -31,7 +31,7 @@ export async function ibcTransfer({
   destinationChain: string;
   sender: string;
   receiver: string;
-  coin: string;
+  coin: string | Coin;
   memo?: string;
 }) {
   const msg = newTransferMsg({
