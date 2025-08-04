@@ -380,8 +380,8 @@ github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.2.0 h1:rM+
 github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.2.0/go.mod h1:O5H9Ic3Pe6cmJn1eqlj5N48sLb8WQ1VWmDP4/11g/4E=
 github.com/cosmos/ibc-apps/modules/ibc-hooks/v8 v8.0.0 h1:RBUq0cC9HJ9iIhifdWbV+kjDExzfhmAB7ktOAU1RWPU=
 github.com/cosmos/ibc-apps/modules/ibc-hooks/v8 v8.0.0/go.mod h1:6szYOdzw0cUzFj8ZW+qfss0b4mMN1/HWxPATKZKbCfI=
-github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.0.0 h1:AQO9NIAP3RFqvBCj7IqM/V1LCxmuvcvGUdu0RIEz/c0=
-github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.0.0/go.mod h1:/ZpKJSW/SKPkFS7jTqkPVn7kOHUUfRNzu+8aS7YOL8o=
+github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.1.0 h1:HhrupgqdiLG3L8Uyu8Ibgfv1GLjMpAjfkH8PZ4bmjZk=
+github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.1.0/go.mod h1:iHB/bxW0wlYeNB45ki6sEFvCjatmGLwMXumqtB1y3bQ=
 github.com/cosmos/ibc-go/modules/capability v1.0.1 h1:ibwhrpJ3SftEEZRxCRkH0fQZ9svjthrX2+oXdZvzgGI=
 github.com/cosmos/ibc-go/modules/capability v1.0.1/go.mod h1:rquyOV262nGJplkumH+/LeYs04P3eV8oB7ZM4Ygqk4E=
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72 h1:QjCi4bJoy9AXLL1e4jqi+4rHYN0gGZAQxf937cdWhw4=
