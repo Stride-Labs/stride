@@ -1,4 +1,4 @@
-import { stride, StrideClient } from "stridejs";
+import { gaia, stride, StrideClient } from "stridejs";
 import { CosmosClient } from "./types";
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { QueryClient } from "@cosmjs/stargate";
@@ -11,6 +11,7 @@ import {
   HostZoneUnbonding,
   UserRedemptionRecord,
 } from "stridejs/dist/types/codegen/stride/records/records";
+import { CHAIN_CONFIGS, COSMOSHUB_CHAIN_NAME } from "./consts";
 
 /**
  * Queryes a module account address from the account name
@@ -353,4 +354,19 @@ export async function getLatestUserRedemptionRecord({
 
   const sortedUserRedemptionRecords = userRedemptionRecords.sort((a, b) => Number(b.epochNumber - a.epochNumber));
   return sortedUserRedemptionRecords[0];
+}
+
+/**
+ * Gets the last tokenize share record ID for LSM
+ */
+export async function getLatestTokenizeShareRecordId(): Promise<bigint> {
+  const cosmosRpc = CHAIN_CONFIGS[COSMOSHUB_CHAIN_NAME].rpcEndpoint;
+  const tmClient = await Tendermint37Client.connect(cosmosRpc);
+  const queryClient = new QueryClient(tmClient);
+
+  const response = await queryClient.queryAbci(
+    "/gaia.liquid.v1beta1.Query/LastTokenizeShareRecordId",
+    gaia.liquid.v1beta1.QueryLastTokenizeShareRecordIdRequest.encode({}).finish(),
+  );
+  return gaia.liquid.v1beta1.QueryLastTokenizeShareRecordIdResponse.decode(response.value).id;
 }

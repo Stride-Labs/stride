@@ -96,6 +96,9 @@ test-auction:
 test-autopilot:
 	@(cd client && npx vitest run test/autopilot.test.ts)
 
+test-lsm:
+	@(cd client && npx vitest run test/lsm.test.ts)
+
 startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log
 
