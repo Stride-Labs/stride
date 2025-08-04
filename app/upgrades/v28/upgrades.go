@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
 
+	"github.com/Stride-Labs/stride/v28/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v28/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
 )
@@ -30,6 +33,13 @@ var (
 
 	MaxMessagesPerIca = uint64(5)
 	BandChainId       = "laozi-mainnet"
+
+	// Action Gov Prop 262
+	ReceivingAddress  = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
+	IncentivesAddress = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
+	IncentivesAmount  = sdkmath.NewInt(8_000_000_000_000)
+	SecurityAddress   = "stride14p6dyylhlmr445w9shcp36r5qcypc5d7rftpr2v0dt3pcjvy66zq60qfgg"
+	SecurityAmount    = sdkmath.NewInt(1_481_000_000_000)
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
@@ -39,6 +49,7 @@ func CreateUpgradeHandler(
 	consumerKeeper consumerkeeper.Keeper,
 	distrKeeper distrkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	bankKeeper bankkeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -75,6 +86,11 @@ func CreateUpgradeHandler(
 
 		ctx.Logger().Info("Setting max icas for band...")
 		SetMaxIcasBand(ctx, stakeibcKeeper)
+
+		ctx.Logger().Info("Action Gov Prop 262...")
+		if err := ActionGovProp262(ctx, stakeibcKeeper, bankKeeper); err != nil {
+			return nil, err
+		}
 
 		return versionMap, nil
 	}
@@ -150,4 +166,42 @@ func SetMaxIcasBand(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	}
 	bandHostZone.MaxMessagesPerIcaTx = MaxMessagesPerIca
 	k.SetHostZone(ctx, bandHostZone)
+}
+
+// Action Gov Prop 262
+func ActionGovProp262(ctx sdk.Context, k stakeibckeeper.Keeper, bankKeeper bankkeeper.Keeper) error {
+	ctx.Logger().Info("Action Gov Prop 262...")
+
+	receivingAddress, err := sdk.AccAddressFromBech32(ReceivingAddress)
+	if err != nil {
+		return errorsmod.Wrap(err, "invalid prop recipient address")
+	}
+
+	// Transfer from incentive program address to receiving address
+	ctx.Logger().Info("Sending incentives to receiving address...")
+	incentivesAddress, err := sdk.AccAddressFromBech32(IncentivesAddress)
+	if err != nil {
+		return errorsmod.Wrap(err, "invalid prop sender address")
+	}
+
+	incentivesCoins := sdk.NewCoins(sdk.NewCoin("ustrd", IncentivesAmount))
+	err = utils.SafeSendCoins(false, bankKeeper, ctx, incentivesAddress, receivingAddress, incentivesCoins)
+	if err != nil {
+		return errorsmod.Wrap(err, "failed to send tokens from incentives to receiving address")
+	}
+
+	// Transfer from security address to receiving address
+	ctx.Logger().Info("Sending security to receiving address...")
+	securityAddress, err := sdk.AccAddressFromBech32(SecurityAddress)
+	if err != nil {
+		return errorsmod.Wrap(err, "invalid prop sender address")
+	}
+
+	securityCoins := sdk.NewCoins(sdk.NewCoin("ustrd", SecurityAmount))
+	err = utils.SafeSendCoins(false, bankKeeper, ctx, securityAddress, receivingAddress, securityCoins)
+	if err != nil {
+		return errorsmod.Wrap(err, "failed to send toknes from security to receiving address")
+	}
+
+	return nil
 }
