@@ -293,17 +293,17 @@ func (s *UpgradeTestSuite) TestStuckQueryRequestData() {
 
 func (s *UpgradeTestSuite) TestActionGovProp262() func() {
 	incentivesAddress := sdk.MustAccAddressFromBech32(v28.IncentivesAddress)
-	receivingAddress := sdk.MustAccAddressFromBech32(v28.ReceivingAddress)
+	receivingAddress262 := sdk.MustAccAddressFromBech32(v28.ReceivingAddress262)
 	securityAddress := sdk.MustAccAddressFromBech32(v28.SecurityAddress)
 
 	// Fund accounts
 	s.FundAccount(incentivesAddress, sdk.NewCoin(Strd, IncentivesInitialBalance))
-	s.FundAccount(receivingAddress, sdk.NewCoin(Strd, ReceivingInitialBalance))
+	s.FundAccount(receivingAddress262, sdk.NewCoin(Strd, ReceivingInitialBalance))
 	s.FundAccount(securityAddress, sdk.NewCoin(Strd, SecurityInitialBalance))
 
 	// Return callback to check balances
 	return func() {
-		receivingBalance := s.App.BankKeeper.GetBalance(s.Ctx, receivingAddress, Strd)
+		receivingBalance := s.App.BankKeeper.GetBalance(s.Ctx, receivingAddress262, Strd)
 		s.Require().Equal(ReceivingExpectedBalance, receivingBalance.Amount)
 
 		incentivesBalance := s.App.BankKeeper.GetBalance(s.Ctx, incentivesAddress, Strd)

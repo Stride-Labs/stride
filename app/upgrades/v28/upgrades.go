@@ -35,11 +35,11 @@ var (
 	BandChainId       = "laozi-mainnet"
 
 	// Action Gov Prop 262
-	ReceivingAddress  = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
-	IncentivesAddress = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
-	IncentivesAmount  = sdkmath.NewInt(8_000_000_000_000)
-	SecurityAddress   = "stride14p6dyylhlmr445w9shcp36r5qcypc5d7rftpr2v0dt3pcjvy66zq60qfgg"
-	SecurityAmount    = sdkmath.NewInt(1_481_000_000_000)
+	ReceivingAddress262 = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
+	IncentivesAddress   = "stride1tlxk4as9sgpqkh42cfaxqja0mdj6qculqshy0gg3glazmrnx3y8s8gsvqk"
+	IncentivesAmount    = sdkmath.NewInt(8_000_000_000_000)
+	SecurityAddress     = "stride14p6dyylhlmr445w9shcp36r5qcypc5d7rftpr2v0dt3pcjvy66zq60qfgg"
+	SecurityAmount      = sdkmath.NewInt(1_481_000_000_000)
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v27
@@ -170,9 +170,7 @@ func SetMaxIcasBand(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 // Action Gov Prop 262
 func ActionGovProp262(ctx sdk.Context, k stakeibckeeper.Keeper, bankKeeper bankkeeper.Keeper) error {
-	ctx.Logger().Info("Action Gov Prop 262...")
-
-	receivingAddress, err := sdk.AccAddressFromBech32(ReceivingAddress)
+	receivingAddress262, err := sdk.AccAddressFromBech32(ReceivingAddress262)
 	if err != nil {
 		return errorsmod.Wrap(err, "invalid prop recipient address")
 	}
@@ -185,7 +183,7 @@ func ActionGovProp262(ctx sdk.Context, k stakeibckeeper.Keeper, bankKeeper bankk
 	}
 
 	incentivesCoins := sdk.NewCoins(sdk.NewCoin("ustrd", IncentivesAmount))
-	err = utils.SafeSendCoins(false, bankKeeper, ctx, incentivesAddress, receivingAddress, incentivesCoins)
+	err = utils.SafeSendCoins(false, bankKeeper, ctx, incentivesAddress, receivingAddress262, incentivesCoins)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to send tokens from incentives to receiving address")
 	}
@@ -198,7 +196,7 @@ func ActionGovProp262(ctx sdk.Context, k stakeibckeeper.Keeper, bankKeeper bankk
 	}
 
 	securityCoins := sdk.NewCoins(sdk.NewCoin("ustrd", SecurityAmount))
-	err = utils.SafeSendCoins(false, bankKeeper, ctx, securityAddress, receivingAddress, securityCoins)
+	err = utils.SafeSendCoins(false, bankKeeper, ctx, securityAddress, receivingAddress262, securityCoins)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to send tokens from security to receiving address")
 	}
