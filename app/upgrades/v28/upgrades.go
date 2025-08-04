@@ -73,27 +73,27 @@ func CreateUpgradeHandler(
 
 		// Apply distribution fix
 		ctx.Logger().Info("Applying distribution module fix...")
-		if err := ApplyDistributionFix(ctx, distrKeeper); err != nil {
-			// Log warning but continue with upgrade (non-critical)
-			ctx.Logger().Warn("Failed to apply distribution fix, continuing...", "warning", err.Error())
-		} else {
-			ctx.Logger().Info("Distribution fix successfully applied")
-		}
+		// if err := ApplyDistributionFix(ctx, distrKeeper); err != nil {
+		// 	// Log warning but continue with upgrade (non-critical)
+		// 	ctx.Logger().Warn("Failed to apply distribution fix, continuing...", "warning", err.Error())
+		// } else {
+		// 	ctx.Logger().Info("Distribution fix successfully applied")
+		// }
 
 		// Loosen slack from redemption rate bounds
 		ctx.Logger().Info("Update redemption rate bounds...")
 		UpdateRedemptionRateBounds(ctx, stakeibcKeeper)
 
-		ctx.Logger().Info("Processing stale ICQ...")
-		ClearStuckEvmosQuery(ctx, stakeibcKeeper, icqKeeper)
+		// ctx.Logger().Info("Processing stale ICQ...")
+		// ClearStuckEvmosQuery(ctx, stakeibcKeeper, icqKeeper)
 
-		ctx.Logger().Info("Setting max icas for band...")
-		SetMaxIcasBand(ctx, stakeibcKeeper)
+		// ctx.Logger().Info("Setting max icas for band...")
+		// SetMaxIcasBand(ctx, stakeibcKeeper)
 
-		ctx.Logger().Info("Action Gov Prop 262...")
-		if err := ActionGovProp262(ctx, stakeibcKeeper, bankKeeper); err != nil {
-			return nil, err
-		}
+		// ctx.Logger().Info("Action Gov Prop 262...")
+		// if err := ActionGovProp262(ctx, stakeibcKeeper, bankKeeper); err != nil {
+		// 	return nil, err
+		// }
 
 		return versionMap, nil
 	}

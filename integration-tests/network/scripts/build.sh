@@ -67,7 +67,7 @@ main() {
                 ORIGINAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
                 git checkout $UPGRADE_OLD_VERSION
-                sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$admin_address|g" $ADMINS_FILE 
+                sed -i -E "s|stride1gmqp293g968dyemvk9j640e0xqeghravjjwpms|$admin_address|g" $ADMINS_FILE 
                 docker buildx build --platform linux/amd64 --tag core:stride-$UPGRADE_OLD_VERSION ..
                 
                 cleanup
@@ -78,7 +78,7 @@ main() {
         fi
 
         # Update the admin address and build the main dockerfile in the repo root
-        sed -i -E "s|stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh|$admin_address|g" $ADMINS_FILE 
+        sed -i -E "s|stride1gmqp293g968dyemvk9j640e0xqeghravjjwpms|$admin_address|g" $ADMINS_FILE 
         docker buildx build --platform linux/amd64 --tag core:stride ..
 
         # Then build and push the integration test dockerfile
