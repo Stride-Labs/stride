@@ -20,6 +20,17 @@ relayers:
     type: relayer
     chainA: stride
     chainB: osmosis
+  # We start with hermes as a backup relayer
+  - name: stride-cosmoshub
+    type: hermes
+    chainA: stride
+    chainB: cosmoshub
+    createPaths: false
+  - name: stride-osmosis
+    type: hermes
+    chainA: stride
+    chainB: osmosis
+    createPaths: false
 
 chainConfigs:
   stride:

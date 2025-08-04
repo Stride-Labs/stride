@@ -19,6 +19,11 @@
 
   {{- $chainMnemonicIndexA := mul $index 2 }}
   {{- $chainMnemonicIndexB := add $chainMnemonicIndexA 1 }}
+  
+  {{- $createPaths := "true" -}}
+  {{- if hasKey $relayer "createPaths" -}}
+    {{- $createPaths = $relayer.createPaths | toString -}}
+  {{- end -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -54,6 +59,8 @@ spec:
               value: {{ $root.namespace }}
             - name: RELAYER_DEPENDENCY
               value: {{ $prevRelayerName }}
+            - name: CREATE_PATHS
+              value: "{{ $createPaths }}"
           readinessProbe:
             exec:
               command: ["bash", "scripts/relayer-readiness.sh", "{{ $relayer.type }}"]
