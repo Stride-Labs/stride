@@ -6,50 +6,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v28/utils"
 	auctiontypes "github.com/Stride-Labs/stride/v28/x/auction/types"
 
 	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
-
-type PoaValidators struct {
-	name    string
-	address sdk.AccAddress
-}
-
-var poaValidatorSet = []PoaValidators{
-	{
-		name:    "Polkachu",
-		address: nil,
-	},
-	{
-		name:    "Keplr",
-		address: nil,
-	},
-	{
-		name:    "Everstake",
-		address: nil,
-	},
-	{
-		name:    "Imperator",
-		address: nil,
-	},
-	{
-		name:    "L5",
-		address: nil,
-	},
-	{
-		name:    "Stakecito",
-		address: nil,
-	},
-	{
-		name:    "Cosmostation",
-		address: nil,
-	},
-	{
-		name:    "Citadel.one",
-		address: nil,
-	},
-}
 
 // AuctionOffRewardCollectorBalance distributes rewards from the reward collector:
 // Sends 15% to PoA validators, and the remainder to the auction module
@@ -109,14 +70,15 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 		// Send stTokens to each validator in the set
 		// Note: This ignores the remainder for simplicity
 		totalValidatorStTokenAmount := liquidStakeResp.StToken.Amount
-		numValidators := sdkmath.NewInt(int64(len(poaValidatorSet))).ToLegacyDec()
+		numValidators := sdkmath.NewInt(int64(len(utils.PoaValidatorSet))).ToLegacyDec()
 		perValidatorStTokenAmount := sdkmath.LegacyNewDecFromInt(totalValidatorStTokenAmount).Quo(numValidators).TruncateInt()
 		perValidatorStToken := sdk.NewCoin(liquidStakeResp.StToken.Denom, perValidatorStTokenAmount)
 
-		for _, validator := range poaValidatorSet {
-			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RewardCollectorName, validator.address, sdk.NewCoins(perValidatorStToken))
+		for _, validator := range utils.PoaValidatorSet {
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RewardCollectorName, validator.Address, sdk.NewCoins(perValidatorStToken))
 			if err != nil {
-				k.Logger(ctx).Error(fmt.Sprintf("Cannot send stTokens from RewardCollector to %s (%s): %s", validator.address, validator.name, err))
+				k.Logger(ctx).Error(fmt.Sprintf("Cannot send stTokens from RewardCollector to %s (%s): %s",
+					validator.Address, validator.Name, err))
 				continue
 			}
 		}
