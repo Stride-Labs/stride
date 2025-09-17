@@ -5,15 +5,54 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
 
 	auctiontypes "github.com/Stride-Labs/stride/v28/x/auction/types"
 
 	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
+type PoaValidators struct {
+	name    string
+	address sdk.AccAddress
+}
+
+var poaValidatorSet = []PoaValidators{
+	{
+		name:    "Polkachu",
+		address: nil,
+	},
+	{
+		name:    "Keplr",
+		address: nil,
+	},
+	{
+		name:    "Everstake",
+		address: nil,
+	},
+	{
+		name:    "Imperator",
+		address: nil,
+	},
+	{
+		name:    "L5",
+		address: nil,
+	},
+	{
+		name:    "Stakecito",
+		address: nil,
+	},
+	{
+		name:    "Cosmostation",
+		address: nil,
+	},
+	{
+		name:    "Citadel.one",
+		address: nil,
+	},
+}
+
 // AuctionOffRewardCollectorBalance distributes rewards from the reward collector:
-// Sends 15% to ICS, and the remainder to the auction module
+// Sends 15% to PoA validators, and the remainder to the auction module
 // ConsumerRedistributionFraction = what Stride keeps = 0.85 on mainnet
 // ICS Portion = 1 - ConsumerRedistributionFraction = 0.15
 // Fees arrive in the reward collector account as native tokens
@@ -29,7 +68,7 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 	}
 
 	// Calculate Hub's keep rate (1 - strideKeepRate)
-	hubKeepRate := sdkmath.LegacyOneDec().Sub(strideKeepRate)
+	valPaymentRate := sdkmath.LegacyOneDec().Sub(strideKeepRate)
 
 	// Get all host zones and process their tokens in reward collector balance
 	for _, hz := range k.GetAllHostZone(ctx) {
@@ -44,20 +83,21 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 		}
 
 		// Calculate the ICS portion to liquid stake
-		tokensToLiquidStake := sdk.NewDecCoinsFromCoins(tokenBalance).MulDec(hubKeepRate).AmountOf(hz.IbcDenom).TruncateInt()
-		if tokensToLiquidStake.IsZero() {
+		tokensToLiquidStakeForVals := sdk.NewDecCoinsFromCoins(tokenBalance).MulDec(valPaymentRate).AmountOf(hz.IbcDenom).TruncateInt()
+		if tokensToLiquidStakeForVals.IsZero() {
 			continue
 		}
 
 		// Liquid stake the ICS portion
-		msg := types.NewMsgLiquidStake(rewardCollectorAddress.String(), tokensToLiquidStake, hz.HostDenom)
+		msg := types.NewMsgLiquidStake(rewardCollectorAddress.String(), tokensToLiquidStakeForVals, hz.HostDenom)
 		if err := msg.ValidateBasic(); err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Liquid stake from reward collector failed validation: %s", err.Error()))
 			continue
 		}
 		liquidStakeResp, err := NewMsgServerImpl(k).LiquidStake(ctx, msg)
 		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Failed to liquid stake %s for hostzone %s: %s", sdk.NewCoin(hz.IbcDenom, tokensToLiquidStake).String(), hz.ChainId, err.Error()))
+			k.Logger(ctx).Error(fmt.Sprintf("Failed to liquid stake %s for hostzone %s: %s",
+				sdk.NewCoin(hz.IbcDenom, tokensToLiquidStakeForVals).String(), hz.ChainId, err.Error()))
 			continue
 		}
 
@@ -65,13 +105,20 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 		if liquidStakeResp.StToken.IsZero() {
 			continue
 		}
-		icsProviderStTokens := sdk.NewCoins(liquidStakeResp.StToken)
 
-		// Send stTokens to ConsumerToSendToProvider module
-		err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.RewardCollectorName, ccvtypes.ConsumerToSendToProviderName, icsProviderStTokens)
-		if err != nil {
-			k.Logger(ctx).Error(fmt.Sprintf("Cannot send stTokens from RewardCollector to ConsumerToSendToProvider: %s", err))
-			continue
+		// Send stTokens to each validator in the set
+		// Note: This ignores the remainder for simplicity
+		totalValidatorStTokenAmount := liquidStakeResp.StToken.Amount
+		numValidators := sdkmath.NewInt(int64(len(poaValidatorSet))).ToLegacyDec()
+		perValidatorStTokenAmount := sdkmath.LegacyNewDecFromInt(totalValidatorStTokenAmount).Quo(numValidators).TruncateInt()
+		perValidatorStToken := sdk.NewCoin(liquidStakeResp.StToken.Denom, perValidatorStTokenAmount)
+
+		for _, validator := range poaValidatorSet {
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RewardCollectorName, validator.address, sdk.NewCoins(perValidatorStToken))
+			if err != nil {
+				k.Logger(ctx).Error(fmt.Sprintf("Cannot send stTokens from RewardCollector to %s (%s): %s", validator.address, validator.name, err))
+				continue
+			}
 		}
 
 		// Send remaining native tokens to auction module
