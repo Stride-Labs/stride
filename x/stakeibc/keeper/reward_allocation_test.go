@@ -15,8 +15,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/stretchr/testify/suite"
 
-	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
-
+	"github.com/Stride-Labs/stride/v28/utils"
 	auctiontypes "github.com/Stride-Labs/stride/v28/x/auction/types"
 	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
@@ -43,6 +42,7 @@ func (s *KeeperTestSuite) SetupTestRewardAllocation() {
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone2)
+
 	// ConsumerRedistributionFraction = how much Stride keeps
 	// Set consumer redistribution fraction to 0.85 (same as mainnet)
 	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
@@ -80,6 +80,22 @@ func (s *KeeperTestSuite) checkModuleAccountBalance(moduleName, denom string, ex
 	s.Require().Equal(expectedBalance.Int64(), tokens.Amount.Int64(), "%s %s balance", moduleName, denom)
 }
 
+// Helper function to check the balance of a regular account
+func (s *KeeperTestSuite) checkAccountBalance(address string, denom string, expectedBalance sdkmath.Int) {
+	tokens := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(address), denom)
+	s.Require().Equal(expectedBalance.Int64(), tokens.Amount.Int64(), "%s %s balance", address, denom)
+}
+
+// Helper function to get total stToken balance across all PoA validators
+func (s *KeeperTestSuite) getTotalPoAValidatorStTokenBalance(denom string) sdkmath.Int {
+	total := sdkmath.ZeroInt()
+	for _, validator := range utils.PoaValidatorSet {
+		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(validator.Address), denom)
+		total = total.Add(balance.Amount)
+	}
+	return total
+}
+
 func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 	s.SetupTestRewardAllocation()
 	rewardAmount := sdkmath.NewInt(1000)
@@ -88,13 +104,25 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcAtom, rewardAmount))
 	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcOsmo, rewardAmount))
 
-	// Distribute rewards using new logic: 85% liquid staked to ConsumerToSendToProvider, 85% to auction
+	// Distribute rewards using new logic: 15% liquid staked to PoA validators, 85% to auction
 	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
 
-	// Check ConsumerToSendToProvider module balance (should have liquid staked stTokens - 15% of original)
-	providerPortion := sdkmath.NewInt(150) // 15% of 1000
-	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StAtom, providerPortion)
-	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StOsmo, providerPortion)
+	// Check PoA validators received stTokens (15% of original amount gets liquid staked)
+	// Since the redemption rate is 1:1, 15% of 1000 = 150 stTokens total
+	// This gets distributed equally among PoA validators, so 150 / 8 = 18.75 -> 18 per validator
+	expectedStTokenPerValidator := sdkmath.NewInt(18)
+	expectedTotalStTokens := expectedStTokenPerValidator.Mul(sdkmath.NewInt(8)) // adjusts for ignored remainder
+
+	actualStAtomTotal := s.getTotalPoAValidatorStTokenBalance(StAtom)
+	actualStOsmoTotal := s.getTotalPoAValidatorStTokenBalance(StOsmo)
+	s.Require().Equal(expectedTotalStTokens.Int64(), actualStAtomTotal.Int64(), "total stAtom distributed to PoA validators")
+	s.Require().Equal(expectedTotalStTokens.Int64(), actualStOsmoTotal.Int64(), "total stOsmo distributed to PoA validators")
+
+	// Check each validator received equal share (ignoring remainder for simplicity)
+	for _, validator := range utils.PoaValidatorSet {
+		s.checkAccountBalance(validator.Address, StAtom, expectedStTokenPerValidator)
+		s.checkAccountBalance(validator.Address, StOsmo, expectedStTokenPerValidator)
+	}
 
 	// Check Auction module balance (should have remainder - 85% of original)
 	auctionPortion := sdkmath.NewInt(850) // 85% of 1000
@@ -109,22 +137,30 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_NoRewardsAccrued() {
 	s.SetupTestRewardAllocation()
 
-	// balances should be 0 before
+	// Reward account balances should be 0 before
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StAtom, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StOsmo, sdkmath.ZeroInt())
+
+	// PoA validators should have no stTokens initially
+	s.Require().Equal(sdkmath.ZeroInt().Int64(), s.getTotalPoAValidatorStTokenBalance(StAtom).Int64())
+	s.Require().Equal(sdkmath.ZeroInt().Int64(), s.getTotalPoAValidatorStTokenBalance(StOsmo).Int64())
+
+	// Auction accounts should have not tokens
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
 
 	// With no IBC tokens in the rewards collector account, the distribution function should do nothing
 	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
 
-	// balances should be 0 after
+	// Reward collector balance should be unchanged
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StAtom, sdkmath.ZeroInt())
-	s.checkModuleAccountBalance(ccvtypes.ConsumerToSendToProviderName, StOsmo, sdkmath.ZeroInt())
+
+	// PoA validators should be unchanged
+	s.Require().Equal(sdkmath.ZeroInt().Int64(), s.getTotalPoAValidatorStTokenBalance(StAtom).Int64())
+	s.Require().Equal(sdkmath.ZeroInt().Int64(), s.getTotalPoAValidatorStTokenBalance(StOsmo).Int64())
+
+	// Auction account should be unchanged
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, sdkmath.ZeroInt())
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
 }

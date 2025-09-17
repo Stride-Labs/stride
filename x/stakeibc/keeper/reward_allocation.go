@@ -75,7 +75,8 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 		perValidatorStToken := sdk.NewCoin(liquidStakeResp.StToken.Denom, perValidatorStTokenAmount)
 
 		for _, validator := range utils.PoaValidatorSet {
-			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RewardCollectorName, validator.Address, sdk.NewCoins(perValidatorStToken))
+			valAddress := sdk.MustAccAddressFromBech32(validator.Address)
+			err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RewardCollectorName, valAddress, sdk.NewCoins(perValidatorStToken))
 			if err != nil {
 				k.Logger(ctx).Error(fmt.Sprintf("Cannot send stTokens from RewardCollector to %s (%s): %s",
 					validator.Address, validator.Name, err))

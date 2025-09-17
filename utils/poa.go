@@ -1,44 +1,42 @@
 package utils
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
-
 type PoaValidators struct {
 	Name    string
-	Address sdk.AccAddress
+	Address string
 }
 
 // TODO: Fil out addresses
 var PoaValidatorSet = []PoaValidators{
 	{
 		Name:    "Polkachu",
-		Address: nil,
+		Address: "",
 	},
 	{
 		Name:    "Keplr",
-		Address: nil,
+		Address: "",
 	},
 	{
 		Name:    "Everstake",
-		Address: nil,
+		Address: "",
 	},
 	{
 		Name:    "Imperator",
-		Address: nil,
+		Address: "",
 	},
 	{
 		Name:    "L5",
-		Address: nil,
+		Address: "",
 	},
 	{
 		Name:    "Stakecito",
-		Address: nil,
+		Address: "",
 	},
 	{
 		Name:    "Cosmostation",
-		Address: nil,
+		Address: "",
 	},
 	{
 		Name:    "Citadel.one",
-		Address: nil,
+		Address: "",
 	},
 }
