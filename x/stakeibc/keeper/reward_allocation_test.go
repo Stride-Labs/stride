@@ -90,7 +90,7 @@ func (s *KeeperTestSuite) checkAccountBalance(address string, denom string, expe
 func (s *KeeperTestSuite) getTotalPoAValidatorStTokenBalance(denom string) sdkmath.Int {
 	total := sdkmath.ZeroInt()
 	for _, validator := range utils.PoaValidatorSet {
-		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(validator.Address), denom)
+		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(validator), denom)
 		total = total.Add(balance.Amount)
 	}
 	return total
@@ -109,9 +109,10 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 
 	// Check PoA validators received stTokens (15% of original amount gets liquid staked)
 	// Since the redemption rate is 1:1, 15% of 1000 = 150 stTokens total
-	// This gets distributed equally among PoA validators, so 150 / 8 = 18.75 -> 18 per validator
-	expectedStTokenPerValidator := sdkmath.NewInt(18)
-	expectedTotalStTokens := expectedStTokenPerValidator.Mul(sdkmath.NewInt(8)) // adjusts for ignored remainder
+	// This gets distributed equally among PoA validators, so 150 / 7 = 21.42 -> 21 per validator
+	numValidators := sdkmath.NewInt(7)
+	expectedStTokenPerValidator := sdkmath.NewInt(21)
+	expectedTotalStTokens := expectedStTokenPerValidator.Mul(numValidators) // adjusts for ignored remainder
 
 	actualStAtomTotal := s.getTotalPoAValidatorStTokenBalance(StAtom)
 	actualStOsmoTotal := s.getTotalPoAValidatorStTokenBalance(StOsmo)
@@ -120,8 +121,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 
 	// Check each validator received equal share (ignoring remainder for simplicity)
 	for _, validator := range utils.PoaValidatorSet {
-		s.checkAccountBalance(validator.Address, StAtom, expectedStTokenPerValidator)
-		s.checkAccountBalance(validator.Address, StOsmo, expectedStTokenPerValidator)
+		s.checkAccountBalance(validator, StAtom, expectedStTokenPerValidator)
+		s.checkAccountBalance(validator, StOsmo, expectedStTokenPerValidator)
 	}
 
 	// Check Auction module balance (should have remainder - 85% of original)
