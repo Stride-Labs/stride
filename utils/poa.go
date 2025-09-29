@@ -1,5 +1,14 @@
 package utils
 
+// Hub Addresses
+// - cosmosvalcons1m7fg8k39k2tyym5hgwrpf5wx9hqsr8vywuyrtm
+// - cosmosvalcons1c5e86exd7jsyhcfqdejltdsagjfrvv8xv22368
+// - cosmosvalcons1pdpwglc4fcjdzqvyhvfwxg684trpc6uqck5sxk
+// - cosmosvalcons1px0zkz2cxvc6lh34uhafveea9jnaagckmrlsye
+// - cosmosvalcons1vz42ewp04wwepjed7z4qenj925gpakgvap4q2u
+// - cosmosvalcons1upc05nc9pwhhagnkr3f2dft327qxsxfeyvajsu
+// - cosmosvalcons1f6cjsfn47ujttypx7gtncglsmjvndugc2zelqx
+
 var PoaValidatorSet = []string{
 	"stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c",
 	"stride1wj9ckvakuzgvlgw3hwpmsfjxvsc7uke73ps4u8",
