@@ -1,10 +1,10 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /opt
 
 RUN apk add --update curl make git libc-dev bash gcc linux-headers eudev-dev ca-certificates build-base git 
 
-ENV COMMIT_HASH=sam/v2-silence-fee
+ENV COMMIT_HASH=sam/v6-silence-fee
 
 RUN git clone https://github.com/Stride-Labs/celestia-app \
     && cd celestia-app \
@@ -29,4 +29,5 @@ CMD celestia-appd start \
     --api.enable \
     --grpc.enable \
     --grpc-web.enable \
-    --v2-upgrade-height 3 
+    --delayed-precommit-timeout 1s \
+    --force-no-bbr

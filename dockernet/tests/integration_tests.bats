@@ -94,9 +94,9 @@ setup_file() {
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] ibc transfer" {
   # get initial balances
   sval_strd_balance_start=$($STRIDE_MAIN_CMD  q bank balances $(STRIDE_ADDRESS) --denom $STRIDE_DENOM   | GETBAL)
-  hval_strd_balance_start=$($HOST_MAIN_CMD    q bank balances $HOST_VAL_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
+  hval_strd_balance_start=$($HOST_MAIN_CMD    q bank balance $HOST_VAL_ADDRESS $IBC_STRD_DENOM | GETBAL)
   sval_token_balance_start=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $HOST_IBC_DENOM | GETBAL)
-  hval_token_balance_start=$($HOST_MAIN_CMD   q bank balances $HOST_VAL_ADDRESS --denom $HOST_DENOM     | GETBAL)
+  hval_token_balance_start=$($HOST_MAIN_CMD   q bank balance $HOST_VAL_ADDRESS $HOST_DENOM     | GETBAL)
 
   # do IBC transfer
   $STRIDE_MAIN_CMD tx ibc-transfer transfer transfer $STRIDE_TRANSFER_CHANNEL $HOST_VAL_ADDRESS ${TRANSFER_AMOUNT}${STRIDE_DENOM} --from $STRIDE_VAL -y 
@@ -106,9 +106,9 @@ setup_file() {
 
   # get new balances
   sval_strd_balance_end=$($STRIDE_MAIN_CMD  q bank balances $(STRIDE_ADDRESS) --denom $STRIDE_DENOM   | GETBAL)
-  hval_strd_balance_end=$($HOST_MAIN_CMD    q bank balances $HOST_VAL_ADDRESS --denom $IBC_STRD_DENOM | GETBAL)
+  hval_strd_balance_end=$($HOST_MAIN_CMD    q bank balance $HOST_VAL_ADDRESS $IBC_STRD_DENOM | GETBAL)
   sval_token_balance_end=$($STRIDE_MAIN_CMD q bank balances $(STRIDE_ADDRESS) --denom $HOST_IBC_DENOM | GETBAL)
-  hval_token_balance_end=$($HOST_MAIN_CMD   q bank balances $HOST_VAL_ADDRESS --denom $HOST_DENOM     | GETBAL)
+  hval_token_balance_end=$($HOST_MAIN_CMD   q bank balance $HOST_VAL_ADDRESS $HOST_DENOM     | GETBAL)
 
   # get all STRD balance diffs
   sval_strd_balance_diff=$(($sval_strd_balance_start - $sval_strd_balance_end))
@@ -132,7 +132,7 @@ setup_file() {
 
   # get initial ICA accound balance
   delegation_address=$(GET_ICA_ADDR $HOST_CHAIN_ID delegation)
-  delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
+  delegation_ica_balance_start=$($HOST_MAIN_CMD q bank balance $delegation_address $HOST_DENOM | GETBAL)
 
   # liquid stake
   $STRIDE_MAIN_CMD tx stakeibc liquid-stake $STAKE_AMOUNT $HOST_DENOM --from $STRIDE_VAL -y 
@@ -154,7 +154,7 @@ setup_file() {
   WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $delegation_address $HOST_DENOM 
 
   # get the new delegation ICA balance
-  delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balances $delegation_address --denom $HOST_DENOM | GETBAL)
+  delegation_ica_balance_end=$($HOST_MAIN_CMD q bank balance $delegation_address $HOST_DENOM | GETBAL)
   diff=$(($delegation_ica_balance_end - $delegation_ica_balance_start))
   assert_equal "$diff" $STAKE_AMOUNT
 }
@@ -279,7 +279,7 @@ setup_file() {
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "LiquidStake", "ibc_receiver": "'$HOST_VAL_ADDRESS'" } } }'
 
   # get initial balances
-  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN 2>/dev/null | GETBAL)
+  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balance $HOST_VAL_ADDRESS $IBC_STTOKEN 2>/dev/null | GETBAL)
 
   # Send the IBC transfer with the JSON memo
   $HOST_MAIN_CMD tx ibc-transfer transfer transfer $HOST_TRANSFER_CHANNEL \
@@ -289,7 +289,7 @@ setup_file() {
   WAIT_FOR_BALANCE_CHANGE $CHAIN_NAME $HOST_VAL_ADDRESS $IBC_STTOKEN
 
   # make sure stATOM balance increased
-  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN 2>/dev/null | GETBAL)
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balance $HOST_VAL_ADDRESS $IBC_STTOKEN 2>/dev/null | GETBAL)
   stibctoken_balance_diff=$(($stibctoken_balance_end-$stibctoken_balance_start))
   assert_equal "$stibctoken_balance_diff" "$PACKET_FORWARD_STAKE_AMOUNT"
 }
@@ -303,7 +303,7 @@ setup_file() {
   AVOID_EPOCH_BOUNDARY day 25
 
   # get initial balances
-  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+  stibctoken_balance_start=$($HOST_MAIN_CMD q bank balance $HOST_VAL_ADDRESS $IBC_STTOKEN | GETBAL)
 
   memo='{ "autopilot": { "receiver": "'"$(STRIDE_ADDRESS)"'",  "stakeibc": { "action": "RedeemStake", "ibc_receiver": "'$HOST_RECEIVER_ADDRESS'" } } }'
 
@@ -315,7 +315,7 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # make sure stATOM balance decreased
-  stibctoken_balance_mid=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+  stibctoken_balance_mid=$($HOST_MAIN_CMD q bank balance $HOST_VAL_ADDRESS $IBC_STTOKEN | GETBAL)
   stibctoken_balance_diff=$(($stibctoken_balance_start-$stibctoken_balance_mid))
   assert_equal "$stibctoken_balance_diff" "$REDEEM_AMOUNT"
 
@@ -334,7 +334,7 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 10
 
   # Confirm the stATOM balance was refunded
-  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balances $HOST_VAL_ADDRESS --denom $IBC_STTOKEN | GETBAL)
+  stibctoken_balance_end=$($HOST_MAIN_CMD q bank balance $HOST_VAL_ADDRESS $IBC_STTOKEN | GETBAL)
   assert_equal "$stibctoken_balance_end" "$stibctoken_balance_mid"
 }
 
@@ -344,7 +344,7 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 30
 
   # get initial balance of redemption ICA
-  redemption_ica_balance_start=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID redemption) --denom $HOST_DENOM | GETBAL)
+  redemption_ica_balance_start=$($HOST_MAIN_CMD q bank balance $(GET_ICA_ADDR $HOST_CHAIN_ID redemption) $HOST_DENOM | GETBAL)
 
   # call redeem-stake
   $STRIDE_MAIN_CMD tx stakeibc redeem-stake $REDEEM_AMOUNT $HOST_CHAIN_ID $HOST_RECEIVER_ADDRESS \
@@ -364,14 +364,14 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # check that the tokens were transferred to the redemption account
-  redemption_ica_balance_end=$($HOST_MAIN_CMD q bank balances $(GET_ICA_ADDR $HOST_CHAIN_ID redemption) --denom $HOST_DENOM | GETBAL)
+  redemption_ica_balance_end=$($HOST_MAIN_CMD q bank balance $(GET_ICA_ADDR $HOST_CHAIN_ID redemption) $HOST_DENOM | GETBAL)
   diff_positive=$(($redemption_ica_balance_end > $redemption_ica_balance_start))
   assert_equal "$diff_positive" "1"
 }
 
 @test "[INTEGRATION-BASIC-$CHAIN_NAME] claim redeemed tokens" {
   # get balance before claim
-  start_balance=$($HOST_MAIN_CMD q bank balances $HOST_RECEIVER_ADDRESS --denom $HOST_DENOM | GETBAL)
+  start_balance=$($HOST_MAIN_CMD q bank balance $HOST_RECEIVER_ADDRESS $HOST_DENOM | GETBAL)
 
   # grab the epoch number for the first deposit record in the list od DRs
   EPOCH=$($STRIDE_MAIN_CMD q records list-user-redemption-record  | grep -Fiw 'epoch_number' | head -n 1 | grep -o -E '[0-9]+')
@@ -384,7 +384,7 @@ setup_file() {
   WAIT_FOR_BLOCK $STRIDE_LOGS 2
 
   # check that the tokens were transferred to the sender account
-  end_balance=$($HOST_MAIN_CMD q bank balances $HOST_RECEIVER_ADDRESS --denom $HOST_DENOM | GETBAL)
+  end_balance=$($HOST_MAIN_CMD q bank balance $HOST_RECEIVER_ADDRESS $HOST_DENOM | GETBAL)
 
   # check that the undelegated tokens were transferred to the sender account
   diff_positive=$(($end_balance > $start_balance))

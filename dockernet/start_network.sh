@@ -72,4 +72,4 @@ for i in ${!HOST_CHAINS[@]}; do
     bash $SRC/register_host.sh ${HOST_CHAINS[i]} $i 
 done
 
-$SRC/create_logs.sh &
+# $SRC/create_logs.sh &

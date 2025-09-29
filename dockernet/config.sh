@@ -501,9 +501,18 @@ WAIT_FOR_BALANCE_CHANGE() {
   max_blocks=30
 
   main_cmd=$(GET_VAR_VALUE ${chain}_MAIN_CMD)
-  initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
+  if [[ "$chain" == "STRIDE" ]]; then
+    initial_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
+  else
+    initial_balance=$($main_cmd q bank balance $address $denom | grep amount | NUMBERS_ONLY)
+  fi
+
   for i in $(seq $max_blocks); do
-    new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
+    if [[ "$chain" == "STRIDE" ]]; then
+      new_balance=$($main_cmd q bank balances $address --denom $denom | grep amount | NUMBERS_ONLY)
+    else
+      new_balance=$($main_cmd q bank balance $address $denom | grep amount | NUMBERS_ONLY)
+    fi
     balance_change=$(echo "$new_balance - $initial_balance" | bc)
 
     if [[ $(echo "$balance_change >= $minimum_change" | bc -l) == "1" ]]; then
