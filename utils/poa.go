@@ -1,5 +1,10 @@
 package utils
 
+import sdkmath "cosmossdk.io/math"
+
+// Validators are paid 15% of revenue
+var PoaValPaymentRate = sdkmath.LegacyMustNewDecFromStr("0.15")
+
 // Hub Addresses
 // - cosmosvalcons1m7fg8k39k2tyym5hgwrpf5wx9hqsr8vywuyrtm
 // - cosmosvalcons1c5e86exd7jsyhcfqdejltdsagjfrvv8xv22368

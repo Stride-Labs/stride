@@ -12,11 +12,6 @@ import (
 	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
-var (
-	// Validators are paid 15% of revenue
-	ValPaymentRate = sdkmath.LegacyMustNewDecFromStr("0.15")
-)
-
 // AuctionOffRewardCollectorBalance distributes rewards from the reward collector:
 // Sends 15% to PoA validators, and the remainder to the auction module
 // ConsumerRedistributionFraction = what Stride keeps = 0.85 on mainnet
@@ -38,7 +33,7 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 		}
 
 		// Calculate the ICS portion to liquid stake
-		tokensToLiquidStakeForVals := sdk.NewDecCoinsFromCoins(tokenBalance).MulDec(ValPaymentRate).AmountOf(hz.IbcDenom).TruncateInt()
+		tokensToLiquidStakeForVals := sdk.NewDecCoinsFromCoins(tokenBalance).MulDec(utils.PoaValPaymentRate).AmountOf(hz.IbcDenom).TruncateInt()
 		if tokensToLiquidStakeForVals.IsZero() {
 			continue
 		}
