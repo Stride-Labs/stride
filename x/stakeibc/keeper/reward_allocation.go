@@ -12,6 +12,11 @@ import (
 	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
 )
 
+var (
+	// Validators are paid 15% of revenue
+	ValPaymentRate = sdkmath.LegacyMustNewDecFromStr("0.15")
+)
+
 // AuctionOffRewardCollectorBalance distributes rewards from the reward collector:
 // Sends 15% to PoA validators, and the remainder to the auction module
 // ConsumerRedistributionFraction = what Stride keeps = 0.85 on mainnet
@@ -19,17 +24,6 @@ import (
 // Fees arrive in the reward collector account as native tokens
 func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 	rewardCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
-
-	// Get consumer redistribution fraction from CCV params
-	consumerRedistributionFracStr := k.ConsumerKeeper.GetConsumerParams(ctx).ConsumerRedistributionFraction
-	strideKeepRate, err := sdkmath.LegacyNewDecFromStr(consumerRedistributionFracStr)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Invalid strideKeepRate, cannot send stTokens to ICS provider: %s", err))
-		return
-	}
-
-	// Calculate Hub's keep rate (1 - strideKeepRate)
-	valPaymentRate := sdkmath.LegacyOneDec().Sub(strideKeepRate)
 
 	// Get all host zones and process their tokens in reward collector balance
 	for _, hz := range k.GetAllHostZone(ctx) {
@@ -44,7 +38,7 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 		}
 
 		// Calculate the ICS portion to liquid stake
-		tokensToLiquidStakeForVals := sdk.NewDecCoinsFromCoins(tokenBalance).MulDec(valPaymentRate).AmountOf(hz.IbcDenom).TruncateInt()
+		tokensToLiquidStakeForVals := sdk.NewDecCoinsFromCoins(tokenBalance).MulDec(ValPaymentRate).AmountOf(hz.IbcDenom).TruncateInt()
 		if tokensToLiquidStakeForVals.IsZero() {
 			continue
 		}
