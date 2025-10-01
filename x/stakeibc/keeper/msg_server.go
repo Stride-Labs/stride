@@ -63,6 +63,7 @@ func (ms msgServer) UpdateHostZoneParams(goCtx context.Context, msg *types.MsgUp
 	return &types.MsgUpdateHostZoneParamsResponse{}, nil
 }
 
+// Gov transaction to deprecate a host zone
 func (ms msgServer) DeprecateHostZone(goCtx context.Context, msg *types.MsgDeprecateHostZone) (*types.MsgDeprecateHostZoneResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if ms.authority != msg.Authority {
