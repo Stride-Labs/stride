@@ -76,6 +76,7 @@ func (ms msgServer) DeprecateHostZone(goCtx context.Context, msg *types.MsgDepre
 	}
 
 	hostZone.Halted = true
+	hostZone.Deprecated = false
 	ms.Keeper.SetHostZone(ctx, hostZone)
 
 	return &types.MsgDeprecateHostZoneResponse{}, nil
