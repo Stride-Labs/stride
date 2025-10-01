@@ -2,6 +2,8 @@ package utils
 
 import sdkmath "cosmossdk.io/math"
 
+// WARNING: DO NOT MODIFY
+
 // Validators are paid 15% of revenue
 var PoaValPaymentRate = sdkmath.LegacyMustNewDecFromStr("0.15")
 
