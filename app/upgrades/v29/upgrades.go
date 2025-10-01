@@ -32,13 +32,13 @@ func CreateUpgradeHandler(
 		}
 
 		ctx.Logger().Info("Updating CCV params...")
-		DisableHubRewards(ctx, consumerKeeper)
+		DisableCcvRewards(ctx, consumerKeeper)
 
 		return versionMap, nil
 	}
 }
 
-func DisableHubRewards(ctx sdk.Context, ck consumerkeeper.Keeper) {
+func DisableCcvRewards(ctx sdk.Context, ck consumerkeeper.Keeper) {
 	params := ck.GetConsumerParams(ctx)
 	params.ConsumerRedistributionFraction = "1.0"
 	ck.SetParams(ctx, params)
