@@ -143,9 +143,12 @@ type HostZone struct {
 	// A boolean indicating whether the chain has LSM enabled
 	LsmLiquidStakeEnabled bool `protobuf:"varint,27,opt,name=lsm_liquid_stake_enabled,json=lsmLiquidStakeEnabled,proto3" json:"lsm_liquid_stake_enabled,omitempty"`
 	// A boolean indicating whether the chain is currently halted
+	// A host zone is halted if redemption rate bounds are exceeded or it is
+	// deprecated
 	Halted bool `protobuf:"varint,19,opt,name=halted,proto3" json:"halted,omitempty"`
 	// Indicates if the host zone is deprecated and should no longer handle liquid
-	// stakes
+	// stakes. This is only used as documentation - it doesn't affect any
+	// functionality `Halted` is used to stop business logic
 	Deprecated bool `protobuf:"varint,38,opt,name=deprecated,proto3" json:"deprecated,omitempty"`
 }
 

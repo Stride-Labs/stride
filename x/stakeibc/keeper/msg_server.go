@@ -75,8 +75,10 @@ func (ms msgServer) DeprecateHostZone(goCtx context.Context, msg *types.MsgDepre
 		return nil, types.ErrHostZoneNotFound.Wrapf("host zone %s not found", msg.ChainId)
 	}
 
+	// The halted is set to freeze business logic, deprecated is just used as an annotation/documentation
+	// but does not impact anything functionally
 	hostZone.Halted = true
-	hostZone.Deprecated = false
+	hostZone.Deprecated = true
 	ms.Keeper.SetHostZone(ctx, hostZone)
 
 	return &types.MsgDeprecateHostZoneResponse{}, nil
