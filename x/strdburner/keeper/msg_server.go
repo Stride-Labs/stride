@@ -45,7 +45,10 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 		return nil, errorsmod.Wrapf(err, "unable to burn coins")
 	}
 
-	// TODO: Accounting
+	// Update accounting
+	k.IncrementTotalStrdBurned(ctx, msg.Amount)
+	k.IncrementTotalUserStrdBurned(ctx, msg.Amount)
+	k.IncrementStrdBurnedByAddress(ctx, userAddress, msg.Amount)
 
 	// Emit burn events
 	ctx.EventManager().EmitEvent(
@@ -57,6 +60,7 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeUserBurn,
+			sdk.NewAttribute(types.AttributeAddress, msg.Burner),
 			sdk.NewAttribute(types.AttributeAmount, burnCoin.String()),
 		),
 	)

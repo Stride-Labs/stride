@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v28/app/apptesting"
+	"github.com/Stride-Labs/stride/v28/x/strdburner/keeper"
 	"github.com/Stride-Labs/stride/v28/x/strdburner/types"
 )
 
@@ -24,6 +25,10 @@ func (s *KeeperTestSuite) SetupTest() {
 	// Create a logger with accessible output
 	logger := log.NewLogger(&s.logBuffer)
 	s.Ctx = s.Ctx.WithLogger(logger)
+}
+
+func (s *KeeperTestSuite) GetMsgServer() types.MsgServer {
+	return keeper.NewMsgServerImpl(s.App.StrdBurnerKeeper)
 }
 
 func TestKeeperTestSuite(t *testing.T) {
