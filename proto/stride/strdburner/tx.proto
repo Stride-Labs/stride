@@ -21,7 +21,6 @@ service Msg {
 message MsgBurn {
   option (cosmos.msg.v1.signer) = "burner";
   option (amino.name) = "strdburner/MsgBurn";
-  option deprecated = true;
 
   string burner = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string amount = 2 [
