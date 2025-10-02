@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) TestSetAndGetTotalStrdBurned() {
 	protocolBurned := s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), protocolBurned)
 
-	userBurned := s.App.StrdBurnerKeeper.GetUserStrdBurned(s.Ctx)
+	userBurned := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), userBurned)
 }
 
@@ -102,35 +102,35 @@ func (s *KeeperTestSuite) TestSetAndGetProtocolStrdBurned() {
 	totalBurned := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), totalBurned)
 
-	userBurned := s.App.StrdBurnerKeeper.GetUserStrdBurned(s.Ctx)
+	userBurned := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), userBurned)
 }
 
 func (s *KeeperTestSuite) TestSetAndGetUserStrdBurned() {
 	// Test initial state (should be zero)
-	initialAmount := s.App.StrdBurnerKeeper.GetUserStrdBurned(s.Ctx)
+	initialAmount := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), initialAmount)
 
 	// Clear any potential existing value to explicitly test nil case
 	store := s.Ctx.KVStore(s.App.GetKey(types.StoreKey))
-	store.Delete([]byte(types.UserStrdBurnedKey))
+	store.Delete([]byte(types.TotalUserStrdBurnedKey))
 
 	// Test getting value when none exists (should return zero)
-	nilAmount := s.App.StrdBurnerKeeper.GetUserStrdBurned(s.Ctx)
+	nilAmount := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), nilAmount)
 
 	// Test setting and getting a value
 	testAmount := sdkmath.NewInt(1000)
-	s.App.StrdBurnerKeeper.SetUserStrdBurned(s.Ctx, testAmount)
+	s.App.StrdBurnerKeeper.SetTotalUserStrdBurned(s.Ctx, testAmount)
 
-	storedAmount := s.App.StrdBurnerKeeper.GetUserStrdBurned(s.Ctx)
+	storedAmount := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), testAmount, storedAmount)
 
 	// Test updating the value
 	newAmount := sdkmath.NewInt(2000)
-	s.App.StrdBurnerKeeper.SetUserStrdBurned(s.Ctx, newAmount)
+	s.App.StrdBurnerKeeper.SetTotalUserStrdBurned(s.Ctx, newAmount)
 
-	updatedAmount := s.App.StrdBurnerKeeper.GetUserStrdBurned(s.Ctx)
+	updatedAmount := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), newAmount, updatedAmount)
 
 	// Confirm other burn amounts are 0
@@ -139,6 +139,53 @@ func (s *KeeperTestSuite) TestSetAndGetUserStrdBurned() {
 
 	protocolBurned := s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), protocolBurned)
+}
+
+func (s *KeeperTestSuite) TestSetAndGetStrdBurnedByAddress() {
+	acc1 := s.TestAccs[0]
+	acc2 := s.TestAccs[1]
+	acc3 := s.TestAccs[2]
+
+	// Test initial state (should be zero)
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc1))
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc2))
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc3))
+
+	// Test setting and getting a value for user 1
+	testAmount1 := sdkmath.NewInt(1000)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc1, testAmount1)
+
+	require.Equal(s.T(), testAmount1, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc1))
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc2))
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc3))
+
+	// Test setting and getting a value for user 2
+	testAmount2 := sdkmath.NewInt(2000)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc2, testAmount2)
+
+	require.Equal(s.T(), testAmount1, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc1))
+	require.Equal(s.T(), testAmount2, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc2))
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc3))
+
+	// Test setting and getting a value for user 3
+	testAmount3 := sdkmath.NewInt(3000)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc3, testAmount3)
+
+	require.Equal(s.T(), testAmount1, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc1))
+	require.Equal(s.T(), testAmount2, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc2))
+	require.Equal(s.T(), testAmount3, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc3))
+
+	// Test updating the value
+	newAmount1 := sdkmath.NewInt(4000)
+	newAmount2 := sdkmath.NewInt(5000)
+	newAmount3 := sdkmath.NewInt(6000)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc1, newAmount1)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc2, newAmount2)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc3, newAmount3)
+
+	require.Equal(s.T(), newAmount1, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc1))
+	require.Equal(s.T(), newAmount2, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc2))
+	require.Equal(s.T(), newAmount3, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc3))
 }
 
 func (s *KeeperTestSuite) TestLogger() {

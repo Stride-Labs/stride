@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/log"
 	sdkmath "cosmossdk.io/math"
 
+	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,11 +43,13 @@ func (k Keeper) GetStrdBurnerAddress() sdk.AccAddress {
 	return k.accountKeeper.GetModuleAddress(types.ModuleName)
 }
 
+// Sets the total STRD burned across all users and the protocol
 func (k Keeper) SetTotalStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
 	bz := sdk.Uint64ToBigEndian(amount.Uint64())
 	ctx.KVStore(k.storeKey).Set([]byte(types.TotalStrdBurnedKey), bz)
 }
 
+// Returns the total STRD burned across all users and the protocol
 func (k Keeper) GetTotalStrdBurned(ctx sdk.Context) sdkmath.Int {
 	bz := ctx.KVStore(k.storeKey).Get([]byte(types.TotalStrdBurnedKey))
 
@@ -58,11 +61,13 @@ func (k Keeper) GetTotalStrdBurned(ctx sdk.Context) sdkmath.Int {
 	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(bz))
 }
 
+// Sets the total STRD burned from the protocol
 func (k Keeper) SetProtocolStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
 	bz := sdk.Uint64ToBigEndian(amount.Uint64())
 	ctx.KVStore(k.storeKey).Set([]byte(types.ProtocolStrdBurnedKey), bz)
 }
 
+// Returns the total STRD burned from the protocol
 func (k Keeper) GetProtocolStrdBurned(ctx sdk.Context) sdkmath.Int {
 	bz := ctx.KVStore(k.storeKey).Get([]byte(types.ProtocolStrdBurnedKey))
 
@@ -74,13 +79,15 @@ func (k Keeper) GetProtocolStrdBurned(ctx sdk.Context) sdkmath.Int {
 	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(bz))
 }
 
+// Sets the total STRD burned from all users
 func (k Keeper) SetUserStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
 	bz := sdk.Uint64ToBigEndian(amount.Uint64())
-	ctx.KVStore(k.storeKey).Set([]byte(types.UserStrdBurnedKey), bz)
+	ctx.KVStore(k.storeKey).Set([]byte(types.TotalUserStrdBurnedKey), bz)
 }
 
+// Returns the total STRD burned from all users
 func (k Keeper) GetUserStrdBurned(ctx sdk.Context) sdkmath.Int {
-	bz := ctx.KVStore(k.storeKey).Get([]byte(types.UserStrdBurnedKey))
+	bz := ctx.KVStore(k.storeKey).Get([]byte(types.TotalUserStrdBurnedKey))
 
 	// If no value has been set, return zero
 	if bz == nil {
@@ -88,4 +95,23 @@ func (k Keeper) GetUserStrdBurned(ctx sdk.Context) sdkmath.Int {
 	}
 
 	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(bz))
+}
+
+// Sets the total STRD burned from a given address
+func (k Keeper) SetStrdBurnedByAddress(ctx sdk.Context, address sdk.AccAddress, amount sdkmath.Int) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserStrdBurnedByAddressKeyPrefix)
+	amountBz := sdk.Uint64ToBigEndian(amount.Uint64())
+	store.Set(address, amountBz)
+}
+
+// Returns the total STRD burned from a given address
+func (k Keeper) GetStrdBurnedByAddress(ctx sdk.Context, address sdk.AccAddress) sdkmath.Int {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserStrdBurnedByAddressKeyPrefix)
+
+	amountBz := store.Get(address)
+	if len(amountBz) == 0 {
+		return sdkmath.ZeroInt()
+	}
+
+	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(amountBz))
 }
