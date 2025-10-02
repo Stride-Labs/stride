@@ -166,6 +166,74 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_NoRewardsAccrued
 	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
 }
 
+func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_TotalValidatorShareTruncatesZero() {
+	s.SetupTestRewardAllocation()
+	rewardAmount := sdkmath.NewInt(6) // truncates validator share to 0.15 * 6 = 0.9 -> 0
+
+	// Fund reward collector account with ibc'd reward tokens
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcAtom, rewardAmount))
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcOsmo, rewardAmount))
+
+	// Distribute rewards using new logic: 15% liquid staked to PoA validators, 85% to auction
+	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
+
+	// Check PoA validators did not receive anything
+	actualStAtomTotal := s.getTotalPoAValidatorStTokenBalance(StAtom)
+	actualStOsmoTotal := s.getTotalPoAValidatorStTokenBalance(StOsmo)
+	s.Require().Equal(int64(0), actualStAtomTotal.Int64(), "total stAtom distributed to PoA validators")
+	s.Require().Equal(int64(0), actualStOsmoTotal.Int64(), "total stOsmo distributed to PoA validators")
+
+	// Check each validator received equal share (ignoring remainder for simplicity)
+	for _, validator := range utils.PoaValidatorSet {
+		s.checkAccountBalance(validator, StAtom, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator, StOsmo, sdkmath.ZeroInt())
+	}
+
+	// Auction balance should also be 0 since it short circuits
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, sdkmath.ZeroInt())
+
+	// Check RewardCollector module balance should have the initial amount
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, rewardAmount)
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, rewardAmount)
+}
+
+func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_IndividualValidatorShareTruncatesZero() {
+	s.SetupTestRewardAllocation()
+	rewardAmount := sdkmath.NewInt(10)
+
+	// Fund reward collector account with ibc'd reward tokens
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcAtom, rewardAmount))
+	s.FundModuleAccount(stakeibctypes.RewardCollectorName, sdk.NewCoin(IbcOsmo, rewardAmount))
+
+	// Distribute rewards using new logic: 15% liquid staked to PoA validators, 85% to auction
+	s.App.StakeibcKeeper.AuctionOffRewardCollectorBalance(s.Ctx)
+
+	// Check PoA validators did not receive anything
+	// Total validator share is 0.15 * 10 = 1.5
+	// Individual validator share is 1.5 / 7 = 0.2 -> 0
+	actualStAtomTotal := s.getTotalPoAValidatorStTokenBalance(StAtom)
+	actualStOsmoTotal := s.getTotalPoAValidatorStTokenBalance(StOsmo)
+	s.Require().Equal(int64(0), actualStAtomTotal.Int64(), "total stAtom distributed to PoA validators")
+	s.Require().Equal(int64(0), actualStOsmoTotal.Int64(), "total stOsmo distributed to PoA validators")
+
+	// Check each validator received equal share (ignoring remainder for simplicity)
+	for _, validator := range utils.PoaValidatorSet {
+		s.checkAccountBalance(validator, StAtom, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator, StOsmo, sdkmath.ZeroInt())
+	}
+
+	// Check Auction module balance
+	// The 0.15 * 10 = 1 rewards should have been liquid staked, so there should be 9 in the auction
+	expectedRewardRemainder := sdkmath.NewInt(9)
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcAtom, expectedRewardRemainder)
+	s.checkModuleAccountBalance(auctiontypes.ModuleName, IbcOsmo, expectedRewardRemainder)
+
+	// The reward collector should have zero remainder
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcAtom, sdkmath.ZeroInt())
+	s.checkModuleAccountBalance(stakeibctypes.RewardCollectorName, IbcOsmo, sdkmath.ZeroInt())
+}
+
 // Test the process of a delegator claiming staking reward stTokens (tests that Fee Account can distribute arbitrary denoms)
 func (s *KeeperTestSuite) TestClaimStakingRewardStTokens() {
 	s.SetupTestRewardAllocation()
