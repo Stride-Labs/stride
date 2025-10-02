@@ -80,13 +80,13 @@ func (k Keeper) GetProtocolStrdBurned(ctx sdk.Context) sdkmath.Int {
 }
 
 // Sets the total STRD burned from all users
-func (k Keeper) SetUserStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
+func (k Keeper) SetTotalUserStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
 	bz := sdk.Uint64ToBigEndian(amount.Uint64())
 	ctx.KVStore(k.storeKey).Set([]byte(types.TotalUserStrdBurnedKey), bz)
 }
 
 // Returns the total STRD burned from all users
-func (k Keeper) GetUserStrdBurned(ctx sdk.Context) sdkmath.Int {
+func (k Keeper) GetTotalUserStrdBurned(ctx sdk.Context) sdkmath.Int {
 	bz := ctx.KVStore(k.storeKey).Get([]byte(types.TotalUserStrdBurnedKey))
 
 	// If no value has been set, return zero
@@ -99,14 +99,14 @@ func (k Keeper) GetUserStrdBurned(ctx sdk.Context) sdkmath.Int {
 
 // Sets the total STRD burned from a given address
 func (k Keeper) SetStrdBurnedByAddress(ctx sdk.Context, address sdk.AccAddress, amount sdkmath.Int) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserStrdBurnedByAddressKeyPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnedByAddressKeyPrefix)
 	amountBz := sdk.Uint64ToBigEndian(amount.Uint64())
 	store.Set(address, amountBz)
 }
 
 // Returns the total STRD burned from a given address
 func (k Keeper) GetStrdBurnedByAddress(ctx sdk.Context, address sdk.AccAddress) sdkmath.Int {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.UserStrdBurnedByAddressKeyPrefix)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnedByAddressKeyPrefix)
 
 	amountBz := store.Get(address)
 	if len(amountBz) == 0 {
@@ -114,4 +114,32 @@ func (k Keeper) GetStrdBurnedByAddress(ctx sdk.Context, address sdk.AccAddress) 
 	}
 
 	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(amountBz))
+}
+
+// Increment the total strd burned
+func (k Keeper) IncrementTotalStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
+	currentBurned := k.GetTotalStrdBurned(ctx)
+	newBurned := currentBurned.Add(amount)
+	k.SetTotalStrdBurned(ctx, newBurned)
+}
+
+// Increment the protocol strd burned
+func (k Keeper) IncrementProtocolStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
+	currentBurned := k.GetProtocolStrdBurned(ctx)
+	newBurned := currentBurned.Add(amount)
+	k.SetProtocolStrdBurned(ctx, newBurned)
+}
+
+// Increment the total user strd burned
+func (k Keeper) IncrementTotalUserStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
+	currentBurned := k.GetTotalUserStrdBurned(ctx)
+	newBurned := currentBurned.Add(amount)
+	k.SetTotalUserStrdBurned(ctx, newBurned)
+}
+
+// Increment the strd burned for an address
+func (k Keeper) IncrementStrdBurnedByAddress(ctx sdk.Context, address sdk.AccAddress, amount sdkmath.Int) {
+	currentBurned := k.GetStrdBurnedByAddress(ctx, address)
+	newBurned := currentBurned.Add(amount)
+	k.SetStrdBurnedByAddress(ctx, address, newBurned)
 }

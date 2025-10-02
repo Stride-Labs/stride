@@ -11,8 +11,8 @@ const (
 )
 
 var (
-	TotalStrdBurnedKey               = "total_burned"
-	ProtocolStrdBurnedKey            = "total_protocol_burned"
-	TotalUserStrdBurnedKey           = "total_user_burned"
-	UserStrdBurnedByAddressKeyPrefix = []byte("user_burned_by_address")
+	TotalStrdBurnedKey       = "total_burned"
+	ProtocolStrdBurnedKey    = "total_protocol_burned"
+	TotalUserStrdBurnedKey   = "total_user_burned"
+	BurnedByAddressKeyPrefix = []byte("burned_by_address")
 )

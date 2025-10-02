@@ -188,6 +188,55 @@ func (s *KeeperTestSuite) TestSetAndGetStrdBurnedByAddress() {
 	require.Equal(s.T(), newAmount3, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, acc3))
 }
 
+func (s *KeeperTestSuite) TestIncrementTotalStrdBurned() {
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx))
+
+	incrementAmount1 := sdkmath.NewInt(1000)
+	s.App.StrdBurnerKeeper.IncrementTotalStrdBurned(s.Ctx, incrementAmount1)
+	require.Equal(s.T(), incrementAmount1, s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx))
+
+	incrementAmount2 := sdkmath.NewInt(2000)
+	s.App.StrdBurnerKeeper.IncrementTotalStrdBurned(s.Ctx, incrementAmount2)
+	require.Equal(s.T(), incrementAmount1.Add(incrementAmount2), s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx))
+}
+
+func (s *KeeperTestSuite) TestIncrementProtocolStrdBurned() {
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx))
+
+	incrementAmount1 := sdkmath.NewInt(1000)
+	s.App.StrdBurnerKeeper.IncrementProtocolStrdBurned(s.Ctx, incrementAmount1)
+	require.Equal(s.T(), incrementAmount1, s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx))
+
+	incrementAmount2 := sdkmath.NewInt(2000)
+	s.App.StrdBurnerKeeper.IncrementProtocolStrdBurned(s.Ctx, incrementAmount2)
+	require.Equal(s.T(), incrementAmount1.Add(incrementAmount2), s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx))
+}
+
+func (s *KeeperTestSuite) TestIncrementTotalUserStrdBurned() {
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx))
+
+	incrementAmount1 := sdkmath.NewInt(1000)
+	s.App.StrdBurnerKeeper.IncrementTotalUserStrdBurned(s.Ctx, incrementAmount1)
+	require.Equal(s.T(), incrementAmount1, s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx))
+
+	incrementAmount2 := sdkmath.NewInt(2000)
+	s.App.StrdBurnerKeeper.IncrementTotalUserStrdBurned(s.Ctx, incrementAmount2)
+	require.Equal(s.T(), incrementAmount1.Add(incrementAmount2), s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx))
+}
+
+func (s *KeeperTestSuite) TestIncrementStrdBurnedByAddress() {
+	address := s.TestAccs[0]
+	require.Equal(s.T(), sdkmath.ZeroInt(), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, address))
+
+	incrementAmount1 := sdkmath.NewInt(1000)
+	s.App.StrdBurnerKeeper.IncrementStrdBurnedByAddress(s.Ctx, address, incrementAmount1)
+	require.Equal(s.T(), incrementAmount1, s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, address))
+
+	incrementAmount2 := sdkmath.NewInt(2000)
+	s.App.StrdBurnerKeeper.IncrementStrdBurnedByAddress(s.Ctx, address, incrementAmount2)
+	require.Equal(s.T(), incrementAmount1.Add(incrementAmount2), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, address))
+}
+
 func (s *KeeperTestSuite) TestLogger() {
 	logger := s.App.StrdBurnerKeeper.Logger(s.Ctx)
 	require.NotNil(s.T(), logger)
