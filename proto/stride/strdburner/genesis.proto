@@ -12,4 +12,14 @@ message GenesisState {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  // Total amount of ustrd burned from the protocol
+  string protocol_ustrd_burned = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // Total amount of ustrd burned from users
+  string user_ustrd_burned = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
 }

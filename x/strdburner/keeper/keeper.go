@@ -57,3 +57,35 @@ func (k Keeper) GetTotalStrdBurned(ctx sdk.Context) sdkmath.Int {
 
 	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(bz))
 }
+
+func (k Keeper) SetProtocolStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
+	bz := sdk.Uint64ToBigEndian(amount.Uint64())
+	ctx.KVStore(k.storeKey).Set([]byte(types.ProtocolStrdBurnedKey), bz)
+}
+
+func (k Keeper) GetProtocolStrdBurned(ctx sdk.Context) sdkmath.Int {
+	bz := ctx.KVStore(k.storeKey).Get([]byte(types.ProtocolStrdBurnedKey))
+
+	// If no value has been set, return zero
+	if bz == nil {
+		return sdkmath.ZeroInt()
+	}
+
+	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(bz))
+}
+
+func (k Keeper) SetUserStrdBurned(ctx sdk.Context, amount sdkmath.Int) {
+	bz := sdk.Uint64ToBigEndian(amount.Uint64())
+	ctx.KVStore(k.storeKey).Set([]byte(types.UserStrdBurnedKey), bz)
+}
+
+func (k Keeper) GetUserStrdBurned(ctx sdk.Context) sdkmath.Int {
+	bz := ctx.KVStore(k.storeKey).Get([]byte(types.UserStrdBurnedKey))
+
+	// If no value has been set, return zero
+	if bz == nil {
+		return sdkmath.ZeroInt()
+	}
+
+	return sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(bz))
+}

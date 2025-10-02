@@ -9,5 +9,7 @@ const (
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
 
-	TotalStrdBurnedKey = "total_burned"
+	TotalStrdBurnedKey    = "total_burned"
+	ProtocolStrdBurnedKey = "protocol_burned"
+	UserStrdBurnedKey     = "user_burned"
 )
