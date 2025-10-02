@@ -21,7 +21,6 @@ func (s *KeeperTestSuite) TestQueryTotalStrdBurned() {
 	expectedTotal := sdkmath.NewInt(3000000)
 	s.App.StrdBurnerKeeper.SetProtocolStrdBurned(s.Ctx, expectedProtocol)
 	s.App.StrdBurnerKeeper.SetTotalUserStrdBurned(s.Ctx, expectedUser)
-	s.App.StrdBurnerKeeper.SetTotalStrdBurned(s.Ctx, expectedTotal)
 
 	// Query for the total burned amount
 	req := &types.QueryTotalStrdBurnedRequest{}

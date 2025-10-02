@@ -12,12 +12,15 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	k.accountKeeper.GetModuleAccount(ctx, types.ModuleName)
 
 	// Set Total STRD Burned
-	k.SetTotalStrdBurned(ctx, genState.TotalUstrdBurned)
+	k.SetProtocolStrdBurned(ctx, genState.ProtocolUstrdBurned)
+	k.SetTotalUserStrdBurned(ctx, genState.TotalUstrdBurned)
 }
 
 // Export's module state into genesis file
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
+	genesis.ProtocolUstrdBurned = k.GetProtocolStrdBurned(ctx)
+	genesis.UserUstrdBurned = k.GetTotalUserStrdBurned(ctx)
 	genesis.TotalUstrdBurned = k.GetTotalStrdBurned(ctx)
 	return genesis
 }

@@ -25,7 +25,6 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 	}
 
 	// Update TotalStrdBurned and ProtocolStrdBurned
-	k.IncrementTotalStrdBurned(ctx, strdBalance.Amount)
 	k.IncrementProtocolStrdBurned(ctx, strdBalance.Amount)
 
 	// Emit burn event

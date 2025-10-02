@@ -46,7 +46,6 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 	}
 
 	// Update accounting
-	k.IncrementTotalStrdBurned(ctx, msg.Amount)
 	k.IncrementTotalUserStrdBurned(ctx, msg.Amount)
 	k.IncrementStrdBurnedByAddress(ctx, userAddress, msg.Amount)
 
