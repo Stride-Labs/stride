@@ -16,12 +16,34 @@ func (s *KeeperTestSuite) TestQueryStrdBurnerAddress() {
 
 func (s *KeeperTestSuite) TestQueryTotalStrdBurned() {
 	// Set initial total burned amount
-	expectedAmount := sdkmath.NewInt(1000000)
-	s.App.StrdBurnerKeeper.SetTotalStrdBurned(s.Ctx, expectedAmount)
+	expectedProtocol := sdkmath.NewInt(1000000)
+	expectedUser := sdkmath.NewInt(2000000)
+	expectedTotal := sdkmath.NewInt(3000000)
+	s.App.StrdBurnerKeeper.SetProtocolStrdBurned(s.Ctx, expectedProtocol)
+	s.App.StrdBurnerKeeper.SetTotalUserStrdBurned(s.Ctx, expectedUser)
+	s.App.StrdBurnerKeeper.SetTotalStrdBurned(s.Ctx, expectedTotal)
 
 	// Query for the total burned amount
 	req := &types.QueryTotalStrdBurnedRequest{}
 	resp, err := s.App.StrdBurnerKeeper.TotalStrdBurned(s.Ctx, req)
 	s.Require().NoError(err, "no error expected when querying total strd burned")
-	s.Require().Equal(expectedAmount, resp.TotalBurned, "total burned amount")
+	s.Require().Equal(expectedProtocol, resp.ProtocolBurned, "protocol burned amount")
+	s.Require().Equal(expectedUser, resp.TotalUserBurned, "total user burned amount")
+	s.Require().Equal(expectedTotal, resp.TotalBurned, "total burned amount")
+}
+
+func (s *KeeperTestSuite) TestQueryBurnedByAddress() {
+	acc := s.TestAccs[0]
+
+	// Set initial total burned amount
+	expectedAmount := sdkmath.NewInt(1000000)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc, expectedAmount)
+
+	// Query for the total burned amount
+	req := &types.QueryStrdBurnedByAddressRequest{
+		Address: acc.String(),
+	}
+	resp, err := s.App.StrdBurnerKeeper.StrdBurnedByAddress(s.Ctx, req)
+	s.Require().NoError(err, "no error expected when querying total strd burned")
+	s.Require().Equal(expectedAmount, resp.BurnedAmount, "total burned amount")
 }

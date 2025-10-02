@@ -18,7 +18,22 @@ func (k Keeper) StrdBurnerAddress(goCtx context.Context, req *types.QueryStrdBur
 }
 
 func (k Keeper) TotalStrdBurned(goCtx context.Context, req *types.QueryTotalStrdBurnedRequest) (*types.QueryTotalStrdBurnedResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	return &types.QueryTotalStrdBurnedResponse{
-		TotalBurned: k.GetTotalStrdBurned(sdk.UnwrapSDKContext(goCtx)),
+		TotalBurned:     k.GetTotalStrdBurned(ctx),
+		ProtocolBurned:  k.GetProtocolStrdBurned(ctx),
+		TotalUserBurned: k.GetTotalUserStrdBurned(ctx),
+	}, nil
+}
+
+func (k Keeper) StrdBurnedByAddress(goCtx context.Context, req *types.QueryStrdBurnedByAddressRequest) (*types.QueryStrdBurnedByAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	address, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryStrdBurnedByAddressResponse{
+		BurnedAmount: k.GetStrdBurnedByAddress(ctx, address),
 	}, nil
 }
