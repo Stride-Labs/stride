@@ -14,7 +14,7 @@ func (s *KeeperTestSuite) verifyUserBurnEvents(address sdk.AccAddress, amount sd
 }
 
 // Test successful burns across multiple accounts
-func (s *KeeperTestSuite) TestSuccessfulBurns() {
+func (s *KeeperTestSuite) TestSuccessfulBurns_MultipleUsers() {
 	initialBalance := sdkmath.NewInt(10_000)
 
 	// Fund each account
@@ -84,6 +84,57 @@ func (s *KeeperTestSuite) TestSuccessfulBurns() {
 	expectedSupply := initialBalance.Mul(sdkmath.NewInt(3)).Sub(totalBurned)
 	actualSupply := s.App.BankKeeper.GetSupply(s.Ctx, keeper.USTRD)
 	s.Require().Equal(actualSupply.Amount, expectedSupply)
+}
+
+// Test a failed burn from an insufficient STRD balance
+func (s *KeeperTestSuite) TestSuccessfulBurns_MultipleBurns() {
+	initialBalance := sdkmath.NewInt(10_000)
+
+	acc := s.TestAccs[0]
+	s.FundAccount(acc, sdk.NewCoin(keeper.USTRD, initialBalance))
+
+	// Build valid burn messages
+	msg1 := types.MsgBurn{
+		Burner: acc.String(),
+		Amount: sdkmath.NewInt(1000),
+	}
+	msg2 := types.MsgBurn{
+		Burner: acc.String(),
+		Amount: sdkmath.NewInt(2000),
+	}
+	msg3 := types.MsgBurn{
+		Burner: acc.String(),
+		Amount: sdkmath.NewInt(3000),
+	}
+
+	// Burn 3 times from the same user
+	_, err := s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg1)
+	s.Require().NoError(err)
+	s.verifyUserBurnEvents(acc, msg1.Amount)
+
+	_, err = s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg2)
+	s.Require().NoError(err)
+	s.verifyUserBurnEvents(acc, msg2.Amount)
+
+	_, err = s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg3)
+	s.Require().NoError(err)
+	s.verifyUserBurnEvents(acc, msg3.Amount)
+
+	// Check global state
+	expectedTotalBurned := msg1.Amount.Add(msg2.Amount).Add(msg3.Amount)
+
+	totalBurned := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
+	s.Require().Equal(expectedTotalBurned, totalBurned)
+
+	totalUserBurned := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
+	s.Require().Equal(expectedTotalBurned, totalUserBurned)
+
+	protocolBurned := s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx)
+	s.Require().Equal(sdkmath.ZeroInt(), protocolBurned)
+
+	// Check user state
+	userBalance := s.App.BankKeeper.GetBalance(s.Ctx, acc, keeper.USTRD)
+	s.Require().Equal(userBalance.Amount, initialBalance.Sub(expectedTotalBurned))
 }
 
 // Test a failed burn from an insufficient STRD balance
