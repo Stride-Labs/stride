@@ -1,8 +1,15 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+
+	claimvestingtypes "github.com/Stride-Labs/stride/v28/x/claim/vesting/types"
 
 	"github.com/Stride-Labs/stride/v28/x/strdburner/keeper"
 	"github.com/Stride-Labs/stride/v28/x/strdburner/types"
@@ -13,8 +20,18 @@ func (s *KeeperTestSuite) verifyUserBurnEvents(address sdk.AccAddress, amount sd
 	s.CheckEventValueEmitted(types.EventTypeUserBurn, types.AttributeAmount, sdk.NewCoin(keeper.USTRD, amount).String())
 }
 
+func (s *KeeperTestSuite) CreateNewBaseAccount(account sdk.AccAddress) *authtypes.BaseAccount {
+	nextAccountNumber, err := s.App.AccountKeeper.AccountNumber.Next(s.Ctx)
+	s.Require().NoError(err)
+
+	baseAccount := authtypes.NewBaseAccountWithAddress(account)
+	baseAccount.AccountNumber = nextAccountNumber + 1
+
+	return baseAccount
+}
+
 // Test successful burns across multiple accounts
-func (s *KeeperTestSuite) TestSuccessfulBurns_MultipleUsers() {
+func (s *KeeperTestSuite) TestBurns_Successful_MultipleUsers() {
 	initialBalance := sdkmath.NewInt(10_000)
 
 	// Fund each account
@@ -87,7 +104,7 @@ func (s *KeeperTestSuite) TestSuccessfulBurns_MultipleUsers() {
 }
 
 // Test a failed burn from an insufficient STRD balance
-func (s *KeeperTestSuite) TestSuccessfulBurns_MultipleBurns() {
+func (s *KeeperTestSuite) TestBurn_Successful_MultipleBurnsFromUser() {
 	initialBalance := sdkmath.NewInt(10_000)
 
 	acc := s.TestAccs[0]
@@ -137,8 +154,117 @@ func (s *KeeperTestSuite) TestSuccessfulBurns_MultipleBurns() {
 	s.Require().Equal(userBalance.Amount, initialBalance.Sub(expectedTotalBurned))
 }
 
+// Tests buring from a continuous vesting account
+func (s *KeeperTestSuite) TestBurn_Successful_ContinuousVestingAccount() {
+	account := s.TestAccs[0]
+
+	initialBalance := sdkmath.NewInt(1000)
+	initialCoins := sdk.NewCoins(sdk.NewCoin(keeper.USTRD, initialBalance))
+	startTime := time.Now().Unix()
+	endTime := time.Date(2035, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+
+	// Create continuous vesting account
+	baseAccount := s.CreateNewBaseAccount(account)
+	vestingAccount, err := vestingtypes.NewContinuousVestingAccount(baseAccount, initialCoins, startTime, endTime)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
+
+	// Confirm tokens are locked
+	vestingAccount = s.App.AccountKeeper.GetAccount(s.Ctx, account).(*vestingtypes.ContinuousVestingAccount)
+	vestedBalance := vestingAccount.LockedCoins(s.Ctx.BlockTime()).AmountOf(keeper.USTRD)
+	s.Require().Equal(initialBalance, vestedBalance, "locked balance")
+
+	// Burn some of the locked tokens
+	expectedBurnAmount := sdkmath.NewInt(100)
+	msg := types.MsgBurn{
+		Burner: account.String(),
+		Amount: expectedBurnAmount,
+	}
+	_, err = s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "burn should not have failed")
+
+	// Confirm burn accounting change
+	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, account)
+	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "Burn amount by address")
+}
+
+// Tests buring from a periodic vesting account
+func (s *KeeperTestSuite) TestBurn_Successful_PeriodicVestingAccount() {
+	account := s.TestAccs[0]
+
+	initialBalance := sdkmath.NewInt(1000)
+	initialCoins := sdk.NewCoins(sdk.NewCoin(keeper.USTRD, initialBalance))
+	startTime := time.Now().Unix()
+	endTime := time.Date(2035, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+
+	periods := vestingtypes.Periods{
+		vestingtypes.Period{Length: endTime - startTime, Amount: initialCoins},
+	}
+
+	// Create stride periodic vesting account
+	baseAccount := s.CreateNewBaseAccount(account)
+	vestingAccount, err := vestingtypes.NewPeriodicVestingAccount(baseAccount, initialCoins, startTime, periods)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
+
+	// Confirm tokens are locked
+	vestingAccount = s.App.AccountKeeper.GetAccount(s.Ctx, account).(*vestingtypes.PeriodicVestingAccount)
+	vestedBalance := vestingAccount.LockedCoins(s.Ctx.BlockTime()).AmountOf(keeper.USTRD)
+	s.Require().Equal(initialBalance, vestedBalance, "locked balance")
+
+	// Burn some of the locked tokens
+	expectedBurnAmount := sdkmath.NewInt(100)
+	msg := types.MsgBurn{
+		Burner: account.String(),
+		Amount: expectedBurnAmount,
+	}
+	_, err = s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "burn should not have failed")
+
+	// Confirm burn accounting change
+	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, account)
+	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "Burn amount by address")
+}
+
+// Tests buring from a stride periodic vesting account
+func (s *KeeperTestSuite) TestBurn_Successful_StridePeriodicVestingAccount() {
+	account := s.TestAccs[0]
+
+	initialBalance := sdkmath.NewInt(1000)
+	initialCoins := sdk.NewCoins(sdk.NewCoin(keeper.USTRD, initialBalance))
+	startTime := time.Now().Unix()
+	endTime := time.Date(2035, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+
+	periods := claimvestingtypes.Periods{
+		claimvestingtypes.Period{StartTime: time.Now().Unix(), Length: endTime - startTime, Amount: initialCoins},
+	}
+
+	// Create stride periodic vesting account
+	baseAccount := s.CreateNewBaseAccount(account)
+	vestingAccount := claimvestingtypes.NewStridePeriodicVestingAccount(baseAccount, initialCoins, periods)
+	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
+
+	// Confirm tokens are locked
+	vestingAccount = s.App.AccountKeeper.GetAccount(s.Ctx, account).(*claimvestingtypes.StridePeriodicVestingAccount)
+	vestedBalance := vestingAccount.LockedCoins(s.Ctx.BlockTime()).AmountOf(keeper.USTRD)
+	s.Require().Equal(initialBalance, vestedBalance, "locked balance")
+
+	// Burn some of the locked tokens
+	expectedBurnAmount := sdkmath.NewInt(100)
+	msg := types.MsgBurn{
+		Burner: account.String(),
+		Amount: expectedBurnAmount,
+	}
+	_, err := s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "burn should not have failed")
+
+	// Confirm burn accounting change
+	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, account)
+	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "Burn amount by address")
+}
+
 // Test a failed burn from an insufficient STRD balance
-func (s *KeeperTestSuite) TestBurnFailed_InsufficientBalance() {
+func (s *KeeperTestSuite) TestBurn_Failed_InsufficientBalance() {
 	acc := s.TestAccs[0]
 	s.FundAccount(acc, sdk.NewCoin(keeper.USTRD, sdkmath.NewInt(999)))
 
