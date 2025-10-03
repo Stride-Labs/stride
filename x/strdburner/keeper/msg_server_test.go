@@ -88,5 +88,14 @@ func (s *KeeperTestSuite) TestSuccessfulBurns() {
 
 // Test a failed burn from an insufficient STRD balance
 func (s *KeeperTestSuite) TestBurnFailed_InsufficientBalance() {
+	acc := s.TestAccs[0]
+	s.FundAccount(acc, sdk.NewCoin(keeper.USTRD, sdkmath.NewInt(999)))
 
+	msg := types.MsgBurn{
+		Burner: acc.String(),
+		Amount: sdkmath.NewInt(1000),
+	}
+
+	_, err := s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "unable to transfer tokens to the burner module account")
 }
