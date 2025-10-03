@@ -1,0 +1,29 @@
+name: PoA Validator List
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Verify poa.go
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
+
+      - name: Check if poa.go changed
+        id: poa-go-changed
+        uses: tj-actions/changed-files@v46
+        with:
+          files: |
+            utils/poa.go
+
+      - name: Fail if poa.go changed
+        if: steps.poa-go-changed.outputs.any_changed == 'true'
+        run: echo "Admin file was changed" && exit 1
