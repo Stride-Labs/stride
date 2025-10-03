@@ -21,7 +21,7 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 	rewardCollectorAddress := k.AccountKeeper.GetModuleAccount(ctx, types.RewardCollectorName).GetAddress()
 
 	// Get all host zones and process their tokens in reward collector balance
-	for _, hz := range k.GetAllHostZone(ctx) {
+	for _, hz := range k.GetAllActiveHostZone(ctx) {
 		// Check if reward collector has this host zone's IBC denom
 		// These are the fees collected from liquid staking rewards
 		if hz.IbcDenom == "" { // prevents panic in balance query if the denom field is not set

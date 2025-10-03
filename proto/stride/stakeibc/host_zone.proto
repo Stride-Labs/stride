@@ -135,6 +135,12 @@ message HostZone {
   // A boolean indicating whether the chain has LSM enabled
   bool lsm_liquid_stake_enabled = 27;
   // A boolean indicating whether the chain is currently halted
+  // A host zone is halted if redemption rate bounds are exceeded or it is
+  // deprecated
   bool halted = 19;
+  // Indicates if the host zone is deprecated and should no longer handle liquid
+  // stakes. This is only used as documentation - it doesn't affect any
+  // functionality `Halted` is used to stop business logic
+  bool deprecated = 38;
   reserved 4, 5, 6, 7, 14, 15, 16;
 }

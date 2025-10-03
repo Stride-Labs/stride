@@ -34,6 +34,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgSetCommunityPoolRebate{}, "stakeibc/MsgSetCommunityPoolRebate")
 	legacy.RegisterAminoMsg(cdc, &MsgToggleTradeController{}, "stakeibc/MsgToggleTradeController")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateHostZoneParams{}, "stakeibc/MsgUpdateHostZoneParams")
+	legacy.RegisterAminoMsg(cdc, &MsgDeprecateHostZone{}, "stakeibc/MsgDeprecateHostZone")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -56,6 +57,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgSetCommunityPoolRebate{},
 		&MsgToggleTradeController{},
 		&MsgUpdateHostZoneParams{},
+		&MsgDeprecateHostZone{},
 	)
 
 	registry.RegisterImplementations((*govtypes.Content)(nil),

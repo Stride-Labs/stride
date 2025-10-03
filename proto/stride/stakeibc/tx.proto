@@ -51,6 +51,8 @@ service Msg {
       returns (MsgToggleTradeControllerResponse);
   rpc UpdateHostZoneParams(MsgUpdateHostZoneParams)
       returns (MsgUpdateHostZoneParamsResponse);
+  rpc DeprecateHostZone(MsgDeprecateHostZone)
+      returns (MsgDeprecateHostZoneResponse);
 }
 
 message MsgUpdateInnerRedemptionRateBounds {
@@ -273,6 +275,15 @@ message MsgResumeHostZone {
   string chain_id = 2;
 }
 message MsgResumeHostZoneResponse {}
+
+message MsgDeprecateHostZone {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "stakeibc/MsgDeprecateHostZone";
+
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string chain_id = 2;
+}
+message MsgDeprecateHostZoneResponse {}
 
 // Creates a new trade route
 message MsgCreateTradeRoute {
