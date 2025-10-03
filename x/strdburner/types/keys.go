@@ -8,6 +8,11 @@ const (
 
 	// RouterKey defines the routing key
 	RouterKey = ModuleName
+)
 
-	TotalStrdBurnedKey = "total_burned"
+var (
+	TotalStrdBurnedKey       = "total_burned" // DEPRECATED
+	ProtocolStrdBurnedKey    = "total_protocol_burned"
+	TotalUserStrdBurnedKey   = "total_user_burned"
+	BurnedByAddressKeyPrefix = []byte("burned_by_address")
 )

@@ -2,7 +2,10 @@ package types
 
 // strdburner module event typs
 const (
-	EventTypeBurn = "burn"
+	EventTypeBurn         = "burn"
+	EventTypeProtocolBurn = "protocol_burn"
+	EventTypeUserBurn     = "user_burn"
 
-	AttributeAmount = "amount"
+	AttributeAddress = "address"
+	AttributeAmount  = "amount"
 )

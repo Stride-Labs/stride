@@ -24,6 +24,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdQueryStrdBurnerAddress(),
 		CmdQueryStrdBurnerTotalBurned(),
+		CmdQueryStrdBurnedByAddress(),
 	)
 
 	return cmd
@@ -64,6 +65,31 @@ func CmdQueryStrdBurnerTotalBurned() *cobra.Command {
 
 			req := &types.QueryTotalStrdBurnedRequest{}
 			res, err := queryClient.TotalStrdBurned(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	return cmd
+}
+
+func CmdQueryStrdBurnedByAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burned-by-address",
+		Short: "Query the STRD burned from an address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryStrdBurnedByAddressRequest{
+				Address: args[0],
+			}
+			res, err := queryClient.StrdBurnedByAddress(context.Background(), req)
 			if err != nil {
 				return err
 			}
