@@ -2,8 +2,21 @@ syntax = "proto3";
 package stride.strdburner;
 
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v28/x/strdburner/types";
+
+// Stores the total burned for each account
+message AddressBurnedAmount {
+  // The address of the account
+  string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The total burned from the account
+  string amount = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
 
 // GenesisState defines the strdburner module's genesis state
 message GenesisState {
@@ -18,8 +31,11 @@ message GenesisState {
     (gogoproto.nullable) = false
   ];
   // Total amount of ustrd burned from users
-  string user_ustrd_burned = 2 [
+  string total_user_ustrd_burned = 2 [
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  // List of the amount burned from each account
+  repeated AddressBurnedAmount burned_by_account = 3
+      [ (gogoproto.nullable) = false ];
 }
