@@ -125,3 +125,25 @@ func (k Keeper) IncrementStrdBurnedByAddress(ctx sdk.Context, address sdk.AccAdd
 	newBurned := currentBurned.Add(amount)
 	k.SetStrdBurnedByAddress(ctx, address, newBurned)
 }
+
+// Returns all addresses and their respective STRD burned amounts
+func (k Keeper) GetAllStrdBurnedAcrossAddresses(ctx sdk.Context) []types.AddressBurnedAmount {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.BurnedByAddressKeyPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	var addressBurnedAmounts []types.AddressBurnedAmount
+	for ; iterator.Valid(); iterator.Next() {
+		addressBytes := iterator.Key()
+		address := sdk.AccAddress(addressBytes).String()
+		amount := sdkmath.NewIntFromUint64(sdk.BigEndianToUint64(iterator.Value()))
+
+		addressBurnedAmounts = append(addressBurnedAmounts, types.AddressBurnedAmount{
+			Address: address,
+			Amount:  amount,
+		})
+	}
+
+	return addressBurnedAmounts
+}

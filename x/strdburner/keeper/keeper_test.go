@@ -195,6 +195,25 @@ func (s *KeeperTestSuite) TestIncrementStrdBurnedByAddress() {
 	require.Equal(s.T(), incrementAmount1.Add(incrementAmount2), s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, address))
 }
 
+func (s *KeeperTestSuite) TestGetAllStrdBurnedAcrossAddresses() {
+	acc1, acc2 := s.TestAccs[0], s.TestAccs[1]
+
+	amount1 := sdkmath.NewInt(1000)
+	amount2 := sdkmath.NewInt(2000)
+
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc1, amount1)
+	s.App.StrdBurnerKeeper.SetStrdBurnedByAddress(s.Ctx, acc2, amount2)
+
+	burnedAccounts := s.App.StrdBurnerKeeper.GetAllStrdBurnedAcrossAddresses(s.Ctx)
+	s.Require().Len(burnedAccounts, 2)
+
+	s.Require().Equal(acc1.String(), burnedAccounts[0].Address, "account 1 address")
+	s.Require().Equal(acc2.String(), burnedAccounts[1].Address, "account 2 address")
+
+	s.Require().Equal(amount1, burnedAccounts[0].Amount, "account 1 amount")
+	s.Require().Equal(amount2, burnedAccounts[1].Amount, "account 2 amount")
+}
+
 func (s *KeeperTestSuite) TestLogger() {
 	logger := s.App.StrdBurnerKeeper.Logger(s.Ctx)
 	require.NotNil(s.T(), logger)
