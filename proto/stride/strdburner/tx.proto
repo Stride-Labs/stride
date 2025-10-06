@@ -15,6 +15,9 @@ service Msg {
 
   // Burn STRD
   rpc Burn(MsgBurn) returns (MsgBurnResponse);
+
+  // Link non-stride address
+  rpc Link(MsgLink) returns (MsgLinkResponse);
 }
 
 // Burn STRD
@@ -29,3 +32,13 @@ message MsgBurn {
   ];
 }
 message MsgBurnResponse {}
+
+// Link non-stride address
+message MsgLink {
+  option (cosmos.msg.v1.signer) = "sender";
+  option (amino.name) = "strdburner/MsgLink";
+
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string linked_address = 2;
+}
+message MsgLinkResponse {}
