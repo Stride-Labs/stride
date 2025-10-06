@@ -32,6 +32,16 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 		return nil, err
 	}
 
+	// Check if there are enough unlocked tokens to cover the burn amount
+	// If there aren't enough locked tokens, but the balance is sufficent, it is likely a vesting account
+	hasSufficientTotalBalance := k.bankKeeper.GetBalance(ctx, userAddress, USTRD).Amount.GTE(msg.Amount)
+	hasInsufficientUnlockedBalance := k.bankKeeper.SpendableCoins(ctx, userAddress).AmountOf(USTRD).LT(msg.Amount)
+	if hasSufficientTotalBalance && hasInsufficientUnlockedBalance {
+		if err := k.DowngradeVestingAccount(ctx, userAddress); err != nil {
+			return nil, err
+		}
+	}
+
 	// Send tokens from the user to this burner module
 	burnCoin := sdk.NewCoins(sdk.NewCoin(USTRD, msg.Amount))
 	err = k.bankKeeper.SendCoinsFromAccountToModule(ctx, userAddress, types.ModuleName, burnCoin)
