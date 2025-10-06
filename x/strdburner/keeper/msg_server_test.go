@@ -20,15 +20,9 @@ func (s *KeeperTestSuite) verifyUserBurnEvents(address sdk.AccAddress, amount sd
 	s.CheckEventValueEmitted(types.EventTypeUserBurn, types.AttributeAmount, sdk.NewCoin(keeper.USTRD, amount).String())
 }
 
-func (s *KeeperTestSuite) CreateNewBaseAccount(account sdk.AccAddress) *authtypes.BaseAccount {
-	nextAccountNumber, err := s.App.AccountKeeper.AccountNumber.Next(s.Ctx)
-	s.Require().NoError(err)
-
-	baseAccount := authtypes.NewBaseAccountWithAddress(account)
-	baseAccount.AccountNumber = nextAccountNumber + 1
-
-	return baseAccount
-}
+// --------------------------------------------
+//            Generic Burn Tests
+// --------------------------------------------
 
 // Test successful burns across multiple accounts
 func (s *KeeperTestSuite) TestBurns_Successful_MultipleUsers() {
@@ -154,39 +148,282 @@ func (s *KeeperTestSuite) TestBurn_Successful_MultipleBurnsFromUser() {
 	s.Require().Equal(userBalance.Amount, initialBalance.Sub(expectedTotalBurned))
 }
 
-// Tests buring from a continuous vesting account
-func (s *KeeperTestSuite) TestBurn_Successful_ContinuousVestingAccount() {
-	account := s.TestAccs[0]
+// Test a failed burn from an insufficient STRD balance
+func (s *KeeperTestSuite) TestBurn_Failed_InsufficientBalance() {
+	acc := s.TestAccs[0]
+	s.FundAccount(acc, sdk.NewCoin(keeper.USTRD, sdkmath.NewInt(999)))
 
-	initialBalance := sdkmath.NewInt(1000)
+	msg := types.MsgBurn{
+		Burner: acc.String(),
+		Amount: sdkmath.NewInt(1000),
+	}
+
+	_, err := s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().ErrorContains(err, "unable to transfer tokens to the burner module account")
+}
+
+// --------------------------------------------
+//            Vesting Test Helpers
+// --------------------------------------------
+
+type VestingState int
+
+const (
+	VestingStateParitallyVested VestingState = iota
+	VestingStateFullyVested
+)
+
+// Helper to create a new base account
+func (s *KeeperTestSuite) CreateNewBaseAccount(account sdk.AccAddress) *authtypes.BaseAccount {
+	nextAccountNumber, err := s.App.AccountKeeper.AccountNumber.Next(s.Ctx)
+	s.Require().NoError(err)
+
+	baseAccount := authtypes.NewBaseAccountWithAddress(account)
+	baseAccount.AccountNumber = nextAccountNumber + 1
+
+	return baseAccount
+}
+
+// Helper to get start and end times of a vesting account
+func (s *KeeperTestSuite) GetVestingTimes(vestingState VestingState) (int64, int64) {
+	currentTime := s.Ctx.BlockTime().Unix()
+	if vestingState == VestingStateParitallyVested {
+		return currentTime - 10_000, currentTime + 10_000
+	}
+	if vestingState == VestingStateFullyVested {
+		return currentTime - 10_000, currentTime
+	}
+	panic("Unrecognized vesting state")
+}
+
+// Helper to confirm tokens are locked in the account
+func (s *KeeperTestSuite) ConfirmTokensLocked(address sdk.AccAddress, expectedBalance sdkmath.Int) {
+	// Note: Continuous vesting cast works for all vesting types since they all implement LockedCoins
+	vestingAccount := s.App.AccountKeeper.GetAccount(s.Ctx, address).(*vestingtypes.ContinuousVestingAccount)
+	vestedBalance := vestingAccount.LockedCoins(s.Ctx.BlockTime()).AmountOf(keeper.USTRD)
+	s.Require().Equal(expectedBalance, vestedBalance, "locked balance")
+}
+
+// Helper to create a new continuous vesting account that's partially vested
+func (s *KeeperTestSuite) CreateContinuousVestingAccount(
+	address sdk.AccAddress,
+	initialBalance sdkmath.Int,
+	vestingState VestingState,
+) {
+	baseAccount := s.CreateNewBaseAccount(address)
+	s.FundAccount(address, sdk.NewCoin(keeper.USTRD, initialBalance))
+
 	initialCoins := sdk.NewCoins(sdk.NewCoin(keeper.USTRD, initialBalance))
-	startTime := time.Now().Unix()
-	endTime := time.Date(2035, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+	startTime, endTime := s.GetVestingTimes(vestingState)
 
-	// Create continuous vesting account
-	baseAccount := s.CreateNewBaseAccount(account)
 	vestingAccount, err := vestingtypes.NewContinuousVestingAccount(baseAccount, initialCoins, startTime, endTime)
 	s.Require().NoError(err)
 	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
 
-	// Confirm tokens are locked
-	vestingAccount = s.App.AccountKeeper.GetAccount(s.Ctx, account).(*vestingtypes.ContinuousVestingAccount)
-	vestedBalance := vestingAccount.LockedCoins(s.Ctx.BlockTime()).AmountOf(keeper.USTRD)
-	s.Require().Equal(initialBalance, vestedBalance, "locked balance")
-
-	// Burn some of the locked tokens
-	expectedBurnAmount := sdkmath.NewInt(100)
-	msg := types.MsgBurn{
-		Burner: account.String(),
-		Amount: expectedBurnAmount,
+	if vestingState == VestingStateParitallyVested {
+		s.ConfirmTokensLocked(address, initialBalance.Quo(sdkmath.NewInt(2))) // should be 50% vested
+	} else if vestingState == VestingStateFullyVested {
+		s.ConfirmTokensLocked(address, sdkmath.ZeroInt())
 	}
-	_, err = s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
+}
+
+// Helper to create a new continuous vesting account that's partially vested
+func (s *KeeperTestSuite) CreatePeriodicVestingAccount(
+	address sdk.AccAddress,
+	initialBalance sdkmath.Int,
+	vestingState VestingState,
+) {
+	baseAccount := s.CreateNewBaseAccount(address)
+	s.FundAccount(address, sdk.NewCoin(keeper.USTRD, initialBalance))
+
+	initialCoins := sdk.NewCoins(sdk.NewCoin(keeper.USTRD, initialBalance))
+	startTime, endTime := s.GetVestingTimes(vestingState)
+
+	periods := vestingtypes.Periods{
+		vestingtypes.Period{Length: endTime - startTime, Amount: initialCoins},
+	}
+
+	vestingAccount, err := vestingtypes.NewPeriodicVestingAccount(baseAccount, initialCoins, startTime, periods)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
+
+	if vestingState == VestingStateParitallyVested {
+		s.ConfirmTokensLocked(address, initialBalance.Quo(sdkmath.NewInt(2))) // should be 50% vested
+	} else if vestingState == VestingStateFullyVested {
+		s.ConfirmTokensLocked(address, sdkmath.ZeroInt())
+	}
+}
+
+// Helper to create a new continuous vesting account that's partially vested
+func (s *KeeperTestSuite) CreateStridePeriodicVestingAccount(
+	address sdk.AccAddress,
+	initialBalance sdkmath.Int,
+	vestingState VestingState,
+) {
+	baseAccount := s.CreateNewBaseAccount(address)
+	s.FundAccount(address, sdk.NewCoin(keeper.USTRD, initialBalance))
+
+	initialCoins := sdk.NewCoins(sdk.NewCoin(keeper.USTRD, initialBalance))
+	startTime, endTime := s.GetVestingTimes(vestingState)
+
+	periods := claimvestingtypes.Periods{
+		claimvestingtypes.Period{StartTime: time.Now().Unix(), Length: endTime - startTime, Amount: initialCoins},
+	}
+
+	vestingAccount := claimvestingtypes.NewStridePeriodicVestingAccount(baseAccount, initialCoins, periods)
+	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
+
+	if vestingState == VestingStateParitallyVested {
+		s.ConfirmTokensLocked(address, initialBalance.Quo(sdkmath.NewInt(2))) // should be 50% vested
+	} else if vestingState == VestingStateFullyVested {
+		s.ConfirmTokensLocked(address, sdkmath.ZeroInt())
+	}
+}
+
+// Helper to submit a burn tx
+func (s *KeeperTestSuite) TryBurn(address sdk.AccAddress, amount sdkmath.Int) error {
+	msg := types.MsgBurn{
+		Burner: address.String(),
+		Amount: amount,
+	}
+	_, err := s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	return err
+}
+
+// --------------------------------------------
+//     Continous Vesting Account Burn Tests
+// --------------------------------------------
+
+// Tests burning from a continuous vesting account that has insufficient unlocked balance,
+// causing the account to get downgraded in order to fulfill the burn
+func (s *KeeperTestSuite) TestBurn_ContinuousVestingAccount_PartiallyVested_Downgraded() {
+	// The account will have 1000 tokens, with 500 vested
+	// We'll try to burn 900 which will force a downgrade for the unlocked tokens
+	address := s.TestAccs[0]
+	initialBalance := sdkmath.NewInt(1000)
+	burnAmount := sdkmath.NewInt(900)
+
+	// Create continuous vesting account
+	s.CreateContinuousVestingAccount(address, initialBalance, VestingStateParitallyVested)
+
+	// Attempt to burn into the locked portion
+	err := s.TryBurn(address, burnAmount)
 	s.Require().NoError(err, "burn should not have failed")
 
 	// Confirm burn accounting change
-	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, account)
-	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "Burn amount by address")
+	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, address)
+	s.Require().Equal(burnAmount, actualBurnAmount, "Burn amount by address")
+
+	// Confirm it's no longer a vesting account
+	accountI := s.App.AccountKeeper.GetAccount(s.Ctx, address)
+	_, ok := accountI.(*vestingtypes.ContinuousVestingAccount)
+	s.Require().False(ok, "Should no longer be a vesting account")
+
+	_, ok = accountI.(*authtypes.BaseAccount)
+	s.Require().True(ok, "Should be a base account")
+
+	// Confirm updated balance
+	updatedBalance := s.App.BankKeeper.GetBalance(s.Ctx, address, keeper.USTRD).Amount
+	s.Require().Equal(initialBalance.Sub(burnAmount), updatedBalance, "updated balance")
 }
+
+// Tests burning from a continuous vesting account that has enough unlocked tokens
+// to cover the burn, and thus does not need to be downgraded
+func (s *KeeperTestSuite) TestBurn_ContinuousVestingAccount_PartiallyVested_NotDowngraded() {
+	// The account will have 1000 tokens, with 500 vested
+	// We'll try to burn 100 which will force a downgrade for the unlocked tokens
+	address := s.TestAccs[0]
+	initialBalance := sdkmath.NewInt(1000)
+	burnAmount := sdkmath.NewInt(100)
+
+	// Create continuous vesting account
+	s.CreateContinuousVestingAccount(address, initialBalance, VestingStateParitallyVested)
+
+	// Burn some of the locked tokens
+	err := s.TryBurn(address, burnAmount)
+	s.Require().NoError(err, "burn should not have failed")
+
+	// Confirm burn accounting change
+	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, address)
+	s.Require().Equal(burnAmount, actualBurnAmount, "Burn amount by address")
+
+	// Confirm it is still a vesting account
+	accountI := s.App.AccountKeeper.GetAccount(s.Ctx, address)
+	_, ok := accountI.(*vestingtypes.ContinuousVestingAccount)
+	s.Require().True(ok, "Should still be a vesting account")
+
+	_, ok = accountI.(*authtypes.BaseAccount)
+	s.Require().False(ok, "Should not be a base account")
+
+	// Confirm updated balance
+	updatedBalance := s.App.BankKeeper.GetBalance(s.Ctx, address, keeper.USTRD).Amount
+	s.Require().Equal(initialBalance.Sub(burnAmount), updatedBalance, "updated balance")
+}
+
+// Tests buring from a continuous vesting account
+func (s *KeeperTestSuite) TestBurn_ContinuousVestingAccount_PartiallyVested_InsufficientBalance() {
+	// Attempt to burn with an amount greater than the balance
+	address := s.TestAccs[0]
+	initialBalance := sdkmath.NewInt(1000)
+	burnAmount := sdkmath.NewInt(1001)
+
+	// Create continuous vesting account
+	s.CreateContinuousVestingAccount(address, initialBalance, VestingStateParitallyVested)
+
+	// Burn some of the locked tokens
+	err := s.TryBurn(address, burnAmount)
+	s.Require().ErrorContains(err, "unable to transfer tokens to the burner module account")
+}
+
+// Tests burning from a continuous vesting account that has everything vested, so it is not downgraded
+func (s *KeeperTestSuite) TestBurn_ContinuousVestingAccount_FullyVested_NotDowngraded() {
+	// The account will have 1000 tokens, all vested
+	address := s.TestAccs[0]
+	initialBalance := sdkmath.NewInt(1000)
+	burnAmount := sdkmath.NewInt(100)
+
+	// Create continuous vesting account
+	s.CreateContinuousVestingAccount(address, initialBalance, VestingStateFullyVested)
+
+	// Burn some of the locked tokens
+	err := s.TryBurn(address, burnAmount)
+	s.Require().NoError(err, "burn should not have failed")
+
+	// Confirm burn accounting change
+	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, address)
+	s.Require().Equal(burnAmount, actualBurnAmount, "Burn amount by address")
+
+	// Confirm it is still a vesting account
+	accountI := s.App.AccountKeeper.GetAccount(s.Ctx, address)
+	_, ok := accountI.(*vestingtypes.ContinuousVestingAccount)
+	s.Require().True(ok, "Should still be a vesting account")
+
+	_, ok = accountI.(*authtypes.BaseAccount)
+	s.Require().False(ok, "Should not be a base account")
+
+	// Confirm updated balance
+	updatedBalance := s.App.BankKeeper.GetBalance(s.Ctx, address, keeper.USTRD).Amount
+	s.Require().Equal(initialBalance.Sub(burnAmount), updatedBalance, "updated balance")
+}
+
+// Tests buring from a continuous vesting account
+func (s *KeeperTestSuite) TestBurn_ContinuousVestingAccount_FullyVested_InsufficientBalance() {
+	// Attempt to burn with an amount greater than the balance
+	address := s.TestAccs[0]
+	initialBalance := sdkmath.NewInt(1000)
+	burnAmount := sdkmath.NewInt(1001)
+
+	// Create continuous vesting account
+	s.CreateContinuousVestingAccount(address, initialBalance, VestingStateFullyVested)
+
+	// Burn some of the locked tokens
+	err := s.TryBurn(address, burnAmount)
+	s.Require().ErrorContains(err, "unable to transfer tokens to the burner module account")
+}
+
+// --------------------------------------------
+//     Periodic Vesting Account Burn Tests
+// --------------------------------------------
 
 // Tests buring from a periodic vesting account
 func (s *KeeperTestSuite) TestBurn_Successful_PeriodicVestingAccount() {
@@ -203,6 +440,7 @@ func (s *KeeperTestSuite) TestBurn_Successful_PeriodicVestingAccount() {
 
 	// Create stride periodic vesting account
 	baseAccount := s.CreateNewBaseAccount(account)
+	s.FundAccount(account, sdk.NewCoin(keeper.USTRD, initialBalance))
 	vestingAccount, err := vestingtypes.NewPeriodicVestingAccount(baseAccount, initialCoins, startTime, periods)
 	s.Require().NoError(err)
 	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
@@ -224,6 +462,14 @@ func (s *KeeperTestSuite) TestBurn_Successful_PeriodicVestingAccount() {
 	// Confirm burn accounting change
 	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, account)
 	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "Burn amount by address")
+
+	// Confirm it's no longer a vesting account
+	accountI := s.App.AccountKeeper.GetAccount(s.Ctx, account)
+	_, ok := accountI.(*vestingtypes.PeriodicVestingAccount)
+	s.Require().False(ok, "Should no longer be a vesting account")
+
+	_, ok = accountI.(*authtypes.BaseAccount)
+	s.Require().True(ok, "Should be a vesting account")
 }
 
 // Tests buring from a stride periodic vesting account
@@ -241,6 +487,7 @@ func (s *KeeperTestSuite) TestBurn_Successful_StridePeriodicVestingAccount() {
 
 	// Create stride periodic vesting account
 	baseAccount := s.CreateNewBaseAccount(account)
+	s.FundAccount(account, sdk.NewCoin(keeper.USTRD, initialBalance))
 	vestingAccount := claimvestingtypes.NewStridePeriodicVestingAccount(baseAccount, initialCoins, periods)
 	s.App.AccountKeeper.SetAccount(s.Ctx, vestingAccount)
 
@@ -261,18 +508,12 @@ func (s *KeeperTestSuite) TestBurn_Successful_StridePeriodicVestingAccount() {
 	// Confirm burn accounting change
 	actualBurnAmount := s.App.StrdBurnerKeeper.GetStrdBurnedByAddress(s.Ctx, account)
 	s.Require().Equal(expectedBurnAmount, actualBurnAmount, "Burn amount by address")
-}
 
-// Test a failed burn from an insufficient STRD balance
-func (s *KeeperTestSuite) TestBurn_Failed_InsufficientBalance() {
-	acc := s.TestAccs[0]
-	s.FundAccount(acc, sdk.NewCoin(keeper.USTRD, sdkmath.NewInt(999)))
+	// Confirm it's no longer a vesting account
+	accountI := s.App.AccountKeeper.GetAccount(s.Ctx, account)
+	_, ok := accountI.(*claimvestingtypes.StridePeriodicVestingAccount)
+	s.Require().False(ok, "Should no longer be a vesting account")
 
-	msg := types.MsgBurn{
-		Burner: acc.String(),
-		Amount: sdkmath.NewInt(1000),
-	}
-
-	_, err := s.GetMsgServer().Burn(sdk.UnwrapSDKContext(s.Ctx), &msg)
-	s.Require().ErrorContains(err, "unable to transfer tokens to the burner module account")
+	_, ok = accountI.(*authtypes.BaseAccount)
+	s.Require().True(ok, "Should be a vesting account")
 }
