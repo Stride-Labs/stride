@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"regexp"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -60,9 +61,9 @@ func (msg *MsgBurn) ValidateBasic() error {
 //                     MsgLink
 // -----------------------------------------------
 
-func NewMsgLink(sender string, linkedAddress string) *MsgLink {
+func NewMsgLink(strideAddress string, linkedAddress string) *MsgLink {
 	return &MsgLink{
-		Sender:        sender,
+		StrideAddress: strideAddress,
 		LinkedAddress: linkedAddress,
 	}
 }
@@ -76,7 +77,7 @@ func (msg MsgLink) Route() string {
 }
 
 func (msg *MsgLink) GetSigners() []sdk.AccAddress {
-	burner, err := sdk.AccAddressFromBech32(msg.Sender)
+	burner, err := sdk.AccAddressFromBech32(msg.StrideAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -84,13 +85,19 @@ func (msg *MsgLink) GetSigners() []sdk.AccAddress {
 }
 
 func (msg *MsgLink) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Sender)
+	_, err := sdk.AccAddressFromBech32(msg.StrideAddress)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid address (%s)", err)
 	}
 
 	if msg.LinkedAddress == "" {
-		return fmt.Errorf("Linked address cannot be empty")
+		return fmt.Errorf("linked address cannot be empty")
+	}
+
+	// Check if LinkedAddress is alphanumeric
+	alphanumericPattern := regexp.MustCompile("^[a-zA-Z0-9]+$")
+	if !alphanumericPattern.MatchString(msg.LinkedAddress) {
+		return fmt.Errorf("linked address must be alphanumeric")
 	}
 
 	return nil

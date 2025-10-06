@@ -38,7 +38,7 @@ message MsgLink {
   option (cosmos.msg.v1.signer) = "sender";
   option (amino.name) = "strdburner/MsgLink";
 
-  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string stride_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string linked_address = 2;
 }
 message MsgLinkResponse {}
