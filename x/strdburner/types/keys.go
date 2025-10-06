@@ -15,4 +15,5 @@ var (
 	ProtocolStrdBurnedKey    = "total_protocol_burned"
 	TotalUserStrdBurnedKey   = "total_user_burned"
 	BurnedByAddressKeyPrefix = []byte("burned_by_address")
+	LinkedAddressesKeyPrefix = []byte("linked_addresses")
 )

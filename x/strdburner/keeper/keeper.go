@@ -147,3 +147,43 @@ func (k Keeper) GetAllStrdBurnedAcrossAddresses(ctx sdk.Context) []types.Address
 
 	return addressBurnedAmounts
 }
+
+// Links a non-stride address with a stride address
+func (k Keeper) SetLinkedAddress(ctx sdk.Context, strideAddress sdk.AccAddress, linkedAddress string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.LinkedAddressesKeyPrefix)
+	store.Set(strideAddress, []byte(linkedAddress))
+}
+
+// Returns linked address for a given stride address
+func (k Keeper) GetLinkedAddress(ctx sdk.Context, strideAddress sdk.AccAddress) string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.LinkedAddressesKeyPrefix)
+
+	linkedAddressBz := store.Get(strideAddress)
+	if len(linkedAddressBz) == 0 {
+		return ""
+	}
+
+	return string(linkedAddressBz)
+}
+
+// Returns all linked addresses
+func (k Keeper) GetAllLinkedAddresses(ctx sdk.Context) []types.LinkedAddresses {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.LinkedAddressesKeyPrefix)
+
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	var linkedAddresses []types.LinkedAddresses
+	for ; iterator.Valid(); iterator.Next() {
+		addressBytes := iterator.Key()
+		strideAddress := sdk.AccAddress(addressBytes).String()
+		linkedAddress := string(iterator.Value())
+
+		linkedAddresses = append(linkedAddresses, types.LinkedAddresses{
+			StrideAddress: strideAddress,
+			LinkedAddress: linkedAddress,
+		})
+	}
+
+	return linkedAddresses
+}

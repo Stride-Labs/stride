@@ -219,6 +219,77 @@ func (s *KeeperTestSuite) TestGetAllStrdBurnedAcrossAddresses() {
 	s.Require().Equal(amount2, addressToAmount[acc2.String()], "account 2 amount")
 }
 
+func (s *KeeperTestSuite) TestSetAndGetLinkedAddress() {
+	acc1 := s.TestAccs[0]
+	acc2 := s.TestAccs[1]
+	acc3 := s.TestAccs[2]
+
+	// Test initial state (should be empty)
+	require.Equal(s.T(), "", s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc1))
+	require.Equal(s.T(), "", s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc2))
+	require.Equal(s.T(), "", s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc3))
+
+	// Test setting and getting a value for user 1
+	linkedAddress1 := "0x1"
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc1, linkedAddress1)
+
+	require.Equal(s.T(), linkedAddress1, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc1))
+	require.Equal(s.T(), "", s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc2))
+	require.Equal(s.T(), "", s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc3))
+
+	// Test setting and getting a value for user 2
+	linkedAddress2 := "0x2"
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc2, linkedAddress2)
+
+	require.Equal(s.T(), linkedAddress1, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc1))
+	require.Equal(s.T(), linkedAddress2, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc2))
+	require.Equal(s.T(), "", s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc3))
+
+	// Test setting and getting a value for user 3
+	linkedAddress3 := "0x3"
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc3, linkedAddress3)
+
+	require.Equal(s.T(), linkedAddress1, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc1))
+	require.Equal(s.T(), linkedAddress2, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc2))
+	require.Equal(s.T(), linkedAddress3, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc3))
+
+	// Test updating the value
+	newLinkedAddress1 := "0x4"
+	newLinkedAddress2 := "0x5"
+	newLinkedAddress3 := "0x6"
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc1, newLinkedAddress1)
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc2, newLinkedAddress2)
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc3, newLinkedAddress3)
+
+	require.Equal(s.T(), newLinkedAddress1, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc1))
+	require.Equal(s.T(), newLinkedAddress2, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc2))
+	require.Equal(s.T(), newLinkedAddress3, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, acc3))
+}
+
+func (s *KeeperTestSuite) TestGetAllLinkedAddresses() {
+	acc1, acc2 := s.TestAccs[0], s.TestAccs[1]
+
+	linkedAddress1 := "0x1"
+	linkedAddress2 := "0x2"
+
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc1, linkedAddress1)
+	s.App.StrdBurnerKeeper.SetLinkedAddress(s.Ctx, acc2, linkedAddress2)
+
+	burnedAccounts := s.App.StrdBurnerKeeper.GetAllLinkedAddresses(s.Ctx)
+	s.Require().Len(burnedAccounts, 2)
+
+	strideToLinkedAddress := make(map[string]string)
+	for _, account := range burnedAccounts {
+		strideToLinkedAddress[account.StrideAddress] = account.LinkedAddress
+	}
+
+	s.Require().Contains(strideToLinkedAddress, acc1.String(), "account 1 should be present")
+	s.Require().Contains(strideToLinkedAddress, acc2.String(), "account 2 should be present")
+
+	s.Require().Equal(linkedAddress1, strideToLinkedAddress[acc1.String()], "account 1 linked address")
+	s.Require().Equal(linkedAddress2, strideToLinkedAddress[acc2.String()], "account 2 linked address")
+}
+
 func (s *KeeperTestSuite) TestLogger() {
 	logger := s.App.StrdBurnerKeeper.Logger(s.Ctx)
 	require.NotNil(s.T(), logger)
