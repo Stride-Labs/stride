@@ -81,7 +81,12 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 func (k msgServer) Link(goCtx context.Context, msg *types.MsgLink) (*types.MsgLinkResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	_ = ctx
+	strideAddress, err := sdk.AccAddressFromBech32(msg.StrideAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	k.SetLinkedAddress(ctx, strideAddress, msg.LinkedAddress)
 
 	return &types.MsgLinkResponse{}, nil
 }
