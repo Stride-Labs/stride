@@ -13,6 +13,7 @@ func DefaultGenesis() *GenesisState {
 		ProtocolUstrdBurned:  sdkmath.ZeroInt(),
 		TotalUserUstrdBurned: sdkmath.ZeroInt(),
 		BurnedByAccount:      []AddressBurnedAmount{},
+		LinkedAddresses:      []LinkedAddresses{},
 	}
 }
 
