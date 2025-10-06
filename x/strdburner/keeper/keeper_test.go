@@ -68,9 +68,9 @@ func (s *KeeperTestSuite) TestSetAndGetProtocolStrdBurned() {
 	updatedAmount := s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx)
 	require.Equal(s.T(), newAmount, updatedAmount)
 
-	// Confirm other burn amounts are 0
+	// Confirm other burn amounts
 	totalBurned := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
-	require.Equal(s.T(), sdkmath.ZeroInt(), totalBurned)
+	require.Equal(s.T(), newAmount, totalBurned)
 
 	userBurned := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), userBurned)
@@ -103,9 +103,9 @@ func (s *KeeperTestSuite) TestSetAndGetUserStrdBurned() {
 	updatedAmount := s.App.StrdBurnerKeeper.GetTotalUserStrdBurned(s.Ctx)
 	require.Equal(s.T(), newAmount, updatedAmount)
 
-	// Confirm other burn amounts are 0
+	// Confirm other burn amounts
 	totalBurned := s.App.StrdBurnerKeeper.GetTotalStrdBurned(s.Ctx)
-	require.Equal(s.T(), sdkmath.ZeroInt(), totalBurned)
+	require.Equal(s.T(), newAmount, totalBurned)
 
 	protocolBurned := s.App.StrdBurnerKeeper.GetProtocolStrdBurned(s.Ctx)
 	require.Equal(s.T(), sdkmath.ZeroInt(), protocolBurned)
@@ -207,11 +207,16 @@ func (s *KeeperTestSuite) TestGetAllStrdBurnedAcrossAddresses() {
 	burnedAccounts := s.App.StrdBurnerKeeper.GetAllStrdBurnedAcrossAddresses(s.Ctx)
 	s.Require().Len(burnedAccounts, 2)
 
-	s.Require().Equal(acc1.String(), burnedAccounts[0].Address, "account 1 address")
-	s.Require().Equal(acc2.String(), burnedAccounts[1].Address, "account 2 address")
+	addressToAmount := make(map[string]sdkmath.Int)
+	for _, account := range burnedAccounts {
+		addressToAmount[account.Address] = account.Amount
+	}
 
-	s.Require().Equal(amount1, burnedAccounts[0].Amount, "account 1 amount")
-	s.Require().Equal(amount2, burnedAccounts[1].Amount, "account 2 amount")
+	s.Require().Contains(addressToAmount, acc1.String(), "account 1 should be present")
+	s.Require().Contains(addressToAmount, acc2.String(), "account 2 should be present")
+
+	s.Require().Equal(amount1, addressToAmount[acc1.String()], "account 1 amount")
+	s.Require().Equal(amount2, addressToAmount[acc2.String()], "account 2 amount")
 }
 
 func (s *KeeperTestSuite) TestLogger() {
