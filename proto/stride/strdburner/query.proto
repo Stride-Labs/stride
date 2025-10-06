@@ -26,6 +26,12 @@ service Query {
       returns (QueryStrdBurnedByAddressResponse) {
     option (google.api.http).get = "/stride/strdburner/burned/{address}";
   }
+
+  // LinkedAddress queries the linked address for a given stride address
+  rpc LinkedAddress(QueryLinkedAddressRequest)
+      returns (QueryLinkedAddressResponse) {
+    option (google.api.http).get = "/stride/strdburner/linked/{stride_address}";
+  }
 }
 
 // QueryStrdBurnerAddressRequest is the request type for the Query/strdburner
@@ -71,3 +77,11 @@ message QueryStrdBurnedByAddressResponse {
     (gogoproto.nullable) = false
   ];
 }
+
+// QueryLinkedAddressRequest is the request type for the Query/strdburner
+// RPC method
+message QueryLinkedAddressRequest { string stride_address = 1; }
+
+// QueryLinkedAddressResponse is the response type for the
+// Query/strdburner RPC method
+message QueryLinkedAddressResponse { string linked_address = 1; }

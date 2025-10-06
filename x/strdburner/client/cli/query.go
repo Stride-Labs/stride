@@ -25,6 +25,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryStrdBurnerAddress(),
 		CmdQueryStrdBurnerTotalBurned(),
 		CmdQueryStrdBurnedByAddress(),
+		CmdLinkedAddress(),
 	)
 
 	return cmd
@@ -90,6 +91,31 @@ func CmdQueryStrdBurnedByAddress() *cobra.Command {
 				Address: args[0],
 			}
 			res, err := queryClient.StrdBurnedByAddress(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+	return cmd
+}
+
+func CmdLinkedAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "linked-address",
+		Short: "Query linked address for a given stride address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := &types.QueryLinkedAddressRequest{
+				StrideAddress: args[0],
+			}
+			res, err := queryClient.LinkedAddress(context.Background(), req)
 			if err != nil {
 				return err
 			}
