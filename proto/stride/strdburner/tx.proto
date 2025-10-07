@@ -1,0 +1,44 @@
+
+syntax = "proto3";
+package stride.strdburner;
+
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/Stride-Labs/stride/v28/x/strdburner/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // Burn STRD
+  rpc Burn(MsgBurn) returns (MsgBurnResponse);
+
+  // Link non-stride address
+  rpc Link(MsgLink) returns (MsgLinkResponse);
+}
+
+// Burn STRD
+message MsgBurn {
+  option (cosmos.msg.v1.signer) = "burner";
+  option (amino.name) = "strdburner/MsgBurn";
+
+  string burner = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string amount = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+message MsgBurnResponse {}
+
+// Link non-stride address
+message MsgLink {
+  option (cosmos.msg.v1.signer) = "stride_address";
+  option (amino.name) = "strdburner/MsgLink";
+
+  string stride_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string linked_address = 2;
+}
+message MsgLinkResponse {}

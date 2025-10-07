@@ -69,11 +69,11 @@ spec:
             timeoutSeconds: 10
           resources:
             limits:
-              cpu: "200m"
-              memory: "1000M"
+              cpu: "100m"
+              memory: "100M"
             requests:
-              cpu: "200m"
-              memory: "1000M"
+              cpu: "50m"
+              memory: "50M"
           volumeMounts:
             - name: configs
               mountPath: "/home/{{ $relayer.type }}/configs"
@@ -100,4 +100,5 @@ spec:
     - port: 5183
       name: rpc
       protocol: TCP
+---
 {{- end }}

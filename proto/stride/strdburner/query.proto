@@ -20,6 +20,18 @@ service Query {
       returns (QueryTotalStrdBurnedResponse) {
     option (google.api.http).get = "/stride/strdburner/total_burned";
   }
+
+  // StrdBurnerAddress queries amount burned from a given address
+  rpc StrdBurnedByAddress(QueryStrdBurnedByAddressRequest)
+      returns (QueryStrdBurnedByAddressResponse) {
+    option (google.api.http).get = "/stride/strdburner/burned/{address}";
+  }
+
+  // LinkedAddress queries the linked address for a given stride address
+  rpc LinkedAddress(QueryLinkedAddressRequest)
+      returns (QueryLinkedAddressResponse) {
+    option (google.api.http).get = "/stride/strdburner/linked/{stride_address}";
+  }
 }
 
 // QueryStrdBurnerAddressRequest is the request type for the Query/strdburner
@@ -43,4 +55,33 @@ message QueryTotalStrdBurnedResponse {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  string protocol_burned = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string total_user_burned = 3 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
 }
+
+// QueryStrdBurnedByAddressRequest is the request type for the Query/strdburner
+// RPC method
+message QueryStrdBurnedByAddressRequest { string address = 1; }
+
+// QueryStrdBurnedByAddressResponse is the response type for the
+// Query/strdburner RPC method
+message QueryStrdBurnedByAddressResponse {
+  string burned_amount = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// QueryLinkedAddressRequest is the request type for the Query/strdburner
+// RPC method
+message QueryLinkedAddressRequest { string stride_address = 1; }
+
+// QueryLinkedAddressResponse is the response type for the
+// Query/strdburner RPC method
+message QueryLinkedAddressResponse { string linked_address = 1; }

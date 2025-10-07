@@ -20,7 +20,7 @@ specifiers:
   jest: 29.7.0
   osmojs: 16.15.0
   prettier: 3.3.3
-  stridejs: github:Stride-Labs/stridejs#02d79121b07315e74852667c4a79c37306f0ac85
+  stridejs: github:Stride-Labs/stridejs#559e7908ba8fd0945b6fe07a7542e5413155d7b3
   typescript: 5.5.3
   vitest: 2.1.9
 
@@ -36,7 +36,7 @@ dependencies:
   jest: 29.7.0
   osmojs: 16.15.0
   prettier: 3.3.3
-  stridejs: github.com/Stride-Labs/stridejs/02d79121b07315e74852667c4a79c37306f0ac85
+  stridejs: github.com/Stride-Labs/stridejs/559e7908ba8fd0945b6fe07a7542e5413155d7b3
   typescript: 5.5.3
   vitest: 2.1.9
 
@@ -3552,8 +3552,8 @@ packages:
     engines: {node: '>=10'}
     dev: false
 
-  github.com/Stride-Labs/stridejs/02d79121b07315e74852667c4a79c37306f0ac85:
-    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/02d79121b07315e74852667c4a79c37306f0ac85}
+  github.com/Stride-Labs/stridejs/559e7908ba8fd0945b6fe07a7542e5413155d7b3:
+    resolution: {tarball: https://codeload.github.com/Stride-Labs/stridejs/tar.gz/559e7908ba8fd0945b6fe07a7542e5413155d7b3}
     name: stridejs
     version: 0.14.1
     dependencies:

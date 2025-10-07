@@ -156,7 +156,9 @@ var xxx_messageInfo_QueryTotalStrdBurnedRequest proto.InternalMessageInfo
 // QueryTotalStrdBurnedResponse is the response type for the Query/strdburner
 // RPC method
 type QueryTotalStrdBurnedResponse struct {
-	TotalBurned cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=total_burned,json=totalBurned,proto3,customtype=cosmossdk.io/math.Int" json:"total_burned"`
+	TotalBurned     cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=total_burned,json=totalBurned,proto3,customtype=cosmossdk.io/math.Int" json:"total_burned"`
+	ProtocolBurned  cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=protocol_burned,json=protocolBurned,proto3,customtype=cosmossdk.io/math.Int" json:"protocol_burned"`
+	TotalUserBurned cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=total_user_burned,json=totalUserBurned,proto3,customtype=cosmossdk.io/math.Int" json:"total_user_burned"`
 }
 
 func (m *QueryTotalStrdBurnedResponse) Reset()         { *m = QueryTotalStrdBurnedResponse{} }
@@ -192,43 +194,236 @@ func (m *QueryTotalStrdBurnedResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryTotalStrdBurnedResponse proto.InternalMessageInfo
 
+// QueryStrdBurnedByAddressRequest is the request type for the Query/strdburner
+// RPC method
+type QueryStrdBurnedByAddressRequest struct {
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+}
+
+func (m *QueryStrdBurnedByAddressRequest) Reset()         { *m = QueryStrdBurnedByAddressRequest{} }
+func (m *QueryStrdBurnedByAddressRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryStrdBurnedByAddressRequest) ProtoMessage()    {}
+func (*QueryStrdBurnedByAddressRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_76c45869caa19016, []int{4}
+}
+func (m *QueryStrdBurnedByAddressRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryStrdBurnedByAddressRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryStrdBurnedByAddressRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryStrdBurnedByAddressRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryStrdBurnedByAddressRequest.Merge(m, src)
+}
+func (m *QueryStrdBurnedByAddressRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryStrdBurnedByAddressRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryStrdBurnedByAddressRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryStrdBurnedByAddressRequest proto.InternalMessageInfo
+
+func (m *QueryStrdBurnedByAddressRequest) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+// QueryStrdBurnedByAddressResponse is the response type for the
+// Query/strdburner RPC method
+type QueryStrdBurnedByAddressResponse struct {
+	BurnedAmount cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=burned_amount,json=burnedAmount,proto3,customtype=cosmossdk.io/math.Int" json:"burned_amount"`
+}
+
+func (m *QueryStrdBurnedByAddressResponse) Reset()         { *m = QueryStrdBurnedByAddressResponse{} }
+func (m *QueryStrdBurnedByAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryStrdBurnedByAddressResponse) ProtoMessage()    {}
+func (*QueryStrdBurnedByAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_76c45869caa19016, []int{5}
+}
+func (m *QueryStrdBurnedByAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryStrdBurnedByAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryStrdBurnedByAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryStrdBurnedByAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryStrdBurnedByAddressResponse.Merge(m, src)
+}
+func (m *QueryStrdBurnedByAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryStrdBurnedByAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryStrdBurnedByAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryStrdBurnedByAddressResponse proto.InternalMessageInfo
+
+// QueryLinkedAddressRequest is the request type for the Query/strdburner
+// RPC method
+type QueryLinkedAddressRequest struct {
+	StrideAddress string `protobuf:"bytes,1,opt,name=stride_address,json=strideAddress,proto3" json:"stride_address,omitempty"`
+}
+
+func (m *QueryLinkedAddressRequest) Reset()         { *m = QueryLinkedAddressRequest{} }
+func (m *QueryLinkedAddressRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryLinkedAddressRequest) ProtoMessage()    {}
+func (*QueryLinkedAddressRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_76c45869caa19016, []int{6}
+}
+func (m *QueryLinkedAddressRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryLinkedAddressRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryLinkedAddressRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryLinkedAddressRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLinkedAddressRequest.Merge(m, src)
+}
+func (m *QueryLinkedAddressRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryLinkedAddressRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLinkedAddressRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryLinkedAddressRequest proto.InternalMessageInfo
+
+func (m *QueryLinkedAddressRequest) GetStrideAddress() string {
+	if m != nil {
+		return m.StrideAddress
+	}
+	return ""
+}
+
+// QueryLinkedAddressResponse is the response type for the
+// Query/strdburner RPC method
+type QueryLinkedAddressResponse struct {
+	LinkedAddress string `protobuf:"bytes,1,opt,name=linked_address,json=linkedAddress,proto3" json:"linked_address,omitempty"`
+}
+
+func (m *QueryLinkedAddressResponse) Reset()         { *m = QueryLinkedAddressResponse{} }
+func (m *QueryLinkedAddressResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryLinkedAddressResponse) ProtoMessage()    {}
+func (*QueryLinkedAddressResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_76c45869caa19016, []int{7}
+}
+func (m *QueryLinkedAddressResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryLinkedAddressResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryLinkedAddressResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryLinkedAddressResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLinkedAddressResponse.Merge(m, src)
+}
+func (m *QueryLinkedAddressResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryLinkedAddressResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLinkedAddressResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryLinkedAddressResponse proto.InternalMessageInfo
+
+func (m *QueryLinkedAddressResponse) GetLinkedAddress() string {
+	if m != nil {
+		return m.LinkedAddress
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*QueryStrdBurnerAddressRequest)(nil), "stride.strdburner.QueryStrdBurnerAddressRequest")
 	proto.RegisterType((*QueryStrdBurnerAddressResponse)(nil), "stride.strdburner.QueryStrdBurnerAddressResponse")
 	proto.RegisterType((*QueryTotalStrdBurnedRequest)(nil), "stride.strdburner.QueryTotalStrdBurnedRequest")
 	proto.RegisterType((*QueryTotalStrdBurnedResponse)(nil), "stride.strdburner.QueryTotalStrdBurnedResponse")
+	proto.RegisterType((*QueryStrdBurnedByAddressRequest)(nil), "stride.strdburner.QueryStrdBurnedByAddressRequest")
+	proto.RegisterType((*QueryStrdBurnedByAddressResponse)(nil), "stride.strdburner.QueryStrdBurnedByAddressResponse")
+	proto.RegisterType((*QueryLinkedAddressRequest)(nil), "stride.strdburner.QueryLinkedAddressRequest")
+	proto.RegisterType((*QueryLinkedAddressResponse)(nil), "stride.strdburner.QueryLinkedAddressResponse")
 }
 
 func init() { proto.RegisterFile("stride/strdburner/query.proto", fileDescriptor_76c45869caa19016) }
 
 var fileDescriptor_76c45869caa19016 = []byte{
-	// 402 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2d, 0x2e, 0x29, 0xca,
-	0x4c, 0x49, 0xd5, 0x2f, 0x2e, 0x29, 0x4a, 0x49, 0x2a, 0x2d, 0xca, 0x4b, 0x2d, 0xd2, 0x2f, 0x2c,
-	0x4d, 0x2d, 0xaa, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x84, 0x48, 0xeb, 0x21, 0xa4,
-	0xa5, 0x24, 0x93, 0xf3, 0x8b, 0x73, 0xf3, 0x8b, 0xe3, 0xc1, 0x0a, 0xf4, 0x21, 0x1c, 0x88, 0x6a,
-	0x29, 0x91, 0xf4, 0xfc, 0xf4, 0x7c, 0x88, 0x38, 0x88, 0x05, 0x15, 0x95, 0x49, 0xcf, 0xcf, 0x4f,
-	0xcf, 0x49, 0xd5, 0x4f, 0x2c, 0xc8, 0xd4, 0x4f, 0xcc, 0xcb, 0xcb, 0x2f, 0x49, 0x2c, 0xc9, 0xcc,
-	0xcf, 0x83, 0xea, 0x51, 0x92, 0xe7, 0x92, 0x0d, 0x04, 0x59, 0x18, 0x5c, 0x52, 0x94, 0xe2, 0x04,
-	0xb6, 0xc1, 0x31, 0x25, 0xa5, 0x28, 0xb5, 0xb8, 0x38, 0x28, 0xb5, 0xb0, 0x34, 0xb5, 0xb8, 0x44,
-	0x29, 0x84, 0x4b, 0x0e, 0x97, 0x82, 0xe2, 0x82, 0xfc, 0xbc, 0xe2, 0x54, 0x21, 0x23, 0x2e, 0xf6,
-	0x44, 0x88, 0x90, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0xa7, 0x93, 0xc4, 0xa5, 0x2d, 0xba, 0x22, 0x50,
-	0x97, 0x41, 0x15, 0x07, 0x97, 0x14, 0x65, 0xe6, 0xa5, 0x07, 0xc1, 0x14, 0x2a, 0xc9, 0x72, 0x49,
-	0x83, 0x4d, 0x0d, 0xc9, 0x2f, 0x49, 0xcc, 0x81, 0x1b, 0x9d, 0x02, 0xb3, 0x34, 0x81, 0x4b, 0x06,
-	0xbb, 0x34, 0xd4, 0x4a, 0x07, 0x2e, 0x9e, 0x12, 0x90, 0x54, 0x3c, 0x38, 0x50, 0x52, 0xa0, 0xf6,
-	0xca, 0x9e, 0xb8, 0x27, 0xcf, 0x70, 0xeb, 0x9e, 0xbc, 0x28, 0xc4, 0xee, 0xe2, 0x94, 0x6c, 0xbd,
-	0xcc, 0x7c, 0xfd, 0xdc, 0xc4, 0x92, 0x0c, 0x3d, 0xcf, 0xbc, 0x92, 0x20, 0x6e, 0xb0, 0x16, 0x88,
-	0x49, 0x46, 0x47, 0x98, 0xb8, 0x58, 0xc1, 0x56, 0x08, 0xcd, 0x61, 0xe4, 0x12, 0xc4, 0xf0, 0x9c,
-	0x90, 0x81, 0x1e, 0x46, 0xd0, 0xeb, 0xe1, 0x0d, 0x28, 0x29, 0x43, 0x12, 0x74, 0x40, 0xbc, 0xa1,
-	0xa4, 0xd4, 0x74, 0xf9, 0xc9, 0x64, 0x26, 0x19, 0x21, 0x29, 0x7d, 0xcc, 0x64, 0x00, 0x0d, 0x29,
-	0xa1, 0xd9, 0x8c, 0x5c, 0xfc, 0x68, 0xc1, 0x20, 0xa4, 0x87, 0xcb, 0x2a, 0xec, 0xc1, 0x29, 0xa5,
-	0x4f, 0xb4, 0x7a, 0xa8, 0xc3, 0xd4, 0xc1, 0x0e, 0x53, 0x14, 0x92, 0xc7, 0xe2, 0x30, 0xe4, 0x80,
-	0x77, 0xf2, 0x3b, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27,
-	0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0x93, 0xf4, 0xcc,
-	0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0xfd, 0x60, 0xb0, 0x21, 0xba, 0x3e, 0x89, 0x49,
-	0xc5, 0x30, 0x03, 0xcb, 0x8c, 0x2c, 0xf4, 0x2b, 0x50, 0x8c, 0xad, 0x2c, 0x48, 0x2d, 0x4e, 0x62,
-	0x03, 0xa7, 0x4a, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x26, 0x10, 0x72, 0x24, 0x18, 0x03,
-	0x00, 0x00,
+	// 600 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0x41, 0x6b, 0x13, 0x41,
+	0x14, 0xc7, 0xb3, 0x95, 0x2a, 0x3e, 0xdb, 0x86, 0x8c, 0x15, 0xd2, 0x35, 0xd9, 0xd4, 0x95, 0xa0,
+	0x68, 0xb3, 0xa3, 0xa9, 0x07, 0xc1, 0x8b, 0x5d, 0x41, 0x28, 0x14, 0xc1, 0xa4, 0x5e, 0xbc, 0x84,
+	0x4d, 0x76, 0xdc, 0x2e, 0x4d, 0x76, 0xd2, 0x99, 0x59, 0x31, 0x94, 0x5e, 0xfc, 0x04, 0x82, 0x78,
+	0xd2, 0x83, 0x77, 0xaf, 0x7e, 0x88, 0x1e, 0x8b, 0x5e, 0xc4, 0x43, 0x91, 0xc4, 0x6f, 0xe0, 0x17,
+	0x90, 0xcc, 0x4c, 0xda, 0x6e, 0xb2, 0xd1, 0xf4, 0x96, 0xcc, 0x7b, 0xff, 0xff, 0xfb, 0xf1, 0xe6,
+	0x3f, 0x0b, 0x45, 0x2e, 0x58, 0xe8, 0x13, 0xcc, 0x05, 0xf3, 0x9b, 0x31, 0x8b, 0x08, 0xc3, 0x7b,
+	0x31, 0x61, 0x3d, 0xa7, 0xcb, 0xa8, 0xa0, 0x28, 0xa7, 0xca, 0xce, 0x69, 0xd9, 0x5c, 0x69, 0x51,
+	0xde, 0xa1, 0xbc, 0x21, 0x1b, 0xb0, 0xfa, 0xa3, 0xba, 0xcd, 0xe5, 0x80, 0x06, 0x54, 0x9d, 0x0f,
+	0x7f, 0xe9, 0xd3, 0x42, 0x40, 0x69, 0xd0, 0x26, 0xd8, 0xeb, 0x86, 0xd8, 0x8b, 0x22, 0x2a, 0x3c,
+	0x11, 0xd2, 0x48, 0x6b, 0xec, 0x12, 0x14, 0x9f, 0x0f, 0x07, 0xd6, 0x05, 0xf3, 0x5d, 0x39, 0x61,
+	0xc3, 0xf7, 0x19, 0xe1, 0xbc, 0x46, 0xf6, 0x62, 0xc2, 0x85, 0xbd, 0x0d, 0xd6, 0xb4, 0x06, 0xde,
+	0xa5, 0x11, 0x27, 0xa8, 0x0a, 0x97, 0x3c, 0x75, 0x94, 0x37, 0x56, 0x8d, 0xdb, 0x97, 0xdd, 0xfc,
+	0xb7, 0xaf, 0x95, 0x65, 0x4d, 0xa6, 0x9b, 0xeb, 0x82, 0x85, 0x51, 0x50, 0x1b, 0x35, 0xda, 0x45,
+	0xb8, 0x2e, 0x5d, 0xb7, 0xa9, 0xf0, 0xda, 0x27, 0xd6, 0xfe, 0x68, 0xe8, 0x1f, 0x03, 0x0a, 0xe9,
+	0x75, 0x3d, 0xf3, 0x31, 0x2c, 0x88, 0x61, 0xa9, 0x21, 0xb7, 0xe2, 0xeb, 0xc1, 0xc5, 0xc3, 0xe3,
+	0x52, 0xe6, 0xe7, 0x71, 0xe9, 0x9a, 0x1a, 0xce, 0xfd, 0x5d, 0x27, 0xa4, 0xb8, 0xe3, 0x89, 0x1d,
+	0x67, 0x33, 0x12, 0xb5, 0x2b, 0x52, 0xa2, 0x9c, 0xd0, 0x53, 0xc8, 0xca, 0x0d, 0xb4, 0xe8, 0x89,
+	0xc9, 0xdc, 0x2c, 0x26, 0x4b, 0x23, 0x95, 0xf6, 0xd9, 0x84, 0x9c, 0x22, 0x89, 0x39, 0x61, 0x23,
+	0xa7, 0x0b, 0xb3, 0x38, 0x65, 0xa5, 0xee, 0x05, 0x27, 0x4c, 0x59, 0xd9, 0x8f, 0xa0, 0x94, 0x5c,
+	0xb5, 0xef, 0xf6, 0x92, 0xb7, 0x81, 0xf2, 0x63, 0xbb, 0x3e, 0xdd, 0xe8, 0x2b, 0x58, 0x9d, 0x2e,
+	0xd6, 0x5b, 0x73, 0x61, 0x51, 0x01, 0x36, 0xbc, 0x0e, 0x8d, 0x23, 0x31, 0xdb, 0xda, 0x16, 0x94,
+	0x66, 0x43, 0x4a, 0x6c, 0x17, 0x56, 0xe4, 0x9c, 0xad, 0x30, 0xda, 0x25, 0xfe, 0x18, 0x5e, 0x19,
+	0x96, 0x54, 0x62, 0x1b, 0x49, 0xca, 0x45, 0x75, 0xaa, 0xbb, 0xed, 0x27, 0x60, 0xa6, 0x79, 0x68,
+	0xca, 0x32, 0x2c, 0xb5, 0x65, 0x61, 0xdc, 0xa4, 0x7d, 0xb6, 0xbd, 0xfa, 0x61, 0x1e, 0xe6, 0xa5,
+	0x0b, 0xfa, 0x64, 0x40, 0x6e, 0x22, 0x9e, 0xe8, 0x9e, 0x33, 0xf1, 0x78, 0x9c, 0x7f, 0x46, 0xdd,
+	0xbc, 0x7f, 0x0e, 0x85, 0x62, 0xb5, 0xed, 0xb7, 0xdf, 0x7f, 0xbf, 0x9f, 0x2b, 0x20, 0x13, 0x4f,
+	0x3e, 0x64, 0x4d, 0x8f, 0x3e, 0x1a, 0x90, 0x1d, 0xcb, 0x31, 0x72, 0xa6, 0x8d, 0x4a, 0x7f, 0x10,
+	0x26, 0x9e, 0xb9, 0x5f, 0x83, 0xdd, 0x92, 0x60, 0x37, 0x50, 0x29, 0x05, 0xec, 0xec, 0xcb, 0x41,
+	0x5f, 0x0c, 0xb8, 0x9a, 0x92, 0x19, 0x54, 0xfd, 0xef, 0x32, 0x26, 0xd2, 0x69, 0xae, 0x9f, 0x4b,
+	0xa3, 0x49, 0xef, 0x4a, 0xd2, 0x32, 0xba, 0x99, 0x42, 0xaa, 0x18, 0xf1, 0xbe, 0x5e, 0xe5, 0x01,
+	0xfa, 0x6c, 0xc0, 0x62, 0x22, 0x35, 0x68, 0x6d, 0xda, 0xcc, 0xb4, 0x80, 0x9a, 0x95, 0x19, 0xbb,
+	0x35, 0x5b, 0x55, 0xb2, 0xad, 0xa1, 0x3b, 0x29, 0x6c, 0x2a, 0x8d, 0x78, 0x3f, 0x19, 0xf8, 0x03,
+	0xf7, 0xd9, 0x61, 0xdf, 0x32, 0x8e, 0xfa, 0x96, 0xf1, 0xab, 0x6f, 0x19, 0xef, 0x06, 0x56, 0xe6,
+	0x68, 0x60, 0x65, 0x7e, 0x0c, 0xac, 0xcc, 0xcb, 0x07, 0x41, 0x28, 0x76, 0xe2, 0xa6, 0xd3, 0xa2,
+	0x1d, 0x5c, 0x97, 0xaa, 0xca, 0x96, 0xd7, 0xe4, 0x23, 0xef, 0xd7, 0xd5, 0x87, 0xf8, 0x4d, 0xe2,
+	0x9e, 0x7a, 0x5d, 0xc2, 0x9b, 0x17, 0xe5, 0x07, 0x67, 0xfd, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0x59, 0xd7, 0xab, 0x5c, 0x2b, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -247,6 +442,10 @@ type QueryClient interface {
 	StrdBurnerAddress(ctx context.Context, in *QueryStrdBurnerAddressRequest, opts ...grpc.CallOption) (*QueryStrdBurnerAddressResponse, error)
 	// StrdBurnerAddress queries the address of the strdburner module
 	TotalStrdBurned(ctx context.Context, in *QueryTotalStrdBurnedRequest, opts ...grpc.CallOption) (*QueryTotalStrdBurnedResponse, error)
+	// StrdBurnerAddress queries amount burned from a given address
+	StrdBurnedByAddress(ctx context.Context, in *QueryStrdBurnedByAddressRequest, opts ...grpc.CallOption) (*QueryStrdBurnedByAddressResponse, error)
+	// LinkedAddress queries the linked address for a given stride address
+	LinkedAddress(ctx context.Context, in *QueryLinkedAddressRequest, opts ...grpc.CallOption) (*QueryLinkedAddressResponse, error)
 }
 
 type queryClient struct {
@@ -275,12 +474,34 @@ func (c *queryClient) TotalStrdBurned(ctx context.Context, in *QueryTotalStrdBur
 	return out, nil
 }
 
+func (c *queryClient) StrdBurnedByAddress(ctx context.Context, in *QueryStrdBurnedByAddressRequest, opts ...grpc.CallOption) (*QueryStrdBurnedByAddressResponse, error) {
+	out := new(QueryStrdBurnedByAddressResponse)
+	err := c.cc.Invoke(ctx, "/stride.strdburner.Query/StrdBurnedByAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) LinkedAddress(ctx context.Context, in *QueryLinkedAddressRequest, opts ...grpc.CallOption) (*QueryLinkedAddressResponse, error) {
+	out := new(QueryLinkedAddressResponse)
+	err := c.cc.Invoke(ctx, "/stride.strdburner.Query/LinkedAddress", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// StrdBurnerAddress queries the address of the strdburner module
 	StrdBurnerAddress(context.Context, *QueryStrdBurnerAddressRequest) (*QueryStrdBurnerAddressResponse, error)
 	// StrdBurnerAddress queries the address of the strdburner module
 	TotalStrdBurned(context.Context, *QueryTotalStrdBurnedRequest) (*QueryTotalStrdBurnedResponse, error)
+	// StrdBurnerAddress queries amount burned from a given address
+	StrdBurnedByAddress(context.Context, *QueryStrdBurnedByAddressRequest) (*QueryStrdBurnedByAddressResponse, error)
+	// LinkedAddress queries the linked address for a given stride address
+	LinkedAddress(context.Context, *QueryLinkedAddressRequest) (*QueryLinkedAddressResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -292,6 +513,12 @@ func (*UnimplementedQueryServer) StrdBurnerAddress(ctx context.Context, req *Que
 }
 func (*UnimplementedQueryServer) TotalStrdBurned(ctx context.Context, req *QueryTotalStrdBurnedRequest) (*QueryTotalStrdBurnedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TotalStrdBurned not implemented")
+}
+func (*UnimplementedQueryServer) StrdBurnedByAddress(ctx context.Context, req *QueryStrdBurnedByAddressRequest) (*QueryStrdBurnedByAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StrdBurnedByAddress not implemented")
+}
+func (*UnimplementedQueryServer) LinkedAddress(ctx context.Context, req *QueryLinkedAddressRequest) (*QueryLinkedAddressResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LinkedAddress not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -334,6 +561,42 @@ func _Query_TotalStrdBurned_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_StrdBurnedByAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryStrdBurnedByAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).StrdBurnedByAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.strdburner.Query/StrdBurnedByAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).StrdBurnedByAddress(ctx, req.(*QueryStrdBurnedByAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_LinkedAddress_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLinkedAddressRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).LinkedAddress(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/stride.strdburner.Query/LinkedAddress",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).LinkedAddress(ctx, req.(*QueryLinkedAddressRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "stride.strdburner.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -345,6 +608,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TotalStrdBurned",
 			Handler:    _Query_TotalStrdBurned_Handler,
+		},
+		{
+			MethodName: "StrdBurnedByAddress",
+			Handler:    _Query_StrdBurnedByAddress_Handler,
+		},
+		{
+			MethodName: "LinkedAddress",
+			Handler:    _Query_LinkedAddress_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -448,6 +719,26 @@ func (m *QueryTotalStrdBurnedResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 	var l int
 	_ = l
 	{
+		size := m.TotalUserBurned.Size()
+		i -= size
+		if _, err := m.TotalUserBurned.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.ProtocolBurned.Size()
+		i -= size
+		if _, err := m.ProtocolBurned.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
 		size := m.TotalBurned.Size()
 		i -= size
 		if _, err := m.TotalBurned.MarshalTo(dAtA[i:]); err != nil {
@@ -457,6 +748,129 @@ func (m *QueryTotalStrdBurnedResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 	}
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryStrdBurnedByAddressRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryStrdBurnedByAddressRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryStrdBurnedByAddressRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryStrdBurnedByAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryStrdBurnedByAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryStrdBurnedByAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.BurnedAmount.Size()
+		i -= size
+		if _, err := m.BurnedAmount.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryLinkedAddressRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLinkedAddressRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLinkedAddressRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.StrideAddress) > 0 {
+		i -= len(m.StrideAddress)
+		copy(dAtA[i:], m.StrideAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.StrideAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryLinkedAddressResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLinkedAddressResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLinkedAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.LinkedAddress) > 0 {
+		i -= len(m.LinkedAddress)
+		copy(dAtA[i:], m.LinkedAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.LinkedAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -510,6 +924,60 @@ func (m *QueryTotalStrdBurnedResponse) Size() (n int) {
 	_ = l
 	l = m.TotalBurned.Size()
 	n += 1 + l + sovQuery(uint64(l))
+	l = m.ProtocolBurned.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	l = m.TotalUserBurned.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryStrdBurnedByAddressRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryStrdBurnedByAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.BurnedAmount.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryLinkedAddressRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StrideAddress)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryLinkedAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.LinkedAddress)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	return n
 }
 
@@ -763,6 +1231,404 @@ func (m *QueryTotalStrdBurnedResponse) Unmarshal(dAtA []byte) error {
 			if err := m.TotalBurned.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProtocolBurned", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ProtocolBurned.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalUserBurned", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TotalUserBurned.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryStrdBurnedByAddressRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryStrdBurnedByAddressRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryStrdBurnedByAddressRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryStrdBurnedByAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryStrdBurnedByAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryStrdBurnedByAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BurnedAmount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.BurnedAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryLinkedAddressRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLinkedAddressRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLinkedAddressRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StrideAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StrideAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryLinkedAddressResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLinkedAddressResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLinkedAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LinkedAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.LinkedAddress = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

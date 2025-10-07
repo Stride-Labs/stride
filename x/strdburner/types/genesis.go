@@ -9,7 +9,11 @@ import (
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		TotalUstrdBurned: sdkmath.ZeroInt(),
+		TotalUstrdBurned:     sdkmath.ZeroInt(),
+		ProtocolUstrdBurned:  sdkmath.ZeroInt(),
+		TotalUserUstrdBurned: sdkmath.ZeroInt(),
+		BurnedByAccount:      []AddressBurnedAmount{},
+		LinkedAddresses:      []LinkedAddresses{},
 	}
 }
 

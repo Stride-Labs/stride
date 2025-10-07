@@ -6,6 +6,7 @@ package types
 import (
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -24,17 +25,128 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Stores the total burned for each account
+type AddressBurnedAmount struct {
+	// The address of the account
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	// The total burned from the account
+	Amount cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=cosmossdk.io/math.Int" json:"amount"`
+}
+
+func (m *AddressBurnedAmount) Reset()         { *m = AddressBurnedAmount{} }
+func (m *AddressBurnedAmount) String() string { return proto.CompactTextString(m) }
+func (*AddressBurnedAmount) ProtoMessage()    {}
+func (*AddressBurnedAmount) Descriptor() ([]byte, []int) {
+	return fileDescriptor_003ecc60d66895bb, []int{0}
+}
+func (m *AddressBurnedAmount) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AddressBurnedAmount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AddressBurnedAmount.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AddressBurnedAmount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddressBurnedAmount.Merge(m, src)
+}
+func (m *AddressBurnedAmount) XXX_Size() int {
+	return m.Size()
+}
+func (m *AddressBurnedAmount) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddressBurnedAmount.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AddressBurnedAmount proto.InternalMessageInfo
+
+func (m *AddressBurnedAmount) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+// Stores stride and non-stride linked addresses
+type LinkedAddresses struct {
+	// The stride address for the account
+	StrideAddress string `protobuf:"bytes,1,opt,name=stride_address,json=strideAddress,proto3" json:"stride_address,omitempty"`
+	// The non-stride address that is linked
+	LinkedAddress string `protobuf:"bytes,2,opt,name=linked_address,json=linkedAddress,proto3" json:"linked_address,omitempty"`
+}
+
+func (m *LinkedAddresses) Reset()         { *m = LinkedAddresses{} }
+func (m *LinkedAddresses) String() string { return proto.CompactTextString(m) }
+func (*LinkedAddresses) ProtoMessage()    {}
+func (*LinkedAddresses) Descriptor() ([]byte, []int) {
+	return fileDescriptor_003ecc60d66895bb, []int{1}
+}
+func (m *LinkedAddresses) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *LinkedAddresses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_LinkedAddresses.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *LinkedAddresses) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LinkedAddresses.Merge(m, src)
+}
+func (m *LinkedAddresses) XXX_Size() int {
+	return m.Size()
+}
+func (m *LinkedAddresses) XXX_DiscardUnknown() {
+	xxx_messageInfo_LinkedAddresses.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LinkedAddresses proto.InternalMessageInfo
+
+func (m *LinkedAddresses) GetStrideAddress() string {
+	if m != nil {
+		return m.StrideAddress
+	}
+	return ""
+}
+
+func (m *LinkedAddresses) GetLinkedAddress() string {
+	if m != nil {
+		return m.LinkedAddress
+	}
+	return ""
+}
+
 // GenesisState defines the strdburner module's genesis state
 type GenesisState struct {
 	// Total amount of ustrd burned
 	TotalUstrdBurned cosmossdk_io_math.Int `protobuf:"bytes,9,opt,name=total_ustrd_burned,json=totalUstrdBurned,proto3,customtype=cosmossdk.io/math.Int" json:"total_ustrd_burned"`
+	// Total amount of ustrd burned from the protocol
+	ProtocolUstrdBurned cosmossdk_io_math.Int `protobuf:"bytes,1,opt,name=protocol_ustrd_burned,json=protocolUstrdBurned,proto3,customtype=cosmossdk.io/math.Int" json:"protocol_ustrd_burned"`
+	// Total amount of ustrd burned from users
+	TotalUserUstrdBurned cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=total_user_ustrd_burned,json=totalUserUstrdBurned,proto3,customtype=cosmossdk.io/math.Int" json:"total_user_ustrd_burned"`
+	// List of the amount burned from each account
+	BurnedByAccount []AddressBurnedAmount `protobuf:"bytes,3,rep,name=burned_by_account,json=burnedByAccount,proto3" json:"burned_by_account"`
+	// List of the linked addresses
+	LinkedAddresses []LinkedAddresses `protobuf:"bytes,4,rep,name=linked_addresses,json=linkedAddresses,proto3" json:"linked_addresses"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
 func (m *GenesisState) String() string { return proto.CompactTextString(m) }
 func (*GenesisState) ProtoMessage()    {}
 func (*GenesisState) Descriptor() ([]byte, []int) {
-	return fileDescriptor_003ecc60d66895bb, []int{0}
+	return fileDescriptor_003ecc60d66895bb, []int{2}
 }
 func (m *GenesisState) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -63,28 +175,135 @@ func (m *GenesisState) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GenesisState proto.InternalMessageInfo
 
+func (m *GenesisState) GetBurnedByAccount() []AddressBurnedAmount {
+	if m != nil {
+		return m.BurnedByAccount
+	}
+	return nil
+}
+
+func (m *GenesisState) GetLinkedAddresses() []LinkedAddresses {
+	if m != nil {
+		return m.LinkedAddresses
+	}
+	return nil
+}
+
 func init() {
+	proto.RegisterType((*AddressBurnedAmount)(nil), "stride.strdburner.AddressBurnedAmount")
+	proto.RegisterType((*LinkedAddresses)(nil), "stride.strdburner.LinkedAddresses")
 	proto.RegisterType((*GenesisState)(nil), "stride.strdburner.GenesisState")
 }
 
 func init() { proto.RegisterFile("stride/strdburner/genesis.proto", fileDescriptor_003ecc60d66895bb) }
 
 var fileDescriptor_003ecc60d66895bb = []byte{
-	// 223 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2f, 0x2e, 0x29, 0xca,
-	0x4c, 0x49, 0xd5, 0x2f, 0x2e, 0x29, 0x4a, 0x49, 0x2a, 0x2d, 0xca, 0x4b, 0x2d, 0xd2, 0x4f, 0x4f,
-	0xcd, 0x4b, 0x2d, 0xce, 0x2c, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x84, 0x28, 0xd0,
-	0x43, 0x28, 0x90, 0x12, 0x49, 0xcf, 0x4f, 0xcf, 0x07, 0xcb, 0xea, 0x83, 0x58, 0x10, 0x85, 0x4a,
-	0xd1, 0x5c, 0x3c, 0xee, 0x10, 0x9d, 0xc1, 0x25, 0x89, 0x25, 0xa9, 0x42, 0xde, 0x5c, 0x42, 0x25,
-	0xf9, 0x25, 0x89, 0x39, 0xf1, 0xa5, 0x20, 0xad, 0xf1, 0x60, 0xbd, 0x29, 0x12, 0x9c, 0x0a, 0x8c,
-	0x1a, 0x9c, 0x4e, 0xb2, 0x27, 0xee, 0xc9, 0x33, 0xdc, 0xba, 0x27, 0x2f, 0x9a, 0x9c, 0x5f, 0x9c,
-	0x9b, 0x5f, 0x5c, 0x9c, 0x92, 0xad, 0x97, 0x99, 0xaf, 0x9f, 0x9b, 0x58, 0x92, 0xa1, 0xe7, 0x99,
-	0x57, 0x12, 0x24, 0x00, 0xd6, 0x18, 0x0a, 0xd2, 0xe7, 0x04, 0xd6, 0xe6, 0xe4, 0x77, 0xe2, 0x91,
-	0x1c, 0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70, 0xe1,
-	0xb1, 0x1c, 0xc3, 0x8d, 0xc7, 0x72, 0x0c, 0x51, 0x26, 0xe9, 0x99, 0x25, 0x19, 0xa5, 0x49, 0x7a,
-	0xc9, 0xf9, 0xb9, 0xfa, 0xc1, 0x60, 0xa7, 0xea, 0xfa, 0x24, 0x26, 0x15, 0xeb, 0x43, 0xfd, 0x55,
-	0x66, 0x64, 0xa1, 0x5f, 0x81, 0xec, 0xbb, 0x92, 0xca, 0x82, 0xd4, 0xe2, 0x24, 0x36, 0xb0, 0x9b,
-	0x8d, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x25, 0x0d, 0x42, 0xab, 0xff, 0x00, 0x00, 0x00,
+	// 441 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0xcf, 0xaa, 0xd3, 0x40,
+	0x14, 0xc6, 0x13, 0x7b, 0xb9, 0x72, 0x47, 0xef, 0xbf, 0xb9, 0x2d, 0xc6, 0x82, 0x69, 0x09, 0x28,
+	0xdd, 0x34, 0x81, 0xaa, 0xe0, 0x4e, 0x9a, 0x8d, 0x88, 0x45, 0x30, 0x51, 0x10, 0x37, 0x21, 0xc9,
+	0x0c, 0x69, 0x68, 0x92, 0x29, 0x33, 0x13, 0x31, 0x3b, 0x1f, 0xc1, 0x77, 0xd1, 0x87, 0xe8, 0xb2,
+	0xb8, 0x12, 0x17, 0x45, 0xda, 0x17, 0x91, 0xcc, 0x24, 0x9a, 0xf6, 0x76, 0x91, 0x5d, 0x32, 0xe7,
+	0xfb, 0x7e, 0x73, 0xe6, 0x9b, 0x33, 0x60, 0xc0, 0x38, 0x8d, 0x11, 0xb6, 0x18, 0xa7, 0x28, 0xc8,
+	0x69, 0x86, 0xa9, 0x15, 0xe1, 0x0c, 0xb3, 0x98, 0x99, 0x4b, 0x4a, 0x38, 0x81, 0xd7, 0x52, 0x60,
+	0xfe, 0x17, 0xf4, 0xbb, 0x11, 0x89, 0x88, 0xa8, 0x5a, 0xe5, 0x97, 0x14, 0xf6, 0x1f, 0x86, 0x84,
+	0xa5, 0x84, 0x79, 0xb2, 0x20, 0x7f, 0x64, 0xc9, 0xf8, 0xaa, 0x82, 0x9b, 0x29, 0x42, 0x14, 0x33,
+	0x66, 0x97, 0x08, 0x34, 0x4d, 0x49, 0x9e, 0x71, 0x38, 0x01, 0x77, 0x7d, 0xb9, 0xac, 0xa9, 0x43,
+	0x75, 0x74, 0x66, 0x6b, 0x3f, 0x7f, 0x8c, 0xbb, 0x95, 0xb5, 0x32, 0xb8, 0x9c, 0xc6, 0x59, 0xe4,
+	0xd4, 0x42, 0xf8, 0x1c, 0x9c, 0xfa, 0xc2, 0xad, 0xdd, 0x11, 0x96, 0x47, 0xab, 0xcd, 0x40, 0xf9,
+	0xbd, 0x19, 0xf4, 0xa4, 0x8d, 0xa1, 0x85, 0x19, 0x13, 0x2b, 0xf5, 0xf9, 0xdc, 0x7c, 0x9d, 0x71,
+	0xa7, 0x12, 0x1b, 0x05, 0xb8, 0x9c, 0xc5, 0xd9, 0x02, 0xa3, 0x0a, 0x8b, 0x19, 0x7c, 0x09, 0x2e,
+	0xe4, 0xd9, 0xbc, 0xb6, 0x4d, 0x9c, 0x4b, 0x7d, 0xb5, 0x08, 0x1f, 0x83, 0x8b, 0x44, 0x30, 0xff,
+	0x01, 0x44, 0x4b, 0xce, 0x79, 0xd2, 0xdc, 0xc9, 0xf8, 0xde, 0x01, 0xf7, 0x5f, 0xc9, 0x4c, 0x5d,
+	0xee, 0x73, 0x0c, 0xdf, 0x00, 0xc8, 0x09, 0xf7, 0x13, 0x2f, 0x2f, 0x43, 0xf5, 0x44, 0xaa, 0x48,
+	0x3b, 0x6b, 0x73, 0x9c, 0x2b, 0x61, 0xfc, 0x50, 0xfa, 0x64, 0x92, 0xf0, 0x1d, 0xe8, 0x89, 0x90,
+	0x43, 0x72, 0xc0, 0x53, 0xdb, 0xf0, 0x6e, 0x6a, 0x6f, 0x13, 0xf9, 0x1e, 0x3c, 0xa8, 0xfb, 0xc3,
+	0x74, 0x1f, 0xda, 0x2a, 0xf3, 0x6e, 0xd5, 0x24, 0xa6, 0x4d, 0xea, 0x47, 0x70, 0x2d, 0x21, 0x5e,
+	0x50, 0x78, 0x7e, 0x18, 0x8a, 0x3b, 0xec, 0x0c, 0x3b, 0xa3, 0x7b, 0x93, 0x27, 0xe6, 0xad, 0x21,
+	0x33, 0x8f, 0xcc, 0x8b, 0x7d, 0x52, 0xee, 0xeb, 0x5c, 0x4a, 0x8c, 0x5d, 0x4c, 0x25, 0x04, 0xba,
+	0xe0, 0x6a, 0xff, 0x1e, 0x30, 0xd3, 0x4e, 0x04, 0xd8, 0x38, 0x02, 0x3e, 0x18, 0x83, 0x1a, 0x9a,
+	0x1c, 0x2c, 0xbf, 0x5d, 0x6d, 0x75, 0x75, 0xbd, 0xd5, 0xd5, 0x3f, 0x5b, 0x5d, 0xfd, 0xb6, 0xd3,
+	0x95, 0xf5, 0x4e, 0x57, 0x7e, 0xed, 0x74, 0xe5, 0xd3, 0xb3, 0x28, 0xe6, 0xf3, 0x3c, 0x30, 0x43,
+	0x92, 0x5a, 0xae, 0xc0, 0x8f, 0x67, 0x7e, 0xc0, 0xac, 0xea, 0x25, 0x7d, 0x9e, 0xbc, 0xb0, 0xbe,
+	0x34, 0xdf, 0x13, 0x2f, 0x96, 0x98, 0x05, 0xa7, 0x22, 0xe9, 0xa7, 0x7f, 0x03, 0x00, 0x00, 0xff,
+	0xff, 0x1a, 0x6d, 0x6c, 0x8b, 0x71, 0x03, 0x00, 0x00,
+}
+
+func (m *AddressBurnedAmount) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AddressBurnedAmount) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AddressBurnedAmount) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Amount.Size()
+		i -= size
+		if _, err := m.Amount.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *LinkedAddresses) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LinkedAddresses) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *LinkedAddresses) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.LinkedAddress) > 0 {
+		i -= len(m.LinkedAddress)
+		copy(dAtA[i:], m.LinkedAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.LinkedAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.StrideAddress) > 0 {
+		i -= len(m.StrideAddress)
+		copy(dAtA[i:], m.StrideAddress)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.StrideAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -117,6 +336,54 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0x4a
+	if len(m.LinkedAddresses) > 0 {
+		for iNdEx := len(m.LinkedAddresses) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.LinkedAddresses[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.BurnedByAccount) > 0 {
+		for iNdEx := len(m.BurnedByAccount) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.BurnedByAccount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	{
+		size := m.TotalUserUstrdBurned.Size()
+		i -= size
+		if _, err := m.TotalUserUstrdBurned.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size := m.ProtocolUstrdBurned.Size()
+		i -= size
+		if _, err := m.ProtocolUstrdBurned.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -131,12 +398,60 @@ func encodeVarintGenesis(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *AddressBurnedAmount) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = m.Amount.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	return n
+}
+
+func (m *LinkedAddresses) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StrideAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = len(m.LinkedAddress)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
 func (m *GenesisState) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = m.ProtocolUstrdBurned.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	l = m.TotalUserUstrdBurned.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	if len(m.BurnedByAccount) > 0 {
+		for _, e := range m.BurnedByAccount {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.LinkedAddresses) > 0 {
+		for _, e := range m.LinkedAddresses {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
 	l = m.TotalUstrdBurned.Size()
 	n += 1 + l + sovGenesis(uint64(l))
 	return n
@@ -147,6 +462,236 @@ func sovGenesis(x uint64) (n int) {
 }
 func sozGenesis(x uint64) (n int) {
 	return sovGenesis(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *AddressBurnedAmount) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AddressBurnedAmount: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AddressBurnedAmount: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *LinkedAddresses) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LinkedAddresses: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LinkedAddresses: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StrideAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StrideAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LinkedAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.LinkedAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *GenesisState) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -177,6 +722,142 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: GenesisState: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProtocolUstrdBurned", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ProtocolUstrdBurned.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalUserUstrdBurned", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TotalUserUstrdBurned.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BurnedByAccount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BurnedByAccount = append(m.BurnedByAccount, AddressBurnedAmount{})
+			if err := m.BurnedByAccount[len(m.BurnedByAccount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LinkedAddresses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.LinkedAddresses = append(m.LinkedAddresses, LinkedAddresses{})
+			if err := m.LinkedAddresses[len(m.LinkedAddresses)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		case 9:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TotalUstrdBurned", wireType)
