@@ -695,3 +695,28 @@ func (s *KeeperTestSuite) TestBurn_StridePeriodicVestingAccount_FullyVested_Insu
 	err := s.TryBurn(address, burnAmount)
 	s.Require().ErrorContains(err, "unable to transfer tokens to the burner module account")
 }
+
+// --------------------------------------------
+//	              Link Tests
+// --------------------------------------------
+
+func (s *KeeperTestSuite) TestLink_Successful() {
+	strideAddress := s.TestAccs[0]
+	linkedAddress1 := "0x1"
+	linkedAddress2 := "0x1"
+
+	// Link one address
+	msg := types.MsgLink{
+		StrideAddress: strideAddress.String(),
+		LinkedAddress: linkedAddress1,
+	}
+	_, err := s.GetMsgServer().Link(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when linking")
+	s.Require().Equal(linkedAddress1, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, strideAddress))
+
+	// Link a different address (overwrites the first)
+	msg.LinkedAddress = linkedAddress2
+	_, err = s.GetMsgServer().Link(sdk.UnwrapSDKContext(s.Ctx), &msg)
+	s.Require().NoError(err, "no error expected when linking")
+	s.Require().Equal(linkedAddress2, s.App.StrdBurnerKeeper.GetLinkedAddress(s.Ctx, strideAddress))
+}

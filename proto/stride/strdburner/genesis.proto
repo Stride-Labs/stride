@@ -18,6 +18,15 @@ message AddressBurnedAmount {
   ];
 }
 
+// Stores stride and non-stride linked addresses
+message LinkedAddresses {
+  // The stride address for the account
+  string stride_address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // The non-stride address that is linked
+  string linked_address = 2;
+}
+
 // GenesisState defines the strdburner module's genesis state
 message GenesisState {
   // Total amount of ustrd burned
@@ -37,5 +46,8 @@ message GenesisState {
   ];
   // List of the amount burned from each account
   repeated AddressBurnedAmount burned_by_account = 3
+      [ (gogoproto.nullable) = false ];
+  // List of the linked addresses
+  repeated LinkedAddresses linked_addresses = 4
       [ (gogoproto.nullable) = false ];
 }

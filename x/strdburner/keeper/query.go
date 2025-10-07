@@ -37,3 +37,15 @@ func (k Keeper) StrdBurnedByAddress(goCtx context.Context, req *types.QueryStrdB
 		BurnedAmount: k.GetStrdBurnedByAddress(ctx, address),
 	}, nil
 }
+
+func (k Keeper) LinkedAddress(goCtx context.Context, req *types.QueryLinkedAddressRequest) (*types.QueryLinkedAddressResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	address, err := sdk.AccAddressFromBech32(req.StrideAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryLinkedAddressResponse{
+		LinkedAddress: k.GetLinkedAddress(ctx, address),
+	}, nil
+}

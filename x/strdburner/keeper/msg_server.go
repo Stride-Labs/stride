@@ -76,3 +76,17 @@ func (k msgServer) Burn(goCtx context.Context, msg *types.MsgBurn) (*types.MsgBu
 
 	return &types.MsgBurnResponse{}, nil
 }
+
+// User transaction to link a non-stride address
+func (k msgServer) Link(goCtx context.Context, msg *types.MsgLink) (*types.MsgLinkResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	strideAddress, err := sdk.AccAddressFromBech32(msg.StrideAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	k.SetLinkedAddress(ctx, strideAddress, msg.LinkedAddress)
+
+	return &types.MsgLinkResponse{}, nil
+}

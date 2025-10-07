@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"strings"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -49,6 +50,74 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 				Amount: sdkmath.NewInt(999_999),
 			},
 			expectedError: "amount (999999ustrd) is below 1 STRD minimum",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actualError := tc.msg.ValidateBasic()
+			if tc.expectedError != "" {
+				require.ErrorContains(t, actualError, tc.expectedError)
+				return
+			}
+			require.NoError(t, actualError)
+		})
+	}
+}
+
+func TestMsgLink_ValidateBasic(t *testing.T) {
+	validAddress, _ := apptesting.GenerateTestAddrs()
+
+	tests := []struct {
+		name          string
+		msg           types.MsgLink
+		expectedError string
+	}{
+		{
+			name: "valid inputs",
+			msg: types.MsgLink{
+				StrideAddress: validAddress,
+				LinkedAddress: "0x1",
+			},
+		},
+		{
+			name: "invalid address",
+			msg: types.MsgLink{
+				StrideAddress: "invalid_address",
+				LinkedAddress: "0x1",
+			},
+			expectedError: sdkerrors.ErrInvalidAddress.Error(),
+		},
+		{
+			name: "invalid address: wrong chain's bech32prefix",
+			msg: types.MsgLink{
+				StrideAddress: "celestia1yjq0n2ewufluenyyvj2y9sead9jfstpxnqv2xz",
+				LinkedAddress: "0x1",
+			},
+			expectedError: sdkerrors.ErrInvalidAddress.Error(),
+		},
+		{
+			name: "empty linked address",
+			msg: types.MsgLink{
+				StrideAddress: validAddress,
+				LinkedAddress: "",
+			},
+			expectedError: "linked address cannot be empty",
+		},
+		{
+			name: "not alphanumeric address",
+			msg: types.MsgLink{
+				StrideAddress: validAddress,
+				LinkedAddress: "0x1!",
+			},
+			expectedError: "linked address must be alphanumeric",
+		},
+		{
+			name: "address too long",
+			msg: types.MsgLink{
+				StrideAddress: validAddress,
+				LinkedAddress: strings.Repeat("X", 201),
+			},
+			expectedError: "address must be less than 200 characters, 201 provided",
 		},
 	}
 	for _, tc := range tests {

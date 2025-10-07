@@ -18,10 +18,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	k.SetTotalUserStrdBurned(ctx, genState.TotalUserUstrdBurned)
 
 	// Set STRD burned by address
-	allAddresses := map[string]bool{}
+	burnedAddresses := map[string]bool{}
 	for _, accountBurned := range genState.BurnedByAccount {
-		if allAddresses[accountBurned.Address] {
-			panic(fmt.Sprintf("Duplicate address found: %s", accountBurned.Address))
+		if burnedAddresses[accountBurned.Address] {
+			panic(fmt.Sprintf("Duplicate burner address found: %s", accountBurned.Address))
 		}
 
 		address, err := sdk.AccAddressFromBech32(accountBurned.Address)
@@ -30,7 +30,23 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		}
 		k.SetStrdBurnedByAddress(ctx, address, accountBurned.Amount)
 
-		allAddresses[accountBurned.Address] = true
+		burnedAddresses[accountBurned.Address] = true
+	}
+
+	// Set linked addresses
+	linkedAddresses := map[string]bool{}
+	for _, accountLinked := range genState.LinkedAddresses {
+		if linkedAddresses[accountLinked.StrideAddress] {
+			panic(fmt.Sprintf("Duplicate linked address found: %s", accountLinked.StrideAddress))
+		}
+
+		address, err := sdk.AccAddressFromBech32(accountLinked.StrideAddress)
+		if err != nil {
+			panic(fmt.Sprintf("Invalid stride address: %s", accountLinked.StrideAddress))
+		}
+		k.SetLinkedAddress(ctx, address, accountLinked.LinkedAddress)
+
+		linkedAddresses[accountLinked.StrideAddress] = true
 	}
 }
 
@@ -41,5 +57,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis.TotalUserUstrdBurned = k.GetTotalUserStrdBurned(ctx)
 	genesis.TotalUstrdBurned = k.GetTotalStrdBurned(ctx)
 	genesis.BurnedByAccount = k.GetAllStrdBurnedAcrossAddresses(ctx)
+	genesis.LinkedAddresses = k.GetAllLinkedAddresses(ctx)
 	return genesis
 }
