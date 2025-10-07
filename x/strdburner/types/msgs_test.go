@@ -23,14 +23,14 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			name: "valid inputs",
 			msg: types.MsgBurn{
 				Burner: validAddress,
-				Amount: sdkmath.NewInt(1200000),
+				Amount: sdkmath.NewInt(1_200_000),
 			},
 		},
 		{
 			name: "invalid address",
 			msg: types.MsgBurn{
 				Burner: "invalid_address",
-				Amount: sdkmath.NewInt(1000000),
+				Amount: sdkmath.NewInt(1_200_000),
 			},
 			expectedError: sdkerrors.ErrInvalidAddress.Error(),
 		},
@@ -38,7 +38,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			name: "invalid address: wrong chain's bech32prefix",
 			msg: types.MsgBurn{
 				Burner: "celestia1yjq0n2ewufluenyyvj2y9sead9jfstpxnqv2xz",
-				Amount: sdkmath.NewInt(1000000),
+				Amount: sdkmath.NewInt(1_200_000),
 			},
 			expectedError: sdkerrors.ErrInvalidAddress.Error(),
 		},
@@ -46,7 +46,7 @@ func TestMsgBurn_ValidateBasic(t *testing.T) {
 			name: "amount below threshold",
 			msg: types.MsgBurn{
 				Burner: validAddress,
-				Amount: sdkmath.NewInt(999999),
+				Amount: sdkmath.NewInt(999_999),
 			},
 			expectedError: "amount (999999ustrd) is below 1 STRD minimum",
 		},

@@ -13,6 +13,11 @@ const (
 	TypeMsgBurn = "burn"
 )
 
+var (
+	_ sdk.Msg       = &MsgBurn{}
+	_ sdk.LegacyMsg = &MsgBurn{}
+)
+
 func NewMsgBurn(burner string, amount sdkmath.Int) *MsgBurn {
 	return &MsgBurn{
 		Burner: burner,
@@ -43,7 +48,7 @@ func (msg *MsgBurn) ValidateBasic() error {
 	}
 
 	// Min threshold of 1 STRD
-	minThreshold := int64(1000000)
+	minThreshold := int64(1_000_000)
 	if msg.Amount.LT(sdkmath.NewInt(minThreshold)) {
 		return fmt.Errorf("amount (%vustrd) is below 1 STRD minimum", msg.Amount)
 	}
