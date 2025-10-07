@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"strings"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -109,6 +110,14 @@ func TestMsgLink_ValidateBasic(t *testing.T) {
 				LinkedAddress: "0x1!",
 			},
 			expectedError: "linked address must be alphanumeric",
+		},
+		{
+			name: "address too long",
+			msg: types.MsgLink{
+				StrideAddress: validAddress,
+				LinkedAddress: strings.Repeat("X", 201),
+			},
+			expectedError: "address must be less than 200 characters, 201 provided",
 		},
 	}
 	for _, tc := range tests {

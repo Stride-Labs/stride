@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -99,7 +100,11 @@ func (msg *MsgLink) ValidateBasic() error {
 	}
 
 	if msg.LinkedAddress == "" {
-		return fmt.Errorf("linked address cannot be empty")
+		return errors.New("linked address cannot be empty")
+	}
+
+	if len(msg.LinkedAddress) > 200 {
+		return fmt.Errorf("address must be less than 200 characters, %d provided", len(msg.LinkedAddress))
 	}
 
 	// Check if LinkedAddress is alphanumeric
