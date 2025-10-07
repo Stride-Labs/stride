@@ -104,14 +104,6 @@ func TestMsgLink_ValidateBasic(t *testing.T) {
 			expectedError: "linked address cannot be empty",
 		},
 		{
-			name: "not alphanumeric address",
-			msg: types.MsgLink{
-				StrideAddress: validAddress,
-				LinkedAddress: "0x1!",
-			},
-			expectedError: "linked address must be alphanumeric",
-		},
-		{
 			name: "address too long",
 			msg: types.MsgLink{
 				StrideAddress: validAddress,

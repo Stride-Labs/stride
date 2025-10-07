@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"fmt"
-	"regexp"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -105,12 +104,6 @@ func (msg *MsgLink) ValidateBasic() error {
 
 	if len(msg.LinkedAddress) > 200 {
 		return fmt.Errorf("address must be less than 200 characters, %d provided", len(msg.LinkedAddress))
-	}
-
-	// Check if LinkedAddress is alphanumeric
-	alphanumericPattern := regexp.MustCompile("^[a-zA-Z0-9]+$")
-	if !alphanumericPattern.MatchString(msg.LinkedAddress) {
-		return fmt.Errorf("linked address must be alphanumeric")
 	}
 
 	return nil
