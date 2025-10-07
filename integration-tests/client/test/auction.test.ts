@@ -307,6 +307,7 @@ describe("Buyback and Burn", () => {
           metadata: "Update icqoracle params",
           title: "Update icqoracle params",
           summary: "Update icqoracle params",
+          expedited: false,
         }),
       ]);
       const proposalId = BigInt(getValueFromEvents(tx.events, "submit_proposal.proposal_id"));
@@ -654,7 +655,8 @@ describe("Buyback and Burn", () => {
           }),
         );
 
-        const { totalBurned: totalBurnedAfter } = await stridejs.query.stride.strdburner.totalStrdBurned({});
+        const { totalBurned: totalBurnedAfter, protocolBurned } =
+          await stridejs.query.stride.strdburner.totalStrdBurned({});
         const { balance: { amount: userAtomBalanceAfter } = { amount: "0" } } =
           await stridejs.query.cosmos.bank.v1beta1.balance({
             address: strideAccounts.user.address,
@@ -663,6 +665,7 @@ describe("Buyback and Burn", () => {
 
         expect(BigInt(userAtomBalanceAfter)).toBe(BigInt(userAtomBalanceBefore) + atomsToBuy);
         expect(BigInt(totalBurnedAfter)).toBe(BigInt(totalBurnedBefore) + strdToPay);
+        expect(BigInt(protocolBurned)).toBe(BigInt(totalBurnedBefore) + strdToPay);
       },
       5 * 60 * 1000 /* 5min */,
     );
