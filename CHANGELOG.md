@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. ICS Migration - Opt-In PSS with PoA style set ([#1456](https://github.com/Stride-Labs/stride/pull/1456))
 2. added gov tx to deprecate host zones ([#1457](https://github.com/Stride-Labs/stride/pull/1457))
 3. Added burn tx ([#1458](https://github.com/Stride-Labs/stride/pull/1458))
+4. Versioning ([#1462](https://github.com/Stride-Labs/stride/pull/1462))
 
 ## [v28.0.0](https://github.com/Stride-Labs/stride/releases/tag/v28.0.0) - 2025-08-02
 
