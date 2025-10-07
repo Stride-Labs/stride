@@ -313,3 +313,28 @@ export function newLSMLiquidStakeMsg({
     lsmTokenIbcDenom,
   });
 }
+
+/**
+ * Creates a new burn STRD message
+ * @param amount The amount to burn
+ * @returns The burn message
+ */
+export function newBurnStrdMsg({ burner, amount }: { burner: string; amount: bigint }) {
+  return stride.strdburner.MessageComposer.withTypeUrl.burn({
+    burner,
+    amount: amount.toString(),
+  });
+}
+
+/**
+ * Creates a new link message
+ * @param strideAddress The stride address that's linking
+ * @param linkedAddress The linked address
+ * @returns The link message
+ */
+export function newLinkMsg({ strideAddress, linkedAddress }: { strideAddress: string; linkedAddress: string }) {
+  return stride.strdburner.MessageComposer.withTypeUrl.link({
+    strideAddress,
+    linkedAddress,
+  });
+}

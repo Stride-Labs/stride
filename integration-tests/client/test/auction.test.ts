@@ -633,7 +633,8 @@ describe("Buyback and Burn", () => {
         );
 
         // Buy ATOM with STRD off auction and verify STRD was burned and ATOM was sent to user
-        const { totalBurned: totalBurnedBefore } = await stridejs.query.stride.strdburner.totalStrdBurned({});
+        const { totalBurned: totalBurnedBefore, protocolBurned: protocolBurnedBefore } =
+          await stridejs.query.stride.strdburner.totalStrdBurned({});
         const { balance: { amount: userAtomBalanceBefore } = { amount: "0" } } =
           await stridejs.query.cosmos.bank.v1beta1.balance({
             address: strideAccounts.user.address,
@@ -655,7 +656,7 @@ describe("Buyback and Burn", () => {
           }),
         );
 
-        const { totalBurned: totalBurnedAfter, protocolBurned } =
+        const { totalBurned: totalBurnedAfter, protocolBurned: protocolBurnedAfter } =
           await stridejs.query.stride.strdburner.totalStrdBurned({});
         const { balance: { amount: userAtomBalanceAfter } = { amount: "0" } } =
           await stridejs.query.cosmos.bank.v1beta1.balance({
@@ -665,7 +666,7 @@ describe("Buyback and Burn", () => {
 
         expect(BigInt(userAtomBalanceAfter)).toBe(BigInt(userAtomBalanceBefore) + atomsToBuy);
         expect(BigInt(totalBurnedAfter)).toBe(BigInt(totalBurnedBefore) + strdToPay);
-        expect(BigInt(protocolBurned)).toBe(BigInt(totalBurnedBefore) + strdToPay);
+        expect(BigInt(protocolBurnedAfter)).toBe(BigInt(protocolBurnedBefore) + strdToPay);
       },
       5 * 60 * 1000 /* 5min */,
     );

@@ -85,7 +85,7 @@ upgrade-stride:
 
 test:
 .PHONY: test
-test: test-core test-auction
+test: test-core test-auction test-autopilot test-lsm test-burn
 
 test-core:
 	@(cd client && npx vitest run test/core.test.ts)
@@ -98,6 +98,9 @@ test-autopilot:
 
 test-lsm:
 	@(cd client && npx vitest run test/lsm.test.ts)
+
+test-burn:
+	@(cd client && npx vitest run test/burn.test.ts)
 
 startup-logs:
 	@$(KUBECTL) exec -it $(POD_ID) -- cat logs/startup.log
