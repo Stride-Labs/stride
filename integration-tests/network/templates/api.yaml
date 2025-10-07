@@ -22,11 +22,11 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: "400m"
-              memory: "8096M"
+              cpu: "100m"
+              memory: "100M"
             requests:
-              cpu: "200m"
-              memory: "4096M"
+              cpu: "50m"
+              memory: "50M"
 ---
 apiVersion: v1
 kind: Service
