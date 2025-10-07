@@ -7,8 +7,8 @@ import (
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/stretchr/testify/require"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/migrations/v2/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v29/x/icacallbacks/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/migrations/v2/types"
 )
 
 func TestConvertDelegateCallback(t *testing.T) {

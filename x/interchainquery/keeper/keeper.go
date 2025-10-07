@@ -13,8 +13,8 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/v28/utils"
-	"github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v29/utils"
+	"github.com/Stride-Labs/stride/v29/x/interchainquery/types"
 )
 
 // Keeper of this module maintains collections of registered zones.

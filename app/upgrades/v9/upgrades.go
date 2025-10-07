@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	claimkeeper "github.com/Stride-Labs/stride/v28/x/claim/keeper"
+	claimkeeper "github.com/Stride-Labs/stride/v29/x/claim/keeper"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v29

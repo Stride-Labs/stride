@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v28/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v29/x/strdburner/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

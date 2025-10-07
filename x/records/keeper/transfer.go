@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v28/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v29/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v29/x/icacallbacks/types"
 
-	"github.com/Stride-Labs/stride/v28/x/records/types"
+	"github.com/Stride-Labs/stride/v29/x/records/types"
 )
 
 // Timeout for the IBC transfer of the LSM Token to the host zone

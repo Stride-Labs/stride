@@ -9,9 +9,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v28/utils"
-	"github.com/Stride-Labs/stride/v28/x/icqoracle/types"
-	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v29/utils"
+	"github.com/Stride-Labs/stride/v29/x/icqoracle/types"
+	icqtypes "github.com/Stride-Labs/stride/v29/x/interchainquery/types"
 )
 
 const (

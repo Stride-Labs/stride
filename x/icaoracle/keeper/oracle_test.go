@@ -5,7 +5,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	"github.com/Stride-Labs/stride/v28/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v29/x/icaoracle/types"
 )
 
 func (s *KeeperTestSuite) TestGetOracle() {

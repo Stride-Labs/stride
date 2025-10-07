@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v28/x/claim/migrations/v2/types"
-	claimtypes "github.com/Stride-Labs/stride/v28/x/claim/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v29/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v29/x/claim/types"
 )
 
 func TestConvertToNewAirdrop(t *testing.T) {

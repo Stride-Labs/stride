@@ -9,12 +9,12 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v28/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
-	"github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v29/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v29/x/records/types"
+	"github.com/Stride-Labs/stride/v29/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/types"
 )
 
 // ----------------------------------------------------

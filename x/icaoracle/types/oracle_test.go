@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v28/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v29/x/icaoracle/types"
 )
 
 func TestValidateICASetup(t *testing.T) {

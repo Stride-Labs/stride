@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "stride/epochs/genesis.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v28/x/epochs/types";
+option go_package = "github.com/Stride-Labs/stride/v29/x/epochs/types";
 
 // Query defines the gRPC querier service.
 service Query {

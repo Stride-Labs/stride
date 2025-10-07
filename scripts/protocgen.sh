@@ -26,5 +26,5 @@ cd ..
 # move proto files to the right places
 #
 # Note: Proto files are suffixed with the current binary version.
-cp -r github.com/Stride-Labs/stride/v28/* ./
+cp -r github.com/Stride-Labs/stride/v29/* ./
 rm -rf github.com

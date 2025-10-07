@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v28/x/records/types"
+	"github.com/Stride-Labs/stride/v29/x/records/types"
 )
 
 func (s *KeeperTestSuite) TestGenesis() {

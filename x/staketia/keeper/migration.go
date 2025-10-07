@@ -9,13 +9,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	"github.com/Stride-Labs/stride/v28/utils"
-	recordkeeper "github.com/Stride-Labs/stride/v28/x/records/keeper"
-	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
-	oldtypes "github.com/Stride-Labs/stride/v28/x/staketia/legacytypes"
-	"github.com/Stride-Labs/stride/v28/x/staketia/types"
+	"github.com/Stride-Labs/stride/v29/utils"
+	recordkeeper "github.com/Stride-Labs/stride/v29/x/records/keeper"
+	recordtypes "github.com/Stride-Labs/stride/v29/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v29/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	oldtypes "github.com/Stride-Labs/stride/v29/x/staketia/legacytypes"
+	"github.com/Stride-Labs/stride/v29/x/staketia/types"
 )
 
 // Helper to deserialize the host zone with the old types

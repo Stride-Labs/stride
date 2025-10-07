@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v29/x/icacallbacks/types"
 )
 
 func (s *KeeperTestSuite) TestCallbackDataQuerySingle() {

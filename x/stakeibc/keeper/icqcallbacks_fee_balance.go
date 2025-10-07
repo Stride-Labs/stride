@@ -11,11 +11,11 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v28/utils"
-	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
-	icqkeeper "github.com/Stride-Labs/stride/v28/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v29/utils"
+	epochtypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
+	icqkeeper "github.com/Stride-Labs/stride/v29/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v29/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.

@@ -48,17 +48,17 @@ done
 update_version go.mod
 update_version ./scripts/protocgen.sh
 
-echo ">>> Committing changes..."
+# echo ">>> Committing changes..."
 
-git add .
-git commit -m "updated package from $OLD_VERSION -> $NEW_VERSION"
+# git add .
+# git commit -m "updated package from $OLD_VERSION -> $NEW_VERSION"
 
-# Re-generate protos
-echo ">>> Rebuilding protos..."
+# # Re-generate protos
+# echo ">>> Rebuilding protos..."
 
-make proto-all
+# make proto-all
 
-git add .
-git commit -m 'generated protos'
+# git add .
+# git commit -m 'generated protos'
 
-echo "Done"
+# echo "Done"
