@@ -36,5 +36,5 @@ func (k Keeper) DowngradeVestingAccount(ctx sdk.Context, address sdk.AccAddress)
 		return nil
 	}
 
-	return errors.New("Vesting account not recognized")
+	return errors.New("unable to downgrade vesiting account, account not recognized")
 }
