@@ -47,6 +47,7 @@ jobs:
 
       - name: Push changes
         run: |
+          git status
           git add -A
           git commit -m "Update version to ${{ env.NEW_VERSION }}"
           git push origin ${{ env.branch_name }}
