@@ -77,7 +77,7 @@ func CmdQueryStrdBurnerTotalBurned() *cobra.Command {
 
 func CmdQueryStrdBurnedByAddress() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "burned-by-address",
+		Use:   "burned-by-address [address]",
 		Short: "Query the STRD burned from an address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
