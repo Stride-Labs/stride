@@ -82,6 +82,7 @@ func CmdLink() *cobra.Command {
 		Short: "Link non-stride adress",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Link non-stride adress
+WARNING: No address validation is done in the CLI, it is YOUR responsibility to enter a correct address
 
 Example:
   $ %[1]s tx %[2]s link 0x1234...
