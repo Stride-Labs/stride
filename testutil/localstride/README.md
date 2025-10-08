@@ -201,7 +201,7 @@ bash setup_node.sh
 
 5. Start the node and wait until it's caught up to the head of the network
 
-```
+```bash
 strided start
 ```
 
@@ -237,7 +237,7 @@ The command:
 
 7. Start LocalStride:
 
-- Run the startup command which will setup each node. It will take a few minutes to setup and after the configuration and genesis files have been modified.
+- Run the startup command which will setup each node. It will take a few minutes to setup after the configuration and genesis files have been modified.
 
 ```bash
 make localnet-state-export-start
