@@ -3,7 +3,7 @@ package types // noalias
 import (
 	context "context"
 
-	epochstypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
+	epochstypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

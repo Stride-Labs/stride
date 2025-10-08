@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v28/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v29/x/strdburner/types"
 )
 
 // Loads module state from genesis

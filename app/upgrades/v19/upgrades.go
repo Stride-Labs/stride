@@ -15,7 +15,7 @@ import (
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
-	"github.com/Stride-Labs/stride/v28/utils"
+	"github.com/Stride-Labs/stride/v29/utils"
 )
 
 const (

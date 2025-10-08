@@ -7,11 +7,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v28/app/apptesting"
-	v8 "github.com/Stride-Labs/stride/v28/app/upgrades/v8"
-	autopilottypes "github.com/Stride-Labs/stride/v28/x/autopilot/types"
-	"github.com/Stride-Labs/stride/v28/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v28/x/claim/types"
+	"github.com/Stride-Labs/stride/v29/app/apptesting"
+	v8 "github.com/Stride-Labs/stride/v29/app/upgrades/v8"
+	autopilottypes "github.com/Stride-Labs/stride/v29/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v29/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v29/x/claim/types"
 )
 
 var (

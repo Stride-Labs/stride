@@ -14,9 +14,9 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
 
-	"github.com/Stride-Labs/stride/v28/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v28/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v29/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v29/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v29/x/stakeibc/keeper"
 )
 
 var (

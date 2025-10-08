@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v28/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v29/x/icacallbacks/types"
 )
 
 func (s *KeeperTestSuite) createNCallbackData(ctx sdk.Context, n int) []types.CallbackData {

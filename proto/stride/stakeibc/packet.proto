@@ -1,7 +1,7 @@
 syntax = "proto3";
 package stride.stakeibc;
 
-option go_package = "github.com/Stride-Labs/stride/v28/x/stakeibc/types";
+option go_package = "github.com/Stride-Labs/stride/v29/x/stakeibc/types";
 
 message StakeibcPacketData {
   oneof packet { NoData no_data = 1; }

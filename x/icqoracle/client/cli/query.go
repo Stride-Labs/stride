@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v28/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v29/x/icqoracle/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module.

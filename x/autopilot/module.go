@@ -16,9 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v28/x/autopilot/client/cli"
-	"github.com/Stride-Labs/stride/v28/x/autopilot/keeper"
-	"github.com/Stride-Labs/stride/v28/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v29/x/autopilot/client/cli"
+	"github.com/Stride-Labs/stride/v29/x/autopilot/keeper"
+	"github.com/Stride-Labs/stride/v29/x/autopilot/types"
 )
 
 var (

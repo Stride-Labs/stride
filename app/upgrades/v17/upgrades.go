@@ -17,11 +17,11 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
 	"github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v28/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v28/x/interchainquery/keeper"
-	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v29/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v29/x/interchainquery/keeper"
+	recordtypes "github.com/Stride-Labs/stride/v29/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v29/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/types"
 )
 
 var (
