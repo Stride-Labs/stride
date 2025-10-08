@@ -7,10 +7,10 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v28/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v28/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v29/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v29/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTradeConvertedBalanceCallbackTestCase() BalanceQueryCallbackTestCase {

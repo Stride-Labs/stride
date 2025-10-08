@@ -9,9 +9,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
-	"github.com/Stride-Labs/stride/v28/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v29/x/records/types"
+	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestParamsQuery() {

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package stride.icacallbacks;
 
-option go_package = "github.com/Stride-Labs/stride/v28/x/icacallbacks/types";
+option go_package = "github.com/Stride-Labs/stride/v29/x/icacallbacks/types";
 
 message IcacallbacksPacketData {
   oneof packet { NoData no_data = 1; }

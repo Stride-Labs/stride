@@ -6,9 +6,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v28/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v28/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v28/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v29/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/types"
 )
 
 type RedeemStakeState struct {

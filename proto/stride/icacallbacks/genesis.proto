@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "stride/icacallbacks/callback_data.proto";
 import "stride/icacallbacks/params.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v28/x/icacallbacks/types";
+option go_package = "github.com/Stride-Labs/stride/v29/x/icacallbacks/types";
 
 // GenesisState defines the icacallbacks module's genesis state.
 message GenesisState {

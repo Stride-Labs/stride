@@ -5,7 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v28/utils"
+	"github.com/Stride-Labs/stride/v29/utils"
 )
 
 const TypeMsgResumeHostZone = "resume_host_zone"

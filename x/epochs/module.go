@@ -16,9 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v28/x/epochs/client/cli"
-	"github.com/Stride-Labs/stride/v28/x/epochs/keeper"
-	"github.com/Stride-Labs/stride/v28/x/epochs/types"
+	"github.com/Stride-Labs/stride/v29/x/epochs/client/cli"
+	"github.com/Stride-Labs/stride/v29/x/epochs/keeper"
+	"github.com/Stride-Labs/stride/v29/x/epochs/types"
 )
 
 var (

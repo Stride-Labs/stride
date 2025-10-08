@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v28/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v29/x/interchainquery/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

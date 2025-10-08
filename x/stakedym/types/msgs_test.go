@@ -7,8 +7,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v28/app/apptesting"
-	"github.com/Stride-Labs/stride/v28/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v29/app/apptesting"
+	"github.com/Stride-Labs/stride/v29/x/stakedym/types"
 )
 
 // ----------------------------------------------

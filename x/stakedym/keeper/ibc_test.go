@@ -6,7 +6,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v28/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v29/x/stakedym/types"
 )
 
 type PacketCallbackTestCase struct {
