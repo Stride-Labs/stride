@@ -201,7 +201,7 @@ bash setup_node.sh
 
 5. Start the node and wait until it's caught up to the head of the network
 
-```
+```bash
 strided start
 ```
 
@@ -237,7 +237,7 @@ The command:
 
 7. Start LocalStride:
 
-- Run the startup command which will setup each node. It will take a few minutes to setup and after the configuration and genesis files have been modified.
+- Run the startup command which will setup each node. It will take a few minutes to setup after the configuration and genesis files have been modified.
 
 ```bash
 make localnet-state-export-start
@@ -259,6 +259,12 @@ make localnet-state-export-start
 If it starts up successfully, you can kill it with `control + C`
 
 ### Testing the upgrade
+
+- Take another state export so the before state is as close to the upgrade as possible. This helps reduce the state diffs between the two. Also try to make sure you're not near an epoch boundary which happens every hour.
+
+```bash
+strided export --home /home/stride/.stride1 > testutil/localstride/state-export/state_export_before.json
+```
 
 - Start the network up again in detached mode
 

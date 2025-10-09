@@ -21,11 +21,14 @@ class Account:
 
 
 # Constants
+TOKEN_INCREASE = 1000000000000000
+POWER_INCREASE = 1000000000
 BONDED_TOKENS_POOL_MODULE_ADDRESS = "stride1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3ksfndm"
+NOT_BONDED_TOKENS_POOL_MODULE_ADDRESS = "stride1tygms3xhhs3yv487phx3dw4a95jn7t7lzs4zm0"
 
 config = {
     "governance_voting_period": "180s",
-    "epoch_day_duration": '86400s',
+    "epoch_day_duration": "86400s",
     "epoch_stride_duration": "21600s",
 }
 
@@ -55,13 +58,13 @@ def replace_validator(genesis, old_validator, new_validator):
     replace(genesis, old_validator.consensus_address, new_validator.consensus_address)
 
     # replace(genesis, old_validator.pubkey, new_validator.pubkey)
-    for validator in genesis["validators"]:
-        if validator['name'] == old_validator.moniker:
-            validator['pub_key']['value'] = new_validator.pubkey
+    for validator in genesis["consensus"]["validators"]:
+        if validator["name"] == old_validator.moniker:
+            validator["pub_key"]["value"] = new_validator.pubkey
 
-    for validator in genesis['app_state']['staking']['validators']:
-        if validator['description']['moniker'] == old_validator.moniker:
-            validator['consensus_pubkey']['key'] = new_validator.pubkey
+    for validator in genesis["app_state"]["staking"]["validators"]:
+        if validator["description"]["moniker"] == old_validator.moniker:
+            validator["consensus_pubkey"]["key"] = new_validator.pubkey
 
     # This creates problems
     # replace(genesis, old_validator.operator_address, new_validator.operator_address)
@@ -76,37 +79,37 @@ def replace_account(genesis, old_account, new_account):
 def create_parser():
 
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter, description='Create a testnet from a state export'
+        formatter_class=argparse.RawDescriptionHelpFormatter, description="Create a testnet from a state export"
     )
 
     parser.add_argument(
-        '-c', '--chain-id', type=str, default="localstride", help='Chain ID for the testnet \nDefault: localstride\n'
+        "-c", "--chain-id", type=str, default="localstride", help="Chain ID for the testnet \nDefault: localstride\n"
     )
 
     parser.add_argument(
-        '-i', '--input', type=str, default="state_export.json", dest='input_genesis', help='Path to input genesis'
+        "-i", "--input", type=str, default="state_export.json", dest="input_genesis", help="Path to input genesis"
     )
 
     parser.add_argument(
-        '-o', '--output', type=str, default="testnet_genesis.json", dest='output_genesis', help='Path to output genesis'
+        "-o", "--output", type=str, default="testnet_genesis.json", dest="output_genesis", help="Path to output genesis"
     )
 
-    parser.add_argument('--validator-hex-address', type=str, help='Validator hex address to replace')
+    parser.add_argument("--validator-hex-address", type=str, help="Validator hex address to replace")
 
-    parser.add_argument('--validator-operator-address', type=str, help='Validator operator address to replace')
+    parser.add_argument("--validator-operator-address", type=str, help="Validator operator address to replace")
 
-    parser.add_argument('--validator-consensus-address', type=str, help='Validator consensus address to replace')
+    parser.add_argument("--validator-consensus-address", type=str, help="Validator consensus address to replace")
 
-    parser.add_argument('--validator-pubkey', type=str, help='Validator pubkey to replace')
+    parser.add_argument("--validator-pubkey", type=str, help="Validator pubkey to replace")
 
-    parser.add_argument('--account-pubkey', type=str, help='Account pubkey to replace')
+    parser.add_argument("--account-pubkey", type=str, help="Account pubkey to replace")
 
-    parser.add_argument('--account-address', type=str, help='Account address to replace')
+    parser.add_argument("--account-address", type=str, help="Account address to replace")
 
-    parser.add_argument('--prune-ibc', action='store_true', help='Prune the IBC module')
+    parser.add_argument("--prune-ibc", action="store_true", help="Prune the IBC module")
 
     parser.add_argument(
-        '--pretty-output', action='store_true', help='Properly indent output genesis (increases time and file size)'
+        "--pretty-output", action="store_true", help="Properly indent output genesis (increases time and file size)"
     )
 
     return parser
@@ -140,52 +143,52 @@ def main():
     )
 
     print("📝 Opening {}... (it may take a while)".format(args.input_genesis))
-    with open(args.input_genesis, 'r') as f:
+    with open(args.input_genesis, "r") as f:
         genesis = json.load(f)
 
     # Replace chain-id
-    print("🔗 Replace chain-id {} with {}".format(genesis['chain_id'], args.chain_id))
-    genesis['chain_id'] = args.chain_id
+    print("🔗 Replace chain-id {} with {}".format(genesis["chain_id"], args.chain_id))
+    genesis["chain_id"] = args.chain_id
 
     # Update gov module
     print("🗳️ Update gov module")
     print(
         "\tModify governance_voting_period from {} to {}".format(
-            genesis['app_state']['gov']['params']['voting_period'], config["governance_voting_period"]
+            genesis["app_state"]["gov"]["params"]["voting_period"], config["governance_voting_period"]
         )
     )
-    genesis['app_state']['gov']['params']['voting_period'] = config["governance_voting_period"]
+    genesis["app_state"]["gov"]["params"]["voting_period"] = config["governance_voting_period"]
 
     # Update epochs module
     print("⌛ Update epochs module")
     print("\tModify epoch_duration")
     print("\tReset current_epoch_start_time")
 
-    for epoch in genesis['app_state']['epochs']['epochs']:
-        if epoch['identifier'] == "day":
-            epoch['duration'] = config["epoch_day_duration"]
+    for epoch in genesis["app_state"]["epochs"]["epochs"]:
+        if epoch["identifier"] == "day":
+            epoch["duration"] = config["epoch_day_duration"]
 
-        elif epoch['identifier'] == "stride_epoch":
-            epoch['duration'] = config["epoch_stride_duration"]
+        elif epoch["identifier"] == "stride_epoch":
+            epoch["duration"] = config["epoch_stride_duration"]
 
-        epoch['current_epoch_start_time'] = datetime.now().isoformat() + 'Z'
+        epoch["current_epoch_start_time"] = datetime.now().isoformat() + "Z"
 
     # Prune IBC
     if args.prune_ibc:
 
         print("🕸 Pruning IBC module")
 
-        genesis['app_state']["ibc"]["channel_genesis"]["ack_sequences"] = []
-        genesis['app_state']["ibc"]["channel_genesis"]["acknowledgements"] = []
-        genesis['app_state']["ibc"]["channel_genesis"]["channels"] = []
-        genesis['app_state']["ibc"]["channel_genesis"]["commitments"] = []
-        genesis['app_state']["ibc"]["channel_genesis"]["receipts"] = []
-        genesis['app_state']["ibc"]["channel_genesis"]["recv_sequences"] = []
-        genesis['app_state']["ibc"]["channel_genesis"]["send_sequences"] = []
+        genesis["app_state"]["ibc"]["channel_genesis"]["ack_sequences"] = []
+        genesis["app_state"]["ibc"]["channel_genesis"]["acknowledgements"] = []
+        genesis["app_state"]["ibc"]["channel_genesis"]["channels"] = []
+        genesis["app_state"]["ibc"]["channel_genesis"]["commitments"] = []
+        genesis["app_state"]["ibc"]["channel_genesis"]["receipts"] = []
+        genesis["app_state"]["ibc"]["channel_genesis"]["recv_sequences"] = []
+        genesis["app_state"]["ibc"]["channel_genesis"]["send_sequences"] = []
 
-        genesis['app_state']["ibc"]["client_genesis"]["clients"] = []
-        genesis['app_state']["ibc"]["client_genesis"]["clients_consensus"] = []
-        genesis['app_state']["ibc"]["client_genesis"]["clients_metadata"] = []
+        genesis["app_state"]["ibc"]["client_genesis"]["clients"] = []
+        genesis["app_state"]["ibc"]["client_genesis"]["clients_consensus"] = []
+        genesis["app_state"]["ibc"]["client_genesis"]["clients_metadata"] = []
 
     # Impersonate validator
     print("🚀 Replace validator")
@@ -208,44 +211,41 @@ def main():
     # Update staking module
     print("🥩 Update staking module")
 
-    # Replace validator pub key in genesis['app_state']['staking']['validators']
-    for validator in genesis['app_state']['staking']['validators']:
-        if validator['description']['moniker'] == old_validator.moniker:
-
+    # Replace validator pub key in genesis["app_state"]["staking"]["validators"]
+    for validator in genesis["app_state"]["staking"]["validators"]:
+        if validator["description"]["moniker"] == old_validator.moniker:
             # Update delegator shares
-            validator['delegator_shares'] = (
-                str(int(float(validator['delegator_shares']) + 1000000000000000)) + ".000000000000000000"
+            validator["delegator_shares"] = (
+                str(int(float(validator["delegator_shares"]) + TOKEN_INCREASE)) + ".000000000000000000"
             )
-            print("\tUpdate delegator shares to {}".format(validator['delegator_shares']))
+            print("\tUpdate delegator shares to {}".format(validator["delegator_shares"]))
 
             # Update tokens
-            validator['tokens'] = str(int(validator['tokens']) + 1000000000000000)
-            print("\tUpdate tokens to {}".format(validator['tokens']))
+            validator["tokens"] = str(int(validator["tokens"]) + TOKEN_INCREASE)
+            print("\tUpdate tokens to {}".format(validator["tokens"]))
             break
 
     # Update self delegation on operator address
-    for delegation in genesis['app_state']['staking']['delegations']:
-        if delegation['delegator_address'] == new_account.address:
-
-            # delegation['validator_address'] = new_validator.operator_address
-            delegation['shares'] = str(int(float(delegation['shares'])) + 1000000000000000) + ".000000000000000000"
+    for delegation in genesis["app_state"]["staking"]["delegations"]:
+        if delegation["delegator_address"] == new_account.address:
+            delegation["shares"] = str(int(float(delegation["shares"])) + TOKEN_INCREASE) + ".000000000000000000"
             print(
                 "\tUpdate {} delegation shares to {} to {}".format(
-                    new_account.address, delegation['validator_address'], delegation['shares']
+                    new_account.address, delegation["validator_address"], delegation["shares"]
                 )
             )
             break
 
-    # Update genesis['app_state']['distribution']['delegator_starting_infos'] on operator address
-    for delegator_starting_info in genesis['app_state']['distribution']['delegator_starting_infos']:
-        if delegator_starting_info['delegator_address'] == new_account.address:
-            delegator_starting_info['starting_info']['stake'] = (
-                str(int(float(delegator_starting_info['starting_info']['stake']) + 1000000000000000))
+    # Update genesis["app_state"]["distribution"]["delegator_starting_infos"] on operator address
+    for delegator_starting_info in genesis["app_state"]["distribution"]["delegator_starting_infos"]:
+        if delegator_starting_info["delegator_address"] == new_account.address:
+            delegator_starting_info["starting_info"]["stake"] = (
+                str(int(float(delegator_starting_info["starting_info"]["stake"]) + TOKEN_INCREASE))
                 + ".000000000000000000"
             )
             print(
                 "\tUpdate {} stake to {}".format(
-                    delegator_starting_info['delegator_address'], delegator_starting_info['starting_info']['stake']
+                    delegator_starting_info["delegator_address"], delegator_starting_info["starting_info"]["stake"]
                 )
             )
             break
@@ -253,64 +253,106 @@ def main():
     print("🔋 Update validator power")
 
     # Update power in genesis["validators"]
-    for validator in genesis["validators"]:
-        if validator['name'] == old_validator.moniker:
-            validator['power'] = str(int(validator['power']) + 1000000000)
-            print("\tUpdate {} validator power to {}".format(validator['address'], validator['power']))
+    for validator in genesis["consensus"]["validators"]:
+        if validator["name"] == old_validator.moniker:
+            validator["power"] = str(int(validator["power"]) + POWER_INCREASE)
+            print("\tUpdate {} validator power to {}".format(validator["address"], validator["power"]))
             break
 
-    for validator_power in genesis['app_state']['staking']['last_validator_powers']:
-        if validator_power['address'] == old_validator.operator_address:
-            validator_power['power'] = str(int(validator_power['power']) + 1000000000)
+    for validator_power in genesis["app_state"]["staking"]["last_validator_powers"]:
+        if validator_power["address"] == old_validator.operator_address:
+            validator_power["power"] = str(int(validator_power["power"]) + POWER_INCREASE)
             print(
                 "\tUpdate {} last_validator_power to {}".format(
-                    old_validator.operator_address, validator_power['power']
+                    old_validator.operator_address, validator_power["power"]
                 )
             )
             break
 
     # Update total power
-    genesis['app_state']['staking']['last_total_power'] = str(
-        int(genesis['app_state']['staking']['last_total_power']) + 1000000000
+    genesis["app_state"]["staking"]["last_total_power"] = str(
+        int(genesis["app_state"]["staking"]["last_total_power"]) + POWER_INCREASE
     )
-    print("\tUpdate last_total_power to {}".format(genesis['app_state']['staking']['last_total_power']))
+    print("\tUpdate last_total_power to {}".format(genesis["app_state"]["staking"]["last_total_power"]))
 
     # Update bank module
     print("💵 Update bank module")
 
-    for balance in genesis['app_state']['bank']['balances']:
-        if balance['address'] == new_account.address:
-            for coin in balance['coins']:
-                if coin['denom'] == "ustrd":
-                    coin["amount"] = str(int(coin["amount"]) + 1000000000000000)
+    # First, update the account balance
+    for balance in genesis["app_state"]["bank"]["balances"]:
+        if balance["address"] == new_account.address:
+            for coin in balance["coins"]:
+                if coin["denom"] == "ustrd":
+                    coin["amount"] = str(int(coin["amount"]) + TOKEN_INCREASE)
                     print("\tUpdate {} ustrd balance to {}".format(new_account.address, coin["amount"]))
                     break
             break
 
-    # Add 1 BN ustrd to bonded_tokens_pool module address
-    for balance in genesis['app_state']['bank']['balances']:
-        if balance['address'] == BONDED_TOKENS_POOL_MODULE_ADDRESS:
-            # Find ustrd
-            for coin in balance['coins']:
-                if coin['denom'] == "ustrd":
-                    coin["amount"] = str(int(coin["amount"]) + 1000000000000000)
+    # Calculate the correct bonded pool balance from all bonded validators
+    total_bonded_tokens = 0
+    for validator in genesis["app_state"]["staking"]["validators"]:
+        if validator["status"] == "BOND_STATUS_BONDED":
+            total_bonded_tokens += int(validator["tokens"])
+
+    print(f"\tCalculated total bonded tokens: {total_bonded_tokens}")
+
+    # Calculate not bonded tokens from unbonding and unbonded validators
+    total_not_bonded_tokens = 0
+    for validator in genesis["app_state"]["staking"]["validators"]:
+        if validator["status"] in ["BOND_STATUS_UNBONDING", "BOND_STATUS_UNBONDED"]:
+            total_not_bonded_tokens += int(validator["tokens"])
+
+    # Add unbonding delegation tokens
+    for ubd in genesis["app_state"]["staking"]["unbonding_delegations"]:
+        for entry in ubd["entries"]:
+            total_not_bonded_tokens += int(entry["balance"])
+
+    print(f"\tCalculated total not bonded tokens: {total_not_bonded_tokens}")
+
+    # Updated bonded pool balance
+    for balance in genesis["app_state"]["bank"]["balances"]:
+        if balance["address"] == BONDED_TOKENS_POOL_MODULE_ADDRESS:
+            for coin in balance["coins"]:
+                if coin["denom"] == "ustrd":
+                    old_amount = int(coin["amount"])
+                    coin["amount"] = str(total_bonded_tokens)
                     print(
-                        "\tUpdate {} (bonded_tokens_pool_module) ustrd balance to {}".format(
-                            BONDED_TOKENS_POOL_MODULE_ADDRESS, coin["amount"]
+                        "\tUpdate {} (bonded_tokens_pool_module) ustrd balance from {} to {}".format(
+                            BONDED_TOKENS_POOL_MODULE_ADDRESS, old_amount, coin["amount"]
                         )
                     )
+                    # Calculate the difference for supply adjustment
+                    bonded_pool_increase = total_bonded_tokens - old_amount
                     break
             break
 
-    # Update bank balance
-    for supply in genesis['app_state']['bank']['supply']:
+    # Update not bonded pool balance
+    for balance in genesis["app_state"]["bank"]["balances"]:
+        if balance["address"] == NOT_BONDED_TOKENS_POOL_MODULE_ADDRESS:
+            for coin in balance["coins"]:
+                if coin["denom"] == "ustrd":
+                    old_not_bonded_amount = int(coin["amount"])
+                    coin["amount"] = str(total_not_bonded_tokens)
+                    print(
+                        "\tUpdate {} (not_bonded_tokens_pool_module) ustrd balance from {} to {}".format(
+                            NOT_BONDED_TOKENS_POOL_MODULE_ADDRESS, old_not_bonded_amount, coin["amount"]
+                        )
+                    )
+                    not_bonded_pool_adjustment = total_not_bonded_tokens - old_not_bonded_amount
+                    break
+            break
+
+    # Update total supply accounting for both account increase and bonded pool adjustment
+    for supply in genesis["app_state"]["bank"]["supply"]:
         if supply["denom"] == "ustrd":
+            old_supply = int(supply["amount"])
+            new_supply = old_supply + TOKEN_INCREASE + bonded_pool_increase + not_bonded_pool_adjustment
             print(
-                "\tUpdate total ustrd supply from {} to {}".format(
-                    supply["amount"], str(int(supply["amount"]) + 2000000000000000)
+                "\tUpdate total ustrd supply from {} to {} (account: +{}, bonded pool: +{}, not bonded pool: +{})".format(
+                    supply["amount"], new_supply, TOKEN_INCREASE, bonded_pool_increase, not_bonded_pool_adjustment
                 )
             )
-            supply["amount"] = str(int(supply["amount"]) + 2000000000000000)
+            supply["amount"] = str(new_supply)
             break
 
     print("Set governors as validators")
@@ -320,20 +362,20 @@ def main():
     # sovereign to consumer changeovers
     # See: https://github.com/cosmos/cosmos-sdk/blob/main/baseapp/abci.go#L114
     init_val_set = [
-        {'power': val['power'], 'pub_key': {'ed25519': val['pub_key']['value']}} for val in genesis['validators']
+        {"power": val["power"], "pub_key": {"ed25519": val["pub_key"]["value"]}}
+        for val in genesis["consensus"]["validators"]
     ]
-    genesis['app_state']['ccvconsumer']['initial_val_set'] = init_val_set
-    genesis['app_state']['ccvconsumer']['provider']['initial_val_set'] = init_val_set
+    genesis["app_state"]["ccvconsumer"]["provider"]["initial_val_set"] = init_val_set
 
     # Update provider fee pool addr
     print("🥸  Replace Provider Fee Pool Addr")
-    genesis['app_state']['ccvconsumer']['params'][
-        'provider_fee_pool_addr_str'
+    genesis["app_state"]["ccvconsumer"]["params"][
+        "provider_fee_pool_addr_str"
     ] = "stride1h2r2k24349gtx7e4kfxxl8gzqz8tn6zyc0sq2a"
-    genesis['app_state']['ccvconsumer']['params']['enabled'] = True
+    genesis["app_state"]["ccvconsumer"]["params"]["enabled"] = True
 
     print("📝 Writing {}... (it may take a while)".format(args.output_genesis))
-    with open(args.output_genesis, 'w') as f:
+    with open(args.output_genesis, "w") as f:
         if args.pretty_output:
             f.write(json.dumps(genesis, indent=2))
         else:

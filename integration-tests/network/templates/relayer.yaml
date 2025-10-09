@@ -69,11 +69,11 @@ spec:
             timeoutSeconds: 10
           resources:
             limits:
-              cpu: "100m"
-              memory: "100M"
+              cpu: "400m"
+              memory: "200M"
             requests:
-              cpu: "50m"
-              memory: "50M"
+              cpu: "200m"
+              memory: "100M"
           volumeMounts:
             - name: configs
               mountPath: "/home/{{ $relayer.type }}/configs"
