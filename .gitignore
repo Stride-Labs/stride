@@ -48,3 +48,5 @@ integration-tests/storage
 
 /__debug
 *.lock
+
+localstride/exports
