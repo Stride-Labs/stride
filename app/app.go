@@ -1317,12 +1317,10 @@ func NewStrideApp(
 	return app
 }
 
-// InitOsmosisAppForTestnet is broken down into two sections:
+// Initialize a local testnet using mainnet state
+// The Staking, Slashing, and Distribution changes are required - everything beyond that is custom
 func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPubKey crypto.PubKey, newOperatorAddress, upgradeToTrigger string) *StrideApp {
-	//
-	// Required Changes:
-	//
-
+	// Create a new account that will be used in the validator
 	ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 	pubkey := &ed25519.PubKey{Key: newValPubKey.Bytes()}
 	pubkeyAny, err := types.NewAnyWithValue(pubkey)
@@ -1330,15 +1328,18 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 		tmos.Exit(err.Error())
 	}
 
-	// STAKING
-	//
-
 	// Create Validator struct for our new validator.
+	// The validator will have all the bonded tokens
+	vs := app.StakingKeeper.GetValidatorSet()
+	totalBondedTokens, err := vs.TotalBondedTokens(ctx)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
 	_, bz, err := bech32.DecodeAndConvert(newOperatorAddress)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
-	bech32Addr, err := bech32.ConvertAndEncode("osmovaloper", bz)
+	bech32Addr, err := bech32.ConvertAndEncode(sdk.GetConfig().GetBech32ValidatorAddrPrefix(), bz)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
@@ -1347,7 +1348,7 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 		ConsensusPubkey: pubkeyAny,
 		Jailed:          false,
 		Status:          stakingtypes.Bonded,
-		Tokens:          sdkmath.NewInt(900000000000000),
+		Tokens:          totalBondedTokens,
 		DelegatorShares: sdkmath.LegacyMustNewDecFromStr("10000000"),
 		Description: stakingtypes.Description{
 			Moniker: "Testnet Validator",
@@ -1423,9 +1424,6 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 		panic(err)
 	}
 
-	// DISTRIBUTION
-	//
-
 	// Initialize records for this validator across all distribution stores
 	valAddr, err = sdk.ValAddressFromBech32(newVal.GetOperator())
 	if err != nil {
@@ -1448,9 +1446,6 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 		tmos.Exit(err.Error())
 	}
 
-	// SLASHING
-	//
-
 	// Set validator signing info for our new validator.
 	newConsAddr := sdk.ConsAddress(newValAddr.Bytes())
 	newValidatorSigningInfo := slashingtypes.ValidatorSigningInfo{
@@ -1463,13 +1458,7 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 		tmos.Exit(err.Error())
 	}
 
-	//
-	// Optional Changes:
-	//
-
-	// GOV
-	//
-
+	// Shorten the gov voting period
 	newExpeditedVotingPeriod := time.Minute
 	newVotingPeriod := time.Minute * 2
 
@@ -1487,104 +1476,7 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 		tmos.Exit(err.Error())
 	}
 
-	// EPOCHS
-	//
-
-	// dayEpochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "day")
-	// dayEpochInfo.Duration = time.Hour * 6
-	// // Prevents epochs from running back to back
-	// dayEpochInfo.CurrentEpochStartTime = time.Now().UTC()
-	// // If you want epoch to run a minute after starting the chain, uncomment the line below and comment the line above
-	// // dayEpochInfo.CurrentEpochStartTime = time.Now().UTC().Add(-dayEpochInfo.Duration).Add(time.Minute)
-	// dayEpochInfo.CurrentEpochStartHeight = app.LastBlockHeight()
-	// app.EpochsKeeper.DeleteEpochInfo(ctx, "day")
-	// err = app.EpochsKeeper.AddEpochInfo(ctx, dayEpochInfo)
-	// if err != nil {
-	// 	tmos.Exit(err.Error())
-	// }
-
-	// weekEpochInfo := app.EpochsKeeper.GetEpochInfo(ctx, "week")
-	// weekEpochInfo.Duration = time.Hour * 12
-	// // Prevents epochs from running back to back
-	// weekEpochInfo.CurrentEpochStartTime = time.Now().UTC()
-	// weekEpochInfo.CurrentEpochStartHeight = app.LastBlockHeight()
-	// app.EpochsKeeper.DeleteEpochInfo(ctx, "week")
-	// err = app.EpochsKeeper.AddEpochInfo(ctx, weekEpochInfo)
-	// if err != nil {
-	// 	tmos.Exit(err.Error())
-	// }
-
-	// BANK
-	//
-
-	defaultCoins := sdk.NewCoins(
-		sdk.NewInt64Coin("ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7", 1000000000000), // DAI
-		sdk.NewInt64Coin("ibc/498A0751C798A0D9A389AA3691123DADA57DAA4FE165D5C75894505B876BA6E4", 1000000000000), // USDC, for pool creation fee
-		sdk.NewInt64Coin(utils.BaseStrideDenom, 1000000000000),
-		sdk.NewInt64Coin("uion", 1000000000))
-
-	localOsmosisAccounts := []sdk.AccAddress{
-		sdk.MustAccAddressFromBech32("osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj"),
-		sdk.MustAccAddressFromBech32("osmo1cyyzpxplxdzkeea7kwsydadg87357qnahakaks"),
-		sdk.MustAccAddressFromBech32("osmo18s5lynnmx37hq4wlrw9gdn68sg2uxp5rgk26vv"),
-		sdk.MustAccAddressFromBech32("osmo1qwexv7c6sm95lwhzn9027vyu2ccneaqad4w8ka"),
-		sdk.MustAccAddressFromBech32("osmo14hcxlnwlqtq75ttaxf674vk6mafspg8xwgnn53"),
-		sdk.MustAccAddressFromBech32("osmo12rr534cer5c0vj53eq4y32lcwguyy7nndt0u2t"),
-		sdk.MustAccAddressFromBech32("osmo1nt33cjd5auzh36syym6azgc8tve0jlvklnq7jq"),
-		sdk.MustAccAddressFromBech32("osmo10qfrpash5g2vk3hppvu45x0g860czur8ff5yx0"),
-		sdk.MustAccAddressFromBech32("osmo1f4tvsdukfwh6s9swrc24gkuz23tp8pd3e9r5fa"),
-		sdk.MustAccAddressFromBech32("osmo1myv43sqgnj5sm4zl98ftl45af9cfzk7nhjxjqh"),
-		sdk.MustAccAddressFromBech32("osmo14gs9zqh8m49yy9kscjqu9h72exyf295afg6kgk"),
-		sdk.MustAccAddressFromBech32("osmo1jllfytsz4dryxhz5tl7u73v29exsf80vz52ucc"),
-	}
-
-	// Fund localosmosis accounts
-	for _, account := range localOsmosisAccounts {
-		err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, defaultCoins)
-		if err != nil {
-			tmos.Exit(err.Error())
-		}
-		err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, account, defaultCoins)
-		if err != nil {
-			tmos.Exit(err.Error())
-		}
-	}
-
-	// Fund edgenet faucet
-	faucetCoins := sdk.NewCoins(
-		sdk.NewInt64Coin("ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7", 1000000000000000), // DAI
-		sdk.NewInt64Coin(utils.BaseStrideDenom, 1000000000000000),
-		sdk.NewInt64Coin("uion", 1000000000000))
-	err = app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, faucetCoins)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
-	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, sdk.MustAccAddressFromBech32("osmo1rqgf207csps822qwmd3k2n6k6k4e99w502e79t"), faucetCoins)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
-
-	// Mars bank account
-	marsCoins := sdk.NewCoins(
-		sdk.NewInt64Coin(utils.BaseStrideDenom, 10000000000000),
-		sdk.NewInt64Coin("ibc/903A61A498756EA560B85A85132D3AEE21B5DEDD41213725D22ABF276EA6945E", 400000000000),
-		sdk.NewInt64Coin("ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858", 3000000000000),
-		sdk.NewInt64Coin("ibc/C140AFD542AE77BD7DCC83F13FDD8C5E5BB8C4929785E6EC2F4C636F98F17901", 200000000000),
-		sdk.NewInt64Coin("ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2", 700000000000),
-		sdk.NewInt64Coin("ibc/D1542AA8762DB13087D8364F3EA6509FD6F009A34F00426AF9E4F9FA85CBBF1F", 2000000000),
-		sdk.NewInt64Coin("ibc/EA1D43981D5C9A1C4AAEA9C23BB1D4FA126BA9BC7020A25E0AE4AA841EA25DC5", 3000000000000000000))
-	err = app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, marsCoins)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
-	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, sdk.MustAccAddressFromBech32("osmo1ev02crc36675xd8s029qh7wg3wjtfk37jr004z"), marsCoins)
-	if err != nil {
-		tmos.Exit(err.Error())
-	}
-
-	// UPGRADE
-	//
-
+	// Optionally play the latest upgrade on top of the mainnet state
 	if upgradeToTrigger != "" {
 		upgradePlan := upgradetypes.Plan{
 			Name:   upgradeToTrigger,
