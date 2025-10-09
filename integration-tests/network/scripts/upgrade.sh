@@ -6,6 +6,7 @@ set -eu
 
 NAMESPACE=integration
 
+EXEC0="kubectl exec -it stride-validator-0 -c validator -n $NAMESPACE -- "
 STRIDED0="kubectl exec -it stride-validator-0 -c validator -n $NAMESPACE -- strided"
 STRIDED1="kubectl exec -it stride-validator-1 -c validator -n $NAMESPACE -- strided"
 STRIDED2="kubectl exec -it stride-validator-2 -c validator -n $NAMESPACE -- strided"
@@ -21,13 +22,7 @@ latest_height=$($STRIDED0 status | jq -r 'if .SyncInfo then .SyncInfo.latest_blo
 upgrade_height=$((latest_height+UPGRADE_BUFFER))
 
 echo -e "\nSubmitting proposal for $upgrade_name at height $upgrade_height...\n"
-$STRIDED0 tx gov submit-legacy-proposal software-upgrade $upgrade_name \
-    --title $upgrade_name \
-    --description "description" \
-    --no-validate \
-    --deposit 10000001ustrd \
-    --upgrade-height $upgrade_height \
-    --from val1 -y | trim_tx
+$EXEC0 bash scripts/propose_upgrade.sh $upgrade_name $upgrade_height | trim_tx
 
 sleep 5
 echo -e "\nProposal:\n"
@@ -49,7 +44,7 @@ $STRIDED0 query gov tally $proposal_id
 
 echo -e "\nProposal Status:\n"
 while true; do
-    status=$($STRIDED0 query gov proposal $proposal_id --output json | jq -r '.status')
+    status=$($STRIDED0 query gov proposal $proposal_id --output json | jq -r '.proposal.status')
     if [[ "$status" == "PROPOSAL_STATUS_VOTING_PERIOD" ]]; then
         echo "Proposal still in progress..."
         sleep 5
