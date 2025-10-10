@@ -32,7 +32,7 @@ curl -L https://raw.githubusercontent.com/Stride-Labs/mainnet/main/mainnet/genes
 sed -i -E 's|seeds = ".*"|seeds = "ade4d8bc8cbe014af6ebdf3cb7b1e9ad36f412c0@seeds.polkachu.com:12256"|g' ${STRIDE_HOME}/config/config.toml
 
 mnemonic="deer gaze swear marine one perfect hero twice turkey symbol mushroom hub escape accident prevent rifle horse arena secret endless panel equal rely payment" 
-echo $mnemonic | strided keys add val --recover --keyring-backend test
+echo $mnemonic | strided keys add val --recover --keyring-backend test --home ${STRIDE_HOME}
 
 snapshot_file=$(ls -t ${HOME}/Downloads/stride_*.tar.lz4 | head -n 1)
 echo -e "\nSnapshot File: $snapshot_file"

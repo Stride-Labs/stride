@@ -1487,6 +1487,13 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 		tmos.Exit(err.Error())
 	}
 
+	// Reset each epoch
+	for _, epoch := range app.EpochsKeeper.AllEpochInfos(ctx) {
+		epoch.CurrentEpochStartTime = time.Now().UTC()
+		epoch.CurrentEpochStartHeight = app.LastBlockHeight()
+		app.EpochsKeeper.SetEpochInfo(ctx, epoch)
+	}
+
 	// Optionally play the latest upgrade on top of the mainnet state
 	if upgradeToTrigger != "" {
 		upgradePlan := upgradetypes.Plan{

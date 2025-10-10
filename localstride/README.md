@@ -28,7 +28,7 @@ make setup-localstride-node
 make start-localstride-node
 ```
 
-- Kill the code once it's caught up to the latest block
+- Kill the node once it's caught up to the latest block
 - Export the current state
 
 ```bash
@@ -51,11 +51,23 @@ make backup-localstride
 UPGRADE_NAME=v{UPGRADE_NAME} make upgrade-localstride
 ```
 
-- Kill the node again
-- Export the new state
+- Once the upgrade height is reached, it will crash
+- Then kill it and build the new stride binary on the current branch
 
 ```bash
-STAGE=after UPGRADE_NAME=v{UPGRADE_NAME} localstride-state-export
+make install
+```
+
+- And start up the node with the new version
+
+```bash
+make start-localstride-node
+```
+
+- Kill it once again, and export the new state
+
+```bash
+STAGE=after UPGRADE_NAME=v{UPGRADE_NAME} make localstride-state-export
 ```
 
 - View the logs and confirm the upgrade passed
