@@ -18,6 +18,8 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	cmtcfg "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/libs/bytes"
 	"github.com/cometbft/cometbft/libs/cli"
 	cosmosdb "github.com/cosmos/cosmos-db"
 	dbm "github.com/cosmos/cosmos-db"
@@ -48,7 +50,7 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v29/app"
+	strideapp "github.com/Stride-Labs/stride/v29/app"
 )
 
 const (
@@ -122,14 +124,15 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxConfig, basicManager 
 	cfg.Seal()
 
 	rootCmd.AddCommand(
-		genutilcli.InitCmd(basicManager, app.DefaultNodeHome),
+		genutilcli.InitCmd(basicManager, strideapp.DefaultNodeHome),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
-		pruning.Cmd(newApp, app.DefaultNodeHome),
+		pruning.Cmd(newApp, strideapp.DefaultNodeHome),
 		snapshot.Cmd(newApp),
 	)
 
-	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	server.AddCommands(rootCmd, strideapp.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	server.AddTestnetCreatorCommand(rootCmd, newTestnetApp, addModuleInitFlags)
 
 	// this code is taken from the Osmosis repo here:
 	// https://github.com/osmosis-labs/osmosis/blob/e5895ce4a460a585c0afb29873de9c7de826b690/cmd/osmosisd/cmd/root.go#L777
@@ -181,7 +184,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxConfig, basicManager 
 
 // genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
 func genesisCommand(txConfig client.TxConfig, basicManager module.BasicManager, cmds ...*cobra.Command) *cobra.Command {
-	cmd := genutilcli.Commands(txConfig, basicManager, app.DefaultNodeHome)
+	cmd := genutilcli.Commands(txConfig, basicManager, strideapp.DefaultNodeHome)
 
 	for _, subCmd := range cmds {
 		cmd.AddCommand(subCmd)
@@ -372,7 +375,7 @@ func newApp(
 		baseapp.SetChainID(chainID),
 	}
 
-	return app.NewStrideApp(
+	return strideapp.NewStrideApp(
 		logger,
 		db,
 		traceStore,
@@ -381,6 +384,37 @@ func newApp(
 		wasmOpts,
 		baseappOptions...,
 	)
+}
+
+// newTestnetApp starts by running the normal newApp method. From there, the app interface returned is modified in order
+// for a testnet to be created from the provided app.
+func newTestnetApp(logger log.Logger, db cosmosdb.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+	// Create an app and type cast to a StrideApp
+	app := newApp(logger, db, traceStore, appOpts)
+	strideApp, ok := app.(*strideapp.StrideApp)
+	if !ok {
+		panic("app created from newApp is not of type osmosisApp")
+	}
+
+	newValAddr, ok := appOpts.Get(server.KeyNewValAddr).(bytes.HexBytes)
+	if !ok {
+		panic("newValAddr is not of type bytes.HexBytes")
+	}
+	newValPubKey, ok := appOpts.Get(server.KeyUserPubKey).(crypto.PubKey)
+	if !ok {
+		panic("newValPubKey is not of type crypto.PubKey")
+	}
+	newOperatorAddress, ok := appOpts.Get(server.KeyNewOpAddr).(string)
+	if !ok {
+		panic("newOperatorAddress is not of type string")
+	}
+	upgradeToTrigger, ok := appOpts.Get(server.KeyTriggerTestnetUpgrade).(string)
+	if !ok {
+		panic("upgradeToTrigger is not of type string")
+	}
+
+	// Make modifications to the normal OsmosisApp required to run the network locally
+	return strideapp.InitStrideAppForTestnet(strideApp, newValAddr, newValPubKey, newOperatorAddress, upgradeToTrigger)
 }
 
 // appExport creates a new StrideApp (optionally at a given height) and exports state
@@ -394,7 +428,7 @@ func appExport(
 	appOpts servertypes.AppOptions,
 	modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
-	var strideApp *app.StrideApp
+	var strideApp *strideapp.StrideApp
 
 	homePath, ok := appOpts.Get(flags.FlagHome).(string)
 	if !ok || homePath == "" {
@@ -415,7 +449,7 @@ func appExport(
 		loadLatest = true
 	}
 
-	strideApp = app.NewStrideApp(
+	strideApp = strideapp.NewStrideApp(
 		logger,
 		db,
 		traceStore,

@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 3. Added burn tx ([#1458](https://github.com/Stride-Labs/stride/pull/1458))
 4. Versioning ([#1462](https://github.com/Stride-Labs/stride/pull/1462))
 
+### Off-Chain changes
+
+1. Localstride v2 ([#1463](https://github.com/Stride-Labs/stride/pull/1463))
+
 ## [v28.0.0](https://github.com/Stride-Labs/stride/releases/tag/v28.0.0) - 2025-08-02
 
 ### On-Chain changes

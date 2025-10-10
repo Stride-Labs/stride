@@ -6,12 +6,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
+	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"cosmossdk.io/x/evidence"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -28,6 +30,9 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvm "github.com/CosmWasm/wasmvm/v2"
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/libs/bytes"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -39,6 +44,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/address"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -47,6 +53,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -1306,6 +1313,198 @@ func NewStrideApp(
 	app.ScopedICAHostKeeper = scopedICAHostKeeper
 	app.ScopedCCVConsumerKeeper = scopedCCVConsumerKeeper
 	app.ScopedWasmKeeper = scopedWasmKeeper
+
+	return app
+}
+
+// Initialize a local testnet using mainnet state
+// The Staking, Slashing, and Distribution changes are required - everything beyond that is custom
+func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPubKey crypto.PubKey, newOperatorAddress, upgradeToTrigger string) *StrideApp {
+	// Create a new account that will be used in the validator
+	// This does not match the actual operator keys, but it's not required that they match
+	ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+	pubkey := &ed25519.PubKey{Key: newValPubKey.Bytes()}
+	pubkeyAny, err := types.NewAnyWithValue(pubkey)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
+	// Fund the operator account
+	operatorAddress := sdk.MustAccAddressFromBech32(newOperatorAddress)
+	initialBalance := sdk.NewCoins(sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(100_000_000)))
+	if err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, initialBalance); err != nil {
+		tmos.Exit(err.Error())
+	}
+	if err := app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, operatorAddress, initialBalance); err != nil {
+		tmos.Exit(err.Error())
+	}
+
+	// Create Validator struct for our new validator.
+	// The validator will have all the bonded tokens
+	vs := app.StakingKeeper.GetValidatorSet()
+	totalBondedTokens, err := vs.TotalBondedTokens(ctx)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	_, bz, err := bech32.DecodeAndConvert(newOperatorAddress)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	bech32Addr, err := bech32.ConvertAndEncode(sdk.GetConfig().GetBech32ValidatorAddrPrefix(), bz)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	newVal := stakingtypes.Validator{
+		OperatorAddress: bech32Addr,
+		ConsensusPubkey: pubkeyAny,
+		Jailed:          false,
+		Status:          stakingtypes.Bonded,
+		Tokens:          totalBondedTokens,
+		DelegatorShares: sdkmath.LegacyMustNewDecFromStr("10000000"),
+		Description: stakingtypes.Description{
+			Moniker: "Testnet Validator",
+		},
+		Commission: stakingtypes.Commission{
+			CommissionRates: stakingtypes.CommissionRates{
+				Rate:          sdkmath.LegacyMustNewDecFromStr("0.05"),
+				MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.1"),
+				MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.05"),
+			},
+		},
+		MinSelfDelegation: sdkmath.OneInt(),
+	}
+
+	// Remove all validators from power store
+	stakingKey := app.GetKey(stakingtypes.ModuleName)
+	stakingStore := ctx.KVStore(stakingKey)
+	iterator, err := app.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	for ; iterator.Valid(); iterator.Next() {
+		stakingStore.Delete(iterator.Key())
+	}
+	iterator.Close()
+
+	// Remove all valdiators from last validators store
+	iterator, err = app.StakingKeeper.LastValidatorsIterator(ctx)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	for ; iterator.Valid(); iterator.Next() {
+		stakingStore.Delete(iterator.Key())
+	}
+	iterator.Close()
+
+	// Remove all validators from validators store
+	iterator = storetypes.KVStorePrefixIterator(stakingStore, stakingtypes.ValidatorsKey)
+	for ; iterator.Valid(); iterator.Next() {
+		stakingStore.Delete(iterator.Key())
+	}
+	iterator.Close()
+
+	// Remove all validators from unbonding queue
+	iterator = storetypes.KVStorePrefixIterator(stakingStore, stakingtypes.ValidatorQueueKey)
+	for ; iterator.Valid(); iterator.Next() {
+		stakingStore.Delete(iterator.Key())
+	}
+	iterator.Close()
+
+	// Add our validator to power and last validators store
+	err = app.StakingKeeper.SetValidator(ctx, newVal)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	err = app.StakingKeeper.SetValidatorByConsAddr(ctx, newVal)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	err = app.StakingKeeper.SetValidatorByPowerIndex(ctx, newVal)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	valAddr, err := sdk.ValAddressFromBech32(newVal.GetOperator())
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	err = app.StakingKeeper.SetLastValidatorPower(ctx, valAddr, 0)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	if err := app.StakingKeeper.Hooks().AfterValidatorCreated(ctx, valAddr); err != nil {
+		panic(err)
+	}
+
+	// Initialize records for this validator across all distribution stores
+	valAddr, err = sdk.ValAddressFromBech32(newVal.GetOperator())
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	err = app.DistrKeeper.SetValidatorHistoricalRewards(ctx, valAddr, 0, distrtypes.NewValidatorHistoricalRewards(sdk.DecCoins{}, 1))
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	err = app.DistrKeeper.SetValidatorCurrentRewards(ctx, valAddr, distrtypes.NewValidatorCurrentRewards(sdk.DecCoins{}, 1))
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	err = app.DistrKeeper.SetValidatorAccumulatedCommission(ctx, valAddr, distrtypes.InitialValidatorAccumulatedCommission())
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	err = app.DistrKeeper.SetValidatorOutstandingRewards(ctx, valAddr, distrtypes.ValidatorOutstandingRewards{Rewards: sdk.DecCoins{}})
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
+	// Set validator signing info for our new validator.
+	newConsAddr := sdk.ConsAddress(newValAddr.Bytes())
+	newValidatorSigningInfo := slashingtypes.ValidatorSigningInfo{
+		Address:     newConsAddr.String(),
+		StartHeight: app.LastBlockHeight() - 1,
+		Tombstoned:  false,
+	}
+	err = app.SlashingKeeper.SetValidatorSigningInfo(ctx, newConsAddr, newValidatorSigningInfo)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
+	// Shorten the gov voting period
+	newExpeditedVotingPeriod := time.Minute
+	newVotingPeriod := time.Minute * 2
+
+	govParams, err := app.GovKeeper.Params.Get(ctx)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+	govParams.ExpeditedVotingPeriod = &newExpeditedVotingPeriod
+	govParams.VotingPeriod = &newVotingPeriod
+	govParams.MinDeposit = sdk.NewCoins(sdk.NewInt64Coin(utils.BaseStrideDenom, 100000000))
+	govParams.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewInt64Coin(utils.BaseStrideDenom, 150000000))
+
+	err = app.GovKeeper.Params.Set(ctx, govParams)
+	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
+	// Reset each epoch
+	for _, epoch := range app.EpochsKeeper.AllEpochInfos(ctx) {
+		epoch.CurrentEpochStartTime = time.Now().UTC()
+		epoch.CurrentEpochStartHeight = app.LastBlockHeight()
+		app.EpochsKeeper.SetEpochInfo(ctx, epoch)
+	}
+
+	// Optionally play the latest upgrade on top of the mainnet state
+	if upgradeToTrigger != "" {
+		upgradePlan := upgradetypes.Plan{
+			Name:   upgradeToTrigger,
+			Height: app.LastBlockHeight() + 10,
+		}
+		err = app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradePlan)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	return app
 }

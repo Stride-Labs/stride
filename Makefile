@@ -205,7 +205,7 @@ proto-check-breaking:
 	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=main
 
 ###############################################################################
-###                             LocalStride                                 ###
+###                           Legacy LocalStride                            ###
 ###############################################################################
 
 localnet-keys:
@@ -252,3 +252,47 @@ localnet-state-export-stop:
 	@docker compose -f $(STATE_EXPORT_COMPOSE_FILE) down
 
 localnet-state-export-clean: localnet-clean
+
+###############################################################################
+###                      Localnet with Mainnet State                        ###
+###############################################################################
+
+LOCALSTRIDE_STRIDE_HOME=$(HOME)/.stride-localstride
+
+setup-localstride-node:
+	@bash $(CURDIR)/localstride/setup_node.sh
+
+start-localstride-node:
+	@strided start --home $(LOCALSTRIDE_STRIDE_HOME)
+
+localstride-state-export:
+ifndef STAGE
+	$(error "ERROR: Please set `STAGE`. Usage: STAGE={before|after} UPGRADE_NAME=v{UPGRADE_NAME} make mainnet-localstride-export")
+endif
+ifndef UPGRADE_NAME
+	$(error "ERROR: Please set `UPGRADE_NAME`. Usage: STAGE={before|after} UPGRADE_NAME=v{UPGRADE_NAME} make mainnet-localstride-export")
+endif
+	@echo "Exporting state $(STAGE) upgrade $(UPGRADE_NAME)..."
+	@strided export > $(CURDIR)/localstride/exports/state_export_${STAGE}_$(UPGRADE_NAME).json --home $(LOCALSTRIDE_STRIDE_HOME)
+	@echo "Done"
+
+backup-localstride:
+	@rm -rf $(LOCALSTRIDE_STRIDE_HOME)-backup
+	@cp -r $(LOCALSTRIDE_STRIDE_HOME) $(LOCALSTRIDE_STRIDE_HOME)-backup
+
+restore-localstride-backup:
+	@rm -rf $(LOCALSTRIDE_STRIDE_HOME)
+	@cp -r $(LOCALSTRIDE_STRIDE_HOME)-backup $(LOCALSTRIDE_STRIDE_HOME)
+
+testnetify-localstride:
+	@echo "{}" > $(LOCALSTRIDE_STRIDE_HOME)/config/addrbook.json
+	@strided in-place-testnet stride-test-1 stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc \
+		--home $(LOCALSTRIDE_STRIDE_HOME)
+
+upgrade-localstride:
+ifndef UPGRADE_NAME
+	$(error "ERROR: Please set `UPGRADE_NAME`. Usage: 'Ex: UPGRADE_NAME=v29 make start-mainnet-localstride")
+endif
+	@echo "{}" > $(LOCALSTRIDE_STRIDE_HOME)/config/addrbook.json
+	@strided in-place-testnet stride-test-1 stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc \
+		--trigger-testnet-upgrade $(UPGRADE_NAME) --home $(LOCALSTRIDE_STRIDE_HOME)
