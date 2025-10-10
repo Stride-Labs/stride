@@ -76,3 +76,5 @@ STAGE=after UPGRADE_NAME=v{UPGRADE_NAME} make localstride-state-export
 ```bash
 make restore-localstride-backup
 ```
+
+- Finally, compare the two export jsons in `localstride/exports`
