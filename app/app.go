@@ -1321,10 +1321,21 @@ func NewStrideApp(
 // The Staking, Slashing, and Distribution changes are required - everything beyond that is custom
 func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPubKey crypto.PubKey, newOperatorAddress, upgradeToTrigger string) *StrideApp {
 	// Create a new account that will be used in the validator
+	// This does not match the actual operator keys, but it's not required that they match
 	ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 	pubkey := &ed25519.PubKey{Key: newValPubKey.Bytes()}
 	pubkeyAny, err := types.NewAnyWithValue(pubkey)
 	if err != nil {
+		tmos.Exit(err.Error())
+	}
+
+	// Fund the operator account
+	operatorAddress := sdk.MustAccAddressFromBech32(newOperatorAddress)
+	initialBalance := sdk.NewCoins(sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(100_000_000)))
+	if err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, initialBalance); err != nil {
+		tmos.Exit(err.Error())
+	}
+	if err := app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, operatorAddress, initialBalance); err != nil {
 		tmos.Exit(err.Error())
 	}
 
