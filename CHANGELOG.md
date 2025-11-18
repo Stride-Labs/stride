@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v30.0.0](https://github.com/Stride-Labs/stride/releases/tag/v30.0.0) - 2025-11-18
+
+### On-Chain changes
+
+1. Added new validator to PSS set ([#1467](https://github.com/Stride-Labs/stride/pull/1467))
+
 ## [v29.0.0](https://github.com/Stride-Labs/stride/releases/tag/v29.0.0) - 2025-10-08
 
 ### On-Chain changes
