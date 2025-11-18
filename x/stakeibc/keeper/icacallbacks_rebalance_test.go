@@ -6,9 +6,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v29/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v30/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
 )
 
 type RebalanceCallbackState struct {

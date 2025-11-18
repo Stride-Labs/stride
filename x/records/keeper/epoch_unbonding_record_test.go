@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v29/x/records/types"
+	"github.com/Stride-Labs/stride/v30/x/records/types"
 )
 
 // Helper function to create a new host zone unbonding record, filling in the sdkmath.Int's

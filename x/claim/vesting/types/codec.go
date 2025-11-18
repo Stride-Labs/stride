@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v29/x/claim/vesting/exported"
+	"github.com/Stride-Labs/stride/v30/x/claim/vesting/exported"
 )
 
 // RegisterLegacyAminoCodec registers the vesting interfaces and concrete types on the

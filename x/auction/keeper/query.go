@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v29/x/auction/types"
+	"github.com/Stride-Labs/stride/v30/x/auction/types"
 )
 
 var _ types.QueryServer = Keeper{}

@@ -4,8 +4,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v29/x/staketia/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v30/x/staketia/types"
 )
 
 // ----------------------------------------------

@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v29/app/apptesting"
-	v3 "github.com/Stride-Labs/stride/v29/app/upgrades/v3"
+	"github.com/Stride-Labs/stride/v30/app/apptesting"
+	v3 "github.com/Stride-Labs/stride/v30/app/upgrades/v3"
 )
 
 var airdropIdentifiers = []string{"stride", "gaia", "osmosis", "juno", "stars"}

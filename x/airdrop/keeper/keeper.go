@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v29/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v30/x/airdrop/types"
 )
 
 type (

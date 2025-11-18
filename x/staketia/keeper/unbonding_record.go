@@ -4,7 +4,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v29/x/staketia/types"
+	"github.com/Stride-Labs/stride/v30/x/staketia/types"
 )
 
 // Writes an unbonding record to the active store

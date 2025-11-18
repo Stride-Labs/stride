@@ -13,15 +13,15 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	"github.com/Stride-Labs/stride/v29/app/apptesting"
-	"github.com/Stride-Labs/stride/v29/utils"
-	epochtypes "github.com/Stride-Labs/stride/v29/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v29/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v29/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v29/x/records/types"
-	"github.com/Stride-Labs/stride/v29/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v30/app/apptesting"
+	"github.com/Stride-Labs/stride/v30/utils"
+	epochtypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v30/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v30/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v30/x/records/types"
+	"github.com/Stride-Labs/stride/v30/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v30/x/stakeibc/types"
 )
 
 // ----------------------------------------------------

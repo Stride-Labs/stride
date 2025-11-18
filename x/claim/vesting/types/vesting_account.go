@@ -10,8 +10,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/Stride-Labs/stride/v29/utils"
-	vestexported "github.com/Stride-Labs/stride/v29/x/claim/vesting/exported"
+	"github.com/Stride-Labs/stride/v30/utils"
+	vestexported "github.com/Stride-Labs/stride/v30/x/claim/vesting/exported"
 )
 
 // Compile-time type assertions

@@ -3,7 +3,7 @@ package stride.icaoracle;
 
 import "stride/icaoracle/icaoracle.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v29/x/icaoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v30/x/icaoracle/types";
 
 // Callback data for instantiating an oracle
 message InstantiateOracleCallback { string oracle_chain_id = 1; }

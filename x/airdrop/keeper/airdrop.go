@@ -4,7 +4,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v29/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v30/x/airdrop/types"
 )
 
 // Writes an airdrop configuration to the store

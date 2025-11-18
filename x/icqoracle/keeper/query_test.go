@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v29/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v30/x/icqoracle/types"
 )
 
 func (s *KeeperTestSuite) TestQueryTokenPrice() {

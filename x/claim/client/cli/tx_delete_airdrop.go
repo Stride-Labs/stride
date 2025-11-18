@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v29/x/claim/types"
+	"github.com/Stride-Labs/stride/v30/x/claim/types"
 )
 
 func CmdDeleteAirdrop() *cobra.Command {

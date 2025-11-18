@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v29/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v30/x/stakedym/types"
 )
 
 func TestValidateDelegationRecordGenesis(t *testing.T) {
