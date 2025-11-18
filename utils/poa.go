@@ -15,6 +15,7 @@ var PoaValPaymentRate = sdkmath.LegacyMustNewDecFromStr("0.15")
 // - cosmosvalcons1vz42ewp04wwepjed7z4qenj925gpakgvap4q2u
 // - cosmosvalcons1upc05nc9pwhhagnkr3f2dft327qxsxfeyvajsu
 // - cosmosvalcons1f6cjsfn47ujttypx7gtncglsmjvndugc2zelqx
+// - cosmosvalcons1jufcrrd9gze26sxd82ppse03eg5g5xa2gplt6p
 
 var PoaValidatorSet = []string{
 	"stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c",
@@ -24,4 +25,5 @@ var PoaValidatorSet = []string{
 	"stride1j79tw5chf34u88s30gxchzx2cu080elm4hqg5j",
 	"stride1qe8uuf5x69c526h4nzxwv4ltftr73v7qr7y9vq",
 	"stride1rgwn0h67xmuluymk4vvhtl4tqtgfg39j9zuk2z",
+	"stride1smuvvnjj6w7x6ytq9kdgvlj6er99y6648s3der",
 }

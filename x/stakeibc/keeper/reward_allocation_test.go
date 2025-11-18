@@ -109,9 +109,9 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 
 	// Check PoA validators received stTokens (15% of original amount gets liquid staked)
 	// Since the redemption rate is 1:1, 15% of 1000 = 150 stTokens total
-	// This gets distributed equally among PoA validators, so 150 / 7 = 21.42 -> 21 per validator
-	numValidators := sdkmath.NewInt(7)
-	expectedStTokenPerValidator := sdkmath.NewInt(21)
+	// This gets distributed equally among PoA validators, so 150 / 8 = 18.75 -> 18 per validator
+	numValidators := sdkmath.NewInt(8)
+	expectedStTokenPerValidator := sdkmath.NewInt(18)
 	expectedTotalStTokens := expectedStTokenPerValidator.Mul(numValidators) // adjusts for ignored remainder
 
 	actualStAtomTotal := s.getTotalPoAValidatorStTokenBalance(StAtom)
