@@ -15,9 +15,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v29/x/airdrop/client/cli"
-	"github.com/Stride-Labs/stride/v29/x/airdrop/keeper"
-	"github.com/Stride-Labs/stride/v29/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v30/x/airdrop/client/cli"
+	"github.com/Stride-Labs/stride/v30/x/airdrop/keeper"
+	"github.com/Stride-Labs/stride/v30/x/airdrop/types"
 )
 
 var (

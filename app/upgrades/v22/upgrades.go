@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v29/x/stakeibc/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v30/x/stakeibc/keeper"
 )
 
 var (

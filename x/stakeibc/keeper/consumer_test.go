@@ -3,7 +3,7 @@ package keeper_test
 import (
 	_ "github.com/stretchr/testify/suite"
 
-	stakeibctypes "github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v30/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestRegisterStTokenDenomsToWhitelist() {

@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	"github.com/Stride-Labs/stride/v29/x/staketia/types"
+	"github.com/Stride-Labs/stride/v30/x/staketia/types"
 )
 
 // test that the admin address helpers work as expected

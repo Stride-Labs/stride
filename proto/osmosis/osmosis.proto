@@ -4,7 +4,7 @@ package osmosis;
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v29/x/icqoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v30/x/icqoracle/types";
 
 // A TWAP record should be indexed in state by pool_id, (asset pair), timestamp
 // The asset pair assets should be lexicographically sorted.

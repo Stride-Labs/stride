@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v29/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v30/x/stakeibc/client/cli"
 )
 
 func TestCmdLiquidStake(t *testing.T) {

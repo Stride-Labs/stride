@@ -8,7 +8,7 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
 )
 
 // -----------------------------------------------------------

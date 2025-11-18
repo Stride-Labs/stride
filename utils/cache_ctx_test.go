@@ -4,7 +4,7 @@ import (
 	"cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v29/utils"
+	"github.com/Stride-Labs/stride/v30/utils"
 )
 
 var expectedOutOfGasError = types.ErrorOutOfGas{Descriptor: "my func"}

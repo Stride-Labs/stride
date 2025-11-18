@@ -9,9 +9,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v29/utils"
-	recordstypes "github.com/Stride-Labs/stride/v29/x/records/types"
-	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v30/utils"
+	recordstypes "github.com/Stride-Labs/stride/v30/x/records/types"
+	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
 )
 
 // Gets the total unbonded amount for the host zone that has finished unbonding

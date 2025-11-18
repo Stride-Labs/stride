@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/Stride-Labs/stride/v29/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v30/x/icaoracle/types"
 )
 
 const (

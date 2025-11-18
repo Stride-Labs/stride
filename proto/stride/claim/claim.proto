@@ -3,7 +3,7 @@ package stride.claim;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v29/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v30/x/claim/types";
 
 enum Action {
   option (gogoproto.goproto_enum_prefix) = false;

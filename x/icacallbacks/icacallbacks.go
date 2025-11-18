@@ -11,7 +11,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v29/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v30/x/icacallbacks/types"
 )
 
 // Parses ICA tx responses and returns a list of each serialized response

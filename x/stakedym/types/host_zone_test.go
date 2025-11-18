@@ -8,8 +8,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v29/app/apptesting"
-	"github.com/Stride-Labs/stride/v29/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v30/app/apptesting"
+	"github.com/Stride-Labs/stride/v30/x/stakedym/types"
 )
 
 const (

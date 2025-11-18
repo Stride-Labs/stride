@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "stride/icqoracle/icqoracle.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v29/x/icqoracle/types";
+option go_package = "github.com/Stride-Labs/stride/v30/x/icqoracle/types";
 
 // Query defines the gRPC querier service.
 service Query {

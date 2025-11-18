@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v29/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v30/x/stakedym/types"
 )
 
 type transferData struct {

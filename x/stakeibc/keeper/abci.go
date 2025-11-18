@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 
-	"github.com/Stride-Labs/stride/v29/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

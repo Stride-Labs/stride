@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v29/utils"
-	"github.com/Stride-Labs/stride/v29/x/staketia/types"
+	"github.com/Stride-Labs/stride/v30/utils"
+	"github.com/Stride-Labs/stride/v30/x/staketia/types"
 )
 
 type msgServer struct {
