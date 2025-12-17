@@ -10,7 +10,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v30/x/staketia/types"
+	"github.com/Stride-Labs/stride/v31/x/staketia/types"
 )
 
 //////////////////////////////////////////////

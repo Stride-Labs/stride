@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v30/app/apptesting"
-	v20 "github.com/Stride-Labs/stride/v30/app/upgrades/v20"
-	stakeibctypes "github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/app/apptesting"
+	v20 "github.com/Stride-Labs/stride/v31/app/upgrades/v20"
+	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {

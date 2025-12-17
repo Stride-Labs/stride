@@ -4,7 +4,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v30/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v31/x/autopilot/types"
 )
 
 // Stores a fallback address for an outbound transfer

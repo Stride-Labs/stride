@@ -8,7 +8,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v30/x/records/types"
+	"github.com/Stride-Labs/stride/v31/x/records/types"
 )
 
 func (s *KeeperTestSuite) createNDepositRecord(n int) []types.DepositRecord {

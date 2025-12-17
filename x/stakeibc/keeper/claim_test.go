@@ -10,10 +10,10 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	epochtypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v30/x/records/types"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 type ClaimUndelegatedState struct {

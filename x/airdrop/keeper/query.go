@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/Stride-Labs/stride/v30/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v31/x/airdrop/types"
 )
 
 var _ types.QueryServer = Keeper{}

@@ -7,10 +7,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v30/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v30/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v30/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v31/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 // CommunityPoolBalanceCallback is a callback handler for CommunityPoolBalance queries.

@@ -10,9 +10,9 @@ import (
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
 	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
 
-	recordskeeper "github.com/Stride-Labs/stride/v30/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v30/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v30/x/stakeibc/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v31/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v31/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
 )
 
 var (

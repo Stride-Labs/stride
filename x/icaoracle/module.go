@@ -16,9 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v30/x/icaoracle/client/cli"
-	"github.com/Stride-Labs/stride/v30/x/icaoracle/keeper"
-	"github.com/Stride-Labs/stride/v30/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v31/x/icaoracle/client/cli"
+	"github.com/Stride-Labs/stride/v31/x/icaoracle/keeper"
+	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
 )
 
 var (

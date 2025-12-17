@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v30/x/staketia/types"
+	"github.com/Stride-Labs/stride/v31/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) TestQueryHostZone() {

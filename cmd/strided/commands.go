@@ -50,7 +50,7 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 
-	strideapp "github.com/Stride-Labs/stride/v30/app"
+	strideapp "github.com/Stride-Labs/stride/v31/app"
 )
 
 const (

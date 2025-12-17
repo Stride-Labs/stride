@@ -7,7 +7,7 @@ import (
 
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	claimvestingtypes "github.com/Stride-Labs/stride/v30/x/claim/vesting/types"
+	claimvestingtypes "github.com/Stride-Labs/stride/v31/x/claim/vesting/types"
 )
 
 // Downgrades a vesting account to a base account

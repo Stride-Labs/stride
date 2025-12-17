@@ -7,8 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) createNHostZone(n int) []types.HostZone {

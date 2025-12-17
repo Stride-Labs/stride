@@ -7,7 +7,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	"github.com/Stride-Labs/stride/v30/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
 )
 
 type RestoreOracleICATestCase struct {

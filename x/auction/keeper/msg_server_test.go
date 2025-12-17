@@ -6,8 +6,8 @@ import (
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/Stride-Labs/stride/v30/x/auction/types"
-	icqoracletypes "github.com/Stride-Labs/stride/v30/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v31/x/auction/types"
+	icqoracletypes "github.com/Stride-Labs/stride/v31/x/icqoracle/types"
 )
 
 func (s *KeeperTestSuite) TestCreateAuction() {

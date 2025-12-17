@@ -3,7 +3,7 @@ package stride.mint.v1beta1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v30/x/mint/types";
+option go_package = "github.com/Stride-Labs/stride/v31/x/mint/types";
 
 // Minter represents the minting state.
 message Minter {

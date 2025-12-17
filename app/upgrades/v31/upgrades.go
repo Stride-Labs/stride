@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	staketiakeeper "github.com/Stride-Labs/stride/v30/x/staketia/keeper"
-	staketiatypes "github.com/Stride-Labs/stride/v30/x/staketia/types"
+	staketiakeeper "github.com/Stride-Labs/stride/v31/x/staketia/keeper"
+	staketiatypes "github.com/Stride-Labs/stride/v31/x/staketia/types"
 )
 
 var (

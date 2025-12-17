@@ -16,9 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v30/x/strdburner/client/cli"
-	"github.com/Stride-Labs/stride/v30/x/strdburner/keeper"
-	"github.com/Stride-Labs/stride/v30/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v31/x/strdburner/client/cli"
+	"github.com/Stride-Labs/stride/v31/x/strdburner/keeper"
+	"github.com/Stride-Labs/stride/v31/x/strdburner/types"
 )
 
 var (

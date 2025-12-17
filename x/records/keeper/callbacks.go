@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	icacallbackstypes "github.com/Stride-Labs/stride/v30/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
 )
 
 const IBCCallbacksID_NativeTransfer = "transfer"
