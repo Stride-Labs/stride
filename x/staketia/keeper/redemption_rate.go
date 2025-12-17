@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v30/x/staketia/types"
+	"github.com/Stride-Labs/stride/v31/x/staketia/types"
 )
 
 // Checks whether the redemption rate has exceeded the inner or outer safety bounds

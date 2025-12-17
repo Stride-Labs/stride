@@ -18,11 +18,11 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/spf13/cast"
 
-	"github.com/Stride-Labs/stride/v30/utils"
-	epochtypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v30/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v30/x/records/types"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/utils"
+	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v31/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 type msgServer struct {

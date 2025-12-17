@@ -1,6 +1,6 @@
 package keeper_test
 
-import "github.com/Stride-Labs/stride/v30/x/auction/types"
+import "github.com/Stride-Labs/stride/v31/x/auction/types"
 
 func (s *KeeperTestSuite) TestParams() {
 	expectedParams := types.Params{}

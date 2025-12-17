@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 func TestHostZoneUnbondingFrequency(t *testing.T) {

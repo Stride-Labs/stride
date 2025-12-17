@@ -11,7 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/Stride-Labs/stride/v30/testutil/network"
+	"github.com/Stride-Labs/stride/v31/testutil/network"
 )
 
 func ExecuteCLIExpectError(t *testing.T, cmd *cobra.Command, args []string, errorString string) {

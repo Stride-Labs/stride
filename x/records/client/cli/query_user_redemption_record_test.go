@@ -14,9 +14,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v30/testutil/network"
-	"github.com/Stride-Labs/stride/v30/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v30/x/records/types"
+	"github.com/Stride-Labs/stride/v31/testutil/network"
+	"github.com/Stride-Labs/stride/v31/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v31/x/records/types"
 )
 
 // TODO [cleanup] - Migrate to new CLI testing framework

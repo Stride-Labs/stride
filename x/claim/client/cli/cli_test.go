@@ -15,20 +15,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
-	strideclitestutil "github.com/Stride-Labs/stride/v30/testutil/cli"
+	strideclitestutil "github.com/Stride-Labs/stride/v31/testutil/cli"
 
-	"github.com/Stride-Labs/stride/v30/testutil/network"
+	"github.com/Stride-Labs/stride/v31/testutil/network"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	strideapp "github.com/Stride-Labs/stride/v30/app"
-	cmdcfg "github.com/Stride-Labs/stride/v30/cmd/strided/config"
+	strideapp "github.com/Stride-Labs/stride/v31/app"
+	cmdcfg "github.com/Stride-Labs/stride/v31/cmd/strided/config"
 
-	"github.com/Stride-Labs/stride/v30/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v31/x/claim/client/cli"
 
-	"github.com/Stride-Labs/stride/v30/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v30/x/claim/types"
+	"github.com/Stride-Labs/stride/v31/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v31/x/claim/types"
 )
 
 var (

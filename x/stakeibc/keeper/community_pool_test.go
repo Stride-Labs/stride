@@ -12,12 +12,12 @@ import (
 
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v30/app/apptesting"
-	epochtypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v30/x/interchainquery/types"
-	recordtypes "github.com/Stride-Labs/stride/v30/x/records/types"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 // -----------------------------

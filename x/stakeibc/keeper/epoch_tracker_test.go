@@ -6,9 +6,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	epochtypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 // These are used to indicate that the value does not matter for the sake of the test

@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v30/app/apptesting"
-	"github.com/Stride-Labs/stride/v30/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v31/app/apptesting"
+	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
 )
 
 func TestValidateGenesis(t *testing.T) {

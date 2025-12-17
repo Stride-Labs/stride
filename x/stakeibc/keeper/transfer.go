@@ -14,10 +14,10 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v30/utils"
-	epochstypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v30/x/records/types"
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/utils"
+	epochstypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v31/x/records/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone

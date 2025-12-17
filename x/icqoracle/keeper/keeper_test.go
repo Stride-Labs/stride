@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v30/app/apptesting"
-	"github.com/Stride-Labs/stride/v30/x/icqoracle/keeper"
-	"github.com/Stride-Labs/stride/v30/x/icqoracle/types"
-	icqtypes "github.com/Stride-Labs/stride/v30/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v31/app/apptesting"
+	"github.com/Stride-Labs/stride/v31/x/icqoracle/keeper"
+	"github.com/Stride-Labs/stride/v31/x/icqoracle/types"
+	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
 )
 
 type KeeperTestSuite struct {

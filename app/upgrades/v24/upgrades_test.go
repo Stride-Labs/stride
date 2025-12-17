@@ -6,10 +6,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v30/app/apptesting"
-	v24 "github.com/Stride-Labs/stride/v30/app/upgrades/v24"
-	recordstypes "github.com/Stride-Labs/stride/v30/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/app/apptesting"
+	v24 "github.com/Stride-Labs/stride/v31/app/upgrades/v24"
+	recordstypes "github.com/Stride-Labs/stride/v31/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 type UpdateRedemptionRateBounds struct {

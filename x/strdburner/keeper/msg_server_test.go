@@ -7,10 +7,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	claimvestingtypes "github.com/Stride-Labs/stride/v30/x/claim/vesting/types"
+	claimvestingtypes "github.com/Stride-Labs/stride/v31/x/claim/vesting/types"
 
-	"github.com/Stride-Labs/stride/v30/x/strdburner/keeper"
-	"github.com/Stride-Labs/stride/v30/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v31/x/strdburner/keeper"
+	"github.com/Stride-Labs/stride/v31/x/strdburner/types"
 )
 
 func (s *KeeperTestSuite) verifyUserBurnEvents(address sdk.AccAddress, amount sdkmath.Int) {

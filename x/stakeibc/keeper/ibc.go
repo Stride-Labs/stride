@@ -13,7 +13,7 @@ import (
 
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 
-	"github.com/Stride-Labs/stride/v30/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
 
 func (k Keeper) OnChanOpenAck(ctx sdk.Context, portID, channelID string) error {

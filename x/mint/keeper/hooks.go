@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	epochstypes "github.com/Stride-Labs/stride/v30/x/epochs/types"
-	"github.com/Stride-Labs/stride/v30/x/mint/types"
+	epochstypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
+	"github.com/Stride-Labs/stride/v31/x/mint/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"

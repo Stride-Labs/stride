@@ -13,10 +13,10 @@ import (
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v30/app"
-	"github.com/Stride-Labs/stride/v30/app/apptesting"
-	v19 "github.com/Stride-Labs/stride/v30/app/upgrades/v19"
-	legacyratelimittypes "github.com/Stride-Labs/stride/v30/app/upgrades/v19/legacyratelimit/types"
+	"github.com/Stride-Labs/stride/v31/app"
+	"github.com/Stride-Labs/stride/v31/app/apptesting"
+	v19 "github.com/Stride-Labs/stride/v31/app/upgrades/v19"
+	legacyratelimittypes "github.com/Stride-Labs/stride/v31/app/upgrades/v19/legacyratelimit/types"
 )
 
 var StTiaSupply = sdkmath.NewInt(1000)

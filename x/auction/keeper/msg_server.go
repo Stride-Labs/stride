@@ -6,7 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v30/x/auction/types"
+	"github.com/Stride-Labs/stride/v31/x/auction/types"
 )
 
 type msgServer struct {

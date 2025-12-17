@@ -5,9 +5,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v30/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v30/x/icaoracle/keeper"
-	"github.com/Stride-Labs/stride/v30/x/icaoracle/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v31/x/icaoracle/keeper"
+	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
 )
 
 type SubmitMetricUpdateTestCase struct {

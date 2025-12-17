@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/Stride-Labs/stride/v30/app"
-	"github.com/Stride-Labs/stride/v30/utils"
+	"github.com/Stride-Labs/stride/v31/app"
+	"github.com/Stride-Labs/stride/v31/utils"
 )
 
 var ChainID string

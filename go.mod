@@ -1,4 +1,4 @@
-module github.com/Stride-Labs/stride/v30
+module github.com/Stride-Labs/stride/v31
 
 go 1.23.1
 

@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v30/x/epochs/types"
+	"github.com/Stride-Labs/stride/v31/x/epochs/types"
 )
 
 // Keeper of this module maintains collections of epochs and hooks.
