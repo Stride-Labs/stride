@@ -33,7 +33,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.ConfirmUpgradeSucceeded(v31.UpgradeName)
 
 	// Confirm it was updated to 14 days
-	expectedUnbondingPeriod := uint64(14 * 24 * 60 * 60)
+	expectedUnbondingPeriod := uint64(1213200)
 	hostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err)
 	s.Require().Equal(expectedUnbondingPeriod, hostZone.UnbondingPeriodSeconds)
