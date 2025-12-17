@@ -147,12 +147,12 @@ func InitiateMigration(
 
 	// Register the stakeibc host zone
 	registerMsg := stakeibctypes.MsgRegisterHostZone{
-		ConnectionId:                 types.CelestiaConnectionId,
-		Bech32Prefix:                 types.CelestiaBechPrefix,
-		HostDenom:                    legacyHostZone.NativeTokenDenom,
-		IbcDenom:                     legacyHostZone.NativeTokenIbcDenom,
-		TransferChannelId:            legacyHostZone.TransferChannelId,
-		UnbondingPeriod:              types.CelestiaUnbondingPeriodDays,
+		ConnectionId:      types.CelestiaConnectionId,
+		Bech32Prefix:      types.CelestiaBechPrefix,
+		HostDenom:         legacyHostZone.NativeTokenDenom,
+		IbcDenom:          legacyHostZone.NativeTokenIbcDenom,
+		TransferChannelId: legacyHostZone.TransferChannelId,
+		// UnbondingPeriod:              types.CelestiaUnbondingPeriodDays,
 		MinRedemptionRate:            legacyHostZone.MinRedemptionRate,
 		MaxRedemptionRate:            legacyHostZone.MaxRedemptionRate,
 		LsmLiquidStakeEnabled:        false,

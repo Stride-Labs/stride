@@ -41,6 +41,7 @@ import (
 	v29 "github.com/Stride-Labs/stride/v30/app/upgrades/v29"
 	v3 "github.com/Stride-Labs/stride/v30/app/upgrades/v3"
 	v30 "github.com/Stride-Labs/stride/v30/app/upgrades/v30"
+	v31 "github.com/Stride-Labs/stride/v30/app/upgrades/v31"
 	v4 "github.com/Stride-Labs/stride/v30/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v30/app/upgrades/v5"
 	v6 "github.com/Stride-Labs/stride/v30/app/upgrades/v6"
@@ -398,6 +399,16 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v30.CreateUpgradeHandler(
 			app.ModuleManager,
 			app.configurator,
+		),
+	)
+
+	// v31 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v31.UpgradeName,
+		v31.CreateUpgradeHandler(
+			app.ModuleManager,
+			app.configurator,
+			app.StaketiaKeeper,
 		),
 	)
 
