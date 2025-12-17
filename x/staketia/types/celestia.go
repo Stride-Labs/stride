@@ -16,8 +16,8 @@ const (
 
 	SafeAddressOnStride            = "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc" // S3
 	OperatorAddressOnStride        = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw" // OP-STRIDE
-	CelestiaUnbondingPeriodDays    = 21
-	CelestiaUnbondingPeriodSeconds = uint64(CelestiaUnbondingPeriodDays * 24 * 60 * 60) // 21 days
+	CelestiaUnbondingPeriodDays    = 14
+	CelestiaUnbondingPeriodSeconds = uint64(CelestiaUnbondingPeriodDays * 24 * 60 * 60) // 14 days
 
 	CelestiaBechPrefix = "celestia"
 )
