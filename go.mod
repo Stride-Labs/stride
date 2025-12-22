@@ -29,7 +29,7 @@ require (
 	github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.1.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.4.2-0.20240730185033-ccd4dc278e72
-	github.com/cosmos/ibc-go/v8 v8.7.0
+	github.com/cosmos/ibc-go/v8 v8.8.0
 	github.com/cosmos/ics23/go v0.11.0
 	github.com/cosmos/interchain-security/v6 v6.4.1
 	github.com/evmos/vesting v1.0.0
