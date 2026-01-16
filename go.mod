@@ -234,6 +234,8 @@ replace (
 
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 // indirect
 
+	github.com/cometbft/cometbft => github.com/cometbft/cometbft-sec-tachyon v0.38.21-0.20260113214209-9ac677707f85
+
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
 	// Then later upgraded to SDK 50
