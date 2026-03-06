@@ -1,0 +1,19 @@
+{
+  "validators": [
+    {
+      "name": "Cosmos Spaces",
+      "address": "evmosvaloper17z0xyw6vwjn6gqj86s3axs7mjsngdl6sncdwga",
+      "weight": 0
+    },
+    {
+      "name": "Jerry's Pool",
+      "address": "evmosvaloper1lldjhjnn32e8vek7cxe9g05nf8j74y0xs5zmsu",
+      "weight": 0
+    },
+    {
+      "name": "[Beehive]",
+      "address": "evmosvaloper1nfx47fqnqpcarqwt7qn4fk0llc57vvh3wgg35c",
+      "weight": 0
+    }
+  ]
+}

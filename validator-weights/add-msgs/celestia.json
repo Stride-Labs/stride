@@ -1,0 +1,24 @@
+{
+  "validators": [
+    {
+      "name": "Kiln",
+      "address": "celestiavaloper1uxlf7mvr8nep3gm7udf2u9remms2jyjqa02qlj",
+      "weight": 0
+    },
+    {
+      "name": "Informal Systems",
+      "address": "celestiavaloper1x20lytyf6zkcrv5edpkfkn8sz578qg5spge2ru",
+      "weight": 0
+    },
+    {
+      "name": "Smart Stake \ud83d\udcc8\ud83d\udcca",
+      "address": "celestiavaloper1tzm96yvupy3egtpg6uw0s2f4c85qayw3afwetd",
+      "weight": 0
+    },
+    {
+      "name": "ValiDAO",
+      "address": "celestiavaloper1gfn5m2vjqk4kcdg2zwhzgpvu60jz0f9duhu594",
+      "weight": 0
+    }
+  ]
+}

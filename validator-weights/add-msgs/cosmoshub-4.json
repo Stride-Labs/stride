@@ -1,0 +1,19 @@
+{
+  "validators": [
+    {
+      "name": "Kahuna",
+      "address": "cosmosvaloper17r0cp9zrtkvzlz7a2r09gmdxwqfyje98l3k9h6",
+      "weight": 0
+    },
+    {
+      "name": "The_Cybernetics",
+      "address": "cosmosvaloper18m9wncg0w74vusm4xu0mk6ha2lpdrqq7c9cjq3",
+      "weight": 0
+    },
+    {
+      "name": "CroutonDigital",
+      "address": "cosmosvaloper1nlfrwx5t3mm3cuqqkvjv6jv24m7s2z5utzfe8s",
+      "weight": 0
+    }
+  ]
+}

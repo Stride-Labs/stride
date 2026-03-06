@@ -1,0 +1,196 @@
+{
+  "validator_weights": [
+    {
+      "address": "comdexvaloper10d87jx68zygmwagu9ggzxpept07zs7nmcpyjr6",
+      "weight": 800
+    },
+    {
+      "address": "comdexvaloper12dseyeqwsv3lkxlks45p4fp7et4qnzn5vkavjf",
+      "weight": 800
+    },
+    {
+      "address": "comdexvaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4p3447dz",
+      "weight": 800
+    },
+    {
+      "address": "comdexvaloper10j3t6jxqjjnz4lkh3m2af7yxcf9773r4a8z8z3",
+      "weight": 800
+    },
+    {
+      "address": "comdexvaloper1clsxq6wk4r4wsd0wjlqaa52p4t94r06lya7h5t",
+      "weight": 766
+    },
+    {
+      "address": "comdexvaloper195re7mhwh9urewm3rvaj9r7vm6j63c4sd78njd",
+      "weight": 753
+    },
+    {
+      "address": "comdexvaloper15xevj3n6eq36t62sjjrsvf6hkuryg8w3pmpqy8",
+      "weight": 700
+    },
+    {
+      "address": "comdexvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zcpt5ph",
+      "weight": 618
+    },
+    {
+      "address": "comdexvaloper18hrnuttvs8efncze46g7q2ujy4p4yude83kndl",
+      "weight": 346
+    },
+    {
+      "address": "comdexvaloper1hvhyunq7qvykzvrcnhjj4xnkcla58xustdw75m",
+      "weight": 343
+    },
+    {
+      "address": "comdexvaloper1czs368jkxgwflufajtvr0lhg6660aeplz9s5qn",
+      "weight": 286
+    },
+    {
+      "address": "comdexvaloper1gfe4f7urf866xte5cpmkgsw7q2u97qj06ldtj3",
+      "weight": 251
+    },
+    {
+      "address": "comdexvaloper1ccmys9wyh97khl5wve89wtuc35euylnuzfhp6w",
+      "weight": 248
+    },
+    {
+      "address": "comdexvaloper1d25vszat2kf6n8vs7xz9t9avmmn3d6w86yfghm",
+      "weight": 233
+    },
+    {
+      "address": "comdexvaloper1wg8m5kkhrrszyvgqq2d5t9c4fd0cqqhy04tlud",
+      "weight": 232
+    },
+    {
+      "address": "comdexvaloper1qe8uuf5x69c526h4nzxwv4ltftr73v7q5dufl6",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1flsq5dcypwrf6pjlr2vw0ws5ratv45dfysfv74",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1flh26y7f2vsam4a6snwgrqaxkhe0g2yljstdqm",
+      "weight": 204
+    },
+    {
+      "address": "comdexvaloper14he9lxj0cd5qnwy0haa73sdw7jv5wn2lj7qp63",
+      "weight": 202
+    },
+    {
+      "address": "comdexvaloper1l87lywr66ehhfuy3807nuwfjpmweyerdm8u602",
+      "weight": 187
+    },
+    {
+      "address": "comdexvaloper1p0a674uq64mxfgxa2h75a6k7r86hjg7pefq4zy",
+      "weight": 172
+    },
+    {
+      "address": "comdexvaloper1aqq8kugxxtaumkyaw47hsl6t2ads8758fd57kf",
+      "weight": 148
+    },
+    {
+      "address": "comdexvaloper1z6a9p43svtkzf5efmy78tae7qqz8p8cctyj6yg",
+      "weight": 138
+    },
+    {
+      "address": "comdexvaloper1qr7eckxg5zgsp40sdwr9qj2arfx5ftgpggl98t",
+      "weight": 127
+    },
+    {
+      "address": "comdexvaloper1glgnuuckrkcvl90uk0ute8h0y4gdp5u8s0ahnt",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1gjcv70fqf4557g8uqsk83l82fccykx0ye43ul9",
+      "weight": 116
+    },
+    {
+      "address": "comdexvaloper1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wh2dqrg",
+      "weight": 100
+    },
+    {
+      "address": "comdexvaloper1yyc7vmzy9w2g79gswz9cx845hh7l275cw7eg2r",
+      "weight": 93
+    },
+    {
+      "address": "comdexvaloper1s9em43slvq8zk9xxkdfqgve9zxw4sha7hhkqa7",
+      "weight": 92
+    },
+    {
+      "address": "comdexvaloper1329mxprv0lqhdqm77urzr77gva2jmxmzd3kjek",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper12q4a5qvuzzn2kspe6dekkhnl77ct52dr5vpwsk",
+      "weight": 89
+    },
+    {
+      "address": "comdexvaloper1963hcznh439kspqmjj5hv5h4nk2kphvats5ujk",
+      "weight": 89
+    },
+    {
+      "address": "comdexvaloper1ee63nuagkj5age25jhdytj6vawt89jqqxyw7ls",
+      "weight": 87
+    },
+    {
+      "address": "comdexvaloper1g6fm6xcgzrlm9d2apf3t8xvu7wrk509wxyy5rq",
+      "weight": 64
+    },
+    {
+      "address": "comdexvaloper1txq98fyl406jvgv723dljnnqh5d33gaajyfmpg",
+      "weight": 64
+    },
+    {
+      "address": "comdexvaloper145n9js0hxfrkkufhanvwwfr3dh2m4j6cped8w6",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1gjtvly9lel6zskvwtvlg5vhwpu9c9waw0u289r",
+      "weight": 51
+    },
+    {
+      "address": "comdexvaloper1adpw4sj0p4ux698rt50k9cmd7g5cewvyn7u0h2",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1ks4da6wzff7zdgkxydehl8ffp7k3dffc3x2q7a",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1mp9tca6z6z0qczdy9wps5fuhxsucre0zfevavc",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper12lmnmx83p5lcndvl0zrks3fqk3wspqm0hjtzzz",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1zy7uuu6cd5fde3uunlh5l40jjf24ypd6rnltv5",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1ndslxsucavg3eglqe4mzge74tdx67rcnd7dawq",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1ty6jnra4er0uwm5ud9a04kc3vxk8a324mhrcrk",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1vj0ntz8qk9pxk7xt3n0ukdkt86j3epnva2ag7p",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1zk7jdn32dejfeya3c4e3h5lyjsuhafthlrhe2f",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1e4wjh48ks5j5d9702d35q360ffmf3jj2xpuf3f",
+      "weight": 0
+    },
+    {
+      "address": "comdexvaloper1dz5hxw7dnmga0j0rzgkvlcmpuy37u4jaswel66",
+      "weight": 0
+    }
+  ]
+}

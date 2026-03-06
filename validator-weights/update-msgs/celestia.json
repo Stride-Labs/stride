@@ -1,0 +1,360 @@
+{
+  "validator_weights": [
+    {
+      "address": "celestiavaloper1ac4mnwg79gyvd0x5trl2fgjv07lgfas02jf378",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1r4kqtye4dzacmrwnh6f057p50pdjm8g59tlhhg",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1j2jq259d3rrc24876gwxg0ksp0lhd8gy49k6st",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1xqc7w3pe38kg4tswjt7mnvks7gy4p38vtsuycj",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1e2p4u5vqwgum7pm9vhp0yjvl58gvhfc6yfatw4",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1uqj5ul7jtpskk9ste9mfv6jvh0y3w34vtpz3gw",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1pmn4cjwf26hkcpvyl322glhpdpcemcel8ca2vl",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1uwmf03ke52vld2sa9khs0nslpgzwsm5xs5e4pn",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1wu24jxpn9j0580ehjz344d58cf3t7lzrrgqmnr",
+      "weight": 812
+    },
+    {
+      "address": "celestiavaloper15kpw453rgqrranltr8pcy9muryf3jjd7esw38j",
+      "weight": 774
+    },
+    {
+      "address": "celestiavaloper1ftmw4wh8dq2ljw0xq3xgg00dl7l20se3lrml7q",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1jkuw8rxxrsgn9pq009987kzelkp46cgcaa7lhj",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1amxp3ah9anq4pmpnsknls7sql3kras9hs8pu0g",
+      "weight": 686
+    },
+    {
+      "address": "celestiavaloper1vje2he3pcq3w5udyvla7zm9qd5yes6hzffsjxj",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1uxlf7mvr8nep3gm7udf2u9remms2jyjqa02qlj",
+      "weight": 663
+    },
+    {
+      "address": "celestiavaloper17srrapx2cvqyyy4rg3menq0hn86py8f3klelhl",
+      "weight": 645
+    },
+    {
+      "address": "celestiavaloper1cs37tvmahavw8xcnzcgyz342sh0al37ma4zqat",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1c9ye54e3pzwm3e0zpdlel6pnavrj9qqvjeqh0m",
+      "weight": 603
+    },
+    {
+      "address": "celestiavaloper133t4gpv4vhpqgfn9gr8l4u423zrglg8rkqeupr",
+      "weight": 556
+    },
+    {
+      "address": "celestiavaloper1murrqgqahxevedty0nzqrn5hj434fvffxufxcl",
+      "weight": 458
+    },
+    {
+      "address": "celestiavaloper19f0w9svr905fhefusyx4z8sf83j6et0g57nch8",
+      "weight": 443
+    },
+    {
+      "address": "celestiavaloper1x20lytyf6zkcrv5edpkfkn8sz578qg5spge2ru",
+      "weight": 442
+    },
+    {
+      "address": "celestiavaloper1qe8uuf5x69c526h4nzxwv4ltftr73v7q5qhs58",
+      "weight": 422
+    },
+    {
+      "address": "celestiavaloper19v94c3z7ckarwsum76kaagma0wqsqhh5nl5zqg",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1yknsyf9ws4ugtv3r9g43kwqkne4zmrupcxhlth",
+      "weight": 419
+    },
+    {
+      "address": "celestiavaloper1dlsl4u42ycahzjfwc6td6upgsup9tt7cz8vqm4",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1un77nfm6axkhkupe8fk4xl6fd4adz3y59fucpu",
+      "weight": 395
+    },
+    {
+      "address": "celestiavaloper107lwx458gy345ag2afx9a7e2kkl7x49y3433gj",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1hm2d8e6nd5ngtlte3hlded03vgj3rer94vmdml",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper14ntfv0qkg8522xe0pvrfgqxcmnj5x466v8z3tl",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper17p8y0sm76zhrtjny98tknevafvlq9860ehykz3",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1vl3dkus7g0cj4lg0e2jrqk2reukmlht0ee7cr4",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper15urq2dtp9qce4fyc85m6upwm9xul3049gwdz0x",
+      "weight": 366
+    },
+    {
+      "address": "celestiavaloper187avawwq7qhanrkxf45mayztdqsr49hu8lezdh",
+      "weight": 351
+    },
+    {
+      "address": "celestiavaloper1cmaga4f6f7pttuwzfldn9067ld3090uw0e6zq8",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1l0zmpm02u240crndlj7hkvlj5azuglv4emfczt",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1tzm96yvupy3egtpg6uw0s2f4c85qayw3afwetd",
+      "weight": 337
+    },
+    {
+      "address": "celestiavaloper1v987evnk7hsqct7smdqpxqprhvlcxgt43kyewc",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1nwu3ugynh8m6r7aphv0uxnca84t7gnruvyye9c",
+      "weight": 311
+    },
+    {
+      "address": "celestiavaloper1r5xt7twqmh39ky72f4txxjrhlt2z0qwwmdal8c",
+      "weight": 250
+    },
+    {
+      "address": "celestiavaloper1u4vhh70lwlt2va7hw5evzl6sap92t0m9nqzmud",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1uvytvhunccudw8fzaxvsrumec53nawyj939gj9",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1jgqewpzn7dww5tlpnkypm72fm8tjznmw7ll7ls",
+      "weight": 167
+    },
+    {
+      "address": "celestiavaloper1rcm7tth05klgkqpucdhm5hexnk49dfda3l3hak",
+      "weight": 157
+    },
+    {
+      "address": "celestiavaloper14v4ush42xewyeuuldf6jtdz0a7pxg5fwrlumwf",
+      "weight": 143
+    },
+    {
+      "address": "celestiavaloper1knn88yl08ctsdrtxvfp39jywt7rph9ptv7532y",
+      "weight": 141
+    },
+    {
+      "address": "celestiavaloper1gfn5m2vjqk4kcdg2zwhzgpvu60jz0f9duhu594",
+      "weight": 135
+    },
+    {
+      "address": "celestiavaloper1sl97x54v0u3extuj2zrf7h0qrrtpgpslfrjjry",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1pnzrk7yzx0nr9xrcjyswj7ram4qxlrfz28xvn6",
+      "weight": 107
+    },
+    {
+      "address": "celestiavaloper1auqmdc2pnx5gxvakjdsc9v9zc4y2ga0hcaxg9x",
+      "weight": 89
+    },
+    {
+      "address": "celestiavaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zcvqd22",
+      "weight": 81
+    },
+    {
+      "address": "celestiavaloper1ryyzale2qcp3e35k0ze3kc0mpfdtw9jagcss3k",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1lqfqp2w65pjsu6hg3qg4qfp4t2t6da4a3gg8ad",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1zqjpfxtv3yp6kdlgra4hc9zehxgvpaw82hxr5w",
+      "weight": 45
+    },
+    {
+      "address": "celestiavaloper17h2x3j7u44qkrq0sk8ul0r2qr440rwgj8g0ng0",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1eualhqh07w7p45g45hvrjagkcxsfnflzdw5jzg",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1m58punvt32u07ra4p6x7krgxakye3m90rzgm4c",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper138jl42zlxue4wpvnugcdqhxjmyd2vpt6qhs5ls",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1vdp8q3v72mntewqqak56yk3gzz7h5ukmeym9hk",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1v5hrqlv8dqgzvy0pwzqzg0gxy899rm4klzxm07",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wh8xeg4",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper19y52qzj4hxw0u68krfptkjlm77cvth8dgum7yu",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1463wx5xkus5hyugyecvlhv9qpxklz62kyhwcts",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper12t63cy8kn5n7qw77xvjn00ymcr0uuvz2vh8p79",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1djqecw6nn5tydxq0shan7srv8j65clsfmnxcfu",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1593ns00rftlqp2gyu6wdmrqpgv5frv0hsf4sw2",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1mhux0vt6qszz8qwv8axggt02jjm7tuvdfhz78j",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1qdfdh8stxpkj4zz46x2n9ejyyy9h0c86425yjm",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1yecxnyegvgm5dwsx0r3jsgr74ju6mlxdwkxx8g",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1demcj83q7nxt6gtqxlu7qsmwqpt4jspj3alr92",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1qxeza0sa037u35p3ze8p7ka7emajvydnyjlp07",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper10f8l8m4879h40848rsvxat797t3a5ghgdsjgzl",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper19kr4f4ndyek6kwa0vt3w4un8he0tkekufa8t2g",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1pavac9yrlgwyw6v9yx84sttc96n9ee9zrja2u7",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1ax83exaawlmy5p2qn22gcynrchwdntt5xvj0qu",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1q8teur40emyun60et4wh5z6yj5669stgz8xs59",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper139mu0a0ucz0gmrkavm5wjar2lpx7yvxq3e25e5",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1slnzmhg3kwhc2c5y9atrt5jtmt3sauzzp4tguj",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1clf3nqp89h97umhl4fmcqr642jz6rszcxegjc6",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1zdrz4w2pwwffdvmpum0626vycel9caay9n3pll",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1st4h4ymu52hwtl3s0n298t6adj0vputx8jw8xt",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1s0lankh33kprer2l22nank5rvsuh9ksa2xcd2y",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1vfydl5r98zev8xc7j0mus28r63jcklsu63vuah",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1njzuxja7aa7w2d69ldg2r8c6qhjzfcd42huq0x",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1cqgzxhn3dqd58xexz8yley2wntdvym4emzvpd7",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1t345w0vxnyyrf4eh43lpd3jl7z378rtsdn9tz3",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper125xazqstxpav7ekrt4w8km7ccdu8ytj40xug70",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1qx43f066sh6728avms4qq09cj2a3mg83dgjh22",
+      "weight": 0
+    },
+    {
+      "address": "celestiavaloper1q2kaajedxm0r5xc0twdqz6atap96502d67yjyj",
+      "weight": 0
+    }
+  ]
+}

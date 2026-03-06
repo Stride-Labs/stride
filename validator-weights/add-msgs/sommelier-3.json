@@ -1,0 +1,54 @@
+{
+  "validators": [
+    {
+      "name": "Sommelier Foundation",
+      "address": "sommvaloper1rtt69afx4dtj4t3urgm93qq7kxypzzeew4w8t0",
+      "weight": 0
+    },
+    {
+      "name": "Defi Geek",
+      "address": "sommvaloper1delagkfwss0x8vjrzwqtws4kj47jgteen0vrup",
+      "weight": 0
+    },
+    {
+      "name": "Red Planet",
+      "address": "sommvaloper1kwnymjvr2t4g3agzd6h077kx6k62avzpr8zcpz",
+      "weight": 0
+    },
+    {
+      "name": "Validatus",
+      "address": "sommvaloper1jgfjrec3u2ev6v89sav06we8jn5tf4cqlpj997",
+      "weight": 0
+    },
+    {
+      "name": "FreshSTAKING",
+      "address": "sommvaloper17h2x3j7u44qkrq0sk8ul0r2qr440rwgj2latjp",
+      "weight": 0
+    },
+    {
+      "name": "BitNordic",
+      "address": "sommvaloper1qzy5ydycy6deseghvh4f4f20s268s4tn4527kj",
+      "weight": 0
+    },
+    {
+      "name": "\ud83d\udd25STAVR\ud83d\udd25 REStake ON\u2705",
+      "address": "sommvaloper1fes322u0x7422ugc05xkxeav2zzd3kfgf898f4",
+      "weight": 0
+    },
+    {
+      "name": "VALIDARIOS",
+      "address": "sommvaloper1xepu6f8nvqzd95fgs0njvm8rvwxq79dydzzrmn",
+      "weight": 0
+    },
+    {
+      "name": "SyaNodes",
+      "address": "sommvaloper1k6vwc45uu5k7tth7gnnh4c967g5cg04f84jla3",
+      "weight": 0
+    },
+    {
+      "name": "Ztake.org",
+      "address": "sommvaloper13ul4wf2gwuwfrqrx70h2j9evje05vtglpc44sc",
+      "weight": 0
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "validators": [
+    {
+      "name": "Chorus One",
+      "address": "bandvaloper15urq2dtp9qce4fyc85m6upwm9xul3049fz627w",
+      "weight": 0
+    },
+    {
+      "name": "Forbole",
+      "address": "bandvaloper14kn0kk33szpwus9nh8n87fjel8djx0y0wz502z",
+      "weight": 0
+    },
+    {
+      "name": "Ubik Capital",
+      "address": "bandvaloper14wuzcsyttmyedc7e7z7e0exhg8k94x6eulj6pt",
+      "weight": 0
+    },
+    {
+      "name": "Stakecito",
+      "address": "bandvaloper1p26kdh5fx24qz9xa5jtjje8ha8ee9q44nrsc8c",
+      "weight": 0
+    },
+    {
+      "name": "htx",
+      "address": "bandvaloper1aqqfs9dftsmdnp3tuzqfvpwd4768mj42pd67ea",
+      "weight": 0
+    }
+  ]
+}

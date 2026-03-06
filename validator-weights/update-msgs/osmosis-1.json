@@ -1,0 +1,620 @@
+{
+  "validator_weights": [
+    {
+      "address": "osmovaloper1clpqr4nrk4khgkxj78fcwwh6dl3uw4ep88n0y4",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1z89utvygweg5l56fsk8ak7t6hh88fd0axx2fya",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper130r77dtdgz3yjyyskhrr3j2c90aqezugkhr3rs",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1c9ye54e3pzwm3e0zpdlel6pnavrj9qqv5qgdz9",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper10w06wvmdd4xn7hr76gzrv570f7q5uweem5jcd7",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1e20nfplac6cp5mga25a3ujvcgly3mfu73e6scn",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper12rzd5qr2wmpseypvkjl0spusts0eruw2g35lkn",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1u5v0m74mql5nzfx2yh43s2tke4mvzghr6m2n5t",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1h2c47vd943scjlfum6yc5frvu2l279lwjep5d6",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4phpkatp",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper17cp6fxccqxrpj4zc00w2c7u6y0umc2jajsyc5t",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper15czt5nhlnvayqq37xun9s9yus0d6y26d5jws45",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper146mj09yzu3mvz7pmy4dvs4z9wr2mst7rq8p8gy",
+      "weight": 798
+    },
+    {
+      "address": "osmovaloper14n8pf9uxhuyxqnqryvjdr8g68na98wn5amq3e5",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper15urq2dtp9qce4fyc85m6upwm9xul3049wh9czc",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1hjct6q7npsspsg3dgvzk3sdf89spmlpf6t4agt",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1u6jr0pztvsjpvx77rfzmtw49xwzu9kas05lk04",
+      "weight": 716
+    },
+    {
+      "address": "osmovaloper1lzhlnpahvznwfv4jmay2tgaha5kmz5qxwmj9we",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1xvl4vrlh3epl7desfnqydt4tvexl380ue86syc",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1glmy88g0uf6vmw29pyxu3yq0pxpjqtzqr5e57n",
+      "weight": 647
+    },
+    {
+      "address": "osmovaloper1e9ucjn5fjmetky5wezzcsccp7hqcwzrrdulz7n",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1x20lytyf6zkcrv5edpkfkn8sz578qg5s833swz",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1wlagucxdxvsmvj6330864x8q3vxz4x025rraa6",
+      "weight": 612
+    },
+    {
+      "address": "osmovaloper1l7hln0l79erqaw6jdfdwx0hkfmj3dp27gr77ja",
+      "weight": 596
+    },
+    {
+      "address": "osmovaloper1cyw4vw20el8e7ez8080md0r8psg25n0cq98a9n",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper12zwq8pcmmgwsl95rueqsf65avfg5zcj047ucw6",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper16n0t7lmy4wnhjytzkncjdkxrsu9yfjm3ex7hxr",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1r7spsjagrmcfv96w5dxtttajvnxczhcpgfk74g",
+      "weight": 521
+    },
+    {
+      "address": "osmovaloper1t8qckan2yrygq7kl9apwhzfalwzgc2429p8f0s",
+      "weight": 512
+    },
+    {
+      "address": "osmovaloper1t48236ajss9wswamwll4nj7up2gqdns52gvyaa",
+      "weight": 501
+    },
+    {
+      "address": "osmovaloper1czsuul2n7252wcrvk9dvjcjg2qn2qcdd9ue74s",
+      "weight": 480
+    },
+    {
+      "address": "osmovaloper1et4d3he94fs5u98kzms7s0fjhpaf5hx7q6fuy5",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1e8238v24qccht9mqc2w0r4luq462yxttfpaeam",
+      "weight": 461
+    },
+    {
+      "address": "osmovaloper144xwxcrlntp4wjadhrylzc6p3vdzscye6t3f76",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1gy0nyn2hscxxayj2pdyu8axmfvv75nnvhc079s",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1z5xyynz9ewuf044uaweswldut34z34z3cwpt7y",
+      "weight": 444
+    },
+    {
+      "address": "osmovaloper1jxv0u20scum4trha72c7ltfgfqef6nscqx0u46",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1xaz2yf5l0qcta60nlc9v4vzufz2r3swte7y8xd",
+      "weight": 423
+    },
+    {
+      "address": "osmovaloper1et77usu8q2hargvyusl4qzryev8x8t9weceqyk",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1nna7k5lywn99cd63elcfqm6p8c5c4qcu6ex2gp",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper15knxwwzq38lwe3e3rul8cpcew9n6u0gq7x38cj",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper10ymws40tepmjcu3a2wuy266ddna4ktas0zuzm4",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1xwazl8ftks4gn00y5x3c47auquc62ssuh8af89",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper14amduhjazqhwtkhm6kutdcy4ux5zazf5k803tq",
+      "weight": 362
+    },
+    {
+      "address": "osmovaloper1sjllsnramtg3ewxqwwrwjxfgc4n4ef9ua8h4lf",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1zqevmn000unnjj709akc8p86f9jc4xevf8f8g3",
+      "weight": 361
+    },
+    {
+      "address": "osmovaloper125kjmvuv5sv7qct2t6wc99h3mp7hpyxw37dcgg",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1tj76vuaqu23eex2v6vlqc93ytsselvama69re6",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcmmarz7",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper14kn0kk33szpwus9nh8n87fjel8djx0y0fhtak5",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper135p8cjwa3hnnnksjxchda0a6339z9zm7cudyxn",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1eh5mwu044gd5ntkkc2xgfg8247mgc56f4dlt9h",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper15xstrgzpwhduklvyhy9g7gu774lm8cjjxdvlw6",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1j0vaeh27t4rll7zhmarwcuq8xtrmvqhu6m87mz",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper10rsjwrcj7maz4f0l8dh3smjd022n9ya8ycuyg7",
+      "weight": 284
+    },
+    {
+      "address": "osmovaloper10jm8fvdyqlj78w0j5nawc76wsn4pqmdxgzgh4c",
+      "weight": 274
+    },
+    {
+      "address": "osmovaloper1ej2es5fjztqjcd4pwa0zyvaevtjd2y5w37wr9t",
+      "weight": 269
+    },
+    {
+      "address": "osmovaloper1lfn5ywlunadd3fl8lcem05ew7vezns2kx06pf0",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1f6wx6r7567wu5j4ysskshkmsrk29sme97x25ca",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qk5wjn0s",
+      "weight": 221
+    },
+    {
+      "address": "osmovaloper16q8xd335y38xk2ul67mjg27vdnrcnklt4wx6kt",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1zlymlax05tg9km9jyw496jx60v86m454a3xf3m",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1pxphtfhqnx9ny27d53z4052e3r76e7qq495ehm",
+      "weight": 208
+    },
+    {
+      "address": "osmovaloper1y0us8xvsvfvqkk9c6nt5cfyu5au5tww24nrlnx",
+      "weight": 181
+    },
+    {
+      "address": "osmovaloper1l38793cjjks9k70wkxdq7w3auhjmqu9s9l4njy",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper17r0cp9zrtkvzlz7a2r09gmdxwqfyje98gfer6u",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1tf7wjthwt9mgywqvjdkj974rp5awzzm43ddhlp",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1lmxrexaxuc7ealq4wqdgzrczajhhrenrdlhxha",
+      "weight": 169
+    },
+    {
+      "address": "osmovaloper1n3mhyp9fvcmuu8l0q8qvjy07x0rql8q4d3kvts",
+      "weight": 161
+    },
+    {
+      "address": "osmovaloper19v94c3z7ckarwsum76kaagma0wqsqhh54xucdk",
+      "weight": 158
+    },
+    {
+      "address": "osmovaloper1m73mgwn3cm2e8x9a9axa0kw8nqz8a492vg4hp4",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1xf9zpq5kpxks49cg606tzd8qstaykxgt2vs0d5",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1xk23a255qm4kn6gdezr6jm7zmupn23t3pqjjn6",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1n56swda49evz92zhcw2xc8esx6kzt8qm62hkep",
+      "weight": 116
+    },
+    {
+      "address": "osmovaloper1cmqh34lt9d457ajk9g94eg2pswrpr08rxqwsyy",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper15004ysvmqnqzkvt7x6s4cd53flmmvgfv6t4y9y",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper17mggn4znyeyg25wd7498qxl7r2jhgue8td054x",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1thsw3n94lzxy0knhss9n554zqp4dnfzx78j7sq",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1ux0wrpy2gpeteahn8r95xjketyf0nn800ztng4",
+      "weight": 101
+    },
+    {
+      "address": "osmovaloper1kgddca7qj96z0qcxr2c45z73cfl0c75pf37k8l",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1grgelyng2v6v3t8z87wu3sxgt9m5s03x7uy20c",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1f7jtv9sd3g9jay64zrydfqh7l3eqdzgs289m8u",
+      "weight": 97
+    },
+    {
+      "address": "osmovaloper1q5xvvmf03dx8amz66ku6z0x4u39f0aphqf42wc",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1jvqv650snr7gaee2wsvkx9nf9gwuj946zxa7z4",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper122yaxffys6rmv03nwwkmn3rvr5skzxl9lry2a5",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1e8zrt3wq2wu854e8kfe0fg2y4rpakql37u0l4uwzv2cv0dng4ntqst76th",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1wgmdcxzp49vjgrqusgcagq6qefk4mtjv5c0k7q",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1md9f5524vtmrn64lyv2pdfn7cnkjkklf44vtjz",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1e893vrtzzp6zyzs80tqg52j2vdckzqrdjrjva5",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper13tk45jkxgf7w0nxquup3suwaz2tx483xe832ge",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper14ts0j42qkpr43a3tgxr7zz6l6zdf7hdes5jpma",
+      "weight": 79
+    },
+    {
+      "address": "osmovaloper1ehkfl7palwrh6w2hhr2yfrgrq8jetguct4ddyl",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper17h2x3j7u44qkrq0sk8ul0r2qr440rwgjp38f93",
+      "weight": 70
+    },
+    {
+      "address": "osmovaloper1pjmngrwcsatsuyy8m3qrunaun67sr9x74vvvdk",
+      "weight": 68
+    },
+    {
+      "address": "osmovaloper1r2u5q6t6w0wssrk6l66n3t2q3dw2uqny4gj2e3",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper18wkkhsrsw7gwl3z9gn6e25ag3sn0crzp2tp9t0",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1s29zkm444lr8u4jjfkrycl9wh8gttwfze230hj",
+      "weight": 52
+    },
+    {
+      "address": "osmovaloper1rhjvcesshc833dqwdlwskwcjz08gcnxq73dnqc",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1yp8qwkfs964pkg3rge3k6ree2e6lrttgc8aqzn",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper16j5hsdrcaa6950ks0rf944rgmncukl74cs7yw6",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1feh2keupglep6mvxf5c96eulh3puujjryj2h8v",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1ddle9tczl87gsvmeva3c48nenyng4n56yscals",
+      "weight": 42
+    },
+    {
+      "address": "osmovaloper123nfq6m8f88m4g3sky570unsnk4zng4u6mkmvq",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1juczud9nep06t0khghvm643hf9usw45r3jxhxn",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1z0sh4s80u99l6y9d3vfy582p8jejeeu6tcucs2",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1000ya26q2cmh399q4c5aaacd9lmmdqp9cwpvl4",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1uxn3xw4xzyvu3xka0fr7krsfzyp8af3eyyurzh",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1ls4kmz5v7ytwcqmmchkex970565j8q3d5s6gdw",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1crg24mgm8l3qe7ej9l8t7tsttp40aaas4xmkhx",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper182d2cjt4al2qxkrgx2kp3v8rvm2jc50ft8wz57",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1qx6kgrla69wmz90tn379p4kaux5prdkucgvfuf",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper14537vk6xr9qfptpw2090c589w7a8cm0e0wyv3u",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1ualhu3fjgg77g485gmyswkq3w0dp7gysdcdgw2",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper13x4pynlp86prhcmtns742kgsgu7pjtzjz4a3nk",
+      "weight": 15
+    },
+    {
+      "address": "osmovaloper16vnsrhxsyamf4f4eln6g587qwwd39fte2m2ysc",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1kls9ca0h980sqfmt0497jj8kad3lcws6g08mld",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1969qjenvrjxrypynv36j9hjmlxrqgmy0xq3dg2",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper103s29j7dyc3utljce802m38p2kk89taj0r2hxa",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1083svrca4t350mphfv9x45wq9asrs60c6rv0j5",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1cwurrzatev9lfkn3ak6hh59t6yc0zy00rzp8yd",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1v5y0tg0jllvxf5c3afml8s3awue0ymjusax93d",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1h6pv6eymyf40w0xjuuacj3vnu9lxwq8u0nm7uj",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1dvpxxkksf5hrhnycsgyyjnal79lp7gp3n59t0d",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper13x77yexvf6qexfjg9czp6jhpv7vpjdwwpuclc8",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper19j2hd230c3hw6ds843yu8akc0xgvdvyu4arf82",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1cqdhr7arcezmkhy32qzsqsjvq2rheuhxw9uq8w",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1hk64xxqufcdyh627s29mruep8yfmxpuuclacer",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1u2wsa88eh738mk35a3cncgu7lc6cqf74jdl50x",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1d5ada26tcd24wltfakqkkdu3656k6n4chnyz8h",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1yxg83zcuwfwvyagdzh3a8p45cgqxtrsg2segqf",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper13t30u88ehaq3dlp5uzkxmn9u98nrskjyrutvvs",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1mmzazkl47l9e7aqrygp5kks9n30gcc730qlmwe",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1w4x44ek799hvg97x0mfwu6gg5dww2r8fdpqql4",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1sxx9mszve0gaedz5ld7qdkjkfv8z992a3z2szp",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper106yua27d3dg4er6w2fkq68s5svd9hngu35nxqr",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1k5mws9tqgflx6rvhq6x0tnsdw0ddfkptwf3ch9",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1udp8gef365zcqhlxuepewrxuep9thjanuhxcaw",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1dnmz4yzv73lr3lmauuaa0wpwn8zm8s20lg3pg9",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1q6xc9x054z9y7ll7k740j2cvdsllsfhs5rxyaj",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1j7euyj85fv2jugejrktj540emh9353ltnz0lvc",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper19fec46jadzr4y6gd596kkf8sskm7eyq32kkwc7",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper150722lyxdh25vhhwp89qxp3574lv4tx8j6u0ge",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1t3v9clrvqeudph4gf9fthcn4csalahfuq3nhme",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1japz8jxqcd7zlrcavd53l8vs2w6ukufrju7lyk",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1273zsxhxd5dlgcr2zjf5x25275hjcp3udgkz9z",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1rcp29q3hpd246n6qak7jluqep4v006cd8q9sme",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1c0hr48wkpfcmdljz0xjdxqak4a09ngs366wp8x",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper17z6mxxmkk5vykq6m4c2vexqjs6eq0zqualtqu3",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1symf474wnypes2d3mecllqk6l26rwz8m720t3k",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper102ruvpv2srmunfffxavttxnhezln6fncrdjd27",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper16x4vlh65q5yqa3ghyxs3d9f3mgdz8t2z20ap0r",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1fdratlcgy56etxd07n03vcfm20m4mff8qzn2p3",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1gw6z2kn7z7cg747czxq98yczcmauk29uzqfuw4",
+      "weight": 0
+    },
+    {
+      "address": "osmovaloper1cunqeg5ydl0zvg5jm748xpc90hsz4ufu2kqvgy",
+      "weight": 0
+    }
+  ]
+}

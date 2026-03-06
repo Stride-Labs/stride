@@ -1,0 +1,79 @@
+{
+  "validators": [
+    {
+      "name": "UMEE BURN VALIDATOR",
+      "address": "umeevaloper1fz037eya6ruvklcakq95uftmz6cxw72re9dgkf",
+      "weight": 0
+    },
+    {
+      "name": "Chainroot",
+      "address": "umeevaloper1c0r2r5e3usyjjy55dk5ktql9nc5nljk3fw4lla",
+      "weight": 0
+    },
+    {
+      "name": "\ud83d\udd25STAVR\ud83d\udd25 REStake ON\u2705",
+      "address": "umeevaloper1dkjcas3j43u3v6l94jhhhnjxhlnwxt3m02p4c3",
+      "weight": 0
+    },
+    {
+      "name": "StakeTown",
+      "address": "umeevaloper1tvnv9x93s2vaap79j0jxt49hak8emld2ylx84l",
+      "weight": 0
+    },
+    {
+      "name": "AutoStake \ud83d\udee1\ufe0f Slash Protected",
+      "address": "umeevaloper1py60fpud4w468zn7mthfa25xnzuawjum7w90q2",
+      "weight": 0
+    },
+    {
+      "name": "HighStakes-Daily Airdrop",
+      "address": "umeevaloper1rtdcc3ukvf80xzqk00nsj5v06edf39q0yxe2ve",
+      "weight": 0
+    },
+    {
+      "name": "CoinMetrika",
+      "address": "umeevaloper1z6qsfe95y3luzj4wve93s9w6rjs7msk972zs4f",
+      "weight": 0
+    },
+    {
+      "name": "ELYSIUM",
+      "address": "umeevaloper1tm5lt2y6sw62dptctecq9g9wjv7hwzkfpsnxjw",
+      "weight": 0
+    },
+    {
+      "name": "Encapsulate (fka KingSuper)",
+      "address": "umeevaloper1s0lankh33kprer2l22nank5rvsuh9ksavp35nh",
+      "weight": 0
+    },
+    {
+      "name": "medium",
+      "address": "umeevaloper1nhxqqa7rlmuw7yzpf0v4zzusk39fzuk2h0rptu",
+      "weight": 0
+    },
+    {
+      "name": "Pro-Nodes75",
+      "address": "umeevaloper1vn5ysf7u9dssn2pm6h8agmqerxc5mq79p3e9ny",
+      "weight": 0
+    },
+    {
+      "name": "AM Solutions \ud83c\udf0a",
+      "address": "umeevaloper1hdeemspqtxaw5pk3ddmtzju3xtk0euj5xddr0c",
+      "weight": 0
+    },
+    {
+      "name": "CosmoWiz",
+      "address": "umeevaloper1lpyjdjtscyurhqze5xvkvhdj94wltcs6g7wq84",
+      "weight": 0
+    },
+    {
+      "name": "StakeAngle",
+      "address": "umeevaloper1lewxvf5qcyfqtl2m49k285qtdsa3vgstkj00n8",
+      "weight": 0
+    },
+    {
+      "name": "node101",
+      "address": "umeevaloper12h8fpmg5qs570rmlem27km5xu4l2gv0lapuels",
+      "weight": 0
+    }
+  ]
+}

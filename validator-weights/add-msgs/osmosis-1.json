@@ -1,0 +1,14 @@
+{
+  "validators": [
+    {
+      "name": "01node",
+      "address": "osmovaloper1xaz2yf5l0qcta60nlc9v4vzufz2r3swte7y8xd",
+      "weight": 0
+    },
+    {
+      "name": "Chiter in Cosmos \u269b",
+      "address": "osmovaloper1lmxrexaxuc7ealq4wqdgzrczajhhrenrdlhxha",
+      "weight": 0
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "validators": [
+    {
+      "name": "Silk Nodes",
+      "address": "junovaloper1v676erkdwd3hq2n2a7xte5qpymdfa8c8uyatcw",
+      "weight": 0
+    },
+    {
+      "name": "ECO Stake \ud83c\udf31 | REStake.app",
+      "address": "junovaloper19ur8r2l25qhsy9xvej5zgpuc5cpn6syydmwtrt",
+      "weight": 0
+    },
+    {
+      "name": "Chainroot",
+      "address": "junovaloper1c0r2r5e3usyjjy55dk5ktql9nc5nljk3jn6mkq",
+      "weight": 0
+    },
+    {
+      "name": "Allnodes",
+      "address": "junovaloper1v3lnt5cjjk9658yyrv2673pcqx3nzvkg256xjp",
+      "weight": 0
+    },
+    {
+      "name": "Kleomedes",
+      "address": "junovaloper1x8u2ypdr35802tjyjqyxan8x85fzxe6sk0qmh8",
+      "weight": 0
+    },
+    {
+      "name": "Validatus",
+      "address": "junovaloper19v94c3z7ckarwsum76kaagma0wqsqhh5w9jlsx",
+      "weight": 0
+    },
+    {
+      "name": "\ud83d\udd25STAVR\ud83d\udd25 REStake ON\u2705",
+      "address": "junovaloper177svs8gyz28pupaj6amgls6rahcmwmwq06fukv",
+      "weight": 0
+    },
+    {
+      "name": "Stake&Relax \ud83e\udda5",
+      "address": "junovaloper1yg0h9xeseq3qfu2vkwj3m29yf42lnyfmqasn35",
+      "weight": 0
+    },
+    {
+      "name": "polkachu.com",
+      "address": "junovaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4pvzc6k3",
+      "weight": 0
+    },
+    {
+      "name": "Stakeflow",
+      "address": "junovaloper1ssmt2aveqpc7e0ncgxt0tpj83ur623dvk7uvng",
+      "weight": 0
+    },
+    {
+      "name": "Crosnest",
+      "address": "junovaloper1p0r4znp29547d8ra5k8t6ls0ztm3tj74ak38wz",
+      "weight": 0
+    },
+    {
+      "name": "\ud83d\udc3eTRACE\u2122",
+      "address": "junovaloper13uflwz6ncv7wuey55rhh08nlmskpdpfevckja0",
+      "weight": 0
+    },
+    {
+      "name": "StakeTown",
+      "address": "junovaloper12rkgnycfaqqyclrhquzerrm4nfwg6um26l2aqw",
+      "weight": 0
+    },
+    {
+      "name": "StakeLab.zone",
+      "address": "junovaloper1la7th9kc3gdltl53cedxxqpkyk5runudrzwx55",
+      "weight": 0
+    },
+    {
+      "name": "CommunityStaking",
+      "address": "junovaloper1zxx8j75ngm8m38v9l5wreaavwnsuun7gcq5cu8",
+      "weight": 0
+    },
+    {
+      "name": "Expedition | by Life and Crypto",
+      "address": "junovaloper1tx2u0nvjwregdv6a5t5k7z0krv6l8l6hgq4z85",
+      "weight": 0
+    },
+    {
+      "name": "Cosmos Spaces \u262e\ufe0f \ud83d\udc9c \u269b\ufe0f",
+      "address": "junovaloper1836fhsg6yqpu98vezfc7caakchqe8pvske7t8q",
+      "weight": 0
+    },
+    {
+      "name": "owlstake",
+      "address": "junovaloper1t3cjxseweyyy5ssckdr2ynn0qx283hza33p056",
+      "weight": 0
+    },
+    {
+      "name": "\u2705 CryptoCrew - 100% MEV revenue to Juno stakers! #IBCgang #REstake",
+      "address": "junovaloper1ncu32g0lzhk0epzdar7smd3qv9da2n8w8mwn4k",
+      "weight": 0
+    },
+    {
+      "name": "Inotel",
+      "address": "junovaloper1z89utvygweg5l56fsk8ak7t6hh88fd0aa9ywed",
+      "weight": 0
+    },
+    {
+      "name": "IcyCRO \ud83e\uddca",
+      "address": "junovaloper1nna7k5lywn99cd63elcfqm6p8c5c4qcup6gd43",
+      "weight": 0
+    },
+    {
+      "name": "VairagyaNodes",
+      "address": "junovaloper1qh8rgkdm77wrhlf7un20gz9gmtpxkyaeqsaq63",
+      "weight": 0
+    },
+    {
+      "name": "Secure Secrets",
+      "address": "junovaloper1vq8tw77kp8lvxq9u3c8eeln9zymn68rng8pgt4",
+      "weight": 0
+    },
+    {
+      "name": "Cogwheel \u2699\ufe0f",
+      "address": "junovaloper1sz9nuewea8dlje7lzqymzyww8q0hun5q5ryep7",
+      "weight": 0
+    },
+    {
+      "name": "GATA HUB",
+      "address": "junovaloper1yeaw3dv6jk3hr290l2tsew7rr2vjykynme37s2",
+      "weight": 0
+    },
+    {
+      "name": "CryptoDungeon",
+      "address": "junovaloper13x4pynlp86prhcmtns742kgsgu7pjtzjeknkwx",
+      "weight": 0
+    }
+  ]
+}

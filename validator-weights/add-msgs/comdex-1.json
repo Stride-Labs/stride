@@ -1,0 +1,94 @@
+{
+  "validators": [
+    {
+      "name": "Crosnest",
+      "address": "comdexvaloper12dseyeqwsv3lkxlks45p4fp7et4qnzn5vkavjf",
+      "weight": 0
+    },
+    {
+      "name": "Witval",
+      "address": "comdexvaloper10j3t6jxqjjnz4lkh3m2af7yxcf9773r4a8z8z3",
+      "weight": 0
+    },
+    {
+      "name": "Stakewolle.com |  Auto-compound",
+      "address": "comdexvaloper15xevj3n6eq36t62sjjrsvf6hkuryg8w3pmpqy8",
+      "weight": 0
+    },
+    {
+      "name": "Lavender.Five Nodes \ud83d\udc1d",
+      "address": "comdexvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zcpt5ph",
+      "weight": 0
+    },
+    {
+      "name": "Validatrium-Inactive-Redelegate",
+      "address": "comdexvaloper1wg8m5kkhrrszyvgqq2d5t9c4fd0cqqhy04tlud",
+      "weight": 0
+    },
+    {
+      "name": "Consensus One",
+      "address": "comdexvaloper1flh26y7f2vsam4a6snwgrqaxkhe0g2yljstdqm",
+      "weight": 0
+    },
+    {
+      "name": "Valid Blocks",
+      "address": "comdexvaloper1l87lywr66ehhfuy3807nuwfjpmweyerdm8u602",
+      "weight": 0
+    },
+    {
+      "name": "ChainTools",
+      "address": "comdexvaloper1z6a9p43svtkzf5efmy78tae7qqz8p8cctyj6yg",
+      "weight": 0
+    },
+    {
+      "name": "Chill Validation",
+      "address": "comdexvaloper1qr7eckxg5zgsp40sdwr9qj2arfx5ftgpggl98t",
+      "weight": 0
+    },
+    {
+      "name": "Zenscape",
+      "address": "comdexvaloper1gjcv70fqf4557g8uqsk83l82fccykx0ye43ul9",
+      "weight": 0
+    },
+    {
+      "name": "Finality",
+      "address": "comdexvaloper1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wh2dqrg",
+      "weight": 0
+    },
+    {
+      "name": "\u269b\ufe0fNodeOf Cosmonauts - Comdex\ud83e\uddd1\u200d\ud83d\ude80",
+      "address": "comdexvaloper1yyc7vmzy9w2g79gswz9cx845hh7l275cw7eg2r",
+      "weight": 0
+    },
+    {
+      "name": "Staketab",
+      "address": "comdexvaloper1s9em43slvq8zk9xxkdfqgve9zxw4sha7hhkqa7",
+      "weight": 0
+    },
+    {
+      "name": "StakerHouse",
+      "address": "comdexvaloper12q4a5qvuzzn2kspe6dekkhnl77ct52dr5vpwsk",
+      "weight": 0
+    },
+    {
+      "name": "POSTHUMAN \ud83e\uddec StakeDrop",
+      "address": "comdexvaloper1963hcznh439kspqmjj5hv5h4nk2kphvats5ujk",
+      "weight": 0
+    },
+    {
+      "name": "Cosmos Spaces",
+      "address": "comdexvaloper1ee63nuagkj5age25jhdytj6vawt89jqqxyw7ls",
+      "weight": 0
+    },
+    {
+      "name": "\ud83d\udd25STAVR\ud83d\udd25 REStake ON\u2705",
+      "address": "comdexvaloper1g6fm6xcgzrlm9d2apf3t8xvu7wrk509wxyy5rq",
+      "weight": 0
+    },
+    {
+      "name": "Cosmoverse",
+      "address": "comdexvaloper1txq98fyl406jvgv723dljnnqh5d33gaajyfmpg",
+      "weight": 0
+    }
+  ]
+}

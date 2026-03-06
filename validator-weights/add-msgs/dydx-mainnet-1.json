@@ -1,0 +1,39 @@
+{
+  "validators": [
+    {
+      "name": "Nansen | Stake to Stack Points",
+      "address": "dydxvaloper1c9ye54e3pzwm3e0zpdlel6pnavrj9qqv2ttvgk",
+      "weight": 0
+    },
+    {
+      "name": "Stakecito",
+      "address": "dydxvaloper18jr2wx3qsu8g9gep6jypcxunx2jvcjquxk60wc",
+      "weight": 0
+    },
+    {
+      "name": "RHINO \ud83e\udd8f",
+      "address": "dydxvaloper1cpz0jtj6rkezzs7z8k5gy6py05sxdkmyvggvvh",
+      "weight": 0
+    },
+    {
+      "name": "CLC",
+      "address": "dydxvaloper1e0r3fljewfvj7729q6f07m8fy9v5e208s5ztkf",
+      "weight": 0
+    },
+    {
+      "name": "Interstellar \ud83c\udf78",
+      "address": "dydxvaloper1u0exa7dqlsgvfje9sg0emxrmtdmvakp7d0f697",
+      "weight": 0
+    },
+    {
+      "name": "DELIGHT",
+      "address": "dydxvaloper1mnj3vlwgud7fvfx7tgawmx8k2gd40fy2amarjg",
+      "weight": 0
+    },
+    {
+      "name": "Cosmic Validator | 100% Uptime",
+      "address": "dydxvaloper1k2mlt4akhddh8gz9r3227ruuaestgdczx60vqk",
+      "weight": 0
+    }
+  ]
+}

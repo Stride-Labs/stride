@@ -1,0 +1,204 @@
+{
+  "validator_weights": [
+    {
+      "address": "terravaloper120ppepaj2lh5vreadx42wnjjznh55vvktp78wk",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper188e99yz54744uhr8xjfxmmplhnuw75xea55zfp",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1rr2g4z2ch4cqwl8s70yj94a5l2vakg0v36nmjh",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1wdymftapg5pcvf2aqw4pd0yuuh5w9m6yqdnukv",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper15lsftv92eyssjwkh2393s0nhjc07kryqen2fqf",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1lelhxdzwn9ddecv6sv0kcxj5tguurxnzcfs5wf",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1jt8pcx4sesgztjkjsvjjqtvyfgcehqx09u4exq",
+      "weight": 593
+    },
+    {
+      "address": "terravaloper1tm0xkark2ufecmdhgaaw7gqsycyt4qag6py8x6",
+      "weight": 542
+    },
+    {
+      "address": "terravaloper1vm5azhvaxeanc7auxh02y8jmxrk8tj93f43e7j",
+      "weight": 513
+    },
+    {
+      "address": "terravaloper1vcd42qfvlvnjwaw7hvl6y32wrzqxvas653yus9",
+      "weight": 509
+    },
+    {
+      "address": "terravaloper1htey4gcdcass29vn4dwjcuq58mrvv8ra5pjz4k",
+      "weight": 476
+    },
+    {
+      "address": "terravaloper1a9zv7n6pmkzlm3wj6c23qyejqlmyxsl5faanrv",
+      "weight": 454
+    },
+    {
+      "address": "terravaloper1mgpgp53tynj4djmckxdjhufa7q8lqqjuwnrlqm",
+      "weight": 453
+    },
+    {
+      "address": "terravaloper1pgyelqv0hwjavgf6vhdm4e4pt766wfxxczu20l",
+      "weight": 423
+    },
+    {
+      "address": "terravaloper1cqc26lnatzxvu0z5nd4yx8m4ecllkm7jlakwrw",
+      "weight": 401
+    },
+    {
+      "address": "terravaloper10c04ysz9uznx2mkenuk3j3esjczyqh0j783nzt",
+      "weight": 389
+    },
+    {
+      "address": "terravaloper1puzp2yjqps43x7nse33svljc550xjz35jxg432",
+      "weight": 389
+    },
+    {
+      "address": "terravaloper1wzvgc8j840qtsfsa55kuf9cypqwa2tqnkrduqx",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1l920a79akuc98hz4389axf9ctcymrf5ays578x",
+      "weight": 376
+    },
+    {
+      "address": "terravaloper10qz4hfudfnllkgvhnm7k40dewg27nhxz3yn895",
+      "weight": 359
+    },
+    {
+      "address": "terravaloper1plxp55happ379eevsnk2xeuwzsrldsmqduyu36",
+      "weight": 346
+    },
+    {
+      "address": "terravaloper1fs8g3mlg3f4f4yrckvwk7dk4lt3nv4gtx2uqwj",
+      "weight": 341
+    },
+    {
+      "address": "terravaloper1vh9m0jpuznh00t05c66yqqpsgqzudrg258q6ch",
+      "weight": 323
+    },
+    {
+      "address": "terravaloper1cs0dspacdhym4cwcm3f7suurfszvl6k5s9p06a",
+      "weight": 320
+    },
+    {
+      "address": "terravaloper17q3y0exn6ndxkf78rcvj70gp7mrezmdx4z54xu",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper14rftkw37eltf74degzajq4s5phg23vjlu9h9as",
+      "weight": 256
+    },
+    {
+      "address": "terravaloper1wr0p7dzss74wfmzfqm8r65mk26efg5zhzpm77s",
+      "weight": 246
+    },
+    {
+      "address": "terravaloper1wwq9mfkkqfta334d4hcjrjau9y50a4hw37zhdl",
+      "weight": 203
+    },
+    {
+      "address": "terravaloper13qjxhnw98lm36rxc9yjakkmulhpv7zctdhcl03",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1e4sju9ya52l8ndjcneut4hg52y228360j0w86r",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1q8w4u2wyhx574m70gwe8km5za2ptanny9mnqy3",
+      "weight": 192
+    },
+    {
+      "address": "terravaloper1kepapcnh78hsk8nx2u9nv05rn7vjwwf4fr59zu",
+      "weight": 188
+    },
+    {
+      "address": "terravaloper1vrkzjujfds9p8t5g0xety3e3ft4dep02etv9le",
+      "weight": 187
+    },
+    {
+      "address": "terravaloper1l63t9c0nruewg5zdrmv8pvcxdg0az6fqgg008k",
+      "weight": 187
+    },
+    {
+      "address": "terravaloper1lg8zwpjvyx4pqy0j5ue2kf08edkuwy6l0j7f0h",
+      "weight": 187
+    },
+    {
+      "address": "terravaloper17kh8ngu3s74epwympaxrp4ukahm5rvtf5zc8ma",
+      "weight": 185
+    },
+    {
+      "address": "terravaloper1kxyzu575tex8dv6d5uk26t4q8x5lusw082w3t8",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper18vnm040mwk0d6plc60v5m9h2376gkcphknuwzs",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper18pmvpy25zc7x0u8ppefuyyl2zaafe2wut0nm5e",
+      "weight": 174
+    },
+    {
+      "address": "terravaloper1yej82e2zursn2f56vgxfvmydwj9f2awluhusqh",
+      "weight": 165
+    },
+    {
+      "address": "terravaloper1s6j9wxyprdsxmdf6mvsegsldvmtk0p92pa7aey",
+      "weight": 158
+    },
+    {
+      "address": "terravaloper1dvl464gpzxwru4a97q6pzqv7n7rcnxwlyspnau",
+      "weight": 157
+    },
+    {
+      "address": "terravaloper1wzu2j73nvccghywtghku5ch59f67jykw58na64",
+      "weight": 157
+    },
+    {
+      "address": "terravaloper1rgdps79da300t87twwkcly6ec3vlpgpfgnsel5",
+      "weight": 151
+    },
+    {
+      "address": "terravaloper1ge3vqn6cjkk2xkfwpg5ussjwxvahs2f6at87yp",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1tz203ptlsfs8c63f2j0d0872pt5frjrvtfg0vd",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1tthd0d5t6xksag3qp5cwvmyj7d6k9sktujnjrk",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1hr7svdp2rga9vf3ry95sx7g5wyspgwmg96vqg5",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1cl8j3r09vmlxf5zsq4xms7td8x2qcfml8637yf",
+      "weight": 0
+    },
+    {
+      "address": "terravaloper1gtw2uxdkdt3tvq790ckjz8jm8qgwkdw3uptstn",
+      "weight": 0
+    }
+  ]
+}

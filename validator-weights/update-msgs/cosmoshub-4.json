@@ -1,0 +1,732 @@
+{
+  "validator_weights": [
+    {
+      "address": "cosmosvaloper1c4k24jzduc365kywrsvf5ujz4ya6mwympnc4en",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1x8efhljzvs52u5xa6m7crcwes7v9u0nlwdgw30",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1clpqr4nrk4khgkxj78fcwwh6dl3uw4epsluffn",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1tflk30mq5vgqjdly92kkhhq3raev2hnz6eete3",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1we6knm8qartmmh2r0qfpsz6pq0s7emv3e0meuw",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper14lultfckehtszvzw4ehu0apvsr77afvyju5zzy",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper10wljxpl03053h9690apmyeakly3ylhejrucvtm",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper18ruzecmqj9pv8ac0gvkgryuc7u004te9rh7w5s",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcvrj90c",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1n229vhepft6wnkt5tjpwmxdmcnfz55jv3vp77d",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper10nzaaeh2kq28t3nqsh5m8kmyv90vx7ym5mpakx",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper132juzk0gdmwuxvx4phug7m3ymyatxlh9734g4w",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper15urq2dtp9qce4fyc85m6upwm9xul3049e02707",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1hjct6q7npsspsg3dgvzk3sdf89spmlpfdn6m9d",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1sjllsnramtg3ewxqwwrwjxfgc4n4ef9u2lcnj0",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper16k579jk6yt2cwmqx9dz5xvq9fug2tekvlu9qdv",
+      "weight": 800
+    },
+    {
+      "address": "cosmosvaloper1qaa9zej9a0ge3ugpx3pxyx602lxh3ztqgfnp42",
+      "weight": 800
+    },
+    {
+      "address": "cosmosvaloper1jlr62guqwrwkdt4m3y00zh2rrsamhjf9num5xr",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1gf3dm2mvqhymts6ksrstlyuu2m8pw6dhfp9md2",
+      "weight": 714
+    },
+    {
+      "address": "cosmosvaloper1ey69r37gfxvxg62sh4r0ktpuc46pzjrm873ae8",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1vvwtk805lxehwle9l4yudmq6mn0g32px9xtkhc",
+      "weight": 631
+    },
+    {
+      "address": "cosmosvaloper1uxlf7mvr8nep3gm7udf2u9remms2jyjqvwdul2",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1g48268mu5vfp4wk7dk89r0wdrakm9p5xk0q50k",
+      "weight": 610
+    },
+    {
+      "address": "cosmosvaloper1zqgheeawp7cmqk27dgyctd80rd8ryhqs6la9wc",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1y0us8xvsvfvqkk9c6nt5cfyu5au5tww2ztve7q",
+      "weight": 541
+    },
+    {
+      "address": "cosmosvaloper1eh5mwu044gd5ntkkc2xgfg8247mgc56fz4sdg3",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper156gqf9837u7d4c4678yt3rl4ls9c5vuursrrzf",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper157v7tczs40axfgejp2m43kwuzqe0wsy0rv8puv",
+      "weight": 472
+    },
+    {
+      "address": "cosmosvaloper18sqvyf4ss84qree7gndph5chmm82fglsqfylwn",
+      "weight": 458
+    },
+    {
+      "address": "cosmosvaloper1k2d9ed9vgfuk2m58a2d80q9u6qljkh4vfaqjfq",
+      "weight": 430
+    },
+    {
+      "address": "cosmosvaloper1te8nxpc2myjfrhaty0dnzdhs5ahdh5agzuym9v",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1grgelyng2v6v3t8z87wu3sxgt9m5s03xfytvz7",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1hmd535f69t3x262m6s9wc6jd0dmel2zevhyuhm",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1lzhlnpahvznwfv4jmay2tgaha5kmz5qxerarrl",
+      "weight": 345
+    },
+    {
+      "address": "cosmosvaloper1k6e7l0lz497l8njqjxpd3g4wlkdfwe93uqf03k",
+      "weight": 337
+    },
+    {
+      "address": "cosmosvaloper19f0w9svr905fhefusyx4z8sf83j6et0g9l5yhl",
+      "weight": 328
+    },
+    {
+      "address": "cosmosvaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4pqeemx8",
+      "weight": 326
+    },
+    {
+      "address": "cosmosvaloper1wrx0x9m9ykdhw9sg04v7uljme53wuj03aa5d4f",
+      "weight": 306
+    },
+    {
+      "address": "cosmosvaloper1rwh0cxa72d3yle3r4l8gd7vyphrmjy2kpe4x72",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1gpx52r9h3zeul45amvcy2pysgvcwddxrgx6cnv",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper17r0cp9zrtkvzlz7a2r09gmdxwqfyje98l3k9h6",
+      "weight": 254
+    },
+    {
+      "address": "cosmosvaloper16yupepagywvlk7uhpfchtwa0stu5f8cyhh54f2",
+      "weight": 237
+    },
+    {
+      "address": "cosmosvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zfd832j",
+      "weight": 223
+    },
+    {
+      "address": "cosmosvaloper1yh089p0cre4nhpdqw35uzde5amg3qzexkeggdn",
+      "weight": 218
+    },
+    {
+      "address": "cosmosvaloper1symf474wnypes2d3mecllqk6l26rwz8mfjqdus",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1svwt2mr4x2mx0hcmty0mxsa4rmlfau4lwx2l69",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1gah0q9gqypnr7ufzg0dcda3k6v8qp4ceddn8fs",
+      "weight": 199
+    },
+    {
+      "address": "cosmosvaloper1yw5s259jkcg0jzmh7sce29uk0lqqw2ump7578p",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1q6d3d089hg59x6gcx92uumx70s5y5wadklue8s",
+      "weight": 190
+    },
+    {
+      "address": "cosmosvaloper18m9wncg0w74vusm4xu0mk6ha2lpdrqq7c9cjq3",
+      "weight": 179
+    },
+    {
+      "address": "cosmosvaloper199mlc7fr6ll5t54w7tts7f4s0cvnqgc59nmuxf",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper124maqmcqv8tquy764ktz7cu0gxnzfw54n3vww8",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1nz3c4q40j8jyvg2hcljkwhe69872mnllf7v9xh",
+      "weight": 143
+    },
+    {
+      "address": "cosmosvaloper18extdhzzl5c8tr6453e5hzaj3exrdlea90fj3y",
+      "weight": 143
+    },
+    {
+      "address": "cosmosvaloper1crqm3598z6qmyn2kkcl9dz7uqs4qdqnr6s8jdn",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1hkqejlyrj9h8knms9hwvrnp9xhqvjqlseh06vq",
+      "weight": 138
+    },
+    {
+      "address": "cosmosvaloper1nesedjyngslkvgg8jxy6nuy6r4g6ty0fdk3yky",
+      "weight": 131
+    },
+    {
+      "address": "cosmosvaloper1fs0vl7jem78pmhladkludtkun3cgkrwkt8czur",
+      "weight": 129
+    },
+    {
+      "address": "cosmosvaloper1a37ze3yrr2y9nn98l6frhjskmufvd40cpyd0gq",
+      "weight": 128
+    },
+    {
+      "address": "cosmosvaloper1nuhls0wyf8slhmuasha5pz0u89jrf9nnugq8ak",
+      "weight": 127
+    },
+    {
+      "address": "cosmosvaloper1jst8q8flpn94u9uvkpae8mrkk3a5pjhxx529z2",
+      "weight": 124
+    },
+    {
+      "address": "cosmosvaloper103agss48504gkk3la5xcg5kxplaf6ttnuv234h",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper14yncgrhz5t0j6p9yfm0eht65ltter2kqwkn6dc",
+      "weight": 118
+    },
+    {
+      "address": "cosmosvaloper1lcwxu50rvvgf9v6jy6q5mrzyhlszwtjxhtscmp",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1nlfrwx5t3mm3cuqqkvjv6jv24m7s2z5utzfe8s",
+      "weight": 111
+    },
+    {
+      "address": "cosmosvaloper1n3mhyp9fvcmuu8l0q8qvjy07x0rql8q46fe2xk",
+      "weight": 107
+    },
+    {
+      "address": "cosmosvaloper14kn0kk33szpwus9nh8n87fjel8djx0y070ymmj",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper17mggn4znyeyg25wd7498qxl7r2jhgue8u4qjcq",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1sd4tl9aljmmezzudugs7zlaya7pg2895ws8tfs",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1rxvkwfw3467nxgs6r7yav6cnygkjzkkc2defr6",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1fsg635n5vgc7jazz9sx5725wnc3xqgr7awxaag",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper14qazscc80zgzx3m0m0aa30ths0p9hg8vdglqrc",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1fhr7e04ct0zslmkzqt9smakg3sxrdve6ulclj2",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1m73mgwn3cm2e8x9a9axa0kw8nqz8a492ms63vn",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper17w8wc8y2jg2fjnkfxfw8z7a84qtuvyrgd89hm4",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper13x4pynlp86prhcmtns742kgsgu7pjtzj4djh7s",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1d0aup392g3enru7eash83sedqclaxvp7fzh6gk",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1yfnaup5wa3vdzx3wx9auhvzl85saqj37tqxqnu",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1uhnsxv6m83jj3328mhrql7yax3nge5svrv6t6c",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1e4vye322gkjx8n85jgcclnc7nvdvu82axnr5ll",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ukpah0340rx7k3x2njnavwyjv6pfpvn632df9q",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1lrzxwu4dmy8030waevcpft7rpxjjz26cpzvumd",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ptyzewnns2kn37ewtmv6ppsvhdnmeapvtfc9y5",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ddle9tczl87gsvmeva3c48nenyng4n56nghmjk",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper10unx6s0cdqntvrumd5hs07rgd5ytcztqh8etw6",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper19ecn7ljwp6el2pc5lldyauwv05ufwut9mm38r5",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ej2es5fjztqjcd4pwa0zyvaevtjd2y5wxxp9gd",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper10jzj3jjd3frna0ay08sh4zu4fpy957s49jkk7m",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1rpgtz9pskr5geavkjz02caqmeep7cwwpv73axj",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ualhu3fjgg77g485gmyswkq3w0dp7gys6qzwrv",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1jmykcq8gylmy5tgqtel4xj4q62fdt49sl584xd",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ehkfl7palwrh6w2hhr2yfrgrq8jetgucudztfe",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper16s96n9k9zztdgjy8q4qcxp4hn7ww98qkrka4zk",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1jx7uhnrg8pylqydtxwykc288mzh24866emytpa",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1aewyh4gtvayx6v7w592jdfylawk4rsu9tfvfgm",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1vf44d85es37hwl9f4h9gv0e064m0lla60j9luj",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ssm0d433seakyak8kcf93yefhknjleeds4y3em",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1x88j7vp2xnw3zec8ur3g4waxycyz7m0mahdv3p",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1gxju9ky3hwxvqqagrl3dxtl49kjpxq6wlqe6m5",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper106yp7zw35wftheyyv9f9pe69t8rteumjrx52jg",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper16qnr6snzq49l6grkyu39lzchnfv3ajfdvejx55",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1gf4wlkutql95j7wwsxz490s6fahlvk2s9xpwax",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper13ql36flc4cdjhx08hke5vpr4dyv03aafnmvtnc",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1am8wmhwta4swx8f4quvffu7hqw48aujwypp0ew",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1de7qx00pz2j6gn9k88ntxxylelkazfk3g8fgh9",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper18s3k8dt73e28rraqk70u9xwtv9wlav83n5mqjx",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper15w6ra6m68c63t0sv2hzmkngwr9t88e23r8vtg5",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper15uarq305pfjftjv532jakjx0p52zflzxfr8e42",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper17h2x3j7u44qkrq0sk8ul0r2qr440rwgjkfg0gh",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1wwcp3ath738qcy3panwqxtva3w28kvqdjw5hee",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper14upntdx8lf0f49t987mj99zksxnluanvu6x4lu",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1xqz9pemz5e5zycaa89kys5aw6m8rhgsvw4328e",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1gjtvly9lel6zskvwtvlg5vhwpu9c9waw7sxzwx",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ehlmvdvgkpfcx8f07l929udjerc9mtyhl07ynp",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1e0plfg475phrsvrlzw8gwppeva0zk5yg9fgg8c",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper130mdu9a0etmeuw52qfxk73pn0ga6gawkxsrlwf",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1v5y0tg0jllvxf5c3afml8s3awue0ymju89frut",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1fun809ksxh87nzf88yashp9ynjz6xkscrtvzvw",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper146kwpzhmleafmhtaxulfptyhnvwxzlvm87hwnm",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper18al7yt9q5a7n7aqje9dat36efyxssyahmx2gzs",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ulawrs2d3ajw083a9u6nxsyg5j93kdu6pudrag",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1usvshtypjw57edkwxq3tagme665398f0hf4wuc",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1v69lzl909kje64k8vae24uytpxcnpxgullz2dx",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1cgh5ksjwy2sd407lyre4l3uj2fdrqhpkzp06e6",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper13x77yexvf6qexfjg9czp6jhpv7vpjdwwkyhe4p",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1z96p06tf6pqeca9gatv8h9hp83z2ng4l6erxj4",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1wdrypwex63geqswmcy5qynv4w3z3dyef2qmyna",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper15r4tc0m6hc7z8drq3dzlrtcs6rq2q9l2nvwher",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1sdz4rc95vnzh2f54sacec50vjxnmwdakfym4vh",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1mnjg9xhraxljrccyw9y6u22ws0fa5asa38nd2q",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1pjmngrwcsatsuyy8m3qrunaun67sr9x7z5r2qs",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1jxv0u20scum4trha72c7ltfgfqef6nsch7q6cu",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1xsgse9yump2j35nfut2tkwh7mdtca5llcgr79d",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ff0dw8kawsnxkrgj7p65kvw7jxxakyf8n583gx",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper13p5ckpmc9g2v8ez5qsxs00wadqvcc7q0qheh26",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1wqy2s6nwnxj57l0l5rdjxxr646p3al6y70435m",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1wlagucxdxvsmvj6330864x8q3vxz4x02rmvmsu",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1e859xaue4k2jzqw20cv6l7p3tmc378pc3k8g2u",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1xym2qygmr9vanpa0m7ndk3n0qxgey3ffzcyd5c",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper14k4pzckkre6uxxyd2lnhnpp8sngys9m6hl6ml7",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1hdrlqvyjfy5sdrseecjrutyws9khtxxaux62l7",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper13sduv92y3xdhy3rpmhakrc3v7t37e7ps9l0kpv",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1x3mkgqpshvpq87d33ndsleu7gd7w47dl4ve0yy",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ma02nlc7lchu7caufyrrqt4r6v2mpsj90y9wzd",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper10e4vsut6suau8tk9m6dnrm0slgd6npe3jx5xpv",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper102ruvpv2srmunfffxavttxnhezln6fnc54at8c",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1j0vaeh27t4rll7zhmarwcuq8xtrmvqhudrgcky",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1udpsgkgyutgsglauk9vk9rs03a3skc62gup9ny",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1v78emy9d2xe3tj974l7tmn2whca2nh9zp7s0u9",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1cc99d3xcukhedg4wcw53j7a9q68uza707vpfe7",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1et77usu8q2hargvyusl4qzryev8x8t9wwqkxfs",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper140e7u946a2nqqkvcnjpjm83d0ynsqem8dnp684",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1kyfce0nvluyhgfsdzz8hwrsf5336gsc95pyy4u",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1zc0z44e42qhzltqc8qpj5qrzn836d3lftnqmgw",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1lktjhnzkpkz3ehrg8psvmwhafg56kfss3q3t8m",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1lkujuk2004p3w42tgvuvqnsdmsq8u6jqkwf9wj",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1rcp29q3hpd246n6qak7jluqep4v006cdsc2kkl",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1xwazl8ftks4gn00y5x3c47auquc62ssuqlj02r",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1kn3wugetjuy4zetlq6wadchfhvu3x740ae6z6x",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1a4qlael79p76my9pml6thwhnnzsxyy4ajrvd9s",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1sxx9mszve0gaedz5ld7qdkjkfv8z992ax69k08",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper19j2hd230c3hw6ds843yu8akc0xgvdvyuz9v02v",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1kgddca7qj96z0qcxr2c45z73cfl0c75p7f3s2e",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1vygmh344ldv9qefss9ek7ggsnxparljlmj56q5",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1ec3p6a75mqwkv33zt543n6cnxqwun37rr5xlqv",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1fqzqejwkk898fcslw4z4eeqjzesynvrdfr5hte",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1keltez56g3zm9w8wr8gcmmulze48g2q3usuw8c",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1m902jrk0pn4yc47zfvauqwvtq0e03nen5xgzte",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1000ya26q2cmh399q4c5aaacd9lmmdqp90kw2jn",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1083svrca4t350mphfv9x45wq9asrs60cdmrflj",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper16qme5yxucnaj6snx35nmwze0wyxr8wfgqxsqfw",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1zgqal5almcs35eftsgtmls3ahakej6jmnn2wfj",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper16fnz0v4cnv5dpnj0p3gaft2q2kzx8z5hfrx6v5",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1z8zjv3lntpwxua0rtpvgrcwl0nm0tltgpgs6l7",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper13maqgtlklmereflvg3lq3e8zrp0jsqhr8ef3kk",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1s05va5d09xlq3et8mapsesqh6r5lqy7mkhwshm",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1urxrvt5dmkqpe50gwrerjly2z6nvk9exjz2j3h",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1x8rr4hcf54nz6hfckyy2n05sxss54h8wz9puzg",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1uutuwrwt3z2a5z8z3uasml3rftlpmu25aga5c6",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper122j3zmqdl6d2g64qmjuqzj65gfejsvjp07yljn",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1atpewucekh08gc8h4e6jv8fa7p9k84mmwlzqje",
+      "weight": 0
+    },
+    {
+      "address": "cosmosvaloper1thl5syhmscgnj7whdyrydw3w6vy80044hjpnxh",
+      "weight": 0
+    }
+  ]
+}

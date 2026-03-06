@@ -1,0 +1,34 @@
+{
+  "validators": [
+    {
+      "name": "NodeStake",
+      "address": "sagavaloper19f0w9svr905fhefusyx4z8sf83j6et0gsn0qkm",
+      "weight": 0
+    },
+    {
+      "name": "UnityFarms (20% to charity)",
+      "address": "sagavaloper1pg3u9vl53jngwfly0370jne8fv533hd6emrfmd",
+      "weight": 0
+    },
+    {
+      "name": "Nocturnal Labs",
+      "address": "sagavaloper1axyv94rv40cug6acgh0zlzvq9awf4ajea3yrd4",
+      "weight": 0
+    },
+    {
+      "name": "polkachu.com",
+      "address": "sagavaloper13dfsqypv3rjucvncpjy9p6jm47hc0e7827g0cq",
+      "weight": 0
+    },
+    {
+      "name": "SG-1",
+      "address": "sagavaloper1v7f0980q2z3he88fc7cs6tx7le70578rgcn6re",
+      "weight": 0
+    },
+    {
+      "name": "Stake&Relax \ud83e\udda5",
+      "address": "sagavaloper1l9aqqku8yk0p3w8kljmrwj32ztzz74earjl0sp",
+      "weight": 0
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "validator_weights": [
+    {
+      "address": "sommvaloper1rtt69afx4dtj4t3urgm93qq7kxypzzeew4w8t0",
+      "weight": 1038
+    },
+    {
+      "address": "sommvaloper10nmpa8lqzd37eclk9a54d2utcvrw3evcuvu3cs",
+      "weight": 1038
+    },
+    {
+      "address": "sommvaloper1delagkfwss0x8vjrzwqtws4kj47jgteen0vrup",
+      "weight": 1038
+    },
+    {
+      "address": "sommvaloper1tl6jl7ecqwvgagsc4w46n9nm470cwjyg24hlw3",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1gp957czryfgyvxwn3tfnyy2f0t9g2p4pu0vlu3",
+      "weight": 1038
+    },
+    {
+      "address": "sommvaloper1uw309hv7khuxud7rrnj89fvxvgl9heu5zvs3sl",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1ej2es5fjztqjcd4pwa0zyvaevtjd2y5w6s5pjm",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper15urq2dtp9qce4fyc85m6upwm9xul30499el64g",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1y0few0kgxa7vtq8nskjsdwdtyqglj3k5pv2c4d",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper16zlu8yrmccwssv7tywc74jsh6nen4t5ur5ef67",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1qe8uuf5x69c526h4nzxwv4ltftr73v7qeh9gwf",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1m9n4keerxus8yw3mjqvekxlywn8sq9aguh39c6",
+      "weight": 1038
+    },
+    {
+      "address": "sommvaloper173xq5ys8m7pvs2hesuz4ccx9mjuz2pthkq0zfj",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1hejkwp7qxd4drvsqnc5up6slt5jtvjkq5f0j7k",
+      "weight": 1038
+    },
+    {
+      "address": "sommvaloper1fpwexrflqq066c80qfgs875qq39ws3t689gj28",
+      "weight": 1038
+    },
+    {
+      "address": "sommvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57z4mj4sy",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1nm3xrar9j7dw6e9ua77ernarpc3axxr77alscy",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1thl5syhmscgnj7whdyrydw3w6vy80044ty5hup",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1l38kl5u0rmqj2rr4336jjxpmap9gl7amkf9yff",
+      "weight": 518
+    },
+    {
+      "address": "sommvaloper1cgdlryczzgrk7d4kkeawqg7t6ldz4x84yu305c",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1ju7p97r3atsqlpruy3a9dr25ltdc7qcjr6z6ff",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1kwnymjvr2t4g3agzd6h077kx6k62avzpr8zcpz",
+      "weight": 445
+    },
+    {
+      "address": "sommvaloper1jgfjrec3u2ev6v89sav06we8jn5tf4cqlpj997",
+      "weight": 409
+    },
+    {
+      "address": "sommvaloper1xz0eu8um28a72rl9gufhszkd6tewus8u38l5nd",
+      "weight": 381
+    },
+    {
+      "address": "sommvaloper17h2x3j7u44qkrq0sk8ul0r2qr440rwgj2latjp",
+      "weight": 359
+    },
+    {
+      "address": "sommvaloper1pedd3sk0qhwc3yr6zh036gcwc0d6yhuntw9lcw",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper147nlnr72vfdlm8rcjtqrlsct7gr5veadsjgtxe",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1s0lankh33kprer2l22nank5rvsuh9ksa8324s2",
+      "weight": 224
+    },
+    {
+      "address": "sommvaloper1dlpuptu8k8rps38u9wdjmkwte69v27593alh5s",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper12ghdy3n809dpxr7kkdtyt3xrf8rse8pyhzlazc",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1qzy5ydycy6deseghvh4f4f20s268s4tn4527kj",
+      "weight": 163
+    },
+    {
+      "address": "sommvaloper15055v5dh2hsn6fmy6ucday3pwn8m6gcmfz3kqr",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper199xpf884lrfsg7jyfjwh50e2zpy27qfejafssk",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1n56swda49evz92zhcw2xc8esx6kzt8qm3yd5w3",
+      "weight": 88
+    },
+    {
+      "address": "sommvaloper1fes322u0x7422ugc05xkxeav2zzd3kfgf898f4",
+      "weight": 57
+    },
+    {
+      "address": "sommvaloper1xepu6f8nvqzd95fgs0njvm8rvwxq79dydzzrmn",
+      "weight": 54
+    },
+    {
+      "address": "sommvaloper1esfv6n47eplr769qrv4v98kxlw2al4q4sn3ert",
+      "weight": 0
+    },
+    {
+      "address": "sommvaloper1k6vwc45uu5k7tth7gnnh4c967g5cg04f84jla3",
+      "weight": 18
+    },
+    {
+      "address": "sommvaloper13ul4wf2gwuwfrqrx70h2j9evje05vtglpc44sc",
+      "weight": 17
+    },
+    {
+      "address": "sommvaloper1yk2sgj9a2tfd77fc4eqa6gv2mysu0xglyksy5t",
+      "weight": 0
+    }
+  ]
+}

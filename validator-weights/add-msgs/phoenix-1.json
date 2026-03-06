@@ -1,0 +1,104 @@
+{
+  "validators": [
+    {
+      "name": "Synergy Nodes",
+      "address": "terravaloper1tm0xkark2ufecmdhgaaw7gqsycyt4qag6py8x6",
+      "weight": 0
+    },
+    {
+      "name": "ERIS \u26a1\ufe0f Delegate for claimdrop",
+      "address": "terravaloper1vm5azhvaxeanc7auxh02y8jmxrk8tj93f43e7j",
+      "weight": 0
+    },
+    {
+      "name": "Lavender.Five Nodes \ud83d\udc1d",
+      "address": "terravaloper1vcd42qfvlvnjwaw7hvl6y32wrzqxvas653yus9",
+      "weight": 0
+    },
+    {
+      "name": "cosmosrescue",
+      "address": "terravaloper1htey4gcdcass29vn4dwjcuq58mrvv8ra5pjz4k",
+      "weight": 0
+    },
+    {
+      "name": "Active Nodes",
+      "address": "terravaloper1a9zv7n6pmkzlm3wj6c23qyejqlmyxsl5faanrv",
+      "weight": 0
+    },
+    {
+      "name": "Stakin",
+      "address": "terravaloper1mgpgp53tynj4djmckxdjhufa7q8lqqjuwnrlqm",
+      "weight": 0
+    },
+    {
+      "name": "HighStakes.ch | Stake for Airdrop",
+      "address": "terravaloper1pgyelqv0hwjavgf6vhdm4e4pt766wfxxczu20l",
+      "weight": 0
+    },
+    {
+      "name": "Pro-Nodes75",
+      "address": "terravaloper1puzp2yjqps43x7nse33svljc550xjz35jxg432",
+      "weight": 0
+    },
+    {
+      "name": "WildSage \ud83e\uddd9",
+      "address": "terravaloper1l920a79akuc98hz4389axf9ctcymrf5ays578x",
+      "weight": 0
+    },
+    {
+      "name": "0base.vc",
+      "address": "terravaloper1plxp55happ379eevsnk2xeuwzsrldsmqduyu36",
+      "weight": 0
+    },
+    {
+      "name": "r93AX Nodes",
+      "address": "terravaloper1vh9m0jpuznh00t05c66yqqpsgqzudrg258q6ch",
+      "weight": 0
+    },
+    {
+      "name": "TdrSys | Auto-Compound",
+      "address": "terravaloper1cs0dspacdhym4cwcm3f7suurfszvl6k5s9p06a",
+      "weight": 0
+    },
+    {
+      "name": "Ceres Ventures",
+      "address": "terravaloper1q8w4u2wyhx574m70gwe8km5za2ptanny9mnqy3",
+      "weight": 0
+    },
+    {
+      "name": "NFTSwitch.xyz | Delegate for $SOUL Claim Drop",
+      "address": "terravaloper1vrkzjujfds9p8t5g0xety3e3ft4dep02etv9le",
+      "weight": 0
+    },
+    {
+      "name": "Node39.TOP",
+      "address": "terravaloper1l63t9c0nruewg5zdrmv8pvcxdg0az6fqgg008k",
+      "weight": 0
+    },
+    {
+      "name": "owlstake",
+      "address": "terravaloper1lg8zwpjvyx4pqy0j5ue2kf08edkuwy6l0j7f0h",
+      "weight": 0
+    },
+    {
+      "name": "MANTRA DAO",
+      "address": "terravaloper1yej82e2zursn2f56vgxfvmydwj9f2awluhusqh",
+      "weight": 0
+    },
+    {
+      "name": "Orion - Auto-Compound",
+      "address": "terravaloper1dvl464gpzxwru4a97q6pzqv7n7rcnxwlyspnau",
+      "weight": 0
+    },
+    {
+      "name": "Secure Secrets",
+      "address": "terravaloper1wzu2j73nvccghywtghku5ch59f67jykw58na64",
+      "weight": 0
+    },
+    {
+      "name": "Mario",
+      "address": "terravaloper1rgdps79da300t87twwkcly6ec3vlpgpfgnsel5",
+      "weight": 0
+    }
+  ]
+}
