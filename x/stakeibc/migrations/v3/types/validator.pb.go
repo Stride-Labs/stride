@@ -144,7 +144,8 @@ func init() {
 	proto.RegisterType((*Validator)(nil), "stride.stakeibc.V3Validator")
 }
 
-func init() { proto.RegisterFile("stride/stakeibc/validator.proto", fileDescriptor_5d2f32e16bd6ab8f) }
+// Removed proto.RegisterFile to avoid colliding with the current validator.proto descriptor.
+// The migration types are registered under prefixed names (e.g. V3Validator) which don't conflict.
 
 var fileDescriptor_5d2f32e16bd6ab8f = []byte{
 	// 439 bytes of a gzipped FileDescriptorProto

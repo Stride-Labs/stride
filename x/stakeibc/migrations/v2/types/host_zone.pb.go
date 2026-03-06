@@ -194,7 +194,7 @@ func init() {
 	proto.RegisterType((*HostZone)(nil), "stride.stakeibc.V2HostZone")
 }
 
-func init() { proto.RegisterFile("stride/stakeibc/host_zone.proto", fileDescriptor_f81bf5b42c61245a) }
+// Removed proto.RegisterFile to avoid colliding with the current host_zone.proto descriptor.
 
 var fileDescriptor_f81bf5b42c61245a = []byte{
 	// 619 bytes of a gzipped FileDescriptorProto

@@ -113,7 +113,7 @@ func init() {
 	proto.RegisterType((*ICAAccount)(nil), "stride.stakeibc.V2ICAAccount")
 }
 
-func init() { proto.RegisterFile("stride/stakeibc/ica_account.proto", fileDescriptor_2976ae6e7f6ce824) }
+// Removed proto.RegisterFile to avoid colliding with the current ica_account.proto descriptor.
 
 var fileDescriptor_2976ae6e7f6ce824 = []byte{
 	// 285 bytes of a gzipped FileDescriptorProto

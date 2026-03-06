@@ -487,7 +487,7 @@ func init() {
 	proto.RegisterType((*RebalanceCallback)(nil), "stride.stakeibc.V2RebalanceCallback")
 }
 
-func init() { proto.RegisterFile("stride/stakeibc/callbacks.proto", fileDescriptor_f41c99b09b96a5ac) }
+// Removed proto.RegisterFile to avoid colliding with the current callbacks.proto descriptor.
 
 var fileDescriptor_f41c99b09b96a5ac = []byte{
 	// 610 bytes of a gzipped FileDescriptorProto
