@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v31/app/apptesting"

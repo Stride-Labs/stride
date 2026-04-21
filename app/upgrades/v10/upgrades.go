@@ -20,11 +20,10 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 
-	icacontrollermigrations "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/migrations/v6"
-	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
-	channelkeeper "github.com/cosmos/ibc-go/v8/modules/core/04-channel/keeper"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctmmigrations "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint/migrations"
+	clientkeeper "github.com/cosmos/ibc-go/v10/modules/core/02-client/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctmmigrations "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint/migrations"
 
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
@@ -126,17 +125,6 @@ func CreateUpgradeHandler(
 		legacyParamSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 		if err := baseapp.MigrateParams(ctx, legacyParamSubspace, &consensusParamsKeeper.ParamsStore); err != nil {
 			return nil, errorsmod.Wrapf(err, "unable to migrate params")
-		}
-
-		ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
-		if err := icacontrollermigrations.MigrateICS27ChannelCapability(
-			ctx,
-			cdc,
-			capabilityStoreKey,
-			capabilityKeeper,
-			stakeibctypes.ModuleName,
-		); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to migrate ICA channel capabilities")
 		}
 
 		ctx.Logger().Info("Adding localhost IBC client for ibc-go v7.0 to v7.1 migration...")

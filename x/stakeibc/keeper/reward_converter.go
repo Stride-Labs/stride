@@ -14,7 +14,7 @@ import (
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	"github.com/cosmos/gogoproto/proto"
 
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	epochstypes "github.com/Stride-Labs/stride/v31/x/epochs/types"

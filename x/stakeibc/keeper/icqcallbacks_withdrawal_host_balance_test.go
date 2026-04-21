@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"

@@ -3,7 +3,7 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
 	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"

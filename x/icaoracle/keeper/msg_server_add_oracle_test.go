@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 
 	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
 )

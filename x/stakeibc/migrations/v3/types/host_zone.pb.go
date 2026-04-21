@@ -4,9 +4,9 @@
 package types
 
 import (
+	github_com_cosmos_cosmos_sdk_types "cosmossdk.io/math"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
-	github_com_cosmos_cosmos_sdk_types "cosmossdk.io/math"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -48,9 +48,9 @@ type HostZone struct {
 	// stores how many days we should wait before issuing unbondings
 	UnbondingFrequency uint64 `protobuf:"varint,14,opt,name=unbonding_frequency,json=unbondingFrequency,proto3" json:"unbonding_frequency,omitempty"`
 	// TODO(TEST-101) int to dec
-	StakedBal         github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,13,opt,name=staked_bal,json=stakedBal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"staked_bal"`
-	Address           string                                 `protobuf:"bytes,18,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
-	Halted            bool                                   `protobuf:"varint,19,opt,name=halted,proto3" json:"halted,omitempty"`
+	StakedBal         github_com_cosmos_cosmos_sdk_types.Int       `protobuf:"bytes,13,opt,name=staked_bal,json=stakedBal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"staked_bal"`
+	Address           string                                       `protobuf:"bytes,18,opt,name=address,proto3" json:"address,omitempty" yaml:"address"`
+	Halted            bool                                         `protobuf:"varint,19,opt,name=halted,proto3" json:"halted,omitempty"`
 	MinRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,20,opt,name=min_redemption_rate,json=minRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_redemption_rate"`
 	MaxRedemptionRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,21,opt,name=max_redemption_rate,json=maxRedemptionRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"max_redemption_rate"`
 }
