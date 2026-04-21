@@ -107,9 +107,6 @@ import (
 	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
@@ -257,16 +254,14 @@ type StrideApp struct {
 	interfaceRegistry types.InterfaceRegistry
 
 	// keys to access the substores
-	keys    map[string]*storetypes.KVStoreKey
-	tkeys   map[string]*storetypes.TransientStoreKey
-	memKeys map[string]*storetypes.MemoryStoreKey
+	keys  map[string]*storetypes.KVStoreKey
+	tkeys map[string]*storetypes.TransientStoreKey
 
 	// Dependency keepers
 	// Note: IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	VestingKeeper         evmosvestingkeeper.Keeper
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
-	CapabilityKeeper      *capabilitykeeper.Keeper
 	StakingKeeper         stakingkeeper.Keeper
 	SlashingKeeper        slashingkeeper.Keeper
 	MintKeeper            mintkeeper.Keeper
@@ -294,23 +289,12 @@ type StrideApp struct {
 	Ics20WasmHooks   *ibchooks.WasmHooks
 	HooksICS4Wrapper ibchooks.ICS4Middleware
 
-	// Scoped keepers (for ICA)
-	// TODO: See if we can get rid of these
-	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
-	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
-	ScopedCCVConsumerKeeper   capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
-
 	// Stride keepers
 	StakeibcKeeper        stakeibcmodulekeeper.Keeper
 	EpochsKeeper          epochsmodulekeeper.Keeper
 	InterchainqueryKeeper interchainquerykeeper.Keeper
-	ScopedRecordsKeeper   capabilitykeeper.ScopedKeeper
 	RecordsKeeper         recordsmodulekeeper.Keeper
 	IcacallbacksKeeper    icacallbacksmodulekeeper.Keeper
-	ScopedratelimitKeeper capabilitykeeper.ScopedKeeper
 	RatelimitKeeper       ratelimitkeeper.Keeper
 	ClaimKeeper           claimkeeper.Keeper
 	ICAOracleKeeper       icaoraclekeeper.Keeper
@@ -381,7 +365,6 @@ func NewStrideApp(
 		feegrant.StoreKey,
 		evidencetypes.StoreKey,
 		ibctransfertypes.StoreKey,
-		capabilitytypes.StoreKey,
 		// monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
 		autopilottypes.StoreKey,
@@ -411,7 +394,6 @@ func NewStrideApp(
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -426,7 +408,6 @@ func NewStrideApp(
 		interfaceRegistry: interfaceRegistry,
 		keys:              keys,
 		tkeys:             tkeys,
-		memKeys:           memKeys,
 	}
 
 	// TODO: Remove ParamsKeeper after v10 upgrade
@@ -440,16 +421,6 @@ func NewStrideApp(
 		runtime.EventService{},
 	)
 	bApp.SetParamStore(app.ConsensusParamsKeeper.ParamsStore)
-
-	// add capability keeper and ScopeToModule for ibc module
-	app.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
-
-	// grant capabilities for the ibc and ibc-transfer modules
-	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
-	scopedCCVConsumerKeeper := app.CapabilityKeeper.ScopeToModule(ccvconsumertypes.ModuleName)
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -592,8 +563,6 @@ func NewStrideApp(
 	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
-	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimittypes.ModuleName)
-	app.ScopedratelimitKeeper = scopedratelimitKeeper
 	app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
@@ -661,7 +630,6 @@ func NewStrideApp(
 	}
 	wasmOpts = append(wasmOpts, wasmkeeper.WithWasmEngine(wasmer))
 
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
@@ -1033,7 +1001,6 @@ func NewStrideApp(
 		claimvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, app.BankKeeper),
@@ -1104,7 +1071,6 @@ func NewStrideApp(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.ModuleManager.SetOrderBeginBlockers(
-		capabilitytypes.ModuleName,
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -1151,7 +1117,6 @@ func NewStrideApp(
 		genutiltypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
-		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -1192,11 +1157,7 @@ func NewStrideApp(
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
-	// NOTE: Capability module must occur first so that it can initialize any capabilities
-	// so that other modules that want to create or claim capabilities afterwards in InitChain
-	// can do so safely.
 	app.ModuleManager.SetOrderInitGenesis(
-		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -1250,7 +1211,6 @@ func NewStrideApp(
 	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
@@ -1306,13 +1266,6 @@ func NewStrideApp(
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
 	}
-
-	app.ScopedIBCKeeper = scopedIBCKeeper
-	app.ScopedTransferKeeper = scopedTransferKeeper
-	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
-	app.ScopedICAHostKeeper = scopedICAHostKeeper
-	app.ScopedCCVConsumerKeeper = scopedCCVConsumerKeeper
-	app.ScopedWasmKeeper = scopedWasmKeeper
 
 	return app
 }
@@ -1567,11 +1520,6 @@ func (app *StrideApp) GetIBCKeeper() *ibckeeper.Keeper {
 	return app.IBCKeeper
 }
 
-// GetScopedIBCKeeper implements the TestingApp interface.
-func (app *StrideApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return app.ScopedIBCKeeper
-}
-
 // GetTxConfig implements the TestingApp interface.
 func (app *StrideApp) GetTxConfig() client.TxConfig {
 	return app.txConfig
@@ -1741,13 +1689,6 @@ func (app *StrideApp) GetStoreKeys() []storetypes.StoreKey {
 // NOTE: This is solely to be used for testing purposes.
 func (app *StrideApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 	return app.tkeys[storeKey]
-}
-
-// GetMemKey returns the MemStoreKey for the provided mem key.
-//
-// NOTE: This is solely used for testing purposes.
-func (app *StrideApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
-	return app.memKeys[storeKey]
 }
 
 // GetSubspace returns a param subspace for a given module name.
