@@ -1097,6 +1097,7 @@ func NewStrideApp(
 
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
+		authtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
