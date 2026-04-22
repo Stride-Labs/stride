@@ -254,8 +254,5 @@ replace (
 	//github.com/evmos/vesting => ../vesting
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	// fork cast to add additional error checking
-	github.com/spf13/cast => github.com/Stride-Labs/cast v0.0.3
-
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
