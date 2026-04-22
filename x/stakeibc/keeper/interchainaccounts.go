@@ -305,7 +305,7 @@ func (k Keeper) RegisterTradeRouteICAAccount(
 	}
 
 	// Otherwise, if there's no account already, register a new one
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, connectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
 		return account, err
 	}
 

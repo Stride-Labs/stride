@@ -561,7 +561,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, msg.ConnectionId, msg.AccountOwner, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, msg.ConnectionId, msg.AccountOwner, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register account for owner %s", msg.AccountOwner)
 	}
 

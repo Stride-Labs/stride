@@ -105,7 +105,7 @@ func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*t
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, controllerConnectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, controllerConnectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
 	}
 
@@ -216,7 +216,7 @@ func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestore
 		Encoding:               icatypes.EncodingProtobuf,
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, oracle.ConnectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, oracle.ConnectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
 	}
 

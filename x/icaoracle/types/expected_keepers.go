@@ -24,14 +24,14 @@ type ConnectionKeeper interface {
 // ChannelKeeper defines the expected IBC channel keeper
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, portID, channelID string) (channeltypes.Channel, bool)
-	GetChannelConnection(ctx sdk.Context, portID, channelID string) (string, exported.ConnectionI, error)
+	GetChannelConnection(ctx sdk.Context, portID, channelID string) (string, connectiontypes.ConnectionEnd, error)
 }
 
 // ICAControllerKeeper defines the expected ICA controller keeper
 type ICAControllerKeeper interface {
 	GetInterchainAccountAddress(ctx sdk.Context, connectionID, portID string) (string, bool)
 	GetOpenActiveChannel(ctx sdk.Context, connectionID, portID string) (string, bool)
-	RegisterInterchainAccountWithOrdering(ctx sdk.Context, connectionID, owner, version string) error
+	RegisterInterchainAccount(ctx sdk.Context, connectionID, owner, version string, ordering channeltypes.Order) error
 }
 
 // ICACallbacksKeeper defines the expected ICA callback keeper
