@@ -74,7 +74,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 	invalidMsg := validMsg
 	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, "fake_denom")).IBCDenom()
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
-	s.Require().ErrorContains(err, fmt.Sprintf("denom trace not found for %s", invalidMsg.LsmTokenIbcDenom))
+	s.Require().ErrorContains(err, fmt.Sprintf("denom not found for %s", invalidMsg.LsmTokenIbcDenom))
 
 	// Try with a user that has insufficient balance - it should fail
 	invalidMsg = validMsg
@@ -155,7 +155,7 @@ func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	// Attempt to parse with a valid ibc denom that is not registered - it should fail
 	notRegisteredIBCDenom := transfertypes.ParseDenomTrace("transfer/channel-0/cosmosXXX").IBCDenom()
 	_, err = s.App.StakeibcKeeper.GetLSMTokenDenomTrace(s.Ctx, notRegisteredIBCDenom)
-	s.Require().ErrorContains(err, "denom trace not found")
+	s.Require().ErrorContains(err, "denom not found")
 }
 
 func (s *KeeperTestSuite) TestIsValidIBCPath() {
@@ -500,6 +500,12 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 	// Create a valid IBC denom
 	ibcDenom := s.CreateAndStoreIBCDenom(LSMTokenBaseDenom)
 
+	// Fund the deposit address so the IBC transfer for the valid deposit has balance to escrow
+	// (ibc-go v10 rejects transfers with insufficient balance before the packet is queued,
+	// so a nonzero amount on the happy-path deposit must be backed by a real balance)
+	depositAddress := s.TestAccs[1]
+	s.FundAccount(depositAddress, sdk.NewCoin(ibcDenom, sdkmath.NewInt(10)))
+
 	// Store 2 host zones - one that was registered successfully,
 	// and one that's missing a delegation channel
 	hostZones := []types.HostZone{
@@ -507,7 +513,7 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 			// Valid host zone
 			ChainId:              HostChainId,
 			TransferChannelId:    ibctesting.FirstChannelID,
-			DepositAddress:       s.TestAccs[1].String(),
+			DepositAddress:       depositAddress.String(),
 			DelegationIcaAddress: HostICAAddress,
 		},
 		{
@@ -543,6 +549,7 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 					ChainId:  chainId,
 					Denom:    denom,
 					IbcDenom: ibcDenom,
+					Amount:   sdkmath.OneInt(),
 					Status:   startingStatus,
 				}
 				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)

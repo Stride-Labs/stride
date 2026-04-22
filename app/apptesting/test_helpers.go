@@ -357,7 +357,8 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 		"The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID)
 
 	// Define the new transfer path between Stride and the host chain
-	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain, s.ProviderChain)
+	// Opt out of ibc-go v10's global unique-channel-id counter so channels start at channel-0
+	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain, s.ProviderChain).DisableUniqueChannelIDs()
 
 	// Create clients
 	s.Require().NoError(s.TransferPath.EndpointA.CreateClient())
@@ -419,7 +420,9 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	}
 
 	// Create ICA Path and then copy over the client and connection from the transfer path
-	icaPath := NewIcaPath(s.StrideChain, s.HostChain, s.ProviderChain)
+	// Opt out of ibc-go v10's global unique-channel-id counter so channel IDs are allocated
+	// sequentially from the chain's own next-sequence, making test expectations predictable
+	icaPath := NewIcaPath(s.StrideChain, s.HostChain, s.ProviderChain).DisableUniqueChannelIDs()
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
