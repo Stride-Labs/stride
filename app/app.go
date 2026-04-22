@@ -970,14 +970,11 @@ func NewStrideApp(
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
-	// Now that the full middleware stack is assembled, point the transfer keeper's
-	// ICS4Wrapper at it so outbound sends traverse each middleware's SendPacket on
-	// the way up to core IBC.
-	transferICS4Wrapper, ok := transferStack.(porttypes.ICS4Wrapper)
-	if !ok {
-		panic(fmt.Errorf("cannot convert %T to %T", transferStack, transferICS4Wrapper))
-	}
-	app.TransferKeeper.WithICS4Wrapper(transferICS4Wrapper)
+	// Note: TransferKeeper's ICS4Wrapper was set at construction to PacketForwardKeeper,
+	// which correctly routes outbound sends up through pfm → ibchooks → ratelimit → core IBC.
+	// The autopilot/records/staketia/stakedym middlewares intentionally short-circuit SendPacket
+	// (they don't intercept outbound traffic), so we must NOT overwrite the ICS4Wrapper with the
+	// full outer transferStack here.
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()

@@ -43,17 +43,18 @@ var (
 //
 // This function returns the associated host zone and validator along with the initial deposit record
 func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake) (types.LSMLiquidStake, error) {
-	// Get the denom from the IBC hash - this includes the full path and base denom
+	// Get the denom from the IBC hash - this includes the trace hops and base denom
 	// Ex: LSMTokenIbcDenom of `ibc/XXX` might resolve to a Denom with:
-	//     Base: cosmosvaloperXXX/42, Path(): transfer/channel-0
+	//     Base: cosmosvaloperXXX/42, Trace: [{transfer, channel-0}]
 	denomTrace, err := k.GetLSMTokenDenomTrace(ctx, msg.LsmTokenIbcDenom)
 	if err != nil {
 		return types.LSMLiquidStake{}, err
 	}
 
 	// Get the host zone and validator address from the path and base denom respectively
+	// Note: Denom.Path() concatenates trace + base, so we build the trace-only path from Trace
 	lsmTokenBaseDenom := denomTrace.Base
-	hostZone, err := k.GetHostZoneFromLSMTokenPath(ctx, denomTrace.Path())
+	hostZone, err := k.GetHostZoneFromLSMTokenPath(ctx, tracePath(denomTrace.Trace))
 	if err != nil {
 		return types.LSMLiquidStake{}, err
 	}
@@ -151,6 +152,17 @@ func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types
 
 	return types.HostZone{}, errorsmod.Wrapf(types.ErrInvalidLSMToken,
 		"transfer channel-id from LSM token (%s) does not match any registered host zone", channelId)
+}
+
+// tracePath builds an IBC path string (e.g. "transfer/channel-0") from a Denom's
+// trace hops. v10's Denom.Path() concatenates the hops AND the base denom, which
+// breaks our one-hop path validation for LSM tokens whose base denom contains "/".
+func tracePath(hops []transfertypes.Hop) string {
+	parts := make([]string, 0, len(hops))
+	for _, hop := range hops {
+		parts = append(parts, hop.String())
+	}
+	return strings.Join(parts, "/")
 }
 
 // Parses the LSM token's denom (of the form {validatorAddress}/{recordId}) and confirms that the validator
