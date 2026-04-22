@@ -17,5 +17,5 @@ type IcqKeeper interface {
 
 // IbcTransferKeeper defines the expected interface needed to convert an ibc token hash to its denom on the source chain.
 type IbcTransferKeeper interface {
-	GetDenomTrace(ctx sdk.Context, denomTraceHash tmbytes.HexBytes) (ibctransfertypes.DenomTrace, bool)
+	GetDenom(ctx sdk.Context, denomHash tmbytes.HexBytes) (ibctransfertypes.Denom, bool)
 }

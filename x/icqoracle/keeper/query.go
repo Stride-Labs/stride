@@ -113,9 +113,9 @@ func (k Keeper) unwrapIBCDenom(ctx sdk.Context, denom string) string {
 
 	hash, err := ibctransfertypes.ParseHexHash(strings.TrimPrefix(denom, "ibc/"))
 	if err == nil {
-		denomTrace, found := k.ibcTransferKeeper.GetDenomTrace(ctx, hash)
+		resolved, found := k.ibcTransferKeeper.GetDenom(ctx, hash)
 		if found {
-			return denomTrace.BaseDenom
+			return resolved.Base
 		}
 	}
 	return denom
