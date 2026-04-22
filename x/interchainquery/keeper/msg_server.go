@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/ibc-go/v10/modules/core/exported"
 	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ics23 "github.com/cosmos/ics23/go"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	"github.com/Stride-Labs/stride/v31/x/interchainquery/types"
@@ -47,7 +46,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	}
 
 	// Get the client consensus state at the height 1 block above the message height
-	proofHeight, err := cast.ToUint64E(msg.Height)
+	proofHeight, err := utils.Int64ToUint64E(msg.Height)
 	if err != nil {
 		return err
 	}

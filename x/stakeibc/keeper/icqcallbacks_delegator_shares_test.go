@@ -351,6 +351,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	expectedErrMsg := `unable to convert validator weight to int64, err: overflow: `
 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Error(err, "expected error when validator weight overflows int64")
 	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 

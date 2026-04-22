@@ -9,7 +9,6 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	"github.com/spf13/cast"
 
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 
@@ -225,11 +224,7 @@ func (k Keeper) GetLightClientHeight(ctx sdk.Context, connectionID string) (heig
 		return 0, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "client-id: %s", connection.ClientId)
 	}
 
-	latestHeight, err := cast.ToUint64E(clientHeight.GetRevisionHeight())
-	if err != nil {
-		return 0, err
-	}
-	return latestHeight, nil
+	return clientHeight.GetRevisionHeight(), nil
 }
 
 // Lookup a chain ID from a connection ID by looking up the client state

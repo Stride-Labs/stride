@@ -101,6 +101,41 @@ func IntToUint(i int64) uint64 {
 	return uint64(i)
 }
 
+// Converts from uint64 -> int64, returning an error on overflow.
+// Use this for values that could plausibly overflow (user input, on-chain
+// params that aren't statically bounded), where the caller wants to
+// propagate the error instead of panicking.
+func Uint64ToInt64E(u uint64) (int64, error) {
+	if u > math.MaxInt64 {
+		return 0, fmt.Errorf("uint64 value %d overflows int64", u)
+	}
+	return int64(u), nil
+}
+
+// Converts from int64 -> uint64, returning an error on underflow.
+// Use this for values that could plausibly be negative (e.g. a proto
+// field typed as int64 that is semantically non-negative), where the
+// caller wants to propagate the error instead of panicking.
+func Int64ToUint64E(i int64) (uint64, error) {
+	if i < 0 {
+		return 0, fmt.Errorf("int64 value %d is negative and can't be converted to uint64", i)
+	}
+	return uint64(i), nil
+}
+
+// Converts from float64 -> int64, returning an error if the value is
+// non-finite (NaN/Inf) or falls outside the int64 range.
+// The fractional part is truncated toward zero.
+func Float64ToInt64E(f float64) (int64, error) {
+	if math.IsNaN(f) || math.IsInf(f, 0) {
+		return 0, fmt.Errorf("float64 value %v is not a finite number", f)
+	}
+	if f < math.MinInt64 || f > math.MaxInt64 {
+		return 0, fmt.Errorf("float64 value %v is outside int64 range", f)
+	}
+	return int64(f), nil
+}
+
 //==============================  ADDRESS VERIFICATION UTILS  ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177
 
