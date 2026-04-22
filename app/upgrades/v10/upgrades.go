@@ -123,6 +123,17 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to migrate params")
 		}
 
+		// ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
+		// if err := icacontrollermigrations.MigrateICS27ChannelCapability(
+		// 	ctx,
+		// 	cdc,
+		// 	capabilityStoreKey,
+		// 	capabilityKeeper,
+		// 	stakeibctypes.ModuleName,
+		// ); err != nil {
+		// 	return nil, errorsmod.Wrapf(err, "unable to migrate ICA channel capabilities")
+		// }
+
 		ctx.Logger().Info("Adding localhost IBC client for ibc-go v7.0 to v7.1 migration...")
 		AddLocalhostIBCClient(ctx, clientKeeper)
 
