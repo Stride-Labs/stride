@@ -546,13 +546,17 @@ func NewStrideApp(
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
-		keys[ibcexported.StoreKey],
+		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
 		app.GetSubspace(ibcexported.ModuleName),
-		&app.ConsumerKeeper,
 		app.UpgradeKeeper,
-		scopedIBCKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	// Register the tendermint light client module with the client keeper
+	clientKeeper := app.IBCKeeper.ClientKeeper
+	storeProvider := clientKeeper.GetStoreProvider()
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
+	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
 	// Create IBC Hooks Keeper (must be defined after the wasmKeeper is created)
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
@@ -594,15 +598,16 @@ func NewStrideApp(
 	)
 
 	// Create Transfer Keepers
+	// ICS4Wrapper is set post-construction via WithICS4Wrapper once the full transfer middleware stack is assembled below
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec, keys[ibctransfertypes.StoreKey],
+		appCodec,
+		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.PacketForwardKeeper, // ICS4Wrapper
+		app.PacketForwardKeeper, // ICS4Wrapper (placeholder — overwritten after stack assembly)
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
+		app.MsgServiceRouter(),
 		app.AccountKeeper,
 		app.BankKeeper,
-		scopedTransferKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -662,6 +667,10 @@ func NewStrideApp(
 		app.GRPCQueryRouter(),
 	)
 
+	// Register the 08-wasm light client module with the client keeper
+	wasmLightClientModule := ibcwasm.NewLightClientModule(app.WasmClientKeeper, app.IBCKeeper.ClientKeeper.GetStoreProvider())
+	app.IBCKeeper.ClientKeeper.AddRoute(ibcwasmtypes.ModuleName, &wasmLightClientModule)
+
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
@@ -703,12 +712,10 @@ func NewStrideApp(
 	// Note: must be above app.StakeibcKeeper and app.ICAOracleKeeper
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec,
-		keys[icacontrollertypes.StoreKey],
+		runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]),
 		app.GetSubspace(icacontrollertypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - may be replaced with middleware such as ics29 fee
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		scopedICAControllerKeeper,
 		app.MsgServiceRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -908,17 +915,15 @@ func NewStrideApp(
 	// create IBC middleware stacks by combining middleware with base application
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
-		keys[icahosttypes.StoreKey],
+		runtime.NewKVStoreService(keys[icahosttypes.StoreKey]),
 		app.GetSubspace(icahosttypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper — ICA host uses the core channel keeper directly
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
-		scopedICAHostKeeper,
 		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	app.ICAHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
 
 	// Create the middleware stacks
@@ -970,6 +975,15 @@ func NewStrideApp(
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
+	// Now that the full middleware stack is assembled, point the transfer keeper's
+	// ICS4Wrapper at it so outbound sends traverse each middleware's SendPacket on
+	// the way up to core IBC.
+	transferICS4Wrapper, ok := transferStack.(porttypes.ICS4Wrapper)
+	if !ok {
+		panic(fmt.Errorf("cannot convert %T to %T", transferStack, transferICS4Wrapper))
+	}
+	app.TransferKeeper.WithICS4Wrapper(transferICS4Wrapper)
+
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.
@@ -1019,7 +1033,7 @@ func NewStrideApp(
 		ibchooks.NewAppModule(app.AccountKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
-		ibctm.NewAppModule(),
+		ibctm.NewAppModule(tmLightClientModule),
 		// monitoringModule,
 		stakeibcModule,
 		epochsModule,
