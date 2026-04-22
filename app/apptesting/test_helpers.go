@@ -28,7 +28,6 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	ibctestingmock "github.com/cosmos/ibc-go/v10/testing/mock"
 	"github.com/cosmos/ibc-go/v10/testing/simapp"
 	icsproviderapp "github.com/cosmos/interchain-security/v7/app/provider"
 	icstestingutils "github.com/cosmos/interchain-security/v7/testutil/ibc_testing"
@@ -261,7 +260,7 @@ func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestCha
 		s.Require().NoError(err)
 
 		// generate new PrivValidator
-		privVal := ibctestingmock.NewPV()
+		privVal := tmtypes.NewMockPV()
 		tmPubKey, err := privVal.GetPubKey()
 		s.Require().NoError(err)
 		consumerKey, err := tmencoding.PubKeyToProto(tmPubKey)
@@ -424,7 +423,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
-	s.RegisterInterchainAccountWithOrdering(icaPath.EndpointA, owner)
+	s.RegisterInterchainAccount(icaPath.EndpointA, owner)
 
 	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
 		s.Require().NoError(icaPath.EndpointB.ChanOpenTry())
@@ -456,7 +455,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 
 // Register's a new ICA account on the next channel available
 // This function assumes a connection already exists
-func (s *AppTestHelper) RegisterInterchainAccountWithOrdering(endpoint *ibctesting.Endpoint, owner string) {
+func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint, owner string) {
 	// Get the port ID from the owner name (i.e. "icacontroller-{owner}")
 	portID, err := icatypes.NewControllerPortID(owner)
 	s.Require().NoError(err, "owner to portID error")
@@ -464,7 +463,7 @@ func (s *AppTestHelper) RegisterInterchainAccountWithOrdering(endpoint *ibctesti
 	// Get the next channel available and register the ICA
 	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
-	err = s.App.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion, channeltypes.ORDERED)
+	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion, channeltypes.ORDERED)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state
@@ -482,8 +481,8 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain,
 	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
 	path.EndpointA.ChannelConfig.Order = channeltypes.UNORDERED
 	path.EndpointB.ChannelConfig.Order = channeltypes.UNORDERED
-	path.EndpointA.ChannelConfig.Version = transfertypes.Version
-	path.EndpointB.ChannelConfig.Version = transfertypes.Version
+	path.EndpointA.ChannelConfig.Version = transfertypes.V1
+	path.EndpointB.ChannelConfig.Version = transfertypes.V1
 
 	trustingPeriodFraction := providerChain.App.(*icsproviderapp.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
 	consumerUnbondingPeriod := path.EndpointA.Chain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
@@ -627,7 +626,7 @@ func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses [
 
 // Get an IBC denom from it's native host denom
 // This assumes the transfer channel is channel-0
-func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace {
+func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.Denom {
 	sourcePrefix := transfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
 	prefixedDenom := sourcePrefix + denom
 
@@ -648,7 +647,7 @@ func (s *AppTestHelper) MustGetNextSequenceNumber(portId, channelId string) uint
 // Returns the IBC hash
 func (s *AppTestHelper) CreateAndStoreIBCDenom(baseDenom string) (ibcDenom string) {
 	denomTrace := s.GetIBCDenomTrace(baseDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, denomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, denomTrace)
 	return denomTrace.IBCDenom()
 }
 
