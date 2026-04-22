@@ -89,10 +89,24 @@ func (msg *MsgRegisterHostZone) ValidateBasic() error {
 	if !strings.HasPrefix(msg.IbcDenom, "ibc") {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "ibc denom must begin with 'ibc'")
 	}
-	// ibc denom must be valid
-	err = ibctransfertypes.ValidateIBCDenom(msg.IbcDenom)
-	if err != nil {
+	// ibc denom must be valid — ValidateIBCDenom was removed in ibc-go v10,
+	// inlining the equivalent logic here
+	if err := sdk.ValidateDenom(msg.IbcDenom); err != nil {
 		return err
+	}
+	denomSplit := strings.SplitN(msg.IbcDenom, "/", 2)
+	switch {
+	case msg.IbcDenom == ibctransfertypes.DenomPrefix:
+		return errorsmod.Wrapf(ibctransfertypes.ErrInvalidDenomForTransfer,
+			"denomination should be prefixed with the format 'ibc/{hash(trace + \"/\" + %s)}'", msg.IbcDenom)
+	case len(denomSplit) == 2 && denomSplit[0] == ibctransfertypes.DenomPrefix:
+		if strings.TrimSpace(denomSplit[1]) == "" {
+			return errorsmod.Wrapf(ibctransfertypes.ErrInvalidDenomForTransfer,
+				"denomination should be prefixed with the format 'ibc/{hash(trace + \"/\" + %s)}'", msg.IbcDenom)
+		}
+		if _, err := ibctransfertypes.ParseHexHash(denomSplit[1]); err != nil {
+			return errorsmod.Wrapf(err, "invalid denom trace hash %s", denomSplit[1])
+		}
 	}
 	// bech32 prefix must be non-empty (we validate it fully in msg_server)
 	if strings.TrimSpace(msg.Bech32Prefix) == "" {

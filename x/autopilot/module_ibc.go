@@ -317,5 +317,5 @@ func (im IBCModule) WriteAcknowledgement(
 
 // GetAppVersion returns the interchain accounts metadata.
 func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	return transfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
+	return transfertypes.V1, true // im.keeper.GetAppVersion(ctx, portID, channelID)
 }

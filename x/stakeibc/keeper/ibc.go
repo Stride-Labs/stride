@@ -220,12 +220,12 @@ func (k Keeper) GetLightClientHeight(ctx sdk.Context, connectionID string) (heig
 		return 0, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection-id: %s", connectionID)
 	}
 
-	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
-	if !found {
+	clientHeight := k.IBCKeeper.ClientKeeper.GetClientLatestHeight(ctx, connection.ClientId)
+	if clientHeight.IsZero() {
 		return 0, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "client-id: %s", connection.ClientId)
 	}
 
-	latestHeight, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
+	latestHeight, err := cast.ToUint64E(clientHeight.GetRevisionHeight())
 	if err != nil {
 		return 0, err
 	}
