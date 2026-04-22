@@ -938,7 +938,7 @@ func NewStrideApp(
 	var icacallbacksStack porttypes.IBCModule = icacallbacksIBCModule
 	icacallbacksStack = stakeibcmodule.NewIBCMiddleware(icacallbacksStack, app.StakeibcKeeper)
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
-	icacallbacksStack = icacontroller.NewIBCMiddleware(icacallbacksStack, app.ICAControllerKeeper)
+	icacallbacksStack = icacontroller.NewIBCMiddlewareWithAuth(icacallbacksStack, app.ICAControllerKeeper)
 
 	// SendPacket originates from the base app and work up the stack to core IBC
 	// RecvPacket originates from core IBC and goes down the stack
@@ -1273,6 +1273,9 @@ func NewStrideApp(
 		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
+		}
+		if err := app.WasmClientKeeper.InitializePinnedCodes(ctx); err != nil {
+			panic(fmt.Sprintf("WasmClientKeeper failed initialize pinned codes %s", err))
 		}
 	}
 
