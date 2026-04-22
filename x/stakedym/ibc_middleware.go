@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
@@ -35,7 +34,6 @@ func (im IBCMiddleware) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
@@ -46,7 +44,6 @@ func (im IBCMiddleware) OnChanOpenInit(
 		connectionHops,
 		portID,
 		channelID,
-		channelCap,
 		counterparty,
 		version,
 	)
@@ -85,6 +82,7 @@ func (im IBCMiddleware) OnChanCloseConfirm(
 // and update record keeping based on whether it succeeded
 func (im IBCMiddleware) OnAcknowledgementPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
@@ -97,12 +95,12 @@ func (im IBCMiddleware) OnAcknowledgementPacket(
 		return err
 	}
 
-	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+	return im.app.OnAcknowledgementPacket(ctx, channelVersion, packet, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket must check if an outbound transfer of native tokens timed out,
 // and, if so, adjust record keeping
-func (im IBCMiddleware) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet, relayer sdk.AccAddress) error {
+func (im IBCMiddleware) OnTimeoutPacket(ctx sdk.Context, channelVersion string, packet channeltypes.Packet, relayer sdk.AccAddress) error {
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnTimeoutPacket (Stakedym): packet %v, relayer %v", packet, relayer))
 	// Handle stakedym specific logic
 	if err := im.keeper.OnTimeoutPacket(ctx, packet); err != nil {
@@ -110,7 +108,7 @@ func (im IBCMiddleware) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Pac
 		return err
 	}
 
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+	return im.app.OnTimeoutPacket(ctx, channelVersion, packet, relayer)
 }
 
 // No custom logic needed for OnChanOpenTry - passes through to next middleware
@@ -120,7 +118,6 @@ func (im IBCMiddleware) OnChanOpenTry(
 	connectionHops []string,
 	portID,
 	channelID string,
-	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
@@ -130,7 +127,6 @@ func (im IBCMiddleware) OnChanOpenTry(
 		connectionHops,
 		portID,
 		channelID,
-		channelCap,
 		counterparty,
 		counterpartyVersion,
 	)
@@ -157,10 +153,11 @@ func (im IBCMiddleware) OnChanCloseInit(
 // No custom logic needed for OnRecvPacket - passes through to next middleware
 func (im IBCMiddleware) OnRecvPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	return im.app.OnRecvPacket(ctx, packet, relayer)
+	return im.app.OnRecvPacket(ctx, channelVersion, packet, relayer)
 }
 
 // Send implements the ICS4Wrapper interface
@@ -168,7 +165,6 @@ func (im IBCMiddleware) OnRecvPacket(
 // so this should never get called
 func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
 	sourcePort string,
 	sourceChannel string,
 	timeoutHeight clienttypes.Height,
@@ -183,7 +179,6 @@ func (im IBCMiddleware) SendPacket(
 // so this should never get called
 func (im IBCMiddleware) WriteAcknowledgement(
 	ctx sdk.Context,
-	channelCap *capabilitytypes.Capability,
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 ) error {
