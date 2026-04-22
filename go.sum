@@ -683,6 +683,8 @@ github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
+github.com/Stride-Labs/interchain-security/v7 v7.1.0-sdk-0.53.7-rc0 h1:SXldTqNlNWRgym57XAfETJ4Fzipm2IWCfwz101oCApQ=
+github.com/Stride-Labs/interchain-security/v7 v7.1.0-sdk-0.53.7-rc0/go.mod h1:b5Fg0PpTuWRIzrpxmX9jDe7wRS8V8/OHdTP21bXR3M0=
 github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk53-rc0 h1:vtKoxe2cRHzwIUfq5Jl5Hy61D5h6WdLilpBoFwrvDuo=
 github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk53-rc0/go.mod h1:2ccOQlKn7Wx1ZzvCUBU6Vh4b+JR4JBq1UjeCZFGn5+U=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
@@ -847,8 +849,6 @@ github.com/cosmos/ibc-go/v10 v10.5.1 h1:XryNO8LEGwxVPEcKqgTEe1iQA5zRhr5iXFUGCW90
 github.com/cosmos/ibc-go/v10 v10.5.1/go.mod h1:a74pAPUSJ7NewvmvELU74hUClJhwnmm5MGbEaiTw/kE=
 github.com/cosmos/ics23/go v0.11.0 h1:jk5skjT0TqX5e5QJbEnwXIS2yI2vnmLOgpQPeM5RtnU=
 github.com/cosmos/ics23/go v0.11.0/go.mod h1:A8OjxPE67hHST4Icw94hOxxFEJMBG031xIGF/JHNIY0=
-github.com/cosmos/interchain-security/v7 v7.0.0-20250408210344-06e0dc6bf6d6 h1:SzJ/+uqrTsJmI+f/GqPdC4lGxgDQKYvtRCMXFdJljNM=
-github.com/cosmos/interchain-security/v7 v7.0.0-20250408210344-06e0dc6bf6d6/go.mod h1:W7JHsNaZ5XoH88cKT+wuCRsXkx/Fcn2kEwzpeGdJBxI=
 github.com/cosmos/keyring v1.2.0 h1:8C1lBP9xhImmIabyXW4c3vFjjLiBdGCmfLUfeZlV1Yo=
 github.com/cosmos/keyring v1.2.0/go.mod h1:fc+wB5KTk9wQ9sDx0kFXB3A0MaeGHM9AwRStKOQ5vOA=
 github.com/cosmos/ledger-cosmos-go v1.0.0 h1:jNKW89nPf0vR0EkjHG8Zz16h6p3zqwYEOxlHArwgYtw=

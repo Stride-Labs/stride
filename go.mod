@@ -246,6 +246,8 @@ replace (
 
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 // indirect
 
+	github.com/cosmos/interchain-security/v7 => github.com/Stride-Labs/interchain-security/v7 v7.1.0-sdk-0.53.7-rc0
+
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
 	// Then later upgraded to SDK 50
@@ -253,8 +255,6 @@ replace (
 
 	//github.com/evmos/vesting => ../vesting
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-	github.com/interchain-security/v7 => github.com/Stride-Labs/interchain-security/v7 v7.1.0-sdk-0.53.7-rc0
 
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
