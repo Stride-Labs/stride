@@ -19,9 +19,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	appconsumer "github.com/cosmos/interchain-security/v6/app/consumer"
-	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
+	appconsumer "github.com/cosmos/interchain-security/v7/app/consumer"
+	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/v31/cmd/strided/config"
 	testutil "github.com/Stride-Labs/stride/v31/testutil"

@@ -8,8 +8,8 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
-	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"

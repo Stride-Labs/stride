@@ -14,7 +14,7 @@ import (
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/types"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
-	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	v10 "github.com/Stride-Labs/stride/v31/app/upgrades/v10"
