@@ -75,8 +75,8 @@ func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
 
 	expectedRateLimit := ratelimittypes.RateLimit{
 		Path: &ratelimittypes.Path{
-			Denom:     denom,
-			ChannelId: channelId,
+			Denom:             denom,
+			ChannelOrClientId: channelId,
 		},
 		Flow: &ratelimittypes.Flow{
 			Inflow:       flow,
@@ -117,8 +117,8 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 	return func() {
 		expectedRateLimitToCelestia := ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
-				Denom:     v19.StTiaDenom,
-				ChannelId: v19.CelestiaTransferChannelId,
+				Denom:             v19.StTiaDenom,
+				ChannelOrClientId: v19.CelestiaTransferChannelId,
 			},
 			Flow: &ratelimittypes.Flow{
 				Inflow:       sdkmath.NewInt(0),
@@ -134,8 +134,8 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 
 		expectedRateLimitToOsmosis := ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
-				Denom:     v19.StTiaDenom,
-				ChannelId: v19.OsmosisTransferChannelId,
+				Denom:             v19.StTiaDenom,
+				ChannelOrClientId: v19.OsmosisTransferChannelId,
 			},
 			Flow: &ratelimittypes.Flow{
 				Inflow:       sdkmath.NewInt(0),
@@ -151,8 +151,8 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 
 		expectedRateLimitToNeutron := ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
-				Denom:     v19.StTiaDenom,
-				ChannelId: v19.NeutronTransferChannelId,
+				Denom:             v19.StTiaDenom,
+				ChannelOrClientId: v19.NeutronTransferChannelId,
 			},
 			Flow: &ratelimittypes.Flow{
 				Inflow:       sdkmath.NewInt(0),

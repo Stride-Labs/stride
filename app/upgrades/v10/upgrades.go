@@ -21,7 +21,6 @@ import (
 	clientkeeper "github.com/cosmos/ibc-go/v10/modules/core/02-client/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 	"github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibctmmigrations "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint/migrations"
 
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
@@ -137,10 +136,10 @@ func CreateUpgradeHandler(
 		ctx.Logger().Info("Adding localhost IBC client for ibc-go v7.0 to v7.1 migration...")
 		AddLocalhostIBCClient(ctx, clientKeeper)
 
-		ctx.Logger().Info("Pruning expired tendermint consensus states...")
-		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to prune expired consensus states")
-		}
+		// ctx.Logger().Info("Pruning expired tendermint consensus states...")
+		// if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
+		// 	return nil, errorsmod.Wrapf(err, "unable to prune expired consensus states")
+		// }
 
 		ctx.Logger().Info("Reducing STRD staking rewards...")
 		if err := ReduceSTRDStakingRewards(ctx, mintKeeper); err != nil {
@@ -334,11 +333,11 @@ func EnableRateLimits(
 		channelId := hostZone.TransferChannelId
 
 		addRateLimitMsg := &ratelimittypes.MsgAddRateLimit{
-			Denom:          denom,
-			ChannelId:      channelId,
-			MaxPercentSend: threshold,
-			MaxPercentRecv: threshold,
-			DurationHours:  RateLimitDurationHours,
+			Denom:             denom,
+			ChannelOrClientId: channelId,
+			MaxPercentSend:    threshold,
+			MaxPercentRecv:    threshold,
+			DurationHours:     RateLimitDurationHours,
 		}
 
 		if err := ratelimitKeeper.AddRateLimit(ctx, addRateLimitMsg); err != nil {

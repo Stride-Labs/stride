@@ -93,7 +93,7 @@ func AddStTiaRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 
 	for _, channelId := range []string{CelestiaTransferChannelId, OsmosisTransferChannelId, NeutronTransferChannelId} {
 		addMsg := addRateLimitMsgTemplate
-		addMsg.ChannelId = channelId
+		addMsg.ChannelOrClientId = channelId
 
 		if err := k.AddRateLimit(ctx, &addMsg); err != nil {
 			return errorsmod.Wrapf(err, "unable to add stTIA rate limit to %s", channelId)
