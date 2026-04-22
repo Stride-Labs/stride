@@ -72,11 +72,11 @@ func (k *Keeper) SubmitICQRequest(ctx sdk.Context, query types.Query, forceUniqu
 	if !found {
 		return errorsmod.Wrap(connectiontypes.ErrConnectionNotFound, query.ConnectionId)
 	}
-	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
-	if !found {
+	latestHeight := k.IBCKeeper.ClientKeeper.GetClientLatestHeight(ctx, connection.ClientId)
+	if latestHeight.IsZero() {
 		return errorsmod.Wrap(clienttypes.ErrClientNotFound, connection.ClientId)
 	}
-	query.SubmissionHeight = clientState.GetLatestHeight().GetRevisionHeight()
+	query.SubmissionHeight = latestHeight.GetRevisionHeight()
 
 	// Save the query to the store
 	// If the same query is re-requested, it will get replace in the store with an updated TTL
