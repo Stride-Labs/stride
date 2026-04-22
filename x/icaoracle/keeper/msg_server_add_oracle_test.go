@@ -3,8 +3,6 @@ package keeper_test
 import (
 	"fmt"
 
-	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
-
 	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
 )
 
@@ -32,10 +30,10 @@ func (s *KeeperTestSuite) TestAddOracle_Successful() {
 	s.Require().Equal(expectedOracle, actualOracle, "oracle created")
 
 	// Confirm the ICA registration was initiated
-	// We can verify this by checking that the ICAController module is bound to the oracle port
+	// In v10 (capability-free), we verify this by checking that a channel was opened on the oracle port
 	expectedOraclePort := fmt.Sprintf("icacontroller-%s.ORACLE", HostChainId)
-	_, isBound := s.App.ScopedICAControllerKeeper.GetCapability(s.Ctx, host.PortPath(expectedOraclePort))
-	s.Require().True(isBound, "oracle ICA port %s should have been bound to the ICAController module", expectedOraclePort)
+	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix(s.Ctx, expectedOraclePort)
+	s.Require().NotEmpty(channels, "oracle ICA port %s should have a channel initiated by the ICAController module", expectedOraclePort)
 }
 
 func (s *KeeperTestSuite) TestAddOracle_Successful_IcaAlreadyExists() {

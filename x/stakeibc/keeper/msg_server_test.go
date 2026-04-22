@@ -864,7 +864,7 @@ func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
 	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
 	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 	return lsmTokenDenomTrace.IBCDenom()
 }
 
@@ -1092,7 +1092,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_HostZoneNotFound() {
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, "channel-1")
 	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
 	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 
 	invalidMsg := tc.validMsg
 	invalidMsg.LsmTokenIbcDenom = lsmTokenDenomTrace.IBCDenom()
@@ -1108,7 +1108,7 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ValidatorNotFound() {
 	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
 	prefixedDenom := sourcePrefix + "cosmosvaloperXXX/42"
 	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 
 	invalidMsg := tc.validMsg
 	invalidMsg.LsmTokenIbcDenom = lsmTokenDenomTrace.IBCDenom()

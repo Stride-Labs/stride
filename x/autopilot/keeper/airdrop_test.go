@@ -361,6 +361,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			// Call OnRecvPacket for autopilot
 			ack := autopilotStack.OnRecvPacket(
 				s.Ctx,
+				transfertypes.V1,
 				packet,
 				sdk.AccAddress{},
 			)

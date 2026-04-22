@@ -471,6 +471,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_LiquidStake() {
 			routerIBCModule := autopilot.NewIBCModule(s.App.AutopilotKeeper, recordsStack)
 			ack := routerIBCModule.OnRecvPacket(
 				s.Ctx,
+				transfertypes.V1,
 				packet,
 				s.TestAccs[2], // arbitrary relayer address - not actually used
 			)

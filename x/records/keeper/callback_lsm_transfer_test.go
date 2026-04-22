@@ -20,7 +20,7 @@ func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
 	prefixedDenom := transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenDenom)
 	denomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
 	ibcDenom := denomTrace.IBCDenom()
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, denomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, denomTrace)
 
 	deposit := types.LSMTokenDeposit{
 		ChainId:  HostChainId,

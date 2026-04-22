@@ -23,9 +23,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Store a second valid denom trace that will not be registered with the host zone
 	invalidPath := "transfer/channel-100"
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, transfertypes.DenomTrace{
-		BaseDenom: LSMTokenBaseDenom,
-		Path:      invalidPath,
+	s.App.TransferKeeper.SetDenom(s.Ctx, transfertypes.Denom{
+		Base:  LSMTokenBaseDenom,
+		Trace: []transfertypes.Hop{{PortId: transfertypes.PortID, ChannelId: "channel-100"}},
 	})
 
 	// Store the corresponding validator in the host zone
@@ -133,11 +133,11 @@ func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	ibcDenom := transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, baseDenom)).IBCDenom()
 
 	// Store denom trace so the transfer keeper can look it up
-	expectedDenomTrace := transfertypes.DenomTrace{
-		BaseDenom: baseDenom,
-		Path:      path,
+	expectedDenomTrace := transfertypes.Denom{
+		Base:  baseDenom,
+		Trace: []transfertypes.Hop{{PortId: transfertypes.PortID, ChannelId: ibctesting.FirstChannelID}},
 	}
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, expectedDenomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, expectedDenomTrace)
 
 	// Test parsing of IBC Denom
 	actualDenomTrace, err := s.App.StakeibcKeeper.GetLSMTokenDenomTrace(s.Ctx, ibcDenom)

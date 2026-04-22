@@ -428,6 +428,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&tc.packetData)
 			ack := routerIBCModule.OnRecvPacket(
 				s.Ctx,
+				transfertypes.V1,
 				packet,
 				s.TestAccs[2],
 			)
