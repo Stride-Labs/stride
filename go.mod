@@ -246,6 +246,29 @@ replace (
 
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 // indirect
 
+	// Stride-Labs fork of ics23 with a one-line patch to LeafOp.Apply that permits
+	// empty-value leaves (upstream tracking: cosmos/ics23#134). Needed because
+	// Cosmos SDK 0.50+ bank stores reverse-index entries (DenomAddressPrefix 0x03)
+	// with []byte{} values via collections.WithReversePairUncheckedValue. Stock ics23
+	// refuses to hash these leaves even when they appear as neighbors in a valid
+	// non-existence proof, causing intermittent ICQ non-membership verification
+	// failures (e.g. withdrawal-balance queries when the ICA balance is zero).
+	//
+	// Why the global replace is safe:
+	//   - Membership proofs: unaffected. ibc-go's VerifyMembership rejects empty
+	//     values itself (merkle.go:96) before ics23 is ever reached, so client,
+	//     connection, channel, packet-commitment, and packet-ack verification
+	//     behave identically under the patch.
+	//   - Non-membership proofs in ibc-go: only called from packet-receipt-absence
+	//     checks (03-connection/keeper/verify.go:172 and 04-channel/v2/keeper/
+	//     packet.go:335). Both verify absence inside the IBC module store, which
+	//     never stores keys with empty values — the patch never triggers.
+	//   - Interchain-security: zero production non-membership calls.
+	// The only code path the patch actually changes is Stride's ICQ non-membership
+	// verification against modules that use collections' empty-value storage (bank
+	// reverse-index entries) — precisely the bug we're fixing.
+	github.com/cosmos/ics23/go => github.com/Stride-Labs/ics23/go v0.11.0-non-membership-icq-rc4
+
 	github.com/cosmos/interchain-security/v7 => github.com/Stride-Labs/interchain-security/v7 v7.1.0-sdk-0.53.7-rc0
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
