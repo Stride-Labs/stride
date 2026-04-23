@@ -204,12 +204,12 @@ func (k Keeper) GetLightClientTime(ctx sdk.Context, connectionID string) (client
 		return 0, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection-id: %s", connectionID)
 	}
 
-	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, connection.ClientId)
-	if !found {
+	latestHeight := k.IBCKeeper.ClientKeeper.GetClientLatestHeight(ctx, connection.ClientId)
+	if latestHeight.IsZero() {
 		return 0, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "client-id: %s", connection.ClientId)
 	}
 
-	return latestConsensusClientState.GetTimestamp(), nil
+	return k.IBCKeeper.ClientKeeper.GetClientTimestampAtHeight(ctx, connection.ClientId, latestHeight)
 }
 
 // Given a connection ID, returns the light client height
