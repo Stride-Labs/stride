@@ -474,6 +474,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{icqoracletypes.ModuleName, strdburnertypes.ModuleName, auctiontypes.ModuleName},
 		}
+	case "v32":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Deleted: []string{crisistypes.StoreKey},
+		}
 	}
 
 	if storeUpgrades != nil {
