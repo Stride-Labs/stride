@@ -217,8 +217,5 @@ func (k Keeper) GetStIbcDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone
 		return "", channeltypes.ErrChannelNotFound.Wrapf("counterparty channel not found for %s", hostZone.TransferChannelId)
 	}
 
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, counterpartyChannelId)
-	prefixedDenom := sourcePrefix + stDenomOnStride
-
-	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom(), nil
+	return utils.GetIBCDenom(transfertypes.PortID, counterpartyChannelId, stDenomOnStride), nil
 }

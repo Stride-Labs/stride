@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v31/app/apptesting"
+	"github.com/Stride-Labs/stride/v31/utils"
 	"github.com/Stride-Labs/stride/v31/x/stakedym/types"
 )
 
@@ -39,8 +40,7 @@ func fillDefaultHostZone(hostZone types.HostZone) types.HostZone {
 	hostZone.TransferChannelId = fillDefaultValue(hostZone.TransferChannelId, validChannelId)
 	hostZone.NativeTokenDenom = fillDefaultValue(hostZone.NativeTokenDenom, validDenom)
 
-	ibcDenomTracePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, validChannelId)
-	defaultIbcDenom := transfertypes.ParseDenomTrace(ibcDenomTracePrefix + validDenom).IBCDenom()
+	defaultIbcDenom := utils.GetIBCDenom(transfertypes.PortID, validChannelId, validDenom)
 	hostZone.NativeTokenIbcDenom = fillDefaultValue(hostZone.NativeTokenIbcDenom, defaultIbcDenom)
 
 	hostZone.DelegationAddress = fillDefaultValue(hostZone.DelegationAddress, "dymXXX")

@@ -355,8 +355,7 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&packetData)
 
 			// Build the evmos denom from the packet
-			prefixedDenom := transfertypes.GetPrefixedDenom(packet.DestinationPort, packet.DestinationChannel, evmosDenom)
-			evmosIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+			evmosIbcDenom := utils.GetIBCDenom(packet.DestinationPort, packet.DestinationChannel, evmosDenom)
 
 			// Call OnRecvPacket for autopilot
 			ack := autopilotStack.OnRecvPacket(

@@ -72,7 +72,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Try with an ibc denom that's not registered - it should fail
 	invalidMsg := validMsg
-	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, "fake_denom")).IBCDenom()
+	invalidMsg.LsmTokenIbcDenom = transfertypes.ExtractDenomFromPath(fmt.Sprintf("%s/%s", path, "fake_denom")).IBCDenom()
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, fmt.Sprintf("denom not found for %s", invalidMsg.LsmTokenIbcDenom))
 
@@ -84,7 +84,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Try with with a different transfer channel - it should fail
 	invalidMsg = validMsg
-	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", invalidPath, LSMTokenBaseDenom)).IBCDenom()
+	invalidMsg.LsmTokenIbcDenom = transfertypes.ExtractDenomFromPath(fmt.Sprintf("%s/%s", invalidPath, LSMTokenBaseDenom)).IBCDenom()
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
 
@@ -130,7 +130,7 @@ func (s *KeeperTestSuite) TestGetLSMTokenDepositId() {
 func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	baseDenom := "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/48"
 	path := "transfer/channel-0"
-	ibcDenom := transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, baseDenom)).IBCDenom()
+	ibcDenom := transfertypes.ExtractDenomFromPath(fmt.Sprintf("%s/%s", path, baseDenom)).IBCDenom()
 
 	// Store denom trace so the transfer keeper can look it up
 	expectedDenomTrace := transfertypes.Denom{
@@ -153,7 +153,7 @@ func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	s.Require().ErrorContains(err, "unable to get ibc hex hash from denom ibc/xxx")
 
 	// Attempt to parse with a valid ibc denom that is not registered - it should fail
-	notRegisteredIBCDenom := transfertypes.ParseDenomTrace("transfer/channel-0/cosmosXXX").IBCDenom()
+	notRegisteredIBCDenom := transfertypes.ExtractDenomFromPath("transfer/channel-0/cosmosXXX").IBCDenom()
 	_, err = s.App.StakeibcKeeper.GetLSMTokenDenomTrace(s.Ctx, notRegisteredIBCDenom)
 	s.Require().ErrorContains(err, "denom not found")
 }

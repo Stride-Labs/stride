@@ -12,6 +12,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/Stride-Labs/stride/v31/utils"
 	router "github.com/Stride-Labs/stride/v31/x/autopilot"
 	"github.com/Stride-Labs/stride/v31/x/autopilot/types"
 	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
@@ -109,15 +110,15 @@ func (s *KeeperTestSuite) TestTryRedeemStake() {
 
 	// For strd, the hub's channel ID would have been appended to the denom trace
 	strd := "ustrd"
-	strdTrace := transfertypes.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, strd)
+	strdTrace := utils.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, strd)
 
 	// Similarly for stTokens, the hub's channel ID would be appended
 	stAtom := "stuatom"
-	stAtomTrace := transfertypes.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, stAtom)
+	stAtomTrace := utils.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, stAtom)
 
 	// StOsmo will have a valid denom but no host zone
 	stOsmo := "stuosmo"
-	stOsmoTrace := transfertypes.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, stOsmo)
+	stOsmoTrace := utils.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, stOsmo)
 
 	testCases := []struct {
 		name           string
@@ -315,7 +316,7 @@ func (s *KeeperTestSuite) TestOnRecvPacket_RedeemStake() {
 
 	// For stTokens, the hub's channel ID would have been appended to the denom trace
 	stAtom := "stuatom"
-	stAtomTrace := transfertypes.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, stAtom)
+	stAtomTrace := utils.GetPrefixedDenom(transfertypes.PortID, hubToStrideChannel, stAtom)
 
 	testCases := []struct {
 		name       string

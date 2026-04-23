@@ -47,14 +47,13 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with native tokens (e.g. STRD, stATOM)
-	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), transferMetadata.Denom) {
+	if transfertypes.ExtractDenomFromPath(transferMetadata.Denom).HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
 		return fmt.Errorf("native token is not supported for liquid staking (%s)", transferMetadata.Denom)
 	}
 
 	// Note: the denom in the packet is the base denom e.g. uatom - not ibc/xxx
 	// We need to use the port and channel to build the IBC denom
-	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), transferMetadata.Denom)
-	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+	ibcDenom := utils.GetIBCDenom(packet.GetDestPort(), packet.GetDestChannel(), transferMetadata.Denom)
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {

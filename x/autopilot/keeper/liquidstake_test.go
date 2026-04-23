@@ -10,6 +10,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
+	"github.com/Stride-Labs/stride/v31/utils"
 	"github.com/Stride-Labs/stride/v31/x/autopilot"
 	"github.com/Stride-Labs/stride/v31/x/autopilot/types"
 	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
@@ -30,7 +31,7 @@ var (
 		Atom: Atom,
 		Osmo: Osmo,
 		// For strd, the other zone's channel ID is appended to the denom trace
-		Strd: transfertypes.GetPrefixedDenom(transfertypes.PortID, SourceChannelOnHost, Strd),
+		Strd: utils.GetPrefixedDenom(transfertypes.PortID, SourceChannelOnHost, Strd),
 	}
 )
 
@@ -86,8 +87,8 @@ func (s *KeeperTestSuite) SetupAutopilotLiquidStake(
 	})
 
 	// Set the host zone - this should have the actual IBC denom
-	prefixedDenom := transfertypes.GetPrefixedDenom(transfertypes.PortID, strideToHostChannelId, HostDenom)
-	nativeTokenIBCDenom = transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, strideToHostChannelId, HostDenom)
+	nativeTokenIBCDenom = transfertypes.ExtractDenomFromPath(prefixedDenom).IBCDenom()
 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId:           HostChainId,

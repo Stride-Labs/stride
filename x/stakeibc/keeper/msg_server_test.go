@@ -861,9 +861,8 @@ type LSMLiquidStakeTestCase struct {
 // hash it, and then store the trace in the IBC store
 // Returns the ibc hash
 func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenBaseDenom)
+	lsmTokenDenomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
 	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 	return lsmTokenDenomTrace.IBCDenom()
 }
@@ -1089,9 +1088,8 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_HostZoneNotFound() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Change the message so that the denom is an IBC denom from a channel that is not supported
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, "channel-1")
-	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, "channel-1", LSMTokenBaseDenom)
+	lsmTokenDenomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
 	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 
 	invalidMsg := tc.validMsg
@@ -1105,9 +1103,8 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ValidatorNotFound() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Change the message so that the base denom is from a non-existent validator
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + "cosmosvaloperXXX/42"
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, "cosmosvaloperXXX/42")
+	lsmTokenDenomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
 	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 
 	invalidMsg := tc.validMsg

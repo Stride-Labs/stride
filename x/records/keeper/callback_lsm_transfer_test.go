@@ -9,6 +9,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
+	"github.com/Stride-Labs/stride/v31/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v31/x/records/types"
 )
@@ -17,8 +18,8 @@ var LSMTokenDenom = "cosmosvaloperxxx/42"
 
 func (s *KeeperTestSuite) SetupLSMTransferCallback() []byte {
 	// we need a valid ibc denom here or the transfer will fail
-	prefixedDenom := transfertypes.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenDenom)
-	denomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenDenom)
+	denomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
 	ibcDenom := denomTrace.IBCDenom()
 	s.App.TransferKeeper.SetDenom(s.Ctx, denomTrace)
 

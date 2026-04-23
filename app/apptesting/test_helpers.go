@@ -630,10 +630,8 @@ func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses [
 // Get an IBC denom from it's native host denom
 // This assumes the transfer channel is channel-0
 func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.Denom {
-	sourcePrefix := transfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + denom
-
-	return transfertypes.ParseDenomTrace(prefixedDenom)
+	prefixedDenom := utils.GetPrefixedDenom(ibctesting.TransferPort, ibctesting.FirstChannelID, denom)
+	return transfertypes.ExtractDenomFromPath(prefixedDenom)
 }
 
 // Helper function to get the next sequence number for testing when an ICA was submitted
