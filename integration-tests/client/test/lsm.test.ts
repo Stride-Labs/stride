@@ -146,10 +146,18 @@ describe("LSM", () => {
 
     // Liquid stake
     await submitTxAndExpectSuccess(stridejs, [lsmLiquidStakeMsg]);
-    await sleep(3000);
 
-    // Get final st and tokenize share record balances
-    const finalStBalanceOnStride = await getBalance({ client: stridejs, denom: stDenom });
+    // Wait for the liquid stake to complete. The stToken mint and the LSM token
+    // escrow both happen inside FinishLSMLiquidStake, so a stToken balance bump
+    // means the escrow already landed. In the slash-query variant this fires
+    // asynchronously after the ICQ round-trip, which can exceed a simple sleep.
+    const finalStBalanceOnStride = await waitForBalanceChange({
+      client: stridejs,
+      address: stridejs.address,
+      denom: stDenom,
+      initialBalance: initialStBalanceOnStride,
+      minChange: 1,
+    });
     const finalLsmBalanceOnStride = await getBalance({ client: stridejs, denom: lsmDenomOnStride });
 
     // Confirm the balance changes
