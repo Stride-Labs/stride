@@ -175,6 +175,7 @@ export async function ensureNativeHostTokensOnStride({
     client: stridejs,
     address: stridejs.address,
     denom: hostChainConfig.hostDenomOnStride,
+    minChange: minAmount,
   });
 
   return finalBalance;
@@ -231,8 +232,8 @@ export async function ensureStTokensOnHost({
     return await waitForBalanceChange({
       client: hostjs,
       address: hostjs.address,
-      denom: hostChainConfig.stDenom,
-      initialBalance: stBalanceOnStride,
+      denom: hostChainConfig.stDenomOnHost,
+      initialBalance: stBalanceOnHost,
       minChange: minAmount,
     });
   }
@@ -253,10 +254,11 @@ export async function ensureStTokensOnHost({
   await submitTxAndExpectSuccess(hostjs, [autopilotLiquidStake]);
 
   return await waitForBalanceChange({
-    initialBalance: stBalanceOnStride,
+    initialBalance: stBalanceOnHost,
     client: hostjs,
     address: hostjs.address,
     denom: hostChainConfig.stDenomOnHost,
+    minChange: 1,
   });
 }
 

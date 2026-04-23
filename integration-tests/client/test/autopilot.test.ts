@@ -106,6 +106,7 @@ describe.each(TEST_CHAINS)("Autopilot - %s", (hostChainName) => {
       address: stridejs.address,
       denom: stDenom,
       initialBalance: initialUserStBalance,
+      minChange: 1,
     });
     const finalUserNativeBalance = await getBalance({
       client: hostjs,
@@ -165,6 +166,7 @@ describe.each(TEST_CHAINS)("Autopilot - %s", (hostChainName) => {
       address: hostjs.address,
       denom: stDenomOnHost,
       initialBalance: initialUserStBalance,
+      minChange: 1,
     });
     const finalUserNativeBalance = await getBalance({
       client: hostjs,

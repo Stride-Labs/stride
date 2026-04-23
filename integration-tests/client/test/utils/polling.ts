@@ -3,18 +3,20 @@ import { REMOVED } from "./consts";
 import { CosmosClient } from "./types";
 import { sleep } from "stridejs";
 import { getBalance, getDelegatedBalance, getHostZone } from "./queries";
-import { bigIntAbs } from "./utils";
 import { expect } from "vitest";
 import Decimal from "decimal.js";
 
 /**
- * Wait for a balance to change (increase from initial value)
+ * Wait for a balance to increase from its initial value. A strict increase is
+ * required: a balance that stays equal (or decreases) never satisfies the wait.
+ * With the default minChange=0, any strict increase resolves the poll; pass a
+ * larger value to require a minimum arrival size.
  * @param client The stride client
  * @param address The address to query the balance for
  * @param denom The token denom to check the balance for
  * @param initialBalance Optional initial balance to compare against
  * If not provided, will query the current balance
- * @param minChange Min change between queries before the waiting is over
+ * @param minChange Minimum balance increase required before returning
  */
 export async function waitForBalanceChange({
   client,
@@ -35,7 +37,7 @@ export async function waitForBalanceChange({
 
   while (attempt < maxAttempts) {
     const currBalance = await getBalance({ client, address, denom });
-    if (bigIntAbs(currBalance - prevBalance) >= BigInt(minChange)) {
+    if (currBalance > prevBalance && currBalance - prevBalance >= BigInt(minChange)) {
       return currBalance;
     }
 
