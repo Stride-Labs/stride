@@ -214,7 +214,8 @@ export async function waitForRedemptionRateChange({
   client: StrideClient;
   chainId: string;
 }): Promise<Decimal> {
-  const maxAttempts = 360;
+  // ~9 min of polls so the outer 10-min test timeout still wins if we blow past
+  const maxAttempts = 540;
   let attempt = 0;
 
   const { redemptionRate: prevRedemptionRate } = await getHostZone({ client, chainId });
