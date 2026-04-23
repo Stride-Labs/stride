@@ -108,7 +108,7 @@ func CreateUpgradeHandler(
 	govKeeper govkeeper.Keeper,
 	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
-	paramsKeeper paramskeeper.Keeper,
+	paramsKeeper paramskeeper.Keeper, //nolint:staticcheck // SA1019: historical v10 handler, x/params removal scheduled for follow-up
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
