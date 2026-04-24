@@ -11,11 +11,11 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 // Useful across all balance query icqcallback tests

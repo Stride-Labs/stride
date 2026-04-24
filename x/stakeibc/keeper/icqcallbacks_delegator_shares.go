@@ -11,9 +11,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.

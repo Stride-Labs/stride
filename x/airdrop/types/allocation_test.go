@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v31/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v32/x/airdrop/types"
 )
 
 func TestGetRemainingAllocations(t *testing.T) {

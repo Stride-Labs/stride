@@ -14,11 +14,11 @@ import (
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v31/x/interchainquery/keeper"
-	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
+	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 var (

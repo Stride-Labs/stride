@@ -8,9 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
 
-	minttypes "github.com/Stride-Labs/stride/v31/x/mint/types"
-	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	minttypes "github.com/Stride-Labs/stride/v32/x/mint/types"
+	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 type UpdateRedemptionRateTestCase struct {

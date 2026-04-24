@@ -10,9 +10,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 type UndelegateCallbackState struct {

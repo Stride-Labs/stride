@@ -6,8 +6,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 // TODO: Consider removing stride and day epochs completely and using a single hourly epoch

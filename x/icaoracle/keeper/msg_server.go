@@ -15,7 +15,7 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
 
 type msgServer struct {

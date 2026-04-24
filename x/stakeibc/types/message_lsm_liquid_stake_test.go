@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v31/app/apptesting"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/app/apptesting"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 func TestMsgLSMLiquidStake(t *testing.T) {

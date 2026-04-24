@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v31/x/records/types"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"

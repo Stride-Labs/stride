@@ -10,7 +10,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
-	"github.com/Stride-Labs/stride/v31/x/icaoracle/keeper"
+	"github.com/Stride-Labs/stride/v32/x/icaoracle/keeper"
 )
 
 var _ porttypes.Middleware = &IBCMiddleware{}

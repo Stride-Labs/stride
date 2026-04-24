@@ -8,11 +8,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v31/app/apptesting"
-	v15 "github.com/Stride-Labs/stride/v31/app/upgrades/v15"
-	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/app/apptesting"
+	v15 "github.com/Stride-Labs/stride/v32/app/upgrades/v15"
+	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {

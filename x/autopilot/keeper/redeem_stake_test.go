@@ -8,16 +8,16 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v31/x/records"
+	recordsmodule "github.com/Stride-Labs/stride/v32/x/records"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	router "github.com/Stride-Labs/stride/v31/x/autopilot"
-	"github.com/Stride-Labs/stride/v31/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v31/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	router "github.com/Stride-Labs/stride/v32/x/autopilot"
+	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 func getRedeemStakeStakeibcPacketMetadata(strideAddress, redemptionReceiver string) string {

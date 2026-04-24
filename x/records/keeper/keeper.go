@@ -11,9 +11,9 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/v31/x/icacallbacks/keeper"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
 
-	"github.com/Stride-Labs/stride/v31/x/records/types"
+	"github.com/Stride-Labs/stride/v32/x/records/types"
 )
 
 type (
