@@ -47,11 +47,13 @@ def parse_raw_csvs() -> dict[str, list[dict]]:
 
                 weight_bps = int(Decimal(raw_weight) * 100)
                 if weight_bps > 0:
-                    validators.append({
-                        "address": row["Validator Address"].strip(),
-                        "name": row["Validator Name"].strip(),
-                        "weight_bps": weight_bps,
-                    })
+                    validators.append(
+                        {
+                            "address": row["Validator Address"].strip(),
+                            "name": row["Validator Name"].strip(),
+                            "weight_bps": weight_bps,
+                        }
+                    )
 
         if validators:
             result[chain_id] = validators
@@ -79,11 +81,13 @@ def load_current_weights() -> dict[str, list[dict]]:
         reader = csv.DictReader(f)
         for row in reader:
             chain_id = row["chain_id"]
-            result.setdefault(chain_id, []).append({
-                "address": row["validator_address"],
-                "name": row["validator_name"],
-                "weight": int(row["current_weight"]),
-            })
+            result.setdefault(chain_id, []).append(
+                {
+                    "address": row["validator_address"],
+                    "name": row["validator_name"],
+                    "weight": int(row["current_weight"]),
+                }
+            )
 
     return result
 
@@ -104,15 +108,17 @@ def build_all_validators(
         for address in all_addresses:
             target_entry = target_map.get(address)
             current_entry = current_map.get(address)
-            name = (target_entry or current_entry)["name"]
+            name = (target_entry or current_entry)["name"]  # type: ignore
             target_weight = target_entry["weight_bps"] if target_entry else 0
 
-            rows.append({
-                "chain_id": chain_id,
-                "validator_name": name,
-                "validator_address": address,
-                "target_weight": target_weight,
-            })
+            rows.append(
+                {
+                    "chain_id": chain_id,
+                    "validator_name": name,
+                    "validator_address": address,
+                    "target_weight": target_weight,
+                }
+            )
 
     return rows
 
@@ -121,12 +127,14 @@ def write_target_weights(target_by_chain: dict[str, list[dict]]) -> None:
     rows = []
     for chain_id in sorted(target_by_chain):
         for v in target_by_chain[chain_id]:
-            rows.append({
-                "chain_id": chain_id,
-                "validator_name": v["name"],
-                "validator_address": v["address"],
-                "target_weight": v["weight_bps"],
-            })
+            rows.append(
+                {
+                    "chain_id": chain_id,
+                    "validator_name": v["name"],
+                    "validator_address": v["address"],
+                    "target_weight": v["weight_bps"],
+                }
+            )
 
     headers = ["chain_id", "validator_name", "validator_address", "target_weight"]
     with TARGET_WEIGHTS_PATH.open("w", newline="") as f:
@@ -145,11 +153,13 @@ def find_new_validators(
         current_addresses = {v["address"] for v in current_by_chain.get(chain_id, [])}
         for v in target_by_chain[chain_id]:
             if v["address"] not in current_addresses:
-                rows.append({
-                    "chain_id": chain_id,
-                    "validator_name": v["name"],
-                    "validator_address": v["address"],
-                })
+                rows.append(
+                    {
+                        "chain_id": chain_id,
+                        "validator_name": v["name"],
+                        "validator_address": v["address"],
+                    }
+                )
     return rows
 
 
@@ -179,7 +189,9 @@ def validate(
     for chain_id in sorted(target_by_chain):
         chain_sum = sum(v["weight_bps"] for v in target_by_chain[chain_id])
         if chain_sum != TARGET_SUM:
-            print(f"  FAIL: {chain_id} target weights sum to {chain_sum}, expected {TARGET_SUM}")
+            print(
+                f"  FAIL: {chain_id} target weights sum to {chain_sum}, expected {TARGET_SUM}"
+            )
             ok = False
         else:
             print(f"  OK:   {chain_id} target weights sum to {TARGET_SUM}")
@@ -198,10 +210,14 @@ def validate(
         key = (row["chain_id"], row["validator_address"])
         expected = target_lookup.get(key)
         if expected is None:
-            print(f"  FAIL: {row['chain_id']} {row['validator_address']} has weight {weight} but is not in target")
+            print(
+                f"  FAIL: {row['chain_id']} {row['validator_address']} has weight {weight} but is not in target"
+            )
             ok = False
         elif expected != weight:
-            print(f"  FAIL: {row['chain_id']} {row['validator_address']} weight {weight} != target {expected}")
+            print(
+                f"  FAIL: {row['chain_id']} {row['validator_address']} weight {weight} != target {expected}"
+            )
             ok = False
 
     return ok
@@ -211,7 +227,9 @@ def main() -> int:
     print("Parsing raw target CSVs...")
     target_by_chain = parse_raw_csvs()
     total_target = sum(len(vs) for vs in target_by_chain.values())
-    print(f"Found {total_target} validators with target weights across {len(target_by_chain)} chains")
+    print(
+        f"Found {total_target} validators with target weights across {len(target_by_chain)} chains"
+    )
 
     print("\nNormalizing weights to sum to 10000 per chain...")
     for chain_id in target_by_chain:
