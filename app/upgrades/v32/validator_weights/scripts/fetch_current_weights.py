@@ -45,7 +45,7 @@ def write_csv(rows: list[dict], output_path: Path) -> None:
 
 
 def main() -> int:
-    output_path = Path(__file__).parent / OUTPUT_FILENAME
+    output_path = Path(__file__).parent.parent / OUTPUT_FILENAME
 
     print(f"Fetching host zones from {HOST_ZONE_URL} ...")
     host_zones = fetch_host_zones()
