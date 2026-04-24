@@ -417,6 +417,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ModuleManager,
 			app.configurator,
 			app.GovKeeper,
+			app.RecordsKeeper,
 			app.StakeibcKeeper,
 		),
 	)

@@ -13,6 +13,8 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 
 	"github.com/Stride-Labs/stride/v32/utils"
+	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
@@ -22,6 +24,10 @@ var (
 
 	MinDeposit         = sdkmath.NewInt(20_000_000_000)
 	ValidatorWeightCap = uint64(20)
+
+	// Info for failed LSM record
+	CosmosChainId         = "cosmoshub-4"
+	FailedLSMDepositDenom = "cosmosvaloper1jlr62guqwrwkdt4m3y00zh2rrsamhjf9num5xr/114571"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v32
@@ -29,6 +35,7 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	govKeeper govkeeper.Keeper,
+	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(context context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -54,8 +61,25 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		ctx.Logger().Info("Resetting failed LSM detokenization record...")
+		ResetLSMRecord(ctx, recordsKeeper)
+
 		return versionMap, nil
 	}
+}
+
+// Reset the failed LSM detokenization record status and decrement the amount by 1
+// so that it will succeed on the retry
+func ResetLSMRecord(ctx sdk.Context, k recordskeeper.Keeper) {
+	lsmDeposit, found := k.GetLSMTokenDeposit(ctx, CosmosChainId, FailedLSMDepositDenom)
+	if !found {
+		// No need to panic in this case since the difference is immaterial
+		ctx.Logger().Error("Failed LSM deposit record not found")
+		return
+	}
+	lsmDeposit.Status = recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE
+	lsmDeposit.Amount = lsmDeposit.Amount.Sub(sdkmath.OneInt())
+	k.SetLSMTokenDeposit(ctx, lsmDeposit)
 }
 
 // Increase min deposit by 10x to 20k STRD

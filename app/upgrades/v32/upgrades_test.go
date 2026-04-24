@@ -9,6 +9,7 @@ import (
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v32 "github.com/Stride-Labs/stride/v32/app/upgrades/v32"
 	"github.com/Stride-Labs/stride/v32/utils"
+	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
@@ -26,12 +27,14 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	checkValidatorWeights := s.SetupTestUpdateValidatorWeights()
+	checkLSMRecord := s.SetupLSMRecord()
 
 	s.ConfirmUpgradeSucceeded(v32.UpgradeName)
 
 	s.VerifyMinDepositIncreased()
 	s.VerifyMaxValidatorWeightIncreased()
 	checkValidatorWeights()
+	checkLSMRecord()
 }
 
 func (s *UpgradeTestSuite) VerifyMinDepositIncreased() {
@@ -86,5 +89,26 @@ func (s *UpgradeTestSuite) SetupTestUpdateValidatorWeights() func() {
 				s.Require().Equal(w.Weight, actual, "%s: weight mismatch for %s", chainId, w.Address)
 			}
 		}
+	}
+}
+
+func (s *UpgradeTestSuite) SetupLSMRecord() func() {
+	initialDetokenizeAmount := sdkmath.NewInt(11_000_000)
+	expectedDetokenizeAmount := sdkmath.NewInt(10_999_999)
+
+	// Create the failed detokenization record
+	s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, recordstypes.LSMTokenDeposit{
+		ChainId: v32.CosmosChainId,
+		Denom:   v32.FailedLSMDepositDenom,
+		Amount:  initialDetokenizeAmount,
+		Status:  recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED,
+	})
+
+	return func() {
+		// Confirm the lsm deposit record was reset
+		lsmRecord, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, v32.CosmosChainId, v32.FailedLSMDepositDenom)
+		s.Require().True(found, "lsm deposit record should have been found")
+		s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, lsmRecord.Status, "lsm record status")
+		s.Require().Equal(expectedDetokenizeAmount, lsmRecord.Amount, "lsm deposit record amount")
 	}
 }
