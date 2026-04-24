@@ -85,7 +85,8 @@ func IncreaseMaxValidatorWeight(ctx sdk.Context, sk stakeibckeeper.Keeper) {
 // Phase 1: Add new validators (not yet on-chain) with weight 0
 // Phase 2: Set all validator weights to their target values
 func UpdateValidatorWeights(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
-	for chainId, validators := range NewValidators {
+	for _, chainId := range utils.StringMapKeys(NewValidators) {
+		validators := NewValidators[chainId]
 		ctx.Logger().Info(fmt.Sprintf("Adding %d new validators to %s...", len(validators), chainId))
 		for _, val := range validators {
 			validator := stakeibctypes.Validator{
@@ -99,7 +100,8 @@ func UpdateValidatorWeights(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
 		}
 	}
 
-	for chainId, weights := range TargetWeights {
+	for _, chainId := range utils.StringMapKeys(TargetWeights) {
+		weights := TargetWeights[chainId]
 		ctx.Logger().Info(fmt.Sprintf("Setting validator weights for %s...", chainId))
 
 		hostZone, found := sk.GetHostZone(ctx, chainId)
