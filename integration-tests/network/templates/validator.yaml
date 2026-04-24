@@ -107,10 +107,10 @@ spec:
           resources:
             limits:
               cpu: "600m"
-              memory: "600M"
+              memory: "700M"
             requests:
-              cpu: "200m"
-              memory: "200M"
+              cpu: "600m"
+              memory: "700M"
       volumes:
         - name: state
           emptyDir: {}

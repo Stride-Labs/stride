@@ -6,9 +6,10 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
+	"github.com/Stride-Labs/stride/v31/utils"
 	"github.com/Stride-Labs/stride/v31/x/autopilot/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
@@ -31,11 +32,11 @@ func (k Keeper) TryRedeemStake(
 	//   (e.g. transfer/{channel-on-hub}/stuatom)
 	// Only stride native stTokens can be redeemed, so we confirm that the denom's prefix matches
 	//   the packet's "source" channel (i.e. the channel on the host zone)
-	if !transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), transferPacketData.Denom) {
+	if !transfertypes.ExtractDenomFromPath(transferPacketData.Denom).HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
 		return fmt.Errorf("the ibc token %s is not supported for redeem stake", transferPacketData.Denom)
 	}
 
-	voucherPrefix := transfertypes.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
+	voucherPrefix := utils.GetDenomPrefix(packet.GetSourcePort(), packet.GetSourceChannel())
 	stAssetDenom := transferPacketData.Denom[len(voucherPrefix):]
 	if !k.stakeibcKeeper.CheckIsStToken(ctx, stAssetDenom) {
 		return fmt.Errorf("not a liquid staking token")

@@ -8,11 +8,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibctypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	epochstypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
@@ -217,8 +217,5 @@ func (k Keeper) GetStIbcDenomOnHostZone(ctx sdk.Context, hostZone types.HostZone
 		return "", channeltypes.ErrChannelNotFound.Wrapf("counterparty channel not found for %s", hostZone.TransferChannelId)
 	}
 
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, counterpartyChannelId)
-	prefixedDenom := sourcePrefix + stDenomOnStride
-
-	return transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom(), nil
+	return utils.GetIBCDenom(transfertypes.PortID, counterpartyChannelId, stDenomOnStride), nil
 }

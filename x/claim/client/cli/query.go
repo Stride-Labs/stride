@@ -128,7 +128,7 @@ $ %s query claim claim-record <address>
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintObjectLegacy(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -172,7 +172,7 @@ $ %s query claim claimable-for-action stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtf
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintObjectLegacy(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -208,7 +208,7 @@ $ %s query claim total-claimable stride stride1h4astdfzjhcwahtfrh24qtvndzzh49xvq
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintObjectLegacy(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -242,7 +242,7 @@ $ %s query claim user-vestings stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintObjectLegacy(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -276,7 +276,7 @@ $ %s query claim claim-status stride1h4astdfzjhcwahtfrh24qtvndzzh49xvqtfftk
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintObjectLegacy(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
@@ -305,7 +305,7 @@ func GetCmdQueryClaimMetadata() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintObjectLegacy(res)
+			return clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)

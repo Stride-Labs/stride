@@ -6,11 +6,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -355,12 +355,12 @@ func (s *KeeperTestSuite) TestAirdropOnRecvPacket() {
 			packet.Data = transfertypes.ModuleCdc.MustMarshalJSON(&packetData)
 
 			// Build the evmos denom from the packet
-			prefixedDenom := transfertypes.GetPrefixedDenom(packet.DestinationPort, packet.DestinationChannel, evmosDenom)
-			evmosIbcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+			evmosIbcDenom := utils.GetIBCDenom(packet.DestinationPort, packet.DestinationChannel, evmosDenom)
 
 			// Call OnRecvPacket for autopilot
 			ack := autopilotStack.OnRecvPacket(
 				s.Ctx,
+				transfertypes.V1,
 				packet,
 				sdk.AccAddress{},
 			)

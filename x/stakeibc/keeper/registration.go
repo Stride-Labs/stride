@@ -4,9 +4,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
@@ -135,37 +135,37 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 	// generate delegate account
 	// NOTE: in the future, if we implement proxy governance, we'll need many more delegate accounts
 	delegateAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_DELEGATION)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, zone.ConnectionId, delegateAccount, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, delegateAccount, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to register delegation ICA")
 	}
 
 	// generate fee account
 	feeAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_FEE)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, zone.ConnectionId, feeAccount, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, feeAccount, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to register fee ICA")
 	}
 
 	// generate withdrawal account
 	withdrawalAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_WITHDRAWAL)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, zone.ConnectionId, withdrawalAccount, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, withdrawalAccount, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to register withdrawal ICA")
 	}
 
 	// generate redemption account
 	redemptionAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_REDEMPTION)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, zone.ConnectionId, redemptionAccount, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, redemptionAccount, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to register redemption ICA")
 	}
 
 	// create community pool deposit account
 	communityPoolDepositAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, zone.ConnectionId, communityPoolDepositAccount, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolDepositAccount, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to register community pool deposit ICA")
 	}
 
 	// create community pool return account
 	communityPoolReturnAccount := types.FormatHostZoneICAOwner(chainId, types.ICAAccountType_COMMUNITY_POOL_RETURN)
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, zone.ConnectionId, communityPoolReturnAccount, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, zone.ConnectionId, communityPoolReturnAccount, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to register community pool return ICA")
 	}
 

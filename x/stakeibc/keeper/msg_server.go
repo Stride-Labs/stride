@@ -12,10 +12,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	proto "github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v31/utils"
@@ -561,7 +561,7 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 		TxType:                 icatypes.TxTypeSDKMultiMsg,
 	}))
 
-	if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, msg.ConnectionId, msg.AccountOwner, appVersion, channeltypes.ORDERED); err != nil {
+	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, msg.ConnectionId, msg.AccountOwner, appVersion, channeltypes.ORDERED); err != nil {
 		return nil, errorsmod.Wrapf(err, "unable to register account for owner %s", msg.AccountOwner)
 	}
 

@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 )
@@ -93,7 +93,7 @@ func AddStTiaRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 
 	for _, channelId := range []string{CelestiaTransferChannelId, OsmosisTransferChannelId, NeutronTransferChannelId} {
 		addMsg := addRateLimitMsgTemplate
-		addMsg.ChannelId = channelId
+		addMsg.ChannelOrClientId = channelId
 
 		if err := k.AddRateLimit(ctx, &addMsg); err != nil {
 			return errorsmod.Wrapf(err, "unable to add stTIA rate limit to %s", channelId)

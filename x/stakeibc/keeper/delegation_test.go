@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	proto "github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -156,7 +156,7 @@ func (s *KeeperTestSuite) SetupDepositRecords() DepositRecordsTestCase {
 
 	ibcDenomTrace := s.GetIBCDenomTrace(Atom) // we need a true IBC denom here
 	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, ibcDenomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, ibcDenomTrace)
 
 	initialModuleAccountBalance := sdk.NewCoin(ibcDenomTrace.IBCDenom(), sdkmath.NewInt(15_000))
 	s.FundAccount(depositAddress, initialModuleAccountBalance)

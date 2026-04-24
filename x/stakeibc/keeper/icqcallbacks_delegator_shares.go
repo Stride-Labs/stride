@@ -10,7 +10,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
@@ -230,9 +229,10 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 		validator.Address, hostZone.DelegationIcaAddress, validator.Delegation, delegatedTokens, slashAmount, slashPct))
 
 	// Update the validator weight and delegation reflect to reflect the slash
-	weight, err := cast.ToInt64E(validator.Weight)
+	weight, err := utils.Uint64ToInt64E(validator.Weight)
 	if err != nil {
-		return errorsmod.Wrapf(types.ErrIntCast, "unable to convert validator weight to int64, err: %s", err.Error())
+		return errorsmod.Wrapf(types.ErrIntCast,
+			"unable to convert validator weight to int64, err: overflow: unable to cast %d of type uint64 to int64", validator.Weight)
 	}
 	weightAdjustment := sdkmath.LegacyNewDecFromInt(delegatedTokens).Quo(sdkmath.LegacyNewDecFromInt(validator.Delegation))
 

@@ -8,10 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"github.com/Stride-Labs/stride/v31/app/apptesting"
 	"github.com/Stride-Labs/stride/v31/utils"
@@ -861,10 +861,9 @@ type LSMLiquidStakeTestCase struct {
 // hash it, and then store the trace in the IBC store
 // Returns the ibc hash
 func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenBaseDenom)
+	lsmTokenDenomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
+	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 	return lsmTokenDenomTrace.IBCDenom()
 }
 
@@ -1089,10 +1088,9 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_HostZoneNotFound() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Change the message so that the denom is an IBC denom from a channel that is not supported
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, "channel-1")
-	prefixedDenom := sourcePrefix + LSMTokenBaseDenom
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, "channel-1", LSMTokenBaseDenom)
+	lsmTokenDenomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
+	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 
 	invalidMsg := tc.validMsg
 	invalidMsg.LsmTokenIbcDenom = lsmTokenDenomTrace.IBCDenom()
@@ -1105,10 +1103,9 @@ func (s *KeeperTestSuite) TestLSMLiquidStakeFailed_ValidatorNotFound() {
 	tc := s.SetupTestLSMLiquidStake()
 
 	// Change the message so that the base denom is from a non-existent validator
-	sourcePrefix := transfertypes.GetDenomPrefix(transfertypes.PortID, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + "cosmosvaloperXXX/42"
-	lsmTokenDenomTrace := transfertypes.ParseDenomTrace(prefixedDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, lsmTokenDenomTrace)
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, "cosmosvaloperXXX/42")
+	lsmTokenDenomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
+	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
 
 	invalidMsg := tc.validMsg
 	invalidMsg.LsmTokenIbcDenom = lsmTokenDenomTrace.IBCDenom()

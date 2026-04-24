@@ -9,8 +9,8 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cast"
 
+	"github.com/Stride-Labs/stride/v31/utils"
 	epochstypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
 	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
@@ -71,20 +71,20 @@ func (k Keeper) GetAllEpochTracker(ctx sdk.Context) (list []types.EpochTracker) 
 
 // Update the epoch information in the stakeibc epoch tracker
 func (k Keeper) UpdateEpochTracker(ctx sdk.Context, epochInfo epochstypes.EpochInfo) (epochNumber uint64, err error) {
-	epochNumber, err = cast.ToUint64E(epochInfo.CurrentEpoch)
+	epochNumber, err = utils.Int64ToUint64E(epochInfo.CurrentEpoch)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch number to uint64: %v", err))
-		return 0, err
+		return 0, errorsmod.Wrap(types.ErrIntCast, err.Error())
 	}
-	epochDurationNano, err := cast.ToUint64E(epochInfo.Duration.Nanoseconds())
+	epochDurationNano, err := utils.Int64ToUint64E(epochInfo.Duration.Nanoseconds())
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return 0, err
+		return 0, errorsmod.Wrap(types.ErrIntCast, err.Error())
 	}
-	nextEpochStartTime, err := cast.ToUint64E(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
+	nextEpochStartTime, err := utils.Int64ToUint64E(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).UnixNano())
 	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch duration to uint64: %v", err))
-		return 0, err
+		k.Logger(ctx).Error(fmt.Sprintf("Could not convert epoch start time to uint64: %v", err))
+		return 0, errorsmod.Wrap(types.ErrIntCast, err.Error())
 	}
 	epochTracker := types.EpochTracker{
 		EpochIdentifier:    epochInfo.Identifier,
@@ -106,11 +106,11 @@ func (k Keeper) GetStrideEpochElapsedShare(ctx sdk.Context) (sdkmath.LegacyDec, 
 	}
 
 	// Get epoch start time, end time, and duration
-	epochDuration, err := cast.ToInt64E(epochTracker.Duration)
+	epochDuration, err := utils.Uint64ToInt64E(epochTracker.Duration)
 	if err != nil {
 		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, "unable to convert epoch duration to int64")
 	}
-	epochEndTime, err := cast.ToInt64E(epochTracker.NextEpochStartTime)
+	epochEndTime, err := utils.Uint64ToInt64E(epochTracker.NextEpochStartTime)
 	if err != nil {
 		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, "unable to convert next epoch start time to int64")
 	}

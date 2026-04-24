@@ -98,7 +98,7 @@ make start
 - Start the network
 
 ```bash
-make stop
+make start
 ```
 
 - Run the tests

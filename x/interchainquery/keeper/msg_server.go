@@ -8,12 +8,12 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
+	commitmenttypesv2 "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types/v2"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ics23 "github.com/cosmos/ics23/go"
-	"github.com/spf13/cast"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	"github.com/Stride-Labs/stride/v31/x/interchainquery/types"
@@ -46,7 +46,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	}
 
 	// Get the client consensus state at the height 1 block above the message height
-	proofHeight, err := cast.ToUint64E(msg.Height)
+	proofHeight, err := utils.Int64ToUint64E(msg.Height)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (k Keeper) VerifyKeyProof(ctx sdk.Context, msg *types.MsgSubmitQueryRespons
 	var clientStateProof []*ics23.ProofSpec = tendermintClientState.ProofSpecs
 
 	// Get the merkle path and merkle proof
-	path := commitmenttypes.NewMerklePath([]string{pathParts[1], string(query.RequestData)}...)
+	path := commitmenttypesv2.NewMerklePath([]byte(pathParts[1]), query.RequestData)
 	merkleProof, err := commitmenttypes.ConvertProofs(msg.ProofOps)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrInvalidICQProof, "Error converting proofs: %s", err.Error())

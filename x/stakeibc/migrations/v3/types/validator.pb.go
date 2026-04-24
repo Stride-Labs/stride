@@ -4,9 +4,9 @@
 package types
 
 import (
+	github_com_cosmos_cosmos_sdk_types "cosmossdk.io/math"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
-	github_com_cosmos_cosmos_sdk_types "cosmossdk.io/math"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
@@ -27,7 +27,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type ValidatorExchangeRate struct {
 	InternalTokensToSharesRate github_com_cosmos_cosmos_sdk_types.LegacyDec `protobuf:"bytes,1,opt,name=internal_tokens_to_shares_rate,json=internalTokensToSharesRate,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"internal_tokens_to_shares_rate"`
-	EpochNumber                uint64                                 `protobuf:"varint,2,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	EpochNumber                uint64                                       `protobuf:"varint,2,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
 }
 
 func (m *ValidatorExchangeRate) Reset()         { *m = ValidatorExchangeRate{} }

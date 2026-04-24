@@ -8,10 +8,10 @@ refresh = true
 misbehaviour = true
 
 [mode.connections]
-enabled = true
+enabled = false
 
 [mode.channels]
-enabled = true
+enabled = false
 
 [mode.packets]
 enabled = true

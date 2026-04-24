@@ -4,7 +4,7 @@ import (
 	context "context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"

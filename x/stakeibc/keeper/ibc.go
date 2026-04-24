@@ -5,13 +5,12 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	"github.com/spf13/cast"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 
 	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
 )
@@ -205,12 +204,12 @@ func (k Keeper) GetLightClientTime(ctx sdk.Context, connectionID string) (client
 		return 0, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection-id: %s", connectionID)
 	}
 
-	latestConsensusClientState, found := k.IBCKeeper.ClientKeeper.GetLatestClientConsensusState(ctx, connection.ClientId)
-	if !found {
+	latestHeight := k.IBCKeeper.ClientKeeper.GetClientLatestHeight(ctx, connection.ClientId)
+	if latestHeight.IsZero() {
 		return 0, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "client-id: %s", connection.ClientId)
 	}
 
-	return latestConsensusClientState.GetTimestamp(), nil
+	return k.IBCKeeper.ClientKeeper.GetClientTimestampAtHeight(ctx, connection.ClientId, latestHeight)
 }
 
 // Given a connection ID, returns the light client height
@@ -220,16 +219,12 @@ func (k Keeper) GetLightClientHeight(ctx sdk.Context, connectionID string) (heig
 		return 0, errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection-id: %s", connectionID)
 	}
 
-	clientState, found := k.IBCKeeper.ClientKeeper.GetClientState(ctx, connection.ClientId)
-	if !found {
+	clientHeight := k.IBCKeeper.ClientKeeper.GetClientLatestHeight(ctx, connection.ClientId)
+	if clientHeight.IsZero() {
 		return 0, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "client-id: %s", connection.ClientId)
 	}
 
-	latestHeight, err := cast.ToUint64E(clientState.GetLatestHeight().GetRevisionHeight())
-	if err != nil {
-		return 0, err
-	}
-	return latestHeight, nil
+	return clientHeight.GetRevisionHeight(), nil
 }
 
 // Lookup a chain ID from a connection ID by looking up the client state

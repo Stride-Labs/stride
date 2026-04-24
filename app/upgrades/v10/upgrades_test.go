@@ -14,14 +14,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/address"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v31/app/apptesting"
 	v10 "github.com/Stride-Labs/stride/v31/app/upgrades/v10"
 	"github.com/Stride-Labs/stride/v31/utils"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
 	recordskeeper "github.com/Stride-Labs/stride/v31/x/records/keeper"
@@ -375,7 +375,7 @@ func (s *UpgradeTestSuite) setupRateLimitedHostZone(chainId, stDenom, channelId 
 
 func (s *UpgradeTestSuite) validateRateLimit(rateLimit ratelimittypes.RateLimit, chainId, denom, channelId string) {
 	s.Require().Equal(denom, rateLimit.Path.Denom, "rate limit denom")
-	s.Require().Equal(channelId, rateLimit.Path.ChannelId, "rate limit channel")
+	s.Require().Equal(channelId, rateLimit.Path.ChannelOrClientId, "rate limit channel")
 	description := fmt.Sprintf("%s - %s - %s", chainId, denom, channelId)
 
 	expectedThreshold := v10.NewRateLimits[chainId].Int64()
@@ -420,7 +420,7 @@ func (s *UpgradeTestSuite) TestEnableRateLimits() {
 	})
 
 	// Enable the rate limits
-	err := v10.EnableRateLimits(s.Ctx, s.App.AccountKeeper, s.App.IBCKeeper.ChannelKeeper, s.App.RatelimitKeeper, s.App.StakeibcKeeper)
+	err := v10.EnableRateLimits(s.Ctx, s.App.AccountKeeper, *s.App.IBCKeeper.ChannelKeeper, s.App.RatelimitKeeper, s.App.StakeibcKeeper)
 	s.Require().NoError(err, "no error expected when enabling new rate limits")
 
 	// Confirm correct number of new rate limits

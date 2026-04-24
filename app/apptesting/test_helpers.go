@@ -21,22 +21,21 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
-	ibctestingmock "github.com/cosmos/ibc-go/v8/testing/mock"
-	"github.com/cosmos/ibc-go/v8/testing/simapp"
-	icsproviderapp "github.com/cosmos/interchain-security/v6/app/provider"
-	icstestingutils "github.com/cosmos/interchain-security/v6/testutil/ibc_testing"
-	e2e "github.com/cosmos/interchain-security/v6/testutil/integration"
-	icstestingkeeper "github.com/cosmos/interchain-security/v6/testutil/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
-	providertypes "github.com/cosmos/interchain-security/v6/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	"github.com/cosmos/ibc-go/v10/testing/simapp"
+	icsproviderapp "github.com/cosmos/interchain-security/v7/app/provider"
+	icstestingutils "github.com/cosmos/interchain-security/v7/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v7/testutil/integration"
+	icstestingkeeper "github.com/cosmos/interchain-security/v7/testutil/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	providertypes "github.com/cosmos/interchain-security/v7/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -261,7 +260,7 @@ func (s *AppTestHelper) createStrideConsumerICSTestingApp() (*ibctesting.TestCha
 		s.Require().NoError(err)
 
 		// generate new PrivValidator
-		privVal := ibctestingmock.NewPV()
+		privVal := tmtypes.NewMockPV()
 		tmPubKey, err := privVal.GetPubKey()
 		s.Require().NoError(err)
 		consumerKey, err := tmencoding.PubKeyToProto(tmPubKey)
@@ -358,7 +357,8 @@ func (s *AppTestHelper) CreateTransferChannel(hostChainID string) {
 		"The testing app has already been initialized with a different chainID (%s)", s.HostChain.ChainID)
 
 	// Define the new transfer path between Stride and the host chain
-	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain, s.ProviderChain)
+	// Opt out of ibc-go v10's global unique-channel-id counter so channels start at channel-0
+	s.TransferPath = NewTransferPath(s.StrideChain, s.HostChain, s.ProviderChain).DisableUniqueChannelIDs()
 
 	// Create clients
 	s.Require().NoError(s.TransferPath.EndpointA.CreateClient())
@@ -420,11 +420,13 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 	}
 
 	// Create ICA Path and then copy over the client and connection from the transfer path
-	icaPath := NewIcaPath(s.StrideChain, s.HostChain, s.ProviderChain)
+	// Opt out of ibc-go v10's global unique-channel-id counter so channel IDs are allocated
+	// sequentially from the chain's own next-sequence, making test expectations predictable
+	icaPath := NewIcaPath(s.StrideChain, s.HostChain, s.ProviderChain).DisableUniqueChannelIDs()
 	icaPath = CopyConnectionAndClientToPath(icaPath, s.TransferPath)
 
 	// Register the ICA and complete the handshake
-	s.RegisterInterchainAccountWithOrdering(icaPath.EndpointA, owner)
+	s.RegisterInterchainAccount(icaPath.EndpointA, owner)
 
 	RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
 		s.Require().NoError(icaPath.EndpointB.ChanOpenTry())
@@ -456,7 +458,7 @@ func (s *AppTestHelper) CreateICAChannel(owner string) (channelID, portID string
 
 // Register's a new ICA account on the next channel available
 // This function assumes a connection already exists
-func (s *AppTestHelper) RegisterInterchainAccountWithOrdering(endpoint *ibctesting.Endpoint, owner string) {
+func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint, owner string) {
 	// Get the port ID from the owner name (i.e. "icacontroller-{owner}")
 	portID, err := icatypes.NewControllerPortID(owner)
 	s.Require().NoError(err, "owner to portID error")
@@ -464,7 +466,7 @@ func (s *AppTestHelper) RegisterInterchainAccountWithOrdering(endpoint *ibctesti
 	// Get the next channel available and register the ICA
 	channelSequence := s.App.IBCKeeper.ChannelKeeper.GetNextChannelSequence(s.Ctx)
 
-	err = s.App.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion, channeltypes.ORDERED)
+	err = s.App.ICAControllerKeeper.RegisterInterchainAccount(s.Ctx, endpoint.ConnectionID, owner, TestIcaVersion, channeltypes.ORDERED)
 	s.Require().NoError(err, "register interchain account error")
 
 	// Commit the state
@@ -482,8 +484,8 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain,
 	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
 	path.EndpointA.ChannelConfig.Order = channeltypes.UNORDERED
 	path.EndpointB.ChannelConfig.Order = channeltypes.UNORDERED
-	path.EndpointA.ChannelConfig.Version = transfertypes.Version
-	path.EndpointB.ChannelConfig.Version = transfertypes.Version
+	path.EndpointA.ChannelConfig.Version = transfertypes.V1
+	path.EndpointB.ChannelConfig.Version = transfertypes.V1
 
 	trustingPeriodFraction := providerChain.App.(*icsproviderapp.App).GetProviderKeeper().GetTrustingPeriodFraction(providerChain.GetContext())
 	consumerUnbondingPeriod := path.EndpointA.Chain.App.(*app.StrideApp).GetConsumerKeeper().GetUnbondingPeriod(path.EndpointA.Chain.GetContext())
@@ -627,11 +629,9 @@ func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses [
 
 // Get an IBC denom from it's native host denom
 // This assumes the transfer channel is channel-0
-func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.DenomTrace {
-	sourcePrefix := transfertypes.GetDenomPrefix(ibctesting.TransferPort, ibctesting.FirstChannelID)
-	prefixedDenom := sourcePrefix + denom
-
-	return transfertypes.ParseDenomTrace(prefixedDenom)
+func (s *AppTestHelper) GetIBCDenomTrace(denom string) transfertypes.Denom {
+	prefixedDenom := utils.GetPrefixedDenom(ibctesting.TransferPort, ibctesting.FirstChannelID, denom)
+	return transfertypes.ExtractDenomFromPath(prefixedDenom)
 }
 
 // Helper function to get the next sequence number for testing when an ICA was submitted
@@ -648,7 +648,7 @@ func (s *AppTestHelper) MustGetNextSequenceNumber(portId, channelId string) uint
 // Returns the IBC hash
 func (s *AppTestHelper) CreateAndStoreIBCDenom(baseDenom string) (ibcDenom string) {
 	denomTrace := s.GetIBCDenomTrace(baseDenom)
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, denomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, denomTrace)
 	return denomTrace.IBCDenom()
 }
 

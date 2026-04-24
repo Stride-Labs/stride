@@ -2,12 +2,11 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
 )
@@ -25,14 +24,14 @@ type ConnectionKeeper interface {
 // ChannelKeeper defines the expected IBC channel keeper
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, portID, channelID string) (channeltypes.Channel, bool)
-	GetChannelConnection(ctx sdk.Context, portID, channelID string) (string, exported.ConnectionI, error)
+	GetChannelConnection(ctx sdk.Context, portID, channelID string) (string, connectiontypes.ConnectionEnd, error)
 }
 
 // ICAControllerKeeper defines the expected ICA controller keeper
 type ICAControllerKeeper interface {
 	GetInterchainAccountAddress(ctx sdk.Context, connectionID, portID string) (string, bool)
 	GetOpenActiveChannel(ctx sdk.Context, connectionID, portID string) (string, bool)
-	RegisterInterchainAccountWithOrdering(ctx sdk.Context, connectionID, owner, version string) error
+	RegisterInterchainAccount(ctx sdk.Context, connectionID, owner, version string, ordering channeltypes.Order) error
 }
 
 // ICACallbacksKeeper defines the expected ICA callback keeper
@@ -42,10 +41,9 @@ type ICACallbacksKeeper interface {
 
 // ICS4Wrapper defines the expected ICS4Wrapper for middleware
 type ICS4Wrapper interface {
-	WriteAcknowledgement(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
+	WriteAcknowledgement(ctx sdk.Context, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
 	SendPacket(
 		ctx sdk.Context,
-		chanCap *capabilitytypes.Capability,
 		sourcePort string,
 		sourceChannel string,
 		timeoutHeight clienttypes.Height,

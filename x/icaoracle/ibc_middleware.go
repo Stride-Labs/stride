@@ -5,11 +5,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/v31/x/icaoracle/keeper"
 )
@@ -36,7 +35,6 @@ func (im IBCMiddleware) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
@@ -46,7 +44,6 @@ func (im IBCMiddleware) OnChanOpenInit(
 		connectionHops,
 		portID,
 		channelID,
-		channelCap,
 		counterparty,
 		version,
 	)
@@ -59,11 +56,10 @@ func (im IBCMiddleware) OnChanOpenTry(
 	connectionHops []string,
 	portID,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
-	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, chanCap, counterparty, counterpartyVersion)
+	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, counterparty, counterpartyVersion)
 }
 
 // OnChanOpenAck implements the IBCMiddleware interface
@@ -122,36 +118,38 @@ func (im IBCMiddleware) OnChanOpenConfirm(
 // The Ack handling and routing is managed by icacallbacks
 func (im IBCMiddleware) OnAcknowledgementPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+	return im.app.OnAcknowledgementPacket(ctx, channelVersion, packet, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket simply passes down the to next middleware stack
 // The Ack handling and routing is managed by icacallbacks
 func (im IBCMiddleware) OnTimeoutPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+	return im.app.OnTimeoutPacket(ctx, channelVersion, packet, relayer)
 }
 
 // OnRecvPacket simply passes down the to next middleware stack
 func (im IBCMiddleware) OnRecvPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	return im.app.OnRecvPacket(ctx, packet, relayer)
+	return im.app.OnRecvPacket(ctx, channelVersion, packet, relayer)
 }
 
 // SendPacket implements the ICS4 Wrapper interface but is not utilized in the ICA stack
 func (im IBCMiddleware) SendPacket(
 	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
 	sourcePort string,
 	sourceChannel string,
 	timeoutHeight clienttypes.Height,
@@ -165,7 +163,6 @@ func (im IBCMiddleware) SendPacket(
 // but is not utilized in the bottom of ICA stack
 func (im IBCMiddleware) WriteAcknowledgement(
 	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 ) error {

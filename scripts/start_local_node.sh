@@ -10,6 +10,10 @@ set -eu
 
 STRIDE_HOME=~/.stride-local
 STRIDED="build/strided --home ${STRIDE_HOME}"
+# SDK 0.53's `keys` subcommands no longer reliably pick up keyring-backend from client.toml
+# (help text shows default "test" but the runtime silently falls back to "os"), so pass it
+# explicitly anywhere we touch the keyring
+KEYRING="--keyring-backend test"
 CHAIN_ID=stride-local-1
 DENOM=ustrd
 
@@ -53,11 +57,11 @@ jq ".app_state += $interchain_accts" $genesis_json > json.tmp && mv json.tmp $ge
 $STRIDED add-consumer-section --validator-home-directories $STRIDE_HOME
 jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_json > json.tmp && mv json.tmp $genesis_json
 
-echo "$STRIDE_VAL_MNEMONIC" | $STRIDED keys add val --recover --keyring-backend=test 
-$STRIDED genesis add-genesis-account $($STRIDED keys show val -a) 100000000000${DENOM}
+echo "$STRIDE_VAL_MNEMONIC" | $STRIDED keys add val --recover $KEYRING
+$STRIDED genesis add-genesis-account $($STRIDED keys show val -a $KEYRING) 100000000000${DENOM}
 
-echo "$STRIDE_ADMIN_MNEMONIC" | $STRIDED keys add admin --recover --keyring-backend=test 
-$STRIDED genesis add-genesis-account $($STRIDED keys show admin -a) 100000000000${DENOM}
+echo "$STRIDE_ADMIN_MNEMONIC" | $STRIDED keys add admin --recover $KEYRING
+$STRIDED genesis add-genesis-account $($STRIDED keys show admin -a $KEYRING) 100000000000${DENOM}
 
 # Start the daemon in the background
 $STRIDED start & 
@@ -77,7 +81,7 @@ cat > $validator_json << EOF
   "min-self-delegation": "1"
 }
 EOF
-$STRIDED tx staking create-validator $validator_json --from val -y --chain-id $CHAIN_ID --node http://127.0.0.1:26657
+$STRIDED tx staking create-validator $validator_json --from val -y --chain-id $CHAIN_ID --node http://127.0.0.1:26657 $KEYRING
 
 # Bring the daemon back to the foreground
 wait $pid

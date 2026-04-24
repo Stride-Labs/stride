@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v31/x/icqoracle/types"
 )
@@ -113,9 +113,9 @@ func (k Keeper) unwrapIBCDenom(ctx sdk.Context, denom string) string {
 
 	hash, err := ibctransfertypes.ParseHexHash(strings.TrimPrefix(denom, "ibc/"))
 	if err == nil {
-		denomTrace, found := k.ibcTransferKeeper.GetDenomTrace(ctx, hash)
+		resolved, found := k.ibcTransferKeeper.GetDenom(ctx, hash)
 		if found {
-			return denomTrace.BaseDenom
+			return resolved.Base
 		}
 	}
 	return denom

@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"

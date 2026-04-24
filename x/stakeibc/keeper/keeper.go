@@ -13,9 +13,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	"github.com/spf13/cast"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v31/x/icacallbacks/keeper"
@@ -124,13 +123,9 @@ func (k Keeper) GetICATimeoutNanos(ctx sdk.Context, epochType string) (uint64, e
 		k.Logger(ctx).Error(fmt.Sprintf("Invalid buffer size %d", bufferSize))
 		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Invalid buffer size %d", bufferSize)
 	}
+	// timeoutNanos is uint64 - uint64, so already a uint64; no conversion needed
 	timeoutNanos := epochTracker.NextEpochStartTime - bufferSize
-	timeoutNanosUint64, err := cast.ToUint64E(timeoutNanos)
-	if err != nil {
-		k.Logger(ctx).Error(fmt.Sprintf("Failed to convert timeoutNanos to uint64, error: %s", err.Error()))
-		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "Failed to convert timeoutNanos to uint64, error: %s", err.Error())
-	}
-	return timeoutNanosUint64, nil
+	return timeoutNanos, nil
 }
 
 func (k Keeper) GetOuterSafetyBounds(ctx sdk.Context, zone types.HostZone) (sdkmath.LegacyDec, sdkmath.LegacyDec) {

@@ -6,7 +6,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,16 +17,13 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 
-	icacontrollermigrations "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/migrations/v6"
-	clientkeeper "github.com/cosmos/ibc-go/v8/modules/core/02-client/keeper"
-	channelkeeper "github.com/cosmos/ibc-go/v8/modules/core/04-channel/keeper"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctmmigrations "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint/migrations"
+	clientkeeper "github.com/cosmos/ibc-go/v10/modules/core/02-client/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
 
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v31/x/claim/keeper"
@@ -103,10 +99,8 @@ func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
 	cdc codec.Codec,
-	capabilityStoreKey *storetypes.KVStoreKey,
 	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
-	capabilityKeeper *capabilitykeeper.Keeper,
 	channelKeeper channelkeeper.Keeper,
 	claimKeeper claimkeeper.Keeper,
 	clientKeeper clientkeeper.Keeper,
@@ -114,7 +108,7 @@ func CreateUpgradeHandler(
 	govKeeper govkeeper.Keeper,
 	icacallbacksKeeper icacallbackskeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
-	paramsKeeper paramskeeper.Keeper,
+	paramsKeeper paramskeeper.Keeper, //nolint:staticcheck // SA1019: historical v10 handler, x/params removal scheduled for follow-up
 	ratelimitKeeper ratelimitkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
@@ -128,24 +122,24 @@ func CreateUpgradeHandler(
 			return nil, errorsmod.Wrapf(err, "unable to migrate params")
 		}
 
-		ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
-		if err := icacontrollermigrations.MigrateICS27ChannelCapability(
-			ctx,
-			cdc,
-			capabilityStoreKey,
-			capabilityKeeper,
-			stakeibctypes.ModuleName,
-		); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to migrate ICA channel capabilities")
-		}
+		// ctx.Logger().Info("Migrating ICA channel capabilities for ibc-go v5 to v6 migration...")
+		// if err := icacontrollermigrations.MigrateICS27ChannelCapability(
+		// 	ctx,
+		// 	cdc,
+		// 	capabilityStoreKey,
+		// 	capabilityKeeper,
+		// 	stakeibctypes.ModuleName,
+		// ); err != nil {
+		// 	return nil, errorsmod.Wrapf(err, "unable to migrate ICA channel capabilities")
+		// }
 
 		ctx.Logger().Info("Adding localhost IBC client for ibc-go v7.0 to v7.1 migration...")
 		AddLocalhostIBCClient(ctx, clientKeeper)
 
-		ctx.Logger().Info("Pruning expired tendermint consensus states...")
-		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
-			return nil, errorsmod.Wrapf(err, "unable to prune expired consensus states")
-		}
+		// ctx.Logger().Info("Pruning expired tendermint consensus states...")
+		// if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
+		// 	return nil, errorsmod.Wrapf(err, "unable to prune expired consensus states")
+		// }
 
 		ctx.Logger().Info("Reducing STRD staking rewards...")
 		if err := ReduceSTRDStakingRewards(ctx, mintKeeper); err != nil {
@@ -339,11 +333,11 @@ func EnableRateLimits(
 		channelId := hostZone.TransferChannelId
 
 		addRateLimitMsg := &ratelimittypes.MsgAddRateLimit{
-			Denom:          denom,
-			ChannelId:      channelId,
-			MaxPercentSend: threshold,
-			MaxPercentRecv: threshold,
-			DurationHours:  RateLimitDurationHours,
+			Denom:             denom,
+			ChannelOrClientId: channelId,
+			MaxPercentSend:    threshold,
+			MaxPercentRecv:    threshold,
+			DurationHours:     RateLimitDurationHours,
 		}
 
 		if err := ratelimitKeeper.AddRateLimit(ctx, addRateLimitMsg); err != nil {

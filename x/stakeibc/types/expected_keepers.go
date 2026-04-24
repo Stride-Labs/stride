@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ccvtypes "github.com/cosmos/interchain-security/v6/x/ccv/types"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

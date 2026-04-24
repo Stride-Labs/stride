@@ -114,9 +114,6 @@ func (AppModule) Name() string {
 	return types.ModuleName
 }
 
-// RegisterInvariants registers the mint module invariants.
-func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
-
 // QuerierRoute returns the mint module's querier route name.
 func (AppModule) QuerierRoute() string {
 	return types.QuerierRoute

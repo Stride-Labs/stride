@@ -12,9 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
@@ -43,17 +43,18 @@ var (
 //
 // This function returns the associated host zone and validator along with the initial deposit record
 func (k Keeper) ValidateLSMLiquidStake(ctx sdk.Context, msg types.MsgLSMLiquidStake) (types.LSMLiquidStake, error) {
-	// Get the denom trace from the IBC hash - this includes the full path and base denom
-	// Ex: LSMTokenIbcDenom of `ibc/XXX` might create a DenomTrace with:
-	//     BaseDenom: cosmosvaloperXXX/42, Path: transfer/channel-0
+	// Get the denom from the IBC hash - this includes the trace hops and base denom
+	// Ex: LSMTokenIbcDenom of `ibc/XXX` might resolve to a Denom with:
+	//     Base: cosmosvaloperXXX/42, Trace: [{transfer, channel-0}]
 	denomTrace, err := k.GetLSMTokenDenomTrace(ctx, msg.LsmTokenIbcDenom)
 	if err != nil {
 		return types.LSMLiquidStake{}, err
 	}
 
 	// Get the host zone and validator address from the path and base denom respectively
-	lsmTokenBaseDenom := denomTrace.BaseDenom
-	hostZone, err := k.GetHostZoneFromLSMTokenPath(ctx, denomTrace.Path)
+	// Note: Denom.Path() concatenates trace + base, so we build the trace-only path from Trace
+	lsmTokenBaseDenom := denomTrace.Base
+	hostZone, err := k.GetHostZoneFromLSMTokenPath(ctx, tracePath(denomTrace.Trace))
 	if err != nil {
 		return types.LSMLiquidStake{}, err
 	}
@@ -101,26 +102,26 @@ func GetLSMTokenDepositId(blockHeight int64, chainId, stakerAddress, denom strin
 	return fmt.Sprintf("%x", crypto.Sha256([]byte(id)))
 }
 
-// Parse the LSM Token's IBC denom hash into a DenomTrace object that contains the path and base denom
-func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transfertypes.DenomTrace, error) {
+// Parse the LSM Token's IBC denom hash into a Denom object that contains the trace hops and base denom
+func (k Keeper) GetLSMTokenDenomTrace(ctx sdk.Context, denom string) (transfertypes.Denom, error) {
 	ibcPrefix := transfertypes.DenomPrefix + "/"
 
 	// Confirm the LSM Token is a valid IBC token (has "ibc/" prefix)
 	if !strings.HasPrefix(denom, ibcPrefix) {
-		return transfertypes.DenomTrace{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "lsm token is not an IBC token (%s)", denom)
+		return transfertypes.Denom{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "lsm token is not an IBC token (%s)", denom)
 	}
 
 	// Parse the hash string after the "ibc/" prefix into hex bytes
 	hexHash := denom[len(ibcPrefix):]
 	hash, err := transfertypes.ParseHexHash(hexHash)
 	if err != nil {
-		return transfertypes.DenomTrace{}, errorsmod.Wrapf(err, "unable to get ibc hex hash from denom %s", denom)
+		return transfertypes.Denom{}, errorsmod.Wrapf(err, "unable to get ibc hex hash from denom %s", denom)
 	}
 
-	// Lookup the trace from the hash
-	denomTrace, found := k.RecordsKeeper.TransferKeeper.GetDenomTrace(ctx, hash)
+	// Lookup the denom from the hash
+	denomTrace, found := k.RecordsKeeper.TransferKeeper.GetDenom(ctx, hash)
 	if !found {
-		return transfertypes.DenomTrace{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "denom trace not found for %s", denom)
+		return transfertypes.Denom{}, errorsmod.Wrapf(types.ErrInvalidLSMToken, "denom not found for %s", denom)
 	}
 
 	return denomTrace, nil
@@ -151,6 +152,17 @@ func (k Keeper) GetHostZoneFromLSMTokenPath(ctx sdk.Context, path string) (types
 
 	return types.HostZone{}, errorsmod.Wrapf(types.ErrInvalidLSMToken,
 		"transfer channel-id from LSM token (%s) does not match any registered host zone", channelId)
+}
+
+// tracePath builds an IBC path string (e.g. "transfer/channel-0") from a Denom's
+// trace hops. v10's Denom.Path() concatenates the hops AND the base denom, which
+// breaks our one-hop path validation for LSM tokens whose base denom contains "/".
+func tracePath(hops []transfertypes.Hop) string {
+	parts := make([]string, 0, len(hops))
+	for _, hop := range hops {
+		parts = append(parts, hop.String())
+	}
+	return strings.Join(parts, "/")
 }
 
 // Parses the LSM token's denom (of the form {validatorAddress}/{recordId}) and confirms that the validator

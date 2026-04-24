@@ -6,15 +6,15 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 
 	"github.com/Stride-Labs/stride/v31/x/autopilot/keeper"
 	"github.com/Stride-Labs/stride/v31/x/autopilot/types"
 
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 )
 
 const (
@@ -45,7 +45,6 @@ func (im IBCModule) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	channelCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
@@ -55,7 +54,6 @@ func (im IBCModule) OnChanOpenInit(
 		connectionHops,
 		portID,
 		channelID,
-		channelCap,
 		counterparty,
 		version,
 	)
@@ -68,11 +66,10 @@ func (im IBCModule) OnChanOpenTry(
 	connectionHops []string,
 	portID,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
-	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, chanCap, counterparty, counterpartyVersion)
+	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, counterparty, counterpartyVersion)
 }
 
 // OnChanOpenAck implements the IBCModule interface
@@ -122,6 +119,7 @@ func (im IBCModule) OnChanCloseConfirm(
 // Otherwise, it's difficult to debug tests and it's unclear when there are false positive test cases
 func (im IBCModule) OnRecvPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
@@ -152,7 +150,7 @@ func (im IBCModule) OnRecvPacket(
 	// this is clearly just an normal IBC transfer
 	// Pass down the stack immediately instead of parsing
 	if tokenPacketData.Memo == "" {
-		return im.app.OnRecvPacket(ctx, packet, relayer)
+		return im.app.OnRecvPacket(ctx, channelVersion, packet, relayer)
 	}
 
 	// parse out any autopilot forwarding info
@@ -165,7 +163,7 @@ func (im IBCModule) OnRecvPacket(
 	// Pass the packet down to the next middleware
 	// PFM packets will also go down this path
 	if autopilotMetadata == nil {
-		return im.app.OnRecvPacket(ctx, packet, relayer)
+		return im.app.OnRecvPacket(ctx, channelVersion, packet, relayer)
 	}
 
 	//// At this point, we are officially dealing with an autopilot packet
@@ -202,7 +200,7 @@ func (im IBCModule) OnRecvPacket(
 	newPacket.Data = bz
 
 	// Pass the new packet down the middleware stack first to complete the transfer
-	ack := im.app.OnRecvPacket(ctx, newPacket, relayer)
+	ack := im.app.OnRecvPacket(ctx, channelVersion, newPacket, relayer)
 	if !ack.Success() {
 		return ack
 	}
@@ -260,6 +258,7 @@ func (im IBCModule) OnRecvPacket(
 // OnAcknowledgementPacket implements the IBCModule interface
 func (im IBCModule) OnAcknowledgementPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
@@ -267,7 +266,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	im.keeper.Logger(ctx).Info(fmt.Sprintf("OnAcknowledgementPacket (Autopilot): Packet %v, Acknowledgement %v", packet, acknowledgement))
 	// First pass the packet down the stack so that, in the event of an ack failure,
 	// the tokens are refunded to the original sender
-	if err := im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer); err != nil {
+	if err := im.app.OnAcknowledgementPacket(ctx, channelVersion, packet, acknowledgement, relayer); err != nil {
 		return err
 	}
 	// Then process the autopilot-specific callback
@@ -278,12 +277,13 @@ func (im IBCModule) OnAcknowledgementPacket(
 // OnTimeoutPacket implements the IBCModule interface
 func (im IBCModule) OnTimeoutPacket(
 	ctx sdk.Context,
+	channelVersion string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
 	im.keeper.Logger(ctx).Error(fmt.Sprintf("OnTimeoutPacket (Autopilot): Packet %v", packet))
 	// First pass the packet down the stack so that the tokens are refunded to the original sender
-	if err := im.app.OnTimeoutPacket(ctx, packet, relayer); err != nil {
+	if err := im.app.OnTimeoutPacket(ctx, channelVersion, packet, relayer); err != nil {
 		return err
 	}
 	// Then process the autopilot-specific callback
@@ -297,16 +297,18 @@ func (im IBCModule) OnTimeoutPacket(
 // SendPacket implements the ICS4 Wrapper interface
 func (im IBCModule) SendPacket(
 	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
-	packet ibcexported.PacketI,
-) error {
-	return nil
+	sourcePort string,
+	sourceChannel string,
+	timeoutHeight clienttypes.Height,
+	timeoutTimestamp uint64,
+	data []byte,
+) (uint64, error) {
+	return 0, nil
 }
 
 // WriteAcknowledgement implements the ICS4 Wrapper interface
 func (im IBCModule) WriteAcknowledgement(
 	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 ) error {
@@ -315,5 +317,5 @@ func (im IBCModule) WriteAcknowledgement(
 
 // GetAppVersion returns the interchain accounts metadata.
 func (im IBCModule) GetAppVersion(ctx sdk.Context, portID, channelID string) (string, bool) {
-	return transfertypes.Version, true // im.keeper.GetAppVersion(ctx, portID, channelID)
+	return transfertypes.V1, true // im.keeper.GetAppVersion(ctx, portID, channelID)
 }

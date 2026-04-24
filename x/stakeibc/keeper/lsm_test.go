@@ -5,9 +5,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	recordstypes "github.com/Stride-Labs/stride/v31/x/records/types"
 	"github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
@@ -23,9 +23,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Store a second valid denom trace that will not be registered with the host zone
 	invalidPath := "transfer/channel-100"
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, transfertypes.DenomTrace{
-		BaseDenom: LSMTokenBaseDenom,
-		Path:      invalidPath,
+	s.App.TransferKeeper.SetDenom(s.Ctx, transfertypes.Denom{
+		Base:  LSMTokenBaseDenom,
+		Trace: []transfertypes.Hop{{PortId: transfertypes.PortID, ChannelId: "channel-100"}},
 	})
 
 	// Store the corresponding validator in the host zone
@@ -72,9 +72,9 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Try with an ibc denom that's not registered - it should fail
 	invalidMsg := validMsg
-	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, "fake_denom")).IBCDenom()
+	invalidMsg.LsmTokenIbcDenom = transfertypes.ExtractDenomFromPath(fmt.Sprintf("%s/%s", path, "fake_denom")).IBCDenom()
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
-	s.Require().ErrorContains(err, fmt.Sprintf("denom trace not found for %s", invalidMsg.LsmTokenIbcDenom))
+	s.Require().ErrorContains(err, fmt.Sprintf("denom not found for %s", invalidMsg.LsmTokenIbcDenom))
 
 	// Try with a user that has insufficient balance - it should fail
 	invalidMsg = validMsg
@@ -84,7 +84,7 @@ func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {
 
 	// Try with with a different transfer channel - it should fail
 	invalidMsg = validMsg
-	invalidMsg.LsmTokenIbcDenom = transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", invalidPath, LSMTokenBaseDenom)).IBCDenom()
+	invalidMsg.LsmTokenIbcDenom = transfertypes.ExtractDenomFromPath(fmt.Sprintf("%s/%s", invalidPath, LSMTokenBaseDenom)).IBCDenom()
 	_, err = s.App.StakeibcKeeper.ValidateLSMLiquidStake(s.Ctx, invalidMsg)
 	s.Require().ErrorContains(err, "transfer channel-id from LSM token (channel-100) does not match any registered host zone")
 
@@ -130,14 +130,14 @@ func (s *KeeperTestSuite) TestGetLSMTokenDepositId() {
 func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	baseDenom := "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p/48"
 	path := "transfer/channel-0"
-	ibcDenom := transfertypes.ParseDenomTrace(fmt.Sprintf("%s/%s", path, baseDenom)).IBCDenom()
+	ibcDenom := transfertypes.ExtractDenomFromPath(fmt.Sprintf("%s/%s", path, baseDenom)).IBCDenom()
 
 	// Store denom trace so the transfer keeper can look it up
-	expectedDenomTrace := transfertypes.DenomTrace{
-		BaseDenom: baseDenom,
-		Path:      path,
+	expectedDenomTrace := transfertypes.Denom{
+		Base:  baseDenom,
+		Trace: []transfertypes.Hop{{PortId: transfertypes.PortID, ChannelId: ibctesting.FirstChannelID}},
 	}
-	s.App.TransferKeeper.SetDenomTrace(s.Ctx, expectedDenomTrace)
+	s.App.TransferKeeper.SetDenom(s.Ctx, expectedDenomTrace)
 
 	// Test parsing of IBC Denom
 	actualDenomTrace, err := s.App.StakeibcKeeper.GetLSMTokenDenomTrace(s.Ctx, ibcDenom)
@@ -153,9 +153,9 @@ func (s *KeeperTestSuite) TestGetLSMTokenDenomTrace() {
 	s.Require().ErrorContains(err, "unable to get ibc hex hash from denom ibc/xxx")
 
 	// Attempt to parse with a valid ibc denom that is not registered - it should fail
-	notRegisteredIBCDenom := transfertypes.ParseDenomTrace("transfer/channel-0/cosmosXXX").IBCDenom()
+	notRegisteredIBCDenom := transfertypes.ExtractDenomFromPath("transfer/channel-0/cosmosXXX").IBCDenom()
 	_, err = s.App.StakeibcKeeper.GetLSMTokenDenomTrace(s.Ctx, notRegisteredIBCDenom)
-	s.Require().ErrorContains(err, "denom trace not found")
+	s.Require().ErrorContains(err, "denom not found")
 }
 
 func (s *KeeperTestSuite) TestIsValidIBCPath() {
@@ -500,6 +500,12 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 	// Create a valid IBC denom
 	ibcDenom := s.CreateAndStoreIBCDenom(LSMTokenBaseDenom)
 
+	// Fund the deposit address so the IBC transfer for the valid deposit has balance to escrow
+	// (ibc-go v10 rejects transfers with insufficient balance before the packet is queued,
+	// so a nonzero amount on the happy-path deposit must be backed by a real balance)
+	depositAddress := s.TestAccs[1]
+	s.FundAccount(depositAddress, sdk.NewCoin(ibcDenom, sdkmath.NewInt(10)))
+
 	// Store 2 host zones - one that was registered successfully,
 	// and one that's missing a delegation channel
 	hostZones := []types.HostZone{
@@ -507,7 +513,7 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 			// Valid host zone
 			ChainId:              HostChainId,
 			TransferChannelId:    ibctesting.FirstChannelID,
-			DepositAddress:       s.TestAccs[1].String(),
+			DepositAddress:       depositAddress.String(),
 			DelegationIcaAddress: HostICAAddress,
 		},
 		{
@@ -543,6 +549,7 @@ func (s *KeeperTestSuite) TestTransferAllLSMDeposits() {
 					ChainId:  chainId,
 					Denom:    denom,
 					IbcDenom: ibcDenom,
+					Amount:   sdkmath.OneInt(),
 					Status:   startingStatus,
 				}
 				s.App.RecordsKeeper.SetLSMTokenDeposit(s.Ctx, deposit)

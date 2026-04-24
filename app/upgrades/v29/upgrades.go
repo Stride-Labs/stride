@@ -9,7 +9,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	consumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
+	consumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
 
 	strdburnerkeeper "github.com/Stride-Labs/stride/v31/x/strdburner/keeper"
 	"github.com/Stride-Labs/stride/v31/x/strdburner/types"

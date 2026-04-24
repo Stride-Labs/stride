@@ -12,10 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	"github.com/spf13/cast"
 )
 

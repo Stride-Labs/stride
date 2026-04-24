@@ -94,9 +94,6 @@ func NewAppModule(ak keeper.AccountKeeper, bk types.BankKeeper) AppModule {
 	}
 }
 
-// RegisterInvariants performs a no-op; there are no invariants to enforce.
-func (AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
-
 // QuerierRoute returns an empty string as the module contains no query
 // functionality.
 func (AppModule) QuerierRoute() string { return "" }

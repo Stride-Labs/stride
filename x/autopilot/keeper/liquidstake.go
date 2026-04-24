@@ -8,8 +8,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	"github.com/Stride-Labs/stride/v31/x/autopilot/types"
@@ -47,14 +47,13 @@ func (k Keeper) TryLiquidStaking(
 	}
 
 	// In this case, we can't process a liquid staking transaction, because we're dealing with native tokens (e.g. STRD, stATOM)
-	if transfertypes.ReceiverChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), transferMetadata.Denom) {
+	if transfertypes.ExtractDenomFromPath(transferMetadata.Denom).HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
 		return fmt.Errorf("native token is not supported for liquid staking (%s)", transferMetadata.Denom)
 	}
 
 	// Note: the denom in the packet is the base denom e.g. uatom - not ibc/xxx
 	// We need to use the port and channel to build the IBC denom
-	prefixedDenom := transfertypes.GetPrefixedDenom(packet.GetDestPort(), packet.GetDestChannel(), transferMetadata.Denom)
-	ibcDenom := transfertypes.ParseDenomTrace(prefixedDenom).IBCDenom()
+	ibcDenom := utils.GetIBCDenom(packet.GetDestPort(), packet.GetDestChannel(), transferMetadata.Denom)
 
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, transferMetadata.Denom)
 	if err != nil {

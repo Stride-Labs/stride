@@ -5,12 +5,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"cosmossdk.io/store/prefix"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v31/app"
@@ -75,8 +75,8 @@ func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
 
 	expectedRateLimit := ratelimittypes.RateLimit{
 		Path: &ratelimittypes.Path{
-			Denom:     denom,
-			ChannelId: channelId,
+			Denom:             denom,
+			ChannelOrClientId: channelId,
 		},
 		Flow: &ratelimittypes.Flow{
 			Inflow:       flow,
@@ -117,8 +117,8 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 	return func() {
 		expectedRateLimitToCelestia := ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
-				Denom:     v19.StTiaDenom,
-				ChannelId: v19.CelestiaTransferChannelId,
+				Denom:             v19.StTiaDenom,
+				ChannelOrClientId: v19.CelestiaTransferChannelId,
 			},
 			Flow: &ratelimittypes.Flow{
 				Inflow:       sdkmath.NewInt(0),
@@ -134,8 +134,8 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 
 		expectedRateLimitToOsmosis := ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
-				Denom:     v19.StTiaDenom,
-				ChannelId: v19.OsmosisTransferChannelId,
+				Denom:             v19.StTiaDenom,
+				ChannelOrClientId: v19.OsmosisTransferChannelId,
 			},
 			Flow: &ratelimittypes.Flow{
 				Inflow:       sdkmath.NewInt(0),
@@ -151,8 +151,8 @@ func (s *UpgradeTestSuite) SetupStTiaRateLimits() func() {
 
 		expectedRateLimitToNeutron := ratelimittypes.RateLimit{
 			Path: &ratelimittypes.Path{
-				Denom:     v19.StTiaDenom,
-				ChannelId: v19.NeutronTransferChannelId,
+				Denom:             v19.StTiaDenom,
+				ChannelOrClientId: v19.NeutronTransferChannelId,
 			},
 			Flow: &ratelimittypes.Flow{
 				Inflow:       sdkmath.NewInt(0),

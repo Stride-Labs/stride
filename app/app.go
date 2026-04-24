@@ -73,9 +73,6 @@ import (
 	consensus "github.com/cosmos/cosmos-sdk/x/consensus"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -98,46 +95,42 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
-	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v8"
-	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v8/keeper"
-	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v8/types"
-	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
-	ibctestingtypes "github.com/cosmos/ibc-go/v8/testing/types"
-	ccvconsumer "github.com/cosmos/interchain-security/v6/x/ccv/consumer"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v6/x/ccv/consumer/keeper"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
-	ccvdistr "github.com/cosmos/interchain-security/v6/x/ccv/democracy/distribution"
-	ccvstaking "github.com/cosmos/interchain-security/v6/x/ccv/democracy/staking"
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
+	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/keeper"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/types"
+	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
+	ica "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ccvconsumer "github.com/cosmos/interchain-security/v7/x/ccv/consumer"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	ccvdistr "github.com/cosmos/interchain-security/v7/x/ccv/democracy/distribution"
+	ccvstaking "github.com/cosmos/interchain-security/v7/x/ccv/democracy/staking"
 	evmosvesting "github.com/evmos/vesting/x/vesting"
 	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
@@ -258,25 +251,22 @@ type StrideApp struct {
 	interfaceRegistry types.InterfaceRegistry
 
 	// keys to access the substores
-	keys    map[string]*storetypes.KVStoreKey
-	tkeys   map[string]*storetypes.TransientStoreKey
-	memKeys map[string]*storetypes.MemoryStoreKey
+	keys  map[string]*storetypes.KVStoreKey
+	tkeys map[string]*storetypes.TransientStoreKey
 
 	// Dependency keepers
 	// Note: IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	VestingKeeper         evmosvestingkeeper.Keeper
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
-	CapabilityKeeper      *capabilitykeeper.Keeper
 	StakingKeeper         stakingkeeper.Keeper
 	SlashingKeeper        slashingkeeper.Keeper
 	MintKeeper            mintkeeper.Keeper
 	DistrKeeper           distrkeeper.Keeper
 	GovKeeper             govkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
-	CrisisKeeper          *crisiskeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
-	ParamsKeeper          paramskeeper.Keeper
+	ParamsKeeper          paramskeeper.Keeper //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 	IBCKeeper             *ibckeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
 	TransferKeeper        ibctransferkeeper.Keeper
@@ -295,23 +285,12 @@ type StrideApp struct {
 	Ics20WasmHooks   *ibchooks.WasmHooks
 	HooksICS4Wrapper ibchooks.ICS4Middleware
 
-	// Scoped keepers (for ICA)
-	// TODO: See if we can get rid of these
-	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
-	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
-	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
-	ScopedCCVConsumerKeeper   capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
-
 	// Stride keepers
 	StakeibcKeeper        stakeibcmodulekeeper.Keeper
 	EpochsKeeper          epochsmodulekeeper.Keeper
 	InterchainqueryKeeper interchainquerykeeper.Keeper
-	ScopedRecordsKeeper   capabilitykeeper.ScopedKeeper
 	RecordsKeeper         recordsmodulekeeper.Keeper
 	IcacallbacksKeeper    icacallbacksmodulekeeper.Keeper
-	ScopedratelimitKeeper capabilitykeeper.ScopedKeeper
 	RatelimitKeeper       ratelimitkeeper.Keeper
 	ClaimKeeper           claimkeeper.Keeper
 	ICAOracleKeeper       icaoraclekeeper.Keeper
@@ -382,7 +361,6 @@ func NewStrideApp(
 		feegrant.StoreKey,
 		evidencetypes.StoreKey,
 		ibctransfertypes.StoreKey,
-		capabilitytypes.StoreKey,
 		// monitoringptypes.StoreKey,
 		stakeibcmoduletypes.StoreKey,
 		autopilottypes.StoreKey,
@@ -396,7 +374,6 @@ func NewStrideApp(
 		claimtypes.StoreKey,
 		icaoracletypes.StoreKey,
 		ccvconsumertypes.StoreKey,
-		crisistypes.StoreKey,
 		consensusparamtypes.StoreKey,
 		packetforwardtypes.StoreKey,
 		evmosvestingtypes.StoreKey,
@@ -412,7 +389,6 @@ func NewStrideApp(
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -427,7 +403,6 @@ func NewStrideApp(
 		interfaceRegistry: interfaceRegistry,
 		keys:              keys,
 		tkeys:             tkeys,
-		memKeys:           memKeys,
 	}
 
 	// TODO: Remove ParamsKeeper after v10 upgrade
@@ -441,16 +416,6 @@ func NewStrideApp(
 		runtime.EventService{},
 	)
 	bApp.SetParamStore(app.ConsensusParamsKeeper.ParamsStore)
-
-	// add capability keeper and ScopeToModule for ibc module
-	app.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
-
-	// grant capabilities for the ibc and ibc-transfer modules
-	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
-	scopedCCVConsumerKeeper := app.CapabilityKeeper.ScopeToModule(ccvconsumertypes.ModuleName)
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -511,17 +476,6 @@ func NewStrideApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	invCheckPeriod := cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod))
-	app.CrisisKeeper = crisiskeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
-		invCheckPeriod,
-		app.BankKeeper,
-		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
-	)
-
 	app.ClaimKeeper = *claimkeeper.NewKeeper(
 		appCodec,
 		keys[claimtypes.StoreKey],
@@ -570,19 +524,22 @@ func NewStrideApp(
 	app.ConsumerKeeper = ccvconsumerkeeper.NewNonZeroKeeper(
 		appCodec,
 		keys[ccvconsumertypes.StoreKey],
-		app.GetSubspace(ccvconsumertypes.ModuleName),
 	)
 
 	// Create IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
-		keys[ibcexported.StoreKey],
+		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
 		app.GetSubspace(ibcexported.ModuleName),
-		&app.ConsumerKeeper,
 		app.UpgradeKeeper,
-		scopedIBCKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	// Register the tendermint light client module with the client keeper
+	clientKeeper := app.IBCKeeper.ClientKeeper
+	storeProvider := clientKeeper.GetStoreProvider()
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
+	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
 	// Create IBC Hooks Keeper (must be defined after the wasmKeeper is created)
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
@@ -593,8 +550,6 @@ func NewStrideApp(
 	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
-	scopedratelimitKeeper := app.CapabilityKeeper.ScopeToModule(ratelimittypes.ModuleName)
-	app.ScopedratelimitKeeper = scopedratelimitKeeper
 	app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
@@ -602,6 +557,7 @@ func NewStrideApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ClientKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
 	ratelimitModule := ratelimit.NewAppModule(appCodec, app.RatelimitKeeper)
@@ -617,7 +573,7 @@ func NewStrideApp(
 	// It's important to note that the PFM Keeper must be initialized before the Transfer Keeper
 	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
 		appCodec,
-		keys[packetforwardtypes.StoreKey],
+		runtime.NewKVStoreService(keys[packetforwardtypes.StoreKey]),
 		nil, // will be zero-value here, reference is set later on with SetTransferKeeper.
 		app.IBCKeeper.ChannelKeeper,
 		app.BankKeeper,
@@ -626,15 +582,18 @@ func NewStrideApp(
 	)
 
 	// Create Transfer Keepers
+	// ICS4Wrapper is PacketForwardKeeper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
+	// The autopilot/records/staketia/stakedym middlewares short-circuit SendPacket and must not sit above the
+	// TransferKeeper on the outbound path, so we do NOT overwrite this with the full transferStack below.
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec, keys[ibctransfertypes.StoreKey],
+		appCodec,
+		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
 		app.GetSubspace(ibctransfertypes.ModuleName),
 		app.PacketForwardKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
+		app.MsgServiceRouter(),
 		app.AccountKeeper,
 		app.BankKeeper,
-		scopedTransferKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -662,7 +621,6 @@ func NewStrideApp(
 	}
 	wasmOpts = append(wasmOpts, wasmkeeper.WithWasmEngine(wasmer))
 
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
@@ -672,8 +630,6 @@ func NewStrideApp(
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		scopedWasmKeeper,
 		app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
@@ -695,6 +651,10 @@ func NewStrideApp(
 		app.GRPCQueryRouter(),
 	)
 
+	// Register the 08-wasm light client module with the client keeper
+	wasmLightClientModule := ibcwasm.NewLightClientModule(app.WasmClientKeeper, app.IBCKeeper.ClientKeeper.GetStoreProvider())
+	app.IBCKeeper.ClientKeeper.AddRoute(ibcwasmtypes.ModuleName, &wasmLightClientModule)
+
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
@@ -711,10 +671,7 @@ func NewStrideApp(
 	app.ConsumerKeeper = ccvconsumerkeeper.NewKeeper(
 		appCodec,
 		keys[ccvconsumertypes.StoreKey],
-		app.GetSubspace(ccvconsumertypes.ModuleName),
-		scopedCCVConsumerKeeper,
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
 		app.IBCKeeper.ConnectionKeeper,
 		app.IBCKeeper.ClientKeeper,
 		app.SlashingKeeper,
@@ -736,12 +693,10 @@ func NewStrideApp(
 	// Note: must be above app.StakeibcKeeper and app.ICAOracleKeeper
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec,
-		keys[icacontrollertypes.StoreKey],
+		runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]),
 		app.GetSubspace(icacontrollertypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper - may be replaced with middleware such as ics29 fee
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
-		scopedICAControllerKeeper,
 		app.MsgServiceRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -941,17 +896,15 @@ func NewStrideApp(
 	// create IBC middleware stacks by combining middleware with base application
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
-		keys[icahosttypes.StoreKey],
+		runtime.NewKVStoreService(keys[icahosttypes.StoreKey]),
 		app.GetSubspace(icahosttypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper — ICA host uses the core channel keeper directly
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
-		scopedICAHostKeeper,
 		app.MsgServiceRouter(),
+		app.GRPCQueryRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	app.ICAHostKeeper.WithQueryRouter(app.GRPCQueryRouter())
 	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
 
 	// Create the middleware stacks
@@ -971,7 +924,7 @@ func NewStrideApp(
 	var icacallbacksStack porttypes.IBCModule = icacallbacksIBCModule
 	icacallbacksStack = stakeibcmodule.NewIBCMiddleware(icacallbacksStack, app.StakeibcKeeper)
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
-	icacallbacksStack = icacontroller.NewIBCMiddleware(icacallbacksStack, app.ICAControllerKeeper)
+	icacallbacksStack = icacontroller.NewIBCMiddlewareWithAuth(icacallbacksStack, app.ICAControllerKeeper)
 
 	// SendPacket originates from the base app and work up the stack to core IBC
 	// RecvPacket originates from core IBC and goes down the stack
@@ -1003,6 +956,9 @@ func NewStrideApp(
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
+	// Do NOT call TransferKeeper.WithICS4Wrapper(transferStack) here — see the comment at
+	// TransferKeeper construction for why PacketForwardKeeper must remain the ICS4Wrapper.
+
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.
@@ -1019,10 +975,6 @@ func NewStrideApp(
 
 	/****  Module Options ****/
 
-	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
-	// we prefer to be more strict in what arguments the modules expect.
-	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
-
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
@@ -1034,9 +986,7 @@ func NewStrideApp(
 		claimvesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, app.BankKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(slashingtypes.ModuleName), app.interfaceRegistry),
 		ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, authtypes.FeeCollectorName, app.GetSubspace(distrtypes.ModuleName)),
@@ -1045,7 +995,7 @@ func NewStrideApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
-		params.NewAppModule(app.ParamsKeeper),
+		params.NewAppModule(app.ParamsKeeper), //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
 		// technically, app.GetSubspace(packetforwardtypes.ModuleName) will never be run https://github.com/cosmos/ibc-apps/issues/146#issuecomment-1839242144
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
@@ -1053,7 +1003,7 @@ func NewStrideApp(
 		ibchooks.NewAppModule(app.AccountKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
-		ibctm.NewAppModule(),
+		ibctm.NewAppModule(tmLightClientModule),
 		// monitoringModule,
 		stakeibcModule,
 		epochsModule,
@@ -1097,6 +1047,7 @@ func NewStrideApp(
 
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
+		authtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -1104,7 +1055,6 @@ func NewStrideApp(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.ModuleManager.SetOrderBeginBlockers(
-		capabilitytypes.ModuleName,
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
@@ -1117,7 +1067,6 @@ func NewStrideApp(
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		govtypes.ModuleName,
-		crisistypes.ModuleName,
 		genutiltypes.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
@@ -1147,11 +1096,9 @@ func NewStrideApp(
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
-		crisistypes.ModuleName,
 		genutiltypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
-		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -1192,11 +1139,7 @@ func NewStrideApp(
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
-	// NOTE: Capability module must occur first so that it can initialize any capabilities
-	// so that other modules that want to create or claim capabilities afterwards in InitChain
-	// can do so safely.
 	app.ModuleManager.SetOrderInitGenesis(
-		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -1206,7 +1149,6 @@ func NewStrideApp(
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,
-		crisistypes.ModuleName,
 		genutiltypes.ModuleName,
 		ibcexported.ModuleName,
 		evidencetypes.ModuleName,
@@ -1239,7 +1181,6 @@ func NewStrideApp(
 		strdburnertypes.ModuleName,
 	)
 
-	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	err = app.ModuleManager.RegisterServices(app.configurator)
 	if err != nil {
@@ -1250,7 +1191,6 @@ func NewStrideApp(
 	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
@@ -1305,14 +1245,10 @@ func NewStrideApp(
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
+		if err := app.WasmClientKeeper.InitializePinnedCodes(ctx); err != nil {
+			panic(fmt.Sprintf("WasmClientKeeper failed initialize pinned codes %s", err))
+		}
 	}
-
-	app.ScopedIBCKeeper = scopedIBCKeeper
-	app.ScopedTransferKeeper = scopedTransferKeeper
-	app.ScopedICAControllerKeeper = scopedICAControllerKeeper
-	app.ScopedICAHostKeeper = scopedICAHostKeeper
-	app.ScopedCCVConsumerKeeper = scopedCCVConsumerKeeper
-	app.ScopedWasmKeeper = scopedWasmKeeper
 
 	return app
 }
@@ -1557,11 +1493,6 @@ func (app *StrideApp) Name() string { return app.BaseApp.Name() }
 // GetBaseApp returns the base app of the application
 func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
-// GetStakingKeeper implements the TestingApp interface.
-func (app *StrideApp) GetStakingKeeper() ibctestingtypes.StakingKeeper {
-	return app.StakingKeeper
-}
-
 // GetIBCKeeper implements the TestingApp interface.
 func (app *StrideApp) GetTransferKeeper() *ibctransferkeeper.Keeper {
 	return &app.TransferKeeper
@@ -1570,11 +1501,6 @@ func (app *StrideApp) GetTransferKeeper() *ibctransferkeeper.Keeper {
 // GetIBCKeeper implements the TestingApp interface.
 func (app *StrideApp) GetIBCKeeper() *ibckeeper.Keeper {
 	return app.IBCKeeper
-}
-
-// GetScopedIBCKeeper implements the TestingApp interface.
-func (app *StrideApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return app.ScopedIBCKeeper
 }
 
 // GetTxConfig implements the TestingApp interface.
@@ -1748,13 +1674,6 @@ func (app *StrideApp) GetTKey(storeKey string) *storetypes.TransientStoreKey {
 	return app.tkeys[storeKey]
 }
 
-// GetMemKey returns the MemStoreKey for the provided mem key.
-//
-// NOTE: This is solely used for testing purposes.
-func (app *StrideApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
-	return app.memKeys[storeKey]
-}
-
 // GetSubspace returns a param subspace for a given module name.
 //
 // NOTE: This is solely to be used for testing purposes.
@@ -1813,8 +1732,8 @@ func GetMaccPerms() map[string][]string {
 
 // initParamsKeeper init params keeper and its subspaces
 // TODO: Remove ParamsKeeper after v10 upgrade
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper { //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey) //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 
 	paramsKeeper.Subspace(authtypes.ModuleName).WithKeyTable(authtypes.ParamKeyTable())         //nolint:staticcheck
 	paramsKeeper.Subspace(banktypes.ModuleName).WithKeyTable(banktypes.ParamKeyTable())         //nolint:staticcheck
@@ -1823,7 +1742,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(distrtypes.ModuleName).WithKeyTable(distrtypes.ParamKeyTable())       //nolint:staticcheck
 	paramsKeeper.Subspace(slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()) //nolint:staticcheck
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(crisistypes.ModuleName).WithKeyTable(crisistypes.ParamKeyTable())     //nolint:staticcheck
 	paramsKeeper.Subspace(stakeibcmoduletypes.ModuleName)
 	paramsKeeper.Subspace(epochsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(interchainquerytypes.ModuleName)

@@ -8,7 +8,7 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	icqtypes "github.com/Stride-Labs/stride/v31/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v31/x/stakeibc/keeper"
@@ -351,6 +351,7 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_WeightOverfow() {
 	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	expectedErrMsg := `unable to convert validator weight to int64, err: overflow: `
 	expectedErrMsg += `unable to cast \d+ of type uint64 to int64: unable to cast to safe cast int`
+	s.Require().Error(err, "expected error when validator weight overflows int64")
 	s.Require().Regexp(expectedErrMsg, err.Error())
 }
 

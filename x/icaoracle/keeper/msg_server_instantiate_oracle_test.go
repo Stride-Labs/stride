@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"

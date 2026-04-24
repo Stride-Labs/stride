@@ -106,6 +106,7 @@ describe.each(TEST_CHAINS)("Autopilot - %s", (hostChainName) => {
       address: stridejs.address,
       denom: stDenom,
       initialBalance: initialUserStBalance,
+      minChange: 1,
     });
     const finalUserNativeBalance = await getBalance({
       client: hostjs,
@@ -165,6 +166,7 @@ describe.each(TEST_CHAINS)("Autopilot - %s", (hostChainName) => {
       address: hostjs.address,
       denom: stDenomOnHost,
       initialBalance: initialUserStBalance,
+      minChange: 1,
     });
     const finalUserNativeBalance = await getBalance({
       client: hostjs,
@@ -281,12 +283,18 @@ describe.each(TEST_CHAINS)("Autopilot - %s", (hostChainName) => {
     });
 
     await submitTxAndExpectSuccess(hostjs, [autopilotRedeemStake]);
-    await sleep(10000); // wait for transfer to complete and tokens to be returned
 
-    // Confirm st tokens were refunded
-    const finalStBalanceOnHost = await getBalance({
+    // The debit (redeemAmount escrowed on host) is committed by submitTxAndExpectSuccess.
+    // The refund is async: stride's autopilot fails the RedeemStake, writes an
+    // error ack, the ack round-trips back to host via the relayer, and the
+    // transfer module un-escrows the tokens. Poll until it lands instead of
+    // relying on a fixed sleep that isn't always long enough.
+    const finalStBalanceOnHost = await waitForBalanceChange({
       client: hostjs,
+      address: hostjs.address,
       denom: stDenomOnHost,
+      initialBalance: initialStBalanceOnHost - BigInt(redeemAmount),
+      minChange: redeemAmount,
     });
     expect(finalStBalanceOnHost).to.equal(initialStBalanceOnHost);
   }, 120_000); // 2 min timeout

@@ -11,11 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	"github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 
 	"github.com/Stride-Labs/stride/v31/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v31/x/interchainquery/keeper"
@@ -222,30 +219,30 @@ func RegisterCommunityPoolAddresses(ctx sdk.Context, k stakeibckeeper.Keeper) er
 		// Register the deposit and return ICA addresses
 		// (these will get set in the OnChanAck callback)
 		// create community pool deposit account
-		connectionId := hostZone.ConnectionId
-		connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionId)
-		if !found {
-			return errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", connectionId)
-		}
-		counterpartyConnectionId := connectionEnd.Counterparty.ConnectionId
+		// connectionId := hostZone.ConnectionId
+		// connectionEnd, found := k.IBCKeeper.ConnectionKeeper.GetConnection(ctx, connectionId)
+		// if !found {
+		// 	return errorsmod.Wrapf(connectiontypes.ErrConnectionNotFound, "connection %s not found", connectionId)
+		// }
+		// counterpartyConnectionId := connectionEnd.Counterparty.ConnectionId
 
-		appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
-			Version:                icatypes.Version,
-			ControllerConnectionId: connectionId,
-			HostConnectionId:       counterpartyConnectionId,
-			Encoding:               icatypes.EncodingProtobuf,
-			TxType:                 icatypes.TxTypeSDKMultiMsg,
-		}))
+		// appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
+		// 	Version:                icatypes.Version,
+		// 	ControllerConnectionId: connectionId,
+		// 	HostConnectionId:       counterpartyConnectionId,
+		// 	Encoding:               icatypes.EncodingProtobuf,
+		// 	TxType:                 icatypes.TxTypeSDKMultiMsg,
+		// }))
 
-		depositAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
-		if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, depositAccount, appVersion, types.ORDERED); err != nil {
-			return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool deposit ICA")
-		}
+		// depositAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_DEPOSIT)
+		// if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, depositAccount, appVersion, types.ORDERED); err != nil {
+		// 	return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool deposit ICA")
+		// }
 
-		returnAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_RETURN)
-		if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, returnAccount, appVersion, types.ORDERED); err != nil {
-			return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool return ICA")
-		}
+		// returnAccount := stakeibctypes.FormatHostZoneICAOwner(chainId, stakeibctypes.ICAAccountType_COMMUNITY_POOL_RETURN)
+		// if err := k.ICAControllerKeeper.RegisterInterchainAccountWithOrdering(ctx, connectionId, returnAccount, appVersion, types.ORDERED); err != nil {
+		// 	return errorsmod.Wrapf(stakeibctypes.ErrFailedToRegisterHostZone, "failed to register community pool return ICA")
+		// }
 	}
 
 	return nil
@@ -327,7 +324,7 @@ func UpdateRateLimitThresholds(ctx sdk.Context, sk stakeibckeeper.Keeper, rk rat
 		// If the expected threshold is 0, that means there should be no rate limit
 		// Remove the rate limit in this case
 		if updatedThreshold.IsZero() {
-			rk.RemoveRateLimit(ctx, rateLimit.Path.Denom, rateLimit.Path.ChannelId)
+			rk.RemoveRateLimit(ctx, rateLimit.Path.Denom, rateLimit.Path.ChannelOrClientId)
 			continue
 		}
 
@@ -356,8 +353,8 @@ func AddRateLimitToOsmosis(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 		// Create and store the rate limit object with the same bounds as
 		// the original rate limit
 		path := ratelimittypes.Path{
-			Denom:     denom,
-			ChannelId: OsmosisTransferChannelId,
+			Denom:             denom,
+			ChannelOrClientId: OsmosisTransferChannelId,
 		}
 		quota := ratelimittypes.Quota{
 			MaxPercentSend: rateLimit.Quota.MaxPercentSend,

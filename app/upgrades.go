@@ -10,12 +10,11 @@ import (
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v8/types"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	consumertypes "github.com/cosmos/interchain-security/v6/x/ccv/consumer/types"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
+	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
 	v10 "github.com/Stride-Labs/stride/v31/app/upgrades/v10"
@@ -150,13 +149,11 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ModuleManager,
 			app.configurator,
 			app.appCodec,
-			app.keys[capabilitytypes.ModuleName],
 			app.AccountKeeper,
 			app.BankKeeper,
-			app.CapabilityKeeper,
-			app.IBCKeeper.ChannelKeeper,
+			*app.IBCKeeper.ChannelKeeper,
 			app.ClaimKeeper,
-			app.IBCKeeper.ClientKeeper,
+			*app.IBCKeeper.ClientKeeper,
 			app.ConsensusParamsKeeper,
 			app.GovKeeper,
 			app.IcacallbacksKeeper,
@@ -316,7 +313,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		v23.CreateUpgradeHandler(
 			app.ModuleManager,
 			app.configurator,
-			app.IBCKeeper.ClientKeeper,
+			*app.IBCKeeper.ClientKeeper,
 			app.RecordsKeeper,
 			app.StakeibcKeeper,
 		),
@@ -476,6 +473,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v26":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{icqoracletypes.ModuleName, strdburnertypes.ModuleName, auctiontypes.ModuleName},
+		}
+	case "v32":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Deleted: []string{crisistypes.StoreKey},
 		}
 	}
 

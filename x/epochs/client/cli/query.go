@@ -9,9 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
+	"github.com/Stride-Labs/stride/v31/utils"
 	"github.com/Stride-Labs/stride/v31/x/epochs/types"
 )
 
@@ -138,7 +138,7 @@ func GetCmdSecondsRemaining() *cobra.Command {
 			}
 
 			// duration: seconds
-			duration, err := cast.ToInt64E(res.Epoch.Duration.Seconds())
+			duration, err := utils.Float64ToInt64E(res.Epoch.Duration.Seconds())
 			if err != nil {
 				return err
 			}
