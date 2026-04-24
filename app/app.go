@@ -582,12 +582,14 @@ func NewStrideApp(
 	)
 
 	// Create Transfer Keepers
-	// ICS4Wrapper is set post-construction via WithICS4Wrapper once the full transfer middleware stack is assembled below
+	// ICS4Wrapper is PacketForwardKeeper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
+	// The autopilot/records/staketia/stakedym middlewares short-circuit SendPacket and must not sit above the
+	// TransferKeeper on the outbound path, so we do NOT overwrite this with the full transferStack below.
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.PacketForwardKeeper, // ICS4Wrapper (placeholder — overwritten after stack assembly)
+		app.PacketForwardKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
@@ -954,11 +956,8 @@ func NewStrideApp(
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
 	transferStack = autopilot.NewIBCModule(app.AutopilotKeeper, transferStack)
 
-	// Note: TransferKeeper's ICS4Wrapper was set at construction to PacketForwardKeeper,
-	// which correctly routes outbound sends up through pfm → ibchooks → ratelimit → core IBC.
-	// The autopilot/records/staketia/stakedym middlewares intentionally short-circuit SendPacket
-	// (they don't intercept outbound traffic), so we must NOT overwrite the ICS4Wrapper with the
-	// full outer transferStack here.
+	// Do NOT call TransferKeeper.WithICS4Wrapper(transferStack) here — see the comment at
+	// TransferKeeper construction for why PacketForwardKeeper must remain the ICS4Wrapper.
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
