@@ -26,6 +26,10 @@ updates for the v32 upgrade handler.
 5. **Validation** — The build script verifies that (a) target weights sum to 10000 per
    chain, and (b) every non-zero entry in `all_validators.csv` matches `target_weights.csv`.
 
+6. **Generate Go code** — `scripts/generate_validators_go.py` reads `new_validators.csv`
+   and `all_validators.csv` to produce `../validators.go`, which contains the
+   `NewValidators` and `TargetWeights` data used by the upgrade handler.
+
 ## Files
 
 | File | Description |
@@ -43,6 +47,7 @@ updates for the v32 upgrade handler.
 |--------|-------------|
 | `scripts/fetch_current_weights.py` | Fetches current validator weights from the Stride host zone API |
 | `scripts/build_target_weights.py` | Parses raw CSVs, normalizes weights, builds all output CSVs, and runs validation |
+| `scripts/generate_validators_go.py` | Generates `../validators.go` from `new_validators.csv` and `all_validators.csv` |
 
 ## Usage
 
@@ -52,4 +57,7 @@ python3 scripts/fetch_current_weights.py
 
 # Step 2: Build target weights and validate
 python3 scripts/build_target_weights.py
+
+# Step 3: Generate validators.go for the upgrade handler
+python3 scripts/generate_validators_go.py
 ```
