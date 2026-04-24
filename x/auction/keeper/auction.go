@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v31/x/auction/types"
+	"github.com/Stride-Labs/stride/v32/x/auction/types"
 )
 
 // SetAuction stores auction info for a token

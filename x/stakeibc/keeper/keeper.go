@@ -16,11 +16,11 @@ import (
 	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v31/x/icacallbacks/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v31/x/interchainquery/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v31/x/records/keeper"
-	"github.com/Stride-Labs/stride/v31/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
+	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 type (

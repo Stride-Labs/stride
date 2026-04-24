@@ -5,7 +5,7 @@ import (
 
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v31/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 )

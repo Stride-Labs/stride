@@ -17,9 +17,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v31/app/apptesting"
-	"github.com/Stride-Labs/stride/v31/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v32/app/apptesting"
+	"github.com/Stride-Labs/stride/v32/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 )
 
 func TestParseTxMsgDataCurrent(t *testing.T) {

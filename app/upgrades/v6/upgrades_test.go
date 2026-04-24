@@ -9,12 +9,12 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v31/app"
+	"github.com/Stride-Labs/stride/v32/app"
 
-	"github.com/Stride-Labs/stride/v31/app/apptesting"
-	v6 "github.com/Stride-Labs/stride/v31/app/upgrades/v6"
-	"github.com/Stride-Labs/stride/v31/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v31/x/claim/types"
+	"github.com/Stride-Labs/stride/v32/app/apptesting"
+	v6 "github.com/Stride-Labs/stride/v32/app/upgrades/v6"
+	"github.com/Stride-Labs/stride/v32/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
 )
 
 type UpgradeTestSuite struct {

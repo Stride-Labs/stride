@@ -15,8 +15,8 @@ import (
 	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ics23 "github.com/cosmos/ics23/go"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	"github.com/Stride-Labs/stride/v31/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 )
 
 type msgServer struct {

@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	"github.com/Stride-Labs/stride/v31/x/staketia/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	"github.com/Stride-Labs/stride/v32/x/staketia/types"
 )
 
 // IBC transfers all TIA in the deposit account and sends it to the delegation account

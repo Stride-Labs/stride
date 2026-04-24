@@ -10,9 +10,9 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v31/testutil/network"
-	"github.com/Stride-Labs/stride/v31/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v31/x/records/types"
+	"github.com/Stride-Labs/stride/v32/testutil/network"
+	"github.com/Stride-Labs/stride/v32/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v32/x/records/types"
 )
 
 func networkWithDepositRecordObjects(t *testing.T, n int) (*network.Network, []types.DepositRecord) {

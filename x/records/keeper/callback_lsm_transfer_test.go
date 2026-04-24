@@ -9,9 +9,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v31/x/records/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v32/x/records/types"
 )
 
 var LSMTokenDenom = "cosmosvaloperxxx/42"

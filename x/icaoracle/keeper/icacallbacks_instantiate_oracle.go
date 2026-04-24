@@ -8,9 +8,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v31/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
 
 // Callback after an instantiating an oracle's CW contract

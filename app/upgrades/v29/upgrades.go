@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	consumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
 
-	strdburnerkeeper "github.com/Stride-Labs/stride/v31/x/strdburner/keeper"
-	"github.com/Stride-Labs/stride/v31/x/strdburner/types"
+	strdburnerkeeper "github.com/Stride-Labs/stride/v32/x/strdburner/keeper"
+	"github.com/Stride-Labs/stride/v32/x/strdburner/types"
 )
 
 var (

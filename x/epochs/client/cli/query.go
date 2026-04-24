@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 
-	"github.com/Stride-Labs/stride/v31/utils"
-	"github.com/Stride-Labs/stride/v31/x/epochs/types"
+	"github.com/Stride-Labs/stride/v32/utils"
+	"github.com/Stride-Labs/stride/v32/x/epochs/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

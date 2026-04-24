@@ -23,8 +23,8 @@ import (
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
-	cmdcfg "github.com/Stride-Labs/stride/v31/cmd/strided/config"
-	testutil "github.com/Stride-Labs/stride/v31/testutil"
+	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
+	testutil "github.com/Stride-Labs/stride/v32/testutil"
 )
 
 const Bech32Prefix = "stride"

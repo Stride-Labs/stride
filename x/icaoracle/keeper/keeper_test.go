@@ -7,9 +7,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v31/app/apptesting"
-	"github.com/Stride-Labs/stride/v31/x/icaoracle/keeper"
-	"github.com/Stride-Labs/stride/v31/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v32/app/apptesting"
+	"github.com/Stride-Labs/stride/v32/x/icaoracle/keeper"
+	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
 
 var (

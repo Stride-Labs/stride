@@ -9,13 +9,13 @@ import (
 
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
-	"github.com/Stride-Labs/stride/v31/app/apptesting"
-	v25 "github.com/Stride-Labs/stride/v31/app/upgrades/v25"
-	epochtypes "github.com/Stride-Labs/stride/v31/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v31/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v31/x/stakeibc/types"
-	oldstaketiatypes "github.com/Stride-Labs/stride/v31/x/staketia/legacytypes"
-	staketiatypes "github.com/Stride-Labs/stride/v31/x/staketia/types"
+	"github.com/Stride-Labs/stride/v32/app/apptesting"
+	v25 "github.com/Stride-Labs/stride/v32/app/upgrades/v25"
+	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	oldstaketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/legacytypes"
+	staketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/types"
 )
 
 type UpdateRedemptionRateBounds struct {
