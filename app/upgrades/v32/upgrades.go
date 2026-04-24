@@ -126,11 +126,14 @@ func UpdateValidatorWeights(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
 		sk.SetHostZone(ctx, hostZone)
 
 		var totalWeight uint64
+		var activeValidators uint64
 		for _, validator := range hostZone.Validators {
 			totalWeight += validator.Weight
+			if validator.Weight > 0 {
+				activeValidators++
+			}
 		}
-		ctx.Logger().Info(fmt.Sprintf("  %s: %d validators, total weight %d",
-			chainId, len(hostZone.Validators), totalWeight))
+		ctx.Logger().Info(fmt.Sprintf("  %d validators, total weight %d", activeValidators, totalWeight))
 	}
 
 	return nil
