@@ -3,11 +3,13 @@ package v32_test
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v32 "github.com/Stride-Labs/stride/v32/app/upgrades/v32"
 	"github.com/Stride-Labs/stride/v32/utils"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {
@@ -23,13 +25,10 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
-	// Setup state for steps that require it
 	checkValidatorWeights := s.SetupTestUpdateValidatorWeights()
 
-	// Run upgrade
 	s.ConfirmUpgradeSucceeded(v32.UpgradeName)
 
-	// Verify post-upgrade state
 	s.VerifyMinDepositIncreased()
 	s.VerifyMaxValidatorWeightIncreased()
 	checkValidatorWeights()
@@ -48,10 +47,44 @@ func (s *UpgradeTestSuite) VerifyMaxValidatorWeightIncreased() {
 }
 
 func (s *UpgradeTestSuite) SetupTestUpdateValidatorWeights() func() {
-	// TODO: seed host zones with validators whose weights should be updated
+	for chainId, vals := range v32.OldValidators {
+		var validators []*stakeibctypes.Validator
+		for _, val := range vals {
+			validators = append(validators, &stakeibctypes.Validator{
+				Name:                      val.Name,
+				Address:                   val.Address,
+				Weight:                    val.Weight,
+				Delegation:                sdkmath.ZeroInt(),
+				SlashQueryProgressTracker: sdkmath.ZeroInt(),
+				SlashQueryCheckpoint:      sdkmath.ZeroInt(),
+				SharesToTokensRate:        sdkmath.LegacyOneDec(),
+			})
+		}
 
-	// Return callback to check store after upgrade
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+			ChainId:    chainId,
+			Validators: validators,
+		})
+	}
+
 	return func() {
-		// TODO: assert validator weights were updated as expected
+		for chainId, weights := range v32.TargetWeights {
+			hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+			s.Require().True(found, "host zone %s should exist", chainId)
+
+			actualWeights := map[string]uint64{}
+			for _, val := range hostZone.Validators {
+				actualWeights[val.Address] = val.Weight
+			}
+
+			s.Require().Equal(len(weights), len(actualWeights),
+				"%s: validator count mismatch", chainId)
+
+			for _, w := range weights {
+				actual, exists := actualWeights[w.Address]
+				s.Require().True(exists, "%s: validator %s should exist", chainId, w.Address)
+				s.Require().Equal(w.Weight, actual, "%s: weight mismatch for %s", chainId, w.Address)
+			}
+		}
 	}
 }

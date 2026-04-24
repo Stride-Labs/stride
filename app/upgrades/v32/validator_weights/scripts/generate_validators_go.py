@@ -35,6 +35,7 @@ def build_go_source(
     lines.append("type ValidatorConfig struct {")
     lines.append("\tAddress string")
     lines.append("\tName    string")
+    lines.append("\tWeight  uint64")
     lines.append("}")
     lines.append("")
     lines.append("type WeightConfig struct {")
@@ -47,7 +48,8 @@ def build_go_source(
     for chain_id in sorted(current_vals):
         lines.append(f'\t"{chain_id}": {{')
         for v in current_vals[chain_id]:
-            lines.append(f'\t\t{{Address: "{v["validator_address"]}", Name: "{v["validator_name"]}"}},')
+            w = int(v["current_weight"])
+            lines.append(f'\t\t{{Address: "{v["validator_address"]}", Name: "{v["validator_name"]}", Weight: {w}}},')
         lines.append("\t},")
     lines.append("}")
     lines.append("")
