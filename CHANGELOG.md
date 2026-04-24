@@ -42,6 +42,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v32.0.0](https://github.com/Stride-Labs/stride/releases/tag/v32.0.0) - 2026-04-24
+
+### On-Chain changes
+
+1. SDK 53 ([#1490](https://github.com/Stride-Labs/stride/pull/1490))
+2. v32 versions ([#1491](https://github.com/Stride-Labs/stride/pull/1491))
+3. v32 upgrade handler ([#1492](https://github.com/Stride-Labs/stride/pull/1492))
+
 ## [v31.0.0](https://github.com/Stride-Labs/stride/releases/tag/v31.0.0) - 2025-12-17
 
 ### On-Chain changes
