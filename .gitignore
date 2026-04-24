@@ -50,3 +50,4 @@ integration-tests/storage
 *.lock
 
 localstride/exports
+localstride/scratch
