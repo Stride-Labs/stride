@@ -330,7 +330,10 @@ import (
 // hex of the consensus address). Missing entries fall back to empty string.
 //
 // Operator addresses are derived from the consensus address bytes by
-// bech32-encoding with the "stridevaloper" prefix — same shape Neutron used.
+// bech32-encoding with the "stridevaloper" prefix. Stride's ICS validators
+// have no Stride-side operator address (the operator key lives on the Hub),
+// so this is a metadata-only string — POA's runtime logic keys off the
+// consensus address, not OperatorAddress.
 func SnapshotValidatorsFromICS(
     ctx sdk.Context,
     consumerKeeper ccvconsumerkeeper.Keeper,
@@ -404,7 +407,7 @@ git commit -m "feat(v33): add SnapshotValidatorsFromICS helper"
 - Modify: `app/upgrades/v33/helpers.go`
 - Modify: `app/upgrades/v33/helpers_test.go`
 
-This helper synthesizes a POA `GenesisState` and calls `poaKeeper.InitGenesis(ctx.WithBlockHeight(0), ...)`.
+This helper synthesizes a POA `GenesisState` and calls `poaKeeper.InitGenesis(...)`. The shape mirrors the canonical SDK sample at `cosmos-sdk/enterprise/poa/examples/migrate-from-pos/sample_upgrades/upgrade_handler.go:initializePOA` — match it closely.
 
 - [ ] **Step 4.1: Write the failing test**
 
@@ -418,7 +421,7 @@ func TestInitializePOA_HappyPath(t *testing.T) {
     poaVals, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
     require.NoError(t, err)
 
-    err = v33.InitializePOA(s.Ctx, s.App.POAKeeper, "stride1<TEST_ADMIN_BECH32>", poaVals)
+    err = v33.InitializePOA(s.Ctx, s.App.AppCodec(), s.App.POAKeeper, "stride1<TEST_ADMIN_BECH32>", poaVals)
     require.NoError(t, err)
 
     // Confirm POA state was populated
@@ -433,12 +436,12 @@ func TestInitializePOA_HappyPath(t *testing.T) {
 
 func TestInitializePOA_InvalidAdmin(t *testing.T) {
     s := apptesting.NewTestApp(t)
-    err := v33.InitializePOA(s.Ctx, s.App.POAKeeper, "not_a_bech32", []poatypes.Validator{})
+    err := v33.InitializePOA(s.Ctx, s.App.AppCodec(), s.App.POAKeeper, "not_a_bech32", []poatypes.Validator{})
     require.Error(t, err)
 }
 ```
 
-(Replace `stride1<TEST_ADMIN_BECH32>` with a valid bech32 generated however Stride's tests typically generate them — `s.TestAccs[0]` or similar.)
+(Replace `stride1<TEST_ADMIN_BECH32>` with a valid bech32 generated however Stride's tests typically generate them — `s.TestAccs[0]` or similar. `s.App.AppCodec()` returns the `codec.Codec` registered on the test app; substitute with the project's actual accessor if the name differs.)
 
 - [ ] **Step 4.2: Run test to verify it fails**
 
@@ -454,11 +457,20 @@ Append to `app/upgrades/v33/helpers.go`:
 
 ```go
 // InitializePOA seeds POA's KV store with the given validator set and admin.
-// Must be called from an upgrade handler with ctx.WithBlockHeight(0) — POA's
-// InitGenesis has block-height-0-specific code paths.
+// Mirrors the canonical SDK sample at
+// cosmos-sdk/enterprise/poa/examples/migrate-from-pos/sample_upgrades/upgrade_handler.go.
+//
+// WithBlockHeight(0) is required: POA's CreateValidator path calls
+// GetTotalPower, which only treats "no total power yet" as a non-error
+// case when ctx.BlockHeight() == 0 (enterprise/poa/x/poa/keeper/validator.go).
+//
+// The keeper-level InitGenesis returns ([]abci.ValidatorUpdate, error); we
+// discard the updates because an upgrade handler returns a VersionMap, not
+// ABCI updates. The next EndBlock will reap and emit anything still queued.
 func InitializePOA(
     ctx sdk.Context,
-    poaKeeper poakeeper.Keeper,
+    cdc codec.Codec,
+    poaKeeper *poakeeper.Keeper,
     adminAddress string,
     validators []poatypes.Validator,
 ) error {
@@ -466,18 +478,25 @@ func InitializePOA(
         return errorsmod.Wrapf(err, "invalid admin address: %s", adminAddress)
     }
 
-    genesisState := &poatypes.GenesisState{
-        Params: poatypes.Params{
-            Admin: adminAddress,
-        },
+    sdkCtx := sdk.UnwrapSDKContext(ctx).WithBlockHeight(0)
+
+    genesis := &poatypes.GenesisState{
+        Params:     poatypes.Params{Admin: adminAddress},
         Validators: validators,
+        // AllocatedFees intentionally omitted — fresh POA init has no
+        // pre-existing per-validator fee allocations to restore.
     }
 
-    return poaKeeper.InitGenesis(ctx.WithBlockHeight(0), genesisState)
+    _, err := poaKeeper.InitGenesis(sdkCtx, cdc, genesis)
+    return err
 }
 ```
 
-If POA's `InitGenesis` signature differs (e.g., takes a non-pointer GenesisState, or returns nothing), adapt.
+Notes:
+
+- `poaKeeper` is `*poakeeper.Keeper` (pointer), matching the sample and the keeper's own method receivers.
+- Add `"github.com/cosmos/cosmos-sdk/codec"` to the imports if not already present.
+- POA's `Validator.Metadata` has a `Description` field (in addition to `Moniker` and `OperatorAddress`) which Stride leaves empty; the admin can set it later via `MsgUpdateValidators`.
 
 - [ ] **Step 4.4: Run test to verify it passes**
 
@@ -895,6 +914,87 @@ git commit -m "feat(v33): remove slashing and evidence from module manager"
 
 ---
 
+## Task 8b: Delete stakeibc's consumer-reward-denom whitelist plumbing
+
+**Files:**
+
+- Delete: `x/stakeibc/keeper/consumer.go`
+- Delete: `x/stakeibc/keeper/consumer_test.go`
+- Modify: `x/stakeibc/keeper/registration.go` (remove the whitelist call site)
+- Modify: `x/stakeibc/keeper/keeper.go` (drop `ConsumerKeeper` field + constructor param)
+- Modify: `x/stakeibc/types/expected_keepers.go` (drop `ConsumerKeeper` interface)
+- Modify: `x/stakeibc/keeper/reward_allocation_test.go` (drop the `ConsumerKeeper.SetParams` test setup line)
+- Modify: `app/app.go` (drop the `app.ConsumerKeeper` argument from `stakeibcmodulekeeper.NewKeeper(...)`)
+
+**Why this lives in v33:** `stakeibc.RegisterStTokenDenomsToWhitelist` is the only Stride-side production code path that mutates ICS consumer state at runtime — it appends new stToken denoms to `ConsumerKeeper.GetConsumerParams(ctx).RewardDenoms` whenever a host zone is registered. The whitelist exists so the ICS consumer module knows which local denoms count as "reward denoms" to ship 15% of to the Hub each block. Post-v33, that 15% Hub-shipping path no longer runs (`ccvconsumer` is out of the manager and the inflation/fee flow is rewired around it), so the whitelist serves no purpose. Leaving the function in place would leave a runtime caller of a dead module — exactly the "module dependency we missed" risk Stride wanted to surface.
+
+This task is intentionally placed before the `x/distribution` fee-collector switch (Task 9) and the ante-handler change (Task 10) because it removes the last live caller of `ConsumerKeeper.SetParams` — clean to delete first, then let the rest of the rewiring flow.
+
+- [ ] **Step 8b.1: Delete the whitelist function and its test**
+
+```bash
+rm x/stakeibc/keeper/consumer.go
+rm x/stakeibc/keeper/consumer_test.go
+```
+
+- [ ] **Step 8b.2: Remove the call site in `registration.go`**
+
+In `x/stakeibc/keeper/registration.go` (around line 211), delete the block:
+
+```go
+// register stToken to consumer reward denom whitelist so that
+// stToken rewards can be distributed to provider validators
+err = k.RegisterStTokenDenomsToWhitelist(ctx, []string{types.StAssetDenomFromHostZoneDenom(zone.HostDenom)})
+if err != nil {
+    return nil, errorsmod.Wrap(err, "unable to register stToken as ICS reward denom")
+}
+```
+
+The surrounding `RegisterHostZone` flow does not depend on the whitelist call's return value or side effects.
+
+- [ ] **Step 8b.3: Drop `ConsumerKeeper` from the stakeibc keeper struct and constructor**
+
+In `x/stakeibc/keeper/keeper.go`:
+
+- Remove `ConsumerKeeper types.ConsumerKeeper` from the struct (around line 45).
+- Remove the `ConsumerKeeper types.ConsumerKeeper` parameter from `NewKeeper` (around line 65).
+- Remove the `ConsumerKeeper: ConsumerKeeper,` field assignment (around line 88).
+
+- [ ] **Step 8b.4: Drop the `ConsumerKeeper` interface in `expected_keepers.go`**
+
+In `x/stakeibc/types/expected_keepers.go`, delete the entire `ConsumerKeeper` interface block (around line 57).
+
+- [ ] **Step 8b.5: Update `reward_allocation_test.go`**
+
+In `x/stakeibc/keeper/reward_allocation_test.go` (around lines 46–50), delete the three lines that set `ConsumerRedistributionFraction` via `s.App.ConsumerKeeper.GetConsumerParams` / `SetParams`. Replace with a comment noting that the equivalent fraction is now hardcoded in `utils.PoaValPaymentRate` (the existing reward-allocation logic already reads that constant), so the test setup no longer needs to mutate consumer params.
+
+If the test asserts a specific reward split that depended on the consumer-param value, update the expected value to use `utils.PoaValPaymentRate` (`0.15`).
+
+- [ ] **Step 8b.6: Drop the `app.ConsumerKeeper` argument from `stakeibcmodulekeeper.NewKeeper(...)` in `app/app.go`**
+
+Around `app/app.go:759`, the last argument is `app.ConsumerKeeper`. Delete that line. The constructor no longer accepts it after Step 8b.3.
+
+- [ ] **Step 8b.7: Build and run stakeibc tests**
+
+```bash
+make build
+go test ./x/stakeibc/...
+```
+
+Expected: builds clean, all tests pass.
+
+- [ ] **Step 8b.8: Commit**
+
+```bash
+git add x/stakeibc/keeper/registration.go x/stakeibc/keeper/keeper.go \
+        x/stakeibc/types/expected_keepers.go \
+        x/stakeibc/keeper/reward_allocation_test.go app/app.go
+git rm x/stakeibc/keeper/consumer.go x/stakeibc/keeper/consumer_test.go
+git commit -m "feat(v33): remove stakeibc consumer-reward-denom whitelist (no longer needed post-POA)"
+```
+
+---
+
 ## Task 9: Reconfigure x/distribution fee collector
 
 **Files:**
@@ -958,43 +1058,17 @@ git commit -m "feat(v33): switch x/distribution fee collector to fee_collector"
 
 - Modify: `app/ante_handler.go`
 
-POA's `EndBlock` panics at block height 1 if the ante handler isn't routing tx fees to the POA module account. We replace the standard `DeductFeeDecorator` with POA's equivalent (or configure the standard one with POA's module account name).
+POA's `EndBlock` panics at block height 1 if the ante handler isn't routing tx fees to the POA module account. There is **no separate POA ante package** — POA reuses the standard SDK `ante.DeductFeeDecorator` and exposes a `WithFeeRecipientModule(string)` builder method that overrides the destination module account name. The change is one line in `NewAnteHandler` plus an unrelated cleanup of a stale ICS decorator.
 
-- [ ] **Step 10.1: Find POA's ante decorator**
-
-Inspect the POA module's `client/ante` or `module.go` for a `NewDeductFeeDecorator` (or similarly named) that routes to the POA module account. Likely path:
-
-```
-github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/ante
-```
-
-If POA ships its own decorator, use it. If not, use the standard `ante.NewDeductFeeDecorator` and look for a way to override the fee collector name (the SDK may have made it configurable, or POA may extend the standard decorator).
-
-- [ ] **Step 10.2: Update imports**
-
-Add to `app/ante_handler.go`:
+- [ ] **Step 10.1: Add the `poatypes` import to `app/ante_handler.go`**
 
 ```go
-poaante "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/ante"
+poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 ```
 
-- [ ] **Step 10.3: Update `HandlerOptions` struct**
+No new keeper import is required and `HandlerOptions` does **not** need a `POAKeeper` field — the decorator only needs the module name string.
 
-If POA's decorator needs the POA keeper, add:
-
-```go
-type HandlerOptions struct {
-    ante.HandlerOptions
-    IBCKeeper         *ibckeeper.Keeper
-    ConsumerKeeper    ccvconsumerkeeper.Keeper
-    POAKeeper         poakeeper.Keeper // new
-    WasmConfig        *wasmtypes.NodeConfig
-    WasmKeeper        *wasmkeeper.Keeper
-    TXCounterStoreKey corestoretypes.KVStoreService
-}
-```
-
-- [ ] **Step 10.4: Replace the `DeductFeeDecorator` line**
+- [ ] **Step 10.2: Replace the `DeductFeeDecorator` line**
 
 Find this in `NewAnteHandler`:
 
@@ -1002,46 +1076,38 @@ Find this in `NewAnteHandler`:
 ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
 ```
 
-Replace with POA's version:
+Replace with the same constructor chained with `WithFeeRecipientModule`:
 
 ```go
-poaante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.POAKeeper, options.TxFeeChecker),
+ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker).
+    WithFeeRecipientModule(poatypes.ModuleName),
 ```
 
-If POA's decorator has a different signature (e.g., doesn't need `POAKeeper`, or takes different args), adapt to the actual API.
+- [ ] **Step 10.3: Remove the stale `DisabledModulesDecorator` line**
 
-- [ ] **Step 10.5: Update the call site in `app.go`**
-
-Wherever `NewAnteHandler` is called (probably in `NewStrideApp`, around line 1456), pass the new `POAKeeper`:
+Find this in `NewAnteHandler` (currently `app/ante_handler.go:55`):
 
 ```go
-options := app.HandlerOptions{
-    HandlerOptions: ante.HandlerOptions{
-        ...
-        SigGasConsumer: ante.DefaultSigVerificationGasConsumer,
-    },
-    IBCKeeper:         app.IBCKeeper,
-    ConsumerKeeper:    app.ConsumerKeeper,
-    POAKeeper:         *app.POAKeeper, // new
-    WasmConfig:        wasmConfig,
-    WasmKeeper:        &app.WasmKeeper,
-    TXCounterStoreKey: runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-}
+consumerante.NewDisabledModulesDecorator("/cosmos.evidence", "/cosmos.slashing"),
 ```
 
-- [ ] **Step 10.6: Build and confirm**
+**Delete** the line. It rejects tx messages targeted at the `x/slashing` and `x/evidence` modules; once those modules are removed from the manager (Task 8), their msg routes are gone, so the decorator is at best a no-op and at worst a stale dependency on `interchain-security/v7/app/consumer/ante` that v34 wants removed.
+
+If the `consumerante` import is now unused, drop it as well. Keep the `ccvconsumerkeeper` import if `HandlerOptions.ConsumerKeeper` is still used elsewhere in this file; it can be removed in v34 with the keeper itself.
+
+- [ ] **Step 10.4: Build and confirm**
 
 ```bash
 make build
 ```
 
-Expected: builds clean.
+Expected: builds clean. No call-site change in `app.go` is required because `HandlerOptions` is unchanged.
 
-- [ ] **Step 10.7: Commit**
+- [ ] **Step 10.5: Commit**
 
 ```bash
-git add app/ante_handler.go app/app.go
-git commit -m "feat(v33): route tx fees to POA module account via ante"
+git add app/ante_handler.go
+git commit -m "feat(v33): route tx fees to POA module account; drop stale slashing/evidence decorator"
 ```
 
 ---
@@ -1079,12 +1145,15 @@ import (
 
 // CreateUpgradeHandler returns the v33 upgrade handler that migrates Stride
 // from ICS consumer to POA. See docs/superpowers/specs/2026-04-27-ics-to-poa-migration-design.md.
+//
+// poaKeeper is a pointer because POA's keeper methods (including InitGenesis)
+// have pointer receivers; passing by value here would not compile.
 func CreateUpgradeHandler(
     mm *module.Manager,
     configurator module.Configurator,
     cdc codec.Codec,
     consumerKeeper ccvconsumerkeeper.Keeper,
-    poaKeeper poakeeper.Keeper,
+    poaKeeper *poakeeper.Keeper,
     bankKeeper bankkeeper.Keeper,
     accountKeeper authkeeper.AccountKeeper,
     distrKeeper distrkeeper.Keeper,
@@ -1110,7 +1179,7 @@ func CreateUpgradeHandler(
 
         // 3. Initialize POA state with that set + admin.
         sdkCtx.Logger().Info("v33: initializing POA state...")
-        if err := InitializePOA(sdkCtx, poaKeeper, AdminMultisigAddress, poaValidators); err != nil {
+        if err := InitializePOA(sdkCtx, cdc, poaKeeper, AdminMultisigAddress, poaValidators); err != nil {
             return nil, err
         }
 
@@ -1176,7 +1245,7 @@ app.UpgradeKeeper.SetUpgradeHandler(
         app.configurator,
         app.appCodec,
         app.ConsumerKeeper,
-        *app.POAKeeper,
+        app.POAKeeper, // already *poakeeper.Keeper
         app.BankKeeper,
         app.AccountKeeper,
         app.DistrKeeper,
@@ -1654,6 +1723,7 @@ Confirm:
 | --------------------------------------------- | --------------------------------------------------------- |
 | §1 Overview & goals                           | Tasks 11, 16 (CHANGELOG)                                  |
 | §2 Module manager changes                     | Tasks 6, 7, 8                                             |
+| §2 stakeibc whitelist removal                 | Task 8b                                                   |
 | §2 Keeper wiring (POA)                        | Task 6                                                    |
 | §2 Keeper wiring (distribution)               | Task 9                                                    |
 | §2 Ante handler change                        | Task 10                                                   |

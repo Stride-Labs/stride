@@ -86,9 +86,26 @@ Add `poatypes.StoreKey` and `poatypes.TransientStoreKey` to store mounts. Use `p
 
 **Standalone staking keeper** — `app.ConsumerKeeper.SetStandaloneStakingKeeper(app.StakingKeeper)` — keep for v33, remove in v34. This was for pre-CCV slashing of historical infractions, irrelevant post-migration.
 
+**`stakeibc` consumer-reward-denom whitelist** — `x/stakeibc/keeper/consumer.go::RegisterStTokenDenomsToWhitelist` is a runtime caller of `ConsumerKeeper.GetConsumerParams` / `SetParams`, invoked from `RegisterHostZone` to register new stToken denoms with the ICS consumer's reward-denom whitelist. Post-v33, the whitelist no longer drives any reward flow (the 15% Hub-shipping path is gone), so the function is dead weight on a removed module. **Delete the function, its test, the call site in `RegisterHostZone`, the `ConsumerKeeper` field on `stakeibcmodulekeeper.Keeper`, the corresponding constructor parameter and `app.go` wiring, and the `ConsumerKeeper` interface in `x/stakeibc/types/expected_keepers.go`.** This eliminates the only Stride-side production code path that mutates ICS consumer state at runtime, so v34 can drop `ConsumerKeeper` from `app.go` without further `stakeibc` rework. Implementation lives in the plan's Task 8b.
+
 ### Ante handler change
 
-Tx fee recipient changes from `fee_collector` → POA module account. POA's `EndBlock` at height 1 panics if this isn't done — it's a hard requirement of the POA module's design. Specific change is in `app/ante_handler.go` — replace the `DeductFeeDecorator`'s fee collector name.
+Tx fee recipient changes from `fee_collector` → POA module account. POA's `EndBlock` at height 1 panics if this isn't done — it's a hard requirement of the POA module's design.
+
+There is **no separate POA ante package**. POA reuses the standard SDK `x/auth/ante.DeductFeeDecorator` and exposes a `WithFeeRecipientModule(string)` builder method that overrides the destination module account name. The change in `app/ante_handler.go` is therefore one line:
+
+```go
+// before:
+ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
+
+// after:
+ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker).
+    WithFeeRecipientModule(poatypes.ModuleName),
+```
+
+No new import on the POA keeper is needed in the ante handler, and `HandlerOptions` does not need a `POAKeeper` field.
+
+**Also remove** the existing `consumerante.NewDisabledModulesDecorator("/cosmos.evidence", "/cosmos.slashing")` line from `app/ante_handler.go`. That decorator was rejecting tx messages for the `x/slashing` and `x/evidence` modules; once those modules are removed from the manager, their msg routes are gone too, so the decorator is at best a no-op and at worst a stale dependency on `interchain-security/v7/app/consumer/ante`. Removing it lets v34 drop that import entirely.
 
 ### Begin/end blocker ordering
 
@@ -122,7 +139,7 @@ poatypes.ModuleName: nil, // fee distribution account; no mint/burn
 
 ### VersionMap handling
 
-The handler does **not** call `delete(vm, ...)` for removed modules. `RunMigrations` silently skips modules not in the manager — verified against SDK source and Neutron v6.0.0 precedent. The stale entries persist harmlessly in on-chain VersionMap state. Skipping the delete matches Stride's existing upgrade patterns (no other Stride upgrade has used this pattern except v5, which used it as a workaround for an authz state-sync bug).
+The handler does **not** call `delete(vm, ...)` for removed modules. `RunMigrations` silently skips modules not in the manager — verified against SDK source (`module/manager.go`'s `RunMigrations` iterates over `m.OrderMigrations`, which only contains modules currently registered). The stale entries persist harmlessly in on-chain VersionMap state. The only past Stride upgrade that used `delete(vm, ...)` was v5, and that was a workaround for an authz state-sync bug, not a general pattern. v34 will fully delete the keepers and store keys; until then, leaving the stale `vm` entries in place is the simplest correct option.
 
 ## §3. The v33 upgrade handler
 
@@ -213,23 +230,31 @@ var ValidatorMonikers = map[string]string{
 
 ### Step 3 — `initializePOA`
 
-Synthesize a `GenesisState` and call POA's `InitGenesis`:
+Synthesize a `GenesisState` and call POA's keeper-level `InitGenesis`. Mirrors the canonical sample at `cosmos-sdk/enterprise/poa/examples/migrate-from-pos/sample_upgrades/upgrade_handler.go:initializePOA`:
 
 ```
-func initializePOA(ctx, poaKeeper, adminAddr, validators) error:
-    genesisState = poatypes.GenesisState{
-        Params: poatypes.Params{
-            Admin: adminAddr,  // multisig bech32
-        },
+func initializePOA(ctx, cdc, poaKeeper *Keeper, adminAddr, validators) error:
+    sdkCtx = sdk.UnwrapSDKContext(ctx).WithBlockHeight(0)
+
+    genesis = &poatypes.GenesisState{
+        Params: poatypes.Params{Admin: adminAddr},  // multisig bech32
         Validators: validators,
     }
 
-    // POA's InitGenesis requires block height 0 — documented in the source.
-    err = poaKeeper.InitGenesis(ctx.WithBlockHeight(0), genesisState)
+    // POA's keeper-level InitGenesis takes a codec and returns
+    // (validator updates, error). We discard the updates — see
+    // "On validator updates" below.
+    _, err = poaKeeper.InitGenesis(sdkCtx, cdc, genesis)
     return err
 ```
 
-**Why `WithBlockHeight(0)`**: POA's `InitGenesis` internally uses block-height-0-specific code paths for checkpoint init. Documented in `enterprise/poa/x/poa/keeper/genesis.go`. Easy to forget and silently corrupt state.
+**Why `WithBlockHeight(0)`**: POA's `CreateValidator` calls `GetTotalPower`, which only treats "no total power yet" as a non-error case when `ctx.BlockHeight() == 0` (`enterprise/poa/x/poa/keeper/validator.go:199`). At any other height, the lookup returns an error and `InitGenesis` fails. The canonical sample explicitly does `sdk.UnwrapSDKContext(ctx).WithBlockHeight(0)` for exactly this reason. Easy to forget; will fail loudly if missed.
+
+**On `GenesisState` shape**: POA's `GenesisState` has three fields — `Params`, `Validators`, and `AllocatedFees`. The handler only sets the first two and leaves `AllocatedFees` nil (zero-valued), because this is a fresh POA initialization with no pre-existing per-validator fee allocations to migrate. The canonical sample omits the field for the same reason.
+
+**On `Validator.Metadata`**: POA's `ValidatorMetadata` has three fields — `Moniker`, `Description`, `OperatorAddress`. The snapshot populates `Moniker` (from the pre-baked map) and `OperatorAddress` (derived from the consensus address bytes); `Description` is left empty. The admin can set descriptions later via `MsgUpdateValidators` if desired.
+
+**On validator updates**: POA's keeper `InitGenesis` returns `([]abci.ValidatorUpdate, error)`. We discard the updates: an upgrade handler returns a `VersionMap`, not ABCI updates, and the next `EndBlock` will reap and emit anything POA still has queued. Because the seeded set already matches CometBFT's view, that next `EndBlock` produces a no-diff handoff (see "On validator powers" below).
 
 **On validator powers**: the handler seeds POA with each validator's *current* ICS-assigned power (whatever `GetAllCCValidator` returns). This guarantees POA's first `EndBlock` produces no diff against CometBFT's existing set — the cleanest possible handoff.
 
@@ -415,7 +440,7 @@ All tests are standard go tests run via `make test-unit`. Broader integration te
 Pure-function helpers from §3, tested in isolation with mock keepers. Same pattern as Stride's existing keeper tests.
 
 - **`snapshotValidatorsFromICS`** — fixtures cover: 8-validator happy path, validator with power=0 (assert behavior), unknown consensus address not in moniker map (assert empty moniker fallback), bech32-encoding of operator address.
-- **`initializePOA`** — assert `ctx.WithBlockHeight(0)` is used, POA state populated correctly, admin set.
+- **`initializePOA`** — assert `WithBlockHeight(0)` is applied to the inner ctx, POA state populated correctly, admin set, and the (discarded) validator-updates return is well-formed (one entry per seeded validator).
 - **`sweepICSModuleAccounts`** — pre-fund both module accounts, assert post-sweep balances zero and community pool received the right amount.
 
 ### Test 2 — upgrade handler test with synthetic state
