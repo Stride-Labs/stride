@@ -847,8 +847,8 @@ github.com/cosmos/ibc-go/modules/capability v1.0.1 h1:ibwhrpJ3SftEEZRxCRkH0fQZ9s
 github.com/cosmos/ibc-go/modules/capability v1.0.1/go.mod h1:rquyOV262nGJplkumH+/LeYs04P3eV8oB7ZM4Ygqk4E=
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.5.0 h1:Pgadr9+DzehIRoSzGgf66wD5pxYYOu7782MZY0I097o=
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.5.0/go.mod h1:8yt/wsEzNZlZwFIJz22/glgMBqHb0f11s13sz9HCHn4=
-github.com/cosmos/ibc-go/v10 v10.5.1 h1:XryNO8LEGwxVPEcKqgTEe1iQA5zRhr5iXFUGCW90oig=
-github.com/cosmos/ibc-go/v10 v10.5.1/go.mod h1:a74pAPUSJ7NewvmvELU74hUClJhwnmm5MGbEaiTw/kE=
+github.com/cosmos/ibc-go/v10 v10.6.0 h1:k7PZVSLXFtCdoWlU+ERGn2m1Np4Tw8BF8WyPGl0DOi4=
+github.com/cosmos/ibc-go/v10 v10.6.0/go.mod h1:a74pAPUSJ7NewvmvELU74hUClJhwnmm5MGbEaiTw/kE=
 github.com/cosmos/keyring v1.2.0 h1:8C1lBP9xhImmIabyXW4c3vFjjLiBdGCmfLUfeZlV1Yo=
 github.com/cosmos/keyring v1.2.0/go.mod h1:fc+wB5KTk9wQ9sDx0kFXB3A0MaeGHM9AwRStKOQ5vOA=
 github.com/cosmos/ledger-cosmos-go v1.0.0 h1:jNKW89nPf0vR0EkjHG8Zz16h6p3zqwYEOxlHArwgYtw=
