@@ -231,6 +231,15 @@ func initializePOA(ctx, poaKeeper, adminAddr, validators) error:
 
 **Why `WithBlockHeight(0)`**: POA's `InitGenesis` internally uses block-height-0-specific code paths for checkpoint init. Documented in `enterprise/poa/x/poa/keeper/genesis.go`. Easy to forget and silently corrupt state.
 
+**On validator powers**: the handler seeds POA with each validator's *current* ICS-assigned power (whatever `GetAllCCValidator` returns). This guarantees POA's first `EndBlock` produces no diff against CometBFT's existing set — the cleanest possible handoff.
+
+ICS-assigned powers reflect Hub-side bonded ATOM, which has no meaning on a permissioned POA chain. Long-term Stride probably wants all 8 validators at equal power (e.g., `1` each). Two paths to get there:
+
+- **A — rebalance in the handler.** After `InitGenesis`, immediately submit synthesized `MsgUpdateValidators` (or directly modify keeper state) to set all powers to `1`. ~5 lines of code. Safe — CometBFT applies the change one block later via the standard ABCI lag; the old set still signs block N+1, the rebalanced set takes over at N+2. Avoids any post-upgrade multisig coordination.
+- **B — rebalance later via multisig.** Handler leaves powers as inherited; multisig submits `MsgUpdateValidators` whenever convenient. Exercises POA's runtime path in production rather than just at upgrade time.
+
+Either is fine; pick based on operational preference. **A** is recommended for simplicity (no MS signing needed and tests covered by the same upgrade test suite).
+
 After this call, POA's KV store has the 8 validators with their power and keys. The next `EndBlock` will process them.
 
 ### Step 4 — `sweepICSModuleAccounts`
