@@ -80,6 +80,8 @@ Add `poatypes.StoreKey` and `poatypes.TransientStoreKey` to store mounts. Use `p
 
 **`x/ccv/consumer` keeper** — leave constructed, don't register. Handler reads `GetAllCCValidator`. Delete in v34.
 
+**CCV IBC route** — leave bound. The line `IBCRouter.AddRoute(ccvconsumertypes.ModuleName, consumerModule)` in `app.go` stays in place, and the `consumerModule := ccvconsumer.NewAppModule(...)` definition that feeds it stays too. The route is now only an IBC dispatch target — `ccvconsumer` is no longer in the module manager so its `BeginBlock`/`EndBlock` don't run. Late VSC packets from the Hub still arrive over the live channel and are queued by `ConsumerKeeper.OnRecvPacket`, but they never get applied (no `EndBlock` to drain the queue). This is the "channel times out naturally" path: the channel stays alive at the IBC layer until the underlying client expires, packets/acks/timeouts in flight can still be dispatched (so the relayer doesn't get stuck), and v34 deletes the route, the `consumerModule` variable, and the keeper as one coordinated change. Removing the route in v33 while leaving the channel open would leave packets with no handler — at best they error-ack, at worst the IBC core handler errors on receipt.
+
 **`x/gov` keeper** — **no change**. Still uses staking-based tally since govenators/delegators drive governance voting. Do NOT swap to POA's tally function.
 
 **Staking hooks** — current hooks (`DistrKeeper.Hooks()`, `ClaimKeeper.Hooks()`) are unchanged. Slashing was never a hook on staking (it was driven off ICS events), so no hook removal needed.
@@ -498,7 +500,10 @@ Stride doesn't appear to do this pattern today — it's worth flagging as new te
 
 These should fail loudly before any human reviews a v33 PR:
 
-1. **Validator set continuity**: post-handler POA `EndBlock` produces a set whose `ValidatorsHash` equals the pre-handler CometBFT `ValidatorsHash`.
+1. **Validator set continuity** — three layered assertions, weakest to strongest:
+   1. Post-handler POA `EndBlock` returns `[]abci.ValidatorUpdate{}` (necessary; catches "POA queued an unexpected post-init update").
+   2. Element-wise pubkey + power equivalence between the pre-handler ICS set (`consumerKeeper.GetAllCCValidator`) and the post-handler POA set (`poaKeeper.GetAllValidators`). Catches snapshot helper bugs (dropped/duplicated validator, swapped power). Empty `EndBlock` updates is *not* a substitute — POA's `InitGenesis` reaps and discards updates internally, so a wrong-set seed would still leave the next `EndBlock` empty and the chain wouldn't halt until the first multisig `MsgUpdateValidators` later.
+   3. **`ValidatorsHash` equality** (load-bearing): build CometBFT's `ValidatorsHash` from both sets via `tmtypes.NewValidatorSet(...).Hash()` and assert equality. Required because pubkey-encoding mismatches (Any-wrap, byte order, amino-vs-proto, ed25519-vs-secp256k1 conversion) can pass element-wise comparison but produce a different hash — and CometBFT verifies block N+1's signatures against *its* hash, not POA's. This assertion lives in the mainnet-export test (Task 15).
 2. **No accidental govenator drain**: total bonded STRD in `bonded_tokens_pool` post-handler == pre-handler.
 3. **No accidental delegator drain**: delegation count post-handler == pre-handler.
 4. **POA admin is set**: `poaKeeper.GetParams(ctx).Admin == ExpectedAdminMultisigAddress`.

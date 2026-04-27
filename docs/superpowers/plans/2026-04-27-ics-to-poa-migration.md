@@ -766,6 +766,8 @@ git commit -m "feat(v33): wire POA module into app (additive)"
 
 Removes the two ICS-era modules that are being replaced by POA. **Keep their keepers constructed** in app.go — only remove the `*.NewAppModule(...)` registrations and the corresponding entries in blocker/genesis ordering.
 
+**Critical: do NOT delete the IBC route or the `consumerModule` variable.** The CCV channel is left to time out naturally per the spec (§1, §3 "What the handler deliberately does NOT do", §7 Risk 5). Removing the route while the channel is still open would leave incoming VSC packets, acks, and timeouts with no module to dispatch to — at best they error-ack back to the provider, at worst the IBC core handler errors on receipt. With the route still bound but the module no longer in the manager, late VSC packets are received and queued by `ConsumerKeeper.OnRecvPacket` but never applied (because `ccvconsumer`'s `EndBlock` no longer runs to drain the queue), and the channel times out cleanly via IBC client expiration. v34 deletes the route, the `consumerModule` variable, and the keeper as a coordinated set.
+
 - [ ] **Step 7.1: Remove from `module.NewManager(...)`**
 
 In the module manager construction, **delete** these lines:
@@ -778,11 +780,7 @@ ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeep
 consumerModule, // (the variable defined as ccvconsumer.NewAppModule(...))
 ```
 
-Also remove the line that defines `consumerModule` (around line 691):
-
-```go
-consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper, app.GetSubspace(ccvconsumertypes.ModuleName))
-```
+**Do NOT remove the `consumerModule` definition (around line 691)** — it stays so the IBC route binding (Step 7.5 below) keeps working. The variable is now used only as an IBC dispatch target, not as a module-manager entry.
 
 - [ ] **Step 7.2: Replace ccvdistr with plain x/distribution**
 
@@ -812,29 +810,29 @@ ccvconsumertypes.ModuleName,
 
 Same removal: delete `ccvconsumertypes.ModuleName` from the InitGenesis order list.
 
-- [ ] **Step 7.5: Remove the IBC route**
+- [ ] **Step 7.5: Keep the IBC route bound — DO NOT REMOVE**
 
-Locate the IBC router setup (around line 972):
+The line at `app/app.go:972`:
 
 ```go
 .AddRoute(ccvconsumertypes.ModuleName, consumerModule)
 ```
 
-**Delete** this line.
+**stays in place.** This is what lets the IBC core dispatch late VSC packets, acks, and timeouts on the still-open CCV channel until it times out naturally. Removing it now (while the channel is open) is the failure mode the spec explicitly avoids. v34 will close the channel and drop the route together.
 
-- [ ] **Step 7.6: Remove the unused `ccvconsumer` and `ccvdistr` package imports**
+- [ ] **Step 7.6: Imports — keep `ccvconsumer`, drop `ccvdistr`**
 
-If those packages are no longer referenced anywhere (because `consumerModule` is gone and `ccvdistr.NewAppModule` is gone), Go will emit unused-import errors. Remove the imports:
+`ccvconsumer` is still referenced (by the `consumerModule` definition at line 691, which feeds the route at line 972), so its import stays. `ccvdistr` is no longer referenced — Go will emit an unused-import error. Drop only `ccvdistr`:
 
 ```go
-ccvconsumer "github.com/cosmos/interchain-security/v7/x/ccv/consumer"
 ccvdistr "github.com/cosmos/interchain-security/v7/x/ccv/democracy/distribution"
 ```
 
 **Keep**:
 
+- `ccvconsumer "github.com/cosmos/interchain-security/v7/x/ccv/consumer"` — for `consumerModule` definition (still bound to IBC route)
 - `ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"` — for `app.ConsumerKeeper`
-- `ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"` — for store key reference, module account names, etc.
+- `ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"` — for store key reference, module account names, IBC route module name, etc.
 - `ccvstaking "github.com/cosmos/interchain-security/v7/x/ccv/democracy/staking"` — still used
 
 - [ ] **Step 7.7: Build and confirm**
@@ -1356,10 +1354,41 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 // --- assertion helpers ---
 
 func (s *UpgradeTestSuite) checkPOAValidatorsMatchICSSnapshot() {
+    // Element-wise comparison of pubkey + power between the seeded ICS set
+    // and POA's stored set. "Same length and same admin" is not enough: if
+    // the snapshot helper drops or duplicates a validator, or seeds the
+    // wrong power, this is the assertion that catches it.
+    ccVals := s.App.ConsumerKeeper.GetAllCCValidator(s.Ctx)
+    s.Require().Len(ccVals, 8, "ICS seed should have 8 validators")
+
     poaVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
     s.Require().NoError(err)
-    s.Require().Len(poaVals, 8)
-    // each validator's pubkey + power matches what was seeded
+    s.Require().Len(poaVals, 8, "POA should have 8 validators after upgrade")
+
+    // Index POA validators by consensus address (hex of derived from pubkey)
+    // so we can look them up by their ICS-side identity.
+    poaByConsAddr := make(map[string]poatypes.Validator, len(poaVals))
+    for _, pv := range poaVals {
+        var pk cryptotypes.PubKey
+        s.Require().NoError(s.App.AppCodec().UnpackAny(pv.PubKey, &pk))
+        poaByConsAddr[sdk.GetConsAddress(pk).String()] = pv
+    }
+
+    for _, cv := range ccVals {
+        consPub, err := cv.ConsPubKey()
+        s.Require().NoError(err)
+        consAddr := sdk.GetConsAddress(consPub).String()
+
+        pv, ok := poaByConsAddr[consAddr]
+        s.Require().True(ok, "ICS validator %s missing from POA", consAddr)
+        s.Require().Equal(cv.Power, pv.Power,
+            "power mismatch for validator %s: ICS=%d POA=%d", consAddr, cv.Power, pv.Power)
+
+        var poaPub cryptotypes.PubKey
+        s.Require().NoError(s.App.AppCodec().UnpackAny(pv.PubKey, &poaPub))
+        s.Require().True(poaPub.Equals(consPub),
+            "pubkey mismatch for validator %s", consAddr)
+    }
 }
 
 func (s *UpgradeTestSuite) checkPOAAdminSet() {
@@ -1400,15 +1429,27 @@ func (s *UpgradeTestSuite) checkActiveGovProposalUnaffected() {
 }
 
 func (s *UpgradeTestSuite) checkValidatorSetContinuity() {
-    // The most important assertion: POA's first EndBlock returns no updates,
-    // OR an update set whose net effect equals the pre-handler CometBFT set.
+    // Empty EndBlock updates is necessary but NOT sufficient. POA's
+    // InitGenesis calls CreateValidator for each entry, queues an update
+    // per validator into the transient store, and reaps them at the end of
+    // InitGenesis (see enterprise/poa/x/poa/keeper/genesis.go). The handler
+    // discards that returned slice. So if we seeded the WRONG set (wrong
+    // powers / missing validator / swapped pubkey), the next EndBlock would
+    // STILL return [] because the transient store was already drained — the
+    // chain wouldn't halt at the upgrade block, but the first multisig
+    // MsgUpdateValidators afterwards would emit a diff against POA's wrong
+    // state and halt CometBFT then.
     //
-    // We invoke poa.EndBlock directly and assert it returns zero updates,
-    // since InitGenesis seeded the validators directly into KV without
-    // queueing any updates in the transient store.
+    // We get two layers of protection:
+    //   1. checkPOAValidatorsMatchICSSnapshot (above) — element-wise pubkey
+    //      + power equivalence between the seeded ICS set and POA's stored
+    //      validators. Catches snapshot helper bugs.
+    //   2. EndBlock returns [] — confirms POA isn't holding any unexpected
+    //      queued updates that would surprise CometBFT at block N+1.
     updates, err := s.App.POAKeeper.EndBlocker(s.Ctx)
     s.Require().NoError(err)
-    s.Require().Empty(updates, "POA EndBlock must not emit ValidatorUpdates on the upgrade block")
+    s.Require().Empty(updates,
+        "POA EndBlock must not emit ValidatorUpdates on the upgrade block; got %d", len(updates))
 }
 
 // --- setup helpers ---
@@ -1581,6 +1622,16 @@ func (s *UpgradeTestSuite) TestUpgradeFromMainnetExport() {
     preUpgradePOAValSetSize := len(s.App.ConsumerKeeper.GetAllCCValidator(s.Ctx))
     s.Require().Equal(8, preUpgradePOAValSetSize, "expected mainnet PSS allowlist of 8")
 
+    // Capture the pre-upgrade CometBFT validator set hash. This is the
+    // load-bearing assertion the spec calls out (§6, §7 Risk 1): the
+    // validator set CometBFT will sign block N+1 with must hash to the
+    // same value as the set CometBFT signed block N with. If POA seeds a
+    // set with subtly wrong pubkey encoding (Any-wrap mismatch, byte order,
+    // amino vs proto), element-wise comparison can miss it but the hash
+    // catches it because CometBFT computes ValidatorsHash from the wire
+    // representation it actually consumes.
+    preUpgradeHash := computeValidatorsHash(s.T(), s.App.ConsumerKeeper.GetAllCCValidator(s.Ctx))
+
     // Capture all active proposal IDs
     iter, err := s.App.GovKeeper.Proposals.Iterate(s.Ctx, nil)
     s.Require().NoError(err)
@@ -1612,6 +1663,14 @@ func (s *UpgradeTestSuite) TestUpgradeFromMainnetExport() {
     s.checkActiveGovProposalUnaffected()
     s.checkValidatorSetContinuity()
 
+    // Load-bearing: the post-handler POA set must hash to the same
+    // ValidatorsHash CometBFT had pre-handler.
+    poaVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
+    s.Require().NoError(err)
+    postUpgradeHash := computeValidatorsHashFromPOA(s.T(), s.App.AppCodec(), poaVals)
+    s.Require().Equal(preUpgradeHash, postUpgradeHash,
+        "post-handler POA validator set must hash to the same ValidatorsHash as the pre-handler CometBFT set")
+
     // Mainnet-specific: real cons_redistribute balance landed in community pool
     feePool, err := s.App.DistrKeeper.FeePool.Get(s.Ctx)
     s.Require().NoError(err)
@@ -1622,7 +1681,51 @@ func (s *UpgradeTestSuite) TestUpgradeFromMainnetExport() {
     s.Require().True(cpBalance.GTE(sdkmath.LegacyNewDecFromInt(expectedAdded)),
         "community pool should have grown by at least the swept cons_redistribute balance")
 }
+
+// computeValidatorsHash builds CometBFT's ValidatorsHash from the seeded
+// CCValidator records. CometBFT computes this hash from the wire
+// representation it actually uses for consensus signature verification, so
+// any pubkey-encoding mismatch surfaces here.
+func computeValidatorsHash(t *testing.T, ccVals []ccvconsumertypes.CrossChainValidator) []byte {
+    t.Helper()
+    tmVals := make([]*tmtypes.Validator, 0, len(ccVals))
+    for _, cv := range ccVals {
+        consPub, err := cv.ConsPubKey()
+        require.NoError(t, err)
+        tmPK, err := cryptocodec.ToCmtPubKeyInterface(consPub)
+        require.NoError(t, err)
+        tmVals = append(tmVals, tmtypes.NewValidator(tmPK, cv.Power))
+    }
+    return tmtypes.NewValidatorSet(tmVals).Hash()
+}
+
+// computeValidatorsHashFromPOA does the same calculation but reads POA's
+// stored validators. The hash must equal computeValidatorsHash's output.
+func computeValidatorsHashFromPOA(t *testing.T, cdc codec.Codec, poaVals []poatypes.Validator) []byte {
+    t.Helper()
+    tmVals := make([]*tmtypes.Validator, 0, len(poaVals))
+    for _, pv := range poaVals {
+        var consPub cryptotypes.PubKey
+        require.NoError(t, cdc.UnpackAny(pv.PubKey, &consPub))
+        tmPK, err := cryptocodec.ToCmtPubKeyInterface(consPub)
+        require.NoError(t, err)
+        tmVals = append(tmVals, tmtypes.NewValidator(tmPK, pv.Power))
+    }
+    return tmtypes.NewValidatorSet(tmVals).Hash()
+}
 ```
+
+Add the imports these helpers need to the top of the test file:
+
+```go
+import (
+    cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+    cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+    tmtypes "github.com/cometbft/cometbft/types"
+)
+```
+
+Note: `cryptocodec.ToCmtPubKeyInterface` is the SDK helper that converts an SDK `cryptotypes.PubKey` (e.g., ed25519, secp256k1) into the CometBFT pubkey type used by `tmtypes.NewValidator`. If the helper name differs in Stride's pinned SDK version, find the equivalent — the load-bearing property is that both hash inputs go through CometBFT's wire encoding, not the SDK's.
 
 - [ ] **Step 15.3: Run the test**
 
