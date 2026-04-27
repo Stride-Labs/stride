@@ -26,7 +26,7 @@ require (
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v10 v10.0.0
 	github.com/cosmos/ibc-apps/modules/rate-limiting/v10 v10.1.0
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.5.0
-	github.com/cosmos/ibc-go/v10 v10.5.1
+	github.com/cosmos/ibc-go/v10 v10.6.0
 	github.com/cosmos/ics23/go v0.11.0
 	github.com/cosmos/interchain-security/v7 v7.0.0-20250408210344-06e0dc6bf6d6
 	github.com/evmos/vesting v1.0.0
