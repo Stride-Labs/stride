@@ -3,6 +3,11 @@ module github.com/Stride-Labs/stride/v32
 go 1.25.9
 
 require (
+	cosmossdk.io/api v1.0.0
+	cosmossdk.io/client/v2 v2.11.0
+	cosmossdk.io/core v1.1.0
+	cosmossdk.io/errors v1.1.0
+	cosmossdk.io/log/v2 v2.1.0
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/tools/confix v0.1.2
 	github.com/CosmWasm/wasmd v0.70.0
@@ -11,6 +16,7 @@ require (
 	github.com/cosmos/cosmos-db v1.1.3
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.54.2
+	github.com/cosmos/cosmos-sdk/store/v2 v2.0.0
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11 v11.0.0
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v11 v11.0.0
@@ -18,7 +24,7 @@ require (
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11 v11.0.0
 	github.com/cosmos/ibc-go/v11 v11.0.0
 	github.com/cosmos/ics23/go v0.11.0
-	github.com/cosmos/interchain-security/v7 v7.0.0-20250408210344-06e0dc6bf6d6
+	github.com/cosmos/interchain-security/v7 v7.0.0-20260422202817-84f762600f84
 	github.com/evmos/vesting v1.0.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.4
@@ -44,16 +50,15 @@ require (
 	cloud.google.com/go/iam v1.9.0 // indirect
 	cloud.google.com/go/monitoring v1.27.0 // indirect
 	cloud.google.com/go/storage v1.62.1 // indirect
-	cosmossdk.io/api v1.0.0 // indirect
 	cosmossdk.io/collections v1.4.0 // indirect
-	cosmossdk.io/core v1.1.0 // indirect
 	cosmossdk.io/depinject v1.2.1 // indirect
-	cosmossdk.io/errors v1.1.0 // indirect
-	cosmossdk.io/log/v2 v2.1.0 // indirect
+	cosmossdk.io/log v1.6.1 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
+	cosmossdk.io/store v1.1.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
+	github.com/CosmWasm/wasmvm/v2 v2.3.2 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
 	github.com/DataDog/zstd v1.5.7 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.32.0 // indirect
@@ -104,7 +109,6 @@ require (
 	github.com/cometbft/cometbft-db v1.0.4 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/btree v1.0.0 // indirect
-	github.com/cosmos/cosmos-sdk/store/v2 v2.0.0 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/iavl v1.2.8 // indirect
@@ -201,6 +205,7 @@ require (
 	github.com/marten-seemann/tcp v0.0.0-20210406111302-dfbc87cc63fd // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
+	github.com/mdp/qrterminal/v3 v3.2.1 // indirect
 	github.com/miekg/dns v1.1.66 // indirect
 	github.com/mikioh/tcpinfo v0.0.0-20190314235526-30a79bb1804b // indirect
 	github.com/mikioh/tcpopt v0.0.0-20190314235656-172688c1accc // indirect
@@ -346,6 +351,7 @@ require (
 	lukechampine.com/blake3 v1.4.1 // indirect
 	nhooyr.io/websocket v1.8.17 // indirect
 	pgregory.net/rapid v1.2.0 // indirect
+	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
@@ -383,8 +389,6 @@ replace (
 	// verification against modules that use collections' empty-value storage (bank
 	// reverse-index entries) — precisely the bug we're fixing.
 	github.com/cosmos/ics23/go => github.com/Stride-Labs/ics23/go v0.11.0-non-membership-icq-rc4
-
-	github.com/cosmos/interchain-security/v7 => github.com/Stride-Labs/interchain-security/v7 v7.1.0-sdk-0.53.7-rc0
 
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1

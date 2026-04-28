@@ -8,7 +8,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/types"
@@ -447,8 +446,10 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
 		}
 	case "v10":
+		// crisis module was removed in cosmos-sdk v0.54; inline its historical
+		// store key ("crisis") so the v10 store-upgrade marker still compiles.
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{crisistypes.StoreKey, consensustypes.StoreKey},
+			Added: []string{"crisis", consensustypes.StoreKey},
 		}
 	case "v12":
 		storeUpgrades = &storetypes.StoreUpgrades{
@@ -489,7 +490,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		}
 	case "v32":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Deleted: []string{crisistypes.StoreKey},
+			Deleted: []string{"crisis"},
 		}
 	}
 
