@@ -266,10 +266,10 @@ type StrideApp struct {
 	ParamsKeeper          paramskeeper.Keeper //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 	IBCKeeper             *ibckeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
-	TransferKeeper        ibctransferkeeper.Keeper
+	TransferKeeper        *ibctransferkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
-	ICAControllerKeeper   icacontrollerkeeper.Keeper
-	ICAHostKeeper         icahostkeeper.Keeper
+	ICAControllerKeeper   *icacontrollerkeeper.Keeper
+	ICAHostKeeper         *icahostkeeper.Keeper
 	ConsumerKeeper        ccvconsumerkeeper.Keeper
 	AutopilotKeeper       autopilotkeeper.Keeper
 	PacketForwardKeeper   *packetforwardkeeper.Keeper
@@ -581,7 +581,7 @@ func NewStrideApp(
 	// ICS4Wrapper is PacketForwardKeeper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
 	// The autopilot/records/staketia/stakedym middlewares short-circuit SendPacket and must not sit above the
 	// TransferKeeper on the outbound path, so we do NOT overwrite this with the full transferStack below.
-	app.TransferKeeper = *ibctransferkeeper.NewKeeper(
+	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		app.AccountKeeper.AddressCodec(),
 		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
@@ -675,7 +675,7 @@ func NewStrideApp(
 		app.SlashingKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,
-		&app.TransferKeeper,
+		app.TransferKeeper,
 		app.IBCKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -689,7 +689,7 @@ func NewStrideApp(
 	consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper, app.GetSubspace(ccvconsumertypes.ModuleName))
 
 	// Note: must be above app.StakeibcKeeper and app.ICAOracleKeeper
-	app.ICAControllerKeeper = *icacontrollerkeeper.NewKeeper(
+	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]),
 		app.IBCKeeper.ChannelKeeper,
@@ -890,7 +890,7 @@ func NewStrideApp(
 	}
 
 	// create IBC middleware stacks by combining middleware with base application
-	app.ICAHostKeeper = *icahostkeeper.NewKeeper(
+	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[icahosttypes.StoreKey]),
 		app.IBCKeeper.ChannelKeeper,
@@ -899,14 +899,14 @@ func NewStrideApp(
 		app.GRPCQueryRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
+	icaModule := ica.NewAppModule(app.ICAControllerKeeper, app.ICAHostKeeper)
 
 	// Create the middleware stacks
 	// Stack one (ICAHost Stack) contains:
 	// - IBC
 	// - ICAHost
 	// - base app
-	icaHostIBCModule := icahost.NewIBCModule(&app.ICAHostKeeper)
+	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
 
 	// Stack two (ICACallbacks Stack) contains
 	// - IBC
@@ -918,7 +918,7 @@ func NewStrideApp(
 	var icacallbacksStack porttypes.IBCModule = icacallbacksIBCModule
 	icacallbacksStack = stakeibcmodule.NewIBCMiddleware(icacallbacksStack, app.StakeibcKeeper)
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
-	icacallbacksStack = icacontroller.NewIBCMiddlewareWithAuth(icacallbacksStack, &app.ICAControllerKeeper)
+	icacallbacksStack = icacontroller.NewIBCMiddlewareWithAuth(icacallbacksStack, app.ICAControllerKeeper)
 
 	// SendPacket originates from the base app and work up the stack to core IBC
 	// RecvPacket originates from core IBC and goes down the stack
@@ -936,7 +936,7 @@ func NewStrideApp(
 	// - base app
 	// Note: Traffic up the stack does not pass through records or autopilot,
 	// as defined via the ICS4Wrappers of each keeper
-	var transferStack porttypes.IBCModule = transfer.NewIBCModule(&app.TransferKeeper)
+	var transferStack porttypes.IBCModule = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = packetforward.NewIBCMiddleware(
 		transferStack,
 		app.PacketForwardKeeper,
@@ -995,7 +995,7 @@ func NewStrideApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.BaseApp.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibchooks.NewAppModule(app.AccountKeeper),
-		transfer.NewAppModule(&app.TransferKeeper),
+		transfer.NewAppModule(app.TransferKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
 		ibctm.NewAppModule(tmLightClientModule),
 		// monitoringModule,
@@ -1489,7 +1489,7 @@ func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // GetIBCKeeper implements the TestingApp interface.
 func (app *StrideApp) GetTransferKeeper() *ibctransferkeeper.Keeper {
-	return &app.TransferKeeper
+	return app.TransferKeeper
 }
 
 // GetIBCKeeper implements the TestingApp interface.
