@@ -22,7 +22,6 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/libs/bytes"
 	tmos "github.com/cometbft/cometbft/libs/os"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -1236,7 +1235,7 @@ func NewStrideApp(
 		}
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
-		ctx := app.BaseApp.NewContextLegacy(true, tmproto.Header{})
+		ctx := app.BaseApp.NewContext(true)
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
@@ -1253,7 +1252,7 @@ func NewStrideApp(
 func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPubKey crypto.PubKey, newOperatorAddress, upgradeToTrigger string) *StrideApp {
 	// Create a new account that will be used in the validator
 	// This does not match the actual operator keys, but it's not required that they match
-	ctx := app.BaseApp.NewContextLegacy(true, tmproto.Header{})
+	ctx := app.BaseApp.NewContext(true)
 	pubkey := &ed25519.PubKey{Key: newValPubKey.Bytes()}
 	pubkeyAny, err := types.NewAnyWithValue(pubkey)
 	if err != nil {
