@@ -3,9 +3,9 @@ package v5_test
 import (
 	"testing"
 
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	sdkmath "cosmossdk.io/math"

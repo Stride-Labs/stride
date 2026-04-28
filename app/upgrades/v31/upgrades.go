@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	staketiakeeper "github.com/Stride-Labs/stride/v32/x/staketia/keeper"
 	staketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/types"

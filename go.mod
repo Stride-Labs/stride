@@ -7,14 +7,9 @@ require (
 	cosmossdk.io/client/v2 v2.11.0
 	cosmossdk.io/core v1.1.0
 	cosmossdk.io/errors v1.1.0
-	cosmossdk.io/log v1.6.1
+	cosmossdk.io/log/v2 v2.1.0
 	cosmossdk.io/math v1.5.3
-	cosmossdk.io/store v1.1.2
 	cosmossdk.io/tools/confix v0.1.2
-	cosmossdk.io/x/evidence v0.2.0
-	cosmossdk.io/x/feegrant v0.2.0
-	cosmossdk.io/x/tx v0.14.0
-	cosmossdk.io/x/upgrade v0.2.0
 	github.com/CosmWasm/wasmd v0.60.6
 	github.com/CosmWasm/wasmvm/v2 v2.3.2
 	github.com/cometbft/cometbft v0.39.1

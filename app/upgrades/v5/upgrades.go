@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	claimmigration "github.com/Stride-Labs/stride/v32/x/claim/migrations/v2"
 	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
