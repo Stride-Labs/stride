@@ -7,7 +7,7 @@ import (
 
 	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

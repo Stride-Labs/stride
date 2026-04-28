@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 )

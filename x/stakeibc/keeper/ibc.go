@@ -10,7 +10,7 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

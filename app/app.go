@@ -95,15 +95,15 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
-	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
-	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10"
-	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/keeper"
-	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/types"
-	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/types"
+	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/keeper"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/types"
+	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v11"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
@@ -542,22 +542,22 @@ func NewStrideApp(
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
 		keys[ibchookstypes.StoreKey],
 	)
-	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
-	app.Ics20WasmHooks = &wasmHooks
-	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
+	// v11 NewWasmHooks returns *WasmHooks (was a value in v10).
+	app.Ics20WasmHooks = ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper                                        // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
+	// v11 dropped the legacy paramtypes.Subspace argument.
 	app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
-		app.GetSubspace(ratelimittypes.ModuleName),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ClientKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
-	ratelimitModule := ratelimit.NewAppModule(appCodec, app.RatelimitKeeper)
+	ratelimitModule := ratelimit.NewAppModule(appCodec, &app.RatelimitKeeper)
 
 	// Create the ICS4 wrapper which routes up the stack from ibchooks -> ratelimit
 	// (see full stack definition below)
@@ -944,7 +944,7 @@ func NewStrideApp(
 		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
 	)
 	transferStack = ibchooks.NewIBCMiddleware(transferStack, &app.HooksICS4Wrapper)
-	transferStack = ratelimit.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+	transferStack = ratelimit.NewIBCMiddleware(&app.RatelimitKeeper, transferStack)
 	transferStack = staketia.NewIBCMiddleware(app.StaketiaKeeper, transferStack)
 	transferStack = stakedym.NewIBCMiddleware(app.StakedymKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)

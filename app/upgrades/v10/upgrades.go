@@ -22,8 +22,8 @@ import (
 	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
 	"github.com/cosmos/ibc-go/v11/modules/core/exported"
 
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
