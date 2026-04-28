@@ -17,7 +17,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/libs/bytes"
@@ -628,6 +628,7 @@ func NewStrideApp(
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeperV2,
 		app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),

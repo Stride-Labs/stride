@@ -6,7 +6,7 @@ require (
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/tools/confix v0.1.2
 	github.com/CosmWasm/wasmd v0.70.0
-	github.com/CosmWasm/wasmvm/v2 v2.3.2
+	github.com/CosmWasm/wasmvm/v3 v3.0.4
 	github.com/cometbft/cometbft v0.39.1
 	github.com/cosmos/cosmos-db v1.1.3
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
@@ -54,7 +54,6 @@ require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
-	github.com/CosmWasm/wasmvm/v3 v3.0.4 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
 	github.com/DataDog/zstd v1.5.7 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.32.0 // indirect
