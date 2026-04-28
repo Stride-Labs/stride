@@ -3,7 +3,7 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v32/x/staketia/types"

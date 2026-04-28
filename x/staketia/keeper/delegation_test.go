@@ -5,8 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 	"github.com/Stride-Labs/stride/v32/x/staketia/types"

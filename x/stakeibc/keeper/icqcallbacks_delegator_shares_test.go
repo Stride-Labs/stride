@@ -8,7 +8,7 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"

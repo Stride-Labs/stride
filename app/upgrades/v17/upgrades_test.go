@@ -7,7 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/suite"
 
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"

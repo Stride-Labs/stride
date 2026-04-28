@@ -9,9 +9,9 @@ import (
 
 	"cosmossdk.io/log/v2"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"

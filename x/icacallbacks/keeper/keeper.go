@@ -11,11 +11,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 )

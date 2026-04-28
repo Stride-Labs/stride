@@ -3,9 +3,9 @@ package testutil
 import (
 	"time"
 
-	ibctypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	"github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	"github.com/cosmos/ibc-go/v11/modules/core/23-commitment/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	ccvprovidertypes "github.com/cosmos/interchain-security/v7/x/ccv/provider/types"
 	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 )

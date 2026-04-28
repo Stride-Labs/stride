@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"

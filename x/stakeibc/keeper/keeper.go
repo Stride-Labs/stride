@@ -13,8 +13,8 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"

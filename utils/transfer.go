@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 )
 
 // GetDenomPrefix returns the ICS20 hop prefix for a port/channel pair, e.g. "transfer/channel-0/".

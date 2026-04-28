@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"

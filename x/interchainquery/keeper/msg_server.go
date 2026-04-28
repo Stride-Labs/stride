@@ -8,11 +8,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
-	commitmenttypesv2 "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types/v2"
-	"github.com/cosmos/ibc-go/v10/modules/core/exported"
-	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v11/modules/core/23-commitment/types"
+	commitmenttypesv2 "github.com/cosmos/ibc-go/v11/modules/core/23-commitment/types/v2"
+	"github.com/cosmos/ibc-go/v11/modules/core/exported"
+	tendermint "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	ics23 "github.com/cosmos/ics23/go"
 
 	"github.com/Stride-Labs/stride/v32/utils"

@@ -8,9 +8,9 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"

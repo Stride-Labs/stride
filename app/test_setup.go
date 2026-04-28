@@ -18,7 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	appconsumer "github.com/cosmos/interchain-security/v7/app/consumer"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"

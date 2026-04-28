@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
-	clientkeeper "github.com/cosmos/ibc-go/v10/modules/core/02-client/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
+	clientkeeper "github.com/cosmos/ibc-go/v11/modules/core/02-client/keeper"
 
 	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"

@@ -5,8 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"

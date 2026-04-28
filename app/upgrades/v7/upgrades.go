@@ -20,9 +20,9 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	icahostkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	icahostkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochskeeper "github.com/Stride-Labs/stride/v32/x/epochs/keeper"

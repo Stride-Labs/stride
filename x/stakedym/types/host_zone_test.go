@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"

@@ -18,9 +18,9 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	clientkeeper "github.com/cosmos/ibc-go/v10/modules/core/02-client/keeper"
-	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
-	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+	clientkeeper "github.com/cosmos/ibc-go/v11/modules/core/02-client/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
+	"github.com/cosmos/ibc-go/v11/modules/core/exported"
 
 	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"

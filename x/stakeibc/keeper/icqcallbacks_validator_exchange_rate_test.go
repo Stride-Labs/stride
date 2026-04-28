@@ -5,7 +5,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	"github.com/cosmos/gogoproto/proto"
 

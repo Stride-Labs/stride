@@ -5,10 +5,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 

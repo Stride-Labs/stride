@@ -13,7 +13,7 @@ import (
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/types"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 

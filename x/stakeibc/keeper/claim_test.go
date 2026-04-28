@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	proto "github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"

@@ -9,7 +9,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"

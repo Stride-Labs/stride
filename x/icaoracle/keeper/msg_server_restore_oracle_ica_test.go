@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"fmt"
 
-	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
