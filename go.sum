@@ -147,6 +147,8 @@ github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE
 github.com/cometbft/cometbft v0.38.21 h1:qcIJSH9LiwU5s6ZgKR5eRbsLNucbubfraDs5bzgjtOI=
 github.com/cometbft/cometbft v0.39.0 h1:IQeTvVs4RH8LvBuZ3isS6uXKhS/lqpphL2CGUxa10ys=
 github.com/cometbft/cometbft v0.39.0/go.mod h1:lkMTqoPc3h77h6i0oe3wyZgZQBwEwXq+lYpnZLmKJYI=
+github.com/cometbft/cometbft v0.39.1 h1:rPMgpKVd6OUIMDQW6InsAxGCdV+6uiwMQjKYmACjH/o=
+github.com/cometbft/cometbft v0.39.1/go.mod h1:lkMTqoPc3h77h6i0oe3wyZgZQBwEwXq+lYpnZLmKJYI=
 github.com/cometbft/cometbft-db v1.0.4 h1:cezb8yx/ZWcF124wqUtAFjAuDksS1y1yXedvtprUFxs=
 github.com/cometbft/cometbft-db v1.0.4/go.mod h1:M+BtHAGU2XLrpUxo3Nn1nOCcnVCiLM9yx5OuT0u5SCA=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
@@ -163,6 +165,8 @@ github.com/cosmos/cosmos-proto v1.0.0-beta.5/go.mod h1:hQGLpiIUloJBMdQMMWb/4wRAp
 github.com/cosmos/cosmos-sdk v0.53.7 h1:CqY48EB118WuR2EcTobiFACOQbfP8Dyyb5C5nAOq3XM=
 github.com/cosmos/cosmos-sdk v0.54.0 h1:eggBnFL+QiBt3O2/oPAuZtBdxl840UcdYhow+sk5Vag=
 github.com/cosmos/cosmos-sdk v0.54.0/go.mod h1:Kx5RNGmLShyUK6aWXljCMKjwJ3YNJX2ykd9rziRoXpM=
+github.com/cosmos/cosmos-sdk v0.54.2 h1:TBcKN4z++XJ8Tu/NCbLV14KQ3pKhoSwSTDipeWmuaxs=
+github.com/cosmos/cosmos-sdk v0.54.2/go.mod h1:yU5ttNdGYTVPfdYhrD8HN1hGg9s3jm7Ub42SpFW3T/Y=
 github.com/cosmos/cosmos-sdk/store/v2 v2.0.0 h1:5CFXBU5cHIvxMpz5QBrTwR5DL/W3uZL2BYYMoDp4siY=
 github.com/cosmos/cosmos-sdk/store/v2 v2.0.0/go.mod h1:XyRyi5fGjIcokBqS1cyA8/QVbVNy4ui8hmpk1gezuHo=
 github.com/cosmos/go-bip39 v1.0.0 h1:pcomnQdrdH22njcAatO0yWojsUnCO3y2tNoV1cb6hHY=
