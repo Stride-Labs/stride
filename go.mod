@@ -3,10 +3,10 @@ module github.com/Stride-Labs/stride/v32
 go 1.23.8
 
 require (
-	cosmossdk.io/api v0.9.2
-	cosmossdk.io/client/v2 v2.0.0-beta.9
-	cosmossdk.io/core v0.11.3
-	cosmossdk.io/errors v1.0.2
+	cosmossdk.io/api v1.0.0
+	cosmossdk.io/client/v2 v2.11.0
+	cosmossdk.io/core v1.1.0
+	cosmossdk.io/errors v1.1.0
 	cosmossdk.io/log v1.6.1
 	cosmossdk.io/math v1.5.3
 	cosmossdk.io/store v1.1.2
@@ -17,10 +17,10 @@ require (
 	cosmossdk.io/x/upgrade v0.2.0
 	github.com/CosmWasm/wasmd v0.60.6
 	github.com/CosmWasm/wasmvm/v2 v2.3.2
-	github.com/cometbft/cometbft v0.38.21
+	github.com/cometbft/cometbft v0.39.1
 	github.com/cosmos/cosmos-db v1.1.3
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
-	github.com/cosmos/cosmos-sdk v0.53.7
+	github.com/cosmos/cosmos-sdk v0.54.2
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10 v10.1.0
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v10 v10.0.0

@@ -846,11 +846,11 @@ func NewStrideApp(
 		runtime.NewKVStoreService(keys[govtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.StakingKeeper,
 		app.DistrKeeper,
 		app.MsgServiceRouter(),
 		govtypes.DefaultConfig(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govkeeper.NewDefaultCalculateVoteResultsAndVotingPower(app.StakingKeeper),
 	)
 	govKeeper.SetLegacyRouter(govRouter)
 	app.GovKeeper = *govKeeper
@@ -1096,11 +1096,11 @@ func NewStrideApp(
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
+		banktypes.ModuleName,
 		genutiltypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
 		authtypes.ModuleName,
-		banktypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		vestingtypes.ModuleName,
@@ -1718,7 +1718,12 @@ func (app *StrideApp) RegisterTendermintService(clientCtx client.Context) {
 
 // RegisterNodeService registers the node gRPC Query service.
 func (app *StrideApp) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
-	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
+	nodeservice.RegisterNodeService(
+		clientCtx,
+		app.GRPCQueryRouter(),
+		cfg,
+		func() int64 { return app.CommitMultiStore().EarliestVersion() },
+	)
 }
 
 // GetMaccPerms returns a copy of the module account permissions
