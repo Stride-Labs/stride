@@ -61,6 +61,9 @@ import (
 	strdburnertypes "github.com/Stride-Labs/stride/v32/x/strdburner/types"
 )
 
+// x/crisis was removed in cosmos-sdk v0.54; this is its historical store key.
+const removedCrisisStoreKey = "crisis"
+
 func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	// v2 upgrade handler
 	app.UpgradeKeeper.SetUpgradeHandler(
@@ -446,10 +449,8 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			Added: []string{ratelimittypes.StoreKey, autopilottypes.StoreKey},
 		}
 	case "v10":
-		// crisis module was removed in cosmos-sdk v0.54; inline its historical
-		// store key ("crisis") so the v10 store-upgrade marker still compiles.
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{"crisis", consensustypes.StoreKey},
+			Added: []string{removedCrisisStoreKey, consensustypes.StoreKey},
 		}
 	case "v12":
 		storeUpgrades = &storetypes.StoreUpgrades{
@@ -490,7 +491,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		}
 	case "v32":
 		storeUpgrades = &storetypes.StoreUpgrades{
-			Deleted: []string{"crisis"},
+			Deleted: []string{removedCrisisStoreKey},
 		}
 	}
 
