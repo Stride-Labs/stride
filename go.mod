@@ -52,9 +52,7 @@ require (
 	cloud.google.com/go/storage v1.62.1 // indirect
 	cosmossdk.io/collections v1.4.0 // indirect
 	cosmossdk.io/depinject v1.2.1 // indirect
-	cosmossdk.io/log v1.6.1 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
-	cosmossdk.io/store v1.1.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
@@ -393,7 +391,7 @@ replace (
 	// Add additional verification check to ensure an account is a BaseAccount type before converting
 	// it to a vesting account: https://github.com/Stride-Labs/vesting/pull/1
 	// Then later upgraded to SDK 50
-	github.com/evmos/vesting => github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk53-rc0
+	github.com/evmos/vesting => github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk54-rc0
 
 	//github.com/evmos/vesting => ../vesting
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
