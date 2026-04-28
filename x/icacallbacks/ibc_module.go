@@ -16,13 +16,19 @@ import (
 var _ porttypes.IBCModule = &IBCModule{}
 
 type IBCModule struct {
-	keeper keeper.Keeper
+	keeper      keeper.Keeper
+	ics4Wrapper porttypes.ICS4Wrapper
 }
 
-func NewIBCModule(k keeper.Keeper) IBCModule {
-	return IBCModule{
+func NewIBCModule(k keeper.Keeper) *IBCModule {
+	return &IBCModule{
 		keeper: k,
 	}
+}
+
+// SetICS4Wrapper sets the ICS4Wrapper above this module on the IBC stack.
+func (im *IBCModule) SetICS4Wrapper(wrapper porttypes.ICS4Wrapper) {
+	im.ics4Wrapper = wrapper
 }
 
 // No custom logic is necessary in OnChanOpenInit

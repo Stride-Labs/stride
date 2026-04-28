@@ -15,16 +15,27 @@ import (
 var _ porttypes.Middleware = &IBCMiddleware{}
 
 type IBCMiddleware struct {
-	app    porttypes.IBCModule
-	keeper keeper.Keeper
+	app         porttypes.IBCModule
+	keeper      keeper.Keeper
+	ics4Wrapper porttypes.ICS4Wrapper
 }
 
 // NewIBCMiddleware creates a new IBCMiddleware given the keeper
-func NewIBCMiddleware(k keeper.Keeper, app porttypes.IBCModule) IBCMiddleware {
-	return IBCMiddleware{
+func NewIBCMiddleware(k keeper.Keeper, app porttypes.IBCModule) *IBCMiddleware {
+	return &IBCMiddleware{
 		app:    app,
 		keeper: k,
 	}
+}
+
+// SetICS4Wrapper sets the ICS4Wrapper above this module on the IBC stack.
+func (im *IBCMiddleware) SetICS4Wrapper(wrapper porttypes.ICS4Wrapper) {
+	im.ics4Wrapper = wrapper
+}
+
+// SetUnderlyingApplication sets the underlying IBC application beneath this middleware.
+func (im *IBCMiddleware) SetUnderlyingApplication(app porttypes.IBCModule) {
+	im.app = app
 }
 
 // No custom logic needed for OnChanOpenInit - passes through to next middleware

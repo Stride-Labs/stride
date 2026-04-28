@@ -119,8 +119,6 @@ import (
 	ibctransferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v11/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
@@ -530,7 +528,6 @@ func NewStrideApp(
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
-		app.GetSubspace(ibcexported.ModuleName),
 		app.UpgradeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -585,17 +582,18 @@ func NewStrideApp(
 	// ICS4Wrapper is PacketForwardKeeper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
 	// The autopilot/records/staketia/stakedym middlewares short-circuit SendPacket and must not sit above the
 	// TransferKeeper on the outbound path, so we do NOT overwrite this with the full transferStack below.
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+	app.TransferKeeper = *ibctransferkeeper.NewKeeper(
 		appCodec,
+		app.AccountKeeper.AddressCodec(),
 		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
-		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.PacketForwardKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	// Override the default ICS4Wrapper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
+	app.TransferKeeper.WithICS4Wrapper(app.PacketForwardKeeper)
 
 	// Set the TransferKeeper reference in the PacketForwardKeeper
 	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
@@ -691,11 +689,9 @@ func NewStrideApp(
 	consumerModule := ccvconsumer.NewAppModule(app.ConsumerKeeper, app.GetSubspace(ccvconsumertypes.ModuleName))
 
 	// Note: must be above app.StakeibcKeeper and app.ICAOracleKeeper
-	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
+	app.ICAControllerKeeper = *icacontrollerkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]),
-		app.GetSubspace(icacontrollertypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -894,11 +890,9 @@ func NewStrideApp(
 	}
 
 	// create IBC middleware stacks by combining middleware with base application
-	app.ICAHostKeeper = icahostkeeper.NewKeeper(
+	app.ICAHostKeeper = *icahostkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[icahosttypes.StoreKey]),
-		app.GetSubspace(icahosttypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper — ICA host uses the core channel keeper directly
 		app.IBCKeeper.ChannelKeeper,
 		app.AccountKeeper,
 		app.MsgServiceRouter(),
@@ -912,7 +906,7 @@ func NewStrideApp(
 	// - IBC
 	// - ICAHost
 	// - base app
-	icaHostIBCModule := icahost.NewIBCModule(app.ICAHostKeeper)
+	icaHostIBCModule := icahost.NewIBCModule(&app.ICAHostKeeper)
 
 	// Stack two (ICACallbacks Stack) contains
 	// - IBC
@@ -924,7 +918,7 @@ func NewStrideApp(
 	var icacallbacksStack porttypes.IBCModule = icacallbacksIBCModule
 	icacallbacksStack = stakeibcmodule.NewIBCMiddleware(icacallbacksStack, app.StakeibcKeeper)
 	icacallbacksStack = icaoracle.NewIBCMiddleware(icacallbacksStack, app.ICAOracleKeeper)
-	icacallbacksStack = icacontroller.NewIBCMiddlewareWithAuth(icacallbacksStack, app.ICAControllerKeeper)
+	icacallbacksStack = icacontroller.NewIBCMiddlewareWithAuth(icacallbacksStack, &app.ICAControllerKeeper)
 
 	// SendPacket originates from the base app and work up the stack to core IBC
 	// RecvPacket originates from core IBC and goes down the stack
@@ -942,7 +936,7 @@ func NewStrideApp(
 	// - base app
 	// Note: Traffic up the stack does not pass through records or autopilot,
 	// as defined via the ICS4Wrappers of each keeper
-	var transferStack porttypes.IBCModule = transfer.NewIBCModule(app.TransferKeeper)
+	var transferStack porttypes.IBCModule = transfer.NewIBCModule(&app.TransferKeeper)
 	transferStack = packetforward.NewIBCMiddleware(
 		transferStack,
 		app.PacketForwardKeeper,
@@ -1001,7 +995,7 @@ func NewStrideApp(
 		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.BaseApp.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibchooks.NewAppModule(app.AccountKeeper),
-		transfer.NewAppModule(app.TransferKeeper),
+		transfer.NewAppModule(&app.TransferKeeper),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
 		ibctm.NewAppModule(tmLightClientModule),
 		// monitoringModule,
@@ -1760,13 +1754,11 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(claimtypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
-	// IBC legacy params to support v8 migration from param store to standalone stores
-	keyTable := ibcclienttypes.ParamKeyTable()
-	keyTable.RegisterParamSet(&ibcconnectiontypes.Params{})
-	paramsKeeper.Subspace(ibcexported.ModuleName).WithKeyTable(keyTable)
-	paramsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
-	paramsKeeper.Subspace(icacontrollertypes.SubModuleName).WithKeyTable(icacontrollertypes.ParamKeyTable())
-	paramsKeeper.Subspace(icahosttypes.SubModuleName).WithKeyTable(icahosttypes.ParamKeyTable())
+	// IBC legacy subspaces (param key tables removed in ibc-go v11; subspaces kept for migration handlers)
+	paramsKeeper.Subspace(ibcexported.ModuleName)
+	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
+	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	return paramsKeeper
 }
 

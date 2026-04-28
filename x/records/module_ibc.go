@@ -18,16 +18,27 @@ import (
 // IBC MODULE IMPLEMENTATION
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
 type IBCModule struct {
-	keeper keeper.Keeper
-	app    porttypes.IBCModule
+	keeper      keeper.Keeper
+	app         porttypes.IBCModule
+	ics4Wrapper porttypes.ICS4Wrapper
 }
 
 // NewIBCModule creates a new IBCModule given the keeper
-func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
-	return IBCModule{
+func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) *IBCModule {
+	return &IBCModule{
 		keeper: k,
 		app:    app,
 	}
+}
+
+// SetICS4Wrapper sets the ICS4Wrapper above this module on the IBC stack.
+func (im *IBCModule) SetICS4Wrapper(wrapper porttypes.ICS4Wrapper) {
+	im.ics4Wrapper = wrapper
+}
+
+// SetUnderlyingApplication sets the underlying IBC application beneath this middleware.
+func (im *IBCModule) SetUnderlyingApplication(app porttypes.IBCModule) {
+	im.app = app
 }
 
 // OnChanOpenInit implements the IBCModule interface
