@@ -31,16 +31,16 @@ func AirdropConfigValidateBasic(
 		return errors.New("reward denom must be specified")
 	}
 
-	if distributionStartDate == nil || *distributionStartDate == (time.Time{}) {
+	if distributionStartDate == nil || (*distributionStartDate).Equal((time.Time{})) {
 		return errors.New("distribution start date must be specified")
 	}
-	if distributionEndDate == nil || *distributionEndDate == (time.Time{}) {
+	if distributionEndDate == nil || (*distributionEndDate).Equal((time.Time{})) {
 		return errors.New("distribution end date must be specified")
 	}
-	if clawbackDate == nil || *clawbackDate == (time.Time{}) {
+	if clawbackDate == nil || (*clawbackDate).Equal((time.Time{})) {
 		return errors.New("clawback date must be specified")
 	}
-	if claimTypeDeadlineDate == nil || *claimTypeDeadlineDate == (time.Time{}) {
+	if claimTypeDeadlineDate == nil || (*claimTypeDeadlineDate).Equal((time.Time{})) {
 		return errors.New("claim type deadline date must be specified")
 	}
 

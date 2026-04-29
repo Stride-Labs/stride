@@ -56,7 +56,7 @@ func (k Keeper) HostZoneAll(c context.Context, req *types.QueryAllHostZoneReques
 	store := ctx.KVStore(k.storeKey)
 	hostZoneStore := prefix.NewStore(store, types.KeyPrefix(types.HostZoneKey))
 
-	pageRes, err := query.Paginate(hostZoneStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(hostZoneStore, req.Pagination, func(key, value []byte) error {
 		var hostZone types.HostZone
 		if err := k.cdc.Unmarshal(value, &hostZone); err != nil {
 			return err

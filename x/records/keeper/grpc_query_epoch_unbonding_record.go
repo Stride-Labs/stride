@@ -25,7 +25,7 @@ func (k Keeper) EpochUnbondingRecordAll(c context.Context, req *types.QueryAllEp
 	store := ctx.KVStore(k.storeKey)
 	epochUnbondingRecordStore := prefix.NewStore(store, types.KeyPrefix(types.EpochUnbondingRecordKey))
 
-	pageRes, err := query.Paginate(epochUnbondingRecordStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(epochUnbondingRecordStore, req.Pagination, func(key, value []byte) error {
 		var epochUnbondingRecord types.EpochUnbondingRecord
 		if err := k.Cdc.Unmarshal(value, &epochUnbondingRecord); err != nil {
 			return err

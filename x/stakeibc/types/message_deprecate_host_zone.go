@@ -13,7 +13,7 @@ const TypeMsgDeprecateHostZone = "deprecate_host_zone"
 
 var _ sdk.Msg = &MsgDeprecateHostZone{}
 
-func NewMsgDeprecateHostZone(authority string, chainId string) *MsgDeprecateHostZone {
+func NewMsgDeprecateHostZone(authority, chainId string) *MsgDeprecateHostZone {
 	return &MsgDeprecateHostZone{
 		Authority: authority,
 		ChainId:   chainId,

@@ -120,7 +120,7 @@ func GetAllHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx s
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // Add a new hourly epoch that will be used by the rate limit module

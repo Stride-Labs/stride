@@ -160,7 +160,7 @@ func (s *AppTestHelper) FundAccount(acc sdk.AccAddress, amount sdk.Coin) {
 }
 
 // Helper function to compare coins with a more legible error
-func (s *AppTestHelper) CompareCoins(expectedCoin sdk.Coin, actualCoin sdk.Coin, msg string) {
+func (s *AppTestHelper) CompareCoins(expectedCoin, actualCoin sdk.Coin, msg string) {
 	s.Require().Equal(expectedCoin.Amount.Int64(), actualCoin.Amount.Int64(), msg)
 }
 
@@ -480,7 +480,7 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 }
 
 // Creates a transfer channel between two chains
-func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, providerChain *ibctesting.TestChain) *ibctesting.Path {
+func NewTransferPath(chainA, chainB, providerChain *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig.PortID = ibctesting.TransferPort
 	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
@@ -498,7 +498,7 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain,
 }
 
 // Creates an ICA channel between two chains
-func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, providerChain *ibctesting.TestChain) *ibctesting.Path {
+func NewIcaPath(chainA, chainB, providerChain *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig.PortID = icatypes.HostPortID
 	path.EndpointB.ChannelConfig.PortID = icatypes.HostPortID
@@ -518,7 +518,7 @@ func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, prov
 // In ibctesting, there's no easy way to create a new channel on an existing connection
 // To get around this, this helper function will copy the client/connection info from an existing channel
 // We use this when creating ICA channels, because we want to reuse the same connections/clients from the transfer channel
-func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting.Path) *ibctesting.Path {
+func CopyConnectionAndClientToPath(path, pathToCopy *ibctesting.Path) *ibctesting.Path {
 	path.EndpointA.ClientID = pathToCopy.EndpointA.ClientID
 	path.EndpointB.ClientID = pathToCopy.EndpointB.ClientID
 	path.EndpointA.ConnectionID = pathToCopy.EndpointA.ConnectionID

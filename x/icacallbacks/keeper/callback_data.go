@@ -59,5 +59,5 @@ func (k Keeper) GetAllCallbackData(ctx sdk.Context) (list []types.CallbackData) 
 		list = append(list, val)
 	}
 
-	return
+	return list
 }

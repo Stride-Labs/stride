@@ -39,7 +39,7 @@ type ValidatorICQCallbackTestCase struct {
 	sharesToTokensRateIfSlashed sdkmath.LegacyDec
 }
 
-func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens int64, shares int64) []byte {
+func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens, shares int64) []byte {
 	validator := stakingtypes.Validator{
 		OperatorAddress: address,
 		Tokens:          sdkmath.NewInt(tokens),

@@ -50,7 +50,7 @@ func (k Keeper) GetAllEpochUnbondingRecord(ctx sdk.Context) (list []types.EpochU
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // GetAllPreviousEpochUnbondingRecords returns all epochUnbondingRecords prior to a given epoch
@@ -69,7 +69,7 @@ func (k Keeper) GetAllPreviousEpochUnbondingRecords(ctx sdk.Context, epochNumber
 		}
 	}
 
-	return
+	return list
 }
 
 // GetEpochUnbondingRecordIDBytes returns the byte representation of the ID

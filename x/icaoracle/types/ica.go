@@ -56,6 +56,6 @@ func (i ICATx) GetRelativeTimeoutNano() uint64 {
 	return utils.IntToUint(i.RelativeTimeout.Nanoseconds())
 }
 
-func FormatICAAccountOwner(chainId string, accountType string) string {
+func FormatICAAccountOwner(chainId, accountType string) string {
 	return fmt.Sprintf("%s.%s", chainId, accountType)
 }

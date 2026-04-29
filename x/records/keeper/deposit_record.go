@@ -92,7 +92,7 @@ func (k Keeper) GetAllDepositRecord(ctx sdk.Context) (list []types.DepositRecord
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // GetDepositRecordIDBytes returns the byte representation of the ID

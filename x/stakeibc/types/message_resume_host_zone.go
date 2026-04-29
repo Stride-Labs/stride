@@ -13,7 +13,7 @@ const TypeMsgResumeHostZone = "resume_host_zone"
 
 var _ sdk.Msg = &MsgResumeHostZone{}
 
-func NewMsgResumeHostZone(creator string, chainId string) *MsgResumeHostZone {
+func NewMsgResumeHostZone(creator, chainId string) *MsgResumeHostZone {
 	return &MsgResumeHostZone{
 		Creator: creator,
 		ChainId: chainId,

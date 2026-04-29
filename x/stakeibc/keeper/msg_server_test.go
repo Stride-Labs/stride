@@ -1673,7 +1673,7 @@ func (s *KeeperTestSuite) closeICAChannel(portId, channelID string) {
 }
 
 // Helper function to call RestoreChannel and check that a new channel was created and opened
-func (s *KeeperTestSuite) restoreChannelAndVerifySuccess(msg types.MsgRestoreInterchainAccount, portID string, channelID string) {
+func (s *KeeperTestSuite) restoreChannelAndVerifySuccess(msg types.MsgRestoreInterchainAccount, portID, channelID string) {
 	// Restore the channel
 	_, err := s.GetMsgServer().RestoreInterchainAccount(s.Ctx, &msg)
 	s.Require().NoError(err, "registered ica account successfully")

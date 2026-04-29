@@ -15,7 +15,7 @@ const TypeMsgAddValidators = "add_validators"
 
 var _ sdk.Msg = &MsgAddValidators{}
 
-func NewMsgAddValidators(creator string, hostZone string, validators []*Validator) *MsgAddValidators {
+func NewMsgAddValidators(creator, hostZone string, validators []*Validator) *MsgAddValidators {
 	return &MsgAddValidators{
 		Creator:    creator,
 		HostZone:   hostZone,

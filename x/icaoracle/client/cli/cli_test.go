@@ -19,9 +19,7 @@ import (
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
 
-var (
-	HostChainId = "chain-1"
-)
+var HostChainId = "chain-1"
 
 type ClientTestSuite struct {
 	suite.Suite

@@ -12,9 +12,7 @@ import (
 	staketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/types"
 )
 
-var (
-	UpgradeName = "v31"
-)
+var UpgradeName = "v31"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v31
 func CreateUpgradeHandler(

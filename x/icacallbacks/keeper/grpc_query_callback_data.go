@@ -24,7 +24,7 @@ func (k Keeper) CallbackDataAll(c context.Context, req *types.QueryAllCallbackDa
 	store := ctx.KVStore(k.storeKey)
 	callbackDataStore := prefix.NewStore(store, types.KeyPrefix(types.CallbackDataKeyPrefix))
 
-	pageRes, err := query.Paginate(callbackDataStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(callbackDataStore, req.Pagination, func(key, value []byte) error {
 		var callbackData types.CallbackData
 		if err := k.cdc.Unmarshal(value, &callbackData); err != nil {
 			return err

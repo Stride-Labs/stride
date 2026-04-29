@@ -144,7 +144,7 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 
 // Confirms a delegation has completed on the host zone, increments the internal delegated balance,
 // and archives the record
-func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash, sender string) (err error) {
 	// grab unbonding record, verify record is ready to be delegated, and a hash hasn't already been posted
 	delegationRecord, found := k.GetDelegationRecord(ctx, recordId)
 	if !found {

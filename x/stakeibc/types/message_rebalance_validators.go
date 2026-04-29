@@ -18,7 +18,7 @@ const TypeMsgRebalanceValidators = "rebalance_validators"
 
 var _ sdk.Msg = &MsgRebalanceValidators{}
 
-func NewMsgRebalanceValidators(creator string, hostZone string, numValidators uint64) *MsgRebalanceValidators {
+func NewMsgRebalanceValidators(creator, hostZone string, numValidators uint64) *MsgRebalanceValidators {
 	return &MsgRebalanceValidators{
 		Creator:      creator,
 		HostZone:     hostZone,

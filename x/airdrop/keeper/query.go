@@ -106,7 +106,7 @@ func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocat
 	airdropAllocationsSubstore := prefix.NewStore(allAllocationsStore, types.KeyPrefix(req.AirdropId))
 
 	allocationsOnPage := []types.UserAllocation{}
-	pageRes, err := query.Paginate(airdropAllocationsSubstore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(airdropAllocationsSubstore, req.Pagination, func(key, value []byte) error {
 		var userAllocation types.UserAllocation
 		if err := k.cdc.Unmarshal(value, &userAllocation); err != nil {
 			return err

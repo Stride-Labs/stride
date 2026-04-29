@@ -18,7 +18,7 @@ func (k Keeper) SetTradeRoute(ctx sdk.Context, tradeRoute types.TradeRoute) {
 
 // GetTradeRoute returns a tradeRoute from its start and end denoms
 // The start and end denom's are in their native format (e.g. uusdc and udydx)
-func (k Keeper) GetTradeRoute(ctx sdk.Context, rewardDenom string, hostDenom string) (val types.TradeRoute, found bool) {
+func (k Keeper) GetTradeRoute(ctx sdk.Context, rewardDenom, hostDenom string) (val types.TradeRoute, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKeyPrefix))
 	key := types.TradeRouteKeyFromDenoms(rewardDenom, hostDenom)
 	b := store.Get(key)
@@ -31,7 +31,7 @@ func (k Keeper) GetTradeRoute(ctx sdk.Context, rewardDenom string, hostDenom str
 
 // RemoveTradeRoute removes a tradeRoute from the store
 // The start and end denom's are in their native format (e.g. uusdc and udydx)
-func (k Keeper) RemoveTradeRoute(ctx sdk.Context, rewardDenom string, hostDenom string) {
+func (k Keeper) RemoveTradeRoute(ctx sdk.Context, rewardDenom, hostDenom string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TradeRouteKeyPrefix))
 	key := types.TradeRouteKeyFromDenoms(rewardDenom, hostDenom)
 	store.Delete(key)
@@ -51,7 +51,7 @@ func (k Keeper) GetAllTradeRoutes(ctx sdk.Context) (list []types.TradeRoute) {
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // Searches for a trade route by the trade account chain ID

@@ -22,7 +22,7 @@ import (
 )
 
 // Submit a validator sharesToTokens rate ICQ as triggered either manually or epochly with a conservative timeout
-func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId string, validatorAddress string) error {
+func (k Keeper) QueryValidatorSharesToTokensRate(ctx sdk.Context, chainId, validatorAddress string) error {
 	timeoutDuration := time.Hour * 24
 	timeoutPolicy := icqtypes.TimeoutPolicy_REJECT_QUERY_RESPONSE
 	callbackData := []byte{}

@@ -57,7 +57,7 @@ func (k Keeper) TryRedeemStake(
 	return k.RunRedeemStake(ctx, strideAddress, redemptionReceiver, hostZoneDenom, amount)
 }
 
-func (k Keeper) RunRedeemStake(ctx sdk.Context, strideAddress string, redemptionReceiver string, hostZoneDenom string, amount sdkmath.Int) error {
+func (k Keeper) RunRedeemStake(ctx sdk.Context, strideAddress, redemptionReceiver, hostZoneDenom string, amount sdkmath.Int) error {
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return err

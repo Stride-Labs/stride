@@ -15,8 +15,10 @@ const (
 )
 
 // KeyActive is the store key for Params
-var KeyStakeibcActive = []byte("StakeibcActive")
-var KeyClaimActive = []byte("ClaimActive")
+var (
+	KeyStakeibcActive = []byte("StakeibcActive")
+	KeyClaimActive    = []byte("ClaimActive")
+)
 
 var _ paramtypes.ParamSet = (*Params)(nil)
 

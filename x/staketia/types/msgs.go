@@ -381,7 +381,7 @@ func (msg *MsgResumeHostZone) ValidateBasic() error {
 //             MsgSetOperatorAddress
 // ----------------------------------------------
 
-func NewMsgSetOperatorAddress(signer string, operator string) *MsgSetOperatorAddress {
+func NewMsgSetOperatorAddress(signer, operator string) *MsgSetOperatorAddress {
 	return &MsgSetOperatorAddress{
 		Signer:   signer,
 		Operator: operator,

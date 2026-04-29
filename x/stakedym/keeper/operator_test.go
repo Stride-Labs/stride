@@ -6,7 +6,6 @@ import (
 
 // test that the admin address helpers work as expected
 func (s *KeeperTestSuite) TestIsAddressHelpers() {
-
 	operatorAddress := s.TestAccs[0].String()
 	safeAddress := s.TestAccs[1].String()
 	randomAddress := s.TestAccs[2].String()
@@ -33,5 +32,4 @@ func (s *KeeperTestSuite) TestIsAddressHelpers() {
 	s.Require().NoError(s.App.StakedymKeeper.CheckIsSafeOrOperatorAddress(s.Ctx, operatorAddress))
 	s.Require().NoError(s.App.StakedymKeeper.CheckIsSafeOrOperatorAddress(s.Ctx, safeAddress))
 	s.Require().Error(s.App.StakedymKeeper.CheckIsSafeOrOperatorAddress(s.Ctx, randomAddress))
-
 }

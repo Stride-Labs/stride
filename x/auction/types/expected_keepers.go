@@ -24,5 +24,5 @@ type BankKeeper interface {
 
 // Required IcqOracleKeeper functions
 type IcqOracleKeeper interface {
-	GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (price sdkmath.LegacyDec, err error)
+	GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom, quoteDenom string) (price sdkmath.LegacyDec, err error)
 }

@@ -257,7 +257,7 @@ func (msg *MsgUpdateAirdrop) ValidateBasic() error {
 //             MsgAddAllocations
 // ----------------------------------------------
 
-func NewMsgAddAllocations(admin string, airdropId string, allocations []RawAllocation) *MsgAddAllocations {
+func NewMsgAddAllocations(admin, airdropId string, allocations []RawAllocation) *MsgAddAllocations {
 	return &MsgAddAllocations{
 		Admin:       admin,
 		AirdropId:   airdropId,

@@ -45,7 +45,7 @@ func (k Keeper) Auctions(goCtx context.Context, req *types.QueryAuctionsRequest)
 	auctionStore := prefix.NewStore(store, types.AuctionPrefix)
 
 	auctions := []types.Auction{}
-	pageRes, err := query.Paginate(auctionStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(auctionStore, req.Pagination, func(key, value []byte) error {
 		var auction types.Auction
 		if err := k.cdc.Unmarshal(value, &auction); err != nil {
 			return err

@@ -67,7 +67,7 @@ func (k Keeper) GetAllEpochTracker(ctx sdk.Context) (list []types.EpochTracker) 
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // Update the epoch information in the stakeibc epoch tracker

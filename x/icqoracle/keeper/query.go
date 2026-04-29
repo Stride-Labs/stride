@@ -49,7 +49,7 @@ func (k Keeper) TokenPrices(goCtx context.Context, req *types.QueryTokenPricesRe
 	tokenPriceStore := prefix.NewStore(store, types.TokenPricePrefix)
 
 	responses := []types.TokenPriceResponse{}
-	pageRes, err := query.Paginate(tokenPriceStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(tokenPriceStore, req.Pagination, func(key, value []byte) error {
 		var tokenPrice types.TokenPrice
 		if err := k.cdc.Unmarshal(value, &tokenPrice); err != nil {
 			return err

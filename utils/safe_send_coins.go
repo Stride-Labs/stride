@@ -11,7 +11,7 @@ import (
 
 type BankKeeper interface {
 	BlockedAddr(addr sdk.AccAddress) bool
-	SendCoins(context context.Context, senderAddr sdk.AccAddress, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoins(context context.Context, senderAddr, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }
 
 // SafeSendCoins transfers coins from one account to another with additional safety checks.
@@ -30,7 +30,7 @@ type BankKeeper interface {
 //   - error: nil if the transfer is successful, otherwise an error
 //   - returns sdkerrors.ErrUnauthorized if checkBlockedAddr is true and recipient is blocked
 //   - returns any error from the underlying SendCoins operation
-func SafeSendCoins(checkBlockedAddr bool, bankKeeper BankKeeper, ctx sdk.Context, senderAddr sdk.AccAddress, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
+func SafeSendCoins(checkBlockedAddr bool, bankKeeper BankKeeper, ctx sdk.Context, senderAddr, recipientAddr sdk.AccAddress, amt sdk.Coins) error {
 	if checkBlockedAddr && bankKeeper.BlockedAddr(recipientAddr) {
 		return errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive funds", recipientAddr)
 	}

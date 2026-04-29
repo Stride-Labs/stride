@@ -849,7 +849,7 @@ func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error 
 	return k.SetParams(ctx, params)
 }
 
-func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress string, newStrideAddress string, airdropId string) error {
+func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress, newStrideAddress, airdropId string) error {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropId)
 	if airdrop == nil {
 		return errorsmod.Wrapf(types.ErrAirdropNotFound, "airdrop not found for identifier %s", airdropId)

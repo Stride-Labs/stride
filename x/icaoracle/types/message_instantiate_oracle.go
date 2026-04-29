@@ -15,7 +15,7 @@ const TypeMsgInstantiateOracle = "instantiate_oracle"
 
 var _ sdk.Msg = &MsgInstantiateOracle{}
 
-func NewMsgInstantiateOracle(creator string, chainId string, contractCodeId uint64, transferChannelId string) *MsgInstantiateOracle {
+func NewMsgInstantiateOracle(creator, chainId string, contractCodeId uint64, transferChannelId string) *MsgInstantiateOracle {
 	return &MsgInstantiateOracle{
 		Creator:                 creator,
 		OracleChainId:           chainId,

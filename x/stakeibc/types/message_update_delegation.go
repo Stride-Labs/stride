@@ -13,7 +13,7 @@ const TypeMsgUpdateValidatorSharesExchRate = "update_validator_shares_exch_rate"
 
 var _ sdk.Msg = &MsgUpdateValidatorSharesExchRate{}
 
-func NewMsgUpdateValidatorSharesExchRate(creator string, chainid string, valoper string) *MsgUpdateValidatorSharesExchRate {
+func NewMsgUpdateValidatorSharesExchRate(creator, chainid, valoper string) *MsgUpdateValidatorSharesExchRate {
 	return &MsgUpdateValidatorSharesExchRate{
 		Creator: creator,
 		ChainId: chainid,

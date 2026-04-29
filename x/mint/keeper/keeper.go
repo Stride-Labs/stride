@@ -105,7 +105,7 @@ func (k Keeper) GetMinter(ctx sdk.Context) (minter types.Minter) {
 	}
 
 	k.cdc.MustUnmarshal(b, &minter)
-	return
+	return minter
 }
 
 // set the minter.
@@ -229,7 +229,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 }
 
 // set up a new module account address
-func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, submoduleNamespace string) {
+func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName, submoduleNamespace string) {
 	// create and save the module account to the account keeper
 	acctAddress := k.GetSubmoduleAddress(submoduleName, submoduleNamespace)
 	acc := k.accountKeeper.NewAccount(
@@ -244,7 +244,7 @@ func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, sub
 }
 
 // helper: get the address of a submodule
-func (k Keeper) GetSubmoduleAddress(submoduleName string, submoduleNamespace string) sdk.AccAddress {
+func (k Keeper) GetSubmoduleAddress(submoduleName, submoduleNamespace string) sdk.AccAddress {
 	key := append([]byte(submoduleNamespace), []byte(submoduleName)...)
 	return address.Module(types.ModuleName, key)
 }

@@ -81,7 +81,7 @@ func (s *KeeperTestSuite) checkModuleAccountBalance(moduleName, denom string, ex
 }
 
 // Helper function to check the balance of a regular account
-func (s *KeeperTestSuite) checkAccountBalance(address string, denom string, expectedBalance sdkmath.Int) {
+func (s *KeeperTestSuite) checkAccountBalance(address, denom string, expectedBalance sdkmath.Int) {
 	tokens := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(address), denom)
 	s.Require().Equal(expectedBalance.Int64(), tokens.Amount.Int64(), "%s %s balance", address, denom)
 }

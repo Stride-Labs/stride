@@ -237,7 +237,7 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 
 // Confirms that an undelegation has been completed on the host zone
 // Updates the record status to UNBONDING_IN_PROGRESS, decrements the delegated balance and burns stTokens
-func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash, sender string) (err error) {
 	// grab unbonding record, verify it's in the right state, and no tx hash has been submitted yet
 	record, found := k.GetUnbondingRecord(ctx, recordId)
 	if !found {
@@ -340,7 +340,7 @@ func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
 }
 
 // Confirms that unbonded tokens have been sent back to stride and marks the unbonding record CLAIMABLE
-func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHash, sender string) (err error) {
 	// grab unbonding record and verify the record is ready to be swept, and has not been swept yet
 	record, found := k.GetUnbondingRecord(ctx, recordId)
 	if !found {

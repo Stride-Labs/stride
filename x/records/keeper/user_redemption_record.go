@@ -45,7 +45,7 @@ func (k Keeper) GetAllUserRedemptionRecord(ctx sdk.Context) (list []types.UserRe
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // IterateUserRedemptionRecords iterates zones

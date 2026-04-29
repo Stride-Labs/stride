@@ -268,13 +268,13 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 
 	testCases := []struct {
 		name          string
-		setup         func() (responseBz []byte, callbackDataBz []byte)
+		setup         func() (responseBz, callbackDataBz []byte)
 		expectedError string
 		verify        func(err error)
 	}{
 		{
 			name: "successful update with valid pool data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				// Create mock pool data with expected price of 1.5
@@ -306,7 +306,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "successful update with inverse assets in twap data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				// Create pool with swapped denoms
@@ -338,14 +338,14 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "invalid callback data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				return []byte{}, []byte("invalid callback data")
 			},
 			expectedError: "Error deserializing query.CallbackData",
 		},
 		{
 			name: "token price not found",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				// Don't set the token price in state
 				return []byte{}, s.App.AppCodec().MustMarshal(&baseTokenPrice)
 			},
@@ -353,7 +353,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "query not in progress",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				tokenPrice := baseTokenPrice
 				tokenPrice.QueryInProgress = false
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, tokenPrice)
@@ -367,7 +367,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "invalid twap data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				return []byte("invalid twap data"), s.App.AppCodec().MustMarshal(&baseTokenPrice)
@@ -376,21 +376,21 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "empty query callback data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				return []byte{}, []byte{}
 			},
 			expectedError: "price not found for baseDenom='' quoteDenom='' poolId='0'",
 		},
 		{
 			name: "nil query callback data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				return []byte{}, nil
 			},
 			expectedError: "price not found for baseDenom='' quoteDenom='' poolId='0'",
 		},
 		{
 			name: "corrupted token price in callback data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				// Create corrupted protobuf data
 				corruptedData := []byte{0xFF, 0xFF, 0xFF, 0xFF}
 				return []byte{}, corruptedData
@@ -399,7 +399,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "empty twap response data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				return []byte{}, s.App.AppCodec().MustMarshal(&baseTokenPrice)
@@ -408,7 +408,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "nil twap response data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				return nil, s.App.AppCodec().MustMarshal(&baseTokenPrice)
@@ -417,7 +417,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "corrupted twap response data",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				// Create corrupted protobuf data
@@ -428,7 +428,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "twap with empty tokens",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 
 				// Create twap response with empty token denoms
@@ -445,7 +445,7 @@ func (s *KeeperTestSuite) TestOsmosisPriceCallback() {
 		},
 		{
 			name: "error setting updated token price",
-			setup: func() (responseBz []byte, callbackDataBz []byte) {
+			setup: func() (responseBz, callbackDataBz []byte) {
 				// First set the token price
 				s.App.ICQOracleKeeper.SetTokenPrice(s.Ctx, baseTokenPrice)
 

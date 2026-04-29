@@ -148,7 +148,7 @@ func (k Keeper) RedemptionRecords(c context.Context, req *types.QueryRedemptionR
 	store := ctx.KVStore(k.storeKey)
 	redemptionRecordStore := prefix.NewStore(store, types.RedemptionRecordsKeyPrefix)
 
-	pageRes, err := query.Paginate(redemptionRecordStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(redemptionRecordStore, req.Pagination, func(key, value []byte) error {
 		var redemptionRecord types.RedemptionRecord
 		if err := k.cdc.Unmarshal(value, &redemptionRecord); err != nil {
 			return err

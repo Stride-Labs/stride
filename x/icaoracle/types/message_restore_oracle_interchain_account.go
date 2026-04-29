@@ -11,7 +11,7 @@ const TypeMsgRestoreOracleICA = "restore_oracle_ica"
 
 var _ sdk.Msg = &MsgRestoreOracleICA{}
 
-func NewMsgRestoreOracleICA(creator string, oracleChainId string) *MsgRestoreOracleICA {
+func NewMsgRestoreOracleICA(creator, oracleChainId string) *MsgRestoreOracleICA {
 	return &MsgRestoreOracleICA{
 		Creator:       creator,
 		OracleChainId: oracleChainId,

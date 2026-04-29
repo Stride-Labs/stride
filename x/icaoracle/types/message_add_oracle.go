@@ -15,7 +15,7 @@ const TypeMsgAddOracle = "add_oracle"
 
 var _ sdk.Msg = &MsgAddOracle{}
 
-func NewMsgAddOracle(creator string, connectionId string) *MsgAddOracle {
+func NewMsgAddOracle(creator, connectionId string) *MsgAddOracle {
 	return &MsgAddOracle{
 		Creator:      creator,
 		ConnectionId: connectionId,
