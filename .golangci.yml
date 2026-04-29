@@ -10,7 +10,6 @@ run:
     - containedctx
     - contextcheck
     - cyclop
-    - deadcode
     - decorder
     - depguard
     - dogsled
@@ -20,11 +19,8 @@ run:
     - errchkjson
     - errname
     - errorlint
-    - execinquery
     - exhaustive
-    - exhaustivestruct
     - exhaustruct
-    - exportloopref
     - forbidigo
     - forcetypeassert
     - funlen
@@ -37,11 +33,10 @@ run:
     - gocyclo
     - godot
     - godox
-    - goerr113
+    - err113
     - gofumpt
     - goheader
-    - golint
-    - gomnd
+    - mnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
@@ -49,17 +44,14 @@ run:
     - gosimple
     - govet
     - grouper
-    - ifshort
     - importas
     - ineffassign
     - interfacebloat
-    - interfacer
     - ireturn
     - lll
     - loggercheck
     - maintidx
     - makezero
-    - maligned
     - misspell
     - nakedret
     - nestif
@@ -69,7 +61,6 @@ run:
     - noctx
     - nolintlint
     - nonamedreturns
-    - nosnakecase
     - nosprintfhostport
     - paralleltest
     - prealloc
@@ -78,10 +69,8 @@ run:
     - reassign
     - revive
     - rowserrcheck
-    - scopelint
     - sqlclosecheck
     - staticcheck
-    - structcheck
     - stylecheck
     - tagliatelle
     - tenv
@@ -94,7 +83,6 @@ run:
     - unparam
     - unused
     - usestdlibvars
-    - varcheck
     - varnamelen
     - wastedassign
     - whitespace
