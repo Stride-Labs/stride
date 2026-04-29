@@ -56,7 +56,6 @@ require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.2 // indirect
-	github.com/CosmWasm/wasmvm/v2 v2.3.2 // indirect
 	github.com/DataDog/datadog-go v4.8.3+incompatible // indirect
 	github.com/DataDog/zstd v1.5.7 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.32.0 // indirect
@@ -364,6 +363,13 @@ replace (
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11 => github.com/Stride-Labs/ibc-apps/middleware/packet-forward-middleware/v11 v11.0.0-stride-rc0
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v11 => github.com/Stride-Labs/ibc-apps/modules/ibc-hooks/v11 v11.0.0-stride-rc0
 	github.com/cosmos/ibc-apps/modules/rate-limiting/v11 => github.com/Stride-Labs/ibc-apps/modules/rate-limiting/v11 v11.0.0-stride-rc0
+
+	// Stride-Labs fork of 08-wasm that bumps the light-client internals from
+	// wasmvm/v2 to wasmvm/v3 so it can share a single runtime with wasmd v0.70.
+	// TODO: drop this replace directive and bump the upstream require line back
+	// to the official cosmos/ibc-go release once 08-wasm publishes a wasmvm/v3
+	// compatible version.
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11 => github.com/Stride-Labs/ibc-go/modules/light-clients/08-wasm/v11 v11.0.0-wasmvm-v3-rc0
 
 	// Stride-Labs fork of ics23 with a one-line patch to LeafOp.Apply that permits
 	// empty-value leaves (upstream tracking: cosmos/ics23#134). Needed because

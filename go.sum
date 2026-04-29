@@ -53,8 +53,6 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/CosmWasm/wasmd v0.70.0 h1:ZpIBgSPsbxIuGYWbtLUYcrFDmzDldjN3bf2ruV78NRc=
 github.com/CosmWasm/wasmd v0.70.0/go.mod h1:GcE5hSsLRKB2RtKNzJbMqPYiZrPu2SrQIadU9PfbmzE=
-github.com/CosmWasm/wasmvm/v2 v2.3.2 h1:LO6+G9iG3Hg6EezxfMWX5TMx6a5DbuKGwZv6BSdtXfA=
-github.com/CosmWasm/wasmvm/v2 v2.3.2/go.mod h1:RzLlMwFRLaTwPM0DdHFA0m/APT5muKjU6t3ZxCrpXJ0=
 github.com/CosmWasm/wasmvm/v3 v3.0.4 h1:nccZU7jzH3bSMnHzXE7JjpSfeXayv6IUcpugdRVX5uc=
 github.com/CosmWasm/wasmvm/v3 v3.0.4/go.mod h1:oknpb1bFERvvKcY7vHRp1F/Y/z66xVrsl7n9uWkOAlM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
@@ -89,6 +87,8 @@ github.com/Stride-Labs/ibc-apps/modules/ibc-hooks/v11 v11.0.0-stride-rc0 h1:UqPh
 github.com/Stride-Labs/ibc-apps/modules/ibc-hooks/v11 v11.0.0-stride-rc0/go.mod h1:j0Ws0wadCCDs/3SDePPV6bxIkTK8btGLdV6bdEpqQFI=
 github.com/Stride-Labs/ibc-apps/modules/rate-limiting/v11 v11.0.0-stride-rc0 h1:DTMOzx0aPhH9b4ohelhA7ILaw3t+JAmapf8xVLae+jE=
 github.com/Stride-Labs/ibc-apps/modules/rate-limiting/v11 v11.0.0-stride-rc0/go.mod h1:pr4u030EkonDfVgwBHfJnjiInOTPMcDHFksjyS5mZQk=
+github.com/Stride-Labs/ibc-go/modules/light-clients/08-wasm/v11 v11.0.0-wasmvm-v3-rc0 h1:XnXO5xIF5kxuS5KDrdhw1aZJ4xl5YXDWH3npJAP3Tj8=
+github.com/Stride-Labs/ibc-go/modules/light-clients/08-wasm/v11 v11.0.0-wasmvm-v3-rc0/go.mod h1:QFrVFRGKVs2vgJ7uJoDMNb56QunW4Rbp2wDFGFH6cYE=
 github.com/Stride-Labs/ics23/go v0.11.0-non-membership-icq-rc4 h1:/zsQ/+NwDTdESdo4sUlAryBM6Rauqr6+GMETICaeI0A=
 github.com/Stride-Labs/ics23/go v0.11.0-non-membership-icq-rc4/go.mod h1:RkgSLGLkT2RoQ7VhF+dYbYijIY7+SERZQNc2uUm5tu0=
 github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk54-rc0 h1:3GgPgVU5IWgXcWexMSizBG4k1aceEQsORj/QAluG134=
@@ -260,8 +260,6 @@ github.com/cosmos/gogoproto v1.7.2 h1:5G25McIraOC0mRFv9TVO139Uh3OklV2hczr13KKVHC
 github.com/cosmos/gogoproto v1.7.2/go.mod h1:8S7w53P1Y1cHwND64o0BnArT6RmdgIvsBuco6uTllsk=
 github.com/cosmos/iavl v1.2.8 h1:55F96BGUJ7KT7h+Ky/cEqS+pEvhFqsU4O8Th3F0N1js=
 github.com/cosmos/iavl v1.2.8/go.mod h1:FRHN4tO+6crf0p2zsqye+nAbsMgiwdkxpWm18DyP6+Y=
-github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11 v11.0.0 h1:tSDoobswqUcAM2QkrZRreb9RcEjfNlHHzCJ1To6NLcI=
-github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11 v11.0.0/go.mod h1:MNNuJf8pljH5f6XLrczt8XVgNGZPuaGfqyjTwpBRcEQ=
 github.com/cosmos/ibc-go/v11 v11.0.0 h1:9EIehi88hNP1cCU83NC+J8UXNn+05YZt9eqmnzCQLSg=
 github.com/cosmos/ibc-go/v11 v11.0.0/go.mod h1:iWlzLuCu+ctVbQwoVf5z51HE5e/NE8/pwnLVVDmP++4=
 github.com/cosmos/interchain-security/v7 v7.0.0-20260422202817-84f762600f84 h1:pMKpHe+mplhNaRYCTOf/JPr1VqKC//nMWsHyeZjX1o8=
