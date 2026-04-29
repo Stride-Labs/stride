@@ -1272,7 +1272,7 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 	// Create Validator struct for our new validator.
 	// The validator will have all the bonded tokens
 	vs := app.StakingKeeper.GetValidatorSet()
-	totalBondedTokens, err := vs.TotalBondedTokens(ctx)
+	totalBondedTokens, err := vs.TotalValidatorPower(ctx)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
