@@ -805,9 +805,9 @@ func GetAdminAddress() (address string, ok bool) {
 }
 
 func (s *AppTestHelper) SetNewAccount(addr sdk.AccAddress) {
-	nextAccountNumber, err := s.App.AccountKeeper.AccountNumber.Next(s.Ctx)
-	s.Require().NoError(err)
-	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccount(addr, nil, nextAccountNumber, 0))
+	acc := authtypes.NewBaseAccountWithAddress(addr)
+	acc.AccountNumber = s.App.AccountKeeper.NextAccountNumber(s.Ctx, acc)
+	s.App.AccountKeeper.SetAccount(s.Ctx, acc)
 }
 
 // Modifies sdk config to have stride address prefixes (used for non-keeper tests)

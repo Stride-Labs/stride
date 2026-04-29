@@ -29,7 +29,7 @@ func CreateMinimalConsumerTestGenesis() *ccvtypes.ConsumerGenesisState {
 	genesisState.Provider.ClientState.MaxClockDrift = ccvprovidertypes.DefaultMaxClockDrift
 	genesisState.Provider.ConsensusState = &ibctmtypes.ConsensusState{
 		Timestamp: time.Now().UTC(),
-		Root:      types.MerkleRoot{Hash: []byte("dummy")},
+		Root:      types.MerkleRoot{Hash: make([]byte, 32)},
 	}
 
 	return genesisState
