@@ -14,6 +14,7 @@ import (
 )
 
 func ExecuteCLIExpectError(t *testing.T, cmd *cobra.Command, args []string, errorString string) {
+	t.Helper()
 	sdk.GetConfig().SetBech32PrefixForAccount("stride", "stridepub")
 
 	clientCtx := client.Context{}.

@@ -98,7 +98,7 @@ func (s *KeeperTestSuite) SetupClaimUndelegatedTokens() ClaimUndelegatedTestCase
 				Amount:      redemptionAmount,
 			}},
 			ICAAccountType: types.ICAAccountType_REDEMPTION,
-			Timeout:        uint64(types.DefaultICATimeoutNanos),
+			Timeout:        types.DefaultICATimeoutNanos,
 		},
 	}
 }

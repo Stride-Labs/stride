@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,7 +32,7 @@ func (k Keeper) Airdrop(goCtx context.Context, req *types.QueryAirdropRequest) (
 
 	periodLengthSeconds := k.GetParams(ctx).PeriodLengthSeconds
 	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
-	if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
+	if errors.Is(err, types.ErrAirdropNotStarted) || errors.Is(err, types.ErrAirdropEnded) {
 		currentDateIndex = -1
 	} else if err != nil {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())
@@ -147,7 +148,7 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
 	if err == nil {
 		claimable = allocation.GetClaimableAllocation(currentDateIndex)
-	} else if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
+	} else if errors.Is(err, types.ErrAirdropNotStarted) || errors.Is(err, types.ErrAirdropEnded) {
 		claimable = sdkmath.ZeroInt()
 	} else {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())

@@ -191,7 +191,7 @@ func (k Keeper) BuildHostToTradeTransferMsg(
 	// Timeout the first transfer halfway through the epoch, and the second transfer at the end of the epoch
 	// The pfm transfer requires a duration instead of a timestamp for the timeout, so we just use half the epoch length
 	halfEpochDuration := strideEpochTracker.Duration / 2
-	transfer1TimeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime - halfEpochDuration) // unix nano
+	transfer1TimeoutTimestamp := strideEpochTracker.NextEpochStartTime - halfEpochDuration // unix nano
 	transfer2TimeoutDuration := fmt.Sprintf("%ds", halfEpochDuration/1e9)                          // string in seconds
 
 	startingDenom := route.RewardDenomOnHostZone
@@ -283,7 +283,7 @@ func (k Keeper) TransferConvertedTokensTradeToHost(ctx sdk.Context, amount sdkma
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	timeout := uint64(strideEpochTracker.NextEpochStartTime)
+	timeout := strideEpochTracker.NextEpochStartTime
 
 	convertedDenom := route.HostDenomOnTradeZone
 	sendTokens := sdk.NewCoin(convertedDenom, amount)

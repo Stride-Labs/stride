@@ -66,8 +66,8 @@ func (s *KeeperTestSuite) TestEndBlocker() {
 					if event.Type == types.EventTypeBurn {
 						found = true
 						for _, attr := range event.Attributes {
-							if string(attr.Key) == types.AttributeAmount {
-								require.Equal(t, tc.initialBalance.String(), string(attr.Value))
+							if attr.Key == types.AttributeAmount {
+								require.Equal(t, tc.initialBalance.String(), attr.Value)
 							}
 						}
 					}

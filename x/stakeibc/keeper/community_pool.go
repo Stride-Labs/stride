@@ -289,7 +289,7 @@ func (k Keeper) FundCommunityPool(
 	if !found {
 		return errorsmod.Wrapf(types.ErrEpochNotFound, "epoch %s not found", epochstypes.STRIDE_EPOCH)
 	}
-	timeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
+	timeoutTimestamp := strideEpochTracker.NextEpochStartTime
 
 	// No need to build ICA callback data or input an ICA callback method
 	icaCallbackId := ""

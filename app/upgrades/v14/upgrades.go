@@ -504,7 +504,7 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 	// 	return nil, err
 	// }
 
-	telemetry.IncrCounter(
+	telemetry.IncrCounter( //nolint:staticcheck // TODO: switch to OpenTelemetry
 		float32(ctx.GasMeter().GasConsumed()),
 		"tx", "fund_vesting_account", "gas_used",
 	)

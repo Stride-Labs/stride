@@ -583,6 +583,7 @@ func (s *AppTestHelper) CheckMultipleICATxSubmitted(portId, channelId string, ic
 
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
+	t.Helper()
 	txMsgData := &sdk.TxMsgData{
 		MsgResponses: make([]*codectypes.Any, len(msgResponses)),
 	}
@@ -607,6 +608,7 @@ func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto
 
 // Constructs an legacy ICA Packet Acknowledgement compatible with ibc-go version v4 and lower
 func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
+	t.Helper()
 	txMsgData := &sdk.TxMsgData{
 		Data: make([]*sdk.MsgData, len(msgResponses)), //nolint:staticcheck
 	}
@@ -831,8 +833,8 @@ func (s *AppTestHelper) getEventsFromEventType(eventType string) (events []sdk.E
 // Returns the value if found
 func (s *AppTestHelper) getEventValuesFromAttribute(event sdk.Event, attributeKey string) (values []string) {
 	for _, attribute := range event.Attributes {
-		if string(attribute.Key) == attributeKey {
-			values = append(values, string(attribute.Value))
+		if attribute.Key == attributeKey {
+			values = append(values, attribute.Value)
 		}
 	}
 	return values

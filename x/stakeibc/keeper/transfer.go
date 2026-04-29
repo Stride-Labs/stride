@@ -114,7 +114,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
+	endEpochTimestamp := strideEpochTracker.NextEpochStartTime
 
 	// Determine the host zone's stToken ibc denom
 	nativeDenom := hostZone.HostDenom
@@ -176,7 +176,7 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
+	endEpochTimestamp := strideEpochTracker.NextEpochStartTime
 
 	// build and send an IBC message for the coin to transfer it back to the hostZone
 	msg := transfertypes.NewMsgTransfer(

@@ -12,7 +12,7 @@ import (
 
 // BeginBlocker of stakeibc module
 func (k Keeper) BeginBlocker(ctx sdk.Context) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker) //nolint:staticcheck // TODO: switch to OpenTelemetry
 
 	// Iterate over all host zones and verify redemption rate
 	for _, hz := range k.GetAllHostZone(ctx) {

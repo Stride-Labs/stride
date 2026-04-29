@@ -13,6 +13,7 @@ import (
 )
 
 func ParseUserAllocations(t *testing.T) {
+	t.Helper()
 	inputCSVContents := `strideXXX,10,10,20
 strideYYY,0,10,0
 strideZZZ,5,100,6`
