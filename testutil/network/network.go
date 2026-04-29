@@ -91,7 +91,6 @@ func DefaultConfig() network.Config {
 			return app.NewStrideApp(
 				val.GetCtx().Logger,
 				cosmosdb.NewMemDB(),
-				nil,
 				true,
 				simtestutil.NewAppOptionsWithFlagHome(tempHomeDir),
 				[]wasmkeeper.Option{},

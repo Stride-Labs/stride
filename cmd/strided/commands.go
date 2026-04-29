@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"path/filepath"
 	"strings"
 
@@ -314,7 +313,6 @@ func versionCommand() *cobra.Command {
 func newApp(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
 ) servertypes.Application {
 	var cache storetypes.MultiStorePersistentCache
@@ -377,7 +375,6 @@ func newApp(
 	return strideapp.NewStrideApp(
 		logger,
 		db,
-		traceStore,
 		true,
 		appOpts,
 		wasmOpts,
@@ -387,9 +384,9 @@ func newApp(
 
 // newTestnetApp starts by running the normal newApp method. From there, the app interface returned is modified in order
 // for a testnet to be created from the provided app.
-func newTestnetApp(logger log.Logger, db cosmosdb.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+func newTestnetApp(logger log.Logger, db cosmosdb.DB, appOpts servertypes.AppOptions) servertypes.Application {
 	// Create an app and type cast to a StrideApp
-	app := newApp(logger, db, traceStore, appOpts)
+	app := newApp(logger, db, appOpts)
 	strideApp, ok := app.(*strideapp.StrideApp)
 	if !ok {
 		panic("app created from newApp is not of type osmosisApp")
@@ -420,7 +417,6 @@ func newTestnetApp(logger log.Logger, db cosmosdb.DB, traceStore io.Writer, appO
 func appExport(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	height int64,
 	forZeroHeight bool,
 	jailAllowedAddrs []string,
@@ -451,7 +447,6 @@ func appExport(
 	strideApp = strideapp.NewStrideApp(
 		logger,
 		db,
-		traceStore,
 		loadLatest,
 		appOpts,
 		[]wasmkeeper.Option{},

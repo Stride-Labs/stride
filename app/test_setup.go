@@ -56,7 +56,6 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 	app := NewStrideApp(
 		log.NewNopLogger(),
 		db,
-		nil,
 		true,
 		appopts,
 		[]wasmkeeper.Option{},
