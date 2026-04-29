@@ -10,13 +10,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
-
 	"github.com/Stride-Labs/stride/v32/x/claim/types"
 	stridevestingtypes "github.com/Stride-Labs/stride/v32/x/claim/vesting/types"
 )

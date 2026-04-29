@@ -3,11 +3,10 @@ package types
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

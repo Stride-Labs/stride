@@ -5,10 +5,9 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // BeginBlocker of stakeibc module

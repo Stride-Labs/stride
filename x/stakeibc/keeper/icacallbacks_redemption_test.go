@@ -1,13 +1,13 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
+
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
-
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 

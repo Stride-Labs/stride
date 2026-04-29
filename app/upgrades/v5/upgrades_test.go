@@ -3,17 +3,17 @@ package v5_test
 import (
 	"testing"
 
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
-
-	sdkmath "cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/app"
-
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v5 "github.com/Stride-Labs/stride/v32/app/upgrades/v5"
 	oldclaimtypes "github.com/Stride-Labs/stride/v32/x/claim/migrations/v2/types"

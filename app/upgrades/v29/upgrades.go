@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	consumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+
 	sdkmath "cosmossdk.io/math"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	consumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
 
 	strdburnerkeeper "github.com/Stride-Labs/stride/v32/x/strdburner/keeper"
 	"github.com/Stride-Labs/stride/v32/x/strdburner/types"

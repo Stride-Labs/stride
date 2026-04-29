@@ -3,20 +3,20 @@ package keeper_test
 import (
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	_ "github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
+	sdkmath "cosmossdk.io/math"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"

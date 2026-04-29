@@ -3,17 +3,17 @@ package keeper_test
 import (
 	"strings"
 
-	sdkmath "cosmossdk.io/math"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	_ "github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
-
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	auctiontypes "github.com/Stride-Labs/stride/v32/x/auction/types"

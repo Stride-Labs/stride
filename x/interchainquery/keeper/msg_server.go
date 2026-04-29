@@ -6,14 +6,16 @@ import (
 	"sort"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v11/modules/core/23-commitment/types"
 	commitmenttypesv2 "github.com/cosmos/ibc-go/v11/modules/core/23-commitment/types/v2"
 	"github.com/cosmos/ibc-go/v11/modules/core/exported"
 	tendermint "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 	ics23 "github.com/cosmos/ics23/go"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"

@@ -4,9 +4,9 @@ import (
 	fmt "fmt"
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
-
 	proto "github.com/cosmos/gogoproto/proto"
+
+	errorsmod "cosmossdk.io/errors"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 )

@@ -3,13 +3,13 @@ package types
 import (
 	"strings"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 )

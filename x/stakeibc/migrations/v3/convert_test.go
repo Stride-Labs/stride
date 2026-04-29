@@ -3,9 +3,9 @@ package v3
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3/types"
 	newstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"

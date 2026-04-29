@@ -3,13 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/gogoproto/proto"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"

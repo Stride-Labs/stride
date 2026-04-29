@@ -5,17 +5,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
+	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

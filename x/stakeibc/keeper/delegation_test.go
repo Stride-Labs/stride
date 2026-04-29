@@ -3,14 +3,14 @@ package keeper_test
 import (
 	"fmt"
 
+	proto "github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	_ "github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	proto "github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v11/testing"
-
-	sdkmath "cosmossdk.io/math"
 
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"

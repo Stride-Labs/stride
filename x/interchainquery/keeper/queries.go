@@ -6,16 +6,17 @@ import (
 	"strings"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cometbft/cometbft/crypto"
 	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cometbft/cometbft/crypto"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 )

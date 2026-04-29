@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	sdkmath "cosmossdk.io/math"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"

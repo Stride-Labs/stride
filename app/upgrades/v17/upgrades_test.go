@@ -5,18 +5,18 @@ import (
 	"strconv"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/suite"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	sdkmath "cosmossdk.io/math"
 
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v17 "github.com/Stride-Labs/stride/v32/app/upgrades/v17"
+	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"

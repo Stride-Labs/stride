@@ -3,8 +3,9 @@ package types
 import (
 	context "context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"

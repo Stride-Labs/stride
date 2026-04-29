@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v32/x/airdrop/client/cli"
 	"github.com/Stride-Labs/stride/v32/x/airdrop/types"

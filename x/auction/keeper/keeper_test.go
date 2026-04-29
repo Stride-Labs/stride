@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"cosmossdk.io/log/v2"
 	"github.com/stretchr/testify/suite"
+
+	"cosmossdk.io/log/v2"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/x/auction/keeper"

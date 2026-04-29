@@ -3,8 +3,9 @@ package keeper_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"

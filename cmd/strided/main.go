@@ -7,7 +7,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v32/app"
 	"github.com/Stride-Labs/stride/v32/cmd"
-
 	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
 )
 

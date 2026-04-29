@@ -4,17 +4,18 @@ import (
 	"fmt"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-	authz "github.com/cosmos/cosmos-sdk/x/authz"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/types"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/types"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	v10 "github.com/Stride-Labs/stride/v32/app/upgrades/v10"
 	v11 "github.com/Stride-Labs/stride/v32/app/upgrades/v11"

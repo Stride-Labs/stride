@@ -5,22 +5,21 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	"cosmossdk.io/core/appmodule"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	"cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
-	"github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/Stride-Labs/stride/v32/x/interchainquery/client/cli"
+	"github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
 	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 )
 

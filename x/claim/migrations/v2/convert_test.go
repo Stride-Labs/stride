@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	oldclaimtypes "github.com/Stride-Labs/stride/v32/x/claim/migrations/v2/types"
 	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"

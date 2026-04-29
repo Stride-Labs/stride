@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/gogoproto/proto"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
-	"github.com/cosmos/gogoproto/proto"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"

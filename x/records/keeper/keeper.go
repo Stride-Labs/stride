@@ -3,16 +3,17 @@ package keeper
 import (
 	"fmt"
 
+	ibctransferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+
 	"cosmossdk.io/log/v2"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 
 	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
-
 	"github.com/Stride-Labs/stride/v32/x/records/types"
 )
 

@@ -3,21 +3,21 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/log/v2"
-	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/cast"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	"github.com/Stride-Labs/stride/v32/x/mint/types"
+	"cosmossdk.io/log/v2"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/Stride-Labs/stride/v32/x/mint/types"
 )
 
 // Keeper of the mint store.

@@ -3,15 +3,14 @@ package keeper_test
 import (
 	"time"
 
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
-	proto "github.com/cosmos/gogoproto/proto"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
 

@@ -4,8 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	cosmosproto "github.com/cosmos/gogoproto/proto"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	clientkeeper "github.com/cosmos/ibc-go/v11/modules/core/02-client/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
+	"github.com/cosmos/ibc-go/v11/modules/core/exported"
+	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,13 +27,6 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	clientkeeper "github.com/cosmos/ibc-go/v11/modules/core/02-client/keeper"
-	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
-	"github.com/cosmos/ibc-go/v11/modules/core/exported"
-
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
-
 	"github.com/Stride-Labs/stride/v32/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
 	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
@@ -35,9 +37,6 @@ import (
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-
-	cosmosproto "github.com/cosmos/gogoproto/proto"
-	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
 )
 
 var (

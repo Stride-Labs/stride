@@ -1,13 +1,13 @@
 package keeper_test
 
 import (
-	_ "github.com/stretchr/testify/suite"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	_ "github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"

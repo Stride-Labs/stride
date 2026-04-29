@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cosmossdk.io/core/appmodule"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	"cosmossdk.io/core/appmodule"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -19,7 +20,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v32/x/mint/client/cli"
 	"github.com/Stride-Labs/stride/v32/x/mint/keeper"
-
 	//"github.com/Stride-Labs/stride/v32/x/mint/simulation"
 	"github.com/Stride-Labs/stride/v32/x/mint/types"
 )

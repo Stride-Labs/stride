@@ -1,93 +1,113 @@
+version: "2"
 run:
-  timeout: 20m
-  disable-all: true
   tests: true
+  allow-parallel-runners: true
+linters:
+  default: none
   enable:
-    - asasalint
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - containedctx
-    - contextcheck
-    - cyclop
-    - decorder
-    - depguard
+    - copyloopvar
     - dogsled
-    - dupl
-    - durationcheck
     - errcheck
-    - errchkjson
-    - errname
     - errorlint
-    - exhaustive
-    - exhaustruct
-    - forbidigo
-    - forcetypeassert
-    - funlen
-    - gci
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
     - goconst
     - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - err113
-    - gofumpt
-    - goheader
-    - mnd
-    - gomoddirectives
-    - gomodguard
-    - goprintffuncname
     - gosec
-    - gosimple
     - govet
-    - grouper
-    - importas
     - ineffassign
-    - interfacebloat
-    - ireturn
-    - lll
-    - loggercheck
-    - maintidx
-    - makezero
     - misspell
     - nakedret
-    - nestif
-    - nilerr
-    - nilnil
-    - nlreturn
-    - noctx
     - nolintlint
-    - nonamedreturns
-    - nosprintfhostport
-    - paralleltest
-    - prealloc
-    - predeclared
-    - promlinter
-    - reassign
     - revive
-    - rowserrcheck
-    - sqlclosecheck
     - staticcheck
-    - stylecheck
-    - tagliatelle
-    - tenv
-    - testableexamples
-    - testpackage
     - thelper
-    - tparallel
-    - typecheck
     - unconvert
-    - unparam
     - unused
-    - usestdlibvars
-    - varnamelen
-    - wastedassign
-    - whitespace
-    - wrapcheck
-    - wsl
-
+  settings:
+    dogsled:
+      max-blank-identifiers: 6
+    gocritic:
+      disabled-checks:
+        - regexpMust
+        - appendAssign
+        - ifElseChain
+    gosec:
+      excludes:
+        - G101
+        - G107
+        - G115
+        - G118
+        - G404
+      confidence: medium
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: true
+      require-specific: false
+      allow-unused: false
+    revive:
+      rules:
+        - name: redefines-builtin-id
+          disabled: true
+        - name: exported
+          severity: error
+          disabled: false
+    staticcheck:
+      checks:
+        - all
+    unused:
+      local-variables-are-used: false
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        text: "ST1000:"
+      - linters:
+          - staticcheck
+        text: "ST1003:"
+      - linters:
+          - staticcheck
+        text: "ST1016:"
+      - linters:
+          - revive
+        text: "or be unexported"
+      - linters:
+          - staticcheck
+        path: migrations
+        text: "SA1019:"
+    paths:
+      - .*\.pb\.go$
+      - .*\.pb\.gw\.go$
+      - .*\.pulsar\.go$
+      - deps
+      - third_party
 issues:
-  max-same-issues: 0
+  max-issues-per-linter: 10000
+  max-same-issues: 10000
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(cosmossdk.io)
+        - prefix(github.com/cosmos/cosmos-sdk)
+        - prefix(github.com/Stride-Labs/stride)
+      custom-order: true
+    gofumpt:
+      extra-rules: true
+  exclusions:
+    generated: lax
+    paths:
+      - .*\.pb\.go$
+      - .*\.pb\.gw\.go$
+      - .*\.pulsar\.go$
+      - deps
+      - third_party

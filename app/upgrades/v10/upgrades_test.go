@@ -6,34 +6,30 @@ import (
 	"testing"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	cosmosproto "github.com/cosmos/gogoproto/proto"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
+	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-
-	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v10 "github.com/Stride-Labs/stride/v32/app/upgrades/v10"
 	"github.com/Stride-Labs/stride/v32/utils"
-
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
-
+	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-
-	cosmosproto "github.com/cosmos/gogoproto/proto"
-	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
-
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
 )
 
 var initialRateLimitChannelValue = sdkmath.NewInt(1_000_000)
