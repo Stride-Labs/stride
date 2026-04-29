@@ -69,7 +69,7 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	}
 
 	// Submit ICA and grab sequence number for the callback key
-	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(k.ICAControllerKeeper)
 	msgSendTx := icacontrollertypes.NewMsgSendTx(tx.Owner, tx.ConnectionId, tx.GetRelativeTimeoutNano(), packetData)
 	res, err := icaMsgServer.SendTx(ctx, msgSendTx)
 	if err != nil {

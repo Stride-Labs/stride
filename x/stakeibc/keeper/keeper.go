@@ -31,7 +31,7 @@ type (
 		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
 		authority             string
-		ICAControllerKeeper   icacontrollerkeeper.Keeper
+		ICAControllerKeeper   *icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
 		AccountKeeper         types.AccountKeeper
@@ -54,7 +54,7 @@ func NewKeeper(
 	authority string,
 	accountKeeper types.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
-	icacontrollerkeeper icacontrollerkeeper.Keeper,
+	icacontrollerkeeper *icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,

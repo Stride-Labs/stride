@@ -42,7 +42,7 @@ func CreateUpgradeHandler(
 	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	epochsKeeper epochskeeper.Keeper,
-	icahostKeeper icahostkeeper.Keeper,
+	icahostKeeper *icahostkeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
@@ -151,7 +151,7 @@ func IncreaseStrideInflation(ctx sdk.Context, k mintkeeper.Keeper) {
 
 // Add stride messages (LiquidStake, RedeemStake, Claim) to the ICAHost allow messages
 // to allow other protocols to liquid stake via ICA
-func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
+func AddICAHostAllowMessages(ctx sdk.Context, k *icahostkeeper.Keeper) {
 	ctx.Logger().Info("Adding ICA Host allow messages")
 
 	params := icahosttypes.Params{

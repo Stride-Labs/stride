@@ -24,7 +24,7 @@ type (
 		memKey             storetypes.StoreKey
 		paramstore         paramtypes.Subspace
 		AccountKeeper      types.AccountKeeper
-		TransferKeeper     ibctransferkeeper.Keeper
+		TransferKeeper     *ibctransferkeeper.Keeper
 		IBCKeeper          ibckeeper.Keeper
 		ICACallbacksKeeper icacallbackskeeper.Keeper
 	}
@@ -36,7 +36,7 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	AccountKeeper types.AccountKeeper,
-	TransferKeeper ibctransferkeeper.Keeper,
+	TransferKeeper *ibctransferkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	ICACallbacksKeeper icacallbackskeeper.Keeper,
 ) *Keeper {

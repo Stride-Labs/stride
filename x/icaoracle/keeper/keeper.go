@@ -23,7 +23,7 @@ type Keeper struct {
 	ClientKeeper        types.ClientKeeper
 	ConnectionKeeper    types.ConnectionKeeper
 	ChannelKeeper       types.ChannelKeeper
-	ICAControllerKeeper icacontrollerkeeper.Keeper
+	ICAControllerKeeper *icacontrollerkeeper.Keeper
 	ICACallbacksKeeper  types.ICACallbacksKeeper
 }
 
@@ -37,7 +37,7 @@ func NewKeeper(
 	clientKeeper types.ClientKeeper,
 	connectionKeeper types.ConnectionKeeper,
 	channelKeeper types.ChannelKeeper,
-	icaControllerKeeper icacontrollerkeeper.Keeper,
+	icaControllerKeeper *icacontrollerkeeper.Keeper,
 	icaCallbacksKeeper types.ICACallbacksKeeper,
 ) *Keeper {
 	return &Keeper{
