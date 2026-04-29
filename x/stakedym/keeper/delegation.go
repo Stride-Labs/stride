@@ -222,7 +222,5 @@ func (k Keeper) SafelyPrepareDelegation(ctx sdk.Context, epochNumber uint64, epo
 
 // Liquid stakes fees with a cache context wrapper so revert any partial state changes
 func (k Keeper) SafelyLiquidStakeAndDistributeFees(ctx sdk.Context) error {
-	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
-		return k.LiquidStakeAndDistributeFees(ctx)
-	})
+	return utils.ApplyFuncIfNoError(ctx, k.LiquidStakeAndDistributeFees)
 }

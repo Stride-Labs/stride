@@ -610,7 +610,7 @@ func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto
 func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
 	t.Helper()
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(msgResponses)), //nolint:staticcheck
+		Data: make([]*sdk.MsgData, len(msgResponses)), //nolint:staticcheck // sdk.MsgData is deprecated but required for legacy ibc-go v4 acks
 	}
 	for i, msgResponse := range msgResponses {
 		var data []byte
@@ -620,7 +620,7 @@ func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses [
 			require.NoError(t, err, "marshal error")
 		}
 
-		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
+		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck // sdk.MsgData is deprecated but required for legacy ibc-go v4 acks
 			MsgType: msgType,
 			Data:    data,
 		}

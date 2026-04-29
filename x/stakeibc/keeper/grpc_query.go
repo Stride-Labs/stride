@@ -163,7 +163,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						unbondingDurationEstimate := (unbondingFrequency - 1) * 7
 						unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
 					}
-					unbondingTime = unbondingTime + nanosecondsInDay
+					unbondingTime += nanosecondsInDay
 					unbondingTimeStr := time.Unix(0, utils.UintToInt(unbondingTime)).UTC().String()
 
 					addressUnbonding := types.AddressUnbonding{

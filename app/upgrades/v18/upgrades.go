@@ -108,7 +108,7 @@ func DecrementTerraDelegationChangesInProgress(
 		if val.DelegationChangesInProgress < 3 {
 			val.DelegationChangesInProgress = 0
 		} else {
-			val.DelegationChangesInProgress = val.DelegationChangesInProgress - 3
+			val.DelegationChangesInProgress -= 3
 		}
 	}
 

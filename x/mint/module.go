@@ -20,7 +20,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v32/x/mint/client/cli"
 	"github.com/Stride-Labs/stride/v32/x/mint/keeper"
-	//"github.com/Stride-Labs/stride/v32/x/mint/simulation"
 	"github.com/Stride-Labs/stride/v32/x/mint/types"
 )
 

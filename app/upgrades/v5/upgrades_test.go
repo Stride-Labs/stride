@@ -3,7 +3,7 @@ package v5_test
 import (
 	"testing"
 
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // SA1019: legacy proto package required for v5 historical migration test
 	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"

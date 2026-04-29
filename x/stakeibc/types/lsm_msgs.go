@@ -16,8 +16,6 @@ const (
 var _ sdk.Msg = &MsgRedeemTokensForShares{}
 
 // NewMsgRedeemTokensForShares creates a new MsgRedeemTokensForShares instance.
-//
-//nolint:interfacer
 func NewMsgRedeemTokensForShares(delAddr sdk.AccAddress, amount sdk.Coin) *MsgRedeemTokensForShares {
 	return &MsgRedeemTokensForShares{
 		DelegatorAddress: delAddr.String(),

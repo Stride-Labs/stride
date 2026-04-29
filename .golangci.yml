@@ -30,6 +30,10 @@ linters:
         - regexpMust
         - appendAssign
         - ifElseChain
+        # captLocal flags capitalized parameter names (e.g., `Cdc`, `RecordsKeeper`).
+        # Renaming them across many keeper constructors is a large mechanical churn for
+        # cosmetic gain, so we leave the existing names alone.
+        - captLocal
     gosec:
       excludes:
         - G101

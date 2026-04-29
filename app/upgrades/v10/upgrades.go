@@ -10,7 +10,7 @@ import (
 	clientkeeper "github.com/cosmos/ibc-go/v11/modules/core/02-client/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
 	"github.com/cosmos/ibc-go/v11/modules/core/exported"
-	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck
+	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck // SA1019: legacy proto package required for v10 historical migration
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"

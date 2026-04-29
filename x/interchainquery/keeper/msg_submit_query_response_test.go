@@ -88,7 +88,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Id = tc.query.Id + "INVALID_SUFFIX" // create an invalid query id
+	tc.query.Id += "INVALID_SUFFIX" // create an invalid query id
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)

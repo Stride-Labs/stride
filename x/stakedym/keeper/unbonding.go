@@ -407,7 +407,5 @@ func (k Keeper) SafelyPrepareUndelegation(ctx sdk.Context, epochNumber uint64) e
 
 // Runs distribute claims with a cache context wrapper so revert any partial state changes
 func (k Keeper) SafelyDistributeClaims(ctx sdk.Context) error {
-	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
-		return k.DistributeClaims(ctx)
-	})
+	return utils.ApplyFuncIfNoError(ctx, k.DistributeClaims)
 }

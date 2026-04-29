@@ -304,10 +304,8 @@ func (msg *MsgAddAllocations) ValidateBasic() error {
 
 		if i == 0 {
 			allocationsLength = len(allocation.Allocations)
-		} else {
-			if len(allocation.Allocations) != allocationsLength {
-				return fmt.Errorf("address %s has an inconsistent number of allocations", allocation.UserAddress)
-			}
+		} else if len(allocation.Allocations) != allocationsLength {
+			return fmt.Errorf("address %s has an inconsistent number of allocations", allocation.UserAddress)
 		}
 
 		for _, amount := range allocation.Allocations {

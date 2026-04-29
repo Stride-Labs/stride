@@ -3,7 +3,7 @@ package v2
 import (
 	"testing"
 
-	"github.com/golang/protobuf/proto" //nolint:staticcheck
+	"github.com/golang/protobuf/proto" //nolint:staticcheck // legacy deprecated proto
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"

@@ -136,7 +136,7 @@ func Float64ToInt64E(f float64) (int64, error) {
 	return int64(f), nil
 }
 
-//==============================  ADDRESS VERIFICATION UTILS  ================================
+// ============================== ADDRESS VERIFICATION UTILS ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177
 
 var errBech32EmptyAddress = errors.New("decoding Bech32 address failed: must provide a non empty address")

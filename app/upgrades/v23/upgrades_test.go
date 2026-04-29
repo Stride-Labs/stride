@@ -40,7 +40,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		HostDenomOnHostZone:     "host-denom",
 		RewardDenomOnRewardZone: "reward-denom",
 
-		TradeConfig: stakeibctypes.TradeConfig{ //nolint:staticcheck
+		TradeConfig: stakeibctypes.TradeConfig{ //nolint:staticcheck // exercises the deprecated TradeConfig path that v23 migrates away from
 			MinSwapAmount: minTransferAmount,
 		},
 	}

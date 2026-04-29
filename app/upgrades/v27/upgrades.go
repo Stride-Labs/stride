@@ -79,7 +79,7 @@ func DecrementEvmosDelegationChangesInProgress(
 
 	for _, val := range hostZone.Validators {
 		if val.DelegationChangesInProgress > 0 {
-			val.DelegationChangesInProgress = val.DelegationChangesInProgress - 1
+			val.DelegationChangesInProgress--
 		}
 	}
 
