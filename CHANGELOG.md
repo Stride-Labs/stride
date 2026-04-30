@@ -42,6 +42,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## [v33.0.0]
+
+### On-Chain changes
+
+1. Migrate from ICS consumer to POA. Block-producing validator set is now
+   controlled by an admin multisig via `x/poa`. Govenator staking, delegations,
+   governance, and liquid staking product economics are unchanged.
+2. Remove `ccvconsumer`, `ccvdistr`, `slashing`, `evidence` from the module
+   manager (their keepers stay mounted; full deletion is deferred to v34).
+3. Reconfigure `x/distribution` to use the standard `fee_collector` (was
+   `cons_redistribute`).
+4. Route tx fees to the POA module account via the ante handler.
+5. Inflation flow unchanged except no longer leaks 15% to the Cosmos Hub.
+6. Liquid staking revenue flow (stakeibc → reward collector → 15%/85% split →
+   auction → strdburner) is unchanged.
+7. Remove the stakeibc consumer-reward-denom whitelist plumbing — no longer
+   needed once `ccvconsumer` is out of the module manager.
+
 ## [v32.0.0](https://github.com/Stride-Labs/stride/releases/tag/v32.0.0) - 2026-04-24
 
 ### On-Chain changes
