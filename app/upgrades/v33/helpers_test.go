@@ -8,6 +8,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	"github.com/stretchr/testify/suite"
 
@@ -49,7 +50,7 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
 		s.Require().Equal(int64(100), val.Power)
 		s.Require().NotNil(val.Metadata)
 		s.Require().Equal(fmtMoniker(i), val.Metadata.Moniker)
-		s.Require().Contains(val.Metadata.OperatorAddress, "stridevaloper")
+		s.Require().Contains(val.Metadata.OperatorAddress, "stride1")
 	}
 }
 
@@ -104,6 +105,30 @@ func (s *HelpersTestSuite) TestSweepICSModuleAccounts_EmptyAccounts() {
 		s.Ctx, s.App.AccountKeeper, s.App.BankKeeper, s.App.DistrKeeper,
 	)
 	s.Require().NoError(err)
+}
+
+func (s *HelpersTestSuite) TestInitializePOA_HappyPath() {
+	s.seedConsumerValidators(8)
+
+	poaVals, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
+	s.Require().NoError(err)
+
+	adminAddr := s.TestAccs[0].String()
+	err = v33.InitializePOA(s.Ctx, s.App.AppCodec(), s.App.POAKeeper, adminAddr, poaVals)
+	s.Require().NoError(err)
+
+	storedVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().Len(storedVals, 8)
+
+	params, err := s.App.POAKeeper.GetParams(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(adminAddr, params.Admin)
+}
+
+func (s *HelpersTestSuite) TestInitializePOA_InvalidAdmin() {
+	err := v33.InitializePOA(s.Ctx, s.App.AppCodec(), s.App.POAKeeper, "not_a_bech32", []poatypes.Validator{})
+	s.Require().Error(err)
 }
 
 // --- test helpers ---

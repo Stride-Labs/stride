@@ -1,17 +1,19 @@
 package v33
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 
+	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
@@ -25,11 +27,12 @@ import (
 // Monikers are looked up from the pre-baked ValidatorMonikers map (keyed by
 // hex of the consensus address). Missing entries fall back to empty string.
 //
-// Operator addresses are derived from the consensus address bytes by
-// bech32-encoding with the "stridevaloper" prefix. Stride's ICS validators
-// have no Stride-side operator address (the operator key lives on the Hub),
-// so this is a metadata-only string — POA's runtime logic keys off the
-// consensus address, not OperatorAddress.
+// ICS validators have no Stride-side operator address (the operator key lives
+// on the Hub). POA's CreateValidator requires a valid sdk.AccAddress for
+// OperatorAddress that (a) is unique per validator and (b) is distinct from the
+// validator's consensus pubkey address. We synthesize one by hashing
+// "poa-operator:" + consensusAddress bytes, which is deterministic and can be
+// updated later via MsgUpdateValidators once real operator keys are known.
 func SnapshotValidatorsFromICS(
 	ctx sdk.Context,
 	consumerKeeper ccvconsumerkeeper.Keeper,
@@ -55,11 +58,7 @@ func SnapshotValidatorsFromICS(
 				"failed to wrap cons pubkey for validator %x", ccVal.Address)
 		}
 
-		operatorAddr, err := bech32.ConvertAndEncode("stridevaloper", ccVal.Address)
-		if err != nil {
-			return nil, errorsmod.Wrapf(err,
-				"failed to bech32-encode operator address for validator %x", ccVal.Address)
-		}
+		operatorAddr := syntheticOperatorAddress(ccVal.Address)
 
 		moniker := ValidatorMonikers[hex.EncodeToString(ccVal.Address)]
 
@@ -74,6 +73,50 @@ func SnapshotValidatorsFromICS(
 	}
 
 	return poaVals, nil
+}
+
+// syntheticOperatorAddress derives a unique, deterministic sdk.AccAddress
+// placeholder for a validator whose real operator key is unknown. It hashes
+// "poa-operator:" + consensusAddr and takes the first 20 bytes, guaranteeing
+// uniqueness across validators while remaining distinct from the consensus key.
+func syntheticOperatorAddress(consensusAddr []byte) string {
+	hash := sha256.Sum256(append([]byte("poa-operator:"), consensusAddr...))
+	return sdk.AccAddress(hash[:20]).String()
+}
+
+// InitializePOA seeds POA's KV store with the given validator set and admin.
+// Mirrors the canonical SDK sample at
+// cosmos-sdk/enterprise/poa/examples/migrate-from-pos/sample_upgrades/upgrade_handler.go.
+//
+// WithBlockHeight(0) is required: POA's CreateValidator path calls
+// GetTotalPower, which only treats "no total power yet" as a non-error
+// case when ctx.BlockHeight() == 0 (enterprise/poa/x/poa/keeper/validator.go).
+//
+// The keeper-level InitGenesis returns ([]abci.ValidatorUpdate, error); we
+// discard the updates because an upgrade handler returns a VersionMap, not
+// ABCI updates. The next EndBlock will reap and emit anything still queued.
+func InitializePOA(
+	ctx sdk.Context,
+	cdc codec.Codec,
+	poaKeeper *poakeeper.Keeper,
+	adminAddress string,
+	validators []poatypes.Validator,
+) error {
+	if _, err := sdk.AccAddressFromBech32(adminAddress); err != nil {
+		return errorsmod.Wrapf(err, "invalid admin address: %s", adminAddress)
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx).WithBlockHeight(0)
+
+	genesis := &poatypes.GenesisState{
+		Params:     poatypes.Params{Admin: adminAddress},
+		Validators: validators,
+		// AllocatedFees intentionally omitted — fresh POA init has no
+		// pre-existing per-validator fee allocations to restore.
+	}
+
+	_, err := poaKeeper.InitGenesis(sdkCtx, cdc, genesis)
+	return err
 }
 
 // SweepICSModuleAccounts moves any residual balance from the two ICS-era
