@@ -49,7 +49,6 @@ import (
 	ccvconsumer "github.com/cosmos/interchain-security/v7/x/ccv/consumer"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
-	ccvdistr "github.com/cosmos/interchain-security/v7/x/ccv/democracy/distribution"
 	ccvstaking "github.com/cosmos/interchain-security/v7/x/ccv/democracy/staking"
 	evmosvesting "github.com/evmos/vesting/x/vesting"
 	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
@@ -73,6 +72,9 @@ import (
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	poa "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa"
+	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -104,7 +106,6 @@ import (
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/cosmos-sdk/x/evidence"
 	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
@@ -124,7 +125,6 @@ import (
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
-	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -134,6 +134,7 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/Stride-Labs/stride/v32/app/distrwrapper"
 	"github.com/Stride-Labs/stride/v32/utils"
 	airdrop "github.com/Stride-Labs/stride/v32/x/airdrop"
 	airdropkeeper "github.com/Stride-Labs/stride/v32/x/airdrop/keeper"
@@ -220,6 +221,7 @@ var (
 		icqoracletypes.ModuleName:                     nil,
 		auctiontypes.ModuleName:                       nil,
 		strdburnertypes.ModuleName:                    {authtypes.Burner},
+		poatypes.ModuleName:                           nil, // POA accumulates tx fees; no mint/burn permissions needed
 	}
 )
 
@@ -298,6 +300,7 @@ type StrideApp struct {
 	ICQOracleKeeper       icqoraclekeeper.Keeper
 	AuctionKeeper         auctionkeeper.Keeper
 	StrdBurnerKeeper      strdburnerkeeper.Keeper
+	POAKeeper             *poakeeper.Keeper
 
 	// Module managers
 	ModuleManager      *module.Manager
@@ -382,9 +385,10 @@ func NewStrideApp(
 		icqoracletypes.StoreKey,
 		auctiontypes.StoreKey,
 		strdburnertypes.StoreKey,
+		poatypes.StoreKey,
 	)
 
-	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, poatypes.TransientStoreKey)
 
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -441,6 +445,14 @@ func NewStrideApp(
 		addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
+
+	app.POAKeeper = poakeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[poatypes.StoreKey]),
+		runtime.NewTransientStoreService(tkeys[poatypes.TransientStoreKey]),
+		app.AccountKeeper,
+		app.BankKeeper,
+	)
 	epochsKeeper := epochsmodulekeeper.NewKeeper(
 		appCodec,
 		keys[epochsmoduletypes.StoreKey],
@@ -461,7 +473,7 @@ func NewStrideApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
-		ccvconsumertypes.ConsumerRedistributeName,
+		authtypes.FeeCollectorName, // was: ccvconsumertypes.ConsumerRedistributeName
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
@@ -750,7 +762,6 @@ func NewStrideApp(
 		app.IcacallbacksKeeper,
 		app.RatelimitKeeper,
 		app.ICAOracleKeeper,
-		app.ConsumerKeeper,
 	)
 	app.StakeibcKeeper = *stakeibcKeeper.SetHooks(
 		stakeibcmoduletypes.NewMultiStakeIBCHooks(app.ClaimKeeper.Hooks()),
@@ -981,11 +992,9 @@ func NewStrideApp(
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, app.BankKeeper),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(slashingtypes.ModuleName), app.interfaceRegistry),
-		ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, authtypes.FeeCollectorName, app.GetSubspace(distrtypes.ModuleName)),
+		distrwrapper.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		ccvstaking.NewAppModule(appCodec, &app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
-		evidence.NewAppModule(app.EvidenceKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper), //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
@@ -1005,7 +1014,6 @@ func NewStrideApp(
 		recordsModule,
 		ratelimitModule,
 		icacallbacksModule,
-		consumerModule,
 		autopilotModule,
 		icaoracleModule,
 		stakeTiaModule,
@@ -1015,6 +1023,7 @@ func NewStrideApp(
 		icqOracleModule,
 		auctionModule,
 		strdburnerModule,
+		poa.NewAppModule(appCodec, app.POAKeeper, poa.WithSecp256k1Support()),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -1050,8 +1059,6 @@ func NewStrideApp(
 	app.ModuleManager.SetOrderBeginBlockers(
 		minttypes.ModuleName,
 		distrtypes.ModuleName,
-		slashingtypes.ModuleName,
-		evidencetypes.ModuleName,
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
 		claimvestingtypes.ModuleName,
@@ -1072,7 +1079,6 @@ func NewStrideApp(
 		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -1085,6 +1091,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		poatypes.ModuleName,
 		strdburnertypes.ModuleName,
 	)
 
@@ -1095,11 +1102,9 @@ func NewStrideApp(
 		stakingtypes.ModuleName,
 		authtypes.ModuleName,
 		distrtypes.ModuleName,
-		slashingtypes.ModuleName,
 		vestingtypes.ModuleName,
 		claimvestingtypes.ModuleName,
 		minttypes.ModuleName,
-		evidencetypes.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
@@ -1114,7 +1119,6 @@ func NewStrideApp(
 		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -1127,6 +1131,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		poatypes.ModuleName,
 		strdburnertypes.ModuleName, // strdburner should be last
 	)
 
@@ -1139,12 +1144,10 @@ func NewStrideApp(
 		stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
 		claimvestingtypes.ModuleName,
-		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,
 		genutiltypes.ModuleName,
 		ibcexported.ModuleName,
-		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -1158,7 +1161,6 @@ func NewStrideApp(
 		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -1171,6 +1173,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		poatypes.ModuleName,
 		strdburnertypes.ModuleName,
 	)
 

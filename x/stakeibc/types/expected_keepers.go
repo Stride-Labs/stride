@@ -4,7 +4,6 @@ import (
 	"context"
 
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
-	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -51,9 +50,4 @@ type RatelimitKeeper interface {
 	RemoveDenomFromBlacklist(ctx sdk.Context, denom string)
 	SetWhitelistedAddressPair(ctx sdk.Context, whitelist ratelimittypes.WhitelistedAddressPair)
 	RemoveWhitelistedAddressPair(ctx sdk.Context, sender, receiver string)
-}
-
-type ConsumerKeeper interface {
-	GetConsumerParams(ctx sdk.Context) ccvtypes.ConsumerParams
-	SetParams(ctx sdk.Context, params ccvtypes.ConsumerParams)
 }

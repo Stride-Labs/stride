@@ -8,18 +8,16 @@ import (
 	"time"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	types1 "github.com/cometbft/cometbft/abci/types"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
-	tmtypes "github.com/cometbft/cometbft/types"
 	cosmosdb "github.com/cosmos/cosmos-db"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	pruningtypes "github.com/cosmos/cosmos-sdk/store/v2/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
@@ -30,7 +28,6 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
 	"github.com/Stride-Labs/stride/v32/app"
-	testutil "github.com/Stride-Labs/stride/v32/testutil"
 )
 
 type (
@@ -60,7 +57,6 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 // DefaultConfig will initialize config for the network with custom application,
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
-	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
 	tempApp := app.InitStrideTestApp(false)
 	encoding := app.MakeEncodingConfig()
 
@@ -73,14 +69,16 @@ func DefaultConfig() network.Config {
 		InterfaceRegistry: encoding.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
-			err := modifyConsumerGenesis(val.(network.Validator))
-			if err != nil {
+			// POA is the InitChain validator-update source post-v33 (ICS →
+			// POA migration). Without this seed CometBFT panics on an empty
+			// validator set update. See seedNetworkValidator for details.
+			if err := seedNetworkValidator(val.(network.Validator)); err != nil {
 				panic(err)
 			}
 
-			// do NOT create validators using gentxs so that val sets are applied using only ccv genesis
-			err = modifyGenutilGenesis(val.(network.Validator))
-			if err != nil {
+			// Drop gentxs so the chain's validator set comes only from POA's
+			// genesis, not from a framework-generated staking gentx.
+			if err := clearGentxs(val.(network.Validator)); err != nil {
 				panic(err)
 			}
 
@@ -117,77 +115,82 @@ func DefaultConfig() network.Config {
 	}
 }
 
-// add new val sets to consumer genesis before launching app
-func modifyConsumerGenesis(val network.Validator) error {
+// seedNetworkValidator seeds POA's genesis with the network's validator so
+// InitChain returns at least one ValidatorUpdate. Post-v33 (ICS → POA
+// migration) ccvconsumer is no longer in the module manager, so POA is the
+// only module that can produce InitChain validator updates — without this
+// seed CometBFT panics on an empty validator set.
+//
+// We deliberately do NOT seed a shadow staking validator here. Block production
+// works fine without one because distribution is wired through
+// app/distrwrapper, which iterates bonded staking validators by stake (no
+// per-voter ValidatorByConsAddr lookup). With zero bonded validators,
+// distrwrapper routes the staking share to the community pool — fine for
+// these CLI tests since they don't assert on per-validator rewards.
+func seedNetworkValidator(val network.Validator) error {
 	genFile := val.Ctx.Config.GenesisFile()
 	appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to read genesis from the file")
 	}
 
-	tmProtoPublicKey, err := cryptocodec.ToCmtProtoPublicKey(val.PubKey)
+	pkAny, err := codectypes.NewAnyWithValue(val.PubKey)
 	if err != nil {
-		return errorsmod.Wrap(err, "invalid public key")
+		return errorsmod.Wrap(err, "failed to wrap validator pubkey as Any")
 	}
 
-	initialValset := []types1.ValidatorUpdate{{PubKey: tmProtoPublicKey, Power: 100}}
-	vals, err := tmtypes.PB2TM.ValidatorUpdates(initialValset)
+	poaGenesis := &poatypes.GenesisState{
+		Params: poatypes.Params{Admin: authtypes.NewModuleAddress("gov").String()},
+		Validators: []poatypes.Validator{
+			{
+				PubKey: pkAny,
+				// Power=100 matches what modifyConsumerGenesis used pre-v33 and
+				// what the network framework's BondedTokens implies.
+				Power: 100,
+				Metadata: &poatypes.ValidatorMetadata{
+					OperatorAddress: val.Address.String(),
+					Moniker:         "test-validator",
+				},
+			},
+		},
+	}
+	poaBz, err := val.ClientCtx.Codec.MarshalJSON(poaGenesis)
 	if err != nil {
-		return errorsmod.Wrap(err, "could not convert val updates to validator set")
+		return errorsmod.Wrap(err, "failed to marshal POA genesis state into JSON")
 	}
+	appState[poatypes.ModuleName] = poaBz
 
-	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.Provider.InitialValSet = initialValset
-	consumerGenesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
-
-	if err := consumerGenesisState.Validate(); err != nil {
-		return errorsmod.Wrap(err, "invalid consumer genesis")
-	}
-
-	consumerGenStateBz, err := val.ClientCtx.Codec.MarshalJSON(consumerGenesisState)
-	if err != nil {
-		return errorsmod.Wrap(err, "failed to marshal consumer genesis state into JSON")
-	}
-
-	appState[ccvconsumertypes.ModuleName] = consumerGenStateBz
-	appStateJSON, err := json.Marshal(appState)
-	if err != nil {
-		return errorsmod.Wrap(err, "failed to marshal application genesis state into JSON")
-	}
-
-	genDoc.AppState = appStateJSON
-	err = genutil.ExportGenesisFile(genDoc, genFile)
-	if err != nil {
-		return errorsmod.Wrap(err, "failed to export genesis state")
-	}
-
-	return nil
+	return writeGenesis(genDoc, appState, genFile)
 }
 
-// remove gentxs from genutil genesis
-func modifyGenutilGenesis(val network.Validator) error {
+// clearGentxs replaces the genutil genesis with the default (empty gentx list).
+// Called so the chain's validator set is taken from POA's genesis only, not
+// from a framework-generated staking gentx that would compete with POA.
+func clearGentxs(val network.Validator) error {
 	genFile := val.Ctx.Config.GenesisFile()
 	appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to read genesis from the file")
 	}
 
-	genutilGenesisState := genutiltypes.DefaultGenesisState()
-	genutilGenStateBz, err := val.ClientCtx.Codec.MarshalJSON(genutilGenesisState)
+	genutilBz, err := val.ClientCtx.Codec.MarshalJSON(genutiltypes.DefaultGenesisState())
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to marshal consumer genesis state into JSON")
+		return errorsmod.Wrap(err, "failed to marshal genutil genesis state into JSON")
 	}
-	appState[genutiltypes.ModuleName] = genutilGenStateBz
+	appState[genutiltypes.ModuleName] = genutilBz
+
+	return writeGenesis(genDoc, appState, genFile)
+}
+
+// writeGenesis serializes appState back into genDoc and writes it to genFile.
+func writeGenesis(genDoc *genutiltypes.AppGenesis, appState map[string]json.RawMessage, genFile string) error {
 	appStateJSON, err := json.Marshal(appState)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to marshal application genesis state into JSON")
 	}
-
 	genDoc.AppState = appStateJSON
-	err = genutil.ExportGenesisFile(genDoc, genFile)
-	if err != nil {
+	if err := genutil.ExportGenesisFile(genDoc, genFile); err != nil {
 		return errorsmod.Wrap(err, "failed to export genesis state")
 	}
-
 	return nil
 }

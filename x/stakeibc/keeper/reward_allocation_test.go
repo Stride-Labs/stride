@@ -43,11 +43,8 @@ func (s *KeeperTestSuite) SetupTestRewardAllocation() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone2)
 
-	// ConsumerRedistributionFraction = how much Stride keeps
-	// Set consumer redistribution fraction to 0.85 (same as mainnet)
-	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
-	consumerParams.ConsumerRedistributionFraction = "0.85"
-	s.App.ConsumerKeeper.SetParams(s.Ctx, consumerParams)
+	// The PoA validator payment rate (15%) is hardcoded in utils.PoaValPaymentRate;
+	// no consumer-params mutation is needed here.
 
 	// Set epoch tracker and deposit records for liquid stake
 	currentEpoch := uint64(2)
@@ -90,7 +87,7 @@ func (s *KeeperTestSuite) checkAccountBalance(address, denom string, expectedBal
 func (s *KeeperTestSuite) getTotalPoAValidatorStTokenBalance(denom string) sdkmath.Int {
 	total := sdkmath.ZeroInt()
 	for _, validator := range utils.PoaValidatorSet {
-		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(validator), denom)
+		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(validator.Operator), denom)
 		total = total.Add(balance.Amount)
 	}
 	return total
@@ -121,8 +118,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 
 	// Check each validator received equal share (ignoring remainder for simplicity)
 	for _, validator := range utils.PoaValidatorSet {
-		s.checkAccountBalance(validator, StAtom, expectedStTokenPerValidator)
-		s.checkAccountBalance(validator, StOsmo, expectedStTokenPerValidator)
+		s.checkAccountBalance(validator.Operator, StAtom, expectedStTokenPerValidator)
+		s.checkAccountBalance(validator.Operator, StOsmo, expectedStTokenPerValidator)
 	}
 
 	// Check Auction module balance (should have remainder - 85% of original)
@@ -185,8 +182,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_TotalValidatorSh
 
 	// Check each validator received equal share (ignoring remainder for simplicity)
 	for _, validator := range utils.PoaValidatorSet {
-		s.checkAccountBalance(validator, StAtom, sdkmath.ZeroInt())
-		s.checkAccountBalance(validator, StOsmo, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StAtom, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StOsmo, sdkmath.ZeroInt())
 	}
 
 	// Auction balance should also be 0 since it short circuits
@@ -219,8 +216,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_IndividualValida
 
 	// Check each validator received equal share (ignoring remainder for simplicity)
 	for _, validator := range utils.PoaValidatorSet {
-		s.checkAccountBalance(validator, StAtom, sdkmath.ZeroInt())
-		s.checkAccountBalance(validator, StOsmo, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StAtom, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StOsmo, sdkmath.ZeroInt())
 	}
 
 	// Check Auction module balance
