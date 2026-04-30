@@ -4,12 +4,19 @@
 #
 # Trims a full `strided export` mainnet JSON down to only the modules touched
 # by the v33 upgrade handler (and its assertions). Used to keep the committed
-# fixture (testdata/mainnet_export.json.gz) reasonably small. A raw export at
-# current mainnet height is typically ~150–300 MB; trimmed output is usually
-# under 10 MB compressed.
+# fixture (testdata/mainnet_export.json.gz) reasonably small (under GitHub's
+# 100 MB per-file limit). A raw export at current mainnet height is ~3 GB
+# uncompressed; trimmed output is normally well under 50 MB compressed.
+#
+# Two passes:
+#   1. Module-level: drop every app_state.<module> not in KEEP_MODULES.
+#   2. Sub-key: empty out app_state.ccvconsumer.height_to_valset_update_id —
+#      a per-block bookkeeping array (~30M entries / 1.4 GB on a chain that
+#      has been a consumer for 2 years). The v33 handler only reads the
+#      8-entry provider.initial_val_set, so this field is dead weight.
 #
 # Usage:
-#   ./scripts/trim_export.sh <input.json> <output.json.gz>
+#   ./app/upgrades/v33/scripts/trim_export.sh app/upgrades/v33/testdata/raw_export.json app/upgrades/v33/testdata/mainnet_export.json.gz
 #
 # Modules KEPT in app_state (everything else is stripped):
 #   ccvconsumer    snapshot source — the validator set we migrate to POA
@@ -70,7 +77,17 @@ INPUT_SIZE=$(wc -c < "$INPUT" | tr -d ' ')
 echo "Input:  $INPUT  ($(numfmt --to=iec --suffix=B "$INPUT_SIZE" 2>/dev/null || echo "$INPUT_SIZE B"))"
 echo "Keeping app_state.{$(IFS=,; echo "${KEEP_MODULES[*]}")}"
 
-JQ_FILTER='.app_state |= with_entries(select(.key as $k | $keep | index($k)))'
+# Module-level filter: drop everything outside the keep-list.
+# Then the second-level scrub: ccvconsumer.height_to_valset_update_id is a
+# per-block array (~30M entries / ~1.4 GB on a 2-year-old consumer chain).
+# The v33 handler only reads provider.initial_val_set, so this field is dead
+# weight — stripping it shrinks the trimmed fixture from ~160 MB to <50 MB.
+JQ_FILTER='
+  .app_state |= with_entries(select(.key as $k | $keep | index($k)))
+  | if .app_state.ccvconsumer? then
+      .app_state.ccvconsumer.height_to_valset_update_id = []
+    else . end
+'
 
 if [[ "$OUTPUT" == *.gz ]]; then
   jq --argjson keep "$KEEP_JSON" "$JQ_FILTER" "$INPUT" | gzip -9 > "$OUTPUT"
