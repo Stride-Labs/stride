@@ -260,12 +260,9 @@ func initializePOA(ctx, cdc, poaKeeper *Keeper, adminAddr, validators) error:
 
 **On validator powers**: the handler seeds POA with each validator's *current* ICS-assigned power (whatever `GetAllCCValidator` returns). This guarantees POA's first `EndBlock` produces no diff against CometBFT's existing set — the cleanest possible handoff.
 
-ICS-assigned powers reflect Hub-side bonded ATOM, which has no meaning on a permissioned POA chain. Long-term Stride probably wants all 8 validators at equal power (e.g., `1` each). Two paths to get there:
+Mainnet check (2026-04-30): all 8 validators carry an identical power of `275925` because the Hub assigns uniform power across an opt-in PoA-style allowlist. Since the set is already balanced, no post-upgrade rebalance is needed in v33 *or* v34. The number is opaque (a Hub-side scaling factor with no Stride-side meaning post-migration), but POA only cares about *relative* power between validators — equal is equal regardless of magnitude. Leaving it alone is the lowest-friction choice.
 
-- **A — rebalance in the handler.** After `InitGenesis`, immediately submit synthesized `MsgUpdateValidators` (or directly modify keeper state) to set all powers to `1`. ~5 lines of code. Safe — CometBFT applies the change one block later via the standard ABCI lag; the old set still signs block N+1, the rebalanced set takes over at N+2. Avoids any post-upgrade multisig coordination.
-- **B — rebalance later via multisig.** Handler leaves powers as inherited; multisig submits `MsgUpdateValidators` whenever convenient. Exercises POA's runtime path in production rather than just at upgrade time.
-
-Either is fine; pick based on operational preference. **A** is recommended for simplicity (no MS signing needed and tests covered by the same upgrade test suite).
+If we ever need to renormalize (for example, to make queries/explorers display a cleaner integer like `1`), the multisig can submit `MsgUpdateValidators` at any time — it's a one-off operation, not a v33 or v34 deliverable.
 
 After this call, POA's KV store has the 8 validators with their power and keys. The next `EndBlock` will process them.
 
