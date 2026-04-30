@@ -19,11 +19,13 @@ import (
 	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
 	testutil "github.com/Stride-Labs/stride/v32/testutil"
@@ -130,6 +132,28 @@ func GenesisStateWithConsumerValSet(app *StrideApp) GenesisState {
 	consumerGenesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
 	consumerGenesisState.Params.Enabled = true
 	genesisState[consumertypes.ModuleName] = app.AppCodec().MustMarshalJSON(consumerGenesisState)
+
+	// Seed the POA genesis with the test validator so that POA's InitGenesis
+	// returns a non-empty ValidatorUpdate (the module manager requires exactly
+	// one module to do so after the ccvconsumer module was removed).
+	pubKeyAny, err := codectypes.NewAnyWithValue(privVal.PrivKey.PubKey())
+	if err != nil {
+		panic(fmt.Sprintf("failed to pack poa validator pubkey: %s", err.Error()))
+	}
+	poaGenesisState := &poatypes.GenesisState{
+		Params: poatypes.Params{Admin: authtypes.NewModuleAddress("gov").String()},
+		Validators: []poatypes.Validator{
+			{
+				PubKey: pubKeyAny,
+				Power:  1,
+				Metadata: &poatypes.ValidatorMetadata{
+					OperatorAddress: account.GetAddress().String(),
+					Moniker:         "test-validator",
+				},
+			},
+		},
+	}
+	genesisState[poatypes.ModuleName] = app.AppCodec().MustMarshalJSON(poaGenesisState)
 
 	return genesisState
 }

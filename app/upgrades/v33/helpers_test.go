@@ -108,6 +108,15 @@ func (s *HelpersTestSuite) TestSweepICSModuleAccounts_EmptyAccounts() {
 }
 
 func (s *HelpersTestSuite) TestInitializePOA_HappyPath() {
+	// Record how many POA validators exist before the operation. The test app
+	// seeds one genesis validator so that POA's InitGenesis produces a non-empty
+	// ValidatorUpdate for InitChain (required since ccvconsumer was removed from
+	// the module manager). That bootstrap validator is test infrastructure and
+	// should not affect the count of ICS-migrated validators.
+	initialVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
+	s.Require().NoError(err)
+	initialCount := len(initialVals)
+
 	s.seedConsumerValidators(8)
 
 	poaVals, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
@@ -119,7 +128,8 @@ func (s *HelpersTestSuite) TestInitializePOA_HappyPath() {
 
 	storedVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
 	s.Require().NoError(err)
-	s.Require().Len(storedVals, 8)
+	// InitializePOA should have added exactly 8 new validators from ICS.
+	s.Require().Len(storedVals, initialCount+8)
 
 	params, err := s.App.POAKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err)
