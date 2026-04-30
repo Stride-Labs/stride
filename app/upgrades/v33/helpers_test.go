@@ -4,8 +4,10 @@ import (
 	"encoding/hex"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	"github.com/stretchr/testify/suite"
 
@@ -68,6 +70,40 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_UnknownMoniker() {
 	for _, val := range poaValidators {
 		s.Require().Equal("", val.Metadata.Moniker)
 	}
+}
+
+func (s *HelpersTestSuite) TestSweepICSModuleAccounts_HappyPath() {
+	consRedistributeAddr := s.App.AccountKeeper.GetModuleAddress(consumertypes.ConsumerRedistributeName)
+	consToProviderAddr := s.App.AccountKeeper.GetModuleAddress(consumertypes.ConsumerToSendToProviderName)
+
+	bondDenom, err := s.App.StakingKeeper.BondDenom(s.Ctx)
+	s.Require().NoError(err)
+	fundAmount := sdk.NewInt64Coin(bondDenom, 1_000_000)
+
+	s.FundModuleAccount(consumertypes.ConsumerRedistributeName, fundAmount)
+	s.FundModuleAccount(consumertypes.ConsumerToSendToProviderName, fundAmount)
+
+	err = v33.SweepICSModuleAccounts(
+		s.Ctx, s.App.AccountKeeper, s.App.BankKeeper, s.App.DistrKeeper,
+	)
+	s.Require().NoError(err)
+
+	s.Require().True(s.App.BankKeeper.GetAllBalances(s.Ctx, consRedistributeAddr).IsZero())
+	s.Require().True(s.App.BankKeeper.GetAllBalances(s.Ctx, consToProviderAddr).IsZero())
+
+	// Community pool should have received both amounts
+	feePool, err := s.App.DistrKeeper.FeePool.Get(s.Ctx)
+	s.Require().NoError(err)
+	cpBalance := feePool.CommunityPool.AmountOf(bondDenom)
+	s.Require().Equal(sdkmath.LegacyNewDec(2_000_000), cpBalance)
+}
+
+func (s *HelpersTestSuite) TestSweepICSModuleAccounts_EmptyAccounts() {
+	// Don't fund anything — both accounts are empty; sweep should be a no-op
+	err := v33.SweepICSModuleAccounts(
+		s.Ctx, s.App.AccountKeeper, s.App.BankKeeper, s.App.DistrKeeper,
+	)
+	s.Require().NoError(err)
 }
 
 // --- test helpers ---
