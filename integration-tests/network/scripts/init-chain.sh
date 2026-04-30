@@ -56,13 +56,13 @@ add_genesis_account() {
     $BINARY $chain_genesis_command add-genesis-account $address $balance
 }
 
-# Adds each validator to the genesis file, and also saves down the public keys 
-# which are needed for ICS
-# Each validators public private key and node ID are saved in the API
+# Adds each validator to the genesis file, generates per-validator priv_val keys
+# in a separate home directory, and accumulates a POA-genesis-shaped JSON array
+# of validator entries which is later injected into app_state.poa.validators.
 add_validators() {
     echo "Adding validators..."
 
-    validator_public_keys=""
+    poa_validators="[]"
     for (( i=1; i <= $NUM_VALIDATORS; i++ )); do
         # Add the validator account to the keyring and genesis
         validator_key=$(jq -r '.validators[$index]' --argjson index "$((i-1))" ${KEYS_FILE})
@@ -71,27 +71,40 @@ add_validators() {
         add_genesis_account "$validator_key" "${VALIDATOR_BALANCE}${DENOM}"
 
         # Use a separate directory for the non-main nodes so we can generate unique validator keys
-        if [[ "$i" == "1" ]]; then 
+        if [[ "$i" == "1" ]]; then
             validator_home=${CHAIN_HOME}
-        else 
+        else
             validator_home=/tmp/${CHAIN_NAME}-${name} && rm -rf $validator_home
             $BINARY init $name --chain-id $CHAIN_ID --overwrite --home ${validator_home} &> /dev/null
         fi
 
         # Save the node IDs and keys to the API
         $BINARY tendermint show-node-id --home ${validator_home} > node_id.txt
-        upload_shared_file node_id.txt ${NODE_IDS_DIR}/${CHAIN_NAME}/${name}.txt 
+        upload_shared_file node_id.txt ${NODE_IDS_DIR}/${CHAIN_NAME}/${name}.txt
         upload_shared_file ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${CHAIN_NAME}/${name}.json
         upload_shared_file ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${CHAIN_NAME}/${name}.json
 
-        # Save the comma separted public keys for the ICS genesis update
-        validator_public_keys+="$(jq -r '.pub_key.value' ${validator_home}/config/priv_validator_key.json),"
+        # Build a POA validator entry: consensus pubkey from this node's home,
+        # operator address from the validator's keyring entry on the main home,
+        # moniker = val name, power = "1" (equal-weight POA per the design spec).
+        if [[ "$CHAIN_NAME" == "stride" ]]; then
+            val_pubkey_json=$($BINARY tendermint show-validator --home ${validator_home} 2>/dev/null)
+            val_op_addr=$($BINARY keys show $name -a)
+            poa_validators=$(echo "$poa_validators" | jq \
+                --argjson pk "$val_pubkey_json" \
+                --arg op "$val_op_addr" \
+                --arg moniker "$name" \
+                '. + [{pub_key: $pk, power: "1", metadata: {operator_address: $op, moniker: $moniker}}]')
+        fi
     done
 
-    # For non-stride nodes, generate the validator gentx (for the main node only)
-    # The other validators will be created after startup
-    if [[ "$CHAIN_NAME" != "stride" ]]; then 
-        $BINARY $chain_genesis_command gentx val1 ${VALIDATOR_STAKE}${DENOM} --chain-id $CHAIN_ID 
+    # Stash the POA validators array as a global so update_stride_genesis can use it.
+    POA_VALIDATORS_JSON="$poa_validators"
+
+    # For non-stride nodes, generate the validator gentx (for the main node only).
+    # The other validators will be created after startup via tx staking create-validator.
+    if [[ "$CHAIN_NAME" != "stride" ]]; then
+        $BINARY $chain_genesis_command gentx val1 ${VALIDATOR_STAKE}${DENOM} --chain-id $CHAIN_ID
     fi
 }
 
@@ -140,8 +153,16 @@ update_stride_genesis() {
     jq_inplace '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration |= "'$STRIDE_EPOCH_EPOCH_DURATION'"' $genesis_json
     jq_inplace '(.app_state.epochs.epochs[] | select(.identifier=="mint") ).duration |= "'$STRIDE_MINT_EPOCH_DURATION'"' $genesis_json 
 
-    $BINARY add-consumer-section --validator-public-keys $validator_public_keys
-    jq_inplace '.app_state.ccvconsumer.params.unbonding_period |= "'$UNBONDING_TIME'"' $genesis_json 
+    # Seed POA genesis with the validator set assembled in add_validators(). Post-v33,
+    # ccvconsumer is no longer in the module manager and POA is the sole source of the
+    # InitChain validator set. Bech32 below is authtypes.NewModuleAddress("gov") for
+    # Stride's address prefix; see app/test_setup.go for the Go derivation.
+    POA_ADMIN="stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl"
+    jq --arg admin "$POA_ADMIN" \
+       --argjson vals "$POA_VALIDATORS_JSON" \
+       '.app_state.poa.params.admin = $admin
+        | .app_state.poa.validators = $vals' \
+       $genesis_json > /tmp/$(basename $genesis_json) && mv /tmp/$(basename $genesis_json) $genesis_json
 
     jq_inplace '.app_state.airdrop.params.period_length_seconds |= "'${AIRDROP_PERIOD_SECONDS}'"' $genesis_json 
 
