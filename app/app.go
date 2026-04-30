@@ -51,6 +51,9 @@ import (
 	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	ccvdistr "github.com/cosmos/interchain-security/v7/x/ccv/democracy/distribution"
 	ccvstaking "github.com/cosmos/interchain-security/v7/x/ccv/democracy/staking"
+	poa "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa"
+	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	evmosvesting "github.com/evmos/vesting/x/vesting"
 	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
@@ -220,6 +223,7 @@ var (
 		icqoracletypes.ModuleName:                     nil,
 		auctiontypes.ModuleName:                       nil,
 		strdburnertypes.ModuleName:                    {authtypes.Burner},
+		poatypes.ModuleName:                           nil, // POA accumulates tx fees; no mint/burn permissions needed
 	}
 )
 
@@ -298,6 +302,7 @@ type StrideApp struct {
 	ICQOracleKeeper       icqoraclekeeper.Keeper
 	AuctionKeeper         auctionkeeper.Keeper
 	StrdBurnerKeeper      strdburnerkeeper.Keeper
+	POAKeeper             *poakeeper.Keeper
 
 	// Module managers
 	ModuleManager      *module.Manager
@@ -382,9 +387,10 @@ func NewStrideApp(
 		icqoracletypes.StoreKey,
 		auctiontypes.StoreKey,
 		strdburnertypes.StoreKey,
+		poatypes.StoreKey,
 	)
 
-	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, poatypes.TransientStoreKey)
 
 	// register streaming services
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -440,6 +446,14 @@ func NewStrideApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		addresscodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
+	)
+
+	app.POAKeeper = poakeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[poatypes.StoreKey]),
+		runtime.NewTransientStoreService(tkeys[poatypes.TransientStoreKey]),
+		app.AccountKeeper,
+		app.BankKeeper,
 	)
 	epochsKeeper := epochsmodulekeeper.NewKeeper(
 		appCodec,
@@ -1015,6 +1029,7 @@ func NewStrideApp(
 		icqOracleModule,
 		auctionModule,
 		strdburnerModule,
+		poa.NewAppModule(appCodec, app.POAKeeper, poa.WithSecp256k1Support()),
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -1085,6 +1100,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		poatypes.ModuleName,
 		strdburnertypes.ModuleName,
 	)
 
@@ -1127,6 +1143,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		poatypes.ModuleName,
 		strdburnertypes.ModuleName, // strdburner should be last
 	)
 
@@ -1171,6 +1188,7 @@ func NewStrideApp(
 		airdroptypes.ModuleName,
 		icqoracletypes.ModuleName,
 		auctiontypes.ModuleName,
+		poatypes.ModuleName,
 		strdburnertypes.ModuleName,
 	)
 
