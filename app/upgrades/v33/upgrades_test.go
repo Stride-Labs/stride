@@ -5,7 +5,11 @@ import (
 	"testing"
 	"time"
 
+	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	"github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -13,8 +17,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v33 "github.com/Stride-Labs/stride/v32/app/upgrades/v33"

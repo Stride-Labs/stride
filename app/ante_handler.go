@@ -6,11 +6,11 @@ import (
 	ibcante "github.com/cosmos/ibc-go/v11/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
-	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 
 	corestoretypes "cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"

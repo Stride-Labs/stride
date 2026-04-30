@@ -4,19 +4,19 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-
-	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
-	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
-
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 )

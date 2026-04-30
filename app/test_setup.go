@@ -20,12 +20,12 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
 	testutil "github.com/Stride-Labs/stride/v32/testutil"
@@ -210,4 +210,3 @@ func buildPOAGenesisFromAbciValSet(valSet []types.ValidatorUpdate) *poatypes.Gen
 		Validators: poaVals,
 	}
 }
-
