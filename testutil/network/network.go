@@ -8,29 +8,29 @@ import (
 	"time"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	types1 "github.com/cometbft/cometbft/abci/types"
 	cometbftrand "github.com/cometbft/cometbft/libs/rand"
-	tmtypes "github.com/cometbft/cometbft/types"
 	cosmosdb "github.com/cosmos/cosmos-db"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	pruningtypes "github.com/cosmos/cosmos-sdk/store/v2/pruning/types"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v32/app"
-	testutil "github.com/Stride-Labs/stride/v32/testutil"
 )
 
 type (
@@ -60,9 +60,9 @@ func New(t *testing.T, configs ...network.Config) *network.Network {
 // DefaultConfig will initialize config for the network with custom application,
 // genesis and single validator. All other parameters are inherited from cosmos-sdk/testutil/network.DefaultConfig
 func DefaultConfig() network.Config {
-	// app doesn't have this module anymore, but we need them for test setup, which uses gentx
 	tempApp := app.InitStrideTestApp(false)
 	encoding := app.MakeEncodingConfig()
+	bondedTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 
 	chainId := fmt.Sprintf("stride-%d", cometbftrand.NewRand().Uint64())
 	genState := tempApp.DefaultGenesis()
@@ -73,14 +73,19 @@ func DefaultConfig() network.Config {
 		InterfaceRegistry: encoding.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor: func(val network.ValidatorI) servertypes.Application {
-			err := modifyConsumerGenesis(val.(network.Validator))
-			if err != nil {
+			// Wire the network's single validator into POA + staking + bank.
+			// Post-v33 (ICS → POA migration) this is what makes the chain
+			// produce blocks: POA is the InitChain validator-update source,
+			// and a Bonded staking shadow record is what distribution looks
+			// up at every BeginBlock past height 1. See seedNetworkValidator
+			// for the full rationale.
+			if err := seedNetworkValidator(val.(network.Validator), bondedTokens); err != nil {
 				panic(err)
 			}
 
-			// do NOT create validators using gentxs so that val sets are applied using only ccv genesis
-			err = modifyGenutilGenesis(val.(network.Validator))
-			if err != nil {
+			// Drop gentxs so the chain's validator set comes only from POA's
+			// genesis, not from a framework-generated staking gentx.
+			if err := clearGentxs(val.(network.Validator)); err != nil {
 				panic(err)
 			}
 
@@ -109,7 +114,7 @@ func DefaultConfig() network.Config {
 		MinGasPrices:    fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
 		AccountTokens:   sdk.TokensFromConsensusPower(1000, sdk.DefaultPowerReduction),
 		StakingTokens:   sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction),
-		BondedTokens:    sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction),
+		BondedTokens:    bondedTokens,
 		PruningStrategy: pruningtypes.PruningOptionNothing,
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.Secp256k1Type),
@@ -117,77 +122,184 @@ func DefaultConfig() network.Config {
 	}
 }
 
-// add new val sets to consumer genesis before launching app
-func modifyConsumerGenesis(val network.Validator) error {
+// seedNetworkValidator wires the network's single validator into every module
+// that needs to know about it for blocks to flow. There are two demands:
+//
+//   - POA must hold the validator so its InitGenesis returns the InitChain
+//     ValidatorUpdate. Post-v33 (ICS → POA migration) ccvconsumer is no longer
+//     in the module manager, so POA is the only source — without this seed
+//     CometBFT panics on an empty validator set.
+//
+//   - Staking must hold a Bonded shadow record at the same consensus key, with
+//     the bonded pool funded to match. distribution.AllocateTokens calls
+//     stakingKeeper.ValidatorByConsAddr at every BeginBlock past height 1, and
+//     post-v33 POA doesn't shadow validators into staking — so without this
+//     record the chain consensus-fails at block 3 with "validator does not
+//     exist". Pre-v33 ccvconsumer's hooks created the shadow automatically.
+//
+// One function, three module sections (poa, staking, bank), one round-trip
+// through the genesis file.
+func seedNetworkValidator(val network.Validator, bondAmt sdkmath.Int) error {
 	genFile := val.Ctx.Config.GenesisFile()
 	appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to read genesis from the file")
 	}
 
-	tmProtoPublicKey, err := cryptocodec.ToCmtProtoPublicKey(val.PubKey)
+	pkAny, err := codectypes.NewAnyWithValue(val.PubKey)
 	if err != nil {
-		return errorsmod.Wrap(err, "invalid public key")
+		return errorsmod.Wrap(err, "failed to wrap validator pubkey as Any")
 	}
 
-	initialValset := []types1.ValidatorUpdate{{PubKey: tmProtoPublicKey, Power: 100}}
-	vals, err := tmtypes.PB2TM.ValidatorUpdates(initialValset)
+	// --- POA: validator-set source for InitChain ---
+	poaGenesis := &poatypes.GenesisState{
+		Params: poatypes.Params{Admin: authtypes.NewModuleAddress("gov").String()},
+		Validators: []poatypes.Validator{
+			{
+				PubKey: pkAny,
+				Power:  bondAmt.Quo(sdk.DefaultPowerReduction).Int64(),
+				Metadata: &poatypes.ValidatorMetadata{
+					OperatorAddress: val.Address.String(),
+					Moniker:         "test-validator",
+				},
+			},
+		},
+	}
+	poaBz, err := val.ClientCtx.Codec.MarshalJSON(poaGenesis)
 	if err != nil {
-		return errorsmod.Wrap(err, "could not convert val updates to validator set")
+		return errorsmod.Wrap(err, "failed to marshal POA genesis state into JSON")
+	}
+	appState[poatypes.ModuleName] = poaBz
+
+	// --- Staking: Bonded shadow record so distribution can resolve the proposer ---
+	// Mark this as exported and leave LastValidatorPowers empty so staking seeds
+	// its indexes/state without returning InitGenesis validator updates. POA must
+	// remain the sole validator-update source at genesis.
+	stakingGenesis := stakingtypes.NewGenesisState(
+		stakingtypes.DefaultParams(),
+		[]stakingtypes.Validator{{
+			OperatorAddress:   sdk.ValAddress(val.Address).String(),
+			ConsensusPubkey:   pkAny,
+			Status:            stakingtypes.Bonded,
+			Tokens:            bondAmt,
+			DelegatorShares:   sdkmath.LegacyOneDec(),
+			Description:       stakingtypes.Description{Moniker: "test-validator"},
+			UnbondingTime:     time.Unix(0, 0).UTC(),
+			Commission:        stakingtypes.NewCommission(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec()),
+			MinSelfDelegation: sdkmath.ZeroInt(),
+		}},
+		[]stakingtypes.Delegation{
+			stakingtypes.NewDelegation(
+				val.Address.String(),
+				sdk.ValAddress(val.Address).String(),
+				sdkmath.LegacyOneDec(),
+			),
+		},
+	)
+	stakingGenesis.LastTotalPower = bondAmt
+	stakingGenesis.Exported = true
+
+	stakingBz, err := val.ClientCtx.Codec.MarshalJSON(stakingGenesis)
+	if err != nil {
+		return errorsmod.Wrap(err, "failed to marshal staking genesis state into JSON")
+	}
+	appState[stakingtypes.ModuleName] = stakingBz
+
+	// --- Bank: move the validator's self-bond into the bonded pool, then recompute supply ---
+	var bankGenesis banktypes.GenesisState
+	if err := val.ClientCtx.Codec.UnmarshalJSON(appState[banktypes.ModuleName], &bankGenesis); err != nil {
+		return errorsmod.Wrap(err, "failed to unmarshal bank genesis")
 	}
 
-	consumerGenesisState := testutil.CreateMinimalConsumerTestGenesis()
-	consumerGenesisState.Provider.InitialValSet = initialValset
-	consumerGenesisState.Provider.ConsensusState.NextValidatorsHash = tmtypes.NewValidatorSet(vals).Hash()
-
-	if err := consumerGenesisState.Validate(); err != nil {
-		return errorsmod.Wrap(err, "invalid consumer genesis")
+	if err := moveBondedTokens(&bankGenesis, val.Address.String(), bondAmt); err != nil {
+		return err
 	}
 
-	consumerGenStateBz, err := val.ClientCtx.Codec.MarshalJSON(consumerGenesisState)
+	totalSupply := sdk.NewCoins()
+	for _, b := range bankGenesis.Balances {
+		totalSupply = totalSupply.Add(b.Coins...)
+	}
+	bankGenesis.Supply = totalSupply
+	bankBz, err := val.ClientCtx.Codec.MarshalJSON(&bankGenesis)
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to marshal consumer genesis state into JSON")
+		return errorsmod.Wrap(err, "failed to marshal bank genesis state into JSON")
+	}
+	appState[banktypes.ModuleName] = bankBz
+
+	return writeGenesis(genDoc, appState, genFile)
+}
+
+func moveBondedTokens(bankGenesis *banktypes.GenesisState, delegatorAddr string, bondAmt sdkmath.Int) error {
+	bondDenom := sdk.DefaultBondDenom
+	bondedPoolAddr := authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String()
+
+	delegatorFound := false
+	bondedPoolFound := false
+
+	for i := range bankGenesis.Balances {
+		balance := &bankGenesis.Balances[i]
+
+		switch balance.Address {
+		case delegatorAddr:
+			currentBond := balance.Coins.AmountOf(bondDenom)
+			if currentBond.LT(bondAmt) {
+				return fmt.Errorf(
+					"validator account %s has %s%s, need %s%s for bonded stake",
+					delegatorAddr, currentBond.String(), bondDenom, bondAmt.String(), bondDenom,
+				)
+			}
+
+			balance.Coins = balance.Coins.Sub(sdk.NewCoin(bondDenom, bondAmt))
+			delegatorFound = true
+
+		case bondedPoolAddr:
+			balance.Coins = balance.Coins.Add(sdk.NewCoin(bondDenom, bondAmt))
+			bondedPoolFound = true
+		}
 	}
 
-	appState[ccvconsumertypes.ModuleName] = consumerGenStateBz
-	appStateJSON, err := json.Marshal(appState)
-	if err != nil {
-		return errorsmod.Wrap(err, "failed to marshal application genesis state into JSON")
+	if !delegatorFound {
+		return fmt.Errorf("validator account balance not found in bank genesis: %s", delegatorAddr)
 	}
 
-	genDoc.AppState = appStateJSON
-	err = genutil.ExportGenesisFile(genDoc, genFile)
-	if err != nil {
-		return errorsmod.Wrap(err, "failed to export genesis state")
+	if !bondedPoolFound {
+		bankGenesis.Balances = append(bankGenesis.Balances, banktypes.Balance{
+			Address: bondedPoolAddr,
+			Coins:   sdk.NewCoins(sdk.NewCoin(bondDenom, bondAmt)),
+		})
 	}
 
 	return nil
 }
 
-// remove gentxs from genutil genesis
-func modifyGenutilGenesis(val network.Validator) error {
+// clearGentxs replaces the genutil genesis with the default (empty gentx list).
+// Called so the chain's validator set is taken from POA's genesis only, not
+// from a framework-generated staking gentx that would compete with POA.
+func clearGentxs(val network.Validator) error {
 	genFile := val.Ctx.Config.GenesisFile()
 	appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to read genesis from the file")
 	}
 
-	genutilGenesisState := genutiltypes.DefaultGenesisState()
-	genutilGenStateBz, err := val.ClientCtx.Codec.MarshalJSON(genutilGenesisState)
+	genutilBz, err := val.ClientCtx.Codec.MarshalJSON(genutiltypes.DefaultGenesisState())
 	if err != nil {
-		return errorsmod.Wrap(err, "failed to marshal consumer genesis state into JSON")
+		return errorsmod.Wrap(err, "failed to marshal genutil genesis state into JSON")
 	}
-	appState[genutiltypes.ModuleName] = genutilGenStateBz
+	appState[genutiltypes.ModuleName] = genutilBz
+
+	return writeGenesis(genDoc, appState, genFile)
+}
+
+// writeGenesis serializes appState back into genDoc and writes it to genFile.
+func writeGenesis(genDoc *genutiltypes.AppGenesis, appState map[string]json.RawMessage, genFile string) error {
 	appStateJSON, err := json.Marshal(appState)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to marshal application genesis state into JSON")
 	}
-
 	genDoc.AppState = appStateJSON
-	err = genutil.ExportGenesisFile(genDoc, genFile)
-	if err != nil {
+	if err := genutil.ExportGenesisFile(genDoc, genFile); err != nil {
 		return errorsmod.Wrap(err, "failed to export genesis state")
 	}
-
 	return nil
 }
