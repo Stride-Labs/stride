@@ -49,16 +49,34 @@ jq '(.app_state.epochs.epochs[] | select(.identifier=="day") ).duration = $epoch
 jq '(.app_state.epochs.epochs[] | select(.identifier=="stride_epoch") ).duration = $epochLen' --arg epochLen $STRIDE_EPOCH_EPOCH_DURATION $genesis_json > json.tmp && mv json.tmp $genesis_json
 jq '.app_state.gov.params.max_deposit_period = $newVal' --arg newVal "$MAX_DEPOSIT_PERIOD" $genesis_json > json.tmp && mv json.tmp $genesis_json
 jq '.app_state.gov.params.voting_period = $newVal' --arg newVal "$VOTING_PERIOD" $genesis_json > json.tmp && mv json.tmp $genesis_json
+jq '.app_state.staking.params.unbonding_time = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_json > json.tmp && mv json.tmp $genesis_json
 
 jq "del(.app_state.interchain_accounts)" $genesis_json > json.tmp && mv json.tmp $genesis_json
 interchain_accts=$(cat dockernet/config/ica_controller.json)
 jq ".app_state += $interchain_accts" $genesis_json > json.tmp && mv json.tmp $genesis_json
 
-$STRIDED add-consumer-section --validator-home-directories $STRIDE_HOME
-jq '.app_state.ccvconsumer.params.unbonding_period = $newVal' --arg newVal "$UNBONDING_TIME" $genesis_json > json.tmp && mv json.tmp $genesis_json
-
 echo "$STRIDE_VAL_MNEMONIC" | $STRIDED keys add val --recover $KEYRING
 $STRIDED genesis add-genesis-account $($STRIDED keys show val -a $KEYRING) 100000000000${DENOM}
+
+# Seed POA genesis with the local validator so it produces blocks (post-v33,
+# ccvconsumer is no longer in the module manager and POA is the sole source
+# of the InitChain validator set). The bech32 below is
+# authtypes.NewModuleAddress("gov").String() against Stride's address prefix
+# — re-derive via app/test_setup.go if the prefix or module name ever changes.
+POA_ADMIN="stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl"
+val_op_addr=$($STRIDED keys show val -a $KEYRING)
+val_pubkey_json=$($STRIDED tendermint show-validator 2>/dev/null)
+
+jq --arg admin "$POA_ADMIN" \
+   --arg op "$val_op_addr" \
+   --argjson pk "$val_pubkey_json" \
+   '.app_state.poa.params.admin = $admin
+    | .app_state.poa.validators = [{
+        pub_key: $pk,
+        power: "1",
+        metadata: {operator_address: $op, moniker: "stride-local"}
+      }]' \
+   $genesis_json > json.tmp && mv json.tmp $genesis_json
 
 echo "$STRIDE_ADMIN_MNEMONIC" | $STRIDED keys add admin --recover $KEYRING
 $STRIDED genesis add-genesis-account $($STRIDED keys show admin -a $KEYRING) 100000000000${DENOM}
