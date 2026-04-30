@@ -21,7 +21,7 @@ At a high level, v33 does the migration with old ICS keepers left mounted but in
 2. Block N+1 signs with the same 8 validators, now produced by `x/poa`.
 3. No interruption to block production.
 4. Govenators, delegators, and their bonded STRD are undisturbed.
-5. Staking rewards continue flowing from mint → `x/distribution` → govenators → delegators.
+5. Staking rewards continue flowing from mint → `app/distrwrapper` (in-tree replacement for `ccvdistr`) → 85% to govenators / delegators, 15% to POA validators. Same economic split as today; the 15% slice that previously routed to a non-functional IBC-to-Hub target is now redirected to the POA module account.
 6. Governance proposals tally correctly based on bonded STRD (unchanged behavior).
 7. Stride's liquid staking product (`stakeibc`, etc.) is unaffected.
 
@@ -40,10 +40,11 @@ At a high level, v33 does the migration with old ICS keepers left mounted but in
 | Module | Today | v33 | Reason |
 |---|---|---|---|
 | `x/ccv/consumer` | registered | **removed** | No longer driving validator set |
-| `x/ccv/democracy/distribution` (`ccvdistr`) | registered | **removed** | 85/15 split logic no longer needed; use plain `x/distribution` |
+| `x/ccv/democracy/distribution` (`ccvdistr`) | registered | **removed** | Replaced by in-tree `app/distrwrapper` that preserves the 85/15 split without an ICS dependency |
 | `x/ccv/democracy/staking` (`ccvstaking`) | registered | **kept** | Still suppresses x/staking validator updates to CometBFT |
 | `x/staking` | wrapped by ccvstaking | **unchanged** (still wrapped) | Govenators + delegators keep running |
-| `x/distribution` | wrapped by ccvdistr | **used directly** (unwrapped) | Standard flow: `fee_collector` → validators |
+| `x/distribution` | wrapped by ccvdistr | **wrapped by `app/distrwrapper`** | New in-tree wrapper: 85% to bonded staking validators (stake-iteration, no `ValidatorByConsAddr`), 15% to POA module account |
+| `app/distrwrapper` | — | **added** | New in-tree module embedding `distr.AppModule` and overriding `BeginBlock`. Mirror of `ccvdistr`'s logic with two changes: fee source is `fee_collector` (not `ConsumerRedistributeName`), and the 15% non-staking slice routes to the POA module account so POA's lazy checkpoint distributes it to POA validators |
 | `x/slashing` | registered | **removed** | POA validators aren't slashed; govenators don't sign blocks |
 | `x/evidence` | registered | **removed** | No slashing backend to route evidence to |
 | `x/poa` | — | **added** | New block-producer module |
@@ -61,6 +62,31 @@ app.DistrKeeper = distrkeeper.NewKeeper(
     authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 )
 ```
+
+**`app/distrwrapper` AppModule** — replaces `distr.NewAppModule(...)` in the
+module manager. The wrapper embeds the standard `distr.AppModule` and overrides
+only `BeginBlock`. All other module-level concerns (genesis, queries, msg
+services, hooks, migrations) pass through to the embedded standard module
+unchanged. The override:
+
+1. Reads `fee_collector` balance.
+2. Sends 15% to the POA module account (POA's lazy `checkpointAllValidators`
+   distributes to POA validators on the next set change or `MsgWithdrawFees`).
+3. Sends the remaining 85% through the distribution module account, then
+   iterates BONDED staking validators by stake and allocates pro-rata —
+   identical to `ccvdistr`'s `AllocateTokens` semantics.
+
+This is what makes the chain safe to run post-v33. The standard `x/distribution`
+`AllocateTokens` calls `stakingKeeper.ValidatorByConsAddr(consAddr)` for each
+voter at every BeginBlock — if a POA validator's consensus address isn't in
+staking (true today for ~3 of Stride's 8 mainnet validators because of ICS
+key-assignment), that lookup errors and CometBFT halts with `CONSENSUS FAILURE`.
+The wrapper sidesteps this entirely by iterating bonded staking validators
+directly instead of looking up consensus voters.
+
+The 15% POA slice also has a useful side effect: it preserves the pre-v33
+`ConsumerRedistributionFraction` economic profile while redirecting the slice
+that previously went to a non-functional IBC-to-Hub target.
 
 **`x/poa` keeper** — new, requires KV + transient store + account + bank keepers:
 
@@ -364,17 +390,29 @@ For the curious, see `2026-04-27-ics-cleanup-design.md` for the v34 plan. Implem
 └──────────────────────────────────────────────────────────────────┘
 
   fee_collector                     poa_module_account ◄── tx fees
-                                                          (via ante handler)
-       │                                   │
-       ▼                                   ▼
-┌────────────────────────┐    ┌──────────────────────────────────┐
-│ x/distribution         │    │ x/poa (lazy checkpoint model)    │
-│   (unwrapped, standard)│    │   accrues tx fees in its account │
-│   fee pool = fee_      │    │   allocates per-validator on:    │
-│   collector            │    │     • power changes              │
-│   → govenators         │    │     • MsgWithdrawFees            │
-│   → delegators         │    │   → POA validators (8 of them)   │
-└────────────────────────┘    └──────────────────────────────────┘
+       │                                   ▲                  (via ante handler)
+       ▼                                   │
+┌─────────────────────────────────────┐    │
+│ app/distrwrapper.BeginBlock         │    │
+│   drains fee_collector, splits:     │    │
+│     • 15% ────────────────────────► │ ◄──┘ (then POA's lazy checkpoint
+│     • 85% ──┐                       │      distributes pro-rata to the
+│             │                       │      8 POA validators on next set
+└─────────────┼───────────────────────┘      change or MsgWithdrawFees)
+              │
+              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ x/distribution (standard, wrapped only at BeginBlock by          │
+│   distrwrapper — all other behavior unchanged)                   │
+│   iterate BONDED staking validators by stake fraction            │
+│   → govenator commission → govenator operator account            │
+│   → remainder → delegator rewards (claimable via Withdraw)       │
+│   → community-tax slice + truncation remainder → community pool  │
+│ NB: stake-iteration model. No ValidatorByConsAddr lookup, so     │
+│ the chain cannot halt on POA validators that lack a staking      │
+│ shadow record (which is true today for ~3 of 8 mainnet vals due  │
+│ to ICS key-assignment).                                          │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ### Liquid-staking revenue flow (orthogonal to migration)
@@ -416,8 +454,8 @@ Stride's liquid staking product has its own revenue flow that is **completely in
 | Revenue stream | Recipient today | Recipient post-v33 |
 |---|---|---|
 | STRD inflation — 72% (strategic reserve, community pools) | Same fixed addresses | **Same, unchanged** |
-| STRD inflation — 27.64% staking portion × 85% local | Govenators + delegators | Govenators + delegators (gets 100%, no 15% leak) |
-| STRD inflation — 27.64% staking portion × 15% Hub | Hub via IBC | Govenators + delegators (gained) |
+| STRD inflation — 27.64% staking portion × 85% local | Govenators + delegators | Govenators + delegators (unchanged) |
+| STRD inflation — 27.64% staking portion × 15% Hub | Hub via IBC | POA validators via POA lazy distribution (redirected from non-functional IBC target) |
 | Stride tx fees | Govenators + delegators via ccvconsumer split | POA validators via POA lazy distribution |
 | LS revenue — 15% (via stakeibc) | 8 hardcoded addresses (as stTokens) | **Same, unchanged** |
 | LS revenue — 85% (via stakeibc → auction) | Buyback-and-burn (STRD) | **Same, unchanged** |
@@ -426,7 +464,7 @@ Stride's liquid staking product has its own revenue flow that is **completely in
 
 1. `x/mint`: no change. Keep routing 27.64% staking-portion to `fee_collector`.
 2. `x/distribution` keeper construction: change `feeCollectorName` param from `ccvconsumertypes.ConsumerRedistributeName` → `authtypes.FeeCollectorName`.
-3. Drop `ccvdistr.NewAppModule(...)` from module manager; use plain `distr.NewAppModule(...)`.
+3. Replace `ccvdistr.NewAppModule(...)` in the module manager with `distrwrapper.NewAppModule(...)` (new in-tree package at `app/distrwrapper/`). Wrapper preserves `ccvdistr`'s 85/15 split semantics with `fee_collector` as the source and the POA module account as the 15% target.
 4. Ante handler: change tx-fee destination from `authtypes.FeeCollectorName` → `poatypes.ModuleName`.
 5. Upgrade handler step 4: sweep residual balances in `cons_to_send_to_provider` and `cons_redistribute` to community pool.
 
