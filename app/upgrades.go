@@ -11,6 +11,7 @@ import (
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
 
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
@@ -42,6 +43,7 @@ import (
 	v30 "github.com/Stride-Labs/stride/v32/app/upgrades/v30"
 	v31 "github.com/Stride-Labs/stride/v32/app/upgrades/v31"
 	v32 "github.com/Stride-Labs/stride/v32/app/upgrades/v32"
+	v33 "github.com/Stride-Labs/stride/v32/app/upgrades/v33"
 	v4 "github.com/Stride-Labs/stride/v32/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v32/app/upgrades/v5"
 	v6 "github.com/Stride-Labs/stride/v32/app/upgrades/v6"
@@ -425,6 +427,21 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		),
 	)
 
+	// v33 upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v33.UpgradeName,
+		v33.CreateUpgradeHandler(
+			app.ModuleManager,
+			app.configurator,
+			app.appCodec,
+			app.ConsumerKeeper,
+			app.POAKeeper,
+			app.BankKeeper,
+			app.AccountKeeper,
+			app.DistrKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
@@ -493,6 +510,13 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	case "v32":
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Deleted: []string{removedCrisisStoreKey},
+		}
+	case "v33":
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{
+				poatypes.StoreKey,
+				poatypes.TransientStoreKey,
+			},
 		}
 	}
 
