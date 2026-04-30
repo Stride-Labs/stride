@@ -77,8 +77,8 @@ github.com/OffchainLabs/prysm/v6 v6.1.4 h1:gwLBbGaYsEh9zpZL337uVjXPX3F86UNJ7KIiF
 github.com/OffchainLabs/prysm/v6 v6.1.4/go.mod h1:VbMsULGbZkgM4kwbKxb/ywhhR/EtebwGPIAszIU59Ws=
 github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260116142910-60249400e523 h1:pQUezn45oyv/8VcOQvPCg2851EIIusY0YKkJhAXsy2I=
 github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20260116142910-60249400e523/go.mod h1:ioLG6R+5bUSO1oeGSDxOV3FADARuMoytZCSX6MEMQkI=
-github.com/RoaringBitmap/roaring/v2 v2.15.0 h1:gCbixa3UiG7g6WUZNVOfEEg2HTc1vR4OVdMkX8t1ZFc=
-github.com/RoaringBitmap/roaring/v2 v2.15.0/go.mod h1:eq4wdNXxtJIS/oikeCzdX1rBzek7ANzbth041hrU8Q4=
+github.com/RoaringBitmap/roaring/v2 v2.16.0 h1:Kys1UNf49d5W8Tq3bpuAhIr/Z8/yPB+59CO8A6c/BbE=
+github.com/RoaringBitmap/roaring/v2 v2.16.0/go.mod h1:eq4wdNXxtJIS/oikeCzdX1rBzek7ANzbth041hrU8Q4=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/Stride-Labs/ibc-apps/middleware/packet-forward-middleware/v11 v11.0.0-stride-rc0 h1:AokT53zSfG7pMdXCHaFDEiRvhE625V7bmdcRN/qhQ78=
@@ -249,6 +249,8 @@ github.com/cosmos/cosmos-proto v1.0.0-beta.5 h1:eNcayDLpip+zVLRLYafhzLvQlSmyab+R
 github.com/cosmos/cosmos-proto v1.0.0-beta.5/go.mod h1:hQGLpiIUloJBMdQMMWb/4wRApmI9hjHH05nefC0Ojec=
 github.com/cosmos/cosmos-sdk v0.54.2 h1:TBcKN4z++XJ8Tu/NCbLV14KQ3pKhoSwSTDipeWmuaxs=
 github.com/cosmos/cosmos-sdk v0.54.2/go.mod h1:yU5ttNdGYTVPfdYhrD8HN1hGg9s3jm7Ub42SpFW3T/Y=
+github.com/cosmos/cosmos-sdk/enterprise/poa v1.0.0 h1:CxkqLfSrtLrza1ej3Mc+PlnHwytFJr6yckvhkd3SMh0=
+github.com/cosmos/cosmos-sdk/enterprise/poa v1.0.0/go.mod h1:pRYeDKqjTuUDYRpiQU8ggU6ug38J9A9X1EDHqFqU3uc=
 github.com/cosmos/cosmos-sdk/store/v2 v2.0.0 h1:5CFXBU5cHIvxMpz5QBrTwR5DL/W3uZL2BYYMoDp4siY=
 github.com/cosmos/cosmos-sdk/store/v2 v2.0.0/go.mod h1:XyRyi5fGjIcokBqS1cyA8/QVbVNy4ui8hmpk1gezuHo=
 github.com/cosmos/go-bip39 v1.0.0 h1:pcomnQdrdH22njcAatO0yWojsUnCO3y2tNoV1cb6hHY=
