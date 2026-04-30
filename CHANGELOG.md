@@ -52,9 +52,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 2. Remove `ccvconsumer`, `ccvdistr`, `slashing`, `evidence` from the module
    manager (their keepers stay mounted; full deletion is deferred to v34).
 3. Reconfigure `x/distribution` to use the standard `fee_collector` (was
-   `cons_redistribute`).
+   `cons_redistribute`). Wrap the standard `distr.AppModule` with a new in-tree
+   `app/distrwrapper` that overrides `BeginBlock` to: (a) iterate bonded
+   staking validators by stake (no `ValidatorByConsAddr` lookup, which would
+   otherwise halt the chain on POA validators that lack a staking shadow due
+   to ICS key-assignment), and (b) preserve the pre-v33 85/15 split with the
+   15% slice now routed to the POA module account instead of the previous
+   non-functional IBC-to-Hub target.
 4. Route tx fees to the POA module account via the ante handler.
-5. Inflation flow unchanged except no longer leaks 15% to the Cosmos Hub.
+5. Inflation flow economic profile is unchanged — same 85/15 split, just with
+   the 15% redirected from the (paused) Hub provider rewards to POA validators.
 6. Liquid staking revenue flow (stakeibc → reward collector → 15%/85% split →
    auction → strdburner) is unchanged.
 7. Remove the stakeibc consumer-reward-denom whitelist plumbing — no longer

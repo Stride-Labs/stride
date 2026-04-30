@@ -16,6 +16,11 @@ This is the cleanup binary that follows v33 (the ICS → POA migration). After v
 2. Replace the borrowed `ccvstaking` wrapper with an in-tree equivalent.
 3. Drop the `github.com/cosmos/interchain-security/v7` dependency from `go.mod`.
 
+**Note**: the `ccvdistr` replacement was already done in v33 as
+`app/distrwrapper`, so this plan only needs to handle `ccvstaking`. v33 itself
+is therefore self-contained from a chain-safety perspective — v34 is purely
+about pruning the ICS module from the dep graph.
+
 **Non-goals:**
 
 - Re-enabling slashing.
