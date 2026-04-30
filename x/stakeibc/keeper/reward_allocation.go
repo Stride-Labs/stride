@@ -65,11 +65,11 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 
 		if perValidatorStToken.Amount.GT(sdkmath.ZeroInt()) {
 			for _, validator := range utils.PoaValidatorSet {
-				valAddress := sdk.MustAccAddressFromBech32(validator)
+				valAddress := sdk.MustAccAddressFromBech32(validator.Operator)
 				err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.RewardCollectorName, valAddress, sdk.NewCoins(perValidatorStToken))
 				if err != nil {
 					k.Logger(ctx).Error(fmt.Sprintf("Cannot send stTokens from RewardCollector to %s: %s",
-						validator, err))
+						validator.Operator, err))
 					continue
 				}
 			}

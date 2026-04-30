@@ -87,7 +87,7 @@ func (s *KeeperTestSuite) checkAccountBalance(address, denom string, expectedBal
 func (s *KeeperTestSuite) getTotalPoAValidatorStTokenBalance(denom string) sdkmath.Int {
 	total := sdkmath.ZeroInt()
 	for _, validator := range utils.PoaValidatorSet {
-		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(validator), denom)
+		balance := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(validator.Operator), denom)
 		total = total.Add(balance.Amount)
 	}
 	return total
@@ -118,8 +118,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_Success() {
 
 	// Check each validator received equal share (ignoring remainder for simplicity)
 	for _, validator := range utils.PoaValidatorSet {
-		s.checkAccountBalance(validator, StAtom, expectedStTokenPerValidator)
-		s.checkAccountBalance(validator, StOsmo, expectedStTokenPerValidator)
+		s.checkAccountBalance(validator.Operator, StAtom, expectedStTokenPerValidator)
+		s.checkAccountBalance(validator.Operator, StOsmo, expectedStTokenPerValidator)
 	}
 
 	// Check Auction module balance (should have remainder - 85% of original)
@@ -182,8 +182,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_TotalValidatorSh
 
 	// Check each validator received equal share (ignoring remainder for simplicity)
 	for _, validator := range utils.PoaValidatorSet {
-		s.checkAccountBalance(validator, StAtom, sdkmath.ZeroInt())
-		s.checkAccountBalance(validator, StOsmo, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StAtom, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StOsmo, sdkmath.ZeroInt())
 	}
 
 	// Auction balance should also be 0 since it short circuits
@@ -216,8 +216,8 @@ func (s *KeeperTestSuite) TestLiquidStakeRewardCollectorBalance_IndividualValida
 
 	// Check each validator received equal share (ignoring remainder for simplicity)
 	for _, validator := range utils.PoaValidatorSet {
-		s.checkAccountBalance(validator, StAtom, sdkmath.ZeroInt())
-		s.checkAccountBalance(validator, StOsmo, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StAtom, sdkmath.ZeroInt())
+		s.checkAccountBalance(validator.Operator, StOsmo, sdkmath.ZeroInt())
 	}
 
 	// Check Auction module balance

@@ -6,14 +6,16 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v33 "github.com/Stride-Labs/stride/v32/app/upgrades/v33"
+	"github.com/Stride-Labs/stride/v32/utils"
 )
 
 type HelpersTestSuite struct {
@@ -31,9 +33,17 @@ func TestHelpersTestSuite(t *testing.T) {
 func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
 	s.seedConsumerValidators(8)
 
+	// Map each seeded consensus address to one of the real monikers in
+	// utils.PoaValidatorSet so SnapshotValidatorsFromICS can complete the
+	// hex_cons_addr → moniker → operator join.
 	addrs := s.getSeededConsAddresses()
+	s.Require().Len(addrs, len(utils.PoaValidatorSet))
+
+	expectedOperators := make(map[string]string, len(addrs)) // hex_cons_addr → operator
 	for i, addr := range addrs {
-		v33.ValidatorMonikers[hex.EncodeToString(addr)] = fmtMoniker(i)
+		moniker := utils.PoaValidatorSet[i].Moniker
+		v33.ValidatorMonikers[hex.EncodeToString(addr)] = moniker
+		expectedOperators[hex.EncodeToString(addr)] = utils.PoaValidatorSet[i].Operator
 	}
 	s.T().Cleanup(func() {
 		for _, addr := range addrs {
@@ -45,12 +55,19 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
 	s.Require().NoError(err)
 	s.Require().Len(poaValidators, 8)
 
-	for i, val := range poaValidators {
+	for _, val := range poaValidators {
 		s.Require().NotNil(val.PubKey)
 		s.Require().Equal(int64(100), val.Power)
 		s.Require().NotNil(val.Metadata)
-		s.Require().Equal(fmtMoniker(i), val.Metadata.Moniker)
-		s.Require().Contains(val.Metadata.OperatorAddress, "stride1")
+
+		// Recover the seeded hex_cons_addr from the validator's pubkey so we can
+		// look up the moniker + operator we expected to be assigned to it.
+		var pk cryptotypes.PubKey
+		s.Require().NoError(s.App.AppCodec().UnpackAny(val.PubKey, &pk))
+		hexAddr := hex.EncodeToString(pk.Address().Bytes())
+
+		s.Require().Equal(v33.ValidatorMonikers[hexAddr], val.Metadata.Moniker)
+		s.Require().Equal(expectedOperators[hexAddr], val.Metadata.OperatorAddress)
 	}
 }
 
@@ -62,15 +79,36 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_WrongCount() {
 	s.Require().Contains(err.Error(), "expected 8 validators")
 }
 
+func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_MissingMoniker() {
+	s.seedConsumerValidators(8)
+	// Do NOT populate ValidatorMonikers — every validator hex_cons_addr lookup
+	// will miss, which should now halt the upgrade rather than silently
+	// produce empty monikers.
+
+	_, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "no moniker in v33 validators.json")
+}
+
 func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_UnknownMoniker() {
 	s.seedConsumerValidators(8)
-	// Do NOT populate ValidatorMonikers — every validator should fall back to ""
 
-	poaValidators, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
-	s.Require().NoError(err)
-	for _, val := range poaValidators {
-		s.Require().Equal("", val.Metadata.Moniker)
+	// Populate monikers but use a value that does NOT appear in
+	// utils.PoaValidatorSet — this catches drift between the two sources of
+	// truth.
+	addrs := s.getSeededConsAddresses()
+	for _, addr := range addrs {
+		v33.ValidatorMonikers[hex.EncodeToString(addr)] = "moniker-not-in-poa-set"
 	}
+	s.T().Cleanup(func() {
+		for _, addr := range addrs {
+			delete(v33.ValidatorMonikers, hex.EncodeToString(addr))
+		}
+	})
+
+	_, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "no entry in utils.PoaValidatorSet")
 }
 
 func (s *HelpersTestSuite) TestSweepICSModuleAccounts_HappyPath() {
@@ -118,6 +156,18 @@ func (s *HelpersTestSuite) TestInitializePOA_HappyPath() {
 	initialCount := len(initialVals)
 
 	s.seedConsumerValidators(8)
+
+	// SnapshotValidatorsFromICS now requires every CCValidator to map to a
+	// real moniker + operator. Wire that up before the call.
+	addrs := s.getSeededConsAddresses()
+	for i, addr := range addrs {
+		v33.ValidatorMonikers[hex.EncodeToString(addr)] = utils.PoaValidatorSet[i].Moniker
+	}
+	s.T().Cleanup(func() {
+		for _, addr := range addrs {
+			delete(v33.ValidatorMonikers, hex.EncodeToString(addr))
+		}
+	})
 
 	poaVals, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
 	s.Require().NoError(err)
