@@ -9,11 +9,7 @@ import (
 const UpgradeName = "v33"
 
 // AdminMultisigAddress is the bech32 address that POA recognizes as its admin
-// post-upgrade. The multisig does not need to be operationally signing-ready
-// at upgrade time; it just has to be a valid bech32 address.
-//
-// FINAL VALUE TO BE PROVIDED BY OPS BEFORE MAINNET RELEASE.
-// During implementation, use a placeholder Stride address you control on testnet.
+// post-upgrade
 const AdminMultisigAddress = "stride1fduug6m38gyuqt3wcgc2kcgr9nnte0n7ssn27e"
 
 // ExpectedValidatorCount is enforced by the upgrade handler. Panics if
