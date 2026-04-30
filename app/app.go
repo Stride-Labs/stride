@@ -473,7 +473,7 @@ func NewStrideApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
-		ccvconsumertypes.ConsumerRedistributeName,
+		authtypes.FeeCollectorName, // was: ccvconsumertypes.ConsumerRedistributeName
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
