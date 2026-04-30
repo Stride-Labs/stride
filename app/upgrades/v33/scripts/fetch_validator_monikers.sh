@@ -17,6 +17,9 @@
 #   ...
 # }
 #
+# To regenerate, redirect stdout to the package root:
+#   ./scripts/fetch_validator_monikers.sh > ../validators.json
+#
 # Refuses to emit output if any spreadsheet row fails to resolve, or if the live
 # validator count differs from the spreadsheet row count.
 #
