@@ -51,4 +51,3 @@ type RatelimitKeeper interface {
 	SetWhitelistedAddressPair(ctx sdk.Context, whitelist ratelimittypes.WhitelistedAddressPair)
 	RemoveWhitelistedAddressPair(ctx sdk.Context, sender, receiver string)
 }
-

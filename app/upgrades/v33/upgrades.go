@@ -4,18 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
-
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 // CreateUpgradeHandler returns the v33 upgrade handler that migrates Stride

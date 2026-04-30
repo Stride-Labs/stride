@@ -4,14 +4,16 @@ import (
 	"encoding/hex"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v33 "github.com/Stride-Labs/stride/v32/app/upgrades/v33"
