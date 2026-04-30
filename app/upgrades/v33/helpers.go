@@ -8,10 +8,14 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 )
 
 // SnapshotValidatorsFromICS reads the current CCV validator set from the
@@ -70,4 +74,35 @@ func SnapshotValidatorsFromICS(
 	}
 
 	return poaVals, nil
+}
+
+// SweepICSModuleAccounts moves any residual balance from the two ICS-era
+// reward module accounts (cons_redistribute and cons_to_send_to_provider)
+// to the community pool. After v33, no module deposits to these accounts;
+// any leftover balance would be permanently stranded otherwise.
+func SweepICSModuleAccounts(
+	ctx sdk.Context,
+	accountKeeper authkeeper.AccountKeeper,
+	bankKeeper bankkeeper.Keeper,
+	distrKeeper distrkeeper.Keeper,
+) error {
+	accountsToSweep := []string{
+		ccvconsumertypes.ConsumerRedistributeName,
+		ccvconsumertypes.ConsumerToSendToProviderName,
+	}
+
+	for _, moduleName := range accountsToSweep {
+		moduleAddr := accountKeeper.GetModuleAddress(moduleName)
+		balance := bankKeeper.GetAllBalances(ctx, moduleAddr)
+		if balance.IsZero() {
+			ctx.Logger().Info(fmt.Sprintf("v33: %s is empty, skipping sweep", moduleName))
+			continue
+		}
+
+		if err := distrKeeper.FundCommunityPool(ctx, balance, moduleAddr); err != nil {
+			return errorsmod.Wrapf(err, "failed to fund community pool from %s", moduleName)
+		}
+		ctx.Logger().Info(fmt.Sprintf("v33: swept %s from %s to community pool", balance, moduleName))
+	}
+	return nil
 }
