@@ -2,33 +2,45 @@
 
 ## Status
 
-The v33 upgrade is currently exercised by **synthetic-state integration tests** in
-`app/upgrades/v33/upgrades_test.go::TestUpgradeTestSuite`. Those tests seed a
-controlled ICS validator set, govenator state, ICS reward module accounts, and
-an active gov proposal — then run the upgrade handler and assert post-state.
-They are the primary protection against regressions in the migration logic.
+The v33 upgrade is exercised by two integration tests:
 
-This directory exists for an additional **mainnet-export integration test** that
-runs the v33 upgrade handler against real Stride mainnet state. That test is
-not yet implemented because (a) it requires a fresh mainnet state export
-(produced by an actual mainnet node), and (b) it requires a `SetupFromGenesis`
-helper in `app/apptesting/test_helpers.go` that loads `StrideApp` from a
-genesis JSON path and runs `InitChain` to populate state.
+1. **Synthetic-state test** — `upgrades_test.go::TestUpgradeTestSuite`. Seeds a
+   controlled ICS validator set, ICS reward module accounts, and an active gov
+   proposal directly via test helpers, then runs the handler. Fast, granular
+   assertions, but the test app already has POA wired so it's closer to
+   "fresh-binary against seeded ICS state" than a true v32→v33 migration.
 
-When ops is ready to validate v33 against a real export — usually shortly
-before the binary ships — follow the workflow below.
+2. **Mainnet-export test** — `mainnet_export_test.go::TestUpgradeFromMainnetExport`.
+   Loads real post-v32 mainnet state (this fixture) into the relevant module
+   keepers, then runs the handler. More representative of production state
+   shape (8 real validators, real ICS account balances, real gov state)
+   while still allowing granular Go-level assertions. The test is gated on
+   the fixture being present and `t.Skip`s otherwise.
+
+Both layer below the localstride mainnet-state-export testnet (which validates
+block production end-to-end without granular assertions) and the k8s network
+test (most prod-faithful, but no in-process assertions).
 
 ## How to generate `mainnet_export.json.gz`
 
-1. Sync a Stride mainnet node to a recent height (or use one you trust).
-2. Stop the node.
-3. Run `strided export --height <H> > mainnet_export.json`.
-4. (Optional) Sanitize. Strip account keys / signatures if any are present.
-   For this test, raw export is fine — we are not committing private data.
-5. Compress: `gzip -9 mainnet_export.json`.
-6. Move into this directory: `mv mainnet_export.json.gz app/upgrades/v33/testdata/`.
-7. Commit. The file may be 50–200MB; consider git-lfs if size is a concern.
-   Otherwise commit once and update only when the test specifically needs newer state.
+The raw `strided export` output at current mainnet height is typically
+150–300 MB — far too large to commit. The trim step below keeps only the
+modules touched by the v33 handler (or asserted against by the test) and
+discards everything else (`ibc`, `transfer`, `wasm`, all the unrelated
+Stride domain modules, etc.). Trimmed output is normally < 10 MB compressed.
 
-The fixture is consumed exclusively by `TestUpgradeFromMainnetExport` (to be
-implemented when the fixture lands).
+```bash
+# 1. Sync a Stride mainnet node to a recent height (or use one you trust).
+# 2. Stop the node.
+# 3. Export.
+strided export --height <H> > /tmp/mainnet_export_raw.json
+
+# 4. Trim to v33-relevant modules and gzip.
+./scripts/trim_export.sh /tmp/mainnet_export_raw.json testdata/mainnet_export.json.gz
+
+# 5. Commit. The trimmed fixture is small enough for plain git
+#    (no git-lfs needed). Bump only when the test needs newer state.
+```
+
+The trim script is `app/upgrades/v33/scripts/trim_export.sh` — see the header
+comment for the exact module keep-list and rationale.
