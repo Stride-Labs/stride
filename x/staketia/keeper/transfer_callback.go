@@ -4,14 +4,14 @@ import (
 	"encoding/binary"
 	"strings"
 
-	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/staketia/types"
 )
 
 // Stores the record ID for a pending outbound transfer of native tokens
-func (k Keeper) SetTransferInProgressRecordId(ctx sdk.Context, channelId string, sequence uint64, recordId uint64) {
+func (k Keeper) SetTransferInProgressRecordId(ctx sdk.Context, channelId string, sequence, recordId uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TransferInProgressRecordIdKeyPrefix)
 
 	recordIdKey := types.TransferInProgressRecordKey(channelId, sequence)

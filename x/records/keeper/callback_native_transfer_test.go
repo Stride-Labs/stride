@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	_ "github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"

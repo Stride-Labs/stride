@@ -6,27 +6,24 @@ import (
 	"testing"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-
-	strideclitestutil "github.com/Stride-Labs/stride/v32/testutil/cli"
-
-	"github.com/Stride-Labs/stride/v32/testutil/network"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
 
 	strideapp "github.com/Stride-Labs/stride/v32/app"
 	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
-
+	strideclitestutil "github.com/Stride-Labs/stride/v32/testutil/cli"
+	"github.com/Stride-Labs/stride/v32/testutil/network"
 	"github.com/Stride-Labs/stride/v32/x/claim/client/cli"
-
 	"github.com/Stride-Labs/stride/v32/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
 )

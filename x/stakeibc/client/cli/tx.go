@@ -7,14 +7,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

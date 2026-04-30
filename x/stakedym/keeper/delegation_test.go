@@ -3,11 +3,13 @@ package keeper_test
 import (
 	"time"
 
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"github.com/Stride-Labs/stride/v32/x/stakedym/types"
 )

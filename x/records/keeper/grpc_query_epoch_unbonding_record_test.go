@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/x/records/types"
 )

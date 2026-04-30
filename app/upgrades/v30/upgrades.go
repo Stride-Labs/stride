@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
-var (
-	UpgradeName = "v30"
-)
+var UpgradeName = "v30"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v30
 func CreateUpgradeHandler(

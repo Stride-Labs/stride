@@ -3,16 +3,18 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/gogoproto/proto"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"github.com/cosmos/gogoproto/proto"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
@@ -194,7 +196,7 @@ func (k Keeper) SubmitTxs(
 	}
 
 	// Submit ICA tx
-	msgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	msgServer := icacontrollerkeeper.NewMsgServerImpl(k.ICAControllerKeeper)
 	relativeTimeoutOffset := timeoutTimestamp - utils.IntToUint(ctx.BlockTime().UnixNano())
 	msgSendTx := icacontrollertypes.NewMsgSendTx(owner, connectionId, relativeTimeoutOffset, packetData)
 	res, err := msgServer.SendTx(ctx, msgSendTx)
@@ -239,7 +241,7 @@ func (k Keeper) SubmitICATxWithoutCallback(
 	relativeTimeoutOffset := timeoutTimestamp - utils.IntToUint(ctx.BlockTime().UnixNano())
 
 	// Submit ICA, no need to store callback data or register callback function
-	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(k.ICAControllerKeeper)
 	msgSendTx := icacontrollertypes.NewMsgSendTx(icaAccountOwner, connectionId, relativeTimeoutOffset, packetData)
 	_, err = icaMsgServer.SendTx(ctx, msgSendTx)
 	if err != nil {

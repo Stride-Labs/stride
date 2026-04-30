@@ -5,9 +5,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
@@ -78,7 +79,7 @@ func DecrementEvmosDelegationChangesInProgress(
 
 	for _, val := range hostZone.Validators {
 		if val.DelegationChangesInProgress > 0 {
-			val.DelegationChangesInProgress = val.DelegationChangesInProgress - 1
+			val.DelegationChangesInProgress--
 		}
 	}
 

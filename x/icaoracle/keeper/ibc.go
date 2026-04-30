@@ -3,12 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
@@ -69,7 +71,7 @@ func (k Keeper) SubmitICATx(ctx sdk.Context, tx types.ICATx) error {
 	}
 
 	// Submit ICA and grab sequence number for the callback key
-	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(&k.ICAControllerKeeper)
+	icaMsgServer := icacontrollerkeeper.NewMsgServerImpl(k.ICAControllerKeeper)
 	msgSendTx := icacontrollertypes.NewMsgSendTx(tx.Owner, tx.ConnectionId, tx.GetRelativeTimeoutNano(), packetData)
 	res, err := icaMsgServer.SendTx(ctx, msgSendTx)
 	if err != nil {

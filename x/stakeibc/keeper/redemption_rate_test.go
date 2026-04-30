@@ -4,9 +4,11 @@ import (
 	"math/rand"
 	"strconv"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	minttypes "github.com/Stride-Labs/stride/v32/x/mint/types"
 	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"

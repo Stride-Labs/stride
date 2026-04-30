@@ -1,13 +1,12 @@
 package types
 
 import (
+	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-
 	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 )
 
 // IcqKeeper defines the expected interface needed to send ICQ requests.

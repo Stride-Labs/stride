@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/x/auction/types"

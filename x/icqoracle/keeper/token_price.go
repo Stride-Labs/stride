@@ -5,8 +5,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
@@ -22,14 +23,14 @@ func (k Keeper) SetTokenPrice(ctx sdk.Context, tokenPrice types.TokenPrice) {
 }
 
 // RemoveTokenPrice removes price query for a token
-func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId uint64) {
+func (k Keeper) RemoveTokenPrice(ctx sdk.Context, baseDenom, quoteDenom string, osmosisPoolId uint64) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	key := types.TokenPriceKey(baseDenom, quoteDenom, osmosisPoolId)
 	store.Delete(key)
 }
 
 // Updates the token price when a query is requested
-func (k Keeper) SetQueryInProgress(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId uint64) error {
+func (k Keeper) SetQueryInProgress(ctx sdk.Context, baseDenom, quoteDenom string, osmosisPoolId uint64) error {
 	tokenPrice, err := k.GetTokenPrice(ctx, baseDenom, quoteDenom, osmosisPoolId)
 	if err != nil {
 		return err
@@ -52,7 +53,7 @@ func (k Keeper) SetQueryComplete(ctx sdk.Context, tokenPrice types.TokenPrice, n
 }
 
 // GetTokenPrice retrieves price data for a token
-func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom string, quoteDenom string, osmosisPoolId uint64) (types.TokenPrice, error) {
+func (k Keeper) GetTokenPrice(ctx sdk.Context, baseDenom, quoteDenom string, osmosisPoolId uint64) (types.TokenPrice, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.TokenPricePrefix)
 	key := types.TokenPriceKey(baseDenom, quoteDenom, osmosisPoolId)
 
@@ -115,7 +116,7 @@ func (k Keeper) GetTokenPricesByDenom(ctx sdk.Context, baseDenom string) (map[st
 //   - No prices exist for either token
 //   - No common quote token exists between the two tokens
 //   - All available prices with a common quote token are stale (exceeded the expiration timeout)
-func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, quoteDenom string) (sdkmath.LegacyDec, error) {
+func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom, quoteDenom string) (sdkmath.LegacyDec, error) {
 	// First attempt: Try to get the price with baseDenom as the base token and quoteDenom as the quote token
 	price, errDirect := k.getTokenPriceForQuoteDenomImpl(ctx, baseDenom, quoteDenom)
 	if errDirect == nil {
@@ -141,7 +142,7 @@ func (k Keeper) GetTokenPriceForQuoteDenom(ctx sdk.Context, baseDenom string, qu
 // getTokenPriceForQuoteDenomImpl is the internal implementation that attempts to get the price
 // for baseDenom in terms of quoteDenom by finding a common quote token. It returns an error
 // if no valid price path can be found.
-func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom string, quoteDenom string) (price sdkmath.LegacyDec, err error) {
+func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom, quoteDenom string) (price sdkmath.LegacyDec, err error) {
 	// Get all price for baseToken
 	baseTokenPrices, err := k.GetTokenPricesByDenom(ctx, baseDenom)
 	if err != nil {

@@ -3,13 +3,13 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/x/records/types"
 )
@@ -25,7 +25,7 @@ func (k Keeper) UserRedemptionRecordAll(c context.Context, req *types.QueryAllUs
 	store := ctx.KVStore(k.storeKey)
 	userRedemptionRecordStore := prefix.NewStore(store, types.KeyPrefix(types.UserRedemptionRecordKey))
 
-	pageRes, err := query.Paginate(userRedemptionRecordStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(userRedemptionRecordStore, req.Pagination, func(key, value []byte) error {
 		var userRedemptionRecord types.UserRedemptionRecord
 		if err := k.Cdc.Unmarshal(value, &userRedemptionRecord); err != nil {
 			return err

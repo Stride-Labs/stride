@@ -3,9 +3,9 @@ package v13
 import (
 	"context"
 
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 )

@@ -4,8 +4,10 @@ import (
 	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 )
 
-const IBCCallbacksID_NativeTransfer = "transfer"
-const IBCCallbacksID_LSMTransfer = "lsm-transfer"
+const (
+	IBCCallbacksID_NativeTransfer = "transfer"
+	IBCCallbacksID_LSMTransfer    = "lsm-transfer"
+)
 
 func (k Keeper) Callbacks() icacallbackstypes.ModuleCallbacks {
 	return []icacallbackstypes.ICACallback{

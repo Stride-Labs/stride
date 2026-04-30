@@ -3,21 +3,18 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/log"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/log/v2"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-
 	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-
-	storetypes "cosmossdk.io/store/types"
 )
 
 type (

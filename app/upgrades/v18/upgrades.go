@@ -6,12 +6,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
@@ -107,7 +108,7 @@ func DecrementTerraDelegationChangesInProgress(
 		if val.DelegationChangesInProgress < 3 {
 			val.DelegationChangesInProgress = 0
 		} else {
-			val.DelegationChangesInProgress = val.DelegationChangesInProgress - 3
+			val.DelegationChangesInProgress -= 3
 		}
 	}
 

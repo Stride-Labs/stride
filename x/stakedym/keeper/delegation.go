@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/stakedym/types"
@@ -142,7 +144,7 @@ func (k Keeper) PrepareDelegation(ctx sdk.Context, epochNumber uint64, epochDura
 
 // Confirms a delegation has completed on the host zone, increments the internal delegated balance,
 // and archives the record
-func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+func (k Keeper) ConfirmDelegation(ctx sdk.Context, recordId uint64, txHash, sender string) (err error) {
 	// grab unbonding record, verify record is ready to be delegated, and a hash hasn't already been posted
 	delegationRecord, found := k.GetDelegationRecord(ctx, recordId)
 	if !found {
@@ -220,7 +222,5 @@ func (k Keeper) SafelyPrepareDelegation(ctx sdk.Context, epochNumber uint64, epo
 
 // Liquid stakes fees with a cache context wrapper so revert any partial state changes
 func (k Keeper) SafelyLiquidStakeAndDistributeFees(ctx sdk.Context) error {
-	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
-		return k.LiquidStakeAndDistributeFees(ctx)
-	})
+	return utils.ApplyFuncIfNoError(ctx, k.LiquidStakeAndDistributeFees)
 }

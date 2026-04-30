@@ -23,7 +23,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 // User transaction to liquid stake native tokens into stTokens
-func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) { //nolint:staticcheck
+func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) { //nolint:staticcheck // MsgLiquidStake is deprecated; this stub keeps the disabled path compatible with old clients
 	return nil, errors.New("Liquid staking is no longer enabled in staketia, use stakeibc instead")
 }
 

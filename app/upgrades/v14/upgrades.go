@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -20,9 +24,7 @@ import (
 	vesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
-	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
-	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
@@ -502,7 +504,7 @@ func FundVestingAccount(ctx sdk.Context, k evmosvestingkeeper.Keeper, stakingKee
 	// 	return nil, err
 	// }
 
-	telemetry.IncrCounter(
+	telemetry.IncrCounter( //nolint:staticcheck // TODO: switch to OpenTelemetry
 		float32(ctx.GasMeter().GasConsumed()),
 		"tx", "fund_vesting_account", "gas_used",
 	)

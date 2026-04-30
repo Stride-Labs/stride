@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+
 	"github.com/cosmos/cosmos-sdk/server"
 
 	"github.com/Stride-Labs/stride/v32/utils"
@@ -101,7 +102,7 @@ func overwriteConfigTomlValues(serverCtx *server.Context) error {
 		}()
 
 		// Check if the file is writable
-		if fileInfo.Mode()&os.FileMode(0200) != 0 {
+		if fileInfo.Mode()&os.FileMode(0o200) != 0 {
 			// It will be re-read in server.InterceptConfigsPreRunHandler
 			// this may panic for permissions issues. So we catch the panic.
 			// Note that this exits with a non-zero exit code if fails to write the file.
@@ -161,7 +162,7 @@ func overwriteAppTomlValues(serverCtx *server.Context) error {
 		}
 
 		// Check if the file is writable
-		if fileInfo.Mode()&os.FileMode(0200) != 0 {
+		if fileInfo.Mode()&os.FileMode(0o200) != 0 {
 			// It will be re-read in server.InterceptConfigsPreRunHandler
 			// this may panic for permissions issues. So we catch the panic.
 			// Note that this exits with a non-zero exit code if fails to write the file.

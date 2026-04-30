@@ -4,8 +4,9 @@ import (
 	"math"
 	"testing"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"

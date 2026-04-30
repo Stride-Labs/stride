@@ -6,8 +6,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -105,7 +106,7 @@ func (k Keeper) GetAllHostZone(ctx sdk.Context) (list []types.HostZone) {
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // Unregisters a host zone, including removing the module accounts and records
@@ -191,7 +192,7 @@ func (k Keeper) GetAllActiveHostZone(ctx sdk.Context) (list []types.HostZone) {
 			list = append(list, hostZone)
 		}
 	}
-	return
+	return list
 }
 
 // Validate whether a denom is a supported liquid staking token

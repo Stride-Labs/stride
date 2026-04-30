@@ -4,9 +4,10 @@ import (
 	"context"
 
 	sdkmath "cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"

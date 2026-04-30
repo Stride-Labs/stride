@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	consumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	consumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	strdburnerkeeper "github.com/Stride-Labs/stride/v32/x/strdburner/keeper"
 	"github.com/Stride-Labs/stride/v32/x/strdburner/types"
 )
 
-var (
-	UpgradeName = "v29"
-)
+var UpgradeName = "v29"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v29
 func CreateUpgradeHandler(

@@ -3,13 +3,13 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/x/records/types"
 )
@@ -25,7 +25,7 @@ func (k Keeper) DepositRecordAll(c context.Context, req *types.QueryAllDepositRe
 	store := ctx.KVStore(k.storeKey)
 	depositRecordStore := prefix.NewStore(store, types.KeyPrefix(types.DepositRecordKey))
 
-	pageRes, err := query.Paginate(depositRecordStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(depositRecordStore, req.Pagination, func(key, value []byte) error {
 		var depositRecord types.DepositRecord
 		if err := k.Cdc.Unmarshal(value, &depositRecord); err != nil {
 			return err

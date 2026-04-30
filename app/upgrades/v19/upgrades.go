@@ -4,16 +4,18 @@ import (
 	"context"
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 )

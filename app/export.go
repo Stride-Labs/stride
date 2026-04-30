@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	storetypes "cosmossdk.io/store/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -208,7 +209,6 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 	// update bond intra-tx counters.
 	store := ctx.KVStore(app.GetKey(stakingtypes.StoreKey))
 	iter := storetypes.KVStoreReversePrefixIterator(store, stakingtypes.ValidatorsKey)
-	counter := int16(0)
 
 	for ; iter.Valid(); iter.Next() {
 		addr := sdk.ValAddress(iter.Key()[1:])
@@ -225,7 +225,6 @@ func (app *StrideApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs
 		if err := app.StakingKeeper.SetValidator(ctx, validator); err != nil {
 			panic(err)
 		}
-		counter++
 	}
 
 	if err := iter.Close(); err != nil {

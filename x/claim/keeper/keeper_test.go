@@ -4,11 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/x/claim/types"

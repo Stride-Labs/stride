@@ -1,7 +1,7 @@
 package utils_test
 
 import (
-	"cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
@@ -43,7 +43,7 @@ func (s *UtilsTestSuite) TestCacheCtxConsumeGas() {
 			ctx.GasMeter().ConsumeGas(tc.gasUsedPreCtx, "pre ctx")
 			var err error
 			f := func() {
-				// nolint:errcheck
+				//nolint:errcheck // intentionally swallow error to verify panic recovery
 				utils.ApplyFuncIfNoError(ctx, func(c sdk.Context) error {
 					return consumeGas(c, 1000, 10)
 				})

@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/gogoproto/proto"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"

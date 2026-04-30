@@ -3,9 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cast"
+
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"

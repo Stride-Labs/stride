@@ -1,9 +1,11 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/strdburner/types"
 )
@@ -64,8 +66,8 @@ func (s *KeeperTestSuite) TestEndBlocker() {
 					if event.Type == types.EventTypeBurn {
 						found = true
 						for _, attr := range event.Attributes {
-							if string(attr.Key) == types.AttributeAmount {
-								require.Equal(t, tc.initialBalance.String(), string(attr.Value))
+							if attr.Key == types.AttributeAmount {
+								require.Equal(t, tc.initialBalance.String(), attr.Value)
 							}
 						}
 					}

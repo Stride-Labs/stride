@@ -3,8 +3,9 @@ package types
 import (
 	"fmt"
 
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
+
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 const (
@@ -14,8 +15,10 @@ const (
 )
 
 // KeyActive is the store key for Params
-var KeyStakeibcActive = []byte("StakeibcActive")
-var KeyClaimActive = []byte("ClaimActive")
+var (
+	KeyStakeibcActive = []byte("StakeibcActive")
+	KeyClaimActive    = []byte("ClaimActive")
+)
 
 var _ paramtypes.ParamSet = (*Params)(nil)
 

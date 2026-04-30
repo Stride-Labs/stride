@@ -8,6 +8,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -256,7 +257,7 @@ func (msg *MsgUpdateAirdrop) ValidateBasic() error {
 //             MsgAddAllocations
 // ----------------------------------------------
 
-func NewMsgAddAllocations(admin string, airdropId string, allocations []RawAllocation) *MsgAddAllocations {
+func NewMsgAddAllocations(admin, airdropId string, allocations []RawAllocation) *MsgAddAllocations {
 	return &MsgAddAllocations{
 		Admin:       admin,
 		AirdropId:   airdropId,
@@ -303,10 +304,8 @@ func (msg *MsgAddAllocations) ValidateBasic() error {
 
 		if i == 0 {
 			allocationsLength = len(allocation.Allocations)
-		} else {
-			if len(allocation.Allocations) != allocationsLength {
-				return fmt.Errorf("address %s has an inconsistent number of allocations", allocation.UserAddress)
-			}
+		} else if len(allocation.Allocations) != allocationsLength {
+			return fmt.Errorf("address %s has an inconsistent number of allocations", allocation.UserAddress)
 		}
 
 		for _, amount := range allocation.Allocations {

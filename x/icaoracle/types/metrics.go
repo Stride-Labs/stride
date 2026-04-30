@@ -1,5 +1,3 @@
 package types
 
-var (
-	MetricType_RedemptionRate = "redemption_rate"
-)
+var MetricType_RedemptionRate = "redemption_rate"

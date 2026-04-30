@@ -4,16 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"path/filepath"
 	"strings"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/store"
-	"cosmossdk.io/store/snapshots"
-	snapshottypes "cosmossdk.io/store/snapshots/types"
-	storetypes "cosmossdk.io/store/types"
-	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
@@ -23,6 +16,15 @@ import (
 	"github.com/cometbft/cometbft/libs/cli"
 	cosmosdb "github.com/cosmos/cosmos-db"
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
+
+	"cosmossdk.io/log/v2"
+	confixcmd "cosmossdk.io/tools/confix/cmd"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/debug"
@@ -35,6 +37,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/store/v2"
+	"github.com/cosmos/cosmos-sdk/store/v2/snapshots"
+	snapshottypes "github.com/cosmos/cosmos-sdk/store/v2/snapshots/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -43,11 +49,6 @@ import (
 	vestingcli "github.com/cosmos/cosmos-sdk/x/auth/vesting/client/cli"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 
 	strideapp "github.com/Stride-Labs/stride/v32/app"
 )
@@ -314,7 +315,6 @@ func versionCommand() *cobra.Command {
 func newApp(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	appOpts servertypes.AppOptions,
 ) servertypes.Application {
 	var cache storetypes.MultiStorePersistentCache
@@ -377,7 +377,6 @@ func newApp(
 	return strideapp.NewStrideApp(
 		logger,
 		db,
-		traceStore,
 		true,
 		appOpts,
 		wasmOpts,
@@ -387,9 +386,9 @@ func newApp(
 
 // newTestnetApp starts by running the normal newApp method. From there, the app interface returned is modified in order
 // for a testnet to be created from the provided app.
-func newTestnetApp(logger log.Logger, db cosmosdb.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+func newTestnetApp(logger log.Logger, db cosmosdb.DB, appOpts servertypes.AppOptions) servertypes.Application {
 	// Create an app and type cast to a StrideApp
-	app := newApp(logger, db, traceStore, appOpts)
+	app := newApp(logger, db, appOpts)
 	strideApp, ok := app.(*strideapp.StrideApp)
 	if !ok {
 		panic("app created from newApp is not of type osmosisApp")
@@ -420,7 +419,6 @@ func newTestnetApp(logger log.Logger, db cosmosdb.DB, traceStore io.Writer, appO
 func appExport(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	height int64,
 	forZeroHeight bool,
 	jailAllowedAddrs []string,
@@ -451,7 +449,6 @@ func appExport(
 	strideApp = strideapp.NewStrideApp(
 		logger,
 		db,
-		traceStore,
 		loadLatest,
 		appOpts,
 		[]wasmkeeper.Option{},

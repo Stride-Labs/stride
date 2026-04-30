@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-
-	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v32/app"
+	sdkmath "cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+
+	"github.com/Stride-Labs/stride/v32/app"
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v6 "github.com/Stride-Labs/stride/v32/app/upgrades/v6"
 	"github.com/Stride-Labs/stride/v32/x/claim/types"

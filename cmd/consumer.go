@@ -7,21 +7,23 @@ import (
 	"fmt"
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
 	types1 "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/config"
 	pvm "github.com/cometbft/cometbft/privval"
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tmtypes "github.com/cometbft/cometbft/types"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
+	"github.com/spf13/cobra"
+
+	errorsmod "cosmossdk.io/errors"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
-	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v32/testutil"
 )

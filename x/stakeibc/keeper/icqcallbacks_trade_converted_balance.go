@@ -1,15 +1,15 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/stakedym/types"
@@ -147,7 +148,7 @@ func (k Keeper) RedemptionRecords(c context.Context, req *types.QueryRedemptionR
 	store := ctx.KVStore(k.storeKey)
 	redemptionRecordStore := prefix.NewStore(store, types.RedemptionRecordsKeyPrefix)
 
-	pageRes, err := query.Paginate(redemptionRecordStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(redemptionRecordStore, req.Pagination, func(key, value []byte) error {
 		var redemptionRecord types.RedemptionRecord
 		if err := k.cdc.Unmarshal(value, &redemptionRecord); err != nil {
 			return err

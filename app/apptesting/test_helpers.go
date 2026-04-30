@@ -5,11 +5,30 @@ import (
 	"testing"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypesproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/gogoproto/proto"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	tendermint "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+	"github.com/cosmos/ibc-go/v11/testing/simapp"
+	icsproviderapp "github.com/cosmos/interchain-security/v7/app/provider"
+	icstestingutils "github.com/cosmos/interchain-security/v7/testutil/ibc_testing"
+	e2e "github.com/cosmos/interchain-security/v7/testutil/integration"
+	icstestingkeeper "github.com/cosmos/interchain-security/v7/testutil/keeper"
+	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	providertypes "github.com/cosmos/interchain-security/v7/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -20,24 +39,7 @@ import (
 	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	"github.com/cosmos/ibc-go/v10/testing/simapp"
-	icsproviderapp "github.com/cosmos/interchain-security/v7/app/provider"
-	icstestingutils "github.com/cosmos/interchain-security/v7/testutil/ibc_testing"
-	e2e "github.com/cosmos/interchain-security/v7/testutil/integration"
-	icstestingkeeper "github.com/cosmos/interchain-security/v7/testutil/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
-	providertypes "github.com/cosmos/interchain-security/v7/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v32/app"
 	"github.com/Stride-Labs/stride/v32/utils"
@@ -158,7 +160,7 @@ func (s *AppTestHelper) FundAccount(acc sdk.AccAddress, amount sdk.Coin) {
 }
 
 // Helper function to compare coins with a more legible error
-func (s *AppTestHelper) CompareCoins(expectedCoin sdk.Coin, actualCoin sdk.Coin, msg string) {
+func (s *AppTestHelper) CompareCoins(expectedCoin, actualCoin sdk.Coin, msg string) {
 	s.Require().Equal(expectedCoin.Amount.Int64(), actualCoin.Amount.Int64(), msg)
 }
 
@@ -478,7 +480,7 @@ func (s *AppTestHelper) RegisterInterchainAccount(endpoint *ibctesting.Endpoint,
 }
 
 // Creates a transfer channel between two chains
-func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, providerChain *ibctesting.TestChain) *ibctesting.Path {
+func NewTransferPath(chainA, chainB, providerChain *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig.PortID = ibctesting.TransferPort
 	path.EndpointB.ChannelConfig.PortID = ibctesting.TransferPort
@@ -496,7 +498,7 @@ func NewTransferPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain,
 }
 
 // Creates an ICA channel between two chains
-func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, providerChain *ibctesting.TestChain) *ibctesting.Path {
+func NewIcaPath(chainA, chainB, providerChain *ibctesting.TestChain) *ibctesting.Path {
 	path := ibctesting.NewPath(chainA, chainB)
 	path.EndpointA.ChannelConfig.PortID = icatypes.HostPortID
 	path.EndpointB.ChannelConfig.PortID = icatypes.HostPortID
@@ -516,7 +518,7 @@ func NewIcaPath(chainA *ibctesting.TestChain, chainB *ibctesting.TestChain, prov
 // In ibctesting, there's no easy way to create a new channel on an existing connection
 // To get around this, this helper function will copy the client/connection info from an existing channel
 // We use this when creating ICA channels, because we want to reuse the same connections/clients from the transfer channel
-func CopyConnectionAndClientToPath(path *ibctesting.Path, pathToCopy *ibctesting.Path) *ibctesting.Path {
+func CopyConnectionAndClientToPath(path, pathToCopy *ibctesting.Path) *ibctesting.Path {
 	path.EndpointA.ClientID = pathToCopy.EndpointA.ClientID
 	path.EndpointB.ClientID = pathToCopy.EndpointB.ClientID
 	path.EndpointA.ConnectionID = pathToCopy.EndpointA.ConnectionID
@@ -581,6 +583,7 @@ func (s *AppTestHelper) CheckMultipleICATxSubmitted(portId, channelId string, ic
 
 // Constructs an ICA Packet Acknowledgement compatible with ibc-go v5+
 func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
+	t.Helper()
 	txMsgData := &sdk.TxMsgData{
 		MsgResponses: make([]*codectypes.Any, len(msgResponses)),
 	}
@@ -605,8 +608,9 @@ func ICAPacketAcknowledgement(t *testing.T, msgType string, msgResponses []proto
 
 // Constructs an legacy ICA Packet Acknowledgement compatible with ibc-go version v4 and lower
 func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses []proto.Message) channeltypes.Acknowledgement {
+	t.Helper()
 	txMsgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(msgResponses)), //nolint:staticcheck
+		Data: make([]*sdk.MsgData, len(msgResponses)), //nolint:staticcheck // sdk.MsgData is deprecated but required for legacy ibc-go v4 acks
 	}
 	for i, msgResponse := range msgResponses {
 		var data []byte
@@ -616,7 +620,7 @@ func ICAPacketAcknowledgementLegacy(t *testing.T, msgType string, msgResponses [
 			require.NoError(t, err, "marshal error")
 		}
 
-		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
+		txMsgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck // sdk.MsgData is deprecated but required for legacy ibc-go v4 acks
 			MsgType: msgType,
 			Data:    data,
 		}
@@ -805,9 +809,9 @@ func GetAdminAddress() (address string, ok bool) {
 }
 
 func (s *AppTestHelper) SetNewAccount(addr sdk.AccAddress) {
-	nextAccountNumber, err := s.App.AccountKeeper.AccountNumber.Next(s.Ctx)
-	s.Require().NoError(err)
-	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccount(addr, nil, nextAccountNumber, 0))
+	acc := authtypes.NewBaseAccountWithAddress(addr)
+	acc.AccountNumber = s.App.AccountKeeper.NextAccountNumber(s.Ctx, acc)
+	s.App.AccountKeeper.SetAccount(s.Ctx, acc)
 }
 
 // Modifies sdk config to have stride address prefixes (used for non-keeper tests)
@@ -829,8 +833,8 @@ func (s *AppTestHelper) getEventsFromEventType(eventType string) (events []sdk.E
 // Returns the value if found
 func (s *AppTestHelper) getEventValuesFromAttribute(event sdk.Event, attributeKey string) (values []string) {
 	for _, attribute := range event.Attributes {
-		if string(attribute.Key) == attributeKey {
-			values = append(values, string(attribute.Value))
+		if attribute.Key == attributeKey {
+			values = append(values, attribute.Value)
 		}
 	}
 	return values

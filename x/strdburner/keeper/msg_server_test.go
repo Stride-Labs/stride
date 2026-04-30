@@ -2,13 +2,12 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	claimvestingtypes "github.com/Stride-Labs/stride/v32/x/claim/vesting/types"
-
 	"github.com/Stride-Labs/stride/v32/x/strdburner/keeper"
 	"github.com/Stride-Labs/stride/v32/x/strdburner/types"
 )

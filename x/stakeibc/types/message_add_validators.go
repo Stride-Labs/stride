@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -14,7 +15,7 @@ const TypeMsgAddValidators = "add_validators"
 
 var _ sdk.Msg = &MsgAddValidators{}
 
-func NewMsgAddValidators(creator string, hostZone string, validators []*Validator) *MsgAddValidators {
+func NewMsgAddValidators(creator, hostZone string, validators []*Validator) *MsgAddValidators {
 	return &MsgAddValidators{
 		Creator:    creator,
 		HostZone:   hostZone,

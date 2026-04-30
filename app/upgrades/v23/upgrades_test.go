@@ -3,10 +3,11 @@ package v23_test
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
-	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
+	ibcclienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v23 "github.com/Stride-Labs/stride/v32/app/upgrades/v23"
@@ -39,7 +40,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		HostDenomOnHostZone:     "host-denom",
 		RewardDenomOnRewardZone: "reward-denom",
 
-		TradeConfig: stakeibctypes.TradeConfig{ //nolint:staticcheck
+		TradeConfig: stakeibctypes.TradeConfig{ //nolint:staticcheck // exercises the deprecated TradeConfig path that v23 migrates away from
 			MinSwapAmount: minTransferAmount,
 		},
 	}

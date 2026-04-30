@@ -3,9 +3,9 @@ package types // noalias
 import (
 	context "context"
 
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.

@@ -3,18 +3,18 @@ package cli_test
 import (
 	"testing"
 
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/testutil/network"
 )
 
 func ExecuteCLIExpectError(t *testing.T, cmd *cobra.Command, args []string, errorString string) {
+	t.Helper()
 	sdk.GetConfig().SetBech32PrefixForAccount("stride", "stridepub")
 
 	clientCtx := client.Context{}.

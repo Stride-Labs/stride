@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	"github.com/stretchr/testify/suite"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

@@ -2,6 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -12,7 +13,7 @@ const TypeMsgDeprecateHostZone = "deprecate_host_zone"
 
 var _ sdk.Msg = &MsgDeprecateHostZone{}
 
-func NewMsgDeprecateHostZone(authority string, chainId string) *MsgDeprecateHostZone {
+func NewMsgDeprecateHostZone(authority, chainId string) *MsgDeprecateHostZone {
 	return &MsgDeprecateHostZone{
 		Authority: authority,
 		ChainId:   chainId,

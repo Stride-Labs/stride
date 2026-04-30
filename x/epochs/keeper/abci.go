@@ -15,7 +15,7 @@ import (
 
 // BeginBlocker of epochs module
 func (k Keeper) BeginBlocker(ctx sdk.Context) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker) //nolint:staticcheck // TODO: switch to OpenTelemetry
 	logger := k.Logger(ctx)
 	k.IterateEpochInfo(ctx, func(_ int64, epochInfo types.EpochInfo) (stop bool) {
 		// Has it not started, and is the block time > initial epoch start time

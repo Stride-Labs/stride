@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-	proto "github.com/cosmos/gogoproto/proto"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )

@@ -3,16 +3,18 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/Stride-Labs/stride/v32/utils"
 	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 // Marshalls redemption callback arguments

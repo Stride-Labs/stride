@@ -2,6 +2,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -10,7 +11,7 @@ const TypeMsgRestoreOracleICA = "restore_oracle_ica"
 
 var _ sdk.Msg = &MsgRestoreOracleICA{}
 
-func NewMsgRestoreOracleICA(creator string, oracleChainId string) *MsgRestoreOracleICA {
+func NewMsgRestoreOracleICA(creator, oracleChainId string) *MsgRestoreOracleICA {
 	return &MsgRestoreOracleICA{
 		Creator:       creator,
 		OracleChainId: oracleChainId,

@@ -6,11 +6,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"

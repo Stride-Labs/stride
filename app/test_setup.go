@@ -5,23 +5,25 @@ import (
 	"fmt"
 	"os"
 
-	"cosmossdk.io/log"
-	sdkmath "cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/cometbft/cometbft/abci/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	tmtypes "github.com/cometbft/cometbft/types"
 	cosmosdb "github.com/cosmos/cosmos-db"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+	appconsumer "github.com/cosmos/interchain-security/v7/app/consumer"
+	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
+
+	"cosmossdk.io/log/v2"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	appconsumer "github.com/cosmos/interchain-security/v7/app/consumer"
-	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
 	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
 	testutil "github.com/Stride-Labs/stride/v32/testutil"
@@ -56,7 +58,6 @@ func InitStrideTestApp(initChain bool) *StrideApp {
 	app := NewStrideApp(
 		log.NewNopLogger(),
 		db,
-		nil,
 		true,
 		appopts,
 		[]wasmkeeper.Option{},

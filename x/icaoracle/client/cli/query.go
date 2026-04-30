@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
-	"github.com/gogo/protobuf/proto"
 
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )

@@ -2,13 +2,16 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
-	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/x/airdrop/types"
 )
@@ -29,7 +32,7 @@ func (k Keeper) Airdrop(goCtx context.Context, req *types.QueryAirdropRequest) (
 
 	periodLengthSeconds := k.GetParams(ctx).PeriodLengthSeconds
 	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
-	if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
+	if errors.Is(err, types.ErrAirdropNotStarted) || errors.Is(err, types.ErrAirdropEnded) {
 		currentDateIndex = -1
 	} else if err != nil {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())
@@ -103,7 +106,7 @@ func (k Keeper) AllAllocations(goCtx context.Context, req *types.QueryAllAllocat
 	airdropAllocationsSubstore := prefix.NewStore(allAllocationsStore, types.KeyPrefix(req.AirdropId))
 
 	allocationsOnPage := []types.UserAllocation{}
-	pageRes, err := query.Paginate(airdropAllocationsSubstore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(airdropAllocationsSubstore, req.Pagination, func(key, value []byte) error {
 		var userAllocation types.UserAllocation
 		if err := k.cdc.Unmarshal(value, &userAllocation); err != nil {
 			return err
@@ -145,7 +148,7 @@ func (k Keeper) UserSummary(goCtx context.Context, req *types.QueryUserSummaryRe
 	currentDateIndex, err := airdrop.GetCurrentDateIndex(ctx, periodLengthSeconds)
 	if err == nil {
 		claimable = allocation.GetClaimableAllocation(currentDateIndex)
-	} else if err == types.ErrAirdropNotStarted || err == types.ErrAirdropEnded {
+	} else if errors.Is(err, types.ErrAirdropNotStarted) || errors.Is(err, types.ErrAirdropEnded) {
 		claimable = sdkmath.ZeroInt()
 	} else {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())

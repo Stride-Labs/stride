@@ -6,19 +6,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto"
+	"github.com/cosmos/gogoproto/proto"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/cometbft/cometbft/crypto"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

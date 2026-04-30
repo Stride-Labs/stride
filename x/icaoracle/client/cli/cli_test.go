@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cobra"
-	"github.com/stretchr/testify/suite"
 
 	strideapp "github.com/Stride-Labs/stride/v32/app"
 	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
@@ -18,9 +19,7 @@ import (
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
 
-var (
-	HostChainId = "chain-1"
-)
+var HostChainId = "chain-1"
 
 type ClientTestSuite struct {
 	suite.Suite

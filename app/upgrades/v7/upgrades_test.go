@@ -7,20 +7,20 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store/prefix"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/app"
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v7 "github.com/Stride-Labs/stride/v32/app/upgrades/v7"
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	newstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-
 	// This isn't the exact type host zone schema as the one that's will be in the store
 	// before the upgrade, but the only thing that matters, for the sake of the test,
 	// is that it doesn't have min/max redemption rate as attributes
 	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v2/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 var (

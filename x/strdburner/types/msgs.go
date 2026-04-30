@@ -6,6 +6,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -69,7 +70,7 @@ func (msg *MsgBurn) ValidateBasic() error {
 //                     MsgLink
 // -----------------------------------------------
 
-func NewMsgLink(strideAddress string, linkedAddress string) *MsgLink {
+func NewMsgLink(strideAddress, linkedAddress string) *MsgLink {
 	return &MsgLink{
 		StrideAddress: strideAddress,
 		LinkedAddress: linkedAddress,

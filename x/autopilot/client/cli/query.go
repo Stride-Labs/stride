@@ -7,10 +7,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
-
-	"github.com/cosmos/cosmos-sdk/client/flags"
 )
 
 // GetQueryCmd returns the cli query commands for this module

@@ -4,11 +4,11 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	errorsmod "cosmossdk.io/errors"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/records/types"
 )
@@ -50,7 +50,7 @@ func (k Keeper) GetAllEpochUnbondingRecord(ctx sdk.Context) (list []types.EpochU
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // GetAllPreviousEpochUnbondingRecords returns all epochUnbondingRecords prior to a given epoch
@@ -69,7 +69,7 @@ func (k Keeper) GetAllPreviousEpochUnbondingRecords(ctx sdk.Context, epochNumber
 		}
 	}
 
-	return
+	return list
 }
 
 // GetEpochUnbondingRecordIDBytes returns the byte representation of the ID

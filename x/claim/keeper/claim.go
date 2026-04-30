@@ -6,14 +6,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/claim/types"
@@ -847,7 +849,7 @@ func (k Keeper) DeleteAirdropAndEpoch(ctx sdk.Context, identifier string) error 
 	return k.SetParams(ctx, params)
 }
 
-func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress string, newStrideAddress string, airdropId string) error {
+func (k Keeper) UpdateAirdropAddress(ctx sdk.Context, existingStrideAddress, newStrideAddress, airdropId string) error {
 	airdrop := k.GetAirdropByIdentifier(ctx, airdropId)
 	if airdrop == nil {
 		return errorsmod.Wrapf(types.ErrAirdropNotFound, "airdrop not found for identifier %s", airdropId)

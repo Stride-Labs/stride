@@ -6,13 +6,14 @@ import (
 	"testing"
 
 	tmcli "github.com/cometbft/cometbft/libs/cli"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
 	"github.com/Stride-Labs/stride/v32/testutil/network"
 	"github.com/Stride-Labs/stride/v32/x/records/client/cli"

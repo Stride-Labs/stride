@@ -3,6 +3,7 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -15,8 +16,6 @@ const (
 var _ sdk.Msg = &MsgRedeemTokensForShares{}
 
 // NewMsgRedeemTokensForShares creates a new MsgRedeemTokensForShares instance.
-//
-//nolint:interfacer
 func NewMsgRedeemTokensForShares(delAddr sdk.AccAddress, amount sdk.Coin) *MsgRedeemTokensForShares {
 	return &MsgRedeemTokensForShares{
 		DelegatorAddress: delAddr.String(),

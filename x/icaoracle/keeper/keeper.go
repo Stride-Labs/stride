@@ -3,12 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/keeper"
+
+	"cosmossdk.io/log/v2"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
 
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
 )
@@ -23,7 +25,7 @@ type Keeper struct {
 	ClientKeeper        types.ClientKeeper
 	ConnectionKeeper    types.ConnectionKeeper
 	ChannelKeeper       types.ChannelKeeper
-	ICAControllerKeeper icacontrollerkeeper.Keeper
+	ICAControllerKeeper *icacontrollerkeeper.Keeper
 	ICACallbacksKeeper  types.ICACallbacksKeeper
 }
 
@@ -37,7 +39,7 @@ func NewKeeper(
 	clientKeeper types.ClientKeeper,
 	connectionKeeper types.ConnectionKeeper,
 	channelKeeper types.ChannelKeeper,
-	icaControllerKeeper icacontrollerkeeper.Keeper,
+	icaControllerKeeper *icacontrollerkeeper.Keeper,
 	icaCallbacksKeeper types.ICACallbacksKeeper,
 ) *Keeper {
 	return &Keeper{

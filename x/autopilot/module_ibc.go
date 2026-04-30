@@ -3,18 +3,18 @@ package autopilot
 import (
 	"fmt"
 
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 
 	"github.com/Stride-Labs/stride/v32/x/autopilot/keeper"
 	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
-
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 )
 
 const (
@@ -26,16 +26,27 @@ const (
 // IBCModule implements the ICS26 interface for transfer given the transfer keeper.
 // TODO: Use IBCMiddleware struct
 type IBCModule struct {
-	keeper keeper.Keeper
-	app    porttypes.IBCModule
+	keeper      keeper.Keeper
+	app         porttypes.IBCModule
+	ics4Wrapper porttypes.ICS4Wrapper
 }
 
 // NewIBCModule creates a new IBCModule given the keeper
-func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) IBCModule {
-	return IBCModule{
+func NewIBCModule(k keeper.Keeper, app porttypes.IBCModule) *IBCModule {
+	return &IBCModule{
 		keeper: k,
 		app:    app,
 	}
+}
+
+// SetICS4Wrapper sets the ICS4Wrapper above this module on the IBC stack.
+func (im *IBCModule) SetICS4Wrapper(wrapper porttypes.ICS4Wrapper) {
+	im.ics4Wrapper = wrapper
+}
+
+// SetUnderlyingApplication sets the underlying IBC application beneath this middleware.
+func (im *IBCModule) SetUnderlyingApplication(app porttypes.IBCModule) {
+	im.app = app
 }
 
 // OnChanOpenInit implements the IBCModule interface

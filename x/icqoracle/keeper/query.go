@@ -4,14 +4,13 @@ import (
 	"context"
 	"strings"
 
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v32/x/icqoracle/types"
 )
@@ -50,7 +49,7 @@ func (k Keeper) TokenPrices(goCtx context.Context, req *types.QueryTokenPricesRe
 	tokenPriceStore := prefix.NewStore(store, types.TokenPricePrefix)
 
 	responses := []types.TokenPriceResponse{}
-	pageRes, err := query.Paginate(tokenPriceStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(tokenPriceStore, req.Pagination, func(key, value []byte) error {
 		var tokenPrice types.TokenPrice
 		if err := k.cdc.Unmarshal(value, &tokenPrice); err != nil {
 			return err

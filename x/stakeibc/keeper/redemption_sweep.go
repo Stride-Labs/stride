@@ -3,11 +3,13 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"

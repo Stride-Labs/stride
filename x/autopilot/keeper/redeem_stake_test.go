@@ -3,12 +3,11 @@ package keeper_test
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
-	recordsmodule "github.com/Stride-Labs/stride/v32/x/records"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -16,6 +15,7 @@ import (
 	router "github.com/Stride-Labs/stride/v32/x/autopilot"
 	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	recordsmodule "github.com/Stride-Labs/stride/v32/x/records"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

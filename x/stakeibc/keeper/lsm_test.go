@@ -3,17 +3,18 @@ package keeper_test
 import (
 	"fmt"
 
+	"github.com/cosmos/gogoproto/proto"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-
-	"github.com/cosmos/gogoproto/proto"
 )
 
 func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {

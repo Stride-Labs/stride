@@ -3,11 +3,13 @@ package keeper
 import (
 	"fmt"
 
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
@@ -55,7 +57,7 @@ func (k Keeper) TryRedeemStake(
 	return k.RunRedeemStake(ctx, strideAddress, redemptionReceiver, hostZoneDenom, amount)
 }
 
-func (k Keeper) RunRedeemStake(ctx sdk.Context, strideAddress string, redemptionReceiver string, hostZoneDenom string, amount sdkmath.Int) error {
+func (k Keeper) RunRedeemStake(ctx sdk.Context, strideAddress, redemptionReceiver, hostZoneDenom string, amount sdkmath.Int) error {
 	hostZone, err := k.stakeibcKeeper.GetHostZoneFromHostDenom(ctx, hostZoneDenom)
 	if err != nil {
 		return err

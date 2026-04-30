@@ -1,12 +1,12 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	_ "github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
 
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
-
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 

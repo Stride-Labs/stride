@@ -3,38 +3,66 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	wasmvm "github.com/CosmWasm/wasmvm/v3"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/libs/bytes"
+	tmos "github.com/cometbft/cometbft/libs/os"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/gogoproto/proto"
+	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward"
+	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/types"
+	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
+	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/keeper"
+	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/types"
+	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v11"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
+	ica "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts"
+	icacontroller "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller"
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/keeper"
+	icacontrollertypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/types"
+	icahost "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host"
+	icahostkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v11/modules/core"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+	ccvconsumer "github.com/cosmos/interchain-security/v7/x/ccv/consumer"
+	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
+	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+	ccvdistr "github.com/cosmos/interchain-security/v7/x/ccv/democracy/distribution"
+	ccvstaking "github.com/cosmos/interchain-security/v7/x/ccv/democracy/staking"
+	evmosvesting "github.com/evmos/vesting/x/vesting"
+	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+	"github.com/spf13/cast"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	"cosmossdk.io/x/evidence"
-	evidencekeeper "cosmossdk.io/x/evidence/keeper"
-	evidencetypes "cosmossdk.io/x/evidence/types"
-	"cosmossdk.io/x/feegrant"
-	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
-	feegrantmodule "cosmossdk.io/x/feegrant/module"
-	"cosmossdk.io/x/tx/signing"
-	"cosmossdk.io/x/upgrade"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	wasmvm "github.com/CosmWasm/wasmvm/v2"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto"
-	"github.com/cometbft/cometbft/libs/bytes"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	dbm "github.com/cosmos/cosmos-db"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -52,6 +80,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/std"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -75,6 +104,12 @@ import (
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
+	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
@@ -94,47 +129,10 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
-	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
-	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10"
-	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/keeper"
-	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v10/types"
-	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
-	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/keeper"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
-	ica "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts"
-	icacontroller "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
-	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
-	icahost "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host"
-	icahostkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v10/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	ccvconsumer "github.com/cosmos/interchain-security/v7/x/ccv/consumer"
-	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
-	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
-	ccvdistr "github.com/cosmos/interchain-security/v7/x/ccv/democracy/distribution"
-	ccvstaking "github.com/cosmos/interchain-security/v7/x/ccv/democracy/staking"
-	evmosvesting "github.com/evmos/vesting/x/vesting"
-	evmosvestingkeeper "github.com/evmos/vesting/x/vesting/keeper"
-	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
-	"github.com/spf13/cast"
+	"github.com/cosmos/cosmos-sdk/x/tx/signing"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	airdrop "github.com/Stride-Labs/stride/v32/x/airdrop"
@@ -269,10 +267,10 @@ type StrideApp struct {
 	ParamsKeeper          paramskeeper.Keeper //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 	IBCKeeper             *ibckeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
-	TransferKeeper        ibctransferkeeper.Keeper
+	TransferKeeper        *ibctransferkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
-	ICAControllerKeeper   icacontrollerkeeper.Keeper
-	ICAHostKeeper         icahostkeeper.Keeper
+	ICAControllerKeeper   *icacontrollerkeeper.Keeper
+	ICAHostKeeper         *icahostkeeper.Keeper
 	ConsumerKeeper        ccvconsumerkeeper.Keeper
 	AutopilotKeeper       autopilotkeeper.Keeper
 	PacketForwardKeeper   *packetforwardkeeper.Keeper
@@ -314,7 +312,6 @@ type StrideApp struct {
 func NewStrideApp(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	loadLatest bool,
 	appOpts servertypes.AppOptions,
 	wasmOpts []wasmkeeper.Option,
@@ -342,7 +339,6 @@ func NewStrideApp(
 	std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(Name, logger, db, txConfig.TxDecoder(), baseAppOptions...)
-	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
@@ -530,7 +526,6 @@ func NewStrideApp(
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
-		app.GetSubspace(ibcexported.ModuleName),
 		app.UpgradeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -545,22 +540,22 @@ func NewStrideApp(
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
 		keys[ibchookstypes.StoreKey],
 	)
-	wasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
-	app.Ics20WasmHooks = &wasmHooks
-	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
+	// v11 NewWasmHooks returns *WasmHooks (was a value in v10).
+	app.Ics20WasmHooks = ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper                                        // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
+	// v11 dropped the legacy paramtypes.Subspace argument.
 	app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
-		app.GetSubspace(ratelimittypes.ModuleName),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ClientKeeper,
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 	)
-	ratelimitModule := ratelimit.NewAppModule(appCodec, app.RatelimitKeeper)
+	ratelimitModule := ratelimit.NewAppModule(appCodec, &app.RatelimitKeeper)
 
 	// Create the ICS4 wrapper which routes up the stack from ibchooks -> ratelimit
 	// (see full stack definition below)
@@ -587,15 +582,16 @@ func NewStrideApp(
 	// TransferKeeper on the outbound path, so we do NOT overwrite this with the full transferStack below.
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
+		app.AccountKeeper.AddressCodec(),
 		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
-		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.PacketForwardKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	// Override the default ICS4Wrapper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
+	app.TransferKeeper.WithICS4Wrapper(app.PacketForwardKeeper)
 
 	// Set the TransferKeeper reference in the PacketForwardKeeper
 	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
@@ -630,6 +626,7 @@ func NewStrideApp(
 		distrkeeper.NewQuerier(app.DistrKeeper),
 		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeperV2,
 		app.TransferKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
@@ -677,7 +674,7 @@ func NewStrideApp(
 		app.SlashingKeeper,
 		app.BankKeeper,
 		app.AccountKeeper,
-		&app.TransferKeeper,
+		app.TransferKeeper,
 		app.IBCKeeper,
 		authtypes.FeeCollectorName,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -694,8 +691,6 @@ func NewStrideApp(
 	app.ICAControllerKeeper = icacontrollerkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[icacontrollertypes.StoreKey]),
-		app.GetSubspace(icacontrollertypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -846,11 +841,11 @@ func NewStrideApp(
 		runtime.NewKVStoreService(keys[govtypes.StoreKey]),
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.StakingKeeper,
 		app.DistrKeeper,
 		app.MsgServiceRouter(),
 		govtypes.DefaultConfig(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		govkeeper.NewDefaultCalculateVoteResultsAndVotingPower(app.StakingKeeper),
 	)
 	govKeeper.SetLegacyRouter(govRouter)
 	app.GovKeeper = *govKeeper
@@ -897,15 +892,13 @@ func NewStrideApp(
 	app.ICAHostKeeper = icahostkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[icahosttypes.StoreKey]),
-		app.GetSubspace(icahosttypes.SubModuleName),
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper — ICA host uses the core channel keeper directly
 		app.IBCKeeper.ChannelKeeper,
 		app.AccountKeeper,
 		app.MsgServiceRouter(),
 		app.GRPCQueryRouter(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	icaModule := ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper)
+	icaModule := ica.NewAppModule(app.ICAControllerKeeper, app.ICAHostKeeper)
 
 	// Create the middleware stacks
 	// Stack one (ICAHost Stack) contains:
@@ -950,7 +943,7 @@ func NewStrideApp(
 		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
 	)
 	transferStack = ibchooks.NewIBCMiddleware(transferStack, &app.HooksICS4Wrapper)
-	transferStack = ratelimit.NewIBCMiddleware(app.RatelimitKeeper, transferStack)
+	transferStack = ratelimit.NewIBCMiddleware(&app.RatelimitKeeper, transferStack)
 	transferStack = staketia.NewIBCMiddleware(app.StaketiaKeeper, transferStack)
 	transferStack = stakedym.NewIBCMiddleware(app.StakedymKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)
@@ -1096,11 +1089,11 @@ func NewStrideApp(
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
+		banktypes.ModuleName,
 		genutiltypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
 		authtypes.ModuleName,
-		banktypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		vestingtypes.ModuleName,
@@ -1231,7 +1224,7 @@ func NewStrideApp(
 			wasmkeeper.NewWasmSnapshotter(app.CommitMultiStore(), &app.WasmKeeper),
 		)
 		if err != nil {
-			panic(fmt.Errorf("failed to register snapshot extension: %s", err))
+			panic(fmt.Errorf("failed to register snapshot extension: %w", err))
 		}
 	}
 
@@ -1241,7 +1234,7 @@ func NewStrideApp(
 		}
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		ctx := app.BaseApp.NewContext(true)
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
 			panic(fmt.Sprintf("failed initialize pinned codes %s", err))
 		}
@@ -1258,7 +1251,7 @@ func NewStrideApp(
 func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPubKey crypto.PubKey, newOperatorAddress, upgradeToTrigger string) *StrideApp {
 	// Create a new account that will be used in the validator
 	// This does not match the actual operator keys, but it's not required that they match
-	ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+	ctx := app.BaseApp.NewContext(true)
 	pubkey := &ed25519.PubKey{Key: newValPubKey.Bytes()}
 	pubkeyAny, err := types.NewAnyWithValue(pubkey)
 	if err != nil {
@@ -1278,7 +1271,7 @@ func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPu
 	// Create Validator struct for our new validator.
 	// The validator will have all the bonded tokens
 	vs := app.StakingKeeper.GetValidatorSet()
-	totalBondedTokens, err := vs.TotalBondedTokens(ctx)
+	totalBondedTokens, err := vs.TotalValidatorPower(ctx)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
@@ -1495,7 +1488,7 @@ func (app *StrideApp) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
 // GetIBCKeeper implements the TestingApp interface.
 func (app *StrideApp) GetTransferKeeper() *ibctransferkeeper.Keeper {
-	return &app.TransferKeeper
+	return app.TransferKeeper
 }
 
 // GetIBCKeeper implements the TestingApp interface.
@@ -1718,7 +1711,12 @@ func (app *StrideApp) RegisterTendermintService(clientCtx client.Context) {
 
 // RegisterNodeService registers the node gRPC Query service.
 func (app *StrideApp) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
-	nodeservice.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
+	nodeservice.RegisterNodeService(
+		clientCtx,
+		app.GRPCQueryRouter(),
+		cfg,
+		func() int64 { return app.CommitMultiStore().EarliestVersion() },
+	)
 }
 
 // GetMaccPerms returns a copy of the module account permissions
@@ -1735,13 +1733,13 @@ func GetMaccPerms() map[string][]string {
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper { //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey) //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 
-	paramsKeeper.Subspace(authtypes.ModuleName).WithKeyTable(authtypes.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(banktypes.ModuleName).WithKeyTable(banktypes.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(stakingtypes.ModuleName).WithKeyTable(stakingtypes.ParamKeyTable())   //nolint:staticcheck
-	paramsKeeper.Subspace(minttypes.ModuleName).WithKeyTable(minttypes.ParamKeyTable())         //nolint:staticcheck
-	paramsKeeper.Subspace(distrtypes.ModuleName).WithKeyTable(distrtypes.ParamKeyTable())       //nolint:staticcheck
-	paramsKeeper.Subspace(slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()) //nolint:staticcheck
-	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable())         //nolint:staticcheck
+	paramsKeeper.Subspace(authtypes.ModuleName).WithKeyTable(authtypes.ParamKeyTable())       //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
+	paramsKeeper.Subspace(banktypes.ModuleName).WithKeyTable(banktypes.ParamKeyTable())       //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
+	paramsKeeper.Subspace(stakingtypes.ModuleName).WithKeyTable(stakingtypes.ParamKeyTable()) //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
+	paramsKeeper.Subspace(minttypes.ModuleName).WithKeyTable(minttypes.ParamKeyTable())
+	paramsKeeper.Subspace(distrtypes.ModuleName).WithKeyTable(distrtypes.ParamKeyTable())       //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
+	paramsKeeper.Subspace(slashingtypes.ModuleName).WithKeyTable(slashingtypes.ParamKeyTable()) //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypesv1.ParamKeyTable())         //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 	paramsKeeper.Subspace(stakeibcmoduletypes.ModuleName)
 	paramsKeeper.Subspace(epochsmoduletypes.ModuleName)
 	paramsKeeper.Subspace(interchainquerytypes.ModuleName)
@@ -1755,13 +1753,11 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(claimtypes.ModuleName)
 	paramsKeeper.Subspace(wasmtypes.ModuleName)
 
-	// IBC legacy params to support v8 migration from param store to standalone stores
-	keyTable := ibcclienttypes.ParamKeyTable()
-	keyTable.RegisterParamSet(&ibcconnectiontypes.Params{})
-	paramsKeeper.Subspace(ibcexported.ModuleName).WithKeyTable(keyTable)
-	paramsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
-	paramsKeeper.Subspace(icacontrollertypes.SubModuleName).WithKeyTable(icacontrollertypes.ParamKeyTable())
-	paramsKeeper.Subspace(icahosttypes.SubModuleName).WithKeyTable(icahosttypes.ParamKeyTable())
+	// IBC legacy subspaces (param key tables removed in ibc-go v11; subspaces kept for migration handlers)
+	paramsKeeper.Subspace(ibcexported.ModuleName)
+	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
+	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
+	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	return paramsKeeper
 }
 

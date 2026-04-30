@@ -3,8 +3,9 @@ package v27_test
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v27 "github.com/Stride-Labs/stride/v32/app/upgrades/v27"

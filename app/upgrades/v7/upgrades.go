@@ -4,25 +4,26 @@ import (
 	"context"
 	"time"
 
+	icahostkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/keeper"
+	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	icahostkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/keeper"
-	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochskeeper "github.com/Stride-Labs/stride/v32/x/epochs/keeper"
@@ -42,7 +43,7 @@ func CreateUpgradeHandler(
 	accountKeeper authkeeper.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
 	epochsKeeper epochskeeper.Keeper,
-	icahostKeeper icahostkeeper.Keeper,
+	icahostKeeper *icahostkeeper.Keeper,
 	mintKeeper mintkeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
 	stakeibcStoreKey storetypes.StoreKey,
@@ -119,7 +120,7 @@ func GetAllHostZone(cdc codec.Codec, stakeibcStoreKey storetypes.StoreKey, ctx s
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // Add a new hourly epoch that will be used by the rate limit module
@@ -151,7 +152,7 @@ func IncreaseStrideInflation(ctx sdk.Context, k mintkeeper.Keeper) {
 
 // Add stride messages (LiquidStake, RedeemStake, Claim) to the ICAHost allow messages
 // to allow other protocols to liquid stake via ICA
-func AddICAHostAllowMessages(ctx sdk.Context, k icahostkeeper.Keeper) {
+func AddICAHostAllowMessages(ctx sdk.Context, k *icahostkeeper.Keeper) {
 	ctx.Logger().Info("Adding ICA Host allow messages")
 
 	params := icahosttypes.Params{

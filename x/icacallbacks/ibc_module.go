@@ -3,11 +3,13 @@ package icacallbacks
 import (
 	"fmt"
 
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	"github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
 	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
@@ -16,13 +18,19 @@ import (
 var _ porttypes.IBCModule = &IBCModule{}
 
 type IBCModule struct {
-	keeper keeper.Keeper
+	keeper      keeper.Keeper
+	ics4Wrapper porttypes.ICS4Wrapper
 }
 
-func NewIBCModule(k keeper.Keeper) IBCModule {
-	return IBCModule{
+func NewIBCModule(k keeper.Keeper) *IBCModule {
+	return &IBCModule{
 		keeper: k,
 	}
+}
+
+// SetICS4Wrapper sets the ICS4Wrapper above this module on the IBC stack.
+func (im *IBCModule) SetICS4Wrapper(wrapper porttypes.ICS4Wrapper) {
+	im.ics4Wrapper = wrapper
 }
 
 // No custom logic is necessary in OnChanOpenInit

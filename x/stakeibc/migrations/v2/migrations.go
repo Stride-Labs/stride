@@ -1,11 +1,11 @@
 package v2
 
 import (
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-
 	errorsmod "cosmossdk.io/errors"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v2/types"

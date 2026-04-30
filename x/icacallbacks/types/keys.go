@@ -32,6 +32,6 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
-func PacketID(portID string, channelID string, sequence uint64) string {
+func PacketID(portID, channelID string, sequence uint64) string {
 	return fmt.Sprintf("%s.%s.%d", portID, channelID, sequence)
 }
