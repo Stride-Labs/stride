@@ -1,13 +1,12 @@
 package v33
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -18,21 +17,20 @@ import (
 
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
+
+	"github.com/Stride-Labs/stride/v32/utils"
 )
 
 // SnapshotValidatorsFromICS reads the current CCV validator set from the
 // consumer keeper and converts it into a slice of POA Validators ready to
 // be passed to poaKeeper.InitGenesis.
 //
-// Monikers are looked up from the pre-baked ValidatorMonikers map (keyed by
-// hex of the consensus address). Missing entries fall back to empty string.
-//
-// ICS validators have no Stride-side operator address (the operator key lives
-// on the Hub). POA's CreateValidator requires a valid sdk.AccAddress for
-// OperatorAddress that (a) is unique per validator and (b) is distinct from the
-// validator's consensus pubkey address. We synthesize one by hashing
-// "poa-operator:" + consensusAddress bytes, which is deterministic and can be
-// updated later via MsgUpdateValidators once real operator keys are known.
+// Each consensus address is joined to a moniker via the embedded
+// ValidatorMonikers map (sourced from validators.json), and that moniker is
+// joined to a Stride-side operator address via utils.PoaValidatorSet — the
+// same address the existing reward-allocation pipeline pays out to. Both joins
+// must succeed; a missing entry on either side is a configuration drift
+// between the two sources of truth and halts the upgrade.
 func SnapshotValidatorsFromICS(
 	ctx sdk.Context,
 	consumerKeeper ccvconsumerkeeper.Keeper,
@@ -43,6 +41,11 @@ func SnapshotValidatorsFromICS(
 			"expected %d validators in consumer keeper, got %d",
 			ExpectedValidatorCount, len(ccVals),
 		)
+	}
+
+	operatorByMoniker := make(map[string]string, len(utils.PoaValidatorSet))
+	for _, v := range utils.PoaValidatorSet {
+		operatorByMoniker[v.Moniker] = v.Operator
 	}
 
 	poaVals := make([]poatypes.Validator, 0, len(ccVals))
@@ -58,9 +61,20 @@ func SnapshotValidatorsFromICS(
 				"failed to wrap cons pubkey for validator %x", ccVal.Address)
 		}
 
-		operatorAddr := syntheticOperatorAddress(ccVal.Address)
-
-		moniker := ValidatorMonikers[hex.EncodeToString(ccVal.Address)]
+		hexAddr := hex.EncodeToString(ccVal.Address)
+		moniker, ok := ValidatorMonikers[hexAddr]
+		if !ok {
+			return nil, fmt.Errorf(
+				"validator %s has no moniker in v33 validators.json", hexAddr,
+			)
+		}
+		operatorAddr, ok := operatorByMoniker[moniker]
+		if !ok {
+			return nil, fmt.Errorf(
+				"validator %s (moniker %q) has no entry in utils.PoaValidatorSet",
+				hexAddr, moniker,
+			)
+		}
 
 		poaVals = append(poaVals, poatypes.Validator{
 			PubKey: pubKeyAny,
@@ -73,15 +87,6 @@ func SnapshotValidatorsFromICS(
 	}
 
 	return poaVals, nil
-}
-
-// syntheticOperatorAddress derives a unique, deterministic sdk.AccAddress
-// placeholder for a validator whose real operator key is unknown. It hashes
-// "poa-operator:" + consensusAddr and takes the first 20 bytes, guaranteeing
-// uniqueness across validators while remaining distinct from the consensus key.
-func syntheticOperatorAddress(consensusAddr []byte) string {
-	hash := sha256.Sum256(append([]byte("poa-operator:"), consensusAddr...))
-	return sdk.AccAddress(hash[:20]).String()
 }
 
 // InitializePOA seeds POA's KV store with the given validator set and admin.
