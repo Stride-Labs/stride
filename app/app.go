@@ -49,7 +49,6 @@ import (
 	ccvconsumer "github.com/cosmos/interchain-security/v7/x/ccv/consumer"
 	ccvconsumerkeeper "github.com/cosmos/interchain-security/v7/x/ccv/consumer/keeper"
 	ccvconsumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
-	ccvdistr "github.com/cosmos/interchain-security/v7/x/ccv/democracy/distribution"
 	ccvstaking "github.com/cosmos/interchain-security/v7/x/ccv/democracy/staking"
 	poa "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa"
 	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
@@ -105,6 +104,7 @@ import (
 	consensus "github.com/cosmos/cosmos-sdk/x/consensus"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
@@ -1016,7 +1016,7 @@ func NewStrideApp(
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, app.BankKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.ConsumerKeeper, app.GetSubspace(slashingtypes.ModuleName), app.interfaceRegistry),
-		ccvdistr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, authtypes.FeeCollectorName, app.GetSubspace(distrtypes.ModuleName)),
+		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
 		ccvstaking.NewAppModule(appCodec, &app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
@@ -1038,7 +1038,6 @@ func NewStrideApp(
 		recordsModule,
 		ratelimitModule,
 		icacallbacksModule,
-		consumerModule,
 		autopilotModule,
 		icaoracleModule,
 		stakeTiaModule,
@@ -1106,7 +1105,6 @@ func NewStrideApp(
 		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -1149,7 +1147,6 @@ func NewStrideApp(
 		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -1194,7 +1191,6 @@ func NewStrideApp(
 		ratelimittypes.ModuleName,
 		icacallbacksmoduletypes.ModuleName,
 		claimtypes.ModuleName,
-		ccvconsumertypes.ModuleName,
 		autopilottypes.ModuleName,
 		icaoracletypes.ModuleName,
 		consensusparamtypes.ModuleName,
