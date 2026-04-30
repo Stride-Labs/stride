@@ -21,6 +21,7 @@ This is the cleanup binary that follows v33 (the ICS → POA migration). After v
 - Re-enabling slashing.
 - Changing inflation, mint params, or any tokenomics.
 - Modifying govenators, delegations, or the staking module.
+- **Renormalizing POA validator powers.** All 8 validators inherit the same opaque uniform power (`275925`, a Hub-side scaling factor) from the v33 snapshot. Since the set is already balanced, there is no functional reason to rewrite it — POA only cares about relative power, and equal is equal. If the multisig ever wants a cleaner display value, that's a one-off `MsgUpdateValidators` outside this binary.
 - Any new business logic.
 
 ## §2. Why a separate plan
