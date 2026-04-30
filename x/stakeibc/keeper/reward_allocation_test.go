@@ -43,11 +43,8 @@ func (s *KeeperTestSuite) SetupTestRewardAllocation() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone2)
 
-	// ConsumerRedistributionFraction = how much Stride keeps
-	// Set consumer redistribution fraction to 0.85 (same as mainnet)
-	consumerParams := s.App.ConsumerKeeper.GetConsumerParams(s.Ctx)
-	consumerParams.ConsumerRedistributionFraction = "0.85"
-	s.App.ConsumerKeeper.SetParams(s.Ctx, consumerParams)
+	// The PoA validator payment rate (15%) is hardcoded in utils.PoaValPaymentRate;
+	// no consumer-params mutation is needed here.
 
 	// Set epoch tracker and deposit records for liquid stake
 	currentEpoch := uint64(2)

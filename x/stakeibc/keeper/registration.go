@@ -210,13 +210,6 @@ func (k Keeper) RegisterHostZone(ctx sdk.Context, msg *types.MsgRegisterHostZone
 	}
 	k.RecordsKeeper.AppendDepositRecord(ctx, depositRecord)
 
-	// register stToken to consumer reward denom whitelist so that
-	// stToken rewards can be distributed to provider validators
-	err = k.RegisterStTokenDenomsToWhitelist(ctx, []string{types.StAssetDenomFromHostZoneDenom(zone.HostDenom)})
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "unable to register stToken as ICS reward denom")
-	}
-
 	// emit events
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
