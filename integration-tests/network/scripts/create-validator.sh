@@ -72,6 +72,15 @@ EOF
 }
 
 main() {
+    # PSS-only validators: pods with index >= 5 do NOT register as govenators.
+    # This mirrors the mainnet shape where ~3 of 8 PSS validators have
+    # ICS-key-assigned consensus keys not in x/staking, exercising the
+    # distrwrapper stake-iteration path post-upgrade.
+    if [[ "$POD_INDEX" -ge 5 ]]; then
+        echo "Skipping govenator registration for PSS-only validator (pod $POD_INDEX)"
+        exit 0
+    fi
+
     echo "Adding validator..."
     wait_for_startup
     add_keys
