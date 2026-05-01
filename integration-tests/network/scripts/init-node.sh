@@ -57,8 +57,20 @@ update_config() {
     sed -i -E "s|node = \".*\"|node = \"tcp://localhost:${RPC_PORT}\"|g" $client_toml
 
     echo "Retrieving private keys and genesis.json..."
-    download_shared_file ${VALIDATOR_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/priv_validator_key.json 
-    download_shared_file ${NODE_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json  ${CHAIN_HOME}/config/node_key.json 
+    download_shared_file ${VALIDATOR_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json ${CHAIN_HOME}/config/priv_validator_key.json
+
+    # ig-tests POA upgrade: re-pin the stride cons key from
+    # keys.json::cons_keys[VALIDATOR_INDEX-1] for self-consistency.
+    # The shared file already came from the pinned main node, but
+    # re-pinning here makes init-node.sh independent of init-chain.sh
+    # ordering.
+    if [[ "$CHAIN_NAME" == "stride" ]]; then
+        cons_key_index=$((VALIDATOR_INDEX - 1))
+        jq -r ".cons_keys[$cons_key_index]" ${KEYS_FILE} \
+            > ${CHAIN_HOME}/config/priv_validator_key.json
+    fi
+
+    download_shared_file ${NODE_KEYS_DIR}/${CHAIN_NAME}/val${VALIDATOR_INDEX}.json  ${CHAIN_HOME}/config/node_key.json
     download_shared_file ${GENESIS_DIR}/${CHAIN_NAME}/genesis.json ${CHAIN_HOME}/config/genesis.json 
 
     if [[ "$VALIDATOR_INDEX" != "1" ]]; then
