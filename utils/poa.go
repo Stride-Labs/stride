@@ -13,13 +13,12 @@ type PoaValidator struct {
 	HubAddress string
 }
 
+// REHEARSAL ONLY — DO NOT MERGE
+// This branch (poa-migration-ig-tests) replaces the 8 mainnet entries with
+// 3 test validators matching app/upgrades/v33/validators.json. See that
+// file's sidecar REHEARSAL_ONLY marker for context.
 var PoaValidatorSet = []PoaValidator{
-	{Moniker: "Polkachu", Operator: "stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c", HubAddress: "cosmosvalcons1m7fg8k39k2tyym5hgwrpf5wx9hqsr8vywuyrtm"},
-	{Moniker: "L5", Operator: "stride1wj9ckvakuzgvlgw3hwpmsfjxvsc7uke73ps4u8", HubAddress: "cosmosvalcons1c5e86exd7jsyhcfqdejltdsagjfrvv8xv22368"},
-	{Moniker: "Imperator", Operator: "stride13u4dsapth4m3hef3z8qgjtdnv06predefnndkw", HubAddress: "cosmosvalcons1pdpwglc4fcjdzqvyhvfwxg684trpc6uqck5sxk"},
-	{Moniker: "Cosmostation", Operator: "stride1jj9z2xwxesuy65n90dujsak554eqkrr2ygyan2", HubAddress: "cosmosvalcons1px0zkz2cxvc6lh34uhafveea9jnaagckmrlsye"},
-	{Moniker: "Keplr", Operator: "stride1j79tw5chf34u88s30gxchzx2cu080elm4hqg5j", HubAddress: "cosmosvalcons1vz42ewp04wwepjed7z4qenj925gpakgvap4q2u"},
-	{Moniker: "Stakecito", Operator: "stride1qe8uuf5x69c526h4nzxwv4ltftr73v7qr7y9vq", HubAddress: "cosmosvalcons1upc05nc9pwhhagnkr3f2dft327qxsxfeyvajsu"},
-	{Moniker: "Citadel.one", Operator: "stride1rgwn0h67xmuluymk4vvhtl4tqtgfg39j9zuk2z", HubAddress: "cosmosvalcons1f6cjsfn47ujttypx7gtncglsmjvndugc2zelqx"},
-	{Moniker: "CryptoCrew", Operator: "stride1smuvvnjj6w7x6ytq9kdgvlj6er99y6648s3der", HubAddress: "cosmosvalcons1jufcrrd9gze26sxd82ppse03eg5g5xa2gplt6p"},
+	{Moniker: "Validator1", Operator: "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7", HubAddress: ""},
+	{Moniker: "Validator2", Operator: "stride17kht2x2ped6qytr2kklevtvmxpw7wq9rmuc3ca", HubAddress: ""},
+	{Moniker: "Validator3", Operator: "stride1nnurja9zt97huqvsfuartetyjx63tc5zq8s6fv", HubAddress: ""},
 }
