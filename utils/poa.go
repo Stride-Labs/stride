@@ -1,3 +1,9 @@
+// REHEARSAL ONLY — DO NOT MERGE
+// PoaValidatorSet has been replaced with test operator addresses generated
+// from the rehearsal validator mnemonics in
+// integration-tests/network/configs/keys.json. The mainnet set lives on the
+// `main` branch.
+
 package utils
 
 import sdkmath "cosmossdk.io/math"
@@ -14,12 +20,12 @@ type PoaValidator struct {
 }
 
 var PoaValidatorSet = []PoaValidator{
-	{Moniker: "Polkachu", Operator: "stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c", HubAddress: "cosmosvalcons1m7fg8k39k2tyym5hgwrpf5wx9hqsr8vywuyrtm"},
-	{Moniker: "L5", Operator: "stride1wj9ckvakuzgvlgw3hwpmsfjxvsc7uke73ps4u8", HubAddress: "cosmosvalcons1c5e86exd7jsyhcfqdejltdsagjfrvv8xv22368"},
-	{Moniker: "Imperator", Operator: "stride13u4dsapth4m3hef3z8qgjtdnv06predefnndkw", HubAddress: "cosmosvalcons1pdpwglc4fcjdzqvyhvfwxg684trpc6uqck5sxk"},
-	{Moniker: "Cosmostation", Operator: "stride1jj9z2xwxesuy65n90dujsak554eqkrr2ygyan2", HubAddress: "cosmosvalcons1px0zkz2cxvc6lh34uhafveea9jnaagckmrlsye"},
-	{Moniker: "Keplr", Operator: "stride1j79tw5chf34u88s30gxchzx2cu080elm4hqg5j", HubAddress: "cosmosvalcons1vz42ewp04wwepjed7z4qenj925gpakgvap4q2u"},
-	{Moniker: "Stakecito", Operator: "stride1qe8uuf5x69c526h4nzxwv4ltftr73v7qr7y9vq", HubAddress: "cosmosvalcons1upc05nc9pwhhagnkr3f2dft327qxsxfeyvajsu"},
-	{Moniker: "Citadel.one", Operator: "stride1rgwn0h67xmuluymk4vvhtl4tqtgfg39j9zuk2z", HubAddress: "cosmosvalcons1f6cjsfn47ujttypx7gtncglsmjvndugc2zelqx"},
-	{Moniker: "CryptoCrew", Operator: "stride1smuvvnjj6w7x6ytq9kdgvlj6er99y6648s3der", HubAddress: "cosmosvalcons1jufcrrd9gze26sxd82ppse03eg5g5xa2gplt6p"},
+	{Moniker: "Validator1", Operator: "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7", HubAddress: ""},
+	{Moniker: "Validator2", Operator: "stride17kht2x2ped6qytr2kklevtvmxpw7wq9rmuc3ca", HubAddress: ""},
+	{Moniker: "Validator3", Operator: "stride1nnurja9zt97huqvsfuartetyjx63tc5zq8s6fv", HubAddress: ""},
+	{Moniker: "Validator4", Operator: "stride1py0fvhdtq4au3d9l88rec6vyda3e0wtt9szext", HubAddress: ""},
+	{Moniker: "Validator5", Operator: "stride1c5jnf370kaxnv009yhc3jt27f549l5u36chzem", HubAddress: ""},
+	{Moniker: "Validator6", Operator: "stride1eudadx6z3dp6pa4sgqx740tyvuasfh4nrt7rc2", HubAddress: ""},
+	{Moniker: "Validator7", Operator: "stride1fm497naw27ck2d4z6z4ujcwq929ad5gexwvz8f", HubAddress: ""},
+	{Moniker: "Validator8", Operator: "stride1gfvjzmrucy9xemzqktvg28m8n40wpv6l4fam6r", HubAddress: ""},
 }
