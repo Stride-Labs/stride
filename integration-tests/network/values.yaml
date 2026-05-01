@@ -7,54 +7,15 @@ images:
 
 activeChains:
   - stride
-  - cosmoshub
-  - osmosis
 
-# type can be either "relayer" or "hermes"
-relayers:
-  - name: stride-cosmoshub
-    type: relayer
-    chainA: stride
-    chainB: cosmoshub
-  - name: stride-osmosis
-    type: relayer
-    chainA: stride
-    chainB: osmosis
-  # We start with hermes as a backup relayer
-  - name: stride-cosmoshub
-    type: hermes
-    chainA: stride
-    chainB: cosmoshub
-    createPaths: false
-  - name: stride-osmosis
-    type: hermes
-    chainA: stride
-    chainB: osmosis
-    createPaths: false
+# No relayers — Stride is the only chain in this rehearsal network.
+relayers: []
 
 chainConfigs:
   stride:
     binary: strided
     version: latest
-    numValidators: 3
+    numValidators: 8
     home: .stride
     denom: ustrd
     decimals: 6
-
-  cosmoshub:
-    binary: gaiad
-    version: v22.1.0
-    numValidators: 1
-    home: .gaia
-    denom: uatom
-    decimals: 6
-
-  osmosis:
-    binary: osmosisd
-    version: v28.0.0
-    numValidators: 1
-    home: .osmosisd
-    denom: uosmo
-    decimals: 6
-
-
