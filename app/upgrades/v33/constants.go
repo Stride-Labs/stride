@@ -8,9 +8,11 @@ import (
 // UpgradeName is the SDK upgrade plan name. Match the binary release tag.
 const UpgradeName = "v33"
 
-// AdminMultisigAddress is the bech32 address that POA recognizes as its admin
-// post-upgrade
-const AdminMultisigAddress = "stride1fduug6m38gyuqt3wcgc2kcgr9nnte0n7ssn27e"
+// REHEARSAL ONLY — DO NOT MERGE
+// AdminMultisigAddress points at the integration-tests `admin` account so the
+// rehearsal can drive POA admin behavior with a known signer. The mainnet
+// multisig address lives on the `main` branch.
+const AdminMultisigAddress = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8"
 
 // ExpectedValidatorCount is enforced by the upgrade handler. Panics if
 // consumerKeeper.GetAllCCValidator returns a different count.
