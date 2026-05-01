@@ -81,5 +81,95 @@
       "name": "user1",
       "mnemonic": "brief play describe burden half aim soccer carbon hope wait output play vacuum joke energy crucial output mimic cruise brother document rail anger leaf"
     }
+  ],
+  "cons_keys": [
+    {
+      "address": "F5D85500835F5A8004ED3396E5A8FBFBE272C973",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "QMRyBecP82ZGFEfknEIjFXDRmMkLbpdMoX5r5stiV+8="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "g0aXN6hAQq1ZGUMm8zvDlW1g7QJ7pK0gSlIFM1yM8llAxHIF5w/zZkYUR+ScQiMVcNGYyQtul0yhfmvmy2JX7w=="
+      }
+    },
+    {
+      "address": "DEAE162A52B136A2F79A9A7C767BE2A133B026C7",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "gCN/4CnO4hx+UvB5bANa3bHfqs98Mz5yiYVfAfb52CU="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "Yod4a9QPEPJeXx2m2ugYENSh4FASbCrSYXE7wQVe+YOAI3/gKc7iHH5S8HlsA1rdsd+qz3wzPnKJhV8B9vnYJQ=="
+      }
+    },
+    {
+      "address": "ADF1E4665AFABC9CD2C3541EF0CCA31E81CE7F44",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "DkCeh9Eu7yaadCXSL19+KYclncEqDc7bjcpdn/v1A5s="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "QvnFHSJmkDh3nGD/1daNxQ7cMEDb0okXHJQd39gADdcOQJ6H0S7vJpp0JdIvX34phyWdwSoNztuNyl2f+/UDmw=="
+      }
+    },
+    {
+      "address": "AB7F8434C6599F0C399AB2E6CA906D10DB6A1B63",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "DKs0MeM7s8fpZ2x8mmFEakmSBLL30a8/wUdkrUoVesw="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "gx4umUos7a6YHAbpZvv3VCvnW/LwPRCGTyyoaabIG0EMqzQx4zuzx+lnbHyaYURqSZIEsvfRrz/BR2StShV6zA=="
+      }
+    },
+    {
+      "address": "6DC24282649F5D2D72DB21DB9C8AF5F7DD8E06C7",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "RCNCOPKtoxE+7b7JM3Zv9PRC7X9zkqgogOEmQ2IL1fA="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "upSyfAg6BoD2xJ/xGKDfUT4RSEJgu+ImGt9Oj1oLcV1EI0I48q2jET7tvskzdm/09ELtf3OSqCiA4SZDYgvV8A=="
+      }
+    },
+    {
+      "address": "9DC4E8F9BAD7774C305DDFEDC8C4661B9B4F6AD2",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "k+GxV06COsWyutG4U4UyI7ecmCn/Vt3NHvAAtqMQybY="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "V8+ztwuq1rdfvmCNt0JaP5/tI5w5srpwb4pJ4hwWpsOT4bFXToI6xbK60bhThTIjt5yYKf9W3c0e8AC2oxDJtg=="
+      }
+    },
+    {
+      "address": "4DBD54765995FF7C168902899148D080E51BC409",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "MFMW3ZZpmwFA7aKJYGIM006qIWMG+PML625IkGxM1js="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "9DHEcrmI4WdVEZ5T30fgawgRfSkOWjB5NMb0D0BBq+4wUxbdlmmbAUDtoolgYgzTTqohYwb48wvrbkiQbEzWOw=="
+      }
+    },
+    {
+      "address": "1F84D6EA8D9DFA399BC1F712063C69B0008D8DCC",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "hdu4gBQ4M7vRw9VDGJgGhj/pepfVPdn7US+IfuRyPYU="
+      },
+      "priv_key": {
+        "type": "tendermint/PrivKeyEd25519",
+        "value": "EYcwM8gQZVi5sZz2nOWrcObJ8OZO0gvscZ2WUCStmO2F27iAFDgzu9HD1UMYmAaGP+l6l9U92ftRL4h+5HI9hQ=="
+      }
+    }
   ]
 }
