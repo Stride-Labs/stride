@@ -71,12 +71,18 @@ add_validators() {
         add_genesis_account "$validator_key" "${VALIDATOR_BALANCE}${DENOM}"
 
         # Use a separate directory for the non-main nodes so we can generate unique validator keys
-        if [[ "$i" == "1" ]]; then 
+        if [[ "$i" == "1" ]]; then
             validator_home=${CHAIN_HOME}
-        else 
+        else
             validator_home=/tmp/${CHAIN_NAME}-${name} && rm -rf $validator_home
             $BINARY init $name --chain-id $CHAIN_ID --overwrite --home ${validator_home} &> /dev/null
         fi
+
+        # Overwrite the auto-generated cons key with the pinned rehearsal cons key.
+        # The index in cons_keys is i-1 (jq is 0-indexed; the loop is 1-indexed).
+        cons_key_index=$((i - 1))
+        jq -r ".cons_keys[$cons_key_index]" ${KEYS_FILE} \
+            > ${validator_home}/config/priv_validator_key.json
 
         # Save the node IDs and keys to the API
         $BINARY tendermint show-node-id --home ${validator_home} > node_id.txt
