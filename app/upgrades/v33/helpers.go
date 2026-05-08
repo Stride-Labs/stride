@@ -36,11 +36,18 @@ func SnapshotValidatorsFromICS(
 	consumerKeeper ccvconsumerkeeper.Keeper,
 ) ([]poatypes.Validator, error) {
 	ccVals := consumerKeeper.GetAllCCValidator(ctx)
-	if len(ccVals) != ExpectedValidatorCount {
+	if len(ccVals) > ExpectedValidatorCount {
 		return nil, fmt.Errorf(
-			"expected %d validators in consumer keeper, got %d",
+			"expected at most %d validators in consumer keeper, got %d",
 			ExpectedValidatorCount, len(ccVals),
 		)
+	}
+	if len(ccVals) < ExpectedValidatorCount {
+		ctx.Logger().Error(fmt.Sprintf(
+			"v33: expected %d validators in consumer keeper, got %d — "+
+				"a validator may have been jailed; proceeding with current set",
+			ExpectedValidatorCount, len(ccVals),
+		))
 	}
 
 	operatorByMoniker := make(map[string]string, len(utils.PoaValidatorSet))
