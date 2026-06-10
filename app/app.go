@@ -17,9 +17,6 @@ import (
 	tmos "github.com/cometbft/cometbft/libs/os"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward"
-	packetforwardkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/keeper"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v11/packetforward/types"
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/keeper"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/types"
@@ -37,6 +34,9 @@ import (
 	icahostkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
 	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	packetforward "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware"
+	packetforwardkeeper "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/keeper"
+	packetforwardtypes "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/types"
 	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
@@ -540,9 +540,11 @@ func NewStrideApp(
 	app.IBCHooksKeeper = ibchookskeeper.NewKeeper(
 		keys[ibchookstypes.StoreKey],
 	)
-	// v11 NewWasmHooks returns *WasmHooks (was a value in v10).
-	app.Ics20WasmHooks = ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
-	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper                                        // wasm keeper initialized below
+	// Official ibc-hooks v11 NewWasmHooks returns a WasmHooks value; take its address
+	// for the pointer field (the Stride fork returned a pointer directly).
+	ics20WasmHooks := ibchooks.NewWasmHooks(&app.IBCHooksKeeper, nil, AccountAddressPrefix) // the contract keeper is set later
+	app.Ics20WasmHooks = &ics20WasmHooks
+	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
 	// v11 dropped the legacy paramtypes.Subspace argument.
@@ -564,22 +566,10 @@ func NewStrideApp(
 		app.Ics20WasmHooks,
 	)
 
-	// Initialize the packet forward middleware Keeper
-	// It's important to note that the PFM Keeper must be initialized before the Transfer Keeper
-	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[packetforwardtypes.StoreKey]),
-		nil, // will be zero-value here, reference is set later on with SetTransferKeeper.
-		app.IBCKeeper.ChannelKeeper,
-		app.BankKeeper,
-		app.HooksICS4Wrapper, // ICS4Wrapper
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// Create Transfer Keepers
-	// ICS4Wrapper is PacketForwardKeeper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
-	// The autopilot/records/staketia/stakedym middlewares short-circuit SendPacket and must not sit above the
-	// TransferKeeper on the outbound path, so we do NOT overwrite this with the full transferStack below.
+	// Create Transfer Keeper first — the core ibc-go PFM keeper takes the transfer
+	// keeper at construction (no deferred SetTransferKeeper). The TransferKeeper's
+	// own ICS4Wrapper defaults to the ChannelKeeper here and is overridden to the
+	// PFM keeper below, so there is no circular dependency.
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
 		app.AccountKeeper.AddressCodec(),
@@ -590,11 +580,26 @@ func NewStrideApp(
 		app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	// Override the default ICS4Wrapper so outbound sends route up through pfm → ibchooks → ratelimit → core IBC.
-	app.TransferKeeper.WithICS4Wrapper(app.PacketForwardKeeper)
 
-	// Set the TransferKeeper reference in the PacketForwardKeeper
-	app.PacketForwardKeeper.SetTransferKeeper(app.TransferKeeper)
+	// Initialize the packet forward middleware Keeper (must be after the Transfer Keeper).
+	app.PacketForwardKeeper = packetforwardkeeper.NewKeeper(
+		appCodec,
+		app.AccountKeeper.AddressCodec(),
+		runtime.NewKVStoreService(keys[packetforwardtypes.StoreKey]),
+		app.TransferKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.BankKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+	// PFM's own outbound ICS4Wrapper was HooksICS4Wrapper under the fork API; the core
+	// NewKeeper defaults it to ChannelKeeper, so restore it explicitly.
+	app.PacketForwardKeeper.WithICS4Wrapper(app.HooksICS4Wrapper)
+
+	// Override the TransferKeeper's ICS4Wrapper so outbound sends route up through
+	// pfm → ibchooks → ratelimit → core IBC. The autopilot/records/staketia/stakedym
+	// middlewares short-circuit SendPacket and must not sit above the TransferKeeper
+	// on the outbound path, so we do NOT overwrite this with the full transferStack below.
+	app.TransferKeeper.WithICS4Wrapper(app.PacketForwardKeeper)
 
 	// Add wasm keeper and wasm client keeper (must be after IBCKeeper and TransferKeeper)
 	wasmContractMemoryLimit := uint32(32)
@@ -936,13 +941,18 @@ func NewStrideApp(
 	// Note: Traffic up the stack does not pass through records or autopilot,
 	// as defined via the ICS4Wrappers of each keeper
 	var transferStack porttypes.IBCModule = transfer.NewIBCModule(app.TransferKeeper)
-	transferStack = packetforward.NewIBCMiddleware(
-		transferStack,
+	packetForwardMiddleware := packetforward.NewIBCMiddleware(
 		app.PacketForwardKeeper,
 		0, // retries on timeout
 		packetforwardkeeper.DefaultForwardTransferPacketTimeoutTimestamp, // forward timeout
 	)
-	transferStack = ibchooks.NewIBCMiddleware(transferStack, &app.HooksICS4Wrapper)
+	packetForwardMiddleware.SetUnderlyingApplication(transferStack)
+	transferStack = packetForwardMiddleware
+	// Official ibc-hooks v11 NewIBCMiddleware returns a value; the porttypes.IBCModule
+	// interface is implemented on *IBCMiddleware, so take its address (the fork returned
+	// a pointer directly).
+	ibcHooksMiddleware := ibchooks.NewIBCMiddleware(transferStack, &app.HooksICS4Wrapper)
+	transferStack = &ibcHooksMiddleware
 	transferStack = ratelimit.NewIBCMiddleware(&app.RatelimitKeeper, transferStack)
 	transferStack = staketia.NewIBCMiddleware(app.StaketiaKeeper, transferStack)
 	transferStack = stakedym.NewIBCMiddleware(app.StakedymKeeper, transferStack)
@@ -990,8 +1000,7 @@ func NewStrideApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper), //nolint:staticcheck // SA1019: x/params removal scheduled for follow-up
 		claim.NewAppModule(appCodec, app.ClaimKeeper),
-		// technically, app.GetSubspace(packetforwardtypes.ModuleName) will never be run https://github.com/cosmos/ibc-apps/issues/146#issuecomment-1839242144
-		packetforward.NewAppModule(app.PacketForwardKeeper, app.GetSubspace(packetforwardtypes.ModuleName)),
+		packetforward.NewAppModule(app.PacketForwardKeeper),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.BaseApp.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibchooks.NewAppModule(app.AccountKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
