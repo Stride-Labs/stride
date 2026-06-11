@@ -47,8 +47,13 @@ func (s *KeeperTestSuite) SetupTest() {
 	distributors["osmosis"] = addr3
 
 	// Initiate a distributor account for evmos user airdrop
-	pub4 := secp256k1.GenPrivKey().PubKey()
-	addr4 := sdk.AccAddress(pub4.Address())
+	// Note: this must be an admin address because it's used by the msg server
+	// tests and MsgCreateAirdrop is admin gated
+	adminAddress, ok := apptesting.GetAdminAddress()
+	if !ok {
+		panic("no admin address found")
+	}
+	addr4 := sdk.MustAccAddressFromBech32(adminAddress)
 	s.SetNewAccount(addr4)
 	distributors["evmos"] = addr4
 

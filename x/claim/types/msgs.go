@@ -170,6 +170,12 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop denom not set")
 	}
 
+	// Validate the denom up front so an invalid denom can't later panic the bank
+	// keeper's GetBalance (via NewCoin) when the claim hooks read the distributor balance
+	if err := sdk.ValidateDenom(msg.Denom); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop denom (%s)", err)
+	}
+
 	if msg.StartTime == 0 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
 	}

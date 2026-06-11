@@ -59,6 +59,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 		return fmt.Errorf("cannot get auction for name='%s': %w", bid.AuctionName, err)
 	}
 
+	if !auction.Enabled {
+		return fmt.Errorf("auction '%s' is disabled", bid.AuctionName)
+	}
+
 	if bid.PaymentTokenAmount.LT(auction.MinBidAmount) {
 		return fmt.Errorf("payment bid amount '%s' is less than the minimum bid '%s' amount for auction '%s'", bid.PaymentTokenAmount.String(), auction.MinBidAmount.String(), bid.AuctionName)
 	}

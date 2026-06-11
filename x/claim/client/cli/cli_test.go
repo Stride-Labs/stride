@@ -23,6 +23,7 @@ import (
 	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
 	strideclitestutil "github.com/Stride-Labs/stride/v32/testutil/cli"
 	"github.com/Stride-Labs/stride/v32/testutil/network"
+	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/claim/client/cli"
 	"github.com/Stride-Labs/stride/v32/x/claim/types"
 	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
@@ -47,6 +48,12 @@ func init() {
 	distributorAddrs = []string{
 		"stride1ajerf2nmxsg0u728ga7665fmlfguqxcd8e36vf",
 		"stride1zkfk3q70ranm3han4lvutvcvetncxg829j972a",
+	}
+
+	// Register the distributors as admins since MsgCreateAirdrop is admin gated
+	// (the test network validators run in-process, so they share this map)
+	for _, distributorAddr := range distributorAddrs {
+		utils.Admins[distributorAddr] = true
 	}
 }
 

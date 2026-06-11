@@ -191,32 +191,35 @@ func (k Keeper) getTokenPriceForQuoteDenomImpl(ctx sdk.Context, baseDenom, quote
 	foundQuoteTokenZeroPrice := false
 
 	// Find a common quote denom and calculate baseToken to quoteToken price
-	for commonQuoteDenom1, baseTokenPrice := range baseTokenPrices {
-		for commonQuoteDenom2, quoteTokenPrice := range quoteTokenPrices {
-			if commonQuoteDenom1 == commonQuoteDenom2 {
-				foundCommonQuoteToken = true
-
-				// Check that both prices are not stale
-				if ctx.BlockTime().Unix()-baseTokenPrice.LastResponseTime.Unix() > priceExpirationTimeoutSec {
-					foundBaseTokenStalePrice = true
-					continue
-				}
-				if ctx.BlockTime().Unix()-quoteTokenPrice.LastResponseTime.Unix() > priceExpirationTimeoutSec {
-					foundQuoteTokenStalePrice = true
-					continue
-				}
-
-				// Check that quote price is not zero to prevent division by zero
-				if quoteTokenPrice.SpotPrice.IsZero() {
-					foundQuoteTokenZeroPrice = true
-					continue
-				}
-
-				// Calculate the price of 1 baseToken in quoteToken
-				price = baseTokenPrice.SpotPrice.Quo(quoteTokenPrice.SpotPrice)
-				break
-			}
+	// Iterate denoms in sorted order so that all validators select the same common
+	// quote denom (map iteration order is nondeterministic)
+	for _, commonQuoteDenom := range utils.StringMapKeys(baseTokenPrices) {
+		quoteTokenPrice, ok := quoteTokenPrices[commonQuoteDenom]
+		if !ok {
+			continue
 		}
+		baseTokenPrice := baseTokenPrices[commonQuoteDenom]
+		foundCommonQuoteToken = true
+
+		// Check that both prices are not stale
+		if ctx.BlockTime().Unix()-baseTokenPrice.LastResponseTime.Unix() > priceExpirationTimeoutSec {
+			foundBaseTokenStalePrice = true
+			continue
+		}
+		if ctx.BlockTime().Unix()-quoteTokenPrice.LastResponseTime.Unix() > priceExpirationTimeoutSec {
+			foundQuoteTokenStalePrice = true
+			continue
+		}
+
+		// Check that quote price is not zero to prevent division by zero
+		if quoteTokenPrice.SpotPrice.IsZero() {
+			foundQuoteTokenZeroPrice = true
+			continue
+		}
+
+		// Calculate the price of 1 baseToken in quoteToken
+		price = baseTokenPrice.SpotPrice.Quo(quoteTokenPrice.SpotPrice)
+		break
 	}
 
 	if price.IsZero() {
