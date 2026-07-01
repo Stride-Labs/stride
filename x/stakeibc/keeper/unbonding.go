@@ -276,7 +276,7 @@ func (k Keeper) applySharesRoundingSafety(
 		return unbondAmount
 	}
 	validator, _, found := GetValidatorFromAddress(hostZone.Validators, validatorCapacity.ValidatorAddress)
-	if !found || !validator.SharesToTokensRate.LT(sdkmath.LegacyOneDec()) {
+	if !found || validator.SharesToTokensRate.IsNil() || !validator.SharesToTokensRate.LT(sdkmath.LegacyOneDec()) {
 		return unbondAmount
 	}
 	buffer := unbondAmount.Quo(UndelegationSharesSafetyDivisor)
