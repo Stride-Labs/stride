@@ -1146,6 +1146,66 @@ func (s *KeeperTestSuite) TestGetUnbondingICAMessages() {
 	}
 }
 
+// Regression test for the v32-rebalance undelegation incident (Injective/Osmosis).
+// Fully draining a slashed validator (shares-to-tokens rate < 1) must leave a small rounding
+// buffer so the host staking module doesn't reject the MsgUndelegate with "invalid shares amount".
+func (s *KeeperTestSuite) TestGetUnbondingICAMessages_SharesRoundingSafety() {
+	delegationAddress := "cosmos_DELEGATION"
+	slashedVal := "valSlashed"
+	healthyVal := "valHealthy"
+
+	hostZone := types.HostZone{
+		ChainId:              HostChainId,
+		HostDenom:            Atom,
+		DelegationIcaAddress: delegationAddress,
+		Validators: []*types.Validator{
+			{Address: slashedVal, Weight: 0, SharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.99")},
+			{Address: healthyVal, Weight: 0, SharesToTokensRate: sdkmath.LegacyOneDec()},
+		},
+	}
+
+	fullDelegation := sdkmath.NewInt(1_000_000_000_000_000_000) // 1e18
+	expectedBuffer := fullDelegation.Quo(keeper.UndelegationSharesSafetyDivisor)
+	s.Require().True(expectedBuffer.IsPositive(), "test setup: buffer should be non-zero")
+
+	s.Run("slashed full drain is buffered and remainder cascades", func() {
+		capacities := []keeper.ValidatorUnbondCapacity{
+			{ValidatorAddress: slashedVal, Capacity: fullDelegation, CurrentDelegation: fullDelegation},
+			{ValidatorAddress: healthyVal, Capacity: fullDelegation, CurrentDelegation: fullDelegation},
+		}
+		_, splits, err := s.App.StakeibcKeeper.GetUnbondingICAMessages(hostZone, fullDelegation, capacities)
+		s.Require().NoError(err)
+		s.Require().Len(splits, 2, "buffered remainder should cascade to a second validator")
+		s.Require().Equal(fullDelegation.Sub(expectedBuffer).Int64(), splits[0].NativeTokenAmount.Int64(),
+			"slashed full drain should leave a rounding buffer")
+		s.Require().Equal(expectedBuffer.Int64(), splits[1].NativeTokenAmount.Int64(),
+			"buffered remainder should cascade to the next validator")
+		total := splits[0].NativeTokenAmount.Add(splits[1].NativeTokenAmount)
+		s.Require().Equal(fullDelegation.Int64(), total.Int64(), "total unbonded must equal requested")
+	})
+
+	s.Run("unslashed (rate == 1) full drain is not buffered", func() {
+		capacities := []keeper.ValidatorUnbondCapacity{
+			{ValidatorAddress: healthyVal, Capacity: fullDelegation, CurrentDelegation: fullDelegation},
+		}
+		_, splits, err := s.App.StakeibcKeeper.GetUnbondingICAMessages(hostZone, fullDelegation, capacities)
+		s.Require().NoError(err)
+		s.Require().Equal(fullDelegation.Int64(), splits[0].NativeTokenAmount.Int64(),
+			"rate == 1 validators must not be buffered")
+	})
+
+	s.Run("partial undelegation of a slashed validator is not buffered", func() {
+		partial := sdkmath.NewInt(400_000_000_000_000_000)
+		capacities := []keeper.ValidatorUnbondCapacity{
+			{ValidatorAddress: slashedVal, Capacity: fullDelegation, CurrentDelegation: fullDelegation},
+		}
+		_, splits, err := s.App.StakeibcKeeper.GetUnbondingICAMessages(hostZone, partial, capacities)
+		s.Require().NoError(err)
+		s.Require().Equal(partial.Int64(), splits[0].NativeTokenAmount.Int64(),
+			"partial drains have headroom and must not be buffered")
+	})
+}
+
 func (s *KeeperTestSuite) TestBatchSubmitUndelegateICAMessages() {
 	// The test will submit ICA's across 10 validators, in batches of 3
 	// There should be 4 ICA's submitted
