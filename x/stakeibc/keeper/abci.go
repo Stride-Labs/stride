@@ -38,6 +38,10 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 	}
 
 	k.AssertStrideAndDayEpochRelationship(ctx)
+
+	// Log-only check that the internal delegation records are self-consistent
+	// (TotalDelegations == sum of validator delegations) so accounting drift is caught early
+	k.CheckDelegationRecordsConsistent(ctx)
 }
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
