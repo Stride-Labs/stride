@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v32/utils"
@@ -139,6 +141,7 @@ func (k Keeper) MarkUndelegationAckReceived(ctx sdk.Context, hostZone types.Host
 // There may be some epoch numbers in this batch from records that have already had a full unbonding
 // and have moved onto status EXIT_TRANSFER_QUEUE
 func (k Keeper) HandleFailedUndelegation(ctx sdk.Context, chainId string, epochNumbers []uint64) error {
+	retriedEpochs := []uint64{}
 	for _, epochNumber := range epochNumbers {
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, chainId)
 		if !found {
@@ -155,6 +158,23 @@ func (k Keeper) HandleFailedUndelegation(ctx sdk.Context, chainId string, epochN
 		if err != nil {
 			return err
 		}
+		retriedEpochs = append(retriedEpochs, epochNumber)
+	}
+
+	// Surface the failure as an event so operators can alert on it. A rejected undelegation
+	// (e.g. the host returning "invalid shares amount", or targeting a stale/phantom delegation)
+	// otherwise loops silently in UNBONDING_RETRY_QUEUE and can strand redemptions for weeks
+	// before anyone notices - which is exactly what happened on Injective/Osmosis after v32.
+	if len(retriedEpochs) > 0 {
+		k.Logger(ctx).Error(utils.LogWithHostZone(chainId,
+			"Undelegation failed and was moved to the retry queue for epochs %v", retriedEpochs))
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeUndelegationFailed,
+				sdk.NewAttribute(types.AttributeKeyHostZone, chainId),
+				sdk.NewAttribute(types.AttributeKeyEpochNumbers, fmt.Sprint(retriedEpochs)),
+			),
+		)
 	}
 	return nil
 }
