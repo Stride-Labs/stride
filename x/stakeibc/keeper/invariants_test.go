@@ -6,6 +6,32 @@ import (
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
+func (s *KeeperTestSuite) TestCheckDelegationRecordsConsistent() {
+	// Consistent zone: TotalDelegations == sum(validator.Delegation)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:          "consistent-1",
+		TotalDelegations: sdkmath.NewInt(300),
+		Validators: []*types.Validator{
+			{Address: "valA", Delegation: sdkmath.NewInt(100)},
+			{Address: "valB", Delegation: sdkmath.NewInt(200)},
+		},
+	})
+	s.Require().True(s.App.StakeibcKeeper.CheckDelegationRecordsConsistent(s.Ctx),
+		"records should be consistent")
+
+	// Inconsistent zone: TotalDelegations != sum(validator.Delegation)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:          "inconsistent-1",
+		TotalDelegations: sdkmath.NewInt(999),
+		Validators: []*types.Validator{
+			{Address: "valA", Delegation: sdkmath.NewInt(100)},
+			{Address: "valB", Delegation: sdkmath.NewInt(200)},
+		},
+	})
+	s.Require().False(s.App.StakeibcKeeper.CheckDelegationRecordsConsistent(s.Ctx),
+		"drift between TotalDelegations and summed validator delegations should be flagged")
+}
+
 func (s *KeeperTestSuite) TestIsRedemptionRateWithinSafetyBounds() {
 	params := s.App.StakeibcKeeper.GetParams(s.Ctx)
 	params.DefaultMinRedemptionRateThreshold = 75
