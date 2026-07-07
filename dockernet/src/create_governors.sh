@@ -22,9 +22,21 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
   val_acct="${VAL_PREFIX}${i}"
   pub_key=$($cmd tendermint show-validator)
 
-  $cmd tx staking create-validator --amount ${STAKE_TOKENS}${DENOM} --from $val_acct \
-    --pubkey=$pub_key --commission-rate="0.10" --commission-max-rate="0.20" \
-    --commission-max-change-rate="0.01" --min-self-delegation="1" -y | TRIM_TX
+  # SDK v0.50+ create-validator takes a json file instead of flags
+  validator_json=${STATE}/$node_name/governor.json
+  cat << EOF > $validator_json
+{
+  "pubkey": $pub_key,
+  "amount": "${STAKE_TOKENS}${DENOM}",
+  "moniker": "$val_acct",
+  "commission-rate": "0.10",
+  "commission-max-rate": "0.20",
+  "commission-max-change-rate": "0.01",
+  "min-self-delegation": "1"
+}
+EOF
+
+  $cmd tx staking create-validator $validator_json --from $val_acct --keyring-backend test -y | TRIM_TX
   sleep 2
 done
 
