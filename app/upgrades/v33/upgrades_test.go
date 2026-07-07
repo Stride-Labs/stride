@@ -110,6 +110,14 @@ func (s *UpgradeTestSuite) TestReconcileOsmosisDelegations() {
 	s.Require().Equal(sum, hostZone.TotalDelegations, "TotalDelegations == sum(validator.Delegation)")
 }
 
+func (s *UpgradeTestSuite) TestReconcileOsmosisDelegations_MissingHostZone() {
+	// Without the osmosis-1 host zone (e.g. dockernet or a testnet), reconciliation must
+	// no-op instead of erroring - an error would fail the upgrade and halt the chain
+	err := v33.ReconcileOsmosisDelegations(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper)
+	s.Require().NoError(err, "missing host zone should be skipped, not an error")
+	s.Require().Empty(s.osmoDelegationQueueRecords(), "no deposit record should be created")
+}
+
 func (s *UpgradeTestSuite) TestReconcileOsmosisDelegations_Idempotent() {
 	s.setupOsmosisPhantomState()
 
