@@ -36,7 +36,7 @@ for (( i=1; i <= $NUM_NODES; i++ )); do
 }
 EOF
 
-  $cmd tx staking create-validator $validator_json --from $val_acct --keyring-backend test -y | TRIM_TX
+  $cmd tx staking create-validator $validator_json --from $val_acct --keyring-backend test --chain-id $CHAIN_ID -y | TRIM_TX
   sleep 2
 done
 

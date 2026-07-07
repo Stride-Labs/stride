@@ -11,7 +11,7 @@ PROPOSAL_ID=1
 printf "PROPOSAL\n"
 $STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $UPGRADE_NAME \
     --title $UPGRADE_NAME --description "description" --no-validate \
-    --upgrade-height $UPGRADE_HEIGHT --from val1 --keyring-backend test -y | TRIM_TX
+    --upgrade-height $UPGRADE_HEIGHT --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
 
 sleep 5
 printf "\nPROPOSAL CONFIRMATION\n"
@@ -19,7 +19,7 @@ $STRIDE_MAIN_CMD query gov proposals
 
 sleep 5 
 printf "\nDEPOSIT\n"
-$STRIDE_MAIN_CMD tx gov deposit $PROPOSAL_ID 10000001ustrd --from val1 --keyring-backend test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov deposit $PROPOSAL_ID 10000001ustrd --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
 
 sleep 5
 printf "\nDEPOSIT CONFIRMATION\n"
@@ -27,9 +27,9 @@ $STRIDE_MAIN_CMD query gov deposits $PROPOSAL_ID
 
 sleep 5
 printf "\nVOTING\n"
-$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val1 --keyring-backend test -y | TRIM_TX
-$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val2 --keyring-backend test -y | TRIM_TX
-$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val3 --keyring-backend test -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val2 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
+$STRIDE_MAIN_CMD tx gov vote $PROPOSAL_ID yes --from val3 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
 
 sleep 5
 printf "\nVOTE CONFIRMATION\n"

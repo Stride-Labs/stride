@@ -33,7 +33,7 @@ fi
 echo "$CHAIN - Registering host zone..."
 $STRIDE_MAIN_CMD tx stakeibc register-host-zone \
     $CONNECTION $HOST_DENOM $ADDRESS_PREFIX $IBC_DENOM $CHANNEL 1 $LSM_ENABLED $COMMUNITY_POOL_TREASURY_ADDRESS_FLAG \
-    --gas 2000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 --keyring-backend test -y | TRIM_TX
+    --gas 2000000 --from $STRIDE_ADMIN_ACCT --home $DOCKERNET_HOME/state/stride1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
 sleep 10
 
 # Build array of validators of the form:
@@ -55,7 +55,7 @@ for (( i=1; i <= $NUM_VALS; i++ )); do
         if [[ "$i" == "1" ]]; then
             echo "$CHAIN - Submitting validator bonds..."
         fi
-        $GAIA_MAIN_CMD tx staking validator-bond $delegate_val --from ${VAL_PREFIX}${i} --keyring-backend test -y --fees 1000000ufee | TRIM_TX
+        $GAIA_MAIN_CMD tx staking validator-bond $delegate_val --from ${VAL_PREFIX}${i} --keyring-backend test --chain-id $CHAIN_ID -y --fees 1000000ufee | TRIM_TX
     fi
 done
 
@@ -67,7 +67,7 @@ echo "{\"validators\": [${validators[*]}]}" > $validator_json
 # Add host zone validators to Stride's host zone struct
 echo "$CHAIN - Registering validators..."
 $STRIDE_MAIN_CMD tx stakeibc add-validators $CHAIN_ID $validator_json --gas 1000000 \
-    --from $STRIDE_ADMIN_ACCT --keyring-backend test -y | TRIM_TX
+    --from $STRIDE_ADMIN_ACCT --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
 sleep 5
 
 # Confirm the ICA accounts have been registered before continuing
