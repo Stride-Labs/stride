@@ -9,9 +9,12 @@ UPGRADE_HEIGHT="${UPGRADE_HEIGHT:-150}"
 PROPOSAL_ID=1
 
 printf "PROPOSAL\n"
-$STRIDE_MAIN_CMD tx gov submit-legacy-proposal software-upgrade $UPGRADE_NAME \
-    --title $UPGRADE_NAME --description "description" --no-validate \
-    --upgrade-height $UPGRADE_HEIGHT --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID -y | TRIM_TX
+# SDK v0.50+ removed the legacy software-upgrade gov proposal; use the modern
+# x/upgrade command which submits a gov v1 proposal wrapping MsgSoftwareUpgrade
+$STRIDE_MAIN_CMD tx upgrade software-upgrade $UPGRADE_NAME \
+    --title $UPGRADE_NAME --summary "description" --no-validate \
+    --upgrade-height $UPGRADE_HEIGHT --deposit 10000001ustrd \
+    --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID --gas 400000 -y | TRIM_TX
 
 sleep 5
 printf "\nPROPOSAL CONFIRMATION\n"
