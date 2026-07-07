@@ -65,11 +65,11 @@ set_stride_genesis() {
     jq ".app_state += $interchain_accts" $genesis_config > json.tmp && mv json.tmp $genesis_config
 
     # set the staketia accounts in the staketia host zone
-    deposit_address=$($MAIN_CMD    keys show -a deposit)
-    redemption_address=$($MAIN_CMD keys show -a redemption)
-    claim_address=$($MAIN_CMD      keys show -a claim)
-    safe_address=$($MAIN_CMD       keys show -a safe)
-    operator_address=$($MAIN_CMD   keys show -a operator)
+    deposit_address=$($MAIN_CMD    keys show -a deposit --keyring-backend test)
+    redemption_address=$($MAIN_CMD keys show -a redemption --keyring-backend test)
+    claim_address=$($MAIN_CMD      keys show -a claim --keyring-backend test)
+    safe_address=$($MAIN_CMD       keys show -a safe --keyring-backend test)
+    operator_address=$($MAIN_CMD   keys show -a operator --keyring-backend test)
 
     jq '.app_state.staketia.host_zone.deposit_address = $newVal'    --arg newVal "$deposit_address"    $genesis_config > json.tmp && mv json.tmp $genesis_config
     jq '.app_state.staketia.host_zone.redemption_address = $newVal' --arg newVal "$redemption_address" $genesis_config > json.tmp && mv json.tmp $genesis_config

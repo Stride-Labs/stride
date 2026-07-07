@@ -117,9 +117,9 @@ while true; do
         # Log stride staketia balances
         print_separator "STAKETIA STRIDE" $balances
 
-        deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit)
-        redemption_address=$($STRIDE_MAIN_CMD keys show -a redemption)
-        claim_address=$($STRIDE_MAIN_CMD keys show -a claim)
+        deposit_address=$($STRIDE_MAIN_CMD keys show -a deposit --keyring-backend test)
+        redemption_address=$($STRIDE_MAIN_CMD keys show -a redemption --keyring-backend test)
+        claim_address=$($STRIDE_MAIN_CMD keys show -a claim --keyring-backend test)
         fee_address=$($STRIDE_MAIN_CMD q auth module-account staketia_fee_address | grep "address:" | awk '{print $2}')
 
         print_stride_balance $deposit_address    "DEPOSIT" 
