@@ -123,7 +123,10 @@ var OsmosisPhantomDelegations = []ValidatorReconciliation{
 func ReconcileOsmosisDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper, rk recordskeeper.Keeper) error {
 	hostZone, found := sk.GetHostZone(ctx, OsmosisChainId)
 	if !found {
-		return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "host zone %s not found", OsmosisChainId)
+		// Skip rather than error: an error here fails the upgrade and halts the chain, and
+		// non-mainnet environments (dockernet, testnets) don't have the osmosis-1 host zone
+		ctx.Logger().Info(fmt.Sprintf("v33: host zone %s not found, skipping phantom delegation reconciliation", OsmosisChainId))
+		return nil
 	}
 
 	totalReduction := sdkmath.ZeroInt()
