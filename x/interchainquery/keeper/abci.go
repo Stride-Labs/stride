@@ -13,7 +13,7 @@ import (
 
 // EndBlocker of interchainquery module
 func (k Keeper) EndBlocker(ctx sdk.Context) {
-	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker) //nolint:staticcheck // TODO: switch to OpenTelemetry
 
 	events := sdk.Events{}
 	for _, query := range k.AllQueries(ctx) {

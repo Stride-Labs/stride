@@ -3,8 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/store/prefix"
-
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/auction/types"
@@ -58,6 +57,10 @@ func (k Keeper) PlaceBid(ctx sdk.Context, bid *types.MsgPlaceBid) error {
 	auction, err := k.GetAuction(ctx, bid.AuctionName)
 	if err != nil {
 		return fmt.Errorf("cannot get auction for name='%s': %w", bid.AuctionName, err)
+	}
+
+	if !auction.Enabled {
+		return fmt.Errorf("auction '%s' is disabled", bid.AuctionName)
 	}
 
 	if bid.PaymentTokenAmount.LT(auction.MinBidAmount) {

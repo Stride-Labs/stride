@@ -4,14 +4,16 @@ import (
 	"os"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/Stride-Labs/stride/v32/x/airdrop/client/cli"
 	"github.com/Stride-Labs/stride/v32/x/airdrop/types"
 )
 
 func ParseUserAllocations(t *testing.T) {
+	t.Helper()
 	inputCSVContents := `strideXXX,10,10,20
 strideYYY,0,10,0
 strideZZZ,5,100,6`

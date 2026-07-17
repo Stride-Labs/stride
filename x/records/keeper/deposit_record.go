@@ -3,8 +3,8 @@ package keeper
 import (
 	"encoding/binary"
 
-	"cosmossdk.io/store/prefix"
-	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/records/types"
@@ -92,7 +92,7 @@ func (k Keeper) GetAllDepositRecord(ctx sdk.Context) (list []types.DepositRecord
 		list = append(list, val)
 	}
 
-	return
+	return list
 }
 
 // GetDepositRecordIDBytes returns the byte representation of the ID

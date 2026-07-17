@@ -3,9 +3,11 @@ package keeper
 import (
 	"fmt"
 
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/Stride-Labs/stride/v32/x/icacallbacks"
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"

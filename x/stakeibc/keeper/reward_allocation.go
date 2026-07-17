@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	auctiontypes "github.com/Stride-Labs/stride/v32/x/auction/types"
-
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 

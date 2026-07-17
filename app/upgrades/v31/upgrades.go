@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	staketiakeeper "github.com/Stride-Labs/stride/v32/x/staketia/keeper"
 	staketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/types"
 )
 
-var (
-	UpgradeName = "v31"
-)
+var UpgradeName = "v31"
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v31
 func CreateUpgradeHandler(

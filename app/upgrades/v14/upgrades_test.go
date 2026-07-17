@@ -5,13 +5,15 @@ import (
 	"testing"
 	"time"
 
+	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
+	"github.com/stretchr/testify/suite"
+
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/store/prefix"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	evmosvestingtypes "github.com/evmos/vesting/x/vesting/types"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/app"
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
@@ -184,7 +186,7 @@ func initBaseAccount(address sdk.AccAddress) *authtypes.BaseAccount {
 	return bacc
 }
 
-func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress, start int64, end int64, coins int64) *vestingtypes.ContinuousVestingAccount {
+func (s *UpgradeTestSuite) CreateContinuousVestingAccount(address sdk.AccAddress, start, end, coins int64) *vestingtypes.ContinuousVestingAccount {
 	startTime := time.Unix(start, 0)
 	endTime := time.Unix(end, 0)
 
@@ -260,7 +262,7 @@ func (s *UpgradeTestSuite) CheckAirdropsInitialized() {
 }
 
 // Helper function to check the attributes of the new Airdrop
-func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtypes.Airdrop, distributor string, identifier string, chainId string, autopilotEnabled bool) {
+func (s *UpgradeTestSuite) CheckAirdropAdded(ctx sdk.Context, airdrop *claimtypes.Airdrop, distributor, identifier, chainId string, autopilotEnabled bool) {
 	// Check that the params of the airdrop were initialized
 	s.Require().Equal(identifier, airdrop.AirdropIdentifier, fmt.Sprintf("%s airdrop identifier", identifier))
 	s.Require().Equal(chainId, airdrop.ChainId, fmt.Sprintf("%s airdrop chain-id", identifier))

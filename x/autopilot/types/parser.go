@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const LiquidStake = "LiquidStake"
-const RedeemStake = "RedeemStake"
+const (
+	LiquidStake = "LiquidStake"
+	RedeemStake = "RedeemStake"
+)
 
 // Packet metadata info specific to Stakeibc (e.g. 1-click liquid staking)
 type StakeibcPacketMetadata struct {

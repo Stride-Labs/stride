@@ -63,7 +63,7 @@ func (s *KeeperTestSuite) TestEpochTrackerGetAll() {
 }
 
 // TODO: Move keeper utility functions to new file
-func (s *KeeperTestSuite) SetupEpochElapsedShares(epochDurationSeconds float64, nextStartTimeSeconds float64) {
+func (s *KeeperTestSuite) SetupEpochElapsedShares(epochDurationSeconds, nextStartTimeSeconds float64) {
 	// We call this to instantiate the block time
 	s.CreateTransferChannel(HostChainId)
 
@@ -76,7 +76,7 @@ func (s *KeeperTestSuite) SetupEpochElapsedShares(epochDurationSeconds float64, 
 }
 
 // Helper function to create an epoch tracker and check that the elapsed share matches expectations
-func (s *KeeperTestSuite) checkEpochElapsedShare(epochDurationSeconds float64, nextStartTimeSeconds float64, expectedShare sdkmath.LegacyDec) {
+func (s *KeeperTestSuite) checkEpochElapsedShare(epochDurationSeconds, nextStartTimeSeconds float64, expectedShare sdkmath.LegacyDec) {
 	s.SetupEpochElapsedShares(epochDurationSeconds, nextStartTimeSeconds)
 
 	actualShare, err := s.App.StakeibcKeeper.GetStrideEpochElapsedShare(s.Ctx)

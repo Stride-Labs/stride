@@ -3,12 +3,13 @@ package cli
 import (
 	"os"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/spf13/cobra"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/gogo/protobuf/proto"
-	"github.com/spf13/cobra"
 
 	"github.com/Stride-Labs/stride/v32/x/staketia/types"
 )

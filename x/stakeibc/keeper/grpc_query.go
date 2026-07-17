@@ -6,15 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cosmos/cosmos-sdk/types/query"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
@@ -57,7 +56,7 @@ func (k Keeper) HostZoneAll(c context.Context, req *types.QueryAllHostZoneReques
 	store := ctx.KVStore(k.storeKey)
 	hostZoneStore := prefix.NewStore(store, types.KeyPrefix(types.HostZoneKey))
 
-	pageRes, err := query.Paginate(hostZoneStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(hostZoneStore, req.Pagination, func(key, value []byte) error {
 		var hostZone types.HostZone
 		if err := k.cdc.Unmarshal(value, &hostZone); err != nil {
 			return err
@@ -164,7 +163,7 @@ func (k Keeper) AddressUnbondings(c context.Context, req *types.QueryAddressUnbo
 						unbondingDurationEstimate := (unbondingFrequency - 1) * 7
 						unbondingTime = unbondingStartTime + (unbondingDurationEstimate * nanosecondsInDay)
 					}
-					unbondingTime = unbondingTime + nanosecondsInDay
+					unbondingTime += nanosecondsInDay
 					unbondingTimeStr := time.Unix(0, utils.UintToInt(unbondingTime)).UTC().String()
 
 					addressUnbonding := types.AddressUnbonding{

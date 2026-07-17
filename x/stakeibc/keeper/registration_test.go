@@ -3,11 +3,13 @@ package keeper_test
 import (
 	"fmt"
 
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
@@ -81,7 +83,7 @@ func (s *KeeperTestSuite) SetupRegisterHostZone() RegisterHostZoneTestCase {
 // In order to test those cases, we need to first create a new host zone,
 // and then attempt to register with duplicate fields in the message
 // This function 1) creates a new host zone and 2) returns what would be a successful register message
-func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string, prefix string) stakeibctypes.MsgRegisterHostZone {
+func (s *KeeperTestSuite) createNewHostZoneMessage(chainID, denom, prefix string) stakeibctypes.MsgRegisterHostZone {
 	newConnectionID := "connection-1"
 	s.MockClientAndConnection(chainID, "07-tendermint-1", newConnectionID)
 
@@ -98,7 +100,7 @@ func (s *KeeperTestSuite) createNewHostZoneMessage(chainID string, denom string,
 // This function will occupy one of the specified port with the specified channel
 //
 //	so that the registration fails
-func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName string, channelID string) {
+func (s *KeeperTestSuite) createActiveChannelOnICAPort(accountName, channelID string) {
 	portID := fmt.Sprintf("%s%s.%s", icatypes.ControllerPortPrefix, HostChainId, accountName)
 	openChannel := channeltypes.Channel{State: channeltypes.OPEN}
 

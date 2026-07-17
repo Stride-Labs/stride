@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -12,7 +13,7 @@ const TypeMsgCalibrateDelegation = "calibrate_delegation"
 
 var _ sdk.Msg = &MsgCalibrateDelegation{}
 
-func NewMsgCalibrateDelegation(creator string, chainid string, valoper string) *MsgCalibrateDelegation {
+func NewMsgCalibrateDelegation(creator, chainid, valoper string) *MsgCalibrateDelegation {
 	return &MsgCalibrateDelegation{
 		Creator: creator,
 		ChainId: chainid,

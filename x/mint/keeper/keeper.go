@@ -3,21 +3,21 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/log"
-	sdkmath "cosmossdk.io/math"
 	"github.com/spf13/cast"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"cosmossdk.io/log/v2"
+	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/x/mint/types"
-
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	"github.com/Stride-Labs/stride/v32/x/mint/types"
 )
 
 // Keeper of the mint store.
@@ -105,7 +105,7 @@ func (k Keeper) GetMinter(ctx sdk.Context) (minter types.Minter) {
 	}
 
 	k.cdc.MustUnmarshal(b, &minter)
-	return
+	return minter
 }
 
 // set the minter.
@@ -229,7 +229,7 @@ func (k Keeper) DistributeMintedCoin(ctx sdk.Context, mintedCoin sdk.Coin) error
 }
 
 // set up a new module account address
-func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, submoduleNamespace string) {
+func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName, submoduleNamespace string) {
 	// create and save the module account to the account keeper
 	acctAddress := k.GetSubmoduleAddress(submoduleName, submoduleNamespace)
 	acc := k.accountKeeper.NewAccount(
@@ -244,7 +244,7 @@ func (k Keeper) SetupNewModuleAccount(ctx sdk.Context, submoduleName string, sub
 }
 
 // helper: get the address of a submodule
-func (k Keeper) GetSubmoduleAddress(submoduleName string, submoduleNamespace string) sdk.AccAddress {
+func (k Keeper) GetSubmoduleAddress(submoduleName, submoduleNamespace string) sdk.AccAddress {
 	key := append([]byte(submoduleNamespace), []byte(submoduleName)...)
 	return address.Module(types.ModuleName, key)
 }

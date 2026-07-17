@@ -3,17 +3,17 @@ package keeper_test
 import (
 	"strings"
 
-	sdkmath "cosmossdk.io/math"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	_ "github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
-
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	auctiontypes "github.com/Stride-Labs/stride/v32/x/auction/types"
@@ -81,7 +81,7 @@ func (s *KeeperTestSuite) checkModuleAccountBalance(moduleName, denom string, ex
 }
 
 // Helper function to check the balance of a regular account
-func (s *KeeperTestSuite) checkAccountBalance(address string, denom string, expectedBalance sdkmath.Int) {
+func (s *KeeperTestSuite) checkAccountBalance(address, denom string, expectedBalance sdkmath.Int) {
 	tokens := s.App.BankKeeper.GetBalance(s.Ctx, sdk.MustAccAddressFromBech32(address), denom)
 	s.Require().Equal(expectedBalance.Int64(), tokens.Amount.Int64(), "%s %s balance", address, denom)
 }

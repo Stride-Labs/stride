@@ -3,6 +3,7 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -14,7 +15,7 @@ const TypeMsgSetAirdropAllocations = "set_airdrop_allocation"
 
 var _ sdk.Msg = &MsgSetAirdropAllocations{}
 
-func NewMsgSetAirdropAllocations(allocator string, airdropIdentifier string, users []string, weights []sdkmath.LegacyDec) *MsgSetAirdropAllocations {
+func NewMsgSetAirdropAllocations(allocator, airdropIdentifier string, users []string, weights []sdkmath.LegacyDec) *MsgSetAirdropAllocations {
 	return &MsgSetAirdropAllocations{
 		Allocator:         allocator,
 		AirdropIdentifier: airdropIdentifier,
@@ -169,6 +170,12 @@ func (msg *MsgCreateAirdrop) ValidateBasic() error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop denom not set")
 	}
 
+	// Validate the denom up front so an invalid denom can't later panic the bank
+	// keeper's GetBalance (via NewCoin) when the claim hooks read the distributor balance
+	if err := sdk.ValidateDenom(msg.Denom); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid airdrop denom (%s)", err)
+	}
+
 	if msg.StartTime == 0 {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "airdrop start time not set")
 	}
@@ -184,7 +191,7 @@ const TypeMsgDeleteAirdrop = "delete_airdrop"
 
 var _ sdk.Msg = &MsgDeleteAirdrop{}
 
-func NewMsgDeleteAirdrop(distributor string, identifier string) *MsgDeleteAirdrop {
+func NewMsgDeleteAirdrop(distributor, identifier string) *MsgDeleteAirdrop {
 	return &MsgDeleteAirdrop{
 		Distributor: distributor,
 		Identifier:  identifier,

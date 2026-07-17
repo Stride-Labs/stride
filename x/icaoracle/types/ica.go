@@ -4,9 +4,9 @@ import (
 	fmt "fmt"
 	"time"
 
-	errorsmod "cosmossdk.io/errors"
-
 	proto "github.com/cosmos/gogoproto/proto"
+
+	errorsmod "cosmossdk.io/errors"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 )
@@ -56,6 +56,6 @@ func (i ICATx) GetRelativeTimeoutNano() uint64 {
 	return utils.IntToUint(i.RelativeTimeout.Nanoseconds())
 }
 
-func FormatICAAccountOwner(chainId string, accountType string) string {
+func FormatICAAccountOwner(chainId, accountType string) string {
 	return fmt.Sprintf("%s.%s", chainId, accountType)
 }

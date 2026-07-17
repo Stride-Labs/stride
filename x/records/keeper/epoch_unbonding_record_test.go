@@ -216,5 +216,4 @@ func (s *KeeperTestSuite) TestSetHostZoneUnbonding() {
 			s.Require().Equal(expectedAmount.Int64(), hostZoneUnbondingRecord.NativeTokenAmount.Int64(), "updated record amount")
 		}
 	}
-
 }

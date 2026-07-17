@@ -5,7 +5,7 @@ package keeper_test
 // import (
 // 	"fmt"
 
-// 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+// 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 // )
 
 // func (s *KeeperTestSuite) TestIBCDenom() {

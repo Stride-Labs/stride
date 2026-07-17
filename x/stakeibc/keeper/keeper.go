@@ -3,18 +3,20 @@ package keeper
 import (
 	"fmt"
 
+	icacontrollerkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/controller/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	icacontrollerkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
@@ -31,7 +33,7 @@ type (
 		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
 		authority             string
-		ICAControllerKeeper   icacontrollerkeeper.Keeper
+		ICAControllerKeeper   *icacontrollerkeeper.Keeper
 		IBCKeeper             ibckeeper.Keeper
 		bankKeeper            bankkeeper.Keeper
 		AccountKeeper         types.AccountKeeper
@@ -54,7 +56,7 @@ func NewKeeper(
 	authority string,
 	accountKeeper types.AccountKeeper,
 	bankKeeper bankkeeper.Keeper,
-	icacontrollerkeeper icacontrollerkeeper.Keeper,
+	icacontrollerkeeper *icacontrollerkeeper.Keeper,
 	ibcKeeper ibckeeper.Keeper,
 	interchainQueryKeeper icqkeeper.Keeper,
 	RecordsKeeper recordsmodulekeeper.Keeper,

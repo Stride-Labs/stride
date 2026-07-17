@@ -3,15 +3,17 @@ package keeper_test
 import (
 	"fmt"
 
+	"github.com/cosmos/gogoproto/proto"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/utils"
@@ -1671,7 +1673,7 @@ func (s *KeeperTestSuite) closeICAChannel(portId, channelID string) {
 }
 
 // Helper function to call RestoreChannel and check that a new channel was created and opened
-func (s *KeeperTestSuite) restoreChannelAndVerifySuccess(msg types.MsgRestoreInterchainAccount, portID string, channelID string) {
+func (s *KeeperTestSuite) restoreChannelAndVerifySuccess(msg types.MsgRestoreInterchainAccount, portID, channelID string) {
 	// Restore the channel
 	_, err := s.GetMsgServer().RestoreInterchainAccount(s.Ctx, &msg)
 	s.Require().NoError(err, "registered ica account successfully")

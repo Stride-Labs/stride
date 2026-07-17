@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	"github.com/Stride-Labs/stride/v32/x/mint/types"
-
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	"github.com/Stride-Labs/stride/v32/x/mint/types"
 )
 
 func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
@@ -58,7 +58,7 @@ func (k Keeper) AfterEpochEnd(context context.Context, epochInfo epochstypes.Epo
 		}
 
 		if mintedCoin.Amount.IsInt64() {
-			defer telemetry.ModuleSetGauge(types.ModuleName, float32(mintedCoin.Amount.Int64()), "minted_tokens")
+			defer telemetry.ModuleSetGauge(types.ModuleName, float32(mintedCoin.Amount.Int64()), "minted_tokens") //nolint:staticcheck // TODO: switch to OpenTelemetry
 		}
 
 		ctx.EventManager().EmitEvent(

@@ -3,12 +3,14 @@ package v23
 import (
 	"context"
 
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
+	clientkeeper "github.com/cosmos/ibc-go/v11/modules/core/02-client/keeper"
+
 	sdkmath "cosmossdk.io/math"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
-	clientkeeper "github.com/cosmos/ibc-go/v10/modules/core/02-client/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"

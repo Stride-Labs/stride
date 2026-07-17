@@ -38,7 +38,7 @@ func (a *Airdrop) GetCurrentDateIndex(ctx sdk.Context, periodLengthSeconds int64
 // Returns number of periods in the airdrop
 // periodLengthSeconds is the time between each element in the allocations array
 func (a *Airdrop) GetAirdropPeriods(periodLengthSeconds int64) int64 {
-	airdropLengthSeconds := int64(a.DistributionEndDate.Unix() - a.DistributionStartDate.Unix())
+	airdropLengthSeconds := a.DistributionEndDate.Unix() - a.DistributionStartDate.Unix()
 	numberOfDays := (airdropLengthSeconds / (periodLengthSeconds)) + 1
 	return numberOfDays
 }

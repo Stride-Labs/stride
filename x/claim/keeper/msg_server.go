@@ -3,11 +3,12 @@ package keeper
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/Stride-Labs/stride/v32/utils"
 	"github.com/Stride-Labs/stride/v32/x/claim/types"
 )
 
@@ -88,6 +89,10 @@ func (server msgServer) CreateAirdrop(goCtx context.Context, msg *types.MsgCreat
 
 	_, err := sdk.AccAddressFromBech32(msg.Distributor)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := utils.ValidateAdminAddress(msg.Distributor); err != nil {
 		return nil, err
 	}
 

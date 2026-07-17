@@ -1,0 +1,15 @@
+diff --git a/build/tendermintclient.js b/build/tendermintclient.js
+index 257b104030c72bbf351e0806faeed98ebd1ebd5e..52f6bea50d150559edb67e0c5f21752ff6ac57fb 100644
+--- a/build/tendermintclient.js
++++ b/build/tendermintclient.js
+@@ -28,7 +28,9 @@ async function connectComet(endpoint) {
+     if (version.startsWith("0.37.")) {
+         out = tm37Client;
+     }
+-    else if (version.startsWith("0.38.")) {
++    else if (version.startsWith("0.38.") || version.startsWith("0.39.")) {
++        // CometBFT 0.39 is wire-compatible with 0.38 for the RPC paths we use,
++        // and avoids the base64 attribute decoding the 0.34 fallback breaks on.
+         tm37Client.disconnect();
+         out = await comet38_1.Comet38Client.connect(endpoint);
+     }

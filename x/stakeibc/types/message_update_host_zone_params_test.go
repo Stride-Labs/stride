@@ -3,9 +3,10 @@ package types_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"

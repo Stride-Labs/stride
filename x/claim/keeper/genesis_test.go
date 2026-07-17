@@ -1,9 +1,9 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/cometbft/cometbft/crypto/secp256k1"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

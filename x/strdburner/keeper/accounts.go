@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	claimvestingtypes "github.com/Stride-Labs/stride/v32/x/claim/vesting/types"

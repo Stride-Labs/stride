@@ -50,6 +50,6 @@ func RedemptionRecordKey(unbondingRecordId uint64, redeemerAddress string) []byt
 // Builds the transfer-in-progress record key from the channelId and sequence number
 func TransferInProgressRecordKey(channelId string, sequence uint64) []byte {
 	channelIdBz := make([]byte, ChannelIdBufferFixedLength)
-	copy(channelIdBz[:], channelId)
+	copy(channelIdBz, channelId)
 	return append(channelIdBz, IntKey(sequence)...)
 }

@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )

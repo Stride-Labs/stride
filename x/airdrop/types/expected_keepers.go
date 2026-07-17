@@ -9,5 +9,5 @@ import (
 // BankKeeper defines the expected interface needed to retrieve account balances.
 type BankKeeper interface {
 	BlockedAddr(addr sdk.AccAddress) bool
-	SendCoins(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
 }

@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
+	_ "github.com/stretchr/testify/suite"
+
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
-	_ "github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
@@ -87,7 +88,7 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_WrongProof() {
 func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_UnknownId() {
 	tc := s.SetupMsgSubmitQueryResponse()
 
-	tc.query.Id = tc.query.Id + "INVALID_SUFFIX" // create an invalid query id
+	tc.query.Id += "INVALID_SUFFIX" // create an invalid query id
 	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
 
 	resp, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)

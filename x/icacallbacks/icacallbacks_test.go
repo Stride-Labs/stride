@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
+	"github.com/cosmos/gogoproto/proto"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	"github.com/stretchr/testify/require"
+
+	"cosmossdk.io/log/v2"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/x/icacallbacks"
@@ -49,11 +50,11 @@ func TestParseTxMsgDataLegacy(t *testing.T) {
 	expectedMessages := [][]byte{{1}, {2, 2}, {3, 3}}
 
 	msgData := &sdk.TxMsgData{
-		Data: make([]*sdk.MsgData, len(expectedMessages)), //nolint:staticcheck
+		Data: make([]*sdk.MsgData, len(expectedMessages)), //nolint:staticcheck // sdk.MsgData is deprecated but exercised by ParseTxMsgDataLegacy
 	}
 	for i, msgBytes := range expectedMessages {
 		typeUrl := "type" + strconv.Itoa(i)
-		msgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck
+		msgData.Data[i] = &sdk.MsgData{ //nolint:staticcheck // sdk.MsgData is deprecated but exercised by ParseTxMsgDataLegacy
 			MsgType: typeUrl,
 			Data:    msgBytes,
 		}

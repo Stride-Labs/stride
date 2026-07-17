@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"time"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"

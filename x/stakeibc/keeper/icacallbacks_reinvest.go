@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cosmos/gogoproto/proto"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 // Marshalls reinvest callback arguments

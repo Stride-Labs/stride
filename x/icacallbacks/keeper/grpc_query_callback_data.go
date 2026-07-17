@@ -3,11 +3,12 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 )
@@ -23,7 +24,7 @@ func (k Keeper) CallbackDataAll(c context.Context, req *types.QueryAllCallbackDa
 	store := ctx.KVStore(k.storeKey)
 	callbackDataStore := prefix.NewStore(store, types.KeyPrefix(types.CallbackDataKeyPrefix))
 
-	pageRes, err := query.Paginate(callbackDataStore, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(callbackDataStore, req.Pagination, func(key, value []byte) error {
 		var callbackData types.CallbackData
 		if err := k.cdc.Unmarshal(value, &callbackData); err != nil {
 			return err

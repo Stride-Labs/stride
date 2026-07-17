@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	sdkmath "cosmossdk.io/math"
-
 	yaml "gopkg.in/yaml.v2"
 
-	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
+	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 )
 
 // Parameter store keys.

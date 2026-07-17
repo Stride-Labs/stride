@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -13,8 +15,6 @@ import (
 	bankv3types "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-
-	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
@@ -289,7 +289,7 @@ func (k Keeper) FundCommunityPool(
 	if !found {
 		return errorsmod.Wrapf(types.ErrEpochNotFound, "epoch %s not found", epochstypes.STRIDE_EPOCH)
 	}
-	timeoutTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
+	timeoutTimestamp := strideEpochTracker.NextEpochStartTime
 
 	// No need to build ICA callback data or input an ICA callback method
 	icaCallbackId := ""

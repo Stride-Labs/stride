@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	proto "github.com/cosmos/gogoproto/proto"
 
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 

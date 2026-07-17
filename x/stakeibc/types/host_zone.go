@@ -41,7 +41,7 @@ func NewHostZoneDepositAddress(chainId string) sdk.AccAddress {
 }
 
 // Generates a new stride-side module account for a host zone, given an alias
-func NewHostZoneModuleAddress(chainId string, accountAlias string) sdk.AccAddress {
+func NewHostZoneModuleAddress(chainId, accountAlias string) sdk.AccAddress {
 	key := append([]byte(chainId), []byte(accountAlias)...)
 	return address.Module(ModuleName, key)
 }

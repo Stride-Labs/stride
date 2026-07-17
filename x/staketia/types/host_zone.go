@@ -1,9 +1,11 @@
 package types
 
 import (
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 )

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/x/stakedym/types"
@@ -42,7 +43,7 @@ func EmitSuccessfulRedeemStakeEvent(ctx sdk.Context, staker string, hostZone typ
 }
 
 // Emits an event indicated the delegation record is correctly marked as done
-func EmitSuccessfulConfirmDelegationEvent(ctx sdk.Context, recordId uint64, delegationAmount sdkmath.Int, txHash string, sender string) {
+func EmitSuccessfulConfirmDelegationEvent(ctx sdk.Context, recordId uint64, delegationAmount sdkmath.Int, txHash, sender string) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeConfirmDelegationResponse,
@@ -56,7 +57,7 @@ func EmitSuccessfulConfirmDelegationEvent(ctx sdk.Context, recordId uint64, dele
 }
 
 // Emits an event indicated the undelegation record is correctly marked as unbonding_in_progress
-func EmitSuccessfulConfirmUndelegationEvent(ctx sdk.Context, recordId uint64, nativeAmount sdkmath.Int, txHash string, sender string) {
+func EmitSuccessfulConfirmUndelegationEvent(ctx sdk.Context, recordId uint64, nativeAmount sdkmath.Int, txHash, sender string) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeConfirmUndelegation,
@@ -71,7 +72,7 @@ func EmitSuccessfulConfirmUndelegationEvent(ctx sdk.Context, recordId uint64, na
 }
 
 // Emits an event indicated the unbonding record is correctly marked as claimable
-func EmitSuccessfulConfirmUnbondedTokenSweepEvent(ctx sdk.Context, recordId uint64, nativeAmount sdkmath.Int, txHash string, sender string) {
+func EmitSuccessfulConfirmUnbondedTokenSweepEvent(ctx sdk.Context, recordId uint64, nativeAmount sdkmath.Int, txHash, sender string) {
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeConfirmUnbondedTokenSweep,

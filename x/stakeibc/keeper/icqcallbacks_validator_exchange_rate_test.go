@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-
 	"github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -39,7 +39,7 @@ type ValidatorICQCallbackTestCase struct {
 	sharesToTokensRateIfSlashed sdkmath.LegacyDec
 }
 
-func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens int64, shares int64) []byte {
+func (s *KeeperTestSuite) CreateValidatorQueryResponse(address string, tokens, shares int64) []byte {
 	validator := stakingtypes.Validator{
 		OperatorAddress: address,
 		Tokens:          sdkmath.NewInt(tokens),

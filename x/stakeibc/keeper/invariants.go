@@ -4,6 +4,7 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"

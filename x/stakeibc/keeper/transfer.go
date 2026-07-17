@@ -3,16 +3,17 @@ package keeper
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibctypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	ibctypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/utils"
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
@@ -113,7 +114,7 @@ func (k Keeper) TransferCommunityPoolDepositToHolding(ctx sdk.Context, hostZone 
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
+	endEpochTimestamp := strideEpochTracker.NextEpochStartTime
 
 	// Determine the host zone's stToken ibc denom
 	nativeDenom := hostZone.HostDenom
@@ -175,7 +176,7 @@ func (k Keeper) TransferHoldingToCommunityPoolReturn(ctx sdk.Context, hostZone t
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, epochstypes.STRIDE_EPOCH)
 	}
-	endEpochTimestamp := uint64(strideEpochTracker.NextEpochStartTime)
+	endEpochTimestamp := strideEpochTracker.NextEpochStartTime
 
 	// build and send an IBC message for the coin to transfer it back to the hostZone
 	msg := transfertypes.NewMsgTransfer(

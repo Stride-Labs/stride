@@ -10,13 +10,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	"github.com/Stride-Labs/stride/v32/utils"
 	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
-
 	"github.com/Stride-Labs/stride/v32/x/claim/types"
 	stridevestingtypes "github.com/Stride-Labs/stride/v32/x/claim/vesting/types"
 )
@@ -491,7 +489,7 @@ func (s *KeeperTestSuite) TestMultiChainAirdropFlow() {
 	records = s.App.ClaimKeeper.GetClaimRecords(s.Ctx, "osmosis")
 	s.Require().Equal(0, len(records))
 
-	//*********************** End of Stride, Osmosis airdrop *************************
+	// *********************** End of Stride, Osmosis airdrop *************************
 
 	// claim airdrops for juno users after ending stride airdrop
 	// get rewards amount for stake (juno user)
@@ -541,7 +539,7 @@ func (s *KeeperTestSuite) TestMultiChainAirdropFlow() {
 
 	records = s.App.ClaimKeeper.GetClaimRecords(s.Ctx, types.DefaultAirdropIdentifier)
 	s.Require().Equal(0, len(records))
-	//*********************** End of Juno airdrop *************************
+	// *********************** End of Juno airdrop *************************
 }
 
 func (s *KeeperTestSuite) TestAreAllTrue() {

@@ -6,14 +6,16 @@ import (
 	"sort"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/os"
+	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v28 "github.com/Stride-Labs/stride/v32/app/upgrades/v28"

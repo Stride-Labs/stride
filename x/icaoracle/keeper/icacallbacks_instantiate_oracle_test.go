@@ -3,7 +3,7 @@ package keeper_test
 import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/gogoproto/proto"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
 	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"

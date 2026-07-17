@@ -3,15 +3,16 @@ package v19_test
 import (
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-
-	"cosmossdk.io/store/prefix"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v32/app"
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
@@ -94,7 +95,7 @@ func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
 	s.Require().NoError(err)
 
 	hostzoneStore := prefix.NewStore(rateLimitStore, ratelimittypes.RateLimitKeyPrefix)
-	hostzoneStore.Set(ratelimittypes.GetRateLimitItemKey(denom, channelId), initialRateLimitBz)
+	hostzoneStore.Set(ratelimittypes.RateLimitItemKey(denom, channelId), initialRateLimitBz)
 
 	// Return a callback to check the state after the upgrade
 	return func() {

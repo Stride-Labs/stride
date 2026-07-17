@@ -3,6 +3,7 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -13,7 +14,7 @@ const TypeMsgUpdateInnerRedemptionRateBounds = "update_inner_redemption_rate_bou
 
 var _ sdk.Msg = &MsgUpdateInnerRedemptionRateBounds{}
 
-func NewMsgUpdateInnerRedemptionRateBounds(creator string, chainId string, minInnerRedemptionRate sdkmath.LegacyDec, maxInnerRedemptionRate sdkmath.LegacyDec) *MsgUpdateInnerRedemptionRateBounds {
+func NewMsgUpdateInnerRedemptionRateBounds(creator, chainId string, minInnerRedemptionRate, maxInnerRedemptionRate sdkmath.LegacyDec) *MsgUpdateInnerRedemptionRateBounds {
 	return &MsgUpdateInnerRedemptionRateBounds{
 		Creator:                creator,
 		ChainId:                chainId,

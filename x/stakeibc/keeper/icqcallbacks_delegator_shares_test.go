@@ -4,11 +4,12 @@ import (
 	"math"
 	"time"
 
+	"github.com/cosmos/gogoproto/proto"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
 	sdkmath "cosmossdk.io/math"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"

@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -144,6 +145,18 @@ func (s *KeeperTestSuite) TestCreateAirdrop_Successful() {
 	s.Require().Equal("evmos", airdrop.AirdropIdentifier, "airdrop identifier")
 	s.Require().Equal("evmos-1", airdrop.ChainId, "airdrop chain-id")
 	s.Require().Equal(true, airdrop.AutopilotEnabled, "airdrop autopilot enabled")
+}
+
+func (s *KeeperTestSuite) TestCreateAirdrop_NotAdmin() {
+	s.SetupTest()
+	msgServer := keeper.NewMsgServerImpl(s.App.ClaimKeeper)
+
+	// Attempt to create an airdrop with a non-admin distributor, it should fail
+	invalidMsg := getValidCreateEvmosAirdropMsg(s.Ctx)
+	invalidMsg.Distributor = distributors["juno"].String()
+
+	_, err := msgServer.CreateAirdrop(s.Ctx, &invalidMsg)
+	s.Require().ErrorContains(err, "is not an admin")
 }
 
 func (s *KeeperTestSuite) TestCreateAirdrop_IdentifierAlreadyExists() {

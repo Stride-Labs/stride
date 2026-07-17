@@ -9,16 +9,16 @@ import (
 	"strconv"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	"github.com/cosmos/cosmos-sdk/types/module"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/cosmos-sdk/types/module"
 
 	config "github.com/Stride-Labs/stride/v32/cmd/strided/config"
 	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
@@ -45,7 +45,7 @@ func ValidateAdminAddress(address string) error {
 	return nil
 }
 
-func Min(a int, b int) int {
+func Min(a, b int) int {
 	if a < b {
 		return a
 	}
@@ -136,7 +136,7 @@ func Float64ToInt64E(f float64) (int64, error) {
 	return int64(f), nil
 }
 
-//==============================  ADDRESS VERIFICATION UTILS  ================================
+// ============================== ADDRESS VERIFICATION UTILS ================================
 // ref: https://github.com/cosmos/cosmos-sdk/blob/b75c2ebcfab1a6b535723f1ac2889a2fc2509520/types/address.go#L177
 
 var errBech32EmptyAddress = errors.New("decoding Bech32 address failed: must provide a non empty address")
@@ -193,7 +193,7 @@ func VerifyAddressFormat(bz []byte) error {
 type AccAddress []byte
 
 // AccAddressFromBech32 creates an AccAddress from a Bech32 string.
-func AccAddressFromBech32(address string, bech32prefix string) (addr AccAddress, err error) {
+func AccAddressFromBech32(address, bech32prefix string) (addr AccAddress, err error) {
 	if len(strings.TrimSpace(address)) == 0 {
 		return AccAddress{}, errors.New("empty address string is not allowed")
 	}
@@ -229,7 +229,7 @@ func Min64(i, j int64) int64 {
 }
 
 // Compute coin amount for specific period using linear vesting calculation algorithm.
-func GetVestedCoinsAt(vAt int64, vStart int64, vLength int64, vCoins sdk.Coins) sdk.Coins {
+func GetVestedCoinsAt(vAt, vStart, vLength int64, vCoins sdk.Coins) sdk.Coins {
 	var vestedCoins sdk.Coins
 
 	if vAt < 0 || vStart < 0 || vLength < 0 {
@@ -283,7 +283,7 @@ func ConvertAddressToStrideAddress(address string) string {
 // Ex:
 //
 //	| COSMOSHUB-4   |   string
-func LogWithHostZone(chainId string, s string, a ...any) string {
+func LogWithHostZone(chainId, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s", strings.ToUpper(chainId), msg)
 }
@@ -293,7 +293,7 @@ func LogWithHostZone(chainId string, s string, a ...any) string {
 // Format:
 //
 //	|   CHAIN-ID    |  {CALLBACK_ID} {CALLBACK_TYPE}  |  string
-func logCallbackWithHostZone(chainId string, callbackId string, callbackType string, s string, a ...any) string {
+func logCallbackWithHostZone(chainId, callbackId, callbackType, s string, a ...any) string {
 	msg := fmt.Sprintf(s, a...)
 	return fmt.Sprintf("|   %-13s |  %s %s  |  %s", strings.ToUpper(chainId), strings.ToUpper(callbackId), callbackType, msg)
 }
@@ -302,7 +302,7 @@ func logCallbackWithHostZone(chainId string, callbackId string, callbackType str
 // Ex:
 //
 //	| COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  string
-func LogICACallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
+func LogICACallbackWithHostZone(chainId, callbackId, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICACALLBACK", s, a...)
 }
 
@@ -310,7 +310,7 @@ func LogICACallbackWithHostZone(chainId string, callbackId string, s string, a .
 // Ex:
 //
 //	| COSMOSHUB-4   |  DELEGATE ICACALLBACK  |  ICA SUCCESS, Packet: ...
-func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status icacallbacktypes.AckResponseStatus, packet channeltypes.Packet) string {
+func LogICACallbackStatusWithHostZone(chainId, callbackId string, status icacallbacktypes.AckResponseStatus, packet channeltypes.Packet) string {
 	var statusMsg string
 	switch status {
 	case icacallbacktypes.AckResponseStatus_SUCCESS:
@@ -327,7 +327,7 @@ func LogICACallbackStatusWithHostZone(chainId string, callbackId string, status 
 // Ex:
 //
 //	| COSMOSHUB-4   |  WITHDRAWALHOSTBALANCE ICQCALLBACK  |  string
-func LogICQCallbackWithHostZone(chainId string, callbackId string, s string, a ...any) string {
+func LogICQCallbackWithHostZone(chainId, callbackId, s string, a ...any) string {
 	return logCallbackWithHostZone(chainId, callbackId, "ICQCALLBACK", s, a...)
 }
 

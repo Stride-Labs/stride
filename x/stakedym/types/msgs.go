@@ -3,6 +3,7 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -376,7 +377,7 @@ func (msg *MsgResumeHostZone) ValidateBasic() error {
 //             MsgSetOperatorAddress
 // ----------------------------------------------
 
-func NewMsgSetOperatorAddress(signer string, operator string) *MsgSetOperatorAddress {
+func NewMsgSetOperatorAddress(signer, operator string) *MsgSetOperatorAddress {
 	return &MsgSetOperatorAddress{
 		Signer:   signer,
 		Operator: operator,

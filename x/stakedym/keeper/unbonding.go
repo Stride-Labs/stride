@@ -6,6 +6,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -154,7 +155,7 @@ func (k Keeper) PrepareUndelegation(ctx sdk.Context, epochNumber uint64) error {
 
 // Confirms that an undelegation has been completed on the host zone
 // Updates the record status to UNBONDING_IN_PROGRESS, decrements the delegated balance and burns stTokens
-func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+func (k Keeper) ConfirmUndelegation(ctx sdk.Context, recordId uint64, txHash, sender string) (err error) {
 	// grab unbonding record, verify it's in the right state, and no tx hash has been submitted yet
 	record, found := k.GetUnbondingRecord(ctx, recordId)
 	if !found {
@@ -247,7 +248,7 @@ func (k Keeper) BurnRedeemedStTokens(ctx sdk.Context, stTokensToBurn sdk.Coins, 
 }
 
 // Sanity check helper for checking diffs on delegated balance and stToken supply are within outer RR bounds
-func (k Keeper) VerifyImpliedRedemptionRateFromUnbonding(ctx sdk.Context, stTokenSupplyBefore sdkmath.Int, delegatedBalanceBefore sdkmath.Int) error {
+func (k Keeper) VerifyImpliedRedemptionRateFromUnbonding(ctx sdk.Context, stTokenSupplyBefore, delegatedBalanceBefore sdkmath.Int) error {
 	hostZoneAfter, err := k.GetHostZone(ctx)
 	if err != nil {
 		return types.ErrHostZoneNotFound
@@ -291,7 +292,7 @@ func (k Keeper) MarkFinishedUnbondings(ctx sdk.Context) {
 }
 
 // Confirms that unbonded tokens have been sent back to stride and marks the unbonding record CLAIMABLE
-func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHash string, sender string) (err error) {
+func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHash, sender string) (err error) {
 	// grab unbonding record and verify the record is ready to be swept, and has not been swept yet
 	record, found := k.GetUnbondingRecord(ctx, recordId)
 	if !found {
@@ -406,7 +407,5 @@ func (k Keeper) SafelyPrepareUndelegation(ctx sdk.Context, epochNumber uint64) e
 
 // Runs distribute claims with a cache context wrapper so revert any partial state changes
 func (k Keeper) SafelyDistributeClaims(ctx sdk.Context) error {
-	return utils.ApplyFuncIfNoError(ctx, func(ctx sdk.Context) error {
-		return k.DistributeClaims(ctx)
-	})
+	return utils.ApplyFuncIfNoError(ctx, k.DistributeClaims)
 }
