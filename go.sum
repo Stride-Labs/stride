@@ -85,8 +85,6 @@ github.com/RoaringBitmap/roaring/v2 v2.18.0 h1:h7sS0VqCkfBMGgcHaudJFB4FE6Td71H6s
 github.com/RoaringBitmap/roaring/v2 v2.18.0/go.mod h1:eq4wdNXxtJIS/oikeCzdX1rBzek7ANzbth041hrU8Q4=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
-github.com/Stride-Labs/ibc-apps/modules/rate-limiting/v11 v11.0.0-stride-rc0 h1:DTMOzx0aPhH9b4ohelhA7ILaw3t+JAmapf8xVLae+jE=
-github.com/Stride-Labs/ibc-apps/modules/rate-limiting/v11 v11.0.0-stride-rc0/go.mod h1:pr4u030EkonDfVgwBHfJnjiInOTPMcDHFksjyS5mZQk=
 github.com/Stride-Labs/ics23/go v0.11.0-non-membership-icq-rc4 h1:/zsQ/+NwDTdESdo4sUlAryBM6Rauqr6+GMETICaeI0A=
 github.com/Stride-Labs/ics23/go v0.11.0-non-membership-icq-rc4/go.mod h1:RkgSLGLkT2RoQ7VhF+dYbYijIY7+SERZQNc2uUm5tu0=
 github.com/Stride-Labs/vesting v1.0.0-check-base-account-sdk54-rc0 h1:3GgPgVU5IWgXcWexMSizBG4k1aceEQsORj/QAluG134=
@@ -262,8 +260,8 @@ github.com/cosmos/ibc-apps/modules/ibc-hooks/v11 v11.0.0 h1:szI3R+ObqczcdS3W4VkV
 github.com/cosmos/ibc-apps/modules/ibc-hooks/v11 v11.0.0/go.mod h1:QmNrqBRpmI2fdK+/S7f+MEa55TIn3P5WgBizB3Ha5IY=
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11 v11.1.0 h1:VY3Cf+cnUtUAkt5lp3MW+WBOsJjjyNz4Icb10t7WM6k=
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11 v11.1.0/go.mod h1:xVfp07w1TsMtcoPyKvNzqJqqTIrqikq5nQl63JxGrc4=
-github.com/cosmos/ibc-go/v11 v11.1.0 h1:77RzkIOSZFL1alC7odQG3zZ7wAQkfsiWLV479ase8Dg=
-github.com/cosmos/ibc-go/v11 v11.1.0/go.mod h1:iWlzLuCu+ctVbQwoVf5z51HE5e/NE8/pwnLVVDmP++4=
+github.com/cosmos/ibc-go/v11 v11.2.0 h1:CgCJYCwf3FlA9U3IovQq/q7lfTJ0pll3GgqWAwWO0wY=
+github.com/cosmos/ibc-go/v11 v11.2.0/go.mod h1:iWlzLuCu+ctVbQwoVf5z51HE5e/NE8/pwnLVVDmP++4=
 github.com/cosmos/interchain-security/v7 v7.0.0-20260422202817-84f762600f84 h1:pMKpHe+mplhNaRYCTOf/JPr1VqKC//nMWsHyeZjX1o8=
 github.com/cosmos/interchain-security/v7 v7.0.0-20260422202817-84f762600f84/go.mod h1:/jQ+MjoIyQZNxXqpLI5iDri6J7TcRdYQHjWOdlCUHZE=
 github.com/cosmos/keyring v1.2.0 h1:8C1lBP9xhImmIabyXW4c3vFjjLiBdGCmfLUfeZlV1Yo=
@@ -525,9 +523,8 @@ github.com/hashicorp/go-rootcerts v1.0.0/go.mod h1:K6zTfqpRlCUIjkwsN4Z+hiSfzSTQa
 github.com/hashicorp/go-sockaddr v1.0.0/go.mod h1:7Xibr9yA9JjQq1JpNB2Vw7kxv8xerXegt+ozgdvDeDU=
 github.com/hashicorp/go-syslog v1.0.0/go.mod h1:qPfqrKkXGihmCqbJM2mZgkZGvKG1dFdvsLplgctolz4=
 github.com/hashicorp/go-uuid v1.0.0/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
+github.com/hashicorp/go-uuid v1.0.1 h1:fv1ep09latC32wFoVwnqcnKJGnMSdBanPczbHAYm1BE=
 github.com/hashicorp/go-uuid v1.0.1/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
-github.com/hashicorp/go-uuid v1.0.2 h1:cfejS+Tpcp13yd5nYHWDI6qVCny6wyX2Mt5SGur2IGE=
-github.com/hashicorp/go-uuid v1.0.2/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-version v1.2.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
 github.com/hashicorp/go-version v1.9.0 h1:CeOIz6k+LoN3qX9Z0tyQrPtiB1DFYRPfCIBtaXPSCnA=
 github.com/hashicorp/go-version v1.9.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
@@ -901,8 +898,6 @@ github.com/quic-go/quic-go v0.59.0 h1:OLJkp1Mlm/aS7dpKgTc6cnpynnD2Xg7C1pwL6vy/SA
 github.com/quic-go/quic-go v0.59.0/go.mod h1:upnsH4Ju1YkqpLXC305eW3yDZ4NfnNbmQRCMWS58IKU=
 github.com/quic-go/webtransport-go v0.10.0 h1:LqXXPOXuETY5Xe8ITdGisBzTYmUOy5eSj+9n4hLTjHI=
 github.com/quic-go/webtransport-go v0.10.0/go.mod h1:LeGIXr5BQKE3UsynwVBeQrU1TPrbh73MGoC6jd+V7ow=
-github.com/rakyll/statik v0.1.7 h1:OF3QCZUuyPxuGEP7B4ypUa7sB/iHtqOTDYZXGM8KOdQ=
-github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Unghqrcc=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9 h1:bsUq1dX0N8AOIL7EB/X911+m4EHsnWEHeJ0c+3TTBrg=
 github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=

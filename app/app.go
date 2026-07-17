@@ -20,9 +20,6 @@ import (
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
 	ibchookskeeper "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/keeper"
 	ibchookstypes "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11/types"
-	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v11"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11"
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11/types"
@@ -37,6 +34,9 @@ import (
 	packetforward "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware"
 	packetforwardkeeper "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/keeper"
 	packetforwardtypes "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/types"
+	ratelimit "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting"
+	ratelimitkeeper "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/keeper"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
@@ -547,22 +547,23 @@ func NewStrideApp(
 	app.Ics20WasmHooks.ContractKeeper = &app.WasmKeeper // wasm keeper initialized below
 
 	// Create Ratelimit Keeper
-	// v11 dropped the legacy paramtypes.Subspace argument.
+	// Note: the core ibc-go keeper defaults its ICS4Wrapper to the channel keeper,
+	// which matches our outbound routing (ratelimit is the top of the ICS4 chain)
 	app.RatelimitKeeper = *ratelimitkeeper.NewKeeper(
 		appCodec,
+		app.AccountKeeper.AddressCodec(),
 		runtime.NewKVStoreService(keys[ratelimittypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.BankKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ClientKeeper,
-		app.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+		app.BankKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-	ratelimitModule := ratelimit.NewAppModule(appCodec, &app.RatelimitKeeper)
+	ratelimitModule := ratelimit.NewAppModule(&app.RatelimitKeeper)
 
 	// Create the ICS4 wrapper which routes up the stack from ibchooks -> ratelimit
 	// (see full stack definition below)
 	app.HooksICS4Wrapper = ibchooks.NewICS4Middleware(
-		app.RatelimitKeeper, // ICS4Wrapper
+		&app.RatelimitKeeper, // ICS4Wrapper (core keeper methods have pointer receivers)
 		app.Ics20WasmHooks,
 	)
 
@@ -753,7 +754,7 @@ func NewStrideApp(
 		app.RecordsKeeper,
 		app.StakingKeeper,
 		app.IcacallbacksKeeper,
-		app.RatelimitKeeper,
+		&app.RatelimitKeeper,
 		app.ICAOracleKeeper,
 		app.ConsumerKeeper,
 	)
@@ -781,7 +782,7 @@ func NewStrideApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.ICAOracleKeeper,
-		app.RatelimitKeeper,
+		&app.RatelimitKeeper,
 		app.RecordsKeeper,
 		app.StakeibcKeeper,
 		app.TransferKeeper,
@@ -795,7 +796,7 @@ func NewStrideApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.ICAOracleKeeper,
-		app.RatelimitKeeper,
+		&app.RatelimitKeeper,
 		app.TransferKeeper,
 	)
 	stakeDymModule := stakedym.NewAppModule(appCodec, app.StakedymKeeper)
@@ -952,8 +953,17 @@ func NewStrideApp(
 	// interface is implemented on *IBCMiddleware, so take its address (the fork returned
 	// a pointer directly).
 	ibcHooksMiddleware := ibchooks.NewIBCMiddleware(transferStack, &app.HooksICS4Wrapper)
-	transferStack = &ibcHooksMiddleware
-	transferStack = ratelimit.NewIBCMiddleware(&app.RatelimitKeeper, transferStack)
+	// The core rate-limiting middleware requires its underlying application to
+	// implement UnmarshalPacketData, which ibc-hooks does not. Since ibc-hooks never
+	// modifies packet data, wrap it in an adapter that delegates unmarshaling to the
+	// PFM middleware below it.
+	hooksWithUnmarshaler := ibcHooksWithPacketUnmarshaler{
+		IBCMiddleware:     &ibcHooksMiddleware,
+		packetUnmarshaler: packetForwardMiddleware,
+	}
+	rateLimitMiddleware := ratelimit.NewIBCMiddleware(&app.RatelimitKeeper)
+	rateLimitMiddleware.SetUnderlyingApplication(hooksWithUnmarshaler)
+	transferStack = rateLimitMiddleware
 	transferStack = staketia.NewIBCMiddleware(app.StaketiaKeeper, transferStack)
 	transferStack = stakedym.NewIBCMiddleware(app.StakedymKeeper, transferStack)
 	transferStack = recordsmodule.NewIBCModule(app.RecordsKeeper, transferStack)

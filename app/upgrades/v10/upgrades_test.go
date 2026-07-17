@@ -7,7 +7,7 @@ import (
 	"time"
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	deprecatedproto "github.com/golang/protobuf/proto" //nolint:staticcheck // SA1019: legacy proto package required for v10 historical migration

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
@@ -95,7 +95,7 @@ func (s *UpgradeTestSuite) SetupRateLimitMigration() func() {
 	s.Require().NoError(err)
 
 	hostzoneStore := prefix.NewStore(rateLimitStore, ratelimittypes.RateLimitKeyPrefix)
-	hostzoneStore.Set(ratelimittypes.GetRateLimitItemKey(denom, channelId), initialRateLimitBz)
+	hostzoneStore.Set(ratelimittypes.RateLimitItemKey(denom, channelId), initialRateLimitBz)
 
 	// Return a callback to check the state after the upgrade
 	return func() {

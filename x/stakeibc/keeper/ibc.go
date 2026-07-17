@@ -3,8 +3,8 @@ package keeper
 import (
 	"fmt"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
 	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
 	connectiontypes "github.com/cosmos/ibc-go/v11/modules/core/03-connection/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"

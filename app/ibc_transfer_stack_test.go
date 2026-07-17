@@ -1,6 +1,7 @@
 package app_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -8,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
-	ratelimit "github.com/cosmos/ibc-apps/modules/rate-limiting/v11"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
 	packetforward "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware"
 	packetforwardkeeper "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/keeper"
+	ratelimit "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting"
+	ratelimitkeeper "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/keeper"
 	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
@@ -75,7 +76,12 @@ func TestTransferStackInboundOrder(t *testing.T) {
 	module = unwrapField(t, module, "app")
 	require.IsType(t, &ratelimit.IBCMiddleware{}, module)
 
+	// Rate limiting wraps ibc-hooks through the app's packet unmarshaler adapter,
+	// which embeds the ibc-hooks middleware and delegates all IBCModule callbacks to it
 	module = unwrapField(t, module, "app")
+	require.Contains(t, fmt.Sprintf("%T", module), "ibcHooksWithPacketUnmarshaler")
+
+	module = unwrapField(t, module, "IBCMiddleware")
 	require.IsType(t, &ibchooks.IBCMiddleware{}, module)
 
 	module = unwrapField(t, module, "App")
@@ -105,9 +111,10 @@ func TestTransferStackOutboundOrder(t *testing.T) {
 	ics4Wrapper = unwrapField(t, app.PacketForwardKeeper, "ics4Wrapper")
 	require.IsType(t, ibchooks.ICS4Middleware{}, ics4Wrapper)
 
-	// ibchooks sends through the ratelimit keeper
+	// ibchooks sends through the ratelimit keeper (pointer identity)
 	ics4Wrapper = unwrapField(t, ics4Wrapper, "channel")
-	require.IsType(t, ratelimitkeeper.Keeper{}, ics4Wrapper)
+	require.IsType(t, &ratelimitkeeper.Keeper{}, ics4Wrapper)
+	require.Same(t, &app.RatelimitKeeper, ics4Wrapper)
 
 	// ratelimit sends through the core IBC channel keeper (pointer identity)
 	ics4Wrapper = unwrapField(t, ics4Wrapper, "ics4Wrapper")

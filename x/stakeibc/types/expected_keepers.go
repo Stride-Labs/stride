@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	ccvtypes "github.com/cosmos/interchain-security/v7/x/ccv/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

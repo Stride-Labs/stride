@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	cosmosproto "github.com/cosmos/gogoproto/proto"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v11/types"
+	ratelimitkeeper "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/keeper"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	clientkeeper "github.com/cosmos/ibc-go/v11/modules/core/02-client/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
 	"github.com/cosmos/ibc-go/v11/modules/core/exported"

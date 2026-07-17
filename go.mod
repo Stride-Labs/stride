@@ -19,9 +19,8 @@ require (
 	github.com/cosmos/cosmos-sdk/store/v2 v2.0.0
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/ibc-apps/modules/ibc-hooks/v11 v11.0.0
-	github.com/cosmos/ibc-apps/modules/rate-limiting/v11 v11.0.0
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v11 v11.1.0
-	github.com/cosmos/ibc-go/v11 v11.1.0
+	github.com/cosmos/ibc-go/v11 v11.2.0
 	github.com/cosmos/ics23/go v0.11.0
 	github.com/cosmos/interchain-security/v7 v7.0.0-20260422202817-84f762600f84
 	github.com/evmos/vesting v1.0.0
@@ -355,12 +354,6 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 // indirect
-
-	// TODO: drop this replace directive and bump the upstream require line to the
-	// official version once cosmos/ibc-apps publishes a rate-limiting v11 tag
-	// (expected in the ibc-apps v11.2 release). 08-wasm, ibc-hooks, and PFM were
-	// un-forked on 2026-06-10; rate-limiting is the last remaining fork.
-	github.com/cosmos/ibc-apps/modules/rate-limiting/v11 => github.com/Stride-Labs/ibc-apps/modules/rate-limiting/v11 v11.0.0-stride-rc0
 
 	// Stride-Labs fork of ics23 with a one-line patch to LeafOp.Apply that permits
 	// empty-value leaves (upstream tracking: cosmos/ics23#134). Needed because
