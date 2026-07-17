@@ -73,12 +73,12 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
 	}
 }
 
-func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_WrongCount() {
-	s.seedConsumerValidators(7) // expecting 8
+func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_TooManyValidators() {
+	s.seedConsumerValidators(9)
 
 	_, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
 	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "expected 8 validators")
+	s.Require().Contains(err.Error(), "expected at most 8 validators")
 }
 
 func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_MissingMoniker() {
