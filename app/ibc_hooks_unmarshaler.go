@@ -1,10 +1,10 @@
 package app
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
 	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // The core ibc-go rate-limiting middleware requires its underlying application to
@@ -21,6 +21,6 @@ type ibcHooksWithPacketUnmarshaler struct {
 
 var _ porttypes.PacketUnmarshalerModule = ibcHooksWithPacketUnmarshaler{}
 
-func (m ibcHooksWithPacketUnmarshaler) UnmarshalPacketData(ctx sdk.Context, portID string, channelID string, bz []byte) (any, string, error) {
+func (m ibcHooksWithPacketUnmarshaler) UnmarshalPacketData(ctx sdk.Context, portID, channelID string, bz []byte) (any, string, error) {
 	return m.packetUnmarshaler.UnmarshalPacketData(ctx, portID, channelID, bz)
 }

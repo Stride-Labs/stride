@@ -6,8 +6,6 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/stretchr/testify/require"
-
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
 	packetforward "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware"
 	packetforwardkeeper "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/keeper"
@@ -16,6 +14,7 @@ import (
 	"github.com/cosmos/ibc-go/v11/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
+	"github.com/stretchr/testify/require"
 
 	strideapp "github.com/Stride-Labs/stride/v32/app"
 	"github.com/Stride-Labs/stride/v32/x/autopilot"
@@ -33,6 +32,7 @@ import (
 
 // unwrapField returns the value of the named (possibly unexported) field of module
 func unwrapField(t *testing.T, module any, fieldName string) any {
+	t.Helper()
 	value := reflect.ValueOf(module)
 	if value.Kind() == reflect.Ptr {
 		value = value.Elem()

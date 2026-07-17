@@ -57,7 +57,9 @@ func CreateUpgradeHandler(
 		}
 
 		// Migrate to open sourced rate limiter
-		MigrateRateLimitModule(ctx, ratelimitKeeper)
+		if err := MigrateRateLimitModule(ctx, ratelimitKeeper); err != nil {
+			return newVm, err
+		}
 
 		// Add stTIA rate limits to Celestia and Osmosis
 		if err := AddStTiaRateLimit(ctx, ratelimitKeeper); err != nil {
@@ -73,7 +75,7 @@ func CreateUpgradeHandler(
 // can remain unchanged
 // The only required change is to create the new epoch type
 // that's used instead of the epochs module
-func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
+func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) error {
 	// Initialize the hour epoch so that the epoch number matches
 	// the current hour and the start time is precisely on the hour
 	genesisState := ratelimittypes.DefaultGenesis()
@@ -81,7 +83,7 @@ func MigrateRateLimitModule(ctx sdk.Context, k ratelimitkeeper.Keeper) {
 	hourEpoch.EpochNumber = utils.IntToUint(int64(ctx.BlockTime().Hour()))
 	hourEpoch.EpochStartTime = ctx.BlockTime().Truncate(time.Hour)
 	hourEpoch.EpochStartHeight = ctx.BlockHeight()
-	k.SetHourEpoch(ctx, hourEpoch)
+	return k.SetHourEpoch(ctx, hourEpoch)
 }
 
 // Add a 10% rate limit for stTIA to Celestia and Osmosis
