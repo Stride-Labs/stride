@@ -388,19 +388,19 @@ func SetConsumerParams(ctx sdk.Context, ck *ccvconsumerkeeper.Keeper, sibc stake
 	ck.SetParams(ctx, ccvconsumerparams)
 
 	// Then, add the stTokens to the reward list
-	ctx.Logger().Info("Registering stTokens to consumer reward denom whitelist...")
-	hostZones := sibc.GetAllHostZone(ctx)
-	allDenoms := []string{}
+	// ctx.Logger().Info("Registering stTokens to consumer reward denom whitelist...")
+	// hostZones := sibc.GetAllHostZone(ctx)
+	// allDenoms := []string{}
 
-	// get all stToken denoms
-	for _, zone := range hostZones {
-		allDenoms = append(allDenoms, stakeibctypes.StAssetDenomFromHostZoneDenom(zone.HostDenom))
-	}
+	// // get all stToken denoms
+	// for _, zone := range hostZones {
+	// 	allDenoms = append(allDenoms, stakeibctypes.StAssetDenomFromHostZoneDenom(zone.HostDenom))
+	// }
 
-	err := sibc.RegisterStTokenDenomsToWhitelist(ctx, allDenoms)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to register stTokens to whitelist")
-	}
+	// err := sibc.RegisterStTokenDenomsToWhitelist(ctx, allDenoms)
+	// if err != nil {
+	// 	return errorsmod.Wrapf(err, "unable to register stTokens to whitelist")
+	// }
 
 	return nil
 }

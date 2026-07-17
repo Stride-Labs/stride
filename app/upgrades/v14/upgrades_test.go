@@ -75,7 +75,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.CheckCcvConsumerParamsAfterUpgrade()
 	s.CheckRefundAfterUpgrade()
 	s.CheckAirdropsInitialized()
-	s.VerifyConsumerRewards()
+	// s.VerifyConsumerRewards()
 	s.CheckAirdropsInitialized()
 	checkStakeibcStoreAfterUpgrade()
 	checkPendingQueriesRemoved()
