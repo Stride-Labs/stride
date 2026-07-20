@@ -1,0 +1,56 @@
+Validator Name,Validator Address,Stride Delegations,Live Delegations,Delegations Minus Stride,Commission,CEX,Active,Uptime,Governance,Eligibility,Reason,Current Weight,New Weight
+Omnistake.com,sagavaloper1am6qxsfxpzxdk7j8e8s37vs6pe8zr6m922nqte,8901233244,13164761632618,13155860399374,0.00%,N,Y,,,Y,OK,9.04%,11.31%
+[Shutting down] cosmostation please redelegate,sagavaloper1nv7mzp90rjxkgrr7ymcfqufgjeqtr7ptfeflz8,8576298487,10523897326280,10515321027793,1.50%,N,Y,,,N,name_excluded (cosmostation),8.71%,
+NodeStake,sagavaloper19f0w9svr905fhefusyx4z8sf83j6et0gsn0qkm,8556605496,7441752786295,7433196180799,1.00%,N,Y,,,Y,OK,8.69%,11.31%
+Restake,sagavaloper1wja9f0d7pllx35k34evemkvh4x56tjxxw8p8g5,0,7059256662904,7059256662904,10.00%,N,N,,,N,inactive,0.00%,
+Lavender.Five Nodes 🐝,sagavaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zupu4tk,5514038056,4769364122294,4763850084238,2.75%,N,Y,,,Y,force_included (PoA partner),5.60%,11.31%
+UnityFarms (20% to charity),sagavaloper1pg3u9vl53jngwfly0370jne8fv533hd6emrfmd,3278883336,4653511358988,4650232475652,2.75%,N,N,,,N,inactive,3.33%,
+Stakecito Labs,sagavaloper1qe8uuf5x69c526h4nzxwv4ltftr73v7qsdtg4m,5189103672,3649009858823,3643820755151,5.00%,N,Y,,,Y,force_included (PoA partner),5.27%,11.31%
+P2P.org 💙,sagavaloper15eryzkm5y7d2ldqf6he7g943g9hepxwa6puvjz,6853161592,3008245806057,3001392644465,2.75%,N,Y,,,Y,OK,6.96%,10.52%
+StakingCabin,sagavaloper1smw8w75qzprplv5g4afkrjkxz0sh4d84qqz4cw,5100485204,2961651219596,2956550734392,2.75%,N,Y,,,Y,OK,5.18%,10.36%
+A41,sagavaloper17wv4hy9h3a8wdxeq0cd652zv8eyw7ytmep2237,0,2817702783957,2817702783957,2.75%,N,N,,,N,inactive,0.00%,
+Nocturnal Labs,sagavaloper1axyv94rv40cug6acgh0zlzvq9awf4ajea3yrd4,2776712015,2776446745531,2773670033516,2.75%,N,Y,,,Y,OK,2.82%,9.72%
+HashKey Cloud,sagavaloper14z9v2s2w2kkua70t20vpcvcgpxqekl7lufz3rs,2215461704,2713085416848,2710869955144,2.75%,N,Y,,,Y,OK,2.25%,9.50%
+Sunsetting please undelegate,sagavaloper1c24csqxrfqktgpn94anp4xmtn7pz772gl903kj,7946122707,2184992894369,2177046771662,2.75%,N,N,,,N,"inactive, name_excluded (undelegate)",8.07%,
+Luganodes,sagavaloper1qara34gyn54s9693rntr7gxj4a34te6gxkx97m,5277722141,2098602398259,2093324676118,2.75%,N,N,,,N,inactive,5.36%,
+Enigma,sagavaloper1v9uqwx20c7f3nf4ckzzvzjr4kxuqw37293gkv9,4686932348,1688237537091,1683550604743,2.75%,N,N,,,N,inactive,4.76%,
+polkachu.com,sagavaloper13dfsqypv3rjucvncpjy9p6jm47hc0e7827g0cq,2304080176,1411762078446,1409457998270,1.00%,N,Y,,,Y,force_included (PoA partner),2.34%,4.94%
+Golden Ratio Staking,sagavaloper1nfha2308jhh2k7jfsa29gpa5t7kqv48wzuje4w,7365179410,1365051729057,1357686549647,2.74%,N,Y,,,Y,OK,7.48%,4.76%
+Stakin by The Tie,sagavaloper13p45c6z865muxdycah0amqhjkfexh0ztejq9gw,4450616428,398576797877,394126181449,2.75%,N,Y,,,Y,OK,4.52%,1.38%
+Simply Staking,sagavaloper1qpsluy5pgjt84jl4yf83e6kz02npgynwsqslj9,4480155918,363010373186,358530217268,2.75%,N,Y,,,Y,OK,4.55%,1.26%
+Stake&Relax 🦥,sagavaloper1l9aqqku8yk0p3w8kljmrwj32ztzz74earjl0sp,1565592935,306298677773,304733084838,2.75%,N,Y,,,Y,OK,1.59%,1.07%
+Chandra Station,sagavaloper106y6thy7gphzrsqq443hl69vfdvntgz2rcxrw2,1555746439,173308326547,171752580108,2.75%,N,Y,,,Y,OK,1.58%,0.60%
+strangelove,sagavaloper1sl97x54v0u3extuj2zrf7h0qrrtpgpsldww2zc,0,155680803287,155680803287,2.75%,N,N,,,N,inactive,0.00%,
+SG-1,sagavaloper1v7f0980q2z3he88fc7cs6tx7le70578rgcn6re,1870834328,155683243659,153812409331,2.60%,N,Y,,,Y,OK,1.90%,0.54%
+redelegate,sagavaloper14p4s4s9ryn6uar7qvlmxsfcnt3e759vplykhs2,0,87439259536,87439259536,2.60%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+[Shutting down on Sept 6 - please redelegate],sagavaloper1t4pxlwh9sfp5u2ghpwm73y5c47ucq3wappnx7q,0,49051481866,49051481866,2.75%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+Solva (CryptoCrew),sagavaloper13pcp0cstupahzz3n36x0dlhpa9fr8m9vlcy78y,0,25714228314,25714228314,5.00%,N,Y,,,Y,force_included (PoA partner),0.00%,0.09%
+01node,sagavaloper1zjaqvcq4jmydnrcxtnpw5fdsggg6dvmapkdels,0,24509696171,24509696171,5.00%,N,N,,,N,inactive,0.00%,
+Marblex,sagavaloper143k55pqumrrlwj06uepv7v8wyvajjcnmu3zkn4,0,18029545475,18029545475,2.00%,N,N,,,N,inactive,0.00%,
+Validation Cloud,sagavaloper1su2yh6xsh5cahxgtrv88vms54jlmes4k8m3dd0,0,7272033608,7272033608,0.00%,N,N,,,N,inactive,0.00%,
+Liquify,sagavaloper1a08q0lesrstewscr6myyy5fy2rfzcdjfq79k4e,0,1638169001,1638169001,2.75%,N,N,,,N,inactive,0.00%,
+Developer DAO,sagavaloper1ye8pyhexlj6asl0ytd6j3frarxqsfyx58de7s8,0,1247001869,1247001869,10.00%,N,N,,,N,inactive,0.00%,
+KalpaTech,sagavaloper1ehkfl7palwrh6w2hhr2yfrgrq8jetgucfpe0ga,0,200010000,200010000,5.00%,N,N,,,N,inactive,0.00%,
+0% fees 🚀 | BlueStake,sagavaloper1c0pnlvu83gzv7lz46ynw4l6y63l8p3em6jevuv,0,181010000,181010000,0.00%,N,N,,,N,inactive,0.00%,
+Ponderosa Cloud,sagavaloper1z9jc2p9qljyzt4mu0qxv9kz6rpdyexp5u42r8u,0,69010000,69010000,1.00%,N,N,,,N,inactive,0.00%,
+Bro_n_Bro,sagavaloper1dazs5hls68jrgtlsr5xf9wkc9m4ueza3g2ltfl,0,23010000,23010000,5.00%,N,N,,,N,inactive,0.00%,
+Shutdown - please redelegate,sagavaloper1xq7yfdkzkgqnymes720p5pnnrwj28naz6fc3yk,0,15269507,15269507,5.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+PathrockNetwork,sagavaloper1naz4vjgjrvq9fzey7n8rr23kjqqj9lxw4p6fud,0,10010000,10010000,0.00%,N,N,,,N,inactive,0.00%,
+BlockHunters 🎯,sagavaloper1symf474wnypes2d3mecllqk6l26rwz8mu7mfa5,0,5810000,5810000,5.00%,N,N,,,N,inactive,0.00%,
+node101,sagavaloper1lrzxwu4dmy8030waevcpft7rpxjjz26c5whc6f,0,4810000,4810000,5.00%,N,N,,,N,inactive,0.00%,
+SyaNodes,sagavaloper1s0622kejpslxynzwr9qq33nf3zyg0vq2x4060l,0,3010000,3010000,0.00%,N,N,,,N,inactive,0.00%,
+AutoStake 🛡️ Slash Protected,sagavaloper1c2uuulu9agt02fz4ynun2h32qxpydul8f5cqm9,0,3010000,3010000,0.00%,N,N,,,N,inactive,0.00%,
+WhisperNode 🤐,sagavaloper1yuxfnuap28h7dmy43m3p8l6jf0z3tea8pj5wjn,0,2010000,2010000,5.00%,N,N,,,N,inactive,0.00%,
+WHENMOONWHENLAMBO,sagavaloper1a29k2w89zvu0j7kcka59cuj4lx6k775zldqlwe,0,2010000,2010000,5.00%,N,N,,,N,inactive,0.00%,
+CroutonDigital,sagavaloper1zd7j327duhewmu8739g9hdcm00clf3zp7zv7pp,0,1110000,1110000,5.00%,N,N,,,N,inactive,0.00%,
+Validatrium.com,sagavaloper19q4mfnuqszfwkt068sfagwkhp0ad6x86zl67z2,0,1010000,1010000,0.00%,N,N,,,N,inactive,0.00%,
+Saga Community Node,sagavaloper19ejpal4hzfpemt7tfk9lgx3srgf9a08hnfm304,0,1010000,1010000,0.00%,N,N,,,N,inactive,0.00%,
+EZ Staking,sagavaloper1gjtvly9lel6zskvwtvlg5vhwpu9c9wawtuax0z,0,1010000,1010000,5.00%,N,N,,,N,inactive,0.00%,
+Informal Systems,sagavaloper12zh2xrqzj0rymlg7v9hn0t085eumgz4xp5zjvv,0,1010000,1010000,5.00%,N,N,,,N,inactive,0.00%,
+owlstake,sagavaloper10c6k35ga7uehjkcl3lchu5qv0kfxwnrxyh8kxx,0,1010000,1010000,5.00%,N,N,,,N,inactive,0.00%,
+AgoraNodes,sagavaloper15gtf87ma0mjqwl5sdcpj20umwa58lu4q6pygas,0,1010000,1010000,5.00%,N,N,,,N,inactive,0.00%,
+Cogwheel ⚙️,sagavaloper1hgr46vkzd24xp5j2hnf4xqr7596a5rhn93ywdn,0,1010000,1010000,5.00%,N,N,,,N,inactive,0.00%,
+Nodes Hub 🛡️ 100% Slash Protected 🛡️,sagavaloper1etp6vvfgtxdu04ufrxjjx3fqcf05nrxlgf640f,0,1010000,1010000,5.00%,N,N,,,N,inactive,0.00%,
+decommissioned,sagavaloper1qx9knjqah8s0l4rhwmapsd6cuah4948jnwyetv,0,10000,10000,5.00%,N,N,,,N,"inactive, name_excluded (decommissioned)",0.00%,
+kjnodes.com 🦄,sagavaloper18uqtw5fd8f98kflvdgp683ev8tdzlgcvy47mje,0,10000,10000,5.00%,N,N,,,N,inactive,0.00%,
+Disperze,sagavaloper1c3x2skx2c6ncwwkmhnywvl9v3anjq2nc55y75z,0,1,1,1.00%,N,N,,,N,inactive,0.00%,

@@ -26,6 +26,11 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
+const (
+	untouchedChainId         = "stargaze-1"
+	untouchedValidatorWeight = uint64(1234)
+)
+
 type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
 
@@ -53,6 +58,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.setupGovenatorState(3)
 	s.setupConsumerRewardAccounts()
 	s.setupActiveGovProposal()
+	s.setupHostZoneValidators()
 
 	s.capturePreUpgradeState()
 	s.populateValidatorMonikers()
@@ -67,6 +73,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.checkICSModuleAccountsDrained()
 	s.checkActiveGovProposalUnaffected()
 	s.checkValidatorSetContinuity()
+	s.checkValidatorWeightsUpdated()
+	s.checkUntouchedHostZoneUnchanged()
 }
 
 // --- assertion helpers ---
@@ -143,6 +151,35 @@ func (s *UpgradeTestSuite) checkActiveGovProposalUnaffected() {
 		s.Require().NotEqual(govtypes.StatusFailed, prop.Status,
 			"proposal %d should not have been failed by the upgrade", id)
 	}
+}
+
+func (s *UpgradeTestSuite) checkValidatorWeightsUpdated() {
+	for chainId, weights := range v33.TargetWeights {
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+		s.Require().True(found, "host zone %s should exist", chainId)
+
+		actualWeights := map[string]uint64{}
+		for _, val := range hostZone.Validators {
+			actualWeights[val.Address] = val.Weight
+		}
+
+		s.Require().Equal(len(weights), len(actualWeights),
+			"%s: validator count mismatch", chainId)
+
+		for _, w := range weights {
+			actual, exists := actualWeights[w.Address]
+			s.Require().True(exists, "%s: validator %s should exist", chainId, w.Address)
+			s.Require().Equal(w.Weight, actual, "%s: weight mismatch for %s", chainId, w.Address)
+		}
+	}
+}
+
+func (s *UpgradeTestSuite) checkUntouchedHostZoneUnchanged() {
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, untouchedChainId)
+	s.Require().True(found, "untouched host zone %s should exist", untouchedChainId)
+	s.Require().Len(hostZone.Validators, 1, "untouched host zone validator count")
+	s.Require().Equal(untouchedValidatorWeight, hostZone.Validators[0].Weight,
+		"untouched host zone validator weight should be unchanged")
 }
 
 func (s *UpgradeTestSuite) checkValidatorSetContinuity() {
@@ -259,6 +296,45 @@ func (s *UpgradeTestSuite) setupGovenatorState(count int) {
 		coin := sdk.NewCoin(bondDenom, delegationAmt)
 		s.FundModuleAccount(stakingtypes.BondedPoolName, coin)
 	}
+}
+
+// setupHostZoneValidators seeds each in-scope host zone with its current
+// on-chain validator set (from OldValidators), plus one out-of-scope host zone
+// that the upgrade must leave untouched.
+func (s *UpgradeTestSuite) setupHostZoneValidators() {
+	for chainId, vals := range v33.OldValidators {
+		var validators []*stakeibctypes.Validator
+		for _, val := range vals {
+			validators = append(validators, &stakeibctypes.Validator{
+				Name:                      val.Name,
+				Address:                   val.Address,
+				Weight:                    val.Weight,
+				Delegation:                sdkmath.ZeroInt(),
+				SlashQueryProgressTracker: sdkmath.ZeroInt(),
+				SlashQueryCheckpoint:      sdkmath.ZeroInt(),
+				SharesToTokensRate:        sdkmath.LegacyOneDec(),
+			})
+		}
+
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+			ChainId:    chainId,
+			Validators: validators,
+		})
+	}
+
+	// Host zone with no entry in TargetWeights — must not be modified
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId: untouchedChainId,
+		Validators: []*stakeibctypes.Validator{{
+			Name:                      "untouchedval",
+			Address:                   "stargazevaloper1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+			Weight:                    untouchedValidatorWeight,
+			Delegation:                sdkmath.ZeroInt(),
+			SlashQueryProgressTracker: sdkmath.ZeroInt(),
+			SlashQueryCheckpoint:      sdkmath.ZeroInt(),
+			SharesToTokensRate:        sdkmath.LegacyOneDec(),
+		}},
+	})
 }
 
 // setupConsumerRewardAccounts pre-funds the two ICS reward module accounts

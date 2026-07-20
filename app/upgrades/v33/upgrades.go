@@ -19,10 +19,12 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	"github.com/Stride-Labs/stride/v32/utils"
 	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
 	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler returns the v33 upgrade handler that migrates Stride
@@ -75,6 +77,12 @@ func CreateUpgradeHandler(
 		// 4. Sweep residual ICS reward module accounts to community pool.
 		ctx.Logger().Info("v33: sweeping ICS module accounts to community pool...")
 		if err := SweepICSModuleAccounts(ctx, accountKeeper, bankKeeper, distrKeeper); err != nil {
+			return nil, err
+		}
+
+		// 5. Update host zone validator weights to the Q2 2026 targets.
+		ctx.Logger().Info("v33: updating validator weights...")
+		if err := UpdateValidatorWeights(ctx, stakeibcKeeper); err != nil {
 			return nil, err
 		}
 
@@ -182,5 +190,64 @@ func ReconcileOsmosisDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper, rk r
 
 	ctx.Logger().Info(fmt.Sprintf("v33: created DELEGATION_QUEUE deposit record for %v %s (rate-preserving credit of reconciled phantom)",
 		totalReduction, hostZone.HostDenom))
+	return nil
+}
+
+// Update validator weights across the host zones with new Q2 2026 targets
+// (host zones without an entry in TargetWeights are left untouched)
+// Phase 1: Add new validators (not yet on-chain) with weight 0
+// Phase 2: Set all validator weights to their target values
+func UpdateValidatorWeights(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
+	for _, chainId := range utils.StringMapKeys(NewValidators) {
+		validators := NewValidators[chainId]
+		ctx.Logger().Info(fmt.Sprintf("Adding %d new validators to %s...", len(validators), chainId))
+		for _, val := range validators {
+			validator := stakeibctypes.Validator{
+				Name:    val.Name,
+				Address: val.Address,
+				Weight:  0,
+			}
+			if err := sk.AddValidatorToHostZone(ctx, chainId, validator, false); err != nil {
+				return errorsmod.Wrapf(err, "failed to add validator %s to %s", val.Address, chainId)
+			}
+		}
+	}
+
+	for _, chainId := range utils.StringMapKeys(TargetWeights) {
+		weights := TargetWeights[chainId]
+		ctx.Logger().Info(fmt.Sprintf("Setting validator weights for %s...", chainId))
+
+		hostZone, found := sk.GetHostZone(ctx, chainId)
+		if !found {
+			return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "host zone %s not found", chainId)
+		}
+
+		weightMap := make(map[string]uint64, len(weights))
+		for _, w := range weights {
+			weightMap[w.Address] = w.Weight
+		}
+
+		for _, validator := range hostZone.Validators {
+			targetWeight, found := weightMap[validator.Address]
+			if !found {
+				return errorsmod.Wrapf(stakeibctypes.ErrValidatorNotFound,
+					"validator %s on %s not found in target weights", validator.Address, chainId)
+			}
+			validator.Weight = targetWeight
+		}
+
+		sk.SetHostZone(ctx, hostZone)
+
+		var totalWeight uint64
+		var activeValidators uint64
+		for _, validator := range hostZone.Validators {
+			totalWeight += validator.Weight
+			if validator.Weight > 0 {
+				activeValidators++
+			}
+		}
+		ctx.Logger().Info(fmt.Sprintf("  %d validators, total weight %d", activeValidators, totalWeight))
+	}
+
 	return nil
 }

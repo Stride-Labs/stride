@@ -1,0 +1,153 @@
+Validator Name,Validator Address,Stride Delegations,Live Delegations,Delegations Minus Stride,Commission,CEX,Active,Uptime,Governance,Eligibility,Reason,Current Weight,New Weight
+Haqq Association,haqqvaloper16lp0xpq87cre5z4jkfddq78r5l4vcd7el2jlmj,0,179725685554789850007031818,1.79726E+26,10.00%,N,Y,,,Y,OK,0.00%,8.00%
+[Shutting down on Sept 15 - please redelegate],haqqvaloper16gg3wzq8h98zyn9kjp7aw3jwy6pnxslrdhl7zp,0,170994400196238198059489605,1.70994E+26,10.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+Allnodes,haqqvaloper15eafuvcrh3c07z4g3pqgq68n3lmsyu5jd9swsy,0,168994316664397189708932638,1.68994E+26,5.00%,N,Y,,,Y,OK,0.00%,8.00%
+Shariah Staking,haqqvaloper1hdeq7zk4qy6vn4vk96rwg8h4azt86jkhspj6k9,0,150329276693512702210300174,1.50329E+26,11.00%,N,Y,,,N,commission>10%,0.00%,
+Republic,haqqvaloper1p6hvrej3r2tksazkvs0p3ecjkvlu27gkdlqjaj,0,131117319216529789908394419,1.31117E+26,20.00%,N,Y,,,N,commission>10%,0.00%,
+CLOSED - Islamic Staking,haqqvaloper1p8k6xk94u24vv9dmxu3vkgg43fs3v72grkpjhm,3404566862077802114673425,115789547833845802324640832,1.12385E+26,10.00%,N,N,,,N,inactive,3.19%,
+[NODERS],haqqvaloper1hgggrfgjeu4d5nveh03c6w37magsuqcy84p44t,1631295331676570357712739,96763011535655246664629719,9.51317E+25,15.00%,N,Y,,,N,commission>10%,1.53%,
+Imperator.co,haqqvaloper1yxgsst9urp5s6qt7aqej09kywahn6djtduxd4p,0,94230908693421281502286877,9.42309E+25,5.00%,N,N,,,N,inactive,0.00%,
+STAKEME,haqqvaloper1p02zk5ecdanap637e2wtt82cucjlxtkrhus623,5546642781816967315006229,99664259883745670569574390,9.41176E+25,10.00%,N,Y,,,Y,OK,5.19%,8.00%
+"[Sunsetting, please redelegate] Forbole",haqqvaloper1yq0zsgqnyw5ya0vjxj3gd8yhdpw8uydekq5qrs,8574727362688322237696527,90645692571769253669241445,8.2071E+25,10.00%,N,N,,,N,"inactive, name_excluded (redelegate)",8.03%,
+polkachu.com,haqqvaloper1th8c90trv8pfvsqf2n9p4whlcdew2yy2wcmgnp,8542692266688241332695213,86571934938690087932407066,7.80292E+25,5.00%,N,Y,,,Y,force_included (PoA partner),8.00%,8.00%
+Virtue Validators,haqqvaloper146de7dnwqfdvxd4nvkrxkd4k9fcalmxy22gt0c,0,70006475854773549944223680,7.00065E+25,20.00%,N,Y,,,N,commission>10%,0.00%,
+A41,haqqvaloper1tdzdn4zdnntdjkxtx8lrp9m8rpdu9yz356j8a5,0,55251356808149036405696604,5.52514E+25,10.00%,N,N,,,N,inactive,0.00%,
+POSITIVA Ultra,haqqvaloper1zsujldhz9azrfewl0gex5ey8f6kvf9dk6ufk47,8542692266688241332695213,59472403246275465273736733,5.09297E+25,10.00%,N,Y,,,Y,OK,8.00%,8.00%
+Neuler,haqqvaloper1a57vprf7lswm3aqy2g5gy509235wmtsfvf9q73,8542692266688241332695213,56616658026591985762018501,4.8074E+25,15.00%,N,N,,,N,"inactive, commission>10%",8.00%,
+Lavender.Five Nodes 🐝,haqqvaloper1dqwmtp0ewnzep83mtf0j73xrwza74ncavusujw,8542692266688241332695213,40708409886234382550040078,3.21657E+25,5.00%,N,Y,,,Y,force_included (PoA partner),8.00%,6.26%
+TakamulFi Validator,haqqvaloper1gcw6ru5akcmzvr3anqre8f3m8eml2rmrz8m6sl,928612429835803806804562,22518081332200420355795498,2.15895E+25,10.00%,N,Y,,,Y,OK,0.87%,4.20%
+Abyss Finance,haqqvaloper1uz39tak5j7cctq9ss3l4pvlnngmng338thy062,3801498058676267393049338,24809592878280402632574264,2.10081E+25,10.00%,N,Y,,,Y,OK,3.56%,4.09%
+Forest Staking,haqqvaloper1ktu3f367c0j0yet6apuefy8xt5n7eswns7yuff,3035150319001881470271208,23702193624236011379732231,2.0667E+25,10.00%,N,Y,,,Y,OK,2.84%,4.02%
+Halal Node,haqqvaloper1vk0v3xuusxh8tcu63nmzrll9xwfcnujev6pd4w,2633824913417607905797858,22661972991453839435838778,2.00281E+25,10.00%,N,Y,,,Y,OK,2.47%,3.90%
+Synergy Nodes,haqqvaloper1y4pfpkwpy6myskp7pne256k6smh2rjtaf0wcfl,3961673538676671918037368,19987345508165343866242868,1.60257E+25,10.00%,N,Y,,,Y,OK,3.71%,3.12%
+StakingCabin,haqqvaloper1f6hy5d68hkx9wtp8er3mgdfwjfjr7tun5yu7us,2434667296006148779817921,18436055027071113576396107,1.60014E+25,10.00%,N,N,,,N,inactive,2.28%,
+Palamar,haqqvaloper1xp597fjhgu6dx3a525htulkn36fqqntjaqvhct,2007532682671736713183324,14197115274140402171773242,1.21896E+25,8.00%,N,Y,,,Y,OK,1.88%,2.37%
+P-OPS Team,haqqvaloper1xwwut6nrqmqqyv4w5an4x0zwr8vt7vy7s723s6,6713051762287574724053,12075042817756807573832902,1.20683E+25,10.00%,N,Y,,,Y,OK,0.01%,2.35%
+StakeBroker,haqqvaloper1rssz59ag9r4hm0tj8avp6x47uuqc9xtc8umtnr,1826000472004611584863548,13873432188385011583628605,1.20474E+25,10.00%,N,Y,,,Y,OK,1.71%,2.34%
+Nodes.Guru,haqqvaloper1esy5m56f7gsgckjgvwreq6yd95rp5k2uf58sqw,6396340834682820697855523,18430413731935288667022387,1.20341E+25,10.00%,N,Y,,,Y,OK,5.99%,2.34%
+Brightlystake,haqqvaloper19as88jg6qywfu0uymqsvcmuvqck5nngjjr8q4e,929163085926431039168766,12956004353645117032210486,1.20268E+25,15.00%,N,Y,,,N,commission>10%,0.87%,
+kioqq @ haqq.sh,haqqvaloper1a4qnqnk5ag0um6z3unkdth92v9c46x0dcpe2n0,1975497586671655808185723,13983033016220789172089009,1.20075E+25,10.00%,N,N,,,N,inactive,1.85%,
+SerGo,haqqvaloper15uexkcv25gshhyunn97369y6379flhm7dsn3dc,917144580219995279775607,12920641881163085279120202,1.20035E+25,10.00%,N,Y,,,Y,OK,0.86%,2.34%
+StakeUp,haqqvaloper1ysps8cnwp868hw3srcsy8mkk9cvv7g70evv2v9,1826000472004611584863548,13829325318268725401051517,1.20033E+25,10.00%,N,Y,,,Y,OK,1.71%,2.34%
+L0vd.com,haqqvaloper188rzn2dgqtfx98eke434xtas9ngef9c5zfccsw,1826000472004611584863548,13828447385884699084149881,1.20024E+25,10.00%,N,Y,,,Y,OK,1.71%,2.34%
+🙏 uGaenn ⛅,haqqvaloper1m7esphm6f43vanux04ug9tyrxm8awrhd4sm6nh,1826000472004611584863548,13827571678448952848789394,1.20016E+25,8.00%,N,Y,,,Y,OK,1.71%,2.34%
+𝐥𝐞𝐬𝐧𝐢𝐤 | 𝐔𝐓𝐒𝐀,haqqvaloper1ld747ks23dqheenk3pjth57claqqpfnxax6cea,942522160983475741471599,12943427040148305741486485,1.20009E+25,20.00%,N,Y,,,N,commission>10%,0.88%,
+Masterblox,haqqvaloper1ja29wpj6l5t42jj67vgqcuj8pu046uqklss524,0,10001066848565054546730111,1.00011E+25,10.00%,N,N,,,N,inactive,0.00%,
+SureStake,haqqvaloper16hy887wxzjmmkkfrdxzgz9dlv6mfru56q539cw,514296911029389874078629,10513463063358605256230967,9.99917E+24,10.00%,N,N,,,N,inactive,0.48%,
+NodeStake,haqqvaloper1qt6yf3fvz250uddj04rxglfd40v8nruqm9kyy7,930305967950940794444497,10044427592520281581775052,9.11412E+24,20.00%,N,Y,,,N,commission>10%,0.87%,
+F5 Nodes,haqqvaloper1x93c3lwves5xagxmx3rkku6scxt9yhwn243sts,2765696621340318131460039,10970461814362848192433299,8.20477E+24,20.00%,N,Y,,,N,commission>10%,2.59%,
+KonsorTech,haqqvaloper1qujkgnaxmy5ngyudunh04j6ctpt8dp4u8h9rk8,1249368744003155294906627,9430447539346864976587672,8.18108E+24,10.00%,N,Y,,,Y,OK,1.17%,1.59%
+01node,haqqvaloper1dr24vnl8veae8998c78vth6qrrmtnhle49vjqg,0,8142388243806991387979142,8.14239E+24,5.00%,N,Y,,,Y,OK,0.00%,1.58%
+tarabukinivan,haqqvaloper1xwpeshg6v7fdg55evd9pzlay22a407dnxaat00,1228012013336434691574889,9276650694674629577935328,8.04864E+24,10.00%,N,Y,,,Y,OK,1.15%,1.57%
+cyberomanov,haqqvaloper1rf3e3z60lqattw7vxxfu328pwlzu60knjlddsf,1217333648003074389909014,9249438752254125033745209,8.03211E+24,7.00%,N,Y,,,Y,OK,1.14%,1.56%
+Dr_Atavov_PRO,haqqvaloper16ecmf2wlfjuaff6sstjcfa8ds5gagm96j4zpcx,0,8014710530967749609189224,8.01471E+24,20.00%,N,Y,,,N,commission>10%,0.00%,
+Stake-Take,haqqvaloper1tnm7y48w5nh8wt0s2u0fxwu607xtqhk6v99773,454340405358834129304086,8465820437516066616917180,8.01148E+24,5.00%,N,Y,,,Y,OK,0.43%,1.56%
+cryptobtcbuyer | Low fees 💚,haqqvaloper137867ch7xxe3a95a2rhs9xntzjp9q7yg0ylvgk,2744339890673597528128294,10755105725566332997601321,8.01077E+24,5.00%,N,Y,,,Y,OK,2.57%,1.56%
+Speedy Staking,haqqvaloper124z48u44fnrar8r6xrnjwfryzfysm39yk2cva8,0,8009123422287664750604671,8.00912E+24,10.00%,N,N,,,N,inactive,0.00%,
+The Honeybadger,haqqvaloper1s8p7kahfwghxz56elmdufgrvehzx20a99q9v7n,1409544224003559819894662,9414638427100012083456393,8.00509E+24,8.00%,N,N,,,N,inactive,1.32%,
+OnThePluto,haqqvaloper1u32kdvz3t2ef7l894z8jyp64l8pme9kq2m074q,0,8004868793796862104517171,8.00487E+24,20.00%,N,Y,,,N,commission>10%,0.00%,
+digiser2,haqqvaloper1nekpsmetpxx2crsuzznuy4epv9eqvj03rtmxae,0,8003912663462774999556948,8.00391E+24,10.00%,N,Y,,,Y,OK,0.00%,1.56%
+2pilot,haqqvaloper1c5clg5vjnlmjn47yrs0uwhvsx8v3vvf7ygef74,0,8003216758367467509178735,8.00322E+24,5.00%,N,Y,,,Y,OK,0.00%,1.56%
+Perfect,haqqvaloper1hlad6a90jpxtakxj9ql3d5a0t0xdxywqauxyue,0,8002291517515127502101248,8.00229E+24,20.00%,N,Y,,,N,commission>10%,0.00%,
+Blackhox,haqqvaloper1jt70r5w5q56fers0a4z2x95l92v360pw8mg5th,1217333648003074389909014,9218836499838310107827435,8.0015E+24,10.00%,N,Y,,,Y,OK,1.14%,1.56%
+DTEAM,haqqvaloper1gygy6q8dvpmwy6ps2yj8d503up3hssuv9gv6yu,1217333648003074389909014,9218718619933184917017102,8.00138E+24,5.00%,N,Y,,,Y,OK,1.14%,1.56%
+Blockscope.net,haqqvaloper148jpf8e7k4eur8dsxpy26l6mwfuvr2a96s0jht,0,8000525435493076565586503,8.00053E+24,10.00%,N,N,,,N,inactive,0.00%,
+shut down,haqqvaloper10jqmd8rvggegva0r5smarr7avwwa8vce0q5gsh,16070132330631011796324,8016097883705511545095009,8.00003E+24,10.00%,N,N,,,N,"inactive, name_excluded (shut down)",0.02%,
+bitszn-shutdown 31 dec 2025,haqqvaloper15hwc2s2g2ea438l53tlh2kg4uqku09zjmjhxp8,0,8000011837867618999318103,8.00001E+24,20.00%,N,N,,,N,"inactive, commission>10%, name_excluded (shutdown)",0.00%,
+Colossus,haqqvaloper1nvmc3ntrrc6z0af5zw9hgx6nppdstxtrnzw8x9,0,7999702185964902724568664,7.9997E+24,10.00%,N,N,,,N,inactive,0.00%,
+gmocoin,haqqvaloper1f2j8t0ddtak6z9td28wmv60xj6mlykzx65jr8w,1217333648003074389909014,9205073729333694840354495,7.98774E+24,5.00%,N,N,,,N,inactive,1.14%,
+"Shutting down, please redelegate",haqqvaloper1s8xgfux6na326c6xzk62vvn232xgkpdmcht4z6,0,60037031734012114120223,6.0037E+22,5.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+VC Staking,haqqvaloper1xp6jvrut2hmc0zdh4jpkusnquwk6z8t234wwfm,0,37232027569410003719925,3.7232E+22,20.00%,N,Y,,,N,commission>10%,0.00%,
+AlxVoy ⚡ ANODE.TEAM,haqqvaloper1wgm35c4nzs6ssgktd0zj4pefdr3h8ms5252mqc,0,37029230837196407650596,3.70292E+22,5.00%,N,Y,,,Y,OK,0.00%,0.01%
+HAQQEX,haqqvaloper1et7sj4dxrffx0t5l7hgdnw2pwd7q606f56slty,0,34843209958409250926746,3.48432E+22,7.00%,N,N,,,N,inactive,0.00%,
+🔥STAVR🔥,haqqvaloper1yj2hjxsu7gxcdje86hgnm9gn7z09ua9vhjx6pn,0,32902786025569801700276,3.29028E+22,5.00%,N,N,,,N,inactive,0.00%,
+Yurbason,haqqvaloper17m4ezze565jxk3a97f05vu4su5ac9jw2q3w2qk,0,18976688466785000211568,1.89767E+22,5.00%,N,Y,,,Y,OK,0.00%,0.00%
+ENZORO,haqqvaloper1m9snuwx8g5geym778mpug09t8qegc5qnfxd46t,0,18622216071855515733050,1.86222E+22,5.00%,N,N,,,N,inactive,0.00%,
+Endorphine Stake,haqqvaloper1ghsrg40n5k8pyxm3jwlt5fu6mvap0xevrhujw4,0,17860907677407498898176,1.78609E+22,10.00%,N,Y,,,Y,OK,0.00%,0.00%
+CroutonDigital,haqqvaloper1f9hyencljeju20vtwkun0qm93lv9hgdee3k75s,0,10015719239520001478414,1.00157E+22,5.00%,N,Y,,,N,over_32_cap,0.00%,
+Impulse,haqqvaloper1zenrae0nqd0mclna6an3059z66tlrzar5xmkzp,0,9323916086181754129263,9.32392E+21,5.00%,N,N,,,N,inactive,0.00%,
+"Sr20de. Please, redelegate. Validator will be disabled on August 10th",haqqvaloper1kywp78uj28vwwqj82w88zshn2w8p6epz88w08x,0,8671611410365978836721,8.67161E+21,5.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+Shutting down - Please redelegate,haqqvaloper1s83ruez67s2uzt2f0yyz9qd3l60qvu845knns0,0,8575328191508579863512,8.57533E+21,10.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+Cosmos Cats - PLS Redelegate,haqqvaloper1735q3s9ydwzy7fn9q7ng2n9u8dguvdmjk34fxz,0,7229117980136919193687,7.22912E+21,5.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+haqqvaloper1ge409598hsx2gnhkh6jtpjmtlygfrt8en5jcmm,haqqvaloper1ge409598hsx2gnhkh6jtpjmtlygfrt8en5jcmm,0,5096618415572453638584,5.09662E+21,10.00%,N,N,,,N,inactive,0.00%,
+Munris,haqqvaloper1lfkml7c2gkjgjv3edtf6304etcxrdg4zc53kyq,0,3649914330201716376928,3.64991E+21,5.00%,N,N,,,N,inactive,0.00%,
+breskulpeak.com,haqqvaloper1kzu8wtwzcsjszelx82pa6yleq8h7mk4vx9y2sq,0,3453382669687722254990,3.45338E+21,10.00%,N,N,,,N,inactive,0.00%,
+CatalystiX,haqqvaloper1kh3l4eslccd3usnvejpa4c9elg04hw8kcavlnp,0,3311927256305440452256,3.31193E+21,5.00%,N,N,,,N,inactive,0.00%,
+Lefey,haqqvaloper1mhakrdp2rkzyztk85aux5ffs7xgwtp6hkzpr05,0,3250634185722499525601,3.25063E+21,10.00%,N,N,,,N,inactive,0.00%,
+Please undelegate,haqqvaloper128fmtp0swncy2v7vfzyh5p48fv5d07esupf9kd,0,2839066830968736010316,2.83907E+21,10.00%,N,N,,,N,"inactive, name_excluded (undelegate)",0.00%,
+Baraka.Fund,haqqvaloper1te388p3alf4hzh4v7082ta72fez0rkyfy6n27n,0,2448403271441830540302,2.4484E+21,5.00%,N,N,,,N,inactive,0.00%,
+AKNodes,haqqvaloper1067vtx6qeqs0vdx856jhc4cz47qmvvd9h5la3p,0,1929679268341595644534,1.92968E+21,10.00%,N,Y,,,N,bottom_5%_stake,0.00%,
+IONode Vietnam,haqqvaloper1l885776etks7m07etq92l796g7vpwul93g9y8g,0,1825925148531372075401,1.82593E+21,5.00%,N,N,,,N,inactive,0.00%,
+ZipX,haqqvaloper1stkyjmnkclfqkfacwdaa0qxu7ws0qrc787v2pw,0,1482911970405429900881,1.48291E+21,10.00%,N,N,,,N,inactive,0.00%,
+Haqq on AlibabaCloud,haqqvaloper1cac5p3kze5r4mdq42y7tt47taq5mt492mw3g52,0,1387184702007304555935,1.38718E+21,5.00%,N,N,,,N,inactive,0.00%,
+Seasting,haqqvaloper184pp3s8tq8dav6y3xth84c9xt4g2fqp4waxsmn,0,1244045804016666417710,1.24405E+21,5.00%,N,N,,,N,inactive,0.00%,
+⚠️Please Redelegate⚠️,haqqvaloper1rq2sayu679swqpew9snt4l8y28zq7jyqvmensh,0,1212527695251554904362,1.21253E+21,10.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+Unbonding,haqqvaloper1wahgc5eatetv20np6wd4wl2drtdn7766krzuhg,0,1195933014102171447410,1.19593E+21,10.00%,N,N,,,N,inactive,0.00%,
+StingRay,haqqvaloper1fvh4dyafkefk5z8yvldvmjrd2fypcd3wzl2v4q,0,1159603042883836369901,1.1596E+21,5.00%,N,N,,,N,inactive,0.00%,
+Craving_for_Knowledge,haqqvaloper1hwtug39cy28zypplj0ytu49k4ddw0cw2rl8lnj,0,1121400923803329712430,1.1214E+21,5.00%,N,N,,,N,inactive,0.00%,
+Jocker | ND,haqqvaloper1gx2r4amu7kckr4r8ejd28gceskpvn28qecqzcf,0,1091213752353561446692,1.09121E+21,5.00%,N,N,,,N,inactive,0.00%,
+archebald💚🌙,haqqvaloper1ndjf5ws9y2s56dxsjcsef2rfc4476jtf274f7r,0,985645306159999377452,9.85645E+20,6.00%,N,N,,,N,inactive,0.00%,
+NodeX Emperor,haqqvaloper1rg5mfq3993ejm8h5ggz4u7zrdev52zxrskxlwp,0,978492432095412449371,9.78492E+20,5.00%,N,N,,,N,inactive,0.00%,
+VitaValeriya,haqqvaloper18k4qjmancvhfy99qjv2uzdxjgjwav0hlwq7rws,0,936304422491900325831,9.36304E+20,5.00%,N,N,,,N,inactive,0.00%,
+Redelagate pls!,haqqvaloper1dst2tpserk080w4yh7xcusecqdf7yegpw424xj,0,935718765421116354290,9.35719E+20,5.00%,N,N,,,N,inactive,0.00%,
+Oldcat,haqqvaloper1y5plmnldwsdfwrspwzye7sg73j398jh8j6r42r,0,800390813920921964628,8.00391E+20,5.00%,N,Y,,,N,bottom_5%_stake,0.00%,
+wb3addctd,haqqvaloper1qeg22wec94yauguddjc6eqrd4l45d4yguzxahx,0,772300230828691161059,7.723E+20,10.00%,N,N,,,N,inactive,0.00%,
+ERTstake,haqqvaloper1g8lenuvtz3gse2dhvwh7taxypv9yzz8xgc0pp4,0,761539660090308651970,7.6154E+20,5.00%,N,N,,,N,inactive,0.00%,
+OneNov,haqqvaloper1cf7x23t97zerhh7pq0v2vwlxdppnvrawj9duch,0,735223723486892761581,7.35224E+20,5.00%,N,N,,,N,inactive,0.00%,
+Securestake,haqqvaloper19tx7harddqw6g80tvcm30ktqzwp526why06r4c,0,666073240654511948265,6.66073E+20,10.00%,N,N,,,N,inactive,0.00%,
+sumoaps,haqqvaloper1hhycj4aea0j7hemvtsf89rf4lujhw0atfvwh08,0,5.81933E+20,5.81933E+20,10.00%,N,N,,,N,inactive,0.00%,
+⭐️ PPNV Service ⭐️,haqqvaloper1zukfp0ht5nx6vlkx0lkcwgc5pyd9m6r6sdh0rj,0,567937671185860814167,5.67938E+20,10.00%,N,N,,,N,inactive,0.00%,
+Mertsalov,haqqvaloper1e5z3re0e7wzy8ylmkf4e5v9ev6yp6kgsupg9qr,0,530003600597500000004,5.30004E+20,5.00%,N,N,,,N,inactive,0.00%,
+Nodetropolis,haqqvaloper14rfd0vvjv8y79mnyhn07387hyh96j3023rha9e,0,4.69945E+20,4.69945E+20,5.00%,N,N,,,N,inactive,0.00%,
+Noderunners,haqqvaloper1cmqgverauqy0q8dq22zpsztgs5vwdk2tp9uc70,0,464085798795000000002,4.64086E+20,10.00%,N,N,,,N,inactive,0.00%,
+Nodes_Georgia,haqqvaloper13kukpp9a5s6dhy93es8ys8v00rtz0t4mhkcdr9,0,360014950399999148038,3.60015E+20,5.00%,N,N,,,N,inactive,0.00%,
+Baraka.Fund,haqqvaloper1xcj8wgmgjrujvzm6s4u7wjtqud9g8575m5tdaw,0,357946492129217236444,3.57946E+20,5.00%,N,N,,,N,inactive,0.00%,
+Aurie,haqqvaloper1w5uz0efrd6r0dgd78vm3mnlk60rfue730ey4gq,0,3.36425E+20,3.36425E+20,10.00%,N,N,,,N,inactive,0.00%,
+Khandyga,haqqvaloper1dxcewxnxx0000z82jrx3jr5kcj0ljxzyzq93rf,0,270467200505140760685,2.70467E+20,10.00%,N,N,,,N,inactive,0.00%,
+Nodemonster,haqqvaloper1p05udkejvuck2ggc8kp08tccm6qya6spr4aqla,0,261549412798361346824,2.61549E+20,10.00%,N,N,,,N,inactive,0.00%,
+SazakiMaeda,haqqvaloper1pvn6nhkltp0qdjaveyvg266djmfc5f0xxrzz2g,0,212473417164999737863,2.12473E+20,5.00%,N,N,,,N,inactive,0.00%,
+Blockstake,haqqvaloper1rw89lqk7x4d7e5urrp0uz7t3vh37kag63xfkyf,0,207292725589285785344,2.07293E+20,10.00%,N,N,,,N,inactive,0.00%,
+Stopped validator,haqqvaloper1thddxhtv6gglqljhwl09azk6y6al7rtdwnlll4,0,202268350152500000002,2.02268E+20,5.00%,N,N,,,N,inactive,0.00%,
+non-delegate,haqqvaloper1v8zq30spw89xwv5jgzmajwmwgr0j7wyc28sm72,0,1.48987E+20,1.48987E+20,5.00%,N,N,,,N,inactive,0.00%,
+Stakinginstitution,haqqvaloper1fx3t5s7qdx8kukc7dte823ue7pmk50xmu659ee,0,117475629933415771137,1.17476E+20,10.00%,N,N,,,N,inactive,0.00%,
+disabled,haqqvaloper1x0fyxnnwv5fkekeuu8rjd8z3frqynh26fp9ush,0,1.12559E+20,1.12559E+20,8.00%,N,N,,,N,inactive,0.00%,
+Falcon,haqqvaloper1eg4a0ucr4ep75te3vq4pjcf8lpw82ccu0cg9py,0,110081608563750843364,1.10082E+20,5.00%,N,N,,,N,inactive,0.00%,
+Stakesphere.io,haqqvaloper1yxkxkhxm57tw2exq37h8wfe45s38zlujg5ng3k,0,108562632060462621771,1.08563E+20,10.00%,N,N,,,N,inactive,0.00%,
+None,haqqvaloper1xsn2j75ua56zwgh3a8pqnsmchp80sgc58l2xwn,0,96420693890002737870,9.64207E+19,5.00%,N,N,,,N,inactive,0.00%,
+Dexedrine,haqqvaloper1vxz7aufkv685l3wgdspgfp5wd83jje29yvn90c,0,8.19918E+19,8.19918E+19,5.00%,N,N,,,N,inactive,0.00%,
+Halal Staking,haqqvaloper15usjx87zs6872dst83uu86ngn83lj9g36cdxsf,0,77873340558619961499,7.78733E+19,7.00%,N,N,,,N,inactive,0.00%,
+dimasik,haqqvaloper1cy870ewyk84uq88y38mayujq4n6cxasmnd2r7w,0,61909491087753002227,6.19095E+19,9.00%,N,N,,,N,inactive,0.00%,
+suryaone,haqqvaloper1qxt7awul3cyvgf2ku08k3n3nqn7lsqvsuzy5hz,0,51051208399999995445,5.10512E+19,5.00%,N,N,,,N,inactive,0.00%,
+StakeLab.zone,haqqvaloper1fnc77q7gmvx7sw6xyyxu88ap2nfwg7m77cv5df,0,4.9995E+19,4.9995E+19,5.00%,N,N,,,N,inactive,0.00%,
+Shutting down - Please redelegate,haqqvaloper1apzgelzzh068rwxkpq23zhnsz3way3nfndtqzl,0,46716213545947943810,4.67162E+19,5.00%,N,N,,,N,"inactive, name_excluded (redelegate)",0.00%,
+Thestakingcompany,haqqvaloper14cppjj98425p5ehpqyzmgmat6vrptdfjsn7anw,0,4.38128E+19,4.38128E+19,10.00%,N,N,,,N,inactive,0.00%,
+Niloki,haqqvaloper107wyg35t7qp9aru7rfx494p9858qhppune4038,0,42072889622703580000,4.20729E+19,5.00%,N,N,,,N,inactive,0.00%,
+dnsarz,haqqvaloper1kk4j6t8gsd6t3x2lun8pgpa5hee2nw3x6udm8z,0,38493875732499840011,3.84939E+19,8.00%,N,N,,,N,inactive,0.00%,
+Elektra,haqqvaloper1hz4ereq8mu0myzjgty3khenpqmsw4ytja2cwq8,0,25495898195001000006,2.54959E+19,5.00%,N,N,,,N,inactive,0.00%,
+blxpro,haqqvaloper1e6wzw6dtht3yq9p04435p38w09h0vkx972pkgh,0,25207189595000262146,2.52072E+19,5.00%,N,N,,,N,inactive,0.00%,
+Stakesphere,haqqvaloper1e25lq3d8s6efw7vnzr963xxpekzze9mvrptk5r,0,18629493790431788201,1.86295E+19,10.00%,N,N,,,N,inactive,0.00%,
+val07,haqqvaloper1kha6ylsm0xhlfl3ugfpzr9zw4ccztdfnj8xee8,0,17039204200000000003,1.70392E+19,11.00%,N,N,,,N,"inactive, commission>10%",0.00%,
+DTeam,haqqvaloper1uz0evf7hj0206vq5ntu3thcdu0lxvjwdvrlr7l,0,16725999999999908902,1.6726E+19,5.00%,N,N,,,N,inactive,0.00%,
+val06,haqqvaloper1r8xxrz778vlgnmv524xakrqtsf3nyrvzeyu45x,0,16203099999999985007,1.62031E+19,11.00%,N,N,,,N,"inactive, commission>10%",0.00%,
+val04,haqqvaloper165x9x0tf6yjta3st5g84yhu0v5np26kqpxw5de,0,14957169999999995559,1.49572E+19,11.00%,N,N,,,N,"inactive, commission>10%",0.00%,
+val05,haqqvaloper1a9ejnxsmhhj4r4qp8p8ugmw335r2vd53j7zurp,0,13277504199999999999,1.32775E+19,11.00%,N,N,,,N,"inactive, commission>10%",0.00%,
+Testnode,haqqvaloper1dyq9zqjyx2rqw8hr0ur9e5zkkp0959g40cj3lf,0,12403719167981000007,1.24037E+19,10.00%,N,N,,,N,inactive,0.00%,
+Indonode,haqqvaloper1hmfc7ezjxpsjprzetayr9ra8ufwgrxee7qhjpt,0,10970064125000000005,1.09701E+19,5.00%,N,N,,,N,inactive,0.00%,
+val03,haqqvaloper1g37gqvjnu5m2jcu4umrdv6ggma65v8nw7jjut9,0,1.08396E+19,1.08396E+19,11.00%,N,N,,,N,"inactive, commission>10%",0.00%,
+Gnom Validator,haqqvaloper19tkgz6fvpvqp5fse5tdf5mcd74vmrf8knctkzy,0,1.0009E+19,1.0009E+19,5.00%,N,N,,,N,inactive,0.00%,
+NodeCtrl,haqqvaloper18um2dml6uezstnpya8kcd8sg0m4n5enpg339rv,0,8550834999999982221,8.55083E+18,5.00%,N,N,,,N,inactive,0.00%,
+HakeemStaking,haqqvaloper1quhv0lqfaz7d0xfgx8tmg0kkxn5r8x3ggzcm74,0,6.9993E+18,6.9993E+18,10.00%,N,N,,,N,inactive,0.00%,
+HashCloud,haqqvaloper1slfwfjvv49tdk2w7dpkklppeg42v6q4sn2tpq9,0,6258379999999915562,6.25838E+18,10.00%,N,N,,,N,inactive,0.00%,
+Shishir,haqqvaloper1z6fvdjhn2zwatewmm9ev504s0ruagvad7jm6w4,0,6148751589009986660,6.14875E+18,5.00%,N,N,,,N,inactive,0.00%,
+test11,haqqvaloper1u22vuxdvuuuk7awjcgepep999xnm2we6vuc3v8,0,5860500000019995552,5.8605E+18,5.00%,N,N,,,N,inactive,0.00%,
+testing,haqqvaloper1wdkzvc4rrwumzah9lfehrmt7v4hgr6fjgzuhnp,0,3459699999999960008,3.4597E+18,5.00%,N,N,,,N,inactive,0.00%,
+Elektro,haqqvaloper1suv7qzwx66vzhk3patrlnukslxj067efldty3q,0,1937877232500999999,1.93788E+18,10.00%,N,N,,,N,inactive,0.00%,
+Multival,haqqvaloper1jvmdjr86sd4yppr0cmrq8svf2ygwahp350dh92,0,1.0999E+18,1.0999E+18,5.00%,N,N,,,N,inactive,0.00%,
+Stopped Validator,haqqvaloper1yn0agdfyyg0eyjxfy6f32mk92mjy0myfcc7peh,0,9.79096E+17,9.79096E+17,10.00%,N,N,,,N,inactive,0.00%,
+test-val,haqqvaloper1f02pm8lfem8sca7ytsp3ak0d9xv782kw22htvs,0,851111111111111109,8.51111E+17,5.00%,N,N,,,N,inactive,0.00%,
+DavidsNode,haqqvaloper1rcafgcfmyn32frznu7h6vsxt3haza90t6lwrrm,0,7.56371E+15,7.56371E+15,5.00%,N,N,,,N,inactive,0.00%,
+Baraka.Fund,haqqvaloper1a8q75jz2tjvyy80nkwtwwn5jsa22kgrh7r4nc8,0,6263730000999874,6.26373E+15,5.00%,N,N,,,N,inactive,0.00%,
+Start-Staking.cc,haqqvaloper1plda7hy5z989fhsulmr7wtve3wxrax9yayutym,0,1000000,1000000,5.00%,N,N,,,N,inactive,0.00%,
+None,haqqvaloper1f924vjfezwct6xqucp0yt8rf2lgtktu0flly5d,0,1000000,1000000,10.00%,N,N,,,N,inactive,0.00%,
+Baraka.Test2,haqqvaloper1setqm8p7vxuw5fwhxjc9p8zslfly6hgdk44u59,0,10,10,5.00%,N,N,,,N,inactive,0.00%,
+Baraka.Test2,haqqvaloper1n0xajcys3dlfhv974y5g9xa4exwtywnz6vhzc3,0,10,10,5.00%,N,N,,,N,inactive,0.00%,
