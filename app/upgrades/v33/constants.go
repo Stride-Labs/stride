@@ -1,3 +1,9 @@
+// REHEARSAL ONLY — DO NOT MERGE
+// This branch (poa-migration-ig-tests) replaces ExpectedValidatorCount and
+// AdminMultisigAddress with test-only values. Shipping these to mainnet
+// would point the v33 upgrade handler at the wrong admin and the wrong
+// validator count. See app/upgrades/v33/validators.json.REHEARSAL_ONLY.
+
 package v33
 
 import (
@@ -10,11 +16,11 @@ const UpgradeName = "v33"
 
 // AdminMultisigAddress is the bech32 address that POA recognizes as its admin
 // post-upgrade
-const AdminMultisigAddress = "stride1fduug6m38gyuqt3wcgc2kcgr9nnte0n7ssn27e"
+const AdminMultisigAddress = "stride1u20df3trc2c2zdhm8qvh2hdjx9ewh00sv6eyy8"
 
 // ExpectedValidatorCount is enforced by the upgrade handler. Panics if
 // consumerKeeper.GetAllCCValidator returns a different count.
-const ExpectedValidatorCount = 8
+const ExpectedValidatorCount = 3
 
 //go:embed validators.json
 var validatorsJSON []byte

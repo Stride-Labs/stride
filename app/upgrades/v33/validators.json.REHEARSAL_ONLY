@@ -1,0 +1,17 @@
+REHEARSAL ONLY — DO NOT MERGE
+
+This branch (poa-migration-ig-tests) replaces the 8 mainnet validators in
+validators.json with 3 test validators that match cons keys pinned in
+integration-tests/network/configs/keys.json::cons_keys. Shipping this
+file to mainnet would point the v33 upgrade handler at fictional
+validators and halt the upgrade.
+
+Companion files modified on this branch:
+  - app/upgrades/v33/constants.go (ExpectedValidatorCount, AdminMultisigAddress)
+  - utils/poa.go (PoaValidatorSet)
+
+Pre-merge sanity check on any v33-related PR:
+  git diff main..poa-migration-ig-tests -- \
+    app/upgrades/v33/validators.json \
+    app/upgrades/v33/constants.go \
+    utils/poa.go

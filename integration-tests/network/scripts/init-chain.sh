@@ -78,6 +78,17 @@ add_validators() {
             $BINARY init $name --chain-id $CHAIN_ID --overwrite --home ${validator_home} &> /dev/null
         fi
 
+        # ig-tests POA upgrade: overwrite the auto-generated stride cons
+        # key with the pinned blob from keys.json::cons_keys[i-1]. This
+        # makes the consensus hex addresses match the values baked into
+        # app/upgrades/v33/validators.json. Hub/osmosis keep their
+        # auto-generated keys.
+        if [[ "$CHAIN_NAME" == "stride" ]]; then
+            cons_key_index=$((i - 1))
+            jq -r ".cons_keys[$cons_key_index]" ${KEYS_FILE} \
+                > ${validator_home}/config/priv_validator_key.json
+        fi
+
         # Save the node IDs and keys to the API
         $BINARY tendermint show-node-id --home ${validator_home} > node_id.txt
         upload_shared_file node_id.txt ${NODE_IDS_DIR}/${CHAIN_NAME}/${name}.txt 

@@ -54,7 +54,7 @@ func TestUpgradeTestSuite(t *testing.T) {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	// ----- arrange -----
-	s.setupICSValidatorSet(8)
+	s.setupICSValidatorSet(3)
 	s.setupGovenatorState(3)
 	s.setupConsumerRewardAccounts()
 	s.setupActiveGovProposal()
@@ -81,13 +81,13 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 
 func (s *UpgradeTestSuite) checkPOAValidatorsMatchICSSnapshot() {
 	ccVals := s.App.ConsumerKeeper.GetAllCCValidator(s.Ctx)
-	s.Require().Len(ccVals, 8, "ICS seed should have 8 validators after seeding")
+	s.Require().Len(ccVals, 3, "ICS seed should have 3 validators after seeding")
 
 	poaVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
 	s.Require().NoError(err)
-	// Pre-existing test genesis validator + 8 newly seeded ICS validators.
-	s.Require().Len(poaVals, s.initialPOAValidatorCount+8,
-		"POA should have initialCount + 8 validators after upgrade")
+	// Pre-existing test genesis validator + 3 newly seeded ICS validators.
+	s.Require().Len(poaVals, s.initialPOAValidatorCount+3,
+		"POA should have initialCount + 3 validators after upgrade")
 
 	// Build a lookup of POA validators by their consensus address so we can
 	// check each ICS validator is present with the correct pubkey and power.
@@ -187,7 +187,7 @@ func (s *UpgradeTestSuite) checkValidatorSetContinuity() {
 	// boundary, so EndBlocker at block N+1 would return [] (nothing queued).
 	// In the unit-test environment we stay in the same sdk.Context across the
 	// upgrade, so the transient store is never wiped and EndBlocker instead
-	// returns the 9 updates queued during InitGenesis (1 genesis + 8 ICS).
+	// returns the 4 updates queued during InitGenesis (1 genesis + 3 ICS).
 	//
 	// We therefore assert on _content_ rather than emptiness: the updates must
 	// correspond 1-to-1 with the ICS validators we seeded (subset check), plus
@@ -196,8 +196,8 @@ func (s *UpgradeTestSuite) checkValidatorSetContinuity() {
 	// fail the length check below.
 	updates, err := s.App.POAKeeper.EndBlocker(s.Ctx)
 	s.Require().NoError(err)
-	s.Require().Len(updates, s.initialPOAValidatorCount+8,
-		"POA EndBlocker should have exactly initialCount+8 queued updates (1 genesis + 8 ICS); got %d", len(updates))
+	s.Require().Len(updates, s.initialPOAValidatorCount+3,
+		"POA EndBlocker should have exactly initialCount+3 queued updates (1 genesis + 3 ICS); got %d", len(updates))
 
 	// Build a set of CometBFT pubkey bytes from updates for O(1) lookup.
 	updatePubKeySet := make(map[string]int64, len(updates))
@@ -371,7 +371,7 @@ func (s *UpgradeTestSuite) setupActiveGovProposal() {
 // delegation count so checkGovenatorStateUntouched can assert nothing changed.
 func (s *UpgradeTestSuite) capturePreUpgradeState() {
 	// Record how many POA validators exist before the upgrade handler adds the
-	// 8 ICS-migrated ones (the genesis bootstrap seeds 1 test validator).
+	// 3 ICS-migrated ones (the genesis bootstrap seeds 1 test validator).
 	initialVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
 	s.Require().NoError(err)
 	s.initialPOAValidatorCount = len(initialVals)

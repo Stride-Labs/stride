@@ -33,7 +33,7 @@ func TestHelpersTestSuite(t *testing.T) {
 }
 
 func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
-	s.seedConsumerValidators(8)
+	s.seedConsumerValidators(3)
 
 	// Map each seeded consensus address to one of the real monikers in
 	// utils.PoaValidatorSet so SnapshotValidatorsFromICS can complete the
@@ -55,7 +55,7 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
 
 	poaValidators, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
 	s.Require().NoError(err)
-	s.Require().Len(poaValidators, 8)
+	s.Require().Len(poaValidators, 3)
 
 	for _, val := range poaValidators {
 		s.Require().NotNil(val.PubKey)
@@ -74,15 +74,15 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
 }
 
 func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_TooManyValidators() {
-	s.seedConsumerValidators(9)
+	s.seedConsumerValidators(4) // expecting 3
 
 	_, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
 	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "expected at most 8 validators")
+	s.Require().Contains(err.Error(), "expected at most 3 validators")
 }
 
 func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_MissingMoniker() {
-	s.seedConsumerValidators(8)
+	s.seedConsumerValidators(3)
 	// Do NOT populate ValidatorMonikers — every validator hex_cons_addr lookup
 	// will miss, which should now halt the upgrade rather than silently
 	// produce empty monikers.
@@ -93,7 +93,7 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_MissingMoniker() {
 }
 
 func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_UnknownMoniker() {
-	s.seedConsumerValidators(8)
+	s.seedConsumerValidators(3)
 
 	// Populate monikers but use a value that does NOT appear in
 	// utils.PoaValidatorSet — this catches drift between the two sources of
@@ -157,7 +157,7 @@ func (s *HelpersTestSuite) TestInitializePOA_HappyPath() {
 	s.Require().NoError(err)
 	initialCount := len(initialVals)
 
-	s.seedConsumerValidators(8)
+	s.seedConsumerValidators(3)
 
 	// SnapshotValidatorsFromICS now requires every CCValidator to map to a
 	// real moniker + operator. Wire that up before the call.
@@ -180,8 +180,8 @@ func (s *HelpersTestSuite) TestInitializePOA_HappyPath() {
 
 	storedVals, err := s.App.POAKeeper.GetAllValidators(s.Ctx)
 	s.Require().NoError(err)
-	// InitializePOA should have added exactly 8 new validators from ICS.
-	s.Require().Len(storedVals, initialCount+8)
+	// InitializePOA should have added exactly 3 new validators from ICS.
+	s.Require().Len(storedVals, initialCount+3)
 
 	params, err := s.App.POAKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err)
