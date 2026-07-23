@@ -244,6 +244,52 @@ func SortUnbondingCapacityByPriority(validatorUnbondCapacity []ValidatorUnbondCa
 	return validatorUnbondCapacity, nil
 }
 
+// UndelegationSharesSafetyDivisor determines the rounding buffer that is left behind when fully
+// draining a slashed validator: buffer = fullAmount / divisor (with a floor of 1 base unit).
+// At 1e17 this leaves at most ~1e-17 of the delegation undelegated, which comfortably covers the
+// worst-case shares rounding error (bounded by delegatorShares * 1e-18) while being economically
+// negligible. The un-drained dust remains delegated and is reconciled by the next calibration.
+var UndelegationSharesSafetyDivisor = sdkmath.NewInt(100_000_000_000_000_000)
+
+// applySharesRoundingSafety guards against the host staking module rejecting a full-balance
+// MsgUndelegate with "invalid shares amount" (ABCI code 18).
+//
+// Stride tracks each validator's delegation in native tokens, derived from the delegator shares
+// times an 18-decimal SharesToTokensRate. For a slashed validator (rate < 1) that stored rate
+// rounds slightly above the validator's exact on-chain tokens/shares ratio, so the tracked token
+// amount can imply marginally MORE shares than the ICA actually holds. When the validator is being
+// fully drained (weight 0), undelegating the full tracked amount then fails ValidateUnbondAmount
+// (sharesFromTokensTruncated(amount) > delegation.shares). Because undelegations are submitted as a
+// single atomic ICA, one such message reverts the whole batch and strands every redemption in it.
+//
+// To stay safe we leave a tiny rounding buffer on full drains of slashed validators only. The
+// remainder cascades to the next validator in GetUnbondingICAMessages, so the full redemption
+// amount is still unbonded (this relies on total real delegation >= total unbond amount, which
+// holds because every redemption is backed by real stake).
+func (k Keeper) applySharesRoundingSafety(
+	hostZone types.HostZone,
+	validatorCapacity ValidatorUnbondCapacity,
+	unbondAmount sdkmath.Int,
+) sdkmath.Int {
+	// Only relevant when this undelegation drains the validator's entire tracked delegation
+	if validatorCapacity.CurrentDelegation.IsNil() || !unbondAmount.Equal(validatorCapacity.CurrentDelegation) {
+		return unbondAmount
+	}
+	validator, _, found := GetValidatorFromAddress(hostZone.Validators, validatorCapacity.ValidatorAddress)
+	if !found || validator.SharesToTokensRate.IsNil() || !validator.SharesToTokensRate.LT(sdkmath.LegacyOneDec()) {
+		return unbondAmount
+	}
+	buffer := unbondAmount.Quo(UndelegationSharesSafetyDivisor)
+	if buffer.IsZero() {
+		buffer = sdkmath.OneInt()
+	}
+	// Never buffer the amount down to zero
+	if buffer.GTE(unbondAmount) {
+		return unbondAmount
+	}
+	return unbondAmount.Sub(buffer)
+}
+
 // Given a total unbond amount and list of unbond capacity for each validator, sorted by unbond priority
 // Iterates through the list and unbonds as much as possible from each validator until all the
 // unbonding has been accounted for
@@ -270,6 +316,11 @@ func (k Keeper) GetUnbondingICAMessages(
 		} else {
 			unbondAmount = remainingUnbondAmount
 		}
+
+		// Leave a rounding buffer when fully draining a slashed validator so the host doesn't
+		// reject the MsgUndelegate with "invalid shares amount" (see applySharesRoundingSafety)
+		unbondAmount = k.applySharesRoundingSafety(hostZone, validatorCapacity, unbondAmount)
+
 		remainingUnbondAmount = remainingUnbondAmount.Sub(unbondAmount)
 
 		// Build the validator splits for the callback
