@@ -23,7 +23,6 @@ import (
 	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
 	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler returns the v33 upgrade handler that migrates Stride
@@ -133,14 +132,20 @@ func ReconcileOsmosisDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper, rk r
 	for _, reconciliation := range OsmosisPhantomDelegations {
 		validator, index, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, reconciliation.Address)
 		if !found {
-			return errorsmod.Wrapf(stakeibctypes.ErrValidatorNotFound,
-				"validator %s (%s) not found on %s", reconciliation.Name, reconciliation.Address, OsmosisChainId)
+			// A drifted constant must never halt the upgrade — log loudly and skip this validator.
+			ctx.Logger().Error(fmt.Sprintf(
+				"v33: validator %s (%s) not found on %s — skipping its reconciliation",
+				reconciliation.Name, reconciliation.Address, OsmosisChainId))
+			continue
 		}
-		// Guard against a stale constant: we should only ever be REDUCING a phantom, never inflating.
+		// Guard against a stale constant: we only ever REDUCE a phantom, never inflate. On drift
+		// (tracked already at/below the constant) we skip this validator rather than halt the upgrade.
 		if validator.Delegation.IsNil() || validator.Delegation.LT(reconciliation.OnChainDelegation) {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-				"validator %s tracked delegation %v is below the expected on-chain amount %v; re-verify constants",
-				reconciliation.Address, validator.Delegation, reconciliation.OnChainDelegation)
+			ctx.Logger().Error(fmt.Sprintf(
+				"v33: validator %s tracked delegation %v is below expected on-chain amount %v — "+
+					"re-verify constants; skipping its reconciliation",
+				reconciliation.Address, validator.Delegation, reconciliation.OnChainDelegation))
+			continue
 		}
 
 		reduction := validator.Delegation.Sub(reconciliation.OnChainDelegation)

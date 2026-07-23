@@ -444,3 +444,72 @@ func (s *UpgradeTestSuite) TestReconcileOsmosisDelegations_Idempotent() {
 	s.Require().Equal(firstTotal, hostZoneAfter.TotalDelegations, "second run must not change TotalDelegations")
 	s.Require().Len(s.osmoDelegationQueueRecords(), 1, "second run must not create another deposit record")
 }
+
+// A drifted constant (tracked delegation below the expected on-chain amount) must skip that
+// validator and still reconcile the rest, rather than halting the upgrade.
+func (s *UpgradeTestSuite) TestReconcileOsmosisDelegations_SkipsDriftedValidator() {
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
+		EpochIdentifier: epochstypes.STRIDE_EPOCH,
+		EpochNumber:     42,
+	})
+
+	// pryzm tracked below its on-chain constant → drift → must be skipped
+	driftedPryzm := v33.OsmosisPhantomDelegations[2].OnChainDelegation.Sub(sdkmath.NewInt(1))
+	trackedTotal := trackedCosmostation.Add(trackedChorusOne).Add(driftedPryzm)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:          v33.OsmosisChainId,
+		HostDenom:        "uosmo",
+		TotalDelegations: trackedTotal,
+		Validators: []*stakeibctypes.Validator{
+			{Address: cosmostation, Delegation: trackedCosmostation},
+			{Address: chorusOne, Delegation: trackedChorusOne},
+			{Address: pryzm, Delegation: driftedPryzm},
+		},
+	})
+
+	err := v33.ReconcileOsmosisDelegations(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper)
+	s.Require().NoError(err, "drift must be skipped, not an error")
+
+	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v33.OsmosisChainId)
+	delegations := map[string]sdkmath.Int{}
+	for _, v := range hostZone.Validators {
+		delegations[v.Address] = v.Delegation
+	}
+	s.Require().Equal(sdkmath.ZeroInt(), delegations[cosmostation], "cosmostation still reconciled")
+	s.Require().Equal(sdkmath.ZeroInt(), delegations[chorusOne], "chorus_one still reconciled")
+	s.Require().Equal(driftedPryzm, delegations[pryzm], "drifted pryzmstakedrop left untouched")
+
+	// Credit reflects only the two reductions that were actually applied
+	appliedReduction := trackedCosmostation.Add(trackedChorusOne)
+	s.Require().Equal(trackedTotal.Sub(appliedReduction), hostZone.TotalDelegations, "TotalDelegations reduced only by applied reductions")
+	records := s.osmoDelegationQueueRecords()
+	s.Require().Len(records, 1)
+	s.Require().Equal(appliedReduction, records[0].Amount, "credit equals only the applied reductions")
+}
+
+// A phantom validator absent from the host zone must be skipped, with the rest still reconciled.
+func (s *UpgradeTestSuite) TestReconcileOsmosisDelegations_SkipsMissingValidator() {
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
+		EpochIdentifier: epochstypes.STRIDE_EPOCH,
+		EpochNumber:     42,
+	})
+
+	// pryzm is not on the host zone at all → skipped
+	trackedTotal := trackedCosmostation.Add(trackedChorusOne)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+		ChainId:          v33.OsmosisChainId,
+		HostDenom:        "uosmo",
+		TotalDelegations: trackedTotal,
+		Validators: []*stakeibctypes.Validator{
+			{Address: cosmostation, Delegation: trackedCosmostation},
+			{Address: chorusOne, Delegation: trackedChorusOne},
+		},
+	})
+
+	err := v33.ReconcileOsmosisDelegations(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper)
+	s.Require().NoError(err, "missing validator must be skipped, not an error")
+
+	records := s.osmoDelegationQueueRecords()
+	s.Require().Len(records, 1)
+	s.Require().Equal(trackedTotal, records[0].Amount, "credit equals the reductions for the present validators")
+}
