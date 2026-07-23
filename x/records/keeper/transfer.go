@@ -10,9 +10,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v32/x/records/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/x/records/types"
 )
 
 // Timeout for the IBC transfer of the LSM Token to the host zone

@@ -50,7 +50,7 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	strideapp "github.com/Stride-Labs/stride/v32/app"
+	strideapp "github.com/Stride-Labs/stride/v33/app"
 )
 
 const (

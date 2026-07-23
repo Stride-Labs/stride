@@ -25,7 +25,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/Stride-Labs/stride/v32/testutil"
+	"github.com/Stride-Labs/stride/v33/testutil"
 )
 
 const (

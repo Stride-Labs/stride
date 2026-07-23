@@ -20,16 +20,16 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	v10 "github.com/Stride-Labs/stride/v32/app/upgrades/v10"
-	"github.com/Stride-Labs/stride/v32/utils"
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	v10 "github.com/Stride-Labs/stride/v33/app/upgrades/v10"
+	"github.com/Stride-Labs/stride/v33/utils"
+	claimtypes "github.com/Stride-Labs/stride/v33/x/claim/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	recordskeeper "github.com/Stride-Labs/stride/v33/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 var initialRateLimitChannelValue = sdkmath.NewInt(1_000_000)

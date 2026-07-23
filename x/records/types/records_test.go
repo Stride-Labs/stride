@@ -7,7 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/x/records/types"
+	"github.com/Stride-Labs/stride/v33/x/records/types"
 )
 
 func TestShouldInitiateUnbonding(t *testing.T) {

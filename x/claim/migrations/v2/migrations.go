@@ -7,8 +7,8 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v32/x/claim/migrations/v2/types"
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v33/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v33/x/claim/types"
 )
 
 func migrateClaimParams(store storetypes.KVStore, cdc codec.Codec) error {

@@ -7,12 +7,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v32/x/staketia/keeper"
-	oldtypes "github.com/Stride-Labs/stride/v32/x/staketia/legacytypes"
-	"github.com/Stride-Labs/stride/v32/x/staketia/types"
+	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/x/staketia/keeper"
+	oldtypes "github.com/Stride-Labs/stride/v33/x/staketia/legacytypes"
+	"github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) TestUpdateStakeibcHostZone() {

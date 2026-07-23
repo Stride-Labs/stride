@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	"github.com/Stride-Labs/stride/v32/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	"github.com/Stride-Labs/stride/v33/x/airdrop/types"
 )
 
 // User transaction to claim all the pending airdrop rewards up to the current day

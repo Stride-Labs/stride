@@ -3,7 +3,7 @@ package client
 import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/client/cli"
 )
 
 var (

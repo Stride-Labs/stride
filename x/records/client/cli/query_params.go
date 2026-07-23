@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/Stride-Labs/stride/v32/x/records/types"
+	"github.com/Stride-Labs/stride/v33/x/records/types"
 )
 
 func CmdQueryParams() *cobra.Command {

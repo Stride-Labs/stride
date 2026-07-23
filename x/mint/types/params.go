@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
 )
 
 // Parameter store keys.

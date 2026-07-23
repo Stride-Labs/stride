@@ -9,8 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
 )
 
 // OnAcknowledgementPacket unmarshals the acknowledgement object to determine if the ack was successful and

@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
 )
 
 // Parses ICA tx responses and returns a list of each serialized response

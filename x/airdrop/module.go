@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v32/x/airdrop/client/cli"
-	"github.com/Stride-Labs/stride/v32/x/airdrop/keeper"
-	"github.com/Stride-Labs/stride/v32/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v33/x/airdrop/client/cli"
+	"github.com/Stride-Labs/stride/v33/x/airdrop/keeper"
+	"github.com/Stride-Labs/stride/v33/x/airdrop/types"
 )
 
 var (

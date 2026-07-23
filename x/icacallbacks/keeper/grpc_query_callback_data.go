@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
 )
 
 func (k Keeper) CallbackDataAll(c context.Context, req *types.QueryAllCallbackDataRequest) (*types.QueryAllCallbackDataResponse, error) {

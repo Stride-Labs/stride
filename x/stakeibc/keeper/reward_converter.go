@@ -17,10 +17,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 const (

@@ -10,13 +10,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	v25 "github.com/Stride-Labs/stride/v32/app/upgrades/v25"
-	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
-	oldstaketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/legacytypes"
-	staketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	v25 "github.com/Stride-Labs/stride/v33/app/upgrades/v25"
+	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	oldstaketiatypes "github.com/Stride-Labs/stride/v33/x/staketia/legacytypes"
+	staketiatypes "github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 type UpdateRedemptionRateBounds struct {

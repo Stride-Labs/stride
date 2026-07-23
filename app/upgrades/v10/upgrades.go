@@ -27,16 +27,16 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
-	mintkeeper "github.com/Stride-Labs/stride/v32/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v32/x/mint/types"
-	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v33/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v33/x/claim/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v33/x/icacallbacks/keeper"
+	mintkeeper "github.com/Stride-Labs/stride/v33/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v33/x/mint/types"
+	recordskeeper "github.com/Stride-Labs/stride/v33/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 var (

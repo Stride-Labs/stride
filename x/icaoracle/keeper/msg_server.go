@@ -16,7 +16,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v33/x/icaoracle/types"
 )
 
 type msgServer struct {

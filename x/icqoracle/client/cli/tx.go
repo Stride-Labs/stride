@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/Stride-Labs/stride/v32/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v33/x/icqoracle/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

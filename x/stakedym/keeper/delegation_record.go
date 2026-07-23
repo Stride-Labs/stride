@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v33/x/stakedym/types"
 )
 
 // Writes a delegation record to the active store

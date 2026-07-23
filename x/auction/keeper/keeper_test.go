@@ -8,9 +8,9 @@ import (
 
 	"cosmossdk.io/log/v2"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	"github.com/Stride-Labs/stride/v32/x/auction/keeper"
-	"github.com/Stride-Labs/stride/v32/x/auction/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	"github.com/Stride-Labs/stride/v33/x/auction/keeper"
+	"github.com/Stride-Labs/stride/v33/x/auction/types"
 )
 
 type KeeperTestSuite struct {

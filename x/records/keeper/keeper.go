@@ -13,8 +13,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v32/x/records/types"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v33/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v33/x/records/types"
 )
 
 type (

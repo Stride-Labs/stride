@@ -11,7 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/server"
 
-	"github.com/Stride-Labs/stride/v32/utils"
+	"github.com/Stride-Labs/stride/v33/utils"
 )
 
 /*

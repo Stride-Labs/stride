@@ -18,7 +18,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 
-	"github.com/Stride-Labs/stride/v32/utils"
+	"github.com/Stride-Labs/stride/v33/utils"
 )
 
 // SnapshotValidatorsFromICS reads the current CCV validator set from the

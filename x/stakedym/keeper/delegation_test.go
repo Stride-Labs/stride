@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v32/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v33/x/stakedym/types"
 )
 
 var InitialDelegation = sdkmath.NewInt(1_000_000)

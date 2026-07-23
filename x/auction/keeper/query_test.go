@@ -5,7 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v32/x/auction/types"
+	"github.com/Stride-Labs/stride/v33/x/auction/types"
 )
 
 func (s *KeeperTestSuite) TestQueryAuction() {
