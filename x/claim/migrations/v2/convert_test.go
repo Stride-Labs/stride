@@ -9,8 +9,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	oldclaimtypes "github.com/Stride-Labs/stride/v32/x/claim/migrations/v2/types"
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
+	oldclaimtypes "github.com/Stride-Labs/stride/v33/x/claim/migrations/v2/types"
+	claimtypes "github.com/Stride-Labs/stride/v33/x/claim/types"
 )
 
 func TestConvertToNewAirdrop(t *testing.T) {

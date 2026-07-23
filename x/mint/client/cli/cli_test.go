@@ -11,8 +11,8 @@ import (
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v32/app"
-	"github.com/Stride-Labs/stride/v32/x/mint/client/cli"
+	"github.com/Stride-Labs/stride/v33/app"
+	"github.com/Stride-Labs/stride/v33/x/mint/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"

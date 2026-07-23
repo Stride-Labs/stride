@@ -15,8 +15,8 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v32/app"
-	"github.com/Stride-Labs/stride/v32/utils"
+	"github.com/Stride-Labs/stride/v33/app"
+	"github.com/Stride-Labs/stride/v33/utils"
 )
 
 var ChainID string

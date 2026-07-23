@@ -16,11 +16,11 @@ import (
 	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
 	"github.com/stretchr/testify/require"
 
-	strideapp "github.com/Stride-Labs/stride/v32/app"
-	"github.com/Stride-Labs/stride/v32/x/autopilot"
-	recordsmodule "github.com/Stride-Labs/stride/v32/x/records"
-	"github.com/Stride-Labs/stride/v32/x/stakedym"
-	"github.com/Stride-Labs/stride/v32/x/staketia"
+	strideapp "github.com/Stride-Labs/stride/v33/app"
+	"github.com/Stride-Labs/stride/v33/x/autopilot"
+	recordsmodule "github.com/Stride-Labs/stride/v33/x/records"
+	"github.com/Stride-Labs/stride/v33/x/stakedym"
+	"github.com/Stride-Labs/stride/v33/x/staketia"
 )
 
 // These tests pin the IBC transfer middleware sequencing in both directions so that

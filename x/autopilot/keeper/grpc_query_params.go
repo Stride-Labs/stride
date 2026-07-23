@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v33/x/autopilot/types"
 )
 
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {

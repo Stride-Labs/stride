@@ -11,9 +11,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	"github.com/Stride-Labs/stride/v32/x/claim/types"
-	minttypes "github.com/Stride-Labs/stride/v32/x/mint/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	"github.com/Stride-Labs/stride/v33/x/claim/types"
+	minttypes "github.com/Stride-Labs/stride/v33/x/mint/types"
 )
 
 type KeeperTestSuite struct {

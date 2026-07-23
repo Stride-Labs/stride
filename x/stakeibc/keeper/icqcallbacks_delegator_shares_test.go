@@ -11,9 +11,9 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackArgs struct {

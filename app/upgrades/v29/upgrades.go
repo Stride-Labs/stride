@@ -13,8 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	strdburnerkeeper "github.com/Stride-Labs/stride/v32/x/strdburner/keeper"
-	"github.com/Stride-Labs/stride/v32/x/strdburner/types"
+	strdburnerkeeper "github.com/Stride-Labs/stride/v33/x/strdburner/keeper"
+	"github.com/Stride-Labs/stride/v33/x/strdburner/types"
 )
 
 var UpgradeName = "v29"

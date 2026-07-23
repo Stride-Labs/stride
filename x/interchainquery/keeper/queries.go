@@ -18,7 +18,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v33/x/interchainquery/types"
 )
 
 // Generates a query ID based on the request information

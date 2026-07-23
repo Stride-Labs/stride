@@ -11,13 +11,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	router "github.com/Stride-Labs/stride/v32/x/autopilot"
-	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
-	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	recordsmodule "github.com/Stride-Labs/stride/v32/x/records"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	router "github.com/Stride-Labs/stride/v33/x/autopilot"
+	"github.com/Stride-Labs/stride/v33/x/autopilot/types"
+	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	recordsmodule "github.com/Stride-Labs/stride/v33/x/records"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 func getRedeemStakeStakeibcPacketMetadata(strideAddress, redemptionReceiver string) string {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v32/x/staketia/types"
+	"github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) TestQueryHostZone() {

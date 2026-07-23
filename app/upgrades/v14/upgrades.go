@@ -26,13 +26,13 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
-	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	stakeibcmigration "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	claimkeeper "github.com/Stride-Labs/stride/v33/x/claim/keeper"
+	claimtypes "github.com/Stride-Labs/stride/v33/x/claim/types"
+	icqkeeper "github.com/Stride-Labs/stride/v33/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	stakeibcmigration "github.com/Stride-Labs/stride/v33/x/stakeibc/migrations/v3"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 var (

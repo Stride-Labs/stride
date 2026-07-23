@@ -9,7 +9,7 @@ import (
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v33/x/icaoracle/types"
 )
 
 func TestValidateICATx(t *testing.T) {

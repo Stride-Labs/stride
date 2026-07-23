@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
 )
 
 func CmdListCallbackData() *cobra.Command {

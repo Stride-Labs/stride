@@ -6,9 +6,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v2/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/migrations/v2/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 const (

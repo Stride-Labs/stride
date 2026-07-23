@@ -25,14 +25,14 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	epochskeeper "github.com/Stride-Labs/stride/v32/x/epochs/keeper"
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	mintkeeper "github.com/Stride-Labs/stride/v32/x/mint/keeper"
-	minttypes "github.com/Stride-Labs/stride/v32/x/mint/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	newstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	epochskeeper "github.com/Stride-Labs/stride/v33/x/epochs/keeper"
+	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	mintkeeper "github.com/Stride-Labs/stride/v33/x/mint/keeper"
+	minttypes "github.com/Stride-Labs/stride/v33/x/mint/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	newstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v7

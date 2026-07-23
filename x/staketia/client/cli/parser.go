@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v32/x/staketia/types"
+	"github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 //////////////////////////////////////////////

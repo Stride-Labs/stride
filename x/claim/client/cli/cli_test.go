@@ -19,14 +19,14 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	strideapp "github.com/Stride-Labs/stride/v32/app"
-	cmdcfg "github.com/Stride-Labs/stride/v32/cmd/strided/config"
-	strideclitestutil "github.com/Stride-Labs/stride/v32/testutil/cli"
-	"github.com/Stride-Labs/stride/v32/testutil/network"
-	"github.com/Stride-Labs/stride/v32/utils"
-	"github.com/Stride-Labs/stride/v32/x/claim/client/cli"
-	"github.com/Stride-Labs/stride/v32/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
+	strideapp "github.com/Stride-Labs/stride/v33/app"
+	cmdcfg "github.com/Stride-Labs/stride/v33/cmd/strided/config"
+	strideclitestutil "github.com/Stride-Labs/stride/v33/testutil/cli"
+	"github.com/Stride-Labs/stride/v33/testutil/network"
+	"github.com/Stride-Labs/stride/v33/utils"
+	"github.com/Stride-Labs/stride/v33/x/claim/client/cli"
+	"github.com/Stride-Labs/stride/v33/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v33/x/claim/types"
 )
 
 var (

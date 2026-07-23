@@ -10,8 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 
-	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 const (

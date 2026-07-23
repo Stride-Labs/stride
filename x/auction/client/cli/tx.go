@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/Stride-Labs/stride/v32/x/auction/types"
+	"github.com/Stride-Labs/stride/v33/x/auction/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

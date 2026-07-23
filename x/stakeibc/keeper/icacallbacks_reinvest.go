@@ -14,12 +14,12 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 // Marshalls reinvest callback arguments

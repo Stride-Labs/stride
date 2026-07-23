@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 
-	"github.com/Stride-Labs/stride/v32/x/claim/types"
+	"github.com/Stride-Labs/stride/v33/x/claim/types"
 )
 
 func CmdSetAirdropAllocations() *cobra.Command {

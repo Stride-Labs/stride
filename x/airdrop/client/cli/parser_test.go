@@ -8,8 +8,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/x/airdrop/client/cli"
-	"github.com/Stride-Labs/stride/v32/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v33/x/airdrop/client/cli"
+	"github.com/Stride-Labs/stride/v33/x/airdrop/types"
 )
 
 func ParseUserAllocations(t *testing.T) {

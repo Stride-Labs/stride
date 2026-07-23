@@ -10,9 +10,9 @@ import (
 	"cosmossdk.io/log/v2"
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	"github.com/Stride-Labs/stride/v32/x/strdburner/keeper"
-	"github.com/Stride-Labs/stride/v32/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	"github.com/Stride-Labs/stride/v33/x/strdburner/keeper"
+	"github.com/Stride-Labs/stride/v33/x/strdburner/types"
 )
 
 type KeeperTestSuite struct {

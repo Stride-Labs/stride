@@ -15,10 +15,10 @@ import (
 	bankTypes "github.com/cosmos/cosmos-sdk/x/bank/migrations/v3"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 // Submit a validator sharesToTokens rate ICQ as triggered either manually or epochly with a conservative timeout

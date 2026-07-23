@@ -9,7 +9,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/x/epochs/types"
+	"github.com/Stride-Labs/stride/v33/x/epochs/types"
 )
 
 // Keeper of this module maintains collections of epochs and hooks.

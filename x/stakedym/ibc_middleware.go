@@ -10,7 +10,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/x/stakedym/keeper"
+	"github.com/Stride-Labs/stride/v33/x/stakedym/keeper"
 )
 
 var _ porttypes.Middleware = &IBCMiddleware{}

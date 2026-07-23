@@ -8,8 +8,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v2/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/migrations/v2/types"
 )
 
 func TestConvertDelegateCallback(t *testing.T) {

@@ -13,13 +13,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	v17 "github.com/Stride-Labs/stride/v32/app/upgrades/v17"
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	v17 "github.com/Stride-Labs/stride/v33/app/upgrades/v17"
+	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 const (

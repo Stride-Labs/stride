@@ -10,9 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/Stride-Labs/stride/v32/x/autopilot/types"
-	claimkeeper "github.com/Stride-Labs/stride/v32/x/claim/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v33/x/autopilot/types"
+	claimkeeper "github.com/Stride-Labs/stride/v33/x/claim/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
 )
 
 type (

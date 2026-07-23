@@ -7,7 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v33/x/stakedym/types"
 )
 
 func TestValidateDelegationRecordGenesis(t *testing.T) {

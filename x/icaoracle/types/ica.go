@@ -8,7 +8,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/Stride-Labs/stride/v32/utils"
+	"github.com/Stride-Labs/stride/v33/utils"
 )
 
 const (

@@ -12,11 +12,11 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	recordskeeper "github.com/Stride-Labs/stride/v33/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 var (

@@ -7,8 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	oldrecordstypes "github.com/Stride-Labs/stride/v32/x/records/migrations/v2/types"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	oldrecordstypes "github.com/Stride-Labs/stride/v33/x/records/migrations/v2/types"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
 )
 
 func TestConvertDepositRecord(t *testing.T) {

@@ -7,9 +7,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v32/x/staketia/types"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 func (k Keeper) ArchiveFailedTransferRecord(ctx sdk.Context, recordId uint64) error {

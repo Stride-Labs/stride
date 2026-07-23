@@ -18,12 +18,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	v33 "github.com/Stride-Labs/stride/v32/app/upgrades/v33"
-	"github.com/Stride-Labs/stride/v32/utils"
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	v33 "github.com/Stride-Labs/stride/v33/app/upgrades/v33"
+	"github.com/Stride-Labs/stride/v33/utils"
+	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 const (

@@ -16,10 +16,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 // For each hostZone with a valid community pool, trigger the ICQs and ICAs to transfer tokens from DepositICA or back to ReturnICA

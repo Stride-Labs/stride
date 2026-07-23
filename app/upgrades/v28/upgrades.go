@@ -15,9 +15,9 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v33/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v33/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
 )
 
 var (

@@ -10,8 +10,8 @@ import (
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v32/x/icaoracle/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/x/icaoracle/types"
 )
 
 // ------------------------------------------

@@ -11,11 +11,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/app"
-	"github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/app"
+	"github.com/Stride-Labs/stride/v33/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestGetQueryId() {

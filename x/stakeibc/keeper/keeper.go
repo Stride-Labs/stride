@@ -18,11 +18,11 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v32/x/icacallbacks/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v32/x/interchainquery/keeper"
-	recordsmodulekeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v33/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v33/x/interchainquery/keeper"
+	recordsmodulekeeper "github.com/Stride-Labs/stride/v33/x/records/keeper"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 type (

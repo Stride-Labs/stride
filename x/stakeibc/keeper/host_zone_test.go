@@ -8,8 +8,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) createNHostZone(n int) []types.HostZone {
