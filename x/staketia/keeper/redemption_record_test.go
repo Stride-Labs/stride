@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/x/staketia/types"
+	"github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 func (s *KeeperTestSuite) addRedemptionRecords() (redemptionRecords []types.RedemptionRecord) {

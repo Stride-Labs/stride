@@ -9,9 +9,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	v29 "github.com/Stride-Labs/stride/v32/app/upgrades/v29"
-	strdburnertypes "github.com/Stride-Labs/stride/v32/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	v29 "github.com/Stride-Labs/stride/v33/app/upgrades/v29"
+	strdburnertypes "github.com/Stride-Labs/stride/v33/x/strdburner/types"
 )
 
 type UpgradeTestSuite struct {

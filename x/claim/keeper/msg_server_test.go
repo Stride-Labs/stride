@@ -6,8 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/x/claim/keeper"
-	"github.com/Stride-Labs/stride/v32/x/claim/types"
+	"github.com/Stride-Labs/stride/v33/x/claim/keeper"
+	"github.com/Stride-Labs/stride/v33/x/claim/types"
 )
 
 func (s *KeeperTestSuite) TestSetAirdropAllocationsForMultiAirdrops() {

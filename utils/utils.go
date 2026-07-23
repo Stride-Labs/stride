@@ -20,9 +20,9 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	config "github.com/Stride-Labs/stride/v32/cmd/strided/config"
-	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	config "github.com/Stride-Labs/stride/v33/cmd/strided/config"
+	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
 )
 
 func FilterDepositRecords(arr []recordstypes.DepositRecord, condition func(recordstypes.DepositRecord) bool) (ret []recordstypes.DepositRecord) {

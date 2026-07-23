@@ -8,7 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v32/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v33/x/airdrop/types"
 )
 
 func (s *KeeperTestSuite) TestQueryAirdrop() {

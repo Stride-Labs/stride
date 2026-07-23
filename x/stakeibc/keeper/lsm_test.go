@@ -12,9 +12,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestValidateLSMLiquidStake() {

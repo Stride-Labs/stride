@@ -3,9 +3,9 @@ package v3
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3/types"
-	newstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/migrations/v3/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 var (

@@ -7,8 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3/types"
-	newstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/migrations/v3/types"
+	newstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 func TestConvertToNewValidator(t *testing.T) {

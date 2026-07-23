@@ -15,13 +15,13 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/Stride-Labs/stride/v32/app"
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	v14 "github.com/Stride-Labs/stride/v32/app/upgrades/v14"
-	claimtypes "github.com/Stride-Labs/stride/v32/x/claim/types"
-	interchainquerytypes "github.com/Stride-Labs/stride/v32/x/interchainquery/types"
-	oldstakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/migrations/v3/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/app"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	v14 "github.com/Stride-Labs/stride/v33/app/upgrades/v14"
+	claimtypes "github.com/Stride-Labs/stride/v33/x/claim/types"
+	interchainquerytypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
+	oldstakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/migrations/v3/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 var (

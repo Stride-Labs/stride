@@ -1,6 +1,6 @@
 package cli_test
 
-import "github.com/Stride-Labs/stride/v32/x/icaoracle/client/cli"
+import "github.com/Stride-Labs/stride/v33/x/icaoracle/client/cli"
 
 func (s *ClientTestSuite) TestCmdQueryOracle() {
 	args := []string{

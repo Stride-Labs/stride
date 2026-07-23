@@ -10,9 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v32/x/claim/types"
-	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	stakingibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/x/claim/types"
+	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	stakingibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 func (k Keeper) AfterDelegationModified(context context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {

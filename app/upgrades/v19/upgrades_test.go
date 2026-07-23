@@ -14,10 +14,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/app"
-	"github.com/Stride-Labs/stride/v32/app/apptesting"
-	v19 "github.com/Stride-Labs/stride/v32/app/upgrades/v19"
-	legacyratelimittypes "github.com/Stride-Labs/stride/v32/app/upgrades/v19/legacyratelimit/types"
+	"github.com/Stride-Labs/stride/v33/app"
+	"github.com/Stride-Labs/stride/v33/app/apptesting"
+	v19 "github.com/Stride-Labs/stride/v33/app/upgrades/v19"
+	legacyratelimittypes "github.com/Stride-Labs/stride/v33/app/upgrades/v19/legacyratelimit/types"
 )
 
 var StTiaSupply = sdkmath.NewInt(1000)

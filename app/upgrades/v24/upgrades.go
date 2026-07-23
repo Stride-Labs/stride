@@ -10,9 +10,9 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v32/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v32/x/stakeibc/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v33/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
 )
 
 var (

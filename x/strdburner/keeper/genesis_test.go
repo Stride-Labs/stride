@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v32/x/strdburner/types"
+	"github.com/Stride-Labs/stride/v33/x/strdburner/types"
 )
 
 func (s *KeeperTestSuite) TestGenesis() {

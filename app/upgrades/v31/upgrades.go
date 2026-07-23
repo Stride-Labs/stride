@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	staketiakeeper "github.com/Stride-Labs/stride/v32/x/staketia/keeper"
-	staketiatypes "github.com/Stride-Labs/stride/v32/x/staketia/types"
+	staketiakeeper "github.com/Stride-Labs/stride/v33/x/staketia/keeper"
+	staketiatypes "github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 var UpgradeName = "v31"

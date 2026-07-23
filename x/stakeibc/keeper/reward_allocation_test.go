@@ -15,11 +15,11 @@ import (
 	teststaking "github.com/cosmos/cosmos-sdk/x/staking/testutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	auctiontypes "github.com/Stride-Labs/stride/v32/x/auction/types"
-	epochtypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v32/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	auctiontypes "github.com/Stride-Labs/stride/v33/x/auction/types"
+	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTestRewardAllocation() {

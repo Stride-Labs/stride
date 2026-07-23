@@ -17,7 +17,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/Stride-Labs/stride/v32/x/mint/types"
+	"github.com/Stride-Labs/stride/v33/x/mint/types"
 )
 
 // Keeper of the mint store.

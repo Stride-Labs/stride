@@ -9,8 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	recordstypes "github.com/Stride-Labs/stride/v32/x/records/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
 )
 
 // Create a new deposit record for each host zone for the given epoch

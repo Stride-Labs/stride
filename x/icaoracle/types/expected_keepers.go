@@ -9,7 +9,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
 )
 
 // ClientKeeper defines the expected IBC client keeper

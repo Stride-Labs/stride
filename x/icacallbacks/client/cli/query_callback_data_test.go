@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
-	"github.com/Stride-Labs/stride/v32/testutil/network"
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks/client/cli"
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/testutil/network"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks/client/cli"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
 )
 
 func networkWithCallbackDataObjects(t *testing.T, n int) (*network.Network, []types.CallbackData) {

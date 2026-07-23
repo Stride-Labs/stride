@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/Stride-Labs/stride/v32/x/staketia/client/cli"
-	"github.com/Stride-Labs/stride/v32/x/staketia/keeper"
-	"github.com/Stride-Labs/stride/v32/x/staketia/types"
+	"github.com/Stride-Labs/stride/v33/x/staketia/client/cli"
+	"github.com/Stride-Labs/stride/v33/x/staketia/keeper"
+	"github.com/Stride-Labs/stride/v33/x/staketia/types"
 )
 
 var (

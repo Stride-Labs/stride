@@ -7,9 +7,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	auctiontypes "github.com/Stride-Labs/stride/v32/x/auction/types"
-	"github.com/Stride-Labs/stride/v32/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	auctiontypes "github.com/Stride-Labs/stride/v33/x/auction/types"
+	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
 
 // AuctionOffRewardCollectorBalance distributes rewards from the reward collector:

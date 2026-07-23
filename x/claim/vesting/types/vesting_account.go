@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	vestexported "github.com/Stride-Labs/stride/v32/x/claim/vesting/exported"
+	"github.com/Stride-Labs/stride/v33/utils"
+	vestexported "github.com/Stride-Labs/stride/v33/x/claim/vesting/exported"
 )
 
 // Compile-time type assertions

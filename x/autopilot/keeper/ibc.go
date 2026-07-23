@@ -11,9 +11,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v32/utils"
-	"github.com/Stride-Labs/stride/v32/x/icacallbacks"
-	icacallbacktypes "github.com/Stride-Labs/stride/v32/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v33/utils"
+	"github.com/Stride-Labs/stride/v33/x/icacallbacks"
+	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
 )
 
 // In the event of an ack error after a outbound transfer, we'll have to bank send to a fallback address

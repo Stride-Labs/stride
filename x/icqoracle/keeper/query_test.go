@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/Stride-Labs/stride/v32/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v33/x/icqoracle/types"
 )
 
 func (s *KeeperTestSuite) TestQueryTokenPrice() {

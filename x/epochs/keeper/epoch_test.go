@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v32/x/epochs/types"
+	"github.com/Stride-Labs/stride/v33/x/epochs/types"
 )
 
 func (s *KeeperTestSuite) TestEpochLifeCycle() {
