@@ -1,0 +1,6 @@
+This directory's `validators.json` has been replaced with TEST consensus
+addresses on the `poa-migration-rehearsal` branch. DO NOT MERGE this branch.
+
+If you are reviewing a v33 PR and see this file, the PR is including
+rehearsal artifacts. The mainnet validators.json should map 8 real
+mainnet hex consensus addresses to monikers like "Polkachu", "L5", etc.
