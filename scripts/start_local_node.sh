@@ -10,6 +10,16 @@ set -eu
 
 STRIDE_HOME=~/.stride-local
 STRIDED="build/strided --home ${STRIDE_HOME}"
+
+# Every strided CLI call re-prints a benign startup banner to stderr: duplicate
+# gogoproto registrations from linking two store modules (cosmossdk.io/store +
+# store/v2), and the POA module's missing cosmos.msg.v1.service annotation (new
+# in v33 — see integration-tests/network/scripts/node-readiness.sh for the same
+# known-noise handling). None of it affects the setup below, so this wrapper
+# routes it to /dev/null to keep the output readable. The node itself is started
+# via `$STRIDED start` (not this wrapper) so its real logs stay visible.
+strided() { $STRIDED "$@" 2>/dev/null; }
+
 # SDK 0.53's `keys` subcommands no longer reliably pick up keyring-backend from client.toml
 # (help text shows default "test" but the runtime silently falls back to "os"), so pass it
 # explicitly anywhere we touch the keyring
@@ -34,11 +44,11 @@ validator_json="${STRIDE_HOME}/validator.json"
 
 rm -rf ${STRIDE_HOME}
 
-$STRIDED init stride-local --chain-id $CHAIN_ID --overwrite
+strided init stride-local --chain-id $CHAIN_ID --overwrite
 
-$STRIDED config set client chain-id $CHAIN_ID
-$STRIDED config set client keyring-backend test
-$STRIDED config set client node http://127.0.0.1:26657
+strided config set client chain-id $CHAIN_ID
+strided config set client keyring-backend test
+strided config set client node http://127.0.0.1:26657
 
 sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml
 sed -i -E '/\[api\]/,/^enable = .*$/ s/^enable = .*$/enable = true/' $app_toml
@@ -55,8 +65,8 @@ jq "del(.app_state.interchain_accounts)" $genesis_json > json.tmp && mv json.tmp
 interchain_accts=$(cat dockernet/config/ica_controller.json)
 jq ".app_state += $interchain_accts" $genesis_json > json.tmp && mv json.tmp $genesis_json
 
-echo "$STRIDE_VAL_MNEMONIC" | $STRIDED keys add val --recover $KEYRING
-$STRIDED genesis add-genesis-account $($STRIDED keys show val -a $KEYRING) 100000000000${DENOM}
+echo "$STRIDE_VAL_MNEMONIC" | strided keys add val --recover $KEYRING
+strided genesis add-genesis-account $(strided keys show val -a $KEYRING) 100000000000${DENOM}
 
 # Seed POA genesis with the local validator so it produces blocks (post-v33,
 # ccvconsumer is no longer in the module manager and POA is the sole source
@@ -64,8 +74,8 @@ $STRIDED genesis add-genesis-account $($STRIDED keys show val -a $KEYRING) 10000
 # authtypes.NewModuleAddress("gov").String() against Stride's address prefix
 # — re-derive via app/test_setup.go if the prefix or module name ever changes.
 POA_ADMIN="stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl"
-val_op_addr=$($STRIDED keys show val -a $KEYRING)
-val_pubkey_json=$($STRIDED tendermint show-validator 2>/dev/null)
+val_op_addr=$(strided keys show val -a $KEYRING)
+val_pubkey_json=$(strided tendermint show-validator)
 
 jq --arg admin "$POA_ADMIN" \
    --arg op "$val_op_addr" \
@@ -78,11 +88,12 @@ jq --arg admin "$POA_ADMIN" \
       }]' \
    $genesis_json > json.tmp && mv json.tmp $genesis_json
 
-echo "$STRIDE_ADMIN_MNEMONIC" | $STRIDED keys add admin --recover $KEYRING
-$STRIDED genesis add-genesis-account $($STRIDED keys show admin -a $KEYRING) 100000000000${DENOM}
+echo "$STRIDE_ADMIN_MNEMONIC" | strided keys add admin --recover $KEYRING
+strided genesis add-genesis-account $(strided keys show admin -a $KEYRING) 100000000000${DENOM}
 
-# Start the daemon in the background
-$STRIDED start & 
+# Start the daemon in the background — run it directly (not the quiet wrapper)
+# so its logs stay visible; this is the output we actually want to see.
+$STRIDED start &
 pid=$!
 sleep 10
 
@@ -90,7 +101,7 @@ sleep 10
 echo "Adding governator..."
 cat > $validator_json << EOF
 {
-  "pubkey": $($STRIDED tendermint show-validator),
+  "pubkey": $(strided tendermint show-validator),
   "amount": "1000000000${DENOM}",
   "moniker": "val1",
   "commission-rate": "0.10",
@@ -99,7 +110,7 @@ cat > $validator_json << EOF
   "min-self-delegation": "1"
 }
 EOF
-$STRIDED tx staking create-validator $validator_json --from val -y --chain-id $CHAIN_ID --node http://127.0.0.1:26657 $KEYRING
+strided tx staking create-validator $validator_json --from val -y --chain-id $CHAIN_ID --node http://127.0.0.1:26657 $KEYRING
 
 # Bring the daemon back to the foreground
 wait $pid
