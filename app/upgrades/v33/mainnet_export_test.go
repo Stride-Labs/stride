@@ -20,6 +20,8 @@ import (
 	"github.com/Stride-Labs/stride/v32/app/apptesting"
 	v33 "github.com/Stride-Labs/stride/v32/app/upgrades/v33"
 	"github.com/Stride-Labs/stride/v32/utils"
+	epochstypes "github.com/Stride-Labs/stride/v32/x/epochs/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v32/x/stakeibc/types"
 )
 
 // mainnetExportPath is relative to this package — read directly from the
@@ -57,6 +59,11 @@ type MainnetExportTestSuite struct {
 
 	// preUpgradeCommunityPool: community pool balance before the handler runs.
 	preUpgradeCommunityPool sdk.DecCoins
+
+	// preUpgradeUntouchedWeights: validator weights (by chain, by address) for
+	// host zones with no entry in TargetWeights — the weight update must not
+	// modify them.
+	preUpgradeUntouchedWeights map[string]map[string]uint64
 }
 
 func (s *MainnetExportTestSuite) SetupTest() {
@@ -82,6 +89,15 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	// ----- arrange: replace synthetic state with real mainnet state -----
 	s.populateConsumerKeeperFromExport(export)
 	s.populateICSModuleBalancesFromExport(export)
+	s.populateHostZonesFromExport(export)
+
+	// The Osmosis phantom-delegation reconciliation credits its reduction against the current
+	// Stride epoch. Mainnet has this tracker; the trimmed export omits the epochs module, so seed
+	// it here (the epoch number is immaterial to the assertions below).
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, stakeibctypes.EpochTracker{
+		EpochIdentifier: epochstypes.STRIDE_EPOCH,
+		EpochNumber:     1,
+	})
 
 	s.capturePreUpgradeState()
 
@@ -98,6 +114,8 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	s.assertPOAAdminSet()
 	s.assertICSModuleAccountsDrained()
 	s.assertCommunityPoolGrewByICSBalances()
+	s.assertValidatorWeightsUpdated()
+	s.assertUntouchedHostZonesUnchanged()
 }
 
 // --- arrange helpers ---
@@ -191,6 +209,33 @@ func (s *MainnetExportTestSuite) populateICSModuleBalancesFromExport(e strideExp
 	// is structurally broken.
 	s.Require().LessOrEqual(matched, len(moduleAccountTargets),
 		"bank.balances had duplicate entries for an ICS module account")
+}
+
+// populateHostZonesFromExport installs the mainnet host zones (with their full
+// validator sets) into the stakeibc keeper so the validator weight update step
+// runs against real state. The export snapshot predates some validators added
+// since (they show up in TargetWeights but not here) — that's fine: the
+// handler only requires that every on-chain validator has a target entry.
+func (s *MainnetExportTestSuite) populateHostZonesFromExport(e strideExport) {
+	raw, ok := e.AppState["stakeibc"]
+	s.Require().True(ok, "trimmed export missing stakeibc section")
+
+	var gen stakeibctypes.GenesisState
+	s.Require().NoError(s.App.AppCodec().UnmarshalJSON(raw, &gen))
+	s.Require().NotEmpty(gen.HostZoneList, "stakeibc.host_zone_list is empty in export")
+
+	s.preUpgradeUntouchedWeights = map[string]map[string]uint64{}
+	for _, hostZone := range gen.HostZoneList {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+		if _, inScope := v33.TargetWeights[hostZone.ChainId]; !inScope {
+			weights := map[string]uint64{}
+			for _, val := range hostZone.Validators {
+				weights[val.Address] = val.Weight
+			}
+			s.preUpgradeUntouchedWeights[hostZone.ChainId] = weights
+		}
+	}
 }
 
 // requireMonikersResolvable fails the test early if any CCValidator's
@@ -315,6 +360,58 @@ func (s *MainnetExportTestSuite) assertICSModuleAccountsDrained() {
 		"cons_redistribute should be drained after sweep")
 	s.Require().True(s.App.BankKeeper.GetAllBalances(s.Ctx, consToProv).IsZero(),
 		"cons_to_send_to_provider should be drained after sweep")
+}
+
+// assertValidatorWeightsUpdated verifies every validator on the in-scope host
+// zones ended up at its target weight, and that all new validators were added.
+// The export predates some validators added on mainnet since the snapshot, so
+// we assert subset (every on-chain validator matches target) rather than the
+// exact count the synthetic suite checks.
+func (s *MainnetExportTestSuite) assertValidatorWeightsUpdated() {
+	for chainId, weights := range v33.TargetWeights {
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+		s.Require().True(found, "host zone %s should exist", chainId)
+
+		targetWeights := map[string]uint64{}
+		for _, w := range weights {
+			targetWeights[w.Address] = w.Weight
+		}
+
+		actualWeights := map[string]uint64{}
+		for _, val := range hostZone.Validators {
+			actualWeights[val.Address] = val.Weight
+		}
+
+		for address, actual := range actualWeights {
+			target, exists := targetWeights[address]
+			s.Require().True(exists, "%s: validator %s has no target weight", chainId, address)
+			s.Require().Equal(target, actual, "%s: weight mismatch for %s", chainId, address)
+		}
+
+		for _, newVal := range v33.NewValidators[chainId] {
+			_, exists := actualWeights[newVal.Address]
+			s.Require().True(exists, "%s: new validator %s should have been added", chainId, newVal.Address)
+		}
+	}
+}
+
+// assertUntouchedHostZonesUnchanged verifies host zones with no TargetWeights
+// entry kept their exact pre-upgrade validator weights.
+func (s *MainnetExportTestSuite) assertUntouchedHostZonesUnchanged() {
+	s.Require().NotEmpty(s.preUpgradeUntouchedWeights,
+		"expected at least one out-of-scope host zone in the export")
+
+	for chainId, expectedWeights := range s.preUpgradeUntouchedWeights {
+		hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
+		s.Require().True(found, "untouched host zone %s should exist", chainId)
+		s.Require().Len(hostZone.Validators, len(expectedWeights),
+			"%s: untouched host zone validator count changed", chainId)
+
+		for _, val := range hostZone.Validators {
+			s.Require().Equal(expectedWeights[val.Address], val.Weight,
+				"%s: untouched host zone weight changed for %s", chainId, val.Address)
+		}
+	}
 }
 
 // assertCommunityPoolGrewByICSBalances verifies the sweep transferred exactly
