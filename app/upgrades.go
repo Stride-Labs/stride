@@ -441,6 +441,7 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.DistrKeeper,
 			app.RecordsKeeper,
 			app.StakeibcKeeper,
+			app.keys[packetforwardtypes.StoreKey],
 		),
 	)
 

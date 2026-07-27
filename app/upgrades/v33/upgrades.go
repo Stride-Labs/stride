@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -43,12 +44,22 @@ func CreateUpgradeHandler(
 	distrKeeper distrkeeper.Keeper,
 	recordsKeeper recordskeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	pfmStoreKey *storetypes.KVStoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
 		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (ICS → POA)...", UpgradeName))
 
-		// 1. Run module migrations. RunMigrations silently skips modules removed
+		// 1. Drop in-flight packet records that would panic the PFM 3→4 migration below.
+		//    Must precede RunMigrations - MustParseHeight panics rather than erroring.
+		ctx.Logger().Info("v33: pruning malformed in-flight packets...")
+		pruned, err := PruneMalformedInFlightPackets(ctx, cdc, pfmStoreKey)
+		if err != nil {
+			return nil, err
+		}
+		ctx.Logger().Info(fmt.Sprintf("v33: pruned %d malformed in-flight packet(s)", pruned))
+
+		// 2. Run module migrations. RunMigrations silently skips modules removed
 		//    from the manager (ccvconsumer, ccvdistr, slashing, evidence).
 		ctx.Logger().Info("v33: running module migrations...")
 		versionMap, err := mm.RunMigrations(ctx, configurator, vm)
@@ -61,26 +72,26 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		// 2. Snapshot current ICS validator set into POA-shaped Validators.
+		// 3. Snapshot current ICS validator set into POA-shaped Validators.
 		ctx.Logger().Info("v33: snapshotting ICS validator set...")
 		poaValidators, err := SnapshotValidatorsFromICS(ctx, consumerKeeper)
 		if err != nil {
 			return nil, err
 		}
 
-		// 3. Initialize POA state with that set + admin.
+		// 4. Initialize POA state with that set + admin.
 		ctx.Logger().Info("v33: initializing POA state...")
 		if err := InitializePOA(ctx, cdc, poaKeeper, AdminMultisigAddress, poaValidators); err != nil {
 			return nil, err
 		}
 
-		// 4. Sweep residual ICS reward module accounts to community pool.
+		// 5. Sweep residual ICS reward module accounts to community pool.
 		ctx.Logger().Info("v33: sweeping ICS module accounts to community pool...")
 		if err := SweepICSModuleAccounts(ctx, accountKeeper, bankKeeper, distrKeeper); err != nil {
 			return nil, err
 		}
 
-		// 5. Update host zone validator weights to the Q2 2026 targets.
+		// 6. Update host zone validator weights to the Q2 2026 targets.
 		ctx.Logger().Info("v33: updating validator weights...")
 		if err := UpdateValidatorWeights(ctx, stakeibcKeeper); err != nil {
 			return nil, err

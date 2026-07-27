@@ -4,6 +4,9 @@ import (
 	"encoding/hex"
 	"testing"
 
+	v4 "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/migrations/v4"
+	"github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/migrations/v4/legacy"
+	packetforwardtypes "github.com/cosmos/ibc-go/v11/modules/apps/packet-forward-middleware/types"
 	consumertypes "github.com/cosmos/interchain-security/v7/x/ccv/consumer/types"
 	"github.com/stretchr/testify/suite"
 
@@ -13,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v33/app/apptesting"
@@ -228,4 +232,100 @@ func (s *HelpersTestSuite) getSeededConsAddresses() [][]byte {
 
 func fmtMoniker(i int) string {
 	return "validator-" + string(rune('a'+i))
+}
+
+// legacyInFlightPacket returns a well-formed in-flight packet, the shape all 25 legitimate
+// mainnet records have.
+func legacyInFlightPacket() legacy.InFlightPacket {
+	return legacy.InFlightPacket{
+		OriginalSenderAddress:  "osmo1m8wg4vxkefhs374qxmmqpyusgz289wmulex5qdwpfx7jnrxzer5s9cv83q",
+		RefundChannelId:        "channel-5",
+		RefundPortId:           "transfer",
+		PacketSrcChannelId:     "channel-326",
+		PacketSrcPortId:        "transfer",
+		PacketTimeoutTimestamp: 1739373116478544000,
+		PacketTimeoutHeight:    "0-0",
+		PacketData:             []byte(`{"amount":"1"}`),
+		RefundSequence:         532899,
+		RetriesRemaining:       2,
+		Timeout:                600000000000,
+	}
+}
+
+// degenerateInFlightPacket mirrors the single junk record on Stride mainnet: stored under key
+// 0x00, no refund routing, and an empty timeout height that MustParseHeight panics on.
+func degenerateInFlightPacket() legacy.InFlightPacket {
+	return legacy.InFlightPacket{
+		OriginalSenderAddress: "0",
+		PacketTimeoutHeight:   "",
+	}
+}
+
+func (s *HelpersTestSuite) setInFlightPacket(key []byte, packet legacy.InFlightPacket) {
+	store := s.Ctx.KVStore(s.App.GetKey(packetforwardtypes.StoreKey))
+	store.Set(key, s.App.AppCodec().MustMarshal(&packet))
+}
+
+func (s *HelpersTestSuite) inFlightPacketExists(key []byte) bool {
+	store := s.Ctx.KVStore(s.App.GetKey(packetforwardtypes.StoreKey))
+	return store.Has(key)
+}
+
+func (s *HelpersTestSuite) TestPruneMalformedInFlightPackets_RemovesDegenerateRecord() {
+	validKey := []byte("channel-0/transfer/161399")
+	degenerateKey := []byte{0}
+
+	s.setInFlightPacket(validKey, legacyInFlightPacket())
+	s.setInFlightPacket(degenerateKey, degenerateInFlightPacket())
+
+	pruned, err := v33.PruneMalformedInFlightPackets(s.Ctx, s.App.AppCodec(), s.App.GetKey(packetforwardtypes.StoreKey))
+	s.Require().NoError(err)
+	s.Require().Equal(1, pruned, "only the degenerate record should be pruned")
+
+	s.Require().False(s.inFlightPacketExists(degenerateKey), "degenerate record should be deleted")
+	s.Require().True(s.inFlightPacketExists(validKey), "legitimate record must be left alone")
+}
+
+func (s *HelpersTestSuite) TestPruneMalformedInFlightPackets_NoopWhenAllValid() {
+	s.setInFlightPacket([]byte("channel-0/transfer/1"), legacyInFlightPacket())
+	s.setInFlightPacket([]byte("channel-0/transfer/2"), legacyInFlightPacket())
+
+	pruned, err := v33.PruneMalformedInFlightPackets(s.Ctx, s.App.AppCodec(), s.App.GetKey(packetforwardtypes.StoreKey))
+	s.Require().NoError(err)
+	s.Require().Zero(pruned)
+}
+
+// A packet that cannot be parsed but still carries refund routing represents real user funds.
+// Deleting it would silently abandon the refund, so the upgrade must halt instead.
+func (s *HelpersTestSuite) TestPruneMalformedInFlightPackets_RefusesRefundablePacket() {
+	refundableKey := []byte("channel-0/transfer/999")
+
+	refundable := legacyInFlightPacket()
+	refundable.PacketTimeoutHeight = "not-a-height"
+	s.setInFlightPacket(refundableKey, refundable)
+
+	_, err := v33.PruneMalformedInFlightPackets(s.Ctx, s.App.AppCodec(), s.App.GetKey(packetforwardtypes.StoreKey))
+	s.Require().ErrorContains(err, "refusing to drop a refundable packet")
+	s.Require().True(s.inFlightPacketExists(refundableKey), "refundable record must be preserved")
+}
+
+// The regression that matters: ibc-go's PFM 3→4 migration panics on the degenerate record, which
+// would halt every mainnet validator at the upgrade height. Pruning first makes it succeed.
+func (s *HelpersTestSuite) TestPruneMalformedInFlightPackets_UnblocksPFMMigration() {
+	storeKey := s.App.GetKey(packetforwardtypes.StoreKey)
+	storeService := runtime.NewKVStoreService(storeKey)
+	cdc := s.App.AppCodec()
+
+	s.setInFlightPacket([]byte("channel-0/transfer/161399"), legacyInFlightPacket())
+	s.setInFlightPacket([]byte{0}, degenerateInFlightPacket())
+
+	s.Require().Panics(func() {
+		_ = v4.Migrate(s.Ctx, storeService, cdc)
+	}, "migration is expected to panic on the degenerate record without the prune")
+
+	pruned, err := v33.PruneMalformedInFlightPackets(s.Ctx, cdc, storeKey)
+	s.Require().NoError(err)
+	s.Require().Equal(1, pruned)
+
+	s.Require().NoError(v4.Migrate(s.Ctx, storeService, cdc), "migration should succeed after pruning")
 }
