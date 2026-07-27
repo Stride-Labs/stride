@@ -28,8 +28,8 @@ import (
 	"path/filepath"
 
 	cmtcfg "github.com/cometbft/cometbft/config"
+	cmtstate "github.com/cometbft/cometbft/proto/tendermint/state"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cometbft/cometbft/store"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/spf13/viper"
 )
@@ -59,10 +59,13 @@ func repairSeenCommit(home string, height int64, dryRun bool) error {
 	}
 	defer blockStoreDB.Close()
 
-	// testnetify() keys off state.LastBlockHeight, which matches the block store height for a
-	// node that was shut down cleanly - the only state the localstride flow upgrades from.
+	// Match testnetify(), which keys off state.LastBlockHeight. That trails the block store
+	// height whenever the node stopped mid-block - as it does when halting for an upgrade.
 	if height == 0 {
-		height = store.NewBlockStore(blockStoreDB).Height()
+		height, err = lastBlockHeight(config)
+		if err != nil {
+			return err
+		}
 	}
 
 	key := []byte(fmt.Sprintf("SC:%v", height))
@@ -112,6 +115,31 @@ func repairSeenCommit(home string, height int64, dryRun bool) error {
 
 	fmt.Println("Done")
 	return nil
+}
+
+// lastBlockHeight reads state.LastBlockHeight straight out of the state store, rather than via
+// the state package, so that a store written by an older CometBFT still loads.
+func lastBlockHeight(config *cmtcfg.Config) (int64, error) {
+	stateDB, err := cmtcfg.DefaultDBProvider(&cmtcfg.DBContext{ID: "state", Config: config})
+	if err != nil {
+		return 0, fmt.Errorf("opening state store: %w", err)
+	}
+	defer stateDB.Close()
+
+	bz, err := stateDB.Get([]byte("stateKey"))
+	if err != nil {
+		return 0, fmt.Errorf("reading state: %w", err)
+	}
+	if len(bz) == 0 {
+		return 0, fmt.Errorf("no state stored in %s", config.DBDir())
+	}
+
+	state := new(cmtstate.State)
+	if err := proto.Unmarshal(bz, state); err != nil {
+		return 0, fmt.Errorf("unmarshalling state: %w", err)
+	}
+
+	return state.LastBlockHeight, nil
 }
 
 // loadConfig reads the node's config.toml so the block store is opened with the configured
