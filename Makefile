@@ -284,7 +284,12 @@ restore-localstride-backup:
 	@rm -rf $(LOCALSTRIDE_STRIDE_HOME)
 	@cp -r $(LOCALSTRIDE_STRIDE_HOME)-backup $(LOCALSTRIDE_STRIDE_HOME)
 
+# `strided in-place-testnet` panics on startup when the validator in slot 0 of the last seen
+# commit was absent from that block. This repairs the commit first - see localstride/fixseencommit
+FIX_LOCALSTRIDE_SEEN_COMMIT=go run $(CURDIR)/localstride/fixseencommit --home $(LOCALSTRIDE_STRIDE_HOME)
+
 testnetify-localstride:
+	@$(FIX_LOCALSTRIDE_SEEN_COMMIT)
 	@echo "{}" > $(LOCALSTRIDE_STRIDE_HOME)/config/addrbook.json
 	@strided in-place-testnet stride-test-1 stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc \
 		--home $(LOCALSTRIDE_STRIDE_HOME)
@@ -293,6 +298,7 @@ upgrade-localstride:
 ifndef UPGRADE_NAME
 	$(error "ERROR: Please set `UPGRADE_NAME`. Usage: 'Ex: UPGRADE_NAME=v29 make start-mainnet-localstride")
 endif
+	@$(FIX_LOCALSTRIDE_SEEN_COMMIT)
 	@echo "{}" > $(LOCALSTRIDE_STRIDE_HOME)/config/addrbook.json
 	@strided in-place-testnet stride-test-1 stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc \
 		--trigger-testnet-upgrade $(UPGRADE_NAME) --home $(LOCALSTRIDE_STRIDE_HOME)

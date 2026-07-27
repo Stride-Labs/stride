@@ -51,6 +51,9 @@ make backup-localstride
 UPGRADE_NAME=v{UPGRADE_NAME} make upgrade-localstride
 ```
 
+- This first repairs the node's last seen commit, which `strided in-place-testnet` would otherwise
+  corrupt whenever the validator in slot 0 was absent from that block, panicking on startup with
+  `converting seen commit: validator address is present`. See `localstride/fixseencommit` for details
 - Once the upgrade height is reached, it will crash
 - Then kill it and build the new stride binary on the current branch
 
