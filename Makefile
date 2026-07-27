@@ -273,7 +273,12 @@ ifndef UPGRADE_NAME
 	$(error "ERROR: Please set `UPGRADE_NAME`. Usage: STAGE={before|after} UPGRADE_NAME=v{UPGRADE_NAME} make mainnet-localstride-export")
 endif
 	@echo "Exporting state $(STAGE) upgrade $(UPGRADE_NAME)..."
-	@strided export > $(CURDIR)/localstride/exports/state_export_${STAGE}_$(UPGRADE_NAME).json --home $(LOCALSTRIDE_STRIDE_HOME)
+	@# strided writes proto-registry warnings to stdout, which land in the export and make it
+	@# invalid JSON, so skip everything ahead of the opening brace. pipefail keeps a failed
+	@# export from being masked by awk exiting 0 and leaving a truncated file behind.
+	@set -o pipefail; strided export --home $(LOCALSTRIDE_STRIDE_HOME) \
+		| awk 'found || index($$0, "{") == 1 { found = 1; print }' \
+		> $(CURDIR)/localstride/exports/state_export_$(STAGE)_$(UPGRADE_NAME).json
 	@echo "Done"
 
 backup-localstride:
