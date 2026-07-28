@@ -42,6 +42,18 @@ WORKDIR /home/validator
 
 EXPOSE 26657 26656 1317 9090
 
-RUN echo "mv ${COSMOVISOR_HOME} ${DAEMON_HOME}/cosmovisor && cosmovisor run start --reject-config-defaults" > start.sh
+# The state volume survives container restarts but the image layers do not, so COSMOVISOR_HOME
+# reappears on every start while ${DAEMON_HOME}/cosmovisor persists. Moving unconditionally
+# therefore succeeds only on the first start: afterwards mv nests the source inside the existing
+# destination, and the start after that dies on the collision. That kills the pod at the upgrade
+# height, right when cosmovisor restarts the daemon.
+#
+# Only seed the directory when it is absent. Never delete and re-move it - post-upgrade the
+# `current` symlink points at upgrades/${UPGRADE_NAME}, and replacing the directory would silently
+# roll the node back to the genesis binary.
+RUN printf '%s\n' \
+    '[ -d "${DAEMON_HOME}/cosmovisor" ] || mv ${COSMOVISOR_HOME} ${DAEMON_HOME}/cosmovisor' \
+    'cosmovisor run start --reject-config-defaults' \
+    > start.sh
 
 CMD ["bash", "start.sh" ]
