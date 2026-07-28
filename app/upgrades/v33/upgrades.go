@@ -199,6 +199,14 @@ func ReconcileOsmosisDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper, rk r
 // Phase 2: Set all validator weights to their target values
 func UpdateValidatorWeights(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
 	for _, chainId := range utils.StringMapKeys(NewValidators) {
+		// Skip rather than error, for the same reason ReconcileOsmosisDelegations does: an error
+		// here fails the upgrade and halts the chain, and non-mainnet environments (dockernet,
+		// testnets, integration-tests) carry none of the mainnet host zones these weights target.
+		if _, found := sk.GetHostZone(ctx, chainId); !found {
+			ctx.Logger().Error(fmt.Sprintf("v33: host zone %s not found, skipping new validators", chainId))
+			continue
+		}
+
 		validators := NewValidators[chainId]
 		ctx.Logger().Info(fmt.Sprintf("Adding %d new validators to %s...", len(validators), chainId))
 		for _, val := range validators {
@@ -215,12 +223,14 @@ func UpdateValidatorWeights(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
 
 	for _, chainId := range utils.StringMapKeys(TargetWeights) {
 		weights := TargetWeights[chainId]
-		ctx.Logger().Info(fmt.Sprintf("Setting validator weights for %s...", chainId))
 
 		hostZone, found := sk.GetHostZone(ctx, chainId)
 		if !found {
-			return errorsmod.Wrapf(stakeibctypes.ErrHostZoneNotFound, "host zone %s not found", chainId)
+			ctx.Logger().Error(fmt.Sprintf("v33: host zone %s not found, skipping weight update", chainId))
+			continue
 		}
+
+		ctx.Logger().Info(fmt.Sprintf("Setting validator weights for %s...", chainId))
 
 		weightMap := make(map[string]uint64, len(weights))
 		for _, w := range weights {
