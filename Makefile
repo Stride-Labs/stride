@@ -273,7 +273,12 @@ ifndef UPGRADE_NAME
 	$(error "ERROR: Please set `UPGRADE_NAME`. Usage: STAGE={before|after} UPGRADE_NAME=v{UPGRADE_NAME} make mainnet-localstride-export")
 endif
 	@echo "Exporting state $(STAGE) upgrade $(UPGRADE_NAME)..."
-	@strided export > $(CURDIR)/localstride/exports/state_export_${STAGE}_$(UPGRADE_NAME).json --home $(LOCALSTRIDE_STRIDE_HOME)
+	@# strided writes proto-registry warnings to stdout, which land in the export and make it
+	@# invalid JSON, so skip everything ahead of the opening brace. pipefail keeps a failed
+	@# export from being masked by awk exiting 0 and leaving a truncated file behind.
+	@set -o pipefail; strided export --home $(LOCALSTRIDE_STRIDE_HOME) \
+		| awk 'found || index($$0, "{") == 1 { found = 1; print }' \
+		> $(CURDIR)/localstride/exports/state_export_$(STAGE)_$(UPGRADE_NAME).json
 	@echo "Done"
 
 backup-localstride:
@@ -284,7 +289,12 @@ restore-localstride-backup:
 	@rm -rf $(LOCALSTRIDE_STRIDE_HOME)
 	@cp -r $(LOCALSTRIDE_STRIDE_HOME)-backup $(LOCALSTRIDE_STRIDE_HOME)
 
+# `strided in-place-testnet` panics on startup when the validator in slot 0 of the last seen
+# commit was absent from that block. This repairs the commit first - see localstride/fixseencommit
+FIX_LOCALSTRIDE_SEEN_COMMIT=go run $(CURDIR)/localstride/fixseencommit --home $(LOCALSTRIDE_STRIDE_HOME)
+
 testnetify-localstride:
+	@$(FIX_LOCALSTRIDE_SEEN_COMMIT)
 	@echo "{}" > $(LOCALSTRIDE_STRIDE_HOME)/config/addrbook.json
 	@strided in-place-testnet stride-test-1 stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc \
 		--home $(LOCALSTRIDE_STRIDE_HOME)
@@ -293,6 +303,7 @@ upgrade-localstride:
 ifndef UPGRADE_NAME
 	$(error "ERROR: Please set `UPGRADE_NAME`. Usage: 'Ex: UPGRADE_NAME=v29 make start-mainnet-localstride")
 endif
+	@$(FIX_LOCALSTRIDE_SEEN_COMMIT)
 	@echo "{}" > $(LOCALSTRIDE_STRIDE_HOME)/config/addrbook.json
 	@strided in-place-testnet stride-test-1 stride1wal8dgs7whmykpdaz0chan2f54ynythkz0cazc \
 		--trigger-testnet-upgrade $(UPGRADE_NAME) --home $(LOCALSTRIDE_STRIDE_HOME)

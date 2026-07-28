@@ -23,7 +23,7 @@ if [[ "$($BINARY status 2>/dev/null | jq -r 'if .SyncInfo then .SyncInfo.latest_
 fi
 
 # Then check if the node is synced according to it's status query
-CATCHING_UP=$($BINARY status 2>&1 | jq "if .SyncInfo then .SyncInfo.catching_up else .sync_info.catching_up end")
+CATCHING_UP=$($BINARY status 2>/dev/null | jq "if .SyncInfo then .SyncInfo.catching_up else .sync_info.catching_up end")
 if [[ "$CATCHING_UP" != "false" ]]; then
     echo "READINESS CHECK FAILED - Node is still syncing"
     exit 1
