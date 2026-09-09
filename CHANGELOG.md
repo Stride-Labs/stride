@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
+## Unreleased
+
+### State Machine Breaking
+
+* (upgrades) v34: swap POA validators — remove Citadel.one and Cosmostation, add cosmosrescue and Citizen Web3 (POA set + `utils/poa.go` stToken payout registry).
+
 ## [v33.0.0]
 
 ### On-Chain changes
