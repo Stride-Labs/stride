@@ -21,7 +21,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v33/app/apptesting"
 	v33 "github.com/Stride-Labs/stride/v33/app/upgrades/v33"
-	"github.com/Stride-Labs/stride/v33/utils"
 )
 
 type HelpersTestSuite struct {
@@ -40,16 +39,16 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_HappyPath() {
 	s.seedConsumerValidators(8)
 
 	// Map each seeded consensus address to one of the real monikers in
-	// utils.PoaValidatorSet so SnapshotValidatorsFromICS can complete the
+	// v33.FrozenValidatorSet so SnapshotValidatorsFromICS can complete the
 	// hex_cons_addr → moniker → operator join.
 	addrs := s.getSeededConsAddresses()
-	s.Require().Len(addrs, len(utils.PoaValidatorSet))
+	s.Require().Len(addrs, len(v33.FrozenValidatorSet))
 
 	expectedOperators := make(map[string]string, len(addrs)) // hex_cons_addr → operator
 	for i, addr := range addrs {
-		moniker := utils.PoaValidatorSet[i].Moniker
+		moniker := v33.FrozenValidatorSet[i].Moniker
 		v33.ValidatorMonikers[hex.EncodeToString(addr)] = moniker
-		expectedOperators[hex.EncodeToString(addr)] = utils.PoaValidatorSet[i].Operator
+		expectedOperators[hex.EncodeToString(addr)] = v33.FrozenValidatorSet[i].Operator
 	}
 	s.T().Cleanup(func() {
 		for _, addr := range addrs {
@@ -100,7 +99,7 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_UnknownMoniker() {
 	s.seedConsumerValidators(8)
 
 	// Populate monikers but use a value that does NOT appear in
-	// utils.PoaValidatorSet — this catches drift between the two sources of
+	// v33.FrozenValidatorSet — this catches drift between the two sources of
 	// truth.
 	addrs := s.getSeededConsAddresses()
 	for _, addr := range addrs {
@@ -114,7 +113,7 @@ func (s *HelpersTestSuite) TestSnapshotValidatorsFromICS_UnknownMoniker() {
 
 	_, err := v33.SnapshotValidatorsFromICS(s.Ctx, s.App.ConsumerKeeper)
 	s.Require().Error(err)
-	s.Require().Contains(err.Error(), "no entry in utils.PoaValidatorSet")
+	s.Require().Contains(err.Error(), "no entry in v33.FrozenValidatorSet")
 }
 
 func (s *HelpersTestSuite) TestSweepICSModuleAccounts_HappyPath() {
@@ -167,7 +166,7 @@ func (s *HelpersTestSuite) TestInitializePOA_HappyPath() {
 	// real moniker + operator. Wire that up before the call.
 	addrs := s.getSeededConsAddresses()
 	for i, addr := range addrs {
-		v33.ValidatorMonikers[hex.EncodeToString(addr)] = utils.PoaValidatorSet[i].Moniker
+		v33.ValidatorMonikers[hex.EncodeToString(addr)] = v33.FrozenValidatorSet[i].Moniker
 	}
 	s.T().Cleanup(func() {
 		for _, addr := range addrs {

@@ -19,7 +19,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v33/app/apptesting"
 	v33 "github.com/Stride-Labs/stride/v33/app/upgrades/v33"
-	"github.com/Stride-Labs/stride/v33/utils"
 	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
 )
@@ -38,7 +37,7 @@ const mainnetExportPath = "testdata/mainnet_export.json.gz"
 // and surgically populates the test app's consumer keeper, ICS module account
 // balances, and (eventually) gov state with the real values, then runs the
 // same handler and asserts on the same outcomes — plus the moniker join
-// (mainnet hex_cons_addr → validators.json moniker → utils.PoaValidatorSet
+// (mainnet hex_cons_addr → validators.json moniker → v33.FrozenValidatorSet
 // operator), which the synthetic test can't validate end-to-end.
 //
 // The fixture is large enough that it isn't always present in dev checkouts;
@@ -253,15 +252,15 @@ func (s *MainnetExportTestSuite) requireMonikersResolvable() {
 			hexAddr)
 	}
 	// Also check the operator-address side of the join — if validators.json
-	// names a moniker that no longer appears in utils.PoaValidatorSet, the
-	// handler would halt with "no entry in utils.PoaValidatorSet".
-	knownMonikers := make(map[string]bool, len(utils.PoaValidatorSet))
-	for _, v := range utils.PoaValidatorSet {
+	// names a moniker that no longer appears in v33.FrozenValidatorSet, the
+	// handler would halt with "no entry in v33.FrozenValidatorSet".
+	knownMonikers := make(map[string]bool, len(v33.FrozenValidatorSet))
+	for _, v := range v33.FrozenValidatorSet {
 		knownMonikers[v.Moniker] = true
 	}
 	for hexAddr, moniker := range v33.ValidatorMonikers {
 		s.Require().True(knownMonikers[moniker],
-			"validators.json maps %s → %q, but %q has no entry in utils.PoaValidatorSet",
+			"validators.json maps %s → %q, but %q has no entry in v33.FrozenValidatorSet",
 			hexAddr, moniker, moniker)
 	}
 }
@@ -288,7 +287,7 @@ func (s *MainnetExportTestSuite) capturePreUpgradeState() {
 // assertPOAValidatorsMatchExport verifies that every mainnet ICS validator
 // landed in the POA store with the right pubkey, power, real moniker, and
 // real stride1... operator address. This is the strongest end-to-end check
-// in the suite — it validates that validators.json + utils.PoaValidatorSet +
+// in the suite — it validates that validators.json + v33.FrozenValidatorSet +
 // the handler all agree on every single mainnet validator.
 func (s *MainnetExportTestSuite) assertPOAValidatorsMatchExport(e strideExport) {
 	ccVals := s.App.ConsumerKeeper.GetAllCCValidator(s.Ctx)
@@ -317,9 +316,9 @@ func (s *MainnetExportTestSuite) assertPOAValidatorsMatchExport(e strideExport) 
 		}{pk: pk, power: pv.Power}
 	}
 
-	// Every entry in utils.PoaValidatorSet should have ended up in POA store
+	// Every entry in v33.FrozenValidatorSet should have ended up in POA store
 	// with the matching pubkey + power from the ICS export.
-	for _, expected := range utils.PoaValidatorSet {
+	for _, expected := range v33.FrozenValidatorSet {
 		got, ok := poaByOperator[expected.Operator]
 		s.Require().True(ok, "operator %s (%s) missing from POA store after upgrade",
 			expected.Operator, expected.Moniker)
