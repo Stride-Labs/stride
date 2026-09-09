@@ -85,6 +85,11 @@ no hand-transcribed cons addresses to typo).
 
 - Replace the `Citadel.one` and `Cosmostation` entries with `cosmosrescue` and
   `Citizen Web3` (operator = payout address, placeholder until confirmed).
+  Payout placeholders are **valid-bech32 deterministic burn addresses** (sha256-derived,
+  no known private key), not a raw `"PLACEHOLDER"` string — `reward_allocation.go`
+  and its tests call `sdk.MustAccAddressFromBech32` on every operator, so an
+  unparseable placeholder would panic them. The handler detects them by exact
+  equality (`utils.IsPlaceholderOperator`).
 - **Delete the `HubAddress` field** from `PoaValidator` and all entries — dead since the
   ICS migration.
 - The v34 handler **joins against `utils.PoaValidatorSet` by moniker** to obtain each
@@ -113,8 +118,10 @@ var OutgoingMonikers = []string{"Citadel.one", "Cosmostation"}
 const ValidatorPower = int64(274523) // matches the current uniform POA set
 ```
 
-**`upgrades.go` — `CreateUpgradeHandler(mm, configurator, poaKeeper *poakeeper.Keeper)`**
-(POA keeper passed by pointer, mirroring v33 wiring in `app/upgrades.go`). After
+**`upgrades.go` — `CreateUpgradeHandler(mm, configurator, cdc codec.Codec, poaKeeper *poakeeper.Keeper)`**
+(POA keeper passed by pointer, mirroring v33 wiring in `app/upgrades.go`; `cdc` is
+needed to unpack stored consensus-pubkey `Any`s when resolving outgoing validators'
+consensus addresses — `GetAllValidators` returns values only, not store keys). After
 `RunMigrations`, in order:
 
 1. **Sentinel guard.** Error if any incoming pubkey is the sentinel, or if the joined
