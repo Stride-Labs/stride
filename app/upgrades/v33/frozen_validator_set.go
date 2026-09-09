@@ -3,8 +3,7 @@ package v33
 // FrozenValidator pins the moniker → operator join the v33 upgrade handler
 // used when it executed on mainnet. The live validator registry (see utils/poa.go)
 // is updated by later upgrades (v34 swaps two entries); v33 is historical and must
-// not track it. Copied verbatim from utils/poa.go as of the v33 release
-// (HubAddress omitted — v33's join never read it).
+// not track it. Copied verbatim from utils/poa.go as of the v33 release.
 type FrozenValidator struct {
 	Moniker  string
 	Operator string
