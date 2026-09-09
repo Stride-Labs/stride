@@ -169,15 +169,29 @@ func resolveOutgoingValidators(ctx sdk.Context, cdc codec.Codec, poaKeeper *poak
 
 	consAddressesByMoniker := make(map[string][]sdk.ConsAddress)
 	for _, validator := range validators {
-		if validator.Metadata == nil {
-			continue
+		if validator.PubKey == nil {
+			return nil, fmt.Errorf("POA validator has a nil consensus pubkey, cannot resolve its consensus address")
 		}
 		var pubKey cryptotypes.PubKey
 		if err := cdc.UnpackAny(validator.PubKey, &pubKey); err != nil {
-			return nil, fmt.Errorf("failed to unpack pubkey for POA validator %q: %w", validator.Metadata.Moniker, err)
+			return nil, fmt.Errorf("failed to unpack pubkey for POA validator: %w", err)
 		}
+		consAddress := sdk.GetConsAddress(pubKey)
+
+		if validator.Metadata == nil {
+			// No known code path leaves Metadata nil (this handler's own
+			// removals pass nil to UpdateValidator, but that only skips
+			// overwriting — the stored Metadata survives). Still, a
+			// nil-Metadata record can never match an OutgoingMonikers entry
+			// by moniker, so skip it defensively rather than panic — but log
+			// so a later "outgoing validator not found" error isn't a
+			// mysterious dead end.
+			ctx.Logger().Warn(fmt.Sprintf("v34: POA validator with cons address %s has nil metadata, skipping", consAddress))
+			continue
+		}
+
 		moniker := validator.Metadata.Moniker
-		consAddressesByMoniker[moniker] = append(consAddressesByMoniker[moniker], sdk.GetConsAddress(pubKey))
+		consAddressesByMoniker[moniker] = append(consAddressesByMoniker[moniker], consAddress)
 	}
 
 	outgoing := make([]outgoingValidator, 0, len(OutgoingMonikers))

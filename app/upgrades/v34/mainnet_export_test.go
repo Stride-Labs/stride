@@ -87,7 +87,7 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 		s.Require().True(pubKey.Equals(&ed25519.PubKey{Key: expectedKeyBytes}))
 	}
 
-	for _, moniker := range []string{"Citadel.one", "Cosmostation"} {
+	for _, moniker := range v34.OutgoingMonikers {
 		validator, ok := byMoniker[moniker]
 		s.Require().True(ok, "outgoing validator %s record should be retained", moniker)
 		s.Require().Zero(validator.Power)
@@ -106,6 +106,10 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	s.Require().Equal(s.preUpgradeTotalPower, postTotalPower)
 
 	// Exactly 4 new updates, unique pubkeys — the chain-halt guard.
+	// ReapValidatorUpdates does NOT drain the queue despite its doc comment
+	// (the transient store clears per block, not per call) — so updates
+	// accumulate across the whole test and slicing off the pre-upgrade count
+	// is intentional, not a workaround.
 	allUpdates := s.App.POAKeeper.ReapValidatorUpdates(s.Ctx)
 	newUpdates := allUpdates[s.preUpgradeUpdateCount:]
 	s.Require().Len(newUpdates, 4)
@@ -114,6 +118,39 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 		key := update.PubKey.String()
 		s.Require().False(seen[key], "duplicate consensus pubkey in emitted updates")
 		seen[key] = true
+	}
+
+	// The central invariant this upgrade must preserve: POA's active
+	// (power > 0) validator set and utils.PoaValidatorSet's payout registry
+	// must name exactly the same validators. Diverge and either stTokens get
+	// burned (a signer with no registry entry) or the registry pays out to a
+	// validator that no longer signs.
+	registryByMoniker := map[string]string{}
+	for _, v := range utils.PoaValidatorSet {
+		registryByMoniker[v.Moniker] = v.Operator
+	}
+
+	// (a) every active POA validator must have a matching registry entry,
+	// with the operator address agreeing. Skip the apptesting genesis
+	// validator (moniker "test-validator") — it's a fixture of the local
+	// test app, not part of the real mainnet POA set, and has no registry
+	// entry.
+	for moniker, validator := range byMoniker {
+		if moniker == "test-validator" || validator.Power == 0 {
+			continue
+		}
+		operator, ok := registryByMoniker[moniker]
+		s.Require().True(ok, "active POA validator %s has no utils.PoaValidatorSet entry", moniker)
+		s.Require().Equal(operator, validator.Metadata.OperatorAddress,
+			"POA validator %s operator address disagrees with utils.PoaValidatorSet", moniker)
+	}
+
+	// (b) every registry entry must correspond to an active POA validator.
+	s.Require().Len(utils.PoaValidatorSet, 8, "registry should have exactly 8 entries post-swap")
+	for _, entry := range utils.PoaValidatorSet {
+		validator, ok := byMoniker[entry.Moniker]
+		s.Require().True(ok, "registry entry %s has no POA validator", entry.Moniker)
+		s.Require().NotZero(validator.Power, "registry entry %s corresponds to an inactive (power 0) POA validator", entry.Moniker)
 	}
 }
 

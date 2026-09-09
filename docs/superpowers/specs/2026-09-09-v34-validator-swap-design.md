@@ -194,3 +194,20 @@ dynamically.
   near expiry.
 - Expect proposer-order churn in dashboards for a rotation or two; the new validators
   propose immediately (join penalty erased by priority rescale — expected).
+- **Never tag a binary while placeholders remain unfilled.** The registry change
+  (`utils/poa.go`) ships unconditionally in the binary, while the POA validator-set
+  change is gated on the v34 upgrade handler actually running — so a binary tagged with
+  placeholders still present, if it ever runs the handler, burns stTokens to the
+  placeholder addresses. Add a mechanical release-workflow step:
+  `grep -q PlaceholderOperator utils/poa.go && echo "STOP: placeholders still present"`
+  must **fail** (i.e. no match) before tagging.
+- **Never run a v34 binary with `--unsafe-skip-upgrades` past the v34 height.** Skipping
+  the upgrade leaves the POA validator set on the old (Citadel.one/Cosmostation) signers
+  while the binary's `utils.PoaValidatorSet` already reflects the new (cosmosrescue/
+  Citizen Web3) payout registry — the exact registry/POA desync this upgrade exists to
+  avoid, reintroduced by skipping it.
+- **The written echo-back confirmation from each incoming validator must cover the
+  payout address, not just the consensus pubkey.** A wrong-but-valid bech32 payout
+  address passes every check in this design (bech32-valid, non-placeholder) and is
+  therefore undetectable by code — and once mainnet stToken rewards start flowing to it,
+  permanent.

@@ -49,9 +49,21 @@ func TestUpgradeTestSuite(t *testing.T) {
 // fillPlaceholders substitutes test values for the release-time placeholders:
 // generated ed25519 keys for the incoming consensus pubkeys, and random
 // accounts for the placeholder payout addresses in utils.PoaValidatorSet.
-// (Package-level vars are mutated; tests in this package run serially and
-// every test that needs filled values calls this in arrange.)
+//
+// Package-level vars are mutated, so this snapshots both globals and
+// registers a cleanup to restore them once the test completes. Without this,
+// a test that runs before MainnetExportTestSuite — release-gate ordering the
+// Go test runner does NOT guarantee, especially under `-shuffle=on` — would
+// leave the export suite reading test-filled values and passing vacuously
+// with placeholders unfilled.
 func (s *UpgradeTestSuite) fillPlaceholders() {
+	incomingSnapshot := append([]v34.IncomingValidator{}, v34.IncomingValidators...)
+	registrySnapshot := append([]utils.PoaValidator{}, utils.PoaValidatorSet...)
+	s.T().Cleanup(func() {
+		copy(v34.IncomingValidators, incomingSnapshot)
+		copy(utils.PoaValidatorSet, registrySnapshot)
+	})
+
 	s.incomingPubKeys = map[string]cryptotypes.PubKey{}
 	for i := range v34.IncomingValidators {
 		moniker := v34.IncomingValidators[i].Moniker
@@ -173,6 +185,10 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 // removals), each for a distinct consensus pubkey. A duplicate pubkey in one
 // block's update set panics every CometBFT node.
 func (s *UpgradeTestSuite) checkEmittedUpdates() {
+	// ReapValidatorUpdates does NOT drain the queue despite its doc comment
+	// (the transient store clears per block, not per call), so updates
+	// accumulate across the whole test — slicing off the pre-upgrade count
+	// is intentional, not a workaround.
 	allUpdates := s.App.POAKeeper.ReapValidatorUpdates(s.Ctx)
 	s.Require().GreaterOrEqual(len(allUpdates), s.preUpgradeUpdateCount)
 	newUpdates := allUpdates[s.preUpgradeUpdateCount:]
@@ -199,6 +215,38 @@ func (s *UpgradeTestSuite) checkEmittedUpdates() {
 		s.Require().True(ok, "outgoing validator %s should have a removal update", moniker)
 		s.Require().Zero(power)
 	}
+}
+
+// TestOutgoingValidatorFeesRemainWithdrawable proves the accrued-fees
+// guarantee documented on SwapPoaValidators: fees an outgoing validator
+// accrued before the swap must still be withdrawable afterward, even though
+// its power drops to 0. This depends on checkpoint ordering inside the
+// handler — CreateValidator runs with checkpoint=true for the incoming
+// validators while the outgoing validators still hold power, so the
+// outgoing validators' pending share is checkpointed (and thus locked in)
+// before they are later zeroed out.
+func (s *UpgradeTestSuite) TestOutgoingValidatorFeesRemainWithdrawable() {
+	// ----- arrange -----
+	s.fillPlaceholders()
+	s.seedCurrentPOASet()
+
+	// Fund the POA module account directly — POA's own account balance
+	// (minus what's already allocated) is what getUnallocatedFees treats as
+	// pending fees to checkpoint out to validators.
+	bondDenom, err := s.App.StakingKeeper.BondDenom(s.Ctx)
+	s.Require().NoError(err)
+	s.FundModuleAccount(poatypes.ModuleName, sdk.NewInt64Coin(bondDenom, 1_000_000))
+
+	// ----- act -----
+	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
+
+	// ----- assert -----
+	outgoingOperator, err := sdk.AccAddressFromBech32(s.seededOperators["Citadel.one"])
+	s.Require().NoError(err)
+
+	payout, err := s.App.POAKeeper.WithdrawValidatorFees(s.Ctx, outgoingOperator)
+	s.Require().NoError(err)
+	s.Require().False(payout.IsZero(), "outgoing validator's pre-upgrade accrued fees should still be withdrawable")
 }
 
 func (s *UpgradeTestSuite) TestSwapFailsWithPlaceholderPubkey() {
@@ -234,21 +282,23 @@ func (s *UpgradeTestSuite) TestSwapFailsWhenOutgoingValidatorMissing() {
 
 func (s *UpgradeTestSuite) TestSwapFailsWhenIncomingMissingFromRegistry() {
 	s.fillPlaceholders()
-	// Break the moniker join for cosmosrescue.
+	// Break the moniker join for cosmosrescue. Restore is registered
+	// immediately so a failed assertion below can't leave
+	// "not-cosmosrescue" in the registry for the rest of the binary.
 	for i := range utils.PoaValidatorSet {
 		if utils.PoaValidatorSet[i].Moniker == "cosmosrescue" {
 			utils.PoaValidatorSet[i].Moniker = "not-cosmosrescue"
 		}
 	}
+	s.T().Cleanup(func() {
+		for i := range utils.PoaValidatorSet {
+			if utils.PoaValidatorSet[i].Moniker == "not-cosmosrescue" {
+				utils.PoaValidatorSet[i].Moniker = "cosmosrescue"
+			}
+		}
+	})
 	s.seedCurrentPOASet()
 
 	err := v34.SwapPoaValidators(s.Ctx, s.App.AppCodec(), s.App.POAKeeper)
 	s.Require().ErrorContains(err, "no entry in utils.PoaValidatorSet")
-
-	// Restore for subsequent tests.
-	for i := range utils.PoaValidatorSet {
-		if utils.PoaValidatorSet[i].Moniker == "not-cosmosrescue" {
-			utils.PoaValidatorSet[i].Moniker = "cosmosrescue"
-		}
-	}
 }

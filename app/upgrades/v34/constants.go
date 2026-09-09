@@ -7,6 +7,9 @@ const (
 	// PlaceholderConsPubKey marks a consensus pubkey the incoming validator has
 	// not yet confirmed (via `strided tendermint show-validator`). The upgrade
 	// handler refuses to run while any incoming validator still carries it.
+	// The real value is the "key" field of that command's JSON output, e.g.
+	// {"@type":"/cosmos.crypto.ed25519.PubKey","key":"<base64>"} — copy the
+	// base64 string, not the whole JSON object.
 	PlaceholderConsPubKey = "PLACEHOLDER"
 
 	// ValidatorPower matches the uniform power of the existing POA set — the
