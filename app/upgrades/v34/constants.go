@@ -32,7 +32,7 @@ type IncomingValidator struct {
 var (
 	IncomingValidators = []IncomingValidator{
 		{Moniker: "cosmosrescue", ConsPubKeyBase64: PlaceholderConsPubKey},
-		{Moniker: "Citizen Web3", ConsPubKeyBase64: PlaceholderConsPubKey},
+		{Moniker: "CitizenWeb3", ConsPubKeyBase64: PlaceholderConsPubKey},
 	}
 
 	// OutgoingMonikers are resolved against live POA state at upgrade time —

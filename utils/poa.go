@@ -44,5 +44,5 @@ var PoaValidatorSet = []PoaValidator{
 	// v34 additions — placeholder payout addresses until the validators
 	// confirm real ones (see PlaceholderOperator* above).
 	{Moniker: "cosmosrescue", Operator: PlaceholderOperatorCosmosRescue},
-	{Moniker: "Citizen Web3", Operator: PlaceholderOperatorCitizenWeb3},
+	{Moniker: "CitizenWeb3", Operator: PlaceholderOperatorCitizenWeb3},
 }

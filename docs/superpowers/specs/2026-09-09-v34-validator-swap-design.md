@@ -1,4 +1,4 @@
-# v34: POA Validator Swap (Citadel.one, Cosmostation → cosmosrescue, Citizen Web3)
+# v34: POA Validator Swap (Citadel.one, Cosmostation → cosmosrescue, CitizenWeb3)
 
 **Date:** 2026-09-09
 **Status:** Approved
@@ -8,7 +8,7 @@
 Replace two validators in Stride's POA set via the v34 chain upgrade:
 
 - **Out:** `Citadel.one`, `Cosmostation` (POA monikers, verified against mainnet POA state)
-- **In:** `cosmosrescue`, `Citizen Web3`
+- **In:** `cosmosrescue`, `CitizenWeb3`
 
 Two places encode validator identity and must change together:
 
@@ -62,9 +62,9 @@ the following. These are load-bearing constraints on the handler design:
 
 ## §3. Validator data
 
-| | cosmosrescue | Citizen Web3 |
+| | cosmosrescue | CitizenWeb3 |
 |---|---|---|
-| POA moniker | `cosmosrescue` | `Citizen Web3` |
+| POA moniker | `cosmosrescue` | `CitizenWeb3` |
 | Consensus pubkey (ed25519, base64) | `JEREY43D2nFKgcFQYAVUHcaKsaD14wmpFpGtXWrNK3c=` * | `rH8ddv5Ev2eIUTDx4x0ESGm7IFkskbdaSE30liWu02M=` * |
 | Payout / operator address | **placeholder** | **placeholder** |
 | Power | 274523 (matches current uniform set) | 274523 |
@@ -84,7 +84,7 @@ no hand-transcribed cons addresses to typo).
 `utils/poa.go` remains the registry of payout addresses:
 
 - Replace the `Citadel.one` and `Cosmostation` entries with `cosmosrescue` and
-  `Citizen Web3` (operator = payout address, placeholder until confirmed).
+  `CitizenWeb3` (operator = payout address, placeholder until confirmed).
   Payout placeholders are **valid-bech32 deterministic burn addresses** (sha256-derived,
   no known private key), not a raw `"PLACEHOLDER"` string — `reward_allocation.go`
   and its tests call `sdk.MustAccAddressFromBech32` on every operator, so an
@@ -110,7 +110,7 @@ const PlaceholderSentinel = "PLACEHOLDER"
 // Incoming: moniker (must match the utils.PoaValidatorSet entry) + base64 ed25519 pubkey.
 var IncomingValidators = []IncomingValidator{
     {Moniker: "cosmosrescue", ConsPubKeyBase64: PlaceholderSentinel},
-    {Moniker: "Citizen Web3", ConsPubKeyBase64: PlaceholderSentinel},
+    {Moniker: "CitizenWeb3", ConsPubKeyBase64: PlaceholderSentinel},
 }
 
 var OutgoingMonikers = []string{"Citadel.one", "Cosmostation"}
@@ -204,7 +204,7 @@ dynamically.
 - **Never run a v34 binary with `--unsafe-skip-upgrades` past the v34 height.** Skipping
   the upgrade leaves the POA validator set on the old (Citadel.one/Cosmostation) signers
   while the binary's `utils.PoaValidatorSet` already reflects the new (cosmosrescue/
-  Citizen Web3) payout registry — the exact registry/POA desync this upgrade exists to
+  CitizenWeb3) payout registry — the exact registry/POA desync this upgrade exists to
   avoid, reintroduced by skipping it.
 - **The written echo-back confirmation from each incoming validator must cover the
   payout address, not just the consensus pubkey.** A wrong-but-valid bech32 payout
