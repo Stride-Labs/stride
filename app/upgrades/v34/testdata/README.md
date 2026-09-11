@@ -19,6 +19,13 @@ jq -n --slurpfile p poa_params.json --slurpfile v poa_vals.json \
 gzip -c trimmed.json > app/upgrades/v34/testdata/mainnet_export.json.gz
 ```
 
+Cross-validated at assembly time: the fixture's pubkeys and powers match the
+live CometBFT signing set (`stride-rpc.polkachu.com/validators`, a separate
+consensus-layer data path), and an independent provider
+(`rest.cosmos.directory/stride`) agreed on every field for all 8 validators.
+The only state a real `strided export` would add is POA fee-accounting
+(`allocated_fees` etc.), which the suite never reads.
+
 ## Regenerating from a node export (byte-provenance alternative)
 
 From a synced post-v33 node's data dir:
