@@ -12,6 +12,6 @@ jq '{app_state: {poa: .app_state.poa}}' full_export.json > trimmed.json
 gzip -c trimmed.json > app/upgrades/v34/testdata/mainnet_export.json.gz
 ```
 
-The suite runs with the REAL v34 constants (no placeholder substitution), so
-it fails until the incoming validators' consensus pubkeys and payout
-addresses are filled in — run it as the final release gate before tagging.
+The suite runs with the REAL v34 constants (no test-key substitution) and
+verifies them against actual mainnet state, including the POA-set ≡
+payout-registry invariant — run it as the final release gate before tagging.

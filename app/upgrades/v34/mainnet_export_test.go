@@ -26,10 +26,11 @@ const mainnetExportPath = "testdata/mainnet_export.json.gz"
 
 // MainnetExportTestSuite replays the v34 handler against real post-v33
 // mainnet POA state. Unlike the synthetic suite, it runs with the REAL
-// constants — no placeholder substitution — so it doubles as the release
-// gate: it fails until the incoming validators' pubkeys and payout addresses
-// are filled in. The fixture is only committed during release prep; the
-// suite skips when it is absent so CI stays green in the meantime.
+// constants — no test-key substitution — so it is the release gate: it
+// verifies the confirmed pubkeys and payout addresses against actual mainnet
+// state, including the POA-set ≡ payout-registry invariant. The fixture is
+// only committed during release prep; the suite skips when it is absent so
+// CI stays green in the meantime.
 type MainnetExportTestSuite struct {
 	apptesting.AppTestHelper
 

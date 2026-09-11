@@ -114,9 +114,6 @@ func buildIncomingValidators() ([]incomingValidator, error) {
 
 	incoming := make([]incomingValidator, 0, len(IncomingValidators))
 	for _, entry := range IncomingValidators {
-		if entry.ConsPubKeyBase64 == PlaceholderConsPubKey {
-			return nil, fmt.Errorf("incoming validator %q still has a placeholder consensus pubkey", entry.Moniker)
-		}
 		keyBytes, err := base64.StdEncoding.DecodeString(entry.ConsPubKeyBase64)
 		if err != nil {
 			return nil, fmt.Errorf("incoming validator %q consensus pubkey is not valid base64: %w", entry.Moniker, err)
@@ -129,9 +126,6 @@ func buildIncomingValidators() ([]incomingValidator, error) {
 		operator, ok := operatorByMoniker[entry.Moniker]
 		if !ok {
 			return nil, fmt.Errorf("incoming validator %q has no entry in utils.PoaValidatorSet", entry.Moniker)
-		}
-		if utils.IsPlaceholderOperator(operator) {
-			return nil, fmt.Errorf("incoming validator %q still has a placeholder payout address", entry.Moniker)
 		}
 		if _, err := sdk.AccAddressFromBech32(operator); err != nil {
 			return nil, fmt.Errorf("incoming validator %q payout address is invalid: %w", entry.Moniker, err)

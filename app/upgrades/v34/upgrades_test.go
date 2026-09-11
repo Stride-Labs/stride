@@ -27,7 +27,7 @@ type UpgradeTestSuite struct {
 	apptesting.AppTestHelper
 
 	// consensus pubkeys generated for the incoming validators, injected into
-	// the v34.IncomingValidators placeholders by fillPlaceholders
+	// v34.IncomingValidators by useTestConsensusKeys
 	incomingPubKeys map[string]cryptotypes.PubKey
 
 	// consensus pubkeys and operator addresses of the seeded current set
@@ -46,17 +46,17 @@ func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-// fillPlaceholders substitutes test values for the release-time placeholders:
-// generated ed25519 keys for the incoming consensus pubkeys, and random
-// accounts for the placeholder payout addresses in utils.PoaValidatorSet.
+// useTestConsensusKeys swaps generated ed25519 keys into
+// v34.IncomingValidators so the synthetic suite doesn't depend on the real
+// (mainnet) consensus keys baked into the constants.
 //
 // Package-level vars are mutated, so this snapshots both globals and
 // registers a cleanup to restore them once the test completes. Without this,
-// a test that runs before MainnetExportTestSuite — release-gate ordering the
-// Go test runner does NOT guarantee, especially under `-shuffle=on` — would
-// leave the export suite reading test-filled values and passing vacuously
-// with placeholders unfilled.
-func (s *UpgradeTestSuite) fillPlaceholders() {
+// a test that runs before MainnetExportTestSuite — an ordering the Go test
+// runner does NOT guarantee, especially under `-shuffle=on` — would leave
+// the export suite (the release gate) reading test-filled values instead of
+// the real constants and passing vacuously.
+func (s *UpgradeTestSuite) useTestConsensusKeys() {
 	incomingSnapshot := append([]v34.IncomingValidator{}, v34.IncomingValidators...)
 	registrySnapshot := append([]utils.PoaValidator{}, utils.PoaValidatorSet...)
 	s.T().Cleanup(func() {
@@ -70,11 +70,6 @@ func (s *UpgradeTestSuite) fillPlaceholders() {
 		pubKey := ed25519.GenPrivKeyFromSecret([]byte("incoming-" + moniker)).PubKey()
 		s.incomingPubKeys[moniker] = pubKey
 		v34.IncomingValidators[i].ConsPubKeyBase64 = base64.StdEncoding.EncodeToString(pubKey.Bytes())
-	}
-	for i := range utils.PoaValidatorSet {
-		if utils.IsPlaceholderOperator(utils.PoaValidatorSet[i].Operator) {
-			utils.PoaValidatorSet[i].Operator = apptesting.CreateRandomAccounts(1)[0].String()
-		}
 	}
 }
 
@@ -132,7 +127,7 @@ func (s *UpgradeTestSuite) validatorsByMoniker() map[string]poatypes.Validator {
 
 func (s *UpgradeTestSuite) TestUpgrade() {
 	// ----- arrange -----
-	s.fillPlaceholders()
+	s.useTestConsensusKeys()
 	s.seedCurrentPOASet()
 	s.capturePreUpgradeState()
 
@@ -227,7 +222,7 @@ func (s *UpgradeTestSuite) checkEmittedUpdates() {
 // before they are later zeroed out.
 func (s *UpgradeTestSuite) TestOutgoingValidatorFeesRemainWithdrawable() {
 	// ----- arrange -----
-	s.fillPlaceholders()
+	s.useTestConsensusKeys()
 	s.seedCurrentPOASet()
 
 	// Fund the POA module account directly — POA's own account balance
@@ -249,30 +244,8 @@ func (s *UpgradeTestSuite) TestOutgoingValidatorFeesRemainWithdrawable() {
 	s.Require().False(payout.IsZero(), "outgoing validator's pre-upgrade accrued fees should still be withdrawable")
 }
 
-func (s *UpgradeTestSuite) TestSwapFailsWithPlaceholderPubkey() {
-	s.fillPlaceholders()
-	v34.IncomingValidators[0].ConsPubKeyBase64 = v34.PlaceholderConsPubKey
-	s.seedCurrentPOASet()
-
-	err := v34.SwapPoaValidators(s.Ctx, s.App.AppCodec(), s.App.POAKeeper)
-	s.Require().ErrorContains(err, "placeholder consensus pubkey")
-}
-
-func (s *UpgradeTestSuite) TestSwapFailsWithPlaceholderPayoutAddress() {
-	s.fillPlaceholders()
-	for i := range utils.PoaValidatorSet {
-		if utils.PoaValidatorSet[i].Moniker == "cosmosrescue" {
-			utils.PoaValidatorSet[i].Operator = utils.PlaceholderOperatorCosmosRescue
-		}
-	}
-	s.seedCurrentPOASet()
-
-	err := v34.SwapPoaValidators(s.Ctx, s.App.AppCodec(), s.App.POAKeeper)
-	s.Require().ErrorContains(err, "placeholder payout address")
-}
-
 func (s *UpgradeTestSuite) TestSwapFailsWhenOutgoingValidatorMissing() {
-	s.fillPlaceholders()
+	s.useTestConsensusKeys()
 	// Seed everyone except Citadel.one.
 	s.seedPOASet(append(append([]string{}, continuingMonikers...), "Cosmostation"))
 
@@ -281,7 +254,7 @@ func (s *UpgradeTestSuite) TestSwapFailsWhenOutgoingValidatorMissing() {
 }
 
 func (s *UpgradeTestSuite) TestSwapFailsWhenIncomingMissingFromRegistry() {
-	s.fillPlaceholders()
+	s.useTestConsensusKeys()
 	// Break the moniker join for cosmosrescue. Restore is registered
 	// immediately so a failed assertion below can't leave
 	// "not-cosmosrescue" in the registry for the rest of the binary.

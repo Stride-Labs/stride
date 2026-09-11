@@ -4,14 +4,6 @@ const (
 	// UpgradeName is the SDK upgrade plan name. Match the binary release tag.
 	UpgradeName = "v34"
 
-	// PlaceholderConsPubKey marks a consensus pubkey the incoming validator has
-	// not yet confirmed (via `strided tendermint show-validator`). The upgrade
-	// handler refuses to run while any incoming validator still carries it.
-	// The real value is the "key" field of that command's JSON output, e.g.
-	// {"@type":"/cosmos.crypto.ed25519.PubKey","key":"<base64>"} — copy the
-	// base64 string, not the whole JSON object.
-	PlaceholderConsPubKey = "PLACEHOLDER"
-
 	// ValidatorPower matches the uniform power of the existing POA set — the
 	// value snapshotted from ICS at the v33 migration. POA only weighs relative
 	// power, so incoming validators join at the same weight and total power is
@@ -28,11 +20,14 @@ type IncomingValidator struct {
 	ConsPubKeyBase64 string // base64-encoded ed25519 consensus pubkey
 }
 
-// vars rather than consts so tests can substitute filled-in values.
+// vars rather than consts so tests can substitute generated test keys.
 var (
+	// Pubkeys confirmed in writing by each validator (2026-09-11) from the
+	// `key` field of `strided tendermint show-validator` on their running
+	// nodes. Payout addresses live in utils.PoaValidatorSet.
 	IncomingValidators = []IncomingValidator{
-		{Moniker: "cosmosrescue", ConsPubKeyBase64: PlaceholderConsPubKey},
-		{Moniker: "CitizenWeb3", ConsPubKeyBase64: PlaceholderConsPubKey},
+		{Moniker: "cosmosrescue", ConsPubKeyBase64: "X9ma3W9EfbHImJKJaUCoKQwDQU9eB1aGZJz2bVHfA3U="},
+		{Moniker: "CitizenWeb3", ConsPubKeyBase64: "5tALxrcAfArCTEMJhCB4ISxsRogKyQzo/R7nZ5YbTMo="},
 	}
 
 	// OutgoingMonikers are resolved against live POA state at upgrade time —

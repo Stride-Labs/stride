@@ -65,15 +65,17 @@ the following. These are load-bearing constraints on the handler design:
 | | cosmosrescue | CitizenWeb3 |
 |---|---|---|
 | POA moniker | `cosmosrescue` | `CitizenWeb3` |
-| Consensus pubkey (ed25519, base64) | `JEREY43D2nFKgcFQYAVUHcaKsaD14wmpFpGtXWrNK3c=` * | `rH8ddv5Ev2eIUTDx4x0ESGm7IFkskbdaSE30liWu02M=` * |
-| Payout / operator address | **placeholder** | **placeholder** |
+| Consensus pubkey (ed25519, base64) | `X9ma3W9EfbHImJKJaUCoKQwDQU9eB1aGZJz2bVHfA3U=` | `5tALxrcAfArCTEMJhCB4ISxsRogKyQzo/R7nZ5YbTMo=` |
+| Payout / operator address | `stride19397kzaerflj7m5ll5rdeap5necvt3r258zt7a` | `stride1dlmvgvnfp27h4c789a4y09e4hradenyl3grcg4` |
 | Power | 274523 (matches current uniform set) | 274523 |
 
-\* Candidate keys pulled from the validators' registered Stride staking (govenator)
-records — right type, not yet confirmed as the keys their nodes actually run. Constants
-ship as **placeholder sentinels** until each validator confirms (a) the consensus pubkey
-via `strided tendermint show-validator` and (b) a fresh payout address. Neither candidate
-key collides with any key in the current POA set.
+Values confirmed in writing by each validator (2026-09-11) from
+`strided tendermint show-validator` on their running nodes — fresh node keys, which is
+why they differ from the candidate keys originally pulled from the validators' Stride
+staking (govenator) records during design. Verified: 32-byte ed25519, no collision with
+any key in the current POA set, valid stride-prefixed bech32 payout addresses. The
+placeholder-sentinel machinery that guarded unfilled values was removed once these
+landed (the handler still validates key size, bech32, and the moniker join at runtime).
 
 Outgoing validators are identified by **moniker only** (`Citadel.one`, `Cosmostation`);
 their consensus addresses are resolved from live POA state at upgrade time (approach A:
