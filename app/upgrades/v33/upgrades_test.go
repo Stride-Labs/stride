@@ -20,7 +20,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v33/app/apptesting"
 	v33 "github.com/Stride-Labs/stride/v33/app/upgrades/v33"
-	"github.com/Stride-Labs/stride/v33/utils"
 	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
 	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
@@ -389,15 +388,15 @@ func (s *UpgradeTestSuite) capturePreUpgradeState() {
 }
 
 // populateValidatorMonikers maps each seeded ICS validator to one of the real
-// monikers in utils.PoaValidatorSet so SnapshotValidatorsFromICS can complete
+// monikers in v33.FrozenValidatorSet so SnapshotValidatorsFromICS can complete
 // the hex_cons_addr → moniker → operator join. Cleaned up after the test run.
 func (s *UpgradeTestSuite) populateValidatorMonikers() {
 	vals := s.App.ConsumerKeeper.GetAllCCValidator(s.Ctx)
-	s.Require().Len(vals, len(utils.PoaValidatorSet),
-		"test seeds must match utils.PoaValidatorSet length so every validator gets a real moniker")
+	s.Require().Len(vals, len(v33.FrozenValidatorSet),
+		"test seeds must match v33.FrozenValidatorSet length so every validator gets a real moniker")
 
 	for i, v := range vals {
-		v33.ValidatorMonikers[hex.EncodeToString(v.Address)] = utils.PoaValidatorSet[i].Moniker
+		v33.ValidatorMonikers[hex.EncodeToString(v.Address)] = v33.FrozenValidatorSet[i].Moniker
 	}
 	s.T().Cleanup(func() {
 		for _, v := range vals {

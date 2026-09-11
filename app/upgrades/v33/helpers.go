@@ -20,8 +20,6 @@ import (
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-
-	"github.com/Stride-Labs/stride/v33/utils"
 )
 
 // SnapshotValidatorsFromICS reads the current CCV validator set from the
@@ -30,7 +28,7 @@ import (
 //
 // Each consensus address is joined to a moniker via the embedded
 // ValidatorMonikers map (sourced from validators.json), and that moniker is
-// joined to a Stride-side operator address via utils.PoaValidatorSet — the
+// joined to a Stride-side operator address via v33.FrozenValidatorSet — the
 // same address the existing reward-allocation pipeline pays out to. Both joins
 // must succeed; a missing entry on either side is a configuration drift
 // between the two sources of truth and halts the upgrade.
@@ -53,8 +51,8 @@ func SnapshotValidatorsFromICS(
 		))
 	}
 
-	operatorByMoniker := make(map[string]string, len(utils.PoaValidatorSet))
-	for _, v := range utils.PoaValidatorSet {
+	operatorByMoniker := make(map[string]string, len(FrozenValidatorSet))
+	for _, v := range FrozenValidatorSet {
 		operatorByMoniker[v.Moniker] = v.Operator
 	}
 
@@ -81,7 +79,7 @@ func SnapshotValidatorsFromICS(
 		operatorAddr, ok := operatorByMoniker[moniker]
 		if !ok {
 			return nil, fmt.Errorf(
-				"validator %s (moniker %q) has no entry in utils.PoaValidatorSet",
+				"validator %s (moniker %q) has no entry in v33.FrozenValidatorSet",
 				hexAddr, moniker,
 			)
 		}
