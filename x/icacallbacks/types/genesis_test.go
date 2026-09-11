@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {

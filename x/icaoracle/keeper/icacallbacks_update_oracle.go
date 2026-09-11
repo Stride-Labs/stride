@@ -8,9 +8,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v33/x/icaoracle/types"
+	"github.com/Stride-Labs/stride/v34/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v34/x/icaoracle/types"
 )
 
 // Callback after an update oracle ICA

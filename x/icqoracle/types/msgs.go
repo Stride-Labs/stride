@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/utils"
+	"github.com/Stride-Labs/stride/v34/utils"
 )
 
 const (

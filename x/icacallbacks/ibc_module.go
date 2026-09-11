@@ -11,8 +11,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/x/icacallbacks/keeper"
-	"github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v34/x/icacallbacks/keeper"
+	"github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
 )
 
 var _ porttypes.IBCModule = &IBCModule{}

@@ -15,9 +15,9 @@ import (
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/app/apptesting"
-	v34 "github.com/Stride-Labs/stride/v33/app/upgrades/v34"
-	"github.com/Stride-Labs/stride/v33/utils"
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
+	"github.com/Stride-Labs/stride/v34/utils"
 )
 
 // mainnetExportPath is relative to this package — read directly from the

@@ -9,11 +9,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 type WithdrawalBalanceICQCallbackState struct {

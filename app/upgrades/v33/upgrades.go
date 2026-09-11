@@ -20,12 +20,12 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v33/utils"
-	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
-	recordskeeper "github.com/Stride-Labs/stride/v33/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v33/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v34/utils"
+	epochstypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
+	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // CreateUpgradeHandler returns the v33 upgrade handler that migrates Stride

@@ -8,8 +8,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/utils"
-	"github.com/Stride-Labs/stride/v33/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v34/utils"
+	"github.com/Stride-Labs/stride/v34/x/icqoracle/types"
 )
 
 func (k Keeper) BeginBlocker(ctx sdk.Context) {

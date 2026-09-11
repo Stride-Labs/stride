@@ -8,9 +8,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v33/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v33/x/records/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v34/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
 )
 
 const chainId = "GAIA"

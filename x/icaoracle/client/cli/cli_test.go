@@ -12,11 +12,11 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	strideapp "github.com/Stride-Labs/stride/v33/app"
-	cmdcfg "github.com/Stride-Labs/stride/v33/cmd/strided/config"
-	strideclitestutil "github.com/Stride-Labs/stride/v33/testutil/cli"
-	"github.com/Stride-Labs/stride/v33/testutil/network"
-	"github.com/Stride-Labs/stride/v33/x/icaoracle/types"
+	strideapp "github.com/Stride-Labs/stride/v34/app"
+	cmdcfg "github.com/Stride-Labs/stride/v34/cmd/strided/config"
+	strideclitestutil "github.com/Stride-Labs/stride/v34/testutil/cli"
+	"github.com/Stride-Labs/stride/v34/testutil/network"
+	"github.com/Stride-Labs/stride/v34/x/icaoracle/types"
 )
 
 var HostChainId = "chain-1"

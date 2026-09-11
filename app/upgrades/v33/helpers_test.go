@@ -19,8 +19,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/app/apptesting"
-	v33 "github.com/Stride-Labs/stride/v33/app/upgrades/v33"
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	v33 "github.com/Stride-Labs/stride/v34/app/upgrades/v33"
 )
 
 type HelpersTestSuite struct {
