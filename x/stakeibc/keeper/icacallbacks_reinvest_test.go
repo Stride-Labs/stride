@@ -11,14 +11,14 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/app/apptesting"
-	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v33/x/icacallbacks/types"
-	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
-	recordtypes "github.com/Stride-Labs/stride/v33/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v33/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
+	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 type ReinvestCallbackState struct {

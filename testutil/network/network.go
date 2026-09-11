@@ -27,7 +27,7 @@ import (
 	genutil "github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/Stride-Labs/stride/v33/app"
+	"github.com/Stride-Labs/stride/v34/app"
 )
 
 type (

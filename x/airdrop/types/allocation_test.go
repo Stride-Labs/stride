@@ -7,7 +7,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v33/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v34/x/airdrop/types"
 )
 
 func TestGetRemainingAllocations(t *testing.T) {

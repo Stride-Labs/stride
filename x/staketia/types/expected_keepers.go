@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordtypes "github.com/Stride-Labs/stride/v33/x/records/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // Required AccountKeeper functions

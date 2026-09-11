@@ -17,10 +17,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	"github.com/Stride-Labs/stride/v33/app/apptesting"
-	v33 "github.com/Stride-Labs/stride/v33/app/upgrades/v33"
-	epochstypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	v33 "github.com/Stride-Labs/stride/v34/app/upgrades/v33"
+	epochstypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // mainnetExportPath is relative to this package — read directly from the

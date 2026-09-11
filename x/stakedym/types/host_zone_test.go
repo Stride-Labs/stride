@@ -8,9 +8,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v33/app/apptesting"
-	"github.com/Stride-Labs/stride/v33/utils"
-	"github.com/Stride-Labs/stride/v33/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	"github.com/Stride-Labs/stride/v34/utils"
+	"github.com/Stride-Labs/stride/v34/x/stakedym/types"
 )
 
 const (

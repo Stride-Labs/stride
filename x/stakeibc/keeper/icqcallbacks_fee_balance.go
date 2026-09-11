@@ -12,11 +12,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v33/utils"
-	epochtypes "github.com/Stride-Labs/stride/v33/x/epochs/types"
-	icqkeeper "github.com/Stride-Labs/stride/v33/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v33/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v33/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v34/utils"
+	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
+	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // FeeBalanceCallback is a callback handler for FeeBalnce queries.

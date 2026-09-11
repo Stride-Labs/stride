@@ -18,9 +18,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/Stride-Labs/stride/v33/x/mint/client/cli"
-	"github.com/Stride-Labs/stride/v33/x/mint/keeper"
-	"github.com/Stride-Labs/stride/v33/x/mint/types"
+	"github.com/Stride-Labs/stride/v34/x/mint/client/cli"
+	"github.com/Stride-Labs/stride/v34/x/mint/keeper"
+	"github.com/Stride-Labs/stride/v34/x/mint/types"
 )
 
 var (

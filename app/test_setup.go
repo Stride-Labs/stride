@@ -27,8 +27,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	cmdcfg "github.com/Stride-Labs/stride/v33/cmd/strided/config"
-	testutil "github.com/Stride-Labs/stride/v33/testutil"
+	cmdcfg "github.com/Stride-Labs/stride/v34/cmd/strided/config"
+	testutil "github.com/Stride-Labs/stride/v34/testutil"
 )
 
 const Bech32Prefix = "stride"
