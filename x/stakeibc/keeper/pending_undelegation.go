@@ -64,12 +64,17 @@ func (k Keeper) GetAllPendingUndelegations(ctx sdk.Context) (list []types.Pendin
 // normal validator capacity logic, and clears the pending key once the ICA has been submitted
 //
 // The ICA is submitted with no epoch unbonding record ids, so the undelegate callback only adjusts
-// the validator and host zone delegation balances (nothing is burned)
+// the validator and host zone delegation balances (nothing is burned). If the ICA fails or times
+// out, the callback re-queues the amount so it's resubmitted at a later day epoch
+//
+// A host zone that unbonds on this day epoch is skipped (key kept) since InitiateAllHostZoneUnbondings
+// has just consumed the same validator capacity, and the delegation balances the capacity is computed
+// from are not decremented until that ICA's ack arrives
 //
 // Any failure (missing channel, insufficient capacity, ICA submit error) is logged and the key is
 // kept so the submission is retried at the next day epoch. This never returns an error or panics
 // since it runs from the epoch hook
-func (k Keeper) SubmitPendingUndelegations(ctx sdk.Context) {
+func (k Keeper) SubmitPendingUndelegations(ctx sdk.Context, epochNumber uint64) {
 	for _, pending := range k.GetAllPendingUndelegations(ctx) {
 		chainId := pending.ChainId
 		amount := pending.Amount
@@ -80,6 +85,16 @@ func (k Keeper) SubmitPendingUndelegations(ctx sdk.Context) {
 			k.Logger(ctx).Error(utils.LogWithHostZone(chainId,
 				"Host zone not found for pending undelegation of %v, removing pending key", amount))
 			k.RemovePendingUndelegation(ctx, chainId)
+			continue
+		}
+
+		// Defer to the next day epoch if the regular unbonding flow runs for this host zone this epoch,
+		// otherwise both would cascade onto the same validators and overshoot the on-chain delegation
+		unbondingFrequency := hostZone.GetUnbondingFrequency()
+		if epochNumber%unbondingFrequency == 0 {
+			k.Logger(ctx).Info(utils.LogWithHostZone(chainId,
+				"Host unbonds this epoch, deferring pending undelegation of %v%s to the next day epoch "+
+					"(Unbonding Frequency: %d, Epoch: %d)", amount, hostZone.HostDenom, unbondingFrequency, epochNumber))
 			continue
 		}
 

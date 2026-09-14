@@ -107,23 +107,28 @@ the key exists for at most one day epoch on a healthy channel).
 
 ### Hook
 
-`SubmitPendingUndelegations(ctx)` is called in `BeforeEpochStart` inside the `DAY_EPOCH` block,
-immediately after `InitiateAllHostZoneUnbondings` (`hooks.go:29`). It is permanent and store-
-driven — a no-op when no keys exist — so nothing to remove in v35. For each pending entry:
+`SubmitPendingUndelegations(ctx, epochNumber)` is called in `BeforeEpochStart` inside the
+`DAY_EPOCH` block, immediately after `InitiateAllHostZoneUnbondings` (`hooks.go:29`). It is
+permanent and store-driven — a no-op when no keys exist — so nothing to remove in v35. For each
+pending entry:
 
 1. Load the host zone; if missing, log and delete the key.
-2. Build messages with the normal capacity logic. Refactor `UnbondFromHostZone`
+2. If `epochNumber % hostZone.GetUnbondingFrequency() == 0` (the host zone's own unbonding
+   epoch, the same check as `InitiateAllHostZoneUnbondings`), log and `continue` with the key
+   kept: both flows compute capacity from `validator.Delegation`, which is not decremented
+   until the ack, so submitting both in one epoch could overshoot the on-chain delegation.
+3. Build messages with the normal capacity logic. Refactor `UnbondFromHostZone`
    (`unbonding.go:416-525`): extract the segment from "Determine the total eligible unbond
    amount" through `GetUnbondingICAMessages` into
    `GetUndelegateMessagesForAmount(ctx, hostZone, amount) (msgs, splits, err)`; `UnbondFromHostZone`
    calls it. No behavior change for the normal path.
-3. `BatchSubmitUndelegateICAMessages(ctx, hostZone, nil, msgs, splits, batchSize)` — unchanged
+4. `BatchSubmitUndelegateICAMessages(ctx, hostZone, nil, msgs, splits, batchSize)` — unchanged
    function. With `EpochUnbondingRecordIds = nil` it submits via `SubmitTxsDayEpoch` (timeout is
    correct: the tracker was refreshed at the top of the hook), sets `ICACallbackID_Undelegate`,
    and increments `DelegationChangesInProgress` on each validator. That increment is required:
    `MarkUndelegationAckReceived` decrements it and errors at zero (`validator.go:226-229`), which
    would fail the ack tx and wedge the ordered delegation channel.
-4. Success → `RemovePendingUndelegation`, `EmitUndelegationEvent`. Any error (channel closed,
+5. Success → `RemovePendingUndelegation`, `EmitUndelegationEvent`. Any error (channel closed,
    insufficient capacity, ICA submit failure) → `Logger.Error`, key kept, retried next day epoch.
    Never returns an error to the hook; never panics.
 
@@ -136,9 +141,13 @@ Existing `UndelegateCallback` handles nil record ids with no change (verified ag
 `MarkUndelegationAckReceived` decrements in-progress; failure/timeout paths touch no records.
 Completion time is parsed from the ack's `MsgUndelegateResponse`, not from records.
 
-Interaction with the normal flow on the same day epoch: `InitiateAllHostZoneUnbondings` runs
-first; both paths compute capacity from the current host zone and the sum of both is bounded by
-capacity (zero-weight validators alone hold >300 INJ of capacity on Injective today).
+Failure and timeout with no record ids: the pending key was deleted at submit time, so the
+callback re-queues the batch via `SetPendingUndelegation(chainId, existing + batchAmount)` —
+additive, since one pending amount may be split across several batches — and logs at Error.
+
+Interaction with the normal flow on the same day epoch: the hook skips a host zone on its own
+unbonding epoch (step 2 above), so the two flows never cascade onto the same validators within
+one epoch.
 
 ## §5. Per-record redemption sweep (scoped)
 
@@ -173,11 +182,13 @@ callback now carries one id, but a record could still be moved by another path w
   `GetAll`; hook with an ICA channel (`CreateICAChannel`, `CheckICATxSubmitted`) submits, removes
   the key, increments `DelegationChangesInProgress` on the chosen validator(s); with no channel the
   submit fails, key kept, no panic; no keys → no ICA (`CheckICATxNotSubmitted`); missing host zone
-  → key removed.
+  → key removed; on the host zone's unbonding epoch → no ICA, key kept, and the next epoch
+  submits.
 - **Undelegate refactor**: existing `UnbondFromHostZone` tests pass unchanged.
 - **Callback** (`icacallbacks_undelegate_test.go`): `TestUndelegateCallback_NoRecords` — success
-  decrements validator delegation and `TotalDelegations`, burns nothing, decrements in-progress;
-  failure and timeout return nil.
+  decrements validator delegation and `TotalDelegations`, burns nothing, decrements in-progress,
+  leaves no pending key; failure and timeout return nil and re-queue the batch amount into the
+  pending store (added to any existing pending amount).
 - **Sweep** (`redemption_sweep_test.go`): existing bundled tests unchanged; new per-record case
   using `PerRecordSweepChainId` — N records → sequence advances by N, every record IN_PROGRESS,
   and an ordering assertion that submissions are ascending by epoch.
@@ -193,7 +204,10 @@ No dockernet rehearsal (decided 2026-09-14).
   vs host zone validators). It has been stable across 2026-09-08 / 09-13 / 09-14.
 - The delegation ICA channel must be open for the hook to submit; if it is closed at the first
   day epoch, the hook retries every day epoch until it succeeds — no action needed beyond the
-  usual channel restoration.
+  usual channel restoration. The hook also defers the submission on Injective's own unbonding
+  epoch (every 4th day epoch), so the reconciliation may land one day later than the upgrade.
+  If the submitted ICA fails or times out, the callback re-queues the amount and the hook
+  resubmits it at the next eligible day epoch.
 - v35 cleanup: remove `PerRecordSweepChainId` and the per-record branch.
 
 ---

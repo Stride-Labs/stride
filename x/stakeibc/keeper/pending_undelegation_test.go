@@ -12,6 +12,12 @@ import (
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
+// The fixture host zone has a 21 day unbonding period, so it unbonds every 4th day epoch
+const (
+	unbondingEpoch    = uint64(4)
+	nonUnbondingEpoch = uint64(5)
+)
+
 type PendingUndelegationTestCase struct {
 	hostZone            types.HostZone
 	pendingAmount       sdkmath.Int
@@ -74,6 +80,8 @@ func (s *KeeperTestSuite) TestGetAllPendingUndelegations() {
 //	Total Stake:  1000 (val1: 600, val2: 400), weights 50/50
 //	Pending:       200 → balanced delegation after unbonding is 400/400
 //	Capacity:      val1: 200, val2: 0
+//
+// The unbonding period is 21 days so the host zone only unbonds on every 4th day epoch
 func (s *KeeperTestSuite) SetupSubmitPendingUndelegations() PendingUndelegationTestCase {
 	delegationAccountOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
 	delegationChannelID, delegationPortID := s.CreateICAChannel(delegationAccountOwner)
@@ -91,9 +99,11 @@ func (s *KeeperTestSuite) SetupSubmitPendingUndelegations() PendingUndelegationT
 		TotalDelegations:    sdkmath.NewInt(1000),
 		RedemptionRate:      sdkmath.LegacyOneDec(),
 		MaxMessagesPerIcaTx: 32,
+		UnbondingPeriod:     21,
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, pendingAmount)
+	s.Require().Equal(unbondingEpoch, hostZone.GetUnbondingFrequency(), "fixture unbonding frequency")
 
 	// Mock the day epoch tracker so the ICA timeout can be computed
 	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, types.EpochTracker{
@@ -129,7 +139,7 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_Successful() {
 
 	// Submit and confirm exactly one ICA was sent
 	s.CheckICATxSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
-		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx)
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
 
@@ -163,9 +173,30 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_Successful() {
 
 	// A second call should find nothing pending and submit nothing
 	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
-		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx)
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
+}
+
+// On a host zone's unbonding epoch the normal unbonding flow already targets the validators' capacity,
+// so the pending undelegation must be deferred to the next day epoch rather than submitted alongside it
+func (s *KeeperTestSuite) TestSubmitPendingUndelegations_UnbondingEpochSkipped() {
+	tc := s.SetupSubmitPendingUndelegations()
+
+	// On the unbonding epoch nothing should be submitted and the key should be kept
+	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, unbondingEpoch)
+		return nil
+	})
+	s.checkPendingUndelegationNotSubmitted(tc)
+
+	// On the following epoch it should be submitted and the key removed
+	s.CheckICATxSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, unbondingEpoch+1)
+		return nil
+	})
+	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().False(found, "pending undelegation should be removed after submission on a non-unbonding epoch")
 }
 
 func (s *KeeperTestSuite) TestSubmitPendingUndelegations_NothingPending() {
@@ -173,7 +204,7 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_NothingPending() {
 	s.App.StakeibcKeeper.RemovePendingUndelegation(s.Ctx, HostChainId)
 
 	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
-		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx)
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
 
@@ -190,7 +221,7 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_ChannelClosed() {
 	s.UpdateChannelState(tc.delegationPortID, tc.delegationChannelID, channeltypes.CLOSED)
 
 	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
-		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx)
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
 	s.checkPendingUndelegationNotSubmitted(tc)
@@ -207,7 +238,7 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_InsufficientCapacity() 
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
-		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx)
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
 	s.checkPendingUndelegationNotSubmitted(tc)
@@ -222,7 +253,7 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_HostZoneNotFound() {
 
 	// Only the valid host zone's ICA should be submitted
 	s.CheckICATxSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
-		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx)
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
 
