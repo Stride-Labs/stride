@@ -13,13 +13,18 @@ import (
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v34/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
 // CreateUpgradeHandler returns the v34 upgrade handler, which swaps two POA
-// validators. See docs/superpowers/specs/2026-09-09-v34-validator-swap-design.md.
+// validators (see docs/superpowers/specs/2026-09-09-v34-validator-swap-design.md),
+// clears stuck slash queries and ICQs (see slash_queries.go), and updates the
+// gov quorum and voting period (see gov_params.go).
 //
 // poaKeeper is a pointer because POA's keeper methods have pointer receivers.
 // cdc unpacks the stored consensus-pubkey Anys when resolving the outgoing
@@ -29,10 +34,13 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	cdc codec.Codec,
 	poaKeeper *poakeeper.Keeper,
+	stakeibcKeeper stakeibckeeper.Keeper,
+	icqKeeper icqkeeper.Keeper,
+	govKeeper govkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
-		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap)...", UpgradeName))
+		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + gov params)...", UpgradeName))
 
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 		if err != nil {
@@ -40,6 +48,13 @@ func CreateUpgradeHandler(
 		}
 
 		if err := SwapPoaValidators(ctx, cdc, poaKeeper); err != nil {
+			return vm, err
+		}
+
+		ResetStuckSlashQueries(ctx, stakeibcKeeper)
+		DeleteStuckQueries(ctx, icqKeeper)
+
+		if err := UpdateGovParams(ctx, govKeeper); err != nil {
 			return vm, err
 		}
 

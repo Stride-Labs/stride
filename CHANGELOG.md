@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### On-Chain changes
 
 1. v34: swap POA validators — remove Citadel.one and Cosmostation, add cosmosrescue and CitizenWeb3 (POA set + `utils/poa.go` stToken payout registry)
+2. v34: reset stuck `SlashQueryInProgress` flags on 12 cosmoshub-4 validators and delete 30 timed-out ICQs
+3. v34: lower gov quorum from 33.4% to 25% and lengthen the voting period from 3 to 5 days
 
 ## [v33.0.0]
 

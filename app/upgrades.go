@@ -454,6 +454,9 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.configurator,
 			app.appCodec,
 			app.POAKeeper,
+			app.StakeibcKeeper,
+			app.InterchainqueryKeeper,
+			app.GovKeeper,
 		),
 	)
 
