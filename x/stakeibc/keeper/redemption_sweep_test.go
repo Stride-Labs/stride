@@ -250,6 +250,172 @@ func (s *KeeperTestSuite) TestSweepUnbondedTokensAllHostZones_NoneSuccessful() {
 	s.CheckEventValueNotEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, OsmoChainId)
 }
 
+// Sets up a host zone on PerRecordSweepChainId with N epoch unbonding records, seeded
+// deliberately out of epoch order, each with a distinct non-default native amount, all
+// eligible for sweep (EXIT_TRANSFER_QUEUE, unbonding time elapsed)
+func (s *KeeperTestSuite) SetupPerRecordSweepUnbondedTokens() SweepUnbondedTokensTestCase {
+	delegationChannelId, delegationPortId := s.CreateICAChannel("INJECTIVE.DELEGATION")
+
+	hostZone := types.HostZone{
+		ChainId:              types.PerRecordSweepChainId,
+		HostDenom:            "inj",
+		UnbondingPeriod:      21,
+		DelegationIcaAddress: "inj_DELEGATION",
+		RedemptionIcaAddress: "inj_REDEMPTION",
+		ConnectionId:         ibctesting.FirstConnectionID,
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	dayEpochTracker := types.EpochTracker{
+		EpochIdentifier:    epochtypes.STRIDE_EPOCH,
+		EpochNumber:        1,
+		NextEpochStartTime: uint64(s.Coordinator.CurrentTime.UnixNano() + 30_000_000_000),
+	}
+	s.App.StakeibcKeeper.SetEpochTracker(s.Ctx, dayEpochTracker)
+
+	unbondingTime := uint64(s.Ctx.BlockTime().Add(-1 * time.Minute).UnixNano())
+
+	// Seeded out of epoch order (3, 1, 2, 4) to exercise the explicit ascending sort
+	epochUnbondingRecords := []recordtypes.EpochUnbondingRecord{
+		{
+			EpochNumber: 3,
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					HostZoneId:        types.PerRecordSweepChainId,
+					NativeTokenAmount: sdkmath.NewInt(3_000_000),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     unbondingTime,
+				},
+			},
+		},
+		{
+			EpochNumber: 1,
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					HostZoneId:        types.PerRecordSweepChainId,
+					NativeTokenAmount: sdkmath.NewInt(1_000_000),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     unbondingTime,
+				},
+			},
+		},
+		{
+			EpochNumber: 2,
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					HostZoneId:        types.PerRecordSweepChainId,
+					NativeTokenAmount: sdkmath.NewInt(2_000_000),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     unbondingTime,
+				},
+			},
+		},
+		{
+			EpochNumber: 4,
+			HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+				{
+					HostZoneId:        types.PerRecordSweepChainId,
+					NativeTokenAmount: sdkmath.NewInt(4_000_000),
+					Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+					UnbondingTime:     unbondingTime,
+				},
+			},
+		},
+	}
+	for _, epochUnbondingRecord := range epochUnbondingRecords {
+		s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+	}
+
+	startSequence := s.MustGetNextSequenceNumber(delegationPortId, delegationChannelId)
+
+	return SweepUnbondedTokensTestCase{
+		epochUnbondingRecords: epochUnbondingRecords,
+		hostZones:             []types.HostZone{hostZone},
+		delegationChannelID:   delegationChannelId,
+		delegationPortID:      delegationPortId,
+		channelStartSequence:  startSequence,
+	}
+}
+
+func (s *KeeperTestSuite) TestSweepUnbondedTokensForHostZone_PerRecordSuccessful() {
+	tc := s.SetupPerRecordSweepUnbondedTokens()
+	hostZone := tc.hostZones[0]
+
+	numRecords := uint64(len(tc.epochUnbondingRecords))
+
+	err := s.App.StakeibcKeeper.SweepUnbondedTokensForHostZone(s.Ctx, hostZone)
+	s.Require().NoError(err, "no error expected when sweeping")
+
+	// Confirm the ICA sequence advanced by exactly N - one ICA per record
+	endSequence := s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID)
+	s.Require().Equal(tc.channelStartSequence+numRecords, endSequence, "tx sequence number after per-record redemption ICAs")
+
+	// Every record should now be IN_PROGRESS
+	epochUnbondingRecords := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
+	s.Require().Len(epochUnbondingRecords, int(numRecords))
+	for _, epochUnbondingRecord := range epochUnbondingRecords {
+		for _, hostZoneUnbondingRecord := range epochUnbondingRecord.HostZoneUnbondings {
+			s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS.String(), hostZoneUnbondingRecord.Status.String(),
+				"epoch unbonding record status for record %d", epochUnbondingRecord.EpochNumber)
+		}
+	}
+
+	// The callbacks should each carry exactly one id, ordered ascending by epoch number,
+	// with the amount matching that record's native amount
+	allCallbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Len(allCallbackData, int(numRecords), "number of callbacks stored")
+
+	expectedAmountByEpoch := map[uint64]sdkmath.Int{
+		1: sdkmath.NewInt(1_000_000),
+		2: sdkmath.NewInt(2_000_000),
+		3: sdkmath.NewInt(3_000_000),
+		4: sdkmath.NewInt(4_000_000),
+	}
+
+	var previousEpoch uint64
+	for i, callbackData := range allCallbackData {
+		redemptionCallback, err := s.App.StakeibcKeeper.UnmarshalRedemptionCallbackArgs(s.Ctx, callbackData.CallbackArgs)
+		s.Require().NoError(err, "no error expected when unmarshaling redemption callback")
+
+		s.Require().Equal(types.PerRecordSweepChainId, redemptionCallback.HostZoneId, "callback chain ID")
+		s.Require().Len(redemptionCallback.EpochUnbondingRecordIds, 1, "callback %d should carry exactly one record id", i)
+
+		epochId := redemptionCallback.EpochUnbondingRecordIds[0]
+		if i > 0 {
+			s.Require().Greater(epochId, previousEpoch, "callbacks should be ordered ascending by epoch number")
+		}
+		previousEpoch = epochId
+
+		hostZoneUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochId, types.PerRecordSweepChainId)
+		s.Require().True(found, "host zone unbonding should still be found for epoch %d", epochId)
+		s.Require().Equal(expectedAmountByEpoch[epochId].String(), hostZoneUnbonding.NativeTokenAmount.String(),
+			"amount swept for epoch %d should match the record's native amount", epochId)
+	}
+
+	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, types.PerRecordSweepChainId)
+}
+
+func (s *KeeperTestSuite) TestSweepUnbondedTokensForHostZone_BundledPathForNonInjective() {
+	// Reuses the standard (non-injective) setup to confirm the bundled path still submits
+	// exactly one ICA for all N records when the chain id does not match PerRecordSweepChainId
+	tc := s.SetupSweepUnbondedTokens()
+	hostZone := tc.hostZones[0]
+
+	err := s.App.StakeibcKeeper.SweepUnbondedTokensForHostZone(s.Ctx, hostZone)
+	s.Require().NoError(err, "no error expected when sweeping")
+
+	endSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(s.Ctx, tc.delegationPortID, tc.delegationChannelID)
+	s.Require().True(found, "sequence number not found after redemption ICA")
+	s.Require().Equal(tc.channelStartSequence+1, endSequence, "exactly one ICA should be submitted for the bundled path")
+
+	allCallbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Len(allCallbackData, 1, "bundled path should store exactly one callback")
+
+	redemptionCallback, err := s.App.StakeibcKeeper.UnmarshalRedemptionCallbackArgs(s.Ctx, allCallbackData[0].CallbackArgs)
+	s.Require().NoError(err, "no error expected when unmarshaling redemption callback")
+	s.Require().Equal([]uint64{1, 2}, redemptionCallback.EpochUnbondingRecordIds, "bundled callback should carry all record ids")
+}
+
 func (s *KeeperTestSuite) TestGetTotalRedemptionSweepAmountAndRecordsIds() {
 	hostBlockTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 	validUnbondTime := uint64(hostBlockTime.Add(-1 * time.Minute).UnixNano())
