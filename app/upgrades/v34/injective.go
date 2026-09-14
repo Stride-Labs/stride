@@ -6,8 +6,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
@@ -74,23 +72,6 @@ var (
 		{Name: "deutschetelekom", Address: "injvaloper1nngrhnm65wm8pu7wkah6hfs3vpd0xw463ydd65", Delta: mustInt("2285434050467623729")},
 		{Name: "lavenderfive", Address: "injvaloper155yk4wfn0xqye80exlsr6hu4qdfsvsgwg3jckk", Delta: mustInt("2105005046483337596")},
 	}
-
-	// RequeuedUnbondingEpochs are injective-1 host zone unbonding records that are re-queued for a
-	// second undelegation. They are already unbonded (status EXIT_TRANSFER_QUEUE) but cannot be
-	// swept because the ~200 INJ above is staked rather than liquid. Re-undelegating records worth
-	// slightly more than that excess (1377: 121.45 + 1385: 6.84 + 1406: 75.93 = 204.21 INJ) unwinds
-	// the accidental stake through the normal unbonding flow, with no new code paths:
-	//
-	//   - The remaining nine stuck records (1094.70 INJ) fit inside the 1103.20 INJ that IS liquid,
-	//     so their sweep succeeds at the first stride epoch after the upgrade.
-	//   - The three records here undelegate at the next unbonding epoch (day epoch % 4), complete
-	//     21 days later, and are then swept from the newly liquid balance.
-	//
-	// Records are set to UNBONDING_RETRY_QUEUE rather than UNBONDING_QUEUE so that the unbonding flow
-	// does not refresh their native amounts at the current redemption rate. Their stINJ was already
-	// burned by the first undelegation (StTokensToBurn is 0), so the callback burns nothing again.
-	// Chosen to avoid the records under active support tickets (1411, 1426).
-	RequeuedUnbondingEpochs = []uint64{1377, 1385, 1406}
 )
 
 func mustInt(s string) sdkmath.Int {
@@ -104,14 +85,20 @@ func mustInt(s string) sdkmath.Int {
 // ReconcileInjectiveDelegations applies InjectiveDelegationDeltas to the injective-1 host zone so
 // that tracked validator delegations (and TotalDelegations) match what is staked on Injective.
 //
+// It returns the total delta actually applied (the same amount TotalDelegations was adjusted by).
+// The upgrade handler queues that excess as a pending undelegation, which the day-epoch hook
+// submits through the normal undelegate pipeline to move the accidentally staked redemption funds
+// back to liquid (see x/stakeibc/keeper/pending_undelegation.go).
+//
 // A missing host zone or validator, or a delta that would drive a delegation negative, is logged
 // and skipped rather than returned as an error: an error here fails the upgrade and halts the
-// chain, and non-mainnet environments do not have this host zone.
-func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) error {
+// chain, and non-mainnet environments do not have this host zone. Skipped validators are excluded
+// from the returned delta; a missing host zone returns zero.
+func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (appliedDelta sdkmath.Int, err error) {
 	hostZone, found := sk.GetHostZone(ctx, InjectiveChainId)
 	if !found {
 		ctx.Logger().Info(fmt.Sprintf("v34: host zone %s not found, skipping delegation reconciliation", InjectiveChainId))
-		return nil
+		return sdkmath.ZeroInt(), nil
 	}
 
 	totalDelta := sdkmath.ZeroInt()
@@ -145,43 +132,5 @@ func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) er
 
 	ctx.Logger().Info(fmt.Sprintf("v34: %s TotalDelegations adjusted by %v to %v",
 		InjectiveChainId, totalDelta, hostZone.TotalDelegations))
-	return nil
-}
-
-// RequeueInjectiveUnbondings moves RequeuedUnbondingEpochs from EXIT_TRANSFER_QUEUE back to
-// UNBONDING_RETRY_QUEUE so the normal unbonding flow undelegates them a second time, unwinding the
-// accidentally staked redemption funds. Records that are not in the expected state are logged
-// and skipped so a stale constant cannot halt the upgrade.
-//
-// EXIT_TRANSFER_IN_PROGRESS is accepted too: the (failing) sweep runs every stride epoch and holds
-// the records in that status for the few minutes until its error ack lands, so the upgrade height
-// may fall inside that window. The redemption callback only resets records that are still
-// EXIT_TRANSFER_IN_PROGRESS on failure, so a re-queued record is not pulled back into the sweep.
-func RequeueInjectiveUnbondings(ctx sdk.Context, rk recordskeeper.Keeper) error {
-	for _, epochNumber := range RequeuedUnbondingEpochs {
-		record, found := rk.GetHostZoneUnbondingByChainId(ctx, epochNumber, InjectiveChainId)
-		if !found {
-			ctx.Logger().Error(fmt.Sprintf("v34: host zone unbonding record for epoch %d on %s not found, skipping",
-				epochNumber, InjectiveChainId))
-			continue
-		}
-		awaitingSweep := record.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE ||
-			record.Status == recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS
-		if !awaitingSweep {
-			ctx.Logger().Error(fmt.Sprintf("v34: epoch %d on %s is in status %s, expected EXIT_TRANSFER_QUEUE "+
-				"or EXIT_TRANSFER_IN_PROGRESS; skipping", epochNumber, InjectiveChainId, record.Status))
-			continue
-		}
-
-		record.Status = recordstypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE
-		record.NativeTokensToUnbond = record.NativeTokenAmount
-		record.StTokensToBurn = sdkmath.ZeroInt()
-		if err := rk.SetHostZoneUnbondingRecord(ctx, epochNumber, InjectiveChainId, *record); err != nil {
-			return err
-		}
-
-		ctx.Logger().Info(fmt.Sprintf("v34: re-queued epoch %d on %s for undelegation of %v%s",
-			epochNumber, InjectiveChainId, record.NativeTokenAmount, record.Denom))
-	}
-	return nil
+	return totalDelta, nil
 }

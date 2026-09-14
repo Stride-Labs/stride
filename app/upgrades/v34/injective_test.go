@@ -4,7 +4,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
@@ -39,20 +38,24 @@ func (s *UpgradeTestSuite) setupInjectiveHostZone() (tracked map[string]sdkmath.
 func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations() {
 	tracked, trackedTotal := s.setupInjectiveHostZone()
 
-	s.Require().NoError(v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper))
+	appliedDelta, err := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().NoError(err)
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
 	s.Require().True(found)
 
-	expectedTotal := trackedTotal
+	expectedDelta := sdkmath.ZeroInt()
 	for _, entry := range v34.InjectiveDelegationDeltas[:4] {
 		validator, _, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, entry.Address)
 		s.Require().True(found, "validator %s should still exist", entry.Name)
 		s.Require().Equal(tracked[entry.Address].Add(entry.Delta), validator.Delegation,
 			"%s delegation should move by its delta", entry.Name)
-		expectedTotal = expectedTotal.Add(entry.Delta)
+		expectedDelta = expectedDelta.Add(entry.Delta)
 	}
-	s.Require().Equal(expectedTotal, hostZone.TotalDelegations, "TotalDelegations adjusted by the applied deltas only")
+	s.Require().True(expectedDelta.IsPositive(), "test relies on the seeded deltas netting positive")
+	s.Require().Equal(expectedDelta, appliedDelta, "returned delta is the sum over the seeded validators only")
+	s.Require().Equal(trackedTotal.Add(appliedDelta), hostZone.TotalDelegations,
+		"TotalDelegations adjusted by exactly the returned delta")
 
 	// Validators in the constants but not on the host zone are skipped, not errors
 	s.Require().Len(hostZone.Validators, 4, "no validators should be added")
@@ -65,8 +68,12 @@ func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations() {
 }
 
 func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_MissingHostZone() {
-	s.Require().NoError(v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper),
-		"missing host zone should be skipped, not an error")
+	appliedDelta, err := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().NoError(err, "missing host zone should be skipped, not an error")
+	s.Require().True(appliedDelta.IsZero(), "nothing applied without a host zone")
+
+	_, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
+	s.Require().False(found, "the reconciliation should not create the host zone")
 }
 
 // A negative delta larger than the tracked delegation means the constant is stale; that
@@ -84,55 +91,11 @@ func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_SkipsNegativeResult
 		Validators:       []*stakeibctypes.Validator{{Address: negative.Address, Delegation: tooSmall}},
 	})
 
-	s.Require().NoError(v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper))
+	appliedDelta, err := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().NoError(err)
+	s.Require().True(appliedDelta.IsZero(), "the skipped validator's delta must be excluded from the returned total")
 
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
 	s.Require().Equal(tooSmall, hostZone.Validators[0].Delegation, "validator must be left untouched")
 	s.Require().Equal(tooSmall, hostZone.TotalDelegations, "TotalDelegations must be left untouched")
-}
-
-func (s *UpgradeTestSuite) setInjectiveUnbondingRecord(epoch uint64, status recordstypes.HostZoneUnbonding_Status, inProgress uint64) {
-	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordstypes.EpochUnbondingRecord{
-		EpochNumber: epoch,
-		HostZoneUnbondings: []*recordstypes.HostZoneUnbonding{{
-			HostZoneId:                v34.InjectiveChainId,
-			Denom:                     "inj",
-			Status:                    status,
-			StTokenAmount:             sdkmath.NewInt(100),
-			NativeTokenAmount:         sdkmath.NewInt(150),
-			NativeTokensToUnbond:      sdkmath.ZeroInt(),
-			StTokensToBurn:            sdkmath.ZeroInt(),
-			ClaimableNativeTokens:     sdkmath.ZeroInt(),
-			UndelegationTxsInProgress: inProgress,
-		}},
-	})
-}
-
-func (s *UpgradeTestSuite) TestRequeueInjectiveUnbondings() {
-	requeued := v34.RequeuedUnbondingEpochs
-	s.Require().GreaterOrEqual(len(requeued), 3, "test expects at least three re-queued epochs")
-
-	s.setInjectiveUnbondingRecord(requeued[0], recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, 0)       // waiting for sweep
-	s.setInjectiveUnbondingRecord(requeued[1], recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS, 0) // sweep ICA in flight
-	s.setInjectiveUnbondingRecord(requeued[2], recordstypes.HostZoneUnbonding_CLAIMABLE, 0)                 // already swept
-
-	s.Require().NoError(v34.RequeueInjectiveUnbondings(s.Ctx, s.App.RecordsKeeper))
-
-	for _, epoch := range requeued[:2] {
-		record, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epoch, v34.InjectiveChainId)
-		s.Require().True(found)
-		s.Require().Equal(recordstypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE, record.Status, "epoch %d", epoch)
-		s.Require().Equal(record.NativeTokenAmount, record.NativeTokensToUnbond, "full native amount is re-undelegated")
-		s.Require().True(record.StTokensToBurn.IsZero(), "stTokens were already burned by the first undelegation")
-		s.Require().True(record.ShouldRetryUnbonding(), "record must be picked up by the unbonding flow")
-	}
-
-	swept, _ := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, requeued[2], v34.InjectiveChainId)
-	s.Require().Equal(recordstypes.HostZoneUnbonding_CLAIMABLE, swept.Status, "record in another status is untouched")
-	s.Require().True(swept.NativeTokensToUnbond.IsZero())
-}
-
-func (s *UpgradeTestSuite) TestRequeueInjectiveUnbondings_MissingRecords() {
-	s.Require().NoError(v34.RequeueInjectiveUnbondings(s.Ctx, s.App.RecordsKeeper),
-		"missing records should be skipped, not an error")
 }

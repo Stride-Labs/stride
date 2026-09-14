@@ -18,16 +18,15 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
 // CreateUpgradeHandler returns the v34 upgrade handler, which swaps two POA
 // validators (see docs/superpowers/specs/2026-09-09-v34-validator-swap-design.md),
-// clears stuck slash queries and ICQs (see slash_queries.go), updates the gov
-// quorum and voting period (see gov_params.go), and reconciles the injective-1
-// host zone's delegation accounting to unblock its stuck redemption sweep (see
-// injective.go).
+// clears stuck slash queries and ICQs (see slash_queries.go), reconciles the
+// injective-1 host zone's delegation accounting and queues the applied excess
+// as a pending undelegation (see injective.go), and updates the gov quorum and
+// voting period (see gov_params.go).
 //
 // poaKeeper is a pointer because POA's keeper methods have pointer receivers.
 // cdc unpacks the stored consensus-pubkey Anys when resolving the outgoing
@@ -40,11 +39,10 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
-	recordsKeeper recordskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
-		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + gov params + Injective reconciliation)...", UpgradeName))
+		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + Injective reconciliation + gov params)...", UpgradeName))
 
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 		if err != nil {
@@ -58,14 +56,19 @@ func CreateUpgradeHandler(
 		ResetStuckSlashQueries(ctx, stakeibcKeeper)
 		DeleteStuckQueries(ctx, icqKeeper)
 
-		if err := UpdateGovParams(ctx, govKeeper); err != nil {
+		// The reconciled excess is redemption money that was accidentally staked, so it is
+		// queued for a one-shot undelegation that the day-epoch hook submits through the normal
+		// undelegate pipeline (see x/stakeibc/keeper/pending_undelegation.go). A zero or negative
+		// applied delta (host zone absent on non-mainnet, or stale constants) queues nothing.
+		appliedDelta, err := ReconcileInjectiveDelegations(ctx, stakeibcKeeper)
+		if err != nil {
 			return vm, err
+		}
+		if appliedDelta.IsPositive() {
+			stakeibcKeeper.SetPendingUndelegation(ctx, InjectiveChainId, appliedDelta)
 		}
 
-		if err := ReconcileInjectiveDelegations(ctx, stakeibcKeeper); err != nil {
-			return vm, err
-		}
-		if err := RequeueInjectiveUnbondings(ctx, recordsKeeper); err != nil {
+		if err := UpdateGovParams(ctx, govKeeper); err != nil {
 			return vm, err
 		}
 
