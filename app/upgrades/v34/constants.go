@@ -1,5 +1,7 @@
 package v34
 
+import "time"
+
 const (
 	// UpgradeName is the SDK upgrade plan name. Match the binary release tag.
 	UpgradeName = "v34"
@@ -9,6 +11,10 @@ const (
 	// power, so incoming validators join at the same weight and total power is
 	// unchanged by the swap.
 	ValidatorPower = int64(274523)
+
+	// Gov params set by this upgrade (previously a 33.4% quorum and 3 day voting period)
+	GovQuorum       = "0.250000000000000000"
+	GovVotingPeriod = 5 * 24 * time.Hour
 )
 
 // IncomingValidator identifies a validator added to the POA set by this
