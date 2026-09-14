@@ -227,7 +227,7 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_ChannelClosed() {
 	s.checkPendingUndelegationNotSubmitted(tc)
 }
 
-func (s *KeeperTestSuite) TestSubmitPendingUndelegations_InsufficientCapacity() {
+func (s *KeeperTestSuite) TestSubmitPendingUndelegations_ZeroWeights() {
 	tc := s.SetupSubmitPendingUndelegations()
 
 	// Zero out the validator weights so no balanced delegation can be computed
@@ -241,6 +241,60 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_InsufficientCapacity() 
 		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
+	s.checkPendingUndelegationNotSubmitted(tc)
+}
+
+// A validator that's fully drained (zero weight) and slashed (SharesToTokensRate < 1) has a tiny
+// rounding buffer withheld from its undelegation (see applySharesRoundingSafety in unbonding.go).
+// With no other validator left with spare capacity to absorb that buffer, the cascade falls short
+// of the full pending amount and GetUnbondingICAMessages returns "unable to unbond full amount" -
+// a real insufficient-capacity failure, distinct from the zero-weight GetTargetValAmtsForHostZone
+// error covered by TestSubmitPendingUndelegations_ZeroWeights
+func (s *KeeperTestSuite) TestSubmitPendingUndelegations_InsufficientCapacity() {
+	tc := s.SetupSubmitPendingUndelegations()
+
+	hostZone := tc.hostZone
+	hostZone.Validators = []*types.Validator{
+		{
+			Address:            "val1",
+			Weight:             0,
+			Delegation:         sdkmath.NewInt(100),
+			SharesToTokensRate: sdkmath.LegacyMustNewDecFromStr("0.99"),
+		},
+		{
+			Address:            "val2",
+			Weight:             100,
+			Delegation:         sdkmath.NewInt(900),
+			SharesToTokensRate: sdkmath.LegacyOneDec(),
+		},
+	}
+	hostZone.TotalDelegations = sdkmath.NewInt(1000)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, sdkmath.NewInt(100))
+
+	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
+		return nil
+	})
+
+	tc.pendingAmount = sdkmath.NewInt(100)
+	s.checkPendingUndelegationNotSubmitted(tc)
+}
+
+// A pending amount of zero has no undelegate messages to submit. Submitting an ICA with no
+// messages (or emitting an undelegation event) would be a no-op that clears the key for nothing,
+// so the key must be kept and no ICA sent
+func (s *KeeperTestSuite) TestSubmitPendingUndelegations_ZeroAmount() {
+	tc := s.SetupSubmitPendingUndelegations()
+
+	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, sdkmath.ZeroInt())
+
+	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
+		return nil
+	})
+
+	tc.pendingAmount = sdkmath.ZeroInt()
 	s.checkPendingUndelegationNotSubmitted(tc)
 }
 

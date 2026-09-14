@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. v34: swap POA validators — remove Citadel.one and Cosmostation, add cosmosrescue and CitizenWeb3 (POA set + `utils/poa.go` stToken payout registry)
 2. v34: reset stuck `SlashQueryInProgress` flags on 12 cosmoshub-4 validators and delete 30 timed-out ICQs
 3. v34: lower gov quorum from 33.4% to 25% and lengthen the voting period from 3 to 5 days
-4. v34: reconcile injective-1 delegations and unblock the stuck redemption sweep — book the delegations that executed on Injective but whose acks were lost across repeated delegation-channel closures, queue a one-shot undelegation of the excess that is submitted from the day-epoch hook, and temporarily sweep injective-1 redemptions per record so records that fit the liquid balance are paid oldest-first
+4. v34: reconcile injective-1 delegations, queue a one-shot undelegation of the excess, and sweep injective-1 redemptions per record
 
 ## [v33.0.0]
 

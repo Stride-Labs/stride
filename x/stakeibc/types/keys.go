@@ -26,11 +26,6 @@ const (
 	FeeAccount = "stride1czvrk3jkvtj8m27kqsqu2yrkhw3h3ykwj3rxh6"
 
 	RewardCollectorName = "reward_collector"
-
-	// TODO [cleanup]: remove after v34 — revert injective-1 to the bundled sweep
-	// The all-or-nothing bundled sweep blocked every redeemer when the delegation ICA was
-	// short; per-record lets the records that fit succeed oldest-first.
-	PerRecordSweepChainId = "injective-1"
 )
 
 // PortKey defines the key to store the port ID in store

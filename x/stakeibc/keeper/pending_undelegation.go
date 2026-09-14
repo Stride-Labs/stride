@@ -1,11 +1,13 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -108,6 +110,9 @@ func (k Keeper) SubmitPendingUndelegations(ctx sdk.Context, epochNumber uint64) 
 			msgs, splits, err := k.GetUndelegateMessagesForAmount(ctx, hostZone, amount)
 			if err != nil {
 				return err
+			}
+			if len(msgs) == 0 {
+				return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "no undelegate messages built for pending undelegation")
 			}
 
 			batchSize := int(utils.UintToInt(hostZone.MaxMessagesPerIcaTx))
