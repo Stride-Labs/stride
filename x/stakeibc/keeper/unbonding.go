@@ -403,13 +403,66 @@ func (k Keeper) BatchSubmitUndelegateICAMessages(
 	return numTxsSubmitted, nil
 }
 
+// Builds the undelegate ICA messages (and the validator splits for the callback) needed to unbond
+// a given native amount from a host zone
+//
+// The amount cascades across the validators in order of how proportionally different their current
+// delegations are from the weight implied target delegation, until their capacities have consumed
+// the full amount. As a result, unbondings lead to a more balanced distribution of stake across validators
+//
+// Errors if the validators do not have enough combined capacity to cover the amount
+func (k Keeper) GetUndelegateMessagesForAmount(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	amount sdkmath.Int,
+) (msgs []proto.Message, splits []*types.SplitUndelegation, err error) {
+	// Determine the total eligible unbond amount - excluding delegations to validators with a slash query in progress
+	totalValidDelegationBeforeUnbonding := sdkmath.ZeroInt()
+	for _, validator := range hostZone.Validators {
+		if !validator.SlashQueryInProgress {
+			totalValidDelegationBeforeUnbonding = totalValidDelegationBeforeUnbonding.Add(validator.Delegation)
+		}
+	}
+
+	// Determine the ideal balanced delegation for each validator after the unbonding
+	//   (as if we were to unbond and then rebalance)
+	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(amount)
+	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
+	if err != nil {
+		return nil, nil, errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
+	}
+
+	// Determine the unbond capacity for each validator
+	// Each validator can only unbond up to the difference between their current delegation and their balanced delegation
+	// The validator's current delegation will be above their balanced delegation if they've received LSM Liquid Stakes
+	//   (which is only rebalanced once per unbonding period)
+	validatorUnbondCapacity := k.GetValidatorUnbondCapacity(ctx, hostZone.Validators, balancedDelegationsAfterUnbonding)
+	if len(validatorUnbondCapacity) == 0 {
+		return nil, nil, fmt.Errorf("there are no validators on %s with sufficient unbond capacity", hostZone.ChainId)
+	}
+
+	// Sort the unbonding capacity by priority
+	// Priority is determined by checking the how proportionally unbalanced each validator is
+	// Zero weight validators will come first in the list
+	prioritizedUnbondCapacity, err := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Get the undelegation ICA messages and split delegations for the callback
+	msgs, splits, err = k.GetUnbondingICAMessages(hostZone, amount, prioritizedUnbondCapacity)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return msgs, splits, nil
+}
+
 // Submits undelegation ICA messages for a given host zone
 //
 // First, the total unbond amount is determined from the epoch unbonding records
-// Then that unbond amount is allowed to cascade across the validators in order of how proportionally
-// different their current delegations are from the weight implied target delegation,
-// until their capacities have consumed the full amount
-// As a result, unbondings lead to a more balanced distribution of stake across validators
+// Then the undelegate messages are built by GetUndelegateMessagesForAmount, which cascades that amount
+// across the validators by unbond capacity, and are submitted in batches
 //
 // Context: Over time, as LSM Liquid stakes are accepted, the total stake managed by the protocol becomes unbalanced
 // as liquid stakes are not aligned with the validator weights. This is only rebalanced once per unbonding period
@@ -442,46 +495,8 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 		return nil
 	}
 
-	// Determine the total eligible unbond amount - excluding delegations to validators with a slash query in progress
-	totalValidDelegationBeforeUnbonding := sdkmath.ZeroInt()
-	for _, validator := range hostZone.Validators {
-		if !validator.SlashQueryInProgress {
-			totalValidDelegationBeforeUnbonding = totalValidDelegationBeforeUnbonding.Add(validator.Delegation)
-		}
-	}
-
-	// Determine the ideal balanced delegation for each validator after the unbonding
-	//   (as if we were to unbond and then rebalance)
-	delegationAfterUnbonding := totalValidDelegationBeforeUnbonding.Sub(totalNativeUnbondAmount)
-	balancedDelegationsAfterUnbonding, err := k.GetTargetValAmtsForHostZone(ctx, hostZone, delegationAfterUnbonding)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to get target val amounts for host zone %s", hostZone.ChainId)
-	}
-
-	// Determine the unbond capacity for each validator
-	// Each validator can only unbond up to the difference between their current delegation and their balanced delegation
-	// The validator's current delegation will be above their balanced delegation if they've received LSM Liquid Stakes
-	//   (which is only rebalanced once per unbonding period)
-	validatorUnbondCapacity := k.GetValidatorUnbondCapacity(ctx, hostZone.Validators, balancedDelegationsAfterUnbonding)
-	if len(validatorUnbondCapacity) == 0 {
-		return fmt.Errorf("there are no validators on %s with sufficient unbond capacity", hostZone.ChainId)
-	}
-
-	// Sort the unbonding capacity by priority
-	// Priority is determined by checking the how proportionally unbalanced each validator is
-	// Zero weight validators will come first in the list
-	prioritizedUnbondCapacity, err := SortUnbondingCapacityByPriority(validatorUnbondCapacity)
-	if err != nil {
-		return err
-	}
-
-	// Get the undelegation ICA messages and split delegations for the callback
-	undelegateBatchSize := int(utils.UintToInt(hostZone.MaxMessagesPerIcaTx))
-	msgs, unbondings, err := k.GetUnbondingICAMessages(
-		hostZone,
-		totalNativeUnbondAmount,
-		prioritizedUnbondCapacity,
-	)
+	// Build the undelegation ICA messages and split delegations for the callback
+	msgs, unbondings, err := k.GetUndelegateMessagesForAmount(ctx, hostZone, totalNativeUnbondAmount)
 	if err != nil {
 		return err
 	}
@@ -492,6 +507,7 @@ func (k Keeper) UnbondFromHostZone(ctx sdk.Context, hostZone types.HostZone) (er
 	}
 
 	// Send the messages in batches so the gas limit isn't exceedeed
+	undelegateBatchSize := int(utils.UintToInt(hostZone.MaxMessagesPerIcaTx))
 	numTxsSubmitted, err := k.BatchSubmitUndelegateICAMessages(
 		ctx,
 		hostZone,

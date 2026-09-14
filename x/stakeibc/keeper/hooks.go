@@ -30,6 +30,9 @@ func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
 		// Initiate unbondings from any hostZone where it's appropriate
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
+		// Submit any one-shot undelegations queued by an upgrade handler (e.g. the v34 Injective
+		// reconciliation). Store-driven, so this is a no-op when nothing is pending
+		k.SubmitPendingUndelegations(ctx)
 		// Cleanup any records that are no longer needed
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
 		// Create an empty unbonding record for this epoch
