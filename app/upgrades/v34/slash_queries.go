@@ -42,11 +42,24 @@ func ResetStuckSlashQueries(ctx sdk.Context, stakeibcKeeper stakeibckeeper.Keepe
 	stakeibcKeeper.SetHostZone(ctx, hostZone)
 }
 
-// DeleteStuckQueries removes the ICQs in StuckQueryIds. An ID that no longer
-// exists (e.g. the query was answered before the upgrade) is a no-op.
+// DeleteStuckQueries removes the ICQs in StuckQueryIds that are still timed
+// out. Calibrate and withdrawal-balance queries reuse deterministic IDs, so a
+// listed ID may have been resubmitted with a fresh timeout since the
+// measurement; that query is live and is kept.
 func DeleteStuckQueries(ctx sdk.Context, icqKeeper icqkeeper.Keeper) {
-	ctx.Logger().Info(fmt.Sprintf("v34: deleting %d stuck ICQs", len(StuckQueryIds)))
 	for _, queryId := range StuckQueryIds {
+		// Already answered or removed since the measurement
+		query, found := icqKeeper.GetQuery(ctx, queryId)
+		if !found {
+			continue
+		}
+
+		if !query.HasTimedOut(ctx.BlockTime()) {
+			ctx.Logger().Info(fmt.Sprintf("v34: ICQ %s was resubmitted and has not timed out, keeping it", queryId))
+			continue
+		}
+
+		ctx.Logger().Info(fmt.Sprintf("v34: deleting stuck ICQ %s", queryId))
 		icqKeeper.DeleteQuery(ctx, queryId)
 	}
 }

@@ -1,7 +1,10 @@
 package v34_test
 
 import (
+	"time"
+
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
+	"github.com/Stride-Labs/stride/v34/utils"
 	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
@@ -39,9 +42,18 @@ func (s *UpgradeTestSuite) TestUpgradeClearsStuckSlashQueries() {
 		Validators: []*stakeibctypes.Validator{{Name: v34.StuckSlashQueryValidators[0], SlashQueryInProgress: true}},
 	})
 
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: unlistedQueryId})
-	for _, queryId := range presentQueryIds {
-		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: queryId})
+	// The first listed query simulates a deterministic ID that was resubmitted after
+	// the measurement, so it has a fresh timeout and must survive. The unlisted query
+	// is timed out too, to confirm only listed IDs are deleted
+	resubmittedQueryId := presentQueryIds[0]
+	timedOutQueryIds := presentQueryIds[1:]
+	expiredTimeout := utils.IntToUint(s.Ctx.BlockTime().Add(-time.Hour).UnixNano())
+	freshTimeout := utils.IntToUint(s.Ctx.BlockTime().Add(24 * time.Hour).UnixNano())
+
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: unlistedQueryId, TimeoutTimestamp: expiredTimeout})
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: resubmittedQueryId, TimeoutTimestamp: freshTimeout})
+	for _, queryId := range timedOutQueryIds {
+		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{Id: queryId, TimeoutTimestamp: expiredTimeout})
 	}
 
 	// ----- act -----
@@ -61,10 +73,12 @@ func (s *UpgradeTestSuite) TestUpgradeClearsStuckSlashQueries() {
 	s.Require().True(found)
 	s.Require().True(otherHostZone.Validators[0].SlashQueryInProgress, "validators on other host zones should not be reset")
 
-	for _, queryId := range presentQueryIds {
+	for _, queryId := range timedOutQueryIds {
 		_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, queryId)
 		s.Require().False(found, "stuck query %s should have been deleted", queryId)
 	}
+	_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, resubmittedQueryId)
+	s.Require().True(found, "a listed query with a fresh timeout should not be deleted")
 	_, found = s.App.InterchainqueryKeeper.GetQuery(s.Ctx, unlistedQueryId)
 	s.Require().True(found, "queries not in StuckQueryIds should not be deleted")
 }
