@@ -18,13 +18,16 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
 // CreateUpgradeHandler returns the v34 upgrade handler, which swaps two POA
 // validators (see docs/superpowers/specs/2026-09-09-v34-validator-swap-design.md),
-// clears stuck slash queries and ICQs (see slash_queries.go), and updates the
-// gov quorum and voting period (see gov_params.go).
+// clears stuck slash queries and ICQs (see slash_queries.go), updates the gov
+// quorum and voting period (see gov_params.go), and reconciles the injective-1
+// host zone's delegation accounting to unblock its stuck redemption sweep (see
+// injective.go).
 //
 // poaKeeper is a pointer because POA's keeper methods have pointer receivers.
 // cdc unpacks the stored consensus-pubkey Anys when resolving the outgoing
@@ -37,10 +40,11 @@ func CreateUpgradeHandler(
 	stakeibcKeeper stakeibckeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
+	recordsKeeper recordskeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
-		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + gov params)...", UpgradeName))
+		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + gov params + Injective reconciliation)...", UpgradeName))
 
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 		if err != nil {
@@ -55,6 +59,13 @@ func CreateUpgradeHandler(
 		DeleteStuckQueries(ctx, icqKeeper)
 
 		if err := UpdateGovParams(ctx, govKeeper); err != nil {
+			return vm, err
+		}
+
+		if err := ReconcileInjectiveDelegations(ctx, stakeibcKeeper); err != nil {
+			return vm, err
+		}
+		if err := RequeueInjectiveUnbondings(ctx, recordsKeeper); err != nil {
 			return vm, err
 		}
 
