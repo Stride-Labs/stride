@@ -37,6 +37,7 @@ event_source = { mode = 'push', url = 'ws://stride-validator.integration.svc:266
 rpc_timeout = '10s'
 account_prefix = 'stride'
 key_name = 'stride'
+max_msg_num = 1 # REHEARSAL ONLY: on an ordered channel only the first MsgTimeout in a batch can verify
 max_gas = 4000000 # REHEARSAL ONLY: an ICA recv + client update simulates at ~830k (hermes default cap is 400k)
 store_prefix = 'ibc'
 # TODO: investigate why this has to be set so high
@@ -56,6 +57,7 @@ event_source = { mode = 'push', url = 'ws://cosmoshub-validator.integration.svc:
 rpc_timeout = '10s'
 account_prefix = 'cosmos'
 key_name = 'cosmoshub'
+max_msg_num = 1 # REHEARSAL ONLY: on an ordered channel only the first MsgTimeout in a batch can verify
 max_gas = 4000000 # REHEARSAL ONLY: an ICA recv + client update simulates at ~830k (hermes default cap is 400k)
 store_prefix = 'ibc'
 # TODO: investigate why this has to be set so high
