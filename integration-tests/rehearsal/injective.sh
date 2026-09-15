@@ -690,7 +690,9 @@ phase_build_and_swap() {
 
     local pod
     for pod in $STRIDE_PODS; do
-        assert_eq "$pod UPGRADE_NAME" "$(kube exec "$pod" -c "$CHAIN_CONTAINER" -- printenv UPGRADE_NAME)" "$UPGRADE_NAME"
+        # the pod env only names the upgrade dir cosmovisor was shipped with; later rehearsal upgrades
+        # (UPGRADE_NAME=v35) just need their own upgrades/<name>/bin directory
+        kube exec "$pod" -c "$CHAIN_CONTAINER" -- mkdir -p "$(dirname "$UPGRADE_BINARY_PATH")"
         kube cp "$SCRATCH/strided" "$pod:$UPGRADE_BINARY_PATH" -c "$CHAIN_CONTAINER"
         kube exec "$pod" -c "$CHAIN_CONTAINER" -- chmod +x "$UPGRADE_BINARY_PATH"
         log "$pod: $UPGRADE_BINARY_PATH version = $(kube exec "$pod" -c "$CHAIN_CONTAINER" -- "$UPGRADE_BINARY_PATH" version 2>&1 | tail -1)"
