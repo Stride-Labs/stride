@@ -30,7 +30,7 @@ port = 3001
 
 [[chains]]
 id = 'stride-test-1'
-compat_mode = '0.37' # REHEARSAL ONLY: CometBFT 0.39 isn't auto-detected by hermes v1.9
+compat_mode = '0.38' # REHEARSAL ONLY: CometBFT 0.39 isn't auto-detected by hermes v1.9
 rpc_addr = 'http://stride-validator.integration.svc:26657'
 grpc_addr = 'http://stride-validator.integration.svc:9090'
 event_source = { mode = 'push', url = 'ws://stride-validator.integration.svc:26657/websocket', batch_delay = '500ms' }
@@ -48,7 +48,7 @@ memo_prefix = 'stride-tests'
 
 [[chains]]
 id = 'cosmoshub-test-1'
-compat_mode = '0.37' # REHEARSAL ONLY
+compat_mode = '0.38' # REHEARSAL ONLY
 rpc_addr = 'http://cosmoshub-validator.integration.svc:26657'
 grpc_addr = 'http://cosmoshub-validator.integration.svc:9090'
 event_source = { mode = 'push', url = 'ws://cosmoshub-validator.integration.svc:26657/websocket', batch_delay = '500ms' }

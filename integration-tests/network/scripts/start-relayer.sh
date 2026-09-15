@@ -83,7 +83,8 @@ main() {
     fi
 
     echo "Starting relayer..."
-    rly start $PATH_NAME
+    # REHEARSAL ONLY: one msg per tx — batched MsgTimeouts on an ordered channel fail proof verification
+    rly start $PATH_NAME --max-msgs 1
 }
 
 main
