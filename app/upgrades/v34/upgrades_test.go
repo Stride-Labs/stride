@@ -14,7 +14,6 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
@@ -289,10 +288,10 @@ func (s *UpgradeTestSuite) TestUpgradeSkipsInjectivePendingUndelegationWithoutHo
 	s.Require().False(found, "nothing should be queued when the injective host zone is absent")
 }
 
-// TestUpgradeFailsOnInconsistentInjectiveTable proves the reconciliation error is surfaced by the
-// handler itself: a table that no longer matches the host zone must fail the upgrade and queue
-// nothing, rather than undelegate a partial sum
-func (s *UpgradeTestSuite) TestUpgradeFailsOnInconsistentInjectiveTable() {
+// TestUpgradeSkipsInconsistentInjectiveTable runs the full handler with a table that no longer
+// matches the host zone: the upgrade must still succeed, but reconcile nothing and queue nothing,
+// rather than undelegate a partial sum or halt the chain
+func (s *UpgradeTestSuite) TestUpgradeSkipsInconsistentInjectiveTable() {
 	// ----- arrange -----
 	s.useTestConsensusKeys()
 	s.seedCurrentPOASet()
@@ -306,14 +305,11 @@ func (s *UpgradeTestSuite) TestUpgradeFailsOnInconsistentInjectiveTable() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	// ----- act -----
-	plan := upgradetypes.Plan{Name: v34.UpgradeName, Height: s.Ctx.BlockHeight()}
-	err := s.App.UpgradeKeeper.ApplyUpgrade(s.Ctx, plan)
+	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
 
 	// ----- assert -----
-	s.Require().ErrorContains(err, removed.Name, "the handler surfaces the reconciliation error")
-
 	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, v34.InjectiveChainId)
-	s.Require().False(found, "nothing is queued when the upgrade fails")
+	s.Require().False(found, "nothing is queued when the table is not applied")
 
 	hostZone, _ = s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
 	s.Require().Equal(trackedTotal.Sub(removed.Delegation), hostZone.TotalDelegations, "the reconciliation wrote nothing")

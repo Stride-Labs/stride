@@ -69,13 +69,18 @@ byte-identical. Commit 2 trims it:
 
 - Delete `RequeueInjectiveUnbondings`, `RequeuedUnbondingEpochs`, their tests, and the
   `recordskeeper.Keeper` parameter added to `CreateUpgradeHandler` / `app/upgrades.go`.
-- `ReconcileInjectiveDelegations(ctx, sk) (appliedDelta sdkmath.Int, err error)` — returns the
-  total delta applied, and applies the table all-or-nothing: a missing host zone (non-mainnet)
-  returns zero without error, but once the host zone exists, a validator missing from it or a
-  delta that would drive a delegation negative returns an error before anything is written. A
-  partial application would return a partial sum — dropping blackpanther's −666 INJ entry alone
-  turns the ~200 INJ excess into ~867 INJ — and that sum is what gets undelegated, so a stale
-  table must fail the upgrade rather than move money on wrong numbers.
+- `ReconcileInjectiveDelegations(ctx, sk) (appliedDelta sdkmath.Int)` — returns the total delta
+  applied, and applies the table all-or-nothing, never as an upgrade error. A missing host zone
+  (non-mainnet) returns zero. A validator missing from the host zone, or a delta that would drive
+  a delegation negative, means the constants no longer describe chain state: nothing is written,
+  zero is returned, an Error is logged, and the upgrade proceeds with the reconciliation deferred
+  to a later upgrade. A partial application would return a partial sum — dropping blackpanther's
+  −666 INJ entry alone turns the ~200 INJ excess into ~867 INJ — and that sum is what gets
+  undelegated. Skipping rather than erroring is deliberate: an error would halt the chain, which
+  is disproportionate for an accounting fix, and the per-record sweep still pays the records that
+  fit. With the validator list and weights unchanged, the negative check can only trip if acks
+  are lost again (tracked and on-chain delegations otherwise move together, and
+  `tracked + delta` is the on-chain amount, which is ≥ 0).
 - Keep: `InjectiveDelegationDeltas`, `DelegationDelta`, `mustInt`, the redemption-callback
   hardening in `icacallbacks_redemption.go` (only resets records still `EXIT_TRANSFER_IN_PROGRESS`)
   and its test.
@@ -83,12 +88,11 @@ byte-identical. Commit 2 trims it:
 Handler (`app/upgrades/v34/upgrades.go`), after `DeleteStuckQueries` and before `UpdateGovParams`:
 
 ```
-applied, err := ReconcileInjectiveDelegations(ctx, stakeibcKeeper)   // err → return (fails upgrade)
+applied := ReconcileInjectiveDelegations(ctx, stakeibcKeeper)
 if applied.IsPositive() { stakeibcKeeper.SetPendingUndelegation(ctx, InjectiveChainId, applied) }
 ```
 
-A zero applied delta (host zone absent on non-mainnet) writes nothing. An inconsistent table on a
-chain that has the host zone is an upgrade error, not a skip (see above).
+A zero applied delta (host zone absent, or table not applied) queues nothing.
 
 ## §4. Pending undelegation
 

@@ -39,8 +39,7 @@ func (s *UpgradeTestSuite) setupInjectiveHostZone() (tracked map[string]sdkmath.
 func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations() {
 	tracked, trackedTotal := s.setupInjectiveHostZone()
 
-	appliedDelta, err := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
-	s.Require().NoError(err)
+	appliedDelta := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
 	s.Require().True(found)
@@ -66,9 +65,9 @@ func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations() {
 	s.Require().Equal(sum, hostZone.TotalDelegations, "TotalDelegations == sum(validator.Delegation)")
 }
 
-// Dropping one entry from the host zone must abort the whole reconciliation: applying the rest
+// Dropping one entry from the host zone must skip the whole reconciliation: applying the rest
 // would return a partial sum, and that partial sum is what gets undelegated.
-func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_MissingValidatorAborts() {
+func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_MissingValidatorSkipsAll() {
 	tracked, trackedTotal := s.setupInjectiveHostZone()
 
 	// Remove the largest negative entry so a partial application would overshoot the true excess
@@ -81,8 +80,7 @@ func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_MissingValidatorAbo
 	hostZone.TotalDelegations = trackedTotal.Sub(tracked[removed.Address])
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-	appliedDelta, err := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
-	s.Require().ErrorContains(err, removed.Name)
+	appliedDelta := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().True(appliedDelta.IsZero(), "nothing is applied when any entry is missing")
 
 	hostZone, _ = s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
@@ -93,8 +91,7 @@ func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_MissingValidatorAbo
 }
 
 func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_MissingHostZone() {
-	appliedDelta, err := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
-	s.Require().NoError(err, "missing host zone should be skipped, not an error")
+	appliedDelta := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().True(appliedDelta.IsZero(), "nothing applied without a host zone")
 
 	_, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
@@ -102,9 +99,9 @@ func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_MissingHostZone() {
 }
 
 // A negative delta larger than the tracked delegation means the constant is stale; the whole
-// reconciliation must abort with nothing written rather than drive the delegation negative or
-// apply the other entries.
-func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_NegativeResultAborts() {
+// reconciliation must be skipped with nothing written rather than drive the delegation negative
+// or apply the other entries.
+func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_NegativeResultSkipsAll() {
 	tracked, trackedTotal := s.setupInjectiveHostZone()
 
 	negative := v34.InjectiveDelegationDeltas[1] // blackpanther, delta ≈ -666 INJ
@@ -120,8 +117,7 @@ func (s *UpgradeTestSuite) TestReconcileInjectiveDelegations_NegativeResultAbort
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 	expectedTotal := hostZone.TotalDelegations
 
-	appliedDelta, err := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
-	s.Require().ErrorContains(err, negative.Name)
+	appliedDelta := v34.ReconcileInjectiveDelegations(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().True(appliedDelta.IsZero(), "nothing is applied when any entry would go negative")
 
 	hostZone, _ = s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)

@@ -89,17 +89,19 @@ func mustInt(s string) sdkmath.Int {
 // submits through the normal undelegate pipeline to move the accidentally staked redemption funds
 // back to liquid (see x/stakeibc/keeper/pending_undelegation.go).
 //
-// The table is applied all-or-nothing. A missing host zone means a non-mainnet environment and
-// returns zero without error. But once the host zone exists, a validator missing from it or a
-// delta that would drive a delegation negative means the constants no longer describe chain state;
-// applying the remaining entries would return a partial sum (dropping one large negative entry
-// turns the ~200 INJ excess into ~867 INJ) and that partial sum would then be undelegated. So any
-// inconsistent entry returns an error, which fails the upgrade before anything is written.
-func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (appliedDelta sdkmath.Int, err error) {
+// The table is applied all-or-nothing, and never as an upgrade error. A missing host zone means a
+// non-mainnet environment. A validator missing from the host zone, or a delta that would drive a
+// delegation negative, means the constants no longer describe chain state (the validator set
+// changed, or acks were lost again): applying the remaining entries would return a partial sum
+// (dropping one large negative entry turns the ~200 INJ excess into ~867 INJ) and that sum would
+// then be undelegated. Instead nothing is written and zero is returned, so the upgrade completes
+// with the sweep unblocked and the reconciliation deferred to a later upgrade. An error here
+// would halt the chain, which is disproportionate for an accounting fix.
+func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (appliedDelta sdkmath.Int) {
 	hostZone, found := sk.GetHostZone(ctx, InjectiveChainId)
 	if !found {
 		ctx.Logger().Info(fmt.Sprintf("v34: host zone %s not found, skipping delegation reconciliation", InjectiveChainId))
-		return sdkmath.ZeroInt(), nil
+		return sdkmath.ZeroInt()
 	}
 
 	// The host zone is only persisted after every entry has been validated
@@ -107,8 +109,9 @@ func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (a
 	for _, entry := range InjectiveDelegationDeltas {
 		validator, index, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, entry.Address)
 		if !found {
-			return sdkmath.ZeroInt(), fmt.Errorf("v34: validator %s (%s) not found on %s, re-verify constants",
-				entry.Name, entry.Address, InjectiveChainId)
+			ctx.Logger().Error(fmt.Sprintf("v34: validator %s (%s) not found on %s; delegation reconciliation NOT applied, "+
+				"re-verify constants and reconcile in a later upgrade", entry.Name, entry.Address, InjectiveChainId))
+			return sdkmath.ZeroInt()
 		}
 
 		if validator.Delegation.IsNil() {
@@ -116,8 +119,10 @@ func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (a
 		}
 		reconciled := validator.Delegation.Add(entry.Delta)
 		if reconciled.IsNegative() {
-			return sdkmath.ZeroInt(), fmt.Errorf("v34: validator %s tracked delegation %v plus delta %v would be negative, re-verify constants",
-				entry.Name, validator.Delegation, entry.Delta)
+			ctx.Logger().Error(fmt.Sprintf("v34: validator %s tracked delegation %v plus delta %v would be negative; delegation "+
+				"reconciliation NOT applied, re-verify constants and reconcile in a later upgrade",
+				entry.Name, validator.Delegation, entry.Delta))
+			return sdkmath.ZeroInt()
 		}
 
 		ctx.Logger().Info(fmt.Sprintf("v34: reconciled %s delegation %v -> %v (%v)",
@@ -132,5 +137,5 @@ func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (a
 
 	ctx.Logger().Info(fmt.Sprintf("v34: %s TotalDelegations adjusted by %v to %v",
 		InjectiveChainId, totalDelta, hostZone.TotalDelegations))
-	return totalDelta, nil
+	return totalDelta
 }
