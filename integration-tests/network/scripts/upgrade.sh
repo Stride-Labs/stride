@@ -8,8 +8,8 @@ NAMESPACE=integration
 
 EXEC0="kubectl exec -i stride-validator-0 -c validator -n $NAMESPACE -- "
 STRIDED0="kubectl exec -i stride-validator-0 -c validator -n $NAMESPACE -- strided"
-STRIDED1="kubectl exec -i stride-validator-1 -c validator -n $NAMESPACE -- strided"
-STRIDED2="kubectl exec -i stride-validator-2 -c validator -n $NAMESPACE -- strided"
+STRIDED1="kubectl exec -i stride-validator-0 -c validator -n $NAMESPACE -- strided" # REHEARSAL ONLY: pod 0 holds every validator key; per-pod execs miss the 30s voting window
+STRIDED2="kubectl exec -i stride-validator-0 -c validator -n $NAMESPACE -- strided"
 
 UPGRADE_BUFFER=150 # blocks (REHEARSAL ONLY: 1s blocks, 30s voting, ~7s per kubectl exec)
 
