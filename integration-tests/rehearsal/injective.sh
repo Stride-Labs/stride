@@ -321,18 +321,19 @@ gaia_balance_is() { [[ $(gaia_balance "$1" 2>/dev/null) == "$2" ]]; }
 tracked_total_is() { [[ $(tracked_total 2>/dev/null) == "$1" ]]; }
 total_delegations_is() { [[ $(host_zone_field .total_delegations 2>/dev/null) == "$1" ]]; }
 gaia_delegated_total_is() { [[ $(gaia_delegated_total "$1" 2>/dev/null) == "$2" ]]; }
+gaia_delegated_total_at_least() { local t; t=$(gaia_delegated_total "$1" 2>/dev/null); is_int "$t" && (( t >= $2 )); }
 day_epoch_reached() { local e; e=$(day_epoch 2>/dev/null); is_int "$e" && (( e >= $1 )); }
 record_status_is() { [[ $(record_field "$1" status 2>/dev/null) == "$2" ]]; }
 deposit_record_status_is() { [[ $(deposit_record_status "$1" 2>/dev/null) == "$2" ]]; }
 sequence_advanced() { local s; s=$(next_sequence_send "$1" 2>/dev/null); is_int "$s" && (( s > $2 )); }
 channel_state_is() { [[ $(channel_state "$1" 2>/dev/null) == "$2" ]]; }
 new_delegation_channel_open() { local ch; ch=$(open_delegation_channel 2>/dev/null); [[ -n $ch && $ch != "$1" ]]; }
-stuck_state_reached() { # <delegation-ica>: re-delegate acked (record gone) and on-chain == tracked + 300
+stuck_state_reached() { # <delegation-ica>: re-delegate acked (record gone) and on-chain >= tracked + 300
     [[ $(deposit_record_status "$DRIFT_STAKE_AMOUNT" 2>/dev/null) == none ]] || return 1
     local onchain tracked
     onchain=$(gaia_delegated_total "$1" 2>/dev/null)
     tracked=$(tracked_total 2>/dev/null)
-    is_int "$onchain" && is_int "$tracked" && (( onchain == tracked + DRIFT_STAKE_AMOUNT ))
+    is_int "$onchain" && is_int "$tracked" && (( onchain >= tracked + DRIFT_STAKE_AMOUNT ))
 }
 
 # =============================================================================================
@@ -558,8 +559,9 @@ phase_drift() {
     else
         log "drift deposit record already exists ($(deposit_record_status "$DRIFT_STAKE_AMOUNT"))"
     fi
-    wait_for "$DEPOSIT_TIMEOUT" "Gaia delegations == $(( onchain_before + DRIFT_STAKE_AMOUNT )) (delegate executed on Gaia)" \
-        gaia_delegated_total_is "$ica" "$(( onchain_before + DRIFT_STAKE_AMOUNT ))"
+    # reinvest delegates land on Gaia too (acks withheld as well), so on-chain only ever grows: >=
+    wait_for "$DEPOSIT_TIMEOUT" "Gaia delegations >= $(( onchain_before + DRIFT_STAKE_AMOUNT )) (delegate executed on Gaia)" \
+        gaia_delegated_total_at_least "$ica" "$(( onchain_before + DRIFT_STAKE_AMOUNT ))"
     sleep 10
     assert_eq "tracked delegations unchanged (ack stranded)" "$(tracked_total)" "$tracked_before"
     assert_eq "drift deposit record status" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_IN_PROGRESS
@@ -594,7 +596,8 @@ phase_drift() {
     assert_ne "delegation ICA address" "$(host_zone_field .delegation_ica_address)" ""
     log "delegation channel restored: $chan -> $(open_delegation_channel)"
     print_ica_channels
-    assert_eq "on-chain == tracked + 300 (drift in place)" "$(gaia_delegated_total "$ica")" "$(( $(tracked_total) + DRIFT_STAKE_AMOUNT ))"
+    local drift=$(( $(gaia_delegated_total "$ica") - $(tracked_total) ))
+    assert_ge "on-chain - tracked (the stake plus any reinvest whose ack was withheld)" "$drift" "$DRIFT_STAKE_AMOUNT"
     DRIFT_DONE=true
     log "drift choreography complete: the re-delegate will retry every stride epoch until the ICA has liquid funds"
 }
@@ -606,16 +609,17 @@ phase_stuck() { # wait for the retrying re-delegate to consume 300 of R1+R2 and 
     r1=$(record_field "$REDEEM_AMOUNT_1" native_token_amount)
     r2=$(record_field "$REDEEM_AMOUNT_2" native_token_amount)
     log "R1=$r1 R2=$r2 (latest records); deposit record: $(deposit_record_status "$DRIFT_STAKE_AMOUNT")"
-    local expected_liquid=$(( r1 + r2 - DRIFT_STAKE_AMOUNT ))
-    wait_for "$UNBONDING_TIMEOUT" "re-delegate acked (deposit record gone, on-chain == tracked + $DRIFT_STAKE_AMOUNT)" stuck_state_reached "$ica"
-    assert_eq "on-chain == tracked + 300" "$(gaia_delegated_total "$ica")" "$(( $(tracked_total) + DRIFT_STAKE_AMOUNT ))"
-    assert_eq "delegation ICA liquid == R1+R2-300" "$(gaia_balance "$ica")" "$expected_liquid"
+    wait_for "$UNBONDING_TIMEOUT" "re-delegate acked (deposit record gone, on-chain >= tracked + $DRIFT_STAKE_AMOUNT)" stuck_state_reached "$ica"
+    local drift=$(( $(gaia_delegated_total "$ica") - $(tracked_total) ))
+    assert_ge "on-chain - tracked" "$drift" "$DRIFT_STAKE_AMOUNT"
+    local expected_liquid=$(( r1 + r2 - drift ))
+    assert_eq "delegation ICA liquid == R1+R2-drift" "$(gaia_balance "$ica")" "$expected_liquid"
     assert_ne "record 1 not swept" "$(record_field "$REDEEM_AMOUNT_1" status)" CLAIMABLE
     assert_ne "record 2 not swept" "$(record_field "$REDEEM_AMOUNT_2" status)" CLAIMABLE
 
     log "letting two more stride epochs run so the bundled sweep fails twice more"
     sleep $(( STRIDE_EPOCH_SECONDS * 2 + 10 ))
-    assert_eq "delegation ICA liquid still R1+R2-300" "$(gaia_balance "$ica")" "$expected_liquid"
+    assert_eq "delegation ICA liquid still R1+R2-drift" "$(gaia_balance "$ica")" "$expected_liquid"
     assert_ne "record 1 still not swept" "$(record_field "$REDEEM_AMOUNT_1" status)" CLAIMABLE
     assert_ne "record 2 still not swept" "$(record_field "$REDEEM_AMOUNT_2" status)" CLAIMABLE
     print_unbonding_records
