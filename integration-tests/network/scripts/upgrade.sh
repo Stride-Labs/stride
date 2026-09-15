@@ -32,11 +32,9 @@ $STRIDED0 query gov proposal $proposal_id
 sleep 1
 echo -e "\nVoting on proposal #$proposal_id...\n"
 echo "Val1:"
-$STRIDED0 tx gov vote $proposal_id yes --from val1 -y | trim_tx
-echo "Val2:"
-$STRIDED1 tx gov vote $proposal_id yes --from val2 -y | trim_tx
-echo "Val3:"
-$STRIDED2 tx gov vote $proposal_id yes --from val3 -y | trim_tx
+# REHEARSAL ONLY: one in-pod exec for all three votes; separate execs (~7-10s each from the laptop)
+# land the later votes after the 30s voting window closes
+$EXEC0 bash -c "for v in val1 val2 val3; do echo \"\$v:\"; strided tx gov vote $proposal_id yes --from \$v -y | grep -E 'code|txhash'; sleep 1; done"
 
 sleep 5
 echo -e "\nVote confirmation:\n"
