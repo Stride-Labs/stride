@@ -84,7 +84,9 @@ main() {
 
     echo "Starting relayer..."
     # REHEARSAL ONLY: default batching; one-msg-per-tx could not keep up with the ICA packet rate
-    rly start $PATH_NAME
+    # REHEARSAL ONLY: refresh clients on a timer — the 204s trusting period expires whenever one
+    # direction carries no packets for a few minutes (e.g. while delegation acks are withheld)
+    rly start $PATH_NAME --time-threshold 90s
 }
 
 main
