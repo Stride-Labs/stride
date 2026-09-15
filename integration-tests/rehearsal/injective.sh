@@ -531,7 +531,9 @@ drift_cleanup() { # never leave the delegation channel unserviced
 
 phase_drift() {
     banner "drift: reproduce the lost-ack theft"
-    trap drift_cleanup ERR
+    # `die` exits, which never fires ERR, so the cleanup hangs off EXIT and is disarmed on success
+    DRIFT_DONE=false
+    trap '[[ $DRIFT_DONE == true ]] || drift_cleanup' EXIT
     prepare_relayer_deployment
     local ica chan seq_before onchain_before tracked_before
     ica=$(host_zone_field .delegation_ica_address)
@@ -574,7 +576,7 @@ phase_drift() {
     log "delegation channel restored: $chan -> $(open_delegation_channel)"
     print_ica_channels
     assert_eq "on-chain == tracked + 300 (drift in place)" "$(gaia_delegated_total "$ica")" "$(( $(tracked_total) + DRIFT_STAKE_AMOUNT ))"
-    trap - ERR
+    DRIFT_DONE=true
     log "drift choreography complete: the re-delegate will retry every stride epoch until the ICA has liquid funds"
 }
 
