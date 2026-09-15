@@ -275,7 +275,7 @@ unbonding_records() {
         | sort_by(.epoch_number | tonumber)'
 }
 # Records are identified by their st amount (500 / 400 stATOM), which is unique per redemption here
-unbonding_record() { unbonding_records | jq -e --arg st "$1" '[.[] | select(.st_token_amount == $st)][0] // empty'; }
+unbonding_record() { unbonding_records | jq -e --arg st "$1" '[.[] | select(.st_token_amount == $st)][-1] // empty'; } # latest record with that st amount (an earlier same-size redeem may already be CLAIMABLE)
 record_field() { unbonding_record "$1" | jq -r ".$2"; } # <st-amount> <field>
 print_unbonding_records() { unbonding_records | jq -c '.[]' | sed 's/^/    /'; }
 
