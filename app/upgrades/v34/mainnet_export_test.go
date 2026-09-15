@@ -10,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
@@ -18,6 +20,8 @@ import (
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
 	"github.com/Stride-Labs/stride/v34/utils"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // mainnetExportPath is relative to this package — read directly from the
@@ -25,12 +29,15 @@ import (
 const mainnetExportPath = "testdata/mainnet_export.json.gz"
 
 // MainnetExportTestSuite replays the v34 handler against real post-v33
-// mainnet POA state. Unlike the synthetic suite, it runs with the REAL
-// constants — no test-key substitution — so it is the release gate: it
-// verifies the confirmed pubkeys and payout addresses against actual mainnet
-// state, including the POA-set ≡ payout-registry invariant. The fixture is
-// only committed during release prep; the suite skips when it is absent so
-// CI stays green in the meantime.
+// mainnet state: the POA validator set and the injective-1 host zone. Unlike
+// the synthetic suite, it runs with the REAL constants — no test-key
+// substitution — so it is the release gate: it verifies the confirmed pubkeys
+// and payout addresses against actual mainnet state, including the POA-set ≡
+// payout-registry invariant, and that the Injective delta table applies in
+// full against the real validator set (every address present, no delegation
+// driven negative), so a stale table cannot silently skip the reconciliation.
+// The fixture is only committed during release prep; the suite skips when it
+// is absent so CI stays green in the meantime.
 type MainnetExportTestSuite struct {
 	apptesting.AppTestHelper
 
@@ -55,9 +62,10 @@ type strideExport struct {
 }
 
 func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
-	// ----- arrange: seed POA with the real mainnet validator set -----
+	// ----- arrange: seed POA and the injective-1 host zone from real mainnet state -----
 	export := s.loadTrimmedExport()
 	exportValidators := s.populatePOAFromExport(export)
+	exportHostZone := s.populateInjectiveHostZoneFromExport(export)
 
 	totalPower, err := s.App.POAKeeper.GetTotalPower(s.Ctx)
 	s.Require().NoError(err)
@@ -67,7 +75,10 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	// ----- act -----
 	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
 
-	// ----- assert -----
+	// ----- assert: Injective reconciliation applied in full -----
+	s.assertInjectiveReconciled(exportHostZone)
+
+	// ----- assert: POA swap -----
 	byMoniker := s.validatorsByMoniker()
 
 	operatorByMoniker := map[string]string{}
@@ -195,6 +206,50 @@ func (s *MainnetExportTestSuite) populatePOAFromExport(export strideExport) map[
 	s.Require().Contains(powers, "Citadel.one", "export must contain the outgoing validators")
 	s.Require().Contains(powers, "Cosmostation", "export must contain the outgoing validators")
 	return powers
+}
+
+// populateInjectiveHostZoneFromExport seeds the injective-1 host zone from the
+// export's app_state.stakeibc section and returns it for later comparison.
+func (s *MainnetExportTestSuite) populateInjectiveHostZoneFromExport(export strideExport) stakeibctypes.HostZone {
+	raw, ok := export.AppState["stakeibc"]
+	s.Require().True(ok, "trimmed export missing stakeibc section — regenerate per testdata/README.md")
+
+	var genesis stakeibctypes.GenesisState
+	s.Require().NoError(s.App.AppCodec().UnmarshalJSON(raw, &genesis))
+	s.Require().Len(genesis.HostZoneList, 1, "export should contain exactly the injective-1 host zone")
+
+	hostZone := genesis.HostZoneList[0]
+	s.Require().Equal(v34.InjectiveChainId, hostZone.ChainId)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	return hostZone
+}
+
+// assertInjectiveReconciled checks the delta table applied in full against the
+// real host zone: the pending undelegation equals the whole table's sum (which
+// can only happen if every validator was found and no result went negative),
+// and each validator moved by exactly its delta.
+func (s *MainnetExportTestSuite) assertInjectiveReconciled(exportHostZone stakeibctypes.HostZone) {
+	expectedDelta := sdkmath.ZeroInt()
+	for _, entry := range v34.InjectiveDelegationDeltas {
+		_, _, found := stakeibckeeper.GetValidatorFromAddress(exportHostZone.Validators, entry.Address)
+		s.Require().True(found, "delta table entry %s (%s) is not on the mainnet host zone — re-measure the table", entry.Name, entry.Address)
+		expectedDelta = expectedDelta.Add(entry.Delta)
+	}
+	s.Require().True(expectedDelta.IsPositive(), "the table should net to the staked redemption excess")
+
+	pending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, v34.InjectiveChainId)
+	s.Require().True(found, "reconciliation was skipped against mainnet state — a delta would drive a delegation negative, re-measure the table")
+	s.Require().Equal(expectedDelta, pending, "pending undelegation should equal the full table sum")
+
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
+	s.Require().True(found)
+	s.Require().Equal(exportHostZone.TotalDelegations.Add(expectedDelta), hostZone.TotalDelegations)
+	for _, entry := range v34.InjectiveDelegationDeltas {
+		before, _, _ := stakeibckeeper.GetValidatorFromAddress(exportHostZone.Validators, entry.Address)
+		after, _, _ := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, entry.Address)
+		s.Require().Equal(before.Delegation.Add(entry.Delta), after.Delegation, "%s delegation should move by its delta", entry.Name)
+		s.Require().False(after.Delegation.IsNegative(), "%s delegation went negative", entry.Name)
+	}
 }
 
 // validatorsByMoniker unpacks every POA validator into a moniker-keyed map.

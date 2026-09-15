@@ -61,4 +61,8 @@ const (
 
 	// TradeRoute keys prefix to retrieve all TradeZones
 	TradeRouteKeyPrefix = "TradeRoute-value-"
+
+	// PendingUndelegationKeyPrefix is the prefix for one-shot undelegation amounts queued by an
+	// upgrade handler, keyed by chain id. Presence means "not yet submitted"
+	PendingUndelegationKeyPrefix = "PendingUndelegation-value-"
 )

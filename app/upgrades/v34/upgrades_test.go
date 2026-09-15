@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	sdkmath "cosmossdk.io/math"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -242,6 +244,75 @@ func (s *UpgradeTestSuite) TestOutgoingValidatorFeesRemainWithdrawable() {
 	payout, err := s.App.POAKeeper.WithdrawValidatorFees(s.Ctx, outgoingOperator)
 	s.Require().NoError(err)
 	s.Require().False(payout.IsZero(), "outgoing validator's pre-upgrade accrued fees should still be withdrawable")
+}
+
+// TestUpgradeQueuesInjectivePendingUndelegation runs the full handler so the wiring from the
+// reconciliation's applied delta into the pending undelegation key is covered
+func (s *UpgradeTestSuite) TestUpgradeQueuesInjectivePendingUndelegation() {
+	// ----- arrange -----
+	s.useTestConsensusKeys()
+	s.seedCurrentPOASet()
+	_, trackedTotal := s.setupInjectiveHostZone()
+
+	// ----- act -----
+	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
+
+	// ----- assert -----
+	// The pending amount must be exactly what the reconciliation booked onto the host zone,
+	// so the later undelegation unwinds precisely the excess that was added
+	expectedDelta := sdkmath.ZeroInt()
+	for _, entry := range v34.InjectiveDelegationDeltas {
+		expectedDelta = expectedDelta.Add(entry.Delta)
+	}
+	s.Require().True(expectedDelta.IsPositive(), "test relies on the table netting positive")
+
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
+	s.Require().True(found)
+	s.Require().Equal(trackedTotal.Add(expectedDelta), hostZone.TotalDelegations, "reconciliation ran in the handler")
+
+	pending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, v34.InjectiveChainId)
+	s.Require().True(found, "the applied delta should be queued as a pending undelegation")
+	s.Require().Equal(expectedDelta, pending, "pending undelegation should equal the applied delta")
+}
+
+func (s *UpgradeTestSuite) TestUpgradeSkipsInjectivePendingUndelegationWithoutHostZone() {
+	// ----- arrange -----
+	s.useTestConsensusKeys()
+	s.seedCurrentPOASet()
+
+	// ----- act -----
+	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
+
+	// ----- assert -----
+	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, v34.InjectiveChainId)
+	s.Require().False(found, "nothing should be queued when the injective host zone is absent")
+}
+
+// TestUpgradeSkipsInconsistentInjectiveTable runs the full handler with a table that no longer
+// matches the host zone: the upgrade must still succeed, but reconcile nothing and queue nothing,
+// rather than undelegate a partial sum or halt the chain
+func (s *UpgradeTestSuite) TestUpgradeSkipsInconsistentInjectiveTable() {
+	// ----- arrange -----
+	s.useTestConsensusKeys()
+	s.seedCurrentPOASet()
+	_, trackedTotal := s.setupInjectiveHostZone()
+
+	// Drop one validator from the host zone so the table cannot be applied in full
+	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
+	removed := hostZone.Validators[len(hostZone.Validators)-1]
+	hostZone.Validators = hostZone.Validators[:len(hostZone.Validators)-1]
+	hostZone.TotalDelegations = trackedTotal.Sub(removed.Delegation)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// ----- act -----
+	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
+
+	// ----- assert -----
+	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, v34.InjectiveChainId)
+	s.Require().False(found, "nothing is queued when the table is not applied")
+
+	hostZone, _ = s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
+	s.Require().Equal(trackedTotal.Sub(removed.Delegation), hostZone.TotalDelegations, "the reconciliation wrote nothing")
 }
 
 func (s *UpgradeTestSuite) TestSwapFailsWhenOutgoingValidatorMissing() {

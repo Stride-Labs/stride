@@ -26,9 +26,10 @@ import (
 //	  * Records delegation changes on the host zone and validators,
 //	  * Burns stTokens
 //	If timeout:
-//	  * Does nothing
+//	  * Does nothing (or re-queues the batch as a pending undelegation if it had no records)
 //	If failure:
-//	  * Sets epoch unbonding record status to RETRY
+//	  * Sets epoch unbonding record status to RETRY (or re-queues the batch as a pending
+//	    undelegation if it had no records)
 func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	var undelegateCallback types.UndelegateCallback
@@ -56,6 +57,11 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
+
+		// A batch with no records has no retry queue, so re-queue it as a pending undelegation
+		if len(undelegateCallback.EpochUnbondingRecordIds) == 0 {
+			k.RequeuePendingUndelegation(ctx, chainId, undelegateCallback.SplitUndelegations)
+		}
 		return nil
 	}
 
@@ -64,6 +70,12 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
+
+		// A batch with no records has no retry queue, so re-queue it as a pending undelegation
+		if len(undelegateCallback.EpochUnbondingRecordIds) == 0 {
+			k.RequeuePendingUndelegation(ctx, chainId, undelegateCallback.SplitUndelegations)
+			return nil
+		}
 
 		// Set any IN_PROGRESS records to RETRY_QUEUE
 		return k.HandleFailedUndelegation(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds)
@@ -178,6 +190,25 @@ func (k Keeper) HandleFailedUndelegation(ctx sdk.Context, chainId string, epochN
 		)
 	}
 	return nil
+}
+
+// If a pending undelegation (a batch submitted with no epoch unbonding records) fails or times out,
+// add the batch amount back to the pending store so it's resubmitted at the next day epoch
+// The pending key was deleted when the batch was submitted, and one pending amount may have been
+// split across several batches, so the amount is added to whatever is already queued
+func (k Keeper) RequeuePendingUndelegation(ctx sdk.Context, chainId string, undelegations []*types.SplitUndelegation) {
+	batchAmount := k.CalculateTotalUnbondedInBatch(undelegations)
+
+	existingAmount, found := k.GetPendingUndelegation(ctx, chainId)
+	if !found {
+		existingAmount = sdkmath.ZeroInt()
+	}
+	requeuedAmount := existingAmount.Add(batchAmount)
+
+	k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
+		"Pending undelegation of %v was not completed, re-queued for the next day epoch (total pending: %v)",
+		batchAmount, requeuedAmount))
+	k.SetPendingUndelegation(ctx, chainId, requeuedAmount)
 }
 
 // Decrement the delegation field on the host zone and each validator's delegations after a successful unbonding ICA

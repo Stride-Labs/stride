@@ -150,6 +150,40 @@ func (s *KeeperTestSuite) TestRedemptionCallback_RedemptionCallbackErrorOnHost()
 	s.checkRedemptionStateIfCallbackFailed(tc)
 }
 
+// A failure ack only resets records that are still waiting on the sweep; a record that was
+// moved elsewhere while the sweep was in flight (e.g. re-queued for undelegation) is left alone.
+func (s *KeeperTestSuite) TestRedemptionCallback_FailureOnlyResetsInProgressRecords() {
+	tc := s.SetupRedemptionCallback()
+	epochNumber := tc.initialState.epochNumber
+
+	// Second host zone unbonding on the same epoch record, already re-queued for undelegation
+	requeuedChainId := "requeued-chain"
+	epochUnbondingRecord, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, epochNumber)
+	s.Require().True(found)
+	epochUnbondingRecord.HostZoneUnbondings = append(epochUnbondingRecord.HostZoneUnbondings, &recordtypes.HostZoneUnbonding{
+		HostZoneId: requeuedChainId,
+		Status:     recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE,
+	})
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, epochUnbondingRecord)
+
+	// The sweep for HostChainId is in flight
+	err := s.App.RecordsKeeper.SetHostZoneUnbondingStatus(s.Ctx, HostChainId, []uint64{epochNumber}, recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS)
+	s.Require().NoError(err)
+
+	failedArgs := tc.validArgs
+	failedArgs.ackResponse.Status = icacallbacktypes.AckResponseStatus_FAILURE
+	err = s.App.StakeibcKeeper.RedemptionCallback(s.Ctx, failedArgs.packet, failedArgs.ackResponse, failedArgs.args)
+	s.Require().NoError(err)
+
+	inProgress, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumber, HostChainId)
+	s.Require().True(found)
+	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE, inProgress.Status, "in-flight record is reset")
+
+	requeued, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, epochNumber, requeuedChainId)
+	s.Require().True(found)
+	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE, requeued.Status, "re-queued record is untouched")
+}
+
 func (s *KeeperTestSuite) TestRedemptionCallback_WrongCallbackArgs() {
 	tc := s.SetupRedemptionCallback()
 	invalidArgs := tc.validArgs

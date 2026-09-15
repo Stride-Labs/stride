@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/cosmos/gogoproto/proto"
 
@@ -54,37 +55,18 @@ func (k Keeper) GetTotalRedemptionSweepAmountAndRecordIds(
 	return totalSweepAmount, unbondingRecordIds
 }
 
-// Batch transfers any unbonded tokens from the delegation account to the redemption account
-func (k Keeper) SweepUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone) error {
+// Submits the ICA to transfer a sweep amount from the delegation account to the redemption
+// account, for the given set of epoch unbonding record IDs, and marks those records IN_PROGRESS
+func (k Keeper) submitRedemptionSweep(
+	ctx sdk.Context,
+	hostZone types.HostZone,
+	sweepAmount sdkmath.Int,
+	epochUnbondingRecordIds []uint64,
+) error {
 	chainId := hostZone.ChainId
-	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Sweeping unbonded tokens"))
-
-	// Confirm the delegation (destination) and redemption (source) accounts are registered
-	if hostZone.DelegationIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
-	}
-	if hostZone.RedemptionIcaAddress == "" {
-		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no redemption account found for %s", chainId)
-	}
-
-	// Get latest blockTime from light client
-	hostBlockTime, err := k.GetLightClientTime(ctx, hostZone.ConnectionId)
-	if err != nil {
-		return errorsmod.Wrapf(err, "could not get light client block time for host zone")
-	}
-
-	// Determine the total unbonded amount that has finished unbonding
-	totalSweepAmount, epochUnbondingRecordIds := k.GetTotalRedemptionSweepAmountAndRecordIds(ctx, chainId, hostBlockTime)
-
-	// If we have any amount to sweep, then we can send the ICA call to sweep them
-	if totalSweepAmount.LTE(sdkmath.ZeroInt()) {
-		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "No tokens ready for sweep"))
-		return nil
-	}
-	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Batch transferring %v to host zone", totalSweepAmount))
 
 	// Build transfer message to transfer from the delegation account to redemption account
-	sweepCoin := sdk.NewCoin(hostZone.HostDenom, totalSweepAmount)
+	sweepCoin := sdk.NewCoin(hostZone.HostDenom, sweepAmount)
 	msgs := []proto.Message{
 		&banktypes.MsgSend{
 			FromAddress: hostZone.DelegationIcaAddress,
@@ -112,12 +94,73 @@ func (k Keeper) SweepUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.H
 	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "ICA MsgSend Successfully Sent"))
 
 	// Update the host zone unbonding records to status IN_PROGRESS
-	err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, epochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS)
-	if err != nil {
+	if err := k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, epochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS); err != nil {
 		return err
 	}
 
-	EmitRedemptionSweepEvent(ctx, hostZone, totalSweepAmount)
+	EmitRedemptionSweepEvent(ctx, hostZone, sweepAmount)
+
+	return nil
+}
+
+// Transfers any unbonded tokens from the delegation account to the redemption account
+//
+// For most host zones this is a single bundled ICA covering every eligible record (unchanged
+// behavior). For injective-1, the delegation ICA's liquid balance can be short of the bundled
+// total (see the v34 Injective reconciliation design), so the bundled all-or-nothing send blocks
+// every redeemer. injective-1 instead submits one ICA per record, oldest first, so records the
+// ICA balance covers still succeed while the rest stay queued and retry next epoch.
+// TODO [cleanup]: remove after v34 — revert injective-1 to the bundled sweep
+func (k Keeper) SweepUnbondedTokensForHostZone(ctx sdk.Context, hostZone types.HostZone) error {
+	chainId := hostZone.ChainId
+	k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Sweeping unbonded tokens"))
+
+	// Confirm the delegation (destination) and redemption (source) accounts are registered
+	if hostZone.DelegationIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation account found for %s", chainId)
+	}
+	if hostZone.RedemptionIcaAddress == "" {
+		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no redemption account found for %s", chainId)
+	}
+
+	// Get latest blockTime from light client
+	hostBlockTime, err := k.GetLightClientTime(ctx, hostZone.ConnectionId)
+	if err != nil {
+		return errorsmod.Wrapf(err, "could not get light client block time for host zone")
+	}
+
+	// Determine the total unbonded amount that has finished unbonding
+	totalSweepAmount, epochUnbondingRecordIds := k.GetTotalRedemptionSweepAmountAndRecordIds(ctx, chainId, hostBlockTime)
+
+	// If we have any amount to sweep, then we can send the ICA call to sweep them
+	if totalSweepAmount.LTE(sdkmath.ZeroInt()) {
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "No tokens ready for sweep"))
+		return nil
+	}
+
+	// injective-1 sweeps one record at a time, oldest first, so a short delegation ICA balance
+	// only blocks the records it can't cover instead of blocking all of them
+	if chainId != types.PerRecordSweepChainId {
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Batch transferring %v to host zone", totalSweepAmount))
+		return k.submitRedemptionSweep(ctx, hostZone, totalSweepAmount, epochUnbondingRecordIds)
+	}
+
+	sortedRecordIds := append([]uint64{}, epochUnbondingRecordIds...)
+	sort.Slice(sortedRecordIds, func(i, j int) bool { return sortedRecordIds[i] < sortedRecordIds[j] })
+
+	for _, epochUnbondingRecordId := range sortedRecordIds {
+		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecordId, chainId)
+		if !found {
+			return errorsmod.Wrapf(types.ErrRecordNotFound, "host zone unbonding not found for chain %s, epoch %d", chainId, epochUnbondingRecordId)
+		}
+
+		k.Logger(ctx).Info(utils.LogWithHostZone(chainId, "Transferring %v to host zone for epoch unbonding record %d",
+			hostZoneUnbonding.NativeTokenAmount, epochUnbondingRecordId))
+
+		if err := k.submitRedemptionSweep(ctx, hostZone, hostZoneUnbonding.NativeTokenAmount, []uint64{epochUnbondingRecordId}); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
