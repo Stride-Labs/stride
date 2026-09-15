@@ -41,8 +41,12 @@ type DelegationDelta struct {
 // REHEARSAL ONLY — DO NOT MERGE: the mainnet table is replaced by the k8s Gaia validators with
 // deltas measured by `rehearsal/injective.sh measure` (on-chain delegation of the delegation ICA
 // minus tracked delegation), the same method used for the mainnet measurement.
+// Measured 2026-09-15 22:53 UTC on the k8s rehearsal network by `rehearsal/injective.sh measure`
+// (Σ = 309643420 uatom: the 300 ATOM lost-ack delegate plus reinvests whose acks were withheld).
 var InjectiveDelegationDeltas = []DelegationDelta{
-	{Name: "cosmoshub1", Address: "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p", Delta: mustInt("0")},
+	{Name: "val3", Address: "cosmosvaloper1nnurja9zt97huqvsfuartetyjx63tc5zxcyn3n", Delta: mustInt("104334860")},
+	{Name: "cosmoshub1", Address: "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p", Delta: mustInt("104334870")},
+	{Name: "val2", Address: "cosmosvaloper17kht2x2ped6qytr2kklevtvmxpw7wq9rarvcqz", Delta: mustInt("100973690")},
 }
 
 func mustInt(s string) sdkmath.Int {
