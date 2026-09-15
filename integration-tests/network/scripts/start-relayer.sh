@@ -39,8 +39,8 @@ create_path() {
         rly tx link $PATH_NAME
     else
         # Otherwise, add the existing connection to the config
-        client_id_a=$(rly q clients $CHAIN_NAME_A | grep $CHAIN_ID_B | jq -r '.client_id')
-        client_id_b=$(rly q clients $CHAIN_NAME_B | grep $CHAIN_ID_A | jq -r '.client_id')
+        client_id_a=$(rly q clients $CHAIN_NAME_A | grep $CHAIN_ID_B | jq -r '.client_id' | head -1) # REHEARSAL ONLY: the connection uses the first (recovered) client
+        client_id_b=$(rly q clients $CHAIN_NAME_B | grep $CHAIN_ID_A | jq -r '.client_id' | head -1)
 
         connection_id_a=$(rly q client-connections $CHAIN_NAME_A $client_id_a | jq -r '.connections[0].id')
         connection_id_b=$(rly q client-connections $CHAIN_NAME_B $client_id_b | jq -r '.connections[0].id')
