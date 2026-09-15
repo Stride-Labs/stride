@@ -709,8 +709,9 @@ lstrided() { strided --home "$LOCAL_STRIDED_HOME" --node "$STRIDE_RPC" "$@"; }
 import_local_keys() {
     local name
     for name in val1 val2 val3; do
-        lstrided keys show "$name" --keyring-backend test >/dev/null 2>&1 && continue
-        key_mnemonic "$name" | lstrided keys add "$name" --recover --keyring-backend test >/dev/null
+        # `keys` rejects --node, so don't go through lstrided here
+        strided --home "$LOCAL_STRIDED_HOME" keys show "$name" --keyring-backend test >/dev/null 2>&1 && continue
+        key_mnemonic "$name" | strided --home "$LOCAL_STRIDED_HOME" keys add "$name" --recover --keyring-backend test >/dev/null
     done
 }
 submit_upgrade_proposal_local() {
