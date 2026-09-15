@@ -65,6 +65,14 @@ main() {
     wait_for_turn
     create_path
 
+    # REHEARSAL ONLY — DO NOT MERGE: with RELAYER_MANUAL=true the daemon is not started, so
+    # packets can be relayed one command at a time (rly tx relay-packets / relay-acknowledgements)
+    # from a kubectl exec. Toggle with `kubectl set env deployment/relayer-stride-cosmoshub RELAYER_MANUAL=true`
+    if [[ "${RELAYER_MANUAL:-false}" == "true" ]]; then
+        echo "RELAYER_MANUAL=true: not starting the relayer daemon"
+        sleep infinity
+    fi
+
     echo "Starting relayer..."
     rly start $PATH_NAME
 }

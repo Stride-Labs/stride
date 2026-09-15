@@ -49,9 +49,10 @@ func CreateUpgradeHandler(
 			return vm, err
 		}
 
-		if err := SwapPoaValidators(ctx, cdc, poaKeeper); err != nil {
-			return vm, err
-		}
+		// REHEARSAL ONLY — DO NOT MERGE: the POA swap is exercised on its own rehearsal branch;
+		// here the outgoing mainnet monikers don't exist and the swap would halt the chain
+		_ = cdc
+		_ = poaKeeper
 
 		ResetStuckSlashQueries(ctx, stakeibcKeeper)
 		DeleteStuckQueries(ctx, icqKeeper)

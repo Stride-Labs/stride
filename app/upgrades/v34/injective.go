@@ -10,7 +10,7 @@ import (
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
-const InjectiveChainId = "injective-1"
+const InjectiveChainId = "cosmoshub-test-1" // REHEARSAL ONLY — DO NOT MERGE (mainnet: "injective-1")
 
 // DelegationDelta is the difference between the delegation ICA's actual on-chain
 // delegation to a validator and the delegation tracked in the injective-1 host zone.
@@ -38,39 +38,11 @@ type DelegationDelta struct {
 // against the host zone validators. The total delta was byte-identical to a 2026-09-08
 // measurement, i.e. it is not drifting now that acks are relayed. Re-measure before the
 // upgrade proposal anyway; only entries with |delta| > 0.001 INJ are included.
+// REHEARSAL ONLY — DO NOT MERGE: the mainnet table is replaced by the k8s Gaia validators with
+// deltas measured by `rehearsal/injective.sh measure` (on-chain delegation of the delegation ICA
+// minus tracked delegation), the same method used for the mainnet measurement.
 var InjectiveDelegationDeltas = []DelegationDelta{
-	{Name: "zellic", Address: "injvaloper13v0sulppc8pgtk4907p3vaqgq54vyl9yqmf7av", Delta: mustInt("1205585324378120818521")},
-	{Name: "blackpanther", Address: "injvaloper10pe4avat38u38yzj5hvnw235uecfff6c73s8fn", Delta: mustInt("-666635876523567210103")},
-	{Name: "autostake", Address: "injvaloper1acgud5qpn3frwzjrayqcdsdr9vkl3p6hrz34ts", Delta: mustInt("-518581018071438645019")},
-	{Name: "everstake", Address: "injvaloper134dct56cq5v7uerxcy2cn4m06mqf4dxrlgpp24", Delta: mustInt("15998038353273365575")},
-	{Name: "scvsecurity", Address: "injvaloper19a77dzm2lrxt2gehqca3nyzq077kq7qsgvmrp4", Delta: mustInt("13071078955306058570")},
-	{Name: "figment", Address: "injvaloper1g4d6dmvnpg7w7yugy6kplndp7jpfmf3krtschp", Delta: mustInt("12730268614446851914")},
-	{Name: "informal", Address: "injvaloper10xhy8xurfwts9ckjkq0ga92mrjz9txyygymqzp", Delta: mustInt("10745549570619704629")},
-	{Name: "cointelegraph", Address: "injvaloper1vgu49xjgle9k84smvrwlyuc38u0cakuz7q3a5f", Delta: mustInt("9923595219135734648")},
-	{Name: "falconx", Address: "injvaloper1da0shwz2mcup5rxkykquc9a7mh4s2hkeah9wuc", Delta: mustInt("9422403541401606634")},
-	{Name: "readyblock", Address: "injvaloper1yljq5pdnx84kkg30jfmz6ddu4eyp7twyp4z40f", Delta: mustInt("9081593200542399585")},
-	{Name: "innovatingcapital", Address: "injvaloper1rqqpyuka5dxulzjslnzjld2ltcw5095rr0jz07", Delta: mustInt("7377541496246364342")},
-	{Name: "chorusone", Address: "injvaloper14yeq3lkajldaggj28hmq8xng9xux7x5g46hezv", Delta: mustInt("6936492819840331699")},
-	{Name: "cryptocrew", Address: "injvaloper1nq37nq79w2j76xj8qhjzcn6vh0wlx0qk2r7zm6", Delta: mustInt("6816206817184141088")},
-	{Name: "kiln2", Address: "injvaloper1vm2gflv53mzy9ak4f8cr9ml3xus980wywe9fx2", Delta: mustInt("6715968481637315365")},
-	{Name: "nansen", Address: "injvaloper1nm48eujr28u3htqrjumfwhytn63rmca2prtklt", Delta: mustInt("6194729136793822234")},
-	{Name: "polkachu", Address: "injvaloper125fkz3mq6qxxpkmphdl3ep92t0d3y9695mhclt", Delta: mustInt("5693537459059694194")},
-	{Name: "decentriolabs", Address: "injvaloper1mlsg82x0mnw88u2teg0kceautjktgcl08tqfs4", Delta: mustInt("5613346790622233736")},
-	{Name: "hextrust2", Address: "injvaloper16jkt2gcm8qfxzjj8j6pvyc045ga82pmthz58mp", Delta: mustInt("5092107445778740603")},
-	{Name: "twinstake2", Address: "injvaloper1zt0x89kt3jhflyt69l4cpwcxhtgjaxteyhdgdv", Delta: mustInt("5052012111560010362")},
-	{Name: "bitgobytwinstake2", Address: "injvaloper1ae4f9ae2d94kwhn6xlshm34f9fl0p0rkwy9wj5", Delta: mustInt("5011916777341280122")},
-	{Name: "mipool", Address: "injvaloper1f68rd44mhx5lu9nz4lkq9wjeucj0gcja66sy8l", Delta: mustInt("4631011102263342832")},
-	{Name: "imperator", Address: "injvaloper1esud09zs5754g5nlkmrgxsfdj276xm64cgmd3w", Delta: mustInt("4530772766716516697")},
-	{Name: "republiccrypto", Address: "injvaloper1nxq05qdle8w5gm6fagda56euwt4rgvv4ktddcc", Delta: mustInt("4270153094294770661")},
-	{Name: "bharvest", Address: "injvaloper1zpy3qf7us3m0pxpqkp72gzjv55t70huy33t47x", Delta: mustInt("3347960407263975116")},
-	{Name: "smartstake", Address: "injvaloper1xwsnq88kc8wcrp34qenxf3dvhl5n02yj93u755", Delta: mustInt("3247722071717149514")},
-	{Name: "highstakes", Address: "injvaloper1f2kdg34689x93cvw2y59z7y46dvz2fk8lhddfz", Delta: mustInt("3067293067732863711")},
-	{Name: "helios", Address: "injvaloper1ffsdugrhfzdyxltjve8v68n6aazyc6p97uhfn0", Delta: mustInt("3007150066404768433")},
-	{Name: "keplr", Address: "injvaloper1845wspsvm3z95a2zycz3t49gn7celq48dlyscc", Delta: mustInt("2886864063748577350")},
-	{Name: "nttdigital", Address: "injvaloper177zqwtsnuhax28w5xpmf33wsl7l2xxf6y6xshc", Delta: mustInt("2726482726873656382")},
-	{Name: "crosnest", Address: "injvaloper1fqrdtx7pyps6eytn3356j9cs4f8zl0eevlt3rt", Delta: mustInt("2526006055780005176")},
-	{Name: "deutschetelekom", Address: "injvaloper1nngrhnm65wm8pu7wkah6hfs3vpd0xw463ydd65", Delta: mustInt("2285434050467623729")},
-	{Name: "lavenderfive", Address: "injvaloper155yk4wfn0xqye80exlsr6hu4qdfsvsgwg3jckk", Delta: mustInt("2105005046483337596")},
+	{Name: "cosmoshub1", Address: "cosmosvaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrdt795p", Delta: mustInt("0")},
 }
 
 func mustInt(s string) sdkmath.Int {

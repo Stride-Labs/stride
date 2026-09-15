@@ -13,7 +13,7 @@ const (
 	// TODO [cleanup]: remove after v34 — revert injective-1 to the bundled sweep
 	// The all-or-nothing bundled sweep blocked every redeemer when the delegation ICA was
 	// short; per-record lets the records that fit succeed oldest-first.
-	PerRecordSweepChainId = "injective-1"
+	PerRecordSweepChainId = "cosmoshub-test-1" // REHEARSAL ONLY — DO NOT MERGE (mainnet: "injective-1")
 )
 
 // Per an SDK constraint, we can issue no more than 7 undelegation messages

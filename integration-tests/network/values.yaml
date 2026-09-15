@@ -5,10 +5,11 @@ images:
   relayer: gcr.io/stride-nodes/integration-tests/relayer:v2.5.2
   hermes: gcr.io/stride-nodes/integration-tests/hermes:v1.9.0
 
+# REHEARSAL ONLY — DO NOT MERGE: stride + cosmoshub with a single go-relayer, so the
+# delegation ICA path can be driven manually (see rehearsal/injective.sh)
 activeChains:
   - stride
   - cosmoshub
-  - osmosis
 
 # type can be either "relayer" or "hermes"
 relayers:
@@ -16,21 +17,6 @@ relayers:
     type: relayer
     chainA: stride
     chainB: cosmoshub
-  - name: stride-osmosis
-    type: relayer
-    chainA: stride
-    chainB: osmosis
-  # We start with hermes as a backup relayer
-  - name: stride-cosmoshub
-    type: hermes
-    chainA: stride
-    chainB: cosmoshub
-    createPaths: false
-  - name: stride-osmosis
-    type: hermes
-    chainA: stride
-    chainB: osmosis
-    createPaths: false
 
 chainConfigs:
   stride:
@@ -44,7 +30,7 @@ chainConfigs:
   cosmoshub:
     binary: gaiad
     version: v22.1.0
-    numValidators: 1
+    numValidators: 3
     home: .gaia
     denom: uatom
     decimals: 6

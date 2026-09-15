@@ -106,10 +106,10 @@ spec:
               mountPath: /home/validator/logs
           resources:
             limits:
-              cpu: "600m"
+              cpu: "400m"
               memory: "700M"
             requests:
-              cpu: "600m"
+              cpu: "400m"
               memory: "700M"
       volumes:
         - name: state
