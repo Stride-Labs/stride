@@ -280,7 +280,8 @@ record_field() { unbonding_record "$1" | jq -r ".$2"; } # <st-amount> <field>
 print_unbonding_records() { unbonding_records | jq -c '.[]' | sed 's/^/    /'; }
 
 deposit_records() { stride_q records list-deposit-record | jq --arg c "$HOST_CHAIN_ID" '[.deposit_record[] | select(.host_zone_id == $c)]'; }
-deposit_record_status() { deposit_records | jq -r --arg a "$1" '[.[] | select(.amount == $a)] | if length == 0 then "none" else .[0].status end'; }
+# The epoch's STRIDE-source record also absorbs a few thousand uatom of per-epoch dust, so match on >= amount
+deposit_record_status() { deposit_records | jq -r --arg a "$1" '[.[] | select(.source == "STRIDE" and (.amount|tonumber) >= ($a|tonumber))] | if length == 0 then "none" else .[0].status end'; }
 print_deposit_records() { deposit_records | jq -c '.[]' | sed 's/^/    /'; }
 
 stride_channels() { stride_q ibc channel channels | jq '.channels'; }
