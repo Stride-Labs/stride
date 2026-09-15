@@ -10,4 +10,6 @@ RUN apt-get update \
 USER hermes
 WORKDIR /home/hermes
 
+# the upstream image sets ENTRYPOINT to the hermes binary
+ENTRYPOINT []
 CMD ["bash", "scripts/start-hermes.sh"]
