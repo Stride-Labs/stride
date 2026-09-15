@@ -83,8 +83,8 @@ main() {
     fi
 
     echo "Starting relayer..."
-    # REHEARSAL ONLY: one msg per tx — batched MsgTimeouts on an ordered channel fail proof verification
-    rly start $PATH_NAME --max-msgs 1
+    # REHEARSAL ONLY: default batching; one-msg-per-tx could not keep up with the ICA packet rate
+    rly start $PATH_NAME
 }
 
 main
