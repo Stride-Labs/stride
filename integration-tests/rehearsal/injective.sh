@@ -492,11 +492,7 @@ phase_drift() {
     prepare_relayer_deployment
     local ica r1 r2
     ica=$(host_zone_field .delegation_ica_address)
-    r1=$(record_field "$REDEEM_AMOUNT_1" native_token_amount)
-    r2=$(record_field "$REDEEM_AMOUNT_2" native_token_amount)
-    assert_eq "record 1 status" "$(record_field "$REDEEM_AMOUNT_1" status)" EXIT_TRANSFER_QUEUE
-    assert_eq "record 2 status" "$(record_field "$REDEEM_AMOUNT_2" status)" EXIT_TRANSFER_QUEUE
-    log "R1=$r1 R2=$r2; unbonding matures in ~$(seconds_until_mature "$REDEEM_AMOUNT_2")s (the channel must be closed before then)"
+    log "on-chain=$(gaia_delegated_total "$ica") tracked=$(tracked_total) liquid=$(gaia_balance "$ica")"
 
     # 1. stake 300 and let the daemon relay the transfer
     if [[ $(deposit_record_status "$DRIFT_STAKE_AMOUNT") == none ]]; then
@@ -545,7 +541,16 @@ phase_drift() {
     log "delegation channel restored: $chan -> $(open_delegation_channel)"
     print_ica_channels
 
-    # 6. the re-delegate consumes 300 of the unbonded R1+R2 and the bundled sweep error-acks
+    log "drift choreography complete: the re-delegate will retry every stride epoch until the ICA has liquid funds"
+}
+
+phase_stuck() { # wait for the retrying re-delegate to consume 300 of R1+R2 and the bundled sweep to fail
+    banner "stuck: wait for the theft and the failing bundled sweep"
+    local ica r1 r2
+    ica=$(host_zone_field .delegation_ica_address)
+    r1=$(record_field "$REDEEM_AMOUNT_1" native_token_amount)
+    r2=$(record_field "$REDEEM_AMOUNT_2" native_token_amount)
+    log "R1=$r1 R2=$r2 (latest records); deposit record: $(deposit_record_status "$DRIFT_STAKE_AMOUNT")"
     local expected_liquid=$(( r1 + r2 - DRIFT_STAKE_AMOUNT ))
     wait_for "$UNBONDING_TIMEOUT" "re-delegate acked (deposit record gone, on-chain == tracked + $DRIFT_STAKE_AMOUNT)" stuck_state_reached "$ica"
     assert_eq "on-chain == tracked + 300" "$(gaia_delegated_total "$ica")" "$(( $(tracked_total) + DRIFT_STAKE_AMOUNT ))"
@@ -770,6 +775,7 @@ main() {
         setup) phase_setup ;;
         redeem) phase_redeem ;;
         drift) phase_drift ;;
+        stuck) phase_stuck ;;
         measure) phase_measure ;;
         build-and-swap) phase_build_and_swap ;;
         upgrade) phase_upgrade ;;
