@@ -44,6 +44,14 @@ main() {
 
     restore_keys
 
+    # REHEARSAL ONLY — DO NOT MERGE: on this branch hermes is a CLI tool, not a daemon. The
+    # rehearsal driver runs `hermes tx packet-recv` (receive-or-timeout, never acks) against the
+    # delegation ICA channel to strand a delegate's ack. Set HERMES_MANUAL=false to run the daemon.
+    if [[ "${HERMES_MANUAL:-true}" == "true" ]]; then
+        echo "HERMES_MANUAL: not starting the hermes daemon"
+        sleep infinity
+    fi
+
     # Optionally run the relayer as a backup that doesn't create the paths
     if [[ "$CREATE_PATHS" == "true" ]]; then
         create_path

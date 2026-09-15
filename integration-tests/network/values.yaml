@@ -17,6 +17,12 @@ relayers:
     type: relayer
     chainA: stride
     chainB: cosmoshub
+  # CLI-only hermes (see start-hermes.sh HERMES_MANUAL) used to hand-relay the delegation channel
+  - name: stride-cosmoshub
+    type: hermes
+    chainA: stride
+    chainB: cosmoshub
+    createPaths: false
 
 chainConfigs:
   stride:

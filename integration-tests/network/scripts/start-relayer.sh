@@ -73,6 +73,15 @@ main() {
         sleep infinity
     fi
 
+    # REHEARSAL ONLY — DO NOT MERGE: RELAYER_DENY_CHANNELS=channel-1[,channel-2] keeps the daemon
+    # off those channels (from the stride side) so they can be relayed by hand while every other
+    # channel — and the light clients — stay serviced. Toggle with
+    # `kubectl set env deployment/relayer-stride-cosmoshub RELAYER_DENY_CHANNELS=channel-1`
+    if [[ -n "${RELAYER_DENY_CHANNELS:-}" ]]; then
+        echo "Denying channels ${RELAYER_DENY_CHANNELS} on ${PATH_NAME}"
+        rly paths update $PATH_NAME --filter-rule denylist --filter-channels "$RELAYER_DENY_CHANNELS"
+    fi
+
     echo "Starting relayer..."
     rly start $PATH_NAME
 }

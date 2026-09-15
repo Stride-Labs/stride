@@ -489,42 +489,44 @@ redeem_once() { # <st-amount> <receiver>   (idempotent per amount)
     log "redeemed $1 $ST_DENOM in day epoch $(day_epoch)"
 }
 
-# Recv-only relaying from inside the manual-mode relayer pod: every OPEN Stride channel gets its
-# packets (MsgRecvPacket / MsgTimeout) relayed, and every channel EXCEPT the delegation ICA channel
-# also gets its acks relayed. The delegate's ack is therefore the only thing stranded, and no other
-# ordered channel dies from an unrelayed timeout while the daemon is off.
-relay_loop_start() { # <delegation-channel>
-    local script
-    script=$(cat <<EOS
-while true; do
-  for ch in \$(rly q channels stride 2>/dev/null | jq -r 'select(.state == "STATE_OPEN") | .channel_id'); do
-    rly tx relay-packets $RELAYER_PATH \$ch >>/tmp/relay-loop.log 2>&1 || true
-    if [ "\$ch" != "$1" ]; then rly tx relay-acknowledgements $RELAYER_PATH \$ch >>/tmp/relay-loop.log 2>&1 || true; fi
-  done
-  sleep 2
-done
-EOS
-)
-    kube exec "deploy/$RELAYER_DEPLOYMENT" -- bash -c "$script" >"$SCRATCH/relay-loop.exec.log" 2>&1 &
-    RELAY_LOOP_PID=$!
-    log "recv-only relay loop started (pid $RELAY_LOOP_PID), acks withheld on $1"
+# The rly daemon keeps running (so the light clients never expire and every other channel is
+# served) but with the delegation ICA channel denylisted; that channel is relayed by hand with
+# `hermes tx packet-recv` (receive-or-timeout, never acks) from the CLI-only hermes pod. The
+# delegate's ack is therefore the only thing stranded.
+HERMES_DEPLOYMENT=hermes-stride-cosmoshub
+relayer_deny_channel() { # <channel>
+    kube set env "deployment/$RELAYER_DEPLOYMENT" "RELAYER_DENY_CHANNELS=$1"
+    kube rollout status "deployment/$RELAYER_DEPLOYMENT" --timeout=180s
+    wait_for "$RELAYER_TIMEOUT" "relayer daemon restarted with $1 denied" relayer_daemon_started
 }
-relay_loop_stop() {
-    kill "${RELAY_LOOP_PID:-0}" 2>/dev/null || true
-    kube exec "deploy/$RELAYER_DEPLOYMENT" -- pkill -f "while true" 2>/dev/null || true
-    log "recv-only relay loop stopped"
+relayer_allow_all() {
+    kube set env "deployment/$RELAYER_DEPLOYMENT" RELAYER_DENY_CHANNELS-
+    kube rollout status "deployment/$RELAYER_DEPLOYMENT" --timeout=180s
+    wait_for "$RELAYER_TIMEOUT" "relayer daemon restarted without a denylist" relayer_daemon_started
 }
-
-drift_cleanup() { # the light clients expire 204s after the last update, so never leave the daemon off
-    relay_loop_stop
-    if [[ $(relayer_mode_current) == manual ]]; then
-        log "drift failed in manual mode: returning the relayer to daemon mode"
-        relayer_mode daemon || true
+relayer_denylist_current() {
+    kube get deployment "$RELAYER_DEPLOYMENT" -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="RELAYER_DENY_CHANNELS")].value}' 2>/dev/null
+}
+hermes_recv_loop_start() { # <channel>: receive-or-timeout every packet on the channel, never ack
+    kube exec "deploy/$HERMES_DEPLOYMENT" -- bash -c "while true; do
+        hermes tx packet-recv --dst-chain $HOST_CHAIN_ID --src-chain $STRIDE_CHAIN_ID --src-port $DELEGATION_ICA_PORT --src-channel $1 >>/tmp/hermes-loop.log 2>&1 || true
+        sleep 3
+    done" >"$SCRATCH/hermes-loop.exec.log" 2>&1 &
+    HERMES_LOOP_PID=$!
+    log "hermes receive-or-timeout loop started on $1 (pid $HERMES_LOOP_PID)"
+}
+hermes_recv_loop_stop() {
+    kill "${HERMES_LOOP_PID:-0}" 2>/dev/null || true
+    kube exec "deploy/$HERMES_DEPLOYMENT" -- pkill -f "while true" 2>/dev/null || true
+    log "hermes loop stopped; last lines:"
+    kube exec "deploy/$HERMES_DEPLOYMENT" -- sh -c 'tail -5 /tmp/hermes-loop.log 2>/dev/null' | sed 's/^/    /' || true
+}
+drift_cleanup() { # never leave the delegation channel unserviced
+    hermes_recv_loop_stop
+    if [[ -n $(relayer_denylist_current) ]]; then
+        log "drift failed: removing the relayer denylist"
+        relayer_allow_all || true
     fi
-}
-relayer_mode_current() {
-    kube get deployment "$RELAYER_DEPLOYMENT" -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="RELAYER_MANUAL")].value}' 2>/dev/null \
-        | grep -q true && echo manual || echo daemon
 }
 
 phase_drift() {
@@ -537,15 +539,15 @@ phase_drift() {
     [[ $chan =~ ^channel-[0-9]+$ ]] || die "expected exactly one OPEN delegation channel, got '$chan'"
     log "on-chain=$(gaia_delegated_total "$ica") tracked=$(tracked_total) liquid=$(gaia_balance "$ica") delegation channel=$chan"
 
-    # 1. daemon off, recv-only loop on: from here every ICA executes on Gaia but delegation acks never return
-    relayer_mode manual
-    relay_loop_start "$chan"
+    # 1. daemon off the delegation channel, hermes receive-or-timeout loop on it
+    relayer_deny_channel "$chan"
+    hermes_recv_loop_start "$chan"
     seq_before=$(next_sequence_send "$chan")
     onchain_before=$(gaia_delegated_total "$ica")
     tracked_before=$(tracked_total)
     log "next-sequence-send=$seq_before on-chain=$onchain_before tracked=$tracked_before"
 
-    # 2. stake 300: the loop relays the transfer (with its ack) and then the delegate (without)
+    # 2. stake 300: the daemon relays the transfer, hermes receives the delegate, nobody relays its ack
     if [[ $(deposit_record_status "$DRIFT_STAKE_AMOUNT") == none ]]; then
         stride_tx "$USER_KEY" stakeibc liquid-stake "$DRIFT_STAKE_AMOUNT" "$HOST_DENOM"
     else
@@ -557,14 +559,14 @@ phase_drift() {
     assert_eq "tracked delegations unchanged (ack stranded)" "$(tracked_total)" "$tracked_before"
     assert_eq "drift deposit record status" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_IN_PROGRESS
 
-    # 3. close the channel with a 1ns-timeout ICA; the loop relays it as MsgTimeout
+    # 3. close the channel with a 1ns-timeout ICA; hermes relays it as MsgTimeout
     stride_tx "$ADMIN_KEY" stakeibc close-delegation-channel "$HOST_CHAIN_ID"
     wait_for 120 "delegation channel $chan STATE_CLOSED" channel_state_is "$chan" STATE_CLOSED
-    relay_loop_stop
+    hermes_recv_loop_stop
     print_ica_channels
 
-    # 4. daemon back, restore the account on a fresh channel
-    relayer_mode daemon
+    # 4. daemon back on every channel, restore the account on a fresh channel
+    relayer_allow_all
     stride_tx "$ADMIN_KEY" stakeibc restore-interchain-account "$HOST_CHAIN_ID" "$CONNECTION_ID" "$DELEGATION_ICA_OWNER"
     assert_eq "drift deposit record reset by restore" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_QUEUE
     wait_for "$ICA_TIMEOUT" "new OPEN delegation channel (not $chan)" new_delegation_channel_open "$chan"
