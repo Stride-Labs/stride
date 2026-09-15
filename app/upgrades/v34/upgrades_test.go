@@ -261,10 +261,10 @@ func (s *UpgradeTestSuite) TestUpgradeQueuesInjectivePendingUndelegation() {
 	// The pending amount must be exactly what the reconciliation booked onto the host zone,
 	// so the later undelegation unwinds precisely the excess that was added
 	expectedDelta := sdkmath.ZeroInt()
-	for _, entry := range v34.InjectiveDelegationDeltas[:4] {
+	for _, entry := range v34.InjectiveDelegationDeltas {
 		expectedDelta = expectedDelta.Add(entry.Delta)
 	}
-	s.Require().True(expectedDelta.IsPositive(), "test relies on the seeded deltas netting positive")
+	s.Require().True(expectedDelta.IsPositive(), "test relies on the table netting positive")
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
 	s.Require().True(found)

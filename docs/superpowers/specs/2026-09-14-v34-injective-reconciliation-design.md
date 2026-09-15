@@ -70,8 +70,12 @@ byte-identical. Commit 2 trims it:
 - Delete `RequeueInjectiveUnbondings`, `RequeuedUnbondingEpochs`, their tests, and the
   `recordskeeper.Keeper` parameter added to `CreateUpgradeHandler` / `app/upgrades.go`.
 - `ReconcileInjectiveDelegations(ctx, sk) (appliedDelta sdkmath.Int, err error)` — returns the
-  total delta actually applied (validators skipped for not-found / would-go-negative are excluded,
-  exactly as the existing `TotalDelegations` adjustment already excludes them).
+  total delta applied, and applies the table all-or-nothing: a missing host zone (non-mainnet)
+  returns zero without error, but once the host zone exists, a validator missing from it or a
+  delta that would drive a delegation negative returns an error before anything is written. A
+  partial application would return a partial sum — dropping blackpanther's −666 INJ entry alone
+  turns the ~200 INJ excess into ~867 INJ — and that sum is what gets undelegated, so a stale
+  table must fail the upgrade rather than move money on wrong numbers.
 - Keep: `InjectiveDelegationDeltas`, `DelegationDelta`, `mustInt`, the redemption-callback
   hardening in `icacallbacks_redemption.go` (only resets records still `EXIT_TRANSFER_IN_PROGRESS`)
   and its test.
@@ -83,9 +87,8 @@ applied, err := ReconcileInjectiveDelegations(ctx, stakeibcKeeper)   // err → 
 if applied.IsPositive() { stakeibcKeeper.SetPendingUndelegation(ctx, InjectiveChainId, applied) }
 ```
 
-A zero/negative applied delta (host zone absent on non-mainnet; constants stale) writes nothing.
-`ReconcileInjectiveDelegations` keeps its skip-and-log semantics; it only returns an error on a
-store failure.
+A zero applied delta (host zone absent on non-mainnet) writes nothing. An inconsistent table on a
+chain that has the host zone is an upgrade error, not a skip (see above).
 
 ## §4. Pending undelegation
 
@@ -208,6 +211,19 @@ No dockernet rehearsal (decided 2026-09-14).
   epoch (every 4th day epoch), so the reconciliation may land one day later than the upgrade.
   If the submitted ICA fails or times out, the callback re-queues the amount and the hook
   resubmits it at the next eligible day epoch.
+- **Upgrade timing.** Between the upgrade block and the undelegate ack, `TotalDelegations`
+  carries the +200.48 INJ and the RR reads ~0.93% high (≈ +0.0144). The RR updates every stride
+  epoch (01/07/13/19 UTC) and the undelegation goes out at the first non-unbonding day boundary
+  (19:00 UTC, day epochs with `epoch % 4 != 0`; day 1472 started 2026-09-14 19:00 and is an
+  unbonding day). Scheduling the upgrade 1–3 hours before such a boundary limits the inflated RR
+  to a single epoch. Target: 2026-09-23 15:00–16:00 UTC (day 1481 boundary at 19:00; the
+  Sep 22 boundary, day 1480, is an unbonding day). The RR is deliberately not adjusted for the
+  pending amount — the exposure is one epoch and the value stays inside the bounds.
+- **Inner bounds.** A bounds breach halts the host zone (`abci.go`), which would also stop the
+  sweep and unbondings. Projected RR on 2026-09-23 ≈ 1.5432 → ≈ 1.5576 after reconciliation vs
+  `max_inner_redemption_rate` 1.56871 today. The inner bounds are set manually; confirm
+  `max_inner_redemption_rate ≥ 1.575` on upgrade day (or raise it to 1.60 the day before and
+  restore it after the ack).
 - v35 cleanup: remove `PerRecordSweepChainId` and the per-record branch.
 
 ---
