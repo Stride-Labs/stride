@@ -698,6 +698,43 @@ phase_build_and_swap() {
     log "swap complete; cosmovisor only reads the upgrade binary at the upgrade height"
 }
 
+# The in-pod strided CLI takes ~8s per call on a 400m-CPU pod and each kubectl exec adds ~7s, so
+# the harness's upgrade.sh cannot get three votes in before a 30s voting period closes. Submit and
+# vote from the laptop instead: the local strided is ~0.2s per call against the RPC ingress.
+STRIDE_RPC=${STRIDE_RPC:-http://stride-rpc.internal.stridenet.co:80}
+LOCAL_STRIDED_HOME="$SCRATCH/strided-home"
+UPGRADE_BUFFER_BLOCKS=60
+GOV_AUTHORITY=stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl
+lstrided() { strided --home "$LOCAL_STRIDED_HOME" --node "$STRIDE_RPC" "$@"; }
+import_local_keys() {
+    local name
+    for name in val1 val2 val3 admin; do
+        lstrided keys show "$name" --keyring-backend test >/dev/null 2>&1 && continue
+        key_mnemonic "$name" | lstrided keys add "$name" --recover --keyring-backend test >/dev/null
+    done
+}
+submit_upgrade_proposal_local() {
+    import_local_keys
+    local height id status tx="--keyring-backend test --chain-id $STRIDE_CHAIN_ID --gas-prices $STRIDE_GAS_PRICES -y -o json"
+    height=$(( $(lstrided status 2>/dev/null | jq -r '.sync_info.latest_block_height') + UPGRADE_BUFFER_BLOCKS ))
+    printf '{"messages":[{"@type":"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade","authority":"%s","plan":{"name":"%s","height":"%s"}}],"deposit":"2000000000ustrd","title":"Upgrade %s","summary":"Upgrade %s"}\n' \
+        "$GOV_AUTHORITY" "$UPGRADE_NAME" "$height" "$UPGRADE_NAME" "$UPGRADE_NAME" > "$SCRATCH/upgrade-proposal.json"
+    log "submitting $UPGRADE_NAME upgrade proposal at height $height"
+    lstrided tx gov submit-proposal "$SCRATCH/upgrade-proposal.json" --from val1 --gas 400000 $tx 2>/dev/null | jq -r '"submit code=\(.code)"'
+    sleep 3
+    id=$(lstrided q gov proposals -o json 2>/dev/null | jq -r '[.proposals[].id | tonumber] | max')
+    local name
+    for name in val1 val2 val3; do
+        lstrided tx gov vote "$id" yes --from "$name" --gas 300000 $tx 2>/dev/null | jq -r --arg n "$name" '"vote \($n) code=\(.code)"'
+        sleep 1
+    done
+    wait_for 90 "proposal $id decided" proposal_decided "$id"
+    status=$(lstrided q gov proposal "$id" -o json 2>/dev/null | jq -r '.proposal.status')
+    [[ $status == PROPOSAL_STATUS_PASSED ]] || die "proposal $id ended $status: $(lstrided q gov proposal "$id" -o json 2>/dev/null | jq -c '.proposal | {failed_reason, final_tally_result}')"
+    log "proposal $id PASSED; upgrade $UPGRADE_NAME scheduled at height $height"
+}
+proposal_decided() { [[ $(lstrided q gov proposal "$1" -o json 2>/dev/null | jq -r '.proposal.status') =~ PASSED|REJECTED|FAILED ]]; }
+
 phase_upgrade() {
     banner "upgrade: gov proposal for $UPGRADE_NAME"
     # upgrade.sh has one kubectl call without -n, so the context's default namespace must match
@@ -712,7 +749,7 @@ phase_upgrade() {
 
     log "pre-upgrade: TotalDelegations=$(host_zone_field .total_delegations) tracked=$(tracked_total) RR=$(host_zone_field .redemption_rate) day epoch=$(day_epoch)"
     print_unbonding_records
-    (cd "$INTEGRATION_DIR" && make upgrade-stride)
+    submit_upgrade_proposal_local
 
     wait_for "$UPGRADE_TIMEOUT" "'Upgrade $UPGRADE_NAME complete' in $STRIDE_POD logs" log_contains "Upgrade $UPGRADE_NAME complete"
     local evidence
