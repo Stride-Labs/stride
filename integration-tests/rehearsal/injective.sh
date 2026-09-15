@@ -541,9 +541,10 @@ phase_drift() {
     [[ $chan =~ ^channel-[0-9]+$ ]] || die "expected exactly one OPEN delegation channel, got '$chan'"
     log "on-chain=$(gaia_delegated_total "$ica") tracked=$(tracked_total) liquid=$(gaia_balance "$ica") delegation channel=$chan"
 
-    # 1. daemon off the delegation channel, hermes receive-or-timeout loop on it
-    relayer_deny_channel "$chan"
+    # 1. hermes receive-or-timeout loop first, THEN the daemon off the channel: the rly restart takes
+    #    ~30s and any ICA sent at a stride boundary in that gap would time out (36s) and close the channel
     hermes_recv_loop_start "$chan"
+    relayer_deny_channel "$chan"
     seq_before=$(next_sequence_send "$chan")
     onchain_before=$(gaia_delegated_total "$ica")
     tracked_before=$(tracked_total)
