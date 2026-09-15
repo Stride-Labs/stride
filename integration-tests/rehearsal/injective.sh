@@ -117,17 +117,18 @@ assert_ge() { # <description> <actual> <minimum>   (integers)
 # wait_for <timeout-seconds> <description> <predicate> [args...]
 # Polls the predicate every POLL_INTERVAL seconds until it exits 0. Predicates run in a
 # condition context, so a failing kubectl inside them just counts as "not yet".
-wait_for() {
+try_wait_for() { # like wait_for but returns 1 on timeout instead of dying
     local timeout=$1 description=$2
     shift 2
     local deadline=$(( $(date +%s) + timeout ))
     log "waiting up to ${timeout}s for: $description"
     until "$@"; do
-        (( $(date +%s) < deadline )) || die "timed out after ${timeout}s waiting for: $description"
+        (( $(date +%s) < deadline )) || { log "timed out after ${timeout}s waiting for: $description"; return 1; }
         sleep "$POLL_INTERVAL"
     done
     log "ok: $description"
 }
+wait_for() { try_wait_for "$@" || die "giving up: $2"; }
 
 is_int() { [[ ${1:-} =~ ^[0-9]+$ ]]; }
 
@@ -581,7 +582,7 @@ phase_drift() {
     stride_tx "$ADMIN_KEY" stakeibc restore-interchain-account "$HOST_CHAIN_ID" "$CONNECTION_ID" "$DELEGATION_ICA_OWNER"
     assert_eq "drift deposit record reset by restore" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_QUEUE
     # rly usually completes the handshake; if the INIT channel sits for a minute, nudge it with hermes
-    if ! wait_for 60 "new OPEN delegation channel (not $chan)" new_delegation_channel_open "$chan"; then
+    if ! try_wait_for 60 "new OPEN delegation channel (not $chan)" new_delegation_channel_open "$chan"; then
         local init_channel
         init_channel=$(stride_channels | jq -r --arg p "$DELEGATION_ICA_PORT" '[.[] | select(.port_id == $p and .state == "STATE_INIT") | .channel_id][0] // empty')
         [[ -n $init_channel ]] || die "no INIT delegation channel to nudge"
