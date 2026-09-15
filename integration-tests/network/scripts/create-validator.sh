@@ -49,7 +49,7 @@ create_validator() {
     "min-self-delegation": "1"
 }
 EOF
-        $BINARY tx staking create-validator validator.json --from ${VALIDATOR_NAME} -y
+        $BINARY tx staking create-validator validator.json --from ${VALIDATOR_NAME} --gas auto --gas-adjustment 1.5 --gas-prices 1${DENOM} -y  # REHEARSAL ONLY: gaia v25 feemarket needs a fee
     else 
         # For sdk 47, use cli command
         min_self_delegation=""
