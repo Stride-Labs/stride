@@ -14,6 +14,7 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
@@ -286,6 +287,36 @@ func (s *UpgradeTestSuite) TestUpgradeSkipsInjectivePendingUndelegationWithoutHo
 	// ----- assert -----
 	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, v34.InjectiveChainId)
 	s.Require().False(found, "nothing should be queued when the injective host zone is absent")
+}
+
+// TestUpgradeFailsOnInconsistentInjectiveTable proves the reconciliation error is surfaced by the
+// handler itself: a table that no longer matches the host zone must fail the upgrade and queue
+// nothing, rather than undelegate a partial sum
+func (s *UpgradeTestSuite) TestUpgradeFailsOnInconsistentInjectiveTable() {
+	// ----- arrange -----
+	s.useTestConsensusKeys()
+	s.seedCurrentPOASet()
+	_, trackedTotal := s.setupInjectiveHostZone()
+
+	// Drop one validator from the host zone so the table cannot be applied in full
+	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
+	removed := hostZone.Validators[len(hostZone.Validators)-1]
+	hostZone.Validators = hostZone.Validators[:len(hostZone.Validators)-1]
+	hostZone.TotalDelegations = trackedTotal.Sub(removed.Delegation)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// ----- act -----
+	plan := upgradetypes.Plan{Name: v34.UpgradeName, Height: s.Ctx.BlockHeight()}
+	err := s.App.UpgradeKeeper.ApplyUpgrade(s.Ctx, plan)
+
+	// ----- assert -----
+	s.Require().ErrorContains(err, removed.Name, "the handler surfaces the reconciliation error")
+
+	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, v34.InjectiveChainId)
+	s.Require().False(found, "nothing is queued when the upgrade fails")
+
+	hostZone, _ = s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.InjectiveChainId)
+	s.Require().Equal(trackedTotal.Sub(removed.Delegation), hostZone.TotalDelegations, "the reconciliation wrote nothing")
 }
 
 func (s *UpgradeTestSuite) TestSwapFailsWhenOutgoingValidatorMissing() {

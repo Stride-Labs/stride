@@ -58,8 +58,9 @@ func CreateUpgradeHandler(
 
 		// The reconciled excess is redemption money that was accidentally staked, so it is
 		// queued for a one-shot undelegation that the day-epoch hook submits through the normal
-		// undelegate pipeline (see x/stakeibc/keeper/pending_undelegation.go). A zero or negative
-		// applied delta (host zone absent on non-mainnet, or stale constants) queues nothing.
+		// undelegate pipeline (see x/stakeibc/keeper/pending_undelegation.go). A zero applied
+		// delta (host zone absent on non-mainnet) queues nothing; a table that no longer matches
+		// the host zone is an error and fails the upgrade.
 		appliedDelta, err := ReconcileInjectiveDelegations(ctx, stakeibcKeeper)
 		if err != nil {
 			return vm, err
