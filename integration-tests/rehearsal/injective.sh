@@ -507,6 +507,7 @@ relayer_allow_all() {
 relayer_denylist_current() {
     kube get deployment "$RELAYER_DEPLOYMENT" -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="RELAYER_DENY_CHANNELS")].value}' 2>/dev/null
 }
+hermes_cli() { kube exec "deploy/$HERMES_DEPLOYMENT" -- hermes "$@" 2>&1; }
 hermes_recv_loop_start() { # <channel>: receive-or-timeout every packet on the channel, never ack
     kube exec "deploy/$HERMES_DEPLOYMENT" -- bash -c "while true; do
         hermes tx packet-recv --dst-chain $HOST_CHAIN_ID --src-chain $STRIDE_CHAIN_ID --src-port $DELEGATION_ICA_PORT --src-channel $1 >>/tmp/hermes-loop.log 2>&1 || true
@@ -566,13 +567,29 @@ phase_drift() {
     stride_tx "$ADMIN_KEY" stakeibc close-delegation-channel "$HOST_CHAIN_ID"
     wait_for 120 "delegation channel $chan STATE_CLOSED" channel_state_is "$chan" STATE_CLOSED
     hermes_recv_loop_stop
+    # The denylisted rly never sees the close event, and the host refuses a new ICA channel while
+    # its end of the old one is still OPEN, so confirm the closure on the host by hand
+    local counterparty
+    counterparty=$(stride_q ibc channel end "$DELEGATION_ICA_PORT" "$chan" | jq -r '.channel.counterparty.channel_id')
+    hermes_cli tx chan-close-confirm --dst-chain "$HOST_CHAIN_ID" --src-chain "$STRIDE_CHAIN_ID" --dst-connection "$CONNECTION_ID" \
+        --dst-port icahost --src-port "$DELEGATION_ICA_PORT" --src-channel "$chan" --dst-channel "$counterparty" | grep -E "SUCCESS|ERROR" | head -1
+    log "host end $counterparty of $chan: $(gaia_q ibc channel end icahost "$counterparty" | jq -r '.channel.state')"
     print_ica_channels
 
     # 4. daemon back on every channel, restore the account on a fresh channel
     relayer_allow_all
     stride_tx "$ADMIN_KEY" stakeibc restore-interchain-account "$HOST_CHAIN_ID" "$CONNECTION_ID" "$DELEGATION_ICA_OWNER"
     assert_eq "drift deposit record reset by restore" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_QUEUE
-    wait_for "$ICA_TIMEOUT" "new OPEN delegation channel (not $chan)" new_delegation_channel_open "$chan"
+    # rly usually completes the handshake; if the INIT channel sits for a minute, nudge it with hermes
+    if ! wait_for 60 "new OPEN delegation channel (not $chan)" new_delegation_channel_open "$chan"; then
+        local init_channel
+        init_channel=$(stride_channels | jq -r --arg p "$DELEGATION_ICA_PORT" '[.[] | select(.port_id == $p and .state == "STATE_INIT") | .channel_id][0] // empty')
+        [[ -n $init_channel ]] || die "no INIT delegation channel to nudge"
+        log "nudging $init_channel with hermes chan-open-try"
+        hermes_cli tx chan-open-try --dst-chain "$HOST_CHAIN_ID" --src-chain "$STRIDE_CHAIN_ID" --dst-connection "$CONNECTION_ID" \
+            --dst-port icahost --src-port "$DELEGATION_ICA_PORT" --src-channel "$init_channel" | grep -E "SUCCESS|ERROR" | head -1
+        wait_for "$ICA_TIMEOUT" "new OPEN delegation channel (not $chan)" new_delegation_channel_open "$chan"
+    fi
     assert_ne "delegation ICA address" "$(host_zone_field .delegation_ica_address)" ""
     log "delegation channel restored: $chan -> $(open_delegation_channel)"
     print_ica_channels
