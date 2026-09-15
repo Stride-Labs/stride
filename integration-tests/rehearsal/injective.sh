@@ -445,11 +445,12 @@ phase_setup() {
 
 add_gaia_validators() {
     local file=/home/validator/rehearsal-validators.json
+    # Written to a local file first: piping straight into `kubectl exec -i` can SIGPIPE the producer
     gaia_q staking validators \
         | jq --argjson w "$VALIDATOR_WEIGHT" '{validators: [.validators[] | select(.status == "BOND_STATUS_BONDED")
             | {name: .description.moniker, address: .operator_address, weight: $w}]}' \
-        | tee "$SCRATCH/validators.json" \
-        | kube exec -i "$STRIDE_POD" -c "$CHAIN_CONTAINER" -- sh -c "cat > $file"
+        > "$SCRATCH/validators.json"
+    kube exec -i "$STRIDE_POD" -c "$CHAIN_CONTAINER" -- sh -c "cat > $file" < "$SCRATCH/validators.json"
     log "validator list: $(jq -c . "$SCRATCH/validators.json")"
     stride_tx "$ADMIN_KEY" stakeibc add-validators "$HOST_CHAIN_ID" "$file"
 }
