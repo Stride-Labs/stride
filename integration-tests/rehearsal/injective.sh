@@ -488,52 +488,68 @@ redeem_once() { # <st-amount> <receiver>   (idempotent per amount)
     log "redeemed $1 $ST_DENOM in day epoch $(day_epoch)"
 }
 
+# Recv-only relaying from inside the manual-mode relayer pod: every OPEN Stride channel gets its
+# packets (MsgRecvPacket / MsgTimeout) relayed, and every channel EXCEPT the delegation ICA channel
+# also gets its acks relayed. The delegate's ack is therefore the only thing stranded, and no other
+# ordered channel dies from an unrelayed timeout while the daemon is off.
+relay_loop_start() { # <delegation-channel>
+    local script
+    script=$(cat <<EOS
+while true; do
+  for ch in \$(rly q channels stride 2>/dev/null | jq -r 'select(.state == "STATE_OPEN") | .channel_id'); do
+    rly tx relay-packets $RELAYER_PATH \$ch >>/tmp/relay-loop.log 2>&1 || true
+    if [ "\$ch" != "$1" ]; then rly tx relay-acknowledgements $RELAYER_PATH \$ch >>/tmp/relay-loop.log 2>&1 || true; fi
+  done
+  sleep 2
+done
+EOS
+)
+    kube exec "deploy/$RELAYER_DEPLOYMENT" -- bash -c "$script" >"$SCRATCH/relay-loop.exec.log" 2>&1 &
+    RELAY_LOOP_PID=$!
+    log "recv-only relay loop started (pid $RELAY_LOOP_PID), acks withheld on $1"
+}
+relay_loop_stop() {
+    kill "${RELAY_LOOP_PID:-0}" 2>/dev/null || true
+    kube exec "deploy/$RELAYER_DEPLOYMENT" -- pkill -f "while true" 2>/dev/null || true
+    log "recv-only relay loop stopped"
+}
+
 phase_drift() {
     banner "drift: reproduce the lost-ack theft"
     prepare_relayer_deployment
-    local ica r1 r2
+    local ica chan seq_before onchain_before tracked_before
     ica=$(host_zone_field .delegation_ica_address)
-    log "on-chain=$(gaia_delegated_total "$ica") tracked=$(tracked_total) liquid=$(gaia_balance "$ica")"
+    chan=$(open_delegation_channel)
+    [[ $chan =~ ^channel-[0-9]+$ ]] || die "expected exactly one OPEN delegation channel, got '$chan'"
+    log "on-chain=$(gaia_delegated_total "$ica") tracked=$(tracked_total) liquid=$(gaia_balance "$ica") delegation channel=$chan"
 
-    # 1. stake 300 and let the daemon relay the transfer
+    # 1. daemon off, recv-only loop on: from here every ICA executes on Gaia but delegation acks never return
+    relayer_mode manual
+    relay_loop_start "$chan"
+    seq_before=$(next_sequence_send "$chan")
+    onchain_before=$(gaia_delegated_total "$ica")
+    tracked_before=$(tracked_total)
+    log "next-sequence-send=$seq_before on-chain=$onchain_before tracked=$tracked_before"
+
+    # 2. stake 300: the loop relays the transfer (with its ack) and then the delegate (without)
     if [[ $(deposit_record_status "$DRIFT_STAKE_AMOUNT") == none ]]; then
         stride_tx "$USER_KEY" stakeibc liquid-stake "$DRIFT_STAKE_AMOUNT" "$HOST_DENOM"
     else
         log "drift deposit record already exists ($(deposit_record_status "$DRIFT_STAKE_AMOUNT"))"
     fi
-    wait_for "$DEPOSIT_TIMEOUT" "drift deposit record DELEGATION_QUEUE" deposit_record_status_is "$DRIFT_STAKE_AMOUNT" DELEGATION_QUEUE
-
-    # 2. take the relayer manual before the next stride epoch submits the delegate
-    local chan seq_before onchain_before tracked_before
-    chan=$(open_delegation_channel)
-    [[ $chan =~ ^channel-[0-9]+$ ]] || die "expected exactly one OPEN delegation channel, got '$chan'"
-    seq_before=$(next_sequence_send "$chan")
-    onchain_before=$(gaia_delegated_total "$ica")
-    tracked_before=$(tracked_total)
-    log "delegation channel $chan next-sequence-send=$seq_before on-chain=$onchain_before tracked=$tracked_before"
-    relayer_mode manual
-    local status
-    status=$(deposit_record_status "$DRIFT_STAKE_AMOUNT")
-    [[ $status == DELEGATION_QUEUE || $status == DELEGATION_IN_PROGRESS ]] \
-        || die "drift deposit record is '$status' after the relayer switch: the daemon delivered the delegate before it stopped. Re-run 'drift' (stakes another 300 ATOM)."
-
-    # 3. relay the delegate the moment it is committed: the ICA times out ~36s after the epoch
-    #    start, and Gaia must execute it so the ack (never relayed) is what goes missing
-    POLL_INTERVAL=1 wait_for $(( STRIDE_EPOCH_SECONDS * 2 + 10 )) "delegate ICA committed on $chan (sequence > $seq_before)" \
-        sequence_advanced "$chan" "$seq_before"
-    rly_manual tx relay-packets "$RELAYER_PATH" "$chan" # VERIFY: rly v2.5.2 relays MsgRecvPacket (and MsgTimeout) only, never acks
-    wait_for 60 "Gaia delegations == $(( onchain_before + DRIFT_STAKE_AMOUNT ))" \
+    wait_for "$DEPOSIT_TIMEOUT" "Gaia delegations == $(( onchain_before + DRIFT_STAKE_AMOUNT )) (delegate executed on Gaia)" \
         gaia_delegated_total_is "$ica" "$(( onchain_before + DRIFT_STAKE_AMOUNT ))"
-    assert_eq "tracked delegations unchanged" "$(tracked_total)" "$tracked_before"
+    sleep 10
+    assert_eq "tracked delegations unchanged (ack stranded)" "$(tracked_total)" "$tracked_before"
     assert_eq "drift deposit record status" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_IN_PROGRESS
 
-    # 4. close the channel with a 1ns-timeout ICA, relayed as MsgTimeout
+    # 3. close the channel with a 1ns-timeout ICA; the loop relays it as MsgTimeout
     stride_tx "$ADMIN_KEY" stakeibc close-delegation-channel "$HOST_CHAIN_ID"
-    sleep 3
-    close_delegation_channel_via_timeout "$chan"
+    wait_for 120 "delegation channel $chan STATE_CLOSED" channel_state_is "$chan" STATE_CLOSED
+    relay_loop_stop
     print_ica_channels
 
-    # 5. daemon back, restore the account on a fresh channel
+    # 4. daemon back, restore the account on a fresh channel
     relayer_mode daemon
     stride_tx "$ADMIN_KEY" stakeibc restore-interchain-account "$HOST_CHAIN_ID" "$CONNECTION_ID" "$DELEGATION_ICA_OWNER"
     assert_eq "drift deposit record reset by restore" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_QUEUE
@@ -541,7 +557,7 @@ phase_drift() {
     assert_ne "delegation ICA address" "$(host_zone_field .delegation_ica_address)" ""
     log "delegation channel restored: $chan -> $(open_delegation_channel)"
     print_ica_channels
-
+    assert_eq "on-chain == tracked + 300 (drift in place)" "$(gaia_delegated_total "$ica")" "$(( $(tracked_total) + DRIFT_STAKE_AMOUNT ))"
     log "drift choreography complete: the re-delegate will retry every stride epoch until the ICA has liquid funds"
 }
 
