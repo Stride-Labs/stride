@@ -423,9 +423,10 @@ phase_setup() {
     if stride_balance_at_least "$user_stride" "$IBC_DENOM" "$LIQUID_STAKE_AMOUNT"; then
         log "user1 already holds >= $LIQUID_STAKE_AMOUNT $IBC_DENOM on Stride"
     else
-        gaia_tx "$USER_KEY" ibc-transfer transfer transfer "$TRANSFER_CHANNEL" "$user_stride" "${LIQUID_STAKE_AMOUNT}${HOST_DENOM}"
-        wait_for "$ICA_TIMEOUT" "user1 ibc/uatom balance on Stride >= $LIQUID_STAKE_AMOUNT" \
-            stride_balance_at_least "$user_stride" "$IBC_DENOM" "$LIQUID_STAKE_AMOUNT"
+        # the drift phase stakes another DRIFT_STAKE_AMOUNT later, so fund both up front
+        gaia_tx "$USER_KEY" ibc-transfer transfer transfer "$TRANSFER_CHANNEL" "$user_stride" "$(( LIQUID_STAKE_AMOUNT + DRIFT_STAKE_AMOUNT ))${HOST_DENOM}"
+        wait_for "$ICA_TIMEOUT" "user1 ibc/uatom balance on Stride >= $(( LIQUID_STAKE_AMOUNT + DRIFT_STAKE_AMOUNT ))" \
+            stride_balance_at_least "$user_stride" "$IBC_DENOM" "$(( LIQUID_STAKE_AMOUNT + DRIFT_STAKE_AMOUNT ))"
     fi
 
     # 5. liquid stake and wait for the full delegation
@@ -514,8 +515,21 @@ relay_loop_stop() {
     log "recv-only relay loop stopped"
 }
 
+drift_cleanup() { # the light clients expire 204s after the last update, so never leave the daemon off
+    relay_loop_stop
+    if [[ $(relayer_mode_current) == manual ]]; then
+        log "drift failed in manual mode: returning the relayer to daemon mode"
+        relayer_mode daemon || true
+    fi
+}
+relayer_mode_current() {
+    kube get deployment "$RELAYER_DEPLOYMENT" -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="RELAYER_MANUAL")].value}' 2>/dev/null \
+        | grep -q true && echo manual || echo daemon
+}
+
 phase_drift() {
     banner "drift: reproduce the lost-ack theft"
+    trap drift_cleanup ERR
     prepare_relayer_deployment
     local ica chan seq_before onchain_before tracked_before
     ica=$(host_zone_field .delegation_ica_address)
@@ -558,6 +572,7 @@ phase_drift() {
     log "delegation channel restored: $chan -> $(open_delegation_channel)"
     print_ica_channels
     assert_eq "on-chain == tracked + 300 (drift in place)" "$(gaia_delegated_total "$ica")" "$(( $(tracked_total) + DRIFT_STAKE_AMOUNT ))"
+    trap - ERR
     log "drift choreography complete: the re-delegate will retry every stride epoch until the ICA has liquid funds"
 }
 
