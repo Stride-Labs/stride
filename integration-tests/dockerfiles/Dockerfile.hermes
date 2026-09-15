@@ -1,13 +1,11 @@
-FROM rust:1.71-buster as builder
+# REHEARSAL ONLY — DO NOT MERGE: hermes >= 1.10 understands CometBFT 0.38+ event encoding
+# (compat_mode = '0.38'); the upstream image is Debian-based so we just add the tools the scripts use
+FROM informalsystems/hermes:1.13.1
 
-# REHEARSAL ONLY: hermes >= 1.10 understands CometBFT 0.38+ event encoding (compat_mode 0.38)
-COPY --from=informalsystems/hermes:1.13.1 /usr/bin/hermes /usr/bin/hermes
-
+USER root
 RUN apt-get update \
-    && apt-get install -y iputils-ping ca-certificates libssl-dev bash vim curl jq \
-    && addgroup --gid 1000 hermes \
-    && adduser --system --home /home/hermes --disabled-password --disabled-login \
-    --uid 1000 --ingroup hermes hermes
+    && apt-get install -y iputils-ping ca-certificates bash vim curl jq \
+    && rm -rf /var/lib/apt/lists/*
 
 USER hermes
 WORKDIR /home/hermes
