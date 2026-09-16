@@ -9,6 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+
 	"github.com/Stride-Labs/stride/v34/utils"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
@@ -85,11 +87,28 @@ func (k Keeper) RemovePendingUndelegationInFlight(ctx sdk.Context, chainId strin
 // DecrementPendingUndelegationInFlight marks one undelegate ICA batch as acked
 func (k Keeper) DecrementPendingUndelegationInFlight(ctx sdk.Context, chainId string) {
 	batches := k.GetPendingUndelegationInFlight(ctx, chainId)
-	if batches <= 1 {
+	if batches == 0 {
+		// Nothing should be acking: the batch was already released (e.g. by a restore)
+		k.Logger(ctx).Error(utils.LogWithHostZone(chainId, "Pending undelegation ack received with no batches in flight"))
+		return
+	}
+	if batches == 1 {
 		k.RemovePendingUndelegationInFlight(ctx, chainId)
 		return
 	}
 	k.SetPendingUndelegationInFlight(ctx, chainId, batches-1)
+}
+
+// IsActiveDelegationChannel reports whether a channel is the host zone's currently active
+// delegation ICA channel (a closed, restored channel is not)
+func (k Keeper) IsActiveDelegationChannel(ctx sdk.Context, hostZone types.HostZone, channelId string) bool {
+	owner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	portId, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		return false
+	}
+	activeChannelId, found := k.ICAControllerKeeper.GetActiveChannelID(ctx, hostZone.ConnectionId, portId)
+	return found && activeChannelId == channelId
 }
 
 // GetAllPendingUndelegations returns every queued pending undelegation

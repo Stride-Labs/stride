@@ -4,7 +4,9 @@ import (
 	"time"
 
 	"github.com/cosmos/gogoproto/proto"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	_ "github.com/stretchr/testify/suite"
 
 	sdkmath "cosmossdk.io/math"
@@ -315,12 +317,19 @@ func (s *KeeperTestSuite) SetupUndelegateCallbackNoRecords() UndelegateCallbackT
 	}
 	hostZone := types.HostZone{
 		ChainId:          HostChainId,
+		ConnectionId:     ibctesting.FirstConnectionID,
 		HostDenom:        Atom,
 		Validators:       validators,
 		TotalDelegations: initialTotalDelegations,
 		DepositAddress:   depositAccount.String(),
 	}
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	// The packet must arrive on the active delegation channel or the callback treats it as stale
+	delegationOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationPort, _ := icatypes.NewControllerPortID(delegationOwner)
+	activeDelegationChannel := "channel-7"
+	s.MockICAChannel(ibctesting.FirstConnectionID, activeDelegationChannel, delegationOwner, "cosmos_DELEGATION")
 
 	// Fund the deposit account with stTokens - none of which should be burned
 	s.FundAccount(depositAccount, sdk.NewCoin(StAtom, initialDepositAccountBalance))
@@ -358,7 +367,7 @@ func (s *KeeperTestSuite) SetupUndelegateCallbackNoRecords() UndelegateCallbackT
 			zoneAccountBalance: initialDepositAccountBalance,
 		},
 		validArgs: UndelegateCallbackArgs{
-			packet:      channeltypes.Packet{},
+			packet:      channeltypes.Packet{SourcePort: delegationPort, SourceChannel: activeDelegationChannel, Sequence: 1},
 			ackResponse: &ackResponse,
 			args:        callbackArgsBz,
 		},
@@ -458,6 +467,49 @@ func (s *KeeperTestSuite) TestUndelegateCallback_NoRecords_FailureAndTimeout() {
 			depositAccount := sdk.MustAccAddressFromBech32(hostZone.DepositAddress)
 			depositBalance := s.App.BankKeeper.GetBalance(s.Ctx, depositAccount, StAtom).Amount
 			s.Require().Equal(initialState.zoneAccountBalance, depositBalance, "deposit account stTokens not burned")
+		})
+	}
+}
+
+// A record-less batch whose packet is on a channel that is no longer the active delegation
+// channel (it died and was restored) must be ignored: its validator counters and in-flight slot
+// now belong to the resubmitted batch
+func (s *KeeperTestSuite) TestUndelegateCallback_NoRecords_StaleChannelIgnored() {
+	for _, testCase := range []struct {
+		name   string
+		status icacallbacktypes.AckResponseStatus
+	}{
+		{name: "success", status: icacallbacktypes.AckResponseStatus_SUCCESS},
+		{name: "failure", status: icacallbacktypes.AckResponseStatus_FAILURE},
+		{name: "timeout", status: icacallbacktypes.AckResponseStatus_TIMEOUT},
+	} {
+		status := testCase.status
+		s.Run(testCase.name, func() {
+			s.SetupTest()
+			tc := s.SetupUndelegateCallbackNoRecords()
+			initialState := tc.initialState
+			pendingAmount := sdkmath.NewInt(100)
+			s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, pendingAmount)
+			s.App.StakeibcKeeper.SetPendingUndelegationInFlight(s.Ctx, HostChainId, 1)
+
+			inProgressBefore := s.MustGetHostZone(HostChainId).Validators[0].DelegationChangesInProgress
+
+			staleArgs := tc.validArgs
+			staleArgs.ackResponse.Status = status
+			staleArgs.packet.SourceChannel = "channel-99" // not the active delegation channel
+
+			err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, staleArgs.packet, staleArgs.ackResponse, staleArgs.args)
+			s.Require().NoError(err, "stale callback is ignored, not an error")
+
+			hostZone := s.MustGetHostZone(HostChainId)
+			s.Require().Equal(initialState.totalDelegations, hostZone.TotalDelegations, "total delegations untouched")
+			s.Require().Equal(initialState.val1Bal, hostZone.Validators[0].Delegation, "val1 delegation untouched")
+			s.Require().Equal(inProgressBefore, hostZone.Validators[0].DelegationChangesInProgress, "val1 in-progress counter untouched")
+
+			pending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+			s.Require().True(found)
+			s.Require().Equal(pendingAmount, pending, "pending amount untouched")
+			s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "in-flight slot untouched")
 		})
 	}
 }

@@ -132,6 +132,7 @@ func (s *KeeperTestSuite) checkPendingUndelegationNotSubmitted(tc PendingUndeleg
 		s.Require().Zero(validator.DelegationChangesInProgress, "validator %s delegation changes in progress", validator.Address)
 	}
 	s.Require().Empty(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx), "no callback data should be stored")
+	s.Require().Zero(s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "nothing should be marked in flight")
 }
 
 func (s *KeeperTestSuite) TestSubmitPendingUndelegations_Successful() {
@@ -332,7 +333,10 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_InFlightSkipped() {
 		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
 		return nil
 	})
-	s.checkPendingUndelegationNotSubmitted(tc)
+	actualAmount, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().True(found, "pending undelegation kept while a batch is in flight")
+	s.Require().Equal(tc.pendingAmount, actualAmount, "pending amount untouched")
+	s.Require().Empty(s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx), "no new callback data")
 	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "in-flight count untouched")
 
 	// Once the batch is released the next epoch submits

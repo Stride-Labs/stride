@@ -26,10 +26,15 @@ import (
 //	  * Records delegation changes on the host zone and validators,
 //	  * Burns stTokens
 //	If timeout:
-//	  * Does nothing (or re-queues the batch as a pending undelegation if it had no records)
+//	  * Does nothing (a batch with no records just releases its pending-undelegation slot so the
+//	    day epoch hook resubmits the still-stored amount)
 //	If failure:
-//	  * Sets epoch unbonding record status to RETRY (or re-queues the batch as a pending
-//	    undelegation if it had no records)
+//	  * Sets epoch unbonding record status to RETRY (a batch with no records releases its
+//	    pending-undelegation slot, as on timeout)
+//
+// A batch with no records whose packet is not on the currently active delegation channel is
+// stale - its channel died, the restore already released the batch, and a resubmission may be
+// live - so it is ignored entirely rather than double-counted
 func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	var undelegateCallback types.UndelegateCallback
@@ -45,6 +50,15 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	hostZone, found := k.GetHostZone(ctx, undelegateCallback.HostZoneId)
 	if !found {
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
+	}
+
+	// A record-less batch on a dead channel: the restore already released it, and its validator
+	// counters and in-flight slot now belong to the resubmission, so touch nothing
+	if len(undelegateCallback.EpochUnbondingRecordIds) == 0 && !k.IsActiveDelegationChannel(ctx, hostZone, packet.SourceChannel) {
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
+			"Ignoring %v ack for pending undelegation on stale channel %s (sequence %d)",
+			ackResponse.Status, packet.SourceChannel, packet.Sequence))
+		return nil
 	}
 
 	// Mark that the ICA completed on the validators and host zone unbonding records

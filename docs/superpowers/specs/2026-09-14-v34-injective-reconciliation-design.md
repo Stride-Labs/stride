@@ -203,16 +203,19 @@ callback now carries one id, but a record could still be moved by another path w
 - **Upgrade** (`upgrades_test.go`): with the injective host zone seeded, the pending key holds the
   applied delta after the handler; without it, no key.
 - **Pending undelegation** (`pending_undelegation_test.go`): set/get/remove round-trip and
-  `GetAll`; hook with an ICA channel (`CreateICAChannel`, `CheckICATxSubmitted`) submits, removes
-  the key, increments `DelegationChangesInProgress` on the chosen validator(s); with no channel the
-  submit fails, key kept, no panic; no keys → no ICA (`CheckICATxNotSubmitted`); missing host zone
+  `GetAll`; hook with an ICA channel (`CreateICAChannel`, `CheckICATxSubmitted`) submits, keeps
+  the key with one batch in flight, increments `DelegationChangesInProgress` on the chosen
+  validator(s); a batch in flight blocks a resubmission; with no channel the submit fails, key
+  kept, nothing in flight, no panic; no keys → no ICA (`CheckICATxNotSubmitted`); missing host zone
   → key removed; on the host zone's unbonding epoch → no ICA, key kept, and the next epoch
   submits.
 - **Undelegate refactor**: existing `UnbondFromHostZone` tests pass unchanged.
 - **Callback** (`icacallbacks_undelegate_test.go`): `TestUndelegateCallback_NoRecords` — success
   decrements validator delegation and `TotalDelegations`, burns nothing, decrements in-progress,
-  leaves no pending key; failure and timeout return nil and re-queue the batch amount into the
-  pending store (added to any existing pending amount).
+  subtracts the batch from the pending amount and releases the batch; failure and timeout return
+  nil, leave the amount, and release the batch; a record-less callback on a stale (restored)
+  channel is ignored entirely. `TestRestoreInterchainAccount_Success`: restore clears the in-flight
+  count and keeps the amount. Neither key is exported in genesis (live only from upgrade to ack).
 - **Sweep** (`redemption_sweep_test.go`): existing bundled tests unchanged; new per-record case
   using `PerRecordSweepChainId` — N records → sequence advances by N, every record IN_PROGRESS,
   and an ordering assertion that submissions are ascending by epoch.
@@ -230,8 +233,9 @@ No dockernet rehearsal (decided 2026-09-14).
   day epoch, the hook retries every day epoch until it succeeds — no action needed beyond the
   usual channel restoration. The hook also defers the submission on Injective's own unbonding
   epoch (every 4th day epoch), so the reconciliation may land one day later than the upgrade.
-  If the submitted ICA fails or times out, the callback re-queues the amount and the hook
-  resubmits it at the next eligible day epoch.
+  If the submitted ICA fails or times out, the amount is still stored and the hook resubmits it at
+  the next eligible day epoch; if the channel dies with it in flight, `restore-interchain-account`
+  releases it and the next eligible day epoch resubmits on the new channel.
 - **Upgrade timing.** Between the upgrade block and the undelegate ack, `TotalDelegations`
   carries the +200.48 INJ and the RR reads ~0.93% high (≈ +0.0144). The RR updates every stride
   epoch (01/07/13/19 UTC) and the undelegation goes out at the first non-unbonding day boundary
