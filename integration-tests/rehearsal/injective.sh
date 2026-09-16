@@ -720,7 +720,8 @@ submit_upgrade_proposal_local() {
     import_local_keys
     local height id status tx="--keyring-backend test --chain-id $STRIDE_CHAIN_ID --gas-prices $STRIDE_GAS_PRICES -y -o json"
     height=$(( $(lstrided status 2>/dev/null | jq -r '.sync_info.latest_block_height') + UPGRADE_BUFFER_BLOCKS ))
-    printf '{"messages":[{"@type":"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade","authority":"%s","plan":{"name":"%s","height":"%s"}}],"deposit":"2000000000ustrd","title":"Upgrade %s","summary":"Upgrade %s"}\n' \
+    # expedited: v34's UpdateGovParams sets the normal voting period to 5 days; expedited stays 29s
+    printf '{"messages":[{"@type":"/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade","authority":"%s","plan":{"name":"%s","height":"%s"}}],"deposit":"2000000000ustrd","title":"Upgrade %s","summary":"Upgrade %s","expedited":true}\n' \
         "$GOV_AUTHORITY" "$UPGRADE_NAME" "$height" "$UPGRADE_NAME" "$UPGRADE_NAME" > "$SCRATCH/upgrade-proposal.json"
     log "submitting $UPGRADE_NAME upgrade proposal at height $height"
     lstrided tx gov submit-proposal "$SCRATCH/upgrade-proposal.json" --from val1 --gas 400000 $tx 2>/dev/null | jq -r '"submit code=\(.code)"'
