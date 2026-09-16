@@ -83,8 +83,9 @@ commit_signers() { rpc_on "$(pod 1)" "commit?height=$1" | jq -r '.result.signed_
 
 poa_validators() { stride_q poa validators | jq '.validators'; }
 # removal is an update to power 0, so the entry may linger in the store: "active" = power > 0
-poa_monikers() { poa_validators | jq -r '[.[] | select((.power | tonumber) > 0) | .metadata.moniker] | sort | join(" ")'; }
-poa_power_of() { poa_validators | jq -r --arg m "$1" '[.[] | select(.metadata.moniker == $m) | .power][0] // "0"'; }
+# (a zero power is omitted from the JSON entirely)
+poa_monikers() { poa_validators | jq -r '[.[] | select(((.power // "0") | tonumber) > 0) | .metadata.moniker] | sort | join(" ")'; }
+poa_power_of() { poa_validators | jq -r --arg m "$1" '[.[] | select(.metadata.moniker == $m) | (.power // "0")][0] // "0"'; }
 
 stride_logs() { kube logs "$(pod 1)" -c "$CHAIN_CONTAINER" "$@"; }
 log_count() { stride_logs 2>/dev/null | grep -c -- "$1" || true; } # grep -c: no SIGPIPE under pipefail
