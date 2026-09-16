@@ -296,7 +296,9 @@ day_epoch() { epoch_number day; }
 parity_of() { (( $1 % 2 == 0 )) && echo even || echo odd; }
 
 stride_logs() { kube logs "$STRIDE_POD" -c "$CHAIN_CONTAINER" "$@"; }
-log_contains() { stride_logs 2>/dev/null | grep -q -- "$1"; }
+# grep -c reads the whole stream: with -q, grep exits on the first match, kubectl dies of SIGPIPE
+# (141) and pipefail turns a present line into "not found" once the log is a few MB
+log_contains() { [[ $(log_count "$1") -gt 0 ]]; }
 log_count() { stride_logs 2>/dev/null | grep -c -- "$1" || true; }
 block_height() { kube exec "$1" -c "$CHAIN_CONTAINER" -- sh -c "$STRIDE_BINARY_SHIM" strided status 2>/dev/null | jq -r '.sync_info.latest_block_height // .SyncInfo.latest_block_height'; }
 
@@ -838,6 +840,30 @@ phase_verify() {
     log "verify complete"
 }
 
+# Steps 4–5 of verify on their own, for when the timed steps 1–3 already ran before verify started
+phase_claims() {
+    banner "claims: pay out both records and confirm ledger == chain"
+    local ica user_gaia r1 r2 user_before epoch
+    ica=$(host_zone_field .delegation_ica_address)
+    user_gaia=$(key_address gaia "$USER_KEY")
+    r1=$(record_field "$REDEEM_AMOUNT_1" native_token_amount)
+    r2=$(record_field "$REDEEM_AMOUNT_2" native_token_amount)
+    assert_eq "record 1 status" "$(record_field "$REDEEM_AMOUNT_1" status)" CLAIMABLE
+    assert_eq "record 2 status" "$(record_field "$REDEEM_AMOUNT_2" status)" CLAIMABLE
+    user_before=$(gaia_balance "$user_gaia")
+    for epoch in $(claimable_epochs "$user_gaia"); do
+        stride_tx "$USER_KEY" stakeibc claim-undelegated-tokens "$HOST_CHAIN_ID" "$epoch" "$user_gaia"
+    done
+    wait_for 180 "user1 Gaia balance == $user_before + R1 + R2" gaia_balance_is "$user_gaia" "$(( user_before + r1 + r2 ))"
+    log "user1 Gaia balance $user_before -> $(gaia_balance "$user_gaia")"
+
+    # The reinvest keeps a small delegate in flight most of the time; compare between acks
+    wait_for $(( STRIDE_EPOCH_SECONDS * 2 )) "no delegation changes in progress" no_delegation_changes_in_progress
+    assert_ledger_matches_chain "$ica"
+    log "pending undelegation submissions so far: $(log_count "Submitting pending undelegation") (day epoch $(day_epoch))"
+}
+no_delegation_changes_in_progress() { [[ $(host_zone | jq -r '[.validators[].delegation_changes_in_progress | tonumber] | add') == 0 ]]; }
+
 claimable_epochs() { # <receiver>
     stride_q records list-user-redemption-record | jq -r --arg c "$HOST_CHAIN_ID" --arg r "$1" \
         '.user_redemption_record[] | select(.host_zone_id == $c and .receiver == $r and (.claim_is_pending | not)) | .epoch_number'
@@ -890,6 +916,7 @@ main() {
         build-and-swap) phase_build_and_swap ;;
         upgrade) phase_upgrade ;;
         verify) phase_verify ;;
+        claims) phase_claims ;;
         status) phase_status ;;
         wait-day-epoch) wait_day_epoch "${2:-}" ;;
         *) usage ;;
