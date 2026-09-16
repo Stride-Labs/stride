@@ -31,14 +31,17 @@ var (
 	// Pubkeys confirmed in writing by each validator (2026-09-11) from the
 	// `key` field of `strided tendermint show-validator` on their running
 	// nodes. Payout addresses live in utils.PoaValidatorSet.
+	// REHEARSAL ONLY: the k8s network's val4/val5 nodes (outside the genesis POA set); their
+	// consensus pubkeys are generated at network init and pasted here by `rehearsal/poa.sh measure`
 	IncomingValidators = []IncomingValidator{
-		{Moniker: "cosmosrescue", ConsPubKeyBase64: "X9ma3W9EfbHImJKJaUCoKQwDQU9eB1aGZJz2bVHfA3U="},
-		{Moniker: "CitizenWeb3", ConsPubKeyBase64: "5tALxrcAfArCTEMJhCB4ISxsRogKyQzo/R7nZ5YbTMo="},
+		{Moniker: "val4", ConsPubKeyBase64: "MEASURE_ME_VAL4"},
+		{Moniker: "val5", ConsPubKeyBase64: "MEASURE_ME_VAL5"},
 	}
 
 	// OutgoingMonikers are resolved against live POA state at upgrade time —
 	// no hand-transcribed consensus addresses to typo.
-	OutgoingMonikers = []string{"Citadel.one", "Cosmostation"}
+	// REHEARSAL ONLY: two of the three genesis validators
+	OutgoingMonikers = []string{"val2", "val3"}
 )
 
 // Stuck ICQ cleanup, measured against mainnet at height 40276875 (2026-09-14).

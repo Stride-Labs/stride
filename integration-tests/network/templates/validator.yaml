@@ -13,6 +13,10 @@
   value: "{{ .config.decimals }}"
 - name: NUM_VALIDATORS
   value: "{{ .config.numValidators }}"
+- name: POA_GENESIS_VALIDATORS
+  value: "{{ .config.poaGenesisValidators | default .config.numValidators }}"
+- name: POA_VALIDATOR_POWER
+  value: "{{ .config.poaValidatorPower | default "1" }}"
 - name: NAMESPACE
   valueFrom:
     fieldRef:

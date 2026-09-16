@@ -86,15 +86,18 @@ add_validators() {
 
         # Build a POA validator entry: consensus pubkey from this node's home,
         # operator address from the validator's keyring entry on the main home,
-        # moniker = val name, power = "1" (equal-weight POA per the design spec).
-        if [[ "$CHAIN_NAME" == "stride" ]]; then
+        # moniker = val name, equal power (POA_VALIDATOR_POWER, default "1").
+        # Nodes past POA_GENESIS_VALIDATORS run with their keys but start outside the set, so an
+        # upgrade handler can add them (v34 POA swap rehearsal).
+        if [[ "$CHAIN_NAME" == "stride" && "$i" -le "${POA_GENESIS_VALIDATORS:-$NUM_VALIDATORS}" ]]; then
             val_pubkey_json=$($BINARY tendermint show-validator --home ${validator_home} 2>/dev/null)
             val_op_addr=$($BINARY keys show $name -a)
             poa_validators=$(echo "$poa_validators" | jq \
                 --argjson pk "$val_pubkey_json" \
                 --arg op "$val_op_addr" \
                 --arg moniker "$name" \
-                '. + [{pub_key: $pk, power: "1", metadata: {operator_address: $op, moniker: $moniker}}]')
+                --arg power "${POA_VALIDATOR_POWER:-1}" \
+                '. + [{pub_key: $pk, power: $power, metadata: {operator_address: $op, moniker: $moniker}}]')
         fi
     done
 

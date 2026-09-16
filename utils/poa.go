@@ -17,6 +17,9 @@ type PoaValidator struct {
 }
 
 var PoaValidatorSet = []PoaValidator{
+	// REHEARSAL ONLY: payout addresses of the k8s network's val4/val5 (keys.json)
+	{Moniker: "val4", Operator: "stride1py0fvhdtq4au3d9l88rec6vyda3e0wtt9szext"},
+	{Moniker: "val5", Operator: "stride1c5jnf370kaxnv009yhc3jt27f549l5u36chzem"},
 	{Moniker: "Polkachu", Operator: "stride1gp957czryfgyvxwn3tfnyy2f0t9g2p4pxxdj7c"},
 	{Moniker: "L5", Operator: "stride1wj9ckvakuzgvlgw3hwpmsfjxvsc7uke73ps4u8"},
 	{Moniker: "Imperator", Operator: "stride13u4dsapth4m3hef3z8qgjtdnv06predefnndkw"},
