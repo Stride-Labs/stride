@@ -583,7 +583,13 @@ phase_drift() {
     # 4. daemon back on every channel, restore the account on a fresh channel
     relayer_allow_all
     stride_tx "$ADMIN_KEY" stakeibc restore-interchain-account "$HOST_CHAIN_ID" "$CONNECTION_ID" "$DELEGATION_ICA_OWNER"
-    assert_eq "drift deposit record reset by restore" "$(deposit_record_status "$DRIFT_STAKE_AMOUNT")" DELEGATION_QUEUE
+    # The reset lands the record in DELEGATION_QUEUE, but if rly completes the new handshake within a
+    # stride epoch the hook has already re-submitted it (IN_PROGRESS on the new channel) by now
+    local reset_status
+    reset_status=$(deposit_record_status "$DRIFT_STAKE_AMOUNT")
+    [[ $reset_status == DELEGATION_QUEUE || $reset_status == DELEGATION_IN_PROGRESS ]] \
+        || die "FAIL drift deposit record reset by restore: got '$reset_status'"
+    log "PASS drift deposit record reset by restore: $reset_status"
     # rly usually completes the handshake; if the INIT channel sits for a minute, nudge it with hermes
     if ! try_wait_for 60 "new OPEN delegation channel (not $chan)" new_delegation_channel_open "$chan"; then
         local init_channel
