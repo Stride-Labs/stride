@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -8,8 +10,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
