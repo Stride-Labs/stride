@@ -100,10 +100,19 @@ A zero applied delta (host zone absent, or table not applied) queues nothing.
 
 One new store key in `x/stakeibc/types/keys.go`:
 `PendingUndelegationKeyPrefix = "PendingUndelegation-value-"`, keyed by chain id, value =
-`sdkmath.Int` (marshalled via `Int.Marshal`). Presence means "not yet submitted"; deletion means
-submitted. This is the one-shot marker *and* the channel that gets the amount from
-`app/upgrades/v34` into `x/stakeibc/keeper` (which cannot import it — cycle) without duplicating
-the number.
+`sdkmath.Int` (marshalled via `Int.Marshal`). The amount stays stored until each submitted batch
+acks successfully, when that batch's amount is subtracted (the key is removed at zero). A second
+key `PendingUndelegationInFlight-value-<chainId>` → `uint64` counts the ICA batches awaiting an
+ack; while it is non-zero the hook does not resubmit. This is the one-shot marker *and* the channel
+that gets the amount from `app/upgrades/v34` into `x/stakeibc/keeper` (which cannot import it —
+cycle) without duplicating the number.
+
+Why "delete on success" rather than "delete on submit": the k8s rehearsal showed the delegation
+channel dying with the undelegate ICA in flight behind a packet whose timeout can never be
+processed once `RestoreInterchainAccount` has zeroed the in-progress counters. A re-queue that
+lives only in the callback's failure/timeout path is then unreachable and the amount is lost.
+Keeping the amount until success makes recovery a one-line restore change (clear the in-flight
+count) with no scanning of the 21k-entry icacallbacks store.
 
 Keeper (`x/stakeibc/keeper/pending_undelegation.go`):
 `SetPendingUndelegation(ctx, chainId, amount)`, `GetPendingUndelegation(ctx, chainId) (Int, bool)`,
@@ -135,9 +144,10 @@ pending entry:
    and increments `DelegationChangesInProgress` on each validator. That increment is required:
    `MarkUndelegationAckReceived` decrements it and errors at zero (`validator.go:226-229`), which
    would fail the ack tx and wedge the ordered delegation channel.
-5. Success → `RemovePendingUndelegation`, `EmitUndelegationEvent`. Any error (channel closed,
-   insufficient capacity, ICA submit failure) → `Logger.Error`, key kept, retried next day epoch.
-   Never returns an error to the hook; never panics.
+5. Success → `SetPendingUndelegationInFlight(numTxs)`, `EmitUndelegationEvent`; the amount stays.
+   A host zone with batches in flight is skipped. Any error (channel closed, insufficient capacity,
+   ICA submit failure) → `Logger.Error`, key kept, retried next day epoch. Never returns an error to
+   the hook; never panics.
 
 ### Callback
 
@@ -148,9 +158,16 @@ Existing `UndelegateCallback` handles nil record ids with no change (verified ag
 `MarkUndelegationAckReceived` decrements in-progress; failure/timeout paths touch no records.
 Completion time is parsed from the ack's `MsgUndelegateResponse`, not from records.
 
-Failure and timeout with no record ids: the pending key was deleted at submit time, so the
-callback re-queues the batch via `SetPendingUndelegation(chainId, existing + batchAmount)` —
-additive, since one pending amount may be split across several batches — and logs at Error.
+With no record ids: success → `ConsumePendingUndelegation(chainId, batchAmount)` (subtract, remove
+at zero) and `DecrementPendingUndelegationInFlight`; failure / timeout → only
+`DecrementPendingUndelegationInFlight`, leaving the amount to be resubmitted at the next eligible
+day epoch. `RestoreInterchainAccount` (delegation branch) calls `RemovePendingUndelegationInFlight`
+so a batch stranded on the dead channel — whose ack can never arrive and whose timeout may never be
+processable — is released for resubmission on the new channel.
+
+Inherent limit (all designs): a batch that executed on the host but whose success ack was
+stranded is resubmitted and undelegates twice; the slash query then sees on-chain < tracked and
+corrects tracked. Window: minutes, same as the incident's own mechanism.
 
 Interaction with the normal flow on the same day epoch: the hook skips a host zone on its own
 unbonding epoch (step 2 above), so the two flows never cascade onto the same validators within

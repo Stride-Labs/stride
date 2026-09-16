@@ -43,6 +43,55 @@ func (k Keeper) RemovePendingUndelegation(ctx sdk.Context, chainId string) {
 	store.Delete([]byte(chainId))
 }
 
+// ConsumePendingUndelegation subtracts a successfully undelegated batch from the pending amount,
+// removing the key once nothing is left
+func (k Keeper) ConsumePendingUndelegation(ctx sdk.Context, chainId string, amount sdkmath.Int) {
+	pending, found := k.GetPendingUndelegation(ctx, chainId)
+	if !found {
+		return
+	}
+	remaining := pending.Sub(amount)
+	if !remaining.IsPositive() {
+		k.RemovePendingUndelegation(ctx, chainId)
+		return
+	}
+	k.SetPendingUndelegation(ctx, chainId, remaining)
+}
+
+// SetPendingUndelegationInFlight records how many undelegate ICA batches of the pending
+// undelegation are awaiting an ack; the hook doesn't resubmit while any are outstanding
+func (k Keeper) SetPendingUndelegationInFlight(ctx sdk.Context, chainId string, batches uint64) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PendingUndelegationInFlightKeyPrefix))
+	store.Set([]byte(chainId), sdk.Uint64ToBigEndian(batches))
+}
+
+// GetPendingUndelegationInFlight returns the number of undelegate ICA batches awaiting an ack
+func (k Keeper) GetPendingUndelegationInFlight(ctx sdk.Context, chainId string) uint64 {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PendingUndelegationInFlightKeyPrefix))
+	batchesBz := store.Get([]byte(chainId))
+	if batchesBz == nil {
+		return 0
+	}
+	return sdk.BigEndianToUint64(batchesBz)
+}
+
+// RemovePendingUndelegationInFlight clears the in-flight batch count (e.g. when the delegation
+// channel is restored and the outstanding batches can never be acked)
+func (k Keeper) RemovePendingUndelegationInFlight(ctx sdk.Context, chainId string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.PendingUndelegationInFlightKeyPrefix))
+	store.Delete([]byte(chainId))
+}
+
+// DecrementPendingUndelegationInFlight marks one undelegate ICA batch as acked
+func (k Keeper) DecrementPendingUndelegationInFlight(ctx sdk.Context, chainId string) {
+	batches := k.GetPendingUndelegationInFlight(ctx, chainId)
+	if batches <= 1 {
+		k.RemovePendingUndelegationInFlight(ctx, chainId)
+		return
+	}
+	k.SetPendingUndelegationInFlight(ctx, chainId, batches-1)
+}
+
 // GetAllPendingUndelegations returns every queued pending undelegation
 func (k Keeper) GetAllPendingUndelegations(ctx sdk.Context) (list []types.PendingUndelegation) {
 	list = []types.PendingUndelegation{}
@@ -63,18 +112,22 @@ func (k Keeper) GetAllPendingUndelegations(ctx sdk.Context) (list []types.Pendin
 }
 
 // SubmitPendingUndelegations submits an undelegate ICA for each pending undelegation, using the
-// normal validator capacity logic, and clears the pending key once the ICA has been submitted
+// normal validator capacity logic
 //
 // The ICA is submitted with no epoch unbonding record ids, so the undelegate callback only adjusts
-// the validator and host zone delegation balances (nothing is burned). If the ICA fails or times
-// out, the callback re-queues the amount so it's resubmitted at a later day epoch
+// the validator and host zone delegation balances (nothing is burned). The pending amount stays in
+// the store until a batch acks successfully, when that batch's amount is subtracted; a batch that
+// fails or times out simply leaves the amount in place to be resubmitted. While any batch is
+// awaiting an ack the host zone is skipped so the amount can't be submitted twice. If the channel
+// dies with a batch in flight, its ack can never arrive and its timeout may never be processable,
+// so RestoreInterchainAccount clears the in-flight count and the next day epoch resubmits
 //
-// A host zone that unbonds on this day epoch is skipped (key kept) since InitiateAllHostZoneUnbondings
-// has just consumed the same validator capacity, and the delegation balances the capacity is computed
+// A host zone that unbonds on this day epoch is skipped since InitiateAllHostZoneUnbondings has
+// just consumed the same validator capacity, and the delegation balances the capacity is computed
 // from are not decremented until that ICA's ack arrives
 //
-// Any failure (missing channel, insufficient capacity, ICA submit error) is logged and the key is
-// kept so the submission is retried at the next day epoch. This never returns an error or panics
+// Any failure (missing channel, insufficient capacity, ICA submit error) is logged and the amount
+// is kept so the submission is retried at the next day epoch. This never returns an error or panics
 // since it runs from the epoch hook
 func (k Keeper) SubmitPendingUndelegations(ctx sdk.Context, epochNumber uint64) {
 	for _, pending := range k.GetAllPendingUndelegations(ctx) {
@@ -87,6 +140,13 @@ func (k Keeper) SubmitPendingUndelegations(ctx sdk.Context, epochNumber uint64) 
 			k.Logger(ctx).Error(utils.LogWithHostZone(chainId,
 				"Host zone not found for pending undelegation of %v, removing pending key", amount))
 			k.RemovePendingUndelegation(ctx, chainId)
+			continue
+		}
+
+		// A previous batch is still awaiting its ack: resubmitting would undelegate the amount twice
+		if inFlight := k.GetPendingUndelegationInFlight(ctx, chainId); inFlight > 0 {
+			k.Logger(ctx).Info(utils.LogWithHostZone(chainId,
+				"Pending undelegation of %v%s has %d batch(es) in flight, waiting for their acks", amount, hostZone.HostDenom, inFlight))
 			continue
 		}
 
@@ -116,11 +176,13 @@ func (k Keeper) SubmitPendingUndelegations(ctx sdk.Context, epochNumber uint64) 
 			}
 
 			batchSize := int(utils.UintToInt(hostZone.MaxMessagesPerIcaTx))
-			if _, err := k.BatchSubmitUndelegateICAMessages(ctx, hostZone, nil, msgs, splits, batchSize); err != nil {
+			numTxsSubmitted, err := k.BatchSubmitUndelegateICAMessages(ctx, hostZone, nil, msgs, splits, batchSize)
+			if err != nil {
 				return err
 			}
 
-			k.RemovePendingUndelegation(ctx, chainId)
+			// The amount stays pending until each batch acks; the count blocks a duplicate submission
+			k.SetPendingUndelegationInFlight(ctx, chainId, numTxsSubmitted)
 			EmitUndelegationEvent(ctx, hostZone, amount)
 			return nil
 		})

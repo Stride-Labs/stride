@@ -143,9 +143,11 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_Successful() {
 		return nil
 	})
 
-	// The pending key should have been cleared
-	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
-	s.Require().False(found, "pending undelegation should be removed after submission")
+	// The amount stays pending until the batch acks; the in-flight count blocks a resubmission
+	actualAmount, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().True(found, "pending undelegation should stay stored while the batch is in flight")
+	s.Require().Equal(tc.pendingAmount, actualAmount, "pending amount unchanged at submission")
+	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "one batch in flight")
 
 	// The callback should carry the split for val1 only, with no epoch unbonding record ids
 	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
@@ -190,13 +192,14 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_UnbondingEpochSkipped()
 	})
 	s.checkPendingUndelegationNotSubmitted(tc)
 
-	// On the following epoch it should be submitted and the key removed
+	// On the following epoch it should be submitted, with the amount kept and the batch in flight
 	s.CheckICATxSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
 		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, unbondingEpoch+1)
 		return nil
 	})
 	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
-	s.Require().False(found, "pending undelegation should be removed after submission on a non-unbonding epoch")
+	s.Require().True(found, "pending undelegation stays stored after submission on a non-unbonding epoch")
+	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "one batch in flight")
 }
 
 func (s *KeeperTestSuite) TestSubmitPendingUndelegations_NothingPending() {
@@ -311,10 +314,73 @@ func (s *KeeperTestSuite) TestSubmitPendingUndelegations_HostZoneNotFound() {
 		return nil
 	})
 
-	// Both keys should be gone - the missing one dropped, the valid one submitted
+	// The missing one is dropped; the valid one is submitted and stays pending with a batch in flight
 	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, missingChainId)
 	s.Require().False(found, "pending undelegation for a missing host zone should be removed")
 	_, found = s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
-	s.Require().False(found, "pending undelegation for the valid host zone should be removed")
-	s.Require().Empty(s.App.StakeibcKeeper.GetAllPendingUndelegations(s.Ctx), "no pending undelegations should remain")
+	s.Require().True(found, "pending undelegation for the valid host zone stays stored while in flight")
+	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "one batch in flight")
+	s.Require().Len(s.App.StakeibcKeeper.GetAllPendingUndelegations(s.Ctx), 1, "only the valid pending undelegation remains")
+}
+
+// A batch that is still awaiting its ack must block a second submission of the same amount
+func (s *KeeperTestSuite) TestSubmitPendingUndelegations_InFlightSkipped() {
+	tc := s.SetupSubmitPendingUndelegations()
+	s.App.StakeibcKeeper.SetPendingUndelegationInFlight(s.Ctx, HostChainId, 1)
+
+	s.CheckICATxNotSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
+		return nil
+	})
+	s.checkPendingUndelegationNotSubmitted(tc)
+	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "in-flight count untouched")
+
+	// Once the batch is released the next epoch submits
+	s.App.StakeibcKeeper.RemovePendingUndelegationInFlight(s.Ctx, HostChainId)
+	s.CheckICATxSubmitted(tc.delegationPortID, tc.delegationChannelID, func() error {
+		s.App.StakeibcKeeper.SubmitPendingUndelegations(s.Ctx, nonUnbondingEpoch)
+		return nil
+	})
+}
+
+func (s *KeeperTestSuite) TestPendingUndelegationInFlight_Counter() {
+	s.Require().Zero(s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "nothing in flight initially")
+
+	s.App.StakeibcKeeper.SetPendingUndelegationInFlight(s.Ctx, HostChainId, 2)
+	s.Require().Equal(uint64(2), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId))
+
+	s.App.StakeibcKeeper.DecrementPendingUndelegationInFlight(s.Ctx, HostChainId)
+	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId))
+
+	s.App.StakeibcKeeper.DecrementPendingUndelegationInFlight(s.Ctx, HostChainId)
+	s.Require().Zero(s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "last decrement clears the key")
+
+	// Decrementing an absent counter is a no-op, and the counters are per chain
+	s.App.StakeibcKeeper.DecrementPendingUndelegationInFlight(s.Ctx, HostChainId)
+	s.App.StakeibcKeeper.SetPendingUndelegationInFlight(s.Ctx, "other-chain", 3)
+	s.Require().Zero(s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId))
+	s.Require().Equal(uint64(3), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, "other-chain"))
+
+	s.App.StakeibcKeeper.RemovePendingUndelegationInFlight(s.Ctx, "other-chain")
+	s.Require().Zero(s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, "other-chain"))
+}
+
+func (s *KeeperTestSuite) TestConsumePendingUndelegation() {
+	// Consuming when nothing is pending is a no-op
+	s.App.StakeibcKeeper.ConsumePendingUndelegation(s.Ctx, HostChainId, sdkmath.NewInt(10))
+	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().False(found)
+
+	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, sdkmath.NewInt(100))
+
+	// A partial batch leaves the remainder pending
+	s.App.StakeibcKeeper.ConsumePendingUndelegation(s.Ctx, HostChainId, sdkmath.NewInt(30))
+	remaining, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().True(found)
+	s.Require().Equal(sdkmath.NewInt(70), remaining)
+
+	// The last batch clears the key (an over-consume clears it too rather than going negative)
+	s.App.StakeibcKeeper.ConsumePendingUndelegation(s.Ctx, HostChainId, sdkmath.NewInt(80))
+	_, found = s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().False(found, "pending undelegation cleared once fully undelegated")
 }

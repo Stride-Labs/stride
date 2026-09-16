@@ -370,6 +370,11 @@ func (s *KeeperTestSuite) TestUndelegateCallback_NoRecords() {
 	initialState := tc.initialState
 	initialStSupply := s.App.BankKeeper.GetSupply(s.Ctx, StAtom).Amount
 
+	// The pending amount covers this batch plus another still in flight
+	remainder := sdkmath.NewInt(30)
+	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, tc.totalUndelegated.Add(remainder))
+	s.App.StakeibcKeeper.SetPendingUndelegationInFlight(s.Ctx, HostChainId, 2)
+
 	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
 	s.Require().NoError(err, "undelegate callback succeeds with no records")
 
@@ -394,25 +399,28 @@ func (s *KeeperTestSuite) TestUndelegateCallback_NoRecords() {
 	// No unbonding records should have been created
 	s.Require().Empty(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx), "no epoch unbonding records")
 
-	// A successful pending undelegation should not be re-queued
-	_, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
-	s.Require().False(found, "no pending undelegation should be queued after success")
+	// This batch's amount is consumed from the pending key and the batch released
+	pending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().True(found, "the other batch's amount is still pending")
+	s.Require().Equal(remainder, pending, "pending amount reduced by exactly this batch")
+	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "one batch still in flight")
 }
 
-// On failure or timeout, an undelegation with no records (a pending undelegation) must be
-// re-queued into the pending store since the key was already deleted at submit time
+// On failure or timeout, an undelegation with no records (a pending undelegation) leaves the
+// pending amount in place and releases the batch so the day epoch hook resubmits it
 func (s *KeeperTestSuite) TestUndelegateCallback_NoRecords_FailureAndTimeout() {
-	existingPending := sdkmath.NewInt(50)
+	pendingAmount := sdkmath.NewInt(100)
 
 	testCases := []struct {
-		name            string
-		status          icacallbacktypes.AckResponseStatus
-		existingPending *sdkmath.Int
+		name             string
+		status           icacallbacktypes.AckResponseStatus
+		inFlightBefore   uint64
+		inFlightExpected uint64
 	}{
-		{name: "failure", status: icacallbacktypes.AckResponseStatus_FAILURE},
-		{name: "timeout", status: icacallbacktypes.AckResponseStatus_TIMEOUT},
-		{name: "failure with existing pending", status: icacallbacktypes.AckResponseStatus_FAILURE, existingPending: &existingPending},
-		{name: "timeout with existing pending", status: icacallbacktypes.AckResponseStatus_TIMEOUT, existingPending: &existingPending},
+		{name: "failure, last batch", status: icacallbacktypes.AckResponseStatus_FAILURE, inFlightBefore: 1, inFlightExpected: 0},
+		{name: "timeout, last batch", status: icacallbacktypes.AckResponseStatus_TIMEOUT, inFlightBefore: 1, inFlightExpected: 0},
+		{name: "failure, other batch outstanding", status: icacallbacktypes.AckResponseStatus_FAILURE, inFlightBefore: 2, inFlightExpected: 1},
+		{name: "timeout, other batch outstanding", status: icacallbacktypes.AckResponseStatus_TIMEOUT, inFlightBefore: 2, inFlightExpected: 1},
 	}
 
 	for _, testCase := range testCases {
@@ -420,13 +428,8 @@ func (s *KeeperTestSuite) TestUndelegateCallback_NoRecords_FailureAndTimeout() {
 			s.SetupTest() // resets the host zone and balances between statuses
 			tc := s.SetupUndelegateCallbackNoRecords()
 			initialState := tc.initialState
-
-			// Optionally seed a pending amount from another batch that should be added to, not overwritten
-			expectedPending := tc.totalUndelegated
-			if testCase.existingPending != nil {
-				s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, *testCase.existingPending)
-				expectedPending = expectedPending.Add(*testCase.existingPending)
-			}
+			s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, pendingAmount)
+			s.App.StakeibcKeeper.SetPendingUndelegationInFlight(s.Ctx, HostChainId, testCase.inFlightBefore)
 
 			invalidArgs := tc.validArgs
 			invalidArgs.ackResponse.Status = testCase.status
@@ -434,10 +437,12 @@ func (s *KeeperTestSuite) TestUndelegateCallback_NoRecords_FailureAndTimeout() {
 			err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, invalidArgs.packet, invalidArgs.ackResponse, invalidArgs.args)
 			s.Require().NoError(err, "undelegate callback with no records succeeds on %s", testCase.name)
 
-			// The batch amount should have been re-queued as a pending undelegation
+			// The pending amount is untouched and the batch released
 			actualPending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
-			s.Require().True(found, "pending undelegation should be re-queued on %s", testCase.name)
-			s.Require().Equal(expectedPending, actualPending, "re-queued pending undelegation amount on %s", testCase.name)
+			s.Require().True(found, "pending undelegation should still be stored on %s", testCase.name)
+			s.Require().Equal(pendingAmount, actualPending, "pending undelegation amount unchanged on %s", testCase.name)
+			s.Require().Equal(testCase.inFlightExpected, s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId),
+				"in-flight batches on %s", testCase.name)
 
 			// The delegations should be untouched
 			hostZone := s.MustGetHostZone(HostChainId)

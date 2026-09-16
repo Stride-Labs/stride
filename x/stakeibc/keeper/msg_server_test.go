@@ -1782,8 +1782,10 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	channels := s.App.IBCKeeper.ChannelKeeper.GetAllChannels(s.Ctx)
 	s.Require().Len(channels, 2, "there should be 2 channels initially (transfer + delegate)")
 
-	// Close the delegation channel
+	// Close the delegation channel with a pending undelegation batch stranded on it
 	s.closeICAChannel(tc.delegationPortID, tc.delegationChannelID)
+	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, sdkmath.NewInt(500))
+	s.App.StakeibcKeeper.SetPendingUndelegationInFlight(s.Ctx, HostChainId, 2)
 
 	// Confirm the new channel was created
 	s.restoreChannelAndVerifySuccess(tc.validMsg, tc.delegationPortID, tc.delegationChannelID)
@@ -1794,6 +1796,12 @@ func (s *KeeperTestSuite) TestRestoreInterchainAccount_Success() {
 	s.verifyLSMDepositStatus(tc.lsmTokenDepositStatusUpdate, true)
 	s.verifyDelegationChangeInProgressReset(tc.depositRecordStatusUpdates)
 	s.verifyUndelegationChangeInProgressReset()
+
+	// The stranded batch is released for the next day epoch; the amount itself is untouched
+	s.Require().Zero(s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId), "in-flight batches cleared by restore")
+	pending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, HostChainId)
+	s.Require().True(found, "pending undelegation kept by restore")
+	s.Require().Equal(sdkmath.NewInt(500), pending, "pending amount unchanged by restore")
 }
 
 func (s *KeeperTestSuite) TestRestoreInterchainAccount_InvalidConnectionId() {

@@ -65,4 +65,7 @@ const (
 	// PendingUndelegationKeyPrefix is the prefix for one-shot undelegation amounts queued by an
 	// upgrade handler, keyed by chain id. Presence means "not yet submitted"
 	PendingUndelegationKeyPrefix = "PendingUndelegation-value-"
+	// PendingUndelegationInFlightKeyPrefix counts the undelegate ICA batches of a pending
+	// undelegation that are awaiting an ack, keyed by chain id
+	PendingUndelegationInFlightKeyPrefix = "PendingUndelegationInFlight-value-"
 )
