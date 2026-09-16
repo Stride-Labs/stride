@@ -34,8 +34,8 @@ var (
 	// REHEARSAL ONLY: the k8s network's val4/val5 nodes (outside the genesis POA set); their
 	// consensus pubkeys are generated at network init and pasted here by `rehearsal/poa.sh measure`
 	IncomingValidators = []IncomingValidator{
-		{Moniker: "val4", ConsPubKeyBase64: "MEASURE_ME_VAL4"},
-		{Moniker: "val5", ConsPubKeyBase64: "MEASURE_ME_VAL5"},
+		{Moniker: "val4", ConsPubKeyBase64: "VknSviQ3ja00Ck3Rf19ikQX29Hfk1dVWq/hMx4ikOjk="},
+		{Moniker: "val5", ConsPubKeyBase64: "pPrponkDVY72CLiWY9glxtGsNKenX5PAxYS573ajfY0="},
 	}
 
 	// OutgoingMonikers are resolved against live POA state at upgrade time —
