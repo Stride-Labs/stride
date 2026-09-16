@@ -454,7 +454,8 @@ add_gaia_validators() {
         | jq --argjson w "$VALIDATOR_WEIGHT" '{validators: [.validators[] | select(.status == "BOND_STATUS_BONDED")
             | {name: .description.moniker, address: .operator_address, weight: $w}]}' \
         > "$SCRATCH/validators.json"
-    kube exec -i "$STRIDE_POD" -c "$CHAIN_CONTAINER" -- sh -c "cat > $file" < "$SCRATCH/validators.json"
+    # kubectl cp rather than exec -i: piping stdin through exec has delivered an empty file before
+    kube cp "$SCRATCH/validators.json" "$STRIDE_POD:$file" -c "$CHAIN_CONTAINER"
     log "validator list: $(jq -c . "$SCRATCH/validators.json")"
     stride_tx "$ADMIN_KEY" stakeibc add-validators "$HOST_CHAIN_ID" "$file"
 }
