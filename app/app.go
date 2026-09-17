@@ -15,6 +15,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/libs/bytes"
 	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/gogoproto/proto"
 	ibchooks "github.com/cosmos/ibc-apps/modules/ibc-hooks/v11"
@@ -1271,9 +1272,13 @@ func NewStrideApp(
 // Initialize a local testnet using mainnet state
 // The Staking, Slashing, and Distribution changes are required - everything beyond that is custom
 func InitStrideAppForTestnet(app *StrideApp, newValAddr bytes.HexBytes, newValPubKey crypto.PubKey, newOperatorAddress, upgradeToTrigger string) *StrideApp {
+	// Write straight to the commit multistore so these changes land in the next block's commit.
+	// NewContext(true) writes to the CheckTx cache, which is discarded, silently dropping every
+	// change below (including the triggered upgrade plan)
+	ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{}) //nolint:staticcheck // SA1019: both suggested replacements are branched and drop these writes
+
 	// Create a new account that will be used in the validator
 	// This does not match the actual operator keys, but it's not required that they match
-	ctx := app.BaseApp.NewContext(true)
 	pubkey := &ed25519.PubKey{Key: newValPubKey.Bytes()}
 	pubkeyAny, err := types.NewAnyWithValue(pubkey)
 	if err != nil {
