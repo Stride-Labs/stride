@@ -26,9 +26,15 @@ import (
 //	  * Records delegation changes on the host zone and validators,
 //	  * Burns stTokens
 //	If timeout:
-//	  * Does nothing
+//	  * Does nothing (a batch with no records just releases its pending-undelegation slot so the
+//	    day epoch hook resubmits the still-stored amount)
 //	If failure:
-//	  * Sets epoch unbonding record status to RETRY
+//	  * Sets epoch unbonding record status to RETRY (a batch with no records releases its
+//	    pending-undelegation slot, as on timeout)
+//
+// A batch with no records whose packet is not on the currently active delegation channel is
+// stale - its channel died, the restore already released the batch, and a resubmission may be
+// live - so it is ignored entirely rather than double-counted
 func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, ackResponse *icacallbackstypes.AcknowledgementResponse, args []byte) error {
 	// Fetch callback args
 	var undelegateCallback types.UndelegateCallback
@@ -46,6 +52,15 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		return errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "Host zone not found: %s", undelegateCallback.HostZoneId)
 	}
 
+	// A record-less batch on a dead channel: the restore already released it, and its validator
+	// counters and in-flight slot now belong to the resubmission, so touch nothing
+	if len(undelegateCallback.EpochUnbondingRecordIds) == 0 && !k.IsActiveDelegationChannel(ctx, hostZone, packet.SourceChannel) {
+		k.Logger(ctx).Error(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Undelegate,
+			"Ignoring %v ack for pending undelegation on stale channel %s (sequence %d)",
+			ackResponse.Status, packet.SourceChannel, packet.Sequence))
+		return nil
+	}
+
 	// Mark that the ICA completed on the validators and host zone unbonding records
 	if err := k.MarkUndelegationAckReceived(ctx, hostZone, undelegateCallback); err != nil {
 		return err
@@ -56,6 +71,12 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_TIMEOUT {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 			icacallbackstypes.AckResponseStatus_TIMEOUT, packet))
+
+		// A pending undelegation's amount is still in the store; releasing the batch lets the day
+		// epoch hook resubmit it
+		if len(undelegateCallback.EpochUnbondingRecordIds) == 0 {
+			k.DecrementPendingUndelegationInFlight(ctx, chainId)
+		}
 		return nil
 	}
 
@@ -64,6 +85,13 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	if ackResponse.Status == icacallbackstypes.AckResponseStatus_FAILURE {
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Undelegate,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
+
+		// A pending undelegation's amount is still in the store; releasing the batch lets the day
+		// epoch hook resubmit it
+		if len(undelegateCallback.EpochUnbondingRecordIds) == 0 {
+			k.DecrementPendingUndelegationInFlight(ctx, chainId)
+			return nil
+		}
 
 		// Set any IN_PROGRESS records to RETRY_QUEUE
 		return k.HandleFailedUndelegation(ctx, chainId, undelegateCallback.EpochUnbondingRecordIds)
@@ -84,6 +112,12 @@ func (k Keeper) UndelegateCallback(ctx sdk.Context, packet channeltypes.Packet, 
 	err = k.UpdateDelegationBalances(ctx, hostZone, undelegateCallback)
 	if err != nil {
 		return err
+	}
+
+	// A batch with no records came from a pending undelegation: its amount is now done
+	if len(undelegateCallback.EpochUnbondingRecordIds) == 0 {
+		k.ConsumePendingUndelegation(ctx, chainId, nativeTokensUnbonded)
+		k.DecrementPendingUndelegationInFlight(ctx, chainId)
 	}
 
 	// Update the accounting on the host zone unbondings

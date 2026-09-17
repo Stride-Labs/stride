@@ -64,10 +64,22 @@ func (k Keeper) RedemptionCallback(ctx sdk.Context, packet channeltypes.Packet, 
 		k.Logger(ctx).Error(utils.LogICACallbackStatusWithHostZone(chainId, ICACallbackID_Redemption,
 			icacallbackstypes.AckResponseStatus_FAILURE, packet))
 
-		// Reset unbondings record status
-		err = k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, redemptionCallback.EpochUnbondingRecordIds, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE)
-		if err != nil {
-			return err
+		// Reset unbondings record status. Only records still waiting on this sweep are reset -
+		// a record moved to another status while the sweep was in flight (e.g. re-queued for
+		// undelegation by an upgrade handler) must not be pulled back into the sweep.
+		for _, epochNumber := range redemptionCallback.EpochUnbondingRecordIds {
+			hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochNumber, chainId)
+			if !found {
+				return errorsmod.Wrapf(recordstypes.ErrHostUnbondingRecordNotFound, "epoch number %d, chain %s", epochNumber, chainId)
+			}
+			if hostZoneUnbonding.Status != recordstypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS {
+				k.Logger(ctx).Info(utils.LogICACallbackWithHostZone(chainId, ICACallbackID_Redemption,
+					"Epoch %d is in status %s, not resetting", epochNumber, hostZoneUnbonding.Status))
+				continue
+			}
+			if err := k.RecordsKeeper.SetHostZoneUnbondingStatus(ctx, chainId, []uint64{epochNumber}, recordstypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE); err != nil {
+				return err
+			}
 		}
 		return nil
 	}

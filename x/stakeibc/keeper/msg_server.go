@@ -594,6 +594,10 @@ func (k msgServer) RestoreInterchainAccount(goCtx context.Context, msg *types.Ms
 			}
 		}
 
+		// a pending undelegation batch in flight on the dead channel can never be acked (and its
+		// timeout may never be processable), so release it for the next day epoch to resubmit
+		k.RemovePendingUndelegationInFlight(ctx, hostZone.ChainId)
+
 		// revert epoch unbonding records for the closed ICA channel
 		epochUnbondingRecords := k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx)
 		for _, epochUnbondingRecord := range epochUnbondingRecords {
