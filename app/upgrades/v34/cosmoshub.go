@@ -52,6 +52,11 @@ var CosmosHubStrandedLsmDeposit = StrandedLsmDeposit{
 //  2. The LSM deposit is found by (chain id, denom) and its status, amount and validator address
 //     match the constant exactly.
 //  3. The validator is present on the host zone.
+//  4. The redemption rate values this deposit in the tokenized bucket as
+//     floor(amount * validator.SharesToTokensRate) (see GetTotalTokenizedDelegations); booking the
+//     raw amount as native delegation is only rate-neutral while that valuation truncates back to
+//     the same amount, i.e. the validator's SharesToTokensRate is exactly 1.0. Guard against a
+//     validator whose rate has since moved off of that.
 //
 // Once every check passes: add the deposit's amount to the validator's (and the host zone's)
 // delegation exactly as a successful detokenize ack would, then remove the LSM deposit and
@@ -89,9 +94,22 @@ func CloseCosmosHubLsmDeposit(ctx sdk.Context, sk stakeibckeeper.Keeper, rk reco
 			deposit.ValidatorAddress, CosmosHubStrandedLsmDeposit.ValidatorAddress))
 		return false
 	}
-	if _, _, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, CosmosHubStrandedLsmDeposit.ValidatorAddress); !found {
+	validator, _, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, CosmosHubStrandedLsmDeposit.ValidatorAddress)
+	if !found {
 		ctx.Logger().Error(fmt.Sprintf("v34: validator %s not found on %s; close-out NOT applied, "+
 			"re-verify constants and close out in a later upgrade", CosmosHubStrandedLsmDeposit.ValidatorAddress, CosmosHubChainId))
+		return false
+	}
+
+	// The bucket move is only rate-neutral while the tokenized valuation of this deposit
+	// (GetTotalTokenizedDelegations' amount * SharesToTokensRate, truncated) still equals the raw
+	// amount this function books as native delegation
+	tokenizedNativeValue := sdkmath.LegacyNewDecFromInt(CosmosHubStrandedLsmDeposit.Amount).Mul(validator.SharesToTokensRate).TruncateInt()
+	if !tokenizedNativeValue.Equal(CosmosHubStrandedLsmDeposit.Amount) {
+		ctx.Logger().Error(fmt.Sprintf("v34: validator %s SharesToTokensRate %s values %s LSM deposit %s at %v uatom tokenized, "+
+			"not the %v that would be booked as native delegation; close-out NOT applied, re-verify constants and close out "+
+			"in a later upgrade", CosmosHubStrandedLsmDeposit.ValidatorAddress, validator.SharesToTokensRate, CosmosHubChainId,
+			CosmosHubStrandedLsmDeposit.Denom, tokenizedNativeValue, CosmosHubStrandedLsmDeposit.Amount))
 		return false
 	}
 

@@ -174,17 +174,22 @@ var StaketiaRemainingDelegatedBalanceDelta = sdkmath.NewInt(-40_076_742_843)
 //  2. The delta table applies in full (every validator present, no delegation driven negative).
 //  3. Celestia DELEGATION_QUEUE then DELEGATION_IN_PROGRESS records, each ascending by id, cover
 //     the phantom amount. TRANSFER_QUEUE records are never touched (their coins are on Stride).
-//  4. Apply the validator deltas (raises TotalDelegations by the phantom amount).
-//  5. Remove the phantom amount from the collected records: whole records are deleted while
+//  4. Every delegate callback on the celestia DELEGATION port, on any channel, decodes cleanly.
+//     This is checked before any write so a malformed entry causes a clean skip instead of
+//     deleting the deposit record its (unreadable) callback references, which would otherwise
+//     leave the callback behind to fail unmarshalling on its eventual ack rather than being the
+//     no-op a removed record's callback is supposed to be.
+//  5. Apply the validator deltas (raises TotalDelegations by the phantom amount).
+//  6. Remove the phantom amount from the collected records: whole records are deleted while
 //     they fit; the first record that would overshoot is shrunk if it is a queue record.
-//  6. An in-progress record is never shrunk: its in-flight callback carries the original split
+//  7. An in-progress record is never shrunk: its in-flight callback carries the original split
 //     amounts and a success ack would subtract more than the shrunk record holds. It is deleted
 //     instead and a fresh DELEGATION_QUEUE record is appended for the leftover. Every deleted
-//     in-progress record's delegate callbacks are removed (on any channel, so the eventual ack is
-//     a no-op instead of failing on a missing record), and for callbacks on the active
-//     DELEGATION channel the validators' DelegationChangesInProgress are decremented as the
-//     callback would have.
-//  7. Log the removals and totals.
+//     in-progress record's (already-decoded) delegate callbacks are removed (on any channel, so
+//     the eventual ack is a no-op instead of failing on a missing record), and for callbacks on
+//     the active DELEGATION channel the validators' DelegationChangesInProgress are decremented
+//     as the callback would have.
+//  8. Log the removals and totals.
 //
 // Any failed check is logged and the function returns false with nothing written. It never
 // returns an error: halting the chain is disproportionate for an accounting fix.
@@ -224,6 +229,19 @@ func ReconcileCelestia(
 		return false
 	}
 
+	// Decode every delegate callback on the port before the first write, so a malformed entry
+	// skips the whole reconciliation instead of deleting a record whose callback later fails to ack
+	owner := stakeibctypes.FormatHostZoneICAOwner(CelestiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	portId, err := icatypes.NewControllerPortID(owner)
+	if err != nil {
+		ctx.Logger().Error(fmt.Sprintf("v34: unable to build %s delegation port id: %s", CelestiaChainId, err))
+		return false
+	}
+	delegateCallbacks, decodable := collectCelestiaDelegateCallbacks(ctx, ick, portId)
+	if !decodable {
+		return false
+	}
+
 	// Every check passed; book the stake on the validators first
 	appliedDelta, applied := reconcileHostZoneDelegations(ctx, sk, CelestiaChainId, CelestiaDelegationDeltas)
 	if !applied {
@@ -233,7 +251,7 @@ func ReconcileCelestia(
 	// Then retire the same amount of records, cleaning up the callbacks of deleted in-progress records
 	deletedInProgress, removedCount := removeAmountFromDepositRecords(ctx, rk, records, appliedDelta)
 	hostZone, _ = sk.GetHostZone(ctx, CelestiaChainId)
-	removeDelegateCallbacks(ctx, sk, ick, &hostZone, deletedInProgress)
+	removeDelegateCallbacks(ctx, sk, ick, &hostZone, portId, delegateCallbacks, deletedInProgress)
 	sk.SetHostZone(ctx, hostZone)
 
 	ctx.Logger().Info(fmt.Sprintf("v34: %s reconciled: booked %v %s of unacknowledged stake and removed the same amount "+
@@ -328,58 +346,84 @@ func removeAmountFromDepositRecords(
 	return deletedInProgress, removedCount
 }
 
-// removeDelegateCallbacks deletes every delegate callback on the celestia DELEGATION port that
-// references a deleted in-progress record, on any channel. For callbacks on the host zone's
-// active DELEGATION channel (the packet is genuinely in flight), the validators'
-// DelegationChangesInProgress are decremented as the callback would have done, never below zero.
-// Callbacks on dead channels are orphans and are just deleted. The host zone is modified in
-// memory; the caller persists it.
-func removeDelegateCallbacks(
+// celestiaDelegateCallback pairs a decoded delegate callback with the key and channel its
+// CallbackData was stored under, so removeDelegateCallbacks can act on it without re-fetching or
+// re-decoding CallbackData once collectCelestiaDelegateCallbacks has already done so.
+type celestiaDelegateCallback struct {
+	Key       string
+	ChannelId string
+	Callback  stakeibctypes.DelegateCallback
+}
+
+// collectCelestiaDelegateCallbacks decodes every delegate callback on portId, on any channel,
+// before any accounting write begins. If any entry fails to unmarshal it logs an error and
+// returns ok=false so the caller skips the whole reconciliation: leaving a malformed callback in
+// place while deleting the deposit record it references would strand it to fail unmarshalling on
+// its eventual ack, instead of the no-op a removed record's callback is supposed to become.
+func collectCelestiaDelegateCallbacks(
 	ctx sdk.Context,
-	sk stakeibckeeper.Keeper,
 	ick icacallbackskeeper.Keeper,
-	hostZone *stakeibctypes.HostZone,
-	deletedRecordIds map[uint64]bool,
-) {
-	if len(deletedRecordIds) == 0 {
-		return
-	}
-
-	owner := stakeibctypes.FormatHostZoneICAOwner(CelestiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
-	portId, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		ctx.Logger().Error(fmt.Sprintf("v34: unable to build %s delegation port id: %s", CelestiaChainId, err))
-		return
-	}
-	activeChannelId, found := sk.ICAControllerKeeper.GetActiveChannelID(ctx, hostZone.ConnectionId, portId)
-	if !found {
-		ctx.Logger().Info(fmt.Sprintf("v34: no active channel on %s; deleted records' callbacks are orphans", portId))
-	}
-
+	portId string,
+) (callbacks []celestiaDelegateCallback, ok bool) {
 	for _, callbackData := range ick.GetAllCallbackData(ctx) {
 		if callbackData.PortId != portId || callbackData.CallbackId != stakeibckeeper.ICACallbackID_Delegate {
 			continue
 		}
 		delegateCallback := stakeibctypes.DelegateCallback{}
 		if err := proto.Unmarshal(callbackData.CallbackArgs, &delegateCallback); err != nil {
-			ctx.Logger().Error(fmt.Sprintf("v34: unable to unmarshal delegate callback %s, leaving it: %s", callbackData.CallbackKey, err))
-			continue
+			ctx.Logger().Error(fmt.Sprintf("v34: unable to unmarshal delegate callback %s on %s: %s; "+
+				"reconciliation NOT applied, re-verify constants and reconcile in a later upgrade",
+				callbackData.CallbackKey, portId, err))
+			return nil, false
 		}
-		if !deletedRecordIds[delegateCallback.DepositRecordId] {
+		callbacks = append(callbacks, celestiaDelegateCallback{
+			Key:       callbackData.CallbackKey,
+			ChannelId: callbackData.ChannelId,
+			Callback:  delegateCallback,
+		})
+	}
+	return callbacks, true
+}
+
+// removeDelegateCallbacks deletes every pre-decoded delegate callback that references a deleted
+// in-progress record, on any channel. For callbacks on the host zone's active DELEGATION channel
+// (the packet is genuinely in flight), the validators' DelegationChangesInProgress are
+// decremented as the callback would have done, never below zero. Callbacks on dead channels are
+// orphans and are just deleted. The host zone is modified in memory; the caller persists it.
+func removeDelegateCallbacks(
+	ctx sdk.Context,
+	sk stakeibckeeper.Keeper,
+	ick icacallbackskeeper.Keeper,
+	hostZone *stakeibctypes.HostZone,
+	portId string,
+	delegateCallbacks []celestiaDelegateCallback,
+	deletedRecordIds map[uint64]bool,
+) {
+	if len(deletedRecordIds) == 0 {
+		return
+	}
+
+	activeChannelId, found := sk.ICAControllerKeeper.GetActiveChannelID(ctx, hostZone.ConnectionId, portId)
+	if !found {
+		ctx.Logger().Info(fmt.Sprintf("v34: no active channel on %s; deleted records' callbacks are orphans", portId))
+	}
+
+	for _, entry := range delegateCallbacks {
+		if !deletedRecordIds[entry.Callback.DepositRecordId] {
 			continue
 		}
 
 		// Only a callback on the active channel still has a packet in flight whose completion
 		// the validators are waiting on
-		if found && callbackData.ChannelId == activeChannelId {
-			for _, split := range delegateCallback.SplitDelegations {
+		if found && entry.ChannelId == activeChannelId {
+			for _, split := range entry.Callback.SplitDelegations {
 				decrementDelegationChangesInProgress(ctx, hostZone, split.Validator)
 			}
 		}
 
-		ick.RemoveCallbackData(ctx, callbackData.CallbackKey)
+		ick.RemoveCallbackData(ctx, entry.Key)
 		ctx.Logger().Info(fmt.Sprintf("v34: removed delegate callback %s for deleted deposit record %d (active channel: %t)",
-			callbackData.CallbackKey, delegateCallback.DepositRecordId, found && callbackData.ChannelId == activeChannelId))
+			entry.Key, entry.Callback.DepositRecordId, found && entry.ChannelId == activeChannelId))
 	}
 }
 

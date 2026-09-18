@@ -19,6 +19,13 @@ const (
 // trackedDelegation) plus one other validator, so tests can assert the other validator is left
 // untouched while stakewithus and TotalDelegations move by exactly the closed amount.
 func (s *UpgradeTestSuite) setupCosmosHubHostZone(trackedDelegation sdkmath.Int) (otherDelegation sdkmath.Int) {
+	return s.setupCosmosHubHostZoneWithRate(trackedDelegation, sdkmath.LegacyOneDec())
+}
+
+// setupCosmosHubHostZoneWithRate is setupCosmosHubHostZone but lets the caller pick
+// stakewithus's SharesToTokensRate, so a regression test can prove the tokenized-value guard in
+// CloseCosmosHubLsmDeposit fires once the rate moves off of 1.0.
+func (s *UpgradeTestSuite) setupCosmosHubHostZoneWithRate(trackedDelegation sdkmath.Int, rate sdkmath.LegacyDec) (otherDelegation sdkmath.Int) {
 	otherDelegation = sdkmath.NewInt(555_000_000)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
 		ChainId:   v34.CosmosHubChainId,
@@ -28,7 +35,7 @@ func (s *UpgradeTestSuite) setupCosmosHubHostZone(trackedDelegation sdkmath.Int)
 				Name:               "stakewithus",
 				Address:            v34.CosmosHubStrandedLsmDeposit.ValidatorAddress,
 				Delegation:         trackedDelegation,
-				SharesToTokensRate: sdkmath.LegacyOneDec(),
+				SharesToTokensRate: rate,
 			},
 			{
 				Name:               "other",
@@ -80,10 +87,19 @@ func (s *UpgradeTestSuite) TestCloseCosmosHubLsmDeposit() {
 		v34.CosmosHubStrandedLsmDeposit.Amount, v34.CosmosHubStrandedLsmDeposit.ValidatorAddress)
 	numeratorBefore := cosmosHubRateNumerator(&s.AppTestHelper)
 
+	// The rate-numerator invariance asserted below only holds because the deposit's tokenized
+	// valuation (amount * SharesToTokensRate, truncated) equals its raw amount -- exactly the
+	// guard CloseCosmosHubLsmDeposit checks before booking it as native delegation
+	hostZoneBeforeClose, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CosmosHubChainId)
+	s.Require().True(found)
+	tokenizedBeforeClose := s.App.StakeibcKeeper.GetTotalTokenizedDelegations(s.Ctx, hostZoneBeforeClose)
+	s.Require().Equal(v34.CosmosHubStrandedLsmDeposit.Amount.String(), tokenizedBeforeClose.TruncateInt().String(),
+		"the deposit's tokenized valuation must equal its raw amount while SharesToTokensRate is 1.0")
+
 	applied := v34.CloseCosmosHubLsmDeposit(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper)
 	s.Require().True(applied)
 
-	_, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, v34.CosmosHubChainId, v34.CosmosHubStrandedLsmDeposit.Denom)
+	_, found = s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, v34.CosmosHubChainId, v34.CosmosHubStrandedLsmDeposit.Denom)
 	s.Require().False(found, "the LSM deposit record should be removed")
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CosmosHubChainId)
@@ -137,6 +153,29 @@ func (s *UpgradeTestSuite) TestCloseCosmosHubLsmDeposit_WrongAmountSkips() {
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CosmosHubChainId)
 	validator, _, _ := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, v34.CosmosHubStrandedLsmDeposit.ValidatorAddress)
 	s.Require().Equal(tracked.String(), validator.Delegation.String(), "delegation must be untouched")
+}
+
+// A validator whose SharesToTokensRate has moved off of 1.0 would make the bucket move mint or
+// burn native value (GetTotalTokenizedDelegations values the deposit at amount * rate, truncated,
+// while the close-out would still book the raw amount), so the guard must skip
+func (s *UpgradeTestSuite) TestCloseCosmosHubLsmDeposit_NonUnitRateSkips() {
+	tracked := sdkmath.NewInt(1_000_000_000)
+	nonUnitRate := sdkmath.LegacyMustNewDecFromStr("0.95")
+	otherDelegation := s.setupCosmosHubHostZoneWithRate(tracked, nonUnitRate)
+	s.seedCosmosHubLsmDeposit(recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED,
+		v34.CosmosHubStrandedLsmDeposit.Amount, v34.CosmosHubStrandedLsmDeposit.ValidatorAddress)
+
+	applied := v34.CloseCosmosHubLsmDeposit(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper)
+	s.Require().False(applied, "a non-1.0 SharesToTokensRate must skip the close-out")
+
+	deposit, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, v34.CosmosHubChainId, v34.CosmosHubStrandedLsmDeposit.Denom)
+	s.Require().True(found, "the deposit must not be removed")
+	s.Require().Equal(v34.CosmosHubStrandedLsmDeposit.Amount.String(), deposit.Amount.String())
+
+	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CosmosHubChainId)
+	validator, _, _ := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, v34.CosmosHubStrandedLsmDeposit.ValidatorAddress)
+	s.Require().Equal(tracked.String(), validator.Delegation.String(), "delegation must be untouched")
+	s.Require().Equal(tracked.Add(otherDelegation).String(), hostZone.TotalDelegations.String(), "TotalDelegations must be untouched")
 }
 
 func (s *UpgradeTestSuite) TestCloseCosmosHubLsmDeposit_WrongValidatorOnRecordSkips() {

@@ -499,6 +499,39 @@ func (s *UpgradeTestSuite) TestReconcileCelestia_RecordsCannotCoverSkipsAll() {
 	s.assertCelestiaStateUnchanged(before)
 }
 
+// seedMalformedDelegateCallback stores unparseable bytes as a delegate callback's args, the way
+// a schema mismatch or data corruption might, so tests can assert ReconcileCelestia's pre-scan
+// catches it before any write instead of surfacing later as a failed ack unmarshal
+func (s *UpgradeTestSuite) seedMalformedDelegateCallback(portId, channelId string, sequence uint64) string {
+	key := icacallbackstypes.PacketID(portId, channelId, sequence)
+	s.App.IcacallbacksKeeper.SetCallbackData(s.Ctx, icacallbackstypes.CallbackData{
+		CallbackKey:  key,
+		PortId:       portId,
+		ChannelId:    channelId,
+		Sequence:     sequence,
+		CallbackId:   stakeibckeeper.ICACallbackID_Delegate,
+		CallbackArgs: []byte{0xff, 0xff, 0xff, 0xff},
+	})
+	return key
+}
+
+// A delegate callback on the port that cannot be unmarshalled must skip the whole reconciliation
+// before any write, rather than deleting the deposit record it (unreadably) references and
+// leaving the callback behind to fail unmarshalling on its eventual ack instead of being a no-op
+func (s *UpgradeTestSuite) TestReconcileCelestia_MalformedCallbackSkipsAll() {
+	s.setupCelestiaHostZone()
+	s.seedCelestiaQueueShrinkScenario()
+	malformedKey := s.seedMalformedDelegateCallback(celestiaDelegationPortId(), celestiaDelegationChannelId, 99)
+	before := s.snapshotCelestiaState()
+
+	applied := v34.ReconcileCelestia(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper, s.App.IcacallbacksKeeper)
+	s.Require().False(applied, "a malformed delegate callback must skip the whole reconciliation")
+	s.assertCelestiaStateUnchanged(before)
+
+	_, found := s.App.IcacallbacksKeeper.GetCallbackData(s.Ctx, malformedKey)
+	s.Require().True(found, "the malformed callback itself must also be left untouched")
+}
+
 func (s *UpgradeTestSuite) setupStaketiaHostZone(remainingDelegatedBalance sdkmath.Int) {
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, staketiatypes.HostZone{
 		ChainId:                   staketiatypes.CelestiaChainId,

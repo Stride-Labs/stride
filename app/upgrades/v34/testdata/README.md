@@ -140,7 +140,7 @@ jq '{app_state: {poa: .app_state.poa,
 # trimmed_full_callbacks.json's icacallbacks.callback_data_list, and add
 # app_state.icacallbacks_active_channel by querying the node's IBC channel state directly
 # (`strided q ibc channel end icacontroller-celestia.DELEGATION <channel>` for the OPEN one)
-gzip -c trimmed.json > app/upgrades/v34/testdata/mainnet_export.json.gz
+gzip -c trimmed_full_callbacks.json > app/upgrades/v34/testdata/mainnet_export.json.gz
 ```
 
 ## What the gate checks
@@ -191,3 +191,26 @@ deposit records, the LSM deposit, the staketia balance, or the celestia
 DELEGATION port's active channel changes on mainnet between now and the
 release, regenerate the fixture together with the constants so the gate tests
 against current state.
+
+## Release prep: run `python3 app/upgrades/v34/testdata/verify_constants.py`
+
+The mainnet-export gate above only checks the constants against a fixture
+snapshot from whenever it was assembled; it cannot catch drift that happens
+between that snapshot and the actual release. The handler itself cannot
+close that gap either: tracked delegations legitimately move as daily
+delegations are acknowledged, so baking an on-chain fingerprint into
+`ReconcileCelestia`/`CloseCosmosHubLsmDeposit` would false-skip a perfectly
+valid reconciliation the moment a single ack lands between now and the
+upgrade. `verify_constants.py` is the staleness gate that fills this gap: it
+re-derives `CelestiaDelegationDeltas`, `StaketiaRemainingDelegatedBalanceDelta`
+and `CosmosHubStrandedLsmDeposit` straight from `celestia.go`/`cosmoshub.go`,
+recomputes every one of them against the *live* chain (per-validator Celestia
+deltas, the staketia delta formula, and the Hub LSM record and delegation
+gap, plus the Hub tokenized-rate invariance the close-out guard depends on),
+cross-checks them against the committed fixture's record sums, and prints
+PASS/FAIL per check with a non-zero exit on any failure. Run it right before
+cutting the release, alongside re-measuring the tables by hand:
+
+```bash
+python3 app/upgrades/v34/testdata/verify_constants.py
+```
