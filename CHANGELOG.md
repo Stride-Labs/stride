@@ -42,13 +42,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- GH ACTIONS TEMPLATE - INSERT NEW VERSION HERE -->
 
-## Unreleased
+## [v34.1.0](https://github.com/Stride-Labs/stride/releases/tag/v34.1.0) - 2026-09-18
+
+Supersedes v34.0.0 (same `v34` upgrade handler, plus items 5-7).
 
 ### On-Chain changes
 
-1. v34: swap POA validators — remove Citadel.one and Cosmostation, add cosmosrescue and CitizenWeb3 (POA set + `utils/poa.go` stToken payout registry)
-2. v34: reset stuck `SlashQueryInProgress` flags on 12 cosmoshub-4 validators and delete 30 timed-out ICQs
-3. v34: lower gov quorum from 33.4% to 25% and lengthen the voting period from 3 to 5 days
+1. v34: swap POA validators — remove Citadel.one and Cosmostation, add cosmosrescue and CitizenWeb3 (POA set + `utils/poa.go` stToken payout registry) ([#1522](https://github.com/Stride-Labs/stride/pull/1522))
+2. v34: reset stuck `SlashQueryInProgress` flags on 12 cosmoshub-4 validators and delete 30 timed-out ICQs ([#1525](https://github.com/Stride-Labs/stride/pull/1525))
+3. v34: lower gov quorum from 33.4% to 25% and lengthen the voting period from 3 to 5 days ([#1525](https://github.com/Stride-Labs/stride/pull/1525))
 4. v34: reconcile injective-1 delegations, queue a one-shot undelegation of the excess, and sweep injective-1 redemptions per record ([#1526](https://github.com/Stride-Labs/stride/pull/1526))
 5. v34: reconcile celestia delegations executed without acknowledgement (+15,440 TIA) and retire the equivalent phantom deposit records; redemption rate unchanged ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
 6. v34: close the stranded cosmoshub-4 LSM detokenization for stakewithus (+11 ATOM) ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
