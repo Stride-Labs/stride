@@ -80,6 +80,7 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	exportCallbacks := s.populateCallbacksFromExport(export)
 	activeChannelId := s.populateActiveCelestiaChannelFromExport(export, exportHostZones[v34.CelestiaChainId])
 	celestiaNumeratorBefore := celestiaRateNumerator(&s.AppTestHelper)
+	cosmosHubNumeratorBefore := cosmosHubRateNumerator(&s.AppTestHelper)
 
 	totalPower, err := s.App.POAKeeper.GetTotalPower(s.Ctx)
 	s.Require().NoError(err)
@@ -94,7 +95,7 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	celestiaDelta := s.assertCelestiaReconciled(exportHostZones[v34.CelestiaChainId], exportRecords, celestiaNumeratorBefore)
 	s.assertCelestiaCallbacksReconciled(exportRecords, exportCallbacks, exportHostZones[v34.CelestiaChainId], activeChannelId)
 	s.assertStaketiaAdjusted(exportStaketiaHostZone, exportHostZones[v34.CelestiaChainId], celestiaDelta)
-	s.assertCosmosHubLsmDepositClosed(exportHostZones[v34.CosmosHubChainId], exportRecords)
+	s.assertCosmosHubLsmDepositClosed(exportHostZones[v34.CosmosHubChainId], exportRecords, cosmosHubNumeratorBefore)
 
 	// ----- assert: POA swap -----
 	byMoniker := s.validatorsByMoniker()
@@ -540,8 +541,13 @@ func (s *MainnetExportTestSuite) assertStaketiaAdjusted(
 // assertCosmosHubLsmDepositClosed checks the export carried the stranded LSM
 // deposit exactly as the constant describes it, and that the close-out
 // applied: the deposit is gone, the other cosmoshub-4 deposits are untouched,
-// and stakewithus plus TotalDelegations rose by exactly the constant amount.
-func (s *MainnetExportTestSuite) assertCosmosHubLsmDepositClosed(exportHostZone stakeibctypes.HostZone, exportRecords recordstypes.GenesisState) {
+// stakewithus plus TotalDelegations rose by exactly the constant amount, and
+// the redemption rate numerator (a pure bucket move) is unchanged.
+func (s *MainnetExportTestSuite) assertCosmosHubLsmDepositClosed(
+	exportHostZone stakeibctypes.HostZone,
+	exportRecords recordstypes.GenesisState,
+	numeratorBefore sdkmath.LegacyDec,
+) {
 	stranded := v34.CosmosHubStrandedLsmDeposit
 	var exportDeposit *recordstypes.LSMTokenDeposit
 	for i := range exportRecords.LsmTokenDepositList {
@@ -564,7 +570,16 @@ func (s *MainnetExportTestSuite) assertCosmosHubLsmDepositClosed(exportHostZone 
 		}
 		after, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, v34.CosmosHubChainId, deposit.Denom)
 		s.Require().True(found, "LSM deposit %s should be untouched", deposit.Denom)
-		s.Require().Equal(deposit, after, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.DepositId, after.DepositId, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.ChainId, after.ChainId, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.Denom, after.Denom, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.IbcDenom, after.IbcDenom, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.StakerAddress, after.StakerAddress, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.ValidatorAddress, after.ValidatorAddress, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.Amount.String(), after.Amount.String(), "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.StToken.Denom, after.StToken.Denom, "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.StToken.Amount.String(), after.StToken.Amount.String(), "LSM deposit %s should be untouched", deposit.Denom)
+		s.Require().Equal(deposit.Status, after.Status, "LSM deposit %s should be untouched", deposit.Denom)
 	}
 
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CosmosHubChainId)
@@ -574,6 +589,9 @@ func (s *MainnetExportTestSuite) assertCosmosHubLsmDepositClosed(exportHostZone 
 	s.Require().Equal(before.Delegation.Add(stranded.Amount).String(), after.Delegation.String(), "stakewithus delegation up by exactly the closed amount")
 	s.Require().Equal(exportHostZone.TotalDelegations.Add(stranded.Amount).String(), hostZone.TotalDelegations.String(),
 		"cosmoshub-4 TotalDelegations up by exactly the closed amount")
+
+	s.Require().Equal(numeratorBefore.String(), cosmosHubRateNumerator(&s.AppTestHelper).String(),
+		"redemption rate components unchanged")
 }
 
 // validatorsByMoniker unpacks every POA validator into a moniker-keyed map.

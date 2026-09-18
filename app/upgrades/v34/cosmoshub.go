@@ -53,10 +53,11 @@ var CosmosHubStrandedLsmDeposit = StrandedLsmDeposit{
 //     match the constant exactly.
 //  3. The validator is present on the host zone.
 //
-// Once every check passes: remove the LSM deposit, add its amount to the validator's (and the
-// host zone's) delegation exactly as a successful detokenize ack would, and persist the host
-// zone. Any mismatch is logged as an error and the function returns false with nothing written;
-// it never returns an error, since halting the chain is disproportionate for an accounting fix.
+// Once every check passes: add the deposit's amount to the validator's (and the host zone's)
+// delegation exactly as a successful detokenize ack would, then remove the LSM deposit and
+// persist the host zone. Any mismatch is logged as an error and the function returns false with
+// nothing written; it never returns an error, since halting the chain is disproportionate for an
+// accounting fix.
 func CloseCosmosHubLsmDeposit(ctx sdk.Context, sk stakeibckeeper.Keeper, rk recordskeeper.Keeper) (applied bool) {
 	hostZone, found := sk.GetHostZone(ctx, CosmosHubChainId)
 	if !found {
@@ -94,8 +95,8 @@ func CloseCosmosHubLsmDeposit(ctx sdk.Context, sk stakeibckeeper.Keeper, rk reco
 		return false
 	}
 
-	// Every check passed: replay the detokenize success path exactly (see DetokenizeCallback)
-	rk.RemoveLSMTokenDeposit(ctx, CosmosHubChainId, CosmosHubStrandedLsmDeposit.Denom)
+	// Every check passed: replay the detokenize success path exactly (see DetokenizeCallback).
+	// Add the delegation to the in-memory host zone first so an error here leaves nothing written.
 	if err := sk.AddDelegationToValidator(ctx, &hostZone, CosmosHubStrandedLsmDeposit.ValidatorAddress,
 		CosmosHubStrandedLsmDeposit.Amount, stakeibckeeper.ICACallbackID_Detokenize); err != nil {
 		// Unreachable given the checks above (the validator is present and the amount is
@@ -105,6 +106,7 @@ func CloseCosmosHubLsmDeposit(ctx sdk.Context, sk stakeibckeeper.Keeper, rk reco
 			"close-out NOT fully applied", CosmosHubChainId, CosmosHubStrandedLsmDeposit.Denom, err))
 		return false
 	}
+	rk.RemoveLSMTokenDeposit(ctx, CosmosHubChainId, CosmosHubStrandedLsmDeposit.Denom)
 	sk.SetHostZone(ctx, hostZone)
 
 	ctx.Logger().Info(fmt.Sprintf("v34: %s LSM deposit %s closed: %v %s booked to validator %s",

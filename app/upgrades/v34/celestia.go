@@ -231,13 +231,13 @@ func ReconcileCelestia(
 	}
 
 	// Then retire the same amount of records, cleaning up the callbacks of deleted in-progress records
-	deletedInProgress := removeAmountFromDepositRecords(ctx, rk, records, appliedDelta)
+	deletedInProgress, removedCount := removeAmountFromDepositRecords(ctx, rk, records, appliedDelta)
 	hostZone, _ = sk.GetHostZone(ctx, CelestiaChainId)
 	removeDelegateCallbacks(ctx, sk, ick, &hostZone, deletedInProgress)
 	sk.SetHostZone(ctx, hostZone)
 
 	ctx.Logger().Info(fmt.Sprintf("v34: %s reconciled: booked %v %s of unacknowledged stake and removed the same amount "+
-		"from %d delegation records", CelestiaChainId, appliedDelta, hostZone.HostDenom, len(records)))
+		"from %d delegation records", CelestiaChainId, appliedDelta, hostZone.HostDenom, removedCount))
 	return true
 }
 
@@ -269,13 +269,14 @@ func collectCelestiaDelegationRecords(ctx sdk.Context, rk recordskeeper.Keeper) 
 // removeAmountFromDepositRecords removes exactly `amount` from the records in order, deleting
 // whole records while they fit and shrinking (queue) or splitting (in-progress) the first record
 // that would overshoot. The caller guarantees the records cover the amount. It returns the ids of
-// the deleted in-progress records, whose in-flight callbacks the caller must clean up.
+// the deleted in-progress records, whose in-flight callbacks the caller must clean up, and the
+// count of records it deleted, shrunk or split.
 func removeAmountFromDepositRecords(
 	ctx sdk.Context,
 	rk recordskeeper.Keeper,
 	records []recordstypes.DepositRecord,
 	amount sdkmath.Int,
-) (deletedInProgress map[uint64]bool) {
+) (deletedInProgress map[uint64]bool, removedCount int) {
 	deletedInProgress = map[uint64]bool{}
 	remaining := amount
 	for _, record := range records {
@@ -291,6 +292,7 @@ func removeAmountFromDepositRecords(
 				deletedInProgress[record.Id] = true
 			}
 			remaining = remaining.Sub(record.Amount)
+			removedCount++
 			ctx.Logger().Info(fmt.Sprintf("v34: removed %s deposit record %d (%s, %v %s)",
 				CelestiaChainId, record.Id, record.Status, record.Amount, record.Denom))
 			continue
@@ -302,13 +304,15 @@ func removeAmountFromDepositRecords(
 		if !inProgress {
 			record.Amount = leftover
 			rk.SetDepositRecord(ctx, record)
+			removedCount++
 			ctx.Logger().Info(fmt.Sprintf("v34: shrunk %s deposit record %d (%s) by %v to %v %s",
 				CelestiaChainId, record.Id, record.Status, remaining, leftover, record.Denom))
-			return deletedInProgress
+			return deletedInProgress, removedCount
 		}
 
 		rk.RemoveDepositRecord(ctx, record.Id)
 		deletedInProgress[record.Id] = true
+		removedCount++
 		replacementId := rk.AppendDepositRecord(ctx, recordstypes.DepositRecord{
 			Amount:             leftover,
 			Denom:              record.Denom,
@@ -319,9 +323,9 @@ func removeAmountFromDepositRecords(
 		})
 		ctx.Logger().Info(fmt.Sprintf("v34: removed %s deposit record %d (%s, %v %s) and re-queued its leftover %v as record %d",
 			CelestiaChainId, record.Id, record.Status, record.Amount, record.Denom, leftover, replacementId))
-		return deletedInProgress
+		return deletedInProgress, removedCount
 	}
-	return deletedInProgress
+	return deletedInProgress, removedCount
 }
 
 // removeDelegateCallbacks deletes every delegate callback on the celestia DELEGATION port that

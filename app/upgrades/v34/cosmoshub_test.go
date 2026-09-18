@@ -3,6 +3,7 @@ package v34_test
 import (
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
 	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
@@ -63,8 +64,9 @@ func (s *UpgradeTestSuite) seedCosmosHubLsmDeposit(
 }
 
 // cosmosHubRateNumerator is the redemption rate numerator components a pure bucket move (LSM
-// deposit -> native delegation) must leave unchanged to the uatom.
-func (s *UpgradeTestSuite) cosmosHubRateNumerator() sdkmath.LegacyDec {
+// deposit -> native delegation) must leave unchanged to the uatom. Shared with the mainnet export
+// suite, hence a free function over the common test helper.
+func cosmosHubRateNumerator(s *apptesting.AppTestHelper) sdkmath.LegacyDec {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CosmosHubChainId)
 	s.Require().True(found)
 	tokenized := s.App.StakeibcKeeper.GetTotalTokenizedDelegations(s.Ctx, hostZone)
@@ -76,7 +78,7 @@ func (s *UpgradeTestSuite) TestCloseCosmosHubLsmDeposit() {
 	otherDelegation := s.setupCosmosHubHostZone(tracked)
 	s.seedCosmosHubLsmDeposit(recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED,
 		v34.CosmosHubStrandedLsmDeposit.Amount, v34.CosmosHubStrandedLsmDeposit.ValidatorAddress)
-	numeratorBefore := s.cosmosHubRateNumerator()
+	numeratorBefore := cosmosHubRateNumerator(&s.AppTestHelper)
 
 	applied := v34.CloseCosmosHubLsmDeposit(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper)
 	s.Require().True(applied)
@@ -97,7 +99,7 @@ func (s *UpgradeTestSuite) TestCloseCosmosHubLsmDeposit() {
 	s.Require().True(found)
 	s.Require().Equal(otherDelegation.String(), other.Delegation.String(), "other validator must be untouched")
 
-	s.Require().Equal(numeratorBefore.String(), s.cosmosHubRateNumerator().String(), "redemption rate components unchanged")
+	s.Require().Equal(numeratorBefore.String(), cosmosHubRateNumerator(&s.AppTestHelper).String(), "redemption rate components unchanged")
 }
 
 func (s *UpgradeTestSuite) TestCloseCosmosHubLsmDeposit_WrongStatusSkips() {

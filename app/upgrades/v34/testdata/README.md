@@ -177,8 +177,10 @@ build instead of a silently deferred reconciliation.
   skipped), and stakeibc's celestia `TotalDelegations` is not mirrored.
 - Cosmos Hub: the export carries the stranded stakewithus LSM deposit in
   `DETOKENIZATION_FAILED` with the constant's amount and validator, the
-  close-out removes it, leaves the other cosmoshub-4 deposits untouched, and
-  raises stakewithus and `TotalDelegations` by exactly 10,999,999 uatom.
+  close-out removes it, leaves the other cosmoshub-4 deposits untouched,
+  raises stakewithus and `TotalDelegations` by exactly 10,999,999 uatom, and
+  the redemption rate components (`GetTotalTokenizedDelegations +
+  TotalDelegations`) are unchanged to the uatom.
 
 Note the snapshots are point-in-time: they catch a wrong address, a delta that
 no longer fits or a record that changed status, not drift that happens after
