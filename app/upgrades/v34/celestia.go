@@ -54,7 +54,10 @@ const CelestiaDelegationChannelId = "channel-862"
 //	on Stride:           GET /Stride-Labs/stride/stakeibc/host_zone/celestia
 //	delta               = on-chain delegation balance minus tracked validator.delegation, per address
 //
-// Include every validator whose delta != 0.
+// Include every validator whose delta != 0. Measure ONLY while the pinned delegation channel has
+// zero packet commitments (verify_constants.py checks this before and after the delta fetch): a
+// packet that executed unbooked is already counted as phantom, and if its ack is booked after the
+// measurement the delta falls while the commitment disappears, leaving a table that over-books.
 var CelestiaDelegationDeltas = []DelegationDelta{
 	{Name: "go", Address: "celestiavaloper1uvytvhunccudw8fzaxvsrumec53nawyj939gj9", Delta: mustInt("1476091841")},
 	{Name: "finoaconsensusservices", Address: "celestiavaloper1e2p4u5vqwgum7pm9vhp0yjvl58gvhfc6yfatw4", Delta: mustInt("1446695576")},
@@ -454,6 +457,8 @@ func removeDelegateCallbacks(
 		}
 
 		// Only a callback on the active channel still has a packet in flight whose completion
+		// (under the zero-commitments guard this branch cannot fire on mainnet, since callback
+		// data implies a live commitment; it is kept for the synthetic tests and as defence)
 		// the validators are waiting on
 		if found && entry.ChannelId == activeChannelId {
 			for _, split := range entry.Callback.SplitDelegations {

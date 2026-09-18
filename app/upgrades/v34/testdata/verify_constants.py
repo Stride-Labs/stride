@@ -190,7 +190,10 @@ def check_celestia_channel(channel_id: str) -> None:
     """The handler skips unless the pinned DELEGATION channel is still active and has no
     unacknowledged packets (see CelestiaDelegationChannelId in celestia.go)."""
     port = "icacontroller-celestia.DELEGATION"
-    channels = fetch_json(f"{STRIDE_API}/ibc/core/channel/v1/channels?pagination.limit=5000")["channels"]
+    page = fetch_json(f"{STRIDE_API}/ibc/core/channel/v1/channels?pagination.limit=5000")
+    if page.get("pagination", {}).get("next_key"):
+        raise RuntimeError("channel listing truncated; raise pagination.limit")
+    channels = page["channels"]
     on_port = sorted(
         (int(c["channel_id"].split("-")[1]) for c in channels if c["port_id"] == port),
     )
@@ -203,10 +206,11 @@ def check_celestia_channel(channel_id: str) -> None:
     pending = fetch_json(
         f"{STRIDE_API}/ibc/core/channel/v1/channels/{channel_id}/ports/{port}/packet_commitments?pagination.limit=1000"
     )["commitments"]
+    state = fetch_json(f"{STRIDE_API}/ibc/core/channel/v1/channels/{channel_id}/ports/{port}")["channel"]["state"]
     report(
         "celestia delegation channel has no unacknowledged packets",
         len(pending) == 0,
-        f"{len(pending)} pending commitments on {channel_id}",
+        f"{len(pending)} pending commitments on {channel_id} (state {state})",
     )
 
 
@@ -391,6 +395,9 @@ def main() -> int:
         f"parsed hub stranded deposit denom={hub_denom} validator={hub_validator_address} amount={hub_amount}\n"
     )
 
+    # The channel must be quiet both before and after the delta fetch: an ack booked between
+    # the two would lower a delta while erasing the commitment that proves it
+    check_celestia_channel(celestia_channel_id)
     check_celestia_deltas(celestia_deltas)
     check_celestia_channel(celestia_channel_id)
     check_staketia_delta(staketia_delta)

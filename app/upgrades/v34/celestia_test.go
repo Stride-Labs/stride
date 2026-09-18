@@ -3,6 +3,7 @@ package v34_test
 import (
 	"github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -515,9 +516,6 @@ func (s *UpgradeTestSuite) seedMalformedDelegateCallback(portId, channelId strin
 	return key
 }
 
-// A delegate callback on the port that cannot be unmarshalled must skip the whole reconciliation
-// before any write, rather than deleting the deposit record it (unreadably) references and
-// leaving the callback behind to fail unmarshalling on its eventual ack instead of being a no-op
 func (s *UpgradeTestSuite) TestReconcileCelestia_RestoredChannelSkipsAll() {
 	s.setupCelestiaHostZone()
 	s.seedCelestiaQueueShrinkScenario()
@@ -545,6 +543,20 @@ func (s *UpgradeTestSuite) TestReconcileCelestia_PendingPacketSkipsAll() {
 	s.assertCelestiaStateUnchanged(before)
 }
 
+// The pinned channel may be CLOSED (its timeouts relayed) at the upgrade block: that is the
+// quietest possible state and must still apply
+func (s *UpgradeTestSuite) TestReconcileCelestia_ClosedQuietChannelApplies() {
+	s.setupCelestiaHostZone()
+	s.seedCelestiaQueueShrinkScenario()
+	s.UpdateChannelState(celestiaDelegationPortId(), celestiaDelegationChannelId, channeltypes.CLOSED)
+
+	applied := v34.ReconcileCelestia(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper, s.App.IcacallbacksKeeper)
+	s.Require().True(applied, "a closed pinned channel with no pending packets must still apply")
+}
+
+// A delegate callback on the port that cannot be unmarshalled must skip the whole reconciliation
+// before any write, rather than deleting the deposit record it (unreadably) references and
+// leaving the callback behind to fail unmarshalling on its eventual ack instead of being a no-op
 func (s *UpgradeTestSuite) TestReconcileCelestia_MalformedCallbackSkipsAll() {
 	s.setupCelestiaHostZone()
 	s.seedCelestiaQueueShrinkScenario()

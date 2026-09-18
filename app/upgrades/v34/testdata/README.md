@@ -202,6 +202,20 @@ table, and such a packet leaves its commitment on Stride forever, so an
 unchanged, empty channel proves the table is still exact. A restore would move
 the active channel and hide that evidence, which is why the id is pinned.
 
+Measure the constants only while that channel has zero packet commitments
+(`verify_constants.py` checks this before and after the delta fetch): a packet
+that executed unbooked is already counted as phantom, and an ack booked after
+the measurement lowers the delta while erasing the commitment that would have
+tripped the guard. Note the committed fixture was assembled with 255 delegate
+callbacks still in flight on channel-862; the export suite mocks the channel
+without their commitments, i.e. it rehearses the post-clear state the handler
+will actually see, not the fixture-height state (which the guard would skip).
+Regenerate the fixture in the quiet state at release prep.
+
+The guard does not cover a Celestia slash on a table validator between the
+last script run and the upgrade block; that over-books the slashed validator by
+the slash amount until the routine slash query corrects it. Rare, and rate-safe.
+
 Operationally: from constant measurement to the upgrade block, do not restore
 the celestia DELEGATION channel, and make sure it has no unacknowledged
 packets at the block (a closed channel with its timeouts relayed qualifies).
