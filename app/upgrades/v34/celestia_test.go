@@ -6,6 +6,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
 	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
@@ -275,8 +276,9 @@ func (s *UpgradeTestSuite) assertCelestiaStateUnchanged(before celestiaState) {
 }
 
 // The redemption rate numerator components: deposit records awaiting delegation plus what is
-// already delegated. A pure bucket move leaves the sum unchanged to the utia.
-func (s *UpgradeTestSuite) celestiaRateNumerator() sdkmath.LegacyDec {
+// already delegated. A pure bucket move leaves the sum unchanged to the utia. Shared with the
+// mainnet export suite, hence a free function over the common test helper.
+func celestiaRateNumerator(s *apptesting.AppTestHelper) sdkmath.LegacyDec {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CelestiaChainId)
 	s.Require().True(found)
 	undelegated := s.App.StakeibcKeeper.GetUndelegatedBalance(v34.CelestiaChainId, s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx))
@@ -369,13 +371,13 @@ func (s *UpgradeTestSuite) TestReconcileCelestia_QueueRecordsShrunk() {
 	tracked, trackedTotal := s.setupCelestiaHostZone()
 	seed := s.seedCelestiaQueueShrinkScenario()
 	before := s.snapshotCelestiaState()
-	numeratorBefore := s.celestiaRateNumerator()
+	numeratorBefore := celestiaRateNumerator(&s.AppTestHelper)
 
 	applied := v34.ReconcileCelestia(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper, s.App.IcacallbacksKeeper)
 	s.Require().True(applied)
 
 	s.assertCelestiaReconciled(seed, tracked, trackedTotal, before)
-	s.Require().Equal(numeratorBefore.String(), s.celestiaRateNumerator().String(), "redemption rate components unchanged")
+	s.Require().Equal(numeratorBefore.String(), celestiaRateNumerator(&s.AppTestHelper).String(), "redemption rate components unchanged")
 
 	// The in-progress record was never reached, so its callback and validator counter are untouched
 	s.Require().Equal(before.callbackKeys, s.snapshotCelestiaState().callbackKeys, "no callbacks removed")
@@ -388,14 +390,14 @@ func (s *UpgradeTestSuite) TestReconcileCelestia_InProgressRecordsDeleted() {
 	tracked, trackedTotal := s.setupCelestiaHostZone()
 	seed, expectations := s.seedCelestiaInProgressScenario()
 	before := s.snapshotCelestiaState()
-	numeratorBefore := s.celestiaRateNumerator()
+	numeratorBefore := celestiaRateNumerator(&s.AppTestHelper)
 
 	applied := v34.ReconcileCelestia(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper, s.App.IcacallbacksKeeper)
 	s.Require().True(applied)
 
 	s.assertCelestiaReconciled(seed, tracked, trackedTotal, before)
 	s.assertCelestiaCallbacks(expectations)
-	s.Require().Equal(numeratorBefore.String(), s.celestiaRateNumerator().String(), "redemption rate components unchanged")
+	s.Require().Equal(numeratorBefore.String(), celestiaRateNumerator(&s.AppTestHelper).String(), "redemption rate components unchanged")
 
 	// No in-progress record survives with a reduced amount
 	for _, record := range s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx) {

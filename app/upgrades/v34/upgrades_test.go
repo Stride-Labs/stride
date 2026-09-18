@@ -140,7 +140,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	celestiaTracked, celestiaTrackedTotal := s.setupCelestiaHostZone()
 	celestiaSeed, celestiaCallbacks := s.seedCelestiaInProgressScenario()
 	celestiaBefore := s.snapshotCelestiaState()
-	celestiaNumeratorBefore := s.celestiaRateNumerator()
+	celestiaNumeratorBefore := celestiaRateNumerator(&s.AppTestHelper)
 	staketiaInitial := sdkmath.NewInt(200_000_000_000)
 	s.setupStaketiaHostZone(staketiaInitial)
 
@@ -157,7 +157,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	// ----- assert -----
 	s.assertCelestiaReconciled(celestiaSeed, celestiaTracked, celestiaTrackedTotal, celestiaBefore)
 	s.assertCelestiaCallbacks(celestiaCallbacks)
-	s.Require().Equal(celestiaNumeratorBefore.String(), s.celestiaRateNumerator().String(), "celestia redemption rate components unchanged")
+	s.Require().Equal(celestiaNumeratorBefore.String(), celestiaRateNumerator(&s.AppTestHelper).String(), "celestia redemption rate components unchanged")
 
 	staketiaHostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
 	s.Require().NoError(err)
