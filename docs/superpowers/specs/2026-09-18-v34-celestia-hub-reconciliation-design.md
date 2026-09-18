@@ -44,6 +44,18 @@ Redemptions route to the multisig until the staketia number reaches zero, so it 
 dry ~40k TIA early and stakeibc redemptions would never auto-enable. The existing
 `MsgAdjustDelegatedBalance` moves both numbers, so it cannot be used.
 
+Root cause (traced 2026-09-18): a v25 migration straddle. Before v25 (2025-02-06 15:00 UTC,
+gov prop 260) `RedeemStake` did not touch the delegated balance and `ConfirmUndelegation`
+decremented it. After v25, `RedeemStake` decrements staketia's `remaining_delegated_balance`
+at redeem time and `ConfirmUndelegation` decrements stakeibc's `total_delegations` instead.
+Unbonding record 884 accumulated redemptions from 2025-02-03 to 02-07 (mostly under the old
+code, so no staketia decrement) and was confirmed on 2025-02-13 under the new code (stakeibc
+decrement only). Its native amount, 39,829,976,251 utia, is 99.4% of the gap. The residual
+246,766,592 utia is 0.02% of all volume undelegated since and matches a second, ongoing
+effect: staketia decrements by the redeem-time estimate while stakeibc decrements by the
+amount finalized up to four days later at a slightly higher rate. That drift is left as-is
+(tabled with item 2); it is ~0.02-0.05% of each redemption.
+
 The redemption rate is unaffected by all three today: stakeibc counts queued/in-progress
 deposit records as undelegated backing and failed LSM deposits as tokenized delegations, so
 the phantom amounts are counted once, in the wrong bucket. Every fix below is a bucket move
@@ -126,9 +138,12 @@ twice and asserts the second call is a no-op.
 ## §4. Staketia (4)
 
 `AdjustStaketiaRemainingDelegatedBalance(ctx, stk, delta)` with
-`StaketiaRemainingDelegatedBalanceDelta = -40,076,742,843` (utia; measured 2026-09-18 as
-multisig on-chain delegation minus `remaining_delegated_balance`; re-measure before the
-proposal). Applies `hostZone.RemainingDelegatedBalance += delta` on the **staketia** host zone
+`StaketiaRemainingDelegatedBalanceDelta = -40,076,742,843` (utia; measured 2026-09-18).
+Measurement rule, to re-run right before the proposal:
+`delta = (multisig on-chain delegation − native amount owed by the current
+ACCUMULATING_REDEMPTIONS and UNBONDING_QUEUE records) − remaining_delegated_balance`. The
+subtraction matters because `remaining_delegated_balance` is already reduced for redemptions
+the multisig has not undelegated yet; on 2026-09-18 that term was zero. Applies `hostZone.RemainingDelegatedBalance += delta` on the **staketia** host zone
 only. Skips with a log if the staketia host zone is absent or the result would be negative.
 It deliberately does not mirror to stakeibc (contrast `MsgAdjustDelegatedBalance`).
 
