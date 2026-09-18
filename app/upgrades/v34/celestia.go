@@ -21,6 +21,17 @@ import (
 
 const CelestiaChainId = "celestia"
 
+// CelestiaDelegationChannelId is the DELEGATION ICA channel that was active when
+// CelestiaDelegationDeltas was measured (2026-09-18). Re-measure with the table.
+//
+// The delta table only changes when a delegate executes on Celestia without its acknowledgement
+// being booked, and such a packet leaves its commitment on Stride forever: it can be neither
+// acked (the ordered channel closed) nor timed out (the host received it). So an unchanged
+// active channel with no packet commitments proves nothing executed unbooked since the table
+// was measured, and the reconciliation is exact. A restore would move the active channel and
+// hide that evidence, which is why the channel id is pinned rather than looked up.
+const CelestiaDelegationChannelId = "channel-862"
+
 // CelestiaDelegationDeltas trues up the celestia host zone's tracked delegations to what is
 // actually staked on Celestia.
 //
@@ -242,6 +253,12 @@ func ReconcileCelestia(
 		return false
 	}
 
+	// Only apply when no delegate can have executed unbooked since the table was measured
+	// (see CelestiaDelegationChannelId)
+	if !celestiaDelegationChannelIsQuiet(ctx, sk, hostZone, portId) {
+		return false
+	}
+
 	// Every check passed; book the stake on the validators first
 	appliedDelta, applied := reconcileHostZoneDelegations(ctx, sk, CelestiaChainId, CelestiaDelegationDeltas)
 	if !applied {
@@ -353,6 +370,29 @@ type celestiaDelegateCallback struct {
 	Key       string
 	ChannelId string
 	Callback  stakeibctypes.DelegateCallback
+}
+
+// celestiaDelegationChannelIsQuiet checks that the active DELEGATION channel is still the one the
+// delta table was measured on and that it has no outstanding packet commitments. Either failure
+// means a delegate may have executed on Celestia after the measurement, so the table can no
+// longer be trusted and the reconciliation is deferred to a later upgrade.
+func celestiaDelegationChannelIsQuiet(ctx sdk.Context, sk stakeibckeeper.Keeper, hostZone stakeibctypes.HostZone, portId string) bool {
+	activeChannelId, found := sk.ICAControllerKeeper.GetActiveChannelID(ctx, hostZone.ConnectionId, portId)
+	if !found || activeChannelId != CelestiaDelegationChannelId {
+		ctx.Logger().Error(fmt.Sprintf("v34: %s active delegation channel is %q, expected %s; "+
+			"reconciliation NOT applied, re-measure constants and reconcile in a later upgrade",
+			CelestiaChainId, activeChannelId, CelestiaDelegationChannelId))
+		return false
+	}
+
+	pending := sk.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(ctx, portId, activeChannelId)
+	if len(pending) > 0 {
+		ctx.Logger().Error(fmt.Sprintf("v34: %s delegation channel %s has %d unacknowledged packets; "+
+			"reconciliation NOT applied, clear the channel and reconcile in a later upgrade",
+			CelestiaChainId, activeChannelId, len(pending)))
+		return false
+	}
+	return true
 }
 
 // collectCelestiaDelegateCallbacks decodes every delegate callback on portId, on any channel,

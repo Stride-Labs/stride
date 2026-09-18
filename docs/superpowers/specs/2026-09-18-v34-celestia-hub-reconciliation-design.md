@@ -130,6 +130,13 @@ Order matters; nothing is written until every check passes.
    way v33 credited Osmosis. Removal therefore stays exact in every case.
 7. Log per-record removals and the totals; return true.
 
+Guard added after review (2026-09-18): before any write, the active DELEGATION channel must equal
+the pinned `CelestiaDelegationChannelId` (measured with the table) and must have zero packet
+commitments; otherwise skip with a log. A stranded packet leaves its commitment on Stride
+forever, so an unchanged empty channel proves no delegate executed unbooked since measurement,
+which removes the residual in-flight cases from §3 step 6 entirely. Operational rule: no restore
+of that channel between measurement and the upgrade block.
+
 Idempotence: a second run finds the delta table would apply again (validators exist) but the
 records would no longer cover the amount, so step 3 skips before anything is written.
 `TestUpgrade` runs the handler once; an explicit idempotence test runs `ReconcileCelestia`

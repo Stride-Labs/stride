@@ -122,6 +122,13 @@ def parse_celestia_deltas() -> list[tuple[str, str, int]]:
     ]
 
 
+def parse_celestia_channel_id() -> str:
+    match = re.search(r'const CelestiaDelegationChannelId = "(channel-\d+)"', CELESTIA_GO.read_text())
+    if not match:
+        raise RuntimeError("CelestiaDelegationChannelId not found in celestia.go")
+    return match.group(1)
+
+
 def parse_staketia_delta() -> int:
     source = CELESTIA_GO.read_text()
     match = re.search(
@@ -176,6 +183,30 @@ def check_celestia_deltas(table: list[tuple[str, str, int]]) -> None:
         "; ".join(mismatches)
         if mismatches
         else f"{len(table)} validators, all deltas match",
+    )
+
+
+def check_celestia_channel(channel_id: str) -> None:
+    """The handler skips unless the pinned DELEGATION channel is still active and has no
+    unacknowledged packets (see CelestiaDelegationChannelId in celestia.go)."""
+    port = "icacontroller-celestia.DELEGATION"
+    channels = fetch_json(f"{STRIDE_API}/ibc/core/channel/v1/channels?pagination.limit=5000")["channels"]
+    on_port = sorted(
+        (int(c["channel_id"].split("-")[1]) for c in channels if c["port_id"] == port),
+    )
+    newest = f"channel-{on_port[-1]}" if on_port else "none"
+    report(
+        "celestia delegation channel is still the pinned one (no restore since measurement)",
+        newest == channel_id,
+        f"pinned {channel_id}, newest on port {newest}",
+    )
+    pending = fetch_json(
+        f"{STRIDE_API}/ibc/core/channel/v1/channels/{channel_id}/ports/{port}/packet_commitments?pagination.limit=1000"
+    )["commitments"]
+    report(
+        "celestia delegation channel has no unacknowledged packets",
+        len(pending) == 0,
+        f"{len(pending)} pending commitments on {channel_id}",
     )
 
 
@@ -348,6 +379,7 @@ def check_fixture_hub_lsm_deposit(
 def main() -> int:
     celestia_deltas = parse_celestia_deltas()
     staketia_delta = parse_staketia_delta()
+    celestia_channel_id = parse_celestia_channel_id()
     hub_denom, hub_validator_address, hub_amount = parse_hub_stranded_deposit()
     phantom_amount = sum(delta for _, _, delta in celestia_deltas)
 
@@ -360,6 +392,7 @@ def main() -> int:
     )
 
     check_celestia_deltas(celestia_deltas)
+    check_celestia_channel(celestia_channel_id)
     check_staketia_delta(staketia_delta)
     check_hub_lsm_deposit(hub_denom, hub_validator_address, hub_amount)
     shares_to_tokens_rate = check_hub_delegation_gap(hub_validator_address, hub_amount)

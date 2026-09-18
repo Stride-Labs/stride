@@ -17,7 +17,7 @@ import (
 
 const (
 	celestiaConnectionId        = "connection-0"
-	celestiaDelegationChannelId = "channel-7"
+	celestiaDelegationChannelId = v34.CelestiaDelegationChannelId
 	celestiaDeadChannelId       = "channel-2"
 	celestiaDelegationIca       = "celestia1delegationica"
 	celestiaHostDenom           = "utia"
@@ -518,6 +518,33 @@ func (s *UpgradeTestSuite) seedMalformedDelegateCallback(portId, channelId strin
 // A delegate callback on the port that cannot be unmarshalled must skip the whole reconciliation
 // before any write, rather than deleting the deposit record it (unreadably) references and
 // leaving the callback behind to fail unmarshalling on its eventual ack instead of being a no-op
+func (s *UpgradeTestSuite) TestReconcileCelestia_RestoredChannelSkipsAll() {
+	s.setupCelestiaHostZone()
+	s.seedCelestiaQueueShrinkScenario()
+
+	// A restore after the measurement moves the active channel to a fresh id
+	owner := stakeibctypes.FormatHostZoneICAOwner(v34.CelestiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	s.MockICAChannel(celestiaConnectionId, "channel-999", owner, celestiaDelegationIca)
+	before := s.snapshotCelestiaState()
+
+	applied := v34.ReconcileCelestia(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper, s.App.IcacallbacksKeeper)
+	s.Require().False(applied, "an active channel other than the pinned one must skip the whole reconciliation")
+	s.assertCelestiaStateUnchanged(before)
+}
+
+func (s *UpgradeTestSuite) TestReconcileCelestia_PendingPacketSkipsAll() {
+	s.setupCelestiaHostZone()
+	s.seedCelestiaQueueShrinkScenario()
+
+	// An unacknowledged delegate on the pinned channel may still execute on the host
+	s.App.IBCKeeper.ChannelKeeper.SetPacketCommitment(s.Ctx, celestiaDelegationPortId(), celestiaDelegationChannelId, 7, []byte("commitment"))
+	before := s.snapshotCelestiaState()
+
+	applied := v34.ReconcileCelestia(s.Ctx, s.App.StakeibcKeeper, s.App.RecordsKeeper, s.App.IcacallbacksKeeper)
+	s.Require().False(applied, "a pending packet on the delegation channel must skip the whole reconciliation")
+	s.assertCelestiaStateUnchanged(before)
+}
+
 func (s *UpgradeTestSuite) TestReconcileCelestia_MalformedCallbackSkipsAll() {
 	s.setupCelestiaHostZone()
 	s.seedCelestiaQueueShrinkScenario()

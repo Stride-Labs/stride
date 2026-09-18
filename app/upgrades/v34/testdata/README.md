@@ -189,8 +189,24 @@ proposal (the measurement commands are in `celestia.go`, `cosmoshub.go` and
 `injective.go`). If the POA set, any host zone's validator set, the celestia
 deposit records, the LSM deposit, the staketia balance, or the celestia
 DELEGATION port's active channel changes on mainnet between now and the
-release, regenerate the fixture together with the constants so the gate tests
-against current state.
+release, regenerate the fixture together with the constants (including
+`CelestiaDelegationChannelId`) so the gate tests against current state.
+
+## The pinned delegation channel guard
+
+`ReconcileCelestia` applies only if the celestia DELEGATION port's active
+channel is still `CelestiaDelegationChannelId` (measured with the delta table)
+and that channel has zero packet commitments. A delegate that executes on the
+host without its ack being booked is the only thing that changes the delta
+table, and such a packet leaves its commitment on Stride forever, so an
+unchanged, empty channel proves the table is still exact. A restore would move
+the active channel and hide that evidence, which is why the id is pinned.
+
+Operationally: from constant measurement to the upgrade block, do not restore
+the celestia DELEGATION channel, and make sure it has no unacknowledged
+packets at the block (a closed channel with its timeouts relayed qualifies).
+If the guard trips, the Celestia step skips with a log and every other v34
+step still applies; re-measure and reconcile in the next upgrade.
 
 ## Release prep: run `python3 app/upgrades/v34/testdata/verify_constants.py`
 

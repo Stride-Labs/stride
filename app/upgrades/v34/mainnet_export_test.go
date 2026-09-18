@@ -326,6 +326,8 @@ func (s *MainnetExportTestSuite) populateActiveCelestiaChannelFromExport(export 
 
 	var activeChannelId string
 	s.Require().NoError(json.Unmarshal(raw, &activeChannelId))
+	s.Require().Equal(v34.CelestiaDelegationChannelId, activeChannelId,
+		"the fixture's active delegation channel must match CelestiaDelegationChannelId — re-measure both together")
 
 	owner := stakeibctypes.FormatHostZoneICAOwner(v34.CelestiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
 	s.MockICAChannel(celestiaHostZone.ConnectionId, activeChannelId, owner, celestiaHostZone.DelegationIcaAddress)
