@@ -16,10 +16,13 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/gogoproto/proto"
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
 	"github.com/Stride-Labs/stride/v34/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
 	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -74,6 +77,8 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	exportHostZones := s.populateHostZonesFromExport(export)
 	exportRecords := s.populateRecordsFromExport(export)
 	exportStaketiaHostZone := s.populateStaketiaHostZoneFromExport(export)
+	exportCallbacks := s.populateCallbacksFromExport(export)
+	activeChannelId := s.populateActiveCelestiaChannelFromExport(export, exportHostZones[v34.CelestiaChainId])
 	celestiaNumeratorBefore := celestiaRateNumerator(&s.AppTestHelper)
 
 	totalPower, err := s.App.POAKeeper.GetTotalPower(s.Ctx)
@@ -87,6 +92,7 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	// ----- assert: every accounting fix applied in full with the real constants -----
 	s.assertInjectiveReconciled(exportHostZones[v34.InjectiveChainId])
 	celestiaDelta := s.assertCelestiaReconciled(exportHostZones[v34.CelestiaChainId], exportRecords, celestiaNumeratorBefore)
+	s.assertCelestiaCallbacksReconciled(exportRecords, exportCallbacks, exportHostZones[v34.CelestiaChainId], activeChannelId)
 	s.assertStaketiaAdjusted(exportStaketiaHostZone, exportHostZones[v34.CelestiaChainId], celestiaDelta)
 	s.assertCosmosHubLsmDepositClosed(exportHostZones[v34.CosmosHubChainId], exportRecords)
 
@@ -245,8 +251,7 @@ func (s *MainnetExportTestSuite) populateHostZonesFromExport(export strideExport
 // populateRecordsFromExport seeds the celestia deposit records and the
 // cosmoshub-4 LSM token deposits from the export's app_state.records section,
 // with their real statuses and ids, and returns the section for later
-// comparison. No icacallbacks entries are seeded: ReconcileCelestia only
-// deletes callbacks it finds, so in-progress records reconcile without them.
+// comparison.
 func (s *MainnetExportTestSuite) populateRecordsFromExport(export strideExport) recordstypes.GenesisState {
 	raw, ok := export.AppState["records"]
 	s.Require().True(ok, "trimmed export missing records section — regenerate per testdata/README.md")
@@ -288,6 +293,42 @@ func (s *MainnetExportTestSuite) populateStaketiaHostZoneFromExport(export strid
 
 	s.App.StaketiaKeeper.SetHostZone(s.Ctx, genesis.HostZone)
 	return genesis.HostZone
+}
+
+// populateCallbacksFromExport seeds icacallbacks from the export's
+// app_state.icacallbacks section — the celestia DELEGATION port's delegate
+// callbacks (every entry on the active channel plus a representative sample
+// of dead-channel entries, per testdata/README.md) — and returns them for
+// later comparison.
+func (s *MainnetExportTestSuite) populateCallbacksFromExport(export strideExport) []icacallbackstypes.CallbackData {
+	raw, ok := export.AppState["icacallbacks"]
+	s.Require().True(ok, "trimmed export missing icacallbacks section — regenerate per testdata/README.md")
+
+	var genesis icacallbackstypes.GenesisState
+	s.Require().NoError(s.App.AppCodec().UnmarshalJSON(raw, &genesis))
+	s.Require().NotEmpty(genesis.CallbackDataList, "export should contain celestia DELEGATION callbacks")
+
+	for _, callback := range genesis.CallbackDataList {
+		s.App.IcacallbacksKeeper.SetCallbackData(s.Ctx, callback)
+	}
+	return genesis.CallbackDataList
+}
+
+// populateActiveCelestiaChannelFromExport reads the celestia DELEGATION
+// active channel id from the export's custom app_state.icacallbacks_active_channel
+// key (not a real export field — see testdata/README.md) and registers it as
+// the host zone's open ICA channel, exactly as ReconcileCelestia would find it
+// on mainnet.
+func (s *MainnetExportTestSuite) populateActiveCelestiaChannelFromExport(export strideExport, celestiaHostZone stakeibctypes.HostZone) string {
+	raw, ok := export.AppState["icacallbacks_active_channel"]
+	s.Require().True(ok, "trimmed export missing icacallbacks_active_channel — regenerate per testdata/README.md")
+
+	var activeChannelId string
+	s.Require().NoError(json.Unmarshal(raw, &activeChannelId))
+
+	owner := stakeibctypes.FormatHostZoneICAOwner(v34.CelestiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	s.MockICAChannel(celestiaHostZone.ConnectionId, activeChannelId, owner, celestiaHostZone.DelegationIcaAddress)
+	return activeChannelId
 }
 
 // assertInjectiveReconciled checks the delta table applied in full against the
@@ -376,6 +417,102 @@ func (s *MainnetExportTestSuite) assertCelestiaReconciled(
 	s.Require().Equal(numeratorBefore.String(), celestiaRateNumerator(&s.AppTestHelper).String(),
 		"celestia redemption rate components (undelegated records + TotalDelegations) should be unchanged")
 	return phantomAmount
+}
+
+// assertCelestiaCallbacksReconciled checks removeDelegateCallbacks actually ran against the real
+// callback set: every delegate callback that referenced a deposit record deleted by the
+// reconciliation is gone, every surviving delegate callback's record still exists, non-delegate
+// callbacks are never touched, and each validator's DelegationChangesInProgress moved down by
+// exactly the number of splits it was named in among the removed active-channel callbacks
+// (dead-channel removals are orphans and never decrement anything, and the count never goes
+// negative).
+func (s *MainnetExportTestSuite) assertCelestiaCallbacksReconciled(
+	exportRecords recordstypes.GenesisState,
+	exportCallbacks []icacallbackstypes.CallbackData,
+	exportHostZone stakeibctypes.HostZone,
+	activeChannelId string,
+) {
+	owner := stakeibctypes.FormatHostZoneICAOwner(v34.CelestiaChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	portId, err := icatypes.NewControllerPortID(owner)
+	s.Require().NoError(err)
+
+	// removeDelegateCallbacks only ever cleans up callbacks for records that were
+	// DELEGATION_IN_PROGRESS and got deleted this run: a queue record deletion has no in-flight
+	// ICA tx and so no callback to clean up, even though the record itself is also gone now. The
+	// export also carries plenty of genuinely dangling callbacks predating this upgrade (the ~90
+	// channel deaths left orphans referencing records outside this snapshot entirely, or referencing
+	// records now sitting back in DELEGATION_QUEUE after an automated restore) — those are real
+	// mainnet noise the upgrade neither creates nor is responsible for cleaning up.
+	inProgressRecordIds := map[uint64]bool{}
+	deletedRecordIds := map[uint64]bool{}
+	for _, record := range exportRecords.DepositRecordList {
+		if record.Status != recordstypes.DepositRecord_DELEGATION_IN_PROGRESS {
+			continue
+		}
+		inProgressRecordIds[record.Id] = true
+		if _, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, record.Id); !found {
+			deletedRecordIds[record.Id] = true
+		}
+	}
+	s.Require().NotEmpty(deletedRecordIds, "the mainnet export should have at least one in-progress celestia deposit record removed")
+
+	afterKeys := map[string]bool{}
+	for _, callback := range s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx) {
+		if callback.PortId == portId {
+			afterKeys[callback.CallbackKey] = true
+		}
+	}
+
+	// Tally, per validator, the splits named in removed callbacks that were on the active
+	// channel — only those had a packet in flight whose completion the validators were waiting on
+	activeChannelDecrements := map[string]int64{}
+	for _, callback := range exportCallbacks {
+		if callback.CallbackId != stakeibckeeper.ICACallbackID_Delegate {
+			s.Require().True(afterKeys[callback.CallbackKey], "non-delegate callback %s should never be touched", callback.CallbackKey)
+			continue
+		}
+
+		var delegateCallback stakeibctypes.DelegateCallback
+		s.Require().NoError(proto.Unmarshal(callback.CallbackArgs, &delegateCallback))
+
+		if !deletedRecordIds[delegateCallback.DepositRecordId] {
+			s.Require().True(afterKeys[callback.CallbackKey],
+				"callback %s for surviving record %d should not have been touched", callback.CallbackKey, delegateCallback.DepositRecordId)
+
+			// Only assert the record still exists for the in-progress records this suite actually
+			// tracks — a callback outside that set may be pre-existing mainnet noise (see above)
+			// whose target record was never part of this snapshot to begin with.
+			if inProgressRecordIds[delegateCallback.DepositRecordId] {
+				_, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, delegateCallback.DepositRecordId)
+				s.Require().True(found, "remaining delegate callback %s references in-progress record %d which no longer exists",
+					callback.CallbackKey, delegateCallback.DepositRecordId)
+			}
+			continue
+		}
+
+		s.Require().False(afterKeys[callback.CallbackKey],
+			"callback %s for removed record %d should have been deleted", callback.CallbackKey, delegateCallback.DepositRecordId)
+		if callback.ChannelId == activeChannelId {
+			for _, split := range delegateCallback.SplitDelegations {
+				activeChannelDecrements[split.Validator]++
+			}
+		}
+	}
+
+	beforeChangesInProgress := map[string]int64{}
+	for _, validator := range exportHostZone.Validators {
+		beforeChangesInProgress[validator.Address] = validator.DelegationChangesInProgress
+	}
+	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CelestiaChainId)
+	s.Require().True(found)
+	for _, validator := range hostZone.Validators {
+		expected := beforeChangesInProgress[validator.Address] - activeChannelDecrements[validator.Address]
+		if expected < 0 {
+			expected = 0
+		}
+		s.Require().Equal(expected, validator.DelegationChangesInProgress,
+			"%s delegation changes in progress should move down by exactly its removed active-channel splits", validator.Name)
+	}
 }
 
 // assertStaketiaAdjusted checks the staketia remaining delegated balance moved

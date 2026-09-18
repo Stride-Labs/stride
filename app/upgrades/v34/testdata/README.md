@@ -12,6 +12,18 @@ v34 mainnet-export suite consumes:
   LSM token deposits only.
 - `app_state.staketia` — `{host_zone}`: the staketia (multisig) host zone for
   the remaining delegated balance correction.
+- `app_state.icacallbacks` — `{callback_data_list}`: every delegate callback on
+  the celestia DELEGATION port's active channel (255 entries, one per current
+  `DELEGATION_IN_PROGRESS` record) plus a representative sample of dead-channel
+  entries (3 per dead channel, 321 entries across all 109 dead channels the
+  port has ever used) and all 24 `rebalance`-id entries, so
+  `removeDelegateCallbacks` is exercised end to end: real callback removals,
+  real survivors, and real non-delegate/dead-channel noise it must leave alone.
+- `app_state.icacallbacks_active_channel` — not a real export field: a
+  single string naming the celestia DELEGATION port's active channel id
+  (`channel-862` as of this snapshot), so the suite can register it as the
+  open ICA channel the way mainnet has it, without querying IBC channel state
+  itself.
 
 The suite skips when the file is absent.
 
@@ -19,11 +31,11 @@ The suite skips when the file is absent.
 
 **POA section** assembled 2026-09-11 at mainnet height **40202716**; **injective-1
 host zone** assembled 2026-09-15 at mainnet height **40302363**; **celestia and
-cosmoshub-4 host zones, records and staketia sections** assembled 2026-09-18 at
-mainnet height **40364142**. All from the public REST API, which serves the same
-module state a `strided export` emits for these sections (the REST field names
-match the module genesis protos, and string-typed integers decode through the
-app codec exactly as an export does):
+cosmoshub-4 host zones, records, staketia and icacallbacks sections** assembled
+2026-09-18 at mainnet height **40364142**. All from the public REST API, which
+serves the same module state a `strided export` emits for these sections (the
+REST field names match the module genesis protos, and string-typed integers
+decode through the app codec exactly as an export does):
 
 ```bash
 API=https://stride-api.polkachu.com
@@ -55,6 +67,53 @@ if a request returns an HTML error page. The committed fixture was assembled by
 merging the height-40364142 pieces into the previously committed POA and
 injective-1 sections, which are byte-identical to the earlier fixture.
 
+### icacallbacks section (Celestia DELEGATION port)
+
+The `callback_data` endpoint is not filterable by port and paginates in pages
+of ~5000 across the whole chain (~22k entries chain-wide at this height); fetch
+every page with `-H "$H"` and a `User-Agent`, then filter client-side:
+
+```bash
+key=""
+> all_callbacks.json.tmp
+while :; do
+  url="$API/Stride-Labs/stride/icacallbacks/callback_data?pagination.limit=5000"
+  [ -n "$key" ] && url="$url&pagination.key=$key"
+  page=$(curl -s -H "User-Agent: curl/8.0" -H "$H" "$url")
+  echo "$page" | jq -c '.callback_data[]' >> all_callbacks.json.tmp
+  key=$(echo "$page" | jq -r '.pagination.next_key // empty')
+  [ -z "$key" ] && break
+done
+jq -s '[.[] | select(.port_id == "icacontroller-celestia.DELEGATION")]' all_callbacks.json.tmp > tia_callbacks.json
+```
+
+The active channel id came from confirming the channel is open at the same height:
+
+```bash
+curl -s -H "$H" "$API/ibc/core/channel/v1/channels/channel-862/ports/icacontroller-celestia.DELEGATION"
+# -> state STATE_OPEN, counterparty channel-700 on icahost; connection-125 matches the
+#    celestia host zone's connection_id in the stakeibc section above
+```
+
+`tia_callbacks.json` has 19,845 entries (~47MB decompressed) — too large to
+commit whole. The committed fixture keeps every entry on `channel-862` (255,
+one per current `DELEGATION_IN_PROGRESS` record — enough to exercise every
+branch of `removeDelegateCallbacks` deterministically) plus a representative
+dead-channel sample (the first 3 `delegate`-id entries per distinct dead
+channel id, 321 entries across 109 channels) plus every `rebalance`-id entry
+(24, on `channel-859`/`channel-481`, to prove non-delegate callbacks are never
+touched):
+
+```bash
+jq '[.[] | select(.channel_id == "channel-862")]
+    + (group_by(.channel_id) | map(select(.[0].channel_id != "channel-862" and .[0].callback_id == "delegate")) | map(.[0:3]) | add)
+    + [.[] | select(.callback_id == "rebalance")]' tia_callbacks.json > tia_callbacks_sample.json
+
+jq --slurpfile cb tia_callbacks_sample.json '.app_state.icacallbacks = {callback_data_list: $cb[0]}
+    | .app_state.icacallbacks_active_channel = "channel-862"' trimmed.json > trimmed_with_callbacks.json
+gzip -c trimmed_with_callbacks.json > app/upgrades/v34/testdata/mainnet_export.json.gz
+```
+
 POA cross-validation at assembly time: the fixture's pubkeys and powers match
 the live CometBFT signing set (`stride-rpc.polkachu.com/validators`, a separate
 consensus-layer data path), and an independent provider
@@ -73,8 +132,14 @@ jq '{app_state: {poa: .app_state.poa,
                               | select(.chain_id == "injective-1" or .chain_id == "celestia" or .chain_id == "cosmoshub-4")]},
                  records: {deposit_record_list: [.app_state.records.deposit_record_list[] | select(.host_zone_id == "celestia")],
                            lsm_token_deposit_list: [.app_state.records.lsm_token_deposit_list[] | select(.chain_id == "cosmoshub-4")]},
-                 staketia: {host_zone: .app_state.staketia.host_zone}}}' \
-  full_export.json > trimmed.json
+                 staketia: {host_zone: .app_state.staketia.host_zone},
+                 icacallbacks: {callback_data_list: [.app_state.icacallbacks.callback_data_list[]
+                              | select(.port_id == "icacontroller-celestia.DELEGATION")]}}}' \
+  full_export.json > trimmed_full_callbacks.json
+# then apply the same channel-862 + per-channel-sample + rebalance filter as above to
+# trimmed_full_callbacks.json's icacallbacks.callback_data_list, and add
+# app_state.icacallbacks_active_channel by querying the node's IBC channel state directly
+# (`strided q ibc channel end icacontroller-celestia.DELEGATION <channel>` for the OPEN one)
 gzip -c trimmed.json > app/upgrades/v34/testdata/mainnet_export.json.gz
 ```
 
@@ -97,9 +162,16 @@ build instead of a silently deferred reconciliation.
   delta, `TotalDelegations` up by the table sum), exactly the table sum is
   removed from the real celestia deposit records (which must cover it),
   transfer-status records are untouched, and the redemption rate components
-  (`GetUndelegatedBalance + TotalDelegations`) are unchanged to the utia. The
-  in-progress records reconcile without icacallbacks entries, which the
-  fixture does not carry: the handler only removes callbacks it finds.
+  (`GetUndelegatedBalance + TotalDelegations`) are unchanged to the utia.
+  `removeDelegateCallbacks` is exercised against the real callback set: every
+  delegate callback whose `DepositRecordId` was a `DELEGATION_IN_PROGRESS`
+  record that got deleted this run is gone (on any channel), every other
+  delegate and non-delegate callback is untouched, and each validator's
+  `DelegationChangesInProgress` moved down by exactly the number of splits it
+  was named in among the removed *active-channel* callbacks (never below
+  zero) — dead-channel removals are orphans and never decrement anything.
+  Real pre-existing dangling callbacks outside this snapshot (mainnet noise
+  from the ~90 channel deaths) are left alone, as expected.
 - Staketia: `remaining_delegated_balance` moves by exactly
   `StaketiaRemainingDelegatedBalanceDelta` (a negative result would have been
   skipped), and stakeibc's celestia `TotalDelegations` is not mirrored.
@@ -113,6 +185,7 @@ no longer fits or a record that changed status, not drift that happens after
 the snapshot. Still re-measure every table and delta immediately before the
 proposal (the measurement commands are in `celestia.go`, `cosmoshub.go` and
 `injective.go`). If the POA set, any host zone's validator set, the celestia
-deposit records, the LSM deposit or the staketia balance changes on mainnet
-between now and the release, regenerate the fixture together with the
-constants so the gate tests against current state.
+deposit records, the LSM deposit, the staketia balance, or the celestia
+DELEGATION port's active channel changes on mainnet between now and the
+release, regenerate the fixture together with the constants so the gate tests
+against current state.
