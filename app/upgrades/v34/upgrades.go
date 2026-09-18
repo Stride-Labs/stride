@@ -17,16 +17,22 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/Stride-Labs/stride/v34/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v34/x/icacallbacks/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	staketiakeeper "github.com/Stride-Labs/stride/v34/x/staketia/keeper"
 )
 
 // CreateUpgradeHandler returns the v34 upgrade handler, which swaps two POA
 // validators (see docs/superpowers/specs/2026-09-09-v34-validator-swap-design.md),
 // clears stuck slash queries and ICQs (see slash_queries.go), reconciles the
 // injective-1 host zone's delegation accounting and queues the applied excess
-// as a pending undelegation (see injective.go), and updates the gov quorum and
-// voting period (see gov_params.go).
+// as a pending undelegation (see injective.go), books the celestia stake that
+// executed without acknowledgement while retiring the matching phantom deposit
+// records and corrects staketia's remaining delegated balance (see celestia.go;
+// docs/superpowers/specs/2026-09-18-v34-celestia-hub-reconciliation-design.md),
+// and updates the gov quorum and voting period (see gov_params.go).
 //
 // poaKeeper is a pointer because POA's keeper methods have pointer receivers.
 // cdc unpacks the stored consensus-pubkey Anys when resolving the outgoing
@@ -37,12 +43,15 @@ func CreateUpgradeHandler(
 	cdc codec.Codec,
 	poaKeeper *poakeeper.Keeper,
 	stakeibcKeeper stakeibckeeper.Keeper,
+	recordsKeeper recordskeeper.Keeper,
+	icacallbacksKeeper icacallbackskeeper.Keeper,
+	staketiaKeeper staketiakeeper.Keeper,
 	icqKeeper icqkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
-		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + Injective reconciliation + gov params)...", UpgradeName))
+		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + Injective reconciliation + Celestia reconciliation + staketia balance correction + gov params)...", UpgradeName))
 
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 		if err != nil {
@@ -65,6 +74,12 @@ func CreateUpgradeHandler(
 		if appliedDelta.IsPositive() {
 			stakeibcKeeper.SetPendingUndelegation(ctx, InjectiveChainId, appliedDelta)
 		}
+
+		// Each of the following accounting fixes is independent and skips itself (with a log)
+		// rather than erroring when its constants no longer describe chain state
+		ReconcileCelestia(ctx, stakeibcKeeper, recordsKeeper, icacallbacksKeeper)
+		AdjustStaketiaRemainingDelegatedBalance(ctx, staketiaKeeper, StaketiaRemainingDelegatedBalanceDelta)
+		// The Cosmos Hub stranded LSM deposit close-out slots in here, after the staketia step
 
 		if err := UpdateGovParams(ctx, govKeeper); err != nil {
 			return vm, err

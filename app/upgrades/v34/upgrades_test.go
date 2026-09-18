@@ -133,10 +133,28 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.seedCurrentPOASet()
 	s.capturePreUpgradeState()
 
+	// Celestia: host zone, queue + in-progress deposit records with callbacks on the active
+	// delegation channel; staketia: the multisig host zone with a balance to correct
+	celestiaTracked, celestiaTrackedTotal := s.setupCelestiaHostZone()
+	celestiaSeed, celestiaCallbacks := s.seedCelestiaInProgressScenario()
+	celestiaBefore := s.snapshotCelestiaState()
+	celestiaNumeratorBefore := s.celestiaRateNumerator()
+	staketiaInitial := sdkmath.NewInt(200_000_000_000)
+	s.setupStaketiaHostZone(staketiaInitial)
+
 	// ----- act -----
 	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
 
 	// ----- assert -----
+	s.assertCelestiaReconciled(celestiaSeed, celestiaTracked, celestiaTrackedTotal, celestiaBefore)
+	s.assertCelestiaCallbacks(celestiaCallbacks)
+	s.Require().Equal(celestiaNumeratorBefore.String(), s.celestiaRateNumerator().String(), "celestia redemption rate components unchanged")
+
+	staketiaHostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(staketiaInitial.Add(v34.StaketiaRemainingDelegatedBalanceDelta).String(),
+		staketiaHostZone.RemainingDelegatedBalance.String(), "staketia remaining delegated balance corrected")
+
 	byMoniker := s.validatorsByMoniker()
 
 	// Incoming: present at ValidatorPower with the generated pubkey and the
