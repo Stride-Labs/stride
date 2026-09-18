@@ -30,7 +30,8 @@ import (
 // injective-1 host zone's delegation accounting and queues the applied excess
 // as a pending undelegation (see injective.go), books the celestia stake that
 // executed without acknowledgement while retiring the matching phantom deposit
-// records and corrects staketia's remaining delegated balance (see celestia.go;
+// records, corrects staketia's remaining delegated balance and closes the
+// Cosmos Hub's stranded stakewithus LSM deposit (see celestia.go, cosmoshub.go;
 // docs/superpowers/specs/2026-09-18-v34-celestia-hub-reconciliation-design.md),
 // and updates the gov quorum and voting period (see gov_params.go).
 //
@@ -51,7 +52,7 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
-		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + Injective reconciliation + Celestia reconciliation + staketia balance correction + gov params)...", UpgradeName))
+		ctx.Logger().Info(fmt.Sprintf("Starting upgrade %s (POA validator swap + stuck ICQ cleanup + Injective reconciliation + Celestia reconciliation + staketia balance correction + Cosmos Hub LSM deposit close-out + gov params)...", UpgradeName))
 
 		vm, err := mm.RunMigrations(ctx, configurator, vm)
 		if err != nil {
@@ -79,7 +80,7 @@ func CreateUpgradeHandler(
 		// rather than erroring when its constants no longer describe chain state
 		ReconcileCelestia(ctx, stakeibcKeeper, recordsKeeper, icacallbacksKeeper)
 		AdjustStaketiaRemainingDelegatedBalance(ctx, staketiaKeeper, StaketiaRemainingDelegatedBalanceDelta)
-		// The Cosmos Hub stranded LSM deposit close-out slots in here, after the staketia step
+		CloseCosmosHubLsmDeposit(ctx, stakeibcKeeper, recordsKeeper)
 
 		if err := UpdateGovParams(ctx, govKeeper); err != nil {
 			return vm, err
