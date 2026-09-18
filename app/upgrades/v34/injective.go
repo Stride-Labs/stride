@@ -1,8 +1,6 @@
 package v34
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,14 +9,6 @@ import (
 )
 
 const InjectiveChainId = "injective-1"
-
-// DelegationDelta is the difference between the delegation ICA's actual on-chain
-// delegation to a validator and the delegation tracked in the injective-1 host zone.
-type DelegationDelta struct {
-	Name    string
-	Address string
-	Delta   sdkmath.Int // actual on-chain delegation minus tracked delegation, in inj (18 decimals)
-}
 
 // InjectiveDelegationDeltas trues up the injective-1 host zone's tracked delegations to
 // what is actually staked on Injective.
@@ -73,14 +63,6 @@ var InjectiveDelegationDeltas = []DelegationDelta{
 	{Name: "lavenderfive", Address: "injvaloper155yk4wfn0xqye80exlsr6hu4qdfsvsgwg3jckk", Delta: mustInt("2105005046483337596")},
 }
 
-func mustInt(s string) sdkmath.Int {
-	i, ok := sdkmath.NewIntFromString(s)
-	if !ok {
-		panic("v34: invalid integer constant " + s)
-	}
-	return i
-}
-
 // ReconcileInjectiveDelegations applies InjectiveDelegationDeltas to the injective-1 host zone so
 // that tracked validator delegations (and TotalDelegations) match what is staked on Injective.
 //
@@ -89,53 +71,12 @@ func mustInt(s string) sdkmath.Int {
 // submits through the normal undelegate pipeline to move the accidentally staked redemption funds
 // back to liquid (see x/stakeibc/keeper/pending_undelegation.go).
 //
-// The table is applied all-or-nothing, and never as an upgrade error. A missing host zone means a
-// non-mainnet environment. A validator missing from the host zone, or a delta that would drive a
-// delegation negative, means the constants no longer describe chain state (the validator set
-// changed, or acks were lost again): applying the remaining entries would return a partial sum
-// (dropping one large negative entry turns the ~200 INJ excess into ~867 INJ) and that sum would
-// then be undelegated. Instead nothing is written and zero is returned, so the upgrade completes
-// with the sweep unblocked and the reconciliation deferred to a later upgrade. An error here
-// would halt the chain, which is disproportionate for an accounting fix.
+// The table is applied all-or-nothing, and never as an upgrade error (see
+// reconcileHostZoneDelegations). Applying the remaining entries after a failed one would return
+// a partial sum (dropping one large negative entry turns the ~200 INJ excess into ~867 INJ) and
+// that sum would then be undelegated. Instead nothing is written and zero is returned, so the
+// upgrade completes with the sweep unblocked and the reconciliation deferred to a later upgrade.
 func ReconcileInjectiveDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (appliedDelta sdkmath.Int) {
-	hostZone, found := sk.GetHostZone(ctx, InjectiveChainId)
-	if !found {
-		ctx.Logger().Info(fmt.Sprintf("v34: host zone %s not found, skipping delegation reconciliation", InjectiveChainId))
-		return sdkmath.ZeroInt()
-	}
-
-	// The host zone is only persisted after every entry has been validated
-	totalDelta := sdkmath.ZeroInt()
-	for _, entry := range InjectiveDelegationDeltas {
-		validator, index, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, entry.Address)
-		if !found {
-			ctx.Logger().Error(fmt.Sprintf("v34: validator %s (%s) not found on %s; delegation reconciliation NOT applied, "+
-				"re-verify constants and reconcile in a later upgrade", entry.Name, entry.Address, InjectiveChainId))
-			return sdkmath.ZeroInt()
-		}
-
-		if validator.Delegation.IsNil() {
-			validator.Delegation = sdkmath.ZeroInt()
-		}
-		reconciled := validator.Delegation.Add(entry.Delta)
-		if reconciled.IsNegative() {
-			ctx.Logger().Error(fmt.Sprintf("v34: validator %s tracked delegation %v plus delta %v would be negative; delegation "+
-				"reconciliation NOT applied, re-verify constants and reconcile in a later upgrade",
-				entry.Name, validator.Delegation, entry.Delta))
-			return sdkmath.ZeroInt()
-		}
-
-		ctx.Logger().Info(fmt.Sprintf("v34: reconciled %s delegation %v -> %v (%v)",
-			entry.Name, validator.Delegation, reconciled, entry.Delta))
-		validator.Delegation = reconciled
-		hostZone.Validators[index] = &validator
-		totalDelta = totalDelta.Add(entry.Delta)
-	}
-
-	hostZone.TotalDelegations = hostZone.TotalDelegations.Add(totalDelta)
-	sk.SetHostZone(ctx, hostZone)
-
-	ctx.Logger().Info(fmt.Sprintf("v34: %s TotalDelegations adjusted by %v to %v",
-		InjectiveChainId, totalDelta, hostZone.TotalDelegations))
-	return totalDelta
+	appliedDelta, _ = reconcileHostZoneDelegations(ctx, sk, InjectiveChainId, InjectiveDelegationDeltas)
+	return appliedDelta
 }

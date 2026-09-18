@@ -18,6 +18,8 @@ import (
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
 	"github.com/Stride-Labs/stride/v34/utils"
+	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
 // continuingMonikers are the POA validators the upgrade must not touch.
@@ -133,10 +135,46 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.seedCurrentPOASet()
 	s.capturePreUpgradeState()
 
+	// Celestia: host zone, queue + in-progress deposit records with callbacks on the active
+	// delegation channel; staketia: the multisig host zone with a balance to correct
+	celestiaTracked, celestiaTrackedTotal := s.setupCelestiaHostZone()
+	celestiaSeed, celestiaCallbacks := s.seedCelestiaInProgressScenario()
+	celestiaBefore := s.snapshotCelestiaState()
+	celestiaNumeratorBefore := celestiaRateNumerator(&s.AppTestHelper)
+	staketiaInitial := sdkmath.NewInt(200_000_000_000)
+	s.setupStaketiaHostZone(staketiaInitial)
+
+	// Cosmos Hub: host zone with the stakewithus validator plus one other, and the stranded LSM
+	// deposit in DETOKENIZATION_FAILED
+	cosmosHubTracked := sdkmath.NewInt(2_000_000_000)
+	cosmosHubOtherDelegation := s.setupCosmosHubHostZone(cosmosHubTracked)
+	s.seedCosmosHubLsmDeposit(recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED,
+		v34.CosmosHubStrandedLsmDeposit.Amount, v34.CosmosHubStrandedLsmDeposit.ValidatorAddress)
+
 	// ----- act -----
 	s.ConfirmUpgradeSucceeded(v34.UpgradeName)
 
 	// ----- assert -----
+	s.assertCelestiaReconciled(celestiaSeed, celestiaTracked, celestiaTrackedTotal, celestiaBefore)
+	s.assertCelestiaCallbacks(celestiaCallbacks)
+	s.Require().Equal(celestiaNumeratorBefore.String(), celestiaRateNumerator(&s.AppTestHelper).String(), "celestia redemption rate components unchanged")
+
+	staketiaHostZone, err := s.App.StaketiaKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(staketiaInitial.Add(v34.StaketiaRemainingDelegatedBalanceDelta).String(),
+		staketiaHostZone.RemainingDelegatedBalance.String(), "staketia remaining delegated balance corrected")
+
+	_, found := s.App.RecordsKeeper.GetLSMTokenDeposit(s.Ctx, v34.CosmosHubChainId, v34.CosmosHubStrandedLsmDeposit.Denom)
+	s.Require().False(found, "the cosmos hub LSM deposit should be closed out")
+	cosmosHubHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v34.CosmosHubChainId)
+	s.Require().True(found)
+	cosmosHubValidator, _, found := stakeibckeeper.GetValidatorFromAddress(cosmosHubHostZone.Validators, v34.CosmosHubStrandedLsmDeposit.ValidatorAddress)
+	s.Require().True(found)
+	s.Require().Equal(cosmosHubTracked.Add(v34.CosmosHubStrandedLsmDeposit.Amount).String(), cosmosHubValidator.Delegation.String(),
+		"cosmos hub stakewithus delegation up by exactly the closed amount")
+	s.Require().Equal(cosmosHubTracked.Add(cosmosHubOtherDelegation).Add(v34.CosmosHubStrandedLsmDeposit.Amount).String(),
+		cosmosHubHostZone.TotalDelegations.String(), "cosmos hub TotalDelegations up by exactly the closed amount")
+
 	byMoniker := s.validatorsByMoniker()
 
 	// Incoming: present at ValidatorPower with the generated pubkey and the

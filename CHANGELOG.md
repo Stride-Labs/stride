@@ -50,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 2. v34: reset stuck `SlashQueryInProgress` flags on 12 cosmoshub-4 validators and delete 30 timed-out ICQs
 3. v34: lower gov quorum from 33.4% to 25% and lengthen the voting period from 3 to 5 days
 4. v34: reconcile injective-1 delegations, queue a one-shot undelegation of the excess, and sweep injective-1 redemptions per record ([#1526](https://github.com/Stride-Labs/stride/pull/1526))
+5. v34: reconcile celestia delegations executed without acknowledgement (+15,440 TIA) and retire the equivalent phantom deposit records; redemption rate unchanged ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
+6. v34: close the stranded cosmoshub-4 LSM detokenization for stakewithus (+11 ATOM) ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
+7. v34: correct staketia `remaining_delegated_balance` by −40,077 TIA (v25 migration straddle of unbonding record 884) ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
 
 ## [v33.0.0]
 
