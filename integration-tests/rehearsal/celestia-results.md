@@ -68,3 +68,15 @@ production on the testnet). Nothing unexpected.
 - The snapshot post-dates channel-862's close, so the rehearsal exercised the closed-channel,
   zero-commitment path that mainnet is in today; the in-flight-callback decrement path is
   covered by unit tests and the mainnet export suite instead.
+
+## Redemption rate, full formula recomputed from the exports
+
+`(deposit records in transfer + undelegated deposit records + tokenized LSM deposits + TotalDelegations) / stToken supply`
+
+| Host zone | Before | After | Δ |
+|---|---|---|---|
+| celestia | 1.176363576943712022 | 1.176363576943712022 | 0 (undelegated −15,439,858,896, TotalDelegations +15,439,858,896) |
+| cosmoshub-4 | 1.996678110362767551 | 1.996678110362767551 | 0 (tokenized −10,999,999, TotalDelegations +10,999,999) |
+| injective-1 | 1.542251109150432507 | 1.556613003698647561 | +0.0144 (+0.93%), by design of #1526: the 200.48 INJ was real stake in no bucket; the spec's runbook requires `max_inner_redemption_rate ≥ 1.575` on upgrade day (1.56871 today, 0.012 headroom) |
+
+Stored `redemption_rate` fields are untouched by the handler (they refresh at the day epoch).
