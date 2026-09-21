@@ -36,11 +36,13 @@ In scope:
 
 Out of scope, explicitly:
 
-- The deprecated zones comdex-1, evmos_9001-2, stargaze-1 and umee-1, and stakedym. Upgrade 2
-  halts comdex-1 and stakedym alongside the in-scope zones (the other three are already
-  halted) and none of them are unbonded, drained or redeemable. Holders of stCMDX, stEVMOS,
-  stSTARS, stUMEE and stDYM have no on-chain redemption path after this work, which matches
-  their status today but is now a deliberate decision.
+- The deprecated zones comdex-1, evmos_9001-2, stargaze-1 and umee-1. They are left exactly
+  as they are: no upgrade touches them, and none of them are unbonded, drained or redeemable.
+  Their host chains are halted, so nothing could be done through their ICAs anyway. Stakedym
+  is halted at upgrade 2 once its operator has flushed its records, and is likewise never
+  unbonded, drained or redeemable. Holders of stCMDX, stEVMOS, stSTARS, stUMEE and stDYM have
+  no on-chain redemption path after this work, which matches their status today but is now a
+  deliberate decision.
 - Removing whole modules or their state. Only messages are removed; stores stay.
 - STRD-side modules beyond message removal (mint, strdburner).
 
@@ -79,7 +81,8 @@ Pipelines that already exist:
   per-validator `MsgUndelegate`s directly and flags `DelegationChangesInProgress` on each, and
   `applySharesRoundingSafety` trims a full-drain amount so share truncation cannot make it
   exceed the on-chain delegation. Neither depends on the zone being active.
-- `HostZone.Deprecated` exists and is true on exactly the four deprecated zones.
+- `HostZone.Deprecated` is true on exactly evmos_9001-2, stargaze-1 and umee-1, which are
+  also halted. comdex-1 is neither halted nor deprecated on chain; its host chain is halted.
 - An ICA-wrapped IBC `MsgTransfer` from a host account back to Stride exists in the
   trade-route code (`x/stakeibc/keeper/reward_converter.go`, `BuildHostToTradeTransferMsg`).
 - The rate limiter covers only stTokens (stATOM, stOSMO, stTIA, stJUNO, stEVMOS); no native
@@ -171,7 +174,8 @@ accounting-consistent and stops at upgrade 2, so it is not worth a switch.
 
 Handler:
 
-1. `Halted = true` on every in-scope stakeibc zone, on comdex-1, and on stakedym's host zone.
+1. `Halted = true` on every in-scope stakeibc zone and on stakedym's host zone. The four
+   deprecated zones are not touched.
 2. Delete the dYdX trade route. Deactivate the three ICA oracles (existing toggle logic).
    Remove `MsgClaimUndelegatedTokens` from the ICA host allow-list.
 3. Remove every rate limit, every blacklisted denom and every whitelisted address pair from
@@ -230,10 +234,10 @@ There is no pinned-rate store and no constants file. The redeem tx reads the hos
 
 New tx `MsgRedeemFromPool { creator, amount (stToken coin) }`:
 
-- Resolve the zone from the stToken denom; require `Halted && !Deprecated`. The `Deprecated`
-  flag is already set on exactly the four out-of-scope zones, so this is a free explicit gate;
-  a redeem of a deprecated stToken would in any case fail atomically at the send step because
-  the pool holds none of that denom and cannot be funded from outside.
+- Resolve the zone from the stToken denom; require `Halted && !Deprecated`. That admits
+  exactly the eleven in-scope zones: comdex-1 is never halted, and the other three deprecated
+  zones carry the flag. A redeem of a deprecated stToken would in any case fail atomically at
+  the send step because the pool holds none of that denom and cannot be funded from outside.
 - `native = amount × HostZone.RedemptionRate`, truncated; reject zero.
 - Burn `amount` from the creator (send to module, burn), then send `native` of the zone's
   `IbcDenom` from the pool to the creator. Two bank operations, one multiplication, no records,
