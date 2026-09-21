@@ -227,9 +227,12 @@ accounting-consistent and stops at upgrade 2, so it is not worth a switch.
 ## §6. Upgrade 2: halt and unbond
 
 Pool: a new stakeibc module account (name in the plan, e.g. `withdrawal_pool`) is registered in
-this binary, added to the bank blocked-address list so nothing can be sent to it from outside
-the module, and is the destination of every window-2 transfer. One account for all denoms; the
-denom identifies the zone.
+this binary and is the destination of every window-2 transfer. Stride blocks every module
+account by default and exempts the few that must receive IBC transfers (the stakeibc module
+account, the reward collector, the staketia and stakedym accounts; `app.go`
+`BlacklistedModuleAccountAddrs`), because ibc-go rejects an inbound transfer to a blocked
+receiver. The pool is added to that exemption list for the same reason; it is not blocked.
+One account for all denoms; the denom identifies the zone. A stray send to it becomes surplus.
 
 Handler:
 
@@ -307,7 +310,9 @@ New tx `MsgRedeemFromPool { creator, chain_id, amount (stToken coin) }`:
   units there, 1e5 elsewhere. No state is needed for the check.
 - Load the host zone by `chain_id`; require `Halted && !Deprecated`, and that `amount.Denom`
   is that zone's stToken denom. The gate admits exactly the eleven in-scope zones: all four
-  deprecated zones carry the flag from upgrade 1 on, and comdex-1 is additionally never halted. A redeem of a deprecated stToken would in any case fail atomically at
+  deprecated zones carry the flag from upgrade 1 on, and comdex-1 is additionally never halted.
+  The gate is the only thing keeping a deprecated stToken out; the pool is not blocked, so
+  "the pool holds none of that denom" is not relied on. A redeem of a deprecated stToken would in any case fail atomically at
   the send step because the pool holds none of that denom and cannot be funded from outside.
 - `native = amount × HostZone.RedemptionRate`, truncated; reject zero.
 - Burn `amount` from the creator (send to module, burn), then send `native` of the zone's
@@ -406,10 +411,9 @@ Checklist to propose upgrade 3:
   address, for celestia, ≥ stToken supply × `HostZone.RedemptionRate`) for every zone. The
   handler errors on a shortfall, so this is what keeps the upgrade from failing on mainnet.
   A shortfall found here is topped up before the proposal: with `MsgTransferFromIca` if an
-  ICA still holds something, otherwise by sending the zone's native IBC denom to that zone's
-  deposit address, which step 2 sweeps into the pool. The pool itself is blocked, so the
-  deposit address is the only external route in, and it needs no code. Any foreign denom that
-  lands in the pool this way or via the sweeps (dYdX USDC, for instance) stays as surplus.
+  ICA still holds something, otherwise by sending the zone's native IBC denom straight to the
+  pool from any Stride account (it is not blocked). Any foreign denom in the pool (dYdX USDC,
+  for instance) stays as surplus.
 
 ## §9. Accounting
 
@@ -475,7 +479,8 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
   safety on a full drain, rejection of a validator with a change in progress, every ICA type
   and a foreign denom on the transfer, no accounting mutation), for the two ValidateBasic gates
   and for the lifted calibration cap; handler tests for the halt flags, oracle deactivation,
-  rate-limit removal and the pool account's existence and blocked status. Localstride run: upgrade, then
+  rate-limit removal, and the pool account's existence plus a test that an inbound IBC
+  transfer to it is accepted (it must be exempt from the bank blocklist). Localstride run: upgrade, then
   `MsgUndelegateFromValidators` for one validator and its ack.
 - Upgrade 3: `MsgRedeemFromPool` is the highest-review item: table-driven tests covering
   the per-chain minimum, rounding to zero, an unknown chain id, a denom that is not the zone's
