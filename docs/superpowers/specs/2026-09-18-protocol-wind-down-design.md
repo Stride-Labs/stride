@@ -31,14 +31,14 @@ In scope:
   before the redeem message is removed. All are flushed and claimed in window 1.
 - Stakedym's 11 open unbonding records (flushed by its operator in window 1), and halting
   stakedym at upgrade 2.
-- Removing every message the protocol no longer needs, and moving wasm control to gov.
+- Removing every message the protocol no longer needs, moving wasm control to gov, and
+  removing every IBC rate limit at upgrade 2.
 
 Out of scope, explicitly:
 
 - Redemption of stEVMOS, stSTARS, stUMEE (zones already halted) and stDYM (halted at upgrade
   2). Holders of those four tokens have no on-chain redemption path after this work, which
   matches their status today but is now a deliberate decision.
-- The IBC rate limits. They stay (they only cover stTokens; no native denom is limited).
 - Removing whole modules or their state. Only messages are removed; stores stay.
 - STRD-side modules beyond message removal (mint, strdburner).
 
@@ -78,8 +78,9 @@ Pipelines that already exist:
   and validator balances and burns nothing.
 - An ICA-wrapped IBC `MsgTransfer` from a host account back to Stride exists in the
   trade-route code (`x/stakeibc/keeper/reward_converter.go`, `BuildHostToTradeTransferMsg`).
-- Rate-limit whitelisting of a (sender, receiver) pair:
-  `RatelimitKeeper.SetWhitelistedAddressPair`, as for deposit → delegation ICA today.
+- The rate limiter covers only stTokens (stATOM, stOSMO, stTIA, stJUNO, stEVMOS); no native
+  denom is limited. Its keeper exposes removal of limits, blacklisted denoms and whitelisted
+  address pairs.
 - Claim today: unbonded tokens sit in the zone's redemption ICA on the host;
   `ClaimUndelegatedTokens` is permissionless, submits an ICA bank `MsgSend` from the
   redemption ICA to the record's host-chain `Receiver`, sets `ClaimIsPending`, and the callback
@@ -122,7 +123,7 @@ State on mainnet (2026-09-18/21):
 | | New logic | Removes | Ops window after |
 |---|---|---|---|
 | Upgrade 1: close the doors | none | liquid stake, redeem, and every create-things message; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
-| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles | ~32 days: undelegate 99.9%, drain every ICA into the pool |
+| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits | ~32 days: undelegate 99.9%, drain every ICA into the pool |
 | Upgrade 3: withdrawal mode | pool account, pinned rates, one redeem tx | nothing | permanent |
 
 Each upgrade lands on a chain with nothing in flight, verified by the checklist that gates its
@@ -169,9 +170,10 @@ Handler:
 1. `Halted = true` on every in-scope stakeibc zone and on stakedym's host zone.
 2. Delete the dYdX trade route. Deactivate the three ICA oracles (existing toggle logic).
    Remove `MsgClaimUndelegatedTokens` from the ICA host allow-list.
-3. Whitelist in the rate limiter, per zone, (delegation ICA → pool), (withdrawal ICA → pool),
-   (fee ICA → pool), (redemption ICA → pool). The pool is the module account defined in §7; its
-   address is deterministic, so the pair can be set before the account exists.
+3. Remove every rate limit, every blacklisted denom and every whitelisted address pair from
+   the rate limiter. After upgrade 3 the only outbound flow that matters is users taking native
+   tokens off the chain, which must never be throttled, and there is no longer a mint path that
+   an stToken limit would protect. The module and middleware stay in the stack with empty state.
 
 Remove message handlers: stakeibc `ClaimUndelegatedTokens`, `RebalanceValidators`,
 `ClearBalance`, `ResumeHostZone`; staketia and stakedym `ResumeHostZone`. Add
@@ -204,13 +206,14 @@ Handler, in order:
 1. Bank-move the full balance of staketia's claim address to the pool.
 2. For each in-scope zone, bank-move the native IBC-denom balance of the zone's deposit address
    to the pool (liquid stakes that never transferred out; they count in the rate today).
-3. Write the pinned rate per zone into a new store entry `WithdrawalRate{chain_id → rate}`
-   from the handler's constants (§9). This entry is the only thing the redeem tx reads and the
-   only marker that a zone is withdrawal-enabled. It is deliberately not
-   `HostZone.RedemptionRate`, so no legacy path (the slash callback, bounds checks, the oracle)
-   can touch it. Evmos, stargaze, umee and stakedym get no entry.
-4. Assert per zone that pool balance ≥ stToken supply × pinned rate. Log on failure and
-   continue; the fix is an additive `MsgTransferFromIca`, never a state edit.
+3. Copy each in-scope zone's `HostZone.RedemptionRate` into a new store entry
+   `WithdrawalRate{chain_id → rate}`. That rate has been frozen since the upgrade 2 halt (§9).
+   The entry is the only thing the redeem tx reads and the only marker that a zone is
+   withdrawal-enabled. It is a separate key so that no legacy path (the slash callback, bounds
+   checks, the oracle) can touch it afterwards. Evmos, stargaze, umee and stakedym get no entry.
+   No constants file: the handler reads the rate from state.
+4. Assert per zone that pool balance ≥ stToken supply × pinned rate, both read from state. Log
+   on failure and continue; the fix is an additive `MsgTransferFromIca`, never a state edit.
 
 New tx `MsgRedeemFromPool { creator, amount (stToken coin) }`:
 
@@ -270,33 +273,50 @@ Checklist to propose upgrade 3:
 - Every pending undelegation key gone, no batch in flight, `TotalDelegations` ≈ 0.1% of its
   pre-unbond value per zone.
 - Delegation, withdrawal, fee and redemption ICA balances at dust on every zone.
-- Constants file and verifier (§9) regenerated from the final balances, and the pool assertion
-  passes for every zone.
+- Off-chain check that pool balance ≥ stToken supply × `HostZone.RedemptionRate` for every
+  zone (the same assertion the handler logs), so a shortfall is topped up before the proposal.
 
 ## §9. Accounting
 
-The only rate math in the design happens once, off-chain, in a script that produces the
-upgrade 3 constants. On-chain code never computes a rate again. Per zone:
+There is no rate calculation anywhere in the design. The withdrawal rate for a zone is the
+`HostZone.RedemptionRate` that was on chain when upgrade 2 halted the zone, copied into
+`WithdrawalRate` by the upgrade 3 handler. Nothing recomputes it: the epoch update is
+halt-gated, and the only other writer (the delegator-shares slash callback) is reachable only
+through the two admin-gated ICQ messages. If ops deliberately run those in window 2 and a slash
+is found, the frozen rate is lowered accordingly, which is the correct direction.
 
-```
-R = min( HostZone.RedemptionRate at upgrade 2,
-         (pool balance + deposit-address native + [staketia claim address, for celestia])
-         / bank supply of the stToken )
-```
+Why freezing is safe. Between the halt and the pool being full, the backing only moves in two
+directions:
 
-Bank supply is the right denominator: stTokens that left Stride over IBC are escrowed here,
-not burned, so they are counted; stTokens burned by flushed redemptions are gone from both
-sides. Nothing else needs a term, because upgrade 3 lands with zero open records, empty
-redemption ICAs, and empty unbonding queues.
+- Up: staking rewards keep accruing until each undelegation executes (roughly 30 days at the
+  zones' yields, on the order of 1%), auto-withdraw to the withdrawal ICA on undelegation, and
+  are swept into the pool. The frozen rate does not include them.
+- Down: the 0.1% left staked by the 99.9% unbond, and any slash during window 2.
 
-The `min` is because the frozen rate is a promise made under the old accounting, and the
-observed ratio is the truth after the 99.9% unbond, slashing drift and rewards up to the
-undelegation. In practice they are within a fraction of a percent; the last redeemers absorb
-the difference, which §1 accepts.
+So the pool is over-collateralized by window-2 rewards minus 0.1%, and only a large slash in
+window 2 could push it under. If that happens the last redeemers absorb it, which §1 accepts.
+A computed rate would remove that tail risk but adds a script and a constants file on the one
+path where a bug is catastrophic; the frozen rate is a number that has already been on chain
+and audited for weeks.
 
-The script reads bank supply and balances on Stride and emits the constants file plus a
-`verify_constants` check, v34-style. Both are regenerated right before the upgrade 3
-proposal, when every balance is static.
+Bank supply is the right reference for the assertion: stTokens that left Stride over IBC are
+escrowed here, not burned, so they are counted; stTokens burned by flushed redemptions are gone
+from both sides. Nothing else needs a term, because upgrade 3 lands with zero open records,
+empty redemption ICAs and empty unbonding queues.
+
+## §9a. Validator compensation
+
+Today POA validators receive two streams: STRD from mint provisions (the staking share of
+~58 STRD per hour epoch, about 16%) plus tx fees, and stTokens from the reward collector (15%
+of Stride's commission on host staking rewards, liquid staked at the mint epoch).
+
+The stToken stream is unaffected in window 1 (everything keeps running) and ends at upgrade 2,
+not because of the halt but because there are no staking rewards to share once the delegations
+are gone. The rewards that accrue during window 2 are swept into the pool as protocol surplus
+rather than split. The STRD stream continues unchanged. If validator pay needs to rise to
+compensate, that is a mint distribution-proportion parameter change by governance and needs no
+code. Releasing pool surplus (pool minus supply × rate) to validators or the community would
+need a gov-gated withdrawal message and is out of scope for these three upgrades.
 
 ## §10. Testing
 
@@ -311,8 +331,7 @@ proposal, when every balance is static.
 - Upgrade 3: `MsgRedeemFromPool` is the highest-review item: table-driven tests covering
   rounding to zero, unknown denoms, denoms without a `WithdrawalRate`, insufficient pool, an
   exact drain of the pool, and a second redeem after the drain. Handler tests for the bank
-  moves, the pinned entries and the assertion. Localstride run: upgrade, then a redeem.
-- The constants script is tested against the same export.
+  moves, the copied rates and the assertion. Localstride run: upgrade, then a redeem.
 
 ## §11. Open items for the plan
 
