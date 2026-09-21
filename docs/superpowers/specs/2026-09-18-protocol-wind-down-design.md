@@ -83,6 +83,13 @@ Pipelines that already exist:
   exceed the on-chain delegation. Neither depends on the zone being active.
 - `HostZone.Deprecated` is true on exactly evmos_9001-2, stargaze-1 and umee-1, which are
   also halted. comdex-1 is neither halted nor deprecated on chain; its host chain is halted.
+- v34 has a chain-agnostic delegation delta helper (`app/upgrades/v34/delegation_deltas.go`):
+  a per-validator table of on-chain minus tracked delegation, applied all-or-nothing to the
+  validators and `TotalDelegations`, skipped with a log (never an upgrade error) if any constant
+  no longer matches state, with a mainnet-export test. Injective and Celestia use it. The
+  delegator-shares slash callback computes a slash as tracked delegation minus on-chain shares
+  × the stored exchange rate, so a delegation-only delta is not re-applied when the rate is
+  later refreshed.
 - An ICA-wrapped IBC `MsgTransfer` from a host account back to Stride exists in the
   trade-route code (`x/stakeibc/keeper/reward_converter.go`, `BuildHostToTradeTransferMsg`).
 - The rate limiter covers only stTokens (stATOM, stOSMO, stTIA, stJUNO, stEVMOS); no native
@@ -129,7 +136,7 @@ State on mainnet (2026-09-18/21):
 
 | | New logic | Removes | Ops window after |
 |---|---|---|---|
-| Upgrade 1: close the doors | none | liquid stake, redeem, and every create-things message; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
+| Upgrade 1: close the doors | none (a Haqq delegation delta table, v34 pattern) | liquid stake, redeem, and every create-things message; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
 | Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits | ~32 days: refresh slashes, undelegate every validator, drain every ICA into the pool |
 | Upgrade 3: withdrawal mode | pool account, one redeem tx | nothing | permanent |
 
@@ -165,6 +172,19 @@ Wasm: handler sets `code_upload_access` to the gov module address only, and for 
 contract whose admin is a Stride-controlled key, sets the admin to the gov module address
 (`ContractKeeper.UpdateContractAdmin`). The plan lists the contracts from a per-contract query.
 
+Haqq delegation reconciliation: apply a per-validator delta table to haqq_11235-1 with the v34
+helper, exactly as v34 did for Injective. The 2026-09-21 measurement (§8a) has 14 validators
+over-recorded, all undetected downtime slashes plus two sub-token dust cases, the largest
+853.8 ISLM. Every delta is negative, so `TotalDelegations` drops by the table's sum and the
+next epoch's rate update, which still runs in window 1, lowers the stISLM redemption rate to
+match. That is the correct outcome for a slash that was never detected. The stored
+`SharesToTokensRate` is deliberately left as is: the window-2 refresh will update it, and the
+slash callback then finds tracked delegation equal to on-chain shares × the refreshed rate, so
+nothing is applied twice. The table is generated from `measure_delegation_drift.py`,
+re-measured right before the proposal, and covered by a mainnet-export test. This is the
+Injective shape (real loss, no stranded liquid), not the v33 Osmosis shape (phantom stake
+credited back as a deposit record).
+
 Everything else keeps running on purpose: reinvest, rate updates, unbonding, sweep, claim, the
 reward-collector fee liquid stake, the trade route, the oracles, and the staketia/stakedym
 operator flows. The fee liquid stake mints stTokens for validators during the window; it is
@@ -187,8 +207,7 @@ Remove message handlers: stakeibc `ClaimUndelegatedTokens`, `RebalanceValidators
 `ClearBalance`, `ResumeHostZone`; staketia and stakedym `ResumeHostZone`. Add
 `utils.ValidateAdminAddress` to the ValidateBasic of `UpdateValidatorSharesExchRate` and
 `CalibrateDelegation`; ops keep them to refresh slashes before the unbond (§8), but nobody
-else can trigger the slash path that rewrites the rate. Raise `CalibrationThreshold` so that
-calibration can correct sub-token drift on 18-decimal denoms (§8a).
+else can trigger the slash path that rewrites the rate.
 
 New admin tx `MsgUndelegateFromValidators { creator, chain_id, validators: [{address, offset}] }`,
 admin-gated in ValidateBasic. An empty `validators` list means every validator on the zone with
@@ -314,10 +333,11 @@ validator on every zone, so the refresh leaves no rounding gap and no per-valida
 needed. The one wrinkle is haqq_11235-1's 18-decimal denom: two validators (SureStake,
 Islamic Staking) are over by 203,557 and 3,216,141 aISLM with an unchanged rate, which is
 dust in ISLM but above calibration's 5,000-base-unit cap, and even one base unit of
-over-recording fails the host's share check. Upgrade 2 therefore raises `CalibrationThreshold`
-(the message is admin-gated from then on, so the cap no longer protects anything). The
+over-recording fails the host's share check. Haqq is therefore trued up by a delta table at
+upgrade 1 (§5), which covers the dust cases too, and the `offset` on
+`MsgUndelegateFromValidators` is the fallback for anything that drifts afterwards. The
 measurement script is `scripts/wind-down/measure_delegation_drift.py` and is rerun as the gate
-before step 2.
+before step 2; haqq_11235-1 is expected to measure clean by then.
 
 Checklist to propose upgrade 3:
 
@@ -379,7 +399,8 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
 ## §10. Testing
 
 - Upgrade 1: handler tests against a mainnet export (`app/upgrades/vN/testdata/`, v34-style)
-  for the autopilot param, ICA host allow-list, wasm params and contract admins; a compile-time
+  for the Haqq delta table (applied, and skipped on a stale constant), the autopilot param, ICA
+  host allow-list, wasm params and contract admins; a compile-time
   guarantee that the removed messages no longer exist; existing keeper tests for the flows
   that keep running stay green.
 - Upgrade 2: unit tests for both admin txs (gating, validation, per-validator message
