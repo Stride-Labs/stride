@@ -15,7 +15,7 @@ The plan is three upgrades separated by two ops windows. It trades calendar time
 days end to end) for simplicity: each upgrade lands on a chain with nothing in flight, so no
 upgrade has to reason about partially-processed records.
 
-Dormant capital is acceptable. If rounding, slashing drift or the 99.9% unbond leave a residue
+Dormant capital is acceptable. If rounding or slashing drift leave a residue
 that no stToken can claim, it stays in the pool. What is not acceptable is a pool that cannot
 cover a valid redemption.
 
@@ -23,7 +23,7 @@ cover a valid redemption.
 
 In scope:
 
-- Every non-halted stakeibc host zone: celestia, comdex-1, cosmoshub-4, dydx-mainnet-1,
+- Every non-deprecated stakeibc host zone: celestia, cosmoshub-4, dydx-mainnet-1,
   haqq_11235-1, injective-1, juno-1, laozi-mainnet, osmosis-1, phoenix-1, sommelier-3, ssc-1.
 - Staketia (stTIA redemptions and the 5-of-7 Celestia multisig), including its 7 open
   unbonding records. Its TIA joins the same pool as the stakeibc Celestia TIA.
@@ -36,9 +36,11 @@ In scope:
 
 Out of scope, explicitly:
 
-- Redemption of stEVMOS, stSTARS, stUMEE (zones already halted) and stDYM (halted at upgrade
-  2). Holders of those four tokens have no on-chain redemption path after this work, which
-  matches their status today but is now a deliberate decision.
+- The deprecated zones comdex-1, evmos_9001-2, stargaze-1 and umee-1, and stakedym. Upgrade 2
+  halts comdex-1 and stakedym alongside the in-scope zones (the other three are already
+  halted) and none of them are unbonded, drained or redeemable. Holders of stCMDX, stEVMOS,
+  stSTARS, stUMEE and stDYM have no on-chain redemption path after this work, which matches
+  their status today but is now a deliberate decision.
 - Removing whole modules or their state. Only messages are removed; stores stay.
 - STRD-side modules beyond message removal (mint, strdburner).
 
@@ -123,7 +125,7 @@ State on mainnet (2026-09-18/21):
 | | New logic | Removes | Ops window after |
 |---|---|---|---|
 | Upgrade 1: close the doors | none | liquid stake, redeem, and every create-things message; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
-| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits | ~32 days: undelegate 99.9%, drain every ICA into the pool |
+| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits | ~32 days: refresh slashes, undelegate 100%, drain every ICA into the pool |
 | Upgrade 3: withdrawal mode | pool account, one redeem tx | nothing | permanent |
 
 Each upgrade lands on a chain with nothing in flight, verified by the checklist that gates its
@@ -167,7 +169,7 @@ accounting-consistent and stops at upgrade 2, so it is not worth a switch.
 
 Handler:
 
-1. `Halted = true` on every in-scope stakeibc zone and on stakedym's host zone.
+1. `Halted = true` on every in-scope stakeibc zone, on comdex-1, and on stakedym's host zone.
 2. Delete the dYdX trade route. Deactivate the three ICA oracles (existing toggle logic).
    Remove `MsgClaimUndelegatedTokens` from the ICA host allow-list.
 3. Remove every rate limit, every blacklisted denom and every whitelisted address pair from
@@ -178,15 +180,16 @@ Handler:
 Remove message handlers: stakeibc `ClaimUndelegatedTokens`, `RebalanceValidators`,
 `ClearBalance`, `ResumeHostZone`; staketia and stakedym `ResumeHostZone`. Add
 `utils.ValidateAdminAddress` to the ValidateBasic of `UpdateValidatorSharesExchRate` and
-`CalibrateDelegation`; ops keep them to diagnose a failing undelegation, but nobody else can
-trigger the slash path that rewrites the rate.
+`CalibrateDelegation`; ops keep them to refresh slashes before the unbond (§8), but nobody
+else can trigger the slash path that rewrites the rate. Raise `CalibrationThreshold` so that
+calibration can correct sub-token drift on 18-decimal denoms (§8a).
 
 New admin tx `MsgSetPendingUndelegation { creator, chain_id, amount }`, admin-gated in
 ValidateBasic: calls `SetPendingUndelegation`; zero removes the key. Nothing else. The v34
-pipeline submits, tracks and retries at the day epoch. Ops pass ~99.9% of `TotalDelegations`.
-ICA txs are atomic, so one `MsgUndelegate` above a validator's true on-chain delegation fails
-the whole batch; recorded delegations drift from the chain and the margin absorbs it. The tx is
-also the override if a zone keeps failing (lower the amount).
+pipeline submits, tracks and retries at the day epoch. Ops pass the full `TotalDelegations`
+after the slash refresh (§8, step 1). ICA txs are atomic, so one `MsgUndelegate` above a
+validator's true on-chain delegation fails the whole batch; the refresh is what prevents that,
+and the tx is the override if a zone keeps failing.
 
 New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount }`, admin-gated:
 `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION}`. Submits one ICA containing an IBC
@@ -258,25 +261,51 @@ Checklist to propose upgrade 2:
 
 Window 2 (after upgrade 2, ~32 days):
 
-1. Day 0: `MsgSetPendingUndelegation` per zone at 99.9% of `TotalDelegations`. Delegation ICA
+1. Day 0: refresh every validator's exchange rate with `UpdateValidatorSharesExchRate`
+   (CLI `update-delegation`) on every in-scope zone and wait for the callbacks. Where the rate
+   moved, the callback applies the slash: recorded delegation becomes on-chain shares × the
+   new rate, and the redemption rate is lowered to match. Use `CalibrateDelegation` only for a
+   validator whose rate is unchanged but whose recorded balance is off by under 5,000 base
+   units (its hard cap). Then rerun the drift measurement (§8a) and require zero
+   over-recorded validators on the zone.
+2. `MsgSetPendingUndelegation` per zone for the full `TotalDelegations`. An ICA tx is atomic,
+   so one over-recorded validator fails the whole batch; after the refresh there are none. If
+   a slash lands between the refresh and the submission, that batch fails, ops rerun the
+   refresh for the zone, and the pipeline resubmits at the next day epoch. Delegation ICA
    channels and relayers stay healthy until every batch acks; a dead channel is restored with
    the existing flow and the pipeline resubmits.
-1b. Once a zone's first round has acked: run `CalibrateDelegation` for each of its validators
-   so recorded balances snap to the chain, then `MsgSetPendingUndelegation` for the remaining
-   `TotalDelegations`. This second round is what makes the frozen rate fully covered (§9); a
-   zone whose second round never lands is short by at most 0.1% minus a day of rewards.
-2. Day 0+: `MsgTransferFromIca` for withdrawal, fee and redemption ICA balances. This is the
+3. Day 0+: `MsgTransferFromIca` for withdrawal, fee and redemption ICA balances. This is the
    live test of the transfer tx on small real amounts.
-3. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
+4. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
    the full balance, then `WITHDRAWAL` again (undelegation auto-withdraws accrued rewards
    there).
-4. Transfer-channel relayers stay up permanently; users need them to leave. ICA channels can be
+5. Transfer-channel relayers stay up permanently; users need them to leave. ICA channels can be
    left to close once every balance is drained.
+
+### §8a. Drift measurement
+
+Measured 2026-09-21 for every in-scope zone except cosmoshub-4 and injective-1 (handled by
+v34): recorded per-validator delegations versus the delegation ICA's on-chain balances.
+dydx-mainnet-1, ssc-1 and sommelier-3 are exact. celestia is under-recorded by ~15,440 TIA
+(the v34 phantom stake; harmless for unbonding). osmosis-1 has one validator over by 3,026
+uosmo with an unchanged rate (calibration range). juno-1 (1 validator, 1.94 JUNO),
+laozi-mainnet (2, 4.53 BAND), phoenix-1 (10, max 1.20 LUNA) and haqq_11235-1 (14, max 853.8
+ISLM, 0.01% of that validator) are over-recorded, and in every case Stride's stored exchange
+rate is above the chain's, i.e. undetected downtime slashes. Recomputing each validator as
+on-chain shares × the chain's current rate reproduces the on-chain balance exactly for every
+validator on every zone, so the refresh leaves no rounding gap and no per-validator buffer is
+needed. The one wrinkle is haqq_11235-1's 18-decimal denom: two validators (SureStake,
+Islamic Staking) are over by 203,557 and 3,216,141 aISLM with an unchanged rate, which is
+dust in ISLM but above calibration's 5,000-base-unit cap, and even one base unit of
+over-recording fails the host's share check. Upgrade 2 therefore raises `CalibrationThreshold`
+(the message is admin-gated from then on, so the cap no longer protects anything). The
+measurement script is `scripts/wind-down/measure_delegation_drift.py` and is rerun as the gate
+before step 2.
 
 Checklist to propose upgrade 3:
 
-- Every pending undelegation key gone, no batch in flight, `TotalDelegations` at dust on every
-  zone after the second round.
+- Every pending undelegation key gone, no batch in flight, `TotalDelegations` zero on every
+  zone.
 - Delegation, withdrawal, fee and redemption ICA balances at dust on every zone.
 - Off-chain check that pool balance ≥ stToken supply × `HostZone.RedemptionRate` for every
   zone (the same assertion the handler logs), so a shortfall is topped up before the proposal.
@@ -300,19 +329,16 @@ being full, the backing therefore moves as follows:
   epoch (one or two days, roughly 0.03% to 0.05%), are auto-withdrawn to the withdrawal ICA by
   the undelegation, and are swept into the pool. Rewards withdrawn but not yet reinvested at
   the halt are also swept.
-- Down: the 0.1% left staked by the 99.9% unbond, and any slash during window 2.
+- Down: any slash during window 2.
 
-After the first round alone a frozen rate would be short by roughly 0.05% to 0.07% per zone
-before any slashing: the 0.1% margin exists only so the first undelegate batch lands despite
-recorded-versus-chain drift (an ICA tx is atomic, so one over-recorded validator fails the
-whole batch), and a day of rewards does not cover it. The second round (§8, step 1b) closes
-the gap: after calibration the recorded balances match the chain and the remainder unbonds
-cleanly, so the pool holds the full delegated amount plus the swept rewards, and supply ×
-frozen rate is the delegated amount. Only a slash in window 2, or a second round that never
-lands, can leave a zone under, and in both cases the last redeemers absorb it, which §1
-accepts. A computed rate would remove that tail risk too, but adds a script on the one path
-where a bug is catastrophic; the frozen rate is a number that has already been on chain and
-audited for weeks.
+Coverage then follows by construction. The refresh (§8, step 1) makes the recorded
+delegations and the redemption rate reflect every slash that has happened, the full recorded
+amount unbonds, and the pool receives it plus the rewards swept on undelegation. Supply ×
+frozen rate is the delegated amount, so the rewards are the buffer. Only a slash between the
+refresh and the undelegation, on a zone whose retried batch never lands, can leave a zone
+under, and then the last redeemers absorb it, which §1 accepts. A computed rate would remove
+that tail risk too, but adds a script on the one path where a bug is catastrophic; the frozen
+rate is a number that has already been on chain and audited for weeks.
 
 Bank supply is the right reference for the assertion: stTokens that left Stride over IBC are
 escrowed here, not burned, so they are counted; stTokens burned by flushed redemptions are gone
