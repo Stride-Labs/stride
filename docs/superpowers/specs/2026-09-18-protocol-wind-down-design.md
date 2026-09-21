@@ -80,7 +80,9 @@ Gating that already exists:
   `MsgLiquidStake`, `MsgRedeemStake` and `MsgClaimUndelegatedTokens` alongside bank, staking,
   distribution, transfer and gov-vote messages.
 - Wasm code upload is restricted to two addresses; all 44 codes were uploaded by one Stride
-  address. Deployed contracts are executable by anyone.
+  address. 21 contracts are instantiated (all Hyperlane): 17 have no admin and 4 have the
+  Stride deploy key `stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh` as admin. Deployed
+  contracts are executable by anyone.
 
 Pipelines that already exist:
 
@@ -160,8 +162,10 @@ proposal (§8).
 
 No new logic. Only message removals and parameter changes.
 
-Remove message handlers (proto `rpc`, msg server, CLI, tests; keeper functions stay because the
-flush and the unbond pipeline use them):
+Remove message handlers (proto `rpc`, msg server, amino registration, CLI, tests; keeper
+functions stay wherever something still calls them, so stakeibc's `LiquidStake` and
+`RedeemStake` keeper paths survive for the reward collector, the community pool and autopilot,
+while staketia's and stakedym's redeem keeper paths go with their handlers):
 
 - stakeibc: `LiquidStake`, `LSMLiquidStake`, `RedeemStake`, `RegisterHostZone`,
   `CreateTradeRoute`, `UpdateTradeRoute`, `DeleteTradeRoute`, `SetCommunityPoolRebate`,
@@ -173,17 +177,24 @@ flush and the unbond pipeline use them):
 - auction: `PlaceBid`, `CreateAuction`, `UpdateAuction`.
 - airdrop: all seven. claim (legacy): all four.
 
-Removing a message rejects it at tx decode for every entry path that goes through the msg
-router with a registered type, and is a stronger block than a flag. Two entry points do not
-decode a message and are closed separately:
+The message types stay registered in the interface registry. A node must still be able to
+decode every historical transaction that contains them (`strided q tx`, the tx REST endpoints);
+dropping the registration would break that for most of the chain's history. Rejection happens
+one step later: with no handler in the msg service router, a submitted message fails with
+"can't route message" for every entry path that goes through the router, which is a stronger
+block than a flag. Two entry points do not go through the router and are closed separately:
 
 - Autopilot: handler sets `StakeibcActive = false`.
 - ICA host: handler removes `MsgLiquidStake` and `MsgRedeemStake` from the allow-list.
   `MsgClaimUndelegatedTokens` stays until upgrade 2 so ICA-originated claims work in window 1.
 
-Wasm: handler sets `code_upload_access` to the gov module address only, and for every deployed
-contract whose admin is a Stride-controlled key, sets the admin to the gov module address
-(`ContractKeeper.UpdateContractAdmin`). The plan lists the contracts from a per-contract query.
+Wasm: handler sets `code_upload_access` to the gov module address only, and for each of the
+four contracts whose admin is the Stride deploy key, sets the admin to the gov module address
+through the gov permission keeper (whose authorization policy allows the change without the
+current admin's signature). The upload-access write is the one upgrade 1 step that fails the
+upgrade on error rather than logging: it can only fail on invalid params, and leaving upload
+open to the two keys with nothing but a log line is the worse outcome. A contract that no
+longer exists is logged and skipped. The list is re-checked right before the proposal.
 
 Trade route: handler deletes the dYdX trade route. Its conversions are worth 1 to 3 USDC a
 day (§3), so stopping them a month early costs nothing, and deleting it here removes the
@@ -197,11 +208,14 @@ three deprecated zones. `Halted` is not touched, per the decision to leave depre
 they are; the flag is documentation and the upgrade 3 redeem gate.
 
 Haqq delegation reconciliation: apply a per-validator delta table to haqq_11235-1 with the v34
-helper, exactly as v34 did for Injective. The 2026-09-21 measurement (§8a) has 14 validators
-over-recorded, all undetected downtime slashes plus two sub-token dust cases, the largest
-853.8 ISLM. Every delta is negative, so `TotalDelegations` drops by the table's sum and the
-next epoch's rate update, which still runs in window 1, lowers the stISLM redemption rate to
-match. That is the correct outcome for a slash that was never detected. The stored
+helper, exactly as v34 did for Injective. The 2026-09-21 measurement (§8a) has 17 validators
+off: 14 over-recorded (undetected downtime slashes and sub-token rounding, the largest
+853.8 ISLM) and 3 under-recorded by sub-token dust (the chain holds slightly more than
+tracked). Both signs are applied so every tracked delegation equals the chain's; the net is a
+decrease of about 1,758 ISLM, so `TotalDelegations` drops and the next epoch's rate update,
+which still runs in window 1, lowers the stISLM redemption rate to match. That is the correct
+outcome for a slash that was never detected, and the table matched live state on three
+measurements over two days. The stored
 `SharesToTokensRate` is deliberately left as is: the window-2 refresh will update it, and the
 slash callback then finds tracked delegation equal to on-chain shares × the refreshed rate, so
 nothing is applied twice. The table is generated from `measure_delegation_drift.py`,
@@ -384,7 +398,8 @@ v34): recorded per-validator delegations versus the delegation ICA's on-chain ba
 dydx-mainnet-1, ssc-1 and sommelier-3 are exact. celestia is under-recorded by ~15,440 TIA
 (the v34 phantom stake; harmless for unbonding). osmosis-1 has one validator over by 3,026
 uosmo with an unchanged rate (calibration range). juno-1 (1 validator, 1.94 JUNO),
-laozi-mainnet (2, 4.53 BAND), phoenix-1 (10, max 1.20 LUNA) and haqq_11235-1 (14, max 853.8
+laozi-mainnet (2, 4.53 BAND), phoenix-1 (10, max 1.20 LUNA) and haqq_11235-1 (14 over plus 3
+under by dust, max 853.8
 ISLM, 0.01% of that validator) are over-recorded, and in every case Stride's stored exchange
 rate is above the chain's, i.e. undetected downtime slashes. Recomputing each validator as
 on-chain shares × the chain's current rate reproduces the on-chain balance exactly for every
@@ -496,3 +511,6 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
 - Version numbers for the three upgrades.
 - Whether the legacy claim module's 2022 airdrops are already expired (its REST query is not
   served; confirm from a full node). Its messages are removed either way.
+- Keeper code left unreferenced by the upgrade 1 removals (stakeibc's LSM liquid-stake entry
+  points, the trade-route authz and ICA registration helpers, `EnableRedemptions`) is dead but
+  harmless; deleting it is a follow-up cleanup, not part of the three upgrades.
