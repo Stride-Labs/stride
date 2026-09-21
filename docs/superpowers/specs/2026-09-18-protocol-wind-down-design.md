@@ -206,8 +206,9 @@ Handler, in order:
 1. Bank-move the full balance of staketia's claim address to the pool.
 2. For each in-scope zone, bank-move the native IBC-denom balance of the zone's deposit address
    to the pool (liquid stakes that never transferred out; they count in the rate today).
-3. Copy each in-scope zone's `HostZone.RedemptionRate` into a new store entry
-   `WithdrawalRate{chain_id → rate}`. That rate has been frozen since the upgrade 2 halt (§9).
+3. Write `HostZone.RedemptionRate × (1 − WindDownMargin)` for each in-scope zone into a new
+   store entry `WithdrawalRate{chain_id → rate}`. The rate has been frozen since the upgrade 2
+   halt and the margin is the same named constant (0.001) that ops apply to the unbond (§9).
    The entry is the only thing the redeem tx reads and the only marker that a zone is
    withdrawal-enabled. It is a separate key so that no legacy path (the slash callback, bounds
    checks, the oracle) can touch it afterwards. Evmos, stargaze, umee and stakedym get no entry.
@@ -285,19 +286,29 @@ halt-gated, and the only other writer (the delegator-shares slash callback) is r
 through the two admin-gated ICQ messages. If ops deliberately run those in window 2 and a slash
 is found, the frozen rate is lowered accordingly, which is the correct direction.
 
-Why freezing is safe. Between the halt and the pool being full, the backing only moves in two
-directions:
+Why a frozen rate with a matching haircut is covered. Confirmed against cosmos-sdk v0.54.3:
+`Unbond` calls the distribution hook `BeforeDelegationSharesModified`, which withdraws the
+accrued rewards, and then removes the shares; rewards are computed from delegation shares only,
+so an unbonding entry earns nothing during its 21 to 30 days. Between the halt and the pool
+being full, the backing therefore moves as follows:
 
-- Up: staking rewards keep accruing until each undelegation executes (roughly 30 days at the
-  zones' yields, on the order of 1%), auto-withdraw to the withdrawal ICA on undelegation, and
-  are swept into the pool. The frozen rate does not include them.
+- Up: staking rewards accrue only from the halt until the undelegate executes at the next day
+  epoch (one or two days, roughly 0.03% to 0.05%), are auto-withdrawn to the withdrawal ICA by
+  the undelegation, and are swept into the pool. Rewards withdrawn but not yet reinvested at
+  the halt are also swept.
 - Down: the 0.1% left staked by the 99.9% unbond, and any slash during window 2.
 
-So the pool is over-collateralized by window-2 rewards minus 0.1%, and only a large slash in
-window 2 could push it under. If that happens the last redeemers absorb it, which §1 accepts.
-A computed rate would remove that tail risk but adds a script and a constants file on the one
+A purely frozen rate would therefore be short by roughly 0.05% to 0.07% per zone before any
+slashing. The haircut closes that: the pool holds about 0.999 × delegated plus a day of
+rewards, and supply × withdrawal rate is 0.999 × delegated, so the rewards are the buffer and
+only a slash in window 2 can push a zone under. If that happens the last redeemers absorb it,
+which §1 accepts. A computed rate would remove that tail risk too, but adds a script on the one
 path where a bug is catastrophic; the frozen rate is a number that has already been on chain
-and audited for weeks.
+and audited for weeks, and the haircut is one multiplication by a constant.
+
+Optional, after window 2: run the (admin-gated) calibration ICQ on every validator so the
+recorded balances snap to the chain, then queue the remaining 0.1% through the same pending
+undelegation. That turns the margin into pool surplus but is not needed for coverage.
 
 Bank supply is the right reference for the assertion: stTokens that left Stride over IBC are
 escrowed here, not burned, so they are counted; stTokens burned by flushed redemptions are gone
