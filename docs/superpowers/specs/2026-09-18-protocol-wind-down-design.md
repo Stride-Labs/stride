@@ -404,8 +404,12 @@ Checklist to propose upgrade 3:
 - The upgrade 3 handler test is run against a fresh mainnet export and a localstride started
   from that export, and both pass the pool assertion (pool balance plus the staketia claim
   address, for celestia, ≥ stToken supply × `HostZone.RedemptionRate`) for every zone. The
-  handler errors on a shortfall, so this is what keeps the upgrade from failing on mainnet;
-  a shortfall found here is topped up with `MsgTransferFromIca` before the proposal.
+  handler errors on a shortfall, so this is what keeps the upgrade from failing on mainnet.
+  A shortfall found here is topped up before the proposal: with `MsgTransferFromIca` if an
+  ICA still holds something, otherwise by sending the zone's native IBC denom to that zone's
+  deposit address, which step 2 sweeps into the pool. The pool itself is blocked, so the
+  deposit address is the only external route in, and it needs no code. Any foreign denom that
+  lands in the pool this way or via the sweeps (dYdX USDC, for instance) stays as surplus.
 
 ## §9. Accounting
 
