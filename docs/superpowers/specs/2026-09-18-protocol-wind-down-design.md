@@ -243,15 +243,15 @@ else can trigger the slash path that rewrites the rate. Remove the 5,000 base-un
 `CalibrationThreshold` check from the calibration callback: it existed to bound what a
 permissionless caller could move, and the message is admin-gated from here on.
 
-New admin tx `MsgUndelegateFromValidators { creator, chain_id, offset, validators: [{address,
-offset}] }`, admin-gated in ValidateBasic. An empty `validators` list means every validator on
-the zone with a non-zero stored delegation; otherwise only the listed ones. The top-level
-`offset` applies to every validator and a per-validator `offset` overrides it for that one.
-Per validator the amount is the stored delegation minus its effective offset, passed through
-`applySharesRoundingSafety`, and rejected if it is not positive. The real run uses a global
-offset of one base unit so no validator can fail the host's share check on a full drain;
-that is immaterial and is on top of the helper, which already buffers full drains of
-validators whose exchange rate is below one. A listed validator with `DelegationChangesInProgress` set
+New admin tx `MsgUndelegateFromValidators { creator, chain_id, validators: [{address, offset}] }`,
+admin-gated in ValidateBasic. An empty `validators` list means every validator on the zone with
+a non-zero stored delegation; otherwise only the listed ones. Per validator the amount is the
+stored delegation minus `offset` (default zero), passed through `applySharesRoundingSafety`,
+and rejected if it is not positive. No blanket offset is needed for the real run: an unslashed
+validator has an exchange rate of exactly one, so a full-drain amount converts to shares with
+no truncation, and the helper already buffers full drains of validators whose rate is below
+one. Both rely on the stored rate matching the chain, which the window-2 refresh guarantees.
+The per-validator `offset` is only the lever for a validator that has drifted since. A listed validator with `DelegationChangesInProgress` set
 is rejected, so a batch cannot be double-submitted while its ack is outstanding. The messages
 go through `BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, so the
 existing callback decrements the balances and nothing is burned.
@@ -354,8 +354,7 @@ Window 2 (after upgrade 2, ~32 days):
    of the tx and the callback, then with an empty list for the rest. An ICA tx is atomic, so
    one over-recorded validator fails its whole batch; after the refresh there are none. If a
    slash lands between the refresh and the submission, that batch fails, ops rerun the refresh
-   (or raise that validator's `offset`) and resubmit for the affected validators. The real run
-   passes a global `offset` of one base unit. Delegation ICA channels and
+   (or set that validator's `offset`) and resubmit for the affected validators. Delegation ICA channels and
    relayers stay healthy until every batch acks; a dead channel is restored with the existing
    flow and the affected validators are resubmitted.
 3. Day 0+: `MsgTransferFromIca` for withdrawal, fee, redemption and community-pool ICA
