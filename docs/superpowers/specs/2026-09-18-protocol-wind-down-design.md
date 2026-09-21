@@ -124,7 +124,7 @@ State on mainnet (2026-09-18/21):
 |---|---|---|---|
 | Upgrade 1: close the doors | none | liquid stake, redeem, and every create-things message; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
 | Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits | ~32 days: undelegate 99.9%, drain every ICA into the pool |
-| Upgrade 3: withdrawal mode | pool account, pinned rates, one redeem tx | nothing | permanent |
+| Upgrade 3: withdrawal mode | pool account, one redeem tx | nothing | permanent |
 
 Each upgrade lands on a chain with nothing in flight, verified by the checklist that gates its
 proposal (§8).
@@ -199,27 +199,27 @@ ICA balances.
 ## §7. Upgrade 3: withdrawal mode
 
 Pool: a new stakeibc module account (name in the plan, e.g. `withdrawal_pool`) holding the
-native IBC denom of every in-scope zone. One account; the denom identifies the zone.
+native IBC denom of every in-scope zone. One account; the denom identifies the zone. It is
+added to the bank blocked-address list so nothing can be sent to it from outside the module.
 
 Handler, in order:
 
 1. Bank-move the full balance of staketia's claim address to the pool.
 2. For each in-scope zone, bank-move the native IBC-denom balance of the zone's deposit address
    to the pool (liquid stakes that never transferred out; they count in the rate today).
-3. Write `HostZone.RedemptionRate × (1 − WindDownMargin)` for each in-scope zone into a new
-   store entry `WithdrawalRate{chain_id → rate}`. The rate has been frozen since the upgrade 2
-   halt and the margin is the same named constant (0.001) that ops apply to the unbond (§9).
-   The entry is the only thing the redeem tx reads and the only marker that a zone is
-   withdrawal-enabled. It is a separate key so that no legacy path (the slash callback, bounds
-   checks, the oracle) can touch it afterwards. Evmos, stargaze, umee and stakedym get no entry.
-   No constants file: the handler reads the rate from state.
-4. Assert per zone that pool balance ≥ stToken supply × pinned rate, both read from state. Log
-   on failure and continue; the fix is an additive `MsgTransferFromIca`, never a state edit.
+3. Assert per zone that pool balance ≥ stToken supply × `HostZone.RedemptionRate`, both read
+   from state. Log on failure and continue; the fix is an additive `MsgTransferFromIca`, never
+   a state edit.
+
+There is no pinned-rate store and no constants file. The redeem tx reads the host zone's
+`RedemptionRate`, which has been frozen since the upgrade 2 halt (§9).
 
 New tx `MsgRedeemFromPool { creator, amount (stToken coin) }`:
 
-- Resolve the zone from the stToken denom; require a `WithdrawalRate` entry.
-- `native = amount × rate`, truncated; reject zero.
+- Resolve the zone from the stToken denom; require `Halted`. No further scope marker is
+  needed: a redeem of stEVMOS, stSTARS or stUMEE fails atomically at the send step because the
+  pool holds none of that denom, and the pool cannot be funded from outside.
+- `native = amount × HostZone.RedemptionRate`, truncated; reject zero.
 - Burn `amount` from the creator (send to module, burn), then send `native` of the zone's
   `IbcDenom` from the pool to the creator. Two bank operations, one multiplication, no records,
   no ICA. Insufficient pool balance fails the tx cleanly.
@@ -261,6 +261,10 @@ Window 2 (after upgrade 2, ~32 days):
 1. Day 0: `MsgSetPendingUndelegation` per zone at 99.9% of `TotalDelegations`. Delegation ICA
    channels and relayers stay healthy until every batch acks; a dead channel is restored with
    the existing flow and the pipeline resubmits.
+1b. Once a zone's first round has acked: run `CalibrateDelegation` for each of its validators
+   so recorded balances snap to the chain, then `MsgSetPendingUndelegation` for the remaining
+   `TotalDelegations`. This second round is what makes the frozen rate fully covered (§9); a
+   zone whose second round never lands is short by at most 0.1% minus a day of rewards.
 2. Day 0+: `MsgTransferFromIca` for withdrawal, fee and redemption ICA balances. This is the
    live test of the transfer tx on small real amounts.
 3. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
@@ -271,8 +275,8 @@ Window 2 (after upgrade 2, ~32 days):
 
 Checklist to propose upgrade 3:
 
-- Every pending undelegation key gone, no batch in flight, `TotalDelegations` ≈ 0.1% of its
-  pre-unbond value per zone.
+- Every pending undelegation key gone, no batch in flight, `TotalDelegations` at dust on every
+  zone after the second round.
 - Delegation, withdrawal, fee and redemption ICA balances at dust on every zone.
 - Off-chain check that pool balance ≥ stToken supply × `HostZone.RedemptionRate` for every
   zone (the same assertion the handler logs), so a shortfall is topped up before the proposal.
@@ -280,13 +284,13 @@ Checklist to propose upgrade 3:
 ## §9. Accounting
 
 There is no rate calculation anywhere in the design. The withdrawal rate for a zone is the
-`HostZone.RedemptionRate` that was on chain when upgrade 2 halted the zone, copied into
-`WithdrawalRate` by the upgrade 3 handler. Nothing recomputes it: the epoch update is
+`HostZone.RedemptionRate` that was on chain when upgrade 2 halted the zone, read live by the
+redeem tx. Nothing recomputes it: the epoch update is
 halt-gated, and the only other writer (the delegator-shares slash callback) is reachable only
 through the two admin-gated ICQ messages. If ops deliberately run those in window 2 and a slash
 is found, the frozen rate is lowered accordingly, which is the correct direction.
 
-Why a frozen rate with a matching haircut is covered. Confirmed against cosmos-sdk v0.54.3:
+Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3:
 `Unbond` calls the distribution hook `BeforeDelegationSharesModified`, which withdraws the
 accrued rewards, and then removes the shares; rewards are computed from delegation shares only,
 so an unbonding entry earns nothing during its 21 to 30 days. Between the halt and the pool
@@ -298,17 +302,17 @@ being full, the backing therefore moves as follows:
   the halt are also swept.
 - Down: the 0.1% left staked by the 99.9% unbond, and any slash during window 2.
 
-A purely frozen rate would therefore be short by roughly 0.05% to 0.07% per zone before any
-slashing. The haircut closes that: the pool holds about 0.999 × delegated plus a day of
-rewards, and supply × withdrawal rate is 0.999 × delegated, so the rewards are the buffer and
-only a slash in window 2 can push a zone under. If that happens the last redeemers absorb it,
-which §1 accepts. A computed rate would remove that tail risk too, but adds a script on the one
-path where a bug is catastrophic; the frozen rate is a number that has already been on chain
-and audited for weeks, and the haircut is one multiplication by a constant.
-
-Optional, after window 2: run the (admin-gated) calibration ICQ on every validator so the
-recorded balances snap to the chain, then queue the remaining 0.1% through the same pending
-undelegation. That turns the margin into pool surplus but is not needed for coverage.
+After the first round alone a frozen rate would be short by roughly 0.05% to 0.07% per zone
+before any slashing: the 0.1% margin exists only so the first undelegate batch lands despite
+recorded-versus-chain drift (an ICA tx is atomic, so one over-recorded validator fails the
+whole batch), and a day of rewards does not cover it. The second round (§8, step 1b) closes
+the gap: after calibration the recorded balances match the chain and the remainder unbonds
+cleanly, so the pool holds the full delegated amount plus the swept rewards, and supply ×
+frozen rate is the delegated amount. Only a slash in window 2, or a second round that never
+lands, can leave a zone under, and in both cases the last redeemers absorb it, which §1
+accepts. A computed rate would remove that tail risk too, but adds a script on the one path
+where a bug is catastrophic; the frozen rate is a number that has already been on chain and
+audited for weeks.
 
 Bank supply is the right reference for the assertion: stTokens that left Stride over IBC are
 escrowed here, not burned, so they are counted; stTokens burned by flushed redemptions are gone
@@ -340,14 +344,14 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
   trade route removal, oracle deactivation and rate-limit removal. Localstride run through a day
   epoch to see a pending undelegation submit.
 - Upgrade 3: `MsgRedeemFromPool` is the highest-review item: table-driven tests covering
-  rounding to zero, unknown denoms, denoms without a `WithdrawalRate`, insufficient pool, an
+  rounding to zero, unknown denoms, a zone that is not halted, insufficient pool, an
   exact drain of the pool, and a second redeem after the drain. Handler tests for the bank
-  moves, the copied rates and the assertion. Localstride run: upgrade, then a redeem.
+  moves and the assertion. Localstride run: upgrade, then a redeem.
 
 ## §11. Open items for the plan
 
-- Module account name; exact proto shapes and enum names for the two admin txs, the redeem tx
-  and `WithdrawalRate`.
+- Module account name; exact proto shapes and enum names for the two admin txs and the redeem
+  tx.
 - Per-contract wasm admin listing for upgrade 1.
 - Version numbers for the three upgrades.
 - Whether the legacy claim module's 2022 airdrops are already expired (its REST query is not
