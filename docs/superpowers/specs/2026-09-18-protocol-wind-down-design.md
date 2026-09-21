@@ -185,6 +185,17 @@ re-measured right before the proposal, and covered by a mainnet-export test. Thi
 Injective shape (real loss, no stranded liquid), not the v33 Osmosis shape (phantom stake
 credited back as a deposit record).
 
+Before applying the table, the handler throws out every slash-path ICQ open for haqq_11235-1
+at that moment: it iterates the pending interchain queries, deletes those for that chain whose
+callback is the validator exchange rate, delegator shares or calibration callback, and clears
+`SlashQueryInProgress` on every haqq validator. Unlike v34's `DeleteStuckQueries` and
+`ResetStuckSlashQueries`, which pin query ids and validator addresses, this is dynamic, so
+the constants cannot go stale between measurement and execution (haqq had 8 such queries
+open and one flagged validator on 2026-09-21). A stale response landing after the delta could
+not double-apply a slash (§3), but a query submitted against the pre-delta state has no
+reason to exist and the reinvest path resubmits fresh ones each epoch. The withdrawal-balance
+query is not a slash query and is left alone.
+
 Everything else keeps running on purpose: reinvest, rate updates, unbonding, sweep, claim, the
 reward-collector fee liquid stake, the trade route, the oracles, and the staketia/stakedym
 operator flows. The fee liquid stake mints stTokens for validators during the window; it is
@@ -399,7 +410,9 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
 ## §10. Testing
 
 - Upgrade 1: handler tests against a mainnet export (`app/upgrades/vN/testdata/`, v34-style)
-  for the Haqq delta table (applied, and skipped on a stale constant), the autopilot param, ICA
+  for the Haqq delta table (applied, and skipped on a stale constant), the haqq slash-query
+  purge (deletes only that chain's slash-path queries, clears the validator flags, leaves other
+  chains' and the withdrawal-balance queries), the autopilot param, ICA
   host allow-list, wasm params and contract admins; a compile-time
   guarantee that the removed messages no longer exist; existing keeper tests for the flows
   that keep running stay green.
