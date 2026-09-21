@@ -67,7 +67,9 @@ Gating that already exists:
   to the withdrawal ICA for the normal reinvest split (`reward_converter.go`). The fee ICA is
   an ordinary ICA on each host that receives Stride's commission slice at reinvest and is
   swept to the reward collector by an epochly ICQ; nothing in the pipeline is a hot wallet
-  except the trade controller on Osmosis. The delegator-shares
+  except the trade controller on Osmosis. The amounts are immaterial: sampled 2026-09-21, the
+  ICA accrues 0.05 to 0.1 USDC per hour (1 to 3 USDC per day on 406k DYDX, 0.14% of dYdX's
+  bonded stake), so the whole wind-down is on the order of 100 USDC. The delegator-shares
   ICQ callback (reached from `UpdateValidatorSharesExchRate` and `CalibrateDelegation`, both
   permissionless today) applies a detected slash and then calls
   `UpdateRedemptionRateForHostZone` with no halt check.
@@ -147,8 +149,8 @@ State on mainnet (2026-09-18/21):
 
 | | New logic | Removes | Ops window after |
 |---|---|---|---|
-| Upgrade 1: close the doors | none (a Haqq delegation delta table, v34 pattern) | liquid stake, redeem, and every create-things message; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
-| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits, calibration cap | ~32 days: refresh slashes, undelegate every validator, drain every ICA into the pool |
+| Upgrade 1: close the doors | none (a Haqq delegation delta table, v34 pattern) | liquid stake, redeem, and every create-things message; the trade route; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
+| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, oracles, all rate limits, calibration cap | ~32 days: refresh slashes, undelegate every validator, drain every ICA into the pool |
 | Upgrade 3: withdrawal mode | pool account, one redeem tx | nothing | permanent |
 
 Each upgrade lands on a chain with nothing in flight, verified by the checklist that gates its
@@ -183,6 +185,13 @@ Wasm: handler sets `code_upload_access` to the gov module address only, and for 
 contract whose admin is a Stride-controlled key, sets the admin to the gov module address
 (`ContractKeeper.UpdateContractAdmin`). The plan lists the contracts from a per-contract query.
 
+Trade route: handler deletes the dYdX trade route. Its conversions are worth 1 to 3 USDC a
+day (§3), so stopping them a month early costs nothing, and deleting it here removes the
+off-chain trade controller from the picture and the need to prove the route quiet before
+upgrade 2. The USDC that accumulates in the dYdX withdrawal ICA during window 1 is swept in
+window 2 as surplus (§6, `denom`). The converter ICA addresses are noted in the plan; the
+stale authz grant on the Osmosis trade ICA is harmless.
+
 Comdex: handler sets `Deprecated = true` on comdex-1 so it carries the same flag as the other
 three deprecated zones. `Halted` is not touched, per the decision to leave deprecated zones as
 they are; the flag is documentation and the upgrade 3 redeem gate.
@@ -212,8 +221,7 @@ reason to exist and the reinvest path resubmits fresh ones each epoch. The withd
 query is not a slash query and is left alone.
 
 Everything else keeps running on purpose: reinvest, rate updates, unbonding, sweep, claim, the
-reward-collector fee liquid stake, the dYdX trade route, the oracles, and the
-staketia/stakedym operator flows. The fee liquid stake mints stTokens for validators during the window; it is
+reward-collector fee liquid stake, the oracles, and the staketia/stakedym operator flows. The fee liquid stake mints stTokens for validators during the window; it is
 accounting-consistent and stops at upgrade 2, so it is not worth a switch.
 
 ## §6. Upgrade 2: halt and unbond
@@ -227,8 +235,7 @@ Handler:
 
 1. `Halted = true` on every in-scope stakeibc zone and on stakedym's host zone. The four
    deprecated zones are not touched.
-2. Delete the dYdX trade route (its converter ICAs are written off; the addresses are noted in
-   the plan). Deactivate the three ICA oracles (existing toggle logic). Remove
+2. Deactivate the three ICA oracles (existing toggle logic). Remove
    `MsgClaimUndelegatedTokens` from the ICA host allow-list.
 3. Remove every rate limit, every blacklisted denom and every whitelisted address pair from
    the rate limiter. After upgrade 3 the only outbound flow that matters is users taking native
@@ -265,8 +272,8 @@ the manual lever if a validator is still off by dust.
 
 New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount (Coin) }`, admin-gated:
 `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION, COMMUNITY_POOL_DEPOSIT,
-COMMUNITY_POOL_RETURN}`, the six ICAs a host zone owns (the two converter ICAs belong to the
-trade route deleted in this same upgrade and are written off). `amount` carries its denom as it exists on the host,
+COMMUNITY_POOL_RETURN}`, the six ICAs a host zone owns (the two converter ICAs belonged to
+the trade route deleted at upgrade 1 and are written off). `amount` carries its denom as it exists on the host,
 so foreign balances such as the USDC in the dYdX withdrawal ICA can be swept too; anything
 that is not the zone's host denom becomes pool surplus. Submits one ICA containing an IBC
 `MsgTransfer` of `amount` from that ICA over the zone's transfer channel to the pool address,
@@ -336,10 +343,6 @@ Checklist to propose upgrade 2:
   empty.
 - Stakedym: same, for its records.
 - No open LSM token deposit on cosmoshub-4.
-- The dYdX trade route is quiet: no pending withdrawal-reward or trade-converted-balance ICQ,
-  no packet commitment on the dYdX→Noble, Noble→Osmosis or Osmosis→dYdX transfer channels used
-  by the route, and zero USDC and DYDX on the Osmosis trade ICA. Any USDC left in the dYdX
-  withdrawal ICA is swept in window 2 as surplus.
 
 Window 2 (after upgrade 2, ~32 days):
 
@@ -456,7 +459,7 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
 ## §10. Testing
 
 - Upgrade 1: handler tests against a mainnet export (`app/upgrades/vN/testdata/`, v34-style)
-  for the comdex-1 `Deprecated` flag, the Haqq delta table (applied, and skipped on a stale
+  for the trade route deletion, the comdex-1 `Deprecated` flag, the Haqq delta table (applied, and skipped on a stale
   constant), the haqq slash-query
   purge (deletes only that chain's slash-path queries, clears the validator flags, leaves other
   chains' and the withdrawal-balance queries), the autopilot param, ICA
@@ -467,8 +470,8 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
   construction with and without offsets, empty versus explicit validator lists, rounding
   safety on a full drain, rejection of a validator with a change in progress, every ICA type
   and a foreign denom on the transfer, no accounting mutation), for the two ValidateBasic gates
-  and for the lifted calibration cap; handler tests for the halt flags, trade route deletion,
-  oracle deactivation, rate-limit removal and the pool account's existence and blocked status. Localstride run: upgrade, then
+  and for the lifted calibration cap; handler tests for the halt flags, oracle deactivation,
+  rate-limit removal and the pool account's existence and blocked status. Localstride run: upgrade, then
   `MsgUndelegateFromValidators` for one validator and its ack.
 - Upgrade 3: `MsgRedeemFromPool` is the highest-review item: table-driven tests covering
   the per-chain minimum, rounding to zero, an unknown chain id, a denom that is not the zone's
