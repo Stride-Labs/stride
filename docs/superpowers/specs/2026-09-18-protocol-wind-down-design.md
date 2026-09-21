@@ -128,6 +128,22 @@ Handler:
    the account exists). Native denoms are not rate-limited today, so this is belt-and-braces
    in case a native limit is ever added.
 
+4. Delete the one live trade route (dydx-mainnet-1 rewards → noble-1 → osmosis-1).
+   `TransferAllRewardTokens` iterates trade routes, not host zones, so the halt does not stop
+   it. Residual balances in its Noble reward account and Osmosis trade account are swept by
+   ops or written off as dormant.
+5. Deactivate the three ICA oracles (injective-1, neutron-1, osmosis-1) with the existing
+   toggle logic. They only push on a rate change, but this removes the last ICA traffic.
+
+Code changes alongside the handler:
+
+- Admin-gate `MsgUpdateValidatorSharesExchRate` and `MsgCalibrateDelegation` (ValidateBasic,
+  `utils.ValidateAdminAddress`). Both are permissionless today and their delegator-shares
+  callback rewrites the redemption rate on a halted zone when it detects a slash. Ops keep
+  them, since they help the pending undelegation succeed.
+- `MsgRebalanceValidators` and `MsgClearBalance` refuse a halted zone. They are admin-only but
+  move funds via ICA and do not check the halt today.
+
 Note on `Halted`: the existing `MsgResumeHostZone` admin message can un-halt a zone, and the
 redemption-rate safety check in `BeginBlocker` keeps running against the frozen rate (a no-op
 since the rate no longer changes). No new flag is introduced; reusing `Halted` is the least code
@@ -189,6 +205,14 @@ Staketia (operator key only, no multisig signing):
 3. Whatever remains in the claim address after the last distribution is moved to the pool by
    the upgrade 2 handler.
 
+Stakedym (operator, existing flow, no code): finish the open records so no user is stranded
+before the module is halted at upgrade 2. On 2026-09-21 that is 5 `UNBONDED` records
+(~1,067 DYM) awaiting sweep and confirm, and 6 `UNBONDING_QUEUE` records (~3,600 DYM, 3,294
+stDYM escrowed) awaiting undelegation, 30 redemption records in total. Undelegate now, wait 21
+days, sweep to the claim address, confirm, and the epoch hook distributes. The remaining
+~257k stDYM has no on-chain redemption path after the halt; that is a deliberate decision
+(§2), not a side effect.
+
 ## §7. Upgrade 2
 
 Pool: a new stakeibc module account (name in the plan, e.g. `withdrawal_pool`) that holds the
@@ -209,10 +233,14 @@ Handler, in order:
 4. For each unclaimed record whose stTokens were already burned (`UNBONDING_IN_PROGRESS`,
    `EXIT_TRANSFER_QUEUE`): leave `NativeTokenAmount` as recorded and set its
    `HostZoneUnbonding` to `CLAIMABLE` likewise. Records already `CLAIMABLE` are untouched.
-5. Pin the rate: set `HostZone.RedemptionRate` (and `LastRedemptionRate`) per zone to a
-   constant from the handler's constants file (§8). Set `MinRedemptionRate`/`Max…` and the
-   inner bounds so the pinned rate is inside them, so `BeginBlocker`'s safety check stays
-   quiet.
+5. Pin the rate: write one `WithdrawalRate{chain_id → rate}` store entry per in-scope zone
+   from the handler's constants file (§8). This entry is both the pinned rate and the
+   withdrawal-enabled marker. It is deliberately **not** `HostZone.RedemptionRate`: the
+   delegator-shares ICQ callback writes that field with no halt check, and nothing in the
+   legacy code paths knows about the new key. `HostZone.RedemptionRate` is left as the frozen
+   value so `BeginBlocker`'s safety check stays quiet.
+5b. Halt stakedym (`HostZone.Halted = true`), after its open records were finished in the
+   window (§6).
 6. Assert, per zone, that the pool's balance of the zone's IBC denom is ≥ circulating supply
    of the stToken × pinned rate, and that each redemption ICA balance is ≥ that zone's reserve
    as pinned. On failure, log and continue (an assertion is a check on the constants, not a
@@ -220,12 +248,11 @@ Handler, in order:
 
 New tx `MsgRedeemFromPool { creator, amount (stToken coin) }`:
 
-- Resolve the host zone from the stToken denom (`HostDenomFromStAssetDenom`); the zone must
-  be marked withdrawal-enabled. The upgrade 2 handler sets a per-zone store flag (key name in
-  the plan) for exactly the in-scope zones when it pins their rates; `Halted` alone is not the
-  marker, since evmos, stargaze and umee are halted without a pinned rate. Reject stEVMOS,
-  stSTARS, stUMEE and unknown denoms.
-- `native = amount × RedemptionRate`, truncated. Reject if zero.
+- Resolve the host zone from the stToken denom (`HostDenomFromStAssetDenom`) and load its
+  `WithdrawalRate` entry; no entry means the denom is not redeemable here. `Halted` alone is
+  not the marker, since evmos, stargaze and umee are halted without a pinned rate. Reject
+  stEVMOS, stSTARS, stUMEE, stDYM and unknown denoms.
+- `native = amount × WithdrawalRate`, truncated. Reject if zero.
 - Burn `amount` from the creator (send to module, burn), then send `native` of the zone's
   `IbcDenom` from the pool to the creator. Both through the bank keeper; no records, no ICA,
   no rate math beyond the one multiplication. Insufficient pool balance fails the tx cleanly.
@@ -298,6 +325,10 @@ complete).
 - **New redeem tx bug.** It is one burn and one send on a fixed rate, with no record state. The
   plan treats it as the highest-review item: table-driven tests including rounding to zero,
   unknown denoms, out-of-scope denoms, insufficient pool, and an exact-drain of the pool.
+- **Slash detection rewrites the rate.** The delegator-shares callback updates
+  `HostZone.RedemptionRate` with no halt check. Mitigated twice: the triggering messages are
+  admin-gated at upgrade 1, and the redeem tx reads `WithdrawalRate`, never
+  `HostZone.RedemptionRate`.
 - **Un-halt by mistake.** `MsgResumeHostZone` still exists; it is admin-gated. The plan may
   add a guard that refuses to resume a zone with a pinned rate. Optional.
 - **Autopilot.** Liquid stakes via memo fail on the halted zone and fall back to the packet
@@ -325,3 +356,57 @@ complete).
 - Confirm there are no open LSM token deposits on cosmoshub-4 at upgrade 1 (v34 closed the
   last known stranded one). The LSM loops are halt-gated, so an open one would simply freeze;
   it should be closed or refunded first.
+- Confirm from a full node that the legacy `claim` module airdrops (2022) are expired; the
+  public REST endpoint does not serve its params query. The `airdrop` module's two airdrops
+  ended in December 2024 and there are zero auctions, so neither needs disabling.
+
+## §12. Upgrade 3 (lockdown), sketch
+
+After the pool is funded and the claim trickle has drained, a third upgrade removes the
+remaining privileged surface. It is deliberately last because every step is irreversible.
+
+- Wasm `code_upload_access` from the two admin addresses to gov only; contract admins for
+  Stride-owned contracts to gov.
+- Remove the admin address list (`utils.ValidateAdminAddress` always fails) and with it every
+  admin message across stakeibc, staketia, stakedym, icaoracle, icqoracle, auction and
+  airdrop, including the two wind-down admin txs from §5.
+- Trim the ICA host allow-list of the three stakeibc messages.
+- Gov (POA) remains the only lever.
+
+## §13. Change-by-change risk
+
+Risk means the chance a mistake loses or strands funds, not implementation effort.
+
+| # | Change | Stage | Risk | Why | Mitigation |
+|---|---|---|---|---|---|
+| 1 | Set `Halted` on in-scope zones | U1 handler | Low | Existing flag, gates everything | Mainnet-export test asserts every flag |
+| 2 | Zero staketia remaining balance | U1 handler | Low | One field, read only by redeem | Export test |
+| 3 | Rate-limit whitelist pairs | U1 handler | Low | Natives aren't limited anyway | Export test |
+| 4 | Delete dYdX trade route | U1 handler | Low | Existing delete logic | Sweep or write off residual Noble/Osmosis balances |
+| 5 | Deactivate 3 ICA oracles | U1 handler | Low | Existing toggle | None needed |
+| 6 | Admin-gate the two ICQ msgs | U1 code | Low | ValidateBasic check | Unit test |
+| 7 | Halt check on Rebalance / ClearBalance | U1 code | Low | One `if` each | Unit test |
+| 8 | `MsgSetPendingUndelegation` | U1 code | Low | Writes one store key; pipeline is v34 code | Unit test; zero amount clears |
+| 9 | `MsgTransferFromIca` | U1 code | **Medium** | New ICA message; a wrong receiver is unrecoverable | Pool address derived from the module name, never passed in; destination is an enum; first use on small residuals; timeout leaves funds in the ICA |
+| 10 | Pending undelegations run | Window | **Medium** | Atomic batches fail on validator drift or capacity; channels can close | 99.9% margin; daily retry; admin override; relayer watch; read totals only after in-flight acks |
+| 11 | Staketia operator undelegate + IBC to claim address | Window | Low | Existing authz flow; receiver fixed by the allow-list | Confirm-sweep checks the balance before marking claimable |
+| 12 | Stakedym operator finishes open records | Window | Low | Existing flow | Halt only after the last distribution |
+| 13 | Per-zone reserve split (reserve to redemption ICA, rest to pool) | Window | **Medium** | Hand arithmetic; a short reserve blocks the last claims | Script computes; verify balances after each transfer; shortfall fixed by another additive transfer |
+| 14 | Pool module account | U2 code | Low | Standard module account | None needed |
+| 15 | Move staketia claim-address remainder to pool | U2 handler | Low | Bank send; subtract open records | Export test |
+| 16 | Move deposit-address natives to pool | U2 handler | Low | Bank send | Export test |
+| 17 | Burn escrowed stTokens, reprice those records | U2 handler | **Medium** | Edits user records; wrong amount over- or underpays | Only queue/retry records; assert burned sum equals deposit-address stToken balance; export test |
+| 18 | Flip unbonding records to claimable, set claimable amount | U2 handler | **Medium** | Claim fails on a too-low claimable amount, and that needs another upgrade to fix | Set from the sum of record amounts; export test simulates all 99 claims |
+| 19 | Pin `WithdrawalRate` per zone | U2 handler | Low code, **High** consequence | Wrong constant oversubscribes the pool for every redeemer | Script plus verifier regenerated at proposal time from static balances; `min(frozen, observed)`; handler assertion logs shortfall |
+| 20 | Handler pool/reserve assertions | U2 handler | Low | Read-only check | None needed |
+| 21 | `MsgRedeemFromPool` | U2 code | **High** | The one new user-facing path that moves funds, callable by anyone forever | One multiply, truncate, burn before send; deny unknown or out-of-scope denoms; table tests incl. rounding to zero, exact drain, insufficient pool; property test that total paid never exceeds pool; most-capable-tier review |
+| 22 | Claim: active-zone check to plain lookup | U2 code | Low | One line; rest is the tested path | Depends on #18 being right |
+| 23 | Halt stakedym | U2 handler | Low | Existing flag | Only after #12 |
+| 24 | Constants script | Off-chain | **Medium** | Feeds #13 and #19 | Tested against the export; two-pass solve; re-run at proposal time |
+| 25 | Wasm upload and contract admins to gov | U3 | Low, irreversible | Can't upgrade contracts outside gov afterward | Do last; gov still works under POA |
+| 26 | Remove admin list, admin msgs, wind-down txs, ICA host allow-list | U3 | Low, irreversible | No ops levers left except gov | Only after the pool is funded and claims drained |
+
+Two changes carry real fund risk: the redeem tx (#21) and the pinned constants (#19).
+Everything else is existing code behind a flag, or an ops step that fails safe and can be
+retried. #9, #17 and #18 are the medium ones because they are new code touching state, and
+each has a hard assertion available.
