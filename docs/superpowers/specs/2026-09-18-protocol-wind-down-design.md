@@ -36,8 +36,9 @@ In scope:
 
 Out of scope, explicitly:
 
-- The deprecated zones comdex-1, evmos_9001-2, stargaze-1 and umee-1. They are left exactly
-  as they are: no upgrade touches them, and none of them are unbonded, drained or redeemable.
+- The deprecated zones comdex-1, evmos_9001-2, stargaze-1 and umee-1. Apart from upgrade 1
+  setting the `Deprecated` flag on comdex-1 (the other three already carry it), no upgrade
+  touches them, and none of them are unbonded, drained or redeemable.
   Their host chains are halted, so nothing could be done through their ICAs anyway. Stakedym
   is halted at upgrade 2 once its operator has flushed its records, and is likewise never
   unbonded, drained or redeemable. Holders of stCMDX, stEVMOS, stSTARS, stUMEE and stDYM have
@@ -83,6 +84,7 @@ Pipelines that already exist:
   exceed the on-chain delegation. Neither depends on the zone being active.
 - `HostZone.Deprecated` is true on exactly evmos_9001-2, stargaze-1 and umee-1, which are
   also halted. comdex-1 is neither halted nor deprecated on chain; its host chain is halted.
+  The existing `DeprecateHostZone` message sets both `Halted` and `Deprecated`.
 - v34 has a chain-agnostic delegation delta helper (`app/upgrades/v34/delegation_deltas.go`):
   a per-validator table of on-chain minus tracked delegation, applied all-or-nothing to the
   validators and `TotalDelegations`, skipped with a log (never an upgrade error) if any constant
@@ -171,6 +173,10 @@ decode a message and are closed separately:
 Wasm: handler sets `code_upload_access` to the gov module address only, and for every deployed
 contract whose admin is a Stride-controlled key, sets the admin to the gov module address
 (`ContractKeeper.UpdateContractAdmin`). The plan lists the contracts from a per-contract query.
+
+Comdex: handler sets `Deprecated = true` on comdex-1 so it carries the same flag as the other
+three deprecated zones. `Halted` is not touched, per the decision to leave deprecated zones as
+they are; the flag is documentation and the upgrade 3 redeem gate.
 
 Haqq delegation reconciliation: apply a per-validator delta table to haqq_11235-1 with the v34
 helper, exactly as v34 did for Injective. The 2026-09-21 measurement (§8a) has 14 validators
@@ -265,8 +271,8 @@ There is no pinned-rate store and no constants file. The redeem tx reads the hos
 New tx `MsgRedeemFromPool { creator, amount (stToken coin) }`:
 
 - Resolve the zone from the stToken denom; require `Halted && !Deprecated`. That admits
-  exactly the eleven in-scope zones: comdex-1 is never halted, and the other three deprecated
-  zones carry the flag. A redeem of a deprecated stToken would in any case fail atomically at
+  exactly the eleven in-scope zones: all four deprecated zones carry the flag from upgrade 1
+  on, and comdex-1 is additionally never halted. A redeem of a deprecated stToken would in any case fail atomically at
   the send step because the pool holds none of that denom and cannot be funded from outside.
 - `native = amount × HostZone.RedemptionRate`, truncated; reject zero.
 - Burn `amount` from the creator (send to module, burn), then send `native` of the zone's
@@ -410,7 +416,8 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
 ## §10. Testing
 
 - Upgrade 1: handler tests against a mainnet export (`app/upgrades/vN/testdata/`, v34-style)
-  for the Haqq delta table (applied, and skipped on a stale constant), the haqq slash-query
+  for the comdex-1 `Deprecated` flag, the Haqq delta table (applied, and skipped on a stale
+  constant), the haqq slash-query
   purge (deletes only that chain's slash-path queries, clears the validator flags, leaves other
   chains' and the withdrawal-balance queries), the autopilot param, ICA
   host allow-list, wasm params and contract admins; a compile-time
