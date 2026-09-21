@@ -73,11 +73,13 @@ Gating that already exists:
 
 Pipelines that already exist:
 
-- The v34 pending-undelegation pipeline (`x/stakeibc/keeper/pending_undelegation.go`) queues
-  an amount per host zone, submits it at the day epoch through the normal validator-capacity
-  logic, tracks in-flight batches, and retries failed batches daily. It reads the host zone
-  with `GetHostZone`, so it runs on a halted zone. Its callback decrements `TotalDelegations`
-  and validator balances and burns nothing.
+- Since v34 the undelegate ICA callback accepts a submission with no epoch unbonding record
+  ids: on success it only decrements the validator and host zone delegation balances and burns
+  nothing (`icacallbacks_undelegate.go`). `BatchSubmitUndelegateICAMessages` takes
+  per-validator `MsgUndelegate`s directly and flags `DelegationChangesInProgress` on each, and
+  `applySharesRoundingSafety` trims a full-drain amount so share truncation cannot make it
+  exceed the on-chain delegation. Neither depends on the zone being active.
+- `HostZone.Deprecated` exists and is true on exactly the four deprecated zones.
 - An ICA-wrapped IBC `MsgTransfer` from a host account back to Stride exists in the
   trade-route code (`x/stakeibc/keeper/reward_converter.go`, `BuildHostToTradeTransferMsg`).
 - The rate limiter covers only stTokens (stATOM, stOSMO, stTIA, stJUNO, stEVMOS); no native
@@ -125,7 +127,7 @@ State on mainnet (2026-09-18/21):
 | | New logic | Removes | Ops window after |
 |---|---|---|---|
 | Upgrade 1: close the doors | none | liquid stake, redeem, and every create-things message; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
-| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits | ~32 days: refresh slashes, undelegate 100%, drain every ICA into the pool |
+| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, trade route, oracles, all rate limits | ~32 days: refresh slashes, undelegate every validator, drain every ICA into the pool |
 | Upgrade 3: withdrawal mode | pool account, one redeem tx | nothing | permanent |
 
 Each upgrade lands on a chain with nothing in flight, verified by the checklist that gates its
@@ -184,12 +186,21 @@ Remove message handlers: stakeibc `ClaimUndelegatedTokens`, `RebalanceValidators
 else can trigger the slash path that rewrites the rate. Raise `CalibrationThreshold` so that
 calibration can correct sub-token drift on 18-decimal denoms (§8a).
 
-New admin tx `MsgSetPendingUndelegation { creator, chain_id, amount }`, admin-gated in
-ValidateBasic: calls `SetPendingUndelegation`; zero removes the key. Nothing else. The v34
-pipeline submits, tracks and retries at the day epoch. Ops pass the full `TotalDelegations`
-after the slash refresh (§8, step 1). ICA txs are atomic, so one `MsgUndelegate` above a
-validator's true on-chain delegation fails the whole batch; the refresh is what prevents that,
-and the tx is the override if a zone keeps failing.
+New admin tx `MsgUndelegateFromValidators { creator, chain_id, validators: [{address, offset}] }`,
+admin-gated in ValidateBasic. An empty `validators` list means every validator on the zone with
+a non-zero stored delegation; otherwise only the listed ones. Per validator the amount is the
+stored delegation minus `offset` (default zero), passed through `applySharesRoundingSafety`,
+and rejected if it is not positive. A listed validator with `DelegationChangesInProgress` set
+is rejected, so a batch cannot be double-submitted while its ack is outstanding. The messages
+go through `BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, so the
+existing callback decrements the balances and nothing is burned.
+
+Submitting by validator rather than cascading a zone amount by weight is what lets ops test on
+a single validator first, skip or shave a validator that is failing or drifted by dust, and
+keep every submitted amount equal to what the host will accept. Retry is resubmission by ops;
+there is no queue and no epoch hook. ICA txs are atomic, so one over-recorded validator still
+fails its whole batch; the slash refresh (§8, step 1) is what prevents that, and `offset` is
+the manual lever if a validator is still off by dust.
 
 New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount }`, admin-gated:
 `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION}`. Submits one ICA containing an IBC
@@ -219,16 +230,17 @@ There is no pinned-rate store and no constants file. The redeem tx reads the hos
 
 New tx `MsgRedeemFromPool { creator, amount (stToken coin) }`:
 
-- Resolve the zone from the stToken denom; require `Halted`. No further scope marker is
-  needed: a redeem of stEVMOS, stSTARS or stUMEE fails atomically at the send step because the
-  pool holds none of that denom, and the pool cannot be funded from outside.
+- Resolve the zone from the stToken denom; require `Halted && !Deprecated`. The `Deprecated`
+  flag is already set on exactly the four out-of-scope zones, so this is a free explicit gate;
+  a redeem of a deprecated stToken would in any case fail atomically at the send step because
+  the pool holds none of that denom and cannot be funded from outside.
 - `native = amount × HostZone.RedemptionRate`, truncated; reject zero.
 - Burn `amount` from the creator (send to module, burn), then send `native` of the zone's
   `IbcDenom` from the pool to the creator. Two bank operations, one multiplication, no records,
   no ICA. Insufficient pool balance fails the tx cleanly.
 - Emit an event with creator, denom, stToken amount, native amount.
 
-Nothing else changes. `MsgTransferFromIca` and `MsgSetPendingUndelegation` stay for stragglers.
+Nothing else changes. `MsgTransferFromIca` and `MsgUndelegateFromValidators` stay for stragglers.
 
 ## §8. Ops windows and proposal checklists
 
@@ -268,12 +280,13 @@ Window 2 (after upgrade 2, ~32 days):
    validator whose rate is unchanged but whose recorded balance is off by under 5,000 base
    units (its hard cap). Then rerun the drift measurement (§8a) and require zero
    over-recorded validators on the zone.
-2. `MsgSetPendingUndelegation` per zone for the full `TotalDelegations`. An ICA tx is atomic,
-   so one over-recorded validator fails the whole batch; after the refresh there are none. If
-   a slash lands between the refresh and the submission, that batch fails, ops rerun the
-   refresh for the zone, and the pipeline resubmits at the next day epoch. Delegation ICA
-   channels and relayers stay healthy until every batch acks; a dead channel is restored with
-   the existing flow and the pipeline resubmits.
+2. `MsgUndelegateFromValidators` per zone: first for a single small validator as a live test
+   of the tx and the callback, then with an empty list for the rest. An ICA tx is atomic, so
+   one over-recorded validator fails its whole batch; after the refresh there are none. If a
+   slash lands between the refresh and the submission, that batch fails, ops rerun the refresh
+   (or pass an `offset`) and resubmit for the affected validators. Delegation ICA channels and
+   relayers stay healthy until every batch acks; a dead channel is restored with the existing
+   flow and the affected validators are resubmitted.
 3. Day 0+: `MsgTransferFromIca` for withdrawal, fee and redemption ICA balances. This is the
    live test of the transfer tx on small real amounts.
 4. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
@@ -304,8 +317,8 @@ before step 2.
 
 Checklist to propose upgrade 3:
 
-- Every pending undelegation key gone, no batch in flight, `TotalDelegations` zero on every
-  zone.
+- No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
+  `TotalDelegations` at dust on every zone.
 - Delegation, withdrawal, fee and redemption ICA balances at dust on every zone.
 - Off-chain check that pool balance ≥ stToken supply × `HostZone.RedemptionRate` for every
   zone (the same assertion the handler logs), so a shortfall is topped up before the proposal.
@@ -365,10 +378,12 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
   for the autopilot param, ICA host allow-list, wasm params and contract admins; a compile-time
   guarantee that the removed messages no longer exist; existing keeper tests for the flows
   that keep running stay green.
-- Upgrade 2: unit tests for both admin txs (gating, validation, message construction, no
-  accounting mutation) and for the two ValidateBasic gates; handler tests for the halt flags,
-  trade route removal, oracle deactivation and rate-limit removal. Localstride run through a day
-  epoch to see a pending undelegation submit.
+- Upgrade 2: unit tests for both admin txs (gating, validation, per-validator message
+  construction with and without offsets, empty versus explicit validator lists, rounding
+  safety on a full drain, rejection of a validator with a change in progress, no accounting
+  mutation) and for the two ValidateBasic gates; handler tests for the halt flags, trade route
+  removal, oracle deactivation and rate-limit removal. Localstride run: upgrade, then
+  `MsgUndelegateFromValidators` for one validator and its ack.
 - Upgrade 3: `MsgRedeemFromPool` is the highest-review item: table-driven tests covering
   rounding to zero, unknown denoms, a zone that is not halted, insufficient pool, an
   exact drain of the pool, and a second redeem after the drain. Handler tests for the bank
