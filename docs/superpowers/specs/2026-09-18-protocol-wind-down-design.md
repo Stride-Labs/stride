@@ -326,7 +326,7 @@ need a gov-gated withdrawal message and is out of scope for these three upgrades
   that keep running stay green.
 - Upgrade 2: unit tests for both admin txs (gating, validation, message construction, no
   accounting mutation) and for the two ValidateBasic gates; handler tests for the halt flags,
-  trade route removal, oracle deactivation and whitelist pairs. Localstride run through a day
+  trade route removal, oracle deactivation and rate-limit removal. Localstride run through a day
   epoch to see a pending undelegation submit.
 - Upgrade 3: `MsgRedeemFromPool` is the highest-review item: table-driven tests covering
   rounding to zero, unknown denoms, denoms without a `WithdrawalRate`, insufficient pool, an
