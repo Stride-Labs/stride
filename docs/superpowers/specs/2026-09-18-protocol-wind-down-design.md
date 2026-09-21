@@ -150,7 +150,8 @@ router with a registered type, and is a stronger block than a flag. Two entry po
 decode a message and are closed separately:
 
 - Autopilot: handler sets `StakeibcActive = false`.
-- ICA host: handler removes the three stakeibc messages from the allow-list.
+- ICA host: handler removes `MsgLiquidStake` and `MsgRedeemStake` from the allow-list.
+  `MsgClaimUndelegatedTokens` stays until upgrade 2 so ICA-originated claims work in window 1.
 
 Wasm: handler sets `code_upload_access` to the gov module address only, and for every deployed
 contract whose admin is a Stride-controlled key, sets the admin to the gov module address
@@ -167,6 +168,7 @@ Handler:
 
 1. `Halted = true` on every in-scope stakeibc zone and on stakedym's host zone.
 2. Delete the dYdX trade route. Deactivate the three ICA oracles (existing toggle logic).
+   Remove `MsgClaimUndelegatedTokens` from the ICA host allow-list.
 3. Whitelist in the rate limiter, per zone, (delegation ICA → pool), (withdrawal ICA → pool),
    (fee ICA → pool), (redemption ICA → pool). The pool is the module account defined in §7; its
    address is deterministic, so the pair can be set before the account exists.
