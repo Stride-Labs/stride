@@ -13,13 +13,26 @@ Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` (§5 is t
 ## Global Constraints
 
 - Module path becomes `github.com/Stride-Labs/stride/v35`; upgrade plan name is `"v35"`.
-- Only `rpc` lines are removed from `.proto` files. Proto `message` definitions stay (some are used internally, and keeping them avoids churn). After any `.proto` edit run `make proto-gen` and commit the regenerated `*.pb.go`.
+- Only `rpc` lines are removed from `.proto` files. Proto `message` definitions stay (some are used internally, and keeping them avoids churn). After any `.proto` edit run `make proto-gen` and commit only the regenerated `tx.pb.go` of the module you changed: because the module-path bump only sed-edited source strings, proto-gen also rewrites the gzipped descriptor bytes of every other `*.pb.go` in the repo; revert that noise with `git checkout <base> -- <files>` before committing.
+- Removed message types STAY registered in the interface registry: keep every `registry.RegisterImplementations((*sdk.Msg)(nil), &Msg...{})` entry in each module's `RegisterInterfaces`, and remove only the `rpc`, the msg-server handler, the `legacy.RegisterAminoMsg` line and the CLI command. Without the registration a v35 node can no longer decode any historical tx containing the message (`strided q tx`, `/cosmos/tx/v1beta1/txs/{hash}` fail with "unable to resolve type URL"). New submissions are still rejected because `MsgServiceRouter().Handler(msg)` is nil ("can't route message"). Add a comment above each block saying so.
 - Keeper logic stays wherever something still calls it (reward collector, autopilot, epoch hooks). Delete keeper code only when nothing references it after the handler is gone.
 - Upgrade handler helpers never return an error for a missing-state case; they log and continue (v34 convention). Only `RunMigrations` errors propagate.
 - macOS host: use `sed -i ''` (BSD sed).
 - Every commit message ends with the attribution lines from the session's system reminder.
 - Do not push. Branch: `wind-down-design` (already checked out; branch from it per task in worktrees as the sub-skill directs).
 - Run `go build ./...` before every commit; run the named package tests in each task.
+
+### Notes from a dry run of this plan (2026-09-21, reverted)
+
+The plan was executed once end to end on a scratch branch and reverted; these are the facts it surfaced, already folded into the tasks above:
+- Trade-route store key is `RewardDenomOnRewardZone + "-" + HostDenomOnHostZone`; mainnet's route is `uusdc`/`adydx`.
+- The Haqq measurement yields 17 deltas (14 negative slashes, 3 positive sub-token dust); both signs apply; the table matched live state on two measurements 3.5 h apart and again a day later.
+- `RegisterHostZone` tests are all keeper tests behind a pure-delegate handler: rewrite, don't delete (18 cases).
+- `community_pool.go`, `handler.go` and `cli/tx_test.go` also reference the removed stakeibc handlers.
+- Every task that runs `make proto-gen` must revert descriptor-only churn in unrelated `*.pb.go` (see Global Constraints).
+- Keeping `RegisterImplementations` is required for historical tx decoding; the first pass dropped them.
+- The full suite passed except the pre-existing `utils` `TestCreateModuleAccount` failure that also fails on main.
+- Unreferenced after the removals and left in place (candidate follow-up cleanup, no behavior impact): `StartLSMLiquidStake`, `SubmitValidatorSlashQuery`, `ShouldCheckIfValidatorWasSlashed`, `EmitPendingLSMLiquidStakeEvent`, `BuildTradeAuthzMsg`, `GetTradeRouteFromTradeAccountChainId`, `RegisterTradeRouteICAAccount`, `EnableRedemptions` (stakeibc).
 
 ---
 
@@ -227,12 +240,15 @@ Every task below depends only on Tasks 1-2. Tasks 3-6 each edit a disjoint set o
 - Create: `x/stakeibc/keeper/liquid_stake.go`
 - Modify: `x/stakeibc/keeper/msg_server.go` (delete `RegisterHostZone` ~42-222, `LiquidStake` 224-309, `RedeemStake` 311-332, `LSMLiquidStake` 334-392, `CreateTradeRoute` 394-481, `DeleteTradeRoute` 483-517, `UpdateTradeRoute` 519-~560, `SetCommunityPoolRebate` 770-803, `ToggleTradeController` 807-end)
 - Modify: `x/stakeibc/keeper/reward_allocation.go:47`
+- Modify: `x/stakeibc/keeper/community_pool.go` (two `NewMsgServerImpl(k).LiquidStake/RedeemStake` calls → `k.LiquidStake` / `k.RedeemStake`)
+- Modify: `x/stakeibc/handler.go` (legacy `MsgServiceHandler` switch: delete the nine cases for the removed messages)
 - Modify: `x/autopilot/keeper/liquidstake.go:76-105`, `x/autopilot/keeper/redeem_stake.go:60-84`
-- Modify: `x/stakeibc/types/codec.go` (amino lines 13,14,16,17,29,30,31,34,35 and the matching `RegisterImplementations` entries)
+- Modify: `x/stakeibc/types/codec.go` (amino lines 13,14,16,17,29,30,31,34,35 only; the `RegisterImplementations` entries STAY, see Global Constraints)
 - Modify: `x/stakeibc/client/cli/tx.go` (AddCommand lines 43-46, 60-61 and the `Cmd*` funcs), `x/stakeibc/client/cli/gov.go` (trade route proposal commands, if present)
 - Delete: `x/stakeibc/types/message_register_host_zone.go` (+`_test`), `message_lsm_liquid_stake.go` (+`_test`), `message_create_trade_route.go` (+`_test`), `message_update_trade_route.go` (+`_test`), `message_delete_trade_route.go` (+`_test`), `message_set_community_pool_rebate.go` (+`_test`), `message_toggle_trade_controller.go` (+`_test`) — only if nothing else references their helpers (check with `grep -rn NewMsgRegisterHostZone x/ app/`)
 - Keep: `x/stakeibc/types/message_liquid_stake.go`, `message_redeem_stake.go` (their `NewMsg*`/`ValidateBasic` are used by the reward collector and autopilot)
-- Test: `x/stakeibc/keeper/msg_server_test.go` (rewrite the LiquidStake tests to call the keeper; delete the tests of removed handlers), `x/stakeibc/keeper/registration_test.go`, `x/stakeibc/keeper/community_pool_test.go` (delete the `SetCommunityPoolRebate` tests), `x/stakeibc/keeper/lsm_test.go` (delete the `LSMLiquidStake` handler tests, keep keeper-level ones), `x/stakeibc/keeper/liquid_stake_test.go` (new home for the LiquidStake keeper tests)
+- Test: `x/stakeibc/keeper/msg_server_test.go` (rewrite the LiquidStake tests to call the keeper; delete the tests of removed handlers), `x/stakeibc/keeper/redeem_stake_test.go` (its 18 calls go through `GetMsgServer().RedeemStake`; rewrite them to `s.App.StakeibcKeeper.RedeemStake(s.Ctx, &msg)`, bodies unchanged), `x/stakeibc/keeper/registration_test.go` (all 18 `TestRegisterHostZone_*` cases exercise `Keeper.RegisterHostZone`, which survives for `x/staketia/keeper/migration.go`; rewrite `s.GetMsgServer().RegisterHostZone(` → `s.App.StakeibcKeeper.RegisterHostZone(`, do not delete the file), `x/stakeibc/client/cli/tx_test.go` (delete the tests of the six removed commands), `x/stakeibc/keeper/community_pool_test.go` (delete the `SetCommunityPoolRebate` tests), `x/stakeibc/keeper/lsm_test.go` (delete the `LSMLiquidStake` handler tests, keep keeper-level ones), `x/stakeibc/keeper/liquid_stake_test.go` (new home for the LiquidStake keeper tests)
+- Also delete the CLI flag constants that lose their only users (`FlagMinRedemptionRate`, `FlagMaxRedemptionRate`, `FlagCommunityPoolTreasuryAddress`, `FlagMaxMessagesPerIcaTx`, `FlagLegacy` in `x/stakeibc/client/cli/tx.go`)
 
 **Interfaces:**
 - Produces: `func (k Keeper) LiquidStake(ctx sdk.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error)` in `x/stakeibc/keeper/liquid_stake.go`. `func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error)` already exists in `redeem_stake.go` and is unchanged.
@@ -350,7 +366,7 @@ Remove the now-unused `stakeibckeeper` import from both autopilot files if it wa
 
 - [ ] **Step 5: Remove codec registrations, CLI commands and dead message helpers**
 
-`x/stakeibc/types/codec.go`: delete the `legacy.RegisterAminoMsg` lines and the `RegisterImplementations` entries for the nine messages. `RegisterInterfaces` must still end with `msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)`.
+`x/stakeibc/types/codec.go`: delete the `legacy.RegisterAminoMsg` lines for the nine messages. Keep their `RegisterImplementations` entries (historical tx decoding, see Global Constraints) and add a comment saying why. `RegisterInterfaces` must still end with `msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)`.
 
 `x/stakeibc/client/cli/tx.go`: delete the `cmd.AddCommand(...)` lines and the `Cmd*` functions for `LiquidStake`, `LSMLiquidStake`, `RegisterHostZone`, `RedeemStake`, `SetCommunityPoolRebate`, `ToggleTradeController`. In `x/stakeibc/client/cli/gov.go` delete any trade-route proposal commands and their `AddCommand` lines.
 
@@ -359,7 +375,7 @@ Delete the `types/message_*.go` files (and their tests) listed under **Files**, 
 - [ ] **Step 6: Fix the remaining tests**
 
 - `msg_server_test.go`: delete every test of a removed handler (`TestRegisterHostZone*`, `TestLSMLiquidStake*`, `TestRedeemStake*` that go through `GetMsgServer()`, `TestCreateTradeRoute*`, `TestUpdateTradeRoute*`, `TestDeleteTradeRoute*`, `TestToggleTradeController*`). Keeper-level `TestRedeemStake*` in `redeem_stake_test.go` stay.
-- `registration_test.go`: delete the tests that call `GetMsgServer().RegisterHostZone`; keep any that test keeper helpers directly.
+- `registration_test.go`: rewrite every `GetMsgServer().RegisterHostZone(` call to the keeper; the old handler was a pure delegate, so the tests are unchanged otherwise.
 - `community_pool_test.go`: delete the `TestSetCommunityPoolRebate*` cases.
 - `lsm_test.go`: delete the cases that call `GetMsgServer().LSMLiquidStake`; keep keeper-level LSM tests (the LSM callbacks still run in window 1).
 - `x/autopilot/keeper/*_test.go`: should pass unchanged; fix any reference to `stakeibckeeper.NewMsgServerImpl`.
@@ -371,6 +387,9 @@ Expected: all `ok`
 
 Run: `grep -c "^\s*rpc " proto/stride/stakeibc/tx.proto`
 Expected: `14`
+
+Run: `git diff --stat HEAD -- 'x/*/types/*.pb.go' | grep -v tx.pb.go`
+Expected: nothing (descriptor noise reverted; see Global Constraints)
 
 - [ ] **Step 8: Commit**
 
@@ -386,7 +405,8 @@ git commit -m "feat(stakeibc): remove liquid stake, redeem and create-things tx 
 - Modify: `x/staketia/keeper/msg_server.go` (delete `LiquidStake` 26-28, `RedeemStake` 31-39), `x/stakedym/keeper/msg_server.go` (delete `LiquidStake` 27-35, `RedeemStake` 37-45)
 - Modify: `x/staketia/keeper/unbonding.go` (delete keeper `RedeemStake` 21-153 and `HandleRedemptionSpillover` 155-186), `x/stakedym/keeper/unbonding.go` (delete keeper `RedeemStake` 20-~105)
 - Keep: `x/stakedym/keeper/delegation.go` `LiquidStake` (used by `LiquidStakeAndDistributeFees` in the hook) and everything else
-- Modify: `x/staketia/types/msgs.go` and `x/stakedym/types/msgs.go` (delete `TypeMsgLiquidStake`, `TypeMsgRedeemStake`, `NewMsgLiquidStake`, `NewMsgRedeemStake` and their `Type/Route/GetSignBytes/ValidateBasic` methods), `x/staketia/types/codec.go`, `x/stakedym/types/codec.go` (remove both messages)
+- Modify: `x/staketia/types/msgs.go` and `x/stakedym/types/msgs.go` (delete `TypeMsgLiquidStake`, `TypeMsgRedeemStake`, `NewMsgLiquidStake`, `NewMsgRedeemStake` and their `Type/Route/GetSignBytes/ValidateBasic` methods), `x/staketia/types/codec.go`, `x/stakedym/types/codec.go` (remove the amino lines only; keep `RegisterImplementations`)
+- Also dead after this task, delete: `EmitSuccessfulRedeemStakeEvent` in both modules' `keeper/events.go`, and `StakeibcKeeper.RedeemStake` in `x/staketia/types/expected_keepers.go`
 - Modify: `x/staketia/client/cli/tx.go` (`CmdRedeemStake`), `x/stakedym/client/cli/tx.go` (`CmdLiquidStake`, `CmdRedeemStake`)
 - Test: `x/staketia/keeper/unbonding_test.go`, `x/stakedym/keeper/unbonding_test.go`, `x/stakedym/keeper/delegation_test.go`, `x/stakedym/keeper/msg_server_test.go`, `x/staketia/types/msgs_test.go`, `x/stakedym/types/msgs_test.go`
 
@@ -448,7 +468,8 @@ git commit -m "feat(staketia,stakedym): remove liquid stake and redeem tx handle
 **Files:**
 - Modify: `proto/stride/icaoracle/tx.proto` (rpc lines 15, 17), `proto/stride/icqoracle/tx.proto` (rpc lines 17, 21)
 - Modify: `x/icaoracle/keeper/msg_server.go` (delete `AddOracle`, `InstantiateOracle`), `x/icqoracle/keeper/msg_server.go` (delete `RegisterTokenPriceQuery`, `RemoveTokenPriceQuery`; keep `UpdateParams`)
-- Modify: `x/icaoracle/types/codec.go`, `x/icqoracle/types/codec.go`
+- Modify: `x/icaoracle/types/codec.go`, `x/icqoracle/types/codec.go` (amino lines only; keep `RegisterImplementations`)
+- Modify: `x/icaoracle/README.md:117-122` (drop `AddOracle`/`InstantiateOracle` from the Transactions list, note they were removed in v35)
 - Modify: `x/icaoracle/client/cli/tx.go` (`CmdAddOracle`, `CmdInstantiateOracle`), `x/icqoracle/client/cli/tx.go` (`CmdAddTokenPrice`, `CmdRemoveTokenPrice`)
 - Delete: `x/icaoracle/types/message_add_oracle.go` (+`_test`), `message_instantiate_oracle.go` (+`_test`); in `x/icqoracle/types/msgs.go` delete the two messages' helpers
 - Keep: all icaoracle keeper logic (the instantiate ICA callback and metric posting still run) and `MsgRestoreOracleICA`, `MsgToggleOracle`, `MsgRemoveOracle`
@@ -506,7 +527,8 @@ git commit -m "feat(icaoracle,icqoracle): remove oracle and price-query registra
 **Files:**
 - Modify: `proto/stride/auction/tx.proto` (rpc lines 19, 24, 26), `proto/stride/airdrop/tx.proto` (all seven rpcs), `proto/stride/claim/tx.proto` (all four rpcs). Each `service Msg { ... }` block stays, with its `option (cosmos.msg.v1.service) = true;` and no rpcs.
 - Modify: `x/auction/keeper/msg_server.go`, `x/airdrop/keeper/msg_server.go`, `x/claim/keeper/msg_server.go`: delete every handler; keep the `msgServer` type and `NewMsgServerImpl` because `module.go` registers them.
-- Modify: `x/auction/types/codec.go`, `x/airdrop/types/codec.go`, `x/claim/types/codec.go`: remove every `Msg*` registration; keep `RegisterMsgServiceDesc`.
+- Modify: `x/auction/types/codec.go`, `x/airdrop/types/codec.go`, `x/claim/types/codec.go`: remove the amino registrations; keep every `RegisterImplementations` entry and `RegisterMsgServiceDesc`.
+- Modify: `x/claim/keeper/claim.go` `CreateAirdropAndEpoch` calls `msg.ValidateBasic()` on a `MsgCreateAirdrop` (used by the v3/v8/v14 upgrade handlers); inline the identical checks (distributor bech32, non-empty identifier/chain-id/denom, valid denom, non-zero start and duration) and add a table test for them in `x/claim/keeper/claim_test.go`, since `msgs_test.go` goes.
 - Modify: `x/auction/client/cli/tx.go`, `x/airdrop/client/cli/tx.go`: delete all `Cmd*` tx commands so `GetTxCmd` returns the bare parent command. `x/claim/client/cli/tx.go`: delete the four `AddCommand` lines and delete `tx_claim_free_amount.go`, `tx_create_airdrop.go`, `tx_delete_airdrop.go`, `tx_set_airdrop_allocations.go`.
 - Modify: `x/auction/types/msgs.go`, `x/airdrop/types/msgs.go`, `x/claim/types/msgs.go`: delete every message's helpers.
 - Keep: all keeper and epoch-hook logic and genesis; module stores are untouched.
@@ -560,7 +582,9 @@ git commit -m "feat(auction,airdrop,claim): remove all tx handlers for wind-down
 - Modify: `app/upgrades/v35/upgrades.go` (add the calls after `RunMigrations`)
 
 **Interfaces:**
-- Produces: `DeprecateComdex(ctx, stakeibcKeeper)`, `DeleteDydxTradeRoute(ctx, stakeibcKeeper)`, `DisableAutopilotStakeibc(ctx, autopilotKeeper)`, `RemoveIcaHostLiquidStakingMessages(ctx, icaHostKeeper)`, `SetWasmUploadAccessToGov(ctx, wasmKeeper)`, `TransferWasmContractAdminsToGov(ctx, wasmKeeper)`. All `func(sdk.Context, <keeper>)` with no return, except `SetWasmUploadAccessToGov` which returns `error` from `SetParams` (logged, not propagated, by the handler).
+- Produces: `DeprecateComdex(ctx, stakeibcKeeper)`, `DeleteDydxTradeRoute(ctx, stakeibcKeeper)`, `DisableAutopilotStakeibc(ctx, autopilotKeeper)`, `RemoveIcaHostLiquidStakingMessages(ctx, icaHostKeeper)`, `SetWasmUploadAccessToGov(ctx, wasmKeeper) error`, `TransferWasmContractAdminsToGov(ctx, wasmKeeper)` which delegates to an unexported `transferWasmContractAdminsToGov(ctx, wasmKeeper, contractAddresses []string)` so a test can pass its own contracts. `SetWasmUploadAccessToGov`'s error IS propagated by the handler (it can only fail on invalid params, and leaving upload open to the two keys with just a log is worse than a failed upgrade); every other helper logs and continues.
+- Extra test (the plan's original skip-path-only test is not enough): copy `hackatom.wasm` from `$(go list -m -f '{{.Dir}}' github.com/CosmWasm/wasmd)/x/wasm/keeper/testdata/` into `app/upgrades/v35/testdata/`, store and instantiate it twice via `wasmkeeper.NewDefaultPermissionKeeper(s.App.WasmKeeper)` (`Create`, then `Instantiate` with a test admin and init msg `{"verifier":"<addr>","beneficiary":"<addr>"}`), run `transferWasmContractAdminsToGov` on the first only, and assert `GetContractInfo(first).Admin == GovModuleAddress.String()` while the second is unchanged. The test app has a working wasmvm.
+- Also: `x/autopilot/README.md:34-42` gets a note that stakeibc autopilot actions are disabled by param from v35.
 - Depends on: Tasks 1-2
 - Review: yes (wasm admin transfer and ICA host allow-list are security-relevant)
 
@@ -577,9 +601,10 @@ import (
 const (
 	ComdexChainId = "comdex-1"
 
-	// The one live trade route on mainnet (dYdX USDC rewards → Noble → Osmosis). Keyed by the
-	// reward denom as it appears on dYdX and the host denom.
-	DydxTradeRouteRewardDenom = "ibc/8E27BA2D5493AF5636760E354E46004562C46AB7EC0CC4C1CA14E9E20E2545B5"
+	// The one live trade route on mainnet (dYdX USDC rewards → Noble → Osmosis). The store is
+	// keyed by the reward denom as it appears on the REWARD zone (Noble's native uusdc) plus the
+	// host denom on the host zone; TradeRoute.GetKey() uses RewardDenomOnRewardZone.
+	DydxTradeRouteRewardDenom = "uusdc"
 	DydxTradeRouteHostDenom   = "adydx"
 )
 
@@ -644,12 +669,12 @@ func (s *UpgradeTestSuite) TestDeprecateComdexSkipsWhenMissing() {
 
 func (s *UpgradeTestSuite) TestDeleteDydxTradeRoute() {
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, stakeibctypes.TradeRoute{
-		RewardDenomOnHostZone: v35.DydxTradeRouteRewardDenom,
-		HostDenomOnHostZone:   v35.DydxTradeRouteHostDenom,
+		RewardDenomOnRewardZone: v35.DydxTradeRouteRewardDenom,
+		HostDenomOnHostZone:     v35.DydxTradeRouteHostDenom,
 	})
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, stakeibctypes.TradeRoute{
-		RewardDenomOnHostZone: "ibc/other",
-		HostDenomOnHostZone:   "uother",
+		RewardDenomOnRewardZone: "ibc/other",
+		HostDenomOnHostZone:     "uother",
 	})
 
 	v35.DeleteDydxTradeRoute(s.Ctx, s.App.StakeibcKeeper)
@@ -853,7 +878,7 @@ In `app/upgrades/v35/upgrades.go`, after the `RunMigrations` block and before th
 		DisableAutopilotStakeibc(ctx, autopilotKeeper)
 		RemoveIcaHostLiquidStakingMessages(ctx, icaHostKeeper)
 		if err := SetWasmUploadAccessToGov(ctx, wasmKeeper); err != nil {
-			ctx.Logger().Error(fmt.Sprintf("v35: unable to set wasm upload access: %s", err.Error()))
+			return vm, err
 		}
 		TransferWasmContractAdminsToGov(ctx, wasmKeeper)
 ```
@@ -937,7 +962,7 @@ if __name__ == "__main__":
 ```
 
 Run: `python3 scripts/wind-down/measure_delegation_drift.py && python3 scripts/wind-down/gen_delta_table.py haqq_11235-1`
-Expected: a Go var block with 14 entries, every `Delta` negative, the largest about `-853800000000000000000` (853.8 ISLM in aISLM). If `drift.json` lacks `actual`/`recorded` as integers, adapt the two `int(...)` reads to the field the script actually writes (see `compute_zone_rows` in `measure_delegation_drift.py`).
+Expected: a Go var block with about 17 entries: 14 negative (undetected downtime slashes, the largest about `-853800000000000000000`, 853.8 ISLM in aISLM) and 3 positive sub-token dust entries where the chain holds slightly more than tracked. Both signs are applied; the net is negative. In `haqq_test.go` assert every delta is non-zero and the sum is negative, not that each is negative. If `drift.json` lacks `actual`/`recorded` as integers, adapt the two `int(...)` reads to the field the script actually writes (see `compute_zone_rows` in `measure_delegation_drift.py`).
 
 - [ ] **Step 3: Write the failing tests**
 
@@ -1228,7 +1253,9 @@ func (s *UpgradeTestSuite) TestRemovedMessagesHaveNoHandler() {
 }
 ```
 
-Run: `go test ./app/upgrades/v35/... -run TestUpgradeTestSuite/TestRemovedMessagesHaveNoHandler 2>&1 | tail -3`
+Add a second test in the same file, `TestRemovedMessagesStillDecode`: for one message per module (e.g. `&stakeibctypes.MsgLiquidStake{Creator: <valid bech32>, Amount: sdkmath.NewInt(1), HostDenom: "uatom"}`), build a tx with `s.App.TxConfig().NewTxBuilder()` + `SetMsgs`, encode with `TxConfig().TxEncoder()`, decode with `TxConfig().TxDecoder()`, and assert no error and one msg of the right type. This is what proves historical txs still decode (Global Constraints).
+
+Run: `go test ./app/upgrades/v35/... -run 'TestUpgradeTestSuite/TestRemovedMessages' 2>&1 | tail -3`
 Expected: `ok`. If a message in `removed` still has a handler, the corresponding Task 3-6 missed it; fix that module, do not edit the list.
 
 - [ ] **Step 2: Assemble the mainnet export fixture**
@@ -1421,7 +1448,7 @@ Add at the top of the versions in `CHANGELOG.md`, matching the existing section 
 
 ### Wind-down: close the doors
 
-- Removed the liquid stake, LSM liquid stake and redeem tx handlers (stakeibc, staketia, stakedym); the keeper paths remain for the reward collector and in-flight flows.
+- Removed the liquid stake, LSM liquid stake and redeem tx handlers (stakeibc, staketia, stakedym). The stakeibc keeper paths remain for the reward collector, community pool and in-flight flows; the staketia and stakedym redeem keeper paths go with their handlers. Historical txs still decode (types stay registered); new submissions are rejected by the router.
 - Removed the register-host-zone, trade route, community-pool rebate and trade-controller handlers (stakeibc), oracle registration (icaoracle), token-price registration (icqoracle), and every auction, airdrop and legacy claim message.
 - Autopilot stakeibc actions disabled; `MsgLiquidStake` and `MsgRedeemStake` dropped from the ICA host allow-list.
 - Wasm code upload restricted to the gov module; admin of the four Stride-administered Hyperlane contracts transferred to gov.
