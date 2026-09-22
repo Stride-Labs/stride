@@ -492,8 +492,8 @@ Window 1 (after upgrade 1, ~35 days):
    channel id to Osmosis for each of the ten non-Osmosis zones, each verified by querying the
    host's channel and confirming its client's counterparty chain id is osmosis-1 and the
    channel is open; and the list of foreign-route denoms per stToken from the escrow
-   balances. Confirm packet-forward middleware on every host whose Stride-side vouchers must
-   be forwarded (§11).
+   balances. Create or identify an account we control on each host chain whose vouchers will
+   be unwound (the ten non-Osmosis zones), the hop-through account for step 4 of window 2.
 6. Announce the timeline, the sweep floor and date, and that holders on other chains transfer
    to Osmosis directly.
 
@@ -530,9 +530,12 @@ Window 2 (after upgrade 2, ~35 days):
    foreign denoms such as the dYdX USDC. This is the live test of the
    transfer tx on small real amounts, and the first arrival on Osmosis confirms the mapped
    channel end to end and the denom each zone lands as.
-4. Day 0+: forward the Stride vault's vouchers (upgrade 2 handler step 4) to the Osmosis vault
-   with a packet-forward memo through each host chain, so they arrive canonical. The osmosis-1
-   zone's vouchers go straight to Osmosis.
+4. Day 0+: unwind the Stride vault's vouchers (upgrade 2 handler step 4) with two signed
+   transfers per zone: Stride vault to the hop-through account on the host, which turns the
+   voucher back into the native token, then that account to the Osmosis vault, which lands it
+   canonical. No middleware is involved; where a host runs packet-forward middleware the two
+   can be collapsed into one transfer with a memo, but nothing depends on it. The osmosis-1
+   zone's vouchers go straight from the Stride vault to the Osmosis vault in one transfer.
 5. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
    the full balance, then `WITHDRAWAL` again (undelegation auto-withdraws accrued rewards
    there). Then create and fund that stToken's pool (§7) once the coverage check passes (§9),
@@ -540,10 +543,10 @@ Window 2 (after upgrade 2, ~35 days):
 6. Staketia, through Stride (the multisig signers are no longer reachable): day 0, the
    operator undelegates the entire multisig delegation on Celestia via authz alongside the
    stakeibc unbonds. Day 21, the operator IBCs the whole liquid balance via authz to the claim
-   address (no memo; the grant forbids one). Then the S2 key signs one transfer from the claim
-   address over the Stride to Celestia channel with a packet-forward memo that continues from
-   Celestia to the Osmosis vault, so it arrives as canonical TIA, the same route as
-   any other Stride-side voucher (step 4). It joins the stTIA pool's funding.
+   address (no memo; the grant forbids one). The TIA then leaves the claim address directly,
+   signed by the S2 key, and never touches the Stride vault: claim address to the Celestia
+   hop-through account (the voucher unwinds to native TIA), then hop-through account to the
+   Osmosis vault, the same two-hop route as step 4. It joins the stTIA pool's funding.
 7. Last days: `MsgSweepStTokens` in batches of up to 100, per denom, for every holder at or
    above the floor, built from a fresh export. Resubmit any address whose transfer timed out
    (its balance is back on Stride). Relayers on channel-5 stay up until the last packet acks.
@@ -684,11 +687,6 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   addresses in §3a once created, the channel-5 constant for the sweep and the
   `chain_id → host-side channel to Osmosis` map; the batch bound after measuring gas.
 - Version numbers for the two upgrades.
-- Packet-forward middleware on laozi-mainnet, sommelier-3 and ssc-1 (celestia, cosmoshub-4,
-  dydx-mainnet-1, juno-1, haqq_11235-1 and phoenix-1 have it). Celestia's matters most: it
-  carries the whole staketia balance; the fallback there is a manual second hop from a
-  Celestia address we control. A host without it means two
-  manual hops for that zone's vouchers, which are small.
 - Identify the owners of the interchain accounts on Stride that hold stTokens (2.3k stATOM in
   one) and the 32-byte holders, and notify them.
 - Whether the legacy claim module's 2022 airdrops are already expired (its REST query is not
