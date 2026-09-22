@@ -1,23 +1,26 @@
-# Protocol Wind-Down: Withdrawal-Only Mode
+# Protocol Wind-Down: Migration to Osmosis
 
 Status: approved design, pre-plan. Large tier; the implementation plan follows in
 `docs/superpowers/plans/`.
 
 ## §1. Goal
 
-Wind Stride down into a withdrawal-only protocol. Stop every flow that moves funds on behalf of
-users, unbond every delegation, bring the native tokens back to Stride into one pool, and let
-stToken holders swap their stTokens for the backing native tokens directly on Stride at a fixed
-rate. The guiding constraints, in order: least risk of a bug that loses funds, least new code,
-most reuse of code that already runs on mainnet, and a chain that is inert while it waits.
+Wind Stride down and shut the chain off. Stop every flow that moves funds on behalf of users,
+unbond every delegation, send the native tokens from the host chains straight to Osmosis, and
+put them into one transmuter pool per stToken where holders swap stTokens for the backing
+native tokens at a fixed rate. stTokens still sitting in Stride accounts are sent to their
+owners on Osmosis before the halt, so nothing a user owns is left on a dead chain. The guiding
+constraints, in order: least risk of a bug that loses funds, least new code, most reuse of code
+that already runs on mainnet, and a chain that stops rather than one that idles for a year.
 
-The plan is three upgrades separated by two ops windows. It trades calendar time (roughly 70
-days end to end) for simplicity: each upgrade lands on a chain with nothing in flight, so no
-upgrade has to reason about partially-processed records.
+The plan is two upgrades separated by one ops window, then a second ops window that ends with
+a coordinated halt. It trades calendar time (roughly 70 days end to end) for simplicity: each
+upgrade lands on a chain with nothing in flight, so no upgrade has to reason about
+partially-processed records, and no on-chain rate is ever computed.
 
-Dormant capital is acceptable. If rounding or slashing drift leave a residue
-that no stToken can claim, it stays in the pool. What is not acceptable is a pool that cannot
-cover a valid redemption.
+Dormant capital is acceptable. Backing that no stToken ever claims stays in the pools and comes
+back to Stride Labs by exiting them later. What is not acceptable is a pool that cannot cover
+a valid swap.
 
 ## §2. Scope
 
@@ -26,26 +29,35 @@ In scope:
 - Every non-deprecated stakeibc host zone: celestia, cosmoshub-4, dydx-mainnet-1,
   haqq_11235-1, injective-1, juno-1, laozi-mainnet, osmosis-1, phoenix-1, sommelier-3, ssc-1.
 - Staketia (stTIA redemptions and the 5-of-7 Celestia multisig), including its 7 open
-  unbonding records. Its TIA joins the same pool as the stakeibc Celestia TIA.
+  unbonding records. Its TIA joins the same stTIA pool as the stakeibc Celestia TIA.
 - The stakeibc user redemption records open at upgrade 1 (99 on 2026-09-18) and any created
   before the redeem message is removed. All are flushed and claimed in window 1.
 - Stakedym's 11 open unbonding records (flushed by its operator in window 1), and halting
   stakedym at upgrade 2.
 - Removing every message the protocol no longer needs, moving wasm control to gov, and
   removing every IBC rate limit at upgrade 2.
+- Three admin txs added at upgrade 2: per-validator undelegation, ICA-to-Osmosis transfer,
+  and the batched stToken sweep to Osmosis.
+- The Osmosis side as an ops procedure (§7): one transmuter per stToken, its assets, its
+  funding, and the coverage check that gates it. No Stride code is involved.
 
 Out of scope, explicitly:
 
 - The deprecated zones comdex-1, evmos_9001-2, stargaze-1 and umee-1. Apart from upgrade 1
   setting the `Deprecated` flag on comdex-1 (the other three already carry it), no upgrade
-  touches them, and none of them are unbonded, drained or redeemable.
+  touches them, and none of them are unbonded, drained or given a pool.
   Their host chains are halted, so nothing could be done through their ICAs anyway. Stakedym
   is halted at upgrade 2 once its operator has flushed its records, and is likewise never
-  unbonded, drained or redeemable. Holders of stCMDX, stEVMOS, stSTARS, stUMEE and stDYM have
-  no on-chain redemption path after this work, which matches their status today but is now a
+  unbonded, drained or given a pool. Holders of stCMDX, stEVMOS, stSTARS, stUMEE and stDYM have
+  no redemption path after this work, which matches their status today but is now a
   deliberate decision.
+- stTokens held by Stride accounts that no key controls (contracts, interchain accounts owned
+  by other chains, module accounts including the community pool). They are not swept; their
+  owners, where there is one, move them out themselves before the halt (§8). Their backing
+  stays in the pools.
 - Removing whole modules or their state. Only messages are removed; stores stay.
-- STRD-side modules beyond message removal (mint, strdburner).
+- STRD-side modules beyond message removal (mint, strdburner). What happens to STRD, the
+  validator set and the chain's history after the halt is a separate decision.
 
 ## §3. Facts the design rests on
 
@@ -105,8 +117,13 @@ Pipelines that already exist:
   delegator-shares slash callback computes a slash as tracked delegation minus on-chain shares
   × the stored exchange rate, so a delegation-only delta is not re-applied when the rate is
   later refreshed.
-- An ICA-wrapped IBC `MsgTransfer` from a host account back to Stride exists in the
-  trade-route code (`x/stakeibc/keeper/reward_converter.go`, `BuildHostToTradeTransferMsg`).
+- An ICA-wrapped IBC `MsgTransfer` from a host account to a third chain exists in the
+  trade-route code (`x/stakeibc/keeper/reward_converter.go`, `BuildHostToTradeTransferMsg`
+  sends from the withdrawal ICA on the host to Osmosis via Noble). Autopilot and staketia
+  already call `transferKeeper.Transfer` from keeper code with a sender that is not the tx
+  signer, so a module can move a user's balance over IBC without a signature from them.
+- Every admin tx checks its signer against the hard-coded admin set (`utils.Admins`: the F5
+  key and the gov module) in ValidateBasic (`utils.ValidateAdminAddress`).
 - The rate limiter covers only stTokens (stATOM, stOSMO, stTIA, stJUNO, stEVMOS); no native
   denom is limited. Its keeper exposes removal of limits, blacklisted denoms and whitelisted
   address pairs.
@@ -129,9 +146,10 @@ Pipelines that already exist:
   exactly one allow-listed receiver: staketia's claim address
   `stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd`. Bank `MsgSend` is not granted. So the
   operator alone can move the whole multisig balance to Stride, but only onto the claim
-  address; upgrade 3 bank-moves it from there into the pool. Staketia's IBC middleware only
-  hooks outbound acks and timeouts, so an unrecorded inbound transfer to the claim address is
-  inert.
+  address, where it would be a TIA voucher that has to unwind through Celestia again to reach
+  Osmosis as canonical TIA. A direct Celestia to Osmosis transfer needs the 5-of-7 to sign.
+  Staketia's IBC middleware only hooks outbound acks and timeouts, so an unrecorded inbound
+  transfer to the claim address is inert.
 
 State on mainnet (2026-09-18/21):
 
@@ -147,16 +165,65 @@ State on mainnet (2026-09-18/21):
 - Zero auctions, zero ICQ-oracle price queries; both airdrop-module airdrops ended December
   2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
 
+Where the stTokens are (bank `denom_owners` on 2026-09-22, in-scope denoms):
+
+- Between 15% and 85% of each stToken's supply is held on Stride outside IBC escrow (55% of
+  stATOM, 719k of 1.30M). The rest sits in the escrow accounts of 3 to 30 transfer channels
+  per denom, i.e. it lives on other chains as vouchers; for stATOM channel-5 (Osmosis) holds
+  456k, channel-0 (Cosmos Hub) 62k, channel-6 (Injective) 31k, and 27 channels hold the rest.
+  The per-channel escrow balance is exactly how much of that stToken is on that counterparty
+  chain.
+- Holder counts are dominated by dust: 567k (account, denom) pairs hold a non-zero balance,
+  5.7k hold at least $10 worth and 1.1k at least $100 (prices of 2026-09-22). The $10 floor
+  strands about $58k of $3.09M; the $100 floor about $193k.
+- The largest holders are ordinary 20-byte accounts, several of them Stride vesting accounts
+  (`StridePeriodicVestingAccount`, `ContinuousVestingAccount`; stTokens are not their vesting
+  denom, so they are freely transferable). Holders with no owner on Osmosis: the transfer
+  escrow accounts; the zones' deposit addresses (in-flight redemptions, 30k stATOM, all
+  flushed in window 1); the distribution module (15.5k stATOM, mostly unwithdrawn validator
+  commission and STRD staking rewards; the community pool proper holds about $17k of
+  stTokens across every denom); interchain accounts owned by other chains (2.3k stATOM in
+  one); and a handful of 32-byte contract-style accounts (7k stTIA in one).
+- Stride and Osmosis both derive addresses from secp256k1 keys on coin type 118, so the
+  Osmosis address of a 20-byte Stride account is the same bytes with the `osmo` prefix, and
+  the same key controls both. A multisig address is the hash of its member keys and threshold
+  and derives the same way. 32-byte addresses (contracts, interchain accounts, module-derived
+  accounts) have no controlling key and no counterpart.
+
+Transmuter (osmosis-labs/transmuter v3.2.0, code id 996 on osmosis-1; source checked
+2026-09-22):
+
+- A transmuter is a `cosmwasmpool` that swaps its assets at a fixed ratio. v3 ("alloyed")
+  gives each asset a `normalization_factor` (any `Uint128`); the rate between two assets is
+  the ratio of their factors. Setting the stToken factor to `RedemptionRate × 1e18` and the
+  native factor to `1e18` encodes the 18-decimal frozen rate exactly. Swap fee is hard-coded
+  to zero; exact-in output rounds down, exact-out input rounds up.
+- Relative factors cannot be changed after instantiation. The admin's only factor operation,
+  `rescale_normalization_factor`, multiplies every factor by the same ratio. The admin can
+  `add_new_assets` later, each with its own factor, provided the denom already has bank
+  supply on Osmosis. The v1/v2 non-alloyed transmuter has no factors and swaps 1:1 only.
+- Instantiation is permissionless via `MsgCreateCosmWasmPool { code_id, instantiate_msg,
+  sender }` with a whitelisted code id and the normal pool-creation fee. The instantiate
+  message is `{ pool_asset_configs: [{denom, normalization_factor}], alloyed_asset_subdenom,
+  alloyed_asset_normalization_factor, admin, moderator }`; admin and moderator are plain
+  addresses and can be multisigs. The pool starts empty. `join_pool` accepts funds in any
+  subset of the assets and mints the alloyed asset (a tokenfactory denom) to the depositor as
+  the LP receipt; `exit_pool` burns it and returns a pro-rata share of whatever the pool
+  holds. Swaps go through the normal poolmanager routes.
+- Limiters are opt-in per denom (`register_limiter`); with none registered, the pool can move
+  from 100% native to 100% stToken. The moderator can `set_active_status` (freeze) and
+  `mark_corrupted_assets`; the admin can transfer adminship in two steps. Contract code
+  migration is governance-only (the wasm admin is the cosmwasmpool module).
+
 ## §4. Overview
 
 | | New logic | Removes | Ops window after |
 |---|---|---|---|
 | Upgrade 1: close the doors | none (a Haqq delegation delta table, v34 pattern) | liquid stake, redeem, and every create-things message; the trade route; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
-| Upgrade 2: halt and unbond | two admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, oracles, all rate limits, calibration cap | ~32 days: refresh slashes, undelegate every validator, drain every ICA into the pool |
-| Upgrade 3: withdrawal mode | pool account, one redeem tx | nothing | permanent |
+| Upgrade 2: halt, unbond, migrate | three admin txs, one ValidateBasic gate, one bank move | claim, rebalance, clear-balance, resume, oracles, all rate limits, calibration cap | ~35 days: refresh slashes, undelegate every validator, send every ICA balance to Osmosis, build and fund the pools, sweep stTokens, halt |
 
 Each upgrade lands on a chain with nothing in flight, verified by the checklist that gates its
-proposal (§8).
+proposal (§8). The halt is a coordinated `halt-height`, not an upgrade.
 
 ## §5. Upgrade 1: close the doors
 
@@ -205,7 +272,7 @@ stale authz grant on the Osmosis trade ICA is harmless.
 
 Comdex: handler sets `Deprecated = true` on comdex-1 so it carries the same flag as the other
 three deprecated zones. `Halted` is not touched, per the decision to leave deprecated zones as
-they are; the flag is documentation and the upgrade 3 redeem gate.
+they are; the flag is documentation.
 
 Haqq delegation reconciliation: apply a per-validator delta table to haqq_11235-1 with the v34
 helper, exactly as v34 did for Injective. The 2026-09-21 measurement (§8a) has 17 validators
@@ -238,15 +305,7 @@ Everything else keeps running on purpose: reinvest, rate updates, unbonding, swe
 reward-collector fee liquid stake, the oracles, and the staketia/stakedym operator flows. The fee liquid stake mints stTokens for validators during the window; it is
 accounting-consistent and stops at upgrade 2, so it is not worth a switch.
 
-## §6. Upgrade 2: halt and unbond
-
-Pool: a new stakeibc module account (name in the plan, e.g. `withdrawal_pool`) is registered in
-this binary and is the destination of every window-2 transfer. Stride blocks every module
-account by default and exempts the few that must receive IBC transfers (the stakeibc module
-account, the reward collector, the staketia and stakedym accounts; `app.go`
-`BlacklistedModuleAccountAddrs`), because ibc-go rejects an inbound transfer to a blocked
-receiver. The pool is added to that exemption list for the same reason; it is not blocked.
-One account for all denoms; the denom identifies the zone. A stray send to it becomes surplus.
+## §6. Upgrade 2: halt, unbond, migrate
 
 Handler:
 
@@ -255,9 +314,16 @@ Handler:
 2. Deactivate the three ICA oracles (existing toggle logic). Remove
    `MsgClaimUndelegatedTokens` from the ICA host allow-list.
 3. Remove every rate limit, every blacklisted denom and every whitelisted address pair from
-   the rate limiter. After upgrade 3 the only outbound flow that matters is users taking native
-   tokens off the chain, which must never be throttled, and there is no longer a mint path that
-   an stToken limit would protect. The module and middleware stay in the stack with empty state.
+   the rate limiter. The stToken sweep (below) sends most of each stToken's on-Stride supply
+   out over one channel in a few days, which no limit would allow, and there is no longer a
+   mint path that a limit would protect. The module and middleware stay in the stack with
+   empty state.
+4. Bank-move the native IBC-denom balance of every in-scope zone's deposit address, and any
+   in-scope native denom held by the reward collector and the auction module, to the
+   wind-down address (a Stride account we control, a constant in the binary). The halt is what
+   strands these: deposit records still in the transfer queue never transfer once the zone is
+   halted. They are vouchers, so ops forward them to Osmosis through their host chain (§8).
+   Skip with a log on any error; the amounts are small.
 
 Remove message handlers: stakeibc `ClaimUndelegatedTokens`, `RebalanceValidators`,
 `ClearBalance`, `ResumeHostZone`; staketia and stakedym `ResumeHostZone`. Add
@@ -267,18 +333,22 @@ else can trigger the slash path that rewrites the rate. Remove the 5,000 base-un
 `CalibrationThreshold` check from the calibration callback: it existed to bound what a
 permissionless caller could move, and the message is admin-gated from here on.
 
-New admin tx `MsgUndelegateFromValidators { creator, chain_id, validators: [{address, offset}] }`,
-admin-gated in ValidateBasic. An empty `validators` list means every validator on the zone with
+All three new txs are admin-gated in ValidateBasic. None reads or writes host zone
+accounting; amounts and lists are ops inputs.
+
+New admin tx `MsgUndelegateFromValidators { creator, chain_id, validators: [{address, offset}] }`.
+An empty `validators` list means every validator on the zone with
 a non-zero stored delegation; otherwise only the listed ones. Per validator the amount is the
 stored delegation minus `offset` (default zero), passed through `applySharesRoundingSafety`,
 and rejected if it is not positive. No blanket offset is needed for the real run: an unslashed
 validator has an exchange rate of exactly one, so a full-drain amount converts to shares with
 no truncation, and the helper already buffers full drains of validators whose rate is below
 one. Both rely on the stored rate matching the chain, which the window-2 refresh guarantees.
-The per-validator `offset` is only the lever for a validator that has drifted since. A listed validator with `DelegationChangesInProgress` set
-is rejected, so a batch cannot be double-submitted while its ack is outstanding. The messages
-go through `BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, so the
-existing callback decrements the balances and nothing is burned.
+The per-validator `offset` is only the lever for a validator that has drifted since. A listed
+validator with `DelegationChangesInProgress` set is rejected, so a batch cannot be
+double-submitted while its ack is outstanding. The messages go through
+`BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, so the existing
+callback decrements the balances and nothing is burned.
 
 Submitting by validator rather than cascading a zone amount by weight is what lets ops test on
 a single validator first, skip or shave a validator that is failing or drifted by dust, and
@@ -287,56 +357,92 @@ there is no queue and no epoch hook. ICA txs are atomic, so one over-recorded va
 fails its whole batch; the slash refresh (§8, step 1) is what prevents that, and `offset` is
 the manual lever if a validator is still off by dust.
 
-New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount (Coin) }`, admin-gated:
-`ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION, COMMUNITY_POOL_DEPOSIT,
+New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount (Coin), source_channel,
+receiver }`: `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION, COMMUNITY_POOL_DEPOSIT,
 COMMUNITY_POOL_RETURN}`, the six ICAs a host zone owns (the two converter ICAs belonged to
-the trade route deleted at upgrade 1 and are written off). `amount` carries its denom as it exists on the host,
-so foreign balances such as the USDC in the dYdX withdrawal ICA can be swept too; anything
-that is not the zone's host denom becomes pool surplus. Submits one ICA containing an IBC
-`MsgTransfer` of `amount` from that ICA over the zone's transfer channel to the pool address,
-built like `BuildHostToTradeTransferMsg`, with the existing ICA timeout. No
-callback state: a failed or timed-out transfer leaves the funds in the ICA and ops resubmit.
-The tx never reads or writes host zone accounting; amounts are an ops input checked against
-ICA balances.
+the trade route deleted at upgrade 1 and are written off). `source_channel` is the transfer
+channel on the host chain that leads to Osmosis, and `receiver` the Osmosis address we
+control; both are ops inputs because Stride stores neither, and `receiver` is validated as an
+`osmo` bech32 address. `amount` carries its denom as it exists on the host, so foreign
+balances such as the USDC in the dYdX withdrawal ICA can be sent too. Submits one ICA
+containing an ICS-20 `MsgTransfer` of `amount` from that ICA over `source_channel` to
+`receiver`, built like `BuildHostToTradeTransferMsg` without the forwarding memo, with the
+existing ICA timeout and a one-day transfer timeout. No callback state: a failed or timed-out
+transfer refunds to the ICA on the host and ops resubmit.
 
-## §7. Upgrade 3: withdrawal mode
+The tokens go from the host straight to Osmosis, never through Stride, because that is the
+only route that lands them as the canonical denom on Osmosis: a voucher that reaches Stride
+first and is forwarded from there arrives as a two-hop denom that no pool would use. For the
+osmosis-1 zone the ICA is already on Osmosis and the tx is an ICA bank `MsgSend` to `receiver`
+instead (`source_channel` empty).
 
-The pool account exists since upgrade 2 (§6) and is full by now.
+New admin tx `MsgSweepStTokens { creator, denom, addresses: [string] }`, the batched stToken
+sweep. `denom` must be the stToken denom of a stakeibc host zone; `addresses` is non-empty
+and at most 100 entries (the batch bound that keeps a tx inside the block gas limit; the plan
+measures the real cost and can raise it). For every listed address, in order:
 
-Handler, in order:
+- Reject the whole tx if the address is not sweepable: it must decode to 20 bytes and its
+  account must be a `BaseAccount` or one of the vesting account types; transfer escrow
+  addresses, module accounts (including the deposit addresses, the distribution module and
+  the reward collector) and interchain accounts are rejected. Batches are built off chain
+  from an export, so a rejected address is an ops error worth surfacing, and the reject is
+  what makes the on-chain rule the safety net rather than the script.
+- Skip with an event if the balance of `denom` is zero (the holder moved it between the
+  export and the tx).
+- Otherwise submit an ICS-20 `MsgTransfer` through `transferKeeper.Transfer` of the full
+  balance, sender the holder's Stride address, receiver the same 20 bytes bech32-encoded with
+  the `osmo` prefix, over the Stride to Osmosis transfer channel (channel-5, a constant), with
+  a one-day timeout and no memo. A timeout or a rejected receive refunds the holder on Stride
+  through the normal ICS-20 path and ops resubmit that address.
 
-1. Bank-move the full balance of staketia's claim address to the pool.
-2. For each in-scope zone, bank-move the native IBC-denom balance of the zone's deposit address
-   to the pool (liquid stakes that never transferred out; they count in the rate today).
-3. Assert per zone that pool balance ≥ stToken supply × `HostZone.RedemptionRate`, both read
-   from state, and return an error if any zone fails, which fails the upgrade. This is the one
-   place a hard error is right: a shortfall must be fixed before redemptions open anyway, and a
-   halted chain during the wind-down costs nothing because nobody can use it. Validators get a
-   corrected binary. The fix is an additive `MsgTransferFromIca`, never a state edit.
+One tx sweeps up to 100 holders of one denom; the whole sweep at the chosen floor is a few
+thousand packets over a few days (§3). There is no floor on chain: the tx is admin-gated, so
+nobody can spam it, and the floor is an ops choice made from prices on the day, stated in the
+announcement. Every account that clears the floor is swept; holders below it, and holders on
+other chains, move themselves (§7).
 
-There is no pinned-rate store and no constants file. The redeem tx reads the host zone's
-`RedemptionRate`, which has been frozen since the upgrade 2 halt (§9).
+## §7. Osmosis side: pools, funding, foreign-route denoms, shutdown
 
-New tx `MsgRedeemFromPool { creator, chain_id, amount (stToken coin) }`:
+Nothing in this section is Stride code. It is the procedure ops follow in window 2 as the
+native tokens arrive, and it is what replaces the on-chain withdrawal mode.
 
-- ValidateBasic: `amount` is positive and at least the chain's minimum, from a hard-coded set
-  of 18-decimal chains (dydx-mainnet-1, injective-1, haqq_11235-1, evmos_9001-2): 1e17 base
-  units there, 1e5 elsewhere. No state is needed for the check.
-- Load the host zone by `chain_id`; require `Halted && !Deprecated`, and that `amount.Denom`
-  is that zone's stToken denom. The gate admits exactly the eleven in-scope zones: all four
-  deprecated zones carry the flag from upgrade 1 on, and comdex-1 is additionally never halted.
-  The gate is the only thing keeping a deprecated stToken out; the pool is not blocked, so
-  "the pool holds none of that denom" is not relied on. A redeem of a deprecated stToken would in any case fail atomically at
-  the send step because the pool holds none of that denom and cannot be funded from outside.
-- `native = amount × HostZone.RedemptionRate`, truncated; reject zero.
-- Burn `amount` from the creator (send to module, burn), then send `native` of the zone's
-  `IbcDenom` from the pool to the creator. Two bank operations, one multiplication, no records,
-  no ICA. Insufficient pool balance fails the tx cleanly.
-- Emit an event with creator, denom, stToken amount, native amount.
+One transmuter pool per in-scope stToken, eleven pools, instantiated from code id 996 (v3.2.0)
+by the Osmosis address that receives the native tokens. Each pool's initial assets are the
+canonical stToken denom on Osmosis (the one minted by transfers over Stride's channel-5) and
+the native token, with normalization factors `HostZone.RedemptionRate × 1e18` for the stToken
+and `1e18` for the native token, the rate read from Stride at instantiation and frozen since
+the upgrade 2 halt (§9). No limiters are registered. Admin and moderator are set to a Stride
+Labs multisig; the moderator's freeze is the incident lever, and adminship can be renounced
+once the pools are in their final shape. The alloyed asset each pool mints is the LP receipt
+and stays in the multisig.
 
-Nothing else changes. `MsgTransferFromIca` and `MsgUndelegateFromValidators` stay for stragglers.
+Funding is one `join_pool` per pool with native tokens only, for exactly the amount the
+coverage check requires (§9), once every source for that denom has arrived: the delegation
+ICA transfer, the withdrawal, fee and redemption ICA sweeps, the forwarded Stride-side
+vouchers, and for stTIA the Celestia multisig. A pool can be created and funded as soon as its
+own denom is complete; zones finish unbonding on different days and nothing couples them.
 
-## §8. Ops windows and proposal checklists
+Foreign-route denoms: a stToken that left Stride to chain X and is sent from X to Osmosis
+arrives as a two-hop denom (`transfer/<osmosis-X channel>/transfer/<X-stride channel>/st...`),
+distinct from the canonical one. Rather than route it back through Stride, which is
+impossible after the halt, each such denom is added to the stToken's pool with the same
+normalization factor via `add_new_assets`, after which it swaps at the same rate. The
+per-channel escrow balances on Stride (§3) list exactly which chains hold which stToken and
+how much, so the set of denoms to add is known before the halt. The contract requires a denom
+to have supply on Osmosis before it can be added, so ops seed each one with a small transfer
+from that chain (or add it after the first user's transfer lands). Third-hop denoms are added
+on request the same way. Osmosis users of DeFi protocols on other chains withdraw there and
+transfer to Osmosis directly.
+
+Shutdown: once every pool is funded, the sweep is complete and the halt checklist (§8) passes,
+validators set a `halt-height` and the chain stops. Stride's IBC clients on other chains expire
+after their trusting periods; stTokens on those chains stay ordinary vouchers and keep working
+in the pools, and any packet toward Stride that was never relayed times out and refunds on its
+source chain. The pools outlive the chain. Backing that is never claimed is reclaimed later by
+exiting the pools with the alloyed asset; that timing is a policy decision outside this
+design.
+
+## §8. Ops windows and checklists
 
 Window 1 (after upgrade 1, ~35 days):
 
@@ -353,6 +459,12 @@ Window 1 (after upgrade 1, ~35 days):
    records. The hour-epoch hook pays them.
 4. Stakedym operator: sweep and confirm the 5 unbonded records; undelegate and confirm the 6
    queued ones; after 21 days sweep and confirm those. The hook pays them.
+5. Prepare the Osmosis side: the receiving address and the admin/moderator multisig, the
+   host-side channel id to Osmosis for each of the ten non-Osmosis zones, and the list of
+   foreign-route denoms per stToken from the escrow balances. Confirm packet-forward
+   middleware on every host whose Stride-side vouchers must be forwarded (§11).
+6. Announce the timeline, the sweep floor and date, and that holders on other chains transfer
+   to Osmosis directly.
 
 Checklist to propose upgrade 2:
 
@@ -363,7 +475,7 @@ Checklist to propose upgrade 2:
 - Stakedym: same, for its records.
 - No open LSM token deposit on cosmoshub-4.
 
-Window 2 (after upgrade 2, ~32 days):
+Window 2 (after upgrade 2, ~35 days):
 
 1. Day 0: refresh every validator's exchange rate with `UpdateValidatorSharesExchRate`
    (CLI `update-delegation`) on every in-scope zone and wait for the callbacks. Where the rate
@@ -376,20 +488,30 @@ Window 2 (after upgrade 2, ~32 days):
    of the tx and the callback, then with an empty list for the rest. An ICA tx is atomic, so
    one over-recorded validator fails its whole batch; after the refresh there are none. If a
    slash lands between the refresh and the submission, that batch fails, ops rerun the refresh
-   (or set that validator's `offset`) and resubmit for the affected validators. Delegation ICA channels and
-   relayers stay healthy until every batch acks; a dead channel is restored with the existing
-   flow and the affected validators are resubmitted.
+   (or set that validator's `offset`) and resubmit for the affected validators. Delegation ICA
+   channels and relayers stay healthy until every batch acks; a dead channel is restored with
+   the existing flow and the affected validators are resubmitted.
 3. Day 0+: `MsgTransferFromIca` for withdrawal, fee, redemption and community-pool ICA
    balances, including foreign denoms such as the dYdX USDC. This is the live test of the
-   transfer tx on small real amounts.
-4. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
+   transfer tx on small real amounts, and the first arrival on Osmosis confirms the channel id
+   and the denom each zone lands as.
+4. Day 0+: forward the wind-down address's vouchers (upgrade 2 handler step 4) to Osmosis with
+   a packet-forward memo through each host chain, so they arrive canonical. The osmosis-1
+   zone's vouchers go straight to Osmosis.
+5. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
    the full balance, then `WITHDRAWAL` again (undelegation auto-withdraws accrued rewards
-   there).
-5. Staketia operator, no Stride txs needed: day 0, undelegate the entire multisig delegation
-   on Celestia via authz alongside the stakeibc unbonds; day 21, IBC the whole liquid balance
-   via authz to the claim address, where it waits for upgrade 3.
-6. Transfer-channel relayers stay up permanently; users need them to leave. ICA channels can be
-   left to close once every balance is drained.
+   there). Then create and fund that stToken's pool (§7) once the coverage check passes (§9),
+   and add its foreign-route denoms.
+6. Staketia, pending the validators' answer: either the 5-of-7 undelegates on day 0 and on
+   day 21 signs one transfer from Celestia to the Osmosis receiving address, or the operator
+   undelegates via authz on day 0 and on day 21 IBCs the balance via authz to the claim
+   address, from which it is forwarded through Celestia to Osmosis like any other voucher.
+   Either way the TIA joins the stTIA pool's funding.
+7. Last days: `MsgSweepStTokens` in batches of up to 100, per denom, for every holder at or
+   above the floor, built from a fresh export. Resubmit any address whose transfer timed out
+   (its balance is back on Stride). Relayers on channel-5 stay up until the last packet acks.
+8. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
+   every balance is sent.
 
 ### §8a. Drift measurement
 
@@ -413,57 +535,66 @@ upgrade 1 (§5), which covers the dust cases too, and the `offset` on
 measurement script is `scripts/wind-down/measure_delegation_drift.py` and is rerun as the gate
 before step 2; haqq_11235-1 is expected to measure clean by then.
 
-Checklist to propose upgrade 3:
+Checklist to halt the chain:
 
 - No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
   `TotalDelegations` at dust on every zone except celestia, where it still carries the
-  multisig portion (the per-validator unbond only touches ICA validators; that portion is the
-  claim-address balance and is counted by the pool assertion).
+  multisig portion (the per-validator unbond only touches ICA validators).
 - All six ICA balances at dust on every zone. Celestia multisig delegation zero, its
-  unbondings complete, and the claim address holding its full balance.
-- The upgrade 3 handler test is run against a fresh mainnet export and a localstride started
-  from that export, and both pass the pool assertion (pool balance plus the staketia claim
-  address, for celestia, ≥ stToken supply × `HostZone.RedemptionRate`) for every zone. The
-  handler errors on a shortfall, so this is what keeps the upgrade from failing on mainnet.
-  A shortfall found here is topped up before the proposal: with `MsgTransferFromIca` if an
-  ICA still holds something, otherwise by sending the zone's native IBC denom straight to the
-  pool from any Stride account (it is not blocked). Any foreign denom in the pool (dYdX USDC,
-  for instance) stays as surplus.
+  unbondings complete, its balance on Osmosis.
+- Every pool created, funded and passing the coverage check (§9) against a fresh export, with
+  its known foreign-route denoms added.
+- The sweep complete: no sweepable account at or above the floor holds any in-scope stToken,
+  and no sweep packet outstanding on channel-5.
+- Validators and STRD delegators have withdrawn their rewards; interchain-account holders
+  have been notified and given time to move out.
 
 ## §9. Accounting
 
-There is no rate calculation anywhere in the design. The withdrawal rate for a zone is the
-`HostZone.RedemptionRate` that was on chain when upgrade 2 halted the zone, read live by the
-redeem tx. Nothing recomputes it: the epoch update is
-halt-gated, and the only other writer (the delegator-shares slash callback) is reachable only
-through the two admin-gated ICQ messages. If ops deliberately run those in window 2 and a slash
-is found, the frozen rate is lowered accordingly, which is the correct direction.
+There is no rate calculation anywhere in the design. The rate for a zone is the
+`HostZone.RedemptionRate` that was on chain when upgrade 2 halted the zone; it is read from
+Stride when the pool is instantiated and becomes the pool's normalization factors, which
+cannot be changed relative to each other afterwards (§3). Nothing on Stride recomputes it:
+the epoch update is halt-gated, and the only other writer (the delegator-shares slash
+callback) is reachable only through the two admin-gated ICQ messages. If ops deliberately run
+those in window 2 and a slash is found, the frozen rate is lowered accordingly, which is the
+correct direction, and the pool must be instantiated after that refresh.
+
+Coverage check, per stToken, run from a fresh Stride export before the pool is funded and
+again before the halt: native tokens held on Osmosis for that denom ≥ Stride bank supply of
+the stToken × `HostZone.RedemptionRate`. Bank supply is the right reference: stTokens that
+left Stride over IBC are escrowed here, not burned, so they are counted, and they are exactly
+the foreign-route holders the pool must also serve; stTokens burned by flushed redemptions are
+gone from both sides. The check is a script over two queries and has no on-chain counterpart,
+which is the one place this design is weaker than an on-chain assertion; the mitigation is
+that funding is a deliberate `join_pool` for the computed amount, so an under-funded pool can
+only come from a wrong number in a script that is run twice and published.
 
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3:
 `Unbond` calls the distribution hook `BeforeDelegationSharesModified`, which withdraws the
 accrued rewards, and then removes the shares; rewards are computed from delegation shares only,
 so an unbonding entry earns nothing during its 21 to 30 days. Between the halt and the pool
-being full, the backing therefore moves as follows:
+being funded, the backing therefore moves as follows:
 
 - Up: staking rewards accrue only from the halt until the undelegate executes at the next day
   epoch (one or two days, roughly 0.03% to 0.05%), are auto-withdrawn to the withdrawal ICA by
-  the undelegation, and are swept into the pool. Rewards withdrawn but not yet reinvested at
-  the halt are also swept.
+  the undelegation, and are sent to Osmosis. Rewards withdrawn but not yet reinvested at the
+  halt are also sent.
 - Down: any slash during window 2.
 
 Coverage then follows by construction. The refresh (§8, step 1) makes the recorded
 delegations and the redemption rate reflect every slash that has happened, the full recorded
-amount unbonds, and the pool receives it plus the rewards swept on undelegation. Supply ×
+amount unbonds, and Osmosis receives it plus the rewards swept on undelegation. Supply ×
 frozen rate is the delegated amount, so the rewards are the buffer. Only a slash between the
 refresh and the undelegation, on a zone whose retried batch never lands, can leave a zone
-under, and then the last redeemers absorb it, which §1 accepts. A computed rate would remove
-that tail risk too, but adds a script on the one path where a bug is catastrophic; the frozen
-rate is a number that has already been on chain and audited for weeks.
+under, and the coverage check catches that before funding; the shortfall is then covered from
+the surplus of the other denoms or by Stride Labs, or the last swappers absorb it, which §1
+accepts.
 
-Bank supply is the right reference for the assertion: stTokens that left Stride over IBC are
-escrowed here, not burned, so they are counted; stTokens burned by flushed redemptions are gone
-from both sides. Nothing else needs a term, because upgrade 3 lands with zero open records,
-empty redemption ICAs and empty unbonding queues.
+The stToken sweep does not change any of this: it moves stTokens from Stride accounts into
+escrow, so bank supply is unchanged and the swept tokens become canonical-denom holders on
+Osmosis. Unsweepable holdings (§2) stay in supply, are covered by the funding, and their
+backing is what the pools hold at the end.
 
 ## §9a. Validator compensation
 
@@ -473,44 +604,56 @@ of Stride's commission on host staking rewards, liquid staked at the mint epoch)
 
 The stToken stream is unaffected in window 1 (everything keeps running) and ends at upgrade 2,
 not because of the halt but because there are no staking rewards to share once the delegations
-are gone. The rewards that accrue during window 2 are swept into the pool as protocol surplus
-rather than split. The STRD stream continues unchanged. If validator pay needs to rise to
-compensate, that is a mint distribution-proportion parameter change by governance and needs no
-code. Releasing pool surplus (pool minus supply × rate) to validators or the community would
-need a gov-gated withdrawal message and is out of scope for these three upgrades.
+are gone. The rewards that accrue during window 2 go to Osmosis with the rest and become
+pool surplus rather than being split. The STRD stream continues unchanged until the halt. If
+validator pay needs to rise to compensate, that is a mint distribution-proportion parameter
+change by governance and needs no code. Validators withdraw their accumulated commission and
+rewards (including stTokens, which they then move to Osmosis themselves) before the halt (§8).
 
 ## §10. Testing
 
 - Upgrade 1: handler tests against a mainnet export (`app/upgrades/vN/testdata/`, v34-style)
-  for the trade route deletion, the comdex-1 `Deprecated` flag, the Haqq delta table (applied, and skipped on a stale
-  constant), the haqq slash-query
-  purge (deletes only that chain's slash-path queries, clears the validator flags, leaves other
-  chains' and the withdrawal-balance queries), the autopilot param, ICA
-  host allow-list, wasm params and contract admins; a compile-time
-  guarantee that the removed messages no longer exist; existing keeper tests for the flows
-  that keep running stay green.
-- Upgrade 2: unit tests for both admin txs (gating, validation, per-validator message
-  construction with and without offsets, empty versus explicit validator lists, rounding
-  safety on a full drain, rejection of a validator with a change in progress, every ICA type
-  and a foreign denom on the transfer, no accounting mutation), for the two ValidateBasic gates
-  and for the lifted calibration cap; handler tests for the halt flags, oracle deactivation,
-  rate-limit removal, and the pool account's existence plus a test that an inbound IBC
-  transfer to it is accepted (it must be exempt from the bank blocklist). Localstride run: upgrade, then
-  `MsgUndelegateFromValidators` for one validator and its ack.
-- Upgrade 3: `MsgRedeemFromPool` is the highest-review item: table-driven tests covering
-  the per-chain minimum, rounding to zero, an unknown chain id, a denom that is not the zone's
-  stToken, a zone that is not halted, a deprecated zone, insufficient pool, an exact drain of
-  the pool, and a second redeem after the drain. Handler tests for the bank
-  moves and the assertion. Localstride run: upgrade, then a redeem.
+  for the trade route deletion, the comdex-1 `Deprecated` flag, the Haqq delta table (applied,
+  and skipped on a stale constant), the haqq slash-query purge (deletes only that chain's
+  slash-path queries, clears the validator flags, leaves other chains' and the
+  withdrawal-balance queries), the autopilot param, ICA host allow-list, wasm params and
+  contract admins; a compile-time guarantee that the removed messages no longer exist;
+  existing keeper tests for the flows that keep running stay green.
+- Upgrade 2, admin txs: unit tests for gating on all three; for the undelegate tx, per-validator
+  message construction with and without offsets, empty versus explicit validator lists,
+  rounding safety on a full drain, rejection of a validator with a change in progress, no
+  accounting mutation; for the transfer tx, every ICA type, a foreign denom, the osmosis-1
+  bank-send form, receiver validation, the built `MsgTransfer` fields (channel, receiver,
+  timeout, empty memo); for the sweep tx, the highest-review item: table-driven tests for a
+  base account, each vesting type, an escrow address, a module account, an interchain account,
+  a 32-byte address, an unknown account, a zero balance (skipped, others in the batch still
+  sent), a batch over the bound, a non-stToken denom, the derived `osmo` address bytes, the
+  full balance and only that denom being sent, and the ICS-20 refund on timeout returning the
+  balance to the holder.
+- Upgrade 2, handler: the halt flags, oracle deactivation, rate-limit removal, the two
+  ValidateBasic gates, the lifted calibration cap, and the voucher bank move (moves the deposit
+  addresses' native balances, skips a zone with none, leaves stTokens alone). Localstride run:
+  upgrade, then one undelegate and its ack, one ICA transfer to a second local chain, and one
+  sweep batch whose packets are relayed and land at the derived addresses.
+- Ops scripts: the coverage check and the batch builder are tested against a mainnet export
+  and their output for the export is checked in beside the plan.
 
 ## §11. Open items for the plan
 
-- Module account name; exact proto shapes and enum names for the two admin txs and the redeem
-  tx.
-- Per-contract wasm admin listing for upgrade 1.
-- Version numbers for the three upgrades.
+- Exact proto shapes and enum names for the three admin txs; the wind-down address and the
+  channel-5 constant; the batch bound after measuring gas.
+- Version numbers for the two upgrades.
+- Staketia route (§8 step 6) pending the validators' answer on the 5-of-7 signing a direct
+  transfer.
+- Packet-forward middleware on laozi-mainnet, sommelier-3 and ssc-1 (celestia, cosmoshub-4,
+  dydx-mainnet-1, juno-1, haqq_11235-1 and phoenix-1 have it). A host without it means two
+  manual hops for that zone's vouchers, which are small.
+- The host-side channel id to Osmosis for each of the ten non-Osmosis zones, confirmed by the
+  first small transfer in window 2.
+- Identify the owners of the interchain accounts on Stride that hold stTokens (2.3k stATOM in
+  one) and the 32-byte holders, and notify them.
 - Whether the legacy claim module's 2022 airdrops are already expired (its REST query is not
   served; confirm from a full node). Its messages are removed either way.
 - Keeper code left unreferenced by the upgrade 1 removals (stakeibc's LSM liquid-stake entry
   points, the trade-route authz and ICA registration helpers, `EnableRedemptions`) is dead but
-  harmless; deleting it is a follow-up cleanup, not part of the three upgrades.
+  harmless; deleting it is a follow-up cleanup, not part of the two upgrades.
