@@ -144,12 +144,15 @@ Pipelines that already exist:
   authz for delegate, undelegate, withdraw rewards, cancel unbonding, and an IBC
   `TransferAuthorization` on `transfer/channel-4` with an effectively unlimited utia limit and
   exactly one allow-listed receiver: staketia's claim address
-  `stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd`. Bank `MsgSend` is not granted. So the
-  operator alone can move the whole multisig balance to Stride, but only onto the claim
-  address, where it would be a TIA voucher that has to unwind through Celestia again to reach
-  Osmosis as canonical TIA. A direct Celestia to Osmosis transfer needs the 5-of-7 to sign.
-  Staketia's IBC middleware only hooks outbound acks and timeouts, so an unrecorded inbound
-  transfer to the claim address is inert.
+  `stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd`, and an empty `allowed_packet_data`, which
+  ibc-go enforces as "memo must be empty", so the operator cannot attach a forwarding memo.
+  Bank `MsgSend` is not granted, and the 5-of-7 signers are no longer reachable, so the
+  operator's authz route is the only way to move the multisig balance, and it can only land
+  on the claim address as a TIA voucher on Stride. The claim address is an ordinary
+  `BaseAccount` whose key (S2) Stride Labs holds, so moving the voucher on from there is a
+  signed transfer, no code. Staketia's IBC middleware only acts on packets it recorded by
+  sequence (its own delegation transfers), so an inbound transfer to the claim address and a
+  signed outbound one from it are both inert to it.
 
 State on mainnet (2026-09-18/21):
 
@@ -502,11 +505,13 @@ Window 2 (after upgrade 2, ~35 days):
    the full balance, then `WITHDRAWAL` again (undelegation auto-withdraws accrued rewards
    there). Then create and fund that stToken's pool (§7) once the coverage check passes (§9),
    and add its foreign-route denoms.
-6. Staketia, pending the validators' answer: either the 5-of-7 undelegates on day 0 and on
-   day 21 signs one transfer from Celestia to the Osmosis receiving address, or the operator
-   undelegates via authz on day 0 and on day 21 IBCs the balance via authz to the claim
-   address, from which it is forwarded through Celestia to Osmosis like any other voucher.
-   Either way the TIA joins the stTIA pool's funding.
+6. Staketia, through Stride (the multisig signers are no longer reachable): day 0, the
+   operator undelegates the entire multisig delegation on Celestia via authz alongside the
+   stakeibc unbonds. Day 21, the operator IBCs the whole liquid balance via authz to the claim
+   address (no memo; the grant forbids one). Then the S2 key signs one transfer from the claim
+   address over the Stride to Celestia channel with a packet-forward memo that continues from
+   Celestia to the Osmosis receiving address, so it arrives as canonical TIA, the same route as
+   any other Stride-side voucher (step 4). It joins the stTIA pool's funding.
 7. Last days: `MsgSweepStTokens` in batches of up to 100, per denom, for every holder at or
    above the floor, built from a fresh export. Resubmit any address whose transfer timed out
    (its balance is back on Stride). Relayers on channel-5 stay up until the last packet acks.
@@ -643,10 +648,10 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
 - Exact proto shapes and enum names for the three admin txs; the wind-down address and the
   channel-5 constant; the batch bound after measuring gas.
 - Version numbers for the two upgrades.
-- Staketia route (§8 step 6) pending the validators' answer on the 5-of-7 signing a direct
-  transfer.
 - Packet-forward middleware on laozi-mainnet, sommelier-3 and ssc-1 (celestia, cosmoshub-4,
-  dydx-mainnet-1, juno-1, haqq_11235-1 and phoenix-1 have it). A host without it means two
+  dydx-mainnet-1, juno-1, haqq_11235-1 and phoenix-1 have it). Celestia's matters most: it
+  carries the whole staketia balance; the fallback there is a manual second hop from a
+  Celestia address we control. A host without it means two
   manual hops for that zone's vouchers, which are small.
 - The host-side channel id to Osmosis for each of the ten non-Osmosis zones, confirmed by the
   first small transfer in window 2.
