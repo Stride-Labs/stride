@@ -36,7 +36,8 @@ In scope:
   stakedym at upgrade 2.
 - Removing every message the protocol no longer needs, moving wasm control to gov, and
   removing every IBC rate limit at upgrade 2.
-- Three admin txs added at upgrade 2: per-validator undelegation, ICA-to-Osmosis transfer,
+- Four admin txs added at upgrade 2: per-validator undelegation, ICA-to-Osmosis transfer,
+  the staketia claim-address transfer,
   and the batched stToken sweep to Osmosis.
 - The Osmosis side as an ops procedure (§7): one transmuter per stToken, its assets, its
   funding, and the coverage check that gates it. No Stride code is involved.
@@ -150,11 +151,21 @@ Pipelines that already exist:
   ibc-go enforces as "memo must be empty", so the operator cannot attach a forwarding memo.
   Bank `MsgSend` is not granted, and the 5-of-7 signers are no longer reachable, so the
   operator's authz route is the only way to move the multisig balance, and it can only land
-  on the claim address as a TIA voucher on Stride. The claim address is an ordinary
-  `BaseAccount` whose key (S2) Stride Labs holds, so moving the voucher on from there is a
-  signed transfer, no code. Staketia's IBC middleware only acts on packets it recorded by
-  sequence (its own delegation transfers), so an inbound transfer to the claim address and a
-  signed outbound one from it are both inert to it.
+  on the claim address as a TIA voucher on Stride. The claim address (labelled S2 in
+  `x/staketia/types/celestia.go`, from the January 2024 launch) is itself a 5-of-7 multisig
+  `BaseAccount`, with a signer set that shares no key with the Celestia multisig, and it has
+  signed exactly one tx in its life (sequence 1). Whether five of its signers can be gathered
+  is unknown; the design does not depend on it. Staketia's keeper already moves funds out of
+  a multisig `BaseAccount` without a signature: its deposit address (S0, the same signer set as
+  the Celestia multisig) is IBC-transferred from keeper code via `transferKeeper.Transfer`
+  with the deposit address as sender (`x/staketia/keeper/delegation.go`), which is the
+  pattern the claim-address tx reuses. Staketia's IBC middleware only acts on packets it
+  recorded by sequence (its own delegation transfers), so an inbound transfer to the claim
+  address and an outbound one from it are both inert to it.
+- Native vouchers stranded on Stride are dust (2026-09-22, with liquid staking still live):
+  the eleven deposit addresses, the reward collector and the auction module together hold
+  about $3 of in-scope native denoms. Nothing on Stride except the staketia claim address
+  will hold a native balance worth moving.
 
 State on mainnet (2026-09-18/21):
 
@@ -222,19 +233,19 @@ Transmuter (osmosis-labs/transmuter v3.2.0, code id 996 on osmosis-1; source che
 
 ## §3a. Operator addresses
 
-Four addresses run the wind-down. Each has one name used everywhere in this spec, the plan
+Three addresses run the wind-down. Each has one name used everywhere in this spec, the plan
 and the code, and each is a hard-coded constant in the upgrade 2 binary (the protocol admin
-already is).
+already is). Nothing on Stride receives native tokens: every native balance leaves from a
+host chain, so there is no Stride-side vault.
 
 | Name | Chain | Type | Status | Constant | Role |
 |---|---|---|---|---|---|
-| Protocol admin | Stride | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins` | Signs `MsgUndelegateFromValidators` and `MsgTransferFromIca`, and the two admin-gated ICQ messages. |
+| Protocol admin | Stride | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins` | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages. |
 | Sweep operator | Stride | new key | to create | `SweepOperatorAddress` | The only address that can sign `MsgSweepStTokens`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
-| Stride vault | Stride | new multisig | to create | `StrideVaultAddress` | Receives the native vouchers that the upgrade 2 handler bank-moves out of the deposit addresses, the reward collector and the auction module, and forwards them to the Osmosis vault through their host chains. Never holds user stTokens. |
-| Osmosis vault | Osmosis | new multisig | to create | `OsmosisVaultAddress` | Receives every ICA transfer and every forwarded voucher, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
+| Osmosis vault | Osmosis | new multisig | to create | `OsmosisVaultAddress` | Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
 
-The sweep operator and the two vaults are created in window 1, proven before the upgrade 2 PR
-is cut (a signed spend from each), and their addresses go into the binary as constants (§8).
+The sweep operator and the Osmosis vault are created in window 1, proven before the upgrade 2
+PR is cut (a signed spend from each), and their addresses go into the binary as constants (§8).
 The Osmosis vault's admin and moderator roles on the pools can be split to a second multisig
 later with `assign_moderator`; that is an ops choice, not a design point.
 
@@ -243,7 +254,7 @@ later with `assign_moderator`; that is an ops choice, not a design point.
 | | New logic | Removes | Ops window after |
 |---|---|---|---|
 | Upgrade 1: close the doors | none (a Haqq delegation delta table, v34 pattern) | liquid stake, redeem, and every create-things message; the trade route; wasm to gov | ~35 days: flush unbondings, claim for everyone, operators finish staketia/stakedym |
-| Upgrade 2: halt, unbond, migrate | three admin txs, one ValidateBasic gate, one bank move | claim, rebalance, clear-balance, resume, oracles, all rate limits, calibration cap | ~35 days: refresh slashes, undelegate every validator, send every ICA balance to Osmosis, build and fund the pools, sweep stTokens, halt |
+| Upgrade 2: halt, unbond, migrate | four admin txs, one ValidateBasic gate | claim, rebalance, clear-balance, resume, oracles, all rate limits, calibration cap | ~35 days: refresh slashes, undelegate every validator, send every ICA balance to Osmosis, build and fund the pools, sweep stTokens, halt |
 
 Each upgrade lands on a chain with nothing in flight, verified by the checklist that gates its
 proposal (§8). The halt is a coordinated `halt-height`, not an upgrade.
@@ -341,12 +352,11 @@ Handler:
    out over one channel in a few days, which no limit would allow, and there is no longer a
    mint path that a limit would protect. The module and middleware stay in the stack with
    empty state.
-4. Bank-move the native IBC-denom balance of every in-scope zone's deposit address, and any
-   in-scope native denom held by the reward collector and the auction module, to the
-   Stride vault (§3a, a constant in the binary). The halt is what
-   strands these: deposit records still in the transfer queue never transfer once the zone is
-   halted. They are vouchers, so ops forward them to Osmosis through their host chain (§8).
-   Skip with a log on any error; the amounts are small.
+
+The halt strands whatever native vouchers sit in the deposit addresses, the reward collector
+and the auction module at that height. Liquid staking stopped at upgrade 1, so by then these
+are the last mint epoch's fee liquid stake and rounding dust (about $3 today, §3); the
+handler does not touch them and they are written off.
 
 Remove message handlers: stakeibc `ClaimUndelegatedTokens`, `RebalanceValidators`,
 `ClearBalance`, `ResumeHostZone`; staketia and stakedym `ResumeHostZone`. Add
@@ -356,9 +366,9 @@ else can trigger the slash path that rewrites the rate. Remove the 5,000 base-un
 `CalibrationThreshold` check from the calibration callback: it existed to bound what a
 permissionless caller could move, and the message is admin-gated from here on.
 
-All three new txs are gated in ValidateBasic: the undelegate and transfer txs on the protocol
-admin (`utils.ValidateAdminAddress`), the sweep tx on the sweep operator (§3a). None reads or
-writes host zone accounting; amounts and lists are ops inputs.
+All four new txs are gated in ValidateBasic: the undelegate, ICA transfer and claim-address
+txs on the protocol admin (`utils.ValidateAdminAddress`), the sweep tx on the sweep operator
+(§3a). None reads or writes host zone accounting; amounts and lists are ops inputs.
 
 New admin tx `MsgUndelegateFromValidators { creator, chain_id, validators: [{address, offset}] }`.
 An empty `validators` list means every validator on the zone with
@@ -404,6 +414,22 @@ osmosis-1 zone the ICA is already on Osmosis and the tx is an ICA bank `MsgSend`
 Osmosis vault instead (osmosis-1 is in the map with an empty channel, which selects this
 form).
 
+New admin tx `MsgTransferStaketiaClaimBalance { creator }`, with no other field. It moves the
+staketia claim address's whole TIA voucher balance to the stakeibc celestia zone's delegation
+ICA on Celestia, where it unwinds to native TIA and is then sent on to Osmosis by
+`MsgTransferFromIca DELEGATION` with the rest of the zone's balance. Everything is a constant
+or read from state: sender is staketia's `ClaimAddress`, denom is
+`CelestiaNativeTokenIBCDenom`, amount is the full balance (reject if zero), channel is the
+celestia host zone's `TransferChannelId`, receiver is its `DelegationIcaAddress`, one-day
+timeout, no memo. It calls `transferKeeper.Transfer` with the claim address as sender, the
+pattern staketia's keeper already uses for its deposit address (§3). It is the route
+regardless of whether the claim address's own 5-of-7 can sign, so no multisig coordination is
+on the critical path. A timeout refunds the claim address and ops resubmit.
+
+The same trick, sending a Stride-side voucher to the zone's delegation ICA so it leaves with
+the ICA balance, is why nothing else needs a Stride-side account or a hop through a host
+chain; the only Stride-side balance worth it is this one.
+
 New admin tx `MsgSweepStTokens { creator, denom, addresses: [string] }`, the batched stToken
 sweep. `denom` must be the stToken denom of a stakeibc host zone; `addresses` is non-empty
 and at most 100 entries (the batch bound that keeps a tx inside the block gas limit; the plan
@@ -446,8 +472,8 @@ and stays in the Osmosis vault.
 
 Funding is one `join_pool` per pool with native tokens only, for exactly the amount the
 coverage check requires (§9), once every source for that denom has arrived: the delegation
-ICA transfer, the withdrawal, fee and redemption ICA sweeps, the forwarded Stride-side
-vouchers, and for stTIA the Celestia multisig. A pool can be created and funded as soon as its
+ICA transfer and the withdrawal, fee and redemption ICA sweeps (for stTIA the delegation ICA
+transfer includes the former multisig balance, routed through the claim address). A pool can be created and funded as soon as its
 own denom is complete; zones finish unbonding on different days and nothing couples them.
 
 Foreign-route denoms: a stToken that left Stride to chain X and is sent from X to Osmosis
@@ -487,13 +513,12 @@ Window 1 (after upgrade 1, ~35 days):
    records. The hour-epoch hook pays them.
 4. Stakedym operator: sweep and confirm the 5 unbonded records; undelegate and confirm the 6
    queued ones; after 21 days sweep and confirm those. The hook pays them.
-5. Create the sweep operator key, the Stride vault and the Osmosis vault (§3a) before the
-   upgrade 2 PR is cut, because the binary hard-codes all three; gather the host-side
+5. Create the sweep operator key and the Osmosis vault (§3a) before the upgrade 2 PR is cut,
+   because the binary hard-codes both; gather the host-side
    channel id to Osmosis for each of the ten non-Osmosis zones, each verified by querying the
    host's channel and confirming its client's counterparty chain id is osmosis-1 and the
    channel is open; and the list of foreign-route denoms per stToken from the escrow
-   balances. Create or identify an account we control on each host chain whose vouchers will
-   be unwound (the ten non-Osmosis zones), the hop-through account for step 4 of window 2.
+   balances.
 6. Announce the timeline, the sweep floor and date, and that holders on other chains transfer
    to Osmosis directly.
 
@@ -505,7 +530,7 @@ Checklist to propose upgrade 2:
   empty.
 - Stakedym: same, for its records.
 - No open LSM token deposit on cosmoshub-4.
-- The three new address constants and the channel map in the binary re-verified: the map
+- The two new address constants and the channel map in the binary re-verified: the map
   against the hosts, each address by a test transfer of a few tokens to it from any wallet
   followed by a signed spend from it, so every constant is proven to be an address we control
   before anything is sent there.
@@ -530,27 +555,21 @@ Window 2 (after upgrade 2, ~35 days):
    foreign denoms such as the dYdX USDC. This is the live test of the
    transfer tx on small real amounts, and the first arrival on Osmosis confirms the mapped
    channel end to end and the denom each zone lands as.
-4. Day 0+: unwind the Stride vault's vouchers (upgrade 2 handler step 4) with two signed
-   transfers per zone: Stride vault to the hop-through account on the host, which turns the
-   voucher back into the native token, then that account to the Osmosis vault, which lands it
-   canonical. No middleware is involved; where a host runs packet-forward middleware the two
-   can be collapsed into one transfer with a memo, but nothing depends on it. The osmosis-1
-   zone's vouchers go straight from the Stride vault to the Osmosis vault in one transfer.
+4. Staketia (the Celestia multisig signers are no longer reachable, so everything goes through
+   the operator's authz grant and Stride): day 0, the operator undelegates the entire multisig
+   delegation on Celestia via authz alongside the stakeibc unbonds. Day 21, the operator IBCs
+   the whole liquid balance via authz to the claim address (no memo; the grant forbids one).
+   Then `MsgTransferStaketiaClaimBalance` moves it to the celestia delegation ICA, where it
+   waits for step 5 with the zone's own unbonded balance. No key of the claim address signs
+   anything.
 5. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
    the full balance, then `WITHDRAWAL` again (undelegation auto-withdraws accrued rewards
    there). Then create and fund that stToken's pool (§7) once the coverage check passes (§9),
    and add its foreign-route denoms.
-6. Staketia, through Stride (the multisig signers are no longer reachable): day 0, the
-   operator undelegates the entire multisig delegation on Celestia via authz alongside the
-   stakeibc unbonds. Day 21, the operator IBCs the whole liquid balance via authz to the claim
-   address (no memo; the grant forbids one). The TIA then leaves the claim address directly,
-   signed by the S2 key, and never touches the Stride vault: claim address to the Celestia
-   hop-through account (the voucher unwinds to native TIA), then hop-through account to the
-   Osmosis vault, the same two-hop route as step 4. It joins the stTIA pool's funding.
-7. Last days: `MsgSweepStTokens` in batches of up to 100, per denom, for every holder at or
+6. Last days: `MsgSweepStTokens` in batches of up to 100, per denom, for every holder at or
    above the floor, built from a fresh export. Resubmit any address whose transfer timed out
    (its balance is back on Stride). Relayers on channel-5 stay up until the last packet acks.
-8. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
+7. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
    every balance is sent.
 
 ### §8a. Drift measurement
@@ -665,17 +684,19 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   accounting mutation; for the transfer tx, every ICA type, a foreign denom, the osmosis-1
   bank-send form, a chain id absent from the map, that the map has an entry for every
   in-scope zone and none for a deprecated one, that the Osmosis vault constant parses as an
-  `osmo` bech32 address and the two Stride constants as `stride` ones, and the built
+  `osmo` bech32 address and the sweep operator constant as a `stride` one, and the built
   `MsgTransfer` fields (mapped channel, Osmosis vault,
   timeout, empty memo); for the sweep tx, the highest-review item: table-driven tests for a
   base account, each vesting type, an escrow address, a module account, an interchain account,
   a 32-byte address, an unknown account, a zero balance (skipped, others in the batch still
   sent), a batch over the bound, a non-stToken denom, the derived `osmo` address bytes, the
   full balance and only that denom being sent, and the ICS-20 refund on timeout returning the
-  balance to the holder.
+  balance to the holder; for the claim-address tx, the full balance and only the TIA denom
+  being sent, the built `MsgTransfer` fields (celestia channel, delegation ICA receiver,
+  timeout, empty memo), a zero balance rejected, and the refund on timeout landing back on
+  the claim address.
 - Upgrade 2, handler: the halt flags, oracle deactivation, rate-limit removal, the two
-  ValidateBasic gates, the lifted calibration cap, and the voucher bank move (moves the deposit
-  addresses' native balances, skips a zone with none, leaves stTokens alone). Localstride run:
+  ValidateBasic gates and the lifted calibration cap. Localstride run:
   upgrade, then one undelegate and its ack, one ICA transfer to a second local chain, and one
   sweep batch whose packets are relayed and land at the derived addresses.
 - Ops scripts: the coverage check and the batch builder are tested against a mainnet export
@@ -683,7 +704,7 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
 
 ## §11. Open items for the plan
 
-- Exact proto shapes and enum names for the three admin txs; the constants: the three new
+- Exact proto shapes and enum names for the four admin txs; the constants: the two new
   addresses in §3a once created, the channel-5 constant for the sweep and the
   `chain_id → host-side channel to Osmosis` map; the batch bound after measuring gas.
 - Version numbers for the two upgrades.
