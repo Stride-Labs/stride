@@ -106,7 +106,9 @@ Pipelines that already exist:
   exceed the on-chain delegation. Neither depends on the zone being active.
 - Every host zone has eight ICA types: delegation, fee, withdrawal, redemption, community-pool
   deposit and return, and the two trade-route converter accounts (`ICAAccountType`). The dYdX
-  withdrawal ICA holds ~3.8 USDC beside its DYDX.
+  withdrawal ICA holds ~3.8 USDC beside its DYDX. The community-pool ICAs (the feature was
+  disabled in v28) hold single-digit base units on every zone, plus 50 USDC in dYdX's deposit
+  ICA (checked 2026-09-22); they are written off along with the converter ICAs.
 - `HostZone.Deprecated` is true on exactly evmos_9001-2, stargaze-1 and umee-1, which are
   also halted. comdex-1 is neither halted nor deprecated on chain; its host chain is halted.
   The existing `DeprecateHostZone` message sets both `Halted` and `Deprecated`.
@@ -361,9 +363,9 @@ fails its whole batch; the slash refresh (§8, step 1) is what prevents that, an
 the manual lever if a validator is still off by dust.
 
 New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount (Coin), source_channel,
-receiver }`: `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION, COMMUNITY_POOL_DEPOSIT,
-COMMUNITY_POOL_RETURN}`, the six ICAs a host zone owns (the two converter ICAs belonged to
-the trade route deleted at upgrade 1 and are written off). `source_channel` is the transfer
+receiver }`: `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION}`, the four ICAs that hold
+anything (the two community-pool ICAs hold dust and the two converter ICAs belonged to the
+trade route deleted at upgrade 1; all four are written off). `source_channel` is the transfer
 channel on the host chain that leads to Osmosis, and `receiver` the Osmosis address we
 control; both are ops inputs because Stride stores neither, and `receiver` is validated as an
 `osmo` bech32 address. `amount` carries its denom as it exists on the host, so foreign
@@ -494,8 +496,8 @@ Window 2 (after upgrade 2, ~35 days):
    (or set that validator's `offset`) and resubmit for the affected validators. Delegation ICA
    channels and relayers stay healthy until every batch acks; a dead channel is restored with
    the existing flow and the affected validators are resubmitted.
-3. Day 0+: `MsgTransferFromIca` for withdrawal, fee, redemption and community-pool ICA
-   balances, including foreign denoms such as the dYdX USDC. This is the live test of the
+3. Day 0+: `MsgTransferFromIca` for withdrawal, fee and redemption ICA balances, including
+   foreign denoms such as the dYdX USDC. This is the live test of the
    transfer tx on small real amounts, and the first arrival on Osmosis confirms the channel id
    and the denom each zone lands as.
 4. Day 0+: forward the wind-down address's vouchers (upgrade 2 handler step 4) to Osmosis with
@@ -545,7 +547,7 @@ Checklist to halt the chain:
 - No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
   `TotalDelegations` at dust on every zone except celestia, where it still carries the
   multisig portion (the per-validator unbond only touches ICA validators).
-- All six ICA balances at dust on every zone. Celestia multisig delegation zero, its
+- All four ICA balances at dust on every zone. Celestia multisig delegation zero, its
   unbondings complete, its balance on Osmosis.
 - Every pool created, funded and passing the coverage check (§9) against a fresh export, with
   its known foreign-route denoms added.
