@@ -362,24 +362,28 @@ there is no queue and no epoch hook. ICA txs are atomic, so one over-recorded va
 fails its whole batch; the slash refresh (§8, step 1) is what prevents that, and `offset` is
 the manual lever if a validator is still off by dust.
 
-New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount (Coin), source_channel,
-receiver }`: `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION}`, the four ICAs that hold
-anything (the two community-pool ICAs hold dust and the two converter ICAs belonged to the
-trade route deleted at upgrade 1; all four are written off). `source_channel` is the transfer
-channel on the host chain that leads to Osmosis, and `receiver` the Osmosis address we
-control; both are ops inputs because Stride stores neither, and `receiver` is validated as an
-`osmo` bech32 address. `amount` carries its denom as it exists on the host, so foreign
-balances such as the USDC in the dYdX withdrawal ICA can be sent too. Submits one ICA
-containing an ICS-20 `MsgTransfer` of `amount` from that ICA over `source_channel` to
-`receiver`, built like `BuildHostToTradeTransferMsg` without the forwarding memo, with the
-existing ICA timeout and a one-day transfer timeout. No callback state: a failed or timed-out
-transfer refunds to the ICA on the host and ops resubmit.
+New admin tx `MsgTransferFromIca { creator, chain_id, ica_type, amount (Coin) }`:
+`ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION}`, the four ICAs that hold anything (the
+two community-pool ICAs hold dust and the two converter ICAs belonged to the trade route
+deleted at upgrade 1; all four are written off). The destination is not a tx input. The
+Osmosis receiving address is one hard-coded constant in the upgrade 2 binary, and the
+host-side transfer channel to Osmosis comes from a hard-coded map `chain_id → channel_id`
+covering the ten non-Osmosis in-scope zones; a `chain_id` absent from the map is rejected.
+Both are reviewed and tested in the upgrade PR (§10) and verified against the hosts before
+the proposal (§8), so a fat-fingered channel or receiver on the day is not possible; the only
+per-tx inputs are the zone, the ICA and the amount. `amount` carries its denom as it exists
+on the host, so foreign balances such as the USDC in the dYdX withdrawal ICA can be sent too.
+Submits one ICA containing an ICS-20 `MsgTransfer` of `amount` from that ICA over the mapped
+channel to the receiving address, built like `BuildHostToTradeTransferMsg` without the
+forwarding memo, with the existing ICA timeout and a one-day transfer timeout. No callback
+state: a failed or timed-out transfer refunds to the ICA on the host and ops resubmit.
 
 The tokens go from the host straight to Osmosis, never through Stride, because that is the
 only route that lands them as the canonical denom on Osmosis: a voucher that reaches Stride
 first and is forwarded from there arrives as a two-hop denom that no pool would use. For the
-osmosis-1 zone the ICA is already on Osmosis and the tx is an ICA bank `MsgSend` to `receiver`
-instead (`source_channel` empty).
+osmosis-1 zone the ICA is already on Osmosis and the tx is an ICA bank `MsgSend` to the
+receiving address instead (osmosis-1 is in the map with an empty channel, which selects this
+form).
 
 New admin tx `MsgSweepStTokens { creator, denom, addresses: [string] }`, the batched stToken
 sweep. `denom` must be the stToken denom of a stakeibc host zone; `addresses` is non-empty
@@ -464,10 +468,13 @@ Window 1 (after upgrade 1, ~35 days):
    records. The hour-epoch hook pays them.
 4. Stakedym operator: sweep and confirm the 5 unbonded records; undelegate and confirm the 6
    queued ones; after 21 days sweep and confirm those. The hook pays them.
-5. Prepare the Osmosis side: the receiving address and the admin/moderator multisig, the
-   host-side channel id to Osmosis for each of the ten non-Osmosis zones, and the list of
-   foreign-route denoms per stToken from the escrow balances. Confirm packet-forward
-   middleware on every host whose Stride-side vouchers must be forwarded (§11).
+5. Prepare the Osmosis side before the upgrade 2 PR is cut, because the binary hard-codes
+   two of these: the receiving address and the admin/moderator multisig; the host-side
+   channel id to Osmosis for each of the ten non-Osmosis zones, each verified by querying the
+   host's channel and confirming its client's counterparty chain id is osmosis-1 and the
+   channel is open; and the list of foreign-route denoms per stToken from the escrow
+   balances. Confirm packet-forward middleware on every host whose Stride-side vouchers must
+   be forwarded (§11).
 6. Announce the timeline, the sweep floor and date, and that holders on other chains transfer
    to Osmosis directly.
 
@@ -479,6 +486,9 @@ Checklist to propose upgrade 2:
   empty.
 - Stakedym: same, for its records.
 - No open LSM token deposit on cosmoshub-4.
+- The receiving address and the channel map in the binary re-verified against the hosts and
+  against the address the multisig actually controls (a test transfer of a few tokens to the
+  receiving address from any wallet, then a signed spend from it).
 
 Window 2 (after upgrade 2, ~35 days):
 
@@ -498,8 +508,8 @@ Window 2 (after upgrade 2, ~35 days):
    the existing flow and the affected validators are resubmitted.
 3. Day 0+: `MsgTransferFromIca` for withdrawal, fee and redemption ICA balances, including
    foreign denoms such as the dYdX USDC. This is the live test of the
-   transfer tx on small real amounts, and the first arrival on Osmosis confirms the channel id
-   and the denom each zone lands as.
+   transfer tx on small real amounts, and the first arrival on Osmosis confirms the mapped
+   channel end to end and the denom each zone lands as.
 4. Day 0+: forward the wind-down address's vouchers (upgrade 2 handler step 4) to Osmosis with
    a packet-forward memo through each host chain, so they arrive canonical. The osmosis-1
    zone's vouchers go straight to Osmosis.
@@ -630,7 +640,9 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   message construction with and without offsets, empty versus explicit validator lists,
   rounding safety on a full drain, rejection of a validator with a change in progress, no
   accounting mutation; for the transfer tx, every ICA type, a foreign denom, the osmosis-1
-  bank-send form, receiver validation, the built `MsgTransfer` fields (channel, receiver,
+  bank-send form, a chain id absent from the map, that the map has an entry for every
+  in-scope zone and none for a deprecated one, that the receiving address parses as an `osmo`
+  bech32 address, and the built `MsgTransfer` fields (mapped channel, receiving address,
   timeout, empty memo); for the sweep tx, the highest-review item: table-driven tests for a
   base account, each vesting type, an escrow address, a module account, an interchain account,
   a 32-byte address, an unknown account, a zero balance (skipped, others in the batch still
@@ -647,16 +659,15 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
 
 ## §11. Open items for the plan
 
-- Exact proto shapes and enum names for the three admin txs; the wind-down address and the
-  channel-5 constant; the batch bound after measuring gas.
+- Exact proto shapes and enum names for the three admin txs; the constants: the Stride-side
+  wind-down address, the Osmosis receiving address, the channel-5 constant for the sweep and
+  the `chain_id → host-side channel to Osmosis` map; the batch bound after measuring gas.
 - Version numbers for the two upgrades.
 - Packet-forward middleware on laozi-mainnet, sommelier-3 and ssc-1 (celestia, cosmoshub-4,
   dydx-mainnet-1, juno-1, haqq_11235-1 and phoenix-1 have it). Celestia's matters most: it
   carries the whole staketia balance; the fallback there is a manual second hop from a
   Celestia address we control. A host without it means two
   manual hops for that zone's vouchers, which are small.
-- The host-side channel id to Osmosis for each of the ten non-Osmosis zones, confirmed by the
-  first small transfer in window 2.
 - Identify the owners of the interchain accounts on Stride that hold stTokens (2.3k stATOM in
   one) and the 32-byte holders, and notify them.
 - Whether the legacy claim module's 2022 airdrops are already expired (its REST query is not
