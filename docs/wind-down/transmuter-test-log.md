@@ -84,3 +84,16 @@ was seen through 20:20 UTC.
 | 20 | 7.3 | Router: 400,000 `ibc/7451…` → ATOM from `$KEY` | `56C06A51FDD4DBCB1AE4357B396DC4E1E850E14015C1CDE4275A30EBF220C0AD` | 71183203 | tokens_in `399600` (taker fee 400 = **0.1% default**, not the 0.02% stATOM/ATOM override), tokens_out `799269` uatom = floor(399600 × RR) |
 | 21 | 7.3 | `join_pool` 300,000 `ibc/7451…` from `$KEY` | `1705617ABFADE1E27A75BB43EC119F19423719DBEE5C5AACDAF5DEFDC0A6DA8D` | 71183211 | `600052` alloyed minted = floor(300000 × RR); no fee |
 | 22 | 7.3 | Router: 300,000 `ibc/7451…` → canonical stATOM from `$KEY` | `4C59BF14BA9BC6B0DEE90432CCED002911D147AC85E9CA048D4B46F4BBEE070A` | 71183216 | tokens_in `299700` (0.1% fee), tokens_out `299700` canonical stATOM: the pool de-hops a foreign route 1:1 |
+
+### Router visibility (Task 3.3 / 7.4), checked repeatedly 20:07–20:50 UTC
+
+SQS (`sqs.osmosis.zone`, the router behind app.osmosis.zone) ingested the pool: `GET /pools?filter[id]=3590` returns it
+with `liquidity_cap: 12` (USD) and `liquidity_cap_error: zero cap for denom (ibc/7451…); zero cap for denom (ibc/C86C…)`,
+i.e. it prices ATOM and canonical stATOM but has no price for the two-hop denoms. It never offered pool 3590 as a
+stATOM→ATOM route (`/router/routes` stayed at 1136, 1283, 803; quotes stayed on 1283 at 1,979,748 per stATOM, worse
+than our 1,999,774). Reason, from the SQS config: `DynamicMinLiquidityCapFiltersDesc` is keyed on the tokens' total
+liquidity across the chain, not the trade size; for a pair whose tokens have ≥ $1M of liquidity only pools with a cap of
+≥ $40,000 are route candidates. A $12 pool can never qualify; a real pool holding the zone's backing will. A quote for
+the two-hop denom fails outright: `denom is not a valid chain denom (ibc/7451…)`, so the app cannot quote or swap
+foreign-route stATOM; those holders need a contract-execute path (join then exit, or a hosted page) or the pool's
+own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded for §7.
