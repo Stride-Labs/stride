@@ -74,3 +74,9 @@ stATOM→ATOM candidates and quotes 1 stATOM → 1,979,748 uatom via 1283; its c
 
 Pool after Task 4: 2,499,857 stATOM / 2,999,852 ATOM; total shares 8,000,000, all held by `$KEY`. No third-party swap
 was seen through 20:20 UTC.
+| 13 | 7.1 | `add_new_assets` Penumbra two-hop denom (supply 0) from `$KEY` | `CC64DB1C1BA5EF932F5ECB918121FA6F2CCC04D597D4FD34BDFB4B2766BC5ADF` | 71183085 | code 5: `Denom has no supply, it might be an invalid denom: ibc/B667…` |
+| 14 | 7.1 | same with `--amount 1uosmo` from `$KEY` | `84873EAC6E3A0D4CA8CEC82FE2D0EE84F3EE59D2D78D6E6137429707CFD3FFEA` | 71183096 | code 5: `Funds must be empty` |
+| 15 | 7.1 | same from `$KEY2` | `C57911AFB749B7AB737538086A5AA8178E723B1A42A8D39B33D8C8FBABDBBAA2` | 71183106 | code 5: `Unauthorized` |
+| 16 | 5 | Stride → Hub: 1,000,000 stuatom over channel-0 to the Hub test address | `4D66536AA998D662BE0273F33F2D0CEA4532EBBB4A70260ECFFCD45842BE44F5` (stride-1) | 40503885 | packet 227560 → channel-391; landed as `1000000 ibc/B05539…` within ~3 minutes, relayed by public relayers, commitment cleared |
+| 17 | 6 | Hub → Osmosis: 1,000,000 `ibc/B05539…` over channel-141 to `$KEY` | `F7403661C69DEAAA9B4E6C4E0BF17C7B2E871F7EA9A4F032283E547AB5D5FB09` (cosmoshub-4) | 33091749 | packet 4998328 → channel-0; arrival pending |
+| 18 | 7.2 | `add_new_assets` Hub (`ibc/7451…`) and Agoric (`ibc/C86C…`) two-hop denoms, factor `1e18`, from `$KEY` | `DDBBDBC69EE85F248EA9EA0F6C581D814466717AF2F481489FDC6244D0F3C14D` | 71183148 | ok; five pool assets plus alloyed; spot price Hub-stATOM/ATOM `2.000174393066540432`, Hub-stATOM/canonical stATOM `1`. Injective and Secret denoms wait for their seed transfers (zero supply today) |
