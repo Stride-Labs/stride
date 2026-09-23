@@ -107,6 +107,16 @@ Queries (`osmosisd q wasm contract-state smart <addr> '<json>'`):
 - Poolmanager taker fee: charged on every routed swap, on top of the contract. Default
   0.1%; the stATOM/ATOM pair has an override of **0.02%** (`trading-pair-taker-fee`, live).
   Join-then-exit through `MsgExecuteContract` bypasses the poolmanager and pays no taker fee.
+- Where the override comes from: a per-pair entry in poolmanager state, written by
+  `MsgSetDenomPairTakerFee`, which only the `taker_fee_params.admin_addresses` may send
+  (live: `osmo162wk8qc3w5s9hfs8dm76wrqnk6fjmsez2t4kk6zyugmrlzgds8sqfesmlm` and
+  `osmo10d07y265gmmuvt4z0w9aw880jnsr700jjeq4qp`, the Osmosis team admin that also
+  administers the allUSDC pool). The 0.02% is Osmosis's standing policy for LST/underlying
+  pairs: stOSMO/OSMO is also 0.02%, while ATOM/OSMO is 0.2% and stATOM/OSMO the 0.1%
+  default. Nothing about our pool triggers it; it is keyed on the two denoms. So the
+  two-hop stATOM denoms pay the **0.1% default** against ATOM (verified live for the Hub and
+  Agoric denoms) unless the Osmosis team adds entries for them, which is a request worth
+  making once the denom list is final.
 - SQS (the router behind app.osmosis.zone) lists `996` in `AlloyedTransmuterCodeIDs`, so it
   understands the pool type. Its dynamic liquidity filter decides whether a pool is a route
   candidate for a given trade size: trades of at least $1 / $1k / $10k / $250k / $1M consider

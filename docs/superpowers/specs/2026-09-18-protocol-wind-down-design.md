@@ -483,8 +483,11 @@ own denom is complete; zones finish unbonding on different days and nothing coup
 Foreign-route denoms: a stToken that left Stride to chain X and is sent from X to Osmosis
 arrives as a two-hop denom (`transfer/<osmosis-X channel>/transfer/<X-stride channel>/st...`),
 distinct from the canonical one. Rather than route it back through Stride, which is
-impossible after the halt, each such denom is added to the stToken's pool with the same
-normalization factor via `add_new_assets`, after which it swaps at the same rate. The
+impossible after the halt, each such denom is added to the stToken's pool with the canonical stToken's
+normalization factor (`1e18`) via `add_new_assets`, after which it swaps at the same rate
+against the native token and 1:1 against every other route of the same stToken. Adding
+denoms with an already-present factor leaves the factor lcm, and so the overflow headroom,
+unchanged (§3). The
 per-channel escrow balances on Stride (§3) list exactly which chains hold which stToken and
 how much, so the set of denoms to add is known before the halt. The contract requires a denom
 to have supply on Osmosis before it can be added, so ops seed each one with a small transfer
