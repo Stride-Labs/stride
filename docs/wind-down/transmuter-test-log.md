@@ -61,3 +61,4 @@ expected: 0, actual: 0.001`; wasm contract admin and creator `osmo1rxjakgd8yhks2
 1 uatom → `0` ustatom. SQS at 20:07 UTC (about 2 minutes after funding) still lists only pools 1136, 1283, 803 as
 stATOM→ATOM candidates and quotes 1 stATOM → 1,979,748 uatom via 1283; its candidate-route cache expires every
 20 minutes, re-check later. `GET /pools/3590` on SQS: Not Found at that time.
+| 4 | 4.1 | Router exact-in from `$KEY2`: 1,000,000 ustatom → ATOM via pool 3590, min out 1,990,000 | `27BF9766A753177FCD3139C4F44E79434D220FEE215FBCB75EAD36CE0667C862` | 71182845 | `token_swapped` tokens_in `999800` ustatom (taker fee 200 = 0.02%), tokens_out `1999774` uatom, exactly floor(999800 × RR). Pool 999,800 stATOM / 6,000,226 ATOM. `$KEY2` is left with 7,161 ustatom, so the next steps run from `$KEY` |
