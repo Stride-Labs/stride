@@ -101,6 +101,58 @@ Queries (`osmosisd q wasm contract-state smart <addr> '<json>'`):
 `calc_in_amt_given_out {token_out, token_in_denom, swap_fee:"0"}`,
 `get_corrupted_denoms`, `get_admin`, `get_admin_candidate`, `get_moderator`.
 
+### Limiters (read from `src/limiter/limiters.rs`)
+
+What a limiter bounds is a denom's **weight**: that denom's normalized value divided by the
+pool's total normalized value, recomputed after every join, exit and swap (`weights()`).
+Two kinds, both registered per `(denom, label)` by the admin, at most 10 per denom:
+
+- `static_limiter { upper_limit }` (a `Decimal` in `(0, 1]`): the action fails with
+  `UpperLimitExceeded { denom, upper_limit, value }` if the denom's post-action weight
+  would be above the limit **and the weight is going up**. Actions that lower or hold the
+  weight are never blocked, so a capped denom can always be taken out of the pool.
+- `change_limiter { window_config { window_size, division_count }, boundary_offset }`: the
+  same rule against a moving average of the weight over a time window (≤ 10 divisions),
+  plus `boundary_offset`. Its history resets on `add_new_assets`.
+
+Rules that matter for us:
+
+- A denom's **last limiter cannot be deregistered** (`EmptyLimiterNotAllowed`); once a denom
+  has one it always has one. It can be widened to `upper_limit: "1"`, which disables it in
+  effect. Plan any limiter as permanent.
+- Limiters apply to the admin's own `join_pool` / `exit_pool` too. An exit that takes only
+  ATOM out raises every stToken denom's weight and is checked against their caps.
+- Under swaps the pool's total normalized value is constant (stToken in at RR, native out
+  at RR), so a cap on a denom is effectively a cap on how much of that denom the pool will
+  ever absorb, measured in native value, as long as the vault does not exit native.
+- A weight is per denom, so the two Secret routes count separately.
+
+What a cap can and cannot protect against here: every stATOM route is the same claim, so
+there is no "depeg" to bound. The one thing a cap does bound is a *counterfeit* route: if
+a source chain (or its light client on Osmosis) were compromised and minted two-hop
+stATOM that never existed on Stride, the attacker could drain ATOM up to that route's cap
+and no further. Stride's per-channel escrow is a hard upper bound on the genuine amount
+each route can ever deliver, so caps at `escrow share + margin` cost honest users nothing.
+Canonical stATOM needs no cap: after the Stride halt no more of it can be minted on
+Osmosis.
+
+Recommended for the real pools (pending a spec change, §7 currently says "no limiters"):
+one `static_limiter` per foreign-route denom, none on the canonical stToken or the native
+token, registered right after the vault's funding join, with `upper_limit` = that route's
+share of the stToken's supply from the escrow snapshot at the halt × 1.5, rounded up.
+Today's stATOM numbers as an illustration:
+
+| Route denom | Escrow share of supply | Suggested cap |
+|---|---|---|
+| Hub two-hop | 4.82% | 0.075 |
+| Injective two-hop | 2.40% | 0.04 |
+| Secret two-hop, each of the two channels | 0.65% | 0.01 |
+| Agoric two-hop | 0.19% | 0.005 |
+| Penumbra, Kujira, Comdex (if ever added) | 0.48% / 0.45% / 0.11% | 0.01 / 0.01 / 0.0025 |
+
+If the vault later exits native tokens (reclaiming unclaimed backing), every stToken weight
+rises and the caps must be widened first with `set_static_limiter_upper_limit`.
+
 ### Fees and routing around the pool
 
 - Swap fee inside the contract: zero, hard-coded.

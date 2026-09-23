@@ -445,17 +445,34 @@ factor is divisible by 1e12, which `2000174393052495819` is not, so expect the s
 error. Then `{"numerator":"2","denominator":"1"}`: succeeds, all factors doubled, spot
 price unchanged. Rescale back with `1/2`.
 
-- [ ] **Step 5: Limiter** (to know what the lever does, even though §7 registers none)
+- [ ] **Step 5: Per-route static cap** (the candidate safety lever for the real pool,
+  see reference §1 "Limiters"). Register it on a two-hop denom, never on canonical stATOM
+  or ATOM. The last limiter on a denom can never be deregistered, only widened, so this
+  step leaves a permanent limiter on the test pool's Hub denom; that is fine for a
+  throwaway pool.
 
 ```bash
-osmosisd tx wasm execute $POOL "{\"register_limiter\":{\"denom\":\"$STATOM\",\"label\":\"cap\",\"limiter_params\":{\"static_limiter\":{\"upper_limit\":\"0.5\"}}}}" --from $KEY $OSMO_TX
-osmosisd tx poolmanager swap-exact-amount-in 3000000$STATOM 1 --swap-route-pool-ids $POOL_ID --swap-route-denoms $ATOM --from $KEY $OSMO_TX
-osmosisd tx wasm execute $POOL "{\"deregister_limiter\":{\"denom\":\"$STATOM\",\"label\":\"cap\"}}" --from $KEY $OSMO_TX
+HUB2=ibc/7451074F46885686D3B47B12A6BF74F6D36847ED1891AC612FCFAEB7FB551E14
+# pool holds ~10 ATOM of value; cap the Hub route at 5% of pool value = ~0.5 ATOM = ~0.25 stATOM
+osmosisd tx wasm execute $POOL "{\"register_limiter\":{\"denom\":\"$HUB2\",\"label\":\"route-cap\",\"limiter_params\":{\"static_limiter\":{\"upper_limit\":\"0.05\"}}}}" --from $KEY $OSMO_TX
+osmosisd q wasm contract-state smart $POOL '{"list_limiters":{}}' --node $OSMO_NODE
+osmosisd tx poolmanager swap-exact-amount-in 100000$HUB2 1 --swap-route-pool-ids $POOL_ID --swap-route-denoms $ATOM --from $KEY $OSMO_TX     # 0.1 stATOM: under the cap
+osmosisd tx poolmanager swap-exact-amount-in 300000$HUB2 1 --swap-route-pool-ids $POOL_ID --swap-route-denoms $ATOM --from $KEY $OSMO_TX     # would take the route past 5%
+osmosisd tx poolmanager swap-exact-amount-in 50000$ATOM 1 --swap-route-pool-ids $POOL_ID --swap-route-denoms $HUB2 --from $KEY $OSMO_TX      # takes the route OUT: always allowed
+osmosisd tx wasm execute $POOL "{\"deregister_limiter\":{\"denom\":\"$HUB2\",\"label\":\"route-cap\"}}" --from $KEY $OSMO_TX
+osmosisd tx wasm execute $POOL "{\"set_static_limiter_upper_limit\":{\"denom\":\"$HUB2\",\"label\":\"route-cap\",\"upper_limit\":\"1\"}}" --from $KEY $OSMO_TX
+osmosisd tx poolmanager swap-exact-amount-in 300000$HUB2 1 --swap-route-pool-ids $POOL_ID --swap-route-denoms $ATOM --from $KEY $OSMO_TX     # now passes
 ```
 
-Expected: the swap that would push stATOM's normalized weight above 50% fails with the
-limiter's upper-limit error; after deregistering it succeeds. (Weights use normalized
-value, so 50% means equal *value*, not equal counts.)
+Expected, in order: limiter listed as `(denom, "route-cap") StaticLimiter{0.05}`; the
+0.1 stATOM swap passes; the 0.3 stATOM swap fails `UpperLimitExceeded {denom, upper_limit
+0.05, value …}` and moves nothing; the ATOM→Hub-stATOM swap passes because the Hub
+denom's weight falls; `deregister_limiter` fails `EmptyLimiterNotAllowed` (it is the
+denom's only limiter); widening to `1` succeeds; the 0.3 stATOM swap then passes. Also
+confirm the cap counts *normalized value*: 0.25 stATOM at RR ≈ 0.5 ATOM ≈ 5% of a 10 ATOM
+pool. Then test that the cap does not bite the vault: `join_pool` with ATOM and
+`exit_pool` with ATOM both pass with the limiter in place (ATOM has no limiter, and the
+Hub denom's weight only falls or stays).
 
 - [ ] **Step 6: Admin hand-over, two-step**
 
