@@ -98,3 +98,9 @@ the two-hop denom fails outright: `denom is not a valid chain denom (ibc/7451…
 foreign-route stATOM; those holders need a contract-execute path (join then exit, or a hosted page) or the pool's
 own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded for §7.
 | 23–29 | 8.1 | From `$KEY2`: `set_active_status`, `mark_corrupted_assets`, `rescale_normalization_factor`, `register_limiter`, `assign_moderator`, `transfer_admin`, `claim_admin` | `FD7F1892…`, `AF44321E…`, `BEACA1F0…`, `BCAB4CD9…`, `E3CAD757…`, `A4965886…`, `5CCFB498…` | 71183301–71183344 | all code 5 `Unauthorized`; nothing changed |
+| 30 | 8.2 | `set_active_status false` from `$KEY` (moderator) | `D546A277C1293482AC27CDA3EF1F3CB048216B84E2A4C295DECAF417ECBC423F` | 71183369 | `is_active: false` |
+| 31 | 8.2 | router swap 100,000 ustatom from `$KEY2` while frozen | `A72CFA9CC0D3B4DDE19E8534BE7EF21A65F602D214E0AA69F67699FDDCAD3184` | 71183378 | code 5 `The pool is currently inactive` |
+| 32 | 8.2 | `exit_pool` 1,000 uatom from `$KEY` (admin) while frozen | `AD34F97FC91A3A368F3E3637C20B2B50B15D5A563EF74291DEC469255ABF4373` | 71183384 | code 5 `The pool is currently inactive` (the freeze binds the admin too) |
+| 33 | 8.2 | `join_pool` 100,000 ustatom from `$KEY2` while frozen | `A374BE30E7F799C9965A5704F8B91A5AAD5400F9D7294EC9787E9ADEB72C72D4` | 71183394 | code 5 `The pool is currently inactive` |
+| 34 | 8.2 | `set_active_status false` again | `D801F439F5F036965E2A0630F9600D986DC924BA08B127CC1061F9C8D9833761` | 71183400 | code 5 `Attempt to set pool to active status to false when it is already false` |
+| 35 | 8.2 | `set_active_status true` | `3AC184AD1B7604A17F2722833B841B5F1253A228D4856826FF68B8003608BAD2` | 71183408 | `is_active: true` |
