@@ -254,6 +254,14 @@ A transfer needs the *destination's* client of the source to be un-expired.
 | Agoric → Osmosis (channel-1 → channel-320) | Osmosis's `07-tendermint-2109` | Active | | public relayers; two-hop supply exists |
 | Penumbra → Osmosis (channel-4 → channel-79703) | Osmosis's `07-tendermint-3242` | **Expired** | | Penumbra holders cannot reach Osmosis until someone recovers the client (Osmosis gov `MsgRecoverClient`) or opens a new channel |
 | Kujira → Osmosis (channel-3 → channel-259) | Osmosis's `07-tendermint-2017` | **Expired** | | same; kaiyo-1 REST endpoints are also down |
+| Stride → Neutron (channel-123 → channel-8) | Stride's client of neutron-1 | Active | | stTIA holders on Neutron; audited 2026-09-23 |
+| Neutron → Osmosis (channel-10 → channel-874) | Osmosis's `07-tendermint-2823` | Active, last header 35 h old | | no relayer keeping it fresh; we may need to relay |
+
+Channel audit 2026-09-23: every channel id, counterparty id, client destination and `ibc/` hash in this
+file and in `sttoken-locations.md` was re-derived from live Stride and Osmosis state and the chain registry
+by a separate pass; no mismatches. Where a chain pair has more than one channel, the one used here carries
+the traffic (Osmosis↔Secret: channel-88 has sent 509,459 packets, channel-476 13,284; Stride's unused sibling
+channels 36/75/18/10/110 hold none of any stToken's escrow).
 
 Consequence for the migration: Penumbra (6.2k stATOM) and Kujira (5.8k stATOM), together
 about $42k at today's price, are stranded on both hops. That is a design question for the
