@@ -7,10 +7,11 @@ are grouped as "Other".
 
 **Status rules.** `in scope`: the pool covers holders there (Stride itself, Osmosis, the token's host chain, plus the
 extra chains listed per token). `ignored`: holders there are not covered; the USD column is what that decision leaves
-behind. Extra chains: stATOM on Injective, Secret, Penumbra, Kujira, Agoric; stTIA on Agoric, Neutron, Hub; stINJ on
-Secret, Hub; stOSMO on Penumbra, Hub, Secret; stDYDX on Hub. The five deprecated zones' tokens (stEVMOS, stDYM,
+behind. Extra chains: stATOM on Injective, Secret, Penumbra, Agoric; stTIA on Agoric, Neutron, Hub; stINJ on
+Secret, Hub; stOSMO on Penumbra, Hub, Secret; stDYDX on Hub. Kujira is ignored because kaiyo-1 appears to have
+stopped (no reachable RPC, clients expired on both sides). The five deprecated zones' tokens (stEVMOS, stDYM,
 stSTARS, stCMDX, stUMEE) are ignored everywhere: those zones are not touched by the migration. Edit the Status column
-to change a decision.
+to change a decision. The relayer map for the in-scope paths is `relayer-map.html` in this folder.
 
 
 ## stATOM (stuatom, host cosmoshub-4)
@@ -19,7 +20,7 @@ to change a decision.
 
 | Token | Total USD | In scope USD | Ignored USD | Ignored locations |
 |---|---:|---:|---:|---:|
-| stATOM | $4,536,858 | $4,521,546 | $15,312 | 22 |
+| stATOM | $4,536,858 | $4,501,285 | $35,573 | 23 |
 | stISLM | $416,792 | $416,571 | $221 | 2 |
 | stTIA | $331,752 | $325,484 | $6,268 | 12 |
 | stINJ | $164,102 | $162,942 | $1,159 | 5 |
@@ -35,7 +36,7 @@ to change a decision.
 | stSOMM | $678 | $677 | $1 | 1 |
 | stCMDX | $207 | $0 | $207 | 5 |
 | stUMEE | $159 | $0 | $159 | 7 |
-| **All** | **$5,790,789** | **$5,751,515** | **$39,274** | |
+| **All** | **$5,790,789** | **$5,731,254** | **$59,535** | |
 
 Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Stride
 
@@ -47,7 +48,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Injective | injective-1 | channel-6 | 31,062.24 | 2.40% | $108,727 | in scope |
 | Secret | secret-4 | channel-40 | 8,385.34 | 0.65% | $29,351 | in scope |
 | Penumbra | penumbra-1 | channel-307 | 6,236.85 | 0.48% | $21,831 | in scope |
-| Kujira | kaiyo-1 | channel-8 | 5,788.38 | 0.45% | $20,261 | in scope |
+| Kujira | kaiyo-1 | channel-8 | 5,788.38 | 0.45% | $20,261 | ignored |
 | Agoric | agoric-3 | channel-148 | 2,424.99 | 0.19% | $8,488 | in scope |
 | Comdex | comdex-1 | channel-49 | 1,420.17 | 0.11% | $4,971 | ignored |
 | Neutron | neutron-1 | channel-123 | 1,093.88 | 0.08% | $3,829 | ignored |
@@ -72,7 +73,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Dymension | dymension_1100-1 | channel-197 | 0.02 | 0.00% | $0 | ignored |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored |
 
-In scope $4,521,546 · ignored $15,312 across 22 location(s)
+In scope $4,501,285 · ignored $35,573 across 23 location(s)
 
 
 ## stISLM (staISLM, host haqq_11235-1)

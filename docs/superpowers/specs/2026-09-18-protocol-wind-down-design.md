@@ -741,7 +741,7 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
 - Stranded stToken holders behind expired clients, to decide on: Penumbra (Osmosis's and
   Stride's clients both expired; ~6.2k stATOM and stOSMO, ~$29k) can be reopened by an
   Osmosis `MsgRecoverClient` or a new channel; Kujira (~5.8k stATOM, ~$20k) has no
-  reachable RPC and looks stopped, so it is a write-off unless kaiyo-1 resumes. Agoric is
+  reachable RPC and looks stopped, so it is ignored (decided 2026-09-23). Agoric is
   fine for holders (Agoric→Osmosis is active) though its Stride hop is expired. The five
   deprecated zones (Evmos, Dymension, Stargaze, Comdex, Umee) and their stTokens (~$16.8k in
   total) are not touched by the migration at all; four of them have expired clients on both
