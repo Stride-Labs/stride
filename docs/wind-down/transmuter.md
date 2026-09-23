@@ -139,16 +139,19 @@ Osmosis.
 Recommended for the real pools (pending a spec change, §7 currently says "no limiters"):
 one `static_limiter` per foreign-route denom, none on the canonical stToken or the native
 token, registered right after the vault's funding join, with `upper_limit` = that route's
-share of the stToken's supply from the escrow snapshot at the halt × 1.5, rounded up.
+share of the stToken's supply from the escrow snapshot at the halt × 1.1, rounded up to
+the next 0.0005. The 10% covers the pool holding slightly less than supply × RR (the
+coverage check funds Stride's bank supply, and rounding shaves dust); the exact minimum
+is share × (supply × RR ÷ pool value).
 Today's stATOM numbers as an illustration:
 
 | Route denom | Escrow share of supply | Suggested cap |
 |---|---|---|
-| Hub two-hop | 4.82% | 0.075 |
-| Injective two-hop | 2.40% | 0.04 |
-| Secret two-hop, each of the two channels | 0.65% | 0.01 |
-| Agoric two-hop | 0.19% | 0.005 |
-| Penumbra, Kujira, Comdex (if ever added) | 0.48% / 0.45% / 0.11% | 0.01 / 0.01 / 0.0025 |
+| Hub two-hop | 4.82% | 0.0535 |
+| Injective two-hop | 2.40% | 0.0265 |
+| Secret two-hop, each of the two channels | 0.65% | 0.0075 |
+| Agoric two-hop | 0.19% | 0.0025 |
+| Penumbra, Kujira, Comdex (if ever added) | 0.48% / 0.45% / 0.11% | 0.0055 / 0.005 / 0.0015 |
 
 If the vault later exits native tokens (reclaiming unclaimed backing), every stToken weight
 rises and the caps must be widened first with `set_static_limiter_upper_limit`.
