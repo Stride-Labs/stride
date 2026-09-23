@@ -211,8 +211,11 @@ Transmuter (osmosis-labs/transmuter v3.2.0, code id 996 on osmosis-1; source che
 
 - A transmuter is a `cosmwasmpool` that swaps its assets at a fixed ratio. v3 ("alloyed")
   gives each asset a `normalization_factor` (any `Uint128`); the rate between two assets is
-  the ratio of their factors. Setting the stToken factor to `RedemptionRate × 1e18` and the
-  native factor to `1e18` encodes the 18-decimal frozen rate exactly. Swap fee is hard-coded
+  the ratio of their factors. A larger factor makes a unit of that token worth
+  less (`out = in × out_factor / in_factor`), so setting the stToken factor to `1e18` and
+  the native factor to `RedemptionRate × 1e18` encodes the 18-decimal frozen rate exactly;
+  the alloyed asset takes the native factor so one alloyed unit is one native base unit.
+  (Corrected 2026-09-23; an earlier draft had the two factors swapped.) Swap fee is hard-coded
   to zero; exact-in output rounds down, exact-out input rounds up.
 - Relative factors cannot be changed after instantiation. The admin's only factor operation,
   `rescale_normalization_factor`, multiplies every factor by the same ratio. The admin can
@@ -463,8 +466,9 @@ native tokens arrive, and it is what replaces the on-chain withdrawal mode.
 One transmuter pool per in-scope stToken, eleven pools, instantiated from code id 996 (v3.2.0)
 by the Osmosis vault (§3a). Each pool's initial assets are the
 canonical stToken denom on Osmosis (the one minted by transfers over Stride's channel-5) and
-the native token, with normalization factors `HostZone.RedemptionRate × 1e18` for the stToken
-and `1e18` for the native token, the rate read from Stride at instantiation and frozen since
+the native token, with normalization factors `1e18` for the stToken and
+`HostZone.RedemptionRate × 1e18` for the native token and the alloyed asset (§3: a larger
+factor is a cheaper unit), the rate read from Stride at instantiation and frozen since
 the upgrade 2 halt (§9). No limiters are registered. Admin and moderator are the Osmosis
 vault (§3a); the moderator's freeze is the incident lever, and adminship can be renounced
 once the pools are in their final shape. The alloyed asset each pool mints is the LP receipt
