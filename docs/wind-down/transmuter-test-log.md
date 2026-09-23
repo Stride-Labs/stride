@@ -104,3 +104,9 @@ own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded fo
 | 33 | 8.2 | `join_pool` 100,000 ustatom from `$KEY2` while frozen | `A374BE30E7F799C9965A5704F8B91A5AAD5400F9D7294EC9787E9ADEB72C72D4` | 71183394 | code 5 `The pool is currently inactive` |
 | 34 | 8.2 | `set_active_status false` again | `D801F439F5F036965E2A0630F9600D986DC924BA08B127CC1061F9C8D9833761` | 71183400 | code 5 `Attempt to set pool to active status to false when it is already false` |
 | 35 | 8.2 | `set_active_status true` | `3AC184AD1B7604A17F2722833B841B5F1253A228D4856826FF68B8003608BAD2` | 71183408 | `is_active: true` |
+| 36 | 8.3 | `mark_corrupted_assets [ATOM]` from `$KEY` (moderator) | h 71183435 | | `get_corrupted_denoms` = [ATOM] |
+| 37 | 8.3 | router 100,000 ustatom → ATOM from `$KEY2` with ATOM corrupted | h 71183443 | | ok: in 99,980, out 199,977 (ATOM leaving is allowed) |
+| 38 | 8.3 | router 100,000 uatom → stATOM from `$KEY2` | h 71183448 | | code 5 `Corrupted asset: ibc/2739… must not increase` |
+| 39 | 8.3 | `join_pool` 100,000 uatom from `$KEY` (the vault's top-up) | h 71183457 | | same error: marking the native corrupted also blocks funding, so it can only be flipped after the pool is fully funded |
+| 40 | 8.3 | `exit_pool` 100,000 ustatom only from `$KEY` | h 71183463 | | same error: ATOM's weight would rise |
+| 41 | 8.3 | `unmark_corrupted_assets [ATOM]` | h 71183472 | | `get_corrupted_denoms` = [] |
