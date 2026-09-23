@@ -10,7 +10,7 @@ are grouped as "Other".
   token: stATOM on Injective, Secret, Penumbra, Agoric; stTIA on Agoric, Neutron, Hub; stINJ on Secret, Hub; stOSMO on
   Penumbra, Hub, Secret; stDYDX on Hub).
 - `ignored · small`: a live chain we could serve but the balance is not worth a route. Dymension counts as a live
-  chain here: it is a normal location for other stTokens.
+  chain here: it is a normal location for other stTokens. stSOMM is ignored entirely for size ($678 in total).
 - `ignored · unrecoverable`: the chain has stopped producing blocks (checked 2026-09-23: Evmos, Stargaze and Umee are
   marked killed in the chain registry with no RPC answering; Kujira has no RPC answering; Comdex's last block is 123
   days old). Nothing on those chains can move again, and the stTokens whose host zone is one of them (stEVMOS,
@@ -39,10 +39,10 @@ Edit the Status column to change a decision. The relayer map for the in-scope pa
 | stDYM | $5,113 | $0 | $0 | $0 | $5,113 |
 | stJUNO | $4,474 | $4,217 | $255 | $2 | $0 |
 | stSTARS | $1,670 | $0 | $0 | $1,670 | $0 |
-| stSOMM | $678 | $677 | $1 | $0 | $0 |
+| stSOMM | $678 | $0 | $678 | $0 | $0 |
 | stCMDX | $207 | $0 | $0 | $207 | $0 |
 | stUMEE | $159 | $0 | $0 | $159 | $0 |
-| **All** | **$5,790,789** | **$5,731,254** | **$20,806** | **$33,615** | **$5,113** |
+| **All** | **$5,790,789** | **$5,730,577** | **$21,483** | **$33,615** | **$5,113** |
 
 Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Stride
 
@@ -335,18 +335,18 @@ Supply 14,563,642.58 · RR 1.917700 · $1,670 total · 85.2% escrowed off Stride
 In scope $0 · small $0 · unrecoverable $1,670 · deprecated $0
 
 
-## stSOMM (stusomm, host sommelier-3)
+## stSOMM (stusomm, host sommelier-3 · too small, ignored entirely)
 
 Supply 1,334,084.22 · RR 1.080333 · $678 total · 48.8% escrowed off Stride
 
 | Chain | Chain id | Stride channel(s) | Amount | % of supply | USD | Status |
 |---|---|---|---:|---:|---:|---|
-| Stride | stride-1 | – | 683,170.78 | 51.21% | $347 | in scope |
-| Osmosis | osmosis-1 | channel-5 | 648,687.88 | 48.62% | $330 | in scope |
+| Stride | stride-1 | – | 683,170.78 | 51.21% | $347 | ignored · small |
+| Osmosis | osmosis-1 | channel-5 | 648,687.88 | 48.62% | $330 | ignored · small |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 2,225.42 | 0.17% | $1 | ignored · small |
-| Sommelier | sommelier-3 | channel-150 | 0.14 | 0.00% | $0 | in scope |
+| Sommelier | sommelier-3 | channel-150 | 0.14 | 0.00% | $0 | ignored · small |
 
-In scope $677 · small $1 · unrecoverable $0 · deprecated $0
+In scope $0 · small $678 · unrecoverable $0 · deprecated $0
 
 
 ## stCMDX (stucmdx, host comdex-1 · host zone stopped, ignored entirely)
