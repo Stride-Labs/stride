@@ -110,3 +110,7 @@ own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded fo
 | 39 | 8.3 | `join_pool` 100,000 uatom from `$KEY` (the vault's top-up) | h 71183457 | | same error: marking the native corrupted also blocks funding, so it can only be flipped after the pool is fully funded |
 | 40 | 8.3 | `exit_pool` 100,000 ustatom only from `$KEY` | h 71183463 | | same error: ATOM's weight would rise |
 | 41 | 8.3 | `unmark_corrupted_assets [ATOM]` | h 71183472 | | `get_corrupted_denoms` = [] |
+| 42 | 8.4 | `rescale_normalization_factor 1/7` | h 71183497 | | code 5 `Rescaling parameter is not divisible: rescale 1000000000000000000 by 1/7` (the ATOM factor happens to be divisible by 7; the stATOM one is not) |
+| 43 | 8.4 | `rescale_normalization_factor 1/1e12` | h 71183507 | | code 5 `… rescale 2000174393066540432 by 1/1000000000000` |
+| 44 | 8.4 | `rescale_normalization_factor 2/1` | h 71183513 | | ok: every factor doubled (stATOM `2e18`, ATOM and alloyed `4000348786133080864`, both two-hop `2e18`); spot price unchanged `2.000174393066540432` |
+| 45 | 8.4 | `rescale_normalization_factor 1/2` | h 71183520 | | back to the original factors, price unchanged |
