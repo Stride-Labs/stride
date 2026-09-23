@@ -138,3 +138,24 @@ own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded fo
 | 74 | 7.2 | `add_new_assets` Secret two-hop denom `ibc/8AEB…`, factor `1e18` | h 71187354 | | ok; spot price vs ATOM `2.000174393066540432` |
 | 75 | 7.3 | router 250,000 `ibc/8AEB…` → ATOM | h 71187364 | | in 249,750 (0.1% default fee), out `499543` = floor(249750 × RR) |
 | 76 | 7.3 | `join_pool` 250,000 `ibc/8AEB…` | h 71187368 | | `500043` alloyed minted = floor(250000 × RR) |
+| 77 | 6 | Injective packet 649337 received on Osmosis (tx `0E6C27145AF4FBC7D15A3123D141CD0E84B089E7D4EBC00DF05499AB0D3014A8`, h 71187282) | | | **error ack** `{"error":"ABCI code: 2: error handling packet"}`, event `ibccallbackerror-ibc-acknowledgement-error: rate limit exceeded`; Injective refunded the 1 stATOM |
+| 78 | 6 | Control: 1,000 ustatom Injective → Osmosis over channel-8 | `3A0EA1A8444EC4E6F169753D3973FE2235C3B1EE9A798BF17D2E55496B98B090` (injective-1) → Osmosis seq 649340, h 71187650 | | same error ack; INJ, USDT and ERC-20 packets on channel-122 in the same minutes succeeded |
+
+### Finding: Injective-hop stATOM cannot enter Osmosis (rate-limiter prefix bug)
+
+Osmosis wraps every contract error from its IBC rate limiter (`x/ibc-rate-limit`, contract
+`osmo17r7qdw2zk6jyw62cvwm6flmhtj9q7zd26r8zc6sqyf0pnaq46cfss8hgxg`, cw2 `rate-limiter 0.1.1`) as
+`rate limit exceeded`; no quota exists for channel-122 or for the denom (full state scan: 804 flow entries, none
+for channel-122). The contract's `Packet::receiver_chain_is_source` tests
+`denom.starts_with("transfer/{source_channel}")` **without a trailing slash**. Injective's channel to Osmosis is
+`channel-8` and its channel to Stride is `channel-89`, so `transfer/channel-89/stuatom` is mistaken for a token
+returning home; the strip of `transfer/channel-8/` fails, the denom becomes empty, the supply query errors and the
+packet is rejected regardless of amount. ibc-go itself compares with the trailing slash. Secret (channel-1 vs
+channel-37) and the Hub (channel-141 vs channel-391) don't collide, which is why those hops worked. Any denom whose
+first hop on Injective is channel-80…89 hits this; other pairs can collide the same way (a source channel that is
+a decimal prefix of the trace's first channel).
+
+Consequence: 31k stATOM on Injective (~$108k) cannot be sent to Osmosis as a two-hop denom until Osmosis migrates
+the contract (governance). Injective holders can still redeem through Stride in window 1 (both clients active), or
+after the halt route Injective → Hub → Osmosis as a three-hop denom (Hub's channel to Injective does not collide
+with channel-141), which the pool would then need added. Report to Osmosis before window 2.

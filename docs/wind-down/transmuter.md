@@ -211,7 +211,7 @@ sha256 and upper-cased. Supply is live on Osmosis.
 | From | Osmosis channel | X's channel to Osmosis | Trace on Osmosis | IBC denom on Osmosis | Supply |
 |---|---|---|---|---|---|
 | Cosmos Hub | channel-0 | channel-141 | `transfer/channel-0/transfer/channel-391/stuatom` | `ibc/7451074F46885686D3B47B12A6BF74F6D36847ED1891AC612FCFAEB7FB551E14` | 0.176527 |
-| Injective | channel-122 | channel-8 | `transfer/channel-122/transfer/channel-89/stuatom` | `ibc/F65724D2AE4A14F5BC149FC12C984D53D2307D95EC57BBA1CE52F94EB670EF60` | 0 |
+| Injective | channel-122 | channel-8 | `transfer/channel-122/transfer/channel-89/stuatom` | `ibc/F65724D2AE4A14F5BC149FC12C984D53D2307D95EC57BBA1CE52F94EB670EF60` | 0, and **cannot be created**: Osmosis's rate limiter rejects every such packet (prefix bug, `channel-8` vs `channel-89`; see the test log) |
 | Secret (channel-88 pair) | channel-88 | channel-1 | `transfer/channel-88/transfer/channel-37/stuatom` | `ibc/8AEB813EE960508AEDC1C2EB605788CE6A32F4E632583336D840BE4B8EC24CC7` | 0 |
 | Secret (channel-476 pair) | channel-476 | `wasm.secret1tqmms5…` channel-44 | not a transfer channel: Osmosis channel-476's counterparty is Secret's SNIP-20 IBC bridge contract port, verified 2026-09-23 (`channel not found` on Secret's transfer port). Plain stATOM holders on Secret cannot use it | – | – |
 | Penumbra | channel-79703 | channel-4 | `transfer/channel-79703/transfer/channel-8/stuatom` | `ibc/B66737925072CEF58C5E9990038D5B869D778DC42C7C2F1F5CEE8665D907AE8B` | 0 |

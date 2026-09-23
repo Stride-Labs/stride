@@ -738,6 +738,14 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   so the Band zone (~$110k stBAND) cannot be unbonded in window 2 without that proposal.
   Raise it with the Band team now; it has to pass before upgrade 2. Every other in-scope
   zone's host-side client of Stride is active (checked 2026-09-23).
+- **Injective-hop stATOM is rejected by Osmosis's IBC rate limiter** (verified 2026-09-23 with two
+  transfers, see the test log): the contract's returning-token check compares channel ids without
+  a trailing slash, so `transfer/channel-89/stuatom` arriving from Injective's channel-8 is
+  mis-classified and every packet fails with `rate limit exceeded`. Until Osmosis migrates the
+  contract, the ~31k stATOM on Injective (~$108k) cannot reach Osmosis directly. Options: file the
+  bug with Osmosis now and ask for a fix before window 2; tell Injective holders to redeem via
+  Stride in window 1; or, after the halt, route Injective → Hub → Osmosis and add the resulting
+  three-hop denom to the pool.
 - Stranded stToken holders behind expired clients, to decide on: Penumbra (Osmosis's and
   Stride's clients both expired; ~6.2k stATOM and stOSMO, ~$29k) can be reopened by an
   Osmosis `MsgRecoverClient` or a new channel; Kujira (~5.8k stATOM, ~$20k) has no
