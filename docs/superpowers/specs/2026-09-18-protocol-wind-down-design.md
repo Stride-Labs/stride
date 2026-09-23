@@ -742,7 +742,10 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   transfers, see the test log): the contract's returning-token check compares channel ids without
   a trailing slash, so `transfer/channel-89/stuatom` arriving from Injective's channel-8 is
   mis-classified and every packet fails with `rate limit exceeded`. Until Osmosis migrates the
-  contract, the ~31k stATOM on Injective (~$108k) cannot reach Osmosis directly. Options: file the
+  contract, nothing Stride-issued on Injective can reach Osmosis directly: ~31k stATOM (~$108k)
+  and the stINJ held there (~$53k). Checked against every other in-scope pair (Hub, Celestia,
+  dYdX, Haqq, Juno, Band, Terra, Saga, Secret, Penumbra, Agoric, Neutron): only Injective's
+  channel ids collide. Options: file the
   bug with Osmosis now and ask for a fix before window 2; tell Injective holders to redeem via
   Stride in window 1; or, after the halt, route Injective → Hub → Osmosis and add the resulting
   three-hop denom to the pool.
