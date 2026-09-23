@@ -114,3 +114,11 @@ own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded fo
 | 43 | 8.4 | `rescale_normalization_factor 1/1e12` | h 71183507 | | code 5 `… rescale 2000174393066540432 by 1/1000000000000` |
 | 44 | 8.4 | `rescale_normalization_factor 2/1` | h 71183513 | | ok: every factor doubled (stATOM `2e18`, ATOM and alloyed `4000348786133080864`, both two-hop `2e18`); spot price unchanged `2.000174393066540432` |
 | 45 | 8.4 | `rescale_normalization_factor 1/2` | h 71183520 | | back to the original factors, price unchanged |
+| 46 | 8.5 | router 300,000 canonical stATOM → Hub-stATOM from `$KEY` (to hold some again) | h 71183564 | | 299,700 → 299,700; weights afterwards stATOM 0.6047, ATOM 0.2326, Hub 0.1627, Agoric 0; total value 8,600,055 uatom-equivalent |
+| 47 | 8.5 | `register_limiter` Hub denom, label `route-cap`, static `0.173` (current weight + 0.01) | h 71183573 | | listed |
+| 48 | 8.5 | router 10,000 Hub-stATOM → ATOM (weight 0.1627 → 0.165, under the cap) | h 71183580 | | ok |
+| 49 | 8.5 | router 200,000 Hub-stATOM → ATOM (would reach ~0.21) | h 71183589 | | code 5 `Upper limit exceeded for ibc/7451…, upper limit is 0.173, …`; nothing moved |
+| 50 | 8.5 | router 50,000 ATOM → Hub-stATOM (Hub weight falls) | h 71183596 | | ok: a capped denom can always leave |
+| 51 | 8.5 | `deregister_limiter` route-cap | h 71183602 | | code 5 `Denom: ibc/7451… cannot have an empty limiter after it has been registered` (the last limiter is permanent) |
+| 52 | 8.5 | `set_static_limiter_upper_limit` route-cap → `1` | h 71183609 | | ok |
+| 53 | 8.5 | router 200,000 Hub-stATOM → ATOM again | h 71183616 | | ok: 199,800 → 399,634; weights stATOM 0.6047, ATOM 0.1896, Hub 0.2057; total value 8,600,058 (constant under swaps, +3 from rounding) |
