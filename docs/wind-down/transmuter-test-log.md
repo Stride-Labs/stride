@@ -53,3 +53,11 @@ active; liquidity `0 stATOM, 0 ATOM`; no limiters; swap fee `0`; spot price stAT
 ATOM/stATOM `0.49995640553465114`; `calc_out_amt_given_in` 1 stATOM → `Insufficient pool asset: required: 2000174ATOM,
 available: 0ATOM`; `calc_in_amt_given_out` 2 ATOM → same shape, required 2000000; swap fee 0.001 → `Invalid swap fee:
 expected: 0, actual: 0.001`; wasm contract admin and creator `osmo1rxjakgd8yhks2j7hc7pt6a22z3zd64grexpyf7` (module).
+| 3 | 3 | Funding join: `join_pool` with 8,000,000 uatom from `$KEY` (8 ATOM, not 10: that is what the key held) | `045BBF7923CA2D9D180B5BC3D9E6BCE78601740BA035C8FFC42A82B17A59D2D9` | 71182801 | 8,000,000 alloyed minted to `$KEY`; liquidity 0 stATOM / 8,000,000 ATOM; total shares 8,000,000 |
+
+### Task 3 quotes after funding (all as predicted)
+
+1,000,000 ustatom exact-in → `2000174` uatom; 2,000,000 uatom exact-out ← `999913` ustatom; 1 ustatom → `2` uatom;
+1 uatom → `0` ustatom. SQS at 20:07 UTC (about 2 minutes after funding) still lists only pools 1136, 1283, 803 as
+stATOM→ATOM candidates and quotes 1 stATOM → 1,979,748 uatom via 1283; its candidate-route cache expires every
+20 minutes, re-check later. `GET /pools/3590` on SQS: Not Found at that time.
