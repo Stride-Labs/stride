@@ -97,3 +97,4 @@ liquidity across the chain, not the trade size; for a pair whose tokens have ≥
 the two-hop denom fails outright: `denom is not a valid chain denom (ibc/7451…)`, so the app cannot quote or swap
 foreign-route stATOM; those holders need a contract-execute path (join then exit, or a hosted page) or the pool's
 own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded for §7.
+| 23–29 | 8.1 | From `$KEY2`: `set_active_status`, `mark_corrupted_assets`, `rescale_normalization_factor`, `register_limiter`, `assign_moderator`, `transfer_admin`, `claim_admin` | `FD7F1892…`, `AF44321E…`, `BEACA1F0…`, `BCAB4CD9…`, `E3CAD757…`, `A4965886…`, `5CCFB498…` | 71183301–71183344 | all code 5 `Unauthorized`; nothing changed |
