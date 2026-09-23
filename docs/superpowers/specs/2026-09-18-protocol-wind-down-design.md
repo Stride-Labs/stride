@@ -742,9 +742,10 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   Stride's clients both expired; ~6.2k stATOM and stOSMO, ~$29k) can be reopened by an
   Osmosis `MsgRecoverClient` or a new channel; Kujira (~5.8k stATOM, ~$20k) has no
   reachable RPC and looks stopped, so it is a write-off unless kaiyo-1 resumes. Agoric is
-  fine for holders (Agoric→Osmosis is active) though its Stride hop is expired. The four
-  deprecated zones (Evmos, Stargaze, Comdex, Umee) have expired clients on both Stride and
-  Osmosis, under $4.6k of stTokens combined.
+  fine for holders (Agoric→Osmosis is active) though its Stride hop is expired. The five
+  deprecated zones (Evmos, Dymension, Stargaze, Comdex, Umee) and their stTokens (~$16.8k in
+  total) are not touched by the migration at all; four of them have expired clients on both
+  Stride and Osmosis anyway.
 - Relayers: during window 1 users redeem through Stride, which needs both clients alive on
   every stToken chain ↔ Stride pair; Neutron's are active but nobody is updating them (35 h
   old on 2026-09-23), so ops relay that pair. In window 2 the host→Osmosis and

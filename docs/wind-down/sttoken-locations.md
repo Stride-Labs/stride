@@ -8,9 +8,12 @@ are grouped as "Other".
 **Status rules.** `in scope`: the pool covers holders there (Stride itself, Osmosis, the token's host chain, plus the
 extra chains listed per token). `ignored`: holders there are not covered; the USD column is what that decision leaves
 behind. Extra chains: stATOM on Injective, Secret, Penumbra, Kujira, Agoric; stTIA on Agoric, Neutron, Hub; stINJ on
-Secret, Hub; stOSMO on Penumbra, Hub, Secret; stDYDX on Hub. Edit the Status column to change a decision.
+Secret, Hub; stOSMO on Penumbra, Hub, Secret; stDYDX on Hub. The five deprecated zones' tokens (stEVMOS, stDYM,
+stSTARS, stCMDX, stUMEE) are ignored everywhere: those zones are not touched by the migration. Edit the Status column
+to change a decision.
 
-Per-token flags present in the source data: ['evm', 'note', 'status'].
+
+## stATOM (stuatom, host cosmoshub-4)
 
 ## Summary
 
@@ -25,17 +28,14 @@ Per-token flags present in the source data: ['evm', 'note', 'status'].
 | stDYDX | $54,956 | $54,165 | $791 | 6 |
 | stLUNA | $8,015 | $6,690 | $1,325 | 7 |
 | stSAGA | $5,292 | $5,216 | $76 | 3 |
-| stEVMOS | $5,216 | $5,183 | $33 | 11 |
-| stDYM | $5,113 | $4,994 | $120 | 3 |
+| stEVMOS | $5,216 | $0 | $5,216 | 14 |
+| stDYM | $5,113 | $0 | $5,113 | 6 |
 | stJUNO | $4,474 | $4,217 | $257 | 10 |
-| stSTARS | $1,670 | $1,542 | $128 | 11 |
+| stSTARS | $1,670 | $0 | $1,670 | 14 |
 | stSOMM | $678 | $677 | $1 | 1 |
-| stCMDX | $207 | $205 | $2 | 2 |
-| stUMEE | $159 | $151 | $8 | 4 |
-| **All** | **$5,790,789** | **$5,763,589** | **$27,199** | |
-
-
-## stATOM (stuatom, host cosmoshub-4, status)
+| stCMDX | $207 | $0 | $207 | 5 |
+| stUMEE | $159 | $0 | $159 | 7 |
+| **All** | **$5,790,789** | **$5,751,515** | **$39,274** | |
 
 Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Stride
 
@@ -75,7 +75,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 In scope $4,521,546 · ignored $15,312 across 22 location(s)
 
 
-## stISLM (staISLM, host haqq_11235-1, evm, status)
+## stISLM (staISLM, host haqq_11235-1)
 
 Supply 101,018,606.41 · RR 1.059801 · $416,792 total · 50.3% escrowed off Stride
 
@@ -90,7 +90,7 @@ Supply 101,018,606.41 · RR 1.059801 · $416,792 total · 50.3% escrowed off Str
 In scope $416,571 · ignored $221 across 2 location(s)
 
 
-## stTIA (stutia, host celestia, status)
+## stTIA (stutia, host celestia)
 
 Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 
@@ -118,7 +118,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 In scope $325,484 · ignored $6,268 across 12 location(s)
 
 
-## stINJ (stinj, host injective-1, evm, status)
+## stINJ (stinj, host injective-1)
 
 Supply 13,685.82 · RR 1.543197 · $164,102 total · 64.8% escrowed off Stride
 
@@ -138,7 +138,7 @@ Supply 13,685.82 · RR 1.543197 · $164,102 total · 64.8% escrowed off Stride
 In scope $162,942 · ignored $1,159 across 5 location(s)
 
 
-## stOSMO (stuosmo, host osmosis-1, status)
+## stOSMO (stuosmo, host osmosis-1)
 
 Supply 2,703,012.20 · RR 1.461651 · $144,709 total · 60.2% escrowed off Stride
 
@@ -171,7 +171,7 @@ Supply 2,703,012.20 · RR 1.461651 · $144,709 total · 60.2% escrowed off Strid
 In scope $143,760 · ignored $949 across 18 location(s)
 
 
-## stBAND (stuband, host laozi-mainnet, status)
+## stBAND (stuband, host laozi-mainnet)
 
 Supply 403,412.63 · RR 1.272885 · $110,795 total · 94.8% escrowed off Stride
 
@@ -185,7 +185,7 @@ Supply 403,412.63 · RR 1.272885 · $110,795 total · 94.8% escrowed off Stride
 In scope $110,246 · ignored $550 across 1 location(s)
 
 
-## stDYDX (stadydx, host dydx-mainnet-1, evm, status)
+## stDYDX (stadydx, host dydx-mainnet-1)
 
 Supply 353,378.02 · RR 1.150952 · $54,956 total · 17.5% escrowed off Stride
 
@@ -205,7 +205,7 @@ Supply 353,378.02 · RR 1.150952 · $54,956 total · 17.5% escrowed off Stride
 In scope $54,165 · ignored $791 across 6 location(s)
 
 
-## stLUNA (stuluna, host phoenix-1, status)
+## stLUNA (stuluna, host phoenix-1)
 
 Supply 75,786.52 · RR 1.979438 · $8,015 total · 58.4% escrowed off Stride
 
@@ -225,7 +225,7 @@ Supply 75,786.52 · RR 1.979438 · $8,015 total · 58.4% escrowed off Stride
 In scope $6,690 · ignored $1,325 across 7 location(s)
 
 
-## stSAGA (stusaga, host ssc-1, status)
+## stSAGA (stusaga, host ssc-1)
 
 Supply 109,843.16 · RR 1.279077 · $5,292 total · 13.6% escrowed off Stride
 
@@ -241,15 +241,15 @@ Supply 109,843.16 · RR 1.279077 · $5,292 total · 13.6% escrowed off Stride
 In scope $5,216 · ignored $76 across 3 location(s)
 
 
-## stEVMOS (staevmos, host evmos_9001-2, status)
+## stEVMOS (staevmos, host evmos_9001-2, deprecated zone: ignored entirely)
 
 Supply 7,955,610.62 · RR 1.589778 · $5,216 total · 76.0% escrowed off Stride
 
 | Chain | Chain id | Stride channel(s) | Amount | % of supply | USD | Status |
 |---|---|---|---:|---:|---:|---|
-| Evmos | evmos_9001-2 | channel-9 | 5,176,921.61 | 65.07% | $3,394 | in scope |
-| Stride | stride-1 | – | 1,905,584.08 | 23.95% | $1,249 | in scope |
-| Osmosis | osmosis-1 | channel-5 | 822,152.94 | 10.33% | $539 | in scope |
+| Evmos | evmos_9001-2 | channel-9 | 5,176,921.61 | 65.07% | $3,394 | ignored |
+| Stride | stride-1 | – | 1,905,584.08 | 23.95% | $1,249 | ignored |
+| Osmosis | osmosis-1 | channel-5 | 822,152.94 | 10.33% | $539 | ignored |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 47,423.48 | 0.60% | $31 | ignored |
 | Carbon | carbon-1 | channel-47 | 3,074.38 | 0.04% | $2 | ignored |
 | Crescent | crescent-1 | channel-51 | 273.64 | 0.00% | $0 | ignored |
@@ -262,26 +262,26 @@ Supply 7,955,610.62 · RR 1.589778 · $5,216 total · 76.0% escrowed off Stride
 | Composable | centauri-1 | channel-134 | 0.30 | 0.00% | $0 | ignored |
 | Secret | secret-4 | channel-40 | 0.01 | 0.00% | $0 | ignored |
 
-In scope $5,183 · ignored $33 across 11 location(s)
+In scope $0 · ignored $5,216 across 14 location(s)
 
 
-## stDYM (stadym, host dymension_1100-1, note, evm, status)
+## stDYM (stadym, host dymension_1100-1, deprecated zone: ignored entirely)
 
 Supply 257,169.44 · RR 1.096130 · $5,113 total · 29.7% escrowed off Stride
 
 | Chain | Chain id | Stride channel(s) | Amount | % of supply | USD | Status |
 |---|---|---|---:|---:|---:|---|
-| Stride | stride-1 | – | 180,780.26 | 70.30% | $3,594 | in scope |
-| Dymension | dymension_1100-1 | channel-197 | 45,433.60 | 17.67% | $903 | in scope |
-| Osmosis | osmosis-1 | channel-5 | 24,940.62 | 9.70% | $496 | in scope |
+| Stride | stride-1 | – | 180,780.26 | 70.30% | $3,594 | ignored |
+| Dymension | dymension_1100-1 | channel-197 | 45,433.60 | 17.67% | $903 | ignored |
+| Osmosis | osmosis-1 | channel-5 | 24,940.62 | 9.70% | $496 | ignored |
 | Neutron | neutron-1 | channel-123 | 5,300.13 | 2.06% | $105 | ignored |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 714.70 | 0.28% | $14 | ignored |
 | Carbon | carbon-1 | channel-47 | 0.13 | 0.00% | $0 | ignored |
 
-In scope $4,994 · ignored $120 across 3 location(s)
+In scope $0 · ignored $5,113 across 6 location(s)
 
 
-## stJUNO (stujuno, host juno-1, status)
+## stJUNO (stujuno, host juno-1)
 
 Supply 246,844.95 · RR 1.933365 · $4,474 total · 42.9% escrowed off Stride
 
@@ -304,15 +304,15 @@ Supply 246,844.95 · RR 1.933365 · $4,474 total · 42.9% escrowed off Stride
 In scope $4,217 · ignored $257 across 10 location(s)
 
 
-## stSTARS (stustars, host stargaze-1, status)
+## stSTARS (stustars, host stargaze-1, deprecated zone: ignored entirely)
 
 Supply 14,563,642.58 · RR 1.917700 · $1,670 total · 85.2% escrowed off Stride
 
 | Chain | Chain id | Stride channel(s) | Amount | % of supply | USD | Status |
 |---|---|---|---:|---:|---:|---|
-| Osmosis | osmosis-1 | channel-5 | 5,930,860.51 | 40.72% | $680 | in scope |
-| Stargaze | stargaze-1 | channel-19 | 5,365,052.27 | 36.84% | $615 | in scope |
-| Stride | stride-1 | – | 2,151,137.02 | 14.77% | $247 | in scope |
+| Osmosis | osmosis-1 | channel-5 | 5,930,860.51 | 40.72% | $680 | ignored |
+| Stargaze | stargaze-1 | channel-19 | 5,365,052.27 | 36.84% | $615 | ignored |
+| Stride | stride-1 | – | 2,151,137.02 | 14.77% | $247 | ignored |
 | Juno | juno-1 | channel-24 | 795,680.41 | 5.46% | $91 | ignored |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 219,822.43 | 1.51% | $25 | ignored |
 | Carbon | carbon-1 | channel-47 | 89,046.95 | 0.61% | $10 | ignored |
@@ -325,10 +325,10 @@ Supply 14,563,642.58 · RR 1.917700 · $1,670 total · 85.2% escrowed off Stride
 | Umee | umee-1 | channel-29 | 3.12 | 0.00% | $0 | ignored |
 | Gravity Bridge | gravity-bridge-3 | channel-121 | 1.00 | 0.00% | $0 | ignored |
 
-In scope $1,542 · ignored $128 across 11 location(s)
+In scope $0 · ignored $1,670 across 14 location(s)
 
 
-## stSOMM (stusomm, host sommelier-3, status)
+## stSOMM (stusomm, host sommelier-3)
 
 Supply 1,334,084.22 · RR 1.080333 · $678 total · 48.8% escrowed off Stride
 
@@ -342,34 +342,34 @@ Supply 1,334,084.22 · RR 1.080333 · $678 total · 48.8% escrowed off Stride
 In scope $677 · ignored $1 across 1 location(s)
 
 
-## stCMDX (stucmdx, host comdex-1, status)
+## stCMDX (stucmdx, host comdex-1, deprecated zone: ignored entirely)
 
 Supply 1,599,360.16 · RR 1.445795 · $207 total · 78.9% escrowed off Stride
 
 | Chain | Chain id | Stride channel(s) | Amount | % of supply | USD | Status |
 |---|---|---|---:|---:|---:|---|
-| Comdex | comdex-1 | channel-49 | 1,237,229.86 | 77.36% | $160 | in scope |
-| Stride | stride-1 | – | 337,462.75 | 21.10% | $44 | in scope |
+| Comdex | comdex-1 | channel-49 | 1,237,229.86 | 77.36% | $160 | ignored |
+| Stride | stride-1 | – | 337,462.75 | 21.10% | $44 | ignored |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 12,050.69 | 0.75% | $2 | ignored |
-| Osmosis | osmosis-1 | channel-5 | 12,002.17 | 0.75% | $2 | in scope |
+| Osmosis | osmosis-1 | channel-5 | 12,002.17 | 0.75% | $2 | ignored |
 | Kujira | kaiyo-1 | channel-8 | 614.69 | 0.04% | $0 | ignored |
 
-In scope $205 · ignored $2 across 2 location(s)
+In scope $0 · ignored $207 across 5 location(s)
 
 
-## stUMEE (stuumee, host umee-1, status)
+## stUMEE (stuumee, host umee-1, deprecated zone: ignored entirely)
 
 Supply 22,431,695.36 · RR 1.479574 · $159 total · 28.9% escrowed off Stride
 
 | Chain | Chain id | Stride channel(s) | Amount | % of supply | USD | Status |
 |---|---|---|---:|---:|---:|---|
-| Stride | stride-1 | – | 15,953,084.27 | 71.12% | $113 | in scope |
-| Osmosis | osmosis-1 | channel-5 | 5,354,748.58 | 23.87% | $38 | in scope |
+| Stride | stride-1 | – | 15,953,084.27 | 71.12% | $113 | ignored |
+| Osmosis | osmosis-1 | channel-5 | 5,354,748.58 | 23.87% | $38 | ignored |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 1,123,289.31 | 5.01% | $8 | ignored |
 | Crescent | crescent-1 | channel-51 | 285.32 | 0.00% | $0 | ignored |
 | Kujira | kaiyo-1 | channel-8 | 174.75 | 0.00% | $0 | ignored |
-| Umee | umee-1 | channel-29 | 62.23 | 0.00% | $0 | in scope |
+| Umee | umee-1 | channel-29 | 62.23 | 0.00% | $0 | ignored |
 | Injective | injective-1 | channel-6 | 50.91 | 0.00% | $0 | ignored |
 
-In scope $151 · ignored $8 across 4 location(s)
+In scope $0 · ignored $159 across 7 location(s)
 
