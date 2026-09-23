@@ -469,10 +469,24 @@ canonical stToken denom on Osmosis (the one minted by transfers over Stride's ch
 the native token, with normalization factors `1e18` for the stToken and
 `HostZone.RedemptionRate × 1e18` for the native token and the alloyed asset (§3: a larger
 factor is a cheaper unit), the rate read from Stride at instantiation and frozen since
-the upgrade 2 halt (§9). No limiters are registered. Admin and moderator are the Osmosis
-vault (§3a); the moderator's freeze is the incident lever, and adminship can be renounced
-once the pools are in their final shape. The alloyed asset each pool mints is the LP receipt
-and stays in the Osmosis vault.
+the upgrade 2 halt (§9). Admin and moderator are the Osmosis vault (§3a); the moderator's
+freeze is the incident lever. Adminship cannot be renounced (a transfer only completes when
+the candidate claims it), so the vault keeps it for the life of the pools. The alloyed asset
+each pool mints is the LP receipt and stays in the Osmosis vault; it is the withdrawal key
+to the pool's backing and is custodied like the backing itself.
+
+Limiters: one `static_limiter` per foreign-route denom, registered right after the funding
+join, with `upper_limit` = that route's share of the stToken's supply in the escrow snapshot
+at the halt × 1.1, rounded up to the next 0.0005. None on the canonical stToken or the
+native token. A limiter bounds a denom's share of pool value and only blocks moves that
+raise it; because swaps leave the pool's value unchanged, the cap is a ceiling on how much
+of that route the pool will ever absorb. Stride's per-channel escrow is a hard upper bound
+on the genuine amount a route can deliver, so the cap costs honest holders nothing and
+bounds the damage from a compromised source chain or light client minting counterfeit
+two-hop vouchers to that route's cap. A denom's last limiter can never be deregistered,
+only widened, so if the vault ever exits native tokens (reclaiming unclaimed backing) it
+widens the caps first. The canonical denom is left uncapped because it is ~90% of supply;
+its counterfeit risk is a forged Stride header, handled in the halt checklist (§8).
 
 Funding is one `join_pool` per pool with native tokens only, for exactly the amount the
 coverage check requires (§9), once every source for that denom has arrived: the delegation
@@ -578,6 +592,12 @@ Window 2 (after upgrade 2, ~35 days):
    (its balance is back on Stride). Relayers on channel-5 stay up until the last packet acks.
 7. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
    every balance is sent.
+8. After the halt: every validator rotates or destroys its consensus key, and Stride Labs
+   confirms it in writing from each. Osmosis's light client of Stride (`07-tendermint-2119`,
+   12-day trusting period) accepts any header signed by two thirds of the last trusted
+   validator set until it expires; a forged header could mint canonical stToken vouchers on
+   Osmosis, which the pools would honour. Keys gone means the window is closed on day 0
+   rather than day 12. No relayer is asked to update that client after the halt.
 
 ### §8a. Drift measurement
 
