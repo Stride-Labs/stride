@@ -743,9 +743,10 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   Osmosis `MsgRecoverClient` or a new channel; Kujira (~5.8k stATOM, ~$20k) has no
   reachable RPC and looks stopped, so it is ignored (decided 2026-09-23). Agoric is
   fine for holders (Agoric→Osmosis is active) though its Stride hop is expired. The five
-  deprecated zones (Evmos, Dymension, Stargaze, Comdex, Umee) and their stTokens (~$16.8k in
-  total) are not touched by the migration at all; four of them have expired clients on both
-  Stride and Osmosis anyway.
+  deprecated zones and their stTokens (~$16.8k in total) are not touched by the migration:
+  Evmos, Stargaze, Umee and Comdex have stopped producing blocks (unrecoverable, like Kujira),
+  and Dymension is alive but left alone by choice. `docs/wind-down/sttoken-locations.md`
+  separates ignored balances into small, unrecoverable and deprecated.
 - Relayers: during window 1 users redeem through Stride, which needs both clients alive on
   every stToken chain ↔ Stride pair; Neutron's are active but nobody is updating them (35 h
   old on 2026-09-23), so ops relay that pair. In window 2 the host→Osmosis and
