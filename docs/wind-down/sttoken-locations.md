@@ -9,12 +9,13 @@ are grouped as "Other".
 - `in scope`: the pool covers holders there (Stride itself, Osmosis, the token's host chain, plus the extra chains per
   token: stATOM on Injective, Secret, Penumbra, Agoric; stTIA on Agoric, Neutron, Hub; stINJ on Secret, Hub; stOSMO on
   Penumbra, Hub, Secret; stDYDX on Hub).
-- `ignored · small`: a live chain we could serve but the balance is not worth a route.
+- `ignored · small`: a live chain we could serve but the balance is not worth a route. Dymension counts as a live
+  chain here: it is a normal location for other stTokens.
 - `ignored · unrecoverable`: the chain has stopped producing blocks (checked 2026-09-23: Evmos, Stargaze and Umee are
   marked killed in the chain registry with no RPC answering; Kujira has no RPC answering; Comdex's last block is 123
   days old). Nothing on those chains can move again, and the stTokens whose host zone is one of them (stEVMOS,
   stSTARS, stUMEE, stCMDX) have no native side to migrate.
-- `ignored · deprecated`: Dymension is alive but stakedym is a deprecated zone we will not touch, so stDYM is left alone.
+- `ignored · deprecated`: stDYM only. Dymension is alive, but stakedym is a deprecated zone we will not touch.
 
 Edit the Status column to change a decision. The relayer map for the in-scope paths is `relayer-map.html` in this folder.
 
@@ -25,9 +26,9 @@ Edit the Status column to change a decision. The relayer map for the in-scope pa
 
 | Token | Total USD | In scope | Ignored · small | Ignored · unrecoverable | Ignored · deprecated |
 |---|---:|---:|---:|---:|---:|
-| stATOM | $4,536,858 | $4,501,285 | $9,849 | $25,723 | $0 |
+| stATOM | $4,536,858 | $4,501,285 | $9,850 | $25,723 | $0 |
 | stISLM | $416,792 | $416,571 | $221 | $0 | $0 |
-| stTIA | $331,752 | $325,484 | $4,284 | $3 | $1,981 |
+| stTIA | $331,752 | $325,484 | $6,265 | $3 | $0 |
 | stINJ | $164,102 | $162,942 | $868 | $292 | $0 |
 | stOSMO | $144,709 | $143,760 | $608 | $340 | $0 |
 | stBAND | $110,795 | $110,246 | $550 | $0 | $0 |
@@ -41,7 +42,7 @@ Edit the Status column to change a decision. The relayer map for the in-scope pa
 | stSOMM | $678 | $677 | $1 | $0 | $0 |
 | stCMDX | $207 | $0 | $0 | $207 | $0 |
 | stUMEE | $159 | $0 | $0 | $159 | $0 |
-| **All** | **$5,790,789** | **$5,731,254** | **$18,825** | **$33,615** | **$7,094** |
+| **All** | **$5,790,789** | **$5,731,254** | **$20,806** | **$33,615** | **$5,113** |
 
 Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Stride
 
@@ -75,10 +76,10 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Oraichain | Oraichain | channel-50 | 0.18 | 0.00% | $1 | ignored · small |
 | Gravity Bridge | gravity-bridge-3 | channel-121 | 0.10 | 0.00% | $0 | ignored · small |
 | Evmos | evmos_9001-2 | channel-16 | 0.02 | 0.00% | $0 | ignored · unrecoverable |
-| Dymension | dymension_1100-1 | channel-197 | 0.02 | 0.00% | $0 | ignored · deprecated |
+| Dymension | dymension_1100-1 | channel-197 | 0.02 | 0.00% | $0 | ignored · small |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored · small |
 
-In scope $4,501,285 · small $9,849 · unrecoverable $25,723 · deprecated $0
+In scope $4,501,285 · small $9,850 · unrecoverable $25,723 · deprecated $0
 
 
 ## stISLM (staISLM, host haqq_11235-1)
@@ -108,7 +109,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 | Neutron | neutron-1 | channel-123 | 8,344.59 | 1.32% | $4,374 | in scope |
 | Carbon | carbon-1 | channel-47 | 6,592.06 | 1.04% | $3,455 | ignored · small |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 3,809.09 | 0.60% | $1,997 | in scope |
-| Dymension | dymension_1100-1 | channel-197 | 3,779.27 | 0.60% | $1,981 | ignored · deprecated |
+| Dymension | dymension_1100-1 | channel-197 | 3,779.27 | 0.60% | $1,981 | ignored · small |
 | Secret | secret-4 | channel-40 | 868.58 | 0.14% | $455 | ignored · small |
 | Celestia | celestia | channel-162 | 614.16 | 0.10% | $322 | in scope |
 | Penumbra | penumbra-1 | channel-307 | 409.55 | 0.06% | $215 | ignored · small |
@@ -121,7 +122,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 | Umee | umee-1 | channel-29 | 0.02 | 0.00% | $0 | ignored · unrecoverable |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored · small |
 
-In scope $325,484 · small $4,284 · unrecoverable $3 · deprecated $1,981
+In scope $325,484 · small $6,265 · unrecoverable $3 · deprecated $0
 
 
 ## stINJ (stinj, host injective-1)
