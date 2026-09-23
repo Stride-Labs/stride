@@ -731,6 +731,26 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
 
 ## §11. Open items for the plan
 
+- **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
+  connection `connection-146`, last header 2026-08-05; the delegation ICA restore is stuck
+  in `STATE_INIT` on channel-768). No ICA tx, and no Stride→Band transfer, can be delivered
+  until Band governance recovers it with `MsgRecoverClient` and a fresh substitute client,
+  so the Band zone (~$110k stBAND) cannot be unbonded in window 2 without that proposal.
+  Raise it with the Band team now; it has to pass before upgrade 2. Every other in-scope
+  zone's host-side client of Stride is active (checked 2026-09-23).
+- Stranded stToken holders behind expired clients, to decide on: Penumbra (Osmosis's and
+  Stride's clients both expired; ~6.2k stATOM and stOSMO, ~$29k) can be reopened by an
+  Osmosis `MsgRecoverClient` or a new channel; Kujira (~5.8k stATOM, ~$20k) has no
+  reachable RPC and looks stopped, so it is a write-off unless kaiyo-1 resumes. Agoric is
+  fine for holders (Agoric→Osmosis is active) though its Stride hop is expired. The four
+  deprecated zones (Evmos, Stargaze, Comdex, Umee) have expired clients on both Stride and
+  Osmosis, under $4.6k of stTokens combined.
+- Relayers: during window 1 users redeem through Stride, which needs both clients alive on
+  every stToken chain ↔ Stride pair; Neutron's are active but nobody is updating them (35 h
+  old on 2026-09-23), so ops relay that pair. In window 2 the host→Osmosis and
+  Stride→Osmosis transfers are relayed by ops where public relayers are absent. After the
+  halt, holders relay their own chain→Osmosis hop if nobody else does. The live map is at
+  https://claude.ai/artifact/986V5LAXxFgzjq7jXPpE8r.
 - Exact proto shapes and enum names for the four admin txs; the constants: the two new
   addresses in §3a once created, the channel-5 constant for the sweep and the
   `chain_id → host-side channel to Osmosis` map; the batch bound after measuring gas.
