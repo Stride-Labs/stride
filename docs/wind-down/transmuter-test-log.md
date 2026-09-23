@@ -159,3 +159,48 @@ Consequence: 31k stATOM on Injective (~$108k) cannot be sent to Osmosis as a two
 the contract (governance). Injective holders can still redeem through Stride in window 1 (both clients active), or
 after the halt route Injective → Hub → Osmosis as a three-hop denom (Hub's channel to Injective does not collide
 with channel-141), which the pool would then need added. Report to Osmosis before window 2.
+| 79 | 9 | `set_active_status false` | `DAC709653638A08E5224301F3F927687D5CACF9417D3D5AECCC7E6F7226964D5` | 71187802 | pool 3590 frozen, not emptied (operator's choice). Liquidity left: 2,350,109 stATOM, 3,131,398 ATOM, 884,418 Hub-stATOM, 499,750 Secret-stATOM, 0 Agoric-stATOM; total shares 10,600,595, of which `$KEY` holds 10,600,095 and the taker-fee collector 500 |
+
+## Task 9: reconciliation (21:55 UTC)
+
+Everything in ATOM-equivalent at RR 2.000174393066540432. Pool value at the freeze is 10,600,603 against
+10,600,595 shares: **+8 uatom** for the pool, all rounding in its favour.
+
+| | uatom-equivalent |
+|---|---:|
+| Start: `$KEY` 8,838,973 ATOM + `$KEY`/`$KEY2` 6,045,114 stATOM | 20,930,255 |
+| Inflows: Hub-hop 1,000,000 + Secret-hop 500,000 stATOM | 3,000,261 |
+| End: `$KEY` 3,507,574 ATOM, 1,537,539 stATOM, 114,672 Hub-stATOM, 10,600,095 alloyed; `$KEY2` 2,199,751 ATOM, 2,156,745 stATOM | 23,925,996 |
+| Difference | 4,520 |
+| Explained: taker fees (1,881 stToken-side, 251 ATOM-side, 500 alloyed) ≈ 4,513 + pool rounding 8 | 4,521 |
+
+Unexplained: 1 uatom (rounding of the fee estimate). Gas: 995,252 uosmo across both keys (~$0.04); pool creation 20
+allUSDC; 5 allUSDC left on `$KEY`. Off Osmosis: 1 stATOM back on Injective (refunded), 0.5 stATOM still on Secret,
+1 stATOM in Stride's channel-40 escrow from the timed-out packet 39378 (refunds when someone relays the timeout;
+hermes could not get through the Secret RPC's rate limit for the full `clear packets` run), 0.4975 ATOM on the Hub.
+
+## Findings that change the spec
+
+1. **Normalization factors were inverted in the spec** (caught reading the code before the test; corrected). On chain
+   the corrected orientation gives spot price exactly `RR`.
+2. **Osmosis's rate limiter rejects Injective-hop stATOM** (prefix bug, channel-8 vs channel-89). ~$108k of stATOM
+   on Injective cannot enter Osmosis until Osmosis migrates the contract. Report to Osmosis; Injective holders
+   redeem via Stride in window 1, or route via the Hub after the halt.
+3. **The Osmosis app cannot see or quote foreign-route stATOM**: SQS calls the two-hop denom "not a valid chain
+   denom". Holders need a contract path (CLI, or a page we host). The chain handles it fine.
+4. **The app router ignores small pools** (≈ $40k floor for this pair); irrelevant for the real pool, but it means
+   no test pool will ever get organic traffic.
+5. **Stride → Secret has no relayer** (packets from 20 Sep still pending; the Secret → Stride direction too), and
+   the only public Secret RPC rate-limits hermes hard. Window 1 needs us to relay Secret in both directions with
+   single-packet commands and pauses, or a private Secret node.
+6. **Osmosis channel-476 to Secret is a wasm-port channel** (Secret's SNIP-20 bridge), not a transfer channel;
+   bank-held stATOM on Secret has one route, channel-1.
+7. **Two-hop pairs pay the 0.1% default taker fee**, canonical stATOM/ATOM 0.02%.
+8. **The corrupted-asset lever blocks the vault's own funding and stToken-only exits**: usable only after funding.
+9. **A denom's last limiter is permanent**; widen to 1 to disable. Caps behave exactly as designed and total pool
+   value is invariant under swaps.
+10. **`--dry-run` cannot resolve key names**, Osmosis base fee is 0.03 uosmo, hermes 1.13.2 needs
+    `compat_mode = '0.38'` for Stride, `injectived` has no macOS build (Docker works).
+
+Everything else matched the plan's predictions exactly: rounding, fees, freeze, hand-over, bearer alloyed,
+`add_new_assets` rules, `Insufficient pool asset` on under-funding.

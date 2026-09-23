@@ -358,3 +358,14 @@ hermes query packet pending --chain stride-1 --port transfer --channel channel-6
 
 rly's equivalent is `rly transact flush stride-injective`. Neither tool can revive an
 expired client; that needs `MsgRecoverClient` through governance on the chain holding it.
+
+## 5. The test pool (2026-09-23)
+
+Pool **3590**, contract `osmo13wcvdtkcu459zjuqdh9f7jshlg64sps0xsduxdsn9r6yez0t270qeg6z6e`, alloyed denom
+`factory/osmo13wcvdtkcu459zjuqdh9f7jshlg64sps0xsduxdsn9r6yez0t270qeg6z6e/alloyed/stATOMtest`, created at height
+71,182,754 with stATOM `1e18`, ATOM and alloyed `2000174393066540432`, admin and moderator
+`osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc`. Assets added: Hub two-hop `ibc/7451…`, Agoric two-hop `ibc/C86C…`,
+Secret two-hop `ibc/8AEB…`. **Frozen** (`set_active_status false`) at height 71,187,802 with ~$21 of liquidity
+left inside, all shares held by the admin key. It is not the real pool; do not add it to any list. Full record:
+`transmuter-test-log.md`. Findings that changed the design are listed at the end of that log; the
+Injective rate-limiter rejection is the one that needs Osmosis's help.
