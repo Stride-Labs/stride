@@ -19,7 +19,7 @@ Companion documents: the wind-down design (`docs/superpowers/specs/2026-09-18-pr
 | Pool creation | `MsgCreateCosmWasmPool { code_id, instantiate_msg, sender }`, permissionless. The poolmanager charges `pool_creation_fee` to the community pool and skips it only for the concentrated-liquidity creator whitelist |
 | Pool creation fee (live) | `20000000 factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC` = 20 allUSDC. The creator must hold allUSDC (swap USDC for it on Osmosis first) |
 | Uniqueness | none. Nothing stops two pools with the same assets or the same subdenom; the alloyed denom is `factory/<pool contract address>/alloyed/<subdenom>`, namespaced by contract |
-| Asset count | 1 to 20 denoms; `add_new_assets` is bounded by the same cap |
+| Asset count | 1 to 20 denoms; the wind-down pools use exactly 2 (one stToken route + native) |
 
 ### Normalization factors: read this before writing an instantiate message
 
@@ -136,25 +136,11 @@ each route can ever deliver, so caps at `escrow share + margin` cost honest user
 Canonical stATOM needs no cap: after the Stride halt no more of it can be minted on
 Osmosis.
 
-Recommended for the real pools (pending a spec change, §7 currently says "no limiters"):
-one `static_limiter` per foreign-route denom, none on the canonical stToken or the native
-token, registered right after the vault's funding join, with `upper_limit` = that route's
-share of the stToken's supply from the escrow snapshot at the halt × 1.1, rounded up to
-the next 0.0005. The 10% covers the pool holding slightly less than supply × RR (the
-coverage check funds Stride's bank supply, and rounding shaves dust); the exact minimum
-is share × (supply × RR ÷ pool value).
-Today's stATOM numbers as an illustration:
-
-| Route denom | Escrow share of supply | Suggested cap |
-|---|---|---|
-| Hub two-hop | 4.82% | 0.0535 |
-| Injective two-hop | 2.40% | 0.0265 |
-| Secret two-hop, each of the two channels | 0.65% | 0.0075 |
-| Agoric two-hop | 0.19% | 0.0025 |
-| Penumbra, Kujira, Comdex (if ever added) | 0.48% / 0.45% / 0.11% | 0.0055 / 0.005 / 0.0015 |
-
-If the vault later exits native tokens (reclaiming unclaimed backing), every stToken weight
-rises and the caps must be widened first with `set_static_limiter_upper_limit`.
+Decision 2026-09-24: the real deployment uses **one pool per stToken route** (canonical denom + native,
+and a separate two-asset pool for each foreign-route denom), each route pool funded with exactly its
+escrow share. That gives per-route isolation by construction, so **no limiters are registered**; the
+mechanics above stay documented because the contract offers them and the test exercised them.
+`add_new_assets` is likewise not part of normal operation.
 
 ### Fees and routing around the pool
 

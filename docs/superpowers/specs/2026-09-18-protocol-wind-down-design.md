@@ -7,7 +7,7 @@ Status: approved design, pre-plan. Large tier; the implementation plan follows i
 
 Wind Stride down and shut the chain off. Stop every flow that moves funds on behalf of users,
 unbond every delegation, send the native tokens from the host chains straight to Osmosis, and
-put them into one transmuter pool per stToken where holders swap stTokens for the backing
+put them into transmuter pools, one per stToken route, where holders swap stTokens for the backing
 native tokens at a fixed rate. stTokens still sitting in Stride accounts are sent to their
 owners on Osmosis before the halt, so nothing a user owns is left on a dead chain. The guiding
 constraints, in order: least risk of a bug that loses funds, least new code, most reuse of code
@@ -474,10 +474,14 @@ other chains, move themselves (§7).
 Nothing in this section is Stride code. It is the procedure ops follow in window 2 as the
 native tokens arrive, and it is what replaces the on-chain withdrawal mode.
 
-One transmuter pool per in-scope stToken, eleven pools, instantiated from code id 996 (v3.2.0)
-by the Osmosis vault (§3a). Each pool's initial assets are the
-canonical stToken denom on Osmosis (the one minted by transfers over Stride's channel-5) and
-the native token, with normalization factors `1e18` for the stToken and
+One transmuter pool per stToken *route*, instantiated from code id 996 (v3.2.0) by the
+Osmosis vault (§3a): for each in-scope stToken, a canonical pool holding the canonical denom
+on Osmosis (the one minted by transfers over Stride's channel-5) plus the native token, and
+one more two-asset pool for every foreign route the locations table marks in scope
+(`docs/wind-down/sttoken-locations.md`; about 28 pools in all, 7 of them for stATOM). A pool
+never holds more than one stToken denom, so the only thing a holder can do with a flavour is
+turn it into the native token at the rate, and a compromised source chain can reach nothing
+but its own pool. Every pool uses normalization factors `1e18` for the stToken and
 `HostZone.RedemptionRate × 1e18` for the native token and the alloyed asset (§3: a larger
 factor is a cheaper unit), the rate read from Stride at instantiation and frozen since
 the upgrade 2 halt (§9). Admin and moderator are the Osmosis vault (§3a); the moderator's
@@ -486,39 +490,34 @@ the candidate claims it), so the vault keeps it for the life of the pools. The a
 each pool mints is the LP receipt and stays in the Osmosis vault; it is the withdrawal key
 to the pool's backing and is custodied like the backing itself.
 
-Limiters: one `static_limiter` per foreign-route denom, registered right after the funding
-join, with `upper_limit` = that route's share of the stToken's supply in the escrow snapshot
-at the halt × 1.1, rounded up to the next 0.0005. None on the canonical stToken or the
-native token. A limiter bounds a denom's share of pool value and only blocks moves that
-raise it; because swaps leave the pool's value unchanged, the cap is a ceiling on how much
-of that route the pool will ever absorb. Stride's per-channel escrow is a hard upper bound
-on the genuine amount a route can deliver, so the cap costs honest holders nothing and
-bounds the damage from a compromised source chain or light client minting counterfeit
-two-hop vouchers to that route's cap. A denom's last limiter can never be deregistered,
-only widened, so if the vault ever exits native tokens (reclaiming unclaimed backing) it
-widens the caps first. The canonical denom is left uncapped because it is ~90% of supply;
-its counterfeit risk is a forged Stride header, handled in the halt checklist (§8).
+No limiters. Isolation comes from the pool layout: a route pool is funded with exactly that
+route's escrow share (below), which bounds what a counterfeit route could ever drain to the
+same amount a cap would have, without a permanent limiter to configure, check or widen. The
+levers that remain are the moderator's freeze per pool and `mark_corrupted_assets` for a pool
+whose stToken denom turns out wrong. The canonical denom's counterfeit risk is a forged Stride
+header, handled in the halt checklist (§8).
 
-Funding is one `join_pool` per pool with native tokens only, for exactly the amount the
-coverage check requires (§9), once every source for that denom has arrived: the delegation
-ICA transfer and the withdrawal, fee and redemption ICA sweeps (for stTIA the delegation ICA
-transfer includes the former multisig balance, routed through the claim address). A pool can be created and funded as soon as its
-own denom is complete; zones finish unbonding on different days and nothing couples them.
+Funding is one `join_pool` per pool with native tokens only, once every source for that
+native denom has arrived: the delegation ICA transfer and the withdrawal, fee and redemption
+ICA sweeps (for stTIA the delegation ICA transfer includes the former multisig balance,
+routed through the claim address). Each route pool receives exactly `escrow_route ×
+RedemptionRate` native tokens, where `escrow_route` is the balance of Stride's escrow
+account for that route's channel in the halt export; the canonical pool receives everything
+else (§9). A stToken's pools can be created and funded as soon as its native denom is
+complete; zones finish unbonding on different days and nothing couples them.
 
 Foreign-route denoms: a stToken that left Stride to chain X and is sent from X to Osmosis
 arrives as a two-hop denom (`transfer/<osmosis-X channel>/transfer/<X-stride channel>/st...`),
 distinct from the canonical one. Rather than route it back through Stride, which is
-impossible after the halt, each such denom is added to the stToken's pool with the canonical stToken's
-normalization factor (`1e18`) via `add_new_assets`, after which it swaps at the same rate
-against the native token and 1:1 against every other route of the same stToken. Adding
-denoms with an already-present factor leaves the factor lcm, and so the overflow headroom,
-unchanged (§3). The
-per-channel escrow balances on Stride (§3) list exactly which chains hold which stToken and
-how much, so the set of denoms to add is known before the halt. The contract requires a denom
-to have supply on Osmosis before it can be added, so ops seed each one with a small transfer
-from that chain (or add it after the first user's transfer lands). Third-hop denoms are added
-on request the same way. Osmosis users of DeFi protocols on other chains withdraw there and
-transfer to Osmosis directly.
+impossible after the halt, each such denom gets its own pool with the same factors, so it
+swaps to the native token at the same rate. The per-channel escrow balances on Stride (§3)
+list exactly which chains hold which stToken and how much, so the set of pools is known
+before the halt. The contract requires every pool asset to have supply on Osmosis at
+instantiation, so ops seed each route denom with a small transfer from that chain first (or
+create the pool after the first user's transfer lands). A third-hop denom gets a pool on
+request the same way, funded by moving native tokens out of the canonical pool. Osmosis
+users of DeFi protocols on other chains withdraw there and transfer to Osmosis directly.
+`add_new_assets` is not used in normal operation.
 
 Shutdown: once every pool is funded, the sweep is complete and the halt checklist (§8) passes,
 validators set a `halt-height` and the chain stops. Stride's IBC clients on other chains expire
@@ -596,8 +595,8 @@ Window 2 (after upgrade 2, ~35 days):
    anything.
 5. As each zone's unbonding completes (day 14 to day 30): `MsgTransferFromIca DELEGATION` for
    the full balance, then `WITHDRAWAL` again (undelegation auto-withdraws accrued rewards
-   there). Then create and fund that stToken's pool (§7) once the coverage check passes (§9),
-   and add its foreign-route denoms.
+   there). Then create and fund that stToken's pools (§7), the canonical one and one per
+   in-scope route, once the coverage check passes (§9).
 6. Last days: `MsgSweepTokensToOsmosis` in batches of up to 100, per denom, for every holder
    at or above the floor, built from a fresh export: the eleven stTokens, then `ustrd`, then
    the other denoms worth sweeping (USDC and any voucher above the floor). Resubmit any
@@ -641,8 +640,8 @@ Checklist to halt the chain:
   multisig portion (the per-validator unbond only touches ICA validators).
 - All four ICA balances at dust on every zone. Celestia multisig delegation zero, its
   unbondings complete, its balance on Osmosis.
-- Every pool created, funded and passing the coverage check (§9) against a fresh export, with
-  its known foreign-route denoms added.
+- Every pool, canonical and per route, created, funded and passing the coverage check (§9)
+  against a fresh export.
 - The sweep complete: no sweepable account at or above the floor holds any in-scope stToken,
   `ustrd`, or another denom on the sweep list, and no sweep packet outstanding on channel-5.
 - Validators and STRD delegators have withdrawn their rewards; interchain-account holders
@@ -659,12 +658,13 @@ callback) is reachable only through the two admin-gated ICQ messages. If ops del
 those in window 2 and a slash is found, the frozen rate is lowered accordingly, which is the
 correct direction, and the pool must be instantiated after that refresh.
 
-Coverage check, per stToken, run from a fresh Stride export before the pool is funded and
+Coverage check, per stToken, run from a fresh Stride export before the pools are funded and
 again before the halt: native tokens held on Osmosis for that denom ≥ Stride bank supply of
-the stToken × `HostZone.RedemptionRate`. Bank supply is the right reference: stTokens that
-left Stride over IBC are escrowed here, not burned, so they are counted, and they are exactly
-the foreign-route holders the pool must also serve; stTokens burned by flushed redemptions are
-gone from both sides. The check is a script over two queries and has no on-chain counterpart,
+the stToken × `HostZone.RedemptionRate`, and, per pool, each route pool holds exactly its
+channel's escrow balance × the rate while the canonical pool holds the remainder. Bank supply
+is the right reference: stTokens that left Stride over IBC are escrowed here, not burned, so
+they are counted, and the per-channel escrows are exactly the route pools' funding; stTokens
+burned by flushed redemptions are gone from both sides. The check is a script over two queries and has no on-chain counterpart,
 which is the one place this design is weaker than an on-chain assertion; the mitigation is
 that funding is a deliberate `join_pool` for the computed amount, so an under-funded pool can
 only come from a wrong number in a script that is run twice and published.

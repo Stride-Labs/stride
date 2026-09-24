@@ -3,14 +3,16 @@
 
 Everything the script needs is in the CONSTANTS block below: the vault (admin) and moderator
 addresses, and one entry per pool with its Stride host zone, Osmosis pool id, the redemption
-rate it was created with, and the per-route caps it must carry. Run it with no arguments after
+rate it was created with, and which route the pool serves (None for the canonical denom, or
+the two-hop trace for a foreign route). Each pool must hold exactly that one stToken denom
+plus the native token, and no limiters. Run it with no arguments after
 `MsgCreateCosmWasmPool`, again after `add_new_assets`, and again after registering limiters:
 
     python3 scripts/wind-down/check_transmuter_pool.py
 
-For each pool it reads the on-chain state and the matching host zone and checks factor
-orientation, the encoded rate, roles, limiters, denom traces and overflow headroom, one line
-per check, unit-test style. Exit code is 1 when any check on any pool fails.
+For each pool it reads the on-chain state and the matching host zone and checks the asset
+set, factor orientation, the encoded rate, roles, the absence of limiters, denom traces and
+overflow headroom, one line per check, unit-test style. Exit code is 1 when any check on any pool fails.
 """
 
 import dataclasses
@@ -32,7 +34,6 @@ TRANSMUTER_CODE_ID = "996"
 TRANSMUTER_VERSION = "3.2.0"
 COSMWASMPOOL_MODULE = "osmo1rxjakgd8yhks2j7hc7pt6a22z3zd64grexpyf7"
 STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS = "channel-326"
-MAX_POOL_ASSETS = 20
 UINT128_MAX = 2**128 - 1
 RATE_DECIMALS = 10**18
 
@@ -42,7 +43,7 @@ class PoolSpec:
     chain_id: str  # Stride host zone
     pool_id: str  # Osmosis pool id, filled in after MsgCreateCosmWasmPool
     rate_at_creation: str | None  # the redemption rate the factors encode; None = use the live rate (zone must be halted)
-    caps: dict[str, str] | None  # foreign-route denom -> static limiter upper_limit; None = report only
+    route_trace: str | None  # None = canonical pool; else the two-hop trace, e.g. "transfer/channel-0/transfer/channel-391/stuatom"
 
 
 # ----------------------------------------------------------------------------------------------
@@ -53,16 +54,13 @@ ADMIN = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # Osmosis vault (transmut
 MODERATOR = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # freeze / corrupted-asset key
 
 POOLS = [
-    # The 2026-09-23 test pool. Replace with the real pools as they are created.
+    # The 2026-09-23 test pool holds five stToken routes, so it fails the "exactly one route" checks
+    # by design. Replace with the real pools as they are created: one entry per route.
     PoolSpec(
         chain_id="cosmoshub-4",
         pool_id="3590",
         rate_at_creation="2.000174393066540432",
-        caps={
-            "ibc/7451074F46885686D3B47B12A6BF74F6D36847ED1891AC612FCFAEB7FB551E14": "1",  # Hub route (test pool: widened to 1)
-            "ibc/C86C2FA56D954AB05960450215E63605528CB3481694ABEA87CE4DB0EF17D265": "0.0025",  # Agoric route
-            "ibc/8AEB813EE960508AEDC1C2EB605788CE6A32F4E632583336D840BE4B8EC24CC7": "0.0075",  # Secret route
-        },
+        route_trace=None,
     ),
 ]
 
@@ -344,12 +342,10 @@ def check_roles(
 
 
 def classify_assets(
-    pool: Pool, zone: HostZone
+    pool: Pool, zone: HostZone, route_trace: str | None
 ) -> tuple[dict | None, dict | None, list[dict], dict | None]:
-    """Split asset configs into (canonical stToken, native, foreign routes, alloyed)."""
-    canonical_denom = ibc_hash(
-        f"transfer/{STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS}/{zone.st_denom}"
-    )
+    """Split asset configs into (this pool's stToken, native, unexpected extras, alloyed)."""
+    st_denom = expected_st_denom(zone=zone, route_trace=route_trace)
     native_denom = native_denom_on_osmosis(zone)
     canonical = native = alloyed = None
     routes: list[dict] = []
@@ -357,13 +353,21 @@ def classify_assets(
         denom = config["denom"]
         if denom == pool.alloyed_denom:
             alloyed = config
-        elif denom == canonical_denom:
+        elif denom == st_denom:
             canonical = config
         elif denom == native_denom:
             native = config
         else:
             routes.append(config)
     return canonical, native, routes, alloyed
+
+
+def expected_st_denom(zone: HostZone, route_trace: str | None) -> str:
+    if route_trace is None:
+        return ibc_hash(f"transfer/{STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS}/{zone.st_denom}")
+    if not route_trace.endswith(f"/{zone.st_denom}"):
+        sys.exit(f"route trace {route_trace} does not end in {zone.st_denom}")
+    return ibc_hash(route_trace)
 
 
 def native_denom_on_osmosis(zone: HostZone) -> str:
@@ -378,7 +382,7 @@ def native_denom_on_osmosis(zone: HostZone) -> str:
 
 
 def check_factors(
-    report: Report, pool: Pool, zone: HostZone
+    report: Report, pool: Pool, zone: HostZone, route_trace: str | None
 ) -> tuple[dict | None, dict | None, list[dict]]:
     report.section(
         f"Factors against {zone.chain_id} (RR {zone.redemption_rate}{', halted' if zone.halted else ', NOT halted'})"
@@ -389,11 +393,19 @@ def check_factors(
             name="host zone is not halted: the live rate still moves, so the factor check "
             "is exact only against rate_at_creation in the CONSTANTS block",
         )
-    canonical, native, routes, alloyed = classify_assets(pool=pool, zone=zone)
+    canonical, native, routes, alloyed = classify_assets(
+        pool=pool, zone=zone, route_trace=route_trace
+    )
+    which = "canonical" if route_trace is None else f"route {route_trace}"
     report.check(
-        name=f"canonical {zone.st_denom} is a pool asset",
+        name=f"{which} {zone.st_denom} is a pool asset",
         ok=canonical is not None,
         detail=canonical["denom"] if canonical else "missing",
+    )
+    report.check(
+        name="pool holds exactly one stToken denom and the native token",
+        ok=len(pool.asset_configs) == 3 and not routes,
+        detail=f"{len(pool.asset_configs) - 1} assets; unexpected: {[r['denom'][:22] for r in routes]}",
     )
     report.check(
         name=f"native {zone.host_denom} is a pool asset",
@@ -425,17 +437,6 @@ def check_factors(
         detail=str(f_alloyed),
     )
 
-    for route in routes:
-        f_route = int(route["normalization_factor"])
-        report.check(
-            name=f"route {route['denom'][:22]}… has the stToken factor",
-            ok=f_route == f_st,
-            detail=str(f_route),
-        )
-    report.check(
-        name=f"asset count within limit ({len(pool.asset_configs) - 1} + alloyed)",
-        ok=len(pool.asset_configs) - 1 <= MAX_POOL_ASSETS,
-    )
     return canonical, native, routes
 
 
@@ -544,14 +545,16 @@ def check_traces(
     canonical: dict | None,
     native: dict | None,
     routes: list[dict],
+    route_trace: str | None,
 ) -> None:
     report.section("Denom traces on Osmosis")
+    st_suffix = (
+        f"transfer/{STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS}/{zone.st_denom}"
+        if route_trace is None
+        else route_trace
+    )
     for label, config, expected_suffix in [
-        (
-            "canonical stToken",
-            canonical,
-            f"transfer/{STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS}/{zone.st_denom}",
-        ),
+        ("this pool's stToken", canonical, st_suffix),
         ("native token", native, f"/{zone.host_denom}"),
     ] + [(f"route {r['denom'][:22]}…", r, f"/{zone.st_denom}") for r in routes]:
         if config is None or not config["denom"].startswith("ibc/"):
@@ -580,73 +583,18 @@ def check_traces(
             ok=path.endswith(expected_suffix),
             detail=path,
         )
-        if label.startswith("route"):
-            hops = path.count("transfer/")
+        if label.startswith("this pool") and route_trace is not None:
             report.check(
-                name=f"{label} is a multi-hop denom",
-                ok=hops >= 2,
-                detail=f"{hops} hops",
+                name="this pool's stToken is a two-hop denom",
+                ok=path.count("transfer/") == 2,
+                detail=path,
             )
 
 
-def check_limiters(
-    report: Report,
-    pool: Pool,
-    canonical: dict | None,
-    native: dict | None,
-    routes: list[dict],
-    caps: dict[str, str] | None,
-) -> None:
+def check_limiters(report: Report, pool: Pool) -> None:
     report.section("Limiters")
-    by_denom: dict[str, list[tuple[str, dict]]] = {}
-    for (denom, label), limiter in pool.limiters:
-        by_denom.setdefault(denom, []).append((label, limiter))
-    for name, config in [("canonical stToken", canonical), ("native token", native)]:
-        if config is not None:
-            report.check(
-                name=f"no limiter on the {name}",
-                ok=config["denom"] not in by_denom,
-                detail=str([l for l, _ in by_denom.get(config["denom"], [])]),
-            )
-    for route in routes:
-        entries = by_denom.get(route["denom"], [])
-        static_caps = [
-            lim["static_limiter"]["upper_limit"]
-            for _, lim in entries
-            if "static_limiter" in lim
-        ]
-        if caps is None:
-            report.line(
-                outcome=Outcome.INFO,
-                name=f"route {route['denom'][:22]}… limiters (pass --caps to assert)",
-                detail=str(static_caps or "none"),
-            )
-            continue
-        expected = caps.get(route["denom"])
-        if expected is None:
-            report.check(
-                name=f"route {route['denom'][:22]}… has an entry in --caps",
-                ok=False,
-                detail="missing from caps file",
-            )
-            continue
-        report.check(
-            name=f"route {route['denom'][:22]}… has exactly one static limiter at {expected}",
-            ok=static_caps == [expected],
-            detail=str(static_caps or "none"),
-        )
-        report.check(
-            name=f"route {route['denom'][:22]}… has no change limiter",
-            ok=all("change_limiter" not in lim for _, lim in entries),
-        )
-    if caps is not None:
-        for denom in caps:
-            if all(r["denom"] != denom for r in routes):
-                report.check(
-                    name=f"cap for {denom[:22]}… refers to a pool asset",
-                    ok=False,
-                    detail="not in the pool",
-                )
+    labels = [f"{denom[:22]}…/{label}" for (denom, label), _ in pool.limiters]
+    report.check(name="no limiters registered on any asset", ok=not pool.limiters, detail=str(labels))
 
 
 def check_liquidity_and_headroom(
@@ -714,13 +662,16 @@ def check_pool(spec: PoolSpec, use_color: bool) -> Report:
             rate_int=rate_to_int(spec.rate_at_creation),
         )
     pool = load_pool(osmosis_rest=OSMOSIS_REST_DEFAULT, pool_id=spec.pool_id)
+    route = "canonical" if spec.route_trace is None else spec.route_trace
     print(
-        f"\n=== Pool {pool.pool_id} vs Stride host zone {zone.chain_id} ({zone.st_denom} → {zone.host_denom}) ==="
+        f"\n=== Pool {pool.pool_id}: {zone.st_denom} ({route}) → {zone.host_denom}, host zone {zone.chain_id} ==="
     )
 
     check_contract(report=report, pool=pool)
     check_roles(report=report, pool=pool, admin=ADMIN, moderator=MODERATOR)
-    canonical, native, routes = check_factors(report=report, pool=pool, zone=zone)
+    canonical, native, routes = check_factors(
+        report=report, pool=pool, zone=zone, route_trace=spec.route_trace
+    )
     check_prices(
         report=report,
         osmosis_rest=OSMOSIS_REST_DEFAULT,
@@ -737,15 +688,9 @@ def check_pool(spec: PoolSpec, use_color: bool) -> Report:
         canonical=canonical,
         native=native,
         routes=routes,
+        route_trace=spec.route_trace,
     )
-    check_limiters(
-        report=report,
-        pool=pool,
-        canonical=canonical,
-        native=native,
-        routes=routes,
-        caps=spec.caps,
-    )
+    check_limiters(report=report, pool=pool)
     check_liquidity_and_headroom(
         report=report, pool=pool, zone=zone, canonical=canonical, native=native
     )

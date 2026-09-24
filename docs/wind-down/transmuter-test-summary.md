@@ -77,8 +77,8 @@ Stride's channel-40 escrow awaiting a timeout relay, 0.5 ATOM on the Hub.
 
 ## Recommendations carried into the spec
 
-- Per-route static limiters at 1.1× each route's escrow share, none on the canonical stToken or native.
-- Register limiters after the funding join; widen before the vault ever exits native.
+- One pool per stToken route (decided 2026-09-24 after the test): canonical + native, and a separate
+  two-asset pool per foreign-route denom funded at its escrow share. No limiters, no `add_new_assets`.
 - Split moderator (fast hot key) from admin (multisig); admin cannot be renounced.
 - Destroy validator consensus keys after the halt (12-day Osmosis client window).
 - File the Osmosis rate-limiter bug now; decide Injective holders' path.
