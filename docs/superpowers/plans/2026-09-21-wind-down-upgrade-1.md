@@ -47,7 +47,7 @@ The plan was executed once end to end on a scratch branch and reverted; these ar
 - Modify: `app/upgrades.go` (imports near line 47, handler registration after the v34 block ending near line 464)
 
 **Interfaces:**
-- Produces: `v35.UpgradeName = "v35"`; `v35.CreateUpgradeHandler(mm, configurator, stakeibcKeeper, icqKeeper, autopilotKeeper, icaHostKeeper, wasmKeeper)`; test suite `UpgradeTestSuite` with `s.Setup()` and `s.ConfirmUpgradeSucceeded(v35.UpgradeName)`. Tasks 7 and 8 add calls inside the handler body between the two `Logger` lines.
+- Produces: `v35.UpgradeName = "v35"`; `v35.CreateUpgradeHandler(mm, configurator, stakeibcKeeper, icqKeeper, autopilotKeeper, icaHostKeeper, wasmKeeper)`; test suite `UpgradeTestSuite` with `s.Setup()` and `s.ConfirmUpgradeSucceeded(v35.UpgradeName)`. Tasks 6 and 7 add calls inside the handler body between the two `Logger` lines.
 - Review: no
 
 - [ ] **Step 1: Write the failing test**
@@ -177,7 +177,7 @@ and directly after the v34 `SetUpgradeHandler(...)` call (before `upgradeInfo, e
 	)
 ```
 
-The unused keeper parameters are used by Tasks 7 and 8; Go does not flag unused function parameters, so this compiles.
+The unused keeper parameters are used by Tasks 6 and 7; Go does not flag unused function parameters, so this compiles.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
