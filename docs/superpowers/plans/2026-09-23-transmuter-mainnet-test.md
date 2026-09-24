@@ -546,3 +546,43 @@ pool — record it.
 None: this is a single mainnet pool driven by one operator, and each task's state is the
 input to the next. Tasks 5 and 6 can overlap with Task 4 in wall-clock time (IBC hops take
 minutes) but are sequenced here for a single log.
+
+### Task 11: Adversarial pass (added 2026-09-24)
+
+Goal: try to take value out of the pool that was not put in, and try to break redemption for others.
+Pool 3590 is unfrozen for this and frozen again at the end. Every step states its prediction first.
+
+- [ ] **11.1 Rounding harvest.** Off-chain: for every ordered pair of the pool's assets plus the alloyed
+  asset, 200 random amounts each through `calc_out_amt_given_in` and `calc_in_amt_given_out`; assert
+  `out ≤ exact` and `in ≥ exact` (exact = amount × out_factor / in_factor as a rational). Then execute 10
+  random swaps on chain and assert the pool's normalized value never decreases.
+- [ ] **11.2 Multi-leg routes.** Router route `[3590 stATOM→alloyed, 3590 alloyed→ATOM]` and
+  `[3590 Hub-stATOM→stATOM, 3590 stATOM→ATOM]` versus the direct swap of the same amount. Expected: never
+  more out than direct.
+- [ ] **11.3 Multi-asset join and exit.** `join_pool` with stATOM + Hub-stATOM + ATOM in one call
+  (expected mint = sum of floors); `exit_pool` with `[1 uatom, 1 ustatom, 1 Hub-stATOM]` (expected burn
+  = 1 + 3 + 3 = 7 alloyed, value received 5.0003).
+- [ ] **11.4 Wrong inputs.** Swap OSMO→ATOM through 3590 (`InvalidTransmuteDenom`); stATOM→stATOM
+  (`SameDenomNotAllowed`); `join_pool` with alloyed (`InvalidJoinPoolDenom`); exact-out of alloyed via
+  the router (works, equals join); exact-in of `340282366920938463463374607431768211455` ustatom
+  (bank `insufficient funds`, no state change).
+- [ ] **11.5 Bank send to the contract.** Send 1,000 uatom directly to the contract address; expected
+  `get_total_pool_liquidity` unchanged, and the contract's bank balance exceeds its liquidity by 1,000.
+  No message can withdraw it (exit is bounded by liquidity state).
+- [ ] **11.6 Front-run the funding.** Create nothing new: model it on 3590 by the stranger joining
+  100,000 ustatom while ATOM is low, then the vault adding ATOM; expected the stranger's alloyed is exactly
+  200,017 and exits at exactly that.
+- [ ] **11.7 Admin fat-finger.** `add_new_assets` `uosmo` with factor `1000000000000000000000` (1e21,
+  i.e. 1 uosmo priced at 0.002 uatom); query `calc_out_amt_given_in` 1,000,000 uosmo → ATOM to show the
+  damage a wrong factor would allow; before any swap, `mark_corrupted_assets [uosmo]`; expected: swap
+  uosmo→ATOM fails `CorruptedAssetRelativelyIncreased` (amount would rise from 0), join with uosmo fails
+  the same way, and after the next unrelated swap the asset is gone from `list_asset_configs`
+  (`clean_up_drained_corrupted_assets` removes a corrupted asset with zero balance).
+- [ ] **11.8 Limiter bypass.** With the Hub cap re-tightened to current weight + 0.005: `join_pool`
+  Hub-stATOM over the cap (expected `UpperLimitExceeded`); `exit_pool` ATOM large enough to push Hub over
+  the cap (expected `UpperLimitExceeded`, the vault is bound too); router swap Hub→ATOM under the cap
+  (ok). Widen back to 1.
+- [ ] **11.9 Agoric route.** Router ATOM→Agoric-stATOM fails (pool holds 0); seed by... not possible
+  without holdings; record as "added, not swappable until someone brings some". If the Agoric two-hop
+  balance on Osmosis (0.78 held by a third party) cannot be obtained, leave it.
+- [ ] **11.10 Freeze again; reconcile value.**
