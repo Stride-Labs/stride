@@ -16,9 +16,10 @@ Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` (§3a ope
 - The Go module path stays `github.com/Stride-Labs/stride/v34` for every file this plan touches; the bump is manual, after both plans land. The upgrade package is `app/upgrades/v36`, plan name `"v36"`.
 - Removed message types STAY registered in the interface registry (historical tx decoding): remove only the `rpc`, the msg-server handler, the `legacy.RegisterAminoMsg` line and the CLI command, exactly as upgrade 1 did. New submissions are rejected by the router ("can't route message").
 - Only `rpc` lines are removed from `.proto` files; new messages are added to `proto/stride/stakeibc/tx.proto` only (all four new txs live in stakeibc). After a `.proto` edit run `make proto-gen` and commit only the `tx.pb.go` of the modules whose proto changed; revert any descriptor-only churn elsewhere with `git checkout <base> -- <files>`.
-- Gating, verbatim from spec §3a and §6: `MsgUndelegateFromValidators`, `MsgTransferFromIca` and `MsgTransferStaketiaClaimBalance` check `utils.ValidateAdminAddress(msg.Creator)` in `ValidateBasic`; `MsgSweepStTokens` checks `msg.Creator == types.SweepOperatorAddress`. `MsgUpdateValidatorSharesExchRate` and `MsgCalibrateDelegation` gain `utils.ValidateAdminAddress`.
+- Gating, verbatim from spec §3a and §6: `MsgUndelegateFromValidators`, `MsgTransferFromIca` and `MsgTransferStaketiaClaimBalance` check `utils.ValidateAdminAddress(msg.Creator)` in `ValidateBasic`; `MsgSweepTokensToOsmosis` checks `msg.Creator == types.SweepOperatorAddress`. `MsgUpdateValidatorSharesExchRate` and `MsgCalibrateDelegation` gain `utils.ValidateAdminAddress`.
 - Constants, verbatim from spec §3a and §6, all in `x/stakeibc/types/wind_down.go`: `SweepOperatorAddress` and `OsmosisVaultAddress` (empty until the release-gate task fills them; every use fails closed while empty), `OsmosisChainId = "osmosis-1"`, `OsmosisBech32Prefix = "osmo"`, `StrideToOsmosisTransferChannelId = "channel-5"`, `MaxSweepBatchSize = 100`, `WindDownTransferTimeout = 24 * time.Hour`, and `HostToOsmosisTransferChannel` mapping each of the eleven in-scope chain ids to the transfer channel on that host that leads to Osmosis (osmosis-1 maps to `""`, which selects the ICA bank-send form).
 - The transfer tx accepts exactly `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION}`.
+- The sweep takes any valid bank denom (spec §6): stTokens, `ustrd`, IBC vouchers such as USDC. Nothing ties the denom to a host zone. It sends no memo, so a voucher denom lands on Osmosis as a two-hop denom; that is deliberate.
 - The sweep's on-chain rule set (spec §6): an address is sweepable iff it decodes to 20 bytes, is not a transfer escrow address, and its account is a `BaseAccount` or one of `ContinuousVestingAccount`, `DelayedVestingAccount`, `PeriodicVestingAccount`, `StridePeriodicVestingAccount`. Anything else, including module accounts and `InterchainAccount`, rejects the whole batch. A zero balance is skipped with an event, not an error.
 - Upgrade handler helpers never return an error for a missing-state case; they log and continue (v34 convention). Only `RunMigrations` errors propagate.
 - macOS host: use `sed -i ''` (BSD sed). Every commit message ends with the attribution lines from the session's system reminder. Do not push. Branch from `wind-down-design` per task in worktrees as the sub-skill directs.
@@ -158,7 +159,7 @@ import "time"
 // so tests can set them; on mainnet they are filled by the release-gate task once the accounts
 // exist, and every code path that needs them fails closed while they are empty.
 var (
-	// SweepOperatorAddress is the only signer of MsgSweepStTokens (spec §3a).
+	// SweepOperatorAddress is the only signer of MsgSweepTokensToOsmosis (spec §3a).
 	SweepOperatorAddress = ""
 	// OsmosisVaultAddress receives every ICA transfer and funds the pools (spec §3a).
 	OsmosisVaultAddress = ""
@@ -170,7 +171,7 @@ var (
 const (
 	OsmosisChainId      = "osmosis-1"
 	OsmosisBech32Prefix = "osmo"
-	// MaxSweepBatchSize bounds MsgSweepStTokens.Addresses so one tx stays inside the block gas limit.
+	// MaxSweepBatchSize bounds MsgSweepTokensToOsmosis.Addresses so one tx stays inside the block gas limit.
 	MaxSweepBatchSize = 100
 	// WindDownTransferTimeout is the ICS-20 (and ICA) timeout used by every wind-down transfer.
 	WindDownTransferTimeout = 24 * time.Hour
@@ -178,7 +179,7 @@ const (
 	EventTypeUndelegateFromValidators   = "undelegate_from_validators"
 	EventTypeTransferFromIca            = "transfer_from_ica"
 	EventTypeTransferStaketiaClaim      = "transfer_staketia_claim_balance"
-	EventTypeSweepStTokens              = "sweep_st_tokens"
+	EventTypeSweepTokensToOsmosis              = "sweep_tokens_to_osmosis"
 	AttributeKeyValidator               = "validator"
 	AttributeKeyAmount                  = "amount"
 	AttributeKeyIcaType                 = "ica_type"
@@ -322,7 +323,7 @@ git commit -m "feat(upgrade): v36 handler skeleton, wiring and wind-down constan
 
 **Files:**
 - Modify: `proto/stride/stakeibc/tx.proto` (four `rpc` lines in `service Msg`; the message definitions appended at the end; add `import "stride/stakeibc/ica_account.proto";` if `ICAAccountType` is not already imported)
-- Create: `x/stakeibc/types/message_undelegate_from_validators.go` (+`_test.go`), `message_transfer_from_ica.go` (+`_test.go`), `message_transfer_staketia_claim_balance.go` (+`_test.go`), `message_sweep_st_tokens.go` (+`_test.go`)
+- Create: `x/stakeibc/types/message_undelegate_from_validators.go` (+`_test.go`), `message_transfer_from_ica.go` (+`_test.go`), `message_transfer_staketia_claim_balance.go` (+`_test.go`), `message_sweep_tokens_to_osmosis.go` (+`_test.go`)
 - Modify: `x/stakeibc/types/codec.go` (four `legacy.RegisterAminoMsg` lines in `RegisterCodec`; four entries in the `RegisterImplementations` list in `RegisterInterfaces`)
 - Create: `x/stakeibc/keeper/wind_down_undelegate.go`, `wind_down_transfer_from_ica.go`, `wind_down_claim_balance.go`, `wind_down_sweep.go` (keeper stubs with the final signatures; Tasks 5-8 replace their bodies)
 - Create: `x/stakeibc/keeper/msg_server_wind_down.go` (the four handlers, thin delegates)
@@ -333,8 +334,8 @@ git commit -m "feat(upgrade): v36 handler skeleton, wiring and wind-down constan
   - `func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelegateFromValidators) (numTxsSubmitted uint64, err error)`
   - `func (k Keeper) TransferFromIca(ctx sdk.Context, msg *types.MsgTransferFromIca) error`
   - `func (k Keeper) TransferStaketiaClaimBalance(ctx sdk.Context) (sequence uint64, amount sdk.Coin, err error)`
-  - `func (k Keeper) SweepStTokens(ctx sdk.Context, msg *types.MsgSweepStTokens) (numSwept uint64, numSkipped uint64, err error)`
-- Produces: `types.NewMsgUndelegateFromValidators`, `types.NewMsgTransferFromIca`, `types.NewMsgTransferStaketiaClaimBalance`, `types.NewMsgSweepStTokens` and their `ValidateBasic`; `types.ValidatorUndelegation{Address, Offset}`.
+  - `func (k Keeper) SweepTokensToOsmosis(ctx sdk.Context, msg *types.MsgSweepTokensToOsmosis) (numSwept uint64, numSkipped uint64, err error)`
+- Produces: `types.NewMsgUndelegateFromValidators`, `types.NewMsgTransferFromIca`, `types.NewMsgTransferStaketiaClaimBalance`, `types.NewMsgSweepTokensToOsmosis` and their `ValidateBasic`; `types.ValidatorUndelegation{Address, Offset}`.
 - Depends on: Task 1
 - Review: yes (the gates are the security boundary of every later task)
 
@@ -474,7 +475,7 @@ func TestMsgTransferStaketiaClaimBalance_ValidateBasic(t *testing.T) {
 }
 ```
 
-`x/stakeibc/types/message_sweep_st_tokens_test.go`:
+`x/stakeibc/types/message_sweep_tokens_to_osmosis_test.go`:
 
 ```go
 package types_test
@@ -488,7 +489,7 @@ import (
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
-func TestMsgSweepStTokens_ValidateBasic(t *testing.T) {
+func TestMsgSweepTokensToOsmosis_ValidateBasic(t *testing.T) {
 	operator, other := apptesting.GenerateTestAddrs()
 	_, invalidAddress := apptesting.GenerateTestAddrs()
 	holder1, holder2 := apptesting.GenerateTestAddrs()
@@ -505,17 +506,19 @@ func TestMsgSweepStTokens_ValidateBasic(t *testing.T) {
 
 	tests := []struct {
 		name string
-		msg  types.MsgSweepStTokens
+		msg  types.MsgSweepTokensToOsmosis
 		err  string
 	}{
-		{name: "valid", msg: types.MsgSweepStTokens{Creator: operator, Denom: "stuatom", Addresses: []string{holder1, holder2}}},
-		{name: "not the sweep operator", msg: types.MsgSweepStTokens{Creator: other, Denom: "stuatom", Addresses: []string{holder1}}, err: "sweep operator"},
-		{name: "invalid creator", msg: types.MsgSweepStTokens{Creator: invalidAddress, Denom: "stuatom", Addresses: []string{holder1}}, err: "invalid creator address"},
-		{name: "denom not an stToken", msg: types.MsgSweepStTokens{Creator: operator, Denom: "uatom", Addresses: []string{holder1}}, err: "stToken"},
-		{name: "no addresses", msg: types.MsgSweepStTokens{Creator: operator, Denom: "stuatom"}, err: "at least one"},
-		{name: "over the batch bound", msg: types.MsgSweepStTokens{Creator: operator, Denom: "stuatom", Addresses: tooMany}, err: "at most"},
-		{name: "invalid holder address", msg: types.MsgSweepStTokens{Creator: operator, Denom: "stuatom", Addresses: []string{invalidAddress}}, err: "invalid address"},
-		{name: "duplicate holder", msg: types.MsgSweepStTokens{Creator: operator, Denom: "stuatom", Addresses: []string{holder1, holder1}}, err: "duplicate"},
+		{name: "valid", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "stuatom", Addresses: []string{holder1, holder2}}},
+		{name: "not the sweep operator", msg: types.MsgSweepTokensToOsmosis{Creator: other, Denom: "stuatom", Addresses: []string{holder1}}, err: "sweep operator"},
+		{name: "invalid creator", msg: types.MsgSweepTokensToOsmosis{Creator: invalidAddress, Denom: "stuatom", Addresses: []string{holder1}}, err: "invalid creator address"},
+		{name: "valid strd", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "ustrd", Addresses: []string{holder1}}},
+		{name: "valid ibc voucher", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "ibc/065DE8EC5E26C3798B1292446DBB5DAB9A490EEC9986ED9955328C38", Addresses: []string{holder1}}},
+		{name: "invalid denom string", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "not a denom!", Addresses: []string{holder1}}, err: "invalid denom"},
+		{name: "no addresses", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "stuatom"}, err: "at least one"},
+		{name: "over the batch bound", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "stuatom", Addresses: tooMany}, err: "at most"},
+		{name: "invalid holder address", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "stuatom", Addresses: []string{invalidAddress}}, err: "invalid address"},
+		{name: "duplicate holder", msg: types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "stuatom", Addresses: []string{holder1, holder1}}, err: "duplicate"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -529,20 +532,20 @@ func TestMsgSweepStTokens_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgSweepStTokens_UnconfiguredOperatorRejectsEveryone(t *testing.T) {
+func TestMsgSweepTokensToOsmosis_UnconfiguredOperatorRejectsEveryone(t *testing.T) {
 	operator, _ := apptesting.GenerateTestAddrs()
 	previous := types.SweepOperatorAddress
 	types.SweepOperatorAddress = ""
 	defer func() { types.SweepOperatorAddress = previous }()
 
-	err := (&types.MsgSweepStTokens{Creator: operator, Denom: "stuatom", Addresses: []string{operator}}).ValidateBasic()
+	err := (&types.MsgSweepTokensToOsmosis{Creator: operator, Denom: "stuatom", Addresses: []string{operator}}).ValidateBasic()
 	require.ErrorContains(t, err, "sweep operator")
 }
 ```
 
 - [ ] **Step 2: Run them to verify they fail**
 
-Run: `go test ./x/stakeibc/types/... -run 'TestMsgUndelegateFromValidators|TestMsgTransferFromIca|TestMsgTransferStaketia|TestMsgSweepStTokens' 2>&1 | tail -3`
+Run: `go test ./x/stakeibc/types/... -run 'TestMsgUndelegateFromValidators|TestMsgTransferFromIca|TestMsgTransferStaketia|TestMsgSweepTokensToOsmosis' 2>&1 | tail -3`
 Expected: build failure (`undefined: types.MsgUndelegateFromValidators` and the others)
 
 - [ ] **Step 3: Add the messages to the proto and regenerate**
@@ -556,7 +559,7 @@ In `proto/stride/stakeibc/tx.proto`, inside `service Msg` (after the last existi
   rpc TransferFromIca(MsgTransferFromIca) returns (MsgTransferFromIcaResponse);
   rpc TransferStaketiaClaimBalance(MsgTransferStaketiaClaimBalance)
       returns (MsgTransferStaketiaClaimBalanceResponse);
-  rpc SweepStTokens(MsgSweepStTokens) returns (MsgSweepStTokensResponse);
+  rpc SweepTokensToOsmosis(MsgSweepTokensToOsmosis) returns (MsgSweepTokensToOsmosisResponse);
 ```
 
 At the end of the file (and add `import "stride/stakeibc/ica_account.proto";` next to the `validator.proto` import if it is not already there):
@@ -610,24 +613,25 @@ message MsgTransferStaketiaClaimBalanceResponse {
   cosmos.base.v1beta1.Coin amount = 2 [ (gogoproto.nullable) = false ];
 }
 
-// Sends each listed holder's full balance of one stToken to the same address on Osmosis.
-// Signed only by the sweep operator; the batch is rejected if any address is not sweepable.
-message MsgSweepStTokens {
+// Sends each listed holder's full balance of one denom (an stToken, ustrd, or any other bank
+// denom) to the same address on Osmosis. Signed only by the sweep operator; the batch is
+// rejected if any address is not sweepable.
+message MsgSweepTokensToOsmosis {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stakeibc/MsgSweepStTokens";
+  option (amino.name) = "stakeibc/MsgSweepTokensToOsmosis";
 
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string denom = 2;
   repeated string addresses = 3;
 }
-message MsgSweepStTokensResponse {
+message MsgSweepTokensToOsmosisResponse {
   uint64 num_swept = 1;
   uint64 num_skipped = 2;
 }
 ```
 
 Run: `make proto-gen`
-Expected: `x/stakeibc/types/tx.pb.go` regenerated; `grep -c "func (m \*MsgSweepStTokens)" x/stakeibc/types/tx.pb.go` is non-zero. Revert descriptor churn in any other `*.pb.go` (Global Constraints).
+Expected: `x/stakeibc/types/tx.pb.go` regenerated; `grep -c "func (m \*MsgSweepTokensToOsmosis)" x/stakeibc/types/tx.pb.go` is non-zero. Revert descriptor churn in any other `*.pb.go` (Global Constraints).
 
 - [ ] **Step 4: Write the message types**
 
@@ -804,32 +808,30 @@ func (msg *MsgTransferStaketiaClaimBalance) ValidateBasic() error {
 }
 ```
 
-`x/stakeibc/types/message_sweep_st_tokens.go`:
+`x/stakeibc/types/message_sweep_tokens_to_osmosis.go`:
 
 ```go
 package types
 
 import (
-	"strings"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-const TypeMsgSweepStTokens = "sweep_st_tokens"
+const TypeMsgSweepTokensToOsmosis = "sweep_tokens_to_osmosis"
 
-var _ sdk.Msg = &MsgSweepStTokens{}
+var _ sdk.Msg = &MsgSweepTokensToOsmosis{}
 
-func NewMsgSweepStTokens(creator, denom string, addresses []string) *MsgSweepStTokens {
-	return &MsgSweepStTokens{Creator: creator, Denom: denom, Addresses: addresses}
+func NewMsgSweepTokensToOsmosis(creator, denom string, addresses []string) *MsgSweepTokensToOsmosis {
+	return &MsgSweepTokensToOsmosis{Creator: creator, Denom: denom, Addresses: addresses}
 }
 
-func (msg *MsgSweepStTokens) Route() string { return RouterKey }
-func (msg *MsgSweepStTokens) Type() string  { return TypeMsgSweepStTokens }
+func (msg *MsgSweepTokensToOsmosis) Route() string { return RouterKey }
+func (msg *MsgSweepTokensToOsmosis) Type() string  { return TypeMsgSweepTokensToOsmosis }
 
-func (msg *MsgSweepStTokens) GetSigners() []sdk.AccAddress {
+func (msg *MsgSweepTokensToOsmosis) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -838,16 +840,17 @@ func (msg *MsgSweepStTokens) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic gates on the sweep operator (spec §3a), not the admin set. An empty
-// SweepOperatorAddress rejects every signer, which is the fail-closed default.
-func (msg *MsgSweepStTokens) ValidateBasic() error {
+// SweepOperatorAddress rejects every signer, which is the fail-closed default. The denom is
+// any valid bank denom: stTokens, ustrd, or a voucher such as USDC.
+func (msg *MsgSweepTokensToOsmosis) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}
 	if SweepOperatorAddress == "" || msg.Creator != SweepOperatorAddress {
 		return errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s is not the sweep operator", msg.Creator)
 	}
-	if !strings.HasPrefix(msg.Denom, StAssetDenomPrefix) || len(msg.Denom) <= len(StAssetDenomPrefix) {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "%s is not an stToken denom", msg.Denom)
+	if err := sdk.ValidateDenom(msg.Denom); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid denom %s: %s", msg.Denom, err.Error())
 	}
 	if len(msg.Addresses) == 0 {
 		return errorsmod.Wrap(ErrRequiredFieldEmpty, "at least one address is required")
@@ -869,18 +872,16 @@ func (msg *MsgSweepStTokens) ValidateBasic() error {
 }
 ```
 
-`StAssetDenomPrefix` is the existing `"st"` constant used by `StAssetDenomFromHostZoneDenom` in `x/stakeibc/types/host_zone.go`; if it is a literal there, extract it to a named constant `StAssetDenomPrefix = "st"` in that file.
-
 `x/stakeibc/types/codec.go`: in `RegisterCodec` add
 
 ```go
 	legacy.RegisterAminoMsg(cdc, &MsgUndelegateFromValidators{}, "stakeibc/MsgUndelegateFromValidators")
 	legacy.RegisterAminoMsg(cdc, &MsgTransferFromIca{}, "stakeibc/MsgTransferFromIca")
 	legacy.RegisterAminoMsg(cdc, &MsgTransferStaketiaClaimBalance{}, "stakeibc/MsgTransferStaketiaClaimBalance")
-	legacy.RegisterAminoMsg(cdc, &MsgSweepStTokens{}, "stakeibc/MsgSweepStTokens")
+	legacy.RegisterAminoMsg(cdc, &MsgSweepTokensToOsmosis{}, "stakeibc/MsgSweepTokensToOsmosis")
 ```
 
-and in `RegisterInterfaces` append `&MsgUndelegateFromValidators{}, &MsgTransferFromIca{}, &MsgTransferStaketiaClaimBalance{}, &MsgSweepStTokens{}` to the `RegisterImplementations((*sdk.Msg)(nil), ...)` list.
+and in `RegisterInterfaces` append `&MsgUndelegateFromValidators{}, &MsgTransferFromIca{}, &MsgTransferStaketiaClaimBalance{}, &MsgSweepTokensToOsmosis{}` to the `RegisterImplementations((*sdk.Msg)(nil), ...)` list.
 
 - [ ] **Step 5: Keeper stubs and msg-server delegates**
 
@@ -956,9 +957,9 @@ import (
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
-// SweepStTokens is implemented in Task 8 of the upgrade 2 plan
-func (k Keeper) SweepStTokens(ctx sdk.Context, msg *types.MsgSweepStTokens) (numSwept uint64, numSkipped uint64, err error) {
-	return 0, 0, errorsmod.Wrap(sdkerrors.ErrNotSupported, "SweepStTokens not implemented")
+// SweepTokensToOsmosis is implemented in Task 8 of the upgrade 2 plan
+func (k Keeper) SweepTokensToOsmosis(ctx sdk.Context, msg *types.MsgSweepTokensToOsmosis) (numSwept uint64, numSkipped uint64, err error) {
+	return 0, 0, errorsmod.Wrap(sdkerrors.ErrNotSupported, "SweepTokensToOsmosis not implemented")
 }
 ```
 
@@ -1004,13 +1005,13 @@ func (k msgServer) TransferStaketiaClaimBalance(goCtx context.Context, msg *type
 	return &types.MsgTransferStaketiaClaimBalanceResponse{Sequence: sequence, Amount: amount}, nil
 }
 
-func (k msgServer) SweepStTokens(goCtx context.Context, msg *types.MsgSweepStTokens) (*types.MsgSweepStTokensResponse, error) {
+func (k msgServer) SweepTokensToOsmosis(goCtx context.Context, msg *types.MsgSweepTokensToOsmosis) (*types.MsgSweepTokensToOsmosisResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	numSwept, numSkipped, err := k.Keeper.SweepStTokens(ctx, msg)
+	numSwept, numSkipped, err := k.Keeper.SweepTokensToOsmosis(ctx, msg)
 	if err != nil {
 		return nil, err
 	}
-	return &types.MsgSweepStTokensResponse{NumSwept: numSwept, NumSkipped: numSkipped}, nil
+	return &types.MsgSweepTokensToOsmosisResponse{NumSwept: numSwept, NumSkipped: numSkipped}, nil
 }
 ```
 
@@ -1129,11 +1130,11 @@ func CmdTransferStaketiaClaimBalance() *cobra.Command {
 	return cmd
 }
 
-// sweep-st-tokens [denom] [addresses-file]: one stride address per line, blank lines ignored.
+// sweep-tokens-to-osmosis [denom] [addresses-file]: one stride address per line, blank lines ignored.
 // The file is a batch written by scripts/wind-down/build_sweep_batches.py.
-func CmdSweepStTokens() *cobra.Command {
+func CmdSweepTokensToOsmosis() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "sweep-st-tokens [denom] [addresses-file]",
+		Use:   "sweep-tokens-to-osmosis [denom] [addresses-file]",
 		Short: "Wind-down: send each listed holder's full stToken balance to the same address on Osmosis",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -1145,7 +1146,7 @@ func CmdSweepStTokens() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			msg := types.NewMsgSweepStTokens(clientCtx.GetFromAddress().String(), args[0], addresses)
+			msg := types.NewMsgSweepTokensToOsmosis(clientCtx.GetFromAddress().String(), args[0], addresses)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
@@ -1180,7 +1181,7 @@ In `x/stakeibc/client/cli/tx.go` `GetTxCmd`, add before the closing `return cmd`
 	cmd.AddCommand(CmdUndelegateFromValidators())
 	cmd.AddCommand(CmdTransferFromIca())
 	cmd.AddCommand(CmdTransferStaketiaClaimBalance())
-	cmd.AddCommand(CmdSweepStTokens())
+	cmd.AddCommand(CmdSweepTokensToOsmosis())
 ```
 
 - [ ] **Step 7: Build and test**
@@ -2238,15 +2239,15 @@ git add x/stakeibc/keeper/wind_down_claim_balance.go x/stakeibc/keeper/wind_down
 git commit -m "feat(stakeibc): MsgTransferStaketiaClaimBalance - claim address TIA to the celestia delegation ICA"
 ```
 
-### Task 8: `MsgSweepStTokens` keeper logic
+### Task 8: `MsgSweepTokensToOsmosis` keeper logic
 
 **Files:**
 - Modify: `x/stakeibc/keeper/wind_down_sweep.go` (replace the stub body)
 - Create: `x/stakeibc/keeper/wind_down_sweep_test.go`
 
 **Interfaces:**
-- Consumes: `k.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix`, `transfertypes.GetEscrowAddress`, `k.AccountKeeper.GetAccount`, `k.bankKeeper.GetBalance`, `k.RecordsKeeper.TransferKeeper.Transfer`, `sdk.MustBech32ifyAddressBytes`, `types.StrideToOsmosisTransferChannelId`, `types.HostZoneDenomFromStAssetDenom`.
-- Produces: the `SweepStTokens` body; helper `func (k Keeper) isSweepableAccount(ctx sdk.Context, address sdk.AccAddress, escrowAddresses map[string]bool) error`.
+- Consumes: `k.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix`, `transfertypes.GetEscrowAddress`, `k.AccountKeeper.GetAccount`, `k.bankKeeper.GetBalance`, `k.RecordsKeeper.TransferKeeper.Transfer`, `sdk.MustBech32ifyAddressBytes`, `types.StrideToOsmosisTransferChannelId`.
+- Produces: the `SweepTokensToOsmosis` body; helper `func (k Keeper) isSweepableAccount(ctx sdk.Context, address sdk.AccAddress, escrowAddresses map[string]bool) error`.
 - Depends on: Tasks 1-2
 - Review: yes (the highest-review item of the spec: moves user balances)
 
@@ -2290,8 +2291,6 @@ func (s *KeeperTestSuite) SetupSweep() SweepTestCase {
 	types.StrideToOsmosisTransferChannelId = ibctesting.FirstChannelID
 	s.T().Cleanup(func() { types.StrideToOsmosisTransferChannelId = previousChannel })
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{ChainId: HostChainId, HostDenom: Atom, Halted: true})
-
 	newAccount := func(account sdk.AccountI) sdk.AccAddress {
 		s.App.AccountKeeper.SetAccount(s.Ctx, account)
 		return account.GetAddress()
@@ -2330,12 +2329,12 @@ func (s *KeeperTestSuite) SetupSweep() SweepTestCase {
 	return tc
 }
 
-func (s *KeeperTestSuite) TestSweepStTokens_BaseAndVestingSweptZeroSkipped() {
+func (s *KeeperTestSuite) TestSweepTokensToOsmosis_BaseAndVestingSweptZeroSkipped() {
 	tc := s.SetupSweep()
 	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)
 
-	msg := types.MsgSweepStTokens{Denom: stAtom, Addresses: []string{tc.base.String(), tc.vesting.String(), tc.empty.String()}}
-	numSwept, numSkipped, err := s.App.StakeibcKeeper.SweepStTokens(s.Ctx, &msg)
+	msg := types.MsgSweepTokensToOsmosis{Denom: stAtom, Addresses: []string{tc.base.String(), tc.vesting.String(), tc.empty.String()}}
+	numSwept, numSkipped, err := s.App.StakeibcKeeper.SweepTokensToOsmosis(s.Ctx, &msg)
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(2), numSwept)
 	s.Require().Equal(uint64(1), numSkipped)
@@ -2345,14 +2344,14 @@ func (s *KeeperTestSuite) TestSweepStTokens_BaseAndVestingSweptZeroSkipped() {
 	for _, address := range []sdk.AccAddress{tc.base, tc.vesting} {
 		s.Require().True(s.App.BankKeeper.GetBalance(s.Ctx, address, stAtom).IsZero())
 		s.Require().Equal(int64(1), s.App.BankKeeper.GetBalance(s.Ctx, address, "ustrd").Amount.Int64())
-		s.CheckEventValueEmitted(types.EventTypeSweepStTokens, types.AttributeKeyReceiver, sdk.MustBech32ifyAddressBytes("osmo", address))
+		s.CheckEventValueEmitted(types.EventTypeSweepTokensToOsmosis, types.AttributeKeyReceiver, sdk.MustBech32ifyAddressBytes("osmo", address))
 	}
-	s.CheckEventValueEmitted(types.EventTypeSweepStTokens, types.AttributeKeySkipped, tc.empty.String())
+	s.CheckEventValueEmitted(types.EventTypeSweepTokensToOsmosis, types.AttributeKeySkipped, tc.empty.String())
 	// Supply unchanged: swept tokens are escrowed, not burned (spec §9)
 	s.Require().Equal(int64(3_000_040), s.App.BankKeeper.GetSupply(s.Ctx, stAtom).Amount.Int64()) // 1M + 2M + 4×10 in the non-sweepable accounts
 }
 
-func (s *KeeperTestSuite) TestSweepStTokens_RejectsNonSweepableAddresses() {
+func (s *KeeperTestSuite) TestSweepTokensToOsmosis_RejectsNonSweepableAddresses() {
 	tc := s.SetupSweep()
 	cases := []struct {
 		name    string
@@ -2369,37 +2368,45 @@ func (s *KeeperTestSuite) TestSweepStTokens_RejectsNonSweepableAddresses() {
 		s.Run(c.name, func() {
 			startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)
 			// A good address in the same batch must not be swept when the batch is rejected
-			msg := types.MsgSweepStTokens{Denom: stAtom, Addresses: []string{tc.base.String(), c.address.String()}}
-			_, _, err := s.App.StakeibcKeeper.SweepStTokens(s.Ctx, &msg)
+			msg := types.MsgSweepTokensToOsmosis{Denom: stAtom, Addresses: []string{tc.base.String(), c.address.String()}}
+			_, _, err := s.App.StakeibcKeeper.SweepTokensToOsmosis(s.Ctx, &msg)
 			s.Require().ErrorContains(err, c.err)
 			s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID), "nothing submitted")
 		})
 	}
 }
 
-func (s *KeeperTestSuite) TestSweepStTokens_UnknownDenom() {
+// Any bank denom sweeps the same way: an stToken, ustrd, and an IBC voucher (spec §6)
+func (s *KeeperTestSuite) TestSweepTokensToOsmosis_AnyDenom() {
 	tc := s.SetupSweep()
-	_, _, err := s.App.StakeibcKeeper.SweepStTokens(s.Ctx, &types.MsgSweepStTokens{Denom: "stunknown", Addresses: []string{tc.base.String()}})
-	s.Require().ErrorContains(err, "no host zone")
+	voucher := "ibc/065DE8EC5E26C3798B1292446DBB5DAB9A490EEC9986ED9955328C38"
+	s.FundAccount(tc.base, sdk.NewCoin(voucher, sdkmath.NewInt(400)))
+	for _, denom := range []string{stAtom, "ustrd", voucher} {
+		startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)
+		numSwept, _, err := s.App.StakeibcKeeper.SweepTokensToOsmosis(s.Ctx, &types.MsgSweepTokensToOsmosis{Denom: denom, Addresses: []string{tc.base.String()}})
+		s.Require().NoError(err, denom)
+		s.Require().Equal(uint64(1), numSwept, denom)
+		s.Require().Equal(startSequence+1, s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID), denom)
+		s.Require().True(s.App.BankKeeper.GetBalance(s.Ctx, tc.base, denom).IsZero(), denom)
+	}
 }
 
-func (s *KeeperTestSuite) TestSweepStTokens_OnlyThatDenomMoves() {
+func (s *KeeperTestSuite) TestSweepTokensToOsmosis_OnlyThatDenomMoves() {
 	tc := s.SetupSweep()
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{ChainId: "osmosis-1", HostDenom: "uosmo", Halted: true})
 	s.FundAccount(tc.base, sdk.NewCoin("stuosmo", sdkmath.NewInt(77)))
 
-	_, _, err := s.App.StakeibcKeeper.SweepStTokens(s.Ctx, &types.MsgSweepStTokens{Denom: stAtom, Addresses: []string{tc.base.String()}})
+	_, _, err := s.App.StakeibcKeeper.SweepTokensToOsmosis(s.Ctx, &types.MsgSweepTokensToOsmosis{Denom: stAtom, Addresses: []string{tc.base.String()}})
 	s.Require().NoError(err)
 	s.Require().Equal(int64(77), s.App.BankKeeper.GetBalance(s.Ctx, tc.base, "stuosmo").Amount.Int64())
 }
 ```
 
-The SDK vesting types are exercised through `vestingtypes.NewContinuousVestingAccount` in one more case: add `TestSweepStTokens_SdkVestingTypes` that creates a `ContinuousVestingAccount`, a `DelayedVestingAccount` and a `PeriodicVestingAccount` (constructors in `vestingtypes`, each from a `BaseAccount` and an `ustrd` vesting amount, end time in the future), funds each with stATOM, sweeps all three and asserts `numSwept == 3`.
+The SDK vesting types are exercised through `vestingtypes.NewContinuousVestingAccount` in one more case: add `TestSweepTokensToOsmosis_SdkVestingTypes` that creates a `ContinuousVestingAccount`, a `DelayedVestingAccount` and a `PeriodicVestingAccount` (constructors in `vestingtypes`, each from a `BaseAccount` and an `ustrd` vesting amount, end time in the future), funds each with stATOM, sweeps all three and asserts `numSwept == 3`.
 
 - [ ] **Step 2: Run them to verify they fail**
 
-Run: `go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestSweepStTokens' 2>&1 | tail -5`
-Expected: FAIL with `SweepStTokens not implemented`
+Run: `go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestSweepTokensToOsmosis' 2>&1 | tail -5`
+Expected: FAIL with `SweepTokensToOsmosis not implemented`
 
 - [ ] **Step 3: Implement**
 
@@ -2428,15 +2435,13 @@ import (
 // owner who controls the same bytes on Osmosis (spec §3)
 const sweepableAddressLength = 20
 
-// SweepStTokens sends each listed holder's full balance of `denom` to the same address on
-// Osmosis (spec §6). The batch is rejected if any address is not sweepable, so the on-chain
-// rule set, not the batch-building script, is the safety net. A zero balance is skipped.
-// A timeout or a rejected receive refunds the holder through the normal ICS-20 path.
-func (k Keeper) SweepStTokens(ctx sdk.Context, msg *types.MsgSweepStTokens) (numSwept uint64, numSkipped uint64, err error) {
-	if _, err := k.GetHostZoneFromHostDenom(ctx, types.HostZoneDenomFromStAssetDenom(msg.Denom)); err != nil {
-		return 0, 0, errorsmod.Wrapf(types.ErrHostZoneNotFound, "no host zone for stToken denom %s", msg.Denom)
-	}
-
+// SweepTokensToOsmosis sends each listed holder's full balance of `denom` (any bank denom: an
+// stToken, ustrd, a voucher such as USDC) to the same address on Osmosis (spec §6). The batch
+// is rejected if any address is not sweepable, so the on-chain rule set, not the
+// batch-building script, is the safety net. A zero balance is skipped. No memo is attached,
+// so a voucher denom lands on Osmosis as a two-hop denom; that is deliberate. A timeout or a
+// rejected receive refunds the holder through the normal ICS-20 path.
+func (k Keeper) SweepTokensToOsmosis(ctx sdk.Context, msg *types.MsgSweepTokensToOsmosis) (numSwept uint64, numSkipped uint64, err error) {
 	escrowAddresses := k.transferEscrowAddresses(ctx)
 	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(types.WindDownTransferTimeout).UnixNano())
 
@@ -2452,7 +2457,7 @@ func (k Keeper) SweepStTokens(ctx sdk.Context, msg *types.MsgSweepStTokens) (num
 		balance := k.bankKeeper.GetBalance(ctx, address, msg.Denom)
 		if balance.IsZero() {
 			numSkipped++
-			ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeSweepStTokens,
+			ctx.EventManager().EmitEvent(sdk.NewEvent(types.EventTypeSweepTokensToOsmosis,
 				sdk.NewAttribute(types.AttributeKeySkipped, holder)))
 			continue
 		}
@@ -2474,7 +2479,7 @@ func (k Keeper) SweepStTokens(ctx sdk.Context, msg *types.MsgSweepStTokens) (num
 		numSwept++
 
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
-			types.EventTypeSweepStTokens,
+			types.EventTypeSweepTokensToOsmosis,
 			sdk.NewAttribute(types.AttributeKeyHolder, holder),
 			sdk.NewAttribute(types.AttributeKeyReceiver, receiver),
 			sdk.NewAttribute(types.AttributeKeyAmount, balance.String()),
@@ -2523,18 +2528,17 @@ func (k Keeper) isSweepableAccount(ctx sdk.Context, address sdk.AccAddress, escr
 }
 ```
 
-`GetHostZoneFromHostDenom(ctx, denom) (*types.HostZone, error)` exists in `host_zone.go`. If `HostZoneDenomFromStAssetDenom` returns the input unchanged for a denom without the prefix, the host-zone lookup fails as intended.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestSweepStTokens' 2>&1 | tail -5`
+Run: `go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestSweepTokensToOsmosis' 2>&1 | tail -5`
 Expected: `ok`
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add x/stakeibc/keeper/wind_down_sweep.go x/stakeibc/keeper/wind_down_sweep_test.go
-git commit -m "feat(stakeibc): MsgSweepStTokens - batched stToken sweep to derived Osmosis addresses with on-chain skip rules"
+git commit -m "feat(stakeibc): MsgSweepTokensToOsmosis - batched sweep of any denom to derived Osmosis addresses with on-chain skip rules"
 ```
 
 ### Task 9: Ops scripts — coverage check and sweep batch builder
@@ -2547,7 +2551,7 @@ git commit -m "feat(stakeibc): MsgSweepStTokens - batched stToken sweep to deriv
 
 **Interfaces:**
 - Consumes: a Stride export (`strided export` JSON, `app_state.bank.balances`, `app_state.bank.supply`, `app_state.stakeibc.host_zone_list`, `app_state.auth.accounts`, `app_state.ibc.channel_genesis.channels`), prices as a JSON `{denom: usd_per_native_token}`, and Osmosis vault balances as a JSON `{native_denom_on_osmosis: amount}` (both files written by ops).
-- Produces: `coverage_check.py EXPORT OSMOSIS_BALANCES` prints one row per in-scope stToken (supply, frozen rate, required native, held native, surplus or shortfall) and exits non-zero on any shortfall; `build_sweep_batches.py EXPORT PRICES --floor-usd 10 --batch-size 100 --out DIR` writes `DIR/<denom>/batch-NNN.txt` files (one address per line) that `strided tx stakeibc sweep-st-tokens` consumes, applying the same skip rules as the chain plus the dollar floor.
+- Produces: `coverage_check.py EXPORT OSMOSIS_BALANCES` prints one row per in-scope stToken (supply, frozen rate, required native, held native, surplus or shortfall) and exits non-zero on any shortfall; `build_sweep_batches.py EXPORT PRICES --floor-usd 10 --batch-size 100 --out DIR [--extra-denom ustrd=0.05:6 ...]` writes `DIR/<denom>/batch-NNN.txt` files (one address per line) that `strided tx stakeibc sweep-tokens-to-osmosis` consumes, applying the same skip rules as the chain plus the dollar floor, for every stToken plus each listed extra denom.
 - Depends on: nothing in Go (Python only). Complements `scripts/wind-down/check_transmuter_pool.py` (already on the branch), which checks a created pool's factors, roles and limiters; these two scripts decide how much goes in and who gets swept.
 - Review: yes (its output decides how much native goes into each pool)
 
@@ -2628,6 +2632,17 @@ class BuildSweepBatchesTest(unittest.TestCase):
         )
         self.assertEqual({h.address for h in holders["stuatom"]}, {BASE, VESTING})
 
+    def test_extra_denoms_are_swept_when_listed(self) -> None:
+        export = synthetic_export()
+        export["app_state"]["bank"]["balances"][0]["coins"].append({"denom": "ustrd", "amount": "500000000"})
+        without = build_sweep_batches.sweepable_holders(export=export, prices={"uatom": Decimal("1.8")}, floor_usd=Decimal("10"))
+        self.assertNotIn("ustrd", without)
+        with_strd = build_sweep_batches.sweepable_holders(
+            export=export, prices={"uatom": Decimal("1.8")}, floor_usd=Decimal("10"),
+            extra_denoms={"ustrd": build_sweep_batches.ExtraDenom(usd_per_token=Decimal("0.05"), decimals=6)},
+        )
+        self.assertEqual([h.address for h in with_strd["ustrd"]], [BASE])
+
     def test_batches_are_bounded_and_written(self) -> None:
         holders = build_sweep_batches.sweepable_holders(
             export=synthetic_export(), prices={"uatom": Decimal("1.8")}, floor_usd=Decimal("0")
@@ -2653,14 +2668,17 @@ Expected: `ModuleNotFoundError: No module named 'build_sweep_batches'`
 `scripts/wind-down/build_sweep_batches.py`:
 
 ```python
-"""Build MsgSweepStTokens batches from a Stride export (wind-down spec §6, §8 window 2 step 6).
+"""Build MsgSweepTokensToOsmosis batches from a Stride export (wind-down spec §6, §8 window 2 step 6).
 
 Applies the chain's skip rules (20-byte address, base or vesting account, not an escrow) plus
 the dollar floor ops chose, and writes one file per batch that the CLI consumes:
 
     python3 build_sweep_batches.py export.json prices.json --floor-usd 10 --batch-size 100 --out batches/
 
-The chain re-checks every rule; this script only decides who is above the floor.
+Every in-scope stToken is on the sweep list automatically, priced through its zone's redemption
+rate. Any other denom (ustrd, a USDC voucher) is added with --extra-denom DENOM=USD_PER_TOKEN:DECIMALS,
+e.g. --extra-denom ustrd=0.05:6. The chain re-checks every rule; this script only decides who
+is above the floor.
 """
 
 import argparse
@@ -2693,12 +2711,27 @@ class Holder:
     value_usd: Decimal
 
 
+@dataclasses.dataclass(frozen=True)
+class ExtraDenom:
+    """A non-stToken denom on the sweep list, priced directly rather than through a zone."""
+
+    usd_per_token: Decimal
+    decimals: int
+
+
+def parse_extra_denom(entry: str) -> tuple[str, ExtraDenom]:
+    denom, spec = entry.split("=", 1)
+    price, decimals = spec.split(":", 1)
+    return denom, ExtraDenom(usd_per_token=Decimal(price), decimals=int(decimals))
+
+
 def main() -> None:
     args = parse_args()
     export = json.load(open(args.export))
     prices = {denom: Decimal(str(price)) for denom, price in json.load(open(args.prices)).items()}
 
-    holders = sweepable_holders(export=export, prices=prices, floor_usd=Decimal(str(args.floor_usd)))
+    extra_denoms = {denom: spec for denom, spec in (parse_extra_denom(entry) for entry in args.extra_denom)}
+    holders = sweepable_holders(export=export, prices=prices, floor_usd=Decimal(str(args.floor_usd)), extra_denoms=extra_denoms)
     written = write_batches(holders=holders, batch_size=args.batch_size, out_dir=pathlib.Path(args.out))
     for st_denom, batches in sorted(written.items()):
         print(f"{st_denom}: {len(holders[st_denom])} holders in {batches} batches")
@@ -2711,12 +2744,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--floor-usd", type=float, default=10.0)
     parser.add_argument("--batch-size", type=int, default=100)
     parser.add_argument("--out", default="batches")
+    parser.add_argument("--extra-denom", action="append", default=[], metavar="DENOM=USD_PER_TOKEN:DECIMALS",
+                        help="a non-stToken denom to sweep, with its price and exponent")
     return parser.parse_args()
 
 
-def sweepable_holders(export: dict, prices: dict[str, Decimal], floor_usd: Decimal) -> dict[str, list[Holder]]:
-    """Every (holder, stToken) pair that passes the chain's rules and is worth at least floor_usd."""
+def sweepable_holders(
+    export: dict, prices: dict[str, Decimal], floor_usd: Decimal, extra_denoms: dict[str, ExtraDenom] | None = None
+) -> dict[str, list[Holder]]:
+    """Every (holder, denom) pair that passes the chain's rules and is worth at least floor_usd."""
     zones = in_scope_zones(export)
+    extra_denoms = extra_denoms or {}
     account_types = account_type_by_address(export)
     escrows = escrow_addresses(export)
 
@@ -2726,11 +2764,8 @@ def sweepable_holders(export: dict, prices: dict[str, Decimal], floor_usd: Decim
         if not is_sweepable_address(address=address, account_types=account_types, escrows=escrows):
             continue
         for coin in balance["coins"]:
-            zone = zones.get(coin["denom"])
-            if zone is None:
-                continue
-            value_usd = usd_value(zone=zone, amount=int(coin["amount"]), prices=prices)
-            if value_usd < floor_usd:
+            value_usd = coin_value_usd(denom=coin["denom"], amount=int(coin["amount"]), zones=zones, prices=prices, extra_denoms=extra_denoms)
+            if value_usd is None or value_usd < floor_usd:
                 continue
             holders[coin["denom"]].append(Holder(address=address, st_denom=coin["denom"], amount=int(coin["amount"]), value_usd=value_usd))
 
@@ -2795,6 +2830,19 @@ def is_sweepable_address(address: str, account_types: dict[str, str], escrows: s
     if address in escrows:
         return False
     return account_types.get(address) in SWEEPABLE_ACCOUNT_TYPES
+
+
+def coin_value_usd(
+    denom: str, amount: int, zones: dict[str, dict], prices: dict[str, Decimal], extra_denoms: dict[str, ExtraDenom]
+) -> Decimal | None:
+    """USD value of a balance, or None when the denom is not on the sweep list."""
+    zone = zones.get(denom)
+    if zone is not None:
+        return usd_value(zone=zone, amount=amount, prices=prices)
+    extra = extra_denoms.get(denom)
+    if extra is None:
+        return None
+    return Decimal(amount) / Decimal(10**extra.decimals) * extra.usd_per_token
 
 
 def usd_value(zone: dict, amount: int, prices: dict[str, Decimal]) -> Decimal:
@@ -2901,11 +2949,11 @@ Expected: `OK`
 Run (needs a fresh `strided export` as `export.json`, and the two input files):
 
 ```bash
-python3 scripts/wind-down/build_sweep_batches.py export.json prices.json --floor-usd 10 --out /tmp/batches | tee scripts/wind-down/sweep_batches_summary.txt
+python3 scripts/wind-down/build_sweep_batches.py export.json prices.json --floor-usd 10 --extra-denom ustrd=<price>:6 --out /tmp/batches | tee scripts/wind-down/sweep_batches_summary.txt
 python3 scripts/wind-down/coverage_check.py export.json osmosis_balances.json | tee scripts/wind-down/coverage_report.txt || true
 ```
 
-Expected: the summary lists eleven denoms with holder counts in the thousands (5,663 pairs at the $10 floor on 2026-09-22 prices); the coverage report shows a shortfall on every row today (nothing is on Osmosis yet), which is the expected pre-migration state. Commit the two text files as the fixture of what the scripts produce.
+Expected: the summary lists the eleven stTokens plus `ustrd` with holder counts in the thousands (5,663 pairs at the $10 floor on 2026-09-22 prices); the coverage report shows a shortfall on every row today (nothing is on Osmosis yet), which is the expected pre-migration state. Commit the two text files as the fixture of what the scripts produce.
 
 - [ ] **Step 6: Commit**
 
@@ -2971,7 +3019,7 @@ func (s *UpgradeTestSuite) TestRemovedAndAddedMessages() {
 
 	kept := []sdk.Msg{
 		&stakeibctypes.MsgUndelegateFromValidators{}, &stakeibctypes.MsgTransferFromIca{},
-		&stakeibctypes.MsgTransferStaketiaClaimBalance{}, &stakeibctypes.MsgSweepStTokens{},
+		&stakeibctypes.MsgTransferStaketiaClaimBalance{}, &stakeibctypes.MsgSweepTokensToOsmosis{},
 		&stakeibctypes.MsgUpdateValidatorSharesExchRate{}, &stakeibctypes.MsgCalibrateDelegation{},
 		&stakeibctypes.MsgRestoreInterchainAccount{},
 		&staketiatypes.MsgConfirmUndelegation{}, &staketiatypes.MsgConfirmUnbondedTokenSweep{},
@@ -3092,7 +3140,7 @@ Under `## Unreleased` → `### On-Chain changes` in `CHANGELOG.md`, add (numberi
 ```
 N. v36: halt every in-scope stakeibc host zone and stakedym; deactivate the ICA oracles; remove `MsgClaimUndelegatedTokens` from the ICA host allow-list; remove every IBC rate limit, blacklisted denom and whitelisted address pair (wind-down spec §6)
 N+1. v36: remove the `ClaimUndelegatedTokens`, `RebalanceValidators`, `ClearBalance` and `ResumeHostZone` tx handlers (stakeibc), and `ResumeHostZone` (staketia, stakedym); admin-gate `UpdateValidatorSharesExchRate` and `CalibrateDelegation`; lift the 5,000 base-unit calibration cap
-N+2. v36: add the wind-down admin txs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance` (protocol admin) and `MsgSweepStTokens` (sweep operator), with the Osmosis vault, the host-to-Osmosis channel map and channel-5 as constants
+N+2. v36: add the wind-down admin txs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance` (protocol admin) and `MsgSweepTokensToOsmosis` (sweep operator; any denom), with the Osmosis vault, the host-to-Osmosis channel map and channel-5 as constants
 ```
 
 - [ ] **Step 6: Full suite and commit**
@@ -3113,6 +3161,6 @@ Not a subagent task: the user runs it (see the memory note on localstride upgrad
 - [ ] **Step 2: Upgrade.** Start localstride on the pre-upgrade release, submit and pass the `v36` proposal, swap the binary at the halt height, confirm the handler log lines: every zone halted, stakedym halted, oracles deactivated, allow-list without claim, rate limits removed.
 - [ ] **Step 3: Undelegate one validator.** `strided tx stakeibc undelegate-from-validators GAIA <valoper>` from the admin key; watch the ICA ack; confirm the validator's `delegation_changes_in_progress` returns to 0 and its delegation drops by the amount, the host zone's `total_delegations` likewise, and no stTokens were burned (supply unchanged). Then `undelegate-from-validators GAIA` with no list for the rest.
 - [ ] **Step 4: Transfer.** After the local unbonding period, `transfer-from-ica GAIA DELEGATION <amount>` and `transfer-from-ica GAIA WITHDRAWAL <amount>`; confirm the funds arrive at the vault address on the second chain as the expected denom.
-- [ ] **Step 5: Sweep.** Fund two dockernet accounts with stATOM, build a batch file by hand, `sweep-st-tokens stuatom batch.txt` from the sweep operator key; confirm the packets relay and the derived addresses on the second chain hold the stATOM voucher; confirm a batch containing a module account is rejected whole.
+- [ ] **Step 5: Sweep.** Fund two dockernet accounts with stATOM and ustrd, build a batch file by hand, `sweep-tokens-to-osmosis stuatom batch.txt` then `sweep-tokens-to-osmosis ustrd batch.txt` from the sweep operator key; confirm the packets relay and the derived addresses on the second chain hold both vouchers; confirm a batch containing a module account is rejected whole.
 - [ ] **Step 6: Claim balance.** Fund the (dockernet) claim address with the celestia IBC denom and run `transfer-staketia-claim-balance`; this needs a dockernet celestia zone, so skip if the local network has none and note it.
 - [ ] **Step 7: Record.** Append the findings under a "Notes from a dry run" heading at the top of this plan, as the upgrade 1 plan did.
