@@ -2548,7 +2548,7 @@ git commit -m "feat(stakeibc): MsgSweepStTokens - batched stToken sweep to deriv
 **Interfaces:**
 - Consumes: a Stride export (`strided export` JSON, `app_state.bank.balances`, `app_state.bank.supply`, `app_state.stakeibc.host_zone_list`, `app_state.auth.accounts`, `app_state.ibc.channel_genesis.channels`), prices as a JSON `{denom: usd_per_native_token}`, and Osmosis vault balances as a JSON `{native_denom_on_osmosis: amount}` (both files written by ops).
 - Produces: `coverage_check.py EXPORT OSMOSIS_BALANCES` prints one row per in-scope stToken (supply, frozen rate, required native, held native, surplus or shortfall) and exits non-zero on any shortfall; `build_sweep_batches.py EXPORT PRICES --floor-usd 10 --batch-size 100 --out DIR` writes `DIR/<denom>/batch-NNN.txt` files (one address per line) that `strided tx stakeibc sweep-st-tokens` consumes, applying the same skip rules as the chain plus the dollar floor.
-- Depends on: nothing in Go (Python only)
+- Depends on: nothing in Go (Python only). Complements `scripts/wind-down/check_transmuter_pool.py` (already on the branch), which checks a created pool's factors, roles and limiters; these two scripts decide how much goes in and who gets swept.
 - Review: yes (its output decides how much native goes into each pool)
 
 - [ ] **Step 1: Write the failing tests**
