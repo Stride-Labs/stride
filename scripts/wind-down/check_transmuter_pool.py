@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-"""Pre-funding checks for a wind-down transmuter pool on Osmosis.
+"""Pre-funding checks for the wind-down transmuter pools on Osmosis.
 
-Reads the pool's on-chain state and the matching Stride host zone, then checks factor
-orientation, the encoded rate, roles, limiters, denom traces and overflow headroom, one
-line per check, unit-test style. Run it after `MsgCreateCosmWasmPool` and before the
-vault's funding join; run it again after `add_new_assets` and after registering limiters.
+Everything the script needs is in the CONSTANTS block below: the vault (admin) and moderator
+addresses, and one entry per pool with its Stride host zone, Osmosis pool id, the redemption
+rate it was created with, and the per-route caps it must carry. Run it with no arguments after
+`MsgCreateCosmWasmPool`, again after `add_new_assets`, and again after registering limiters:
 
-    python3 scripts/wind-down/check_transmuter_pool.py --pool-id 3590 --chain-id cosmoshub-4 \
-        --admin osmo1... --moderator osmo1... --caps caps.json
+    python3 scripts/wind-down/check_transmuter_pool.py
 
-`caps.json` maps each foreign-route denom to the static limiter it must carry, e.g.
-{"ibc/7451...": "0.0535"}. Without it, limiters are reported but not asserted. Exit code is
-1 when any check fails.
+For each pool it reads the on-chain state and the matching host zone and checks factor
+orientation, the encoded rate, roles, limiters, denom traces and overflow headroom, one line
+per check, unit-test style. Exit code is 1 when any check on any pool fails.
 """
 
-import argparse
 import dataclasses
 import enum
 import hashlib
@@ -37,6 +35,38 @@ STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS = "channel-326"
 MAX_POOL_ASSETS = 20
 UINT128_MAX = 2**128 - 1
 RATE_DECIMALS = 10**18
+
+
+@dataclasses.dataclass(frozen=True)
+class PoolSpec:
+    chain_id: str  # Stride host zone
+    pool_id: str  # Osmosis pool id, filled in after MsgCreateCosmWasmPool
+    rate_at_creation: str | None  # the redemption rate the factors encode; None = use the live rate (zone must be halted)
+    caps: dict[str, str] | None  # foreign-route denom -> static limiter upper_limit; None = report only
+
+
+# ----------------------------------------------------------------------------------------------
+# CONSTANTS: edit these, nothing else takes input.
+# ----------------------------------------------------------------------------------------------
+
+ADMIN = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # Osmosis vault (transmuter admin)
+MODERATOR = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # freeze / corrupted-asset key
+
+POOLS = [
+    # The 2026-09-23 test pool. Replace with the real pools as they are created.
+    PoolSpec(
+        chain_id="cosmoshub-4",
+        pool_id="3590",
+        rate_at_creation="2.000174393066540432",
+        caps={
+            "ibc/7451074F46885686D3B47B12A6BF74F6D36847ED1891AC612FCFAEB7FB551E14": "1",  # Hub route (test pool: widened to 1)
+            "ibc/C86C2FA56D954AB05960450215E63605528CB3481694ABEA87CE4DB0EF17D265": "0.0025",  # Agoric route
+            "ibc/8AEB813EE960508AEDC1C2EB605788CE6A32F4E632583336D840BE4B8EC24CC7": "0.0075",  # Secret route
+        },
+    ),
+]
+
+# ----------------------------------------------------------------------------------------------
 
 # Osmosis's transfer channel to each in-scope host zone: this is where the native token's
 # canonical Osmosis denom comes from (verified against the chain registry on 2026-09-23).
@@ -357,7 +387,7 @@ def check_factors(
         report.line(
             outcome=Outcome.WARN,
             name="host zone is not halted: the live rate still moves, so the factor check "
-            "is exact only against the rate at creation (pass --rate)",
+            "is exact only against rate_at_creation in the CONSTANTS block",
         )
     canonical, native, routes, alloyed = classify_assets(pool=pool, zone=zone)
     report.check(
@@ -674,54 +704,26 @@ def check_liquidity_and_headroom(
 # --- Main -----------------------------------------------------------------------------------
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    parser.add_argument(
-        "--pool-id", required=True, help="Osmosis pool id of the transmuter"
-    )
-    parser.add_argument(
-        "--chain-id", required=True, help="Stride host zone chain id, e.g. cosmoshub-4"
-    )
-    parser.add_argument("--admin", help="expected transmuter admin (bech32)")
-    parser.add_argument("--moderator", help="expected transmuter moderator (bech32)")
-    parser.add_argument(
-        "--caps",
-        help="JSON file mapping each foreign-route denom to its expected static upper_limit",
-    )
-    parser.add_argument(
-        "--rate",
-        help="redemption rate the pool was created with (18 decimals); overrides the live "
-        "host-zone rate, for a pool created before the zone was halted",
-    )
-    parser.add_argument("--osmosis-rest", default=OSMOSIS_REST_DEFAULT)
-    parser.add_argument("--stride-rest", default=STRIDE_REST_DEFAULT)
-    parser.add_argument("--no-color", action="store_true")
-    return parser.parse_args()
-
-
-def main() -> int:
-    args = parse_args()
-    report = Report(use_color=not args.no_color and sys.stdout.isatty())
-    caps = json.load(open(args.caps)) if args.caps else None
-
-    zone = load_host_zone(stride_rest=args.stride_rest, chain_id=args.chain_id)
-    if args.rate:
+def check_pool(spec: PoolSpec, use_color: bool) -> Report:
+    report = Report(use_color=use_color)
+    zone = load_host_zone(stride_rest=STRIDE_REST_DEFAULT, chain_id=spec.chain_id)
+    if spec.rate_at_creation:
         zone = dataclasses.replace(
-            zone, redemption_rate=args.rate, rate_int=rate_to_int(args.rate)
+            zone,
+            redemption_rate=spec.rate_at_creation,
+            rate_int=rate_to_int(spec.rate_at_creation),
         )
-    pool = load_pool(osmosis_rest=args.osmosis_rest, pool_id=args.pool_id)
+    pool = load_pool(osmosis_rest=OSMOSIS_REST_DEFAULT, pool_id=spec.pool_id)
     print(
-        f"Transmuter check: pool {pool.pool_id} vs Stride host zone {zone.chain_id} ({zone.st_denom} → {zone.host_denom})"
+        f"\n=== Pool {pool.pool_id} vs Stride host zone {zone.chain_id} ({zone.st_denom} → {zone.host_denom}) ==="
     )
 
     check_contract(report=report, pool=pool)
-    check_roles(report=report, pool=pool, admin=args.admin, moderator=args.moderator)
+    check_roles(report=report, pool=pool, admin=ADMIN, moderator=MODERATOR)
     canonical, native, routes = check_factors(report=report, pool=pool, zone=zone)
     check_prices(
         report=report,
-        osmosis_rest=args.osmosis_rest,
+        osmosis_rest=OSMOSIS_REST_DEFAULT,
         pool=pool,
         zone=zone,
         canonical=canonical,
@@ -730,7 +732,7 @@ def main() -> int:
     )
     check_traces(
         report=report,
-        osmosis_rest=args.osmosis_rest,
+        osmosis_rest=OSMOSIS_REST_DEFAULT,
         zone=zone,
         canonical=canonical,
         native=native,
@@ -742,17 +744,32 @@ def main() -> int:
         canonical=canonical,
         native=native,
         routes=routes,
-        caps=caps,
+        caps=spec.caps,
     )
     check_liquidity_and_headroom(
         report=report, pool=pool, zone=zone, canonical=canonical, native=native
     )
-
     counts = report.counts
     print(
-        f"\n{counts[Outcome.PASS]} passed, {counts[Outcome.FAIL]} failed, {counts[Outcome.WARN]} warnings, {counts[Outcome.SKIP]} skipped"
+        f"  → {counts[Outcome.PASS]} passed, {counts[Outcome.FAIL]} failed, "
+        f"{counts[Outcome.WARN]} warnings, {counts[Outcome.SKIP]} skipped"
     )
-    return 1 if counts[Outcome.FAIL] else 0
+    return report
+
+
+def main() -> int:
+    use_color = sys.stdout.isatty()
+    failed_pools = [
+        spec.pool_id
+        for spec in POOLS
+        if check_pool(spec=spec, use_color=use_color).counts[Outcome.FAIL]
+    ]
+    print()
+    if failed_pools:
+        print(f"FAILED: pools {', '.join(failed_pools)} have failing checks")
+        return 1
+    print(f"OK: all {len(POOLS)} pool(s) passed")
+    return 0
 
 
 if __name__ == "__main__":
