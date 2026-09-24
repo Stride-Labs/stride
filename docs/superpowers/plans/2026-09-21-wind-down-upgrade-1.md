@@ -8,12 +8,12 @@
 
 **Tech Stack:** Go 1.2x, cosmos-sdk v0.54.3, ibc-go v11.2.0, wasmd v0.70.2, gogoproto via `make proto-gen` (docker), testify suites via `app/apptesting`.
 
-Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` (§5 is this upgrade).
+Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` (§5 is this upgrade; the spec now describes a two-upgrade wind-down and upgrade 2 has its own plan, `docs/superpowers/plans/2026-09-24-wind-down-upgrade-2.md`). The module path bump to `/v35` is done manually after this plan, not by it.
 
 ## Global Constraints
 
-- Module path becomes `github.com/Stride-Labs/stride/v35`; upgrade plan name is `"v35"`.
-- Only `rpc` lines are removed from `.proto` files. Proto `message` definitions stay (some are used internally, and keeping them avoids churn). After any `.proto` edit run `make proto-gen` and commit only the regenerated `tx.pb.go` of the module you changed: because the module-path bump only sed-edited source strings, proto-gen also rewrites the gzipped descriptor bytes of every other `*.pb.go` in the repo; revert that noise with `git checkout <base> -- <files>` before committing.
+- The Go module path stays `github.com/Stride-Labs/stride/v34` for every file this plan touches; the bump to `/v35` is a manual step the team runs after the plan lands and is deliberately not a task here. The upgrade package is still `app/upgrades/v35` and the plan name is `"v35"`; those are independent of the module path.
+- Only `rpc` lines are removed from `.proto` files. Proto `message` definitions stay (some are used internally, and keeping them avoids churn). After any `.proto` edit run `make proto-gen` and commit only the regenerated `tx.pb.go` of the module you changed. With the module path untouched proto-gen should leave every other `*.pb.go` alone; if it still rewrites descriptor bytes elsewhere (a protoc image drift), revert that noise with `git checkout <base> -- <files>` before committing and do not chase it.
 - Removed message types STAY registered in the interface registry: keep every `registry.RegisterImplementations((*sdk.Msg)(nil), &Msg...{})` entry in each module's `RegisterInterfaces`, and remove only the `rpc`, the msg-server handler, the `legacy.RegisterAminoMsg` line and the CLI command. Without the registration a v35 node can no longer decode any historical tx containing the message (`strided q tx`, `/cosmos/tx/v1beta1/txs/{hash}` fail with "unable to resolve type URL"). New submissions are still rejected because `MsgServiceRouter().Handler(msg)` is nil ("can't route message"). Add a comment above each block saying so.
 - Keeper logic stays wherever something still calls it (reward collector, autopilot, epoch hooks). Delete keeper code only when nothing references it after the handler is gone.
 - Upgrade handler helpers never return an error for a missing-state case; they log and continue (v34 convention). Only `RunMigrations` errors propagate.
@@ -38,45 +38,7 @@ The plan was executed once end to end on a scratch branch and reverted; these ar
 
 ## Foundation tasks (serial)
 
-### Task 1: Bump the module path to v35
-
-**Files:**
-- Modify: `go.mod` (line 1), every `*.go` and `*.proto` file, `scripts/protocgen.sh`
-
-**Interfaces:**
-- Produces: import path `github.com/Stride-Labs/stride/v35/...` used by every later task.
-- Review: no
-
-- [ ] **Step 1: Replace the module path everywhere**
-
-```bash
-grep -rl "Stride-Labs/stride/v34" --exclude-dir=.git . | xargs sed -i '' 's#Stride-Labs/stride/v34#Stride-Labs/stride/v35#g'
-```
-
-- [ ] **Step 2: Verify nothing references v34 and the tree builds**
-
-Run: `grep -rn "Stride-Labs/stride/v34" --exclude-dir=.git . | wc -l`
-Expected: `0`
-
-Run: `head -1 go.mod`
-Expected: `module github.com/Stride-Labs/stride/v35`
-
-Run: `go build ./...`
-Expected: no output (success)
-
-- [ ] **Step 3: Run the fast unit tests to prove the rename is inert**
-
-Run: `go test ./app/upgrades/v34/... ./x/stakeibc/types/... 2>&1 | tail -3`
-Expected: `ok` lines (the v34 mainnet export suite skips if the fixture is absent; that is fine)
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add -A
-git commit -m "v35 version"
-```
-
-### Task 2: v35 upgrade package skeleton and wiring
+### Task 1: v35 upgrade package skeleton and wiring
 
 **Files:**
 - Create: `app/upgrades/v35/constants.go`
@@ -100,8 +62,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v35/app/apptesting"
-	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
 )
 
 type UpgradeTestSuite struct {
@@ -126,7 +88,7 @@ func (s *UpgradeTestSuite) TestUpgradeRuns() {
 - [ ] **Step 2: Run it to verify it fails**
 
 Run: `go test ./app/upgrades/v35/... 2>&1 | tail -3`
-Expected: build failure, `package github.com/Stride-Labs/stride/v35/app/upgrades/v35 is not in std` or `undefined: v35.UpgradeName`
+Expected: build failure, `package github.com/Stride-Labs/stride/v34/app/upgrades/v35 is not in std` or `undefined: v35.UpgradeName`
 
 - [ ] **Step 3: Create the package**
 
@@ -157,9 +119,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	autopilotkeeper "github.com/Stride-Labs/stride/v35/x/autopilot/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	autopilotkeeper "github.com/Stride-Labs/stride/v34/x/autopilot/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
 // CreateUpgradeHandler returns the v35 upgrade handler: the first wind-down upgrade
@@ -194,7 +156,7 @@ func CreateUpgradeHandler(
 Wire it in `app/upgrades.go`. Add the import next to the v34 one:
 
 ```go
-	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
 ```
 
 and directly after the v34 `SetUpgradeHandler(...)` call (before `upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()`):
@@ -220,7 +182,7 @@ The unused keeper parameters are used by Tasks 7 and 8; Go does not flag unused 
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `go build ./... && go test ./app/upgrades/v35/... 2>&1 | tail -3`
-Expected: `ok  	github.com/Stride-Labs/stride/v35/app/upgrades/v35`
+Expected: `ok  	github.com/Stride-Labs/stride/v34/app/upgrades/v35`
 
 - [ ] **Step 5: Commit**
 
@@ -231,9 +193,9 @@ git commit -m "feat(upgrade): v35 handler skeleton and wiring"
 
 ## Parallel-safe tasks
 
-Every task below depends only on Tasks 1-2. Tasks 3-6 each edit a disjoint set of modules. Tasks 7 and 8 both add lines to `app/upgrades/v35/upgrades.go`; that is textual overlap only, each adds its own helper file and its own calls.
+Every task below depends only on Task 1. Tasks 2-5 each edit a disjoint set of modules. Tasks 6 and 7 both add lines to `app/upgrades/v35/upgrades.go`; that is textual overlap only, each adds its own helper file and its own calls.
 
-### Task 3: stakeibc — remove the liquid-stake, redeem and create-things messages
+### Task 2: stakeibc — remove the liquid-stake, redeem and create-things messages
 
 **Files:**
 - Modify: `proto/stride/stakeibc/tx.proto` (rpc lines 17-20 and the `CreateTradeRoute`, `UpdateTradeRoute`, `DeleteTradeRoute`, `SetCommunityPoolRebate`, `ToggleTradeController` rpcs)
@@ -252,7 +214,7 @@ Every task below depends only on Tasks 1-2. Tasks 3-6 each edit a disjoint set o
 
 **Interfaces:**
 - Produces: `func (k Keeper) LiquidStake(ctx sdk.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error)` in `x/stakeibc/keeper/liquid_stake.go`. `func (k Keeper) RedeemStake(ctx sdk.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error)` already exists in `redeem_stake.go` and is unchanged.
-- Depends on: Tasks 1-2
+- Depends on: Task 1
 - Review: yes (money path: the LiquidStake body moves; the reward collector and autopilot must still mint correctly)
 
 - [ ] **Step 1: Write the failing keeper test for the moved LiquidStake**
@@ -324,9 +286,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v35/utils"
-	epochtypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
-	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v34/utils"
+	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // LiquidStake mints stTokens for native tokens at the current redemption rate.
@@ -398,7 +360,7 @@ git add -A proto/stride/stakeibc x/stakeibc x/autopilot
 git commit -m "feat(stakeibc): remove liquid stake, redeem and create-things tx handlers for wind-down"
 ```
 
-### Task 4: staketia and stakedym — remove LiquidStake and RedeemStake
+### Task 3: staketia and stakedym — remove LiquidStake and RedeemStake
 
 **Files:**
 - Modify: `proto/stride/staketia/tx.proto` (rpc lines 27, 30), `proto/stride/stakedym/tx.proto` (rpc lines 27, 30)
@@ -413,7 +375,7 @@ git commit -m "feat(stakeibc): remove liquid stake, redeem and create-things tx 
 **Interfaces:**
 - Consumes: nothing new.
 - Produces: nothing other tasks use. `stakeibckeeper.EnableRedemptions` loses its only caller and is left in place.
-- Depends on: Tasks 1-2
+- Depends on: Task 1
 - Review: yes (staketia's confirm/sweep/distribute flow must survive untouched; it runs in window 1)
 
 - [ ] **Step 1: Write the failing test**
@@ -463,7 +425,7 @@ git add -A proto/stride/staketia proto/stride/stakedym x/staketia x/stakedym
 git commit -m "feat(staketia,stakedym): remove liquid stake and redeem tx handlers for wind-down"
 ```
 
-### Task 5: icaoracle and icqoracle — remove the registration messages
+### Task 4: icaoracle and icqoracle — remove the registration messages
 
 **Files:**
 - Modify: `proto/stride/icaoracle/tx.proto` (rpc lines 15, 17), `proto/stride/icqoracle/tx.proto` (rpc lines 17, 21)
@@ -476,7 +438,7 @@ git commit -m "feat(staketia,stakedym): remove liquid stake and redeem tx handle
 - Test: the modules' `msg_server_test.go` and `msgs_test.go`
 
 **Interfaces:**
-- Depends on: Tasks 1-2
+- Depends on: Task 1
 - Review: no
 
 - [ ] **Step 1: Write the failing test**
@@ -522,7 +484,7 @@ git add -A proto/stride/icaoracle proto/stride/icqoracle x/icaoracle x/icqoracle
 git commit -m "feat(icaoracle,icqoracle): remove oracle and price-query registration handlers for wind-down"
 ```
 
-### Task 6: auction, airdrop and legacy claim — remove every message
+### Task 5: auction, airdrop and legacy claim — remove every message
 
 **Files:**
 - Modify: `proto/stride/auction/tx.proto` (rpc lines 19, 24, 26), `proto/stride/airdrop/tx.proto` (all seven rpcs), `proto/stride/claim/tx.proto` (all four rpcs). Each `service Msg { ... }` block stays, with its `option (cosmos.msg.v1.service) = true;` and no rpcs.
@@ -535,7 +497,7 @@ git commit -m "feat(icaoracle,icqoracle): remove oracle and price-query registra
 - Test: each module's `msg_server_test.go` and `msgs_test.go`, `x/claim/client/cli/cli_test.go`
 
 **Interfaces:**
-- Depends on: Tasks 1-2
+- Depends on: Task 1
 - Review: no
 
 - [ ] **Step 1: Write the failing test**
@@ -573,7 +535,7 @@ git add -A proto/stride/auction proto/stride/airdrop proto/stride/claim x/auctio
 git commit -m "feat(auction,airdrop,claim): remove all tx handlers for wind-down"
 ```
 
-### Task 7: Handler steps — comdex, trade route, autopilot, ICA host, wasm
+### Task 6: Handler steps — comdex, trade route, autopilot, ICA host, wasm
 
 **Files:**
 - Create: `app/upgrades/v35/params.go`
@@ -585,7 +547,7 @@ git commit -m "feat(auction,airdrop,claim): remove all tx handlers for wind-down
 - Produces: `DeprecateComdex(ctx, stakeibcKeeper)`, `DeleteDydxTradeRoute(ctx, stakeibcKeeper)`, `DisableAutopilotStakeibc(ctx, autopilotKeeper)`, `RemoveIcaHostLiquidStakingMessages(ctx, icaHostKeeper)`, `SetWasmUploadAccessToGov(ctx, wasmKeeper) error`, `TransferWasmContractAdminsToGov(ctx, wasmKeeper)` which delegates to an unexported `transferWasmContractAdminsToGov(ctx, wasmKeeper, contractAddresses []string)` so a test can pass its own contracts. `SetWasmUploadAccessToGov`'s error IS propagated by the handler (it can only fail on invalid params, and leaving upload open to the two keys with just a log is worse than a failed upgrade); every other helper logs and continues.
 - Extra test (the plan's original skip-path-only test is not enough): copy `hackatom.wasm` from `$(go list -m -f '{{.Dir}}' github.com/CosmWasm/wasmd)/x/wasm/keeper/testdata/` into `app/upgrades/v35/testdata/`, store and instantiate it twice via `wasmkeeper.NewDefaultPermissionKeeper(s.App.WasmKeeper)` (`Create`, then `Instantiate` with a test admin and init msg `{"verifier":"<addr>","beneficiary":"<addr>"}`), run `transferWasmContractAdminsToGov` on the first only, and assert `GetContractInfo(first).Admin == GovModuleAddress.String()` while the second is unchanged. The test app has a working wasmvm.
 - Also: `x/autopilot/README.md:34-42` gets a note that stakeibc autopilot actions are disabled by param from v35.
-- Depends on: Tasks 1-2
+- Depends on: Task 1
 - Review: yes (wasm admin transfer and ICA host allow-list are security-relevant)
 
 - [ ] **Step 1: Add the constants**
@@ -641,9 +603,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
-	autopilottypes "github.com/Stride-Labs/stride/v35/x/autopilot/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
+	autopilottypes "github.com/Stride-Labs/stride/v34/x/autopilot/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 func (s *UpgradeTestSuite) TestDeprecateComdex() {
@@ -763,14 +725,14 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	autopilotkeeper "github.com/Stride-Labs/stride/v35/x/autopilot/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	autopilotkeeper "github.com/Stride-Labs/stride/v34/x/autopilot/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // DeprecateComdex sets the Deprecated flag on comdex-1 so it carries the same annotation as
 // evmos, stargaze and umee. Halted is deliberately left alone: deprecated zones are not
-// touched by the wind-down, and the flag is what the upgrade 3 redeem gate reads.
+// touched by the wind-down; the flag is documentation, nothing reads it.
 func DeprecateComdex(ctx sdk.Context, stakeibcKeeper stakeibckeeper.Keeper) {
 	hostZone, found := stakeibcKeeper.GetHostZone(ctx, ComdexChainId)
 	if !found {
@@ -895,7 +857,7 @@ git add app/upgrades/v35
 git commit -m "feat(upgrade): v35 - deprecate comdex, delete dYdX trade route, close autopilot and ICA host entry points, wasm to gov"
 ```
 
-### Task 8: Handler steps — Haqq slash-query purge and delegation delta table
+### Task 7: Handler steps — Haqq slash-query purge and delegation delta table
 
 **Files:**
 - Create: `app/upgrades/v35/delegation_deltas.go` (copy of `app/upgrades/v34/delegation_deltas.go`)
@@ -907,7 +869,7 @@ git commit -m "feat(upgrade): v35 - deprecate comdex, delete dYdX trade route, c
 **Interfaces:**
 - Consumes: `scripts/wind-down/measure_delegation_drift.py` output `scripts/wind-down/drift.json` (`zones.<chain_id>.validators[]` rows with `validator_address`, `moniker`, `recorded`, `actual` in base units).
 - Produces: `PurgeHaqqSlashQueries(ctx, stakeibcKeeper, icqKeeper)`, `ReconcileHaqqDelegations(ctx, stakeibcKeeper) (appliedDelta sdkmath.Int)`, `HaqqChainId`, `HaqqDelegationDeltas []DelegationDelta`, the shared `DelegationDelta`/`mustInt`/`reconcileHostZoneDelegations`.
-- Depends on: Tasks 1-2
+- Depends on: Task 1
 - Review: yes (accounting: changes validator delegations and TotalDelegations)
 
 - [ ] **Step 1: Copy the delta helper**
@@ -916,7 +878,7 @@ git commit -m "feat(upgrade): v35 - deprecate comdex, delete dYdX trade route, c
 sed 's/^package v34$/package v35/; s/"v34: /"v35: /g' app/upgrades/v34/delegation_deltas.go > app/upgrades/v35/delegation_deltas.go
 ```
 
-Open the file and confirm every log line now starts with `v35:` and the imports point at `stride/v35` (Task 1 already rewrote the source file's imports).
+Open the file and confirm every log line now starts with `v35:`. The imports stay on `stride/v34` (the module path is not bumped in this plan).
 
 - [ ] **Step 2: Write the delta-table generator**
 
@@ -974,10 +936,10 @@ package v35_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
-	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
+	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // seedHaqqHostZone stores a haqq host zone whose validators match the delta table, each with a
@@ -1098,8 +1060,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
 const HaqqChainId = "haqq_11235-1"
@@ -1109,7 +1071,7 @@ const HaqqChainId = "haqq_11235-1"
 // sub-token dust, so every delta is negative. Generated by
 // scripts/wind-down/gen_delta_table.py; regenerate and re-measure right before the proposal.
 //
-// PASTE THE GENERATOR OUTPUT HERE (Task 8 step 2). The table below is the 2026-09-21 measurement.
+// PASTE THE GENERATOR OUTPUT HERE (Task 7 step 2). The table below is the 2026-09-21 measurement.
 var HaqqDelegationDeltas = []DelegationDelta{
 	// {Name: "...", Address: "haqqvaloper1...", Delta: mustInt("-...")},
 }
@@ -1162,7 +1124,7 @@ Replace the placeholder comment inside `HaqqDelegationDeltas` with the generator
 
 - [ ] **Step 6: Call the steps from the handler**
 
-In `app/upgrades/v35/upgrades.go`, after `RunMigrations` (order relative to Task 7's calls does not matter; put these first):
+In `app/upgrades/v35/upgrades.go`, after `RunMigrations` (order relative to Task 6's calls does not matter; put these first):
 
 ```go
 		// Purge before applying the table so no in-flight query answers against pre-delta state
@@ -1184,7 +1146,7 @@ git commit -m "feat(upgrade): v35 - purge haqq slash queries and true up haqq va
 
 ## Integration tasks (serial, after every parallel task has merged)
 
-### Task 9: Removed-message guard, mainnet export suite, changelog
+### Task 8: Removed-message guard, mainnet export suite, changelog
 
 **Files:**
 - Create: `app/upgrades/v35/removed_messages_test.go`
@@ -1194,8 +1156,8 @@ git commit -m "feat(upgrade): v35 - purge haqq slash queries and true up haqq va
 - Modify: `CHANGELOG.md` (new `## [v35.0.0]` section at the top of the version list)
 
 **Interfaces:**
-- Consumes: every helper from Tasks 7 and 8; the message types left in place by Tasks 3-6.
-- Depends on: Tasks 1-8
+- Consumes: every helper from Tasks 6 and 7; the message types left in place by Tasks 2-5.
+- Depends on: Tasks 1-7
 - Review: yes (release gate)
 
 - [ ] **Step 1: Write the removed-message guard**
@@ -1208,14 +1170,14 @@ package v35_test
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	airdroptypes "github.com/Stride-Labs/stride/v35/x/airdrop/types"
-	auctiontypes "github.com/Stride-Labs/stride/v35/x/auction/types"
-	claimtypes "github.com/Stride-Labs/stride/v35/x/claim/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v35/x/icaoracle/types"
-	icqoracletypes "github.com/Stride-Labs/stride/v35/x/icqoracle/types"
-	stakedymtypes "github.com/Stride-Labs/stride/v35/x/stakedym/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
-	staketiatypes "github.com/Stride-Labs/stride/v35/x/staketia/types"
+	airdroptypes "github.com/Stride-Labs/stride/v34/x/airdrop/types"
+	auctiontypes "github.com/Stride-Labs/stride/v34/x/auction/types"
+	claimtypes "github.com/Stride-Labs/stride/v34/x/claim/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
+	icqoracletypes "github.com/Stride-Labs/stride/v34/x/icqoracle/types"
+	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
 )
 
 // Every message the wind-down spec §5 removes must have no tx handler; the ones it keeps must
@@ -1256,7 +1218,7 @@ func (s *UpgradeTestSuite) TestRemovedMessagesHaveNoHandler() {
 Add a second test in the same file, `TestRemovedMessagesStillDecode`: for one message per module (e.g. `&stakeibctypes.MsgLiquidStake{Creator: <valid bech32>, Amount: sdkmath.NewInt(1), HostDenom: "uatom"}`), build a tx with `s.App.TxConfig().NewTxBuilder()` + `SetMsgs`, encode with `TxConfig().TxEncoder()`, decode with `TxConfig().TxDecoder()`, and assert no error and one msg of the right type. This is what proves historical txs still decode (Global Constraints).
 
 Run: `go test ./app/upgrades/v35/... -run 'TestUpgradeTestSuite/TestRemovedMessages' 2>&1 | tail -3`
-Expected: `ok`. If a message in `removed` still has a handler, the corresponding Task 3-6 missed it; fix that module, do not edit the list.
+Expected: `ok`. If a message in `removed` still has a handler, the corresponding Task 2-5 missed it; fix that module, do not edit the list.
 
 - [ ] **Step 2: Assemble the mainnet export fixture**
 
@@ -1312,11 +1274,11 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v35/app/apptesting"
-	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
-	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
+	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 const mainnetExportPath = "testdata/mainnet_export.json.gz"
@@ -1468,7 +1430,7 @@ git add app/upgrades/v35 CHANGELOG.md
 git commit -m "test(upgrade): v35 removed-message guard and mainnet export suite; changelog"
 ```
 
-### Task 10: Localstride dry run (manual, documents the release checklist)
+### Task 9: Localstride dry run (manual, documents the release checklist)
 
 **Files:**
 - Modify: `app/upgrades/v35/testdata/README.md` (append the dry-run notes and results)
