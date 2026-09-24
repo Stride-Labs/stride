@@ -773,8 +773,11 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   and Dymension is alive but left alone by choice. `docs/wind-down/sttoken-locations.md`
   separates ignored balances into small, unrecoverable and deprecated.
 - Relayers: during window 1 users redeem through Stride, which needs both clients alive on
-  every stToken chain ↔ Stride pair; Neutron's are active but nobody is updating them (35 h
-  old on 2026-09-23), so ops relay that pair. In window 2 the host→Osmosis and
+  every stToken chain ↔ Stride pair; Neutron's and Carbon's are active but nobody is updating
+  them (35 h and 297 h old on 2026-09-23/24), so ops relay those pairs. Axelar's Stride hop is
+  expired on both sides (its Osmosis hop is fine), so Axelar holders wait for the pools.
+  Scope rule for holder locations: every live chain holding $1k or more of a token is served
+  (`docs/wind-down/sttoken-locations.md`). In window 2 the host→Osmosis and
   Stride→Osmosis transfers are relayed by ops where public relayers are absent. After the
   halt, holders relay their own chain→Osmosis hop if nobody else does. The live map is at
   https://claude.ai/artifact/986V5LAXxFgzjq7jXPpE8r.

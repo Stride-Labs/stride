@@ -201,7 +201,10 @@ supplies were read from each chain on 2026-09-23 and agree with the escrows.
 | Penumbra | channel-307 | channel-8 | `transfer/channel-8/stuatom` | Penumbra does not use the `ibc/` hash form; the trace is what matters | 6,237 (0.48%) |
 | Kujira | channel-8 | channel-32 | `transfer/channel-32/stuatom` | `ibc/0306D6B66EAA2EDBB7EAD23C0EC9DDFC69BB43E80B398035E90FBCFEF3FD1A87` | 5,788 (0.45%) |
 | Agoric | channel-148 | channel-59 | `transfer/channel-59/stuatom` | `ibc/B1E6288B5A0224565D915D1F66716486F16D8A44BF33A9EC323DD6BA30764C35` | 2,425 (0.19%) |
-| Comdex | channel-49 | – | – | not in scope for the test | 1,420 (0.11%) |
+| Neutron | channel-123 | channel-8 | `transfer/channel-8/stuatom` | `ibc/B7864B03E1B9FD4F049243E92ABD691586F682137037A9F3FCA5222815620B3C` | 1,094 (0.08%) |
+| Carbon | channel-47 | channel-8 | `transfer/channel-8/stuatom` | `ibc/B7864B03E1B9FD4F049243E92ABD691586F682137037A9F3FCA5222815620B3C` (same hash as Neutron's: both chains use channel-8 to Stride) | 545 (0.04%) |
+| Axelar | channel-69 | channel-64 | `transfer/channel-64/stuatom` | `ibc/CFB9D610B7BB02E8E6FDB0AF87FCADDF97687A3F13E76AC624C500E54335ADAA` | 375 (0.03%) |
+| Comdex | channel-49 | – | – | chain stopped, ignored | 1,420 (0.11%) |
 
 ### stATOM arriving on Osmosis from those chains (two-hop denoms)
 
@@ -217,11 +220,15 @@ sha256 and upper-cased. Supply is live on Osmosis.
 | Penumbra | channel-79703 | channel-4 | `transfer/channel-79703/transfer/channel-8/stuatom` | `ibc/B66737925072CEF58C5E9990038D5B869D778DC42C7C2F1F5CEE8665D907AE8B` | 0 |
 | Kujira | channel-259 | channel-3 | `transfer/channel-259/transfer/channel-32/stuatom` | `ibc/DED75871F78AF8FC9BCFE75BEA82D66A2B2366204E210FD8E4C77A2AAEA1B1E3` | 0 |
 | Agoric | channel-320 | channel-1 | `transfer/channel-320/transfer/channel-59/stuatom` | `ibc/C86C2FA56D954AB05960450215E63605528CB3481694ABEA87CE4DB0EF17D265` | 0.782288 |
+| Neutron | channel-874 | channel-10 | `transfer/channel-874/transfer/channel-8/stuatom` | `ibc/8FCFAF3AE6BA4C5BDFF85B41449FBACE547E2BAC23895E839230404FB0EC3837` | 7.841929 |
+| Carbon | channel-188 | channel-0 | `transfer/channel-188/transfer/channel-8/stuatom` | `ibc/A1FC8CB6B2E965DEDC6F57749F04CCE3D7C15DD10FC2F7BBEEC19E16D0F82397` | 0 |
+| Axelar | channel-208 | channel-3 | `transfer/channel-208/transfer/channel-64/stuatom` | `ibc/7FA89E771D836CC136CEDD28AD88DD5F2A1083883FA4681FDBBFFD1D78E04FCB` | 0 |
 
 The chain registry tags both Secret pairs preferred, but only channel-1 is a `transfer` channel;
 channel-44 belongs to Secret's private-token bridge contract, so bank-held stATOM on Secret has
-exactly one route, channel-1 → channel-88. The Hub and Agoric denoms already have supply, so
-`add_new_assets` can take them without seeding.
+exactly one route, channel-1 → channel-88. The Hub, Agoric and Neutron denoms already have supply, so `add_new_assets` can take them
+without seeding. None of the Neutron, Carbon or Axelar pairs collide with the rate-limiter prefix
+bug (channel-10 vs channel-8, channel-0 vs channel-8, channel-3 vs channel-64).
 
 ### Other denoms on Osmosis
 
@@ -257,6 +264,11 @@ A transfer needs the *destination's* client of the source to be un-expired.
 | Kujira → Osmosis (channel-3 → channel-259) | Osmosis's `07-tendermint-2017` | **Expired** | | same; kaiyo-1 REST endpoints are also down |
 | Stride → Neutron (channel-123 → channel-8) | Stride's client of neutron-1 | Active | | stTIA holders on Neutron; audited 2026-09-23 |
 | Neutron → Osmosis (channel-10 → channel-874) | Osmosis's `07-tendermint-2823` | Active, last header 35 h old | | no relayer keeping it fresh; we may need to relay |
+| Stride ↔ Carbon (channel-47 ↔ channel-8) | both clients | Active but stale (Stride's 297 h, Carbon's 87 h old on 2026-09-24) | | nobody relaying; we relay for window 1 |
+| Carbon → Osmosis (channel-0 → channel-188) | Osmosis's client of carbon-1 | Active, last header 41 h old | | same |
+| Stride ↔ Axelar (channel-69 ↔ channel-64) | both clients | **Expired** | | Axelar holders cannot redeem through Stride |
+| Axelar → Osmosis (channel-3 → channel-208) | Osmosis's client of axelar-dojo-1 | Active | | public relayers; Axelar holders are fine after the halt |
+| Stride ↔ Dymension (channel-197 ↔ channel-0), Dymension → Osmosis (channel-2 → channel-19774) | all clients | Active | | stTIA holders on Dymension |
 
 Channel audit 2026-09-23: every channel id, counterparty id, client destination and `ibc/` hash in this
 file and in `sttoken-locations.md` was re-derived from live Stride and Osmosis state and the chain registry
