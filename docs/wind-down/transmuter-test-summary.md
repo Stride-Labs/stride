@@ -10,7 +10,7 @@ per-transaction record: `transmuter-test-log.md`. Contract and route reference: 
 - Later added the Hub, Agoric and Secret two-hop stATOM denoms so the pool had every foreign route that
   can reach Osmosis today. Ended with 5 pool assets.
 - Two keys: an admin/moderator/LP (the "vault") and a stranger.
-- Frozen at the end, not emptied. About $21 remains inside, all shares held by the admin key.
+- Frozen at the end, not emptied. About $23 remains inside, nearly all shares held by the admin key.
 
 ## What we proved
 
@@ -28,6 +28,21 @@ Every number the plan predicted from the source matched the chain.
 | Levers | Per-route static cap blocks increases past the cap and never blocks the route leaving; the last limiter on a denom is permanent (widen to 1 to disable). Corrupted-asset marking blocks the reverse direction but also blocks the vault's own top-ups. Rescale is uniform only. |
 | Alloyed asset | A plain bearer token: whoever holds it can exit. Custody it like the backing. |
 | Nobody else showed up | 36+ transactions, zero third-party interaction, because the app's router ignores pools this small. |
+
+## Adversarial pass (day 2)
+
+We then tried to take value out that wasn't put in, or to break redemption. Nothing worked:
+
+- 393 fuzzed quotes across every pair including the alloyed asset: never a unit in the trader's favour.
+- Multi-leg routes through the pool (via the alloyed asset, via canonical stATOM) pay more fees and get less.
+- Multi-asset joins and exits round each leg against the trader; a three-unit exit burns 7 shares.
+- Foreign denom, same denom, alloyed as input, u128-max, over-pool exact-out: all rejected cleanly.
+- Tokens bank-sent to the contract are invisible to the pool and unreachable by anyone.
+- Joining before the vault funds gives exactly RR, nothing more.
+- Admin fat-finger (a denom added with a wrong factor) is survivable: mark it corrupted before anyone
+  swaps into it and it is blocked immediately and removed on the next swap.
+- Caps cannot be bypassed by join, and they bind the vault's own native exits (widen first).
+- Pool value never decreased across ~45 more transactions; it ended 14 uatom ahead of its shares.
 
 ## What we found that changes the plan
 

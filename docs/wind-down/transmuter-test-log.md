@@ -204,3 +204,30 @@ hermes could not get through the Secret RPC's rate limit for the full `clear pac
 
 Everything else matched the plan's predictions exactly: rounding, fees, freeze, hand-over, bearer alloyed,
 `add_new_assets` rules, `Insufficient pool asset` on under-funding.
+
+## Task 11: adversarial pass (2026-09-24, pool unfrozen at h 71237622, frozen again at h 71238120)
+
+Goal: take value out that was not put in, or break redemption for others. Every attempt failed the way the
+source says it should. Pool value went 11,531,626 vs shares 11,531,612 at the end: the pool is 14 uatom ahead,
+and its value never decreased across any transaction.
+
+| # | Test | What happened |
+|---|---|---|
+| 11.1 | Rounding fuzz: 393 quotes (`calc_out_amt_given_in` and `calc_in_amt_given_out`) across all 30 ordered pairs of the 5 pool assets + alloyed, amounts 1…10⁶ | zero cases where out > exact or in < exact; 87 quotes rejected for insufficient liquidity (larger than the pool) |
+| 11.2 | Two-leg route stATOM → alloyed → ATOM (h 71237857): 499,500 → 999,087 alloyed → 998,087 ATOM | worse than direct (999,987): each leg pays a taker fee and rounds down |
+| 11.2 | Two-leg Hub-stATOM → stATOM → ATOM (h 71237831): 89,910 → 89,910 → 179,799 | worse than direct (179,835) |
+| 11.3 | Multi-asset join 30,000 ATOM + 100,000 stATOM + 50,000 Hub in one call (h 71237889) | minted exactly 330,025 = 30,000 + 200,017 + 100,008 |
+| 11.3 | Multi-asset exit [1 uatom, 1 ustatom, 1 Hub] (h 71237895) | burned 7 alloyed for 5.0003 of value (each leg rounds up) |
+| 11.4 | OSMO → ATOM through the pool (h 71237748) | `Unable to transmute token with denom: uosmo: expected one of [...]` |
+| 11.4 | stATOM → stATOM (h 71237849) | `Token in must not have the same denom as token out` |
+| 11.4 | `join_pool` with the alloyed asset (h 71237768) | rejected (alloyed is not a pool asset) |
+| 11.4 | exact-out 100,000 alloyed paying stATOM via router (h 71237774) | ok, cost 49,996 = ceil(100,000 / RR): identical to a join |
+| 11.4 | exact-in of u128 max (h 71237781) | bank `insufficient funds`, no state change |
+| 11.4 | exact-out of 1 uatom more than the pool holds (h 71237789) | `Insufficient pool asset` |
+| 11.5 | Bank-send 1,000 uatom straight to the contract (h 71237885) | liquidity unchanged; contract's bank ATOM is now 1,000 above its tracked liquidity; nothing can withdraw it (exits are bounded by tracked liquidity, not bank balance) |
+| 11.6 | Stranger joins 100,000 stATOM before the vault tops up (h 71237934), vault adds 500,000 ATOM (h 71237904), stranger exits (h 71237943) | minted exactly 200,017, burned exactly 200,017 for 200,017 uatom: a pre-funding join is just a redemption, no advantage |
+| 11.7 | Admin fat-finger drill: `add_new_assets` uosmo with factor 1e21 (h 71237971); quote 1,000,000 uosmo → 2,000 uatom; `mark_corrupted_assets` before any swap (h 71237979); swap uosmo → ATOM (h 71237989) and join with uosmo (h 71237995) | both blocked: `Corrupted asset: uosmo must not increase in amount or weight`; the next unrelated swap (h 71238000) removed uosmo from the asset list (zero balance + corrupted = cleaned up). A wrong add is survivable if it is marked corrupted before anyone swaps into it |
+| 11.8 | Hub cap tightened to current weight + 0.005 (0.165): join 50,000 Hub (h 71238107) | `Upper limit exceeded`: join cannot bypass the cap |
+| 11.8 | `exit_pool` 1,000,000 uatom by the admin with the cap in place (h 71238039) | `Upper limit exceeded`: taking native out raises every route's weight, and the vault is bound too. Widen caps before the vault exits native |
+| 11.8 | router 5,000 Hub → ATOM under the margin (h 71238043) | ok |
+| 11.9 | Agoric-hop stATOM | added to the pool, never swapped: the pool holds none and neither key can obtain any (Stride → Agoric client expired). Untestable, not a contract concern |
