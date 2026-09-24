@@ -290,6 +290,15 @@ osmosisd q cosmwasmpool contract-info <pool_id> --node $OSMO_NODE
 POOL=<contract address>
 ```
 
+Pre-funding check, run after `create-pool` and again after `add_new_assets` and the limiters (one
+line per check, exit 1 on any failure; `--rate` pins the creation rate while the zone is not yet halted,
+`--caps caps.json` asserts each route's static limiter):
+
+```bash
+python3 scripts/wind-down/check_transmuter_pool.py --pool-id <pool_id> --chain-id cosmoshub-4 \
+  --admin <vault> --moderator <moderator> --caps caps.json [--rate <RR at creation>]
+```
+
 Read state:
 
 ```bash
