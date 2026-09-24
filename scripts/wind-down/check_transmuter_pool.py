@@ -25,7 +25,6 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from fractions import Fraction
 
 OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
 STRIDE_REST_DEFAULT = "https://stride-api.polkachu.com"
@@ -173,8 +172,7 @@ def load_host_zone(stride_rest: str, chain_id: str) -> HostZone:
         sys.exit(f"cannot load host zone {chain_id}: {zone['_error']}")
     host = zone["host_zone"]
     rate = host["redemption_rate"]
-    whole, _, frac = rate.partition(".")
-    rate_int = int(whole) * RATE_DECIMALS + int(frac.ljust(18, "0")[:18])
+    rate_int = rate_to_int(rate)
     st_denom = "st" + host["host_denom"]
     supply = get_json(
         f"{stride_rest}/cosmos/bank/v1beta1/supply/by_denom?denom={st_denom}"
@@ -189,6 +187,11 @@ def load_host_zone(stride_rest: str, chain_id: str) -> HostZone:
         halted=bool(host.get("halted", False)),
         st_supply_on_stride=st_supply,
     )
+
+
+def rate_to_int(rate: str) -> int:
+    whole, _, frac = rate.partition(".")
+    return int(whole) * RATE_DECIMALS + int(frac.ljust(18, "0")[:18])
 
 
 def load_pool(osmosis_rest: str, pool_id: str) -> Pool:
@@ -350,6 +353,12 @@ def check_factors(
     report.section(
         f"Factors against {zone.chain_id} (RR {zone.redemption_rate}{', halted' if zone.halted else ', NOT halted'})"
     )
+    if not zone.halted:
+        report.line(
+            outcome=Outcome.WARN,
+            name="host zone is not halted: the live rate still moves, so the factor check "
+            "is exact only against the rate at creation (pass --rate)",
+        )
     canonical, native, routes, alloyed = classify_assets(pool=pool, zone=zone)
     report.check(
         name=f"canonical {zone.st_denom} is a pool asset",
@@ -681,6 +690,11 @@ def parse_args() -> argparse.Namespace:
         "--caps",
         help="JSON file mapping each foreign-route denom to its expected static upper_limit",
     )
+    parser.add_argument(
+        "--rate",
+        help="redemption rate the pool was created with (18 decimals); overrides the live "
+        "host-zone rate, for a pool created before the zone was halted",
+    )
     parser.add_argument("--osmosis-rest", default=OSMOSIS_REST_DEFAULT)
     parser.add_argument("--stride-rest", default=STRIDE_REST_DEFAULT)
     parser.add_argument("--no-color", action="store_true")
@@ -693,6 +707,10 @@ def main() -> int:
     caps = json.load(open(args.caps)) if args.caps else None
 
     zone = load_host_zone(stride_rest=args.stride_rest, chain_id=args.chain_id)
+    if args.rate:
+        zone = dataclasses.replace(
+            zone, redemption_rate=args.rate, rate_int=rate_to_int(args.rate)
+        )
     pool = load_pool(osmosis_rest=args.osmosis_rest, pool_id=args.pool_id)
     print(
         f"Transmuter check: pool {pool.pool_id} vs Stride host zone {zone.chain_id} ({zone.st_denom} → {zone.host_denom})"
