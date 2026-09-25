@@ -366,13 +366,20 @@ hermes query packet pending --chain stride-1 --port transfer --channel channel-6
 rly's equivalent is `rly transact flush stride-injective`. Neither tool can revive an
 expired client; that needs `MsgRecoverClient` through governance on the chain holding it.
 
-## 5. The test pool (2026-09-23)
+## 5. The test pools
 
-Pool **3590**, contract `osmo13wcvdtkcu459zjuqdh9f7jshlg64sps0xsduxdsn9r6yez0t270qeg6z6e`, alloyed denom
-`factory/osmo13wcvdtkcu459zjuqdh9f7jshlg64sps0xsduxdsn9r6yez0t270qeg6z6e/alloyed/stATOMtest`, created at height
-71,182,754 with stATOM `1e18`, ATOM and alloyed `2000174393066540432`, admin and moderator
-`osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc`. Assets added: Hub two-hop `ibc/7451…`, Agoric two-hop `ibc/C86C…`,
-Secret two-hop `ibc/8AEB…`. **Frozen** (`set_active_status false`) at height 71,187,802 with ~$21 of liquidity
-left inside, all shares held by the admin key. It is not the real pool; do not add it to any list. Full record:
-`transmuter-test-log.md`. Findings that changed the design are listed at the end of that log; the
-Injective rate-limiter rejection is the one that needs Osmosis's help.
+**Day 1–2 multi-denom pool (superseded design):** pool **3590**, contract
+`osmo13wcvdtkcu459zjuqdh9f7jshlg64sps0xsduxdsn9r6yez0t270qeg6z6e`, canonical stATOM + ATOM + Hub, Agoric and
+Secret two-hop denoms. Drained back to the keys on 2026-09-25 and frozen (dust left).
+
+**Day 3 per-route pools (current design), created 2026-09-25 at RR `2.002036647211047463`, all frozen, admin
+and moderator `osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc`, ATOM marked corrupted in the three funded pools:**
+
+| Pool | Contract | stToken asset |
+|---|---|---|
+| 3595 | `osmo1yjlnqxxa92kpjfl9tx0pf6gru3t4z9d2x8rkxtfpl3yc58hgh69s0lzman` | canonical stATOM |
+| 3596 | `osmo1jnyv2nppaes6sasyr9h5d9zm8kxs6j0swng6cqz3twkuyqrh8tnquvy768` | Hub-hop stATOM |
+| 3597 | `osmo1n36rynafmm7eucl6zz4ct8nxj0pchpakzpwjgn0phzyfwcuhhlysxpjdr6` | Secret-hop stATOM |
+| 3598 | `osmo147uka66qctyk25up83vgcmd52g3ydlt35rw5srdwjf8eu5gpnf9sqv3u9x` | canonical stATOM with **inverted** factors (negative control, never funded) |
+
+None of these are the real pools; do not add them to any list. Full record: `transmuter-test-log.md`.

@@ -263,5 +263,10 @@ All four created at h 71306336–71306358 (fee 20 allUSDC each, gas 2.5M limit).
 | 12.12 | Freeze 3597 | 3597 swaps fail `inactive`; 3595 keeps working |
 | 12.13 | Fuzz every pair on all three pools | 242 quotes, zero in the trader's favour; pool value vs shares: +1, +6, +2 uatom |
 
-All three frozen at h 71306942–956. Remaining: 3595 1,059,839 stATOM / 249,778 ATOM; 3596 993,103 Hub-stATOM / 42,000
+| 12.14 | **All three pools with ATOM marked corrupted** (3596's flag re-set after the 12.10 drain; 3597 marked for the first time; h 71308235/244), then every way of getting a stToken out for ATOM | all six cross-pool routes (Hub→ATOM→canonical, Hub→ATOM→Secret, Secret→ATOM→Hub, Secret→ATOM→canonical, canonical→ATOM→Hub, canonical→ATOM→Secret, h 71308262–297), direct ATOM→stToken on each pool (h 71308340–354), `join_pool` with ATOM (h 71308359) and a stToken-only `exit_pool` (h 71308366): all refused `Corrupted asset: ibc/2739… must not increase in amount or weight`. Redemptions on all three pools and the join+exit path still work (h 71308375–401). No multi-hop or de-hop path remains |
+
+Gas note: failed transactions still pay gas; both keys ran out of OSMO mid-test (72,000 uosmo per failed tx at
+gas 600k × 0.12). Topped up by swapping 0.3 ATOM → 14.1 OSMO through pool 1 (h 71308318).
+
+All three frozen again after 12.14 (first frozen at h 71306942–956). Remaining: 3595 1,059,839 stATOM / 249,778 ATOM; 3596 993,103 Hub-stATOM / 42,000
 ATOM; 3597 399,800 Secret-stATOM / 200,104 ATOM (shares held by the admin key).

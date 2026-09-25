@@ -16,7 +16,9 @@ redemption rate read at creation), funded with ~10 ATOM. Tests run in four layer
 contract math and state; the two user paths (router swap, join-then-exit); foreign-route
 denoms added with `add_new_assets` and redeemed after real IBC hops from the Hub,
 Injective, Secret and Agoric; admin, moderator and adversarial probes. The pool is then
-emptied and frozen. Findings go into `docs/wind-down/transmuter.md` and the spec.
+frozen. Findings go into `docs/wind-down/transmuter.md` and the spec. Tasks 1–11 were run on
+that multi-denom pool (3590); after the design moved to one pool per route, Task 12 re-ran the
+core tests on per-route pools.
 
 **Reference:** `docs/wind-down/transmuter.md` (denoms, channels, message formats, every
 command used here). Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` §3, §7.
@@ -586,3 +588,27 @@ Pool 3590 is unfrozen for this and frozen again at the end. Every step states it
   without holdings; record as "added, not swappable until someone brings some". If the Agoric two-hop
   balance on Osmosis (0.78 held by a third party) cannot be obtained, leave it.
 - [ ] **11.10 Freeze again; reconcile value.**
+
+### Task 12: Per-route retest (added and run 2026-09-25)
+
+Goal: re-prove the core behaviour on the current design, one two-asset pool per stToken route.
+
+- [x] **12.1** Drain pool 3590 back to the keys and freeze it.
+- [x] **12.2** Create pools: canonical stATOM + ATOM, Hub-hop + ATOM, Secret-hop + ATOM, and one with the
+  factors inverted as a negative control. Factors: stToken `1e18`, ATOM and alloyed `RR × 1e18`.
+- [x] **12.3** Run `scripts/wind-down/check_transmuter_pool.py` before funding. Expected: three pools pass,
+  the inverted pool fails the ratio, orientation, spot-price and quote checks. Freeze it unfunded.
+- [x] **12.4** Fund each route pool with exactly its route holdings × RR, the canonical pool with the rest.
+- [x] **12.5** Isolation: each flavour through every other pool, join with a foreign denom, ask a route
+  pool for canonical stATOM. Expected: all `Unable to transmute token with denom`.
+- [x] **12.6** Per pool: router exact-in, exact-out, reverse, dust; a two-pool de-hop route.
+- [x] **12.7** One-transaction join + exit from a key with no shares: exact exit succeeds fee-free, an exit
+  one unit over reverts the whole tx.
+- [x] **12.8** Mark ATOM corrupted on every funded pool. Expected: every cross-pool route, every ATOM → stToken
+  swap, joins with ATOM and stToken-only exits refused; redemptions and join+exit still work; vault top-up
+  refused until unmarked.
+- [x] **12.9** Drain one pool's ATOM to zero with ATOM marked: ATOM is deleted from the pool; recover with
+  `add_new_assets` at the same factor plus a join, and confirm the rate.
+- [x] **12.10** Stranger authority probes and per-pool freeze isolation; rounding fuzz on each pool; freeze all.
+
+Results: `docs/wind-down/transmuter-test-log.md` Task 12, summarised in `transmuter-test-summary.md`.

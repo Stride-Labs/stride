@@ -1,7 +1,9 @@
 # Transmuter mainnet test: summary
 
-Run on 2026-09-23 on osmosis-1 with real funds, against a throwaway stATOM/ATOM pool. Detailed
-per-transaction record: `transmuter-test-log.md`. Contract and route reference: `transmuter.md`.
+Run on 2026-09-23 to 2026-09-25 on osmosis-1 with real funds: first against one multi-denom stATOM pool
+(3590), then, after the design moved to one pool per route, against per-route pools (3595 canonical, 3596 Hub,
+3597 Secret, 3598 a deliberately inverted control). Detailed per-transaction record: `transmuter-test-log.md`.
+Contract and route reference: `transmuter.md`.
 
 ## What we built
 
@@ -10,7 +12,10 @@ per-transaction record: `transmuter-test-log.md`. Contract and route reference: 
 - Later added the Hub, Agoric and Secret two-hop stATOM denoms so the pool had every foreign route that
   can reach Osmosis today. Ended with 5 pool assets.
 - Two keys: an admin/moderator/LP (the "vault") and a stranger.
-- Frozen at the end, not emptied. About $23 remains inside, nearly all shares held by the admin key.
+- Drained back to the keys on day 3 (dust left) and frozen.
+- Day 3: four per-route pools, 3595 (canonical stATOM + ATOM), 3596 (Hub-hop + ATOM), 3597 (Secret-hop +
+  ATOM), each route pool funded at exactly its "escrow share", plus 3598 with inverted factors, never
+  funded. All frozen at the end; about $15 remains across them, shares held by the admin key.
 
 ## What we proved
 
@@ -59,6 +64,9 @@ Hub route, Secret route) plus a deliberately inverted pool:
   stToken purchases and the de-hop are blocked while redemptions keep working. Two costs, both tested: the
   vault must unmark before a top-up, and when a pool's ATOM reaches zero the contract deletes ATOM from the
   pool; recovery is `add_new_assets` with the same factor plus a join, which restores the exact rate.
+- With ATOM marked in all three pools, every multi-hop and de-hop combination (six cross-pool routes),
+  every direct ATOM → stToken swap, joining with ATOM and stToken-only exits were all refused; redemptions
+  kept working in every pool.
 - Freeze is per pool; authority checks and the rounding fuzz came out as before.
 
 ## What we found that changes the plan
@@ -87,10 +95,12 @@ macOS build (Docker works).
 
 ## Cost and accounting
 
-Reconciled to 1 uatom: start plus inflows minus end equals taker fees plus 8 uatom of pool-favouring
-rounding. Spent: 20 allUSDC pool fee, about $0.04 of gas, a few cents of taker fees. Leftovers: ~$21 in the
-frozen pool, 5 allUSDC on the admin key, 1 stATOM back on Injective, 0.5 stATOM on Secret, 1 stATOM in
-Stride's channel-40 escrow awaiting a timeout relay, 0.5 ATOM on the Hub.
+Days 1–2 reconciled to 1 uatom: start plus inflows minus end equals taker fees plus 8 uatom of pool-favouring
+rounding. Every pool, old and new, ends a few uatom ahead of its shares. Spent: 100 allUSDC in pool fees (5
+pools), about 3 OSMO of gas (0.3 ATOM swapped to OSMO on day 3 after failed-tx gas drained the keys), a few
+cents of taker fees. Leftovers: ~$15 across the frozen per-route pools, 15 allUSDC on the admin key, 1
+stATOM back on Injective, 0.5 stATOM on Secret, 1 stATOM in Stride's channel-40 escrow awaiting a timeout
+relay, 0.5 ATOM on the Hub.
 
 ## Recommendations carried into the spec
 
