@@ -44,6 +44,23 @@ We then tried to take value out that wasn't put in, or to break redemption. Noth
 - Caps cannot be bypassed by join, and they bind the vault's own native exits (widen first).
 - Pool value never decreased across ~45 more transactions; it ended 14 uatom ahead of its shares.
 
+## Per-route retest (day 3)
+
+After the design moved to one pool per route, the tests were re-run on three fresh two-asset pools (canonical,
+Hub route, Secret route) plus a deliberately inverted pool:
+
+- The check script passed the three good pools and failed the inverted one on four checks before any funds
+  went in.
+- Isolation is total: a flavour cannot be swapped, joined or requested in any pool but its own.
+- Every swap matched `floor((in − fee) × RR)`; the one-transaction join+exit (the hosted-page path) is atomic
+  and fee-free, and reverts entirely if the exit asks for one unit more than the join minted.
+- **Per-route pools alone don't stop de-hopping**: Hub-stATOM → ATOM → canonical stATOM works across two pools.
+  **Marking the native token "corrupted" after funding makes every pool one-way**: ATOM can only leave, so
+  stToken purchases and the de-hop are blocked while redemptions keep working. Two costs, both tested: the
+  vault must unmark before a top-up, and when a pool's ATOM reaches zero the contract deletes ATOM from the
+  pool; recovery is `add_new_assets` with the same factor plus a join, which restores the exact rate.
+- Freeze is per pool; authority checks and the rounding fuzz came out as before.
+
 ## What we found that changes the plan
 
 1. **Injective is blocked, by an Osmosis bug.** Osmosis's IBC rate-limiter contract compares channel ids
@@ -78,7 +95,10 @@ Stride's channel-40 escrow awaiting a timeout relay, 0.5 ATOM on the Hub.
 ## Recommendations carried into the spec
 
 - One pool per stToken route (decided 2026-09-24 after the test): canonical + native, and a separate
-  two-asset pool per foreign-route denom funded at its escrow share. No limiters, no `add_new_assets`.
+  two-asset pool per foreign-route denom funded at its escrow share. No limiters.
+- Mark the native token corrupted in every pool right after funding (one-way pools); unmark to top up;
+  if a pool's native drains to zero, re-add it with `add_new_assets` at the same factor.
+- Never use the join+exit page from the vault key (it holds funding shares).
 - Split moderator (fast hot key) from admin (multisig); admin cannot be renounced.
 - Destroy validator consensus keys after the halt (12-day Osmosis client window).
 - File the Osmosis rate-limiter bug now; decide Injective holders' path.

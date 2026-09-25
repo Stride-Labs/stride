@@ -231,3 +231,37 @@ and its value never decreased across any transaction.
 | 11.8 | `exit_pool` 1,000,000 uatom by the admin with the cap in place (h 71238039) | `Upper limit exceeded`: taking native out raises every route's weight, and the vault is bound too. Widen caps before the vault exits native |
 | 11.8 | router 5,000 Hub → ATOM under the margin (h 71238043) | ok |
 | 11.9 | Agoric-hop stATOM | added to the pool, never swapped: the pool holds none and neither key can obtain any (Stride → Agoric client expired). Untestable, not a contract concern |
+
+## Task 12: per-route retest (2026-09-25)
+
+The design moved to one pool per stToken route (spec §7), so the core tests were re-run on fresh two-asset
+pools. Pool 3590 was first drained back to the keys (h 71302752/759; 1,517 uatom and 1,500 shares of dust
+remain) and frozen again (h 71302766). RR at creation: `2.002036647211047463`.
+
+| Pool | Contract | Assets | Funded (uatom) |
+|---|---|---|---:|
+| 3595 canonical | `osmo1yjlnqxxa92kpjfl9tx0pf6gru3t4z9d2x8rkxtfpl3yc58hgh69s0lzman` | canonical stATOM + ATOM | 2,371,613 |
+| 3596 Hub route | `osmo1jnyv2nppaes6sasyr9h5d9zm8kxs6j0swng6cqz3twkuyqrh8tnquvy768` | Hub-hop stATOM `ibc/7451…` + ATOM | 1,980,222 (= 989,104 Hub-stATOM × RR, "escrow share") |
+| 3597 Secret route | `osmo1n36rynafmm7eucl6zz4ct8nxj0pchpakzpwjgn0phzyfwcuhhlysxpjdr6` | Secret-hop stATOM `ibc/8AEB…` + ATOM | 1,000,517 (= 499,750 × RR) |
+| 3598 inverted (negative control) | `osmo147uka66qctyk25up83vgcmd52g3ydlt35rw5srdwjf8eu5gpnf9sqv3u9x` | canonical stATOM `RR×1e18`, ATOM `1e18` | never funded; frozen at h 71306408 |
+
+All four created at h 71306336–71306358 (fee 20 allUSDC each, gas 2.5M limit).
+
+| # | Test | Result |
+|---|---|---|
+| 12.1 | `check_transmuter_pool.py` before funding, all four pools | 3595/3596/3597: all checks pass (only warning: zone not halted). 3598: 4 FAILs: factor ratio, "factors inverted", spot price `0.499491…` instead of RR, quote 499,491 instead of 2,002,036. The pre-funding gate catches an inverted pool. |
+| 12.2 | Isolation: Hub-stATOM through 3595, canonical through 3596, Hub-stATOM through 3597, join 3596 with canonical, ATOM→canonical via 3596 | all 5 fail `Unable to transmute token with denom … expected one of […]` |
+| 12.3 | Router exact-in on each pool: 1,000,000 canonical (3595), 400,000 Hub (3596), 200,000 Secret (3597) | out 2,001,636 / 800,013 / 400,006, each exactly floor((in − taker fee) × RR); fees 0.02% canonical, 0.1% routes |
+| 12.4 | Exact-out 200,000 uatom from 3596 | in 99,899 = ceil(200,000 / RR) plus fee |
+| 12.5 | Reverse ATOM → Hub-stATOM on 3596 | 99,900 → 49,899 (allowed while ATOM is not marked) |
+| 12.6 | Two-pool route Hub-stATOM → ATOM (3596) → canonical (3595) | works: 49,950 → 100,001 → 49,939. Per-route pools alone do **not** stop de-hopping across pools |
+| 12.7 | Dust 1 uatom | `Amount of coin to be operated on must be greater than zero` |
+| 12.8 | One-tx join + exit (two `MsgExecuteContract` in one tx), the hosted-page path | stranger, 20,000 Hub-stATOM: exit of 40,041 (1 over) reverts the whole tx at message 1 (`Insufficient shares: required 40041, available 40040`), balance unchanged; exit of exactly 40,040 succeeds with no fee. (From the admin key the over-ask succeeded by burning one of the vault's own funding shares, value-neutral: the page must never be used from the vault key.) |
+| 12.9 | **One-way lever**: `mark_corrupted_assets [ATOM]` on 3595 and 3596 after funding | ATOM → stToken blocked; the 3596→3595 de-hop blocked at leg 2; stToken → ATOM via router and via join+exit still work; the vault's own ATOM top-up blocked (unmark, top up, re-mark) |
+| 12.10 | Drain 3596's ATOM to zero with ATOM marked (exact-out 870,058) | the contract **removes ATOM from the pool** and clears the flag (assets: Hub-stATOM + alloyed only). Recovery: `add_new_assets` ATOM with factor `RR×1e18`, `join_pool` ATOM → spot price back to exactly RR, redemptions resume (3,996 → 8,000) |
+| 12.11 | Stranger on 3597: freeze, mark corrupted, rescale, add assets, transfer admin | all `Unauthorized` |
+| 12.12 | Freeze 3597 | 3597 swaps fail `inactive`; 3595 keeps working |
+| 12.13 | Fuzz every pair on all three pools | 242 quotes, zero in the trader's favour; pool value vs shares: +1, +6, +2 uatom |
+
+All three frozen at h 71306942–956. Remaining: 3595 1,059,839 stATOM / 249,778 ATOM; 3596 993,103 Hub-stATOM / 42,000
+ATOM; 3597 399,800 Secret-stATOM / 200,104 ATOM (shares held by the admin key).

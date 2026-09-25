@@ -493,8 +493,17 @@ to the pool's backing and is custodied like the backing itself.
 No limiters. Isolation comes from the pool layout: a route pool is funded with exactly that
 route's escrow share (below), which bounds what a counterfeit route could ever drain to the
 same amount a cap would have, without a permanent limiter to configure, check or widen. The
-levers that remain are the moderator's freeze per pool and `mark_corrupted_assets` for a pool
-whose stToken denom turns out wrong. The canonical denom's counterfeit risk is a forged Stride
+levers that remain are the moderator's freeze per pool and `mark_corrupted_assets`.
+
+One-way pools: immediately after each funding join the moderator marks the native token
+corrupted (`mark_corrupted_assets [native]`). The contract then refuses any action that raises
+the native balance, so the only possible movement is stToken in, native out: nobody can buy
+stTokens from a pool, and de-hopping a foreign route through two pools (route → native →
+canonical) is impossible. Redemptions by router swap and by join-then-exit are unaffected
+(tested 2026-09-25). Operational consequences: a top-up means unmark, join, re-mark; and when a
+pool's native balance reaches zero the contract deletes the native asset from that pool, after
+which it is restored with `add_new_assets` at the same factor plus a join (tested; the rate comes
+back exact). The canonical denom's counterfeit risk is a forged Stride
 header, handled in the halt checklist (§8).
 
 Funding is one `join_pool` per pool with native tokens only, once every source for that

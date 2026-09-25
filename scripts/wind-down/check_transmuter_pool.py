@@ -54,14 +54,22 @@ ADMIN = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # Osmosis vault (transmut
 MODERATOR = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # freeze / corrupted-asset key
 
 POOLS = [
-    # The 2026-09-23 test pool holds five stToken routes, so it fails the "exactly one route" checks
-    # by design. Replace with the real pools as they are created: one entry per route.
+    # 2026-09-25 per-route test pools. Replace with the real pools as they are created: one entry per route.
+    PoolSpec(chain_id="cosmoshub-4", pool_id="3595", rate_at_creation="2.002036647211047463", route_trace=None),
     PoolSpec(
         chain_id="cosmoshub-4",
-        pool_id="3590",
-        rate_at_creation="2.000174393066540432",
-        route_trace=None,
+        pool_id="3596",
+        rate_at_creation="2.002036647211047463",
+        route_trace="transfer/channel-0/transfer/channel-391/stuatom",  # Hub route
     ),
+    PoolSpec(
+        chain_id="cosmoshub-4",
+        pool_id="3597",
+        rate_at_creation="2.002036647211047463",
+        route_trace="transfer/channel-88/transfer/channel-37/stuatom",  # Secret route
+    ),
+    # Deliberately inverted factors: this entry must FAIL, proving the script catches it.
+    PoolSpec(chain_id="cosmoshub-4", pool_id="3598", rate_at_creation="2.002036647211047463", route_trace=None),
 ]
 
 # ----------------------------------------------------------------------------------------------
