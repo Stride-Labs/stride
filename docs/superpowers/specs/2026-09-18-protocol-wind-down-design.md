@@ -751,7 +751,6 @@ Checklist to halt the chain:
 - Zero stakeibc user redemption records; zero `HostZoneUnbonding` records outside `CLAIMED`
   with a non-zero amount; no claim ICA in flight. Staketia and stakedym: zero unbonding
   records outside `CLAIMED`, zero redemption records, claim addresses drained.
-
 - No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
   `TotalDelegations` at dust on every zone except celestia, where it still carries the
   multisig portion (the per-validator unbond only touches ICA validators).
