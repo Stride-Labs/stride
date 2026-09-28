@@ -212,9 +212,15 @@ Where the stTokens are (bank `denom_owners` on 2026-09-22, in-scope denoms):
   haqq_11235-1 (60, Ethereum-style keys and hashing). On those chains the address with the
   same bytes belongs to nobody the holder knows, so nothing may be sent there by derivation.
 - Every IBC voucher on Stride carries a denom trace in the transfer module (`GetDenom` by
-  hash): its base denom and the hops it took. A single-hop voucher (`transfer/<stride
-  channel>/<base>`) unwinds to its native form when sent back over that same channel, which
-  is how Stride's IBC transfers of host tokens back to their host already work.
+  hash): its base denom and the hops it took, outermost first. Sending a voucher back over
+  its outermost channel unwinds exactly one hop: a single-hop voucher becomes the native
+  token on its source chain (how Stride already returns host tokens to their host), and a
+  multi-hop voucher becomes the shorter voucher on the chain it last came from. Either way
+  the token goes back to the chain it arrived from and never grows a new hop.
+- There is no direct transfer channel between Stride and noble-1. The only single-hop
+  `uusdc` vouchers on Stride are Axelar's (channel-69 and channel-11 to axelar-dojo-1, about
+  2 USDC in total on 2026-09-28), so "USDC on Stride" is negligible; the largest non-host
+  vouchers are stTokens that came back through Osmosis without unwinding.
 
 Transmuter (osmosis-labs/transmuter v3.2.0, code id 996 on osmosis-1; source checked
 2026-09-22):
@@ -452,18 +458,18 @@ looked at, and is a (channel, bech32 prefix) pair:
 - A Stride-native denom (anything that is not an `ibc/` voucher: every stToken, `ustrd`)
   goes to Osmosis over channel-5 with the `osmo` prefix. It lands as its canonical Osmosis
   denom, which is what the pools use.
-- An `ibc/` voucher goes back to the chain it came from, so it lands there as the native
-  token: the denom trace must be exactly one hop, `transfer/<channel>/<base>`, and that
-  channel must be in `SweepUnwindChannels`, a hard-coded map from Stride transfer channel to
-  the counterparty's bech32 prefix. The whitelist is exactly the channels to chains whose
+- An `ibc/` voucher goes back over the channel it arrived on, the outermost hop of its
+  denom trace, so it unwinds one hop: a host token lands native on its host, and a voucher
+  that came through Osmosis lands on Osmosis as whatever it was there. That channel must be
+  in `SweepUnwindChannels`, a hard-coded map from Stride transfer channel to the
+  counterparty's bech32 prefix. The whitelist is exactly the channels to chains whose
   wallets derive the same address bytes as Stride (§3): cosmoshub-4 (channel-0, `cosmos`),
   celestia (channel-162, `celestia`), osmosis-1 (channel-5, `osmo`), juno-1 (channel-24,
-  `juno`), sommelier-3 (channel-150, `somm`), ssc-1 (channel-213, `saga`), dydx-mainnet-1
-  (channel-160, `dydx`) and noble-1 (Stride's Noble channel, `noble`, so USDC goes home as
-  USDC). A voucher on any other channel, or with more than one hop, rejects the whole tx:
-  a derived address on phoenix-1, laozi-mainnet, injective-1 or haqq_11235-1 is not the
-  holder's, and a multi-hop voucher would only move one hop. Holders of those vouchers move
-  them themselves before the halt (§8).
+  `juno`), sommelier-3 (channel-150, `somm`), ssc-1 (channel-213, `saga`) and
+  dydx-mainnet-1 (channel-160, `dydx`). A voucher whose outermost channel is anything else
+  rejects the whole tx: a derived address on phoenix-1, laozi-mainnet, injective-1 or
+  haqq_11235-1 is not the holder's, and the Axelar channels carry about 2 USDC. Holders of
+  those vouchers move them themselves before the halt (§8).
 
 Then, for every listed address, in order:
 
@@ -481,8 +487,8 @@ Then, for every listed address, in order:
   A timeout or a rejected receive refunds the holder on Stride through the normal ICS-20 path
   and ops resubmit that address.
 
-Every destination is therefore either the canonical form on Osmosis or the native form on the
-source chain; the sweep never creates a multi-hop denom anywhere, and it never needs a
+Every destination is therefore the canonical form on Osmosis, the native form on the source
+chain, or one hop closer to it; the sweep never adds a hop to any denom, and it never needs a
 forwarding memo. The only routing inputs are the two constants (channel-5 and the whitelist),
 reviewed in the upgrade PR like the ICA channel map.
 
@@ -631,9 +637,9 @@ Window 2 (after upgrade 2, ~35 days):
    in-scope route, once the coverage check passes (§9).
 6. Last days: `MsgSweepTokensOffStride` in batches of up to 100, per denom, for every holder
    at or above the floor, built from a fresh export: the eleven stTokens and `ustrd` (to
-   Osmosis), then every single-hop voucher on a whitelisted channel worth sweeping (USDC to
-   Noble, ATOM to the Hub, and so on, each back to its source chain). Vouchers from the four
-   chains outside the whitelist are announced as self-service. Resubmit any address whose
+   Osmosis), then every voucher whose outermost channel is whitelisted and that is worth
+   sweeping (ATOM to the Hub, TIA to Celestia, and so on, each back one hop). Vouchers over
+   the four host channels outside the whitelist are announced as self-service. Resubmit any address whose
    transfer timed out (its balance is back on Stride). Relayers on channel-5 and on every
    whitelisted channel stay up until the last packet acks.
 7. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
@@ -767,8 +773,9 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   a 32-byte address, an unknown account, a zero balance (skipped, others in the batch still
   sent), a batch over the bound, an invalid denom string, an stToken and `ustrd` landing on
   channel-5 with the `osmo` prefix, a single-hop voucher on a whitelisted channel landing on
-  that channel with that chain's prefix, a voucher on a non-whitelisted channel and a two-hop
-  voucher each rejecting the batch, the derived address bytes, the
+  that channel with that chain's prefix, a two-hop voucher unwinding one hop over its
+  whitelisted outer channel, a voucher whose outer channel is not whitelisted rejecting the
+  batch, the derived address bytes, the
   full balance and only that denom being sent, and the ICS-20 refund on timeout returning the
   balance to the holder; for the claim-address tx, the full balance and only the TIA denom
   being sent, the built `MsgTransfer` fields (celestia channel, delegation ICA receiver,
@@ -824,9 +831,10 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   whitelist for the sweep, and the `chain_id → host-side channel to Osmosis` map; the batch
   bound after measuring gas.
 - Version numbers for the two upgrades.
-- Which vouchers go on the sweep list (USDC and the whitelisted hosts' native tokens at least),
-  sized from the export by value like the stTokens; and Stride's transfer channel to noble-1,
-  confirmed from the denom trace of the USDC voucher before it goes into `SweepUnwindChannels`.
+- Which vouchers go on the sweep list (the whitelisted hosts' native tokens at least), sized
+  from the export by value like the stTokens. Whether to whitelist the two Axelar channels for
+  their 2 USDC (axelar uses coin type 118, so derivation would hold) is not worth a constant
+  unless the export shows more.
 - Identify the owners of the interchain accounts on Stride that hold stTokens (2.3k stATOM in
   one) and the 32-byte holders, and notify them.
 - Whether the legacy claim module's 2022 airdrops are already expired (its REST query is not

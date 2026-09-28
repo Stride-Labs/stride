@@ -19,8 +19,8 @@ Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` (§3a ope
 - Gating, verbatim from spec §3a and §6: `MsgUndelegateFromValidators`, `MsgTransferFromIca` and `MsgTransferStaketiaClaimBalance` check `utils.ValidateAdminAddress(msg.Creator)` in `ValidateBasic`; `MsgSweepTokensOffStride` checks `msg.Creator == types.SweepOperatorAddress`. `MsgUpdateValidatorSharesExchRate` and `MsgCalibrateDelegation` gain `utils.ValidateAdminAddress`.
 - Constants, verbatim from spec §3a and §6, all in `x/stakeibc/types/wind_down.go`: `SweepOperatorAddress` and `OsmosisVaultAddress` (empty until the release-gate task fills them; every use fails closed while empty), `OsmosisChainId = "osmosis-1"`, `OsmosisBech32Prefix = "osmo"`, `StrideToOsmosisTransferChannelId = "channel-5"`, `MaxSweepBatchSize = 100`, `WindDownTransferTimeout = 24 * time.Hour`, and `HostToOsmosisTransferChannel` mapping each of the eleven in-scope chain ids to the transfer channel on that host that leads to Osmosis (osmosis-1 maps to `""`, which selects the ICA bank-send form).
 - The transfer tx accepts exactly `ica_type ∈ {DELEGATION, WITHDRAWAL, FEE, REDEMPTION}`.
-- The sweep takes any valid bank denom and picks its destination from the denom, once per tx (spec §6): a Stride-native denom (no `ibc/` prefix: every stToken, `ustrd`) goes to Osmosis over `StrideToOsmosisTransferChannelId` with the `osmo` prefix; an `ibc/` voucher must have a single-hop trace whose channel is a key of `SweepUnwindChannels` (channel → counterparty bech32 prefix) and goes back over that channel with that prefix. Any other voucher rejects the whole tx. No memo, ever.
-- `SweepUnwindChannels`, verbatim from spec §6: channel-0 `cosmos`, channel-162 `celestia`, channel-5 `osmo`, channel-24 `juno`, channel-150 `somm`, channel-213 `saga`, channel-160 `dydx`, plus Stride's channel to noble-1 → `noble` (confirmed from the USDC voucher's denom trace before the PR is cut). Nothing for phoenix-1, laozi-mainnet, injective-1 or haqq_11235-1: their wallets derive different address bytes.
+- The sweep takes any valid bank denom and picks its destination from the denom, once per tx (spec §6): a Stride-native denom (no `ibc/` prefix: every stToken, `ustrd`) goes to Osmosis over `StrideToOsmosisTransferChannelId` with the `osmo` prefix; an `ibc/` voucher goes back over the outermost channel of its denom trace (unwinding one hop) with that channel's prefix, and only if that channel is a key of `SweepUnwindChannels` (channel → counterparty bech32 prefix). Any other voucher rejects the whole tx. No memo, ever.
+- `SweepUnwindChannels`, verbatim from spec §6: channel-0 `cosmos`, channel-162 `celestia`, channel-5 `osmo`, channel-24 `juno`, channel-150 `somm`, channel-213 `saga`, channel-160 `dydx`. Nothing for phoenix-1, laozi-mainnet, injective-1 or haqq_11235-1 (their wallets derive different address bytes) and nothing for the Axelar channels (about 2 USDC). There is no Stride to noble-1 channel.
 - The sweep's on-chain rule set (spec §6): an address is sweepable iff it decodes to 20 bytes, is not a transfer escrow address, and its account is a `BaseAccount` or one of `ContinuousVestingAccount`, `DelayedVestingAccount`, `PeriodicVestingAccount`, `StridePeriodicVestingAccount`. Anything else, including module accounts and `InterchainAccount`, rejects the whole batch. A zero balance is skipped with an event, not an error.
 - Upgrade handler helpers never return an error for a missing-state case; they log and continue (v34 convention). Only `RunMigrations` errors propagate.
 - macOS host: use `sed -i ''` (BSD sed). Every commit message ends with the attribution lines from the session's system reminder. Do not push. Branch from `wind-down-design` per task in worktrees as the sub-skill directs.
@@ -208,9 +208,9 @@ const (
 
 // SweepUnwindChannels maps a Stride transfer channel to the bech32 prefix of its counterparty
 // chain, for the chains whose wallets derive the same address bytes as Stride (secp256k1, coin
-// type 118). MsgSweepTokensOffStride sends a single-hop voucher back over its channel only when
-// the channel is here; on any other chain the address with the same bytes is not the holder's.
-// Ops confirm the noble-1 channel from the USDC voucher's denom trace before the upgrade PR.
+// type 118). MsgSweepTokensOffStride sends a voucher back over the outermost channel of its
+// denom trace only when that channel is here; on any other chain the address with the same
+// bytes is not the holder's.
 var SweepUnwindChannels = map[string]string{
 	"channel-0":   "cosmos",   // cosmoshub-4
 	"channel-162": "celestia", // celestia
@@ -2441,13 +2441,28 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_VoucherUnwindsToSourceChain()
 	s.Require().True(s.App.BankKeeper.GetSupply(s.Ctx, uatomVoucher.IBCDenom()).IsZero())
 }
 
+// A multi-hop voucher unwinds one hop over its outermost channel when that is whitelisted
+func (s *KeeperTestSuite) TestSweepTokensOffStride_MultiHopVoucherUnwindsOneHop() {
+	tc := s.SetupSweep()
+	twoHops := transfertypes.NewDenom("uusdc", transfertypes.NewHop(transfertypes.PortID, ibctesting.FirstChannelID), transfertypes.NewHop(transfertypes.PortID, "channel-750"))
+	s.App.TransferKeeper.SetDenom(s.Ctx, twoHops)
+	s.FundAccount(tc.base, sdk.NewCoin(twoHops.IBCDenom(), sdkmath.NewInt(400)))
+
+	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)
+	numSwept, _, err := s.App.StakeibcKeeper.SweepTokensOffStride(s.Ctx, &types.MsgSweepTokensOffStride{Denom: twoHops.IBCDenom(), Addresses: []string{tc.base.String()}})
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), numSwept)
+	s.Require().Equal(startSequence+1, s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID))
+	s.CheckEventValueEmitted(types.EventTypeSweepTokensOffStride, types.AttributeKeyChannel, ibctesting.FirstChannelID)
+}
+
 // Vouchers with no destination reject the whole batch before anything is sent
 func (s *KeeperTestSuite) TestSweepTokensOffStride_VoucherRejections() {
 	tc := s.SetupSweep()
 	notWhitelisted := transfertypes.NewDenom("uluna", transfertypes.NewHop(transfertypes.PortID, "channel-999"))
-	twoHops := transfertypes.NewDenom("uusdc", transfertypes.NewHop(transfertypes.PortID, ibctesting.FirstChannelID), transfertypes.NewHop(transfertypes.PortID, "channel-7"))
+	outerNotWhitelisted := transfertypes.NewDenom("uusdc", transfertypes.NewHop(transfertypes.PortID, "channel-999"), transfertypes.NewHop(transfertypes.PortID, ibctesting.FirstChannelID))
 	s.App.TransferKeeper.SetDenom(s.Ctx, notWhitelisted)
-	s.App.TransferKeeper.SetDenom(s.Ctx, twoHops)
+	s.App.TransferKeeper.SetDenom(s.Ctx, outerNotWhitelisted)
 	unknownHash := "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
 
 	cases := []struct {
@@ -2456,7 +2471,7 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_VoucherRejections() {
 		err   string
 	}{
 		{name: "channel not whitelisted", denom: notWhitelisted.IBCDenom(), err: "not whitelisted"},
-		{name: "two hops", denom: twoHops.IBCDenom(), err: "single-hop"},
+		{name: "outer hop not whitelisted", denom: outerNotWhitelisted.IBCDenom(), err: "not whitelisted"},
 		{name: "unknown voucher", denom: unknownHash, err: "no denom trace"},
 	}
 	for _, c := range cases {
@@ -2579,7 +2594,7 @@ func (k Keeper) SweepTokensOffStride(ctx sdk.Context, msg *types.MsgSweepTokensO
 }
 
 // resolveSweepDestination picks the channel and address prefix for a denom (spec §6): a
-// Stride-native denom goes to Osmosis; an ibc/ voucher goes back over its single hop when
+// Stride-native denom goes to Osmosis; an ibc/ voucher goes back over its outermost hop when
 // that channel is whitelisted, which is exactly the set of chains whose wallets derive the
 // same address bytes as Stride. Everything else has no destination.
 func (k Keeper) resolveSweepDestination(ctx sdk.Context, denom string) (channelId string, bech32Prefix string, err error) {
@@ -2595,8 +2610,9 @@ func (k Keeper) resolveSweepDestination(ctx sdk.Context, denom string) (channelI
 	if !found {
 		return "", "", errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "no denom trace for %s", denom)
 	}
-	if len(trace.Trace) != 1 || trace.Trace[0].PortId != transfertypes.PortID {
-		return "", "", errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "%s (%s) is not a single-hop transfer voucher; only those unwind to their source", denom, trace.Path())
+	// The outermost hop is the channel the voucher arrived on; sending it back there unwinds one hop
+	if len(trace.Trace) == 0 || trace.Trace[0].PortId != transfertypes.PortID {
+		return "", "", errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "%s (%s) is not a transfer voucher", denom, trace.Path())
 	}
 	channelId = trace.Trace[0].ChannelId
 	bech32Prefix, whitelisted := types.SweepUnwindChannels[channelId]
@@ -2805,8 +2821,8 @@ the dollar floor ops chose, and writes one file per batch that the CLI consumes:
 
 Every in-scope stToken is on the sweep list automatically, priced through its zone's redemption
 rate. Any other denom (ustrd, a USDC voucher) is added with --extra-denom DENOM=USD_PER_TOKEN:DECIMALS,
-e.g. --extra-denom ustrd=0.05:6. An ibc/ extra denom is accepted only if its trace in the export
-is a single hop over a channel in SWEEP_UNWIND_CHANNELS (mirrors x/stakeibc/types/wind_down.go),
+e.g. --extra-denom ustrd=0.05:6. An ibc/ extra denom is accepted only if the outermost hop of its
+trace in the export is a channel in SWEEP_UNWIND_CHANNELS (mirrors x/stakeibc/types/wind_down.go),
 which is the same rule the chain applies. The chain re-checks every rule; this script only
 decides who is above the floor.
 """
@@ -2922,7 +2938,7 @@ def write_batches(holders: dict[str, list[Holder]], batch_size: int, out_dir: pa
 
 
 def reject_unwindable_vouchers(export: dict, extra_denoms: dict[str, ExtraDenom]) -> None:
-    """Fail fast on an ibc/ extra denom the chain would reject: not single-hop, or not on a whitelisted channel."""
+    """Fail fast on an ibc/ extra denom the chain would reject: its outermost hop is not a whitelisted channel."""
     traces = {IBC_PREFIX + entry["hash"] if "hash" in entry else ibc_denom(entry): entry for entry in export["app_state"]["transfer"]["denoms"]}
     for denom in extra_denoms:
         if not denom.startswith(IBC_PREFIX):
@@ -2931,8 +2947,8 @@ def reject_unwindable_vouchers(export: dict, extra_denoms: dict[str, ExtraDenom]
         if trace is None:
             raise SystemExit(f"{denom}: no denom trace in the export")
         hops = trace["trace"]
-        if len(hops) != 1 or hops[0]["channel_id"] not in SWEEP_UNWIND_CHANNELS:
-            raise SystemExit(f"{denom}: trace {hops} is not a single hop over a whitelisted channel; the chain would reject it")
+        if not hops or hops[0]["channel_id"] not in SWEEP_UNWIND_CHANNELS:
+            raise SystemExit(f"{denom}: outermost hop of {hops} is not a whitelisted channel; the chain would reject it")
 
 
 def ibc_denom(entry: dict) -> str:
