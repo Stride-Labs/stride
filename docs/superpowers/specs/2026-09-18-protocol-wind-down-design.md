@@ -38,7 +38,8 @@ In scope:
   removing every IBC rate limit at upgrade 2.
 - Four admin txs added at upgrade 2: per-validator undelegation, ICA-to-Osmosis transfer,
   the staketia claim-address transfer,
-  and the batched token sweep to Osmosis (stTokens, STRD, and anything else holders left on Stride).
+  and the batched token sweep off Stride (stTokens and STRD to Osmosis, IBC vouchers back to
+  their source chain over a whitelisted channel).
 - The Osmosis side as an ops procedure (§7): one transmuter per stToken, its assets, its
   funding, and the coverage check that gates it. No Stride code is involved.
 
@@ -204,7 +205,16 @@ Where the stTokens are (bank `denom_owners` on 2026-09-22, in-scope denoms):
   Osmosis address of a 20-byte Stride account is the same bytes with the `osmo` prefix, and
   the same key controls both. A multisig address is the hash of its member keys and threshold
   and derives the same way. 32-byte addresses (contracts, interchain accounts, module-derived
-  accounts) have no controlling key and no counterpart.
+  accounts) have no controlling key and no counterpart. The same holds for every chain whose
+  wallets use secp256k1 on coin type 118 (chain registry `slip44`): cosmoshub-4, celestia,
+  osmosis-1, juno-1, sommelier-3, ssc-1, dydx-mainnet-1, noble-1. It does not hold where the
+  wallet convention differs: phoenix-1 (coin type 330), laozi-mainnet (494), injective-1 and
+  haqq_11235-1 (60, Ethereum-style keys and hashing). On those chains the address with the
+  same bytes belongs to nobody the holder knows, so nothing may be sent there by derivation.
+- Every IBC voucher on Stride carries a denom trace in the transfer module (`GetDenom` by
+  hash): its base denom and the hops it took. A single-hop voucher (`transfer/<stride
+  channel>/<base>`) unwinds to its native form when sent back over that same channel, which
+  is how Stride's IBC transfers of host tokens back to their host already work.
 
 Transmuter (osmosis-labs/transmuter v3.2.0, code id 996 on osmosis-1; source checked
 2026-09-22):
@@ -244,7 +254,7 @@ host chain, so there is no Stride-side vault.
 | Name | Chain | Type | Status | Constant | Role |
 |---|---|---|---|---|---|
 | Protocol admin | Stride | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins` | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages. |
-| Sweep operator | Stride | new key | to create | `SweepOperatorAddress` | The only address that can sign `MsgSweepTokensToOsmosis`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
+| Sweep operator | Stride | new key | to create | `SweepOperatorAddress` | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
 | Osmosis vault | Osmosis | new multisig | to create | `OsmosisVaultAddress` | Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
 
 The sweep operator and the Osmosis vault are created in window 1, proven before the upgrade 2
@@ -433,12 +443,29 @@ The same trick, sending a Stride-side voucher to the zone's delegation ICA so it
 the ICA balance, is why nothing else needs a Stride-side account or a hop through a host
 chain; the only Stride-side balance worth it is this one.
 
-New admin tx `MsgSweepTokensToOsmosis { creator, denom, addresses: [string] }`, the batched
-token sweep. `denom` is any bank denom (a valid denom string, nothing else is checked): the
-eleven stTokens first, then `ustrd` and whatever else holders left on Stride, such as USDC.
-`addresses` is non-empty and at most 100 entries (the batch bound that keeps a tx inside the
-block gas limit; the plan measures the real cost and can raise it). For every listed address,
-in order:
+New admin tx `MsgSweepTokensOffStride { creator, denom, addresses: [string] }`, the batched
+token sweep. `denom` is any bank denom; `addresses` is non-empty and at most 100 entries (the
+batch bound that keeps a tx inside the block gas limit; the plan measures the real cost and
+can raise it). The destination is decided once per tx from the denom, before any address is
+looked at, and is a (channel, bech32 prefix) pair:
+
+- A Stride-native denom (anything that is not an `ibc/` voucher: every stToken, `ustrd`)
+  goes to Osmosis over channel-5 with the `osmo` prefix. It lands as its canonical Osmosis
+  denom, which is what the pools use.
+- An `ibc/` voucher goes back to the chain it came from, so it lands there as the native
+  token: the denom trace must be exactly one hop, `transfer/<channel>/<base>`, and that
+  channel must be in `SweepUnwindChannels`, a hard-coded map from Stride transfer channel to
+  the counterparty's bech32 prefix. The whitelist is exactly the channels to chains whose
+  wallets derive the same address bytes as Stride (§3): cosmoshub-4 (channel-0, `cosmos`),
+  celestia (channel-162, `celestia`), osmosis-1 (channel-5, `osmo`), juno-1 (channel-24,
+  `juno`), sommelier-3 (channel-150, `somm`), ssc-1 (channel-213, `saga`), dydx-mainnet-1
+  (channel-160, `dydx`) and noble-1 (Stride's Noble channel, `noble`, so USDC goes home as
+  USDC). A voucher on any other channel, or with more than one hop, rejects the whole tx:
+  a derived address on phoenix-1, laozi-mainnet, injective-1 or haqq_11235-1 is not the
+  holder's, and a multi-hop voucher would only move one hop. Holders of those vouchers move
+  them themselves before the halt (§8).
+
+Then, for every listed address, in order:
 
 - Reject the whole tx if the address is not sweepable: it must decode to 20 bytes and its
   account must be a `BaseAccount` or one of the vesting account types; transfer escrow
@@ -450,18 +477,14 @@ in order:
   export and the tx).
 - Otherwise submit an ICS-20 `MsgTransfer` through `transferKeeper.Transfer` of the full
   balance, sender the holder's Stride address, receiver the same 20 bytes bech32-encoded with
-  the `osmo` prefix, over the Stride to Osmosis transfer channel (channel-5, a constant), with
-  a one-day timeout and no memo. A timeout or a rejected receive refunds the holder on Stride
-  through the normal ICS-20 path and ops resubmit that address.
+  the destination prefix, over the destination channel, with a one-day timeout and no memo.
+  A timeout or a rejected receive refunds the holder on Stride through the normal ICS-20 path
+  and ops resubmit that address.
 
-What lands on Osmosis depends on the denom. Stride-native denoms (every stToken, `ustrd`)
-arrive as their canonical Osmosis denom, minted over channel-5. A denom that is itself an IBC
-voucher on Stride (USDC from Noble, any host native token) arrives as a two-hop denom
-(`transfer/channel-326/transfer/<stride channel>/<base>`), not as the canonical Osmosis
-denom, because the sweep sends no forwarding memo. That is deliberate: a memo would put a
-per-denom routing constant on the path that moves user funds, and a two-hop USDC on Osmosis
-is still the holder's, swappable or unwindable by them. If a canonical landing is wanted for a
-voucher denom, that is an ops decision recorded in §11, not a change to the tx.
+Every destination is therefore either the canonical form on Osmosis or the native form on the
+source chain; the sweep never creates a multi-hop denom anywhere, and it never needs a
+forwarding memo. The only routing inputs are the two constants (channel-5 and the whitelist),
+reviewed in the upgrade PR like the ICA channel map.
 
 One tx sweeps up to 100 holders of one denom; the whole sweep at the chosen floor is a few
 thousand packets over a few days (§3). There is no floor on chain: only the sweep operator can
@@ -606,11 +629,13 @@ Window 2 (after upgrade 2, ~35 days):
    the full balance, then `WITHDRAWAL` again (undelegation auto-withdraws accrued rewards
    there). Then create and fund that stToken's pools (§7), the canonical one and one per
    in-scope route, once the coverage check passes (§9).
-6. Last days: `MsgSweepTokensToOsmosis` in batches of up to 100, per denom, for every holder
-   at or above the floor, built from a fresh export: the eleven stTokens, then `ustrd`, then
-   the other denoms worth sweeping (USDC and any voucher above the floor). Resubmit any
-   address whose transfer timed out (its balance is back on Stride). Relayers on channel-5
-   stay up until the last packet acks.
+6. Last days: `MsgSweepTokensOffStride` in batches of up to 100, per denom, for every holder
+   at or above the floor, built from a fresh export: the eleven stTokens and `ustrd` (to
+   Osmosis), then every single-hop voucher on a whitelisted channel worth sweeping (USDC to
+   Noble, ATOM to the Hub, and so on, each back to its source chain). Vouchers from the four
+   chains outside the whitelist are announced as self-service. Resubmit any address whose
+   transfer timed out (its balance is back on Stride). Relayers on channel-5 and on every
+   whitelisted channel stay up until the last packet acks.
 7. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
    every balance is sent.
 8. After the halt: every validator rotates or destroys its consensus key, and Stride Labs
@@ -652,7 +677,8 @@ Checklist to halt the chain:
 - Every pool, canonical and per route, created, funded and passing the coverage check (§9)
   against a fresh export.
 - The sweep complete: no sweepable account at or above the floor holds any in-scope stToken,
-  `ustrd`, or another denom on the sweep list, and no sweep packet outstanding on channel-5.
+  `ustrd`, or a whitelisted voucher on the sweep list, and no sweep packet outstanding on
+  channel-5 or a whitelisted channel.
 - Validators and STRD delegators have withdrawn their rewards; interchain-account holders
   have been notified and given time to move out.
 
@@ -701,7 +727,8 @@ accepts.
 
 The token sweep does not change any of this: it moves stTokens from Stride accounts into
 escrow, so bank supply is unchanged and the swept tokens become canonical-denom holders on
-Osmosis. Sweeping `ustrd` and other denoms has no bearing on the pools at all. Unsweepable holdings (§2) stay in supply, are covered by the funding, and their
+Osmosis. Sweeping `ustrd` and unwinding vouchers to their source chains has no bearing on the
+pools at all. Unsweepable holdings (§2) stay in supply, are covered by the funding, and their
 backing is what the pools hold at the end.
 
 ## §9a. Validator compensation
@@ -738,8 +765,10 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   timeout, empty memo); for the sweep tx, the highest-review item: table-driven tests for a
   base account, each vesting type, an escrow address, a module account, an interchain account,
   a 32-byte address, an unknown account, a zero balance (skipped, others in the batch still
-  sent), a batch over the bound, an invalid denom string, an stToken and `ustrd` and an IBC
-  voucher each sweeping the same way, the derived `osmo` address bytes, the
+  sent), a batch over the bound, an invalid denom string, an stToken and `ustrd` landing on
+  channel-5 with the `osmo` prefix, a single-hop voucher on a whitelisted channel landing on
+  that channel with that chain's prefix, a voucher on a non-whitelisted channel and a two-hop
+  voucher each rejecting the batch, the derived address bytes, the
   full balance and only that denom being sent, and the ICS-20 refund on timeout returning the
   balance to the holder; for the claim-address tx, the full balance and only the TIA denom
   being sent, the built `MsgTransfer` fields (celestia channel, delegation ICA receiver,
@@ -791,12 +820,13 @@ rewards (including stTokens, which they then move to Osmosis themselves) before 
   halt, holders relay their own chain→Osmosis hop if nobody else does. The live map is at
   https://claude.ai/artifact/986V5LAXxFgzjq7jXPpE8r.
 - Exact proto shapes and enum names for the four admin txs; the constants: the two new
-  addresses in §3a once created, the channel-5 constant for the sweep and the
-  `chain_id → host-side channel to Osmosis` map; the batch bound after measuring gas.
+  addresses in §3a once created, the channel-5 constant and the `SweepUnwindChannels`
+  whitelist for the sweep, and the `chain_id → host-side channel to Osmosis` map; the batch
+  bound after measuring gas.
 - Version numbers for the two upgrades.
-- Which non-stToken denoms go on the sweep list besides `ustrd` (USDC at least), and whether
-  any voucher denom should instead be unwound through its source chain for a canonical landing
-  on Osmosis. The tx sends no memo (§6); an unwind would be a separate ops route, not a tx change.
+- Which vouchers go on the sweep list (USDC and the whitelisted hosts' native tokens at least),
+  sized from the export by value like the stTokens; and Stride's transfer channel to noble-1,
+  confirmed from the denom trace of the USDC voucher before it goes into `SweepUnwindChannels`.
 - Identify the owners of the interchain accounts on Stride that hold stTokens (2.3k stATOM in
   one) and the 32-byte holders, and notify them.
 - Whether the legacy claim module's 2022 airdrops are already expired (its REST query is not
