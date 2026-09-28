@@ -1,6 +1,6 @@
 # Protocol Wind-Down: Consolidated Single-Upgrade Design
 
-Status: draft for review, on branch `wind-down-design-consolidation`. This document revisits the
+Status: approved design (brainstorm of 2026-09-28), on branch `wind-down-design-consolidation`. This document revisits the
 sequencing of `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` (the "two-upgrade
 spec"). It changes only what must change to ship one upgrade instead of two; everything it does
 not mention (facts §3, operator addresses §3a, the Osmosis side §7, drift measurement §8a,
@@ -85,7 +85,7 @@ cleanup; only the calls go):
 | Call | Why it must stop |
 |---|---|
 | `UpdateRedemptionRates` (stride epoch) | The rate must not move once the drain starts: after an admin undelegation, `TotalDelegations` falls with no record behind it and the formula would cut the rate. Deleting the call freezes `HostZone.RedemptionRate` at its last pre-upgrade value. |
-| `ReinvestRewards` (stride epoch) | It delegates the withdrawal ICA's rewards back to validators, which would create fresh delegations after the drain and need a second unbonding period. |
+| `ReinvestRewards` (stride epoch) | It delegates the withdrawal ICA's rewards back to validators, which would create fresh delegations after the drain and need a second unbonding period. It is also the root of the whole fee machinery: it submits the withdrawal-balance ICQ, whose callback splits the balance, sends the fee cut to the fee ICA and delegates the rest; the reinvest ack then queues the fee-balance ICQ, whose callback moves the fee ICA to the reward collector. Removing this one call stops all of it: no ICQ, no fee split, no delegation, no reward-collector inflow. Rewards simply accumulate in the withdrawal ICA and leave with `MsgTransferFromIca WITHDRAWAL`; what the fee ICA holds at the upgrade leaves with `MsgTransferFromIca FEE`. Cutting the split inside the callback instead would be more code for the same result. |
 | `StakeExistingDepositsOnHostZones` (stride epoch) | Same: new delegations after the drain. Deposits that still reach the delegation ICA simply stay there and leave with the ICA balance. |
 | `RebalanceAllHostZones` (stride epoch) | Redelegations flag `DelegationChangesInProgress` and would collide with the drain. |
 | `TransferAllRewardTokens` (stride epoch) | Already a no-op with the trade route deleted; removed for clarity. |
@@ -219,14 +219,17 @@ surgery:
 - Localstride dry run: exercise the sequencing rule (submit a redemption, let the day epoch
   unbond it, then drain, then let the sweep and claim complete).
 
-## §9. Decisions to confirm
+## §9. Decisions taken (brainstorm, 2026-09-28)
 
-1. Freeze by deleting the hook calls (recommended) versus a new per-zone flag that gates them.
-   Deleting is less code, cannot be toggled back, and reads as what it is; a flag would only be
-   worth it if some zone needed to keep compounding, and none does.
-2. Delete `AuctionOffRewardCollectorBalance` at the upgrade (recommended), so validators are
-   STRD-only from day 0, rather than letting it mint against the frozen rate until the drain.
-3. Do the drain after the first post-upgrade day epoch (recommended), not before it, so the
-   pipeline never has to compete with it.
-4. Stakedym never halted (recommended); its operator flushes after the upgrade and the module
-   idles.
+1. In-flight redemptions finish through the existing pipeline; no zone is halted, and the
+   compounding flows are stopped by deleting their hook calls rather than by a new per-zone
+   flag. Deleting is less code, cannot be toggled back, and reads as what it is.
+2. The drain runs after the first post-upgrade day epoch has submitted the open redemptions
+   and their acks have landed, never before it, so the pipeline and the drain never compete
+   and no reservation arithmetic is needed.
+3. `AuctionOffRewardCollectorBalance` is deleted at the upgrade: validators are paid in STRD
+   only from day 0.
+4. The fee cut is not carved out separately: deleting `ReinvestRewards` already stops the fee
+   split, the fee ICQ and the reward-collector inflow (§4). Rewards stay in the withdrawal ICA
+   until the transfer tx moves them.
+5. Stakedym is never halted; its operator flushes after the upgrade and the module idles.
