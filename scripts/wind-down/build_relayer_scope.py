@@ -245,32 +245,32 @@ def age_days(timestamp: str | None) -> float | None:
 
 def decide(chain: ChainScope) -> None:
     if chain.chain_id == OSMOSIS_CHAIN_ID:
-        chain.stride_decision = "sweep channel (ours)"
+        chain.stride_decision = "sweep channel, we relay it"
     else:
-        chain.stride_decision = "ICA (ours)" if chain.host else "none"
+        chain.stride_decision = "ICA channel, we relay it" if chain.host else "not needed after the upgrade"
 
     leg = chain.osmosis_leg
     if chain.chain_id == OSMOSIS_CHAIN_ID:
-        chain.osmosis_decision = "destination"
+        chain.osmosis_decision = "destination, the pools live here"
     elif chain.dead:
-        chain.osmosis_decision = "none (chain dead)"
+        chain.osmosis_decision = "not served: chain dead"
     elif chain.deprecated_only:
-        chain.osmosis_decision = "none (deprecated zone)"
+        chain.osmosis_decision = "not served: deprecated zone"
     elif leg is None and chain.usd < MIN_USD_FOR_OPS_RELAYER:
-        chain.osmosis_decision = "none (below minimum)"
+        chain.osmosis_decision = "not served: below minimum"
     elif leg is None:
-        chain.osmosis_decision = "ops (leg not mapped yet)"
+        chain.osmosis_decision = "we relay it (leg not mapped yet)"
     elif chain.osmosis_status == "blocked":
-        chain.osmosis_decision = "blocked (spec §11)"
+        chain.osmosis_decision = "not served: blocked (spec §11)"
     elif leg.client_status != "expired" and leg.last_recv_days is not None and leg.last_recv_days <= FREE_PACKET_MAX_AGE_DAYS:
         # A recent packet beats the map's stale label: it proves a relayer is working the channel
-        chain.osmosis_decision = "free"
+        chain.osmosis_decision = "free, someone else relays it"
     elif chain.usd >= MIN_USD_FOR_OPS_RELAYER:
-        chain.osmosis_decision = "ops (recover client)" if leg.client_status == "expired" else "ops"
+        chain.osmosis_decision = "we relay it, after client recovery" if leg.client_status == "expired" else "we relay it"
     else:
-        chain.osmosis_decision = "none"
+        chain.osmosis_decision = "not served: below minimum"
 
-    served = chain.osmosis_decision.startswith(("free", "ops", "destination"))
+    served = not chain.osmosis_decision.startswith("not served")
     chain.pool_routes = [token["sym"] for token in chain.tokens if served and token["usd"] >= SMALL_TOKEN_USD and token["status"] != "ignored · deprecated"]
 
 
@@ -279,9 +279,9 @@ def decide(chain: ChainScope) -> None:
 
 def render(chains: list[ChainScope]) -> str:
     today = datetime.date.today().isoformat()
-    is_served = lambda chain: chain.osmosis_decision.startswith(("free", "ops", "destination"))  # noqa: E731
+    is_served = lambda chain: not chain.osmosis_decision.startswith("not served")  # noqa: E731
     served = [chain for chain in chains if is_served(chain)]
-    ops = [chain for chain in chains if chain.osmosis_decision.startswith("ops")]
+    ops = [chain for chain in chains if chain.osmosis_decision.startswith("we relay it")]
     dropped = [chain for chain in chains if not is_served(chain)]
     lines = [
         SECTION_START,
@@ -290,6 +290,12 @@ def render(chains: list[ChainScope]) -> str:
         f"Generated {today} by `scripts/wind-down/build_relayer_scope.py` from `relayer-map.html` (client ages) plus the youngest",
         "packet a relayer actually delivered on each leg (`tx_search` on the Stride and Osmosis RPCs). Edit the constants at the",
         "top of the script to change the rule, then rerun; `--offline` reuses the cached lookups in `relayer_scope_cache.json`.",
+        "",
+        "**Reading the two decision columns.** *Stride leg* says whether anything still has to cross between Stride and the",
+        "chain after the upgrade: only host ICAs (the drain and the ICA transfers) and the sweep channel to Osmosis do, and we",
+        "already relay those; for every other chain the Stride leg is simply not needed, whatever its state. *Osmosis leg*",
+        "says how holders on the chain reach the pools: someone else already relays it (free), we will relay it, or the chain",
+        "is not served and why.",
         "",
         "**The rule.** Relayers cost per chain and pool routes cost per token, so the minimum applies to a chain's total.",
         f"A leg is *free* when a packet crossed it within {FREE_PACKET_MAX_AGE_DAYS:.0f} days and its client is not expired (a fresh client header",
@@ -307,7 +313,7 @@ def render(chains: list[ChainScope]) -> str:
         "Every chain that holds any stToken is listed, largest first, whatever its status below; the USD column is the chain's",
         "total across tokens. Legs are shown where the relayer map has a route for the chain.",
         "",
-        "| Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |",
+        "| Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride leg after the upgrade | Osmosis leg: client · last in / out | Osmosis leg for holders | Pool routes |",
         "|---|---:|---|---|---|---|---|---|---|",
     ]
     for chain in chains:
@@ -336,12 +342,15 @@ def update_relayer_map(phases: dict[str, dict], chains: list[ChainScope]) -> Non
             if chain.chain_id == (STRIDE_CHAIN_ID if center_is_stride else OSMOSIS_CHAIN_ID):
                 continue
             route = existing.get(chain.chain_id) or unmapped_route(chain)
+            if center_is_stride and chain.chain_id == OSMOSIS_CHAIN_ID:
+                route["legs"] = sweep_channel_legs(phases)
+                route["status"] = route["legs"][0]["status"] if route["legs"] else "unknown"
             route["decision"] = chain.stride_decision if center_is_stride else chain.osmosis_decision
             route["scope_status"] = map_status(chain, route)
             routes.append(route)
         if not center_is_stride and STRIDE_CHAIN_ID in existing:
             stride = existing[STRIDE_CHAIN_ID]
-            stride["decision"] = "sweep channel (ours)"
+            stride["decision"] = "sweep channel, we relay it"
             routes.append(stride)
         for route in routes:
             route["status"] = route.pop("scope_status", route["status"])
@@ -356,6 +365,14 @@ def update_relayer_map(phases: dict[str, dict], chains: list[ChainScope]) -> Non
             RELAYER_MAP.write_text("\n".join(lines) + "\n")
             return
     raise SystemExit("PHASES line not found while writing the map")
+
+
+def sweep_channel_legs(phases: dict[str, dict]) -> list[dict]:
+    """The Stride → Osmosis leg (channel-5) as the map recorded it on the Osmosis-centred phase's Stride spoke."""
+    for route in phases[OSMOSIS_PHASE]["routes"]:
+        if route["id"] == STRIDE_CHAIN_ID:
+            return [dict(leg) for leg in route["legs"]]
+    return []
 
 
 def unmapped_route(chain: ChainScope) -> dict:

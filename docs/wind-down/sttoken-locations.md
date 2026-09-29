@@ -27,6 +27,12 @@ Generated 2026-09-29 by `scripts/wind-down/build_relayer_scope.py` from `relayer
 packet a relayer actually delivered on each leg (`tx_search` on the Stride and Osmosis RPCs). Edit the constants at the
 top of the script to change the rule, then rerun; `--offline` reuses the cached lookups in `relayer_scope_cache.json`.
 
+**Reading the two decision columns.** *Stride leg* says whether anything still has to cross between Stride and the
+chain after the upgrade: only host ICAs (the drain and the ICA transfers) and the sweep channel to Osmosis do, and we
+already relay those; for every other chain the Stride leg is simply not needed, whatever its state. *Osmosis leg*
+says how holders on the chain reach the pools: someone else already relays it (free), we will relay it, or the chain
+is not served and why.
+
 **The rule.** Relayers cost per chain and pool routes cost per token, so the minimum applies to a chain's total.
 A leg is *free* when a packet crossed it within 7 days and its client is not expired (a fresh client header
 alone proves someone updates the client, not that they relay our channel; a recent packet outranks the map's stale
@@ -41,45 +47,45 @@ Served: $2,454,250 across 16 chains, of which $29,542 needs a relayer from us (P
 Every chain that holds any stToken is listed, largest first, whatever its status below; the USD column is the chain's
 total across tokens. Legs are shown where the relayer map has a route for the chain.
 
-| Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |
+| Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride leg after the upgrade | Osmosis leg: client · last in / out | Osmosis leg for holders | Pool routes |
 |---|---:|---|---|---|---|---|---|---|
-| Osmosis (`osmosis-1`) | $1,905,914 | channel-5 |  | not mapped | sweep channel (ours) | not mapped | destination | stATOM, stISLM, stTIA, stINJ, stOSMO, stBAND, stDYDX, stJUNO |
-| Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 0.1d / 0.0d | ICA (ours) | channel-0: live 0.0d · 0.0d / 0.0d | free | stATOM, stTIA, stINJ, stOSMO, stDYDX |
-| HAQQ (`haqq_11235-1`) | $168,516 | channel-240 | yes | channel-240: live 6.1d · 3.0d / 2.9d | ICA (ours) | channel-1575: live 5.6d · 1.4d / 1.9d | free | stISLM |
-| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.2d / 0.0d | ICA (ours) | channel-122: blocked 0.0d · 0.1d / 0.0d | blocked (spec §11) | – |
-| Secret (`secret-4`) | $76,719 | channel-40 |  | channel-40: live 13.7d · 3.2d / 4.7d | none | channel-88: live 0.0d · 0.1d / 0.1d | free | stATOM, stINJ, stOSMO |
-| Penumbra (`penumbra-1`) | $29,542 | channel-307 |  | channel-307: expired 6915.9d · never / never | none | channel-79703: expired 3194.7d · never / never | ops (recover client) | stATOM, stOSMO |
-| Kujira (`kaiyo-1`) | $20,850 | channel-8 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | none | channel-320: live 0.4d · 0.1d / 0.5d | free | stATOM, stTIA |
-| Neutron (`neutron-1`) | $8,339 | channel-123 |  | channel-123: stale 36.3d · 7.4d / 7.4d | none | channel-874: stale 35.5d · 0.2d / 1.5d | free | stATOM, stTIA |
-| Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 17.2d / never | none | channel-188: stale 40.8d · 4.2d / 8.5d | free | stATOM, stTIA, stLUNA |
-| Comdex (`comdex-1`) | $5,145 | channel-49 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 0.2d / 0.2d | ICA (ours) | channel-251: live 0.2d · 0.0d / 0.0d | free | stLUNA |
-| Evmos (`evmos_9001-2`) | $3,395 | channel-16 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Dymension (`dymension_1100-1`) | $2,884 | channel-197 |  | channel-197: live 2.5d · 5.3d / 0.5d | none | channel-19774: live 0.2d · 0.0d / 0.1d | free | stTIA |
-| Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | none | channel-208: live 0.1d · 0.0d / 0.0d | free | stATOM |
-| Stargaze (`stargaze-1`) | $931 | channel-19 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Canto (`canto_7700-1`) | $748 | channel-74 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Acrechain (`acre_9052-1`) | $623 | channel-57 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Namada (`namada.5f5de2dd1b88cba30586420`) | $611 | channel-308 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Celestia (`celestia`) | $322 | channel-162 | yes | channel-162: live 5.4d · 0.6d / 0.3d | ICA (ours) | channel-6994: live 0.0d · 0.0d / 0.0d | free | – |
-| Composable (`centauri-1`) | $211 | channel-134 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Umee (`umee-1`) | $211 | channel-29 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Saga (`ssc-1`) | $207 | channel-213 | yes | channel-213: live 5.2d · 0.1d / 0.2d | ICA (ours) | channel-38946: live 0.1d · 0.1d / 0.1d | free | – |
-| Juno (`juno-1`) | $94 | channel-24 | yes | channel-24: live 5.9d · 0.2d / 0.2d | ICA (ours) | channel-42: live 0.1d · 0.0d / 0.1d | free | – |
-| dYdX (`dydx-mainnet-1`) | $76 | channel-160 | yes | channel-160: live 5.2d · 0.2d / 0.1d | ICA (ours) | channel-6787: live 0.0d · 0.2d / 0.2d | free | – |
-| Crescent (`crescent-1`) | $13 | channel-51 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Namada testnet (`housefire-alpaca.cc0d3e0c033be`) | $4 | channel-306 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Band (`laozi-mainnet`) | $3 | channel-258 | yes | channel-258: live 5.4d · never / never | ICA (ours) | channel-148: live 9.3d · 0.3d / 0.2d | free | – |
-| Sei (`pacific-1`) | $1 | channel-149 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Persistence (`core-1`) | $1 | channel-53 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Oraichain (`Oraichain`) | $1 | channel-50 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Chihuahua (`chihuahua-1`) | $1 | channel-99 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Gravity Bridge (`gravity-bridge-3`) | $0 | channel-121 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Namada testnet (`campfire-square.ff09671d333707`) | $0 | channel-297 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Astria (`astria`) | $0 | channel-285 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Indigo (`indigo-1`) | $0 | channel-256 |  | not mapped | none | not mapped | none (below minimum) | – |
-| Sommelier (`sommelier-3`) | $0 | channel-150 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Osmosis (`osmosis-1`) | $1,905,914 | channel-5 |  | not mapped | sweep channel, we relay it | not mapped | destination, the pools live here | stATOM, stISLM, stTIA, stINJ, stOSMO, stBAND, stDYDX, stJUNO |
+| Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 0.1d / 0.0d | ICA channel, we relay it | channel-0: live 0.0d · 0.0d / 0.0d | free, someone else relays it | stATOM, stTIA, stINJ, stOSMO, stDYDX |
+| HAQQ (`haqq_11235-1`) | $168,516 | channel-240 | yes | channel-240: live 6.1d · 3.0d / 2.9d | ICA channel, we relay it | channel-1575: live 5.6d · 1.4d / 1.9d | free, someone else relays it | stISLM |
+| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.2d / 0.0d | ICA channel, we relay it | channel-122: blocked 0.0d · 0.1d / 0.0d | not served: blocked (spec §11) | – |
+| Secret (`secret-4`) | $76,719 | channel-40 |  | channel-40: live 13.7d · 3.2d / 4.7d | not needed after the upgrade | channel-88: live 0.0d · 0.1d / 0.1d | free, someone else relays it | stATOM, stINJ, stOSMO |
+| Penumbra (`penumbra-1`) | $29,542 | channel-307 |  | channel-307: expired 6915.9d · never / never | not needed after the upgrade | channel-79703: expired 3194.7d · never / never | we relay it, after client recovery | stATOM, stOSMO |
+| Kujira (`kaiyo-1`) | $20,850 | channel-8 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
+| Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | not needed after the upgrade | channel-320: live 0.4d · 0.1d / 0.5d | free, someone else relays it | stATOM, stTIA |
+| Neutron (`neutron-1`) | $8,339 | channel-123 |  | channel-123: stale 36.3d · 7.4d / 7.4d | not needed after the upgrade | channel-874: stale 35.5d · 0.2d / 1.5d | free, someone else relays it | stATOM, stTIA |
+| Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 17.2d / never | not needed after the upgrade | channel-188: stale 40.8d · 4.2d / 8.5d | free, someone else relays it | stATOM, stTIA, stLUNA |
+| Comdex (`comdex-1`) | $5,145 | channel-49 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
+| Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 0.2d / 0.2d | ICA channel, we relay it | channel-251: live 0.2d · 0.0d / 0.0d | free, someone else relays it | stLUNA |
+| Evmos (`evmos_9001-2`) | $3,395 | channel-16 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
+| Dymension (`dymension_1100-1`) | $2,884 | channel-197 |  | channel-197: live 2.5d · 5.3d / 0.5d | not needed after the upgrade | channel-19774: live 0.2d · 0.0d / 0.1d | free, someone else relays it | stTIA |
+| Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | not needed after the upgrade | channel-208: live 0.1d · 0.0d / 0.0d | free, someone else relays it | stATOM |
+| Stargaze (`stargaze-1`) | $931 | channel-19 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
+| Canto (`canto_7700-1`) | $748 | channel-74 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Acrechain (`acre_9052-1`) | $623 | channel-57 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Namada (`namada.5f5de2dd1b88cba30586420`) | $611 | channel-308 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Celestia (`celestia`) | $322 | channel-162 | yes | channel-162: live 5.4d · 0.6d / 0.3d | ICA channel, we relay it | channel-6994: live 0.0d · 0.0d / 0.0d | free, someone else relays it | – |
+| Composable (`centauri-1`) | $211 | channel-134 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Umee (`umee-1`) | $211 | channel-29 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
+| Saga (`ssc-1`) | $207 | channel-213 | yes | channel-213: live 5.2d · 0.2d / 0.2d | ICA channel, we relay it | channel-38946: live 0.1d · 0.1d / 0.1d | free, someone else relays it | – |
+| Juno (`juno-1`) | $94 | channel-24 | yes | channel-24: live 5.9d · 0.2d / 0.2d | ICA channel, we relay it | channel-42: live 0.1d · 0.0d / 0.1d | free, someone else relays it | – |
+| dYdX (`dydx-mainnet-1`) | $76 | channel-160 | yes | channel-160: live 5.2d · 0.2d / 0.1d | ICA channel, we relay it | channel-6787: live 0.0d · 0.2d / 0.2d | free, someone else relays it | – |
+| Crescent (`crescent-1`) | $13 | channel-51 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Namada testnet (`housefire-alpaca.cc0d3e0c033be`) | $4 | channel-306 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Band (`laozi-mainnet`) | $3 | channel-258 | yes | channel-258: live 5.4d · never / never | ICA channel, we relay it | channel-148: live 9.3d · 0.3d / 0.2d | free, someone else relays it | – |
+| Sei (`pacific-1`) | $1 | channel-149 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Persistence (`core-1`) | $1 | channel-53 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Oraichain (`Oraichain`) | $1 | channel-50 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Chihuahua (`chihuahua-1`) | $1 | channel-99 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
+| Gravity Bridge (`gravity-bridge-3`) | $0 | channel-121 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Namada testnet (`campfire-square.ff09671d333707`) | $0 | channel-297 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Astria (`astria`) | $0 | channel-285 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Indigo (`indigo-1`) | $0 | channel-256 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
+| Sommelier (`sommelier-3`) | $0 | channel-150 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
 
 Per-token value on each chain, with the status from the tables below:
 
