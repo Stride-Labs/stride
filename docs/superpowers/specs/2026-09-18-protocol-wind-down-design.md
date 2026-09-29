@@ -241,7 +241,10 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   and fee balance queries are open on haqq, juno-1, comdex-1 and laozi-mainnet.
 - Native vouchers stranded on Stride are dust: the eleven deposit addresses, the reward
   collector and the auction module together hold about $3 of in-scope native denoms. Nothing
-  on Stride except the staketia claim address will hold a native balance worth moving.
+  on Stride except the staketia claim address will hold a native balance worth moving. User
+  accounts hold more of the host tokens, but of the four hosts whose vouchers the sweep cannot
+  unwind (their wallets are not coin type 118, §7) the whole holding is about $3.2k, nearly all
+  INJ dust (measured 2026-09-29, figures in §7).
 - There is no direct transfer channel between Stride and noble-1. The only single-hop `uusdc`
   vouchers on Stride are Axelar's (channel-69 and channel-11, about 2 USDC in total on
   2026-09-28), so "USDC on Stride" is negligible; the largest non-host vouchers are stTokens
@@ -598,7 +601,12 @@ looked at, and is a (channel, bech32 prefix) pair:
   whose outermost channel is anything else rejects the whole tx: a derived address on
   phoenix-1, laozi-mainnet, injective-1 or haqq_11235-1 is not the holder's, and the Axelar
   channels carry about 2 USDC. A denom with no destination rejects the whole tx: that is a
-  bad batch, not a bad holder. Holders of those vouchers move them themselves before the halt.
+  bad batch, not a bad holder. Holders of those vouchers move them themselves before the halt
+  (an ordinary IBC transfer to an address they type in works; only derivation does not). What
+  that leaves behind is small: on 2026-09-29 the four non-118 hosts' native vouchers on Stride
+  were 396.4 INJ across 47,821 holders (about $3,080, the largest 25 INJ), 12,531 ISLM across
+  31 (about $49), 135.4 BAND across 10 (about $29) and 120.3 LUNA across 78 (about $6), about
+  $3.2k in all at the §9b prices, so nothing is worth a per-chain exception.
 
 Then, for every listed address, and for every listed denom it holds:
 
