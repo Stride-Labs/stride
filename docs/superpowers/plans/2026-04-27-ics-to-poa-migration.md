@@ -766,7 +766,7 @@ git commit -m "feat(v33): wire POA module into app (additive)"
 
 Removes the two ICS-era modules that are being replaced by POA. **Keep their keepers constructed** in app.go — only remove the `*.NewAppModule(...)` registrations and the corresponding entries in blocker/genesis ordering.
 
-**Critical: do NOT delete the IBC route or the `consumerModule` variable.** The CCV channel is left to time out naturally per the spec (§1, §3 "What the handler deliberately does NOT do", §8 Risk 5). Removing the route while the channel is still open would leave incoming VSC packets, acks, and timeouts with no module to dispatch to — at best they error-ack back to the provider, at worst the IBC core handler errors on receipt. With the route still bound but the module no longer in the manager, late VSC packets are received and queued by `ConsumerKeeper.OnRecvPacket` but never applied (because `ccvconsumer`'s `EndBlock` no longer runs to drain the queue), and the channel times out cleanly via IBC client expiration. v34 deletes the route, the `consumerModule` variable, and the keeper as a coordinated set.
+**Critical: do NOT delete the IBC route or the `consumerModule` variable.** The CCV channel is left to time out naturally per the spec (§1, §3 "What the handler deliberately does NOT do", §7 Risk 5). Removing the route while the channel is still open would leave incoming VSC packets, acks, and timeouts with no module to dispatch to — at best they error-ack back to the provider, at worst the IBC core handler errors on receipt. With the route still bound but the module no longer in the manager, late VSC packets are received and queued by `ConsumerKeeper.OnRecvPacket` but never applied (because `ccvconsumer`'s `EndBlock` no longer runs to drain the queue), and the channel times out cleanly via IBC client expiration. v34 deletes the route, the `consumerModule` variable, and the keeper as a coordinated set.
 
 - [ ] **Step 7.1: Remove from `module.NewManager(...)`**
 
@@ -1623,7 +1623,7 @@ func (s *UpgradeTestSuite) TestUpgradeFromMainnetExport() {
     s.Require().Equal(8, preUpgradePOAValSetSize, "expected mainnet PSS allowlist of 8")
 
     // Capture the pre-upgrade CometBFT validator set hash. This is the
-    // load-bearing assertion the spec calls out (§7, §8 Risk 1): the
+    // load-bearing assertion the spec calls out (§6, §7 Risk 1): the
     // validator set CometBFT will sign block N+1 with must hash to the
     // same value as the set CometBFT signed block N with. If POA seeds a
     // set with subtly wrong pubkey encoding (Any-wrap mismatch, byte order,
@@ -1842,14 +1842,14 @@ Confirm:
 | §3 Invariants (count, bech32, non-zero power) | Tasks 3, 4                                                |
 | §4 v34 cleanup                                | Out of scope — separate plan                              |
 | §5 Rewards flow                               | Tasks 9, 10 (code); test in 13                            |
-| §7 Test 1 (helper unit)                       | Tasks 3, 4, 5                                             |
-| §7 Test 2 (synthetic upgrade)                 | Task 13                                                   |
-| §7 Test 3 (mainnet export)                    | Tasks 14, 15                                              |
-| §8 Risks 1, 8                                 | Mitigated by tests in Task 13                             |
-| §8 Risks 2                                    | Mitigated by Task 15                                      |
-| §8 Risks 3 (audit grep)                       | Implicit in `make test-unit` and Task 16                  |
-| §8 Risk 6 (admin bech32 validation)           | Task 4 (`InitializePOA` validates)                        |
-| §8 Risk 7 (ccvstaking compat)                 | Implicitly tested by Task 13 (chain runs after migration) |
+| §6 Test 1 (helper unit)                       | Tasks 3, 4, 5                                             |
+| §6 Test 2 (synthetic upgrade)                 | Task 13                                                   |
+| §6 Test 3 (mainnet export)                    | Tasks 14, 15                                              |
+| §7 Risks 1, 8                                 | Mitigated by tests in Task 13                             |
+| §7 Risks 2                                    | Mitigated by Task 15                                      |
+| §7 Risks 3 (audit grep)                       | Implicit in `make test-unit` and Task 16                  |
+| §7 Risk 6 (admin bech32 validation)           | Task 4 (`InitializePOA` validates)                        |
+| §7 Risk 7 (ccvstaking compat)                 | Implicitly tested by Task 13 (chain runs after migration) |
 
 ### Placeholder scan
 
