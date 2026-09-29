@@ -129,6 +129,13 @@ Pipelines the design reuses:
   it exceed the on-chain delegation. `RestoreInterchainAccount` reopens an ICA channel that
   an ordered-channel timeout closed and resets every validator's in-progress counter. None of
   this depends on the zone being active.
+- The record-driven unbonding path (`UnbondFromHostZone` → `GetUndelegateMessagesForAmount`
+  → `GetTargetValAmtsForHostZone`) computes balanced targets from the zone total and errors
+  when the delegation left after the unbond is not positive (`host_zone.go`), so a record
+  whose amount is at or above the zone's remaining `TotalDelegations` fails on every day
+  epoch and stays in `RETRY_QUEUE` with its stTokens escrowed (audit finding STRIDE-07). The
+  admin drain does not use that path; it matters only for a record left queued on a zone
+  the drain has already emptied (§6, §7).
 - Claim today: unbonded tokens sit in the zone's redemption ICA on the host;
   `ClaimUndelegatedTokens` is permissionless, submits an ICA bank `MsgSend` from the
   redemption ICA to the record's host-chain `Receiver`, sets `ClaimIsPending`, and the callback
@@ -430,8 +437,12 @@ Sequencing with the open redemptions: the first post-upgrade day epoch submits t
 records from each validator's stored delegation, exactly as today. The drain runs only after
 that epoch has submitted them and their acks have landed (`DelegationChangesInProgress` back
 to zero), so the pipeline computes from delegations the admin has not touched and the admin
-drains what is left with an empty list and no reservation arithmetic. The undelegate tx
-refuses any validator with a change in progress, so a mistimed drain fails rather than races.
+drains what is left with an empty list and no reservation arithmetic. The order matters for
+a second reason: the record-driven path computes balanced targets from the zone total and
+rejects a non-positive remainder, so a record still queued after the drain could never be
+submitted and its holder would never be paid. The undelegate tx therefore refuses a zone
+with any queued or retrying record, and any validator with a change in progress, so a
+mistimed drain fails rather than races or strands anyone (§7).
 The redemption ICA is drained only after a zone's claims are done, since it holds the tokens
 of claimable records.
 
@@ -450,8 +461,14 @@ positive. No blanket offset is needed for the real run: an unslashed validator h
 exchange rate of exactly one, so a full-drain amount converts to shares with no truncation,
 and the helper already buffers full drains of validators whose rate is below one. Both rely on
 the stored rate matching the chain, which the day-0 refresh guarantees; `offset` is the lever
-for a validator that has drifted since. A listed validator with `DelegationChangesInProgress`
-set is rejected, and a deprecated zone is rejected. The messages go through
+for a validator that has drifted since. Three things reject the tx before anything is
+submitted: a listed validator with `DelegationChangesInProgress` set, a deprecated zone, and
+a zone with any `HostZoneUnbonding` record in `UNBONDING_QUEUE` or `RETRY_QUEUE` with a
+non-zero amount. The last one exists because of a known bug in the record-driven path
+(`GetTargetValAmtsForHostZone` errors when the delegation left after an unbond is not
+positive, so a record can never be submitted on a drained zone and would retry forever with
+its stTokens escrowed and its backing already on Osmosis); the guard turns "drained too
+early" into a rejected transaction instead of a stranded holder. The messages go through
 `BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, in the zone's usual
 batch size, and the tx registers the batches as in flight so the callback's record-less
 accounting stays clean.
@@ -662,7 +679,9 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    refresh and the epoch) goes to `RETRY_QUEUE` and is retried at the next day epoch; that
    zone's drain waits for it.
 3. Then `MsgUndelegateFromValidators` per zone: first for a single small validator as a live
-   test of the tx and the callback, then with an empty list for the rest. An ICA tx is atomic,
+   test of the tx and the callback, then with an empty list for the rest. The tx refuses the
+   zone while any record is still queued or retrying (§7), so step 2 cannot be skipped by
+   accident. An ICA tx is atomic,
    so one over-recorded validator fails its whole batch; after the refresh there are none. If
    a slash lands between the refresh and the submission, that batch fails, ops rerun the
    refresh (or set that validator's `offset`) and resubmit for the affected validators.
@@ -823,9 +842,10 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   the delegation is corrected and the rate is not.
 - Admin txs (§7): unit tests for gating on all four. Undelegate: per-validator message
   construction with and without offsets, empty versus explicit validator lists, rounding
-  safety on a full drain, rejection of a validator with a change in progress and of a
-  deprecated zone, acceptance on a non-halted zone, no accounting mutation, the in-flight
-  registration. Transfer: every ICA type, a foreign denom, the osmosis-1 bank-send form, a
+  safety on a full drain, rejection of a validator with a change in progress, of a
+  deprecated zone, and of a zone with a record in `UNBONDING_QUEUE` or `RETRY_QUEUE`
+  (accepted once every record is `UNBONDING_IN_PROGRESS` or later), acceptance on a
+  non-halted zone, no accounting mutation, the in-flight registration. Transfer: every ICA type, a foreign denom, the osmosis-1 bank-send form, a
   chain id absent from the map, that the map has an entry for every in-scope zone and none
   for a deprecated one, that the Osmosis vault constant parses as an `osmo` bech32 address
   and the sweep operator constant as a `stride` one, and the built `MsgTransfer` fields
