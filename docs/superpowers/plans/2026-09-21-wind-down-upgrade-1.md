@@ -205,7 +205,7 @@ Every task below depends only on Task 1. Tasks 2-5 each edit a disjoint set of m
 - Modify: `x/stakeibc/keeper/community_pool.go` (two `NewMsgServerImpl(k).LiquidStake/RedeemStake` calls → `k.LiquidStake` / `k.RedeemStake`)
 - Modify: `x/stakeibc/handler.go` (legacy `MsgServiceHandler` switch: delete the nine cases for the removed messages)
 - Modify: `x/autopilot/keeper/liquidstake.go:76-105`, `x/autopilot/keeper/redeem_stake.go:60-84`
-- Modify: `x/stakeibc/types/codec.go` (amino lines 13,14,16,17,29,30,31,34,35 only; the `RegisterImplementations` entries STAY, see Global Constraints)
+- Modify: `x/stakeibc/types/codec.go` (comment only; both registrations STAY, see Global Constraints)
 - Modify: `x/stakeibc/client/cli/tx.go` (AddCommand lines 43-46, 60-61 and the `Cmd*` funcs), `x/stakeibc/client/cli/gov.go` (trade route proposal commands, if present)
 - Delete: `x/stakeibc/types/message_register_host_zone.go` (+`_test`), `message_lsm_liquid_stake.go` (+`_test`), `message_create_trade_route.go` (+`_test`), `message_update_trade_route.go` (+`_test`), `message_delete_trade_route.go` (+`_test`), `message_set_community_pool_rebate.go` (+`_test`), `message_toggle_trade_controller.go` (+`_test`) — only if nothing else references their helpers (check with `grep -rn NewMsgRegisterHostZone x/ app/`)
 - Keep: `x/stakeibc/types/message_liquid_stake.go`, `message_redeem_stake.go` (their `NewMsg*`/`ValidateBasic` are used by the reward collector and autopilot)
@@ -328,7 +328,7 @@ Remove the now-unused `stakeibckeeper` import from both autopilot files if it wa
 
 - [ ] **Step 5: Remove codec registrations, CLI commands and dead message helpers**
 
-`x/stakeibc/types/codec.go`: delete the `legacy.RegisterAminoMsg` lines for the nine messages. Keep their `RegisterImplementations` entries (historical tx decoding, see Global Constraints) and add a comment saying why. `RegisterInterfaces` must still end with `msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)`.
+`x/stakeibc/types/codec.go`: leave it alone except for a comment. Both registrations of the nine messages stay, the `legacy.RegisterAminoMsg` lines and the `RegisterImplementations` entries (historical tx decoding and legacy-amino rendering, see Global Constraints); add a comment above each block saying why they outlive their handlers. `RegisterInterfaces` must still end with `msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)`.
 
 `x/stakeibc/client/cli/tx.go`: delete the `cmd.AddCommand(...)` lines and the `Cmd*` functions for `LiquidStake`, `LSMLiquidStake`, `RegisterHostZone`, `RedeemStake`, `SetCommunityPoolRebate`, `ToggleTradeController`. In `x/stakeibc/client/cli/gov.go` delete any trade-route proposal commands and their `AddCommand` lines.
 
