@@ -104,7 +104,8 @@ def main() -> None:
     for chain in chains:
         decide(chain)
     splice_section(doc=LOCATIONS_DOC, section=render(chains))
-    print(f"updated {LOCATIONS_DOC.relative_to(REPO)} for {len(chains)} chains")
+    update_relayer_map(phases=phases, chains=chains)
+    print(f"updated {LOCATIONS_DOC.relative_to(REPO)} and {RELAYER_MAP.relative_to(REPO)} for {len(chains)} chains")
 
 
 def parse_args() -> argparse.Namespace:
@@ -125,7 +126,7 @@ def load_phases() -> dict[str, dict]:
     raise SystemExit(f"no PHASES array in {RELAYER_MAP}")
 
 
-ROW_PATTERN = re.compile(r"^\| (?P<name>[^|]+?) \| (?P<chain_id>[^|]+?) \| (?P<channels>[^|]+?) \| [^|]+ \| [^|]+ \| \$(?P<usd>[\d,]+) \| (?P<status>[^|]+?) \|$")
+ROW_PATTERN = re.compile(r"^\| (?P<name>[^|]+?) \| (?P<chain_id>[^|]+?) \| (?P<channels>[^|]+?) \| (?P<amount>[\d,.]+) \| (?P<pct>[\d.]+)% \| \$(?P<usd>[\d,]+) \| (?P<status>[^|]+?) \|$")
 TOKEN_HEADER = re.compile(r"^## (?P<sym>st[A-Z]+) \(")
 
 
@@ -142,7 +143,13 @@ def load_escrow_tables() -> dict[str, dict]:
         if token is None or row is None or row.group("chain_id") in ("Chain id", STRIDE_CHAIN_ID):
             continue
         chain = chains.setdefault(row.group("chain_id"), {"name": row.group("name"), "channels": row.group("channels"), "tokens": [], "statuses": set()})
-        chain["tokens"].append({"sym": token, "usd": int(row.group("usd").replace(",", "")), "status": row.group("status")})
+        chain["tokens"].append({
+            "sym": token,
+            "amount": float(row.group("amount").replace(",", "")),
+            "pct": float(row.group("pct")),
+            "usd": int(row.group("usd").replace(",", "")),
+            "status": row.group("status"),
+        })
         chain["statuses"].add(row.group("status"))
     return chains
 
@@ -314,6 +321,65 @@ def render(chains: list[ChainScope]) -> str:
         lines.append(f"- {chain.name}: {tokens}")
     lines += ["", SECTION_END, ""]
     return "\n".join(lines)
+
+
+# --- the map page's data ------------------------------------------------------------------------
+
+
+def update_relayer_map(phases: dict[str, dict], chains: list[ChainScope]) -> None:
+    """Rewrite the PHASES array in the map page: every chain in every phase, with its decision."""
+    for phase in phases.values():
+        center_is_stride = phase["center"] == "Stride"
+        existing = {route["id"]: route for route in phase["routes"]}
+        routes = []
+        for chain in chains:
+            if chain.chain_id == (STRIDE_CHAIN_ID if center_is_stride else OSMOSIS_CHAIN_ID):
+                continue
+            route = existing.get(chain.chain_id) or unmapped_route(chain)
+            route["decision"] = chain.stride_decision if center_is_stride else chain.osmosis_decision
+            route["scope_status"] = map_status(chain, route)
+            routes.append(route)
+        if not center_is_stride and STRIDE_CHAIN_ID in existing:
+            stride = existing[STRIDE_CHAIN_ID]
+            stride["decision"] = "sweep channel (ours)"
+            routes.append(stride)
+        for route in routes:
+            route["status"] = route.pop("scope_status", route["status"])
+        phase["routes"] = sorted(routes, key=lambda route: -route["usd"])
+
+    text = RELAYER_MAP.read_text()
+    new_line = "const PHASES=" + json.dumps(list(phases.values()), ensure_ascii=False, separators=(",", ": ")) + ";"
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if re.match(r"\s*const PHASES\s*=", line):
+            lines[index] = new_line
+            RELAYER_MAP.write_text("\n".join(lines) + "\n")
+            return
+    raise SystemExit("PHASES line not found while writing the map")
+
+
+def unmapped_route(chain: ChainScope) -> dict:
+    """A route for a chain the map had no client data for: tokens only, no legs."""
+    return {
+        "id": chain.chain_id,
+        "name": chain.name,
+        "usd": chain.usd,
+        "tokens": [{"sym": t["sym"], "amount": t["amount"], "usd": t["usd"], "pct": t["pct"]} for t in chain.tokens],
+        "native": [],
+        "host": chain.host,
+        "deprecated": chain.deprecated_only,
+        "status": "unknown",
+        "legs": [],
+    }
+
+
+def map_status(chain: ChainScope, route: dict) -> str:
+    """The colour a chain gets on the map: the map's own leg status where a route exists, else why it is not served."""
+    if chain.dead:
+        return "dead"
+    if route["legs"]:
+        return route["status"]
+    return "small"
 
 
 def leg_cell(leg: Leg | None) -> str:

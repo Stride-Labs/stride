@@ -44,17 +44,17 @@ total across tokens. Legs are shown where the relayer map has a route for the ch
 | Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |
 |---|---:|---|---|---|---|---|---|---|
 | Osmosis (`osmosis-1`) | $1,905,914 | channel-5 |  | not mapped | sweep channel (ours) | not mapped | destination | stATOM, stISLM, stTIA, stINJ, stOSMO, stBAND, stDYDX, stJUNO |
-| Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 0.0d / 0.0d | ICA (ours) | channel-0: live 0.0d · 0.0d / 0.0d | free | stATOM, stTIA, stINJ, stOSMO, stDYDX |
+| Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 0.1d / 0.0d | ICA (ours) | channel-0: live 0.0d · 0.0d / 0.0d | free | stATOM, stTIA, stINJ, stOSMO, stDYDX |
 | HAQQ (`haqq_11235-1`) | $168,516 | channel-240 | yes | channel-240: live 6.1d · 3.0d / 2.9d | ICA (ours) | channel-1575: live 5.6d · 1.4d / 1.9d | free | stISLM |
-| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.1d / 0.0d | ICA (ours) | channel-122: blocked 0.0d · 0.0d / 0.0d | blocked (spec §11) | – |
+| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.2d / 0.0d | ICA (ours) | channel-122: blocked 0.0d · 0.1d / 0.0d | blocked (spec §11) | – |
 | Secret (`secret-4`) | $76,719 | channel-40 |  | channel-40: live 13.7d · 3.2d / 4.7d | none | channel-88: live 0.0d · 0.1d / 0.1d | free | stATOM, stINJ, stOSMO |
 | Penumbra (`penumbra-1`) | $29,542 | channel-307 |  | channel-307: expired 6915.9d · never / never | none | channel-79703: expired 3194.7d · never / never | ops (recover client) | stATOM, stOSMO |
 | Kujira (`kaiyo-1`) | $20,850 | channel-8 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | none | channel-320: live 0.4d · 0.0d / 0.5d | free | stATOM, stTIA |
+| Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | none | channel-320: live 0.4d · 0.1d / 0.5d | free | stATOM, stTIA |
 | Neutron (`neutron-1`) | $8,339 | channel-123 |  | channel-123: stale 36.3d · 7.4d / 7.4d | none | channel-874: stale 35.5d · 0.2d / 1.5d | free | stATOM, stTIA |
 | Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 17.2d / never | none | channel-188: stale 40.8d · 4.2d / 8.5d | free | stATOM, stTIA, stLUNA |
 | Comdex (`comdex-1`) | $5,145 | channel-49 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 0.1d / 0.1d | ICA (ours) | channel-251: live 0.2d · 0.0d / 0.0d | free | stLUNA |
+| Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 0.2d / 0.2d | ICA (ours) | channel-251: live 0.2d · 0.0d / 0.0d | free | stLUNA |
 | Evmos (`evmos_9001-2`) | $3,395 | channel-16 |  | not mapped | none | not mapped | none (chain dead) | – |
 | Dymension (`dymension_1100-1`) | $2,884 | channel-197 |  | channel-197: live 2.5d · 5.3d / 0.5d | none | channel-19774: live 0.2d · 0.0d / 0.1d | free | stTIA |
 | Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | none | channel-208: live 0.1d · 0.0d / 0.0d | free | stATOM |
@@ -65,9 +65,9 @@ total across tokens. Legs are shown where the relayer map has a route for the ch
 | Celestia (`celestia`) | $322 | channel-162 | yes | channel-162: live 5.4d · 0.6d / 0.3d | ICA (ours) | channel-6994: live 0.0d · 0.0d / 0.0d | free | – |
 | Composable (`centauri-1`) | $211 | channel-134 |  | not mapped | none | not mapped | none (below minimum) | – |
 | Umee (`umee-1`) | $211 | channel-29 |  | not mapped | none | not mapped | none (chain dead) | – |
-| Saga (`ssc-1`) | $207 | channel-213 | yes | channel-213: live 5.2d · 0.1d / 0.1d | ICA (ours) | channel-38946: live 0.1d · 0.1d / 0.1d | free | – |
-| Juno (`juno-1`) | $94 | channel-24 | yes | channel-24: live 5.9d · 0.1d / 0.1d | ICA (ours) | channel-42: live 0.1d · 0.0d / 0.1d | free | – |
-| dYdX (`dydx-mainnet-1`) | $76 | channel-160 | yes | channel-160: live 5.2d · 0.1d / 0.0d | ICA (ours) | channel-6787: live 0.0d · 0.2d / 0.2d | free | – |
+| Saga (`ssc-1`) | $207 | channel-213 | yes | channel-213: live 5.2d · 0.1d / 0.2d | ICA (ours) | channel-38946: live 0.1d · 0.1d / 0.1d | free | – |
+| Juno (`juno-1`) | $94 | channel-24 | yes | channel-24: live 5.9d · 0.2d / 0.2d | ICA (ours) | channel-42: live 0.1d · 0.0d / 0.1d | free | – |
+| dYdX (`dydx-mainnet-1`) | $76 | channel-160 | yes | channel-160: live 5.2d · 0.2d / 0.1d | ICA (ours) | channel-6787: live 0.0d · 0.2d / 0.2d | free | – |
 | Crescent (`crescent-1`) | $13 | channel-51 |  | not mapped | none | not mapped | none (below minimum) | – |
 | Namada testnet (`housefire-alpaca.cc0d3e0c033be`) | $4 | channel-306 |  | not mapped | none | not mapped | none (below minimum) | – |
 | Band (`laozi-mainnet`) | $3 | channel-258 | yes | channel-258: live 5.4d · never / never | ICA (ours) | channel-148: live 9.3d · 0.3d / 0.2d | free | – |
