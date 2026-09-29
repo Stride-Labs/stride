@@ -367,7 +367,7 @@ git commit -m "feat(stakeibc): remove liquid stake, redeem and create-things tx 
 - Modify: `x/staketia/keeper/msg_server.go` (delete `LiquidStake` 26-28, `RedeemStake` 31-39), `x/stakedym/keeper/msg_server.go` (delete `LiquidStake` 27-35, `RedeemStake` 37-45)
 - Modify: `x/staketia/keeper/unbonding.go` (delete keeper `RedeemStake` 21-153 and `HandleRedemptionSpillover` 155-186), `x/stakedym/keeper/unbonding.go` (delete keeper `RedeemStake` 20-~105)
 - Keep: `x/stakedym/keeper/delegation.go` `LiquidStake` (used by `LiquidStakeAndDistributeFees` in the hook) and everything else
-- Modify: `x/staketia/types/msgs.go` and `x/stakedym/types/msgs.go` (delete `TypeMsgLiquidStake`, `TypeMsgRedeemStake`, `NewMsgLiquidStake`, `NewMsgRedeemStake` and their `Type/Route/GetSignBytes/ValidateBasic` methods), `x/staketia/types/codec.go`, `x/stakedym/types/codec.go` (remove the amino lines only; keep `RegisterImplementations`)
+- Modify: `x/staketia/types/msgs.go` and `x/stakedym/types/msgs.go` (delete `TypeMsgLiquidStake`, `TypeMsgRedeemStake`, `NewMsgLiquidStake`, `NewMsgRedeemStake` and their `Type/Route/GetSignBytes/ValidateBasic` methods), `x/staketia/types/codec.go`, `x/stakedym/types/codec.go` (comment only; both registrations stay only; keep `RegisterImplementations`)
 - Also dead after this task, delete: `EmitSuccessfulRedeemStakeEvent` in both modules' `keeper/events.go`, and `StakeibcKeeper.RedeemStake` in `x/staketia/types/expected_keepers.go`
 - Modify: `x/staketia/client/cli/tx.go` (`CmdRedeemStake`), `x/stakedym/client/cli/tx.go` (`CmdLiquidStake`, `CmdRedeemStake`)
 - Test: `x/staketia/keeper/unbonding_test.go`, `x/stakedym/keeper/unbonding_test.go`, `x/stakedym/keeper/delegation_test.go`, `x/stakedym/keeper/msg_server_test.go`, `x/staketia/types/msgs_test.go`, `x/stakedym/types/msgs_test.go`
@@ -430,7 +430,7 @@ git commit -m "feat(staketia,stakedym): remove liquid stake and redeem tx handle
 **Files:**
 - Modify: `proto/stride/icaoracle/tx.proto` (rpc lines 15, 17), `proto/stride/icqoracle/tx.proto` (rpc lines 17, 21)
 - Modify: `x/icaoracle/keeper/msg_server.go` (delete `AddOracle`, `InstantiateOracle`), `x/icqoracle/keeper/msg_server.go` (delete `RegisterTokenPriceQuery`, `RemoveTokenPriceQuery`; keep `UpdateParams`)
-- Modify: `x/icaoracle/types/codec.go`, `x/icqoracle/types/codec.go` (amino lines only; keep `RegisterImplementations`)
+- Modify: `x/icaoracle/types/codec.go`, `x/icqoracle/types/codec.go` (comment only; both registrations stay)
 - Modify: `x/icaoracle/README.md:117-122` (drop `AddOracle`/`InstantiateOracle` from the Transactions list, note they were removed in v35)
 - Modify: `x/icaoracle/client/cli/tx.go` (`CmdAddOracle`, `CmdInstantiateOracle`), `x/icqoracle/client/cli/tx.go` (`CmdAddTokenPrice`, `CmdRemoveTokenPrice`)
 - Delete: `x/icaoracle/types/message_add_oracle.go` (+`_test`), `message_instantiate_oracle.go` (+`_test`); in `x/icqoracle/types/msgs.go` delete the two messages' helpers
