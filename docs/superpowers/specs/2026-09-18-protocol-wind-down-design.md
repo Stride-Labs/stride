@@ -133,7 +133,7 @@ Pipelines the design reuses:
   → `GetTargetValAmtsForHostZone`) computes balanced targets from the zone total and errors
   when the delegation left after the unbond is not positive (`host_zone.go`), so a record
   whose amount is at or above the zone's remaining `TotalDelegations` fails on every day
-  epoch and stays in `RETRY_QUEUE` with its stTokens escrowed (audit finding STRIDE-07). The
+  epoch and stays in `UNBONDING_RETRY_QUEUE` with its stTokens escrowed (audit finding STRIDE-07). The
   admin drain does not use that path; it matters only for a record left queued on a zone
   the drain has already emptied (§6, §7).
 - Claim today: unbonded tokens sit in the zone's redemption ICA on the host;
@@ -194,18 +194,35 @@ Staketia:
   recorded by sequence, so an inbound transfer to the claim address and an outbound one from
   it are both inert to it.
 
-State on mainnet (2026-09-18 to 2026-09-22):
+State on mainnet (refreshed 2026-09-29 unless dated otherwise):
 
 - Unbonding periods: osmosis-1 14 days, dydx-mainnet-1 30, juno-1 and sommelier-3 28, all
   others 21. Zones submit undelegations every 4 day-epochs.
-- 99 open stakeibc user redemption records, 3 with a claim pending. Open unbondings:
-  queued-not-submitted amounts on osmosis-1, phoenix-1, ssc-1, laozi-mainnet and a
-  cosmoshub-4 retry (~54.7k ATOM); unbonded-not-swept on cosmoshub-4, dydx-mainnet-1,
-  injective-1, juno-1, osmosis-1, phoenix-1, ssc-1.
-- Staketia: 6 `UNBONDING_IN_PROGRESS`, 1 `UNBONDING_QUEUE` (~717 stTIA), 1 accumulating.
-  Stakedym: 5 `UNBONDED` (~1,067 DYM awaiting sweep), 6 `UNBONDING_QUEUE` (~3,294 stDYM
-  escrowed), 30 redemption records; 284,578 DYM recorded delegation vs 260,352 stDYM supply.
-- Zero auctions, zero ICQ-oracle price queries; both airdrop-module airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
+- 127 open stakeibc user redemption records, 3 with a claim pending. `HostZoneUnbonding`
+  records with a non-zero amount: 17 `UNBONDING_QUEUE` (cosmoshub-4 4, phoenix-1 3, ssc-1 3,
+  juno-1 2, osmosis-1 2, dydx-mainnet-1 1, laozi-mainnet 1, sommelier-3 1), 4
+  `UNBONDING_RETRY_QUEUE` (all cosmoshub-4), 49 `EXIT_TRANSFER_QUEUE` (unbonded, awaiting
+  the sweep), and 3,661 `CLAIMABLE` (swept; the terminal status, kept until the cleanup
+  deletes the epoch record).
+- **The Cosmos Hub pipeline is stuck.** Its four retrying records (epochs 1479 to 1483,
+  ~61.6k ATOM) have failed at every day epoch since, and four more (epochs 1484 to 1487,
+  ~128k ATOM, 34 user records) are queued behind them: roughly $340k of redemptions nobody
+  is receiving. Six Hub validators carry a stale `DelegationChangesInProgress` (keplr 12,
+  stakewithus 2, four small ones 1; the two large ones are 800-weight validators holding
+  ~420k ATOM between them) while the delegation ICA channel (channel-863, the 29th on that
+  connection; 28 earlier ones closed on timeouts) is open with zero unacked packets, so no
+  ICA is actually in flight. The capacity calculation skips flagged validators, which is
+  consistent with the batch never fitting. Juno (21 validators flagged) and Haqq (30) carry
+  the same kind of stale flag without a stuck record yet (§9a). This predates the wind-down
+  and is handled in §5 and §12.
+- Staketia: 6 `UNBONDING_IN_PROGRESS`, 2 `UNBONDING_QUEUE`, 1 accumulating, 0 redemption
+  records. Stakedym: 6 `UNBONDING_IN_PROGRESS`, 1 accumulating, 0 redemption records
+  (2026-09-18: 5 unbonded and 6 queued, since flushed by the operator).
+- Zero auctions, zero ICQ-oracle price queries, zero open LSM deposits; both airdrop-module
+  airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
+  Pending ICQs: haqq_11235-1 has 10 slash-path queries open (7 calibrate, 2 validator
+  exchange rate, 1 delegation) and one validator flagged `SlashQueryInProgress`; withdrawal
+  and fee balance queries are open on haqq, juno-1, comdex-1 and laozi-mainnet.
 - Native vouchers stranded on Stride are dust: the eleven deposit addresses, the reward
   collector and the auction module together hold about $3 of in-scope native denoms. Nothing
   on Stride except the staketia claim address will hold a native balance worth moving.
@@ -363,26 +380,34 @@ limit would protect. The module and middleware stay in the stack with empty stat
 **Comdex.** The handler sets `Deprecated = true` on comdex-1 so it carries the same flag as
 the other three deprecated zones. `Halted` is not touched; the flag is documentation.
 
+**Stale in-progress flags.** For every in-scope zone whose delegation ICA channel is open
+with no unacked packet, the handler resets `DelegationChangesInProgress` to zero on every
+validator, exactly what `RestoreInterchainAccount` does after a channel restore, and logs
+each reset. A flag with no ICA behind it is stale by definition (the callback that clears it
+can never fire), and stale flags are what has the Hub pipeline stuck today (§3): the
+capacity calculation skips flagged validators and the drain refuses them. A zone with an
+unacked packet is skipped and logged; ops clear it with the restore flow after the upgrade.
+
 **Pending ICQs.** The handler throws out two kinds of pending interchain query. For
 haqq_11235-1 it deletes every slash-path query (validator exchange rate, delegator shares,
 calibration callbacks) and clears `SlashQueryInProgress` on every haqq validator, before the
 delta table below is applied: a query submitted against the pre-delta state has no reason to
 exist, and unlike v34's `DeleteStuckQueries` and `ResetStuckSlashQueries`, which pin query ids
 and validator addresses, this is dynamic and cannot go stale between measurement and
-execution (haqq had 8 such queries open and one flagged validator on 2026-09-21). For every
+execution (haqq had 10 such queries open and one flagged validator on 2026-09-29). For every
 zone it deletes the pending withdrawal-balance queries, because their callback delegates and
 the call that submits them is gone (§6).
 
 **Haqq delegation reconciliation.** The handler applies a per-validator delta table to
-haqq_11235-1 with the v34 helper, exactly as v34 did for Injective. The 2026-09-21
-measurement (§9a) has 17 validators off: 14 over-recorded (undetected downtime slashes and
+haqq_11235-1 with the v34 helper, exactly as v34 did for Injective. The 2026-09-29
+measurement (§9a) has 16 validators off: 13 over-recorded (undetected downtime slashes and
 sub-token rounding, the largest 853.8 ISLM) and 3 under-recorded by sub-token dust. Both
 signs are applied so every tracked delegation equals the chain's; the net is a decrease of
 about 1,758 ISLM, so `TotalDelegations` drops. The rate update is deleted in the same
 upgrade (§6), so this no longer flows into the stISLM redemption rate; the rate stays about
 0.002% above the backing (1,758 ISLM against 101M stISLM, roughly $7), which the rewards
 accrued until the drain cover many times over and the coverage check (§10) reports either
-way. The table matched live state on three measurements over two days. The stored
+way. The net has been stable across four measurements since 2026-09-21. The stored
 `SharesToTokensRate` is deliberately left as is: the day-0 refresh updates it, and the slash
 callback then finds tracked delegation equal to on-chain shares × the refreshed rate, so
 nothing is applied twice. The table is generated from `measure_delegation_drift.py`,
@@ -463,7 +488,7 @@ and the helper already buffers full drains of validators whose rate is below one
 the stored rate matching the chain, which the day-0 refresh guarantees; `offset` is the lever
 for a validator that has drifted since. Three things reject the tx before anything is
 submitted: a listed validator with `DelegationChangesInProgress` set, a deprecated zone, and
-a zone with any `HostZoneUnbonding` record in `UNBONDING_QUEUE` or `RETRY_QUEUE` with a
+a zone with any `HostZoneUnbonding` record in `UNBONDING_QUEUE` or `UNBONDING_RETRY_QUEUE` with a
 non-zero amount. The last one exists because of a known bug in the record-driven path
 (`GetTargetValAmtsForHostZone` errors when the delegation left after an unbond is not
 positive, so a record can never be submitted on a drained zone and would retry forever with
@@ -477,8 +502,8 @@ Submitting by validator rather than cascading a zone amount by weight is what le
 a single validator first, skip or shave a validator that is failing or drifted by dust, and
 keep every submitted amount equal to what the host will accept. The live test on each zone is
 a full drain of one validator with a small delegation and no unbonding entry in flight (the
-pick per zone is `docs/wind-down/live-test-validators.md`, about $1,200 across all eleven on
-the 2026-09-22 snapshot), not a partial drain with an offset: a full drain exercises the exact
+pick per zone is §9b, about $1,400 across all eleven on the 2026-09-22 prices), not a partial
+drain with an offset: a full drain exercises the exact
 path the real run takes, and it spends one unbonding entry on a validator that then needs
 nothing further. The SDK caps concurrent unbonding entries at 7 per delegator-validator pair
 (the delegation ICA is the delegator); the day epoch adds at most one per validator and the
@@ -533,10 +558,12 @@ Stride-side voucher to the zone's delegation ICA so it leaves with the ICA balan
 nothing else needs a Stride-side account; the claim address is the only Stride-side balance
 worth it.
 
-**`MsgSweepTokensOffStride { creator, denom, addresses: [string] }`**, the batched token
-sweep. `denom` is any bank denom; `addresses` is non-empty and at most 100 entries (the batch
-bound that keeps a tx inside the block gas limit; the plan measures the real cost and can
-raise it). The destination is decided once per tx from the denom, before any address is
+**`MsgSweepTokensOffStride { creator, denoms: [string], addresses: [string] }`**, the
+batched token sweep. `denoms` is a non-empty list of bank denoms and `addresses` a non-empty
+list of at most 100 entries (the batch bound that keeps a tx inside the block gas limit; the
+plan measures the real cost and can raise it). Taking a list of denoms lets the off-chain
+builder walk holders once, by value, and sweep everything each holder has in one tx instead
+of one pass per denom. Each denom's destination is decided once per tx, before any address is
 looked at, and is a (channel, bech32 prefix) pair:
 
 - A Stride-native denom (anything that is not an `ibc/` voucher: every stToken, `ustrd`)
@@ -552,28 +579,32 @@ looked at, and is a (channel, bech32 prefix) pair:
   `somm`), ssc-1 (channel-213, `saga`) and dydx-mainnet-1 (channel-160, `dydx`). A voucher
   whose outermost channel is anything else rejects the whole tx: a derived address on
   phoenix-1, laozi-mainnet, injective-1 or haqq_11235-1 is not the holder's, and the Axelar
-  channels carry about 2 USDC. Holders of those vouchers move them themselves before the halt.
+  channels carry about 2 USDC. A denom with no destination rejects the whole tx: that is a
+  bad batch, not a bad holder. Holders of those vouchers move them themselves before the halt.
 
-Then, for every listed address, in order:
+Then, for every listed address, and for every listed denom it holds:
 
-- Reject the whole tx if the address is not sweepable: it must decode to 20 bytes and its
-  account must be a `BaseAccount` or one of the vesting account types; transfer escrow
-  addresses, module accounts (including the deposit addresses, the distribution module and
-  the reward collector) and interchain accounts are rejected. Batches are built off chain
-  from an export, so a rejected address is an ops error worth surfacing, and the reject is
-  what makes the on-chain rule the safety net rather than the script.
-- Skip with an event if the balance of `denom` is zero (the holder moved it between the
-  export and the tx).
+- Skip the address, with an event naming it and the reason, if it is not sweepable: it must
+  decode to 20 bytes and its account must be a `BaseAccount` or one of the vesting account
+  types; transfer escrow addresses, module accounts (including the deposit addresses, the
+  distribution module and the reward collector), interchain accounts and unknown accounts are
+  skipped. Skipping moves nothing, so a wrong address in a batch can never send funds
+  anywhere; the event and the `num_skipped` count in the response are how the off-chain
+  builder learns it disagreed with the chain, and the rest of the batch goes through. The
+  on-chain rule stays the safety net; it just does not hold up the good addresses.
+- Skip silently if the balance of that denom is zero (with a list of denoms this is the
+  common case, not an anomaly).
 - Otherwise submit an ICS-20 `MsgTransfer` through `transferKeeper.Transfer` of the full
   balance, sender the holder's Stride address, receiver the same 20 bytes bech32-encoded with
   the destination prefix, over the destination channel, with a one-day timeout and no memo. A
-  timeout or a rejected receive refunds the holder on Stride through the normal ICS-20 path
-  and ops resubmit that address.
+  transfer error here (a closed channel, a send disabled) is not a per-holder condition and
+  rejects the whole tx. A timeout or a rejected receive refunds the holder on Stride through
+  the normal ICS-20 path and ops resubmit that address.
 
 Every destination is therefore the canonical form on Osmosis, the native form on the source
 chain, or one hop closer to it; the sweep never adds a hop to any denom and never needs a
-forwarding memo. One tx sweeps up to 100 holders of one denom; the whole sweep at the chosen
-floor is a few thousand packets over a few days (§3). There is no floor on chain: only the
+forwarding memo. One tx sweeps up to 100 holders across the listed denoms; the whole sweep at
+the chosen floor is a few thousand packets over a few days (§3). There is no floor on chain: only the
 sweep operator can sign the tx, so nobody can spam it, and the floor is an ops choice made
 from prices on the day and stated in the announcement. Every account that clears the floor is
 swept; holders below it, and holders on other chains, move themselves (§8).
@@ -662,8 +693,11 @@ Before the upgrade proposal:
 
 Checklist to propose the upgrade (there is no "nothing in flight" condition):
 
-- The haqq delegation delta table, the drift measurement (§9a) and the mainnet-export tests
-  match the chain at one recent height. A haqq redemption unbonding at the upgrade would
+- A full accounting check: for every validator on every in-scope zone, Stride's recorded
+  delegation equals the delegation ICA's on-chain delegation (the drift measurement, §9a),
+  with any difference either in the haqq delta table or explained. The haqq delegation delta
+  table, the drift measurement and the mainnet-export tests match the chain at one recent
+  height. A haqq redemption unbonding at the upgrade would
   change the drift; measure right before the proposal and expect the delta helper to skip
   (never error) if it no longer matches, with the `offset` on the drain tx as the fallback.
 - On every in-scope host, the delegation ICA's withdraw address (distribution module query) is
@@ -689,7 +723,7 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    and undelegates the queued ones.
 2. Day 0 to 4: the next day epoch submits the queued redemptions on every zone and flags their
    validators. Wait for those acks. A record whose submission fails (a slash between the
-   refresh and the epoch) goes to `RETRY_QUEUE` and is retried at the next day epoch; that
+   refresh and the epoch) goes to `UNBONDING_RETRY_QUEUE` and is retried at the next day epoch; that
    zone's drain waits for it.
 3. Then `MsgUndelegateFromValidators` per zone: first for a single small validator as a live
    test of the tx and the callback, then with an empty list for the rest. The tx refuses the
@@ -710,7 +744,8 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    to the redemption ICA at the next stride epoch and the record goes `CLAIMABLE`; ops run
    `ClaimUndelegatedTokens` for every record (permissionless, as today; a record whose host
    receiver rejects the bank send is handled by hand). Once a zone has no record outside
-   `CLAIMED` and no claim ICA in flight: `MsgTransferFromIca DELEGATION` for the full
+   `CLAIMABLE` with a non-zero amount, no user redemption record, and no claim ICA in
+   flight: `MsgTransferFromIca DELEGATION` for the full
    remaining balance, `WITHDRAWAL` again for the auto-withdrawn rewards, and `REDEMPTION` for
    whatever dust the claims left. Then create and fund that stToken's pools (§8), the
    canonical one and one per in-scope route, once the coverage check passes (§10).
@@ -721,10 +756,11 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    landed on the delegation ICA, again with zero for the remainder, which leaves with that
    zone's balance in step 5. No key of the claim address signs anything.
    Stakedym: after 21 days the operator sweeps and confirms the last records.
-7. Last days: `MsgSweepTokensOffStride` in batches of up to 100, per denom, for every holder
-   at or above the floor, built from a fresh export: the eleven stTokens and `ustrd` (to
-   Osmosis), then every voucher whose outermost channel is whitelisted and that is worth
-   sweeping (ATOM to the Hub, TIA to Celestia, and so on, each back one hop). Vouchers over
+7. Last days: `MsgSweepTokensOffStride` in batches of up to 100 holders, each tx listing every
+   denom on the sweep list, for every holder at or above the floor, built from a fresh
+   export: the eleven stTokens and `ustrd` (to Osmosis) and every voucher whose outermost
+   channel is whitelisted and that is worth sweeping (ATOM to the Hub, TIA to Celestia, and so
+   on, each back one hop). Vouchers over
    the four host channels outside the whitelist are announced as self-service. Resubmit any
    address whose transfer timed out (its balance is back on Stride). Relayers on channel-5 and
    on every whitelisted channel stay up until the last packet acks.
@@ -739,9 +775,11 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
 
 Checklist to halt the chain:
 
-- Zero stakeibc user redemption records; zero `HostZoneUnbonding` records outside `CLAIMED`
-  with a non-zero amount; no claim ICA in flight. Staketia and stakedym: zero unbonding
-  records outside `CLAIMED`, zero redemption records, claim addresses drained.
+- Zero stakeibc user redemption records; zero `HostZoneUnbonding` records outside `CLAIMABLE`
+  with a non-zero amount (`CLAIMABLE` is the terminal status of a swept record; the user
+  records under it are what the claim deletes); no claim ICA in flight. Staketia and
+  stakedym: zero unbonding records outside `CLAIMED`, zero redemption records, claim
+  addresses drained.
 - No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
   `TotalDelegations` at dust on every zone except celestia, where it still carries the
   multisig portion (the per-validator unbond only touches ICA validators).
@@ -755,26 +793,70 @@ Checklist to halt the chain:
 - Validators and STRD delegators have withdrawn their rewards; interchain-account holders
   have been notified and given time to move out.
 
+### §9b. Live-test validator per zone
+
+<!-- live-test-validators:start -->
+Generated 2026-09-29 by `scripts/wind-down/pick_live_test_validators.py`; rerun on the day, after the day-0 refresh.
+Prices: the snapshot in sttoken-locations.md (total USD / (supply × rate) per token).
+
+The first `MsgUndelegateFromValidators` on each zone drains exactly one validator in full, as the live test of the tx
+and its callback, before the empty-list drain of the rest (spec §7, §9 step 3). The pick is the validator with the
+smallest recorded delegation of at least one whole token that has no unbonding entry in flight from the delegation ICA (the SDK allows 7
+concurrent entries per delegator-validator pair; a validator drained in full never needs a second one). "Next" is the
+second-smallest delegation, to show how much the pick matters.
+
+| Zone | Validator | Recorded delegation | USD | Entries in flight | Funded validators | Next smallest (USD) |
+|---|---|---:|---:|---:|---:|---:|
+| celestia | mhventures (`celestiavaloper1q2kaajedxm0r5xc0twdqz6atap96502d67yjyj`) | 15,861,063 utia | $7.07 | 0 | 92 | $8.48 |
+| cosmoshub-4 | icycro (`cosmosvaloper1ukpah0340rx7k3x2njnavwyjv6pfpvn632df9q`) | 14,207,897 uatom | $24.86 | 0 | 64 | $26.51 |
+| dydx-mainnet-1 | luganodes (`dydxvaloper1fs0t34g628xdqc8alfefnadq2x3qawt8g88mav`) | 14,328,832,501,947,858,372 adydx | $1.94 | 0 | 25 | $2.25 |
+| haqq_11235-1 | digiser2 (`haqqvaloper1nekpsmetpxx2crsuzznuy4epv9eqvj03rtmxae`) | 3,877,996,874,608,234,702,464 aISLM | $15.10 | 0 | 41 | $15.10 |
+| injective-1 | autostake (`injvaloper1acgud5qpn3frwzjrayqcdsdr9vkl3p6hrz34ts`) | 9,813,332,455,629,722,717 inj | $76.25 | 0 | 38 | $76.79 |
+| juno-1 | cosmosspaces (`junovaloper1836fhsg6yqpu98vezfc7caakchqe8pvske7t8q`) | 9,007,060,654 ujuno | $84.44 | 0 | 21 | $95.05 |
+| laozi-mainnet | meria (`bandvaloper1plau7keptn9qdt7nmhphltakv5t054f8lgwjdn`) | 4,158,959,467 uband | $897.36 | 0 | 32 | $897.36 |
+| osmosis-1 | haannode (`osmovaloper1hqqzynrdqxzky82mw92ugwsrry0ntrse84g5nr`) | 7,791,194,655 uosmo | $285.37 | 0 | 23 | $485.13 |
+| phoenix-1 | coinhall (`terravaloper1ge3vqn6cjkk2xkfwpg5ussjwxvahs2f6at87yp`) | 411,068,185 uluna | $21.96 | 0 | 40 | $27.49 |
+| sommelier-3 | ztakeorg (`sommvaloper13ul4wf2gwuwfrqrx70h2j9evje05vtglpc44sc`) | 2,450,134,223 usomm | $0.00 | 0 | 19 | $0.00 |
+| ssc-1 | solva (`sagavaloper13pcp0cstupahzz3n36x0dlhpa9fr8m9vlcy78y`) | 117,083,715 usaga | $4.41 | 4 | 16 | $26.46 |
+
+Total value put at risk by the eleven live tests: $1,418.75.
+<!-- live-test-validators:end -->
+
 ### §9a. Drift measurement
 
-Measured 2026-09-21 for every in-scope zone except cosmoshub-4 and injective-1 (handled by
-v34): recorded per-validator delegations versus the delegation ICA's on-chain balances.
-dydx-mainnet-1, ssc-1 and sommelier-3 are exact. celestia is under-recorded by ~15,440 TIA
-(the v34 phantom stake; harmless for unbonding). osmosis-1 has one validator over by 3,026
-uosmo with an unchanged rate. juno-1 (1 validator, 1.94 JUNO), laozi-mainnet (2, 4.53 BAND),
-phoenix-1 (10, max 1.20 LUNA) and haqq_11235-1 (14 over plus 3 under by dust, max 853.8
-ISLM, 0.01% of that validator) are over-recorded, and in every case Stride's stored exchange
-rate is above the chain's, i.e. undetected downtime slashes. Recomputing each validator as
-on-chain shares × the chain's current rate reproduces the on-chain balance exactly for every
-validator on every zone, so the refresh leaves no rounding gap and no per-validator buffer is
-needed. The one wrinkle is haqq_11235-1's 18-decimal denom: two validators (SureStake,
-Islamic Staking) are over by 203,557 and 3,216,141 aISLM with an unchanged rate, which is
-dust in ISLM but above the calibration cap the upgrade removes, and even one base unit of
+Measured 2026-09-29, after v34, for every in-scope zone: recorded per-validator delegations
+versus the delegation ICA's on-chain balances (`scripts/wind-down/measure_delegation_drift.py`,
+rerun as the gate before the drain).
+
+- Exact: celestia (the v34 phantom stake is gone), dydx-mainnet-1, osmosis-1, sommelier-3,
+  ssc-1.
+- cosmoshub-4: 2 over-recorded (NodeGuardians 3.25 ATOM, Forbole 0.006 ATOM), 5 under by at
+  most 9 uatom.
+- injective-1: sub-token dust both ways (7 over, 6 under, all below 1e-15 INJ), plus 606 wei
+  on chain against a validator Stride does not track.
+- juno-1: 1 over by 9.39 JUNO, 20 under (largest 6.96 JUNO; under-recording is harmless for
+  unbonding, the ICA holds more than Stride will ask for).
+- laozi-mainnet: 4 under by dust. phoenix-1: 2 over (0.20 LUNA largest, 0.40 in total).
+- haqq_11235-1: 13 over (largest Neuler at 853.8 ISLM, 0.01% of that validator), 3 under by
+  sub-token dust, net over by 1,758.26 ISLM, unchanged since the 2026-09-21 measurement
+  (one validator has since moved to exact).
+
+In every over-recorded case Stride's stored exchange rate is above the chain's, i.e. an
+undetected downtime slash, and recomputing each validator as on-chain shares × the chain's
+current rate reproduces the on-chain balance exactly, so the day-0 refresh leaves no rounding
+gap and no per-validator buffer is needed. The one wrinkle is haqq_11235-1's 18-decimal
+denom: two validators are over by 203,557 and 3,216,141 aISLM with an unchanged rate, dust in
+ISLM but above the calibration cap the upgrade removes, and even one base unit of
 over-recording fails the host's share check. Haqq is therefore trued up by the delta table at
 the upgrade (§5), which covers the dust cases too, and the `offset` on
-`MsgUndelegateFromValidators` is the fallback for anything that drifts afterwards. The
-measurement script is `scripts/wind-down/measure_delegation_drift.py` and is rerun as the gate
-before the drain; haqq_11235-1 is expected to measure clean by then.
+`MsgUndelegateFromValidators` is the fallback for anything that drifts afterwards.
+
+The same measurement shows how widespread stale `DelegationChangesInProgress` flags are:
+cosmoshub-4 has 6 flagged validators (keplr at 12), juno-1 has 21 (every one at 2) and
+haqq_11235-1 has 30, plus one haqq validator flagged `SlashQueryInProgress`; no zone has an
+unacked ICA packet. On the Hub the flags have already stopped the pipeline (§3); on Juno and
+Haqq they would stop the next submission or the drain the same way, which is why the
+handler resets them (§5).
 
 ## §10. Accounting
 
@@ -846,8 +928,9 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   skipped on a stale constant), the two ICQ purges (the haqq purge deletes only that chain's
   slash-path queries and clears the validator flags; the withdrawal-balance purge leaves every
   other query), the autopilot param, the ICA host allow-list, wasm params and contract admins,
-  oracle deactivation, rate-limit removal, the two ValidateBasic gates and the lifted
-  calibration cap; a compile-time guarantee that the removed messages no longer exist and a
+  oracle deactivation, rate-limit removal, the stale-flag reset (cleared on a zone whose
+  channel has no unacked packet, left alone on one that does), the two ValidateBasic gates
+  and the lifted calibration cap; a compile-time guarantee that the removed messages no longer exist and a
   decode test proving historical txs still parse; existing keeper tests for the flows that
   keep running stay green.
 - Freeze by code (§6): a test that each deleted call is absent from the hook and each kept
@@ -857,16 +940,19 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 - Admin txs (§7): unit tests for gating on all four. Undelegate: per-validator message
   construction with and without offsets, empty versus explicit validator lists, rounding
   safety on a full drain, rejection of a validator with a change in progress, of a
-  deprecated zone, and of a zone with a record in `UNBONDING_QUEUE` or `RETRY_QUEUE`
+  deprecated zone, and of a zone with a record in `UNBONDING_QUEUE` or `UNBONDING_RETRY_QUEUE`
   (accepted once every record is `UNBONDING_IN_PROGRESS` or later), acceptance on a
   non-halted zone, no accounting mutation, the in-flight registration. Transfer: every ICA type, a foreign denom, the osmosis-1 bank-send form, a
   chain id absent from the map, that the map has an entry for every in-scope zone and none
   for a deprecated one, that the Osmosis vault constant parses as an `osmo` bech32 address
   and the sweep operator constant as a `stride` one, and the built `MsgTransfer` fields
   (mapped channel, Osmosis vault, timeout, empty memo). Sweep, the highest-review item:
-  table-driven tests for a base account, each vesting type, an escrow address, a module
-  account, an interchain account, a 32-byte address, an unknown account, a zero balance
-  (skipped, others in the batch still sent), a batch over the bound, an invalid denom string,
+  table-driven tests for a base account and each vesting type (swept), an escrow address, a
+  module account, an interchain account, a 32-byte address and an unknown account (each
+  skipped with its reason in the event while the rest of the batch is sent and `num_skipped`
+  counts it), a zero balance (skipped silently), a batch over the bound, an invalid denom
+  string, an empty denom list, a holder with two of three listed denoms (two transfers), a
+  transfer error rejecting the whole tx,
   an stToken and `ustrd` landing on channel-5 with the `osmo` prefix, a single-hop voucher on
   a whitelisted channel landing on that channel with that chain's prefix, a two-hop voucher
   unwinding one hop over its whitelisted outer channel, a voucher whose outer channel is not
@@ -885,6 +971,14 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 
 ## §12. Open items for the plan
 
+- **The Cosmos Hub unbonding pipeline is stuck today** (§3): ~190k ATOM of redemptions across
+  eight epochs are retrying or queued behind six validators with stale in-progress flags, on
+  an open channel with nothing in flight. This is an incident independent of the wind-down
+  and should be fixed now, not at the upgrade: the flags can only be cleared by a channel
+  restore (which needs the channel closed) or by state surgery, so the practical route is a
+  small v34.x patch or the same reset the v35 handler carries (§5), shipped early. Until it is
+  fixed, Hub holders who redeemed in September are not being paid, and the drain of the Hub
+  would be refused by the queued-record guard (§7).
 - **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
   connection `connection-146`, last header 2026-08-05; the delegation ICA restore is stuck in
   `STATE_INIT` on channel-768). No ICA tx, and no Stride→Band transfer, can be delivered
@@ -1075,7 +1169,7 @@ Ops scripts (PRs 5 and 6):
 
 - `build_sweep_batches.py` applies the on-chain skip rules plus the dollar floor to an
   export and writes one address file per batch that the CLI reads (`sweep-tokens-off-stride
-  DENOM FILE`); extra denoms are passed as `--extra-denom DENOM=USD_PER_TOKEN:DECIMALS`, and an
+  DENOMS FILE`, one batch of holders sweeping every listed denom they hold); extra denoms are passed as `--extra-denom DENOM=USD_PER_TOKEN:DECIMALS`, and an
   `ibc/` extra denom is refused unless its outermost hop is in `SweepUnwindChannels`.
   `coverage_check.py` is the §10 check over an export and the vault's Osmosis balances. Both
   are unit-tested against a synthetic export and their real output is checked in.

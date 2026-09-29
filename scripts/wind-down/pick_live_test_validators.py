@@ -2,10 +2,10 @@
 """Pick, per in-scope zone, the validator to use as the live test of MsgUndelegateFromValidators.
 
 The live test drains one validator in full before the empty-list drain (spec §7, §9). The best
-candidate is the validator with the smallest non-zero delegation that has no unbonding entry
+candidate is the validator with the smallest delegation of at least one whole token that has no unbonding entry
 in flight from the delegation ICA: a full drain of it exercises the real path, costs nothing
 if something is wrong, and spends one unbonding-entry slot on a validator that needs nothing
-further. Writes docs/wind-down/live-test-validators.md.
+further. Writes the table into the spec's §9b, between the live-test-validators markers.
 
     python3 scripts/wind-down/pick_live_test_validators.py
 """
@@ -22,9 +22,11 @@ import urllib.request
 STRIDE_REST = "https://stride-api.polkachu.com"
 COINGECKO = "https://api.coingecko.com/api/v3/simple/price"
 USER_AGENT = "curl/8.0"
-DOCS = pathlib.Path(__file__).resolve().parents[2] / "docs" / "wind-down"
-OUTPUT = DOCS / "live-test-validators.md"
-LOCATIONS_DOC = DOCS / "sttoken-locations.md"
+REPO = pathlib.Path(__file__).resolve().parents[2]
+SPEC = REPO / "docs" / "superpowers" / "specs" / "2026-09-18-protocol-wind-down-design.md"
+LOCATIONS_DOC = REPO / "docs" / "wind-down" / "sttoken-locations.md"
+SECTION_START = "<!-- live-test-validators:start -->"
+SECTION_END = "<!-- live-test-validators:end -->"
 TOKEN_HEADER = re.compile(r"^## st[A-Z]+ \(st\w+, host (?P<chain_id>[\w.-]+)\)")
 TOKEN_STATS = re.compile(r"^Supply (?P<supply>[\d,.]+) · RR (?P<rate>[\d.]+) · \$(?P<usd>[\d,]+) total")
 
@@ -61,8 +63,8 @@ def main() -> None:
     prices, price_source = load_prices()
     host_zones = get(f"{STRIDE_REST}/Stride-Labs/stride/stakeibc/host_zone")["host_zone"]
     candidates = [pick(zone, prices) for zone in host_zones if zone["chain_id"] in ZONES]
-    OUTPUT.write_text(render(candidates, price_source))
-    print(f"wrote {OUTPUT}")
+    splice(render(candidates, price_source))
+    print(f"updated {SPEC.relative_to(REPO)} §9b")
 
 
 def load_prices() -> tuple[dict[str, float], str]:
@@ -138,8 +140,7 @@ def get(url: str, attempts: int = 5) -> dict:
 def render(candidates: list[Candidate], price_source: str) -> str:
     today = datetime.date.today().isoformat()
     lines = [
-        "# Live-test validator per zone",
-        "",
+        SECTION_START,
         f"Generated {today} by `scripts/wind-down/pick_live_test_validators.py`; rerun on the day, after the day-0 refresh.",
         f"Prices: {price_source}.",
         "",
@@ -154,8 +155,15 @@ def render(candidates: list[Candidate], price_source: str) -> str:
     ]
     for c in candidates:
         lines.append(f"| {c.chain_id} | {c.name or c.validator} (`{c.validator}`) | {c.delegation:,} {c.host_denom} | ${c.usd:,.2f} | {c.entries} | {c.validators_total} | ${c.next_smallest_usd:,.2f} |")
-    lines += ["", f"Total value put at risk by the eleven live tests: ${sum(c.usd for c in candidates):,.2f}.", ""]
+    lines += ["", f"Total value put at risk by the eleven live tests: ${sum(c.usd for c in candidates):,.2f}.", SECTION_END]
     return "\n".join(lines)
+
+
+def splice(section: str) -> None:
+    text = SPEC.read_text()
+    start = text.index(SECTION_START)
+    end = text.index(SECTION_END) + len(SECTION_END)
+    SPEC.write_text(text[:start] + section + text[end:])
 
 
 if __name__ == "__main__":
