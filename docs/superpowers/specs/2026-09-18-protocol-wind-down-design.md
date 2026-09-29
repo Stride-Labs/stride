@@ -278,11 +278,11 @@ and the code, and each is a hard-coded constant in the upgrade binary (the proto
 already is). Nothing on Stride receives native tokens: every native balance leaves from a
 host chain, so there is no Stride-side vault.
 
-| Name | Chain | Type | Status | Constant | Role |
-|---|---|---|---|---|---|
-| Protocol admin | Stride | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins` | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages. |
-| Sweep operator | Stride | new key | to create | `SweepOperatorAddress` | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
-| Osmosis vault | Osmosis | new multisig | to create | `OsmosisVaultAddress` | Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
+| Name | Chain | Type | Status | Constant | Address | Role |
+|---|---|---|---|---|---|---|
+| Protocol admin | Stride | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins` | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (F5), `stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl` (gov) | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages. |
+| Sweep operator | Stride | new key | to create | `SweepOperatorAddress` | `stride1...` (paste here) | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
+| Osmosis vault | Osmosis | new multisig | to create | `OsmosisVaultAddress` | `osmo1...` (paste here) | Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
 
 The sweep operator and the Osmosis vault are created and proven before the upgrade PR is cut
 (a signed spend from each), and their addresses go into the binary as constants (§9). The
