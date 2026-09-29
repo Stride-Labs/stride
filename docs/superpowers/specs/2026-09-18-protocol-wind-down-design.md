@@ -296,13 +296,17 @@ one-time state change in the handler; the new code is confined to the four admin
 Every handler step logs and skips on missing state rather than erroring, with one exception
 noted below.
 
-**Message handlers removed** (proto `rpc`, msg server, amino registration, CLI, tests). The
-message types stay registered in the interface registry: a node must still decode every
-historical transaction that contains them (`strided q tx`, the tx REST endpoints), and
-dropping the registration would break that for most of the chain's history. Rejection happens
-one step later: with no handler in the msg service router, a submitted message fails with
-"can't route message" for every entry path that goes through the router, which is a stronger
-block than a flag. Keeper functions stay wherever something still calls them, so stakeibc's
+**Message handlers removed** (the `rpc` line in the proto `Msg` service, the msg-server
+method, the CLI command, their tests). The message types and both of their registrations stay:
+the interface-registry entry, so that every historical transaction containing them still
+decodes (`strided q tx`, the tx REST endpoints, explorers; dropping it would break that for
+most of the chain's history, and since the SDK registers Msg types from the service
+descriptor, the explicit `RegisterImplementations` entries must be kept once the `rpc` is
+gone), and the amino name, so that legacy-amino renderings of those transactions keep
+working. Removing the `rpc` is what removes the handler: with nothing in the msg service
+router, a submitted message fails with "can't route message" for every entry path that goes
+through the router, which is a stronger block than a flag. Decoding needs the type, not the
+handler, so old transactions are unaffected; a decode test proves it (§11). Keeper functions stay wherever something still calls them, so stakeibc's
 `LiquidStake` and `RedeemStake` keeper paths survive for autopilot and the community pool,
 while staketia's and stakedym's redeem keeper paths go with their handlers.
 
@@ -891,7 +895,31 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   written for the two-upgrade sequencing and merge into one v35 plan. The second's package
   becomes `app/upgrades/v35`, its halt steps and the `ClaimUndelegatedTokens` removal are
   dropped, its undelegate tx no longer requires `Halted`, and one new task does the §6
-  deletions, the ICQ purges and their tests.
+  deletions, the ICQ purges and their tests. The merged plan is delivered as six stacked PRs,
+  each reviewable on its own, in this order:
+  1. Remove tx handlers: pure deletions across stakeibc, staketia, stakedym, icaoracle,
+     icqoracle, auction, airdrop and claim, plus rebalance, clear-balance and resume; types
+     and registrations stay; the "no handler" guard test and the historical-tx decode test.
+     Large diff, no logic.
+  2. Freeze by code: the nine hook-call deletions, the slash callback's rate rewrite removed,
+     the admin gates on the two ICQ messages, the calibration cap lifted, and the tests that
+     the rate does not move. Small diff, the one PR that needs the epoch machinery in the
+     reviewer's head.
+  3. Upgrade handler: the v35 package and wiring, and every handler helper with its unit
+     test (autopilot param, ICA-host allow-list, wasm to gov, comdex flag, trade-route
+     deletion, oracle deactivation, rate-limit removal, the two ICQ purges, the haqq delta
+     table and its generator). The small state flips live here rather than in PRs of their
+     own; the haqq reconciliation splits out as a seventh PR if it wants its own reviewer.
+  4. Wind-down constants and the ICA-side admin txs: the constants file with the channel
+     maps, the proto for all four messages (one proto-gen), and `MsgUndelegateFromValidators`,
+     `MsgTransferFromIca` and `MsgTransferStaketiaClaimBalance` with types, keeper, CLI and
+     tests.
+  5. Sweep tx: `MsgSweepTokensOffStride` alone, with its skip rules, destination resolution
+     and the batch-builder script that mirrors them. The one tx that moves user balances gets
+     a review with nothing else in the diff.
+  6. Release gate: the mainnet-export suite over the full handler, the coverage-check script,
+     the changelog, and the two address constants once the accounts exist.
+  The module-path bump to `/v35` stays outside all six as a manual step after they land.
 - Which vouchers go on the sweep list (the whitelisted hosts' native tokens at least), sized
   from the export by value like the stTokens. Whether to whitelist the two Axelar channels for
   their 2 USDC (axelar uses coin type 118, so derivation would hold) is not worth a constant
