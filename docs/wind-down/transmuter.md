@@ -4,7 +4,7 @@ Everything here was read from source or queried from mainnet on 2026-09-23. Re-v
 anything marked *live* before relying on it; channel and client state in particular changes.
 
 Companion documents: the wind-down design (`docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md`,
-§3 and §7) and the mainnet test plan (`docs/superpowers/plans/2026-09-23-transmuter-mainnet-test.md`).
+§3 and §8) and the mainnet test plan (`docs/superpowers/plans/2026-09-23-transmuter-mainnet-test.md`).
 
 ## 1. The contract
 

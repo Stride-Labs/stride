@@ -96,7 +96,7 @@ liquidity across the chain, not the trade size; for a pair whose tokens have ≥
 ≥ $40,000 are route candidates. A $12 pool can never qualify; a real pool holding the zone's backing will. A quote for
 the two-hop denom fails outright: `denom is not a valid chain denom (ibc/7451…)`, so the app cannot quote or swap
 foreign-route stATOM; those holders need a contract-execute path (join then exit, or a hosted page) or the pool's
-own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded for §7.
+own `calc_out_amt_given_in`. Not a contract problem, a frontend one; recorded for §8.
 | 23–29 | 8.1 | From `$KEY2`: `set_active_status`, `mark_corrupted_assets`, `rescale_normalization_factor`, `register_limiter`, `assign_moderator`, `transfer_admin`, `claim_admin` | `FD7F1892…`, `AF44321E…`, `BEACA1F0…`, `BCAB4CD9…`, `E3CAD757…`, `A4965886…`, `5CCFB498…` | 71183301–71183344 | all code 5 `Unauthorized`; nothing changed |
 | 30 | 8.2 | `set_active_status false` from `$KEY` (moderator) | `D546A277C1293482AC27CDA3EF1F3CB048216B84E2A4C295DECAF417ECBC423F` | 71183369 | `is_active: false` |
 | 31 | 8.2 | router swap 100,000 ustatom from `$KEY2` while frozen | `A72CFA9CC0D3B4DDE19E8534BE7EF21A65F602D214E0AA69F67699FDDCAD3184` | 71183378 | code 5 `The pool is currently inactive` |
@@ -234,7 +234,7 @@ and its value never decreased across any transaction.
 
 ## Task 12: per-route retest (2026-09-25)
 
-The design moved to one pool per stToken route (spec §7), so the core tests were re-run on fresh two-asset
+The design moved to one pool per stToken route (spec §8), so the core tests were re-run on fresh two-asset
 pools. Pool 3590 was first drained back to the keys (h 71302752/759; 1,517 uatom and 1,500 shares of dust
 remain) and frozen again (h 71302766). RR at creation: `2.002036647211047463`.
 

@@ -261,7 +261,7 @@ def decide(chain: ChainScope) -> None:
     elif leg is None:
         chain.osmosis_decision = "we relay it (leg not mapped yet)"
     elif chain.osmosis_status == "blocked":
-        chain.osmosis_decision = "not served: blocked (spec §11)"
+        chain.osmosis_decision = "not served: blocked (spec §12)"
     elif leg.client_status != "expired" and leg.last_recv_days is not None and leg.last_recv_days <= FREE_PACKET_MAX_AGE_DAYS:
         # A recent packet beats the map's stale label: it proves a relayer is working the channel
         chain.osmosis_decision = "free, someone else relays it"

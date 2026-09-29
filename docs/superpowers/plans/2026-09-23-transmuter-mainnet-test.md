@@ -6,7 +6,7 @@
 > operator; Claude never holds keys. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Prove on Osmosis mainnet, with a few dollars of real stATOM and ATOM, that a
-transmuter pool created from code id 996 does what the wind-down design (§7) needs: a
+transmuter pool created from code id 996 does what the wind-down design (§8) needs: a
 fixed stToken→native rate, funding by the vault only, permissionless redemption at that
 rate from every chain stATOM lives on, admin/moderator controls that work, and no hole
 that lets value leak or lets a stranger break the pool.
@@ -21,7 +21,7 @@ that multi-denom pool (3590); after the design moved to one pool per route, Task
 core tests on per-route pools.
 
 **Reference:** `docs/wind-down/transmuter.md` (denoms, channels, message formats, every
-command used here). Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` §3, §7.
+command used here). Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` §3, §8.
 
 ## Global Constraints
 
@@ -308,7 +308,7 @@ rpc/grpc, `key_name`, gas denom; `hermes keys add --chain <id> --mnemonic-file �
 packet times out it refunds on Stride; resend.
 
 - [ ] **Step 3: Log which routes needed manual relaying.** That answer feeds the spec
-  (§7 says "ops seed each one with a small transfer").
+  (§8 says "ops seed each one with a small transfer").
 
 ### Task 6: Forward each to Osmosis as a user would
 
@@ -429,7 +429,7 @@ Expected, with ATOM marked corrupted: stATOM→ATOM succeeds (ATOM amount and we
 fall); ATOM→stATOM fails `CorruptedAssetRelativelyIncreased`; the vault's ATOM top-up
 also fails (amount increase) — so this lever blocks *funding* too, and can only be
 flipped after the pool is fully funded; exiting stATOM only fails (ATOM weight rises).
-Unmark restores all four. Write the conclusion into the spec's §7 as an optional
+Unmark restores all four. Write the conclusion into the spec's §8 as an optional
 hardening with that ordering constraint.
 
 - [ ] **Step 4: Rescale is uniform**
@@ -538,8 +538,8 @@ pool — record it.
   two-hop denoms, and which hops needed manual relaying.
 - [ ] **Step 2:** Update the spec: §3 transmuter facts (factor orientation is already
   fixed; add taker fee, creation fee in allUSDC, gov-migration exposure, the
-  corrupted-asset ordering constraint), §7 (funding order, `add_new_assets` list per
-  token now known from the escrow map, user guide need for two-hop holders), §11 (Penumbra
+  corrupted-asset ordering constraint), §8 (funding order, `add_new_assets` list per
+  token now known from the escrow map, user guide need for two-hop holders), §12 (Penumbra
   and Kujira stranded holders; whether to pursue client recovery).
 - [ ] **Step 3:** Commit; do not push.
 

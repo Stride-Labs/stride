@@ -52,7 +52,7 @@ total across tokens. Legs are shown where the relayer map has a route for the ch
 | Osmosis (`osmosis-1`) | $1,905,914 | channel-5 |  | not mapped | sweep channel, we relay it | not mapped | destination, the pools live here | stATOM, stISLM, stTIA, stINJ, stOSMO, stBAND, stDYDX, stJUNO |
 | Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 0.1d / 0.0d | ICA channel, we relay it | channel-0: live 0.0d · 0.0d / 0.0d | free, someone else relays it | stATOM, stTIA, stINJ, stOSMO, stDYDX |
 | HAQQ (`haqq_11235-1`) | $168,516 | channel-240 | yes | channel-240: live 6.1d · 3.0d / 2.9d | ICA channel, we relay it | channel-1575: live 5.6d · 1.4d / 1.9d | free, someone else relays it | stISLM |
-| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.2d / 0.0d | ICA channel, we relay it | channel-122: blocked 0.0d · 0.1d / 0.0d | not served: blocked (spec §11) | – |
+| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.2d / 0.0d | ICA channel, we relay it | channel-122: blocked 0.0d · 0.1d / 0.0d | not served: blocked (spec §12) | – |
 | Secret (`secret-4`) | $76,719 | channel-40 |  | channel-40: live 13.7d · 3.2d / 4.7d | not needed after the upgrade | channel-88: live 0.0d · 0.1d / 0.1d | free, someone else relays it | stATOM, stINJ, stOSMO |
 | Penumbra (`penumbra-1`) | $29,542 | channel-307 |  | channel-307: expired 6915.9d · never / never | not needed after the upgrade | channel-79703: expired 3194.7d · never / never | we relay it, after client recovery | stATOM, stOSMO |
 | Kujira (`kaiyo-1`) | $20,850 | channel-8 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
