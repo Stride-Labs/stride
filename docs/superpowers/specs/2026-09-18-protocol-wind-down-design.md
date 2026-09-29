@@ -204,17 +204,31 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   `UNBONDING_RETRY_QUEUE` (all cosmoshub-4), 49 `EXIT_TRANSFER_QUEUE` (unbonded, awaiting
   the sweep), and 3,661 `CLAIMABLE` (swept; the terminal status, kept until the cleanup
   deletes the epoch record).
-- **The Cosmos Hub pipeline is stuck.** Its four retrying records (epochs 1479 to 1483,
-  ~61.6k ATOM) have failed at every day epoch since, and four more (epochs 1484 to 1487,
-  ~128k ATOM, 34 user records) are queued behind them: roughly $340k of redemptions nobody
-  is receiving. Six Hub validators carry a stale `DelegationChangesInProgress` (keplr 12,
-  stakewithus 2, four small ones 1; the two large ones are 800-weight validators holding
-  ~420k ATOM between them) while the delegation ICA channel (channel-863, the 29th on that
-  connection; 28 earlier ones closed on timeouts) is open with zero unacked packets, so no
-  ICA is actually in flight. The capacity calculation skips flagged validators, which is
-  consistent with the batch never fitting. Juno (21 validators flagged) and Haqq (30) carry
-  the same kind of stale flag without a stuck record yet (§9a). This predates the wind-down
-  and is handled in §5 and §12.
+- **The Cosmos Hub pipeline is stuck, and the cause is the exact failure this design's
+  day-0 refresh exists to prevent.** Four records are in `UNBONDING_RETRY_QUEUE` (epochs
+  1479 to 1483, ~61.6k ATOM) and four more are queued behind them (1484 to 1487, ~128k ATOM,
+  34 user records): roughly $340k of redemptions nobody is receiving. The
+  `undelegation_failed` events (five since 2026-09-06, one per four-day unbonding epoch) and
+  the acknowledgements behind them show what happens: each epoch the Hub's undelegation is
+  split into ICA batches of five validators; the batch that holds NodeGuardians
+  (`cosmosvaloper1jst8q8…`, decommissioned, weight 0, recorded 32,766.32 ATOM against
+  32,763.08 on chain, stored rate exactly 1.0) is rejected by the Hub with ABCI code 18,
+  "invalid shares amount", and the other batches succeed. A zero-weight validator is drained
+  in full first by the cascade, the full-drain amount is 3.25 ATOM more than exists, and
+  `applySharesRoundingSafety` only buffers a validator whose stored rate is below one, which
+  Stride still believes this one is not. Records satisfied by the successful batches move
+  on; whatever the failing batch was to cover stays in retry, and every new epoch's records
+  join it, so the stuck amount grows. The fix needs no code and is available today:
+  `UpdateValidatorSharesExchRate` (CLI `update-delegation`) for NodeGuardians and for
+  Forbole (58.22 ATOM, over by 0.006, same shape), which detects the 0.01% downtime slash,
+  lowers the recorded delegation to the chain's, and stores the sub-one rate so the next
+  full drain both fits and gets the safety buffer. Neither validator is flagged, so the
+  callback will apply. Separately, six Hub validators carry a stale
+  `DelegationChangesInProgress` (keplr 12, stakewithus 2, four small ones 1), Juno has 21
+  and Haqq 30, all with open ICA channels and nothing unacked; those flags do not affect
+  the pipeline (the capacity calculation ignores them) but they do make the slash callback
+  skip a validator and would make the drain refuse it, which is why the handler resets them
+  (§5).
 - Staketia: 6 `UNBONDING_IN_PROGRESS`, 2 `UNBONDING_QUEUE`, 1 accumulating, 0 redemption
   records. Stakedym: 6 `UNBONDING_IN_PROGRESS`, 1 accumulating, 0 redemption records
   (2026-09-18: 5 unbonded and 6 queued, since flushed by the operator).
@@ -384,9 +398,11 @@ the other three deprecated zones. `Halted` is not touched; the flag is documenta
 with no unacked packet, the handler resets `DelegationChangesInProgress` to zero on every
 validator, exactly what `RestoreInterchainAccount` does after a channel restore, and logs
 each reset. A flag with no ICA behind it is stale by definition (the callback that clears it
-can never fire), and stale flags are what has the Hub pipeline stuck today (§3): the
-capacity calculation skips flagged validators and the drain refuses them. A zone with an
-unacked packet is skipped and logged; ops clear it with the restore flow after the upgrade.
+can never fire). Stale flags do not stop the record pipeline, but they make the slash
+callback skip that validator (so a day-0 refresh would silently not apply) and make the
+drain refuse it, and today the Hub, Juno and Haqq carry dozens of them (§3, §9a). A zone
+with an unacked packet is skipped and logged; ops clear it with the restore flow after the
+upgrade.
 
 **Pending ICQs.** The handler throws out two kinds of pending interchain query. For
 haqq_11235-1 it deletes every slash-path query (validator exchange rate, delegator shares,
@@ -971,14 +987,16 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 
 ## §12. Open items for the plan
 
-- **The Cosmos Hub unbonding pipeline is stuck today** (§3): ~190k ATOM of redemptions across
-  eight epochs are retrying or queued behind six validators with stale in-progress flags, on
-  an open channel with nothing in flight. This is an incident independent of the wind-down
-  and should be fixed now, not at the upgrade: the flags can only be cleared by a channel
-  restore (which needs the channel closed) or by state surgery, so the practical route is a
-  small v34.x patch or the same reset the v35 handler carries (§5), shipped early. Until it is
-  fixed, Hub holders who redeemed in September are not being paid, and the drain of the Hub
-  would be refused by the queued-record guard (§7).
+- **The Cosmos Hub unbonding pipeline is stuck today** (§3): ~190k ATOM of redemptions
+  across eight epochs are retrying or queued because the batch that drains NodeGuardians in
+  full is rejected every epoch (recorded 3.25 ATOM above the chain after an undetected
+  slash). Fix it now with the permissionless slash refresh on NodeGuardians and Forbole;
+  the next four-day epoch then clears the backlog. Until it is fixed, Hub holders who
+  redeemed in September are not being paid, and the drain of the Hub would be refused by the
+  queued-record guard (§7). The stale in-progress flags on the Hub, Juno and Haqq are a
+  second, unrelated cleanup that the v35 handler does (§5); why they accumulate is not yet
+  understood (every callback path decrements them and nothing is unacked), which is worth a
+  look before the upgrade so the reset is not papering over a live leak.
 - **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
   connection `connection-146`, last header 2026-08-05; the delegation ICA restore is stuck in
   `STATE_INIT` on channel-768). No ICA tx, and no Stride→Band transfer, can be delivered
