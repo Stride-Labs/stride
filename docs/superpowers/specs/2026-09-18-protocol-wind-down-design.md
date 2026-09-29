@@ -1,7 +1,9 @@
 # Protocol Wind-Down: Migration to Osmosis
 
-Status: approved design, pre-plan. Large tier; the v35 implementation plan is written from
-this spec as six stacked PRs (§12), with the notes carried over from the earlier plans in §13.
+Status: approved design, planned. Large tier; the v35 work is written from this spec as six
+stacked PRs (§12) with one implementation plan per code PR
+(`docs/superpowers/plans/2026-09-29-wind-down-pr1-remove-handlers.md` through
+`...-pr5-sweep-tx.md`), and the notes carried over from the earlier plans in §13.
 
 ## §1. Goal
 
@@ -1037,9 +1039,15 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   addresses in §4 once created, the channel-5 constant and the `SweepUnwindChannels`
   whitelist for the sweep, and the `chain_id → host-side channel to Osmosis` map; the batch
   bound after measuring gas.
-- The plan: one v35 plan written from this spec (the two plans written for the earlier
-  two-upgrade sequencing were deleted on 2026-09-29; what they had learned is in §13). It is
-  delivered as six stacked PRs, each reviewable on its own, in this order:
+- The plans: one per code PR, written from this spec on 2026-09-29 (the two plans written
+  for the earlier two-upgrade sequencing were deleted the same day; what they had learned is
+  in §13). The work is delivered as six stacked PRs, each reviewable on its own, in the order
+  below. **Branching and order:** PR 1 branches off `wind-down-design-consolidation`; every
+  later PR branches off the previous PR's branch (PR 2 off PR 1, PR 3 off PR 2, and so on),
+  so each diff shows only its own change; and the PRs are implemented and merged strictly in
+  sequence, never in parallel. Branch names: `wind-down-pr1-remove-handlers`,
+  `wind-down-pr2-freeze-by-code`, `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`,
+  `wind-down-pr5-sweep-tx`, `wind-down-pr6-release-gate`.
   1. Remove tx handlers: pure deletions across stakeibc, staketia, stakedym, icaoracle,
      icqoracle, auction, airdrop and claim, plus rebalance, clear-balance and resume; types
      and registrations stay; the "no handler" guard test and the historical-tx decode test.
@@ -1062,7 +1070,12 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
      a review with nothing else in the diff.
   6. Release gate: the mainnet-export suite over the full handler, the coverage-check script,
      the changelog, and the two address constants once the accounts exist.
-     The module-path bump to `/v35` stays outside all six as a manual step after they land.
+     PR 6 has no plan of its own: its content is fixed by PRs 3 and 5 (the export suite
+     replays the finished handler; the coverage check reads the finished constants) and by
+     the two accounts existing, so it is written once PR 5 is merged and the accounts are
+     proven (§9).
+     The module-path bump to `/v35` stays outside all six as a manual step after they land:
+     it touches every file and would make the stacked diffs unreviewable.
 - Which vouchers go on the sweep list (the whitelisted hosts' native tokens at least), sized
   from the export by value like the stTokens. Whether to whitelist the two Axelar channels for
   their 2 USDC (axelar uses coin type 118, so derivation would hold) is not worth a constant
