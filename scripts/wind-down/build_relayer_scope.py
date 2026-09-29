@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Decide, per chain, which relayer legs the wind-down gets for free and which it must run.
 
-Reads the routes and light-client ages embedded in docs/wind-down/relayer-map.html, adds the
-last real packet seen on each leg (tx_search on the Stride and Osmosis RPCs, since a fresh
+Takes every chain from the per-token escrow tables in docs/wind-down/sttoken-locations.md, joins
+the routes and light-client ages embedded in docs/wind-down/relayer-map.html where a route exists,
+adds the last real packet seen on each leg (tx_search on the Stride and Osmosis RPCs, since a fresh
 client header only proves someone updates the client, not that they relay our channel), and
 applies the scope rule:
 
@@ -47,6 +48,7 @@ SECTION_END = "<!-- relayer-scope:end -->"
 INSERT_BEFORE = "## Summary"
 
 STRIDE_CHAIN_ID = "stride-1"
+OSMOSIS_CHAIN_ID = "osmosis-1"
 STRIDE_PHASE = "p1"
 OSMOSIS_PHASE = "p2"
 
@@ -69,8 +71,10 @@ class ChainScope:
     chain_id: str
     name: str
     host: bool
-    usd: int
-    tokens: list[dict]
+    usd: int  # every stToken on the chain, whatever its status in the locations doc
+    tokens: list[dict]  # {"sym", "usd", "status"}
+    statuses: set[str]
+    stride_channels: str
     stride_leg: Leg | None
     osmosis_leg: Leg | None
     osmosis_status: str
@@ -78,11 +82,19 @@ class ChainScope:
     osmosis_decision: str = ""
     pool_routes: list[str] = dataclasses.field(default_factory=list)
 
+    @property
+    def dead(self) -> bool:
+        return self.statuses <= {"ignored · unrecoverable"}
+
+    @property
+    def deprecated_only(self) -> bool:
+        return self.statuses <= {"ignored · deprecated"}
+
 
 def main() -> None:
     args = parse_args()
     phases = load_phases()
-    chains = build_chains(phases)
+    chains = build_chains(phases=phases, escrow=load_escrow_tables())
 
     cache = json.loads(CACHE.read_text()) if CACHE.exists() else {}
     for chain in chains:
@@ -113,25 +125,49 @@ def load_phases() -> dict[str, dict]:
     raise SystemExit(f"no PHASES array in {RELAYER_MAP}")
 
 
-def build_chains(phases: dict[str, dict]) -> list[ChainScope]:
-    """One ChainScope per chain in the Stride or Osmosis phase, excluding Stride itself, largest first."""
+ROW_PATTERN = re.compile(r"^\| (?P<name>[^|]+?) \| (?P<chain_id>[^|]+?) \| (?P<channels>[^|]+?) \| [^|]+ \| [^|]+ \| \$(?P<usd>[\d,]+) \| (?P<status>[^|]+?) \|$")
+TOKEN_HEADER = re.compile(r"^## (?P<sym>st[A-Z]+) \(")
+
+
+def load_escrow_tables() -> dict[str, dict]:
+    """Every chain row of every per-token table in the locations doc, keyed by chain id."""
+    chains: dict[str, dict] = {}
+    token = None
+    for line in LOCATIONS_DOC.read_text().splitlines():
+        header = TOKEN_HEADER.match(line)
+        if header:
+            token = header.group("sym")
+            continue
+        row = ROW_PATTERN.match(line)
+        if token is None or row is None or row.group("chain_id") in ("Chain id", STRIDE_CHAIN_ID):
+            continue
+        chain = chains.setdefault(row.group("chain_id"), {"name": row.group("name"), "channels": row.group("channels"), "tokens": [], "statuses": set()})
+        chain["tokens"].append({"sym": token, "usd": int(row.group("usd").replace(",", "")), "status": row.group("status")})
+        chain["statuses"].add(row.group("status"))
+    return chains
+
+
+def build_chains(phases: dict[str, dict], escrow: dict[str, dict]) -> list[ChainScope]:
+    """One ChainScope per chain that holds any stToken, largest first, with map legs where a route exists."""
     stride_routes = {route["id"]: route for route in phases[STRIDE_PHASE]["routes"]}
     osmosis_routes = {route["id"]: route for route in phases[OSMOSIS_PHASE]["routes"]}
-    chain_ids = (set(stride_routes) | set(osmosis_routes)) - {STRIDE_CHAIN_ID}
+    host_ids = {cid for cid, route in {**stride_routes, **osmosis_routes}.items() if route.get("host")}
     chains = []
-    for chain_id in sorted(chain_ids, key=lambda cid: -(osmosis_routes.get(cid) or stride_routes[cid])["usd"]):
-        route = osmosis_routes.get(chain_id) or stride_routes[chain_id]
+    for chain_id, data in escrow.items():
+        route = osmosis_routes.get(chain_id) or stride_routes.get(chain_id) or {}
         chains.append(ChainScope(
             chain_id=chain_id,
-            name=route["name"],
-            host=bool(route.get("host")),
-            usd=int(route["usd"]),
-            tokens=route["tokens"],
+            name=data["name"],
+            host=chain_id in host_ids,
+            usd=sum(token["usd"] for token in data["tokens"]),
+            tokens=data["tokens"],
+            statuses=data["statuses"],
+            stride_channels=data["channels"],
             stride_leg=leg_toward(stride_routes.get(chain_id), center="Stride"),
             osmosis_leg=leg_toward(osmosis_routes.get(chain_id), center="Osmosis"),
-            osmosis_status=(osmosis_routes.get(chain_id) or {}).get("status", "unknown"),
+            osmosis_status=route.get("status", "unmapped"),
         ))
-    return chains
+    return sorted(chains, key=lambda chain: -chain.usd)
 
 
 def leg_toward(route: dict | None, center: str) -> Leg | None:
@@ -201,11 +237,22 @@ def age_days(timestamp: str | None) -> float | None:
 
 
 def decide(chain: ChainScope) -> None:
-    chain.stride_decision = "ICA (ours)" if chain.host else "none"
+    if chain.chain_id == OSMOSIS_CHAIN_ID:
+        chain.stride_decision = "sweep channel (ours)"
+    else:
+        chain.stride_decision = "ICA (ours)" if chain.host else "none"
 
     leg = chain.osmosis_leg
-    if leg is None:
-        chain.osmosis_decision = "none (no channel)"
+    if chain.chain_id == OSMOSIS_CHAIN_ID:
+        chain.osmosis_decision = "destination"
+    elif chain.dead:
+        chain.osmosis_decision = "none (chain dead)"
+    elif chain.deprecated_only:
+        chain.osmosis_decision = "none (deprecated zone)"
+    elif leg is None and chain.usd < MIN_USD_FOR_OPS_RELAYER:
+        chain.osmosis_decision = "none (below minimum)"
+    elif leg is None:
+        chain.osmosis_decision = "ops (leg not mapped yet)"
     elif chain.osmosis_status == "blocked":
         chain.osmosis_decision = "blocked (spec §11)"
     elif leg.client_status != "expired" and leg.last_recv_days is not None and leg.last_recv_days <= FREE_PACKET_MAX_AGE_DAYS:
@@ -216,8 +263,8 @@ def decide(chain: ChainScope) -> None:
     else:
         chain.osmosis_decision = "none"
 
-    served = chain.osmosis_decision in ("free", "ops", "ops (recover client)")
-    chain.pool_routes = [token["sym"] for token in chain.tokens if served and token["usd"] >= SMALL_TOKEN_USD]
+    served = chain.osmosis_decision.startswith(("free", "ops", "destination"))
+    chain.pool_routes = [token["sym"] for token in chain.tokens if served and token["usd"] >= SMALL_TOKEN_USD and token["status"] != "ignored · deprecated"]
 
 
 # --- output -------------------------------------------------------------------------------------
@@ -225,7 +272,7 @@ def decide(chain: ChainScope) -> None:
 
 def render(chains: list[ChainScope]) -> str:
     today = datetime.date.today().isoformat()
-    is_served = lambda chain: chain.osmosis_decision.startswith(("free", "ops"))  # noqa: E731
+    is_served = lambda chain: chain.osmosis_decision.startswith(("free", "ops", "destination"))  # noqa: E731
     served = [chain for chain in chains if is_served(chain)]
     ops = [chain for chain in chains if chain.osmosis_decision.startswith("ops")]
     dropped = [chain for chain in chains if not is_served(chain)]
@@ -250,17 +297,20 @@ def render(chains: list[ChainScope]) -> str:
         + (f" ({', '.join(c.name for c in ops)})" if ops else "") + "."
         + (" Not served: " + ", ".join(f"{c.name} (${c.usd:,})" for c in dropped) + "." if dropped else ""),
         "",
-        "| Chain | In-scope USD | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |",
-        "|---|---:|---|---|---|---|---|---|",
+        "Every chain that holds any stToken is listed, largest first, whatever its status below; the USD column is the chain's",
+        "total across tokens. Legs are shown where the relayer map has a route for the chain.",
+        "",
+        "| Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |",
+        "|---|---:|---|---|---|---|---|---|---|",
     ]
     for chain in chains:
         lines.append(
-            f"| {chain.name} (`{chain.chain_id}`) | ${chain.usd:,} | {'yes' if chain.host else ''} | {leg_cell(chain.stride_leg)} | {chain.stride_decision} "
+            f"| {chain.name} (`{chain.chain_id}`) | ${chain.usd:,} | {chain.stride_channels} | {'yes' if chain.host else ''} | {leg_cell(chain.stride_leg)} | {chain.stride_decision} "
             f"| {leg_cell(chain.osmosis_leg)} | {chain.osmosis_decision} | {', '.join(chain.pool_routes) or '–'} |"
         )
-    lines += ["", "Per-token value on each chain (same snapshot as the tables below):", ""]
+    lines += ["", "Per-token value on each chain, with the status from the tables below:", ""]
     for chain in chains:
-        tokens = ", ".join(f"{t['sym']} ${t['usd']:,}" for t in sorted(chain.tokens, key=lambda t: -t["usd"]))
+        tokens = ", ".join(f"{t['sym']} ${t['usd']:,} ({t['status']})" for t in sorted(chain.tokens, key=lambda t: -t["usd"]))
         lines.append(f"- {chain.name}: {tokens}")
     lines += ["", SECTION_END, ""]
     return "\n".join(lines)
@@ -268,7 +318,7 @@ def render(chains: list[ChainScope]) -> str:
 
 def leg_cell(leg: Leg | None) -> str:
     if leg is None:
-        return "no channel"
+        return "not mapped"
     client = leg.client_status + ("" if leg.client_age_days is None else f" {leg.client_age_days:.1f}d")
     return f"{leg.near_channel}: {client} · {days(leg.last_recv_days)} / {days(leg.last_ack_days)}"
 

@@ -36,45 +36,90 @@ relay their own hop. The Stride leg only matters after the upgrade for hosts (ou
 On a served chain every token worth at least $1,000 gets a pool route. "Last in / out" is the age of the
 youngest packet received on the leg and the youngest acknowledgement delivered for the opposite direction.
 
-Served: $542,250 across 15 chains, of which $29,327 needs a relayer from us (Penumbra). Not served: Injective ($162,053).
+Served: $2,454,250 across 16 chains, of which $29,542 needs a relayer from us (Penumbra). Not served: Injective ($162,057), Kujira ($20,850), Comdex ($5,145), Evmos ($3,395), Stargaze ($931), Canto ($748), Acrechain ($623), Namada ($611), Composable ($211), Umee ($211), Crescent ($13), Namada testnet ($4), Sei ($1), Persistence ($1), Oraichain ($1), Chihuahua ($1), Gravity Bridge ($0), Namada testnet ($0), Astria ($0), Indigo ($0), Sommelier ($0).
 
-| Chain | In-scope USD | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |
-|---|---:|---|---|---|---|---|---|
-| Cosmos Hub (`cosmoshub-4`) | $230,601 | yes | channel-0: live 0.0d · 0.0d / 0.0d | ICA (ours) | channel-0: live 0.0d · 0.0d / 0.0d | free | stATOM, stTIA, stINJ, stOSMO, stDYDX |
-| Haqq (`haqq_11235-1`) | $168,516 | yes | channel-240: live 6.1d · 3.0d / 2.9d | ICA (ours) | channel-1575: live 5.6d · 1.4d / 1.9d | free | stISLM |
-| Injective (`injective-1`) | $162,053 | yes | channel-6: live 2.1d · 0.1d / 0.0d | ICA (ours) | channel-122: blocked 0.0d · 0.0d / 0.0d | blocked (spec §11) | – |
-| Secret (`secret-4`) | $76,197 |  | channel-40: live 13.7d · 3.2d / 4.7d | none | channel-88: live 0.0d · 0.1d / 0.1d | free | stATOM, stINJ, stOSMO |
-| Penumbra (`penumbra-1`) | $29,327 |  | channel-307: expired 6915.9d · never / never | none | channel-79703: expired 3194.7d · never / never | ops (recover client) | stATOM, stOSMO |
-| Agoric (`agoric-3`) | $15,967 |  | channel-148: expired 1137.3d · never / never | none | channel-320: live 0.4d · 0.0d / 0.5d | free | stATOM, stTIA |
-| Neutron (`neutron-1`) | $8,203 |  | channel-123: stale 36.3d · 7.4d / 7.4d | none | channel-874: stale 35.5d · 0.2d / 1.5d | free | stATOM, stTIA |
-| Carbon (`carbon-1`) | $6,572 |  | channel-47: stale 297.0d · 17.2d / never | none | channel-188: stale 40.8d · 4.2d / 8.5d | free | stATOM, stTIA, stLUNA |
-| Terra (`phoenix-1`) | $3,107 | yes | channel-52: live 5.3d · 0.1d / 0.1d | ICA (ours) | channel-251: live 0.2d · 0.0d / 0.0d | free | stLUNA |
-| Dymension (`dymension_1100-1`) | $1,981 |  | channel-197: live 2.5d · 5.3d / 0.5d | none | channel-19774: live 0.2d · 0.0d / 0.1d | free | stTIA |
-| Axelar (`axelar-dojo-1`) | $1,312 |  | channel-69: expired 219.0d · never / never | none | channel-208: live 0.1d · 0.0d / 0.0d | free | stATOM |
-| Celestia (`celestia`) | $322 | yes | channel-162: live 5.4d · 0.6d / 0.3d | ICA (ours) | channel-6994: live 0.0d · 0.0d / 0.0d | free | – |
-| dYdX (`dydx-mainnet-1`) | $76 | yes | channel-160: live 5.2d · 0.1d / 0.0d | ICA (ours) | channel-6787: live 0.0d · 0.2d / 0.2d | free | – |
-| Saga (`ssc-1`) | $65 | yes | channel-213: live 5.2d · 0.1d / 0.1d | ICA (ours) | channel-38946: live 0.1d · 0.1d / 0.0d | free | – |
-| Band (`laozi-mainnet`) | $3 | yes | channel-258: live 5.4d · never / never | ICA (ours) | channel-148: live 9.3d · 0.3d / 0.2d | free | – |
-| Juno (`juno-1`) | $1 | yes | channel-24: live 5.9d · 0.1d / 0.1d | ICA (ours) | channel-42: live 0.1d · 0.0d / 0.0d | free | – |
+Every chain that holds any stToken is listed, largest first, whatever its status below; the USD column is the chain's
+total across tokens. Legs are shown where the relayer map has a route for the chain.
 
-Per-token value on each chain (same snapshot as the tables below):
+| Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |
+|---|---:|---|---|---|---|---|---|---|
+| Osmosis (`osmosis-1`) | $1,905,914 | channel-5 |  | not mapped | sweep channel (ours) | not mapped | destination | stATOM, stISLM, stTIA, stINJ, stOSMO, stBAND, stDYDX, stJUNO |
+| Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 0.0d / 0.0d | ICA (ours) | channel-0: live 0.0d · 0.0d / 0.0d | free | stATOM, stTIA, stINJ, stOSMO, stDYDX |
+| HAQQ (`haqq_11235-1`) | $168,516 | channel-240 | yes | channel-240: live 6.1d · 3.0d / 2.9d | ICA (ours) | channel-1575: live 5.6d · 1.4d / 1.9d | free | stISLM |
+| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.1d / 0.0d | ICA (ours) | channel-122: blocked 0.0d · 0.0d / 0.0d | blocked (spec §11) | – |
+| Secret (`secret-4`) | $76,719 | channel-40 |  | channel-40: live 13.7d · 3.2d / 4.7d | none | channel-88: live 0.0d · 0.1d / 0.1d | free | stATOM, stINJ, stOSMO |
+| Penumbra (`penumbra-1`) | $29,542 | channel-307 |  | channel-307: expired 6915.9d · never / never | none | channel-79703: expired 3194.7d · never / never | ops (recover client) | stATOM, stOSMO |
+| Kujira (`kaiyo-1`) | $20,850 | channel-8 |  | not mapped | none | not mapped | none (chain dead) | – |
+| Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | none | channel-320: live 0.4d · 0.0d / 0.5d | free | stATOM, stTIA |
+| Neutron (`neutron-1`) | $8,339 | channel-123 |  | channel-123: stale 36.3d · 7.4d / 7.4d | none | channel-874: stale 35.5d · 0.2d / 1.5d | free | stATOM, stTIA |
+| Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 17.2d / never | none | channel-188: stale 40.8d · 4.2d / 8.5d | free | stATOM, stTIA, stLUNA |
+| Comdex (`comdex-1`) | $5,145 | channel-49 |  | not mapped | none | not mapped | none (chain dead) | – |
+| Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 0.1d / 0.1d | ICA (ours) | channel-251: live 0.2d · 0.0d / 0.0d | free | stLUNA |
+| Evmos (`evmos_9001-2`) | $3,395 | channel-16 |  | not mapped | none | not mapped | none (chain dead) | – |
+| Dymension (`dymension_1100-1`) | $2,884 | channel-197 |  | channel-197: live 2.5d · 5.3d / 0.5d | none | channel-19774: live 0.2d · 0.0d / 0.1d | free | stTIA |
+| Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | none | channel-208: live 0.1d · 0.0d / 0.0d | free | stATOM |
+| Stargaze (`stargaze-1`) | $931 | channel-19 |  | not mapped | none | not mapped | none (chain dead) | – |
+| Canto (`canto_7700-1`) | $748 | channel-74 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Acrechain (`acre_9052-1`) | $623 | channel-57 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Namada (`namada.5f5de2dd1b88cba30586420`) | $611 | channel-308 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Celestia (`celestia`) | $322 | channel-162 | yes | channel-162: live 5.4d · 0.6d / 0.3d | ICA (ours) | channel-6994: live 0.0d · 0.0d / 0.0d | free | – |
+| Composable (`centauri-1`) | $211 | channel-134 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Umee (`umee-1`) | $211 | channel-29 |  | not mapped | none | not mapped | none (chain dead) | – |
+| Saga (`ssc-1`) | $207 | channel-213 | yes | channel-213: live 5.2d · 0.1d / 0.1d | ICA (ours) | channel-38946: live 0.1d · 0.1d / 0.1d | free | – |
+| Juno (`juno-1`) | $94 | channel-24 | yes | channel-24: live 5.9d · 0.1d / 0.1d | ICA (ours) | channel-42: live 0.1d · 0.0d / 0.1d | free | – |
+| dYdX (`dydx-mainnet-1`) | $76 | channel-160 | yes | channel-160: live 5.2d · 0.1d / 0.0d | ICA (ours) | channel-6787: live 0.0d · 0.2d / 0.2d | free | – |
+| Crescent (`crescent-1`) | $13 | channel-51 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Namada testnet (`housefire-alpaca.cc0d3e0c033be`) | $4 | channel-306 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Band (`laozi-mainnet`) | $3 | channel-258 | yes | channel-258: live 5.4d · never / never | ICA (ours) | channel-148: live 9.3d · 0.3d / 0.2d | free | – |
+| Sei (`pacific-1`) | $1 | channel-149 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Persistence (`core-1`) | $1 | channel-53 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Oraichain (`Oraichain`) | $1 | channel-50 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Chihuahua (`chihuahua-1`) | $1 | channel-99 |  | not mapped | none | not mapped | none (chain dead) | – |
+| Gravity Bridge (`gravity-bridge-3`) | $0 | channel-121 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Namada testnet (`campfire-square.ff09671d333707`) | $0 | channel-297 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Astria (`astria`) | $0 | channel-285 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Indigo (`indigo-1`) | $0 | channel-256 |  | not mapped | none | not mapped | none (below minimum) | – |
+| Sommelier (`sommelier-3`) | $0 | channel-150 |  | not mapped | none | not mapped | none (below minimum) | – |
 
-- Cosmos Hub: stATOM $218,725, stDYDX $3,791, stINJ $3,274, stOSMO $2,814, stTIA $1,997
-- Haqq: stISLM $168,516
-- Injective: stATOM $108,727, stINJ $53,326
-- Secret: stINJ $45,122, stATOM $29,351, stOSMO $1,724
-- Penumbra: stATOM $21,831, stOSMO $7,496
-- Agoric: stATOM $8,488, stTIA $7,479
-- Neutron: stTIA $4,374, stATOM $3,829
-- Carbon: stTIA $3,455, stATOM $1,907, stLUNA $1,210
-- Terra: stLUNA $3,107
-- Dymension: stTIA $1,981
-- Axelar: stATOM $1,312
-- Celestia: stTIA $322
-- dYdX: stDYDX $76
-- Saga: stSAGA $65
-- Band: stBAND $3
-- Juno: stJUNO $1
+Per-token value on each chain, with the status from the tables below:
+
+- Osmosis: stATOM $1,597,226 (in scope), stBAND $104,456 (in scope), stTIA $76,154 (in scope), stOSMO $74,096 (in scope), stISLM $41,031 (in scope), stDYDX $4,969 (in scope), stINJ $3,404 (in scope), stJUNO $1,663 (in scope), stSTARS $680 (ignored · unrecoverable), stSAGA $580 (in scope), stEVMOS $539 (ignored · unrecoverable), stDYM $496 (ignored · deprecated), stSOMM $330 (ignored · small), stLUNA $250 (in scope), stUMEE $38 (ignored · unrecoverable), stCMDX $2 (ignored · unrecoverable)
+- Cosmos Hub: stATOM $218,725 (in scope), stDYDX $3,791 (in scope), stINJ $3,274 (in scope), stOSMO $2,814 (in scope), stTIA $1,997 (in scope), stBAND $550 (ignored · small), stISLM $221 (ignored · small), stJUNO $195 (ignored · small), stLUNA $106 (ignored · small), stEVMOS $31 (ignored · unrecoverable), stSTARS $25 (ignored · unrecoverable), stDYM $14 (ignored · deprecated), stSAGA $8 (ignored · small), stUMEE $8 (ignored · unrecoverable), stCMDX $2 (ignored · unrecoverable), stSOMM $1 (ignored · small)
+- HAQQ: stISLM $168,516 (in scope)
+- Injective: stATOM $108,727 (in scope), stINJ $53,326 (in scope), stTIA $4 (ignored · small), stOSMO $0 (ignored · small), stEVMOS $0 (ignored · unrecoverable), stUMEE $0 (ignored · unrecoverable)
+- Secret: stINJ $45,122 (in scope), stATOM $29,351 (in scope), stOSMO $1,724 (in scope), stTIA $455 (ignored · small), stJUNO $59 (ignored · small), stLUNA $8 (ignored · small), stEVMOS $0 (ignored · unrecoverable)
+- Penumbra: stATOM $21,831 (in scope), stOSMO $7,496 (in scope), stTIA $215 (ignored · small)
+- Kujira: stATOM $20,261 (ignored · unrecoverable), stOSMO $293 (ignored · unrecoverable), stINJ $291 (ignored · unrecoverable), stTIA $3 (ignored · unrecoverable), stDYDX $2 (ignored · unrecoverable), stISLM $0 (ignored · unrecoverable), stLUNA $0 (ignored · unrecoverable), stEVMOS $0 (ignored · unrecoverable), stJUNO $0 (ignored · unrecoverable), stSTARS $0 (ignored · unrecoverable), stCMDX $0 (ignored · unrecoverable), stUMEE $0 (ignored · unrecoverable)
+- Agoric: stATOM $8,488 (in scope), stTIA $7,479 (in scope), stOSMO $317 (ignored · small)
+- Neutron: stTIA $4,374 (in scope), stATOM $3,829 (in scope), stDYM $105 (ignored · deprecated), stDYDX $31 (ignored · small), stOSMO $0 (ignored · small), stSAGA $0 (ignored · small), stJUNO $0 (ignored · small)
+- Carbon: stTIA $3,455 (in scope), stATOM $1,907 (in scope), stLUNA $1,210 (in scope), stDYDX $758 (ignored · small), stINJ $559 (ignored · small), stSAGA $68 (ignored · small), stOSMO $62 (ignored · small), stSTARS $10 (ignored · unrecoverable), stEVMOS $2 (ignored · unrecoverable), stDYM $0 (ignored · deprecated), stJUNO $0 (ignored · small)
+- Comdex: stATOM $4,971 (ignored · unrecoverable), stCMDX $160 (ignored · unrecoverable), stOSMO $12 (ignored · unrecoverable), stLUNA $1 (ignored · unrecoverable), stJUNO $1 (ignored · unrecoverable), stEVMOS $0 (ignored · unrecoverable)
+- Terra: stLUNA $3,107 (in scope), stATOM $821 (ignored · small), stINJ $309 (ignored · small), stOSMO $0 (ignored · small), stSTARS $0 (ignored · unrecoverable)
+- Evmos: stEVMOS $3,394 (ignored · unrecoverable), stINJ $1 (ignored · unrecoverable), stATOM $0 (ignored · unrecoverable), stOSMO $0 (ignored · unrecoverable), stLUNA $0 (ignored · unrecoverable), stJUNO $0 (ignored · unrecoverable), stSTARS $0 (ignored · unrecoverable)
+- Dymension: stTIA $1,981 (in scope), stDYM $903 (ignored · deprecated), stATOM $0 (ignored · small)
+- Axelar: stATOM $1,312 (in scope), stTIA $8 (ignored · small), stINJ $0 (ignored · small), stLUNA $0 (ignored · small)
+- Stargaze: stSTARS $615 (ignored · unrecoverable), stATOM $316 (ignored · unrecoverable), stOSMO $0 (ignored · unrecoverable)
+- Canto: stATOM $746 (ignored · small), stOSMO $2 (ignored · small), stEVMOS $0 (ignored · unrecoverable), stJUNO $0 (ignored · small), stSTARS $0 (ignored · unrecoverable)
+- Acrechain: stATOM $574 (ignored · small), stOSMO $49 (ignored · small), stEVMOS $0 (ignored · unrecoverable), stJUNO $0 (ignored · small), stSTARS $0 (ignored · unrecoverable)
+- Namada: stATOM $288 (ignored · small), stOSMO $178 (ignored · small), stTIA $145 (ignored · small)
+- Celestia: stTIA $322 (in scope)
+- Composable: stATOM $211 (ignored · small), stEVMOS $0 (ignored · unrecoverable)
+- Umee: stATOM $175 (ignored · unrecoverable), stOSMO $35 (ignored · unrecoverable), stJUNO $1 (ignored · unrecoverable), stTIA $0 (ignored · unrecoverable), stDYDX $0 (ignored · unrecoverable), stSTARS $0 (ignored · unrecoverable), stUMEE $0 (ignored · unrecoverable)
+- Saga: stATOM $142 (ignored · small), stSAGA $65 (in scope)
+- Juno: stSTARS $91 (ignored · unrecoverable), stATOM $2 (ignored · small), stJUNO $1 (in scope), stOSMO $0 (ignored · small), stEVMOS $0 (ignored · unrecoverable)
+- dYdX: stDYDX $76 (in scope)
+- Crescent: stATOM $13 (ignored · small), stEVMOS $0 (ignored · unrecoverable), stUMEE $0 (ignored · unrecoverable)
+- Namada testnet: stATOM $3 (ignored · small), stTIA $1 (ignored · small), stOSMO $0 (ignored · small)
+- Band: stBAND $3 (in scope)
+- Sei: stATOM $1 (ignored · small)
+- Persistence: stATOM $1 (ignored · small), stDYDX $0 (ignored · small)
+- Oraichain: stATOM $1 (ignored · small), stOSMO $0 (ignored · small)
+- Chihuahua: stSTARS $1 (ignored · unrecoverable)
+- Gravity Bridge: stATOM $0 (ignored · small), stOSMO $0 (ignored · small), stSTARS $0 (ignored · unrecoverable)
+- Namada testnet: stATOM $0 (ignored · small), stTIA $0 (ignored · small), stOSMO $0 (ignored · small)
+- Astria: stTIA $0 (ignored · small)
+- Indigo: stDYDX $0 (ignored · small)
+- Sommelier: stSOMM $0 (ignored · small)
 
 <!-- relayer-scope:end -->
 
