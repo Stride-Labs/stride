@@ -20,6 +20,64 @@ are grouped as "Other".
 
 Edit the Status column to change a decision. The relayer map for the in-scope paths is `relayer-map.html` in this folder.
 
+<!-- relayer-scope:start -->
+## Relayer scope per chain
+
+Generated 2026-09-29 by `scripts/wind-down/build_relayer_scope.py` from `relayer-map.html` (client ages) plus the youngest
+packet a relayer actually delivered on each leg (`tx_search` on the Stride and Osmosis RPCs). Edit the constants at the
+top of the script to change the rule, then rerun; `--offline` reuses the cached lookups in `relayer_scope_cache.json`.
+
+**The rule.** Relayers cost per chain and pool routes cost per token, so the minimum applies to a chain's total.
+A leg is *free* when a packet crossed it within 7 days and its client is not expired (a fresh client header
+alone proves someone updates the client, not that they relay our channel; a recent packet outranks the map's stale
+label). A leg that is not free is run by *ops* when the
+chain's in-scope value is at least $10,000, otherwise *none*: holders there move before the upgrade or
+relay their own hop. The Stride leg only matters after the upgrade for hosts (our ICA relayers); nobody else gets one.
+On a served chain every token worth at least $1,000 gets a pool route. "Last in / out" is the age of the
+youngest packet received on the leg and the youngest acknowledgement delivered for the opposite direction.
+
+Served: $542,250 across 15 chains, of which $29,327 needs a relayer from us (Penumbra). Not served: Injective ($162,053).
+
+| Chain | In-scope USD | Host | Stride leg: client · last in / out | Stride decision | Osmosis leg: client · last in / out | Osmosis decision | Pool routes |
+|---|---:|---|---|---|---|---|---|
+| Cosmos Hub (`cosmoshub-4`) | $230,601 | yes | channel-0: live 0.0d · 0.0d / 0.0d | ICA (ours) | channel-0: live 0.0d · 0.0d / 0.0d | free | stATOM, stTIA, stINJ, stOSMO, stDYDX |
+| Haqq (`haqq_11235-1`) | $168,516 | yes | channel-240: live 6.1d · 2.9d / 2.9d | ICA (ours) | channel-1575: live 5.6d · 1.4d / 1.9d | free | stISLM |
+| Injective (`injective-1`) | $162,053 | yes | channel-6: live 2.1d · 0.1d / 0.0d | ICA (ours) | channel-122: blocked 0.0d · 0.0d / 0.0d | blocked (spec §11) | – |
+| Secret (`secret-4`) | $76,197 |  | channel-40: live 13.7d · 3.2d / 4.6d | none | channel-88: live 0.0d · 0.0d / 0.1d | free | stATOM, stINJ, stOSMO |
+| Penumbra (`penumbra-1`) | $29,327 |  | channel-307: expired 6915.9d · never / never | none | channel-79703: expired 3194.7d · never / never | ops (recover client) | stATOM, stOSMO |
+| Agoric (`agoric-3`) | $15,967 |  | channel-148: expired 1137.3d · never / never | none | channel-320: live 0.4d · 0.0d / 0.4d | free | stATOM, stTIA |
+| Neutron (`neutron-1`) | $8,203 |  | channel-123: stale 36.3d · 7.4d / 7.4d | none | channel-874: stale 35.5d · 0.2d / 1.5d | free | stATOM, stTIA |
+| Carbon (`carbon-1`) | $6,572 |  | channel-47: stale 297.0d · 17.2d / never | none | channel-188: stale 40.8d · 4.2d / 8.4d | free | stATOM, stTIA, stLUNA |
+| Terra (`phoenix-1`) | $3,107 | yes | channel-52: live 5.3d · 0.1d / 0.1d | ICA (ours) | channel-251: live 0.2d · 0.0d / 0.0d | free | stLUNA |
+| Dymension (`dymension_1100-1`) | $1,981 |  | channel-197: live 2.5d · 5.3d / 0.4d | none | channel-19774: live 0.2d · 0.0d / 0.1d | free | stTIA |
+| Axelar (`axelar-dojo-1`) | $1,312 |  | channel-69: expired 219.0d · never / never | none | channel-208: live 0.1d · 0.0d / 0.0d | free | stATOM |
+| Celestia (`celestia`) | $322 | yes | channel-162: live 5.4d · 0.5d / 0.3d | ICA (ours) | channel-6994: live 0.0d · 0.0d / 0.0d | free | – |
+| dYdX (`dydx-mainnet-1`) | $76 | yes | channel-160: live 5.2d · 0.1d / 0.0d | ICA (ours) | channel-6787: live 0.0d · 0.1d / 0.1d | free | – |
+| Saga (`ssc-1`) | $65 | yes | channel-213: live 5.2d · 0.1d / 0.1d | ICA (ours) | channel-38946: live 0.1d · 0.0d / 0.0d | free | – |
+| Band (`laozi-mainnet`) | $3 | yes | channel-258: live 5.4d · never / never | ICA (ours) | channel-148: live 9.3d · 0.3d / 0.2d | free | – |
+| Juno (`juno-1`) | $1 | yes | channel-24: live 5.9d · 0.1d / 0.1d | ICA (ours) | channel-42: live 0.1d · 0.0d / 0.0d | free | – |
+
+Per-token value on each chain (same snapshot as the tables below):
+
+- Cosmos Hub: stATOM $218,725, stDYDX $3,791, stINJ $3,274, stOSMO $2,814, stTIA $1,997
+- Haqq: stISLM $168,516
+- Injective: stATOM $108,727, stINJ $53,326
+- Secret: stINJ $45,122, stATOM $29,351, stOSMO $1,724
+- Penumbra: stATOM $21,831, stOSMO $7,496
+- Agoric: stATOM $8,488, stTIA $7,479
+- Neutron: stTIA $4,374, stATOM $3,829
+- Carbon: stTIA $3,455, stATOM $1,907, stLUNA $1,210
+- Terra: stLUNA $3,107
+- Dymension: stTIA $1,981
+- Axelar: stATOM $1,312
+- Celestia: stTIA $322
+- dYdX: stDYDX $76
+- Saga: stSAGA $65
+- Band: stBAND $3
+- Juno: stJUNO $1
+
+<!-- relayer-scope:end -->
+
 ## Summary
 
 | Token | Total USD | In scope | Ignored · small | Ignored · unrecoverable | Ignored · deprecated |
