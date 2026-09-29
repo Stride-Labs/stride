@@ -6,15 +6,16 @@
 
 **Architecture:** PR 4 already generated the proto for all four wind-down messages (including `MsgSweepTokensOffStride{creator, denoms, addresses}` and its response `{num_transfers, num_skipped}`), registered them in the codec, created `x/stakeibc/types/wind_down.go` (constants and the two address vars) and left a stub `SweepTokensOffStride` handler in `msg_server_wind_down.go`. This PR adds the message's `ValidateBasic`, one keeper file with the sweep algorithm and its three helpers, replaces the stub handler, adds the CLI command, and ships the batch-builder script. Every ICS-20 transfer goes through the real transfer keeper (`k.RecordsKeeper.TransferKeeper.Transfer`) with the holder as sender, so timeouts and rejected receives refund the holder through the normal transfer path with no state of our own.
 
-**Tech Stack:** Go 1.25, Cosmos SDK v0.54.3, ibc-go v11.2.0 (ICS-20 v1 channels), gogoproto (no proto changes in this PR), testify suites via `app/apptesting`, Python 3 (stdlib only) for the ops script.
+**Tech Stack:** Go 1.25, Cosmos SDK v0.54.3, ibc-go v11.2.0 (ICS-20 v1 channels), gogoproto (no proto changes in this PR), testify suites via `app/apptesting`, Python 3 (stdlib plus a vendored bech32 reference module) for the ops script.
 
 > **Branching:** PR 1 branches off `wind-down-design-consolidation`. Each later PR branches
 > off the previous PR's branch (PR 2 off PR 1, PR 3 off PR 2, and so on) and the PRs are
-> implemented and merged strictly in order: 1, 2, 3, 4, 5. Branch names:
+> implemented and merged strictly in order: 1, 2, 3, 4, 5, 6. Branch names:
 > `wind-down-pr1-remove-handlers`, `wind-down-pr2-freeze-by-code`,
-> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`.
+> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`,
+> `wind-down-pr6-release-gate`.
 > The Go module path stays `github.com/Stride-Labs/stride/v34` in every PR; the bump to
-> `/v35` is a manual step after all five land and is out of scope for every plan.
+> `/v35` is a manual step after all six land and is out of scope for every plan.
 
 This plan's branch is `wind-down-pr5-sweep-tx`, created from `wind-down-pr4-admin-txs`.
 
@@ -953,7 +954,13 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_UnwhitelistedVoucherRejectsBa
 }
 
 // A transfer error (a whitelisted channel that does not exist on chain) rejects the whole tx
-// even when earlier holders in the batch were fine, and the failed tx moves nothing
+// even when earlier holders in the batch were fine, and the failed tx moves nothing.
+//
+// In production baseapp runs every message in a cache-wrapped context and only writes it on
+// success (runMsgs / runTx), so a keeper error discards every state change the message made.
+// The keeper suite calls the keeper directly with no baseapp in front, so this test reproduces
+// that boundary by hand: it runs the sweep on s.Ctx.CacheContext(), never calls write, and then
+// asserts on s.Ctx that nothing of the first holder's transfer survived.
 func (s *KeeperTestSuite) TestSweepTokensOffStride_TransferErrorRejectsBatch() {
 	tc := s.SetupSweep()
 	junoVoucher := s.registerVoucher("ujuno", transfertypes.NewHop(transfertypes.PortID, "channel-24")) // whitelisted, no such channel
@@ -962,11 +969,47 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_TransferErrorRejectsBatch() {
 	s.FundAccount(first, sdk.NewInt64Coin(sweepTestStToken, 10))
 	s.FundAccount(second, sdk.NewInt64Coin(junoVoucher, 10))
 
-	_, err := s.sweep(tc, []string{sweepTestStToken, junoVoucher}, first, second)
+	sequenceBefore := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+	escrowBefore := s.escrowBalance("channel-5", sweepTestStToken)
+
+	msg := types.NewMsgSweepTokensOffStride(tc.operator.String(), []string{sweepTestStToken, junoVoucher},
+		[]string{first.String(), second.String()})
+	s.Require().NoError(msg.ValidateBasic())
+
+	// The first holder's transfer succeeds inside the cache, the second holder's fails
+	cacheCtx, _ := s.Ctx.CacheContext()
+	_, _, err := s.App.StakeibcKeeper.SweepTokensOffStride(cacheCtx, msg)
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "channel-24")
-	// The msg server runs in a cached context in production; here the keeper wrote the first
-	// transfer before the error, so assert the error surfaced rather than balances
+
+	// Nothing written to the cache reaches s.Ctx: balances, the channel sequence, the packet
+	// commitment and the events are all as they were before the call
+	s.Require().Equal(int64(10), s.App.BankKeeper.GetBalance(s.Ctx, first, sweepTestStToken).Amount.Int64(), "first holder untouched")
+	s.Require().Equal(int64(10), s.App.BankKeeper.GetBalance(s.Ctx, second, junoVoucher).Amount.Int64(), "second holder untouched")
+	s.Require().Equal(escrowBefore, s.escrowBalance("channel-5", sweepTestStToken), "escrow untouched")
+	s.Require().Equal(sequenceBefore, s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5"), "no packet sequence consumed")
+	s.Require().Empty(s.App.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(s.Ctx, transfertypes.PortID, "channel-5"), "no packet commitment")
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepTransfer)
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepSkipped)
+}
+
+// The positive counterpart: through the msg server on s.Ctx, a good batch leaves its state
+// changes in place (the cache boundary only discards on error)
+func (s *KeeperTestSuite) TestSweepTokensOffStride_SuccessfulBatchPersists() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStToken, 10))
+	sequenceBefore := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+
+	resp, err := s.sweep(tc, []string{sweepTestStToken}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), resp.NumTransfers)
+
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStToken).Amount.Int64(), "holder drained")
+	s.Require().Equal(int64(10), s.escrowBalance("channel-5", sweepTestStToken).Int64(), "escrowed")
+	s.Require().Equal(sequenceBefore+1, s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5"), "one packet sent")
+	s.Require().Len(s.App.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(s.Ctx, transfertypes.PortID, "channel-5"), 1, "one commitment")
+	s.Require().Len(s.CheckEventTypeEmitted(types.EventTypeSweepTransfer), 1)
 }
 
 // The ICS-20 timeout refund lands the escrowed balance back on the holder
@@ -994,7 +1037,7 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_TimeoutRefundsHolder() {
 ```
 
 Test-writing notes for the implementer:
-- `TestSweepTokensOffStride_TransferErrorRejectsBatch` asserts the error, not balances, because the keeper test suite calls the msg server directly (no ante/cache wrapping). If `s.Ctx.CacheContext()` is easy to wrap around the call, do that and additionally assert `first` still holds its 10 after the write is discarded.
+- `TestSweepTokensOffStride_TransferErrorRejectsBatch` calls the keeper on `s.Ctx.CacheContext()` and never writes it, which is exactly what baseapp does around a failing message, so the assertions on `s.Ctx` prove the whole tx rolled back (balances, sequence, commitments, events) rather than only that an error surfaced. `TestSweepTokensOffStride_SuccessfulBatchPersists` is its positive counterpart through the msg server.
 - `s.CheckEventTypeEmitted` returns the matching events; `Len` on it counts them. `CheckEventValueEmitted` asserts at least one event of the type has the attribute value.
 - Bech32 decoding of the derived receiver uses `sdk.GetFromBech32(addr, "osmo")`, which ignores the SDK config prefix.
 
@@ -1294,16 +1337,17 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ### Task 5: Batch builder script
 
 **Files:**
+- Create: `scripts/wind-down/bech32_ref.py` (vendored BIP-173 reference implementation)
 - Create: `scripts/wind-down/build_sweep_batches.py`
 - Test: `scripts/wind-down/test_build_sweep_batches.py`
 
 **Interfaces:**
 - Consumes: a trimmed `strided export` JSON (`app_state.bank.balances`, `app_state.auth.accounts`, `app_state.ibc.channel_genesis.channels`), a prices JSON `{denom: {"usd_per_token": float, "decimals": int}}`.
-- Produces: `<out-dir>/batch-001.txt ...` (one address per line, ≤ 100 lines, the CLI's input) and `<out-dir>/summary.json` (per batch: addresses, denoms, USD swept; the skipped list with reasons). Public functions used by the test: `load_export(path) -> Export`, `classify_holders(export, denoms, prices, floor_usd) -> HolderPlan`, `write_batches(plan, out_dir, batch_size) -> list[pathlib.Path]`, `parse_extra_denom(spec) -> ExtraDenom`.
+- Produces: `<out-dir>/batch-001.txt ...` (one address per line, ≤ 100 lines, the CLI's input) and `<out-dir>/summary.json` (per batch: addresses, denoms, USD swept; the skipped list with reasons). Public functions used by the test: `load_export(path) -> Export`, `classify_holders(export, denoms, prices, floor_usd) -> HolderPlan`, `write_batches(plan, out_dir, batch_size) -> list[pathlib.Path]`, `parse_extra_denom(spec) -> ExtraDenom`, `check_denom_destination(denom, traces) -> None`, `batch_size_arg(text) -> int`; from `bech32_ref`: `encode(hrp, address_bytes) -> str`, `decode(bech) -> tuple[str, bytes]`.
 - Depends on: none (mirrors constants; no Go dependency).
 - Review: no.
 
-The script mirrors the on-chain rules exactly, so a batch it emits should skip nothing on chain; any `sweep_skipped` event after a submission is a disagreement worth investigating. It is stdlib only and follows the repo's Python conventions (module imports, typed signatures, dataclasses, guard clauses).
+The script mirrors the on-chain rules exactly, so a batch it emits should skip nothing on chain; any `sweep_skipped` event after a submission is a disagreement worth investigating. It is stdlib plus the vendored `bech32_ref.py` (no pip dependency, so it runs in a clean checkout) and follows the repo's Python conventions (module imports, typed signatures, dataclasses, guard clauses). It also mirrors the two on-chain bounds a batch can violate: the address bound (`MAX_SWEEP_ADDRESSES_PER_TX = 100`, the value of `types.MaxSweepAddressesPerTx`) is enforced on `--batch-size`, and the destination rule is enforced on every denom in the final list, whether it came from `--denoms` or `--extra-denom`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1315,11 +1359,13 @@ The script mirrors the on-chain rules exactly, so a batch it emits should skip n
     python3 -m unittest scripts/wind-down/test_build_sweep_batches.py
 """
 
+import argparse
 import json
 import pathlib
 import tempfile
 import unittest
 
+import bech32_ref
 import build_sweep_batches
 
 STRIDE_BASE = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
@@ -1409,11 +1455,41 @@ class BuildSweepBatchesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_sweep_batches.parse_extra_denom("ustrd=0.05")
 
-    def test_ibc_extra_denom_requires_whitelisted_outer_hop(self) -> None:
+    def test_ibc_denom_requires_whitelisted_outer_hop_however_it_is_passed(self) -> None:
         traces = {ATOM_VOUCHER: ["transfer/channel-0"], "ibc/AAAA": ["transfer/channel-52"]}
-        build_sweep_batches.check_extra_denom_destination(denom=ATOM_VOUCHER, traces=traces)
+        build_sweep_batches.check_denom_destination(denom="stuatom", traces=traces)
+        build_sweep_batches.check_denom_destination(denom=ATOM_VOUCHER, traces=traces)
+
+        # The same check guards a voucher given through --denoms, not only --extra-denom
+        with self.assertRaises(ValueError) as raised:
+            build_sweep_batches.check_denom_destination(denom="ibc/AAAA", traces=traces)
+        self.assertIn("ibc/AAAA", str(raised.exception))
+        self.assertIn("channel-52", str(raised.exception))
+
         with self.assertRaises(ValueError):
-            build_sweep_batches.check_extra_denom_destination(denom="ibc/AAAA", traces=traces)
+            build_sweep_batches.check_denom_destination(denom="ibc/BBBB", traces=traces)  # no trace at all
+
+    def test_batch_size_is_bounded_by_the_chain_maximum(self) -> None:
+        self.assertEqual(build_sweep_batches.batch_size_arg("100"), 100)
+        self.assertEqual(build_sweep_batches.batch_size_arg("1"), 1)
+        with self.assertRaises(argparse.ArgumentTypeError):
+            build_sweep_batches.batch_size_arg("101")
+        with self.assertRaises(argparse.ArgumentTypeError):
+            build_sweep_batches.batch_size_arg("0")
+
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
+        with self.assertRaises(ValueError):
+            build_sweep_batches.write_batches(plan=plan, out_dir=pathlib.Path(self.tmp.name) / "out", batch_size=101)
+
+    def test_bech32_round_trip_matches_the_on_chain_derivation(self) -> None:
+        # The stride and osmo forms of the F5 key are the same 20 bytes under two prefixes
+        hrp, address = bech32_ref.decode("stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh")
+        self.assertEqual(hrp, "stride")
+        self.assertEqual(len(address), 20)
+        self.assertEqual(bech32_ref.encode("osmo", address), "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af")
+        self.assertEqual(bech32_ref.encode("stride", address), "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh")
+        with self.assertRaises(ValueError):
+            bech32_ref.decode("stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlx")  # bad checksum
 
 
 if __name__ == "__main__":
@@ -1423,9 +1499,127 @@ if __name__ == "__main__":
 - [ ] **Step 2: Run to verify it fails**
 
 Run: `cd scripts/wind-down && python3 -m unittest test_build_sweep_batches.py 2>&1 | tail -3`
-Expected: `ModuleNotFoundError: No module named 'build_sweep_batches'`.
+Expected: `ModuleNotFoundError: No module named 'bech32_ref'`.
 
-- [ ] **Step 3: Write the script**
+- [ ] **Step 3: Vendor the bech32 reference implementation**
+
+There is no bech32 package in the environment (`python3 -c 'import bech32'` fails) and the
+script must run in a clean checkout, so the BIP-173 reference implementation is vendored
+verbatim with two thin helpers for cosmos addresses (no segwit witness version byte).
+
+`scripts/wind-down/bech32_ref.py`:
+
+```python
+"""Bech32 reference implementation (BIP-173), vendored for the wind-down scripts.
+
+Copyright (c) 2017 Pieter Wuille. Licensed under the MIT License
+(https://github.com/sipa/bech32/blob/master/ref/python/segwit_addr.py). The functions named
+bech32_* and convertbits are the reference code unchanged; encode/decode are thin helpers for
+cosmos-style addresses, which carry raw address bytes and no witness version.
+"""
+
+CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+
+
+def bech32_polymod(values: list[int]) -> int:
+    """Internal function that computes the Bech32 checksum."""
+    generator = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3]
+    chk = 1
+    for value in values:
+        top = chk >> 25
+        chk = (chk & 0x1FFFFFF) << 5 ^ value
+        for i in range(5):
+            chk ^= generator[i] if ((top >> i) & 1) else 0
+    return chk
+
+
+def bech32_hrp_expand(hrp: str) -> list[int]:
+    """Expand the HRP into values for checksum computation."""
+    return [ord(x) >> 5 for x in hrp] + [0] + [ord(x) & 31 for x in hrp]
+
+
+def bech32_verify_checksum(hrp: str, data: list[int]) -> bool:
+    """Verify a checksum given HRP and converted data characters."""
+    return bech32_polymod(bech32_hrp_expand(hrp) + data) == 1
+
+
+def bech32_create_checksum(hrp: str, data: list[int]) -> list[int]:
+    """Compute the checksum values given HRP and data."""
+    values = bech32_hrp_expand(hrp) + data
+    polymod = bech32_polymod(values + [0, 0, 0, 0, 0, 0]) ^ 1
+    return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
+
+
+def bech32_encode(hrp: str, data: list[int]) -> str:
+    """Compute a Bech32 string given HRP and data values."""
+    combined = data + bech32_create_checksum(hrp, data)
+    return hrp + "1" + "".join([CHARSET[d] for d in combined])
+
+
+def bech32_decode(bech: str) -> tuple[str | None, list[int] | None]:
+    """Validate a Bech32 string, and determine HRP and data."""
+    if (any(ord(x) < 33 or ord(x) > 126 for x in bech)) or (bech.lower() != bech and bech.upper() != bech):
+        return (None, None)
+    bech = bech.lower()
+    pos = bech.rfind("1")
+    if pos < 1 or pos + 7 > len(bech) or len(bech) > 90:
+        return (None, None)
+    if not all(x in CHARSET for x in bech[pos + 1 :]):
+        return (None, None)
+    hrp = bech[:pos]
+    data = [CHARSET.find(x) for x in bech[pos + 1 :]]
+    if not bech32_verify_checksum(hrp, data):
+        return (None, None)
+    return (hrp, data[:-6])
+
+
+def convertbits(data: list[int] | bytes, frombits: int, tobits: int, pad: bool = True) -> list[int] | None:
+    """General power-of-2 base conversion."""
+    acc = 0
+    bits = 0
+    ret = []
+    maxv = (1 << tobits) - 1
+    max_acc = (1 << (frombits + tobits - 1)) - 1
+    for value in data:
+        if value < 0 or (value >> frombits):
+            return None
+        acc = ((acc << frombits) | value) & max_acc
+        bits += frombits
+        while bits >= tobits:
+            bits -= tobits
+            ret.append((acc >> bits) & maxv)
+    if pad:
+        if bits:
+            ret.append((acc << (tobits - bits)) & maxv)
+    elif bits >= frombits or ((acc << (tobits - bits)) & maxv):
+        return None
+    return ret
+
+
+def encode(hrp: str, address: bytes) -> str:
+    """Bech32-encode raw cosmos address bytes under the given prefix."""
+    data = convertbits(address, 8, 5)
+    if data is None:
+        raise ValueError(f"cannot convert {len(address)} address bytes to base32")
+    return bech32_encode(hrp, data)
+
+
+def decode(bech: str) -> tuple[str, bytes]:
+    """Decode a cosmos bech32 address into (prefix, raw bytes); raises ValueError when invalid."""
+    hrp, data = bech32_decode(bech)
+    if hrp is None or data is None:
+        raise ValueError(f"invalid bech32 string {bech!r}")
+    converted = convertbits(data, 5, 8, False)
+    if converted is None:
+        raise ValueError(f"invalid bech32 payload in {bech!r}")
+    return hrp, bytes(converted)
+```
+
+The 90-character limit of the reference decoder is fine here: a 32-byte stride address is 65
+characters. Run: `cd scripts/wind-down && python3 -m unittest test_build_sweep_batches.py 2>&1 | tail -3`
+Expected: `ModuleNotFoundError: No module named 'build_sweep_batches'` (the bech32 import now resolves).
+
+- [ ] **Step 4: Write the script**
 
 `scripts/wind-down/build_sweep_batches.py`:
 
@@ -1456,9 +1650,11 @@ import json
 import pathlib
 from decimal import Decimal
 
-import bech32
+import bech32_ref
 
-BATCH_SIZE_DEFAULT = 100
+# Mirror of types.MaxSweepAddressesPerTx; a batch above it fails ValidateBasic on chain
+MAX_SWEEP_ADDRESSES_PER_TX = 100
+BATCH_SIZE_DEFAULT = MAX_SWEEP_ADDRESSES_PER_TX
 ADDRESS_LENGTH_BYTES = 20
 TRANSFER_PORT = "transfer"
 IBC_PREFIX = "ibc/"
@@ -1527,9 +1723,13 @@ def main() -> None:
 
     for spec in args.extra_denom:
         extra = parse_extra_denom(spec)
-        check_extra_denom_destination(denom=extra.denom, traces=export.denom_traces)
         prices[extra.denom] = {"usd_per_token": extra.usd_per_token, "decimals": extra.decimals}
         denoms.append(extra.denom)
+
+    # Every denom on the final list must have an on-chain destination, however it got there:
+    # an ibc/ voucher passed through --denoms is checked exactly like an --extra-denom one
+    for denom in denoms:
+        check_denom_destination(denom=denom, traces=export.denom_traces)
 
     plan = classify_holders(export=export, denoms=denoms, prices=prices, floor_usd=args.floor_usd)
     files = write_batches(plan=plan, out_dir=args.out_dir, batch_size=args.batch_size)
@@ -1545,9 +1745,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--denoms", required=True, help="comma-separated denoms to sweep")
     parser.add_argument("--floor-usd", type=float, required=True)
     parser.add_argument("--out-dir", type=pathlib.Path, required=True)
-    parser.add_argument("--batch-size", type=int, default=BATCH_SIZE_DEFAULT)
+    parser.add_argument("--batch-size", type=batch_size_arg, default=BATCH_SIZE_DEFAULT, help=f"1..{MAX_SWEEP_ADDRESSES_PER_TX}")
     parser.add_argument("--extra-denom", action="append", default=[], help="DENOM=USD_PER_TOKEN:DECIMALS")
     return parser.parse_args()
+
+
+def batch_size_arg(text: str) -> int:
+    """argparse type for --batch-size: the chain rejects a tx with more than MAX_SWEEP_ADDRESSES_PER_TX addresses."""
+    value = int(text)
+    if value < 1 or value > MAX_SWEEP_ADDRESSES_PER_TX:
+        raise argparse.ArgumentTypeError(f"batch size must be between 1 and {MAX_SWEEP_ADDRESSES_PER_TX}, got {value}")
+    return value
 
 
 def load_export(path: pathlib.Path) -> Export:
@@ -1609,6 +1817,9 @@ def skip_reason(address: str, export: Export) -> str | None:
 
 
 def write_batches(plan: HolderPlan, out_dir: pathlib.Path, batch_size: int) -> list[pathlib.Path]:
+    # Guarded here too so a caller that bypasses parse_args cannot emit a batch the chain rejects
+    if batch_size < 1 or batch_size > MAX_SWEEP_ADDRESSES_PER_TX:
+        raise ValueError(f"batch size must be between 1 and {MAX_SWEEP_ADDRESSES_PER_TX}, got {batch_size}")
     out_dir.mkdir(parents=True, exist_ok=True)
     files: list[pathlib.Path] = []
     batches: list[dict] = []
@@ -1641,8 +1852,9 @@ def parse_extra_denom(spec: str) -> ExtraDenom:
     return ExtraDenom(denom=denom, usd_per_token=float(usd_per_token), decimals=int(decimals))
 
 
-def check_extra_denom_destination(denom: str, traces: dict[str, list[str]]) -> None:
-    """An ibc/ extra denom is only sweepable if its outermost hop is a whitelisted unwind channel."""
+def check_denom_destination(denom: str, traces: dict[str, list[str]]) -> None:
+    """Mirror of resolveSweepDestination: a native denom always has one (channel-5), an ibc/ denom
+    only if its outermost hop is a whitelisted unwind channel. Raises ValueError naming the denom."""
     if not denom.startswith(IBC_PREFIX):
         return
     hops = traces.get(denom)
@@ -1670,10 +1882,12 @@ def account_address(account: dict) -> str:
 
 
 def address_bytes(address: str) -> bytes:
-    _, data = bech32.bech32_decode(address)
+    """The raw bytes behind a bech32 address, or b"" when the string is not valid bech32 (which
+    the 20-byte rule then rejects, matching the on-chain decode failure)."""
+    _, data = bech32_ref.bech32_decode(address)
     if data is None:
         return b""
-    converted = bech32.convertbits(data, 5, 8, False)
+    converted = bech32_ref.convertbits(data, 5, 8, False)
     return bytes(converted) if converted is not None else b""
 
 
@@ -1681,7 +1895,7 @@ def escrow_address(port_id: str, channel_id: str) -> str:
     """ibc-go transfertypes.GetEscrowAddress: sha256("ics20-1\\0" + port/channel)[:20], bech32 stride."""
     preimage = b"ics20-1\x00" + f"{port_id}/{channel_id}".encode()
     digest = hashlib.sha256(preimage).digest()[:ADDRESS_LENGTH_BYTES]
-    return bech32.bech32_encode("stride", bech32.convertbits(digest, 8, 5))
+    return bech32_ref.encode("stride", digest)
 
 
 def ibc_denom(base: str, hops: list[str]) -> str:
@@ -1693,18 +1907,20 @@ if __name__ == "__main__":
     main()
 ```
 
-`bech32` is the reference `bech32` package (`pip install bech32`); if it is not installed, the implementer inlines the ~40-line reference decoder/encoder as `_bech32.py` beside the script instead of adding a dependency, and imports it as `import _bech32 as bech32`. Verify `escrow_address("transfer", "channel-5")` against the chain before use: `strided q bank balances $(python3 -c 'import build_sweep_batches as b; print(b.escrow_address("transfer","channel-5"))')` should show the channel-5 stToken escrows from `docs/wind-down/sttoken-locations.md`.
+Verify `escrow_address("transfer", "channel-5")` against the chain before use: `strided q bank balances $(python3 -c 'import build_sweep_batches as b; print(b.escrow_address("transfer","channel-5"))')` should show the channel-5 stToken escrows from `docs/wind-down/sttoken-locations.md`.
 
-- [ ] **Step 4: Run to verify it passes**
+- [ ] **Step 5: Run to verify it passes**
 
 Run: `cd scripts/wind-down && python3 -m unittest test_build_sweep_batches.py -v`
-Expected: 4 tests, `OK`.
+Expected: 7 tests, `OK`. Then, from a clean shell with no site-packages bech32, `python3 -c 'import bech32' ; echo exit=$?` prints a `ModuleNotFoundError` and `exit=1`, while `cd scripts/wind-down && python3 build_sweep_batches.py --help` prints the usage: the script has no dependency outside the checkout.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add scripts/wind-down/build_sweep_batches.py scripts/wind-down/test_build_sweep_batches.py
-git commit -m "ops: build_sweep_batches.py mirrors the on-chain sweep skip rules with a USD floor
+git add scripts/wind-down/bech32_ref.py scripts/wind-down/build_sweep_batches.py scripts/wind-down/test_build_sweep_batches.py
+git commit -m "ops: build_sweep_batches.py mirrors the on-chain sweep skip rules and bounds with a USD floor
+
+Vendors the BIP-173 bech32 reference implementation so the script runs in a clean checkout.
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -1721,8 +1937,8 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 ## Self-review
 
-- **Spec coverage.** §7 sweep: denom list, address bound, destination resolution per denom before any address (Task 2/3), the four skip reasons and skip-does-not-move (Tasks 2/3), silent zero balance, full-balance `MsgTransfer` with the derived receiver, one-day timeout, empty memo, transfer error rejects the tx, refund on timeout (Task 3 tests). §11 sweep list: every bullet maps to a named test in Task 3 or Task 1/2 (`batch over the bound`, `invalid denom string`, `empty denom list` are `ValidateBasic` tests in Task 1). §13 ops script: `build_sweep_batches.py` with `--extra-denom` and the whitelist refusal (Task 5). CLI (Task 4).
-- **Placeholders.** None: every code step carries its code; the one environment-dependent choice (the `bech32` package) states both options.
+- **Spec coverage.** §7 sweep: denom list, address bound, destination resolution per denom before any address (Task 2/3), the four skip reasons and skip-does-not-move (Tasks 2/3), silent zero balance, full-balance `MsgTransfer` with the derived receiver, one-day timeout, empty memo, transfer error rejects the tx, refund on timeout (Task 3 tests). §11 sweep list: every bullet maps to a named test in Task 3 or Task 1/2 (`batch over the bound`, `invalid denom string`, `empty denom list` are `ValidateBasic` tests in Task 1). §13 ops script: `build_sweep_batches.py` with `--extra-denom`, the whitelist refusal applied to every denom on the final list, and the 100-address bound on `--batch-size` (Task 5). The "transfer error rejecting the whole tx" bullet of §11 is proven through a cache boundary with balance, sequence, commitment and event assertions (Task 3). CLI (Task 4).
+- **Placeholders.** None: every code step carries its code, including the vendored `bech32_ref.py`, so the script has no dependency outside the checkout.
 - **Type consistency.** `sweepDestination{ChannelId, Bech32Prefix}` used identically in Tasks 2 and 3; `SweepTokensOffStride` returns `(uint64, uint64, error)` and the handler maps to `NumTransfers/NumSkipped`, the response field names from the PR 4 proto; error and event names match between `types` and the tests.
 - **Review tags.** Tasks 1-3 `Review: yes` (auth gate and user funds), Tasks 4-5 `Review: no`.
 - **Out of scope, noted for the parent.** The tests open extra transfer channels rather than overriding `StrideToOsmosisTransferChannelId`; if PR 4 ends up defining that constant as a `var`, the helper can be dropped and the tests can point the constant at `channel-0`, but the plan does not depend on it.

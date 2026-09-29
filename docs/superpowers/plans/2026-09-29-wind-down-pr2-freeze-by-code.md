@@ -12,11 +12,12 @@
 
 > **Branching:** PR 1 branches off `wind-down-design-consolidation`. Each later PR branches
 > off the previous PR's branch (PR 2 off PR 1, PR 3 off PR 2, and so on) and the PRs are
-> implemented and merged strictly in order: 1, 2, 3, 4, 5. Branch names:
+> implemented and merged strictly in order: 1, 2, 3, 4, 5, 6. Branch names:
 > `wind-down-pr1-remove-handlers`, `wind-down-pr2-freeze-by-code`,
-> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`.
+> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`,
+> `wind-down-pr6-release-gate`.
 > The Go module path stays `github.com/Stride-Labs/stride/v34` in every PR; the bump to
-> `/v35` is a manual step after all five land and is out of scope for every plan.
+> `/v35` is a manual step after all six land and is out of scope for every plan.
 
 This plan is executed on `wind-down-pr2-freeze-by-code`, created from `wind-down-pr1-remove-handlers` (`git checkout wind-down-pr1-remove-handlers && git checkout -b wind-down-pr2-freeze-by-code`). PR 1's removals are assumed present: the `LiquidStake`/`RedeemStake` msg handlers are gone and their keeper paths remain (`Keeper.LiquidStake`, `Keeper.RedeemStake`); `reward_allocation.go` calls `k.LiquidStake` directly.
 
@@ -40,7 +41,7 @@ This plan is executed on `wind-down-pr2-freeze-by-code`, created from `wind-down
 | File | Change |
 |---|---|
 | `x/stakeibc/keeper/hooks.go` | Rewrite `BeforeEpochStart`: nine calls and three unused interval locals removed; nothing else in the file changes. |
-| `x/stakeibc/keeper/hooks_test.go` | New. Behavioural tests per epoch type plus a source-level guard on `BeforeEpochStart`. |
+| `x/stakeibc/keeper/hooks_test.go` | New. Behavioural tests per epoch type (each kept flow proven by its ICA or transfer packet and record transition on a non-halted zone; each deleted flow proven absent by the rate, the record set and the channel sequence) plus a source-level tripwire on `BeforeEpochStart`. |
 | `x/stakeibc/keeper/icqcallbacks_delegator_shares.go` | Remove the two-line rate refresh at the end of `SlashValidatorOnHostZone`. |
 | `x/stakeibc/keeper/icqcallbacks_delegator_shares_test.go` | Add `TestDelegatorSharesCallback_RedemptionRateFrozen`. |
 | `x/stakeibc/keeper/icqcallbacks_callibrate_delegation.go` | Remove `CalibrationThreshold`, its check and the now-unused `sdkmath` import. |
@@ -61,7 +62,7 @@ Verified before writing this plan: no test, CLI test, or script constructs eithe
 - Create: `x/stakeibc/keeper/hooks_test.go`
 
 **Interfaces:**
-- Consumes: `KeeperTestSuite` helpers already in package `keeper_test`: `SetupUpdateRedemptionRates` (`redemption_rate_test.go`), `SetupInitiateAllHostZoneUnbondings` (`unbonding_test.go`), `SetupTestRewardAllocation`, `checkModuleAccountBalance`, `getTotalPoAValidatorStTokenBalance` (`reward_allocation_test.go`).
+- Consumes: `KeeperTestSuite` helpers already in package `keeper_test`: `SetupInitiateAllHostZoneUnbondings` (`unbonding_test.go`), `MustGetHostZone`, `SetupTestRewardAllocation`, `checkModuleAccountBalance`, `getTotalPoAValidatorStTokenBalance` (`reward_allocation_test.go`); `AppTestHelper` helpers `CreateICAChannel`, `IcaAddresses`, `GetIBCDenomTrace`, `FundAccount`, `FundModuleAccount`, `MustGetNextSequenceNumber`, `CheckEventValueEmitted`.
 - Produces: `func (s *KeeperTestSuite) epochInfoForHook(identifier string, epochNumber int64) epochstypes.EpochInfo` (test helper; Tasks 2-4 do not use it).
 - Review: yes (this is the change that freezes the rate on mainnet).
 
@@ -77,19 +78,29 @@ import (
 	"strings"
 	"time"
 
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochstypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
 	minttypes "github.com/Stride-Labs/stride/v34/x/mint/types"
+	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
+// Every test in this file runs the real BeforeEpochStart on non-halted host zones and asserts
+// two things per epoch type: the flows the wind-down keeps still do their work (an ICA or a
+// transfer packet was actually sent and the record moved), and the flows it deletes leave no
+// trace (the rate, the record set and the ICA channel sequence are exactly what the kept
+// flows alone produce). Nothing here sets HostZone.Halted.
+
 // epochInfoForHook builds the EpochInfo the epochs module hands to BeforeEpochStart. The
 // current epoch starts at the block time so the tracker's next start time is in the future,
-// which the ICA timeouts of the kept day-epoch flows need.
+// which the ICA timeouts of the kept flows need.
 func (s *KeeperTestSuite) epochInfoForHook(identifier string, epochNumber int64) epochstypes.EpochInfo {
 	return epochstypes.EpochInfo{
 		Identifier:            identifier,
@@ -100,61 +111,238 @@ func (s *KeeperTestSuite) epochInfoForHook(identifier string, epochNumber int64)
 	}
 }
 
-// The stride epoch used to refresh the redemption rate, create a deposit record for the epoch
-// and submit the withdrawal-balance ICQ that starts the reinvest pipeline. After the freeze it
-// does none of that, while the epoch tracker (a kept call) still advances.
-func (s *KeeperTestSuite) TestBeforeEpochStart_StrideEpoch_RateFrozen() {
-	// Same fixture as TestUpdateRedemptionRatesSuccessful: the old hook would have moved the
-	// rate from 1.0 to (2 + 3 + 4 + 5) / 10 = 1.4
-	s.SetupUpdateRedemptionRates(UpdateRedemptionRateTestCase{
-		totalDelegation:       sdkmath.NewInt(2),
-		undelegatedBal:        sdkmath.NewInt(3),
-		justDepositedNative:   sdkmath.NewInt(4),
-		justDepositedLSM:      sdkmath.NewInt(5),
-		stSupply:              sdkmath.NewInt(10),
-		initialRedemptionRate: sdkmath.LegacyNewDec(1),
-	})
-	initialDepositRecords := len(s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx))
-	s.Require().Equal(2, initialDepositRecords, "fixture seeds two deposit records")
-
-	s.App.StakeibcKeeper.BeforeEpochStart(s.Ctx, s.epochInfoForHook(epochstypes.STRIDE_EPOCH, 7))
-
-	// Frozen: the rate is exactly what it was
-	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	s.Require().True(found, "host zone found")
-	s.Require().Equal(sdkmath.LegacyNewDec(1), hostZone.RedemptionRate, "redemption rate must not move on a stride epoch")
-
-	// No deposit record was created for the epoch
-	s.Require().Len(s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx), initialDepositRecords, "no deposit record created for the epoch")
-
-	// No ICQ was submitted (the withdrawal-balance query is the root of the reinvest pipeline)
-	s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), "no interchain query submitted")
-
-	// Kept: the epoch tracker advanced
-	tracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, epochstypes.STRIDE_EPOCH)
-	s.Require().True(found, "stride epoch tracker set")
-	s.Require().Equal(uint64(7), tracker.EpochNumber, "epoch tracker updated by the hook")
-}
-
-// The day epoch still submits queued undelegations (kept) but no longer creates an epoch
-// unbonding record for the new epoch (deleted).
-func (s *KeeperTestSuite) TestBeforeEpochStart_DayEpoch_UnbondsWithoutNewRecord() {
-	// Seeds GAIA and OSMO host zones, a queued unbonding record at epoch 5, and a GAIA.DELEGATION
-	// ICA channel; both zones unbond on epoch 12 (see TestInitiateAllHostZoneUnbondings_Successful)
+// The day epoch keeps three flows: submitting queued redemption records as undelegate ICAs,
+// submitting a pending (upgrade-queued) undelegation, and deleting fully claimed epoch
+// records. It no longer creates an epoch unbonding record for the new epoch.
+//
+// Fixture: SetupInitiateAllHostZoneUnbondings seeds GAIA (unbonding period 14 → every 3rd
+// day epoch) and OSMO (21 → every 4th) with a queued record at epoch 5 and a GAIA.DELEGATION
+// ICA channel, and a day tracker at epoch 12, on which both zones unbond. On top of that a
+// third zone, JUNO, carries a pending undelegation and an unbonding period of 28 (every 5th
+// day epoch, and 12 % 5 != 0), so SubmitPendingUndelegations submits it on this epoch instead
+// of deferring, and a fully claimed epoch-2 record exists for the cleanup to delete.
+func (s *KeeperTestSuite) TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord() {
 	s.SetupInitiateAllHostZoneUnbondings()
+	gaiaOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	gaiaPortId, err := icatypes.NewControllerPortID(gaiaOwner)
+	s.Require().NoError(err, "GAIA delegation port id")
+	gaiaChannelId, found := s.App.ICAControllerKeeper.GetOpenActiveChannel(s.Ctx, ibctesting.FirstConnectionID, gaiaPortId)
+	s.Require().True(found, "GAIA delegation channel open")
+
+	// A third zone with a pending undelegation that submits on this epoch (12 % 5 != 0).
+	// Same shape as SetupSubmitPendingUndelegations: only val1 has capacity for the 200
+	junoChainId := "JUNO"
+	junoOwner := types.FormatHostZoneICAOwner(junoChainId, types.ICAAccountType_DELEGATION)
+	junoChannelId, junoPortId := s.CreateICAChannel(junoOwner)
+	pendingAmount := sdkmath.NewInt(200)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:              junoChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		HostDenom:            "ujuno",
+		DelegationIcaAddress: "juno_DELEGATION",
+		Validators: []*types.Validator{
+			{Address: "juno_val1", Weight: 50, Delegation: sdkmath.NewInt(600)},
+			{Address: "juno_val2", Weight: 50, Delegation: sdkmath.NewInt(400)},
+		},
+		TotalDelegations:    sdkmath.NewInt(1000),
+		RedemptionRate:      sdkmath.LegacyOneDec(),
+		MaxMessagesPerIcaTx: 32,
+		UnbondingPeriod:     28,
+	})
+	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, junoChainId, pendingAmount)
+
+	// A fully claimed old epoch record, which the cleanup deletes
+	claimedEpoch := uint64(2)
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: claimedEpoch,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{
+			{HostZoneId: HostChainId, ClaimableNativeTokens: sdkmath.ZeroInt(), Status: recordtypes.HostZoneUnbonding_CLAIMABLE},
+		},
+	})
+
 	dayEpoch := int64(12)
-	_, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, uint64(dayEpoch))
+	_, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, uint64(dayEpoch))
 	s.Require().False(found, "no epoch unbonding record for the new epoch before the hook")
+	gaiaStartSequence := s.MustGetNextSequenceNumber(gaiaPortId, gaiaChannelId)
+	junoStartSequence := s.MustGetNextSequenceNumber(junoPortId, junoChannelId)
 
 	s.App.StakeibcKeeper.BeforeEpochStart(s.Ctx, s.epochInfoForHook(epochstypes.DAY_EPOCH, dayEpoch))
 
-	// Kept: the queued records were submitted as undelegate ICAs
+	// Kept: InitiateAllHostZoneUnbondings submitted GAIA's queued record as one undelegate ICA
+	// (two validators, batch size 32) and flagged its validators; the record is in progress
+	s.Require().Equal(gaiaStartSequence+1, s.MustGetNextSequenceNumber(gaiaPortId, gaiaChannelId),
+		"exactly one undelegate ICA on the GAIA delegation channel")
 	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
 	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
+	gaiaUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, 5, HostChainId)
+	s.Require().True(found, "GAIA epoch-5 unbonding record found")
+	s.Require().Equal(recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS, gaiaUnbonding.Status, "GAIA record submitted")
+	gaiaHostZone := s.MustGetHostZone(HostChainId)
+	for _, validator := range gaiaHostZone.Validators {
+		s.Require().Equal(int64(1), validator.DelegationChangesInProgress, "GAIA validator %s flagged by the batch", validator.Address)
+	}
 
-	// Deleted: nothing appends to an epoch unbonding record any more, so none is created
+	// Kept: SubmitPendingUndelegations submitted JUNO's pending amount as one ICA and marked
+	// the batch in flight; the amount stays stored until the ack
+	s.Require().Equal(junoStartSequence+1, s.MustGetNextSequenceNumber(junoPortId, junoChannelId),
+		"exactly one undelegate ICA on the JUNO delegation channel")
+	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, junoChainId), "JUNO batch in flight")
+	stillPending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, junoChainId)
+	s.Require().True(found, "JUNO pending undelegation kept until the ack")
+	s.Require().Equal(pendingAmount, stillPending, "JUNO pending amount unchanged")
+	junoHostZone := s.MustGetHostZone(junoChainId)
+	s.Require().Equal(int64(1), junoHostZone.Validators[0].DelegationChangesInProgress, "juno_val1 flagged")
+	s.Require().Zero(junoHostZone.Validators[1].DelegationChangesInProgress, "juno_val2 had no capacity, not flagged")
+
+	// Kept: CleanupEpochUnbondingRecords deleted the fully claimed record and nothing else
+	_, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, claimedEpoch)
+	s.Require().False(found, "fully claimed epoch record deleted")
+	_, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 5)
+	s.Require().True(found, "in-progress epoch record kept")
+
+	// Deleted: CreateEpochUnbondingRecord no longer runs, so the new epoch has no record
 	_, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, uint64(dayEpoch))
 	s.Require().False(found, "no epoch unbonding record created for the new epoch")
+
+	// Kept: the day tracker advanced
+	tracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, epochstypes.DAY_EPOCH)
+	s.Require().True(found, "day epoch tracker set")
+	s.Require().Equal(uint64(dayEpoch), tracker.EpochNumber, "day tracker updated by the hook")
+}
+
+// The stride epoch keeps three flows: withdrawing accrued rewards to the withdrawal ICA,
+// carrying TRANSFER_QUEUE deposits to the delegation ICA, and sweeping completed unbondings
+// to the redemption ICA. Everything that compounded is gone, and the redemption rate is the
+// proof: with deposit records and rewards present the old formula would have moved it and
+// the frozen hook leaves it exactly where it was.
+//
+// Old rate formula (UpdateRedemptionRateForHostZone):
+//
+//	(TotalDelegations + DELEGATION_QUEUE deposits + TRANSFER_QUEUE deposits + LSM) / stSupply
+//	= (5 + 3 + 4 + 0) / 10 = 1.2, from an initial 1.0
+//
+// The DELEGATION_QUEUE record is the "accrued rewards" position: the reinvest pipeline's
+// withdrawal-balance callback books withdrawn rewards as a DELEGATION_QUEUE deposit record,
+// and that is how rewards entered the rate. The old hook would also have delegated it
+// (StakeExistingDepositsOnHostZones), which is why the record must be untouched after.
+func (s *KeeperTestSuite) TestBeforeEpochStart_StrideEpoch_RateFrozenKeptFlowsRun() {
+	// ICA channel (this also opens the transfer channel channel-0 on the same connection)
+	delegationOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationChannelId, delegationPortId := s.CreateICAChannel(delegationOwner)
+	delegationAddress := s.IcaAddresses[delegationOwner]
+
+	// A real IBC denom for the deposit transfer, and a funded deposit address
+	ibcDenomTrace := s.GetIBCDenomTrace(Atom)
+	s.App.TransferKeeper.SetDenom(s.Ctx, ibcDenomTrace)
+	ibcDenom := ibcDenomTrace.IBCDenom()
+	depositAddress := types.NewHostZoneDepositAddress(HostChainId)
+	initialDepositBalance := sdkmath.NewInt(15_000)
+	s.FundAccount(depositAddress, sdk.NewCoin(ibcDenom, initialDepositBalance))
+
+	initialRate := sdkmath.LegacyNewDec(1)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:              HostChainId,
+		HostDenom:            Atom,
+		IbcDenom:             ibcDenom,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		TransferChannelId:    ibctesting.FirstChannelID,
+		DepositAddress:       depositAddress.String(),
+		DelegationIcaAddress: delegationAddress,
+		WithdrawalIcaAddress: "cosmos_WITHDRAWAL",
+		RedemptionIcaAddress: "cosmos_REDEMPTION",
+		UnbondingPeriod:      14,
+		RedemptionRate:       initialRate,
+		TotalDelegations:     sdkmath.NewInt(5),
+		Validators: []*types.Validator{
+			{Address: ValAddress, Delegation: sdkmath.NewInt(5), Weight: 1, SharesToTokensRate: sdkmath.LegacyOneDec()},
+		},
+		MaxMessagesPerIcaTx: 10,
+	})
+
+	// stToken supply of 10
+	s.Require().NoError(s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewCoin(StAtom, sdkmath.NewInt(10)))))
+
+	// Deposit records from the previous epoch: one to transfer (kept flow) and the rewards
+	// position the deleted delegate flow would have staked
+	strideEpoch := int64(7)
+	previousEpoch := uint64(strideEpoch - 1)
+	rewardsRecord := recordtypes.DepositRecord{
+		Id:                 1,
+		HostZoneId:         HostChainId,
+		Denom:              Atom,
+		Amount:             sdkmath.NewInt(3),
+		Status:             recordtypes.DepositRecord_DELEGATION_QUEUE,
+		DepositEpochNumber: previousEpoch,
+	}
+	transferRecord := recordtypes.DepositRecord{
+		Id:                 2,
+		HostZoneId:         HostChainId,
+		Denom:              Atom,
+		Amount:             sdkmath.NewInt(4),
+		Status:             recordtypes.DepositRecord_TRANSFER_QUEUE,
+		DepositEpochNumber: previousEpoch,
+	}
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, rewardsRecord)
+	s.App.RecordsKeeper.SetDepositRecord(s.Ctx, transferRecord)
+
+	// A completed unbonding waiting for the sweep
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, recordtypes.EpochUnbondingRecord{
+		EpochNumber: 1,
+		HostZoneUnbondings: []*recordtypes.HostZoneUnbonding{{
+			HostZoneId:        HostChainId,
+			NativeTokenAmount: sdkmath.NewInt(1_000_000),
+			Status:            recordtypes.HostZoneUnbonding_EXIT_TRANSFER_QUEUE,
+			UnbondingTime:     uint64(s.Ctx.BlockTime().Add(-1 * time.Minute).UnixNano()),
+		}},
+	})
+
+	// Sanity: the old formula's inputs are all present, so the old hook would have moved the rate
+	s.Require().Len(s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx), 2, "two deposit records seeded")
+	s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), "no ICQ before the hook")
+	delegationStartSequence := s.MustGetNextSequenceNumber(delegationPortId, delegationChannelId)
+	transferStartSequence := s.MustGetNextSequenceNumber(ibctesting.TransferPort, ibctesting.FirstChannelID)
+
+	s.App.StakeibcKeeper.BeforeEpochStart(s.Ctx, s.epochInfoForHook(epochstypes.STRIDE_EPOCH, strideEpoch))
+
+	// Frozen: the rate is exactly the seeded value, not the 1.2 the old formula computes
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(initialRate, hostZone.RedemptionRate, "redemption rate must not move on a stride epoch")
+
+	// Kept, on the delegation ICA channel: exactly two ICAs. One is the reward withdrawal
+	// (ClaimAccruedStakingRewards, one MsgWithdrawDelegatorReward for the one funded validator),
+	// the other the redemption sweep. The deleted SetWithdrawalAddress ICA and the deleted
+	// delegate ICA for the DELEGATION_QUEUE record would each have added one more.
+	s.Require().Equal(delegationStartSequence+2, s.MustGetNextSequenceNumber(delegationPortId, delegationChannelId),
+		"delegation channel carries the reward withdrawal and the sweep, nothing else")
+	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, HostChainId)
+	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeySweptAmount, "1000000")
+	sweptRecord, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, 1, HostChainId)
+	s.Require().True(found, "swept unbonding record found")
+	s.Require().Equal(recordtypes.HostZoneUnbonding_EXIT_TRANSFER_IN_PROGRESS, sweptRecord.Status,
+		"sweep ICA in flight (the record becomes CLAIMABLE on its ack)")
+
+	// Kept, on the transfer channel: exactly one packet, the deposit transfer, and the record
+	// and the deposit balance moved with it
+	s.Require().Equal(transferStartSequence+1, s.MustGetNextSequenceNumber(ibctesting.TransferPort, ibctesting.FirstChannelID),
+		"one ICS-20 packet for the deposit transfer")
+	transferredRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, transferRecord.Id)
+	s.Require().True(found, "transfer deposit record found")
+	s.Require().Equal(recordtypes.DepositRecord_TRANSFER_IN_PROGRESS, transferredRecord.Status, "deposit transfer in progress")
+	s.Require().Equal(initialDepositBalance.Sub(transferRecord.Amount),
+		s.App.BankKeeper.GetBalance(s.Ctx, depositAddress, ibcDenom).Amount, "deposit address debited by the transfer")
+
+	// Deleted: the rewards position was not delegated, no deposit record was created for the
+	// epoch, and the reinvest pipeline's withdrawal-balance ICQ was not submitted
+	untouchedRecord, found := s.App.RecordsKeeper.GetDepositRecord(s.Ctx, rewardsRecord.Id)
+	s.Require().True(found, "rewards deposit record found")
+	s.Require().Equal(rewardsRecord, untouchedRecord, "DELEGATION_QUEUE record untouched: no delegate flow ran")
+	s.Require().Len(s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx), 2, "no deposit record created for the epoch")
+	s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), "no withdrawal-balance ICQ submitted")
+
+	// Kept: the stride tracker advanced
+	tracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, epochstypes.STRIDE_EPOCH)
+	s.Require().True(found, "stride epoch tracker set")
+	s.Require().Equal(uint64(strideEpoch), tracker.EpochNumber, "stride tracker updated by the hook")
 }
 
 // The mint epoch used to liquid stake 15% of the reward collector's host fees for the POA
@@ -172,12 +360,11 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_MintEpoch_RewardCollectorUntouche
 		"no stTokens minted to the POA validators")
 }
 
-// Source-level guard: the freeze is a set of deleted call sites, and the cheapest unambiguous
-// way to keep them deleted is to assert on the text of BeforeEpochStart. A behavioural test
-// can only show one consequence per call; this one names every call by identifier, so a
-// re-added call (or a merge that resurrects one) fails the build with the offending name in
-// the message. It reads hooks.go relative to the package directory, which is where `go test`
-// runs.
+// Source-level guard against the deleted calls being re-added. The behavioural tests above
+// prove what the hook does; this one only pins the set of call sites by name, so a merge that
+// resurrects one fails with the offending identifier in the message instead of a subtle
+// balance drift. It is a tripwire, not evidence that the kept calls execute. It reads
+// hooks.go relative to the package directory, which is where `go test` runs.
 func (s *KeeperTestSuite) TestBeforeEpochStart_SourceHasNoCompoundingCalls() {
 	source, err := os.ReadFile("hooks.go")
 	s.Require().NoError(err, "hooks.go readable from the package directory")
@@ -232,9 +419,14 @@ var (
 	_ = keeper.Keeper.CreateDepositRecordsForEpoch
 	_ = keeper.Keeper.CreateEpochUnbondingRecord
 	_ = keeper.Keeper.AuctionOffRewardCollectorBalance
-	_ = minttypes.ModuleName
 )
 ```
+
+Notes on the fixtures, verified against the existing tests before writing this step:
+
+- `SetupInitiateAllHostZoneUnbondings` (`unbonding_test.go`) is reused as is for the day epoch; the GAIA delegation channel id and port id are read back through `ICAControllerKeeper.GetOpenActiveChannel` because the fixture does not return them. The JUNO zone mirrors `SetupSubmitPendingUndelegations` (`pending_undelegation_test.go`), with unbonding period 28 so its frequency (28/7 + 1 = 5) does not divide epoch 12.
+- The stride-epoch fixture is assembled from `SetupDepositRecords` (`delegation_test.go`: real IBC denom, funded deposit address, `TransferChannelId: ibctesting.FirstChannelID`), `SetupSweepUnbondedTokens` (`redemption_sweep_test.go`: `EXIT_TRANSFER_QUEUE` record with a past `UnbondingTime`, and the sweep ICA leaving the record `EXIT_TRANSFER_IN_PROGRESS`, not `CLAIMABLE`, until the ack) and `SetupUpdateRedemptionRates` (`redemption_rate_test.go`: the deposit-record statuses the old formula summed). Both the reward withdrawal and the sweep go over the delegation ICA channel, which is why the channel's sequence delta of exactly 2 is the assertion that no other ICA (withdraw-address set, delegate) was sent.
+- `ClaimAccruedStakingRewardsOnHost` skips validators with zero delegation, so the stride-epoch zone's one validator carries a delegation of 5 (which also equals `TotalDelegations`).
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -244,7 +436,7 @@ Run:
 go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestBeforeEpochStart' -v 2>&1 | tail -40
 ```
 
-Expected: `TestBeforeEpochStart_StrideEpoch_RateFrozen` FAILS on `redemption rate must not move on a stride epoch` (actual `1.400000000000000000`), `TestBeforeEpochStart_DayEpoch_UnbondsWithoutNewRecord` FAILS on `no epoch unbonding record created for the new epoch`, `TestBeforeEpochStart_MintEpoch_RewardCollectorUntouched` FAILS on the reward collector balance (actual 0), `TestBeforeEpochStart_SourceHasNoCompoundingCalls` FAILS on `k.UpdateRedemptionRates( must not be called`.
+Expected: `TestBeforeEpochStart_StrideEpoch_RateFrozenKeptFlowsRun` FAILS on `redemption rate must not move on a stride epoch` (actual `1.200000000000000000`; if the old hook errors earlier on the withdrawal-address ICA, the first failure is instead `delegation channel carries the reward withdrawal and the sweep, nothing else` with a sequence delta above 2), `TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord` FAILS on `no epoch unbonding record created for the new epoch`, `TestBeforeEpochStart_MintEpoch_RewardCollectorUntouched` FAILS on the reward collector balance (actual 0), `TestBeforeEpochStart_SourceHasNoCompoundingCalls` FAILS on `k.UpdateRedemptionRates( must not be called`.
 
 - [ ] **Step 3: Rewrite `BeforeEpochStart`**
 
@@ -913,7 +1105,7 @@ Manual dry run (not automated, ops step recorded for the release): on localstrid
 
 ## Self-review
 
-1. **Spec coverage.** §6 deleted table: all nine calls, Task 1. §6 kept table: seven calls, Task 1 (guard test asserts each is still present). §6 "Also deleted" (slash callback rate rewrite): Task 2. §5 "Messages gated": Task 4 (gates) and Task 3 (cap). §11 freeze bullet: "each deleted call absent / each kept call runs on a non-halted zone" → Task 1 guard test plus the three behavioural tests on non-halted zones; "RedemptionRate unchanged across a stride epoch with deposit records and rewards present" → `TestBeforeEpochStart_StrideEpoch_RateFrozen` (deposit records present; the reinvest pipeline that would have handled rewards is what the ICQ assertion covers); "slash-callback test that the delegation is corrected and the rate is not" → Task 2. §12 item 2 lists exactly this set.
+1. **Spec coverage.** §6 deleted table: all nine calls, Task 1. §6 kept table: seven calls, Task 1 (guard test asserts each is still present). §6 "Also deleted" (slash callback rate rewrite): Task 2. §5 "Messages gated": Task 4 (gates) and Task 3 (cap). §11 freeze bullet: "each kept call still runs on a non-halted zone" → the day-epoch test proves `InitiateAllHostZoneUnbondings` (undelegate ICA, record `UNBONDING_IN_PROGRESS`, validators flagged), `SubmitPendingUndelegations` (ICA, in-flight counter) and `CleanupEpochUnbondingRecords` (claimed record deleted) by their effects, and the stride-epoch test proves `ClaimAccruedStakingRewards` and `SweepUnbondedTokensAllHostZones` (two ICAs on the delegation channel, sweep event and `EXIT_TRANSFER_IN_PROGRESS`) and `TransferExistingDepositsToHostZones` (one ICS-20 packet, `TRANSFER_IN_PROGRESS`, deposit address debited); `UpdateEpochTracker` by the tracker's epoch number in both. "each deleted call absent" → the same tests by absence (rate unchanged, no new deposit or epoch unbonding record, no ICQ, channel sequence delta exactly 2 so no withdraw-address or delegate ICA, reward collector untouched at the mint epoch), with the source-level test as a tripwire only. "RedemptionRate unchanged across a stride epoch with deposit records and rewards present" → `TestBeforeEpochStart_StrideEpoch_RateFrozenKeptFlowsRun`, whose fixture states the 1.2 the old formula would have produced from the seeded `DELEGATION_QUEUE` rewards record, `TRANSFER_QUEUE` deposit and stToken supply. "slash-callback test that the delegation is corrected and the rate is not" → Task 2. §12 item 2 lists exactly this set.
 2. **Placeholders.** None; every code step shows the code and every test the assertions.
 3. **Type consistency.** `epochInfoForHook` returns `epochstypes.EpochInfo` with `Duration time.Duration`, `CurrentEpoch int64`, `CurrentEpochStartTime time.Time` (matches `x/epochs/types/genesis.pb.go`). `GetEpochTracker(ctx, identifier) (types.EpochTracker, bool)`. `GetEpochUnbondingRecord(ctx, epochNumber uint64) (EpochUnbondingRecord, bool)`. `checkModuleAccountBalance(moduleName, denom string, expected sdkmath.Int)` and `getTotalPoAValidatorStTokenBalance(denom string) sdkmath.Int` exist in `reward_allocation_test.go`. `k.GetParam(ctx, key []byte) uint64` has a pointer receiver on `*Keeper`; calling it on the value receiver `k Keeper` inside `BeforeEpochStart` is what the current code already does, so it compiles.
 4. **Review tags.** All four tasks are `Review: yes`: the hook edit changes mainnet accounting behaviour, the callback and calibration edits are accounting paths, the gates are auth.

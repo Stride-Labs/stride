@@ -12,11 +12,12 @@ Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` §5 (all 
 
 > **Branching:** PR 1 branches off `wind-down-design-consolidation`. Each later PR branches
 > off the previous PR's branch (PR 2 off PR 1, PR 3 off PR 2, and so on) and the PRs are
-> implemented and merged strictly in order: 1, 2, 3, 4, 5. Branch names:
+> implemented and merged strictly in order: 1, 2, 3, 4, 5, 6. Branch names:
 > `wind-down-pr1-remove-handlers`, `wind-down-pr2-freeze-by-code`,
-> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`.
+> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`,
+> `wind-down-pr6-release-gate`.
 > The Go module path stays `github.com/Stride-Labs/stride/v34` in every PR; the bump to
-> `/v35` is a manual step after all five land and is out of scope for every plan.
+> `/v35` is a manual step after all six land and is out of scope for every plan.
 
 This PR's branch is `wind-down-pr3-upgrade-handler`, created from `wind-down-pr2-freeze-by-code`.
 
@@ -55,6 +56,7 @@ This PR's branch is `wind-down-pr3-upgrade-handler`, created from `wind-down-pr2
 | `app/upgrades/v35/testdata/README.md` | what the PR 6 mainnet-export suite will need in `mainnet_export.json.gz` |
 | `app/upgrades.go` | wiring |
 | `scripts/wind-down/gen_delta_table.py`, `test_gen_delta_table.py` | drift.json → Go table literal |
+| `scripts/wind-down/measure_delegation_drift.py`, `.gitignore` | `--output-dir` (default `scripts/wind-down/drift/`, ignored) and `--chain-id` so the measurement runs from a clean checkout |
 
 ---
 
@@ -1298,6 +1300,8 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Create: `app/upgrades/v35/haqq.go`
 - Create: `app/upgrades/v35/haqq_test.go`
 - Modify: `app/upgrades/v35/upgrades.go` (call line)
+- Modify: `scripts/wind-down/measure_delegation_drift.py` (docstring lines 5-6, `SCRIPT_DIR` line 17, `main` lines 492-563)
+- Modify: `.gitignore` (add `scripts/wind-down/drift/`)
 
 **Interfaces:**
 - Consumes: Task 2's `DelegationDelta`, `mustInt`, `reconcileHostZoneDelegations`; `scripts/wind-down/measure_delegation_drift.py`'s `drift.json` (`zones.<chain_id>.validators[]` rows with `validator_address`, `moniker`, `diff` = recorded − actual, `in_stride_list`).
@@ -1305,9 +1309,128 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Depends on: Tasks 1, 2
 - Review: yes (money: rewrites tracked delegations on a live zone)
 
-The drift measurement was rerun for this plan on 2026-09-29 at 21:36 UTC (REST `haqq-rest.publicnode.com`, 52 Stride validators, 42 with an on-chain delegation): 16 non-zero deltas, 13 over-recorded and 3 under, net **−1,758,262,481,209,726,849,963 aISLM** (−1,758.26 ISLM), unchanged from the four earlier measurements in the spec (§5, §9a). The table below is that run's output through the generator. **It is regenerated right before the proposal** (spec §9 checklist) with the commands in Step 6, and the v35 mainnet-export suite (PR 6) is what turns a stale table into a red build.
+The drift measurement was rerun for this plan on 2026-09-29 at 21:36 UTC (REST `haqq-rest.publicnode.com`, 52 Stride validators, 42 with an on-chain delegation): 16 non-zero deltas, 13 over-recorded and 3 under, net **−1,758,262,481,209,726,849,963 aISLM** (−1,758.26 ISLM), unchanged from the four earlier measurements in the spec (§5, §9a). The table below is that run's output through the generator. **It is regenerated right before the proposal** (spec §9 checklist) with the commands in Step 7, and the v35 mainnet-export suite (PR 6) is what turns a stale table into a red build.
 
-- [ ] **Step 1: Write the generator's failing test**
+- [ ] **Step 1: Make the drift script reproducible (`--output-dir`, `--chain-id`)**
+
+The table is a release-critical accounting input, so the measurement must run from a clean checkout with one exact command. Today `scripts/wind-down/measure_delegation_drift.py` writes into a hard-coded, session-private temp directory and always measures every zone. Edit it as follows (there are no tests for this script; Step 7 is the verification).
+
+Docstring, lines 5-6, replace
+
+```python
+Read-only. Writes drift.json and report.md into this directory.
+```
+
+with
+
+```python
+Read-only. Writes drift.json and report.md into --output-dir (default scripts/wind-down/drift/,
+git-ignored). --chain-id (repeatable) restricts the measurement to those Stride host zones.
+```
+
+Imports, lines 9-13: add `import argparse` and `import pathlib` (keep the module-qualified style; alphabetical order: `argparse`, `json`, `pathlib`, `time`, `urllib.request`, `urllib.error`).
+
+Delete line 17 entirely:
+
+```python
+SCRIPT_DIR = "/private/tmp/claude-501/-Users-sampocs-Documents-Projects-stride/4ac0fcca-c8bc-4981-b63e-b0f199cc9eaa/scratchpad/drift"
+```
+
+Replace the head of `main` (line 492 to the `for` at line 500)
+
+```python
+def main():
+    stride_zones = fetch_stride_host_zones()
+    stride_by_chain_id = {z["chain_id"]: z for z in stride_zones}
+
+    all_zone_data = {}
+    all_rows = {}
+    all_summaries = []
+
+    for chain_id, cfg in ZONES.items():
+```
+
+with
+
+```python
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output-dir",
+        type=pathlib.Path,
+        default=pathlib.Path("scripts/wind-down/drift"),
+        help="directory for drift.json and report.md (created if missing)",
+    )
+    parser.add_argument(
+        "--chain-id",
+        action="append",
+        dest="chain_ids",
+        default=None,
+        help="measure only this Stride host zone (repeatable); default is every zone in ZONES",
+    )
+    return parser.parse_args()
+
+
+def selected_zones(chain_ids: list[str] | None) -> dict[str, dict]:
+    if chain_ids is None:
+        return ZONES
+    unknown = sorted(set(chain_ids) - set(ZONES))
+    if unknown:
+        raise SystemExit(f"unknown chain id(s): {', '.join(unknown)}; known: {', '.join(ZONES)}")
+    return {chain_id: ZONES[chain_id] for chain_id in chain_ids}
+
+
+def main() -> None:
+    args = parse_args()
+    zones = selected_zones(chain_ids=args.chain_ids)
+    output_dir: pathlib.Path = args.output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    stride_zones = fetch_stride_host_zones()
+    stride_by_chain_id = {z["chain_id"]: z for z in stride_zones}
+
+    all_zone_data = {}
+    all_rows = {}
+    all_summaries = []
+
+    for chain_id, cfg in zones.items():
+```
+
+Then, still inside `main`, the three remaining references to the full zone table become the selection: line 520 `for chain_id in ZONES:` → `for chain_id in zones:`; line 538 `decimals_map = {chain_id: cfg["decimals"] for chain_id, cfg in ZONES.items()}` → `... for chain_id, cfg in zones.items()}`; line 548 `for chain_id in ZONES:` → `for chain_id in zones:`. The two writes and the final print:
+
+```python
+    with open(f"{SCRIPT_DIR}/drift.json", "w") as f:
+```
+→
+```python
+    with open(output_dir / "drift.json", "w") as f:
+```
+
+```python
+    with open(f"{SCRIPT_DIR}/report.md", "w") as f:
+```
+→
+```python
+    with open(output_dir / "report.md", "w") as f:
+```
+
+```python
+    print("\nDone. Wrote drift.json and report.md")
+```
+→
+```python
+    print(f"\nDone. Wrote {output_dir / 'drift.json'} and {output_dir / 'report.md'}")
+```
+
+Append to `.gitignore` (the existing `scripts/state` and `scripts/logs` entries do not cover it):
+
+```
+scripts/wind-down/drift/
+```
+
+Check: `grep -n SCRIPT_DIR scripts/wind-down/measure_delegation_drift.py` prints nothing; `python3 scripts/wind-down/measure_delegation_drift.py --help` prints both options; `python3 scripts/wind-down/measure_delegation_drift.py --chain-id nope` exits with `unknown chain id(s): nope; known: ...`.
+
+- [ ] **Step 2: Write the generator's failing test**
 
 ```python
 # scripts/wind-down/test_gen_delta_table.py
@@ -1369,12 +1492,12 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 2: Run to verify it fails**
+- [ ] **Step 3: Run to verify it fails**
 
 Run: `cd scripts/wind-down && python3 -m unittest test_gen_delta_table -v`
 Expected: `ModuleNotFoundError: No module named 'gen_delta_table'`.
 
-- [ ] **Step 3: Write `scripts/wind-down/gen_delta_table.py`**
+- [ ] **Step 4: Write `scripts/wind-down/gen_delta_table.py`**
 
 ```python
 #!/usr/bin/env python3
@@ -1461,12 +1584,12 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 4: Run the generator tests**
+- [ ] **Step 5: Run the generator tests**
 
 Run: `cd scripts/wind-down && python3 -m unittest test_gen_delta_table -v`
 Expected: `Ran 3 tests ... OK`.
 
-- [ ] **Step 5: Write the failing Go tests**
+- [ ] **Step 6: Write the failing Go tests**
 
 ```go
 package v35_test
@@ -1576,19 +1699,20 @@ func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_MissingZone() {
 }
 ```
 
-- [ ] **Step 6: Regenerate the table (record the commands; the values below are today's)**
+- [ ] **Step 7: Regenerate the table (record the commands; the values below are today's)**
 
 ```bash
-# From the repo root. measure_delegation_drift.py writes drift.json beside its SCRIPT_DIR
-# (a scratchpad path at the top of the file); point SCRIPT_DIR at a scratch directory first.
-python3 scripts/wind-down/measure_delegation_drift.py
-curl -s -A "Mozilla/5.0" "https://stride-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/haqq_11235-1" > /tmp/haqq_host_zone.json
-python3 scripts/wind-down/gen_delta_table.py <SCRIPT_DIR>/drift.json haqq_11235-1 --host-zone-json /tmp/haqq_host_zone.json
+# From the repo root, after Step 1. Both outputs land in the git-ignored scripts/wind-down/drift/.
+python3 scripts/wind-down/measure_delegation_drift.py --chain-id haqq_11235-1 --output-dir scripts/wind-down/drift
+curl -s -A "Mozilla/5.0" "https://stride-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/haqq_11235-1" > scripts/wind-down/drift/haqq_host_zone.json
+python3 scripts/wind-down/gen_delta_table.py scripts/wind-down/drift/drift.json haqq_11235-1 --host-zone-json scripts/wind-down/drift/haqq_host_zone.json
 ```
 
-Expected (2026-09-29 21:36 UTC): the first line `// 16 deltas, net -1758262481209726849963 (actual minus tracked)` and the table pasted in Step 7.
+This is also the verification of Step 1: the run must complete from a clean checkout with no edits, `git status` must show nothing under `scripts/wind-down/drift/`, and the generator's output must match the table committed in `haqq.go` line for line (`diff <(python3 scripts/wind-down/gen_delta_table.py scripts/wind-down/drift/drift.json haqq_11235-1 --host-zone-json scripts/wind-down/drift/haqq_host_zone.json) <(sed -n '/^var HaqqDelegationDeltas/,/^}/p' app/upgrades/v35/haqq.go)` after the table is in place; a non-empty diff means the chain moved since the last measurement and the table is re-pasted, never hand-edited).
 
-- [ ] **Step 7: Write `haqq.go`**
+Expected (2026-09-29 21:36 UTC): the first line `// 16 deltas, net -1758262481209726849963 (actual minus tracked)` and the table pasted in Step 8.
+
+- [ ] **Step 8: Write `haqq.go`**
 
 ```go
 package v35
@@ -1645,23 +1769,23 @@ func ReconcileHaqqDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (applie
 }
 ```
 
-- [ ] **Step 8: Add the call to `upgrades.go`** (last, after the ICQ purges)
+- [ ] **Step 9: Add the call to `upgrades.go`** (last, after the ICQ purges)
 
 ```go
 		// Haqq delegation reconciliation, after its slash-path ICQs are gone (spec §5)
 		ReconcileHaqqDelegations(ctx, stakeibcKeeper)
 ```
 
-- [ ] **Step 9: Run the tests**
+- [ ] **Step 10: Run the tests**
 
 Run: `go test ./app/upgrades/v35/... -run 'TestUpgradeTestSuite/Test(HaqqDelegationDeltas|ReconcileHaqqDelegations|Upgrade_EmptyState)' -v`
 Expected: all `PASS`.
 
-- [ ] **Step 10: Commit**
+- [ ] **Step 11: Commit**
 
 ```bash
-git add scripts/wind-down/gen_delta_table.py scripts/wind-down/test_gen_delta_table.py app/upgrades/v35/haqq.go app/upgrades/v35/haqq_test.go app/upgrades/v35/upgrades.go
-git commit -m "feat(v35): haqq delegation delta table, its generator, and the reconciliation
+git add scripts/wind-down/measure_delegation_drift.py .gitignore scripts/wind-down/gen_delta_table.py scripts/wind-down/test_gen_delta_table.py app/upgrades/v35/haqq.go app/upgrades/v35/haqq_test.go app/upgrades/v35/upgrades.go
+git commit -m "feat(v35): haqq delegation delta table, its generator, and the reconciliation; drift script takes --output-dir/--chain-id
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -1843,7 +1967,7 @@ Not a code task; recorded here because the plan is where the next engineer looks
 
 **Spec coverage (§5, §11 handler bullet):** autopilot param (Task 3), ICA host allow-list (3), wasm params and contract admins with a real contract (4), comdex flag (5), trade-route deletion (5), oracle deactivation (6), rate-limit removal (6), stale-flag reset cleared on a zone with no unacked packet and left alone on one that does (7), haqq purge deleting only that chain's slash-path queries and clearing the flags, withdrawal-balance purge leaving every other query (8), haqq delta table applied and skipped on a stale constant, both signs, generated from the drift script (9), handler order with the purge before the table and the single error path (10), the fixture contract for the PR 6 export suite (10). The "two ValidateBasic gates and the lifted calibration cap" and the "removed messages no longer exist" tests in §11 belong to PRs 2 and 1. No store upgrade is needed.
 
-**Placeholders:** none; every step carries its code, every test its body, the haqq table its measured values with the regeneration command.
+**Placeholders:** none; every step carries its code, every test its body, the haqq table its measured values with an exact regeneration command that needs no edits to the repo (Task 9 Step 1 gives the drift script `--output-dir` and `--chain-id`; the old session-private `SCRIPT_DIR` is gone).
 
 **Type consistency:** `CreateUpgradeHandler` parameters are fixed in Task 1 and only consumed afterwards; helper names match between the source, the tests and the Task 10 handler body; `reconcileHostZoneDelegations` returns `(sdkmath.Int, bool)` as in v34 and `ReconcileHaqqDelegations` passes that through (v34's Injective wrapper dropped the bool; haqq's keeps it, which its tests use). Test fixtures reused by Task 10 (`storeAndInstantiateHackatom`, `seedFlaggedZone`, `mockDelegationChannel`, `flags`, `seedQueries`, `queryIds`, `setupHaqqHostZone`) are defined once in their own task's test file and shared through the package.
 

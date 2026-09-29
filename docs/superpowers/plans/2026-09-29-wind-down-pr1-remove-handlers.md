@@ -4,11 +4,12 @@
 
 > **Branching:** PR 1 branches off `wind-down-design-consolidation`. Each later PR branches
 > off the previous PR's branch (PR 2 off PR 1, PR 3 off PR 2, and so on) and the PRs are
-> implemented and merged strictly in order: 1, 2, 3, 4, 5. Branch names:
+> implemented and merged strictly in order: 1, 2, 3, 4, 5, 6. Branch names:
 > `wind-down-pr1-remove-handlers`, `wind-down-pr2-freeze-by-code`,
-> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`.
+> `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`, `wind-down-pr5-sweep-tx`,
+> `wind-down-pr6-release-gate`.
 > The Go module path stays `github.com/Stride-Labs/stride/v34` in every PR; the bump to
-> `/v35` is a manual step after all five land and is out of scope for every plan.
+> `/v35` is a manual step after all six land and is out of scope for every plan.
 
 **Goal:** Remove the transaction handlers the protocol no longer needs (spec §5) so that a submitted `MsgLiquidStake`, `MsgRedeemStake`, etc. fails with "can't route message", while every historical transaction that contains one of those messages still decodes.
 

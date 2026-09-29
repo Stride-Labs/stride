@@ -1,9 +1,9 @@
 # Protocol Wind-Down: Migration to Osmosis
 
 Status: approved design, planned. Large tier; the v35 work is written from this spec as six
-stacked PRs (§12) with one implementation plan per code PR
+stacked PRs (§12) with one implementation plan per PR
 (`docs/superpowers/plans/2026-09-29-wind-down-pr1-remove-handlers.md` through
-`...-pr5-sweep-tx.md`), and the notes carried over from the earlier plans in §13.
+`...-pr6-release-gate.md`), and the notes carried over from the earlier plans in §13.
 
 ## §1. Goal
 
@@ -1039,7 +1039,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   addresses in §4 once created, the channel-5 constant and the `SweepUnwindChannels`
   whitelist for the sweep, and the `chain_id → host-side channel to Osmosis` map; the batch
   bound after measuring gas.
-- The plans: one per code PR, written from this spec on 2026-09-29 (the two plans written
+- The plans: one per PR, written from this spec on 2026-09-29 (the two plans written
   for the earlier two-upgrade sequencing were deleted the same day; what they had learned is
   in §13). The work is delivered as six stacked PRs, each reviewable on its own, in the order
   below. **Branching and order:** PR 1 branches off `wind-down-design-consolidation`; every
@@ -1070,10 +1070,8 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
      a review with nothing else in the diff.
   6. Release gate: the mainnet-export suite over the full handler, the coverage-check script,
      the changelog, and the two address constants once the accounts exist.
-     PR 6 has no plan of its own: its content is fixed by PRs 3 and 5 (the export suite
-     replays the finished handler; the coverage check reads the finished constants) and by
-     the two accounts existing, so it is written once PR 5 is merged and the accounts are
-     proven (§9).
+     Its plan is written like the others, but it is the one PR that cannot merge until the
+     two accounts exist and are proven (§9), since it fills their constants.
      The module-path bump to `/v35` stays outside all six as a manual step after they land:
      it touches every file and would make the stacked diffs unreviewable.
 - Which vouchers go on the sweep list (the whitelisted hosts' native tokens at least), sized
