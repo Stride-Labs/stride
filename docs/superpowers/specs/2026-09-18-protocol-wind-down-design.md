@@ -475,7 +475,16 @@ accounting stays clean.
 
 Submitting by validator rather than cascading a zone amount by weight is what lets ops test on
 a single validator first, skip or shave a validator that is failing or drifted by dust, and
-keep every submitted amount equal to what the host will accept. Retry is resubmission by ops;
+keep every submitted amount equal to what the host will accept. The live test on each zone is
+a full drain of one validator with a small delegation and no unbonding entry in flight (the
+pick per zone is `docs/wind-down/live-test-validators.md`, about $1,200 across all eleven on
+the 2026-09-22 snapshot), not a partial drain with an offset: a full drain exercises the exact
+path the real run takes, and it spends one unbonding entry on a validator that then needs
+nothing further. The SDK caps concurrent unbonding entries at 7 per delegator-validator pair
+(the delegation ICA is the delegator); the day epoch adds at most one per validator and the
+drain adds one, and today's worst case is 4 (ssc-1), so no check is needed: a batch that
+hits the cap fails whole, and the cure is waiting up to four days for the oldest entry to
+mature and resubmitting. Retry is resubmission by ops;
 there is no queue and no epoch hook. ICA txs are atomic, so one over-recorded validator still
 fails its whole batch; the slash refresh (§9) is what prevents that. The failure path is the
 existing record-less path of the undelegate callback (§3): an ack error unflags the batch's
@@ -506,13 +515,17 @@ osmosis-1 zone the ICA is already on Osmosis and the tx is an ICA bank `MsgSend`
 Osmosis vault instead (osmosis-1 is in the map with an empty channel, which selects this
 form).
 
-**`MsgTransferStaketiaClaimBalance { creator }`**, with no other field. It moves the staketia
-claim address's whole TIA voucher balance to the stakeibc celestia zone's delegation ICA on
-Celestia, where it unwinds to native TIA and is then sent on to Osmosis by `MsgTransferFromIca
-DELEGATION` with the rest of the zone's balance. Everything is a constant or read from state:
-sender is staketia's `ClaimAddress`, denom is `CelestiaNativeTokenIBCDenom`, amount is the
-full balance (reject if zero), channel is the celestia host zone's `TransferChannelId`,
-receiver is its `DelegationIcaAddress`, one-day timeout, no memo. It calls
+**`MsgTransferStaketiaClaimBalance { creator, amount }`**, where `amount` is an optional
+integer of utia and zero means the whole balance. It moves that much of the staketia claim
+address's TIA voucher balance to the stakeibc celestia zone's delegation ICA on Celestia,
+where it unwinds to native TIA and is then sent on to Osmosis by `MsgTransferFromIca
+DELEGATION` with the rest of the zone's balance. The optional amount exists for one reason:
+a small test transfer first, since the balance is the whole staketia stake and the sender is
+a multisig account the keeper signs for. Everything else is a constant or read from state:
+sender is staketia's `ClaimAddress`, denom is `CelestiaNativeTokenIBCDenom`, the amount is
+capped at the balance (reject if the balance is zero or below the amount), channel is the
+celestia host zone's `TransferChannelId`, receiver is its `DelegationIcaAddress`, one-day
+timeout, no memo. It calls
 `transferKeeper.Transfer` with the claim address as sender, the pattern staketia's keeper
 already uses for its deposit address (§3), so no multisig coordination is on the critical
 path. A timeout refunds the claim address and ops resubmit. The same trick, sending a
@@ -704,8 +717,9 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
 6. Staketia, day 21: the operator IBCs the whole unbonded balance via authz to the claim
    address (no memo; the grant forbids one) and `MsgConfirmUnbondedTokenSweep` for each open
    record; the hour-epoch hook pays the redeemers from the claim address. Then
-   `MsgTransferStaketiaClaimBalance` moves the remainder to the celestia delegation ICA, which
-   leaves with that zone's balance in step 5. No key of the claim address signs anything.
+   `MsgTransferStaketiaClaimBalance` with a small `amount` as the live test, and once it has
+   landed on the delegation ICA, again with zero for the remainder, which leaves with that
+   zone's balance in step 5. No key of the claim address signs anything.
    Stakedym: after 21 days the operator sweeps and confirms the last records.
 7. Last days: `MsgSweepTokensOffStride` in batches of up to 100, per denom, for every holder
    at or above the floor, built from a fresh export: the eleven stTokens and `ustrd` (to
@@ -858,9 +872,10 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   unwinding one hop over its whitelisted outer channel, a voucher whose outer channel is not
   whitelisted rejecting the batch, the derived address bytes, the full balance and only that
   denom being sent, and the ICS-20 refund on timeout returning the balance to the holder.
-  Claim address: the full balance and only the TIA denom being sent, the built `MsgTransfer`
-  fields (celestia channel, delegation ICA receiver, timeout, empty memo), a zero balance
-  rejected, and the refund on timeout landing back on the claim address.
+  Claim address: a zero `amount` sending the full balance and a positive one sending exactly
+  that much, only the TIA denom moving, the built `MsgTransfer` fields (celestia channel,
+  delegation ICA receiver, timeout, empty memo), a zero balance and an amount above the
+  balance rejected, and the refund on timeout landing back on the claim address.
 - Localstride run: upgrade with a redemption submitted beforehand, let the day epoch unbond
   it, drain the rest, let the sweep and claim complete, then one ICA transfer to a second
   local chain and one sweep batch whose packets are relayed and land at the derived
