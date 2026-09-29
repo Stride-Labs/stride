@@ -198,8 +198,7 @@ State on mainnet (2026-09-18 to 2026-09-22):
 - Staketia: 6 `UNBONDING_IN_PROGRESS`, 1 `UNBONDING_QUEUE` (~717 stTIA), 1 accumulating.
   Stakedym: 5 `UNBONDED` (~1,067 DYM awaiting sweep), 6 `UNBONDING_QUEUE` (~3,294 stDYM
   escrowed), 30 redemption records; 284,578 DYM recorded delegation vs 260,352 stDYM supply.
-- Zero auctions, zero ICQ-oracle price queries; both airdrop-module airdrops ended December
-  2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
+- Zero auctions, zero ICQ-oracle price queries; both airdrop-module airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
 - Native vouchers stranded on Stride are dust: the eleven deposit addresses, the reward
   collector and the auction module together hold about $3 of in-scope native denoms. Nothing
   on Stride except the staketia claim address will hold a native balance worth moving.
@@ -255,9 +254,9 @@ and the test log beside it):
   `add_new_assets` later, each with its own factor, provided the denom already has bank
   supply on Osmosis. The v1/v2 non-alloyed transmuter has no factors and swaps 1:1 only.
 - Instantiation is permissionless via `MsgCreateCosmWasmPool { code_id, instantiate_msg,
-  sender }` with a whitelisted code id and the normal pool-creation fee. The instantiate
+sender }` with a whitelisted code id and the normal pool-creation fee. The instantiate
   message is `{ pool_asset_configs: [{denom, normalization_factor}], alloyed_asset_subdenom,
-  alloyed_asset_normalization_factor, admin, moderator }`; admin and moderator are plain
+alloyed_asset_normalization_factor, admin, moderator }`; admin and moderator are plain
   addresses and can be multisigs. The pool starts empty. `join_pool` accepts funds in any
   subset of the assets and mints the alloyed asset (a tokenfactory denom) to the depositor as
   the LP receipt; `exit_pool` burns it and returns a pro-rata share of whatever the pool
@@ -278,11 +277,11 @@ and the code, and each is a hard-coded constant in the upgrade binary (the proto
 already is). Nothing on Stride receives native tokens: every native balance leaves from a
 host chain, so there is no Stride-side vault.
 
-| Name | Chain | Type | Status | Constant | Address | Role |
-|---|---|---|---|---|---|---|
-| Protocol admin | Stride | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins` | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (F5), `stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl` (gov) | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages. |
-| Sweep operator | Stride | new key | to create | `SweepOperatorAddress` | `stride1...` (paste here) | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
-| Osmosis vault | Osmosis | new multisig | to create | `OsmosisVaultAddress` | `osmo1...` (paste here) | Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
+| Name           | Chain   | Type                        | Status                 | Constant               | Address                                                                                                     | Role                                                                                                                                                                                                              |
+| -------------- | ------- | --------------------------- | ---------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Protocol admin | Stride  | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins`         | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (F5), `stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl` (gov) | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages.                                                                               |
+| Sweep operator | Stride  | new key                     | to create              | `SweepOperatorAddress` | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (paste here)                                                | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
+| Osmosis vault  | Osmosis | new multisig                | to create              | `OsmosisVaultAddress`  | `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` (paste here)                                                  | Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator.                                                                                  |
 
 The sweep operator and the Osmosis vault are created and proven before the upgrade PR is cut
 (a signed spend from each), and their addresses go into the binary as constants (§9). The
@@ -395,27 +394,27 @@ until the follow-up cleanup (§12).
 
 Deleted from `BeforeEpochStart`:
 
-| Call | Why it must stop |
-|---|---|
-| `UpdateRedemptionRates` (stride epoch) | The rate must not move once the drain starts: an admin undelegation lowers `TotalDelegations` with no record behind it and the formula would cut the rate. Deleting the call freezes `HostZone.RedemptionRate` at its last pre-upgrade value. |
-| `ReinvestRewards` (stride epoch) | It delegates the withdrawal ICA's rewards back to validators, which would create fresh delegations after the drain and need a second unbonding period. It is also the root of the fee machinery (§3): removing this one call stops the withdrawal-balance ICQ, the fee split, the fee-balance ICQ and the reward-collector inflow. Rewards simply accumulate in the withdrawal ICA and leave with `MsgTransferFromIca WITHDRAWAL`; what the fee ICA holds at the upgrade leaves with `MsgTransferFromIca FEE`. |
-| `StakeExistingDepositsOnHostZones` (stride epoch) | New delegations after the drain. Deposits that reach the delegation ICA stay there and leave with the ICA balance. |
-| `RebalanceAllHostZones` (stride epoch) | Redelegations flag `DelegationChangesInProgress` and would collide with the drain. |
-| `TransferAllRewardTokens` (stride epoch) | A no-op with the trade route deleted; removed for clarity. |
-| `SetWithdrawalAddress` (stride epoch) | Redundant (the withdraw address persists on the host, set years ago) and traffic on the delegation ICA channel the drain uses. A checklist line replaces it (§9). |
-| `CreateDepositRecordsForEpoch` (stride epoch) | Nothing creates deposit amounts once liquid staking is gone. |
-| `CreateEpochUnbondingRecord` (day epoch) | Only `RedeemStake` appended to the current record; new ones would stay empty. |
-| `AuctionOffRewardCollectorBalance` (mint epoch) | It liquid stakes the validators' fee share, minting stTokens against a frozen rate from tokens that never get delegated. Validators are paid in STRD only from day 0 (§10a). |
+| Call                                              | Why it must stop                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UpdateRedemptionRates` (stride epoch)            | The rate must not move once the drain starts: an admin undelegation lowers `TotalDelegations` with no record behind it and the formula would cut the rate. Deleting the call freezes `HostZone.RedemptionRate` at its last pre-upgrade value.                                                                                                                                                                                                                                                                  |
+| `ReinvestRewards` (stride epoch)                  | It delegates the withdrawal ICA's rewards back to validators, which would create fresh delegations after the drain and need a second unbonding period. It is also the root of the fee machinery (§3): removing this one call stops the withdrawal-balance ICQ, the fee split, the fee-balance ICQ and the reward-collector inflow. Rewards simply accumulate in the withdrawal ICA and leave with `MsgTransferFromIca WITHDRAWAL`; what the fee ICA holds at the upgrade leaves with `MsgTransferFromIca FEE`. |
+| `StakeExistingDepositsOnHostZones` (stride epoch) | New delegations after the drain. Deposits that reach the delegation ICA stay there and leave with the ICA balance.                                                                                                                                                                                                                                                                                                                                                                                             |
+| `RebalanceAllHostZones` (stride epoch)            | Redelegations flag `DelegationChangesInProgress` and would collide with the drain.                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `TransferAllRewardTokens` (stride epoch)          | A no-op with the trade route deleted; removed for clarity.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `SetWithdrawalAddress` (stride epoch)             | Redundant (the withdraw address persists on the host, set years ago) and traffic on the delegation ICA channel the drain uses. A checklist line replaces it (§9).                                                                                                                                                                                                                                                                                                                                              |
+| `CreateDepositRecordsForEpoch` (stride epoch)     | Nothing creates deposit amounts once liquid staking is gone.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `CreateEpochUnbondingRecord` (day epoch)          | Only `RedeemStake` appended to the current record; new ones would stay empty.                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `AuctionOffRewardCollectorBalance` (mint epoch)   | It liquid stakes the validators' fee share, minting stTokens against a frozen rate from tokens that never get delegated. Validators are paid in STRD only from day 0 (§10a).                                                                                                                                                                                                                                                                                                                                   |
 
 Kept in `BeforeEpochStart`:
 
-| Call | Why it stays |
-|---|---|
-| `UpdateEpochTracker` (every epoch) | The day-epoch tracker feeds the ICA timeout of every undelegate batch, including the drain's; the stride tracker feeds the sweep ICA. |
-| `InitiateAllHostZoneUnbondings`, `SubmitPendingUndelegations`, `CleanupEpochUnbondingRecords` (day epoch) | Submit the redemptions open at the upgrade, retry a failed batch, and delete records once every zone's unbonding is claimed. |
-| `SweepUnbondedTokensAllHostZones` (stride epoch) | Moves each completed record's amount from the delegation ICA to the redemption ICA, where the claim pays it. |
-| `ClaimAccruedStakingRewards` (stride epoch) | Harmless; rewards withdrawn to the withdrawal ICA are swept to Osmosis. |
-| `TransferExistingDepositsToHostZones` (stride epoch, deposit interval) | Carries any native voucher still in a deposit address to the delegation ICA, so it leaves with the ICA balance instead of being stranded. |
+| Call                                                                                                      | Why it stays                                                                                                                              |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `UpdateEpochTracker` (every epoch)                                                                        | The day-epoch tracker feeds the ICA timeout of every undelegate batch, including the drain's; the stride tracker feeds the sweep ICA.     |
+| `InitiateAllHostZoneUnbondings`, `SubmitPendingUndelegations`, `CleanupEpochUnbondingRecords` (day epoch) | Submit the redemptions open at the upgrade, retry a failed batch, and delete records once every zone's unbonding is claimed.              |
+| `SweepUnbondedTokensAllHostZones` (stride epoch)                                                          | Moves each completed record's amount from the delegation ICA to the redemption ICA, where the claim pays it.                              |
+| `ClaimAccruedStakingRewards` (stride epoch)                                                               | Harmless; rewards withdrawn to the withdrawal ICA are swept to Osmosis.                                                                   |
+| `TransferExistingDepositsToHostZones` (stride epoch, deposit interval)                                    | Carries any native voucher still in a deposit address to the delegation ICA, so it leaves with the ICA balance instead of being stranded. |
 
 Also deleted: the `UpdateRedemptionRateForHostZone` call at the end of the delegator-shares
 slash callback. The callback keeps correcting the validator's and zone's delegation on a
@@ -919,7 +918,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
      a review with nothing else in the diff.
   6. Release gate: the mainnet-export suite over the full handler, the coverage-check script,
      the changelog, and the two address constants once the accounts exist.
-  The module-path bump to `/v35` stays outside all six as a manual step after they land.
+     The module-path bump to `/v35` stays outside all six as a manual step after they land.
 - Which vouchers go on the sweep list (the whitelisted hosts' native tokens at least), sized
   from the export by value like the stTokens. Whether to whitelist the two Axelar channels for
   their 2 USDC (axelar uses coin type 118, so derivation would hold) is not worth a constant
