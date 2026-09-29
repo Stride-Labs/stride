@@ -1,7 +1,7 @@
 # Protocol Wind-Down: Migration to Osmosis
 
-Status: approved design, pre-plan. Large tier; the implementation plan is
-`docs/superpowers/plans/` (the two existing plans merge into one v35 plan, §12).
+Status: approved design, pre-plan. Large tier; the v35 implementation plan is written from
+this spec as six stacked PRs (§12), with the notes carried over from the earlier plans in §13.
 
 ## §1. Goal
 
@@ -890,12 +890,9 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   addresses in §4 once created, the channel-5 constant and the `SweepUnwindChannels`
   whitelist for the sweep, and the `chain_id → host-side channel to Osmosis` map; the batch
   bound after measuring gas.
-- The plans: `2026-09-21-wind-down-upgrade-1.md` and `2026-09-24-wind-down-upgrade-2.md` were
-  written for the two-upgrade sequencing and merge into one v35 plan. The second's package
-  becomes `app/upgrades/v35`, its halt steps and the `ClaimUndelegatedTokens` removal are
-  dropped, its undelegate tx no longer requires `Halted`, and one new task does the §6
-  deletions, the ICQ purges and their tests. The merged plan is delivered as six stacked PRs,
-  each reviewable on its own, in this order:
+- The plan: one v35 plan written from this spec (the two plans written for the earlier
+  two-upgrade sequencing were deleted on 2026-09-29; what they had learned is in §13). It is
+  delivered as six stacked PRs, each reviewable on its own, in this order:
   1. Remove tx handlers: pure deletions across stakeibc, staketia, stakedym, icaoracle,
      icqoracle, auction, airdrop and claim, plus rebalance, clear-balance and resume; types
      and registrations stay; the "no handler" guard test and the historical-tx decode test.
@@ -931,3 +928,121 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   trade-route authz and ICA registration helpers, `EnableRedemptions`, the keeper functions
   behind the deleted hook calls) is dead but harmless; deleting it is a follow-up cleanup, not
   part of the upgrade.
+
+## §13. Notes for the plan, carried over from the earlier plans and their dry run
+
+The two plans written for the two-upgrade sequencing were executed once end to end on a
+scratch branch (2026-09-21) and reverted, then extended for the second upgrade and finally
+deleted when the design became one upgrade. Everything below was learned there and is not
+derivable from the spec or the code at a glance.
+
+Removals (PR 1):
+
+- `RegisterHostZone`'s tests are keeper tests behind a pure-delegate handler: rewrite the 18
+  `GetMsgServer().RegisterHostZone(` calls to the keeper, do not delete the file. The keeper
+  method survives for `x/staketia/keeper/migration.go`.
+- `community_pool.go`, `handler.go` (the legacy switch, dead since SDK 47) and
+  `client/cli/tx_test.go` also reference the removed stakeibc handlers; `redeem_stake_test.go`
+  goes through `GetMsgServer().RedeemStake` in 18 places and is rewritten to the keeper.
+- `msgServer.LiquidStake` has to become `Keeper.LiquidStake(ctx, msg)`: autopilot and
+  `community_pool.go` call it through `NewMsgServerImpl`. Keep `message_liquid_stake.go` and
+  `message_redeem_stake.go` (their constructors and ValidateBasic are still used); the other
+  removed messages' `message_*.go` files can go once `grep` shows only the deleted handler,
+  CLI and tests referenced them. CLI flag constants that lose their only user
+  (`FlagMinRedemptionRate`, `FlagMaxRedemptionRate`, `FlagCommunityPoolTreasuryAddress`,
+  `FlagMaxMessagesPerIcaTx`, `FlagLegacy`) go with them.
+- `ClaimUndelegatedTokens`'s handler lives in `keeper/claim.go`, not `msg_server.go`. It is
+  kept in this design, but that is where to look.
+- After a `.proto` edit `make proto-gen` (docker) may rewrite descriptor bytes in unrelated
+  `*.pb.go`; commit only the `tx.pb.go` of the module whose proto changed and revert the
+  rest. With the module path untouched the churn should be nil.
+- The first dry-run pass dropped `RegisterImplementations` and broke `strided q tx` on old
+  hashes; the decode test (§11) exists because of that.
+- Unreferenced after the removals and left in place (the §12 cleanup): `StartLSMLiquidStake`,
+  `SubmitValidatorSlashQuery`, `ShouldCheckIfValidatorWasSlashed`,
+  `EmitPendingLSMLiquidStakeEvent`, `BuildTradeAuthzMsg`, `GetTradeRouteFromTradeAccountChainId`,
+  `RegisterTradeRouteICAAccount`, `EnableRedemptions`.
+- The full suite passes except `utils` `TestCreateModuleAccount`, which fails on main too.
+
+Upgrade handler (PR 3):
+
+- The trade-route store key is `RewardDenomOnRewardZone + "-" + HostDenomOnHostZone`;
+  mainnet's route is `uusdc` / `adydx`, not the IBC hashes.
+- Wasm admins move through `wasmkeeper.NewGovPermissionKeeper(...)`'s `UpdateContractAdmin`;
+  the unit test instantiates a real contract (`hackatom.wasm` from the wasmd testdata) to
+  prove it. The upload-access param write is the one step whose error fails the upgrade.
+- ICA host params are `icahostkeeper.Keeper.GetParams/SetParams` with `AllowMessages`
+  filtered by `sdk.MsgTypeURL`; `app/upgrades/v7` is the exemplar. The keeper is a pointer on
+  the app (`app.ICAHostKeeper`).
+- The rate limiter is ibc-go v11's rate-limiting middleware, not a local module:
+  `GetAllRateLimits/RemoveRateLimit(denom, channelOrClientId)`,
+  `GetAllBlacklistedDenoms/RemoveDenomFromBlacklist`,
+  `GetAllWhitelistedAddressPairs/RemoveWhitelistedAddressPair(sender, receiver)`; `RateLimit`
+  has `Path.Denom` and `Path.ChannelOrClientId`; methods have pointer receivers, so the
+  handler takes `&app.RatelimitKeeper`.
+- `icaoraclekeeper.ToggleOracle(ctx, chainId, false)` skips the channel validation that the
+  `true` case does. Stakedym's host zone is a singleton: `GetHostZone(ctx) (HostZone, error)`.
+- The haqq delta table is generated by `scripts/wind-down/gen_delta_table.py` from
+  `drift.json`, and the v34 `delegation_deltas.go` helper is copied verbatim into the v35
+  package (`package` and log prefix renamed). The measurement gave 17 deltas, not the 14 a
+  first look suggested: 3 are positive sub-token dust and both signs apply.
+- The localstride upgrade dry run needs the binary trick recorded in the team memory notes
+  (a handler-bearing binary panics at the plan height on a chain that never scheduled it).
+
+Admin txs (PRs 4 and 5):
+
+- All four messages go into `proto/stride/stakeibc/tx.proto` in one proto-gen; the keeper
+  logic of each lives in its own `wind_down_*.go` file with a thin delegate in
+  `msg_server_wind_down.go`, so the sweep PR touches only its own files.
+- The two operator addresses and channel-5 are package `var`s so tests can set them; the
+  addresses start empty and every use fails closed (the sweep gate rejects everyone, the
+  transfer tx errors "osmosis vault is not configured"), and a release-gate test skips while
+  they are empty and passes once filled.
+- Host-side channels to Osmosis from the chain registry on 2026-09-24, to re-verify against
+  each host before the PR: celestia channel-2, cosmoshub-4 channel-141, dydx-mainnet-1
+  channel-3, haqq_11235-1 channel-2, injective-1 channel-8, juno-1 channel-0, laozi-mainnet
+  channel-83, phoenix-1 channel-1 (terra2 lists four preferred channels; channel-1 is the
+  original), sommelier-3 channel-0, ssc-1 channel-1; osmosis-1 maps to an empty channel.
+- A record-less undelegate batch acks through the pending-undelegation branch of the callback,
+  which decrements an in-flight counter and logs an error if none is registered; the tx sets
+  `SetPendingUndelegationInFlight(current + batches)` after submitting. `SubmitTxsDayEpoch`
+  is the submit path, so the day-epoch tracker must exist (it does; `UpdateEpochTracker`
+  stays, §6).
+- `applySharesRoundingSafety` divides by `UndelegationSharesSafetyDivisor = 1e17`, so on a
+  full drain of a slashed validator the buffer floors to zero and becomes one base unit.
+- `GetHostZoneFromHostDenom` returns `(*HostZone, error)`, not `(HostZone, bool)`.
+- `x/stakeibc` importing `x/staketia/types` (for `ClaimAddress`,
+  `CelestiaNativeTokenIBCDenom`, `CelestiaChainId`) is cycle-free; staketia only imports
+  stakeibc types. The claim-address tx therefore lives in stakeibc with the other three.
+- The ICA transfer is built exactly like `BuildHostToTradeTransferMsg` minus the memo and
+  submitted with `SubmitICATxWithoutCallback(ctx, connectionId, owner, msgs, timeout)`,
+  `owner = types.FormatHostZoneICAOwner(chainId, icaType)`; the four ICA addresses are
+  separate `HostZone` fields (`DelegationIcaAddress`, `WithdrawalIcaAddress`,
+  `FeeIcaAddress`, `RedemptionIcaAddress`) resolved by a switch.
+- Sweep skip rules: escrow addresses are computed per transfer channel with
+  `k.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix(ctx, "transfer")` and
+  `transfertypes.GetEscrowAddress`; the allowed account types are `*authtypes.BaseAccount`,
+  the SDK's `Continuous/Delayed/PeriodicVestingAccount` and
+  `*claimvestingtypes.StridePeriodicVestingAccount` (`x/claim/vesting/types`); interchain
+  accounts are `*icatypes.InterchainAccount`. Denom traces come from
+  `transfertypes.ParseHexHash` + `k.RecordsKeeper.TransferKeeper.GetDenom(ctx, hash)`, the
+  pattern in `lsm.go`, and `Denom.Trace[0]` is the outermost hop.
+- Test conventions: `s.CreateICAChannel(owner)` and `s.CheckICATxSubmitted(port, channel,
+  fn)` for ICA submissions; `s.CreateTransferChannel(chainId)` plus
+  `s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)` for ICS-20
+  transfers (the real transfer keeper runs; sequence delta and burned/escrowed balances are
+  the assertions); `s.App.TransferKeeper.SetDenom(ctx, transfertypes.NewDenom(base, hops...))`
+  to register a voucher trace; `apptesting.GetAdminAddress()` for an admin signer;
+  `sdk.MustBech32ifyAddressBytes(prefix, addr)` for the derived receiver; the batch-submit
+  test in `unbonding_test.go` shows the day-epoch tracker mock the drain needs.
+
+Ops scripts (PRs 5 and 6):
+
+- `build_sweep_batches.py` applies the on-chain skip rules plus the dollar floor to an
+  export and writes one address file per batch that the CLI reads (`sweep-tokens-off-stride
+  DENOM FILE`); extra denoms are passed as `--extra-denom DENOM=USD_PER_TOKEN:DECIMALS`, and an
+  `ibc/` extra denom is refused unless its outermost hop is in `SweepUnwindChannels`.
+  `coverage_check.py` is the §10 check over an export and the vault's Osmosis balances. Both
+  are unit-tested against a synthetic export and their real output is checked in.
+- The per-chain relayer scope is `build_relayer_scope.py` (§9); the pre-funding pool check is
+  `check_transmuter_pool.py` (§8).
