@@ -94,8 +94,13 @@ func haqqTrackedDelegationsMatch(ctx sdk.Context, hostZone stakeibctypes.HostZon
 			continue
 		}
 
+		// A nil delegation is zero, as in reconcileHostZoneDelegations, so it matches a pin of 0
+		tracked := validator.Delegation
+		if tracked.IsNil() {
+			tracked = sdkmath.ZeroInt()
+		}
 		expected, hasExpected := HaqqExpectedTrackedDelegations[entry.Address]
-		if !hasExpected || validator.Delegation.IsNil() || !validator.Delegation.Equal(expected) {
+		if !hasExpected || !tracked.Equal(expected) {
 			ctx.Logger().Error(fmt.Sprintf("v35: validator %s (%s) tracked delegation is %v, expected %v; the haqq delegation "+
 				"table was measured against different state and is NOT applied, regenerate it and reconcile in a later upgrade",
 				entry.Name, entry.Address, validator.Delegation, expected))
