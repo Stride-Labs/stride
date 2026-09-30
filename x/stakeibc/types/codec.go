@@ -35,6 +35,11 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgToggleTradeController{}, "stakeibc/MsgToggleTradeController")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateHostZoneParams{}, "stakeibc/MsgUpdateHostZoneParams")
 	legacy.RegisterAminoMsg(cdc, &MsgDeprecateHostZone{}, "stakeibc/MsgDeprecateHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgUndelegateFromValidators{}, "stakeibc/MsgUndelegateFromValidators")
+	legacy.RegisterAminoMsg(cdc, &MsgTransferFromIca{}, "stakeibc/MsgTransferFromIca")
+	// 36 chars: RegisterAminoMsg panics above 39 (ledger signing limit), so the full name cannot be used
+	legacy.RegisterAminoMsg(cdc, &MsgTransferStaketiaClaimBalance{}, "stakeibc/MsgTransferStaketiaClaimBal")
+	legacy.RegisterAminoMsg(cdc, &MsgSweepTokensOffStride{}, "stakeibc/MsgSweepTokensOffStride")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -65,6 +70,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgToggleTradeController{},
 		&MsgUpdateHostZoneParams{},
 		&MsgDeprecateHostZone{},
+		&MsgUndelegateFromValidators{},
+		&MsgTransferFromIca{},
+		&MsgTransferStaketiaClaimBalance{},
+		&MsgSweepTokensOffStride{},
 	)
 
 	registry.RegisterImplementations((*govtypes.Content)(nil),
