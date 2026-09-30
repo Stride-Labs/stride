@@ -2,8 +2,10 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v34/utils"
@@ -33,11 +35,21 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return errorsmod.Wrapf(types.ErrHostZoneNotFound, "no registered zone for queried chain ID (%s)", chainId)
 	}
 
-	// Unmarshal the query response which returns a delegation object for the delegator/validator pair
-	queriedDelegation := stakingtypes.Delegation{}
-	err := k.cdc.Unmarshal(args, &queriedDelegation)
-	if err != nil {
-		return errorsmod.Wrapf(err, "unable to unmarshal delegator shares query response into Delegation type")
+	// An empty response means the delegation ICA has no delegation to the validator on the host
+	// (the query opts into reaching this callback empty): the shares are zero and the validator
+	// comes from the callback data, since there is no Delegation to read it from
+	isEmptyResponse := len(args) == 0
+	queriedDelegation := stakingtypes.Delegation{Shares: sdkmath.LegacyZeroDec()}
+	if isEmptyResponse {
+		if len(query.CallbackData) == 0 {
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "empty calibration response without a validator address in the query callback data")
+		}
+		queriedDelegation.ValidatorAddress = string(query.CallbackData)
+	} else {
+		// Unmarshal the query response which returns a delegation object for the delegator/validator pair
+		if err := k.cdc.Unmarshal(args, &queriedDelegation); err != nil {
+			return errorsmod.Wrapf(err, "unable to unmarshal delegator shares query response into Delegation type")
+		}
 	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Query response - Delegator: %s, Validator: %s, Shares: %v",
 		queriedDelegation.DelegatorAddress, queriedDelegation.ValidatorAddress, queriedDelegation.Shares))
@@ -58,8 +70,8 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	}
 
 	// Skip if the stored rate is unusable, since the computed token amount would be meaningless
-	// and would wipe the recorded delegation
-	if validator.SharesToTokensRate.IsNil() || !validator.SharesToTokensRate.IsPositive() {
+	// and would wipe the recorded delegation (not needed for an empty response: zero shares are zero tokens at any rate)
+	if !isEmptyResponse && (validator.SharesToTokensRate.IsNil() || !validator.SharesToTokensRate.IsPositive()) {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 			"Validator (%s) has a non-positive shares to tokens rate (%v), skipping calibration",
 			validator.Address, validator.SharesToTokensRate))
@@ -68,7 +80,10 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 
 	// Calculate the number of tokens delegated (using the internal sharesToTokensRate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
-	delegatedTokens := queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
+	delegatedTokens := sdkmath.ZeroInt()
+	if !isEmptyResponse {
+		delegatedTokens = queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
+	}
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 

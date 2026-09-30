@@ -192,8 +192,8 @@ func (k msgServer) SubmitQueryResponse(goCtx context.Context, msg *types.MsgSubm
 	// Immediately delete the query so it cannot process again
 	k.DeleteQuery(ctx, query.Id)
 
-	// If the query is contentless, end
-	if len(msg.Result) == 0 {
+	// If the query is contentless, end (unless the query opted into the callback for an empty response)
+	if len(msg.Result) == 0 && !query.InvokeCallbackOnEmptyResponse {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, query.CallbackId,
 			"Query response is contentless - QueryId: %s", query.Id))
 		return &types.MsgSubmitQueryResponseResponse{}, nil
