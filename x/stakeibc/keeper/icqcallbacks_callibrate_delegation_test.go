@@ -213,3 +213,66 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_NoOp() {
 			"%s - host zone total delegation should be unchanged", tc.name)
 	}
 }
+
+// An empty response means the delegation ICA has no delegation to the validator on the host,
+// so the recorded delegation is corrected to zero (whatever the stored rate is)
+func (s *KeeperTestSuite) TestCalibrateDelegation_EmptyResponse() {
+	initialTotalDelegations := sdkmath.NewInt(1_000_000)
+
+	for _, rate := range []sdkmath.LegacyDec{sdkmath.LegacyMustNewDecFromStr("0.75"), sdkmath.LegacyZeroDec(), {}} {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+			ChainId:          HostChainId,
+			TotalDelegations: initialTotalDelegations,
+			Validators: []*types.Validator{
+				{Address: "valoper1", Delegation: sdkmath.NewInt(500)},
+				{Address: ValAddress, Delegation: sdkmath.NewInt(10_000), SharesToTokensRate: rate},
+			},
+		})
+
+		query := icqtypes.Query{ChainId: HostChainId, CallbackData: []byte(ValAddress)}
+		err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, []byte{}, query)
+		s.Require().NoError(err, "rate %v", rate)
+
+		hostZone := s.MustGetHostZone(HostChainId)
+		s.Require().Equal(int64(500), hostZone.Validators[0].Delegation.Int64(), "other validator untouched")
+		s.Require().Equal(int64(0), hostZone.Validators[1].Delegation.Int64(), "validator delegation, rate %v", rate)
+		s.Require().Equal(int64(990_000), hostZone.TotalDelegations.Int64(), "total delegations, rate %v", rate)
+	}
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_EmptyResponse_DelegationChangeInProgress() {
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:          HostChainId,
+		TotalDelegations: sdkmath.NewInt(1_000_000),
+		Validators: []*types.Validator{{
+			Address:                     ValAddress,
+			Delegation:                  sdkmath.NewInt(10_000),
+			SharesToTokensRate:          sdkmath.LegacyMustNewDecFromStr("0.75"),
+			DelegationChangesInProgress: 1,
+		}},
+	})
+
+	query := icqtypes.Query{ChainId: HostChainId, CallbackData: []byte(ValAddress)}
+	err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, []byte{}, query)
+	s.Require().NoError(err)
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(10_000), hostZone.Validators[0].Delegation.Int64())
+	s.Require().Equal(int64(1_000_000), hostZone.TotalDelegations.Int64())
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_EmptyResponse_Failure() {
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:    HostChainId,
+		Validators: []*types.Validator{{Address: ValAddress}},
+	})
+
+	// No validator address in the callback data
+	err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, []byte{}, icqtypes.Query{ChainId: HostChainId})
+	s.Require().ErrorContains(err, "callback data")
+
+	// Unknown validator address
+	query := icqtypes.Query{ChainId: HostChainId, CallbackData: []byte("non-existent validator")}
+	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, []byte{}, query)
+	s.Require().ErrorContains(err, "validator not found")
+}

@@ -170,15 +170,19 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 
 	// Submit delegator shares ICQ
 	query := icqtypes.Query{
-		ChainId:         hostZone.ChainId,
-		ConnectionId:    hostZone.ConnectionId,
-		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		RequestData:     queryData,
-		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_Calibrate,
-		CallbackData:    []byte{},
-		TimeoutDuration: time.Hour,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
+		ChainId:        hostZone.ChainId,
+		ConnectionId:   hostZone.ConnectionId,
+		QueryType:      icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:    queryData,
+		CallbackModule: types.ModuleName,
+		CallbackId:     ICQCallbackID_Calibrate,
+		// The callback data is the raw bech32 validator operator address (as bytes). An empty response means the
+		// delegation ICA has no delegation to the validator, and there is no Delegation in the response to read
+		// the validator from, so the callback takes it from here
+		CallbackData:                  []byte(validatorAddress),
+		InvokeCallbackOnEmptyResponse: true,
+		TimeoutDuration:               time.Hour,
+		TimeoutPolicy:                 icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
 		return err

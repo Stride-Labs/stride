@@ -1013,6 +1013,18 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_ResetFlag() {
 	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "calibration query submitted")
 }
 
+func (s *KeeperTestSuite) TestCalibrateDelegation_QueryOptsIntoEmptyResponse() {
+	msg := s.SetupCalibrateDelegation()
+
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().NoError(err)
+
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1, "calibration query submitted")
+	s.Require().True(queries[0].InvokeCallbackOnEmptyResponse, "query opts into empty responses")
+	s.Require().Equal(ValAddress, string(queries[0].CallbackData), "callback data is the validator address")
+}
+
 func (s *KeeperTestSuite) TestCalibrateDelegation_NoReset() {
 	msg := s.SetupCalibrateDelegation()
 
