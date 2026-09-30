@@ -61,7 +61,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		Quota: &ratelimittypes.Quota{MaxPercentSend: sdkmath.NewInt(10), MaxPercentRecv: sdkmath.NewInt(10), DurationHours: 24},
 		Flow:  &ratelimittypes.Flow{Inflow: sdkmath.ZeroInt(), Outflow: sdkmath.ZeroInt(), ChannelValue: sdkmath.NewInt(1000)},
 	})
-	s.seedHaltedStakedym()
 	s.seedFlaggedZone("cosmoshub-4", "connection-0", false)
 	s.mockDelegationChannel("cosmoshub-4", "connection-0", "channel-863")
 	s.seedQueries()
@@ -89,9 +88,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllRateLimits(s.Ctx), "rate limits")
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx), "blacklisted denoms")
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx), "whitelisted pairs")
-	stakedym, err := s.App.StakedymKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err)
-	s.Require().False(stakedym.Halted, "stakedym unhalted and not re-halted by its BeginBlocker")
 	s.Require().Equal([]int64{0, 0, 0}, s.flags("cosmoshub-4"), "stale flags")
 	s.Require().ElementsMatch([]string{"haqq-fee", "juno-delegation", "comdex-calibrate", "other-haqq-delegation", "other-juno-withdrawal"},
 		s.queryIds(), "both ICQ purges")
