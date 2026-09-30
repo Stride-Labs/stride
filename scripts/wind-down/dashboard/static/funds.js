@@ -241,9 +241,10 @@ function accountsPanel(zone, operators) {
 function accountRow(account) {
   const cell = (value) => `<td class="num">${value === null ? '<span class="muted">–</span>' : amount(value, account.decimals) + ' ' + escapeHtml(account.symbol)}</td>`;
   const others = account.other_balances.map((balance) => `also ${escapeHtml(balance.amount)} ${shortDenom(balance.denom)}`);
-  const note = [account.note, ...others].filter(Boolean).join(' · ');
+  // `others` is already HTML (shortDenom wraps the denom); only the server's plain-text note needs escaping.
+  const note = [escapeHtml(account.note), ...others].filter(Boolean).join(' · ');
   return `<tr><td>${escapeHtml(account.name)}</td><td>${escapeHtml(account.chain)}</td><td>${addressCell(account.address, 14, 8)}</td>
-    ${cell(account.liquid)}${cell(account.staked)}${cell(account.unbonding)}<td class="muted">${escapeHtml(note)}</td></tr>`;
+    ${cell(account.liquid)}${cell(account.staked)}${cell(account.unbonding)}<td class="muted">${note}</td></tr>`;
 }
 
 // ---- formatting

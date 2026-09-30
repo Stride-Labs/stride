@@ -333,5 +333,116 @@ class HostOutageTest(unittest.TestCase):
         self.assertEqual(result.stride_connection_state, "OPEN")
 
 
+def client(chain_id: str, client_id: str, status: str = "Active", remaining: float | None = 86400.0):
+    return chain.ClientHealth(
+        chain_id=chain_id, client_id=client_id, status=status, expires_at=None, seconds_remaining=remaining
+    )
+
+
+def channel_row(name: str, status: channels.Status, outbound: channels.PacketFlow, inbound=None, states=("OPEN", "OPEN")):
+    return channels.ChannelRow(
+        name=name,
+        port_id="p",
+        stride_channel="channel-1",
+        host_channel="channel-2",
+        stride_state=states[0],
+        host_state=states[1],
+        outbound=outbound,
+        inbound=inbound,
+        last_sent=None,
+        last_received=None,
+        last_ack=None,
+        status=status,
+    )
+
+
+class TilesTest(unittest.TestCase):
+    def test_tiles_aggregate_zones_legs_and_routes(self) -> None:
+        shared_osmosis_client = client("osmosis-1", "07-tendermint-1", remaining=5 * 86400.0)
+        zone = channels.ZoneChannels(
+            chain_id="celestia",
+            symbol="TIA",
+            stride_client=client("stride-1", "07-tendermint-137", remaining=9 * 86400.0),
+            host_client=client("celestia", "07-tendermint-0", remaining=2 * 86400.0),
+            stride_connection_state="OPEN",
+            host_connection_state="OPEN",
+            host_error=None,
+            status=channels.Status.CLOSED,
+            channels=[
+                channel_row(
+                    "transfer",
+                    channels.Status.STUCK,
+                    outbound=flow(90, pending_packets=3, pending_acks=1),
+                    inbound=flow(10, pending_packets=0, pending_acks=2),
+                ),
+                channel_row("DELEGATION", channels.Status.CLOSED, channels.NO_PENDING, states=("CLOSED", "CLOSED")),
+                channel_row("WITHDRAWAL", channels.Status.HANDSHAKE_STUCK, channels.NO_PENDING, states=("INIT", None)),
+                channel_row("FEE", channels.Status.OK, channels.NO_PENDING),
+            ],
+        )
+        leg = channels.LegRow(
+            chain_id="celestia",
+            symbol="TIA",
+            host_channel="channel-2",
+            osmosis_channel="channel-6994",
+            host_state="OPEN",
+            osmosis_state="OPEN",
+            host_client=client("celestia", "07-tendermint-0", remaining=2 * 86400.0),  # duplicate of the zone's
+            osmosis_client=shared_osmosis_client,
+            last_received=None,
+            last_ack=None,
+            status=channels.Status.OK,
+        )
+        route = channels.RouteRow(
+            chain="Cosmos Hub",
+            osmosis_channel="channel-0",
+            relayed_by="free",
+            state="OPEN",
+            counterparty_channel="channel-141",
+            client=client("osmosis-1", "07-tendermint-0", status="Expired", remaining=-10.0),
+            last_received=None,
+            last_ack=None,
+            status=channels.Status.OK,
+        )
+
+        tiles = channels.build_tiles(zones=[zone], legs=[leg], routes=[route], now=NOW)
+
+        self.assertEqual((tiles.channels_open, tiles.channels_total), (2, 4))
+        self.assertEqual((tiles.channels_closed, tiles.channels_handshake_stuck), (1, 1))
+        self.assertEqual((tiles.pending_packets, tiles.pending_packet_channels), (3, 1))
+        self.assertEqual((tiles.pending_acks, tiles.pending_ack_channels), (3, 2))
+        self.assertEqual(tiles.oldest_pending_seconds, 90 * 60)
+        self.assertEqual(tiles.oldest_pending_where, "celestia transfer")
+        # 4 distinct clients once the duplicate is merged; the expired one is not live and never the soonest.
+        self.assertEqual((tiles.clients_live, tiles.clients_total), (3, 4))
+        self.assertEqual(tiles.soonest_expiry_seconds, 2 * 86400.0)
+        self.assertEqual(tiles.soonest_expiry_where, "celestia 07-tendermint-0")
+
+    def test_empty_tab_has_no_oldest_or_expiry(self) -> None:
+        tiles = channels.build_tiles(zones=[], legs=[], routes=[], now=NOW)
+
+        self.assertIsNone(tiles.oldest_pending_seconds)
+        self.assertIsNone(tiles.soonest_expiry_seconds)
+        self.assertEqual((tiles.channels_open, tiles.channels_total, tiles.clients_total), (0, 0, 0))
+
+    def test_unknown_age_is_not_reported_as_oldest(self) -> None:
+        zone = channels.ZoneChannels(
+            chain_id="z",
+            symbol="Z",
+            stride_client=client("stride-1", "a"),
+            host_client=client("z", "b"),
+            stride_connection_state="OPEN",
+            host_connection_state="OPEN",
+            host_error=None,
+            status=channels.Status.PENDING,
+            channels=[channel_row("FEE", channels.Status.PENDING, outbound=flow(None, pending_packets=None, pending_acks=None))],
+        )
+
+        tiles = channels.build_tiles(zones=[zone], legs=[], routes=[], now=NOW)
+
+        self.assertIsNone(tiles.oldest_pending_seconds)
+        self.assertEqual(tiles.pending_packets, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

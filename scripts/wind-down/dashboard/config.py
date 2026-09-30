@@ -119,8 +119,7 @@ HOLDER_ROUTES: tuple[HolderRoute, ...] = (
     HolderRoute("Neutron", "channel-874", RelayedBy.FREE),
     HolderRoute("Carbon", "channel-188", RelayedBy.FREE),
     HolderRoute("Terra", "channel-251", RelayedBy.FREE),
-    HolderRoute(
-        "Dymension", "channel-19774", RelayedBy.FREE),
+    HolderRoute("Dymension", "channel-19774", RelayedBy.FREE),
     HolderRoute("Axelar", "channel-208", RelayedBy.FREE),
     HolderRoute("Celestia", "channel-6994", RelayedBy.FREE),
     HolderRoute("Saga", "channel-38946", RelayedBy.FREE),
