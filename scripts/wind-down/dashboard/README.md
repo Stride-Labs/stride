@@ -28,9 +28,24 @@ Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`
   the host. Every commitment is a pending packet (the receiver's `unreceived_packets` lists it) or a pending ack (it does
   not). Commitments are read up to 1,000 per channel per direction; the page shows `N+` beyond the cap.
 - Status: `closed` / `handshake stuck` (an end not OPEN) / `stuck` (oldest pending known to be over 30 minutes old) /
-  `pending` / `ok`. The age comes from `tx_search` for the `send_packet` of the lowest pending sequence.
+  `pending` / `ok`. The age comes from `tx_search` for the `send_packet` of the lowest pending sequence; when that is
+  not indexed and the sequence is a pending ack, it comes from the `recv_packet` on the receiver instead (the cell reads
+  `received 5h ago`, otherwise `sent 45m ago`).
 - Host -> Osmosis legs: one row per zone except osmosis-1, from the host channel in `config.ZONES`.
 - Holder routes into Osmosis: `config.HOLDER_ROUTES`, queried on the Osmosis side only. Collapsed by default.
+
+## Validators tab
+
+- Per zone, Stride's recorded delegation per validator (`host_zone.validators`, joined on validator address) against what
+  the host chain holds: the `balance.amount` of the host's `delegations/{delegation_ica}`. `validators` supplies moniker,
+  status, jailed and the rate (tokens / delegator_shares); `unbonding_delegations` supplies entry counts per validator,
+  out of a maximum of 7.
+- A host delegation Stride has no entry for gets an unregistered row: recorded 0 and a `not registered` badge.
+- Severity: the host holding less than recorded is neutral; over by any amount is amber; over by at least 0.0001% of the
+  recorded delegation is red.
+- The staketia chip compares the multisig's delegations on Celestia with Stride's `remaining_delegated_balance`.
+- Delegations are the one required lookup (a failure gives the zone an error row). The validator list and the unbonding
+  entries are optional: if they fail, those cells show `n/a` and the row falls back to Stride's name.
 
 ## Funds flow tab
 
@@ -58,7 +73,8 @@ Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`
 - A null (`n/a`) means the lookup failed or the index holds nothing. `tx_search` is tried over the last 100,000 blocks
   first because it times out on Osmosis for busy channels, then over the whole index.
 - A send time is usually not in the index for old commitments (Cosmos Hub channel-0 holds ~1,000 very old unreceived
-  packets), so those show as `pending` with the sequence only, never `stuck`.
+  packets) or for epoch-hook ICA sends. A pending ack then ages from its receive time and can become `stuck`; a pending
+  packet has no receive tx, so one sent by a hook stays unknown-age and shows as `pending` with the sequence only.
 - If a host's REST is down the zone still renders from Stride and the feed (host-side cells `n/a`, a "host REST
   unreachable" badge); its host -> Osmosis leg shows as an error row.
 - Funds: if Osmosis cannot be read, vault, pools and coverage are `n/a` for every zone; a timed-out ICA transfer

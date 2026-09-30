@@ -1,4 +1,6 @@
 import datetime
+import http.client
+import json
 import unittest
 import urllib.error
 import urllib.parse
@@ -146,6 +148,31 @@ class PacketHelpersTest(unittest.TestCase):
         self.assertEqual(unreceived, list(range(2, 251, 2)))
         self.assertIn("/channels/channel-9/ports/icahost/packet_commitments/", urls[0])
 
+    def test_unreceived_acks_batches_the_sequence_list(self) -> None:
+        urls: list[str] = []
+
+        def fake_rest_get(chain: chain.Chain, path: str) -> dict:
+            urls.append(path)
+            batch = path.split("/packet_commitments/")[1].split("/")[0].split(",")
+            return {"sequences": [sequence for sequence in batch if int(sequence) % 2 == 0]}
+
+        with mock.patch.object(chain, "rest_get", side_effect=fake_rest_get):
+            committed = chain.ibc_unreceived_acks(
+                chain=CHAIN, channel_id="channel-9", port_id="transfer", sequences=list(range(1, 251))
+            )
+
+        self.assertEqual(len(urls), 3)
+        self.assertEqual(committed, list(range(2, 251, 2)))
+        self.assertIn("/channels/channel-9/ports/transfer/packet_commitments/", urls[0])
+        self.assertTrue(all(url.endswith("/unreceived_acks") for url in urls))
+
+    def test_unreceived_acks_with_nothing_to_check_makes_no_request(self) -> None:
+        with mock.patch.object(chain, "rest_get") as rest_get:
+            result = chain.ibc_unreceived_acks(chain=CHAIN, channel_id="channel-9", port_id="transfer", sequences=[])
+
+        self.assertEqual(result, [])
+        rest_get.assert_not_called()
+
     def test_unreceived_with_nothing_to_check_makes_no_request(self) -> None:
         with mock.patch.object(chain, "rest_get") as rest_get:
             result = chain.ibc_unreceived_packets(chain=CHAIN, channel_id="channel-9", port_id="icahost", sequences=[])
@@ -173,7 +200,7 @@ class PacketHelpersTest(unittest.TestCase):
 class RpcTest(unittest.TestCase):
     def setUp(self) -> None:
         chain._latest_height.cache_clear()
-        chain._block_time.cache_clear()
+        chain.block_time.cache_clear()
 
     def test_latest_tx_searches_the_recent_window_and_returns_block_time(self) -> None:
         responses = [
@@ -216,6 +243,16 @@ class RpcTest(unittest.TestCase):
         with mock.patch.object(chain, "get_json", side_effect=responses):
             self.assertIsNone(chain.rpc_tx_search_latest(chain=CHAIN, query="x='y'"))
 
+    def test_block_time_is_cached_per_height(self) -> None:
+        response = {"result": {"header": {"time": "2026-09-30T11:00:00Z"}}}
+
+        with mock.patch.object(chain, "get_json", return_value=response) as get_json:
+            first = chain.block_time(rpc=CHAIN.rpc, height=7)
+            second = chain.block_time(rpc=CHAIN.rpc, height=7)
+
+        self.assertEqual((first, second), ("2026-09-30T11:00:00Z", "2026-09-30T11:00:00Z"))
+        self.assertEqual(get_json.call_count, 1)
+
     def test_latest_height_is_reused_within_the_cache_window(self) -> None:
         with mock.patch.object(chain, "get_json", return_value={"result": {"sync_info": {"latest_block_height": "9"}}}) as get_json:
             with mock.patch.object(chain.time, "time", return_value=1000.0):
@@ -233,12 +270,67 @@ class GetJsonTest(unittest.TestCase):
 
         self.assertEqual(fetch.call_count, 2)
 
+    def test_retries_once_after_an_error_urllib_does_not_wrap(self) -> None:
+        with mock.patch.object(
+            chain, "_fetch_json", side_effect=[http.client.RemoteDisconnected(), {"ok": True}]
+        ) as fetch:
+            self.assertEqual(chain.get_json(url="https://x"), {"ok": True})
+
+        self.assertEqual(fetch.call_count, 2)
+
     def test_second_failure_propagates(self) -> None:
         with mock.patch.object(chain, "_fetch_json", side_effect=TimeoutError("slow")) as fetch:
             with self.assertRaises(TimeoutError):
                 chain.get_json(url="https://x")
 
         self.assertEqual(fetch.call_count, 2)
+
+
+class ErrorBoundaryTest(unittest.TestCase):
+    def test_network_and_decode_errors_become_zone_errors(self) -> None:
+        for error in (
+            urllib.error.URLError("refused"),
+            TimeoutError("slow"),
+            http.client.IncompleteRead(b""),
+            http.client.RemoteDisconnected(),
+            ConnectionResetError(),
+            json.JSONDecodeError("bad", "x", 0),
+            KeyError("status"),
+        ):
+            with self.subTest(error=type(error).__name__):
+                result = chain.within_error_boundary(chain_id="zone-1", work=self.raiser(error))
+
+                self.assertIsInstance(result, chain.ZoneError)
+                self.assertEqual(result.chain_id, "zone-1")
+                self.assertIn(type(error).__name__, result.error)
+
+    def test_successful_work_passes_through(self) -> None:
+        self.assertEqual(chain.within_error_boundary(chain_id="zone-1", work=lambda: 5), 5)
+
+    def test_other_errors_propagate(self) -> None:
+        with self.assertRaises(ZeroDivisionError):
+            chain.within_error_boundary(chain_id="zone-1", work=self.raiser(ZeroDivisionError()))
+
+    def test_optional_lookup_failure_is_none_and_success_passes_through(self) -> None:
+        self.assertIsNone(chain.optional(self.raiser(http.client.IncompleteRead(b""))))
+        self.assertEqual(chain.optional(lambda: 5), 5)
+
+    def test_optional_lets_other_errors_propagate(self) -> None:
+        with self.assertRaises(ZeroDivisionError):
+            chain.optional(self.raiser(ZeroDivisionError()))
+
+    def test_succeeded_keeps_only_the_requested_type(self) -> None:
+        error = chain.ZoneError(chain_id="zone-1", error="boom")
+
+        self.assertEqual(chain.succeeded([1, error, 2], int), [1, 2])
+        self.assertEqual(chain.succeeded([1, error], chain.ZoneError), [error])
+
+    @staticmethod
+    def raiser(error: Exception):
+        def raise_error() -> None:
+            raise error
+
+        return raise_error
 
 
 if __name__ == "__main__":

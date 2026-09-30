@@ -108,13 +108,15 @@ function oldestCell(row, now) {
   const flows = [row.outbound, row.inbound].filter((flow) => flow && flow.oldest_sequence !== null);
   if (!flows.length) return '<td class="muted">–</td>';
 
-  // The flow whose oldest commitment was sent first; unknown send times sort last.
+  // The flow whose oldest commitment is oldest; unknown times sort last.
   const sentAt = (flow) => (flow.oldest_sent_at ? Date.parse(flow.oldest_sent_at) : Infinity);
   const flow = flows.reduce((first, next) => (sentAt(next) < sentAt(first) ? next : first));
   if (!flow.oldest_sent_at) return `<td class="muted">seq ${flow.oldest_sequence}</td>`;
 
   const ageSeconds = (now - Date.parse(flow.oldest_sent_at)) / 1000;
-  return `<td class="${ageSeconds > STUCK_AFTER_SECONDS ? 't-warn' : 'muted'}">${formatDuration(ageSeconds)} · seq ${flow.oldest_sequence}</td>`;
+  // "sent" for a send_packet tx; "received" when a pending ack's send is not indexed and its receive tx was used.
+  const label = `${flow.oldest_time_source} ${formatDuration(ageSeconds)} ago`;
+  return `<td class="${ageSeconds > STUCK_AFTER_SECONDS ? 't-warn' : 'muted'}">${label} · seq ${flow.oldest_sequence}</td>`;
 }
 
 function sumKnown(values) {
