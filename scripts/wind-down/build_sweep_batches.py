@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Build MsgSweepTokensOffStride batches from a strided export.
 
-Mirrors the on-chain skip rules of x/stakeibc/keeper/wind_down_sweep.go (20-byte address, transfer
-escrow exclusion, account type) and the on-chain amount rule (a vesting account is swept for its
-spendable balance, i.e. minus what its schedule still locks at the export's genesis_time), adds the
+Mirrors the on-chain skip rules of x/stakeibc/keeper/wind_down_sweep.go (20-byte address, protocol
+address deny-list, blocked module address, transfer escrow exclusion, account type) and the
+on-chain amount rule (a vesting account is swept for its spendable balance, i.e. minus what its
+schedule still locks at --as-of), adds the
 off-chain USD floor and excludes wasm contract addresses, so a batch this script emits should skip
 nothing on chain. Holders are ordered by the USD value of the sweepable amounts of the listed denoms
 and split into files of at most --batch-size addresses, one file per tx for
@@ -11,8 +12,12 @@ and split into files of at most --batch-size addresses, one file per tx for
 
     python3 scripts/wind-down/build_sweep_batches.py \
         --export export.json --prices prices.json --floor-usd 100 \
-        --denoms stuatom,stuosmo,stutia,ustrd --out-dir sweep-batches \
-        [--extra-denom ibc/27394F...=10.5:6] [--batch-size 100]
+        --denoms stuatom,stuosmo,stutia,ustrd --out-dir sweep-batches --as-of 2026-09-29T00:00:00Z \
+        [--sweep-operator stride1...] [--extra-denom ibc/27394F...=10.5:6] [--batch-size 100]
+
+--as-of is the block time at the export height (ISO-8601 or unix seconds), NOT the export's
+genesis_time (which is the chain's original genesis): get it with `strided q block <height>` and
+read header.time. Vesting locks are measured at that moment.
 
 prices.json: {"stuatom": {"usd_per_token": 4.2, "decimals": 6}, ...}. An --extra-denom that is an
 ibc/ voucher must have its outermost hop in UNWIND_CHANNELS (the export's denom traces are read
@@ -25,6 +30,7 @@ import datetime
 import hashlib
 import json
 import pathlib
+import re
 from decimal import ROUND_HALF_EVEN, Decimal
 
 import bech32_ref
@@ -46,6 +52,39 @@ UNWIND_CHANNELS = {
     "channel-213": "saga",
     "channel-160": "dydx",
 }
+
+# Mirror of types.SweepProtocolAddresses (constants part): staketia S0-S2 and stakedym S4-S6
+PROTOCOL_ADDRESSES = {
+    "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
+    "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption
+    "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd",  # staketia claim
+    "stride1e7j8d6sdq272fqe2jfxjpgcagn04j75w9695fj",  # stakedym deposit
+    "stride1jpsnc0ynufa2aheflj6mxzzzsu7nlwqk7ff69n",  # stakedym redemption
+    "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras",  # stakedym claim
+}
+
+# Module accounts the bank keeper blocks (app.BlacklistedModuleAccountAddrs: the names in maccPerms in
+# app/app.go except the stakeibc, reward collector, staketia and stakedym ones and
+# cons_to_send_to_provider, which can send). Keep in sync with app/app.go
+BLOCKED_MODULE_NAMES = [
+    "fee_collector",
+    "distribution",
+    "cons_redistribute",
+    "mint",
+    "bonded_tokens_pool",
+    "not_bonded_tokens_pool",
+    "gov",
+    "transfer",
+    "claim",
+    "interchainquery",
+    "interchainaccounts",
+    "wasm",
+    "icqoracle",
+    "auction",
+    "strdburner",
+    "poa",
+]
+MODULE_ACCOUNT = "/cosmos.auth.v1beta1.ModuleAccount"
 
 CONTINUOUS_VESTING = "/cosmos.vesting.v1beta1.ContinuousVestingAccount"
 DELAYED_VESTING = "/cosmos.vesting.v1beta1.DelayedVestingAccount"
@@ -80,7 +119,8 @@ class Export:
     contract_addresses: set[str]  # app_state.wasm.contracts[].contract_address
     denom_traces: dict[str, list[str]]  # ibc/HASH -> ["transfer/channel-x", ...] outermost first
     vesting: dict[str, VestingSchedule]  # address -> schedule, vesting accounts only
-    as_of: int  # genesis_time as unix seconds: the moment the export's balances and locks describe
+    as_of: int  # --as-of as unix seconds: the block time at the export height, when locks are measured
+    module_addresses: set[str]  # sha256(name)[:20] of every ModuleAccount in auth.accounts
 
 
 @dataclasses.dataclass
@@ -113,7 +153,7 @@ class ExtraDenom:
 
 def main() -> None:
     args = parse_args()
-    export = load_export(args.export)
+    export = load_export(args.export, as_of=args.as_of)
     prices = json.loads(args.prices.read_text())
     denoms = [denom for denom in args.denoms.split(",") if denom]
 
@@ -127,7 +167,9 @@ def main() -> None:
     for denom in denoms:
         check_denom_destination(denom=denom, traces=export.denom_traces)
 
-    plan = classify_holders(export=export, denoms=denoms, prices=prices, floor_usd=args.floor_usd)
+    plan = classify_holders(
+        export=export, denoms=denoms, prices=prices, floor_usd=args.floor_usd, sweep_operator=args.sweep_operator
+    )
     files = write_batches(plan=plan, out_dir=args.out_dir, batch_size=args.batch_size)
 
     total_usd = sum((holder.usd for holder in plan.holders), Decimal(0))
@@ -141,9 +183,31 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--denoms", required=True, help="comma-separated denoms to sweep")
     parser.add_argument("--floor-usd", type=float, required=True)
     parser.add_argument("--out-dir", type=pathlib.Path, required=True)
+    parser.add_argument(
+        "--as-of",
+        type=as_of_arg,
+        required=True,
+        help="block time at the export height, ISO-8601 or unix seconds (`strided q block <height>`, header.time)",
+    )
+    parser.add_argument("--sweep-operator", help="stride1... operator address, excluded like the protocol addresses")
     parser.add_argument("--batch-size", type=batch_size_arg, default=BATCH_SIZE_DEFAULT, help=f"1..{MAX_SWEEP_ADDRESSES_PER_TX}")
     parser.add_argument("--extra-denom", action="append", default=[], help="DENOM=USD_PER_TOKEN:DECIMALS")
     return parser.parse_args()
+
+
+def as_of_arg(text: str) -> int:
+    """argparse type for --as-of: unix seconds, or ISO-8601 (a trailing Z and nanosecond fractions,
+    as `strided q block` prints them, are accepted; the fraction is truncated)."""
+    if text.isdigit():
+        return int(text)
+    normalized = re.sub(r"(\.\d{6})\d+", r"\1", text.replace("Z", "+00:00"))
+    try:
+        parsed = datetime.datetime.fromisoformat(normalized)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"--as-of must be ISO-8601 or unix seconds, got {text!r}") from None
+    if parsed.tzinfo is None:
+        raise argparse.ArgumentTypeError(f"--as-of needs a timezone (e.g. a trailing Z), got {text!r}")
+    return int(parsed.timestamp())
 
 
 def batch_size_arg(text: str) -> int:
@@ -154,10 +218,11 @@ def batch_size_arg(text: str) -> int:
     return value
 
 
-def load_export(path: pathlib.Path) -> Export:
+def load_export(path: pathlib.Path, as_of: int) -> Export:
+    """The export's own genesis_time is deliberately unused: it is the chain's original genesis,
+    not the export height, so vesting is measured at the caller's `as_of`."""
     genesis = json.loads(path.read_text())
     app_state = genesis["app_state"]
-    as_of = int(datetime.datetime.fromisoformat(genesis["genesis_time"].replace("Z", "+00:00")).timestamp())
 
     balances: dict[str, dict[str, int]] = {}
     for entry in app_state["bank"]["balances"]:
@@ -166,6 +231,8 @@ def load_export(path: pathlib.Path) -> Export:
     accounts = app_state["auth"]["accounts"]
     account_types = {account_address(account): account["@type"] for account in accounts}
     vesting = {account_address(account): vesting_schedule(account) for account in accounts if account["@type"] in VESTING_ACCOUNT_TYPES}
+
+    module_addresses = {module_address(account["name"]) for account in accounts if account["@type"] == MODULE_ACCOUNT}
 
     channels = app_state.get("ibc", {}).get("channel_genesis", {}).get("channels", [])
     escrows = {escrow_address(ch["port_id"], ch["channel_id"]) for ch in channels if ch["port_id"] == TRANSFER_PORT}
@@ -184,6 +251,7 @@ def load_export(path: pathlib.Path) -> Export:
         denom_traces=traces,
         vesting=vesting,
         as_of=as_of,
+        module_addresses=module_addresses,
     )
 
 
@@ -283,8 +351,12 @@ def coins_by_denom(coins: list[dict]) -> dict[str, int]:
     return {coin["denom"]: int(coin["amount"]) for coin in coins}
 
 
-def classify_holders(export: Export, denoms: list[str], prices: dict, floor_usd: float) -> HolderPlan:
+def classify_holders(
+    export: Export, denoms: list[str], prices: dict, floor_usd: float, sweep_operator: str | None = None
+) -> HolderPlan:
     floor = Decimal(str(floor_usd))
+    protocol = PROTOCOL_ADDRESSES | ({sweep_operator} if sweep_operator else set())
+    blocked = export.module_addresses | {module_address(name) for name in BLOCKED_MODULE_NAMES}
     holders: list[Holder] = []
     skipped: list[Skipped] = []
 
@@ -299,7 +371,7 @@ def classify_holders(export: Export, denoms: list[str], prices: dict, floor_usd:
             continue
         usd = sum((usd_value(denom, amount, prices) for denom, amount in listed.items()), Decimal(0))
 
-        reason = skip_reason(address=address, export=export)
+        reason = skip_reason(address=address, export=export, protocol=protocol, blocked=blocked)
         if reason is not None:
             skipped.append(Skipped(address=address, reason=reason, usd=usd))
             continue
@@ -312,11 +384,15 @@ def classify_holders(export: Export, denoms: list[str], prices: dict, floor_usd:
     return HolderPlan(denoms=denoms, holders=holders, skipped=skipped)
 
 
-def skip_reason(address: str, export: Export) -> str | None:
-    """The on-chain rules, in the on-chain order (escrow before the account lookup), plus the
-    contract exclusion the chain cannot make; None means sweepable."""
+def skip_reason(address: str, export: Export, protocol: set[str], blocked: set[str]) -> str | None:
+    """The on-chain rules, in the on-chain order (20 bytes, protocol, blocked, escrow, then the
+    account lookup), plus the contract exclusion the chain cannot make; None means sweepable."""
     if len(address_bytes(address)) != ADDRESS_LENGTH_BYTES:
         return "address is not 20 bytes"
+    if address in protocol:
+        return "protocol address"
+    if address in blocked:
+        return "blocked module address"
     if address in export.escrow_addresses:
         return "transfer escrow address"
     account_type = export.account_types.get(address)
@@ -373,7 +449,9 @@ def check_denom_destination(denom: str, traces: dict[str, list[str]]) -> None:
     hops = traces.get(denom)
     if not hops:
         raise ValueError(f"{denom} has no denom trace in the export")
-    outer_channel = hops[0].split("/")[1]
+    outer_port, outer_channel = hops[0].split("/")
+    if outer_port != TRANSFER_PORT:
+        raise ValueError(f"{denom} arrived over port {outer_port}, not {TRANSFER_PORT}")
     if outer_channel not in UNWIND_CHANNELS:
         raise ValueError(f"{denom} arrived over {outer_channel}, which is not in UNWIND_CHANNELS")
 
@@ -402,6 +480,11 @@ def address_bytes(address: str) -> bytes:
         return b""
     converted = bech32_ref.convertbits(data, 5, 8, False)
     return bytes(converted) if converted is not None else b""
+
+
+def module_address(name: str) -> str:
+    """SDK authtypes.NewModuleAddress: sha256(name)[:20], bech32 stride."""
+    return bech32_ref.encode("stride", hashlib.sha256(name.encode()).digest()[:ADDRESS_LENGTH_BYTES])
 
 
 def escrow_address(port_id: str, channel_id: str) -> str:

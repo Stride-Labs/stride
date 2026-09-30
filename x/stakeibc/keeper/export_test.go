@@ -13,6 +13,16 @@ func TransferEscrowAddressesForTest(k Keeper, ctx sdk.Context) map[string]bool {
 	return k.transferEscrowAddresses(ctx)
 }
 
-func SweepSkipReasonForTest(k Keeper, ctx sdk.Context, address sdk.AccAddress, escrows map[string]bool) (string, bool) {
-	return k.sweepSkipReason(ctx, address, escrows)
+func SweepProtocolAddressSetForTest() map[string]bool {
+	return sweepProtocolAddressSet()
+}
+
+func SweepSkipReasonForTest(
+	k Keeper,
+	ctx sdk.Context,
+	address sdk.AccAddress,
+	escrows map[string]bool,
+	protocol map[string]bool,
+) (string, bool) {
+	return k.sweepSkipReason(ctx, address, escrows, protocol)
 }

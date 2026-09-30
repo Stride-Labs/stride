@@ -15,7 +15,9 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	claimvestingtypes "github.com/Stride-Labs/stride/v34/x/claim/vesting/types"
+	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
 )
 
 // sweepDestination is where a denom leaves Stride: the transfer channel and the bech32 prefix
@@ -33,6 +35,10 @@ type sweepDestination struct {
 func (k Keeper) resolveSweepDestination(ctx sdk.Context, denom string) (sweepDestination, error) {
 	ibcPrefix := transfertypes.DenomPrefix + "/"
 	if !strings.HasPrefix(denom, ibcPrefix) {
+		if !k.isSweepableNativeDenom(ctx, denom) {
+			return sweepDestination{}, errorsmod.Wrapf(types.ErrSweepDestinationUnavailable,
+				"native denom %s is neither ustrd nor a known stToken", denom)
+		}
 		return sweepDestination{
 			ChannelId:    types.StrideToOsmosisTransferChannelId,
 			Bech32Prefix: types.OsmosisBech32Prefix,
@@ -48,6 +54,13 @@ func (k Keeper) resolveSweepDestination(ctx sdk.Context, denom string) (sweepDes
 		return sweepDestination{}, errorsmod.Wrapf(types.ErrSweepDestinationUnavailable, "no denom trace for %s", denom)
 	}
 
+	// The outer hop must be a transfer-port channel: another port's channel id is not a channel
+	// this sweep's MsgTransfer can send over
+	if trace.Trace[0].PortId != transfertypes.PortID {
+		return sweepDestination{}, errorsmod.Wrapf(types.ErrSweepDestinationUnavailable,
+			"denom %s arrived over port %s, not %s", denom, trace.Trace[0].PortId, transfertypes.PortID)
+	}
+
 	outerChannel := trace.Trace[0].ChannelId
 	prefix, whitelisted := types.SweepUnwindChannels[outerChannel]
 	if !whitelisted {
@@ -57,9 +70,28 @@ func (k Keeper) resolveSweepDestination(ctx sdk.Context, denom string) (sweepDes
 	return sweepDestination{ChannelId: outerChannel, Bech32Prefix: prefix}, nil
 }
 
+// isSweepableNativeDenom accepts only ustrd and the stTokens: those of every stakeibc host zone
+// and of staketia and stakedym (whose native denoms are constants, as stakeibc has no keeper
+// for them). Any other native denom has no known supply on Osmosis to route to
+func (k Keeper) isSweepableNativeDenom(ctx sdk.Context, denom string) bool {
+	switch denom {
+	case utils.BaseStrideDenom,
+		types.StAssetDenomFromHostZoneDenom(staketiatypes.CelestiaNativeTokenDenom),
+		types.StAssetDenomFromHostZoneDenom(stakedymtypes.DymensionNativeTokenDenom):
+		return true
+	}
+	for _, hostZone := range k.GetAllHostZone(ctx) {
+		if denom == types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) {
+			return true
+		}
+	}
+	return false
+}
+
 // transferEscrowAddresses returns the escrow address of every transfer channel, keyed by
 // bech32 string. Escrows hold the supply of every stToken that lives on another chain and are
-// never swept
+// never swept. Only IBC v1 transfer channels are covered: Stride registers no IBC v2
+// counterparties today, so there are no v2 escrows to exclude
 func (k Keeper) transferEscrowAddresses(ctx sdk.Context) map[string]bool {
 	escrows := map[string]bool{}
 	for _, channel := range k.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix(ctx, transfertypes.PortID) {
@@ -68,14 +100,39 @@ func (k Keeper) transferEscrowAddresses(ctx sdk.Context) map[string]bool {
 	return escrows
 }
 
-// sweepSkipReason applies the per-address rules of spec §7: only a 20-byte address whose
-// account is a plain or vesting account has a counterpart the same key controls on the
-// destination chain. Everything else (escrows, module accounts, interchain accounts owned by
-// other chains, 32-byte contract-style addresses, addresses with no account) is skipped, and
-// the reason is what the event carries so the off-chain builder learns why it disagreed
-func (k Keeper) sweepSkipReason(ctx sdk.Context, address sdk.AccAddress, escrows map[string]bool) (reason string, skip bool) {
+// sweepProtocolAddressSet is types.SweepProtocolAddresses as a set, built once per tx
+func sweepProtocolAddressSet() map[string]bool {
+	protocol := map[string]bool{}
+	for _, address := range types.SweepProtocolAddresses() {
+		protocol[address] = true
+	}
+	return protocol
+}
+
+// sweepSkipReason applies the per-address rules of spec §7, in this order: a 20-byte address,
+// not a protocol address (staketia/stakedym multisigs and the operator), not a blocked module
+// address, not a transfer escrow, has an account, and the account is a plain or vesting one.
+// Only that last kind has a counterpart the same key controls on the destination chain.
+// Everything else is skipped, and the reason is what the event carries so the off-chain builder
+// learns why it disagreed
+func (k Keeper) sweepSkipReason(
+	ctx sdk.Context,
+	address sdk.AccAddress,
+	escrows map[string]bool,
+	protocol map[string]bool,
+) (reason string, skip bool) {
 	if len(address) != 20 {
 		return "address is not 20 bytes", true
+	}
+	// The protocol multisigs are BaseAccounts that module code spends from, so no account-type
+	// rule can tell them from a holder: they are named explicitly
+	if protocol[address.String()] {
+		return "protocol address", true
+	}
+	// A module address can be squatted by a BaseAccount (anyone can send to it first), so the
+	// account type alone would not exclude it
+	if k.bankKeeper.BlockedAddr(address) {
+		return "blocked module address", true
 	}
 	// Escrows are checked before the account lookup: an escrow that has never received a
 	// transfer has no account yet, and it must still be named as an escrow, not "not found"
@@ -97,7 +154,7 @@ func (k Keeper) sweepSkipReason(ctx sdk.Context, address sdk.AccAddress, escrows
 		*claimvestingtypes.StridePeriodicVestingAccount:
 		return "", false
 	case *icatypes.InterchainAccount:
-		return fmt.Sprintf("account type %T is not sweepable", account), true
+		return "interchain account", true
 	default:
 		return fmt.Sprintf("account type %T is not sweepable", account), true
 	}
@@ -122,11 +179,12 @@ func (k Keeper) SweepTokensOffStride(
 	}
 
 	escrows := k.transferEscrowAddresses(ctx)
+	protocol := sweepProtocolAddressSet()
 	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(types.WindDownTransferTimeout).UnixNano())
 
 	for _, holderBech32 := range msg.Addresses {
 		holder := sdk.MustAccAddressFromBech32(holderBech32) // validated in ValidateBasic
-		if reason, skip := k.sweepSkipReason(ctx, holder, escrows); skip {
+		if reason, skip := k.sweepSkipReason(ctx, holder, escrows, protocol); skip {
 			emitSweepSkippedEvent(ctx, holderBech32, reason)
 			numSkipped++
 			continue
