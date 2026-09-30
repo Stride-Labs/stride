@@ -1,9 +1,10 @@
 package v35_test
 
 import (
+	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
 
 	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
 	autopilottypes "github.com/Stride-Labs/stride/v34/x/autopilot/types"

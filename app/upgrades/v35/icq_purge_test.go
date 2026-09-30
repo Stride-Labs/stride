@@ -50,8 +50,10 @@ func (s *UpgradeTestSuite) TestPurgeHaqqSlashQueries() {
 	v35.PurgeHaqqSlashQueries(s.Ctx, s.App.InterchainqueryKeeper, s.App.StakeibcKeeper)
 
 	s.Require().ElementsMatch(
-		[]string{"haqq-withdrawal", "haqq-fee", "juno-withdrawal", "juno-delegation", "comdex-calibrate",
-			"other-haqq-delegation", "other-juno-withdrawal"},
+		[]string{
+			"haqq-withdrawal", "haqq-fee", "juno-withdrawal", "juno-delegation", "comdex-calibrate",
+			"other-haqq-delegation", "other-juno-withdrawal",
+		},
 		s.queryIds(), "only stakeibc's haqq slash-path queries are deleted")
 
 	haqq, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
@@ -74,7 +76,9 @@ func (s *UpgradeTestSuite) TestPurgeWithdrawalBalanceQueries() {
 	v35.PurgeWithdrawalBalanceQueries(s.Ctx, s.App.InterchainqueryKeeper)
 
 	s.Require().ElementsMatch(
-		[]string{"haqq-delegation", "haqq-validator", "haqq-calibrate", "haqq-fee", "juno-delegation", "comdex-calibrate",
-			"other-haqq-delegation", "other-juno-withdrawal"},
+		[]string{
+			"haqq-delegation", "haqq-validator", "haqq-calibrate", "haqq-fee", "juno-delegation", "comdex-calibrate",
+			"other-haqq-delegation", "other-juno-withdrawal",
+		},
 		s.queryIds(), "only stakeibc's withdrawal-balance queries are deleted, on every chain")
 }
