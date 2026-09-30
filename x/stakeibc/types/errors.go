@@ -70,4 +70,7 @@ var (
 	ErrInvalidDelegationsInProgress        = errorsmod.Register(ModuleName, 1563, "invalid delegation changes in progress")
 	ErrInvalidUndelegationsInProgress      = errorsmod.Register(ModuleName, 1564, "invalid undelegation changes in progress")
 	ErrRedemptionsDisabled                 = errorsmod.Register(ModuleName, 1565, "redemptions disabled")
+	ErrOsmosisVaultNotConfigured           = errorsmod.Register(ModuleName, 1566, "osmosis vault address is not configured")
+	ErrNoOsmosisChannelForHostZone         = errorsmod.Register(ModuleName, 1567, "host zone has no transfer channel to osmosis")
+	ErrHostZoneUnbondingPending            = errorsmod.Register(ModuleName, 1568, "host zone has an unbonding record queued or retrying")
 )
