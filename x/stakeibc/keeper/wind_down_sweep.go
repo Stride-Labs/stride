@@ -13,6 +13,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
+	"github.com/Stride-Labs/stride/v34/utils"
 	claimvestingtypes "github.com/Stride-Labs/stride/v34/x/claim/vesting/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
@@ -100,4 +101,95 @@ func (k Keeper) sweepSkipReason(ctx sdk.Context, address sdk.AccAddress, escrows
 	default:
 		return fmt.Sprintf("account type %T is not sweepable", account), true
 	}
+}
+
+// SweepTokensOffStride sends every listed denom each listed holder owns to the holder's own
+// address bytes on the destination chain (spec §7): Stride-native denoms to Osmosis, vouchers
+// back one hop over the channel they arrived on. Destinations are resolved once, before any
+// address is read, so a bad denom rejects the batch and a bad holder only skips itself.
+// Returns how many transfers were submitted and how many addresses were skipped
+func (k Keeper) SweepTokensOffStride(
+	ctx sdk.Context,
+	msg *types.MsgSweepTokensOffStride,
+) (numTransfers uint64, numSkipped uint64, err error) {
+	destinations := map[string]sweepDestination{}
+	for _, denom := range msg.Denoms {
+		destination, err := k.resolveSweepDestination(ctx, denom)
+		if err != nil {
+			return 0, 0, err
+		}
+		destinations[denom] = destination
+	}
+
+	escrows := k.transferEscrowAddresses(ctx)
+	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(types.WindDownTransferTimeout).UnixNano())
+
+	for _, holderBech32 := range msg.Addresses {
+		holder := sdk.MustAccAddressFromBech32(holderBech32) // validated in ValidateBasic
+		if reason, skip := k.sweepSkipReason(ctx, holder, escrows); skip {
+			emitSweepSkippedEvent(ctx, holderBech32, reason)
+			numSkipped++
+			continue
+		}
+
+		for _, denom := range msg.Denoms {
+			// Spendable, not total: the ICS-20 escrow is a bank send, which refuses coins a vesting
+			// schedule still locks. Sweeping the total would fail the whole batch for every vesting
+			// account with locked STRD, so the locked remainder stays and only what can move moves
+			balance := k.bankKeeper.SpendableCoin(ctx, holder, denom)
+			if balance.IsZero() {
+				continue
+			}
+
+			destination := destinations[denom]
+			receiver := sdk.MustBech32ifyAddressBytes(destination.Bech32Prefix, holder)
+			transfer := transfertypes.MsgTransfer{
+				SourcePort:       transfertypes.PortID,
+				SourceChannel:    destination.ChannelId,
+				Token:            balance,
+				Sender:           holderBech32,
+				Receiver:         receiver,
+				TimeoutTimestamp: timeoutTimestamp,
+				Memo:             "",
+			}
+			// A failed submission (closed channel, send disabled) is a batch problem, not a
+			// holder problem: reject the whole tx so ops fix the cause and resubmit
+			if _, err := k.RecordsKeeper.TransferKeeper.Transfer(ctx, &transfer); err != nil {
+				return 0, 0, errorsmod.Wrapf(err, "unable to sweep %s from %s over %s",
+					balance.String(), holderBech32, destination.ChannelId)
+			}
+
+			emitSweepTransferEvent(ctx, holderBech32, balance, destination.ChannelId, receiver)
+			numTransfers++
+		}
+	}
+
+	k.Logger(ctx).Info(fmt.Sprintf("Sweep submitted %d transfers for %d denoms across %d addresses (%d skipped)",
+		numTransfers, len(msg.Denoms), len(msg.Addresses), numSkipped))
+	return numTransfers, numSkipped, nil
+}
+
+func emitSweepSkippedEvent(ctx sdk.Context, address, reason string) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSweepSkipped,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeySweepAddress, address),
+			sdk.NewAttribute(types.AttributeKeySweepReason, reason),
+		),
+	)
+}
+
+func emitSweepTransferEvent(ctx sdk.Context, address string, amount sdk.Coin, channelId, receiver string) {
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSweepTransfer,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+			sdk.NewAttribute(types.AttributeKeySweepAddress, address),
+			sdk.NewAttribute(types.AttributeKeySweepDenom, amount.Denom),
+			sdk.NewAttribute(types.AttributeKeySweepAmount, amount.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeySweepChannel, channelId),
+			sdk.NewAttribute(types.AttributeKeySweepReceiver, receiver),
+		),
+	)
 }
