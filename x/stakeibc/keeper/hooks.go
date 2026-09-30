@@ -16,9 +16,10 @@ import (
 
 const StrideEpochsPerDayEpoch = uint64(4)
 
-// BeforeEpochStart drives the flows that pay the redemptions still open after the v35 upgrade
-// and nothing else. The protocol is winding down (docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md,
-// §6): the calls that compounded or moved stake (rate refresh, reinvest, delegate, rebalance,
+// BeforeEpochStart runs the flows that finish open redemptions and move what is already in
+// flight (reward claims, queued deposit transfers) after the v35 upgrade. The protocol is
+// winding down (docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md, §6):
+// the calls that compounded or moved stake (rate refresh, reinvest, delegate, rebalance,
 // reward-token transfer, withdrawal-address set, deposit and epoch-unbonding record creation,
 // the reward-collector auction) were deleted rather than gated, so the redemption rate of every
 // host zone is frozen at its last pre-upgrade value and cannot be toggled back. Their keeper
@@ -53,8 +54,8 @@ func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.
 		// Withdraw accrued staking rewards to the withdrawal ICA, where the wind-down sweeps them
 		k.ClaimAccruedStakingRewards(ctx)
 
-		// Carry any native tokens still sitting in a deposit address to the delegation ICA so they
-		// leave with the ICA balance instead of being stranded on Stride
+		// Transfer the amount of any remaining TRANSFER_QUEUE deposit record to the delegation ICA
+		// so it leaves with the ICA balance instead of being stranded on Stride
 		if epochNumber%depositInterval == 0 {
 			depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)

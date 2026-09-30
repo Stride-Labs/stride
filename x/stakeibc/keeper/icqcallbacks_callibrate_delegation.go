@@ -48,6 +48,24 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
+	// Skip if there is an active delegation change ICA for this validator, since the queried
+	// shares race the recorded delegation
+	if validator.DelegationChangesInProgress > 0 {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+			"Validator (%s) has %d delegation changing ICAs in progress, skipping calibration",
+			validator.Address, validator.DelegationChangesInProgress))
+		return nil
+	}
+
+	// Skip if the stored rate is unusable, since the computed token amount would be meaningless
+	// and would wipe the recorded delegation
+	if validator.SharesToTokensRate.IsNil() || !validator.SharesToTokensRate.IsPositive() {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+			"Validator (%s) has a non-positive shares to tokens rate (%v), skipping calibration",
+			validator.Address, validator.SharesToTokensRate))
+		return nil
+	}
+
 	// Calculate the number of tokens delegated (using the internal sharesToTokensRate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	delegatedTokens := queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
