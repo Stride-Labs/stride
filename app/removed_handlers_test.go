@@ -130,3 +130,41 @@ func (s *RemovedHandlersTestSuite) TestMsgServerInterfacesLostTheMethods() {
 		}
 	}
 }
+
+// removedAminoNames maps each removed non-claim, non-stakeibc message to the amino name
+// registered in its module's codec.go. Amino signing keeps working for these types (they stay
+// registered so history decodes), so a rename or dropped registration would surface here.
+// Every type in this set has an amino registration, so none are skipped.
+var removedAminoNames = []struct {
+	msg  sdk.Msg
+	name string
+}{
+	{&staketiatypes.MsgLiquidStake{}, "staketia/MsgLiquidStake"}, //nolint:staticcheck // deprecated type, kept registered for historical decoding
+	{&staketiatypes.MsgRedeemStake{}, "staketia/MsgRedeemStake"},
+	{&staketiatypes.MsgResumeHostZone{}, "staketia/MsgResumeHostZone"},
+	{&stakedymtypes.MsgLiquidStake{}, "stakedym/MsgLiquidStake"},
+	{&stakedymtypes.MsgRedeemStake{}, "stakedym/MsgRedeemStake"},
+	{&stakedymtypes.MsgResumeHostZone{}, "stakedym/MsgResumeHostZone"},
+	{&icaoracletypes.MsgAddOracle{}, "icaoracle/MsgAddOracle"},
+	{&icaoracletypes.MsgInstantiateOracle{}, "icaoracle/MsgInstantiateOracle"},
+	{&icqoracletypes.MsgRegisterTokenPriceQuery{}, "icqoracle/MsgRegisterTokenPriceQuery"},
+	{&icqoracletypes.MsgRemoveTokenPriceQuery{}, "icqoracle/MsgRemoveTokenPriceQuery"},
+	{&auctiontypes.MsgPlaceBid{}, "auction/MsgPlaceBid"},
+	{&auctiontypes.MsgCreateAuction{}, "auction/MsgCreateAuction"},
+	{&auctiontypes.MsgUpdateAuction{}, "auction/MsgUpdateAuction"},
+	{&airdroptypes.MsgClaimDaily{}, "airdrop/MsgClaimDaily"},
+	{&airdroptypes.MsgClaimEarly{}, "airdrop/MsgClaimEarly"},
+	{&airdroptypes.MsgCreateAirdrop{}, "airdrop/MsgCreateAirdrop"},
+	{&airdroptypes.MsgUpdateAirdrop{}, "airdrop/MsgUpdateAirdrop"},
+	{&airdroptypes.MsgAddAllocations{}, "airdrop/MsgAddAllocations"},
+	{&airdroptypes.MsgUpdateUserAllocation{}, "airdrop/MsgUpdateUserAllocation"},
+	{&airdroptypes.MsgLinkAddresses{}, "airdrop/MsgLinkAddresses"},
+}
+
+func (s *RemovedHandlersTestSuite) TestRemovedMessagesKeepAminoNames() {
+	for _, tc := range removedAminoNames {
+		bz, err := s.App.LegacyAmino().MarshalJSON(tc.msg)
+		s.Require().NoError(err, "%s must marshal via legacy amino", tc.name)
+		s.Require().Contains(string(bz), `"type":"`+tc.name+`"`, "%s amino name", tc.name)
+	}
+}

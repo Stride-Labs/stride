@@ -10,10 +10,6 @@ import (
 )
 
 // ----------------------------------------------
-//                MsgLiquidStake
-// ----------------------------------------------
-
-// ----------------------------------------------
 //            MsgConfirmDelegation
 // ----------------------------------------------
 
@@ -285,10 +281,6 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &nonAdminMsg)
 	s.Require().ErrorContains(err, "signer is not an admin")
 }
-
-// ----------------------------------------------
-//             MsgResumeHostZone
-// ----------------------------------------------
 
 // ----------------------------------------------
 //           MsgRefreshRedemptionRate
