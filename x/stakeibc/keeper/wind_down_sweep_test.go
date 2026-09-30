@@ -8,6 +8,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -181,4 +183,374 @@ func (s *KeeperTestSuite) TestSweepSkipReason() {
 			}
 		})
 	}
+}
+
+// openExtraTransferChannels opens n more transfer channels between Stride and the host chain
+// on the connection CreateTransferChannel established, so tests can address channel-1 .. channel-n
+func (s *KeeperTestSuite) openExtraTransferChannels(n int) {
+	for i := 0; i < n; i++ {
+		path := ibctesting.NewPath(s.StrideChain, s.HostChain).DisableUniqueChannelIDs()
+		path.EndpointA.ClientID = s.TransferPath.EndpointA.ClientID
+		path.EndpointA.ConnectionID = s.TransferPath.EndpointA.ConnectionID
+		path.EndpointB.ClientID = s.TransferPath.EndpointB.ClientID
+		path.EndpointB.ConnectionID = s.TransferPath.EndpointB.ConnectionID
+		for _, endpoint := range []*ibctesting.Endpoint{path.EndpointA, path.EndpointB} {
+			endpoint.ChannelConfig.PortID = ibctesting.TransferPort
+			endpoint.ChannelConfig.Order = channeltypes.UNORDERED
+			endpoint.ChannelConfig.Version = transfertypes.V1
+		}
+
+		s.Require().NoError(path.EndpointA.ChanOpenInit())
+		apptesting.RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+			s.Require().NoError(path.EndpointB.ChanOpenTry())
+		})
+		s.Require().NoError(path.EndpointA.ChanOpenAck())
+		apptesting.RunWithDifferentBechPrefix(sdk.Bech32MainPrefix, func() {
+			s.Require().NoError(path.EndpointB.ChanOpenConfirm())
+		})
+		s.Require().NoError(path.EndpointA.UpdateClient())
+	}
+	s.Ctx = s.StrideChain.GetContext()
+}
+
+type sweepTestCase struct {
+	operator sdk.AccAddress
+	holders  map[string]sdk.AccAddress
+	atomIbc  string // single-hop uatom voucher over channel-0
+	twoHop   string // stuatom that came back through channel-5 (two hops)
+}
+
+// SetupSweep opens channel-0 .. channel-5, funds a base account with an stToken, ustrd and
+// a single-hop voucher, and registers the sweep operator
+func (s *KeeperTestSuite) SetupSweep() sweepTestCase {
+	s.CreateTransferChannel("GAIA")
+	s.openExtraTransferChannels(5)
+	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, transfertypes.PortID, "channel-5")
+	s.Require().True(found, "channel-5 should exist after opening five extra channels")
+
+	operator := s.TestAccs[0]
+	if s.App.AccountKeeper.GetAccount(s.Ctx, operator) == nil {
+		s.SetNewAccount(operator) // assigns the next account number before SetAccount
+	}
+	types.SweepOperatorAddress = operator.String()
+	s.T().Cleanup(func() { types.SweepOperatorAddress = "" })
+
+	kinds := s.setupSweepAccountKinds()
+	atomIbc := s.registerVoucher("uatom", transfertypes.NewHop(transfertypes.PortID, "channel-0"))
+	twoHop := s.registerVoucher(sweepTestStToken,
+		transfertypes.NewHop(transfertypes.PortID, "channel-5"),
+		transfertypes.NewHop(transfertypes.PortID, "channel-326"))
+
+	return sweepTestCase{operator: operator, holders: kinds, atomIbc: atomIbc, twoHop: twoHop}
+}
+
+func (s *KeeperTestSuite) sweep(tc sweepTestCase, denoms []string, addresses ...sdk.AccAddress) (*types.MsgSweepTokensOffStrideResponse, error) {
+	holders := make([]string, 0, len(addresses))
+	for _, address := range addresses {
+		holders = append(holders, address.String())
+	}
+	msg := types.NewMsgSweepTokensOffStride(tc.operator.String(), denoms, holders)
+	s.Require().NoError(msg.ValidateBasic())
+	return s.GetMsgServer().SweepTokensOffStride(s.Ctx, msg)
+}
+
+func (s *KeeperTestSuite) escrowBalance(channelId, denom string) sdkmath.Int {
+	escrow := transfertypes.GetEscrowAddress(transfertypes.PortID, channelId)
+	return s.App.BankKeeper.GetBalance(s.Ctx, escrow, denom).Amount
+}
+
+// One base account holding an stToken and ustrd: both leave over channel-5 to the same bytes
+// with the osmo prefix, the full balances are escrowed, and only the listed denoms move
+func (s *KeeperTestSuite) TestSweepTokensOffStride_NativeDenomsToOsmosis() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStToken, 1_000_000))
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStrd, 250_000))
+	s.FundAccount(holder, sdk.NewInt64Coin("stuosmo", 9)) // not on the list, must stay
+
+	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+
+	resp, err := s.sweep(tc, []string{sweepTestStToken, sweepTestStrd}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(2), resp.NumTransfers)
+	s.Require().Equal(uint64(0), resp.NumSkipped)
+
+	endSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+	s.Require().Equal(startSequence+2, endSequence, "two packets on channel-5")
+
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStToken).Amount.Int64())
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStrd).Amount.Int64())
+	s.Require().Equal(int64(9), s.App.BankKeeper.GetBalance(s.Ctx, holder, "stuosmo").Amount.Int64(), "unlisted denom untouched")
+	s.Require().Equal(int64(1_000_000), s.escrowBalance("channel-5", sweepTestStToken).Int64(), "stToken escrowed on channel-5")
+	s.Require().Equal(int64(250_000), s.escrowBalance("channel-5", sweepTestStrd).Int64(), "ustrd escrowed on channel-5")
+
+	expectedReceiver := sdk.MustBech32ifyAddressBytes("osmo", holder)
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepReceiver, expectedReceiver)
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepChannel, "channel-5")
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepDenom, sweepTestStToken)
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepAmount, "1000000")
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepSkipped)
+
+	// The derived receiver decodes to exactly the sender's bytes
+	receiverBytes, err := sdk.GetFromBech32(expectedReceiver, "osmo")
+	s.Require().NoError(err)
+	s.Require().Equal([]byte(holder), receiverBytes)
+}
+
+// A single-hop voucher goes back over channel-0 with the cosmos prefix and is burned (Stride
+// is not the source of that denom)
+func (s *KeeperTestSuite) TestSweepTokensOffStride_SingleHopVoucherUnwinds() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	s.FundAccount(holder, sdk.NewInt64Coin(tc.atomIbc, 40_000))
+	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-0")
+
+	resp, err := s.sweep(tc, []string{tc.atomIbc}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), resp.NumTransfers)
+
+	s.Require().Equal(startSequence+1, s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-0"))
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holder, tc.atomIbc).Amount.Int64())
+	s.Require().Zero(s.App.BankKeeper.GetSupply(s.Ctx, tc.atomIbc).Amount.Int64(), "voucher burned on the way back")
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepReceiver, sdk.MustBech32ifyAddressBytes("cosmos", holder))
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepChannel, "channel-0")
+}
+
+// A two-hop voucher (stuatom that came back through Osmosis) unwinds one hop over channel-5
+func (s *KeeperTestSuite) TestSweepTokensOffStride_TwoHopVoucherUnwindsOneHop() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	s.FundAccount(holder, sdk.NewInt64Coin(tc.twoHop, 500))
+	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+
+	resp, err := s.sweep(tc, []string{tc.twoHop}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), resp.NumTransfers)
+	s.Require().Equal(startSequence+1, s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5"))
+	s.Require().Zero(s.App.BankKeeper.GetSupply(s.Ctx, tc.twoHop).Amount.Int64(), "two-hop voucher burned")
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepReceiver, sdk.MustBech32ifyAddressBytes("osmo", holder))
+}
+
+// Every sweepable account type is swept; every non-sweepable one is skipped with its reason
+// while the rest of the batch goes through and num_skipped counts it
+func (s *KeeperTestSuite) TestSweepTokensOffStride_SkipRulesInOneBatch() {
+	tc := s.SetupSweep()
+	swept := []string{"base", "continuous_vesting", "delayed_vesting", "periodic_vesting", "stride_periodic_vesting"}
+	skipped := map[string]string{
+		"thirty_two_bytes":   "address is not 20 bytes",
+		"unknown":            "account not found",
+		"escrow":             "transfer escrow address",
+		"module":             "account type *types.ModuleAccount is not sweepable",
+		"interchain_account": "account type *types.InterchainAccount is not sweepable",
+	}
+	addresses := []sdk.AccAddress{}
+	for _, kind := range swept {
+		s.FundAccount(tc.holders[kind], sdk.NewInt64Coin(sweepTestStToken, 1_000))
+		addresses = append(addresses, tc.holders[kind])
+	}
+	// The module account and the escrow hold a balance too: skipping must leave it in place
+	s.FundModuleAccount(distrtypes.ModuleName, sdk.NewInt64Coin(sweepTestStToken, 777))
+	s.FundAccount(tc.holders["escrow"], sdk.NewInt64Coin(sweepTestStToken, 555))
+	s.FundAccount(tc.holders["interchain_account"], sdk.NewInt64Coin(sweepTestStToken, 333))
+	for kind := range skipped {
+		addresses = append(addresses, tc.holders[kind])
+	}
+
+	resp, err := s.sweep(tc, []string{sweepTestStToken}, addresses...)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(len(swept)), resp.NumTransfers)
+	s.Require().Equal(uint64(len(skipped)), resp.NumSkipped)
+
+	for _, kind := range swept {
+		s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, tc.holders[kind], sweepTestStToken).Amount.Int64(), kind)
+	}
+	s.Require().Equal(int64(777), s.App.BankKeeper.GetBalance(s.Ctx, tc.holders["module"], sweepTestStToken).Amount.Int64())
+	s.Require().Equal(int64(555), s.App.BankKeeper.GetBalance(s.Ctx, tc.holders["escrow"], sweepTestStToken).Amount.Int64())
+	s.Require().Equal(int64(333), s.App.BankKeeper.GetBalance(s.Ctx, tc.holders["interchain_account"], sweepTestStToken).Amount.Int64())
+
+	for kind, reason := range skipped {
+		s.CheckEventValueEmitted(types.EventTypeSweepSkipped, types.AttributeKeySweepAddress, tc.holders[kind].String())
+		s.CheckEventValueEmitted(types.EventTypeSweepSkipped, types.AttributeKeySweepReason, reason)
+	}
+	s.Require().Len(s.CheckEventTypeEmitted(types.EventTypeSweepSkipped), len(skipped))
+	s.Require().Len(s.CheckEventTypeEmitted(types.EventTypeSweepTransfer), len(swept))
+}
+
+// A vesting account is swept for its spendable balance only: the STRD its schedule still locks
+// stays behind (the escrow send would refuse it and fail the batch), a fully locked account is
+// skipped silently like a zero balance, and its non-vesting denoms move in full
+func (s *KeeperTestSuite) TestSweepTokensOffStride_VestingSweepsOnlySpendable() {
+	tc := s.SetupSweep()
+	now := s.Ctx.BlockTime().Unix()
+	holders := apptesting.CreateRandomAccounts(2)
+	original := sdk.NewCoins(sdk.NewInt64Coin(sweepTestStrd, 1_000))
+
+	// 40% of a linear schedule has elapsed: 400 vested, 600 still locked
+	partlyVested, err := vestingtypes.NewContinuousVestingAccount(
+		s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, holders[0]).(*authtypes.BaseAccount), original, now-400, now+600)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, partlyVested)
+	s.FundAccount(holders[0], sdk.NewInt64Coin(sweepTestStrd, 1_000))
+	s.FundAccount(holders[0], sdk.NewInt64Coin(sweepTestStToken, 50))
+	s.Require().Equal(int64(600), s.App.BankKeeper.LockedCoins(s.Ctx, holders[0]).AmountOf(sweepTestStrd).Int64(), "fixture: 600 locked")
+
+	// Nothing vested yet: every ustrd is locked, nothing is spendable
+	fullyLocked, err := vestingtypes.NewContinuousVestingAccount(
+		s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, holders[1]).(*authtypes.BaseAccount), original, now, now+1_000)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, fullyLocked)
+	s.FundAccount(holders[1], sdk.NewInt64Coin(sweepTestStrd, 1_000))
+
+	resp, err := s.sweep(tc, []string{sweepTestStrd, sweepTestStToken}, holders[0], holders[1])
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(2), resp.NumTransfers, "400 ustrd and 50 stuatom from the first holder; nothing from the second")
+	s.Require().Equal(uint64(0), resp.NumSkipped, "a fully locked balance is silent, not a skipped address")
+
+	s.Require().Equal(int64(600), s.App.BankKeeper.GetBalance(s.Ctx, holders[0], sweepTestStrd).Amount.Int64(), "locked ustrd stays")
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holders[0], sweepTestStToken).Amount.Int64(), "stToken moves in full")
+	s.Require().Equal(int64(1_000), s.App.BankKeeper.GetBalance(s.Ctx, holders[1], sweepTestStrd).Amount.Int64(), "fully locked holder untouched")
+	s.Require().Equal(int64(400), s.escrowBalance("channel-5", sweepTestStrd).Int64(), "only the spendable 400 escrowed")
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepAmount, "400")
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepSkipped)
+}
+
+// A zero balance is skipped silently: no transfer, no skip event, not counted
+func (s *KeeperTestSuite) TestSweepTokensOffStride_ZeroBalanceSilent() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+
+	resp, err := s.sweep(tc, []string{sweepTestStToken, sweepTestStrd}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(0), resp.NumTransfers)
+	s.Require().Equal(uint64(0), resp.NumSkipped)
+	s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5"))
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepSkipped)
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepTransfer)
+}
+
+// A holder with two of three listed denoms yields exactly two transfers
+func (s *KeeperTestSuite) TestSweepTokensOffStride_TwoOfThreeDenoms() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStToken, 10))
+	s.FundAccount(holder, sdk.NewInt64Coin(tc.atomIbc, 20))
+
+	resp, err := s.sweep(tc, []string{sweepTestStToken, sweepTestStrd, tc.atomIbc}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(2), resp.NumTransfers)
+	s.Require().Len(s.CheckEventTypeEmitted(types.EventTypeSweepTransfer), 2)
+}
+
+// A denom with no destination rejects the whole tx before any address is touched
+func (s *KeeperTestSuite) TestSweepTokensOffStride_UnwhitelistedVoucherRejectsBatch() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	luna := s.registerVoucher("uluna", transfertypes.NewHop(transfertypes.PortID, "channel-1")) // channel-1 exists, not whitelisted
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStToken, 10))
+	s.FundAccount(holder, sdk.NewInt64Coin(luna, 10))
+
+	_, err := s.sweep(tc, []string{sweepTestStToken, luna}, holder)
+	s.Require().ErrorIs(err, types.ErrSweepDestinationUnavailable)
+	s.Require().Equal(int64(10), s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStToken).Amount.Int64(), "nothing moved")
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepTransfer)
+}
+
+// A transfer error (a whitelisted channel that does not exist on chain) rejects the whole tx
+// even when earlier holders in the batch were fine, and the failed tx moves nothing.
+//
+// In production baseapp runs every message in a cache-wrapped context and only writes it on
+// success (runMsgs / runTx), so a keeper error discards every state change the message made.
+// The keeper suite calls the keeper directly with no baseapp in front, so this test reproduces
+// that boundary by hand: it runs the sweep on s.Ctx.CacheContext(), never calls write, first
+// proves on the cache that the first holder's transfer really happened (otherwise any
+// implementation that errors before touching a holder would pass), then asserts on s.Ctx that
+// none of it survived.
+//
+// channel-24 does not exist on the test chain. ibc-go v11's Transfer looks for a v1 channel of
+// that id, finds none, and falls through to the V2 (client-id) path, which fails on the unknown
+// id; the "channel-24" in the error text comes from this keeper's own wrap ("unable to sweep ...
+// over channel-24"), not from ibc-go, which is fine because the wrap is what ops read.
+func (s *KeeperTestSuite) TestSweepTokensOffStride_TransferErrorRejectsBatch() {
+	tc := s.SetupSweep()
+	junoVoucher := s.registerVoucher("ujuno", transfertypes.NewHop(transfertypes.PortID, "channel-24")) // whitelisted, no such channel
+	first := tc.holders["base"]
+	second := tc.holders["continuous_vesting"]
+	s.FundAccount(first, sdk.NewInt64Coin(sweepTestStToken, 10))
+	s.FundAccount(second, sdk.NewInt64Coin(junoVoucher, 10))
+
+	sequenceBefore := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+	escrowBefore := s.escrowBalance("channel-5", sweepTestStToken)
+
+	msg := types.NewMsgSweepTokensOffStride(tc.operator.String(), []string{sweepTestStToken, junoVoucher},
+		[]string{first.String(), second.String()})
+	s.Require().NoError(msg.ValidateBasic())
+
+	// The first holder's transfer succeeds inside the cache, the second holder's fails
+	cacheCtx, _ := s.Ctx.CacheContext()
+	_, _, err := s.App.StakeibcKeeper.SweepTokensOffStride(cacheCtx, msg)
+	s.Require().Error(err)
+	s.Require().Contains(err.Error(), "channel-24")
+
+	// Inside the cache the first transfer did happen: balance moved to escrow, one sequence
+	// consumed, one commitment written. This is what makes the rollback assertions below meaningful
+	s.Require().Zero(s.App.BankKeeper.GetBalance(cacheCtx, first, sweepTestStToken).Amount.Int64(), "first holder drained inside the cache")
+	escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, "channel-5")
+	s.Require().Equal(escrowBefore.AddRaw(10), s.App.BankKeeper.GetBalance(cacheCtx, escrowAddress, sweepTestStToken).Amount, "escrowed inside the cache")
+	cacheSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(cacheCtx, transfertypes.PortID, "channel-5")
+	s.Require().True(found)
+	s.Require().Equal(sequenceBefore+1, cacheSequence, "one packet sequence consumed inside the cache")
+	s.Require().Len(s.App.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(cacheCtx, transfertypes.PortID, "channel-5"), 1, "one commitment inside the cache")
+
+	// Nothing written to the cache reaches s.Ctx: balances, the channel sequence, the packet
+	// commitment and the events are all as they were before the call
+	s.Require().Equal(int64(10), s.App.BankKeeper.GetBalance(s.Ctx, first, sweepTestStToken).Amount.Int64(), "first holder untouched")
+	s.Require().Equal(int64(10), s.App.BankKeeper.GetBalance(s.Ctx, second, junoVoucher).Amount.Int64(), "second holder untouched")
+	s.Require().Equal(escrowBefore, s.escrowBalance("channel-5", sweepTestStToken), "escrow untouched")
+	s.Require().Equal(sequenceBefore, s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5"), "no packet sequence consumed")
+	s.Require().Empty(s.App.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(s.Ctx, transfertypes.PortID, "channel-5"), "no packet commitment")
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepTransfer)
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepSkipped)
+}
+
+// The positive counterpart: through the msg server on s.Ctx, a good batch leaves its state
+// changes in place (the cache boundary only discards on error)
+func (s *KeeperTestSuite) TestSweepTokensOffStride_SuccessfulBatchPersists() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStToken, 10))
+	sequenceBefore := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
+
+	resp, err := s.sweep(tc, []string{sweepTestStToken}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), resp.NumTransfers)
+
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStToken).Amount.Int64(), "holder drained")
+	s.Require().Equal(int64(10), s.escrowBalance("channel-5", sweepTestStToken).Int64(), "escrowed")
+	s.Require().Equal(sequenceBefore+1, s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5"), "one packet sent")
+	s.Require().Len(s.App.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(s.Ctx, transfertypes.PortID, "channel-5"), 1, "one commitment")
+	s.Require().Len(s.CheckEventTypeEmitted(types.EventTypeSweepTransfer), 1)
+}
+
+// The ICS-20 timeout refund lands the escrowed balance back on the holder
+func (s *KeeperTestSuite) TestSweepTokensOffStride_TimeoutRefundsHolder() {
+	tc := s.SetupSweep()
+	holder := tc.holders["base"]
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStToken, 1_000))
+
+	_, err := s.sweep(tc, []string{sweepTestStToken}, holder)
+	s.Require().NoError(err)
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStToken).Amount.Int64())
+
+	// Replay the timeout through the transfer keeper with the packet the sweep built
+	data := transfertypes.NewInternalTransferRepresentation(
+		transfertypes.Token{Denom: transfertypes.NewDenom(sweepTestStToken), Amount: "1000"},
+		holder.String(),
+		sdk.MustBech32ifyAddressBytes("osmo", holder),
+		"",
+	)
+	err = s.App.TransferKeeper.OnTimeoutPacket(s.Ctx, transfertypes.PortID, "channel-5", data)
+	s.Require().NoError(err)
+	s.Require().Equal(int64(1_000), s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStToken).Amount.Int64(), "refunded")
+	s.Require().Zero(s.escrowBalance("channel-5", sweepTestStToken).Int64())
 }

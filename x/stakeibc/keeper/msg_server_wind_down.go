@@ -4,10 +4,7 @@ package keeper
 import (
 	"context"
 
-	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
@@ -47,7 +44,12 @@ func (k msgServer) TransferStaketiaClaimBalance(goCtx context.Context, msg *type
 	return &types.MsgTransferStaketiaClaimBalanceResponse{Transferred: transferred}, nil
 }
 
-// SweepTokensOffStride: the batched sweep (PR 5 replaces the body).
+// SweepTokensOffStride is the batched token sweep, gated on the sweep operator in ValidateBasic
 func (k msgServer) SweepTokensOffStride(goCtx context.Context, msg *types.MsgSweepTokensOffStride) (*types.MsgSweepTokensOffStrideResponse, error) {
-	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgSweepTokensOffStride is delivered in the next PR")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	numTransfers, numSkipped, err := k.Keeper.SweepTokensOffStride(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgSweepTokensOffStrideResponse{NumTransfers: numTransfers, NumSkipped: numSkipped}, nil
 }
