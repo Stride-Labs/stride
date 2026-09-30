@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"strings"
 
 	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
@@ -16,9 +17,12 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	auctiontypes "github.com/Stride-Labs/stride/v34/x/auction/types"
 	claimvestingtypes "github.com/Stride-Labs/stride/v34/x/claim/vesting/types"
+	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
 )
 
 const (
@@ -35,9 +39,12 @@ func (s *KeeperTestSuite) registerVoucher(base string, hops ...transfertypes.Hop
 
 func (s *KeeperTestSuite) TestResolveSweepDestination() {
 	singleHopAtom := s.registerVoucher("uatom", transfertypes.NewHop(transfertypes.PortID, "channel-0"))
-	twoHopStAtomViaOsmosis := s.registerVoucher(sweepTestStToken,
+	s.setSweepHostZone()
+	// Hub ATOM that travelled Hub -> Osmosis -> Stride: Stride's outermost hop is channel-5
+	osmosisRoutedAtom := s.registerVoucher("uatom",
 		transfertypes.NewHop(transfertypes.PortID, "channel-5"),
-		transfertypes.NewHop(transfertypes.PortID, "channel-326"))
+		transfertypes.NewHop(transfertypes.PortID, "channel-0"))
+	wrongPortVoucher := s.registerVoucher("uatom", transfertypes.NewHop("wasm.contract", "channel-0"))
 	unwhitelistedLuna := s.registerVoucher("uluna", transfertypes.NewHop(transfertypes.PortID, "channel-52"))
 
 	testCases := []struct {
@@ -62,9 +69,34 @@ func (s *KeeperTestSuite) TestResolveSweepDestination() {
 			expected: keeper.SweepDestinationForTest{ChannelId: "channel-0", Bech32Prefix: "cosmos"},
 		},
 		{
-			name:     "two-hop voucher unwinds one hop over its outer channel",
-			denom:    twoHopStAtomViaOsmosis,
+			name:     "osmosis-routed voucher unwinds one hop over its outer channel",
+			denom:    osmosisRoutedAtom,
 			expected: keeper.SweepDestinationForTest{ChannelId: "channel-5", Bech32Prefix: "osmo"},
+		},
+		{
+			name:     "staketia stToken goes to osmosis",
+			denom:    "stutia",
+			expected: keeper.SweepDestinationForTest{ChannelId: "channel-5", Bech32Prefix: "osmo"},
+		},
+		{
+			name:     "stakedym stToken goes to osmosis",
+			denom:    "stadym",
+			expected: keeper.SweepDestinationForTest{ChannelId: "channel-5", Bech32Prefix: "osmo"},
+		},
+		{
+			name:        "made-up native denom is rejected",
+			denom:       "ufake",
+			expectedErr: types.ErrSweepDestinationUnavailable,
+		},
+		{
+			name:        "native denom of a host zone (not its stToken) is rejected",
+			denom:       "uatom",
+			expectedErr: types.ErrSweepDestinationUnavailable,
+		},
+		{
+			name:        "voucher whose outer hop is not the transfer port is rejected",
+			denom:       wrongPortVoucher,
+			expectedErr: types.ErrSweepDestinationUnavailable,
 		},
 		{
 			name:        "voucher whose outer channel is not whitelisted is rejected",
@@ -92,6 +124,43 @@ func (s *KeeperTestSuite) TestResolveSweepDestination() {
 			s.Require().NoError(err)
 			s.Require().Equal(tc.expected, destination)
 		})
+	}
+}
+
+// setSweepHostZone registers the cosmoshub host zone so stuatom is a known stToken
+func (s *KeeperTestSuite) setSweepHostZone() {
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{ChainId: "cosmoshub-4", HostDenom: "uatom"})
+}
+
+// setBaseAccount stores a plain BaseAccount at the address, replacing any account already there
+func (s *KeeperTestSuite) setBaseAccount(address sdk.AccAddress) {
+	if existing := s.App.AccountKeeper.GetAccount(s.Ctx, address); existing != nil {
+		s.App.AccountKeeper.RemoveAccount(s.Ctx, existing)
+	}
+	s.App.AccountKeeper.SetAccount(s.Ctx, s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, address))
+}
+
+// The copies in stakeibc/types must match the staketia and stakedym constants
+func (s *KeeperTestSuite) TestSweepProtocolAddressesMatchModuleConstants() {
+	s.Require().ElementsMatch([]string{
+		staketiatypes.DepositAddress, staketiatypes.RedemptionAddress, staketiatypes.ClaimAddress,
+		stakedymtypes.DepositAddress, stakedymtypes.RedemptionAddress, stakedymtypes.ClaimAddress,
+	}, types.SweepProtocolAddresses())
+
+	types.SweepOperatorAddress = s.TestAccs[0].String()
+	s.T().Cleanup(func() { types.SweepOperatorAddress = "" })
+	s.Require().Contains(types.SweepProtocolAddresses(), s.TestAccs[0].String())
+}
+
+// Protocol addresses (staketia and stakedym multisigs) as label -> address
+func protocolAddressKinds() map[string]sdk.AccAddress {
+	return map[string]sdk.AccAddress{
+		"protocol_staketia_deposit":    sdk.MustAccAddressFromBech32(staketiatypes.DepositAddress),
+		"protocol_staketia_redemption": sdk.MustAccAddressFromBech32(staketiatypes.RedemptionAddress),
+		"protocol_staketia_claim":      sdk.MustAccAddressFromBech32(staketiatypes.ClaimAddress),
+		"protocol_stakedym_deposit":    sdk.MustAccAddressFromBech32(stakedymtypes.DepositAddress),
+		"protocol_stakedym_redemption": sdk.MustAccAddressFromBech32(stakedymtypes.RedemptionAddress),
+		"protocol_stakedym_claim":      sdk.MustAccAddressFromBech32(stakedymtypes.ClaimAddress),
 	}
 }
 
@@ -139,6 +208,19 @@ func (s *KeeperTestSuite) setupSweepAccountKinds() map[string]sdk.AccAddress {
 	kinds["unknown"] = accounts[6]
 
 	kinds["module"] = authtypes.NewModuleAddress(distrtypes.ModuleName)
+
+	// A blocked module address that a plain BaseAccount occupies (not a ModuleAccount)
+	blockedBase := authtypes.NewModuleAddress(auctiontypes.ModuleName)
+	s.Require().True(s.App.BankKeeper.BlockedAddr(blockedBase), "fixture: auction module address is blocked")
+	s.setBaseAccount(blockedBase)
+	kinds["blocked_base_account"] = blockedBase
+
+	// Protocol multisigs are plain BaseAccounts that would pass every other rule
+	for kind, address := range protocolAddressKinds() {
+		s.setBaseAccount(address)
+		kinds[kind] = address
+	}
+
 	kinds["thirty_two_bytes"] = sdk.AccAddress(make([]byte, 32))
 	kinds["escrow"] = transfertypes.GetEscrowAddress(transfertypes.PortID, "channel-0")
 	return kinds
@@ -158,6 +240,13 @@ func (s *KeeperTestSuite) TestSweepSkipReason() {
 	escrows := keeper.TransferEscrowAddressesForTest(s.App.StakeibcKeeper, s.Ctx)
 	s.Require().True(escrows[kinds["escrow"].String()], "channel-0 escrow should be in the set")
 
+	// The operator signs the sweep and is never swept itself
+	kinds["operator"] = s.TestAccs[0]
+	s.setBaseAccount(kinds["operator"])
+	types.SweepOperatorAddress = kinds["operator"].String()
+	s.T().Cleanup(func() { types.SweepOperatorAddress = "" })
+	protocol := keeper.SweepProtocolAddressSetForTest()
+
 	testCases := []struct {
 		kind           string
 		expectedSkip   bool
@@ -171,12 +260,21 @@ func (s *KeeperTestSuite) TestSweepSkipReason() {
 		{kind: "thirty_two_bytes", expectedSkip: true, expectedReason: "address is not 20 bytes"},
 		{kind: "unknown", expectedSkip: true, expectedReason: "account not found"},
 		{kind: "escrow", expectedSkip: true, expectedReason: "transfer escrow address"},
-		{kind: "module", expectedSkip: true, expectedReason: "account type *types.ModuleAccount is not sweepable"},
-		{kind: "interchain_account", expectedSkip: true, expectedReason: "account type *types.InterchainAccount is not sweepable"},
+		{kind: "module", expectedSkip: true, expectedReason: "blocked module address"},
+		{kind: "blocked_base_account", expectedSkip: true, expectedReason: "blocked module address"},
+		{kind: "interchain_account", expectedSkip: true, expectedReason: "interchain account"},
+		{kind: "operator", expectedSkip: true, expectedReason: "protocol address"},
+	}
+	for kind := range protocolAddressKinds() {
+		testCases = append(testCases, struct {
+			kind           string
+			expectedSkip   bool
+			expectedReason string
+		}{kind: kind, expectedSkip: true, expectedReason: "protocol address"})
 	}
 	for _, tc := range testCases {
 		s.Run(tc.kind, func() {
-			reason, skip := keeper.SweepSkipReasonForTest(s.App.StakeibcKeeper, s.Ctx, kinds[tc.kind], escrows)
+			reason, skip := keeper.SweepSkipReasonForTest(s.App.StakeibcKeeper, s.Ctx, kinds[tc.kind], escrows, protocol)
 			s.Require().Equal(tc.expectedSkip, skip, fmt.Sprintf("skip for %s (reason %q)", tc.kind, reason))
 			if tc.expectedSkip {
 				s.Require().Equal(tc.expectedReason, reason)
@@ -217,13 +315,14 @@ type sweepTestCase struct {
 	operator sdk.AccAddress
 	holders  map[string]sdk.AccAddress
 	atomIbc  string // single-hop uatom voucher over channel-0
-	twoHop   string // stuatom that came back through channel-5 (two hops)
+	twoHop   string // Hub ATOM that came Hub -> Osmosis -> Stride, so its outer hop is channel-5
 }
 
 // SetupSweep opens channel-0 .. channel-5, funds a base account with an stToken, ustrd and
 // a single-hop voucher, and registers the sweep operator
 func (s *KeeperTestSuite) SetupSweep() sweepTestCase {
 	s.CreateTransferChannel("GAIA")
+	s.setSweepHostZone()
 	s.openExtraTransferChannels(5)
 	_, found := s.App.IBCKeeper.ChannelKeeper.GetChannel(s.Ctx, transfertypes.PortID, "channel-5")
 	s.Require().True(found, "channel-5 should exist after opening five extra channels")
@@ -237,9 +336,9 @@ func (s *KeeperTestSuite) SetupSweep() sweepTestCase {
 
 	kinds := s.setupSweepAccountKinds()
 	atomIbc := s.registerVoucher("uatom", transfertypes.NewHop(transfertypes.PortID, "channel-0"))
-	twoHop := s.registerVoucher(sweepTestStToken,
+	twoHop := s.registerVoucher("uatom",
 		transfertypes.NewHop(transfertypes.PortID, "channel-5"),
-		transfertypes.NewHop(transfertypes.PortID, "channel-326"))
+		transfertypes.NewHop(transfertypes.PortID, "channel-0"))
 
 	return sweepTestCase{operator: operator, holders: kinds, atomIbc: atomIbc, twoHop: twoHop}
 }
@@ -316,11 +415,19 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_SingleHopVoucherUnwinds() {
 	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepChannel, "channel-0")
 }
 
-// A two-hop voucher (stuatom that came back through Osmosis) unwinds one hop over channel-5
+// Hub ATOM that reached Stride through Osmosis (trace channel-5, then Osmosis's channel-0)
+// unwinds one hop: it goes back over channel-5 to an osmo address and Osmosis is left holding
+// the remaining path transfer/channel-0/uatom
 func (s *KeeperTestSuite) TestSweepTokensOffStride_TwoHopVoucherUnwindsOneHop() {
 	tc := s.SetupSweep()
 	holder := tc.holders["base"]
 	s.FundAccount(holder, sdk.NewInt64Coin(tc.twoHop, 500))
+	hash, err := transfertypes.ParseHexHash(strings.TrimPrefix(tc.twoHop, "ibc/"))
+	s.Require().NoError(err)
+	trace, found := s.App.TransferKeeper.GetDenom(s.Ctx, hash)
+	s.Require().True(found)
+	s.Require().Equal("transfer/channel-5/transfer/channel-0/uatom", trace.Path(), "fixture: Osmosis-routed Hub ATOM")
+	s.Require().Equal("transfer/channel-0/uatom", transfertypes.NewDenom(trace.Base, trace.Trace[1:]...).Path(), "path left after one unwind")
 	startSequence := s.MustGetNextSequenceNumber(transfertypes.PortID, "channel-5")
 
 	resp, err := s.sweep(tc, []string{tc.twoHop}, holder)
@@ -337,11 +444,15 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_SkipRulesInOneBatch() {
 	tc := s.SetupSweep()
 	swept := []string{"base", "continuous_vesting", "delayed_vesting", "periodic_vesting", "stride_periodic_vesting"}
 	skipped := map[string]string{
-		"thirty_two_bytes":   "address is not 20 bytes",
-		"unknown":            "account not found",
-		"escrow":             "transfer escrow address",
-		"module":             "account type *types.ModuleAccount is not sweepable",
-		"interchain_account": "account type *types.InterchainAccount is not sweepable",
+		"thirty_two_bytes":     "address is not 20 bytes",
+		"unknown":              "account not found",
+		"escrow":               "transfer escrow address",
+		"module":               "blocked module address",
+		"blocked_base_account": "blocked module address",
+		"interchain_account":   "interchain account",
+	}
+	for kind := range protocolAddressKinds() {
+		skipped[kind] = "protocol address"
 	}
 	addresses := []sdk.AccAddress{}
 	for _, kind := range swept {
@@ -355,6 +466,10 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_SkipRulesInOneBatch() {
 	for kind := range skipped {
 		addresses = append(addresses, tc.holders[kind])
 	}
+	// Protocol multisigs hold real balances that module code spends from: none may move
+	for kind := range protocolAddressKinds() {
+		s.FundAccount(tc.holders[kind], sdk.NewInt64Coin(sweepTestStToken, 111))
+	}
 
 	resp, err := s.sweep(tc, []string{sweepTestStToken}, addresses...)
 	s.Require().NoError(err)
@@ -367,6 +482,9 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_SkipRulesInOneBatch() {
 	s.Require().Equal(int64(777), s.App.BankKeeper.GetBalance(s.Ctx, tc.holders["module"], sweepTestStToken).Amount.Int64())
 	s.Require().Equal(int64(555), s.App.BankKeeper.GetBalance(s.Ctx, tc.holders["escrow"], sweepTestStToken).Amount.Int64())
 	s.Require().Equal(int64(333), s.App.BankKeeper.GetBalance(s.Ctx, tc.holders["interchain_account"], sweepTestStToken).Amount.Int64())
+	for kind := range protocolAddressKinds() {
+		s.Require().Equal(int64(111), s.App.BankKeeper.GetBalance(s.Ctx, tc.holders[kind], sweepTestStToken).Amount.Int64(), kind)
+	}
 
 	for kind, reason := range skipped {
 		s.CheckEventValueEmitted(types.EventTypeSweepSkipped, types.AttributeKeySweepAddress, tc.holders[kind].String())
@@ -412,6 +530,31 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_VestingSweepsOnlySpendable() 
 	s.Require().Equal(int64(400), s.escrowBalance("channel-5", sweepTestStrd).Int64(), "only the spendable 400 escrowed")
 	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepAmount, "400")
 	s.CheckEventTypeNotEmitted(types.EventTypeSweepSkipped)
+}
+
+// A vesting account whose locked coins are partly delegated has less locked than its schedule
+// says (the delegated part has already left the balance), and only the spendable amount moves
+func (s *KeeperTestSuite) TestSweepTokensOffStride_VestingWithDelegatedLockedSweepsSpendable() {
+	tc := s.SetupSweep()
+	now := s.Ctx.BlockTime().Unix()
+	holder := apptesting.CreateRandomAccounts(1)[0]
+	original := sdk.NewCoins(sdk.NewInt64Coin(sweepTestStrd, 1_000))
+
+	// 600 still locked by the schedule, 300 of the vesting coins are delegated: 300 stay locked
+	account, err := vestingtypes.NewContinuousVestingAccount(
+		s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, holder).(*authtypes.BaseAccount), original, now-400, now+600)
+	s.Require().NoError(err)
+	account.DelegatedVesting = sdk.NewCoins(sdk.NewInt64Coin(sweepTestStrd, 300))
+	s.App.AccountKeeper.SetAccount(s.Ctx, account)
+	s.FundAccount(holder, sdk.NewInt64Coin(sweepTestStrd, 700)) // 1000 vesting minus 300 delegated away
+	s.Require().Equal(int64(300), s.App.BankKeeper.LockedCoins(s.Ctx, holder).AmountOf(sweepTestStrd).Int64(), "fixture: 300 locked")
+
+	resp, err := s.sweep(tc, []string{sweepTestStrd}, holder)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), resp.NumTransfers)
+	s.Require().Equal(int64(300), s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStrd).Amount.Int64(), "locked ustrd stays")
+	s.Require().Equal(int64(400), s.escrowBalance("channel-5", sweepTestStrd).Int64(), "only the spendable 400 escrowed")
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepAmount, "400")
 }
 
 // A zero balance is skipped silently: no transfer, no skip event, not counted

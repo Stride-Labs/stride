@@ -4,10 +4,13 @@
 """
 
 import argparse
+import contextlib
+import io
 import json
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 import bech32_ref
 import build_sweep_batches
@@ -16,14 +19,26 @@ STRIDE_BASE = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 STRIDE_VESTING = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
 STRIDE_MODULE = "stride1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8y5yqan"  # the distribution module account: sha256("distribution")[:20]
 STRIDE_CONTINUOUS = "stride1am99pcvynqqhyrwqfvfmnvxjk96rn46le9j65c"  # ContinuousVestingAccount, 40% through its schedule
-STRIDE_ICA = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04"
-STRIDE_NO_ACCOUNT = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g"
-STRIDE_DUST = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd"
+STRIDE_BLOCKED_BASE = "stride1j4yzhgjm00ch3h0p9kel7g8sp6g045qfcgk6ex"  # sha256("auction")[:20] held by a plain BaseAccount
+STRIDE_ICA = "stride1zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zkh7xr"
+STRIDE_NO_ACCOUNT = "stride1yg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zdtjcw5"
+STRIDE_DUST = "stride1xvenxvenxvenxvenxvenxvenxvenxvenl499mx"
 ATOM_VOUCHER = "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
 
 
-GENESIS_TIME = "2026-09-29T00:00:00Z"
-AS_OF = 1790640000  # GENESIS_TIME as unix seconds
+# The export's genesis_time is the chain's original genesis, years before the export height: the
+# builder must never use it for vesting, only --as-of
+GENESIS_TIME = "2020-01-01T00:00:00Z"
+AS_OF = 1790640000  # 2026-09-29T00:00:00Z, the block time at the export height
+SWEEP_OPERATOR = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw"
+PROTOCOL_ADDRESSES = [
+    "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
+    "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption
+    "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd",  # staketia claim
+    "stride1e7j8d6sdq272fqe2jfxjpgcagn04j75w9695fj",  # stakedym deposit
+    "stride1jpsnc0ynufa2aheflj6mxzzzsu7nlwqk7ff69n",  # stakedym redemption
+    "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras",  # stakedym claim
+]
 
 
 def synthetic_export() -> dict:
@@ -39,7 +54,9 @@ def synthetic_export() -> dict:
         {"address": STRIDE_NO_ACCOUNT, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": escrow, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": STRIDE_DUST, "coins": [{"denom": "stuatom", "amount": "1000"}]},
-    ]
+        {"address": STRIDE_BLOCKED_BASE, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
+        {"address": SWEEP_OPERATOR, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
+    ] + [{"address": address, "coins": [{"denom": "stuatom", "amount": "99000000"}]} for address in PROTOCOL_ADDRESSES]
     accounts = [
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_BASE},
         {"@type": "/stride.vesting.StridePeriodicVestingAccount", "base_vesting_account": {"base_account": {"address": STRIDE_VESTING}, "original_vesting": [], "delegated_vesting": [], "end_time": "0"}, "vesting_periods": []},
@@ -50,7 +67,9 @@ def synthetic_export() -> dict:
         {"@type": "/ibc.applications.interchain_accounts.v1.InterchainAccount", "base_account": {"address": STRIDE_ICA}, "account_owner": "x"},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_DUST},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": escrow},
-    ]
+        {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_BLOCKED_BASE},
+        {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": SWEEP_OPERATOR},
+    ] + [{"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": address} for address in PROTOCOL_ADDRESSES]
     channels = [{"port_id": "transfer", "channel_id": "channel-5", "state": "STATE_OPEN"}]
     contracts = [{"contract_address": contract, "contract_info": {"code_id": "1"}}]
     return {
@@ -75,20 +94,20 @@ class BuildSweepBatchesTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.export_path = pathlib.Path(self.tmp.name) / "export.json"
         self.export_path.write_text(json.dumps(synthetic_export()))
-        self.export = build_sweep_batches.load_export(self.export_path)
+        self.export = build_sweep_batches.load_export(self.export_path, as_of=AS_OF)
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
     def test_classify_applies_skip_rules_and_floor(self) -> None:
-        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0)
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0, sweep_operator=SWEEP_OPERATOR)
 
         swept = [holder.address for holder in plan.holders]
         self.assertEqual(swept, [STRIDE_BASE, STRIDE_VESTING, STRIDE_CONTINUOUS],
                          "ordered by USD: base ($100.25), stride vesting ($20), continuous ($10.02 on its spendable part)")
 
         skipped = {entry.address: entry.reason for entry in plan.skipped}
-        self.assertEqual(skipped[STRIDE_MODULE], "account type /cosmos.auth.v1beta1.ModuleAccount is not sweepable")
+        self.assertEqual(skipped[STRIDE_MODULE], "blocked module address")
         self.assertEqual(skipped[build_sweep_batches.escrow_address("transfer", "channel-999")], "wasm contract address")
         self.assertEqual(skipped[STRIDE_ICA], "account type /ibc.applications.interchain_accounts.v1.InterchainAccount is not sweepable")
         self.assertEqual(skipped[STRIDE_NO_ACCOUNT], "account not found")
@@ -96,7 +115,7 @@ class BuildSweepBatchesTest(unittest.TestCase):
         self.assertEqual(skipped[STRIDE_DUST], "below floor ($0.01 < $1.00)")
 
     def test_write_batches_splits_at_batch_size(self) -> None:
-        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0)
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0, sweep_operator=SWEEP_OPERATOR)
         out_dir = pathlib.Path(self.tmp.name) / "out"
 
         files = build_sweep_batches.write_batches(plan=plan, out_dir=out_dir, batch_size=1)
@@ -106,13 +125,13 @@ class BuildSweepBatchesTest(unittest.TestCase):
         summary = json.loads((out_dir / "summary.json").read_text())
         self.assertEqual(summary["denoms"], ["stuatom", "ustrd"])
         self.assertEqual(summary["batches"][0]["num_addresses"], 1)
-        self.assertEqual(len(summary["skipped"]), 6)
+        self.assertEqual(len(summary["skipped"]), 6 + 2 + len(PROTOCOL_ADDRESSES))
 
     def test_vesting_locked_balance_is_not_swept(self) -> None:
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0)
         continuous = next(holder for holder in plan.holders if holder.address == STRIDE_CONTINUOUS)
 
-        # 1,000,000 ustrd held, 600,000 still locked at genesis_time: the chain's SpendableCoin is 400,000
+        # 1,000,000 ustrd held, 600,000 still locked at --as-of: the chain's SpendableCoin is 400,000
         self.assertEqual(continuous.balances, {"stuatom": 1000000, "ustrd": 400000})
         self.assertEqual(f"{continuous.usd:.2f}", "10.02")
 
@@ -120,6 +139,57 @@ class BuildSweepBatchesTest(unittest.TestCase):
         self.assertEqual(build_sweep_batches.locked_at(schedule=schedule, as_of=AS_OF), {"ustrd": 600000})
         self.assertEqual(build_sweep_batches.locked_at(schedule=schedule, as_of=AS_OF + 600), {})
         self.assertEqual(build_sweep_batches.locked_at(schedule=schedule, as_of=AS_OF - 400), {"ustrd": 1000000})
+
+    def test_genesis_time_years_before_as_of_does_not_affect_vesting(self) -> None:
+        # The fixture's genesis_time is 2020; the continuous account is 40% vested at AS_OF only if
+        # the builder measures from --as-of. Measured from genesis_time everything would be vested
+        self.assertEqual(self.export.as_of, AS_OF)
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["ustrd"], prices=PRICES, floor_usd=0.0)
+        continuous = next(holder for holder in plan.holders if holder.address == STRIDE_CONTINUOUS)
+        self.assertEqual(continuous.balances, {"ustrd": 400000})
+
+    def test_as_of_accepts_iso_and_unix_seconds(self) -> None:
+        self.assertEqual(build_sweep_batches.as_of_arg("2026-09-29T00:00:00Z"), AS_OF)
+        self.assertEqual(build_sweep_batches.as_of_arg("2026-09-29T00:00:00.123456789Z"), AS_OF)
+        self.assertEqual(build_sweep_batches.as_of_arg("2026-09-29T02:00:00+02:00"), AS_OF)
+        self.assertEqual(build_sweep_batches.as_of_arg(str(AS_OF)), AS_OF)
+        with self.assertRaises(argparse.ArgumentTypeError):
+            build_sweep_batches.as_of_arg("yesterday")
+
+    def test_as_of_is_required(self) -> None:
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            with mock.patch("sys.argv", ["x", "--export", "e", "--prices", "p", "--denoms", "ustrd", "--floor-usd", "1", "--out-dir", "o"]):
+                build_sweep_batches.parse_args()
+
+    def test_every_protocol_address_and_the_operator_is_excluded(self) -> None:
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0, sweep_operator=SWEEP_OPERATOR)
+        skipped = {entry.address: entry.reason for entry in plan.skipped}
+        swept = {holder.address for holder in plan.holders}
+        for address in PROTOCOL_ADDRESSES + [SWEEP_OPERATOR]:
+            self.assertEqual(skipped[address], "protocol address", address)
+            self.assertNotIn(address, swept)
+        self.assertIn(STRIDE_BASE, swept, "a normal holder in the same run is still swept")
+
+        # Without --sweep-operator the operator is an ordinary holder; the multisigs stay excluded
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
+        self.assertIn(SWEEP_OPERATOR, {holder.address for holder in plan.holders})
+        self.assertEqual(len([e for e in plan.skipped if e.reason == "protocol address"]), len(PROTOCOL_ADDRESSES))
+
+    def test_blocked_module_addresses_are_excluded(self) -> None:
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
+        skipped = {entry.address: entry.reason for entry in plan.skipped}
+        # A blocked name from the app's list, held by a BaseAccount and absent from the export's module accounts
+        self.assertEqual(skipped[STRIDE_BLOCKED_BASE], "blocked module address")
+        # A module account present in the export
+        self.assertEqual(skipped[STRIDE_MODULE], "blocked module address")
+
+        # A module account whose name is not in the constant list is still excluded via the export
+        custom = build_sweep_batches.module_address("custom_module")
+        self.export.module_addresses.add(custom)
+        self.export.balances[custom] = {"stuatom": 99000000}
+        self.export.account_types[custom] = "/cosmos.auth.v1beta1.BaseAccount"
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
+        self.assertIn((custom, "blocked module address"), [(e.address, e.reason) for e in plan.skipped])
 
     def test_extra_denom_parsing_and_whitelist(self) -> None:
         extra = build_sweep_batches.parse_extra_denom("ustrd=0.05:6")
@@ -141,6 +211,11 @@ class BuildSweepBatchesTest(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             build_sweep_batches.check_denom_destination(denom="ibc/BBBB", traces=traces)  # no trace at all
+
+        # The outermost hop must be on the transfer port
+        with self.assertRaises(ValueError) as raised:
+            build_sweep_batches.check_denom_destination(denom="ibc/CCCC", traces={"ibc/CCCC": ["wasm.contract/channel-0"]})
+        self.assertIn("wasm.contract", str(raised.exception))
 
     def test_batch_size_is_bounded_by_the_chain_maximum(self) -> None:
         self.assertEqual(build_sweep_batches.batch_size_arg("100"), 100)
