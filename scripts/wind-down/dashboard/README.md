@@ -32,6 +32,25 @@ Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`
 - Host -> Osmosis legs: one row per zone except osmosis-1, from the host channel in `config.ZONES`.
 - Holder routes into Osmosis: `config.HOLDER_ROUTES`, queried on the Osmosis side only. Collapsed by default.
 
+## Funds flow tab
+
+- Stage table, one row per zone: staked (delegation ICA delegations), unbonding (its unbonding entries, with the
+  earliest maturity), liquid (delegation + withdrawal + fee ICA balances in the host denom), in flight (our ICA
+  transfers to the Osmosis vault whose packet commitment the host still holds), Osmosis vault balance, and the
+  native balance of the zone's transmuter pools. Celestia adds the staketia multisig's delegations, unbonding and
+  liquid balance and the claim address's TIA voucher on Stride. The redemption ICA is shown beside the bar, not in it.
+- Needed = stToken bank supply on Stride x `redemption_rate`; coverage = (vault + pools' native + stTokens swapped
+  into the pools x rate) / needed. The pill is `ok` at 100%, `bad` when nothing is left upstream and it is short.
+- In flight: `tx_search` on the host for `ibc_transfer.sender='<ica>' AND ibc_transfer.receiver='<vault>'` (the 100
+  newest hits per ICA), sequence / amount / denom decoded from each `send_packet`, status from one `unreceived_acks`
+  query for the sequences. `n/a` when the index lookup fails.
+- Pools: every `factory/<contract>/alloyed/...` denom in the vault names a transmuter the vault joined, plus
+  `config.EXTRA_POOL_CONTRACTS`. A pool's asset list (`list_asset_configs`) says which stToken it holds even before a
+  swap; its bank balances give the amounts. It belongs to the zone whose native Osmosis denom it holds, or, once
+  drained of native, whose stToken it holds (by denom trace); canonical when the stToken came over channel-326.
+- Click a row for the zone's diagram, its transfer list and its accounts (ICAs, deposit address, staketia addresses
+  for celestia, vault, pools, operators). Every integer in the payload is a string; the page uses BigInt.
+
 ## Known gaps
 
 - "Last sent" only reflects txs: ICA packets sent by epoch hooks are not in the tx index (`block_search` returns nothing
@@ -42,3 +61,5 @@ Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`
   packets), so those show as `pending` with the sequence only, never `stuck`.
 - If a host's REST is down the zone still renders from Stride and the feed (host-side cells `n/a`, a "host REST
   unreachable" badge); its host -> Osmosis leg shows as an error row.
+- Funds: if Osmosis cannot be read, vault, pools and coverage are `n/a` for every zone; a timed-out ICA transfer
+  shows as `settled` (its commitment is gone) although the tokens were refunded to the ICA, where they show as liquid.

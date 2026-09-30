@@ -80,3 +80,9 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 
 /* validators */
 #view-validators .tile .v { font-size: 16px; overflow-wrap: anywhere; }
+
+/* funds */
+#view-funds tr[data-zone] { cursor: pointer; }
+#view-funds tr[data-zone]:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+#view-funds tr[data-zone].sel:hover td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+#view-funds .bar { min-width: 170px; }
