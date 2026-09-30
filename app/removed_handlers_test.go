@@ -47,7 +47,7 @@ var removedMsgs = []sdk.Msg{
 	&stakeibctypes.MsgRebalanceValidators{},
 	&stakeibctypes.MsgClearBalance{},
 	&stakeibctypes.MsgResumeHostZone{},
-	&staketiatypes.MsgLiquidStake{},
+	&staketiatypes.MsgLiquidStake{}, //nolint:staticcheck // deprecated type, kept registered for historical decoding
 	&staketiatypes.MsgRedeemStake{},
 	&staketiatypes.MsgResumeHostZone{},
 	&stakedymtypes.MsgLiquidStake{},
