@@ -9,9 +9,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	minttypes "github.com/Stride-Labs/stride/v34/x/mint/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
@@ -453,4 +455,33 @@ func (s *KeeperTestSuite) TestDelegatorSharesCallback_ZeroExternalDelegation() {
 	validator = hostZone.Validators[tc.valIndexQueried]
 	s.Require().False(validator.SlashQueryInProgress, "slash query in progress should have been reset")
 	s.Require().Zero(validator.Delegation.Int64(), "validator delegation amount")
+}
+
+// A slash found by the query still lowers the validator's and the zone's delegation, but the
+// redemption rate is frozen (wind-down spec §6): the callback no longer refreshes it. With a
+// stToken supply of 10,000 against 9,950 delegated after the slash, the old refresh would have
+// set the rate to 0.995; it must stay at the seeded 1.5.
+func (s *KeeperTestSuite) TestDelegatorSharesCallback_RedemptionRateFrozen() {
+	tc := s.SetupDelegatorSharesICQCallback()
+
+	frozenRate := sdkmath.LegacyMustNewDecFromStr("1.5")
+	hostZone := tc.hostZone
+	hostZone.RedemptionRate = frozenRate
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+
+	stSupply := sdk.NewCoins(sdk.NewCoin(StAtom, sdkmath.NewInt(10_000)))
+	s.Require().NoError(s.App.BankKeeper.MintCoins(s.Ctx, minttypes.ModuleName, stSupply), "mint stToken supply")
+
+	err := keeper.DelegatorSharesCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
+	s.Require().NoError(err, "delegator shares callback error")
+
+	updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+	s.Require().True(found, "host zone found")
+
+	// The delegation accounting reflects the slash
+	s.Require().Equal(tc.expectedSlashAmount.Int64(), tc.hostZone.TotalDelegations.Sub(updatedHostZone.TotalDelegations).Int64(), "total delegations slashed")
+	s.Require().Equal(tc.expectedDelegationAmount.Int64(), updatedHostZone.Validators[tc.valIndexQueried].Delegation.Int64(), "validator delegation slashed")
+
+	// The rate did not move
+	s.Require().Equal(frozenRate, updatedHostZone.RedemptionRate, "redemption rate must not be rewritten by the slash callback")
 }

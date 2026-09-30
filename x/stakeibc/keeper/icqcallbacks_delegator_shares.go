@@ -248,9 +248,7 @@ func (k Keeper) SlashValidatorOnHostZone(ctx sdk.Context, hostZone types.HostZon
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Delegation,
 		"Delegation updated to: %v, Weight updated to: %v", validator.Delegation, validator.Weight))
 
-	// Update the redemption rate
-	depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
-	k.UpdateRedemptionRateForHostZone(ctx, hostZone, depositRecords)
-
+	// The redemption rate is frozen for the wind-down (spec §6): a slash lowers the backing but
+	// not the rate, and the coverage check on Osmosis is where the difference shows up
 	return nil
 }
