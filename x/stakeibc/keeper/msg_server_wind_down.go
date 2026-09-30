@@ -42,7 +42,12 @@ func (k msgServer) TransferFromIca(goCtx context.Context, msg *types.MsgTransfer
 // TransferStaketiaClaimBalance: claim-address TIA to the celestia delegation ICA (Task 5
 // replaces the body). Delegates to Keeper.TransferStaketiaClaimBalance in wind_down_staketia_claim.go.
 func (k msgServer) TransferStaketiaClaimBalance(goCtx context.Context, msg *types.MsgTransferStaketiaClaimBalance) (*types.MsgTransferStaketiaClaimBalanceResponse, error) {
-	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgTransferStaketiaClaimBalance is wired in a later task of this PR")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	transferred, err := k.Keeper.TransferStaketiaClaimBalance(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgTransferStaketiaClaimBalanceResponse{Transferred: transferred}, nil
 }
 
 // SweepTokensOffStride: the batched sweep (PR 5 replaces the body).

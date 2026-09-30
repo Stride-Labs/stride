@@ -177,14 +177,31 @@ explicitly and check it in the unsigned tx before signing.`,
 	return cmd
 }
 
-// CmdTransferStaketiaClaimBalance: claim-address TIA to the celestia delegation ICA (Task 5
-// replaces this function).
+// CmdTransferStaketiaClaimBalance: claim-address TIA to the celestia delegation ICA.
 func CmdTransferStaketiaClaimBalance() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer-staketia-claim-balance [amount]",
 		Short: "Wind-down: move the staketia claim address's TIA to the celestia delegation ICA",
-		RunE:  notWiredYet("transfer-staketia-claim-balance"),
+		Long: `Submits MsgTransferStaketiaClaimBalance (admin only). amount is in utia and is optional:
+omitted or 0 moves the whole balance. Use a small amount first as the live test.`,
+		Args: cobra.RangeArgs(0, 1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			amount := sdkmath.ZeroInt()
+			if len(args) == 1 {
+				parsed, err := ParseBaseUnits(args[0])
+				if err != nil {
+					return err
+				}
+				amount = parsed
+			}
+
+			return broadcastWindDownTx(cmd, func(creator string) sdk.Msg {
+				return types.NewMsgTransferStaketiaClaimBalance(creator, amount)
+			})
+		},
 	}
+
 	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
