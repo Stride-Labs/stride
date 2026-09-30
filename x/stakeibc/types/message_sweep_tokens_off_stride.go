@@ -11,7 +11,7 @@ const TypeMsgSweepTokensOffStride = "sweep_tokens_off_stride"
 
 var _ sdk.Msg = &MsgSweepTokensOffStride{}
 
-func NewMsgSweepTokensOffStride(creator string, denoms []string, addresses []string) *MsgSweepTokensOffStride {
+func NewMsgSweepTokensOffStride(creator string, denoms, addresses []string) *MsgSweepTokensOffStride {
 	return &MsgSweepTokensOffStride{
 		Creator:   creator,
 		Denoms:    denoms,

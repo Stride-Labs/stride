@@ -111,7 +111,7 @@ func (k Keeper) sweepSkipReason(ctx sdk.Context, address sdk.AccAddress, escrows
 func (k Keeper) SweepTokensOffStride(
 	ctx sdk.Context,
 	msg *types.MsgSweepTokensOffStride,
-) (numTransfers uint64, numSkipped uint64, err error) {
+) (numTransfers, numSkipped uint64, err error) {
 	destinations := map[string]sweepDestination{}
 	for _, denom := range msg.Denoms {
 		destination, err := k.resolveSweepDestination(ctx, denom)
