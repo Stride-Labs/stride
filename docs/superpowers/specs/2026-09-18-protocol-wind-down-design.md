@@ -361,7 +361,7 @@ while staketia's and stakedym's redeem keeper paths go with their handlers.
 
 - stakeibc: `LiquidStake`, `LSMLiquidStake`, `RedeemStake`, `RegisterHostZone`,
   `CreateTradeRoute`, `UpdateTradeRoute`, `DeleteTradeRoute`, `SetCommunityPoolRebate`,
-  `ToggleTradeController`, `RebalanceValidators`, `ClearBalance`, `ResumeHostZone`.
+  `ToggleTradeController`, `RebalanceValidators`, `ClearBalance`.
 - staketia and stakedym: `RedeemStake` (their `LiquidStake` is already a disabled stub; remove
   the stub too), `ResumeHostZone`.
 - icaoracle: `AddOracle`, `InstantiateOracle`. icqoracle: `RegisterTokenPriceQuery`,
@@ -370,7 +370,7 @@ while staketia's and stakedym's redeem keeper paths go with their handlers.
 
 `ClaimUndelegatedTokens` is kept: it pays the redemptions that finish after the upgrade, it
 always was permissionless, and it is a no-op once the last record is claimed.
-`RestoreInterchainAccount` is kept for the drain's timeout path (§7).
+`RestoreInterchainAccount` is kept for the drain's timeout path (§7). `ResumeHostZone` is kept for stakeibc: a zone can still halt during the ops window through the safety-bounds check (a mis-set `UpdateInnerRedemptionRateBounds` is enough), a halted zone drops out of every kept epoch flow, and without the resume tx only an upgrade could bring it back.
 
 **Messages gated.** `UpdateValidatorSharesExchRate` and `CalibrateDelegation` gain
 `utils.ValidateAdminAddress` in ValidateBasic: ops use them to refresh slashes before the
@@ -1087,7 +1087,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   `wind-down-pr2-freeze-by-code`, `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`,
   `wind-down-pr5-sweep-tx`, `wind-down-pr6-release-gate`.
   1. Remove tx handlers: pure deletions across stakeibc, staketia, stakedym, icaoracle,
-     icqoracle, auction, airdrop and claim, plus rebalance, clear-balance and resume; types
+     icqoracle, auction, airdrop and claim, plus rebalance and clear-balance (staketia and stakedym also drop resume; stakeibc keeps it); types
      and registrations stay; the "no handler" guard test and the historical-tx decode test.
      Large diff, no logic.
   2. Freeze by code: the nine hook-call deletions, the slash callback's rate rewrite removed,
