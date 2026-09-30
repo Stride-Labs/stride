@@ -20,12 +20,14 @@ from typing import Any
 
 import channels
 import config
+import validators
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
 # Tab name -> collect(). Later tabs add one line each: "validators": validators.collect, "funds": funds.collect
 COLLECTORS: dict[str, Callable[[], dict[str, Any]]] = {
     "channels": channels.collect,
+    "validators": validators.collect,
 }
 
 

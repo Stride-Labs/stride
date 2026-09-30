@@ -77,3 +77,6 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
   details.panel > summary h2::before { content: "\25B8"; color: var(--muted); }
   details.panel[open] > summary h2::before { content: "\25BE"; }
   .table-scroll { overflow-x: auto; }
+
+/* validators */
+#view-validators .tile .v { font-size: 16px; overflow-wrap: anywhere; }
