@@ -15,9 +15,6 @@ import (
 // Wind-down admin txs (spec §7). Each handler is a thin delegate to the keeper function in the
 // matching wind_down_*.go file. The sweep is delivered by the next PR.
 
-// Keeps the sdk import live until the handlers below use it (Tasks 3-5)
-var _ = sdk.UnwrapSDKContext
-
 // UndelegateFromValidators: the wind-down drain (Task 3 replaces the body).
 // Delegates to Keeper.UndelegateFromValidators in wind_down_undelegate.go.
 func (k msgServer) UndelegateFromValidators(goCtx context.Context, msg *types.MsgUndelegateFromValidators) (*types.MsgUndelegateFromValidatorsResponse, error) {
