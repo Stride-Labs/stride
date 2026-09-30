@@ -3,8 +3,6 @@ package keeper
 import (
 	"context"
 
-	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v34/utils"
@@ -22,26 +20,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
-
-// User transaction to liquid stake native tokens into stTokens
-func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	stToken, err := k.Keeper.LiquidStake(ctx, msg.Staker, msg.NativeAmount)
-	if err != nil {
-		return nil, err
-	}
-	return &types.MsgLiquidStakeResponse{StToken: stToken}, nil
-}
-
-// User transaction to redeem stake stTokens into native tokens
-func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	nativeToken, err := k.Keeper.RedeemStake(ctx, msg.Redeemer, msg.StTokenAmount)
-	if err != nil {
-		return nil, err
-	}
-	return &types.MsgRedeemStakeResponse{NativeToken: nativeToken}, nil
-}
 
 // Operator transaction to confirm a delegation was submitted on the host chain
 func (k msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfirmDelegation) (*types.MsgConfirmDelegationResponse, error) {
@@ -169,37 +147,6 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 	k.SetHostZone(ctx, zone)
 
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
-}
-
-// Unhalts the host zone if redemption rates were exceeded
-// BOUNDS: verified in ValidateBasic
-func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// gate this transaction to the BOUNDS address
-	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
-		return nil, types.ErrInvalidAdmin
-	}
-
-	// Note: of course we don't want to fail this if the zone is halted!
-	zone, err := k.GetHostZone(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check the zone is halted
-	if !zone.Halted {
-		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, "zone is not halted")
-	}
-
-	stDenom := utils.StAssetDenomFromHostZoneDenom(zone.NativeTokenDenom)
-	k.ratelimitKeeper.RemoveDenomFromBlacklist(ctx, stDenom)
-
-	// Resume zone
-	zone.Halted = false
-	k.SetHostZone(ctx, zone)
-
-	return &types.MsgResumeHostZoneResponse{}, nil
 }
 
 // trigger updating the redemption rate
