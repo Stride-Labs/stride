@@ -11,7 +11,7 @@ import (
 
 // seedFlaggedZone stores a host zone with two validators carrying non-zero in-progress counters
 func (s *UpgradeTestSuite) seedFlaggedZone(chainId, connectionId string, deprecated bool) {
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, withInBoundsRates(stakeibctypes.HostZone{
 		ChainId:      chainId,
 		ConnectionId: connectionId,
 		Deprecated:   deprecated,
@@ -20,7 +20,7 @@ func (s *UpgradeTestSuite) seedFlaggedZone(chainId, connectionId string, depreca
 			{Address: chainId + "valoper2", Delegation: sdkmath.NewInt(100), DelegationChangesInProgress: 1},
 			{Address: chainId + "valoper3", Delegation: sdkmath.NewInt(100), DelegationChangesInProgress: 0},
 		},
-	})
+	}))
 }
 
 func (s *UpgradeTestSuite) flags(chainId string) []int64 {
@@ -62,8 +62,14 @@ func (s *UpgradeTestSuite) TestResetStaleDelegationChangesInProgress() {
 	s.seedFlaggedZone("evmos_9001-2", "connection-3", true)
 	s.mockDelegationChannel("evmos_9001-2", "connection-3", "channel-20")
 
+	// osmosis-1: the delegation channel is open on a different connection than the host zone's
+	// ConnectionId -> not the zone's channel, skipped
+	s.seedFlaggedZone("osmosis-1", "connection-4", false)
+	s.mockDelegationChannel("osmosis-1", "connection-99", "channel-30")
+
 	v35.ResetStaleDelegationChangesInProgress(s.Ctx, s.App.StakeibcKeeper)
 
+	s.Require().Equal([]int64{12, 1, 0}, s.flags("osmosis-1"), "channel on another connection: untouched")
 	s.Require().Equal([]int64{0, 0, 0}, s.flags("cosmoshub-4"), "open channel, no packets: reset")
 	s.Require().Equal([]int64{12, 1, 0}, s.flags("juno-1"), "unacked packet: untouched")
 	s.Require().Equal([]int64{12, 1, 0}, s.flags("haqq_11235-1"), "no channel: untouched")

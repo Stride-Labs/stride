@@ -48,12 +48,14 @@ func MoveDeployKeyContractAdminsToGov(ctx sdk.Context, k wasmkeeper.Keeper) {
 		return false
 	})
 
+	numMoved := 0
 	for _, contractAddr := range toMove {
 		if err := govKeeper.UpdateContractAdmin(ctx, contractAddr, gov, gov); err != nil {
 			ctx.Logger().Error(fmt.Sprintf("v35: unable to move admin of %s to gov, skipping: %s", contractAddr, err))
 			continue
 		}
+		numMoved++
 		ctx.Logger().Info(fmt.Sprintf("v35: admin of %s moved from the deploy key to gov", contractAddr))
 	}
-	ctx.Logger().Info(fmt.Sprintf("v35: %d contract admin(s) moved to gov", len(toMove)))
+	ctx.Logger().Info(fmt.Sprintf("v35: %d contract admin(s) moved to gov", numMoved))
 }

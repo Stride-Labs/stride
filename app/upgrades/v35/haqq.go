@@ -1,11 +1,14 @@
 package v35
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // HaqqDelegationDeltas trues up the haqq_11235-1 host zone's tracked delegations to what is
@@ -22,7 +25,8 @@ import (
 // Generated 2026-09-30 01:41 UTC by scripts/wind-down/gen_delta_table.py from
 // measure_delegation_drift.py (Haqq REST rest.cosmos.haqq.network; 52 tracked validators).
 // The 2026-09-29 21:36 UTC run (net -1,758 ISLM) differed:
-// gmocoin's 364.79 ISLM over-recording no longer shows. Regenerate right before the upgrade proposal;
+// gmocoin's 364.79 ISLM over-recording no longer shows (its slash was booked on chain between
+// the two measurements). Regenerate right before the upgrade proposal;
 // the mainnet-export suite (PR 6) fails if this table no longer matches state.
 var HaqqDelegationDeltas = []DelegationDelta{
 	{Name: "neuler", Address: "haqqvaloper1a57vprf7lswm3aqy2g5gy509235wmtsfvf9q73", Delta: mustInt("-853800913870811785762")},
@@ -47,7 +51,56 @@ var HaqqDelegationDeltas = []DelegationDelta{
 // tracked validator delegations (and TotalDelegations) match what is staked on Haqq. It
 // returns the net delta applied and whether the table was applied at all; the table is
 // applied all-or-nothing and never as an upgrade error (see reconcileHostZoneDelegations).
+// The table is skipped whole if any tracked delegation differs from HaqqExpectedTrackedDelegations.
 // Nothing is queued afterwards: the wind-down drains every delegation by admin tx.
 func ReconcileHaqqDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (appliedDelta sdkmath.Int, applied bool) {
+	if hostZone, found := sk.GetHostZone(ctx, HaqqChainId); found && !haqqTrackedDelegationsMatch(ctx, hostZone) {
+		return sdkmath.ZeroInt(), false
+	}
 	return reconcileHostZoneDelegations(ctx, sk, HaqqChainId, HaqqDelegationDeltas)
+}
+
+// HaqqExpectedTrackedDelegations pins HaqqDelegationDeltas to the state it was measured against:
+// each table validator's tracked Delegation (host base denom) on 2026-09-29, read from the Stride
+// host_zone query. A slash detected between generation and the upgrade changes a tracked value, and
+// applying the table on top would double-apply it, so ReconcileHaqqDelegations skips the whole table
+// on any mismatch. Emitted by gen_delta_table.py from --host-zone-json.
+var HaqqExpectedTrackedDelegations = map[string]sdkmath.Int{
+	"haqqvaloper1a57vprf7lswm3aqy2g5gy509235wmtsfvf9q73": mustInt("8550624701423372833667126"),
+	"haqqvaloper1a4qnqnk5ag0um6z3unkdth92v9c46x0dcpe2n0": mustInt("1977324198402384201312159"),
+	"haqqvaloper1gcw6ru5akcmzvr3anqre8f3m8eml2rmrz8m6sl": mustInt("942107178025082374262442"),
+	"haqqvaloper1f6hy5d68hkx9wtp8er3mgdfwjfjr7tun5yu7us": mustInt("2436918471544559988644179"),
+	"haqqvaloper1p8k6xk94u24vv9dmxu3vkgg43fs3v72grkpjhm": mustInt("3404566862077802114673425"),
+	"haqqvaloper1ktu3f367c0j0yet6apuefy8xt5n7eswns7yuff": mustInt("3049476711114360580564391"),
+	"haqqvaloper1f2j8t0ddtak6z9td28wmv60xj6mlykzx65jr8w": mustInt("1218094444964848572284210"),
+	"haqqvaloper16hy887wxzjmmkkfrdxzgz9dlv6mfru56q539cw": mustInt("514296911029389874078629"),
+	"haqqvaloper1ja29wpj6l5t42jj67vgqcuj8pu046uqklss524": mustInt("0"),
+	"haqqvaloper1p02zk5ecdanap637e2wtt82cucjlxtkrhus623": mustInt("5566110280315914752203104"),
+	"haqqvaloper16lp0xpq87cre5z4jkfddq78r5l4vcd7el2jlmj": mustInt("19837445550880585209244"),
+	"haqqvaloper1hgggrfgjeu4d5nveh03c6w37magsuqcy84p44t": mustInt("1631295331676570357712739"),
+	"haqqvaloper1tnm7y48w5nh8wt0s2u0fxwu607xtqhk6v99773": mustInt("459348774183198602894980"),
+	"haqqvaloper1wgm35c4nzs6ssgktd0zj4pefdr3h8ms5252mqc": mustInt("10713097828733603828494"),
+	"haqqvaloper10jqmd8rvggegva0r5smarr7avwwa8vce0q5gsh": mustInt("6512322804323302301356"),
+	"haqqvaloper1xp597fjhgu6dx3a525htulkn36fqqntjaqvhct": mustInt("2539004185409864107364697"),
+}
+
+// haqqTrackedDelegationsMatch requires every table row's validator to be tracked at exactly its
+// expected value, and logs an error naming the first one that is not. A validator missing from the
+// host zone is left to reconcileHostZoneDelegations, which skips the table for it.
+func haqqTrackedDelegationsMatch(ctx sdk.Context, hostZone stakeibctypes.HostZone) bool {
+	for _, entry := range HaqqDelegationDeltas {
+		validator, _, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, entry.Address)
+		if !found {
+			continue
+		}
+
+		expected, hasExpected := HaqqExpectedTrackedDelegations[entry.Address]
+		if !hasExpected || validator.Delegation.IsNil() || !validator.Delegation.Equal(expected) {
+			ctx.Logger().Error(fmt.Sprintf("v35: validator %s (%s) tracked delegation is %v, expected %v; the haqq delegation "+
+				"table was measured against different state and is NOT applied, regenerate it and reconcile in a later upgrade",
+				entry.Name, entry.Address, validator.Delegation, expected))
+			return false
+		}
+	}
+	return true
 }

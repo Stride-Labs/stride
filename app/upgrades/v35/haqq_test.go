@@ -8,16 +8,16 @@ import (
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
-// Seeds the haqq host zone with every validator in the delta table, each tracked at a round
-// number of whole ISLM so the expected post-reconciliation values are obvious. The full table
-// is needed because the reconciliation refuses to apply a partial one.
+// Seeds the haqq host zone with every validator in the delta table, each tracked at the value
+// the table was measured against (HaqqExpectedTrackedDelegations). The full table is needed
+// because the reconciliation refuses to apply a partial one.
 func (s *UpgradeTestSuite) setupHaqqHostZone() (tracked map[string]sdkmath.Int, trackedTotal sdkmath.Int) {
 	tracked = map[string]sdkmath.Int{}
 	trackedTotal = sdkmath.ZeroInt()
 
 	validators := []*stakeibctypes.Validator{}
-	for i, entry := range v35.HaqqDelegationDeltas {
-		delegation := sdkmath.NewInt(int64(1000 + i)).Mul(sdkmath.NewInt(1e18))
+	for _, entry := range v35.HaqqDelegationDeltas {
+		delegation := v35.HaqqExpectedTrackedDelegations[entry.Address]
 		validators = append(validators, &stakeibctypes.Validator{
 			Name:       entry.Name,
 			Address:    entry.Address,
@@ -27,12 +27,12 @@ func (s *UpgradeTestSuite) setupHaqqHostZone() (tracked map[string]sdkmath.Int, 
 		trackedTotal = trackedTotal.Add(delegation)
 	}
 
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, withInBoundsRates(stakeibctypes.HostZone{
 		ChainId:          v35.HaqqChainId,
 		HostDenom:        "aISLM",
 		TotalDelegations: trackedTotal,
 		Validators:       validators,
-	})
+	}))
 	return tracked, trackedTotal
 }
 
@@ -102,4 +102,37 @@ func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_MissingZone() {
 	appliedDelta, applied := v35.ReconcileHaqqDelegations(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().False(applied)
 	s.Require().True(appliedDelta.IsZero())
+}
+
+func (s *UpgradeTestSuite) TestHaqqExpectedTrackedDelegations_MatchesTable() {
+	s.Require().Len(v35.HaqqExpectedTrackedDelegations, len(v35.HaqqDelegationDeltas))
+	for _, entry := range v35.HaqqDelegationDeltas {
+		expected, found := v35.HaqqExpectedTrackedDelegations[entry.Address]
+		s.Require().True(found, "%s has an expected tracked delegation", entry.Name)
+		s.Require().False(expected.IsNil() || expected.IsNegative(), "%s expected value is a non-negative int", entry.Name)
+	}
+}
+
+// A slash booked between table generation and the upgrade changes a tracked delegation; applying the
+// table on top would double-apply it, so one mismatching row must skip every row
+func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_TrackedMismatchSkipsAll() {
+	tracked, trackedTotal := s.setupHaqqHostZone()
+	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
+	hostZone.Validators[3].Delegation = hostZone.Validators[3].Delegation.SubRaw(1)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	mismatched := hostZone.Validators[3]
+
+	appliedDelta, applied := v35.ReconcileHaqqDelegations(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().False(applied)
+	s.Require().True(appliedDelta.IsZero())
+
+	after, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
+	s.Require().Equal(trackedTotal, after.TotalDelegations, "nothing written")
+	for _, validator := range after.Validators {
+		expected := tracked[validator.Address]
+		if validator.Address == mismatched.Address {
+			expected = expected.SubRaw(1)
+		}
+		s.Require().Equal(expected, validator.Delegation, "%s untouched", validator.Name)
+	}
 }

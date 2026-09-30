@@ -52,6 +52,45 @@ class GenDeltaTableTest(unittest.TestCase):
             rendered,
         )
 
+    def test_tracked_delegations_come_from_the_host_zone(self) -> None:
+        host_zone_path = pathlib.Path(tempfile.mkdtemp()) / "host_zone.json"
+        host_zone_path.write_text(
+            json.dumps(
+                {
+                    "host_zone": {
+                        "validators": [
+                            {"address": "haqqvaloper1big", "name": "big", "delegation": "8550624701423372833667126"},
+                            {"address": "haqqvaloper1zero", "name": "zero", "delegation": "0"},
+                        ]
+                    }
+                }
+            )
+        )
+
+        tracked = gen_delta_table.load_tracked_delegations(host_zone_path=host_zone_path)
+
+        self.assertEqual({"haqqvaloper1big": 8550624701423372833667126, "haqqvaloper1zero": 0}, tracked)
+
+    def test_render_go_tracked_map_covers_the_table_rows_in_table_order(self) -> None:
+        entries = [
+            gen_delta_table.DeltaEntry(name="big", address="haqqvaloper1big", delta=-853),
+            gen_delta_table.DeltaEntry(name="small", address="haqqvaloper1small", delta=5),
+        ]
+
+        rendered = gen_delta_table.render_go_tracked(
+            entries=entries,
+            tracked={"haqqvaloper1small": 7, "haqqvaloper1big": 900, "haqqvaloper1other": 1},
+            var_name="HaqqExpectedTrackedDelegations",
+        )
+
+        self.assertEqual(
+            'var HaqqExpectedTrackedDelegations = map[string]sdkmath.Int{\n'
+            '\t"haqqvaloper1big": mustInt("900"),\n'
+            '\t"haqqvaloper1small": mustInt("7"),\n'
+            '}\n',
+            rendered,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
