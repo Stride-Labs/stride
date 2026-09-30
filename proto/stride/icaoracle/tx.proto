@@ -11,11 +11,6 @@ option go_package = "github.com/Stride-Labs/stride/v34/x/icaoracle/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // Adds a new oracle given a provided connection
-  rpc AddOracle(MsgAddOracle) returns (MsgAddOracleResponse);
-  // Instantiates an Oracle CW contract
-  rpc InstantiateOracle(MsgInstantiateOracle)
-      returns (MsgInstantiateOracleResponse);
   // Restores the oracle ICA channel after a closure
   rpc RestoreOracleICA(MsgRestoreOracleICA)
       returns (MsgRestoreOracleICAResponse);

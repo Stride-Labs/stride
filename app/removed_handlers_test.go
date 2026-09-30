@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
 	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
@@ -48,6 +49,8 @@ var removedMsgs = []sdk.Msg{
 	&stakedymtypes.MsgLiquidStake{},
 	&stakedymtypes.MsgRedeemStake{},
 	&stakedymtypes.MsgResumeHostZone{},
+	&icaoracletypes.MsgAddOracle{},
+	&icaoracletypes.MsgInstantiateOracle{},
 }
 
 // keptMsgs are a sample of messages that must keep routing after the removals.
@@ -58,6 +61,7 @@ var keptMsgs = []sdk.Msg{
 	&stakeibctypes.MsgCalibrateDelegation{},
 	&staketiatypes.MsgConfirmUnbondedTokenSweep{},
 	&stakedymtypes.MsgConfirmUnbondedTokenSweep{},
+	&icaoracletypes.MsgToggleOracle{},
 }
 
 // removedServerMethods maps each module's MsgServer interface to the method names that
@@ -70,8 +74,9 @@ var removedServerMethods = map[reflect.Type][]string{
 		"SetCommunityPoolRebate", "ToggleTradeController",
 		"RebalanceValidators", "ClearBalance", "ResumeHostZone",
 	},
-	reflect.TypeOf((*staketiatypes.MsgServer)(nil)).Elem(): {"LiquidStake", "RedeemStake", "ResumeHostZone"},
-	reflect.TypeOf((*stakedymtypes.MsgServer)(nil)).Elem(): {"LiquidStake", "RedeemStake", "ResumeHostZone"},
+	reflect.TypeOf((*staketiatypes.MsgServer)(nil)).Elem():  {"LiquidStake", "RedeemStake", "ResumeHostZone"},
+	reflect.TypeOf((*stakedymtypes.MsgServer)(nil)).Elem():  {"LiquidStake", "RedeemStake", "ResumeHostZone"},
+	reflect.TypeOf((*icaoracletypes.MsgServer)(nil)).Elem(): {"AddOracle", "InstantiateOracle"},
 }
 
 func (s *RemovedHandlersTestSuite) TestRemovedMessagesHaveNoRoute() {
