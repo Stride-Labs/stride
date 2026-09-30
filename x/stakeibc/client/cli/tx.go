@@ -338,7 +338,7 @@ Ex:
 func CmdUpdateValidatorSharesExchRate() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-delegation [chainid] [valoper]",
-		Short: "Broadcast message update-delegation",
+		Short: "Broadcast message update-delegation (admin only: refreshes a validator's shares-to-tokens rate and applies any slash)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argHostdenom := args[0]
@@ -369,7 +369,7 @@ func CmdUpdateValidatorSharesExchRate() *cobra.Command {
 func CmdCalibrateDelegation() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "calibrate-delegation [chainid] [valoper]",
-		Short: "Broadcast message calibrate-delegation",
+		Short: "Broadcast message calibrate-delegation (admin only: trues up a validator's recorded delegation to the host)",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
