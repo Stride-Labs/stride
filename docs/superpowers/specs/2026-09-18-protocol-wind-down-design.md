@@ -323,10 +323,10 @@ and the code, and each is a hard-coded constant in the upgrade binary (the proto
 already is). Nothing on Stride receives native tokens: every native balance leaves from a
 host chain, so there is no Stride-side vault.
 
-| Name           | Chain   | Type                        | Status                 | Constant               | Address                                                                                                     | Role                                                                                                                                                                                                              |
-| -------------- | ------- | --------------------------- | ---------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Protocol admin | Stride  | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins`         | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (F5), `stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl` (gov) | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages.                                                                               |
-| Sweep operator | Stride  | new key                     | to create              | `SweepOperatorAddress` | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (paste here)                                                | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
+| Name           | Chain   | Type                        | Status                 | Constant               | Address                                                                                                     | Role                                                                                                                                                                                                                          |
+| -------------- | ------- | --------------------------- | ---------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Protocol admin | Stride  | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins`         | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (F5), `stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl` (gov) | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages.                                                                                           |
+| Sweep operator | Stride  | new key                     | to create              | `SweepOperatorAddress` | `stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9`                                                             | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only.             |
 | Osmosis vault  | Osmosis | the protocol-admin multisig | exists (same key set)  | `OsmosisVaultAddress`  | `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af`                                                               | The protocol-admin multisig re-encoded with the `osmo` prefix (same 20 bytes, same signers). Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
 
 The Osmosis vault is deliberately the same multisig as the protocol admin, so no new key set
@@ -833,6 +833,7 @@ Checklist to halt the chain:
 ### §9b. Live-test validator per zone
 
 <!-- live-test-validators:start -->
+
 Generated 2026-09-29 by `scripts/wind-down/pick_live_test_validators.py`; rerun on the day, after the day-0 refresh.
 Prices: the snapshot in sttoken-locations.md (total USD / (supply × rate) per token).
 
@@ -842,21 +843,22 @@ smallest recorded delegation of at least one whole token that has no unbonding e
 concurrent entries per delegator-validator pair; a validator drained in full never needs a second one). "Next" is the
 second-smallest delegation, to show how much the pick matters.
 
-| Zone | Validator | Recorded delegation | USD | Entries in flight | Funded validators | Next smallest (USD) |
-|---|---|---:|---:|---:|---:|---:|
-| celestia | mhventures (`celestiavaloper1q2kaajedxm0r5xc0twdqz6atap96502d67yjyj`) | 15,861,063 utia | $7.07 | 0 | 92 | $8.48 |
-| cosmoshub-4 | icycro (`cosmosvaloper1ukpah0340rx7k3x2njnavwyjv6pfpvn632df9q`) | 14,207,897 uatom | $24.86 | 0 | 64 | $26.51 |
-| dydx-mainnet-1 | luganodes (`dydxvaloper1fs0t34g628xdqc8alfefnadq2x3qawt8g88mav`) | 14,328,832,501,947,858,372 adydx | $1.94 | 0 | 25 | $2.25 |
-| haqq_11235-1 | digiser2 (`haqqvaloper1nekpsmetpxx2crsuzznuy4epv9eqvj03rtmxae`) | 3,877,996,874,608,234,702,464 aISLM | $15.10 | 0 | 41 | $15.10 |
-| injective-1 | autostake (`injvaloper1acgud5qpn3frwzjrayqcdsdr9vkl3p6hrz34ts`) | 9,813,332,455,629,722,717 inj | $76.25 | 0 | 38 | $76.79 |
-| juno-1 | cosmosspaces (`junovaloper1836fhsg6yqpu98vezfc7caakchqe8pvske7t8q`) | 9,007,060,654 ujuno | $84.44 | 0 | 21 | $95.05 |
-| laozi-mainnet | meria (`bandvaloper1plau7keptn9qdt7nmhphltakv5t054f8lgwjdn`) | 4,158,959,467 uband | $897.36 | 0 | 32 | $897.36 |
-| osmosis-1 | haannode (`osmovaloper1hqqzynrdqxzky82mw92ugwsrry0ntrse84g5nr`) | 7,791,194,655 uosmo | $285.37 | 0 | 23 | $485.13 |
-| phoenix-1 | coinhall (`terravaloper1ge3vqn6cjkk2xkfwpg5ussjwxvahs2f6at87yp`) | 411,068,185 uluna | $21.96 | 0 | 40 | $27.49 |
-| sommelier-3 | ztakeorg (`sommvaloper13ul4wf2gwuwfrqrx70h2j9evje05vtglpc44sc`) | 2,450,134,223 usomm | $0.00 | 0 | 19 | $0.00 |
-| ssc-1 | solva (`sagavaloper13pcp0cstupahzz3n36x0dlhpa9fr8m9vlcy78y`) | 117,083,715 usaga | $4.41 | 4 | 16 | $26.46 |
+| Zone           | Validator                                                             |                 Recorded delegation |     USD | Entries in flight | Funded validators | Next smallest (USD) |
+| -------------- | --------------------------------------------------------------------- | ----------------------------------: | ------: | ----------------: | ----------------: | ------------------: |
+| celestia       | mhventures (`celestiavaloper1q2kaajedxm0r5xc0twdqz6atap96502d67yjyj`) |                     15,861,063 utia |   $7.07 |                 0 |                92 |               $8.48 |
+| cosmoshub-4    | icycro (`cosmosvaloper1ukpah0340rx7k3x2njnavwyjv6pfpvn632df9q`)       |                    14,207,897 uatom |  $24.86 |                 0 |                64 |              $26.51 |
+| dydx-mainnet-1 | luganodes (`dydxvaloper1fs0t34g628xdqc8alfefnadq2x3qawt8g88mav`)      |    14,328,832,501,947,858,372 adydx |   $1.94 |                 0 |                25 |               $2.25 |
+| haqq_11235-1   | digiser2 (`haqqvaloper1nekpsmetpxx2crsuzznuy4epv9eqvj03rtmxae`)       | 3,877,996,874,608,234,702,464 aISLM |  $15.10 |                 0 |                41 |              $15.10 |
+| injective-1    | autostake (`injvaloper1acgud5qpn3frwzjrayqcdsdr9vkl3p6hrz34ts`)       |       9,813,332,455,629,722,717 inj |  $76.25 |                 0 |                38 |              $76.79 |
+| juno-1         | cosmosspaces (`junovaloper1836fhsg6yqpu98vezfc7caakchqe8pvske7t8q`)   |                 9,007,060,654 ujuno |  $84.44 |                 0 |                21 |              $95.05 |
+| laozi-mainnet  | meria (`bandvaloper1plau7keptn9qdt7nmhphltakv5t054f8lgwjdn`)          |                 4,158,959,467 uband | $897.36 |                 0 |                32 |             $897.36 |
+| osmosis-1      | haannode (`osmovaloper1hqqzynrdqxzky82mw92ugwsrry0ntrse84g5nr`)       |                 7,791,194,655 uosmo | $285.37 |                 0 |                23 |             $485.13 |
+| phoenix-1      | coinhall (`terravaloper1ge3vqn6cjkk2xkfwpg5ussjwxvahs2f6at87yp`)      |                   411,068,185 uluna |  $21.96 |                 0 |                40 |              $27.49 |
+| sommelier-3    | ztakeorg (`sommvaloper13ul4wf2gwuwfrqrx70h2j9evje05vtglpc44sc`)       |                 2,450,134,223 usomm |   $0.00 |                 0 |                19 |               $0.00 |
+| ssc-1          | solva (`sagavaloper13pcp0cstupahzz3n36x0dlhpa9fr8m9vlcy78y`)          |                   117,083,715 usaga |   $4.41 |                 4 |                16 |              $26.46 |
 
 Total value put at risk by the eleven live tests: $1,418.75.
+
 <!-- live-test-validators:end -->
 
 ### §9a. Drift measurement
@@ -1205,7 +1207,7 @@ Admin txs (PRs 4 and 5):
   `transfertypes.ParseHexHash` + `k.RecordsKeeper.TransferKeeper.GetDenom(ctx, hash)`, the
   pattern in `lsm.go`, and `Denom.Trace[0]` is the outermost hop.
 - Test conventions: `s.CreateICAChannel(owner)` and `s.CheckICATxSubmitted(port, channel,
-  fn)` for ICA submissions; `s.CreateTransferChannel(chainId)` plus
+fn)` for ICA submissions; `s.CreateTransferChannel(chainId)` plus
   `s.MustGetNextSequenceNumber(transfertypes.PortID, ibctesting.FirstChannelID)` for ICS-20
   transfers (the real transfer keeper runs; sequence delta and burned/escrowed balances are
   the assertions); `s.App.TransferKeeper.SetDenom(ctx, transfertypes.NewDenom(base, hops...))`
@@ -1217,7 +1219,7 @@ Ops scripts (PRs 5 and 6):
 
 - `build_sweep_batches.py` applies the on-chain skip rules plus the dollar floor to an
   export and writes one address file per batch that the CLI reads (`sweep-tokens-off-stride
-  DENOMS FILE`, one batch of holders sweeping every listed denom they hold); extra denoms are passed as `--extra-denom DENOM=USD_PER_TOKEN:DECIMALS`, and an
+DENOMS FILE`, one batch of holders sweeping every listed denom they hold); extra denoms are passed as `--extra-denom DENOM=USD_PER_TOKEN:DECIMALS`, and an
   `ibc/` extra denom is refused unless its outermost hop is in `SweepUnwindChannels`.
   `coverage_check.py` is the §10 check over an export and the vault's Osmosis balances. Both
   are unit-tested against a synthetic export and their real output is checked in.
