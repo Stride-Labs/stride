@@ -45,6 +45,10 @@ func CreateUpgradeHandler(
 			return vm, err
 		}
 
+		// Entry points that bypass the msg service router (spec §5)
+		DisableAutopilotStakeibc(ctx, autopilotKeeper)
+		RemoveStakeibcFromICAHostAllowList(ctx, icaHostKeeper)
+
 		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
