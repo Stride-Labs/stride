@@ -150,3 +150,7 @@ HOLDER_ROUTES: tuple[HolderRoute, ...] = (
     HolderRoute("dYdX", "channel-6787", RelayedBy.FREE),
     HolderRoute("Band", "channel-148", RelayedBy.FREE),
 )
+
+# Transmuter pool contracts on Osmosis the vault has not joined yet, so the Funds tab shows them before funding.
+# Pools the vault holds an alloyed LP receipt of are discovered from its balances and need no entry here.
+EXTRA_POOL_CONTRACTS: tuple[str, ...] = ()
