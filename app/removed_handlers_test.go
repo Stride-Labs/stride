@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	auctiontypes "github.com/Stride-Labs/stride/v34/x/auction/types"
 	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
 	icqoracletypes "github.com/Stride-Labs/stride/v34/x/icqoracle/types"
 	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
@@ -54,6 +55,9 @@ var removedMsgs = []sdk.Msg{
 	&icaoracletypes.MsgInstantiateOracle{},
 	&icqoracletypes.MsgRegisterTokenPriceQuery{},
 	&icqoracletypes.MsgRemoveTokenPriceQuery{},
+	&auctiontypes.MsgPlaceBid{},
+	&auctiontypes.MsgCreateAuction{},
+	&auctiontypes.MsgUpdateAuction{},
 }
 
 // keptMsgs are a sample of messages that must keep routing after the removals.
@@ -82,6 +86,7 @@ var removedServerMethods = map[reflect.Type][]string{
 	reflect.TypeOf((*stakedymtypes.MsgServer)(nil)).Elem():  {"LiquidStake", "RedeemStake", "ResumeHostZone"},
 	reflect.TypeOf((*icaoracletypes.MsgServer)(nil)).Elem(): {"AddOracle", "InstantiateOracle"},
 	reflect.TypeOf((*icqoracletypes.MsgServer)(nil)).Elem(): {"RegisterTokenPriceQuery", "RemoveTokenPriceQuery"},
+	reflect.TypeOf((*auctiontypes.MsgServer)(nil)).Elem():   {"PlaceBid", "CreateAuction", "UpdateAuction"},
 }
 
 func (s *RemovedHandlersTestSuite) TestRemovedMessagesHaveNoRoute() {
