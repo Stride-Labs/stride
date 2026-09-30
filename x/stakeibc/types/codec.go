@@ -38,8 +38,12 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	// Every message type stays registered here even after its rpc is removed (v35 wind-down):
+	// the interface registry is what decodes historical transactions, and once the rpc is gone
+	// msgservice.RegisterMsgServiceDesc no longer registers the type for us
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgLiquidStake{},
+		&MsgLSMLiquidStake{},
 		&MsgClearBalance{},
 		&MsgRegisterHostZone{},
 		&MsgRedeemStake{},
@@ -54,6 +58,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCalibrateDelegation{},
 		&MsgUpdateInnerRedemptionRateBounds{},
 		&MsgResumeHostZone{},
+		&MsgCreateTradeRoute{},
+		&MsgDeleteTradeRoute{},
+		&MsgUpdateTradeRoute{},
 		&MsgSetCommunityPoolRebate{},
 		&MsgToggleTradeController{},
 		&MsgUpdateHostZoneParams{},
