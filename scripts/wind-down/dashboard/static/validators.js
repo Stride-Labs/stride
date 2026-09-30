@@ -1,0 +1,141 @@
+// Validators tab: zone chips, summary tiles for the selected zone, one row per validator (recorded vs host).
+(() => {
+
+const MULTISIG = 'multisig';
+const SEVERITY_CLASS = { neutral: '', amber: 't-warn', red: 't-bad' };
+const SEVERITY_PILL = { amber: 'warn', red: 'bad' };
+
+let selectedChainId = null; // survives the periodic re-render; chips switch it client-side, no refetch
+let lastData = null;
+let lastRoot = null;
+
+registerTab('validators', renderValidators);
+
+function renderValidators(data, root) {
+  lastData = data;
+  lastRoot = root;
+
+  const entries = data.zones;
+  if (!entries.some((entry) => entry.chain_id === selectedChainId)) selectedChainId = entries[0].chain_id;
+  const selected = entries.find((entry) => entry.chain_id === selectedChainId);
+
+  root.innerHTML = [
+    `<div class="chips">${entries.map(chip).join('')}</div>`,
+    selected.error ? `<div class="errors">${escapeHtml(selected.chain_id)}: ${escapeHtml(selected.error)}</div>` : selectedBody(selected),
+  ].join('');
+
+  root.querySelectorAll('.chip').forEach((element) => {
+    element.onclick = () => {
+      selectedChainId = element.dataset.chain;
+      renderValidators(lastData, lastRoot);
+    };
+  });
+}
+
+function selectedBody(entry) {
+  return entry.kind === MULTISIG ? multisigBody(entry) : zoneBody(entry);
+}
+
+// ---- chips
+
+function chip(entry) {
+  const on = entry.chain_id === selectedChainId ? 'on' : '';
+  return `<span class="chip ${on}" data-chain="${escapeHtml(entry.chain_id)}">${escapeHtml(entry.chain_id)} ${chipBadge(entry)}</span>`;
+}
+
+function chipBadge(entry) {
+  if (entry.error) return pill('bad', 'error');
+  if (entry.kind === MULTISIG) return entry.severity === 'neutral' ? pill('ok', 'ok') : pill(SEVERITY_PILL[entry.severity], 'over');
+
+  const over = entry.totals.over_count;
+  if (over === 0) return pill('ok', 'ok');
+  return pill(entry.totals.red_count > 0 ? 'bad' : 'warn', `${over} over`);
+}
+
+// ---- zone
+
+function zoneBody(zone) {
+  const totals = zone.totals;
+  const amount = (value) => `${formatAmount(value, zone.decimals, 6)} ${zone.symbol}`;
+  const diffClass = BigInt(totals.diff) > 0n ? 't-warn' : '';
+  return `<div class="tiles">
+      ${tile('Validators', totals.validator_count, `${totals.delegated_count} hold a delegation on the host`)}
+      ${tile('Recorded', amount(totals.recorded), 'sum of Stride host_zone.validators')}
+      ${tile('Actual', amount(totals.actual), 'delegation ICA on the host chain')}
+      ${tile('Diff', amount(totals.diff), `recorded − actual · ${totals.over_count} over (${totals.red_count} red)`, diffClass)}
+      ${tile('In progress', totals.in_progress_count, 'slash queries or delegation changes')}
+    </div>
+    <div class="panel"><h2>${escapeHtml(zone.chain_id)} <span class="sub">delegation ICA ${addressCell(zone.delegation_address)} · ${zone.validators.length} validators, largest |diff| first</span></h2>
+      <div class="table-scroll"><table>${zoneHeader()}${zone.validators.map((row) => zoneRow(row, zone)).join('')}</table></div></div>`;
+}
+
+function zoneHeader() {
+  return `<tr><th>Validator</th><th>Operator</th><th class="num">Weight</th><th class="num">Recorded</th><th class="num">Actual</th>
+    <th class="num">Diff</th><th class="num">Diff %</th><th class="num">Rate diff</th><th class="num">Unbonding</th><th>In progress</th><th>Bond status</th></tr>`;
+}
+
+function zoneRow(row, zone) {
+  const amount = (value) => formatAmount(value, zone.decimals, 6);
+  const severityClass = SEVERITY_CLASS[row.severity];
+  const notRegistered = row.registered ? '' : ` ${pill('warn', 'not registered')}`;
+  return `<tr>
+    <td>${escapeHtml(row.moniker)}${notRegistered}</td>
+    <td>${addressCell(row.address)}</td>
+    <td class="num">${escapeHtml(row.weight_percent)}%</td>
+    <td class="num">${amount(row.recorded)}</td>
+    <td class="num">${amount(row.actual)}</td>
+    <td class="num ${severityClass}">${amount(row.diff)}</td>
+    <td class="num ${severityClass}">${row.diff_percent === null ? '<span class="muted">–</span>' : escapeHtml(row.diff_percent) + '%'}</td>
+    <td class="num ${rateDifferenceClass(row.rate_difference)}">${row.rate_difference === null ? '<span class="muted">n/a</span>' : escapeHtml(row.rate_difference)}</td>
+    <td class="num ${unbondingClass(row.unbonding_entries, zone.max_unbonding_entries)}">${unbondingText(row.unbonding_entries, zone.max_unbonding_entries)}</td>
+    <td>${inProgressCell(row)}</td>
+    <td>${bondCell(row.bond_status, row.jailed)}</td></tr>`;
+}
+
+function rateDifferenceClass(difference) {
+  return difference === null || Number(difference) === 0 ? 'muted' : 't-warn';
+}
+
+function unbondingText(entries, max) {
+  return entries === null ? 'n/a' : `${entries} / ${max}`;
+}
+
+function unbondingClass(entries, max) {
+  if (entries === null || entries === 0) return 'muted';
+  return entries >= max ? 't-bad' : '';
+}
+
+function inProgressCell(row) {
+  if (!row.in_progress) return '<span class="muted">–</span>';
+  return `<span title="${escapeHtml(row.in_progress_detail)}">${pill('warn', 'in progress')}</span>`;
+}
+
+function bondCell(status, jailed) {
+  if (status === null) return '<span class="muted">n/a</span>';
+  const jailedPill = jailed ? ` ${pill('bad', 'jailed')}` : '';
+  return `${pill(status === 'bonded' ? 'ok' : 'idle', status)}${jailedPill}`;
+}
+
+// ---- staketia multisig
+
+function multisigBody(entry) {
+  const amount = (value) => `${formatAmount(value, entry.decimals, 6)} ${entry.symbol}`;
+  const diffClass = SEVERITY_CLASS[entry.severity];
+  return `<div class="tiles">
+      ${tile('Validators', entry.validators.length, 'with a delegation from the multisig')}
+      ${tile('Actual', amount(entry.actual_total), 'multisig delegations on Celestia')}
+      ${tile('Remaining delegated', amount(entry.remaining_delegated_balance), 'staketia host_zone on Stride')}
+      ${tile('Diff', amount(entry.diff), 'remaining − actual', diffClass)}
+    </div>
+    <div class="panel"><h2>staketia multisig <span class="sub">5-of-7 multisig ${addressCell(entry.delegation_address)} · on Celestia · no recorded per-validator amounts</span></h2>
+      <div class="table-scroll"><table>
+        <tr><th>Validator</th><th>Operator</th><th class="num">Actual</th><th>Bond status</th></tr>
+        ${entry.validators.map((row) => `<tr><td>${escapeHtml(row.moniker)}</td><td>${addressCell(row.address)}</td>
+          <td class="num">${formatAmount(row.actual, entry.decimals, 6)}</td><td>${bondCell(row.bond_status, row.jailed)}</td></tr>`).join('')}
+      </table></div></div>`;
+}
+
+function tile(label, value, sub, valueClass = '') {
+  return `<div class="tile"><div class="k">${escapeHtml(label)}</div><div class="v ${valueClass}">${escapeHtml(value)}</div><div class="s">${escapeHtml(sub)}</div></div>`;
+}
+})();
