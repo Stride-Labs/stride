@@ -90,6 +90,10 @@ class ChainScope:
     def deprecated_only(self) -> bool:
         return self.statuses <= {"ignored · deprecated"}
 
+    @property
+    def unsupported(self) -> bool:
+        return self.statuses <= {"ignored · unsupported"}
+
 
 def main() -> None:
     args = parse_args()
@@ -254,6 +258,8 @@ def decide(chain: ChainScope) -> None:
         chain.osmosis_decision = "destination, the pools live here"
     elif chain.dead:
         chain.osmosis_decision = "not served: chain dead"
+    elif chain.unsupported:
+        chain.osmosis_decision = "not served: unsupported (decided 2026-09-30)"
     elif chain.deprecated_only:
         chain.osmosis_decision = "not served: deprecated zone"
     elif leg is None and chain.usd < MIN_USD_FOR_OPS_RELAYER:
@@ -339,8 +345,8 @@ def update_relayer_map(phases: dict[str, dict], chains: list[ChainScope]) -> Non
         existing = {route["id"]: route for route in phase["routes"]}
         routes = []
         for chain in chains:
-            if chain.chain_id == (STRIDE_CHAIN_ID if center_is_stride else OSMOSIS_CHAIN_ID):
-                continue
+            if chain.chain_id == (STRIDE_CHAIN_ID if center_is_stride else OSMOSIS_CHAIN_ID) or chain.unsupported:
+                continue  # unsupported chains are left off the map by decision
             route = existing.get(chain.chain_id) or unmapped_route(chain)
             if center_is_stride and chain.chain_id == OSMOSIS_CHAIN_ID:
                 route["legs"] = sweep_channel_legs(phases)

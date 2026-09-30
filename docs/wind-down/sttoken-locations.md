@@ -7,8 +7,8 @@ are grouped as "Other".
 
 **Status values.**
 - `in scope`: the pool covers holders there (Stride itself, Osmosis, the token's host chain, plus every live chain
-  holding $1k or more of the token: stATOM on Injective, Secret, Penumbra, Agoric, Neutron, Carbon, Axelar; stTIA on
-  Agoric, Neutron, Hub, Carbon, Dymension; stINJ on Secret, Hub; stOSMO on Penumbra, Hub, Secret; stDYDX on Hub;
+  holding $1k or more of the token: stATOM on Injective, Secret, Agoric, Neutron, Carbon, Axelar; stTIA on
+  Agoric, Neutron, Hub, Carbon, Dymension; stINJ on Secret, Hub; stOSMO on Hub, Secret; stDYDX on Hub;
   stLUNA on Carbon).
 - `ignored · small`: a live chain we could serve but the balance is under $1k. Dymension counts as a live chain: it is a
   normal location for other stTokens. stSOMM is ignored entirely for size ($678 in total).
@@ -17,13 +17,16 @@ are grouped as "Other".
   days old). Nothing on those chains can move again, and the stTokens whose host zone is one of them (stEVMOS,
   stSTARS, stUMEE, stCMDX) have no native side to migrate.
 - `ignored · deprecated`: stDYM only. Dymension is alive, but stakedym is a deprecated zone we will not touch.
+- `ignored · unsupported`: Penumbra only (decided 2026-09-30). The chain is alive but both its light clients (of Stride
+  and of Osmosis) are expired and its shielded model makes a recovery or a new channel too much work for ~$29k; we will
+  not support it, and it is left off the relayer map.
 
 Edit the Status column to change a decision. The relayer map for the in-scope paths is `relayer-map.html` in this folder.
 
 <!-- relayer-scope:start -->
 ## Relayer scope per chain
 
-Generated 2026-09-29 by `scripts/wind-down/build_relayer_scope.py` from `relayer-map.html` (client ages) plus the youngest
+Generated 2026-09-30 by `scripts/wind-down/build_relayer_scope.py` from `relayer-map.html` (client ages) plus the youngest
 packet a relayer actually delivered on each leg (`tx_search` on the Stride and Osmosis RPCs). Edit the constants at the
 top of the script to change the rule, then rerun; `--offline` reuses the cached lookups in `relayer_scope_cache.json`.
 
@@ -42,7 +45,7 @@ relay their own hop. The Stride leg only matters after the upgrade for hosts (ou
 On a served chain every token worth at least $1,000 gets a pool route. "Last in / out" is the age of the
 youngest packet received on the leg and the youngest acknowledgement delivered for the opposite direction.
 
-Served: $2,454,250 across 16 chains, of which $29,542 needs a relayer from us (Penumbra). Not served: Injective ($162,057), Kujira ($20,850), Comdex ($5,145), Evmos ($3,395), Stargaze ($931), Canto ($748), Acrechain ($623), Namada ($611), Composable ($211), Umee ($211), Crescent ($13), Namada testnet ($4), Sei ($1), Persistence ($1), Oraichain ($1), Chihuahua ($1), Gravity Bridge ($0), Namada testnet ($0), Astria ($0), Indigo ($0), Sommelier ($0).
+Served: $2,424,708 across 15 chains, of which $0 needs a relayer from us. Not served: Injective ($162,057), Penumbra ($29,542), Kujira ($20,850), Comdex ($5,145), Evmos ($3,395), Stargaze ($931), Canto ($748), Acrechain ($623), Namada ($611), Composable ($211), Umee ($211), Crescent ($13), Namada testnet ($4), Sei ($1), Persistence ($1), Oraichain ($1), Chihuahua ($1), Gravity Bridge ($0), Namada testnet ($0), Astria ($0), Indigo ($0), Sommelier ($0).
 
 Every chain that holds any stToken is listed, largest first, whatever its status below; the USD column is the chain's
 total across tokens. Legs are shown where the relayer map has a route for the chain.
@@ -50,33 +53,33 @@ total across tokens. Legs are shown where the relayer map has a route for the ch
 | Chain | Total USD | Stride channel(s) | Host | Stride leg: client · last in / out | Stride leg after the upgrade | Osmosis leg: client · last in / out | Osmosis leg for holders | Pool routes |
 |---|---:|---|---|---|---|---|---|---|
 | Osmosis (`osmosis-1`) | $1,905,914 | channel-5 |  | not mapped | sweep channel, we relay it | not mapped | destination, the pools live here | stATOM, stISLM, stTIA, stINJ, stOSMO, stBAND, stDYDX, stJUNO |
-| Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 0.1d / 0.0d | ICA channel, we relay it | channel-0: live 0.0d · 0.0d / 0.0d | free, someone else relays it | stATOM, stTIA, stINJ, stOSMO, stDYDX |
-| HAQQ (`haqq_11235-1`) | $168,516 | channel-240 | yes | channel-240: live 6.1d · 3.0d / 2.9d | ICA channel, we relay it | channel-1575: live 5.6d · 1.4d / 1.9d | free, someone else relays it | stISLM |
-| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 0.2d / 0.0d | ICA channel, we relay it | channel-122: blocked 0.0d · 0.1d / 0.0d | not served: blocked (spec §12) | – |
-| Secret (`secret-4`) | $76,719 | channel-40 |  | channel-40: live 13.7d · 3.2d / 4.7d | not needed after the upgrade | channel-88: live 0.0d · 0.1d / 0.1d | free, someone else relays it | stATOM, stINJ, stOSMO |
-| Penumbra (`penumbra-1`) | $29,542 | channel-307 |  | channel-307: expired 6915.9d · never / never | not needed after the upgrade | channel-79703: expired 3194.7d · never / never | we relay it, after client recovery | stATOM, stOSMO |
+| Cosmos Hub (`cosmoshub-4`) | $231,762 | channel-0 | yes | channel-0: live 0.0d · 1.0d / 1.0d | ICA channel, we relay it | channel-0: live 0.0d · 1.0d / 1.0d | free, someone else relays it | stATOM, stTIA, stINJ, stOSMO, stDYDX |
+| HAQQ (`haqq_11235-1`) | $168,516 | channel-240 | yes | channel-240: live 6.1d · 3.9d / 3.9d | ICA channel, we relay it | channel-1575: live 5.6d · 2.4d / 2.9d | free, someone else relays it | stISLM |
+| Injective (`injective-1`) | $162,057 | channel-6 | yes | channel-6: live 2.1d · 1.1d / 1.0d | ICA channel, we relay it | channel-122: blocked 0.0d · 1.0d / 1.0d | not served: blocked (spec §12) | – |
+| Secret (`secret-4`) | $76,719 | channel-40 |  | channel-40: live 13.7d · 4.2d / 5.7d | not needed after the upgrade | channel-88: live 0.0d · 1.1d / 1.1d | free, someone else relays it | stATOM, stINJ, stOSMO |
+| Penumbra (`penumbra-1`) | $29,542 | channel-307 |  | channel-307: expired 6915.9d · never / never | not needed after the upgrade | channel-79703: expired 3194.7d · never / never | not served: unsupported (decided 2026-09-30) | – |
 | Kujira (`kaiyo-1`) | $20,850 | channel-8 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
-| Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | not needed after the upgrade | channel-320: live 0.4d · 0.1d / 0.5d | free, someone else relays it | stATOM, stTIA |
-| Neutron (`neutron-1`) | $8,339 | channel-123 |  | channel-123: stale 36.3d · 7.4d / 7.4d | not needed after the upgrade | channel-874: stale 35.5d · 0.2d / 1.5d | free, someone else relays it | stATOM, stTIA |
-| Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 17.2d / never | not needed after the upgrade | channel-188: stale 40.8d · 4.2d / 8.5d | free, someone else relays it | stATOM, stTIA, stLUNA |
+| Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | not needed after the upgrade | channel-320: live 0.4d · 1.0d / 1.5d | free, someone else relays it | stATOM, stTIA |
+| Neutron (`neutron-1`) | $8,339 | channel-123 |  | channel-123: stale 36.3d · 8.4d / 8.4d | not needed after the upgrade | channel-874: stale 35.5d · 1.2d / 2.5d | free, someone else relays it | stATOM, stTIA |
+| Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 18.2d / never | not needed after the upgrade | channel-188: stale 40.8d · 5.2d / 9.5d | free, someone else relays it | stATOM, stTIA, stLUNA |
 | Comdex (`comdex-1`) | $5,145 | channel-49 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
-| Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 0.2d / 0.2d | ICA channel, we relay it | channel-251: live 0.2d · 0.0d / 0.0d | free, someone else relays it | stLUNA |
+| Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 1.1d / 1.1d | ICA channel, we relay it | channel-251: live 0.2d · 1.0d / 1.0d | free, someone else relays it | stLUNA |
 | Evmos (`evmos_9001-2`) | $3,395 | channel-16 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
-| Dymension (`dymension_1100-1`) | $2,884 | channel-197 |  | channel-197: live 2.5d · 5.3d / 0.5d | not needed after the upgrade | channel-19774: live 0.2d · 0.0d / 0.1d | free, someone else relays it | stTIA |
-| Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | not needed after the upgrade | channel-208: live 0.1d · 0.0d / 0.0d | free, someone else relays it | stATOM |
+| Dymension (`dymension_1100-1`) | $2,884 | channel-197 |  | channel-197: live 2.5d · 6.3d / 1.4d | not needed after the upgrade | channel-19774: live 0.2d · 1.0d / 1.1d | free, someone else relays it | stTIA |
+| Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | not needed after the upgrade | channel-208: live 0.1d · 1.0d / 1.0d | free, someone else relays it | stATOM |
 | Stargaze (`stargaze-1`) | $931 | channel-19 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
 | Canto (`canto_7700-1`) | $748 | channel-74 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
 | Acrechain (`acre_9052-1`) | $623 | channel-57 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
 | Namada (`namada.5f5de2dd1b88cba30586420`) | $611 | channel-308 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
-| Celestia (`celestia`) | $322 | channel-162 | yes | channel-162: live 5.4d · 0.6d / 0.3d | ICA channel, we relay it | channel-6994: live 0.0d · 0.0d / 0.0d | free, someone else relays it | – |
+| Celestia (`celestia`) | $322 | channel-162 | yes | channel-162: live 5.4d · 1.5d / 1.3d | ICA channel, we relay it | channel-6994: live 0.0d · 1.0d / 1.0d | free, someone else relays it | – |
 | Composable (`centauri-1`) | $211 | channel-134 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
 | Umee (`umee-1`) | $211 | channel-29 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
-| Saga (`ssc-1`) | $207 | channel-213 | yes | channel-213: live 5.2d · 0.2d / 0.2d | ICA channel, we relay it | channel-38946: live 0.1d · 0.1d / 0.1d | free, someone else relays it | – |
-| Juno (`juno-1`) | $94 | channel-24 | yes | channel-24: live 5.9d · 0.2d / 0.2d | ICA channel, we relay it | channel-42: live 0.1d · 0.0d / 0.1d | free, someone else relays it | – |
-| dYdX (`dydx-mainnet-1`) | $76 | channel-160 | yes | channel-160: live 5.2d · 0.2d / 0.1d | ICA channel, we relay it | channel-6787: live 0.0d · 0.2d / 0.2d | free, someone else relays it | – |
+| Saga (`ssc-1`) | $207 | channel-213 | yes | channel-213: live 5.2d · 1.1d / 1.1d | ICA channel, we relay it | channel-38946: live 0.1d · 1.0d / 1.0d | free, someone else relays it | – |
+| Juno (`juno-1`) | $94 | channel-24 | yes | channel-24: live 5.9d · 1.1d / 1.1d | ICA channel, we relay it | channel-42: live 0.1d · 1.0d / 1.0d | free, someone else relays it | – |
+| dYdX (`dydx-mainnet-1`) | $76 | channel-160 | yes | channel-160: live 5.2d · 1.1d / 1.0d | ICA channel, we relay it | channel-6787: live 0.0d · 1.2d / 1.2d | free, someone else relays it | – |
 | Crescent (`crescent-1`) | $13 | channel-51 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
 | Namada testnet (`housefire-alpaca.cc0d3e0c033be`) | $4 | channel-306 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
-| Band (`laozi-mainnet`) | $3 | channel-258 | yes | channel-258: live 5.4d · never / never | ICA channel, we relay it | channel-148: live 9.3d · 0.3d / 0.2d | free, someone else relays it | – |
+| Band (`laozi-mainnet`) | $3 | channel-258 | yes | channel-258: live 5.4d · never / never | ICA channel, we relay it | channel-148: live 9.3d · 1.3d / 1.2d | free, someone else relays it | – |
 | Sei (`pacific-1`) | $1 | channel-149 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
 | Persistence (`core-1`) | $1 | channel-53 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
 | Oraichain (`Oraichain`) | $1 | channel-50 |  | not mapped | not needed after the upgrade | not mapped | not served: below minimum | – |
@@ -94,7 +97,7 @@ Per-token value on each chain, with the status from the tables below:
 - HAQQ: stISLM $168,516 (in scope)
 - Injective: stATOM $108,727 (in scope), stINJ $53,326 (in scope), stTIA $4 (ignored · small), stOSMO $0 (ignored · small), stEVMOS $0 (ignored · unrecoverable), stUMEE $0 (ignored · unrecoverable)
 - Secret: stINJ $45,122 (in scope), stATOM $29,351 (in scope), stOSMO $1,724 (in scope), stTIA $455 (ignored · small), stJUNO $59 (ignored · small), stLUNA $8 (ignored · small), stEVMOS $0 (ignored · unrecoverable)
-- Penumbra: stATOM $21,831 (in scope), stOSMO $7,496 (in scope), stTIA $215 (ignored · small)
+- Penumbra: stATOM $21,831 (ignored · unsupported), stOSMO $7,496 (ignored · unsupported), stTIA $215 (ignored · unsupported)
 - Kujira: stATOM $20,261 (ignored · unrecoverable), stOSMO $293 (ignored · unrecoverable), stINJ $291 (ignored · unrecoverable), stTIA $3 (ignored · unrecoverable), stDYDX $2 (ignored · unrecoverable), stISLM $0 (ignored · unrecoverable), stLUNA $0 (ignored · unrecoverable), stEVMOS $0 (ignored · unrecoverable), stJUNO $0 (ignored · unrecoverable), stSTARS $0 (ignored · unrecoverable), stCMDX $0 (ignored · unrecoverable), stUMEE $0 (ignored · unrecoverable)
 - Agoric: stATOM $8,488 (in scope), stTIA $7,479 (in scope), stOSMO $317 (ignored · small)
 - Neutron: stTIA $4,374 (in scope), stATOM $3,829 (in scope), stDYM $105 (ignored · deprecated), stDYDX $31 (ignored · small), stOSMO $0 (ignored · small), stSAGA $0 (ignored · small), stJUNO $0 (ignored · small)
@@ -131,25 +134,25 @@ Per-token value on each chain, with the status from the tables below:
 
 ## Summary
 
-| Token | Total USD | In scope | Ignored · small | Ignored · unrecoverable | Ignored · deprecated |
-|---|---:|---:|---:|---:|---:|
-| stATOM | $4,536,858 | $4,508,333 | $2,802 | $25,723 | $0 |
-| stISLM | $416,792 | $416,571 | $221 | $0 | $0 |
-| stTIA | $331,752 | $330,921 | $829 | $3 | $0 |
-| stINJ | $164,102 | $162,942 | $868 | $292 | $0 |
-| stOSMO | $144,709 | $143,760 | $608 | $340 | $0 |
-| stBAND | $110,795 | $110,246 | $550 | $0 | $0 |
-| stDYDX | $54,956 | $54,165 | $789 | $2 | $0 |
-| stLUNA | $8,015 | $7,900 | $115 | $1 | $0 |
-| stSAGA | $5,292 | $5,216 | $76 | $0 | $0 |
-| stEVMOS | $5,216 | $0 | $0 | $5,216 | $0 |
-| stDYM | $5,113 | $0 | $0 | $0 | $5,113 |
-| stJUNO | $4,474 | $4,217 | $255 | $2 | $0 |
-| stSTARS | $1,670 | $0 | $0 | $1,670 | $0 |
-| stSOMM | $678 | $0 | $678 | $0 | $0 |
-| stCMDX | $207 | $0 | $0 | $207 | $0 |
-| stUMEE | $159 | $0 | $0 | $159 | $0 |
-| **All** | **$5,790,789** | **$5,744,270** | **$7,790** | **$33,615** | **$5,113** |
+| Token | Total USD | In scope | Ignored · small | Ignored · unrecoverable | Ignored · deprecated | Ignored · unsupported |
+|---|---:|---:|---:|---:|---:|---:|
+| stATOM | $4,536,859 | $4,486,502 | $2,803 | $25,723 | $0 | $21,831 |
+| stISLM | $416,792 | $416,571 | $221 | $0 | $0 | $0 |
+| stTIA | $331,752 | $330,921 | $613 | $3 | $0 | $215 |
+| stINJ | $164,103 | $162,943 | $868 | $292 | $0 | $0 |
+| stOSMO | $144,709 | $136,265 | $608 | $340 | $0 | $7,496 |
+| stBAND | $110,796 | $110,246 | $550 | $0 | $0 | $0 |
+| stDYDX | $54,955 | $54,164 | $789 | $2 | $0 | $0 |
+| stLUNA | $8,015 | $7,900 | $114 | $1 | $0 | $0 |
+| stSAGA | $5,292 | $5,216 | $76 | $0 | $0 | $0 |
+| stEVMOS | $5,215 | $0 | $0 | $5,215 | $0 | $0 |
+| stDYM | $5,112 | $0 | $0 | $0 | $5,112 | $0 |
+| stJUNO | $4,473 | $4,217 | $254 | $2 | $0 | $0 |
+| stSTARS | $1,669 | $0 | $0 | $1,669 | $0 | $0 |
+| stSOMM | $678 | $0 | $678 | $0 | $0 | $0 |
+| stCMDX | $208 | $0 | $0 | $208 | $0 | $0 |
+| stUMEE | $159 | $0 | $0 | $159 | $0 | $0 |
+| **All** | **$5,790,787** | **$5,714,945** | **$7,574** | **$33,614** | **$5,112** | **$29,542** |
 
 
 ## stATOM (stuatom, host cosmoshub-4)
@@ -163,7 +166,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Cosmos Hub | cosmoshub-4 | channel-0 | 62,487.36 | 4.82% | $218,725 | in scope |
 | Injective | injective-1 | channel-6 | 31,062.24 | 2.40% | $108,727 | in scope |
 | Secret | secret-4 | channel-40 | 8,385.34 | 0.65% | $29,351 | in scope |
-| Penumbra | penumbra-1 | channel-307 | 6,236.85 | 0.48% | $21,831 | in scope |
+| Penumbra | penumbra-1 | channel-307 | 6,236.85 | 0.48% | $21,831 | ignored · unsupported |
 | Kujira | kaiyo-1 | channel-8 | 5,788.38 | 0.45% | $20,261 | ignored · unrecoverable |
 | Agoric | agoric-3 | channel-148 | 2,424.99 | 0.19% | $8,488 | in scope |
 | Comdex | comdex-1 | channel-49 | 1,420.17 | 0.11% | $4,971 | ignored · unrecoverable |
@@ -222,7 +225,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 | Dymension | dymension_1100-1 | channel-197 | 3,779.27 | 0.60% | $1,981 | in scope |
 | Secret | secret-4 | channel-40 | 868.58 | 0.14% | $455 | ignored · small |
 | Celestia | celestia | channel-162 | 614.16 | 0.10% | $322 | in scope |
-| Penumbra | penumbra-1 | channel-307 | 409.55 | 0.06% | $215 | ignored · small |
+| Penumbra | penumbra-1 | channel-307 | 409.55 | 0.06% | $215 | ignored · unsupported |
 | Namada | namada.5f5de2dd1b88cba30586420 | channel-308 | 277.18 | 0.04% | $145 | ignored · small |
 | Axelar | axelar-dojo-1 | channel-69 | 15.79 | 0.00% | $8 | ignored · small |
 | Injective | injective-1 | channel-6 | 8.19 | 0.00% | $4 | ignored · small |
@@ -263,7 +266,7 @@ Supply 2,703,012.20 · RR 1.461651 · $144,709 total · 60.2% escrowed off Strid
 |---|---|---|---:|---:|---:|---|
 | Osmosis | osmosis-1 | channel-5 | 1,384,028.36 | 51.20% | $74,096 | in scope |
 | Stride | stride-1 | – | 1,076,481.66 | 39.83% | $57,631 | in scope |
-| Penumbra | penumbra-1 | channel-307 | 140,013.47 | 5.18% | $7,496 | in scope |
+| Penumbra | penumbra-1 | channel-307 | 140,013.47 | 5.18% | $7,496 | ignored · unsupported |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 52,566.58 | 1.94% | $2,814 | in scope |
 | Secret | secret-4 | channel-40 | 32,203.35 | 1.19% | $1,724 | in scope |
 | Agoric | agoric-3 | channel-148 | 5,920.53 | 0.22% | $317 | ignored · small |

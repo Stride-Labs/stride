@@ -679,7 +679,7 @@ the native tokens arrive.
 (§4): for each in-scope stToken, a canonical pool holding the canonical denom on Osmosis (the
 one minted by transfers over Stride's channel-5) plus the native token, and one more two-asset
 pool for every foreign route the locations table marks in scope
-(`docs/wind-down/sttoken-locations.md`; about 28 pools in all, 7 of them for stATOM). A pool
+(`docs/wind-down/sttoken-locations.md`; 26 route pools plus one canonical per stToken, 7 of the routes for stATOM). A pool
 never holds more than one stToken denom, so the only thing a holder can do with a flavour is
 turn it into the native token at the rate, and a compromised source chain can reach nothing
 but its own pool. Every pool uses normalization factors `1e18` for the stToken and
@@ -1091,15 +1091,15 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   ask for a fix before the upgrade; tell Injective holders to redeem via Stride before the
   upgrade; or, after the halt, route Injective → Hub → Osmosis and add the resulting three-hop
   denom to the pool.
-- Stranded stToken holders behind expired clients, to decide on: Penumbra (Osmosis's and
-  Stride's clients both expired; ~6.2k stATOM and stOSMO, ~$29k) can be reopened by an Osmosis
-  `MsgRecoverClient` or a new channel; Kujira (~5.8k stATOM, ~$20k) has no reachable RPC and
+- Stranded stToken holders behind expired clients: Penumbra (Osmosis's and Stride's clients
+  both expired; ~6.2k stATOM and stOSMO, ~$29k) will not be supported (decided 2026-09-30;
+  status `ignored · unsupported` in the locations doc, left off the relayer map); Kujira (~5.8k stATOM, ~$20k) has no reachable RPC and
   looks stopped, so it is ignored (decided 2026-09-23). Agoric is fine for holders
   (Agoric→Osmosis is active) though its Stride hop is expired. The five deprecated zones and
   their stTokens (~$16.8k in total) are not touched by the migration: Evmos, Stargaze, Umee
   and Comdex have stopped producing blocks (unrecoverable, like Kujira), and Dymension is
   alive but left alone by choice. `docs/wind-down/sttoken-locations.md` separates ignored
-  balances into small, unrecoverable and deprecated.
+  balances into small, unrecoverable, deprecated and unsupported.
 - Relayers: until the upgrade users redeem through Stride, which needs both clients alive on
   every stToken chain ↔ Stride pair; Neutron's and Carbon's are active but nobody is updating
   them (35 h and 297 h old on 2026-09-23/24), so ops relay those pairs. Axelar's Stride hop is
