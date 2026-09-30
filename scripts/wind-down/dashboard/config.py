@@ -50,6 +50,7 @@ def _zone(
     symbol: str,
     decimals: int,
     osmosis_channel: str | None,
+    rest_override: str | None = None,
 ) -> ZoneConfig:
     return ZoneConfig(
         chain_id=chain_id,
@@ -57,7 +58,7 @@ def _zone(
         symbol=symbol,
         decimals=decimals,
         osmosis_channel=osmosis_channel,
-        rest=_polkachu_rest(name=endpoint_name),
+        rest=rest_override or _polkachu_rest(name=endpoint_name),
         rpc=_polkachu_rpc(name=endpoint_name),
     )
 
@@ -67,7 +68,15 @@ ZONES: tuple[ZoneConfig, ...] = (
     _zone("celestia", "celestia", "TIA", 6, "channel-2"),
     _zone("cosmoshub-4", "cosmos", "ATOM", 6, "channel-141"),
     _zone("dydx-mainnet-1", "dydx", "DYDX", 18, "channel-3"),
-    _zone("haqq_11235-1", "haqq", "ISLM", 18, "channel-2"),
+    # haqq-strd-api.polkachu.com has returned 502 since 2026-09-30; the public Polkachu REST works.
+    _zone(
+        "haqq_11235-1",
+        "haqq",
+        "ISLM",
+        18,
+        "channel-2",
+        rest_override="https://haqq-api.polkachu.com",
+    ),
     _zone("injective-1", "injective", "INJ", 18, "channel-8"),
     _zone("juno-1", "juno", "JUNO", 6, "channel-0"),
     _zone("laozi-mainnet", "band", "BAND", 6, "channel-83"),
