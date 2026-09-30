@@ -4,12 +4,17 @@ again before the halt.
 
 Per in-scope stToken: the native tokens held on Osmosis for that denom (the vault's balance
 plus every pool's native liquidity) must cover Stride's bank supply of the stToken times the
-frozen HostZone.RedemptionRate; each route pool must hold exactly its channel's escrow
-balance times the rate; the canonical pool the remainder. Bank supply is the right reference
-because stTokens that left Stride over IBC are escrowed, not burned.
+frozen HostZone.RedemptionRate; each route pool must hold its channel's escrow balance times
+the rate and no more (spec §8/§10 require exact funding); the canonical pool the remainder.
+Bank supply is the right reference because stTokens that left Stride over IBC are escrowed,
+not burned. A pool that already served redemptions holds stTokens too: those stTokens are
+already paid for, so the native requirement is (escrow - stTokens in the pool) x rate. Required
+amounts round UP: rounding down could under-fund by a base unit.
 
 Inputs: a trimmed Stride export (bank supply and balances, stakeibc host zones), a pools file
-(see the PR 6 plan for the shape), the Osmosis vault address. Reads Osmosis over REST.
+(see the PR 6 plan for the shape; every pool names the stToken denom it holds: the canonical
+denom for the canonical pool, the route's two-hop denom for a route pool), the Osmosis vault
+address. Reads Osmosis over REST.
 Read-only; prints a table and exits 1 on any shortfall.
 
 Usage:
@@ -24,15 +29,23 @@ import hashlib
 import json
 import pathlib
 import sys
-import urllib.parse
+import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import ROUND_CEILING, Decimal, localcontext
 from typing import Callable
+
+import bech32_ref
 
 OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
 USER_AGENT = "curl/8.0"
 TIMEOUT_SECONDS = 30
+MAX_ATTEMPTS = 6
+BACKOFF_SECONDS = 5
+HTTP_TOO_MANY_REQUESTS = 429
+DECIMAL_PRECISION = 80
+ESCROW_HASH_BYTES = 20
 TRANSFER_PORT = "transfer"
 ESCROW_ADDRESS_VERSION = "ics20-1"
 STRIDE_BECH32_PREFIX = "stride"
@@ -49,6 +62,7 @@ class CoverageInputError(Exception):
 class RoutePool:
     channel_id: str
     pool_id: str
+    st_denom: str  # the route's two-hop stToken denom as held in the pool
 
 
 @dataclass(frozen=True)
@@ -56,6 +70,7 @@ class PoolSpec:
     chain_id: str
     native_denom_on_osmosis: str
     canonical_pool_id: str | None
+    canonical_st_denom: str | None
     route_pools: list[RoutePool]
 
 
@@ -69,6 +84,7 @@ class CoverageResult:
     native_on_osmosis: int
     route_expected: dict[str, int] = field(default_factory=dict)
     route_shortfalls: dict[str, int] = field(default_factory=dict)
+    route_overfunded: dict[str, int] = field(default_factory=dict)
     canonical_expected: int = 0
     canonical_actual: int = 0
 
@@ -76,7 +92,7 @@ class CoverageResult:
     def covered(self) -> bool:
         total_ok = self.native_on_osmosis >= self.required_native
         canonical_ok = self.canonical_actual >= self.canonical_expected
-        return total_ok and canonical_ok and not self.route_shortfalls
+        return total_ok and canonical_ok and not self.route_shortfalls and not self.route_overfunded
 
 
 # ----------------------------------------------------------------------------------------------
@@ -110,6 +126,7 @@ def evaluate(
     """Pure: the §10 arithmetic for every stToken in the pools file."""
     supply_by_denom = {entry["denom"]: int(entry["amount"]) for entry in export["app_state"]["bank"]["supply"]}
     rates = {zone["chain_id"]: Decimal(zone["redemption_rate"]) for zone in export["app_state"]["stakeibc"]["host_zone_list"]}
+    transfer_channels = transfer_channel_ids(export=export)
     escrow_balances = escrow_balances_by_channel(export=export)
     if not pools:
         raise CoverageInputError("pools file has no entries")
@@ -130,6 +147,10 @@ def evaluate(
         if spec.chain_id not in rates:
             raise CoverageInputError(f"{st_denom}: host zone {spec.chain_id} not in the export")
         rate = rates[spec.chain_id]
+        for route in spec.route_pools:
+            if route.channel_id not in transfer_channels:
+                # A typo'd channel would read a zero escrow and pass with a zero requirement
+                raise CoverageInputError(f"{st_denom}: route channel {route.channel_id} is not a transfer channel in the export")
         if st_denom not in supply_by_denom:
             # A mistyped stToken denom would otherwise make the requirement zero and pass
             raise CoverageInputError(f"{st_denom}: not in the export's bank supply")
@@ -157,40 +178,62 @@ def evaluate_one(
     native = spec.native_denom_on_osmosis
     result = CoverageResult(
         st_denom=st_denom, chain_id=spec.chain_id, rate=rate, supply=supply,
-        required_native=native_for(st_amount=supply, rate=rate),
-        native_on_osmosis=vault_balances.get(native, 0),
+        required_native=0, native_on_osmosis=vault_balances.get(native, 0),
     )
+    st_in_pools = 0
 
-    # Each route pool must hold exactly its channel's escrow share; a pool below that cannot
-    # pay every holder on that chain, a pool above it is surplus the canonical pool should hold
+    # Each route pool must hold its channel's escrow share, less what it already paid out: a pool
+    # below that cannot pay every holder on that chain, a pool above the full escrow x rate is
+    # over-funded (spec §8/§10 fund exactly)
     route_escrow_total = 0
     for route in spec.route_pools:
         escrow = escrow_balances.get(route.channel_id, {}).get(st_denom, 0)
         route_escrow_total += escrow
-        expected = native_for(st_amount=escrow, rate=rate)
-        actual = fetch_liquidity(route.pool_id).get(native, 0)
+        liquidity = fetch_liquidity(route.pool_id)
+        actual = liquidity.get(native, 0)
+        st_in_pool = liquidity.get(route.st_denom, 0)
+        st_in_pools += st_in_pool
+        expected = native_for(st_amount=max(escrow - st_in_pool, 0), rate=rate)
         result.route_expected[route.channel_id] = expected
         result.native_on_osmosis += actual
         if actual < expected:
             result.route_shortfalls[route.channel_id] = expected - actual
+        if actual > native_for(st_amount=escrow, rate=rate):
+            result.route_overfunded[route.channel_id] = actual - native_for(st_amount=escrow, rate=rate)
 
-    # The canonical pool covers every other holder: everything not in a route escrow
-    result.canonical_expected = native_for(st_amount=supply - route_escrow_total, rate=rate)
+    # The canonical pool covers every other holder: everything not in a route escrow, less the
+    # stTokens it already took in
+    canonical_st_in_pool = 0
     if spec.canonical_pool_id is not None:
-        result.canonical_actual = fetch_liquidity(spec.canonical_pool_id).get(native, 0)
+        liquidity = fetch_liquidity(spec.canonical_pool_id)
+        result.canonical_actual = liquidity.get(native, 0)
+        canonical_st_in_pool = liquidity.get(spec.canonical_st_denom, 0)
+        st_in_pools += canonical_st_in_pool
         result.native_on_osmosis += result.canonical_actual
+    result.canonical_expected = native_for(
+        st_amount=max(supply - route_escrow_total - canonical_st_in_pool, 0), rate=rate,
+    )
+    result.required_native = native_for(st_amount=max(supply - st_in_pools, 0), rate=rate)
     return result
 
 
 def in_scope_st_denoms(export: dict) -> set[str]:
-    """stTokens of non-deprecated stakeibc host zones, as the sweep's allow-list defines them."""
+    """stTokens of non-deprecated stakeibc host zones, as the sweep's allow-list defines them.
+
+    stutia is in scope through the stakeibc celestia zone, and the whole stutia supply is checked
+    at that zone's rate: staketia and stakeibc share one denom, so there is no separate staketia
+    rate to apply to a subset of the supply.
+    """
     zones = export["app_state"]["stakeibc"]["host_zone_list"]
     return {f"{ST_DENOM_PREFIX}{zone['host_denom']}" for zone in zones if not zone.get("deprecated", False)}
 
 
 def native_for(st_amount: int, rate: Decimal) -> int:
-    """stTokens × rate, floored to base units (the pools round exact-in output down too)."""
-    return int(Decimal(st_amount) * rate)
+    """stTokens × rate, rounded UP to base units: a requirement rounded down could under-fund by one."""
+    with localcontext() as context:
+        # The default 28 digits would round a 1e15 supply times an 18-decimal rate
+        context.prec = DECIMAL_PRECISION
+        return int((Decimal(st_amount) * rate).to_integral_value(rounding=ROUND_CEILING))
 
 
 # ----------------------------------------------------------------------------------------------
@@ -209,20 +252,36 @@ def load_pools(path: pathlib.Path) -> dict:
 
 def parse_pool_spec(raw: dict) -> PoolSpec:
     try:
-        return PoolSpec(
+        spec = PoolSpec(
             chain_id=raw["chain_id"],
             native_denom_on_osmosis=raw["native_denom_on_osmosis"],
             canonical_pool_id=raw.get("canonical_pool_id"),
-            route_pools=[RoutePool(channel_id=r["channel_id"], pool_id=r["pool_id"]) for r in raw.get("route_pools", [])],
+            canonical_st_denom=raw.get("canonical_st_denom"),
+            route_pools=[
+                RoutePool(channel_id=r["channel_id"], pool_id=r["pool_id"], st_denom=r["st_denom"])
+                for r in raw.get("route_pools", [])
+            ],
         )
     except KeyError as missing:
         raise CoverageInputError(f"pools entry missing {missing}") from missing
+    if spec.canonical_pool_id is not None and not spec.canonical_st_denom:
+        raise CoverageInputError(f"pools entry for {spec.chain_id} has a canonical pool but no canonical_st_denom")
+    return spec
 
 
 def escrow_address(channel_id: str) -> str:
     """ibc-go's GetEscrowAddress: ADR-028 hash of "ics20-1" NUL "transfer/<channel>", 20 bytes."""
     pre_image = ESCROW_ADDRESS_VERSION.encode() + b"\x00" + f"{TRANSFER_PORT}/{channel_id}".encode()
-    return bech32_encode(prefix=STRIDE_BECH32_PREFIX, data=hashlib.sha256(pre_image).digest()[:20])
+    return bech32_ref.encode(hrp=STRIDE_BECH32_PREFIX, address=hashlib.sha256(pre_image).digest()[:ESCROW_HASH_BYTES])
+
+
+def transfer_channel_ids(export: dict) -> list[str]:
+    """Every transfer-port channel in the export's IBC state."""
+    channels = export["app_state"]["ibc"]["channel_genesis"]["channels"]
+    channel_ids = [channel["channel_id"] for channel in channels if channel["port_id"] == TRANSFER_PORT]
+    if not channel_ids:
+        raise CoverageInputError("export has no transfer channels under app_state.ibc.channel_genesis.channels")
+    return channel_ids
 
 
 def escrow_balances_by_channel(export: dict) -> dict[str, dict[str, int]]:
@@ -234,14 +293,9 @@ def escrow_balances_by_channel(export: dict) -> dict[str, dict[str, int]]:
 
     # Escrow accounts are not labelled in an export, but every channel is: derive the escrow
     # address of each transfer-port channel, so no channel can be missed by a scan heuristic
-    channels = export["app_state"]["ibc"]["channel_genesis"]["channels"]
-    transfer_channel_ids = [channel["channel_id"] for channel in channels if channel["port_id"] == TRANSFER_PORT]
-    if not transfer_channel_ids:
-        raise CoverageInputError("export has no transfer channels under app_state.ibc.channel_genesis.channels")
-
     return {
         channel_id: balances_by_address[escrow_address(channel_id=channel_id)]
-        for channel_id in transfer_channel_ids
+        for channel_id in transfer_channel_ids(export=export)
         if escrow_address(channel_id=channel_id) in balances_by_address
     }
 
@@ -252,8 +306,16 @@ def escrow_balances_by_channel(export: dict) -> dict[str, dict[str, int]]:
 
 def get_json(url: str) -> dict:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-        return json.load(response)
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            # Public endpoints rate-limit a script that makes many calls: back off and retry
+            if error.code != HTTP_TOO_MANY_REQUESTS or attempt == MAX_ATTEMPTS:
+                raise
+            time.sleep(BACKOFF_SECONDS * attempt)
+    raise AssertionError("unreachable")
 
 
 def fetch_vault_balances(osmosis_rest: str, vault: str) -> dict[str, int]:
@@ -285,6 +347,8 @@ def print_table(results: list[CoverageResult]) -> None:
               f"{result.required_native:>22}{result.native_on_osmosis:>22}  {status}")
         for channel_id, shortfall in sorted(result.route_shortfalls.items()):
             print(f"    route {channel_id}: short by {shortfall} (expected {result.route_expected[channel_id]})")
+        for channel_id, surplus in sorted(result.route_overfunded.items()):
+            print(f"    route {channel_id}: over-funded by {surplus} (exact funding required)")
         if result.canonical_actual < result.canonical_expected:
             print(f"    canonical: {result.canonical_actual} < expected {result.canonical_expected}")
 
@@ -296,52 +360,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--vault", required=True, help="Osmosis vault address (spec §4)")
     parser.add_argument("--osmosis-rest", default=OSMOSIS_REST_DEFAULT)
     return parser.parse_args()
-
-
-# ----------------------------------------------------------------------------------------------
-# bech32 (stdlib has none; BIP-173 reference, enough for encoding 20-byte addresses)
-# ----------------------------------------------------------------------------------------------
-
-BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
-
-
-def bech32_encode(prefix: str, data: bytes) -> str:
-    five_bit = convert_bits(data=data, from_bits=8, to_bits=5)
-    checksum = bech32_checksum(prefix=prefix, data=five_bit)
-    return prefix + "1" + "".join(BECH32_CHARSET[d] for d in five_bit + checksum)
-
-
-def convert_bits(data: bytes, from_bits: int, to_bits: int) -> list[int]:
-    accumulator = 0
-    bits = 0
-    result = []
-    max_value = (1 << to_bits) - 1
-    for value in data:
-        accumulator = (accumulator << from_bits) | value
-        bits += from_bits
-        while bits >= to_bits:
-            bits -= to_bits
-            result.append((accumulator >> bits) & max_value)
-    if bits:
-        result.append((accumulator << (to_bits - bits)) & max_value)
-    return result
-
-
-def bech32_polymod(values: list[int]) -> int:
-    generator = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3]
-    checksum = 1
-    for value in values:
-        top = checksum >> 25
-        checksum = ((checksum & 0x1FFFFFF) << 5) ^ value
-        for i in range(5):
-            checksum ^= generator[i] if ((top >> i) & 1) else 0
-    return checksum
-
-
-def bech32_checksum(prefix: str, data: list[int]) -> list[int]:
-    expanded = [ord(c) >> 5 for c in prefix] + [0] + [ord(c) & 31 for c in prefix]
-    polymod = bech32_polymod(expanded + data + [0] * 6) ^ 1
-    return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
 
 
 if __name__ == "__main__":

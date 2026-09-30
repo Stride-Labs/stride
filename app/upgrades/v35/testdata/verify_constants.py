@@ -51,6 +51,7 @@ REGISTRY_NAMES = {
     "haqq_11235-1": "haqq",
     "injective-1": "injective",
     "juno-1": "juno",
+    "osmosis-1": "osmosis",
     "laozi-mainnet": "bandchain",
     "phoenix-1": "terra2",
     "sommelier-3": "sommelier",
@@ -68,7 +69,13 @@ SWEEP_CHANNEL_CHAIN_IDS = {
     "channel-160": "dydx-mainnet-1",
 }
 
+# Share/token rounding moves an ISLM delegation by a base unit or two between the measurement and
+# the check: a live-vs-table difference of at most this many base units per row is a WARN, an exact
+# match passes, anything larger fails
+HAQQ_DELTA_DUST_TOLERANCE = 10
+
 failures: list[str] = []
+warnings: list[str] = []
 
 
 @dataclass(frozen=True)
@@ -84,6 +91,19 @@ def report(name: str, ok: bool, detail: str = "") -> None:
     print(f"[{status}] {name}{suffix}")
     if not ok:
         failures.append(name)
+
+
+def report_with_tolerance(name: str, live: int, expected: int, tolerance: int) -> None:
+    """PASS on an exact match, WARN within the documented dust tolerance, FAIL beyond it."""
+    difference = abs(live - expected)
+    detail = f"live {live} vs table {expected}"
+    if difference == 0:
+        report(name, True, detail)
+    elif difference <= tolerance:
+        print(f"[WARN] {name} -- {detail} (off by {difference} base units, within the dust tolerance of {tolerance})")
+        warnings.append(name)
+    else:
+        report(name, False, f"{detail} (off by {difference} base units, tolerance {tolerance})")
 
 
 def fetch_json(url: str) -> dict:
@@ -207,7 +227,7 @@ def check_haqq_table() -> None:
             continue
         expected = entry.delta if entry is not None else 0
         name = entry.name if entry is not None else address
-        report(f"haqq delta {name}", delta == expected, f"live {delta} vs table {expected}")
+        report_with_tolerance(f"haqq delta {name}", live=delta, expected=expected, tolerance=HAQQ_DELTA_DUST_TOLERANCE)
     for address, entry in table.items():
         report(f"haqq validator {entry.name} tracked", address in live,
                "" if address in live else "validator missing from the Stride host zone")
@@ -228,6 +248,9 @@ def check_host_to_osmosis_map() -> None:
     for chain_id, channel_id in sorted(channel_map.items()):
         if chain_id == OSMOSIS_CHAIN_ID:
             report(f"{chain_id} maps to the bank-send form", channel_id == "")
+            continue
+        if chain_id not in REGISTRY_NAMES:
+            report(f"{chain_id} has a chain-registry name", False, "add it to REGISTRY_NAMES")
             continue
         endpoints = registry_rest_endpoints(REGISTRY_NAMES[chain_id])
         for rest in endpoints:
@@ -250,6 +273,15 @@ def check_sweep_unwind_channels() -> None:
         state, counterparty = channel_counterparty_chain_id(rest=STRIDE_API, channel_id=channel_id)
         report(f"stride {channel_id} -> {expected_chain} and open",
                state == "STATE_OPEN" and counterparty == expected_chain, f"{state}, counterparty {counterparty}")
+
+        # The prefix the sweep re-encodes holders' addresses under must be the counterparty's
+        prefix = whitelist.get(channel_id)
+        if expected_chain not in REGISTRY_NAMES:
+            report(f"{channel_id} prefix {prefix!r} vs registry", False, f"{expected_chain} has no chain-registry name")
+            continue
+        registry_prefix = fetch_json(f"{CHAIN_REGISTRY}/{REGISTRY_NAMES[expected_chain]}/chain.json").get("bech32_prefix")
+        report(f"{channel_id} prefix matches the {expected_chain} registry bech32_prefix",
+               prefix == registry_prefix, f"constant {prefix!r} vs registry {registry_prefix!r}")
 
 
 def account_sequence(rest: str, address: str) -> int:
@@ -287,10 +319,12 @@ def main() -> int:
     print("== sweep unwind whitelist ==")
     check_sweep_unwind_channels()
 
+    if warnings:
+        print(f"\n{len(warnings)} WARN (haqq dust within {HAQQ_DELTA_DUST_TOLERANCE} base units): {warnings}")
     if failures:
         print(f"\n{len(failures)} check(s) FAILED: {failures}")
         return 1
-    print("\nall checks passed")
+    print("\nall checks passed" + (" (with warnings)" if warnings else ""))
     return 0
 
 
