@@ -11,17 +11,14 @@ import datetime
 import decimal
 import functools
 import json
-import urllib.error
-from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, TypeVar
+from typing import Any
 
 import chain
 import config
 
-TRANSFER_PORT = "transfer"
 CELESTIA_CHAIN_ID = "celestia"
 STRD_DENOM = "ustrd"
 STRD_SYMBOL = "STRD"
@@ -36,16 +33,10 @@ ALLOYED_INFIX = "/alloyed/"
 ZONE_WORKERS = 16
 POOL_WORKERS = 8
 TRANSFERS_PER_ICA = 100  # newest tx_search hits read per ICA; in-flight transfers time out after a day so they are recent
-UNRECEIVED_BATCH_SIZE = 100
 RATE_PLACES = Decimal("0.000001")
 DECIMAL_CONTEXT = decimal.Context(
     prec=60
 )  # an 18-decimal supply times the rate needs ~46 digits exactly
-
-# What one zone's work may raise without blanking the tab; anything else aborts the refresh.
-ZONE_ERRORS = (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError)
-
-T = TypeVar("T")
 
 
 class IcaType(StrEnum):
@@ -188,12 +179,6 @@ class ZoneFunds:
     staketia: Staketia | None
 
 
-@dataclass(frozen=True)
-class ZoneError:
-    chain_id: str
-    error: str
-
-
 # ---- internal structures
 
 
@@ -304,9 +289,9 @@ def collect() -> dict[str, Any]:
             )
             for zone in config.ZONES
         ]
-        osmosis_future = pool.submit(lambda: _optional(_osmosis_snapshot))
+        osmosis_future = pool.submit(lambda: chain.optional(_osmosis_snapshot))
         records_future = pool.submit(
-            lambda: _optional(lambda: _open_redemption_counts(stride=stride))
+            lambda: chain.optional(lambda: _open_redemption_counts(stride=stride))
         )
         operator_futures = [
             pool.submit(_operator_account, stride=stride, name=name, address=address)
@@ -322,14 +307,14 @@ def collect() -> dict[str, Any]:
         operators = [future.result() for future in operator_futures]
 
     # Pools can only be assigned once every zone's Osmosis denom is known.
-    succeeded = _succeeded(host_sides, HostSide)
+    succeeded = chain.succeeded(host_sides, HostSide)
     zone_denoms = [denoms for denoms in map(_zone_denoms, succeeded) if denoms]
     pools_by_zone = (
         classify_pools(pools=osmosis.pools, zones=zone_denoms) if osmosis else None
     )
     zones = [
         side
-        if isinstance(side, ZoneError)
+        if isinstance(side, chain.ZoneError)
         else _zone_funds(
             side=side,
             osmosis=osmosis,
@@ -442,7 +427,7 @@ def parse_sent_transfers(
         )
         for tx in txs
         for attributes, packet in _send_packets(tx=tx)
-        if attributes["packet_src_port"] == TRANSFER_PORT
+        if attributes["packet_src_port"] == chain.TRANSFER_PORT
         and attributes["packet_src_channel"] == channel
         and packet["sender"] == sender
         and packet["receiver"] == receiver
@@ -518,7 +503,7 @@ def classify_pools(
 
 def canonical_st_denom(st_denom: str) -> str:
     return chain.ibc_denom(
-        path=f"{TRANSFER_PORT}/{STRIDE_CHANNEL_ON_OSMOSIS}/{st_denom}"
+        path=f"{chain.TRANSFER_PORT}/{STRIDE_CHANNEL_ON_OSMOSIS}/{st_denom}"
     )
 
 
@@ -541,7 +526,7 @@ def _send_packets(tx: dict[str, Any]) -> list[tuple[dict[str, str], dict[str, An
     return [
         (attributes, json.loads(bytes.fromhex(attributes["packet_data_hex"])))
         for attributes in events
-        if attributes.get("packet_src_port") == TRANSFER_PORT
+        if attributes.get("packet_src_port") == chain.TRANSFER_PORT
     ]
 
 
@@ -550,8 +535,8 @@ def _send_packets(tx: dict[str, Any]) -> list[tuple[dict[str, str], dict[str, An
 
 def _collect_host_side(
     zone: config.ZoneConfig, host_zone: dict[str, Any], stride: chain.Chain
-) -> HostSide | ZoneError:
-    return _within_error_boundary(
+) -> HostSide | chain.ZoneError:
+    return chain.within_error_boundary(
         chain_id=zone.chain_id,
         work=lambda: _host_side(zone=zone, host_zone=host_zone, stride=stride),
     )
@@ -566,7 +551,7 @@ def _host_side(
     # The Osmosis-side channel id names the zone's native denom on Osmosis; osmosis-1 has no leg.
     osmosis_channel = (
         chain.ibc_channel_end(
-            chain=host, channel_id=zone.osmosis_channel, port_id=TRANSFER_PORT
+            chain=host, channel_id=zone.osmosis_channel, port_id=chain.TRANSFER_PORT
         ).counterparty_channel
         if zone.osmosis_channel
         else None
@@ -574,7 +559,7 @@ def _host_side(
 
     # The tx index is optional: a host whose index does not hold our sends shows in flight as n/a.
     transfers = (
-        _optional(
+        chain.optional(
             lambda: _vault_transfers(host=host, channel=zone.osmosis_channel, icas=icas)
         )
         if zone.osmosis_channel
@@ -650,7 +635,7 @@ def _vault_transfers(
         host=host, channel=channel, sequences=[transfer.sequence for transfer in sent]
     )
     times = {
-        transfer.height: _block_time(rpc=host.rpc, height=transfer.height)
+        transfer.height: chain.block_time(rpc=host.rpc, height=transfer.height)
         for transfer in sent
     }
     return mark_transfers(sent=sent, committed=committed, times=times)
@@ -658,18 +643,9 @@ def _vault_transfers(
 
 def _unreceived_acks(host: chain.Chain, channel: str, sequences: list[int]) -> set[int]:
     """Of `sequences`, the ones the host still holds a packet commitment for: not yet acknowledged or timed out."""
-    committed: set[int] = set()
-    for start in range(0, len(sequences), UNRECEIVED_BATCH_SIZE):
-        batch = ",".join(
-            str(sequence)
-            for sequence in sequences[start : start + UNRECEIVED_BATCH_SIZE]
-        )
-        path = f"/ibc/core/channel/v1/channels/{channel}/ports/{TRANSFER_PORT}/packet_commitments/{batch}/unreceived_acks"
-        committed.update(
-            int(sequence)
-            for sequence in chain.rest_get(chain=host, path=path)["sequences"]
-        )
-    return committed
+    return set(
+        chain.ibc_unreceived_acks(chain=host, channel_id=channel, port_id=chain.TRANSFER_PORT, sequences=sequences)
+    )
 
 
 def _staketia(
@@ -689,7 +665,7 @@ def _staketia(
     claim_balance = _balances(
         chain_handle=stride, address=staketia_zone["claim_address"]
     ).get(voucher, 0)
-    unbonding_records = _optional(
+    unbonding_records = chain.optional(
         lambda: len(
             chain.rest_get(
                 chain=stride, path="/Stride-Labs/stride/staketia/unbonding_records"
@@ -821,7 +797,7 @@ def _open_redemption_counts(stride: chain.Chain) -> dict[str, int]:
 
 
 def _operator_account(stride: chain.Chain, name: str, address: str) -> Account:
-    balances = _optional(lambda: _balances(chain_handle=stride, address=address))
+    balances = chain.optional(lambda: _balances(chain_handle=stride, address=address))
     return Account(
         name=name,
         chain=ChainName.STRIDE,
@@ -1065,7 +1041,7 @@ def _zone_denoms(host_side: HostSide) -> ZoneDenoms | None:
         host_denom
         if host_side.zone.chain_id == config.OSMOSIS_CHAIN_ID
         else chain.ibc_denom(
-            path=f"{TRANSFER_PORT}/{host_side.osmosis_channel}/{host_denom}"
+            path=f"{chain.TRANSFER_PORT}/{host_side.osmosis_channel}/{host_denom}"
         )
     )
     return ZoneDenoms(
@@ -1105,14 +1081,6 @@ def _supply(chain_handle: chain.Chain, denom: str) -> int:
     return int(response["amount"]["amount"])
 
 
-@functools.lru_cache(maxsize=4096)
-def _block_time(rpc: str, height: int) -> str:
-    """Block time at a height; heights never change, so a hit is cached for the life of the process."""
-    return chain.get_json(url=f"{rpc}/header?height={height}")["result"]["header"][
-        "time"
-    ]
-
-
 def _parse_iso(timestamp: str) -> datetime.datetime:
     """Parse the timestamps this module itself emits (isoformat with an offset), for ordering."""
     return datetime.datetime.fromisoformat(timestamp)
@@ -1122,26 +1090,6 @@ def _format_amount(amount: int, decimals: int) -> str:
     """Whole tokens with two places, for notes; the page formats every tabulated amount itself."""
     scale = 10**decimals
     return f"{amount // scale:,}.{(amount % scale) * 100 // scale:02d}"
-
-
-def _within_error_boundary(chain_id: str, work: Callable[[], T]) -> T | ZoneError:
-    """Run one zone's work; a network or decode failure becomes an error record instead of blanking the tab."""
-    try:
-        return work()
-    except ZONE_ERRORS as error:
-        return ZoneError(chain_id=chain_id, error=f"{type(error).__name__}: {error}")
-
-
-def _optional(lookup: Callable[[], T | None]) -> T | None:
-    """An optional lookup: a failure means "not available", shown as n/a."""
-    try:
-        return lookup()
-    except ZONE_ERRORS:
-        return None
-
-
-def _succeeded(results: list[Any], result_type: type[T]) -> list[T]:
-    return [result for result in results if isinstance(result, result_type)]
 
 
 def _stringify_ints(value: Any) -> Any:

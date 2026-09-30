@@ -3,17 +3,13 @@
 import concurrent.futures
 import dataclasses
 import datetime
-import json
-import urllib.error
-from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, TypeVar
+from typing import Any
 
 import chain
 import config
 
-TRANSFER_PORT = "transfer"
 ICA_HOST_PORT = "icahost"
 TRANSFER_NAME = "transfer"
 
@@ -25,10 +21,12 @@ STUCK_AFTER_SECONDS = 30 * 60
 ZONE_WORKERS = 16
 CHANNEL_WORKERS = 6
 
-# What one zone's work may raise without blanking the tab; anything else aborts the refresh.
-ZONE_ERRORS = (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError)
 
-T = TypeVar("T")
+class TimeSource(StrEnum):
+    """Which tx gave a flow's age."""
+
+    SENT = "sent"  # the send_packet tx on the sender
+    RECEIVED = "received"  # the recv_packet tx on the receiver, for acks whose send is not indexed
 
 
 class Status(StrEnum):
@@ -56,6 +54,10 @@ class PacketFlow:
     Every commitment is either a pending packet (the receiver has not seen it) or a pending ack
     (the receiver has, the sender has not processed the ack). Counts are None when the receiving
     side could not be asked.
+
+    The age comes from the send_packet tx. Epoch-hook sends are not in the tx index, so a pending ack
+    with no send time ages from its recv_packet tx on the receiver instead (`oldest_time_source`); a
+    pending packet with no send time has no known age.
     """
 
     pending_packets: int | None
@@ -66,7 +68,8 @@ class PacketFlow:
     )  # lowest commitment sequence; None when nothing is pending
     oldest_sent_at: (
         str | None
-    )  # block time of its send_packet tx, when the tx index has it
+    )  # block time of the tx named by oldest_time_source
+    oldest_time_source: TimeSource | None  # None when oldest_sent_at is None
 
     def age_seconds(self, now: datetime.datetime) -> float | None:
         if self.oldest_sent_at is None:
@@ -82,6 +85,7 @@ NO_PENDING = PacketFlow(
     capped=False,
     oldest_sequence=None,
     oldest_sent_at=None,
+    oldest_time_source=None,
 )
 
 
@@ -158,12 +162,6 @@ class RouteRow:
 
 
 @dataclass(frozen=True)
-class ZoneError:
-    chain_id: str
-    error: str
-
-
-@dataclass(frozen=True)
 class Tiles:
     channels_open: int
     channels_total: int
@@ -219,9 +217,9 @@ def collect() -> dict[str, Any]:
         routes = [future.result() for future in route_futures]
 
     tiles = build_tiles(
-        zones=_succeeded(zones, ZoneChannels),
-        legs=_succeeded(legs, LegRow),
-        routes=_succeeded(routes, RouteRow),
+        zones=chain.succeeded(zones, ZoneChannels),
+        legs=chain.succeeded(legs, LegRow),
+        routes=chain.succeeded(routes, RouteRow),
         now=now,
     )
     return {
@@ -338,8 +336,8 @@ def build_tiles(
 
 def _collect_zone(
     zone: config.ZoneConfig, feed_by_chain: dict[str, Any], now: datetime.datetime
-) -> ZoneChannels | ZoneError:
-    return _within_error_boundary(
+) -> ZoneChannels | chain.ZoneError:
+    return chain.within_error_boundary(
         chain_id=zone.chain_id, work=lambda: _zone_channels(zone=zone, feed_by_chain=feed_by_chain, now=now)
     )
 
@@ -382,7 +380,7 @@ def _host_header(host: chain.Chain, entry: dict[str, Any]) -> HostHeader:
             ).state,
             error=None,
         )
-    except ZONE_ERRORS as error:
+    except chain.ZONE_ERRORS as error:
         return HostHeader(client=None, connection_state=None, error=f"{type(error).__name__}: {error}")
 
 
@@ -391,11 +389,11 @@ def _transfer_spec(
 ) -> ChannelSpec:
     stride_channel = entry["transfer_channel_id"]
     stride_end = chain.ibc_channel_end(
-        chain=stride, channel_id=stride_channel, port_id=TRANSFER_PORT
+        chain=stride, channel_id=stride_channel, port_id=chain.TRANSFER_PORT
     )
     host_channel = stride_end.counterparty_channel
-    host_end = _optional(
-        lambda: chain.ibc_channel_end(chain=host, channel_id=host_channel, port_id=TRANSFER_PORT)
+    host_end = chain.optional(
+        lambda: chain.ibc_channel_end(chain=host, channel_id=host_channel, port_id=chain.TRANSFER_PORT)
         if host_channel
         else None
     )
@@ -403,8 +401,8 @@ def _transfer_spec(
     host_state = host_end.state if host_end else (STATE_UNKNOWN if host_channel else None)
     return ChannelSpec(
         name=TRANSFER_NAME,
-        port_id=TRANSFER_PORT,
-        host_port_id=TRANSFER_PORT,
+        port_id=chain.TRANSFER_PORT,
+        host_port_id=chain.TRANSFER_PORT,
         stride_channel=stride_channel,
         host_channel=host_channel,
         stride_state=stride_end.state,
@@ -438,7 +436,7 @@ def _channel_row(
     # Only transfer channels carry packets the host originates; ICA channels are controller -> host.
     # Reading them needs the host's REST, which may be down while Stride's own side is fine.
     inbound = (
-        _optional(
+        chain.optional(
             lambda: _packet_flow(
                 sender=host,
                 sender_channel=spec.host_channel,
@@ -453,13 +451,13 @@ def _channel_row(
     )
 
     # The tx index is optional: it may not reach back far enough, and epoch-hook ICA sends are not in it.
-    last_sent = _optional(
+    last_sent = chain.optional(
         lambda: chain.rpc_tx_search_latest(
             chain=stride,
             query=f"send_packet.packet_src_channel='{spec.stride_channel}'",
         )
     )
-    last_received = _optional(
+    last_received = chain.optional(
         lambda: (
             chain.rpc_tx_search_latest(
                 chain=host,
@@ -469,7 +467,7 @@ def _channel_row(
             else None
         )
     )
-    last_ack = _optional(
+    last_ack = chain.optional(
         lambda: chain.rpc_tx_search_latest(
             chain=stride,
             query=f"acknowledge_packet.packet_src_channel='{spec.stride_channel}'",
@@ -511,14 +509,14 @@ def _packet_flow(
         return NO_PENDING
 
     oldest = commitments.sequences[0]
-    oldest_sent_at = _optional(
+    oldest_sent_at = chain.optional(
         lambda: _send_time(
             chain_handle=sender, channel_id=sender_channel, sequence=oldest
         )
     )
 
     # Without a counterparty channel (handshake never finished) nothing can be received, but we cannot ask.
-    unreceived = _optional(
+    unreceived = chain.optional(
         lambda: (
             chain.ibc_unreceived_packets(
                 chain=receiver,
@@ -537,15 +535,32 @@ def _packet_flow(
             capped=commitments.capped,
             oldest_sequence=oldest,
             oldest_sent_at=oldest_sent_at,
+            oldest_time_source=TimeSource.SENT if oldest_sent_at else None,
         )
 
     split = split_pending(commitments=commitments.sequences, unreceived=unreceived)
+
+    # A pending ack the sender's index lacks (an epoch-hook send) still has a receive tx to age it from.
+    if oldest_sent_at is None and oldest in split.acks:
+        received_at = chain.optional(
+            lambda: _receive_time(chain_handle=receiver, channel_id=receiver_channel, sequence=oldest)
+        )
+        return PacketFlow(
+            pending_packets=len(split.packets),
+            pending_acks=len(split.acks),
+            capped=commitments.capped,
+            oldest_sequence=oldest,
+            oldest_sent_at=received_at,
+            oldest_time_source=TimeSource.RECEIVED if received_at else None,
+        )
+
     return PacketFlow(
         pending_packets=len(split.packets),
         pending_acks=len(split.acks),
         capped=commitments.capped,
         oldest_sequence=oldest,
         oldest_sent_at=oldest_sent_at,
+        oldest_time_source=TimeSource.SENT if oldest_sent_at else None,
     )
 
 
@@ -555,11 +570,17 @@ def _send_time(chain_handle: chain.Chain, channel_id: str, sequence: int) -> str
     return sent.time if sent else None
 
 
+def _receive_time(chain_handle: chain.Chain, channel_id: str, sequence: int) -> str | None:
+    query = f"recv_packet.packet_dst_channel='{channel_id}' AND recv_packet.packet_sequence='{sequence}'"
+    received = chain.rpc_tx_search_latest(chain=chain_handle, query=query)
+    return received.time if received else None
+
+
 # ---- host -> Osmosis legs and holder routes
 
 
-def _collect_leg(zone: config.ZoneConfig, now: datetime.datetime) -> LegRow | ZoneError:
-    return _within_error_boundary(
+def _collect_leg(zone: config.ZoneConfig, now: datetime.datetime) -> LegRow | chain.ZoneError:
+    return chain.within_error_boundary(
         chain_id=zone.chain_id, work=lambda: _leg_row(zone=zone, now=now)
     )
 
@@ -569,7 +590,7 @@ def _leg_row(zone: config.ZoneConfig, now: datetime.datetime) -> LegRow:
     osmosis = chain.zone_chain(zone=config.ZONES_BY_CHAIN_ID[config.OSMOSIS_CHAIN_ID])
 
     host_end = chain.ibc_channel_end(
-        chain=host, channel_id=zone.osmosis_channel, port_id=TRANSFER_PORT
+        chain=host, channel_id=zone.osmosis_channel, port_id=chain.TRANSFER_PORT
     )
     host_client = _channel_client(chain_handle=host, end=host_end)
 
@@ -577,13 +598,13 @@ def _leg_row(zone: config.ZoneConfig, now: datetime.datetime) -> LegRow:
     osmosis_channel = host_end.counterparty_channel
     osmosis_end = (
         chain.ibc_channel_end(
-            chain=osmosis, channel_id=osmosis_channel, port_id=TRANSFER_PORT
+            chain=osmosis, channel_id=osmosis_channel, port_id=chain.TRANSFER_PORT
         )
         if osmosis_channel
         else None
     )
 
-    last_received = _optional(
+    last_received = chain.optional(
         lambda: (
             chain.rpc_tx_search_latest(
                 chain=osmosis,
@@ -593,7 +614,7 @@ def _leg_row(zone: config.ZoneConfig, now: datetime.datetime) -> LegRow:
             else None
         )
     )
-    last_ack = _optional(
+    last_ack = chain.optional(
         lambda: chain.rpc_tx_search_latest(
             chain=host,
             query=f"acknowledge_packet.packet_src_channel='{zone.osmosis_channel}'",
@@ -621,8 +642,8 @@ def _leg_row(zone: config.ZoneConfig, now: datetime.datetime) -> LegRow:
 
 def _collect_route(
     route: config.HolderRoute, now: datetime.datetime
-) -> RouteRow | ZoneError:
-    return _within_error_boundary(
+) -> RouteRow | chain.ZoneError:
+    return chain.within_error_boundary(
         chain_id=route.chain, work=lambda: _route_row(route=route, now=now)
     )
 
@@ -630,17 +651,17 @@ def _collect_route(
 def _route_row(route: config.HolderRoute, now: datetime.datetime) -> RouteRow:
     osmosis = chain.zone_chain(zone=config.ZONES_BY_CHAIN_ID[config.OSMOSIS_CHAIN_ID])
     end = chain.ibc_channel_end(
-        chain=osmosis, channel_id=route.osmosis_channel, port_id=TRANSFER_PORT
+        chain=osmosis, channel_id=route.osmosis_channel, port_id=chain.TRANSFER_PORT
     )
 
     # Osmosis side only: the holder chain's own RPC is not queried.
-    last_received = _optional(
+    last_received = chain.optional(
         lambda: chain.rpc_tx_search_latest(
             chain=osmosis,
             query=f"recv_packet.packet_dst_channel='{route.osmosis_channel}'",
         )
     )
-    last_ack = _optional(
+    last_ack = chain.optional(
         lambda: chain.rpc_tx_search_latest(
             chain=osmosis,
             query=f"acknowledge_packet.packet_src_channel='{route.osmosis_channel}'",
@@ -669,26 +690,6 @@ def _channel_client(
 
 
 # ---- helpers
-
-
-def _within_error_boundary(chain_id: str, work: Callable[[], T]) -> T | ZoneError:
-    """Run one zone's work; a network or decode failure becomes an error record instead of blanking the tab."""
-    try:
-        return work()
-    except ZONE_ERRORS as error:
-        return ZoneError(chain_id=chain_id, error=f"{type(error).__name__}: {error}")
-
-
-def _optional(lookup: Callable[[], T | None]) -> T | None:
-    """An optional lookup: a failure means "not available", shown as n/a."""
-    try:
-        return lookup()
-    except ZONE_ERRORS:
-        return None
-
-
-def _succeeded(results: list[Any], result_type: type[T]) -> list[T]:
-    return [result for result in results if isinstance(result, result_type)]
 
 
 def _distinct_clients(

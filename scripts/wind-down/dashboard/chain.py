@@ -3,13 +3,14 @@
 import datetime
 import functools
 import hashlib
+import http.client
 import json
 import time
-import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
 import config
 
@@ -20,8 +21,17 @@ PAGE_SIZE = 1000
 RECENT_BLOCK_WINDOW = 100_000
 LATEST_HEIGHT_CACHE_SECONDS = 30
 
+TRANSFER_PORT = "transfer"
 STATE_PREFIX = "STATE_"
 CLIENT_STATUS_ACTIVE = "Active"
+
+# urllib wraps only the request send in URLError; connection resets, truncated bodies and TLS failures while
+# reading the response surface as plain OSError / http.client errors (URLError and TimeoutError are OSError).
+NETWORK_ERRORS = (OSError, http.client.HTTPException)
+# What one zone's work may raise without blanking the tab; anything else aborts the refresh.
+ZONE_ERRORS = (*NETWORK_ERRORS, json.JSONDecodeError, KeyError)
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -64,6 +74,12 @@ class PacketCommitments:
 
 
 @dataclass(frozen=True)
+class ZoneError:
+    chain_id: str
+    error: str
+
+
+@dataclass(frozen=True)
 class ClientHealth:
     chain_id: str  # the chain the client lives on
     client_id: str
@@ -92,7 +108,7 @@ def get_json(url: str) -> Any:
     """GET a URL and decode the JSON body, retrying once on a network error."""
     try:
         return _fetch_json(url=url)
-    except (urllib.error.URLError, TimeoutError):
+    except NETWORK_ERRORS:
         return _fetch_json(url=url)
 
 
@@ -217,6 +233,30 @@ def ibc_unreceived_packets(
     return unreceived
 
 
+def ibc_unreceived_acks(
+    chain: Chain, channel_id: str, port_id: str, sequences: list[int]
+) -> list[int]:
+    """Of `sequences`, the ones the sending chain still holds a commitment for: not yet acknowledged or timed out
+    (asked of the sending chain)."""
+    committed: list[int] = []
+    for start in range(0, len(sequences), UNRECEIVED_BATCH_SIZE):
+        batch = ",".join(
+            str(sequence)
+            for sequence in sequences[start : start + UNRECEIVED_BATCH_SIZE]
+        )
+        path = f"/ibc/core/channel/v1/channels/{channel_id}/ports/{port_id}/packet_commitments/{batch}/unreceived_acks"
+        committed.extend(
+            int(sequence) for sequence in rest_get(chain=chain, path=path)["sequences"]
+        )
+    return committed
+
+
+@functools.lru_cache(maxsize=4096)
+def block_time(rpc: str, height: int) -> str:
+    """Block time at a height; heights never change, so a hit is cached for the life of the process."""
+    return get_json(url=f"{rpc}/header?height={height}")["result"]["header"]["time"]
+
+
 def ibc_client_status(chain: Chain, client_id: str) -> str:
     return rest_get(chain=chain, path=f"/ibc/core/client/v1/client_status/{client_id}")[
         "status"
@@ -253,6 +293,29 @@ def ibc_client_health(
         expires_at=expires_at.isoformat(),
         seconds_remaining=(expires_at - current).total_seconds(),
     )
+
+
+# ---- error boundaries
+
+
+def within_error_boundary(chain_id: str, work: Callable[[], T]) -> T | ZoneError:
+    """Run one zone's work; a network or decode failure becomes an error record instead of blanking the tab."""
+    try:
+        return work()
+    except ZONE_ERRORS as error:
+        return ZoneError(chain_id=chain_id, error=f"{type(error).__name__}: {error}")
+
+
+def optional(lookup: Callable[[], T | None]) -> T | None:
+    """An optional lookup: a failure means "not available", shown as n/a."""
+    try:
+        return lookup()
+    except ZONE_ERRORS:
+        return None
+
+
+def succeeded(results: list[Any], result_type: type[T]) -> list[T]:
+    return [result for result in results if isinstance(result, result_type)]
 
 
 # ---- pure helpers
@@ -302,15 +365,9 @@ def _newest_tx(chain: Chain, query: str) -> TxRef | None:
         return None
 
     height = int(txs[0]["height"])
-    return TxRef(height=height, time=_block_time(rpc=chain.rpc, height=height))
+    return TxRef(height=height, time=block_time(rpc=chain.rpc, height=height))
 
 
 @functools.lru_cache(maxsize=256)
 def _latest_height(rpc: str, time_bucket: int) -> int:
     return int(get_json(url=f"{rpc}/status")["result"]["sync_info"]["latest_block_height"])
-
-
-@functools.lru_cache(maxsize=4096)
-def _block_time(rpc: str, height: int) -> str:
-    """Block time at a height; heights never change, so a hit is cached for the life of the process."""
-    return get_json(url=f"{rpc}/header?height={height}")["result"]["header"]["time"]

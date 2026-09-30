@@ -7,13 +7,10 @@ Decimal strings. Nothing here uses float.
 import concurrent.futures
 import dataclasses
 import decimal
-import json
-import urllib.error
-from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
-from typing import Any, TypeVar
+from typing import Any
 
 import chain
 import config
@@ -34,12 +31,6 @@ RATE_PLACES = Decimal("0.000000000000000001")
 WEIGHT_PLACES = Decimal("0.01")
 # Amounts run to 1e30 (18-decimal zones); the thread-default 28 digits would round them.
 CONTEXT = decimal.Context(prec=60)
-
-# What one zone's work (or one optional lookup) may raise without blanking the tab; anything else aborts.
-LOOKUP_ERRORS = (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError)
-
-T = TypeVar("T")
-
 
 class Severity(StrEnum):
     NEUTRAL = "neutral"  # recorded at or under the host amount
@@ -239,7 +230,7 @@ def _collect_zone_guarded(
     # The one error boundary per zone: a dead host REST endpoint blanks that zone's chip, not the tab.
     try:
         return _collect_zone(zone=zone, stride_zone=stride_zones[zone.chain_id])
-    except LOOKUP_ERRORS as error:
+    except chain.ZONE_ERRORS as error:
         return _error_entry(chain_id=zone.chain_id, error=error)
 
 
@@ -254,8 +245,8 @@ def _collect_zone(
 
     # Delegations are the one required lookup; the rest only decorate rows, so a failure becomes null.
     delegations = _host_delegations(host=host, delegator=ica_address)
-    host_validators = _optional(lookup=lambda: _host_validators(host=host))
-    unbonding_entries = _optional(
+    host_validators = chain.optional(lookup=lambda: _host_validators(host=host))
+    unbonding_entries = chain.optional(
         lookup=lambda: _unbonding_entries(host=host, delegator=ica_address)
     )
 
@@ -281,7 +272,7 @@ def _collect_zone(
 def _collect_staketia_guarded() -> dict[str, Any]:
     try:
         return _collect_staketia()
-    except LOOKUP_ERRORS as error:
+    except chain.ZONE_ERRORS as error:
         return _error_entry(chain_id=STAKETIA_CHAIN_ID, error=error)
 
 
@@ -295,7 +286,7 @@ def _collect_staketia() -> dict[str, Any]:
     remaining = int(staketia_zone["remaining_delegated_balance"])
 
     delegations = _host_delegations(host=host, delegator=multisig)
-    host_validators = _optional(lookup=lambda: _host_validators(host=host))
+    host_validators = chain.optional(lookup=lambda: _host_validators(host=host))
 
     rows = sorted(
         (
@@ -325,7 +316,8 @@ def _collect_staketia() -> dict[str, Any]:
 
 
 def _error_entry(chain_id: str, error: Exception) -> dict[str, Any]:
-    return {"chain_id": chain_id, "error": f"{type(error).__name__}: {error}"}
+    zone_error = chain.ZoneError(chain_id=chain_id, error=f"{type(error).__name__}: {error}")
+    return dataclasses.asdict(zone_error)
 
 
 # ---- queries
@@ -370,13 +362,6 @@ def _unbonding_entries(host: chain.Chain, delegator: str) -> dict[str, int]:
         response["validator_address"]: len(response["entries"])
         for response in responses
     }
-
-
-def _optional(lookup: Callable[[], T]) -> T | None:
-    try:
-        return lookup()
-    except LOOKUP_ERRORS:
-        return None
 
 
 # ---- parsing and rows
