@@ -63,6 +63,9 @@ func CreateUpgradeHandler(
 		DeactivateICAOracles(ctx, icaOracleKeeper)
 		RemoveAllRateLimits(ctx, ratelimitKeeper)
 
+		// Stale DelegationChangesInProgress flags on zones with nothing in flight (spec §5)
+		ResetStaleDelegationChangesInProgress(ctx, stakeibcKeeper)
+
 		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
