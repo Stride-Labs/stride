@@ -10,6 +10,8 @@ STRIDE_ESCROW_CH5 = coverage_check.escrow_address(channel_id="channel-5")
 HOLDER = "stride1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"
 VAULT = "osmo1vault"
 NATIVE = "ibc/NATIVE"
+CANONICAL_ST = "ibc/STUATOM"
+ROUTE_ST = "ibc/STUATOM_TWO_HOP"
 
 
 def synthetic_export() -> dict:
@@ -47,7 +49,8 @@ def pools() -> dict:
             "chain_id": "cosmoshub-4",
             "native_denom_on_osmosis": NATIVE,
             "canonical_pool_id": "1",
-            "route_pools": [{"channel_id": "channel-0", "pool_id": "2"}],
+            "canonical_st_denom": CANONICAL_ST,
+            "route_pools": [{"channel_id": "channel-0", "pool_id": "2", "st_denom": ROUTE_ST}],
         }
     }
 
@@ -84,7 +87,7 @@ class CoverageCheckTest(unittest.TestCase):
         self.assertEqual(result.route_shortfalls, {"channel-0": 1})
         self.assertEqual(result.canonical_expected, 1_500_000 - 150_000)
 
-    def test_rate_rounds_down_to_base_units(self) -> None:
+    def test_rate_rounds_up_to_base_units(self) -> None:
         export = synthetic_export()
         export["app_state"]["stakeibc"]["host_zone_list"][0]["redemption_rate"] = "1.333333333333333333"
         result = coverage_check.evaluate(
@@ -93,8 +96,63 @@ class CoverageCheckTest(unittest.TestCase):
             vault_balances={NATIVE: 2_000_000},
             fetch_liquidity=lambda pool_id: {NATIVE: 0},
         )[0]
-        self.assertEqual(result.required_native, int(Decimal("1000000") * Decimal("1.333333333333333333")))
-        self.assertEqual(result.route_expected["channel-0"], 133_333)
+        self.assertEqual(result.required_native, 1_333_334)
+        self.assertEqual(result.route_expected["channel-0"], 133_334)
+
+    def test_partly_redeemed_pools_are_covered(self) -> None:
+        # Redemptions moved 40,000 stTokens into the route pool (its native paid out to match), so
+        # it needs (100,000 - 40,000) x 1.5 = 90,000 native; the canonical pool took in 200,000
+        # stTokens; the total needs (1,000,000 - 40,000 - 200,000) x 1.5 = 1,140,000 native
+        liquidity = {
+            "1": {NATIVE: 1_050_000, CANONICAL_ST: 200_000},
+            "2": {NATIVE: 90_000, ROUTE_ST: 40_000},
+        }
+        result = coverage_check.evaluate(
+            export=synthetic_export(),
+            pools=pools(),
+            vault_balances={},
+            fetch_liquidity=lambda pool_id: liquidity[pool_id],
+        )[0]
+        self.assertEqual(result.required_native, 1_140_000)
+        self.assertEqual(result.route_expected["channel-0"], 90_000)
+        self.assertEqual(result.canonical_expected, 1_050_000)
+        self.assertEqual(result.route_shortfalls, {})
+        self.assertTrue(result.covered)
+
+    def test_partly_redeemed_route_pool_short_of_the_reduced_requirement_fails(self) -> None:
+        liquidity = {"1": {NATIVE: 1_350_000}, "2": {NATIVE: 89_999, ROUTE_ST: 40_000}}
+        result = coverage_check.evaluate(
+            export=synthetic_export(), pools=pools(), vault_balances={}, fetch_liquidity=lambda pool_id: liquidity[pool_id],
+        )[0]
+        self.assertEqual(result.route_shortfalls, {"channel-0": 1})
+        self.assertFalse(result.covered)
+
+    def test_route_pool_holding_more_than_escrow_times_rate_fails(self) -> None:
+        # escrow 100,000 x 1.5 = 150,000; 150,001 is over-funded even though every total is met
+        liquidity = {"1": {NATIVE: 1_350_000}, "2": {NATIVE: 150_001}}
+        result = coverage_check.evaluate(
+            export=synthetic_export(), pools=pools(), vault_balances={}, fetch_liquidity=lambda pool_id: liquidity[pool_id],
+        )[0]
+        self.assertEqual(result.route_overfunded, {"channel-0": 1})
+        self.assertFalse(result.covered)
+
+    def test_route_channel_not_a_transfer_channel_is_an_error(self) -> None:
+        # channel-1 is the delegation ICA channel in the synthetic export, channel-99 does not exist
+        for channel_id in ("channel-1", "channel-99"):
+            bad = pools()
+            bad["stuatom"]["route_pools"][0]["channel_id"] = channel_id
+            with self.assertRaises(coverage_check.CoverageInputError):
+                coverage_check.evaluate(
+                    export=synthetic_export(), pools=bad, vault_balances={}, fetch_liquidity=lambda pool_id: {},
+                )
+
+    def test_route_pool_without_st_denom_is_an_error(self) -> None:
+        bad = pools()
+        del bad["stuatom"]["route_pools"][0]["st_denom"]
+        with self.assertRaises(coverage_check.CoverageInputError):
+            coverage_check.evaluate(
+                export=synthetic_export(), pools=bad, vault_balances={}, fetch_liquidity=lambda pool_id: {},
+            )
 
     def test_missing_pool_entry_is_an_error(self) -> None:
         with self.assertRaises(coverage_check.CoverageInputError):

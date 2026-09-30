@@ -33,6 +33,17 @@ import (
 // shipped in the binary.
 const mainnetExportPath = "testdata/mainnet_export.json.gz"
 
+// evmosChainId is deprecated on mainnet; the suite gives it an open, empty delegation channel.
+const evmosChainId = "evmos_9001-2"
+
+// expectedResetZones is the zones with an open delegation channel and no packet in flight at the
+// fixture's height (testdata/README.md, "Committed fixture provenance"): the only zones whose
+// flags the handler may reset. juno-1 has packets in flight; celestia, haqq and laozi have no
+// open channel; deprecated zones (evmos here) are skipped even with an open channel.
+var expectedResetZones = []string{
+	"cosmoshub-4", "dydx-mainnet-1", "injective-1", "osmosis-1", "phoenix-1", "sommelier-3", "ssc-1",
+}
+
 // MainnetExportTestSuite replays the v35 handler against real mainnet state with the REAL
 // constants (no test-key substitution) and asserts every effect of spec §5 on it. It is the
 // release gate: a constant that no longer matches state (the haqq delta table, the contract
@@ -142,10 +153,10 @@ func (s *MainnetExportTestSuite) populateICAHostFromExport(export strideExport) 
 // handler only reads and rewrites ContractInfo.Admin, so the code behind the address does
 // not matter. What the fixture proves is the count and the admin of the real contracts;
 // what the suite proves is that every contract with that admin ends with gov as admin.
-func (s *MainnetExportTestSuite) populateWasmFromExport(export strideExport) []sdk.AccAddress {
+func (s *MainnetExportTestSuite) populateWasmFromExport(export strideExport) wasmSeed {
 	var genesis wasmtypes.GenesisState
 	s.Require().NoError(s.App.AppCodec().UnmarshalJSON(s.section(export, "wasm"), &genesis))
-	s.Require().NotEmpty(genesis.Contracts, "export should carry the deploy-key contracts")
+	s.Require().Len(genesis.Contracts, 4, "spec §3: the Hyperlane IGP, IGP hook, aggregate hook and multisig ISM")
 	s.Require().NoError(s.App.WasmKeeper.SetParams(s.Ctx, genesis.Params))
 
 	govKeeper := wasmkeeper.NewGovPermissionKeeper(s.App.WasmKeeper)
@@ -156,18 +167,30 @@ func (s *MainnetExportTestSuite) populateWasmFromExport(export strideExport) []s
 	s.Require().NoError(err)
 
 	deployKey := sdk.MustAccAddressFromBech32(v35.WasmDeployKey)
-	addresses := []sdk.AccAddress{}
+	seed := wasmSeed{controlAdmin: apptesting.CreateRandomAccounts(1)[0]}
 	for i, contract := range genesis.Contracts {
 		s.Require().Equal(v35.WasmDeployKey, contract.ContractInfo.Admin, "fixture contract %d (%s) is not deploy-key administered", i, contract.ContractAddress)
 		address, _, err := govKeeper.Instantiate(s.Ctx, codeId, creator, deployKey, initMsg, "hackatom", sdk.NewCoins())
 		s.Require().NoError(err, "instantiate stand-in for %s", contract.ContractAddress)
-		addresses = append(addresses, address)
+		seed.deployKeyContracts = append(seed.deployKeyContracts, address)
 	}
+
+	// A control contract under another admin proves the handler moves only the deploy key's contracts
+	seed.controlContract, _, err = govKeeper.Instantiate(s.Ctx, codeId, creator, seed.controlAdmin, initMsg, "hackatom-control", sdk.NewCoins())
+	s.Require().NoError(err, "instantiate control contract")
 
 	params := s.App.WasmKeeper.GetParams(s.Ctx)
 	s.Require().Equal(wasmtypes.AccessTypeAnyOfAddresses, params.CodeUploadAccess.Permission)
 	s.Require().Len(params.CodeUploadAccess.Addresses, 2, "spec §3: upload restricted to two addresses before the upgrade")
-	return addresses
+	return seed
+}
+
+// wasmSeed is the stand-in contracts the suite instantiates: one per deploy-key contract in the
+// fixture, plus a control contract administered by an unrelated address.
+type wasmSeed struct {
+	deployKeyContracts []sdk.AccAddress
+	controlContract    sdk.AccAddress
+	controlAdmin       sdk.AccAddress
 }
 
 func (s *MainnetExportTestSuite) populateOraclesFromExport(export strideExport) []icaoracletypes.Oracle {
@@ -229,6 +252,25 @@ func (s *MainnetExportTestSuite) populateDelegationChannelsFromExport(export str
 	return resettable
 }
 
+// setSyntheticInProgressFlags puts DelegationChangesInProgress = 1 on the first validator of
+// every zone. The fixture's resettable zones already carry zero flags, so without this the
+// reset would be unobservable; the flag is synthetic, not mainnet state.
+func (s *MainnetExportTestSuite) setSyntheticInProgressFlags(hostZones map[string]stakeibctypes.HostZone) {
+	for chainId, hostZone := range hostZones {
+		s.Require().NotEmpty(hostZone.Validators, "%s has validators", chainId)
+		hostZone.Validators[0].DelegationChangesInProgress = 1
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	}
+}
+
+// mockDeprecatedZoneChannel opens a delegation channel with zero commitments for a deprecated
+// zone, so the reset's Deprecated skip is what keeps its flag (the fixture has no such channel).
+func (s *MainnetExportTestSuite) mockDeprecatedZoneChannel(hostZone stakeibctypes.HostZone) {
+	owner := stakeibctypes.FormatHostZoneICAOwner(hostZone.ChainId, stakeibctypes.ICAAccountType_DELEGATION)
+	s.Require().NotEmpty(hostZone.ConnectionId)
+	s.MockICAChannel(hostZone.ConnectionId, "channel-9999", owner, "evmos-delegation-ica")
+}
+
 func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	// ----- arrange: seed every section the handler touches from real mainnet state -----
 	export := s.loadTrimmedExport()
@@ -236,11 +278,17 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	queriesBefore := s.populateQueriesFromExport(export)
 	s.populateAutopilotFromExport(export)
 	allowBefore := s.populateICAHostFromExport(export)
-	deployKeyContracts := s.populateWasmFromExport(export)
+	wasmSeed := s.populateWasmFromExport(export)
 	oraclesBefore := s.populateOraclesFromExport(export)
 	s.populateRateLimitsFromExport(export)
 	recordsBefore := s.populateRecordsFromExport(export)
 	resettableZones := s.populateDelegationChannelsFromExport(export, hostZones)
+	s.setSyntheticInProgressFlags(hostZones)
+	s.mockDeprecatedZoneChannel(hostZones[evmosChainId])
+
+	// The fixture's channel picture: an open delegation channel with nothing in flight
+	s.Require().ElementsMatch(expectedResetZones, resettableZones, "fixture channel data implies exactly the README's resettable zones")
+	s.Require().True(hostZones[evmosChainId].Deprecated, "evmos is deprecated: its open channel must not trigger a reset")
 
 	haqqBefore := hostZones[v35.HaqqChainId]
 	flagsBefore := map[string][]int64{}
@@ -263,11 +311,14 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	uploadAccess := s.App.WasmKeeper.GetParams(s.Ctx).CodeUploadAccess
 	s.Require().Equal(wasmtypes.AccessTypeAnyOfAddresses, uploadAccess.Permission)
 	s.Require().Equal([]string{v35.GovModuleAddress().String()}, uploadAccess.Addresses, "upload access is gov only")
-	for _, address := range deployKeyContracts {
+	for _, address := range wasmSeed.deployKeyContracts {
 		info := s.App.WasmKeeper.GetContractInfo(s.Ctx, address)
 		s.Require().NotNil(info)
 		s.Require().Equal(v35.GovModuleAddress().String(), info.Admin, "contract %s admin moved to gov", address)
 	}
+	controlInfo := s.App.WasmKeeper.GetContractInfo(s.Ctx, wasmSeed.controlContract)
+	s.Require().NotNil(controlInfo)
+	s.Require().Equal(wasmSeed.controlAdmin.String(), controlInfo.Admin, "a contract with another admin is untouched")
 
 	// ----- assert: stakeibc state flips -----
 	comdex, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.ComdexChainId)
@@ -283,24 +334,23 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 		s.Require().False(after.Active, "oracle %s inactive", before.ChainId)
 	}
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllRateLimits(s.Ctx))
-	// Stakedym is deprecated and left halted, so its BeginBlocker keeps re-adding `stadym` to the
-	// blacklist every block while its rate is above its bound; nothing else may be blacklisted
-	for _, denom := range s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx) {
-		s.Require().Equal("stadym", denom, "the only denom that may be blacklisted after the upgrade")
-	}
+	// The handler empties the blacklist. The test app runs stakedym at default genesis, so nothing
+	// re-adds `stadym` here; on mainnet the list ends as exactly `stadym`, because stakedym
+	// (deprecated, halted, rate above its max bound) re-adds it every block.
+	s.Require().Empty(s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx))
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx))
 
 	// ----- assert: stale flags reset exactly where nothing is in flight -----
 	for chainId, before := range flagsBefore {
 		after, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
 		s.Require().True(found)
-		if contains(resettableZones, chainId) {
+		if contains(expectedResetZones, chainId) {
 			for _, flag := range delegationChangeFlags(after) {
 				s.Require().Zero(flag, "%s: every DelegationChangesInProgress reset", chainId)
 			}
 			continue
 		}
-		s.Require().Equal(before, delegationChangeFlags(after), "%s: flags untouched (channel missing or packets in flight)", chainId)
+		s.Require().Equal(before, delegationChangeFlags(after), "%s: flags untouched (channel missing, packets in flight or deprecated)", chainId)
 	}
 
 	// ----- assert: ICQ purges -----
@@ -360,6 +410,40 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 		after, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
 		s.Require().Equal(before.RedemptionRate, after.RedemptionRate, "%s redemption rate untouched", chainId)
 		s.Require().Equal(before.Halted, after.Halted, "%s Halted untouched", chainId)
+
+		// Only comdex-1 flips to deprecated; only haqq's tracked delegations and total move
+		if chainId != v35.ComdexChainId {
+			s.Require().Equal(before.Deprecated, after.Deprecated, "%s Deprecated untouched", chainId)
+		}
+		if chainId == v35.HaqqChainId {
+			s.assertHaqqOutsideTableUntouched(before, after)
+			continue
+		}
+		s.Require().True(before.TotalDelegations.Equal(after.TotalDelegations), "%s TotalDelegations untouched", chainId)
+		s.Require().Len(after.Validators, len(before.Validators), "%s validator count untouched", chainId)
+		for _, validator := range before.Validators {
+			afterValidator, _, found := stakeibckeeper.GetValidatorFromAddress(after.Validators, validator.Address)
+			s.Require().True(found, "%s validator %s still tracked", chainId, validator.Name)
+			s.Require().True(trackedDelegation(*validator).Equal(trackedDelegation(afterValidator)),
+				"%s validator %s delegation untouched", chainId, validator.Name)
+		}
+	}
+}
+
+// assertHaqqOutsideTableUntouched checks every haqq validator the delta table does not name.
+func (s *MainnetExportTestSuite) assertHaqqOutsideTableUntouched(before, after stakeibctypes.HostZone) {
+	inTable := map[string]bool{}
+	for _, entry := range v35.HaqqDelegationDeltas {
+		inTable[entry.Address] = true
+	}
+	for _, validator := range before.Validators {
+		if inTable[validator.Address] {
+			continue
+		}
+		afterValidator, _, found := stakeibckeeper.GetValidatorFromAddress(after.Validators, validator.Address)
+		s.Require().True(found, "haqq validator %s still tracked", validator.Name)
+		s.Require().True(trackedDelegation(*validator).Equal(trackedDelegation(afterValidator)),
+			"haqq validator %s is outside the delta table and must be unchanged", validator.Name)
 	}
 }
 
