@@ -44,7 +44,7 @@ func (k Keeper) AuctionOffRewardCollectorBalance(ctx sdk.Context) {
 			k.Logger(ctx).Error(fmt.Sprintf("Liquid stake from reward collector failed validation: %s", err.Error()))
 			continue
 		}
-		liquidStakeResp, err := NewMsgServerImpl(k).LiquidStake(ctx, msg)
+		liquidStakeResp, err := k.LiquidStake(ctx, msg)
 		if err != nil {
 			k.Logger(ctx).Error(fmt.Sprintf("Failed to liquid stake %s for hostzone %s: %s",
 				sdk.NewCoin(hz.IbcDenom, tokensToLiquidStakeForVals).String(), hz.ChainId, err.Error()))
