@@ -142,14 +142,38 @@ the two is required; the full drain is never the default.`,
 	return cmd
 }
 
-// CmdTransferFromIca: ICA balance to the Osmosis vault (Task 4 replaces this function).
+// CmdTransferFromIca: ICA balance to the Osmosis vault.
 func CmdTransferFromIca() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer-from-ica [chain-id] [ica-type] [amount]",
 		Short: "Wind-down: transfer an ICA balance to the Osmosis vault",
-		RunE:  notWiredYet("transfer-from-ica"),
+		Long: `Submits MsgTransferFromIca (admin only). ica-type is one of DELEGATION, WITHDRAWAL, FEE,
+REDEMPTION; amount is a coin in the denom as it exists on the host (e.g. 1000000uatom). The
+receiver and channel are hard-coded in the binary.
+
+Note for hand-written JSON txs (--generate-only, multisig): DELEGATION is the enum's zero
+value, so a message that omits ica_type moves the DELEGATION ICA. Always set ica_type
+explicitly and check it in the unsigned tx before signing.`,
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			argChainId := args[0]
+			icaType, err := ParseIcaType(args[1])
+			if err != nil {
+				return err
+			}
+			argAmount, err := sdk.ParseCoinNormalized(args[2])
+			if err != nil {
+				return fmt.Errorf("invalid amount %q: %w", args[2], err)
+			}
+
+			return broadcastWindDownTx(cmd, func(creator string) sdk.Msg {
+				return types.NewMsgTransferFromIca(creator, argChainId, icaType, argAmount)
+			})
+		},
 	}
+
 	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
 
