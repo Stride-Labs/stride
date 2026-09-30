@@ -11,6 +11,7 @@ import (
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	airdroptypes "github.com/Stride-Labs/stride/v34/x/airdrop/types"
 	auctiontypes "github.com/Stride-Labs/stride/v34/x/auction/types"
+	claimtypes "github.com/Stride-Labs/stride/v34/x/claim/types"
 	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
 	icqoracletypes "github.com/Stride-Labs/stride/v34/x/icqoracle/types"
 	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
@@ -66,6 +67,10 @@ var removedMsgs = []sdk.Msg{
 	&airdroptypes.MsgAddAllocations{},
 	&airdroptypes.MsgUpdateUserAllocation{},
 	&airdroptypes.MsgLinkAddresses{},
+	&claimtypes.MsgSetAirdropAllocations{},
+	&claimtypes.MsgClaimFreeAmount{},
+	&claimtypes.MsgCreateAirdrop{},
+	&claimtypes.MsgDeleteAirdrop{},
 }
 
 // keptMsgs are a sample of messages that must keep routing after the removals.
@@ -96,6 +101,7 @@ var removedServerMethods = map[reflect.Type][]string{
 	reflect.TypeOf((*icqoracletypes.MsgServer)(nil)).Elem(): {"RegisterTokenPriceQuery", "RemoveTokenPriceQuery"},
 	reflect.TypeOf((*auctiontypes.MsgServer)(nil)).Elem():   {"PlaceBid", "CreateAuction", "UpdateAuction"},
 	reflect.TypeOf((*airdroptypes.MsgServer)(nil)).Elem():   {"ClaimDaily", "ClaimEarly", "CreateAirdrop", "UpdateAirdrop", "AddAllocations", "UpdateUserAllocation", "LinkAddresses"},
+	reflect.TypeOf((*claimtypes.MsgServer)(nil)).Elem():     {"SetAirdropAllocations", "ClaimFreeAmount", "CreateAirdrop", "DeleteAirdrop"},
 }
 
 func (s *RemovedHandlersTestSuite) TestRemovedMessagesHaveNoRoute() {

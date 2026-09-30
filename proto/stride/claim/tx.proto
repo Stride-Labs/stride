@@ -9,15 +9,10 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v34/x/claim/types";
 
-// Msg defines the Msg service.
+// v35 wind-down: every legacy claim transaction was removed; message types remain for
+// historical decoding.
 service Msg {
   option (cosmos.msg.v1.service) = true;
-
-  rpc SetAirdropAllocations(MsgSetAirdropAllocations)
-      returns (MsgSetAirdropAllocationsResponse);
-  rpc ClaimFreeAmount(MsgClaimFreeAmount) returns (MsgClaimFreeAmountResponse);
-  rpc CreateAirdrop(MsgCreateAirdrop) returns (MsgCreateAirdropResponse);
-  rpc DeleteAirdrop(MsgDeleteAirdrop) returns (MsgDeleteAirdropResponse);
 }
 
 message MsgSetAirdropAllocations {
