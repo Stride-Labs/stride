@@ -58,3 +58,24 @@ func TestParseBaseUnits(t *testing.T) {
 	_, err = cli.ParseBaseUnits("banana")
 	require.ErrorContains(t, err, "can not convert string to int")
 }
+
+func TestCmdSweepTokensOffStride(t *testing.T) {
+	t.Run("addresses file missing", func(t *testing.T) {
+		cmd := cli.CmdSweepTokensOffStride()
+		ExecuteCLIExpectError(t, cmd, []string{"stuatom,ustrd", "/nonexistent/addresses.txt"}, "unable to read addresses file")
+	})
+
+	t.Run("empty denoms", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "addresses.txt")
+		require.NoError(t, os.WriteFile(file, []byte("stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7\n"), 0o600))
+		cmd := cli.CmdSweepTokensOffStride()
+		ExecuteCLIExpectError(t, cmd, []string{"", file}, "at least one denom is required")
+	})
+
+	t.Run("empty addresses file", func(t *testing.T) {
+		file := filepath.Join(t.TempDir(), "addresses.txt")
+		require.NoError(t, os.WriteFile(file, []byte("\n\n"), 0o600))
+		cmd := cli.CmdSweepTokensOffStride()
+		ExecuteCLIExpectError(t, cmd, []string{"stuatom", file}, "addresses file is empty")
+	})
+}

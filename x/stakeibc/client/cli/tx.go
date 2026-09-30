@@ -46,6 +46,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdUndelegateFromValidators())
 	cmd.AddCommand(CmdTransferFromIca())
 	cmd.AddCommand(CmdTransferStaketiaClaimBalance())
+	cmd.AddCommand(CmdSweepTokensOffStride())
 
 	return cmd
 }
