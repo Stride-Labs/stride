@@ -95,14 +95,50 @@ func notWiredYet(name string) func(cmd *cobra.Command, args []string) error {
 	}
 }
 
-// CmdUndelegateFromValidators: the wind-down drain (Task 3 replaces this function).
+const FlagUndelegateAll = "all"
+
+// CmdUndelegateFromValidators: the wind-down drain.
 func CmdUndelegateFromValidators() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "undelegate-from-validators [chain-id]",
-		Short: "Wind-down: undelegate the recorded delegation from validators",
-		RunE:  notWiredYet("undelegate-from-validators"),
+		Use:   "undelegate-from-validators [chain-id] [validators-file]",
+		Short: "Wind-down: undelegate the recorded delegation from the validators in the file, or from every validator with --all",
+		Long: `Submits MsgUndelegateFromValidators (admin only). With a file, only the listed validators
+are drained, each for its recorded delegation minus the offset; the file is a JSON list:
+  [{"address": "cosmosvaloper1...", "offset": "0"}, ...]
+With --all and no file, every validator with a recorded delegation is drained in full. One of
+the two is required; the full drain is never the default.`,
+		Args: cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			argChainId := args[0]
+			drainAll, err := cmd.Flags().GetBool(FlagUndelegateAll)
+			if err != nil {
+				return err
+			}
+			hasFile := len(args) == 2
+			if drainAll && hasFile {
+				return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "pass a validators file or --all, not both")
+			}
+			if !drainAll && !hasFile {
+				return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "pass a validators file or --all")
+			}
+
+			validators := []types.ValidatorUndelegation{}
+			if hasFile {
+				validators, err = ReadValidatorUndelegations(args[1])
+				if err != nil {
+					return err
+				}
+			}
+
+			return broadcastWindDownTx(cmd, func(creator string) sdk.Msg {
+				return types.NewMsgUndelegateFromValidators(creator, argChainId, validators)
+			})
+		},
 	}
+
+	cmd.Flags().Bool(FlagUndelegateAll, false, "drain every validator with a recorded delegation (instead of a validators file)")
 	flags.AddTxFlagsToCmd(cmd)
+
 	return cmd
 }
 
