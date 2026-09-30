@@ -10,69 +10,6 @@ import (
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/client/cli"
 )
 
-func TestCmdLiquidStake(t *testing.T) {
-	args := []string{
-		"banana",
-		"[lsm-token-denom]",
-	}
-
-	cmd := cli.CmdLiquidStake()
-	ExecuteCLIExpectError(t, cmd, args, "can not convert string to int")
-}
-
-func TestCmdLSMLiquidStake(t *testing.T) {
-	args := []string{
-		"banana",
-		"[lsm-token-denom]",
-	}
-
-	cmd := cli.CmdLSMLiquidStake()
-	ExecuteCLIExpectError(t, cmd, args, "can not convert string to int")
-}
-
-func TestCmdRegisterHostZone(t *testing.T) {
-	t.Run("unbonding-period not a number", func(t *testing.T) {
-		args := []string{
-			"[connection-id]",
-			"[host-denom]",
-			"[bech32prefix]",
-			"[ibc-denom]",
-			"[channel-id]",
-			"[unbonding-period]",
-			"1",
-		}
-
-		cmd := cli.CmdRegisterHostZone()
-		ExecuteCLIExpectError(t, cmd, args, `strconv.ParseUint: parsing "[unbonding-period]": invalid syntax`)
-	})
-
-	t.Run("lsm-enabled not a boolean", func(t *testing.T) {
-		args := []string{
-			"[connection-id]",
-			"[host-denom]",
-			"[bech32prefix]",
-			"[ibc-denom]",
-			"[channel-id]",
-			"0",
-			"2",
-		}
-
-		cmd := cli.CmdRegisterHostZone()
-		ExecuteCLIExpectError(t, cmd, args, `strconv.ParseBool: parsing "2": invalid syntax`)
-	})
-}
-
-func TestCmdRedeemStake(t *testing.T) {
-	args := []string{
-		"[amount]",
-		"[hostZoneID]",
-		"[receiver]",
-	}
-
-	cmd := cli.CmdRedeemStake()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
-}
-
 func TestCmdClaimUndelegatedTokens(t *testing.T) {
 	args := []string{
 		"[host-zone]",
@@ -82,16 +19,6 @@ func TestCmdClaimUndelegatedTokens(t *testing.T) {
 
 	cmd := cli.CmdClaimUndelegatedTokens()
 	ExecuteCLIExpectError(t, cmd, args, `unable to cast "[epoch]" of type string to uint64`)
-}
-
-func TestCmdRebalanceValidators(t *testing.T) {
-	args := []string{
-		"[host-zone]",
-		"[num-to-rebalance]",
-	}
-
-	cmd := cli.CmdRebalanceValidators()
-	ExecuteCLIExpectError(t, cmd, args, `strconv.ParseUint: parsing "[num-to-rebalance]": invalid syntax`)
 }
 
 func TestCmdAddValidators(t *testing.T) {
@@ -215,17 +142,6 @@ func TestCmdChangeMultipleValidatorWeight(t *testing.T) {
 	})
 }
 
-func TestCmdClearBalance(t *testing.T) {
-	args := []string{
-		"[chain-id]",
-		"[amount]",
-		"[channel-id]",
-	}
-
-	cmd := cli.CmdClearBalance()
-	ExecuteCLIExpectError(t, cmd, args, `can not convert string to int: invalid type`)
-}
-
 func TestCmdUpdateInnerRedemptionRateBounds(t *testing.T) {
 	t.Run("invalid min-bound", func(t *testing.T) {
 		args := []string{
@@ -251,38 +167,4 @@ func TestCmdUpdateInnerRedemptionRateBounds(t *testing.T) {
 			ExecuteCLIExpectError(t, cmd, args, "")
 		})
 	})
-}
-
-func TestCmdSetCommunityPoolRebate(t *testing.T) {
-	t.Run("invalid rebate-rate", func(t *testing.T) {
-		args := []string{
-			"[chain-id]",
-			"[rebate-rate]",
-			"[liquid-staked-sttoken-amount]",
-		}
-
-		cmd := cli.CmdSetCommunityPoolRebate()
-		ExecuteCLIExpectError(t, cmd, args, `unable to parse rebate percentage: failed to set decimal string with base 10: [rebate-rate]000000000000000000`)
-	})
-	t.Run("invalid liquid-staked-sttoken-amount", func(t *testing.T) {
-		args := []string{
-			"[chain-id]",
-			"0.123456789",
-			"[liquid-staked-sttoken-amount]",
-		}
-
-		cmd := cli.CmdSetCommunityPoolRebate()
-		ExecuteCLIExpectError(t, cmd, args, `unable to parse liquid stake amount`)
-	})
-}
-
-func TestCmdToggleTradeController(t *testing.T) {
-	args := []string{
-		"[trade-chain-id]",
-		"[grant|revoke]",
-		"[address]",
-	}
-
-	cmd := cli.CmdToggleTradeController()
-	ExecuteCLIExpectError(t, cmd, args, `invalid permission change, must be either 'grant' or 'revoke'`)
 }

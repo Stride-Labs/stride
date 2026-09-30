@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/cosmos/gogoproto/proto"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -524,4 +525,11 @@ func (s *KeeperTestSuite) TestValidatorSharesToTokensRateCallback_DelegationQuer
 
 	err := keeper.ValidatorSharesToTokensRateCallback(s.App.StakeibcKeeper, s.Ctx, tc.validArgs.callbackArgs, tc.validArgs.query)
 	s.Require().ErrorContains(err, "Failed to submit ICQ validator delegations")
+}
+
+func (s *KeeperTestSuite) getLSMTokenIBCDenom() string {
+	prefixedDenom := utils.GetPrefixedDenom(transfertypes.PortID, ibctesting.FirstChannelID, LSMTokenBaseDenom)
+	lsmTokenDenomTrace := transfertypes.ExtractDenomFromPath(prefixedDenom)
+	s.App.TransferKeeper.SetDenom(s.Ctx, lsmTokenDenomTrace)
+	return lsmTokenDenomTrace.IBCDenom()
 }

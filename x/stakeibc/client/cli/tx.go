@@ -1,32 +1,20 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-)
-
-const (
-	FlagMinRedemptionRate            = "min-redemption-rate"
-	FlagMaxRedemptionRate            = "max-redemption-rate"
-	FlagCommunityPoolTreasuryAddress = "community-pool-treasury-address"
-	FlagMaxMessagesPerIcaTx          = "max-messages-per-ica-tx"
-	FlagLegacy                       = "legacy"
 )
 
 var DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
@@ -40,12 +28,7 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdLiquidStake())
-	cmd.AddCommand(CmdLSMLiquidStake())
-	cmd.AddCommand(CmdRegisterHostZone())
-	cmd.AddCommand(CmdRedeemStake())
 	cmd.AddCommand(CmdClaimUndelegatedTokens())
-	cmd.AddCommand(CmdRebalanceValidators())
 	cmd.AddCommand(CmdAddValidators())
 	cmd.AddCommand(CmdChangeValidatorWeight())
 	cmd.AddCommand(CmdChangeMultipleValidatorWeight())
@@ -54,207 +37,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdCloseDelegationChannel())
 	cmd.AddCommand(CmdUpdateValidatorSharesExchRate())
 	cmd.AddCommand(CmdCalibrateDelegation())
-	cmd.AddCommand(CmdClearBalance())
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
-	cmd.AddCommand(CmdResumeHostZone())
-	cmd.AddCommand(CmdSetCommunityPoolRebate())
-	cmd.AddCommand(CmdToggleTradeController())
-
-	return cmd
-}
-
-func CmdLiquidStake() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "liquid-stake [amount] [hostDenom]",
-		Short: "Broadcast message liquid-stake",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argAmount, found := sdkmath.NewIntFromString(args[0])
-			if !found {
-				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
-			}
-			argHostDenom := args[1]
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgLiquidStake(
-				clientCtx.GetFromAddress().String(),
-				argAmount,
-				argHostDenom,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdLSMLiquidStake() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "lsm-liquid-stake [amount] [lsm-token-denom]",
-		Short: "Broadcast message lsm-liquid-stake",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			amount, found := sdkmath.NewIntFromString(args[0])
-			if !found {
-				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
-			}
-			denom := args[1]
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgLSMLiquidStake(
-				clientCtx.GetFromAddress().String(),
-				amount,
-				denom,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdRegisterHostZone() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "register-host-zone [connection-id] [host-denom] [bech32prefix] [ibc-denom] [channel-id] [unbonding-period] [lsm-enabled]",
-		Short: "Broadcast message register-host-zone",
-		Args:  cobra.ExactArgs(7),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			connectionId := args[0]
-			hostDenom := args[1]
-			bech32prefix := args[2]
-			ibcDenom := args[3]
-			channelId := args[4]
-			unbondingPeriod, err := strconv.ParseUint(args[5], 10, 64)
-			if err != nil {
-				return err
-			}
-			lsmEnabled, err := strconv.ParseBool(args[6])
-			if err != nil {
-				return err
-			}
-
-			minRedemptionRateStr, err := cmd.Flags().GetString(FlagMinRedemptionRate)
-			if err != nil {
-				return err
-			}
-			minRedemptionRate := sdkmath.LegacyZeroDec()
-			if minRedemptionRateStr != "" {
-				minRedemptionRate, err = sdkmath.LegacyNewDecFromStr(minRedemptionRateStr)
-				if err != nil {
-					return err
-				}
-			}
-
-			maxRedemptionRateStr, err := cmd.Flags().GetString(FlagMaxRedemptionRate)
-			if err != nil {
-				return err
-			}
-			maxRedemptionRate := sdkmath.LegacyZeroDec()
-			if maxRedemptionRateStr != "" {
-				maxRedemptionRate, err = sdkmath.LegacyNewDecFromStr(maxRedemptionRateStr)
-				if err != nil {
-					return err
-				}
-			}
-
-			communityPoolTreasuryAddress, err := cmd.Flags().GetString(FlagCommunityPoolTreasuryAddress)
-			if err != nil {
-				return err
-			}
-
-			maxMessagesPerIcaTx, err := cmd.Flags().GetUint64(FlagMaxMessagesPerIcaTx)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgRegisterHostZone(
-				clientCtx.GetFromAddress().String(),
-				connectionId,
-				bech32prefix,
-				hostDenom,
-				ibcDenom,
-				channelId,
-				unbondingPeriod,
-				minRedemptionRate,
-				maxRedemptionRate,
-				lsmEnabled,
-				communityPoolTreasuryAddress,
-				maxMessagesPerIcaTx,
-			)
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	cmd.Flags().String(FlagMinRedemptionRate, "", "minimum redemption rate")
-	cmd.Flags().String(FlagMaxRedemptionRate, "", "maximum redemption rate")
-	cmd.Flags().String(FlagCommunityPoolTreasuryAddress, "", "community pool treasury address")
-	cmd.Flags().Uint64(FlagMaxMessagesPerIcaTx, 0, "maximum number of ICA txs in a given tx")
-
-	return cmd
-}
-
-func CmdRedeemStake() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "redeem-stake [amount] [hostZoneID] [receiver]",
-		Short: "Broadcast message redeem-stake",
-		Args:  cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			argAmount, found := sdkmath.NewIntFromString(args[0])
-			if !found {
-				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
-			}
-			hostZoneID := args[1]
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			argReceiver := args[2]
-
-			msg := types.NewMsgRedeemStake(
-				clientCtx.GetFromAddress().String(),
-				argAmount,
-				hostZoneID,
-				argReceiver,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -282,39 +65,6 @@ func CmdClaimUndelegatedTokens() *cobra.Command {
 				argHostZone,
 				argEpoch,
 				argReceiver,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdRebalanceValidators() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "rebalance-validators [host-zone] [num-to-rebalance]",
-		Short: "Broadcast message rebalanceValidators",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argHostZone := args[0]
-			argNumValidators, err := strconv.ParseUint(args[1], 10, 64)
-			if err != nil {
-				return err
-			}
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgRebalanceValidators(
-				clientCtx.GetFromAddress().String(),
-				argHostZone,
-				argNumValidators,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -646,42 +396,6 @@ func CmdCalibrateDelegation() *cobra.Command {
 	return cmd
 }
 
-func CmdClearBalance() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "clear-balance [chain-id] [amount] [channel-id]",
-		Short: "Broadcast message clear-balance",
-		Args:  cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argChainId := args[0]
-			argAmount, found := sdkmath.NewIntFromString(args[1])
-			if !found {
-				return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
-			}
-			argChannelId := args[2]
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgClearBalance(
-				clientCtx.GetFromAddress().String(),
-				argChainId,
-				argAmount,
-				argChannelId,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
 func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set-redemption-rate-bounds [chainid] [min-bound] [max-bound]",
@@ -711,130 +425,6 @@ func CmdUpdateInnerRedemptionRateBounds() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdResumeHostZone() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "resume-host-zone [chainid]",
-		Short: "Broadcast message resume-host-zone",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			argChainId := args[0]
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgResumeHostZone(
-				clientCtx.GetFromAddress().String(),
-				argChainId,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdSetCommunityPoolRebate() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "set-rebate [chain-id] [rebate-rate] [liquid-staked-sttoken-amount]",
-		Short: "Registers or updates a community pool rebate",
-		Long: strings.TrimSpace(`Registers a community pool rebate by specifying the rebate percentage (as a decimal)
-and the amount liquid staked, denominated in the number of stTokens received. 
-E.g. to specify a 20% rebate, the rebate rate should be 0.2
-
-If a 0.0 rebate or 0 token liquid stake is specified, the rebate will be deleted.
-		`),
-		Args: cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			chainId := args[0]
-			rebatePercentage, err := sdkmath.LegacyNewDecFromStr(args[1])
-			if err != nil {
-				return fmt.Errorf("unable to parse rebate percentage: %s", err.Error())
-			}
-			liquidStakedStTokenAmount, ok := sdkmath.NewIntFromString(args[2])
-			if !ok {
-				return errors.New("unable to parse liquid stake amount")
-			}
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgSetCommunityPoolRebate(
-				clientCtx.GetFromAddress().String(),
-				chainId,
-				rebatePercentage,
-				liquidStakedStTokenAmount,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdToggleTradeController() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "toggle-trade-controller [trade-chain-id] [grant|revoke] [address]",
-		Short: "Submits an ICA tx to grant or revoke permissions to trade on behalf of the trade ICA",
-		Long: strings.TrimSpace(`Submits an ICA tx to grant or revoke permissions to trade on behalf of the trade ICA
-Ex:
->>> strided tx toggle-trade-controller osmosis-1 grant osmoXXX
-		`),
-		Args: cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			chainId := args[0]
-			permissionChangeString := args[1]
-			address := args[2]
-
-			permissionChangeInt, ok := types.AuthzPermissionChange_value[strings.ToUpper(permissionChangeString)]
-			if !ok {
-				return errors.New("invalid permission change, must be either 'grant' or 'revoke'")
-			}
-			permissionChange := types.AuthzPermissionChange(permissionChangeInt)
-
-			legacy, err := cmd.Flags().GetBool(FlagLegacy)
-			if err != nil {
-				return err
-			}
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgToggleTradeController(
-				clientCtx.GetFromAddress().String(),
-				chainId,
-				permissionChange,
-				address,
-				legacy,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	cmd.Flags().Bool(FlagLegacy, false, "Use legacy osmosis swap message from gamm")
 
 	return cmd
 }
