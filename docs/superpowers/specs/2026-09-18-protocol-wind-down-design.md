@@ -40,7 +40,7 @@ In scope:
   before the redeem message is removed. All finish through the existing pipeline in the ops
   window and are claimed for everyone.
 - Stakedym's 11 open unbonding records, flushed by its operator after the upgrade. Stakedym
-  is never halted; its messages are removed and the module idles.
+  is halted on mainnet today (its rate crossed its 1.1 max bound); the upgrade widens its max bounds and unhalts it so its open records can be claimed; its messages are removed and the module idles.
 - Removing every message the protocol no longer needs, moving wasm control to gov, removing
   every IBC rate limit, and deleting the epoch-hook calls that compound or move stake.
 - Four admin txs: per-validator undelegation, ICA-to-Osmosis transfer, the staketia
@@ -407,6 +407,12 @@ limit would protect. The module and middleware stay in the stack with empty stat
 **Comdex.** The handler sets `Deprecated = true` on comdex-1 so it carries the same flag as
 the other three deprecated zones. `Halted` is not touched; the flag is documentation.
 
+**Stakedym.** Stakedym is halted on mainnet (rate 1.100538 against max bounds of 1.1) and its
+BeginBlocker re-halts it and re-blacklists `stadym` every block, so its unbonding records
+cannot be claimed. Before the rate-limit removal, the handler raises both max bounds to twice
+the current rate (when below that), leaves the min bounds alone, and clears `Halted`; the
+widened bounds keep the BeginBlocker check passing.
+
 **Stale in-progress flags.** For every in-scope zone whose delegation ICA channel is open
 with no unacked packet, the handler resets `DelegationChangesInProgress` to zero on every
 validator, exactly what `RestoreInterchainAccount` does after a channel restore, and logs
@@ -429,14 +435,18 @@ the call that submits them is gone (§6).
 
 **Haqq delegation reconciliation.** The handler applies a per-validator delta table to
 haqq_11235-1 with the v34 helper, exactly as v34 did for Injective. The 2026-09-29
-measurement (§9a) has 16 validators off: 13 over-recorded (undetected downtime slashes and
-sub-token rounding, the largest 853.8 ISLM) and 3 under-recorded by sub-token dust. Both
-signs are applied so every tracked delegation equals the chain's; the net is a decrease of
-about 1,758 ISLM, so `TotalDelegations` drops. The rate update is deleted in the same
+measurement (§9a) has 16 validators off: 12 over-recorded (undetected downtime slashes and
+sub-token rounding, the largest 853.8 ISLM) and 4 under-recorded by sub-token dust. Both
+signs are applied so every tracked delegation equals the chain's; the regenerated table's net
+is a decrease of 1,393.47 ISLM (2026-09-29; gmocoin's slash was booked on chain between
+measurements), so `TotalDelegations` drops. The rate update is deleted in the same
 upgrade (§6), so this no longer flows into the stISLM redemption rate; the rate stays about
-0.002% above the backing (1,758 ISLM against 101M stISLM, roughly $7), which the rewards
+0.0014% above the backing (1,393 ISLM against 101M stISLM, roughly $6), which the rewards
 accrued until the drain cover many times over and the coverage check (§10) reports either
-way. The net has been stable across four measurements since 2026-09-21. The stored
+way. The table also pins each row's tracked delegation
+(`HaqqExpectedTrackedDelegations`, read from the live host zone when generated) and is
+skipped whole, with an error log, on any mismatch, so a slash booked between generation and
+the upgrade cannot be applied twice. The stored
 `SharesToTokensRate` is deliberately left as is: the day-0 refresh updates it, and the slash
 callback then finds tracked delegation equal to on-chain shares × the refreshed rate, so
 nothing is applied twice. The table is generated from `measure_delegation_drift.py`,
@@ -1025,6 +1035,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   second, unrelated cleanup that the v35 handler does (§5); why they accumulate is not yet
   understood (every callback path decrements them and nothing is unacked), which is worth a
   look before the upgrade so the reset is not papering over a live leak.
+- **Stale flags the handler cannot reset** (measured 2026-09-29): haqq_11235-1's delegation channel-869 is CLOSED with 14 packet commitments (sequences 85-98) and 30 flagged validators, so haqq needs `restore-interchain-account` before the day-0 refresh and the drain; juno-1's open channel-491 has pending commitments from sequence 5729, so its 21 flags clear only once those packets are relayed. The v35 reset skips both zones by design.
 - **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
   connection `connection-146`, last header 2026-08-05; the delegation ICA restore is stuck in
   `STATE_INIT` on channel-768). No ICA tx, and no Stride→Band transfer, can be delivered

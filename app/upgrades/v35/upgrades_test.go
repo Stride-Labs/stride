@@ -4,7 +4,10 @@ import (
 	"testing"
 
 	icahosttypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/types"
+	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	"github.com/stretchr/testify/suite"
+
+	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -46,12 +49,19 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		sdk.MsgTypeURL(&stakeibctypes.MsgClaimUndelegatedTokens{}),
 	}})
 	deployKeyContract := s.storeAndInstantiateHackatom(sdk.MustAccAddressFromBech32(v35.WasmDeployKey))
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, stakeibctypes.HostZone{ChainId: v35.ComdexChainId})
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, withInBoundsRates(stakeibctypes.HostZone{ChainId: v35.ComdexChainId}))
 	s.App.StakeibcKeeper.SetTradeRoute(s.Ctx, stakeibctypes.TradeRoute{
 		RewardDenomOnRewardZone: v35.DydxTradeRouteRewardDenom, HostDenomOnHostZone: v35.DydxTradeRouteHostDenom,
 	})
 	s.App.ICAOracleKeeper.SetOracle(s.Ctx, icaoracletypes.Oracle{ChainId: "osmosis-1", ConnectionId: "connection-9", Active: true})
 	s.App.RatelimitKeeper.AddDenomToBlacklist(s.Ctx, "stuevmos")
+	s.App.RatelimitKeeper.SetWhitelistedAddressPair(s.Ctx, ratelimittypes.WhitelistedAddressPair{Sender: "sender", Receiver: "receiver"})
+	s.App.RatelimitKeeper.SetRateLimit(s.Ctx, ratelimittypes.RateLimit{
+		Path:  &ratelimittypes.Path{Denom: "stuatom", ChannelOrClientId: "channel-0"},
+		Quota: &ratelimittypes.Quota{MaxPercentSend: sdkmath.NewInt(10), MaxPercentRecv: sdkmath.NewInt(10), DurationHours: 24},
+		Flow:  &ratelimittypes.Flow{Inflow: sdkmath.ZeroInt(), Outflow: sdkmath.ZeroInt(), ChannelValue: sdkmath.NewInt(1000)},
+	})
+	s.seedHaltedStakedym()
 	s.seedFlaggedZone("cosmoshub-4", "connection-0", false)
 	s.mockDelegationChannel("cosmoshub-4", "connection-0", "channel-863")
 	s.seedQueries()
@@ -74,10 +84,14 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.Require().Empty(s.App.StakeibcKeeper.GetAllTradeRoutes(s.Ctx), "trade route")
 	oracle, _ := s.App.ICAOracleKeeper.GetOracle(s.Ctx, "osmosis-1")
 	s.Require().False(oracle.Active, "oracle")
-	// Not GetAllBlacklistedDenoms: the fixture zones have a zero redemption rate, so the stakeibc
-	// BeginBlocker that ConfirmUpgradeSucceeded runs after the handler halts them and re-blacklists
-	// their stDenoms. The seeded denom is what the handler owns.
-	s.Require().False(s.App.RatelimitKeeper.IsDenomBlacklisted(s.Ctx, "stuevmos"), "rate limiter")
+	// The fixture zones have in-bounds rates, so the stakeibc BeginBlocker that ConfirmUpgradeSucceeded
+	// runs after the handler does not re-blacklist their stDenoms
+	s.Require().Empty(s.App.RatelimitKeeper.GetAllRateLimits(s.Ctx), "rate limits")
+	s.Require().Empty(s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx), "blacklisted denoms")
+	s.Require().Empty(s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx), "whitelisted pairs")
+	stakedym, err := s.App.StakedymKeeper.GetHostZone(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().False(stakedym.Halted, "stakedym unhalted and not re-halted by its BeginBlocker")
 	s.Require().Equal([]int64{0, 0, 0}, s.flags("cosmoshub-4"), "stale flags")
 	s.Require().ElementsMatch([]string{"haqq-fee", "juno-delegation", "comdex-calibrate", "other-haqq-delegation", "other-juno-withdrawal"},
 		s.queryIds(), "both ICQ purges")
@@ -88,4 +102,15 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		s.Require().Equal(haqqTracked[entry.Address].Add(entry.Delta), validator.Delegation, "haqq delta %s", entry.Name)
 	}
 	s.Require().True(haqq.TotalDelegations.LT(haqqTrackedTotal), "haqq total dropped")
+}
+
+// withInBoundsRates gives a fixture host zone a redemption rate inside its safety bounds so the
+// stakeibc BeginBlocker (which runs right after the handler) does not halt it and re-blacklist its stDenom
+func withInBoundsRates(hostZone stakeibctypes.HostZone) stakeibctypes.HostZone {
+	hostZone.RedemptionRate = sdkmath.LegacyOneDec()
+	hostZone.MinRedemptionRate = sdkmath.LegacyMustNewDecFromStr("0.9")
+	hostZone.MinInnerRedemptionRate = sdkmath.LegacyMustNewDecFromStr("0.95")
+	hostZone.MaxInnerRedemptionRate = sdkmath.LegacyMustNewDecFromStr("1.4")
+	hostZone.MaxRedemptionRate = sdkmath.LegacyMustNewDecFromStr("1.5")
+	return hostZone
 }
