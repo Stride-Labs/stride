@@ -21,7 +21,12 @@ var _ = sdk.UnwrapSDKContext
 // UndelegateFromValidators: the wind-down drain (Task 3 replaces the body).
 // Delegates to Keeper.UndelegateFromValidators in wind_down_undelegate.go.
 func (k msgServer) UndelegateFromValidators(goCtx context.Context, msg *types.MsgUndelegateFromValidators) (*types.MsgUndelegateFromValidatorsResponse, error) {
-	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgUndelegateFromValidators is wired in a later task of this PR")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	numBatches, err := k.Keeper.UndelegateFromValidators(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgUndelegateFromValidatorsResponse{NumBatchesSubmitted: numBatches}, nil
 }
 
 // TransferFromIca: ICA balance to the Osmosis vault (Task 4 replaces the body).
