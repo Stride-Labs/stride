@@ -67,10 +67,10 @@ func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelega
 }
 
 // checkNoQueuedUnbondings rejects the drain while any unbonding record for the zone is still
-// waiting for the day epoch (queued or retrying) with a real amount, has an undelegate ICA
-// in flight, or while a one-shot
-// pending undelegation (the v34 mechanism) is stored for the zone: the record-less success
-// callback calls ConsumePendingUndelegation, so a drain ack would silently eat that amount
+// waiting for the day epoch (queued or retrying) with a real amount, has an undelegate ICA in
+// flight, or while a one-shot pending undelegation (the v34 mechanism) is stored for the zone:
+// the record-less success callback calls ConsumePendingUndelegation, so a drain ack would
+// silently eat that amount
 func (k Keeper) checkNoQueuedUnbondings(ctx sdk.Context, chainId string) error {
 	if pending, found := k.GetPendingUndelegation(ctx, chainId); found {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
