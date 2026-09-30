@@ -2,7 +2,13 @@
 package keeper_test
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"strconv"
+
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -187,6 +193,44 @@ func (s *KeeperTestSuite) TestMsgServer_TransferFromIca() {
 		_, err := s.GetMsgServer().TransferFromIca(s.Ctx, msg)
 		return err
 	})
+
+	// The ICA packet times out one window out; the inner transfer gets twice that window
+	blockTime := s.Ctx.BlockTime()
+	packetTimeout, packetData := s.sentIcaPacket()
+	s.Require().Equal(uint64(blockTime.Add(types.WindDownTransferTimeout).UnixNano()), packetTimeout)
+
+	msgs, err := icatypes.DeserializeCosmosTx(s.App.AppCodec(), packetData.Data, icatypes.EncodingProtobuf)
+	s.Require().NoError(err)
+	s.Require().Len(msgs, 1)
+	transfer, ok := msgs[0].(*transfertypes.MsgTransfer)
+	s.Require().True(ok, "the ICA carries an ICS-20 transfer")
+	s.Require().Equal(uint64(blockTime.Add(2*types.WindDownTransferTimeout).UnixNano()), transfer.TimeoutTimestamp)
+	s.Require().Equal(testOsmosisVault, transfer.Receiver)
+	s.Require().Empty(transfer.Memo)
+}
+
+// Reads the timeout and ICA packet data off the send_packet event emitted by the last submitted tx
+func (s *KeeperTestSuite) sentIcaPacket() (timeoutTimestamp uint64, packetData icatypes.InterchainAccountPacketData) {
+	for _, event := range s.Ctx.EventManager().Events() {
+		if event.Type != channeltypes.EventTypeSendPacket {
+			continue
+		}
+
+		attributes := map[string]string{}
+		for _, attribute := range event.Attributes {
+			attributes[attribute.Key] = attribute.Value
+		}
+
+		timeoutTimestamp, err := strconv.ParseUint(attributes[channeltypes.AttributeKeyTimeoutTimestamp], 10, 64)
+		s.Require().NoError(err)
+		dataBz, err := hex.DecodeString(attributes[channeltypes.AttributeKeyDataHex])
+		s.Require().NoError(err)
+		s.Require().NoError(json.Unmarshal(dataBz, &packetData))
+		return timeoutTimestamp, packetData
+	}
+
+	s.FailNow("no send_packet event emitted")
+	return 0, packetData
 }
 
 // A non-osmosis zone whose mapped channel is empty must not silently become a bank send
