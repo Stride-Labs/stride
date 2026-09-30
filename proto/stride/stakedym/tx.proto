@@ -20,14 +20,11 @@ enum OverwritableRecordType {
 }
 
 // Msg defines the Msg service.
+//
+// v35 wind-down: LiquidStake, RedeemStake and ResumeHostZone have no rpc; their
+// message types remain for historical decoding.
 service Msg {
   option (cosmos.msg.v1.service) = true;
-
-  // User transaction to liquid stake native tokens into stTokens
-  rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
-
-  // User transaction to redeem stake stTokens into native tokens
-  rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
 
   // Operator transaction to confirm a delegation was submitted
   // on the host chain
@@ -52,9 +49,6 @@ service Msg {
   // Adjusts the inner redemption rate bounds on the host zone
   rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
       returns (MsgUpdateInnerRedemptionRateBoundsResponse);
-
-  // Unhalts the host zone if redemption rates were exceeded
-  rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
 
   // Trigger updating the redemption rate
   rpc RefreshRedemptionRate(MsgRefreshRedemptionRate)
