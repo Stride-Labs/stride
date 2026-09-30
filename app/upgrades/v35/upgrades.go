@@ -70,6 +70,9 @@ func CreateUpgradeHandler(
 		PurgeHaqqSlashQueries(ctx, icqKeeper, stakeibcKeeper)
 		PurgeWithdrawalBalanceQueries(ctx, icqKeeper)
 
+		// Haqq delegation reconciliation, after its slash-path ICQs are gone (spec §5)
+		ReconcileHaqqDelegations(ctx, stakeibcKeeper)
+
 		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
