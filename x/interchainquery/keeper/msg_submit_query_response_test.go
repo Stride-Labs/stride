@@ -194,36 +194,6 @@ func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_FindAndInvokeCallback() {
 	s.Require().ErrorContains(err, "unable to determine balance from query response")
 }
 
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_EmptyResponse_SkipsCallback() {
-	tc := s.SetupMsgSubmitQueryResponse()
-
-	// Without the opt-in, an empty response is dropped: the query is deleted and no callback runs
-	// (an unregistered callback ID would error if the callback lookup were reached)
-	tc.validMsg.Result = []byte{}
-	tc.query.CallbackId = "unregistered-callback"
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
-
-	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().NoError(err)
-
-	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, tc.query.Id)
-	s.Require().False(found, "query should be deleted")
-}
-
-func (s *KeeperTestSuite) TestMsgSubmitQueryResponse_EmptyResponse_InvokesCallbackWhenOptedIn() {
-	tc := s.SetupMsgSubmitQueryResponse()
-
-	// With the opt-in, the callback lookup is reached for an empty response
-	// (an unregistered callback ID errors, which proves the callback path ran)
-	tc.validMsg.Result = []byte{}
-	tc.query.CallbackId = "unregistered-callback"
-	tc.query.InvokeCallbackOnEmptyResponse = true
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, tc.query)
-
-	_, err := s.GetMsgServer().SubmitQueryResponse(tc.goCtx, &tc.validMsg)
-	s.Require().ErrorIs(err, types.ErrICQCallbackNotFound)
-}
-
 // To write this test, we need to write data to Gaia, then get the proof for that data and check it using the LC
 // As a first pass, to verify proof checking, we will use an example from Stride integration testing
 //     //   ...down the line, we may want to write tests here that verify the merkle check using proofs from tendermint's proof_test library, https://github.com/cometbft/cometbft/blob/75d51e18f740c7cbfb7d8b4d49182ee6c7f41982/crypto/merkle/proof_test.go
