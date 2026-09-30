@@ -10,6 +10,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
+	icqoracletypes "github.com/Stride-Labs/stride/v34/x/icqoracle/types"
 	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
@@ -51,6 +52,8 @@ var removedMsgs = []sdk.Msg{
 	&stakedymtypes.MsgResumeHostZone{},
 	&icaoracletypes.MsgAddOracle{},
 	&icaoracletypes.MsgInstantiateOracle{},
+	&icqoracletypes.MsgRegisterTokenPriceQuery{},
+	&icqoracletypes.MsgRemoveTokenPriceQuery{},
 }
 
 // keptMsgs are a sample of messages that must keep routing after the removals.
@@ -62,6 +65,7 @@ var keptMsgs = []sdk.Msg{
 	&staketiatypes.MsgConfirmUnbondedTokenSweep{},
 	&stakedymtypes.MsgConfirmUnbondedTokenSweep{},
 	&icaoracletypes.MsgToggleOracle{},
+	&icqoracletypes.MsgUpdateParams{},
 }
 
 // removedServerMethods maps each module's MsgServer interface to the method names that
@@ -77,6 +81,7 @@ var removedServerMethods = map[reflect.Type][]string{
 	reflect.TypeOf((*staketiatypes.MsgServer)(nil)).Elem():  {"LiquidStake", "RedeemStake", "ResumeHostZone"},
 	reflect.TypeOf((*stakedymtypes.MsgServer)(nil)).Elem():  {"LiquidStake", "RedeemStake", "ResumeHostZone"},
 	reflect.TypeOf((*icaoracletypes.MsgServer)(nil)).Elem(): {"AddOracle", "InstantiateOracle"},
+	reflect.TypeOf((*icqoracletypes.MsgServer)(nil)).Elem(): {"RegisterTokenPriceQuery", "RemoveTokenPriceQuery"},
 }
 
 func (s *RemovedHandlersTestSuite) TestRemovedMessagesHaveNoRoute() {
