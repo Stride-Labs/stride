@@ -227,8 +227,11 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   `UpdateValidatorSharesExchRate` (CLI `update-delegation`) for NodeGuardians and for
   Forbole (58.22 ATOM, over by 0.006, same shape), which detects the 0.01% downtime slash,
   lowers the recorded delegation to the chain's, and stores the sub-one rate so the next
-  full drain both fits and gets the safety buffer. Neither validator is flagged, so the
-  callback will apply. Separately, six Hub validators carry a stale
+  full drain both fits and gets the safety buffer. Done on 2026-09-29 from the hot wallet
+  (txs `591DFD17…` and `63238D95…`); both callbacks applied within minutes and the Hub host
+  zone now records NodeGuardians at 32,763.075057 ATOM and Forbole at 58.214178, rates
+  0.9999. The backlog should clear at the next Hub unbonding epoch, 2026-09-30 19:00 UTC;
+  verify with the `undelegation_failed` event search and the retry records. Separately, six Hub validators carry a stale
   `DelegationChangesInProgress` (keplr 12, stakewithus 2, four small ones 1), Juno has 21
   and Haqq 30, all with open ICA channels and nothing unacked; those flags do not affect
   the pipeline (the capacity calculation ignores them) but they do make the slash callback
@@ -1013,8 +1016,9 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 - **The Cosmos Hub unbonding pipeline is stuck today** (§3): ~190k ATOM of redemptions
   across eight epochs are retrying or queued because the batch that drains NodeGuardians in
   full is rejected every epoch (recorded 3.25 ATOM above the chain after an undetected
-  slash). Fix it now with the permissionless slash refresh on NodeGuardians and Forbole;
-  the next four-day epoch then clears the backlog. Until it is fixed, Hub holders who
+  slash). The permissionless slash refresh was run on NodeGuardians and Forbole on
+  2026-09-29 and applied; confirm on 2026-09-30 after 19:00 UTC that the epoch's batches all
+  acked with results, the retry records moved on, and no `undelegation_failed` event fired. Until it is fixed, Hub holders who
   redeemed in September are not being paid, and the drain of the Hub would be refused by the
   queued-record guard (§7). The stale in-progress flags on the Hub, Juno and Haqq are a
   second, unrelated cleanup that the v35 handler does (§5); why they accumulate is not yet
