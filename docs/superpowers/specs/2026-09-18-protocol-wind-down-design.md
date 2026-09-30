@@ -251,9 +251,21 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   2026-09-29 (§9a) applied on Terra and Injective within minutes, but on Haqq only the ones
   whose second query happened to be answered did. Nothing on Haqq can be fixed by a
   refresh while this lasts, which is the reason the haqq delta table at the upgrade covers
-  every drifted validator rather than only the dust cases. ICA transactions on a chain this
-  slow still fit the one-day timeouts, but if Haqq stops for good before the drain, stISLM
-  (about $417k) joins the unrecoverable set with the four dead zones (§12).
+  every drifted validator rather than only the dust cases. Slow blocks do not make relaying
+  impossible, only late; what breaks Haqq is our own ICA timeouts. A stride-epoch ICA times
+  out about 4.8 hours after submission (next epoch start minus a fifth of the epoch,
+  `GetICATimeoutNanos`), a day-epoch one after about 19 hours, and a timeout closes the
+  ordered channel. On 2026-09-27 the delegation ICA channel (channel-869, the eleventh on
+  that connection) closed on a timed-out `MsgWithdrawDelegatorReward` from
+  `ClaimAccruedStakingRewards` and the withdrawal ICA channel (channel-668, the sixth) on a
+  timed-out fee-split `MsgSend`; neither has been restored, so Haqq's delegation and
+  withdrawal ICAs are unusable today and the zone's 30 stale in-progress flags are the
+  packets that were in flight on those channels when they closed (their timeouts are never
+  relayed on a closed channel; `RestoreInterchainAccount` is what resets them). Any ICA the
+  epoch hook keeps sending from these accounts will close a restored channel again the
+  first time delivery takes longer than 4.8 hours, which on Haqq now is routine. If Haqq
+  stops for good before the drain, stISLM (about $417k) joins the unrecoverable set with the
+  four dead zones (§12).
 - Native vouchers stranded on Stride are dust: the eleven deposit addresses, the reward
   collector and the auction module together hold about $3 of in-scope native denoms. Nothing
   on Stride except the staketia claim address will hold a native balance worth moving. User
@@ -1047,13 +1059,18 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   acked with results, the retry records moved on, and no `undelegation_failed` event fired. Until it is fixed, Hub holders who
   redeemed in September are not being paid, and the drain of the Hub would be refused by the
   queued-record guard (§7). The stale in-progress flags on the Hub, Juno and Haqq are a
-  second, unrelated cleanup that the v35 handler does (§5); why they accumulate is not yet
-  understood (every callback path decrements them and nothing is unacked), which is worth a
-  look before the upgrade so the reset is not papering over a live leak.
+  second cleanup that the v35 handler does (§5). They accumulate when an ordered ICA
+  channel closes on a timeout with other packets still in flight: those packets' timeouts
+  are never relayed on the closed channel, so their callbacks never run and their flags
+  stay until a restore resets them (§3). The Hub's 28 closed delegation channels and Haqq's
+  11 are where its flags came from.
 - **Stale flags the handler cannot reset** (measured 2026-09-29): haqq_11235-1's delegation channel-869 is CLOSED with 14 packet commitments (sequences 85-98) and 30 flagged validators, so haqq needs `restore-interchain-account` before the day-0 refresh and the drain; juno-1's open channel-491 has pending commitments from sequence 5729, so its 21 flags clear only once those packets are relayed. The v35 reset skips both zones by design.
 - **Haqq's chain health** (§3): with one block every few minutes since at least
-  2026-09-21 and no ICQ answered in that time, decide before the proposal whether haqq
-  stays in scope. If it does, every haqq correction rides on the delta table (no refresh is
+  2026-09-21, no ICQ answered in that time, and both the delegation and withdrawal ICA
+  channels closed since 2026-09-27, decide before the proposal whether haqq stays in scope.
+  Either way, restore the two channels now (`RestoreInterchainAccount`) so the zone is
+  usable, and expect them to close again at the next stride-epoch ICA that is delivered
+  late until the epoch senders are deleted at the upgrade (§6). If it does, every haqq correction rides on the delta table (no refresh is
   possible) and the drain's ICA relaying must be watched by hand; if Haqq halts for good,
   stISLM moves to the unrecoverable set and its holders get no pool.
 - **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
@@ -1109,7 +1126,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
      icqoracle, auction, airdrop and claim, plus rebalance, clear-balance and resume; types
      and registrations stay; the "no handler" guard test and the historical-tx decode test.
      Large diff, no logic.
-  2. Freeze by code: the nine hook-call deletions, the slash callback's rate rewrite removed,
+  2. Freeze by code: the ten hook-call deletions, the slash callback's rate rewrite removed,
      the admin gates on the two ICQ messages, the calibration cap lifted, and the tests that
      the rate does not move. Small diff, the one PR that needs the epoch machinery in the
      reviewer's head.
