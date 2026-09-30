@@ -3,18 +3,20 @@
 Measure drift between Stride's recorded per-validator delegations (stakeibc host_zone)
 and actual on-chain delegations of Stride's delegation ICA on each host chain.
 
-Read-only. Writes drift.json and report.md into this directory.
+Read-only. Writes drift.json and report.md into --output-dir (default: the drift/ directory
+beside this script, scripts/wind-down/drift/, git-ignored; resolved from the script's own path,
+not the working directory). --chain-id (repeatable) restricts the measurement to those zones.
 """
 
+import argparse
 import json
+import pathlib
 import time
 import urllib.request
 import urllib.error
 from decimal import Decimal, getcontext
 
 getcontext().prec = 60
-
-SCRIPT_DIR = "/private/tmp/claude-501/-Users-sampocs-Documents-Projects-stride/4ac0fcca-c8bc-4981-b63e-b0f199cc9eaa/scratchpad/drift"
 
 STRIDE_REST = "https://stride-api.polkachu.com"
 UA_HEADER = {"User-Agent": "curl/8.0"}
@@ -489,7 +491,39 @@ def render_summary_table(summaries: list[dict], decimals_map: dict) -> str:
     return "\n".join(lines)
 
 
-def main():
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output-dir",
+        type=pathlib.Path,
+        default=pathlib.Path(__file__).resolve().parent / "drift",
+        help="directory for drift.json and report.md (created if missing; default: drift/ beside this script)",
+    )
+    parser.add_argument(
+        "--chain-id",
+        action="append",
+        dest="chain_ids",
+        default=None,
+        help="measure only this Stride host zone (repeatable); default is every zone in ZONES",
+    )
+    return parser.parse_args()
+
+
+def selected_zones(chain_ids: list[str] | None) -> dict[str, dict]:
+    if chain_ids is None:
+        return ZONES
+    unknown = sorted(set(chain_ids) - set(ZONES))
+    if unknown:
+        raise SystemExit(f"unknown chain id(s): {', '.join(unknown)}; known: {', '.join(ZONES)}")
+    return {chain_id: ZONES[chain_id] for chain_id in chain_ids}
+
+
+def main() -> None:
+    args = parse_args()
+    zones = selected_zones(chain_ids=args.chain_ids)
+    output_dir: pathlib.Path = args.output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     stride_zones = fetch_stride_host_zones()
     stride_by_chain_id = {z["chain_id"]: z for z in stride_zones}
 
@@ -497,7 +531,7 @@ def main():
     all_rows = {}
     all_summaries = []
 
-    for chain_id, cfg in ZONES.items():
+    for chain_id, cfg in zones.items():
         stride_zone = stride_by_chain_id.get(chain_id)
         if stride_zone is None:
             print(f"WARN: {chain_id} not found in Stride host_zone list")
@@ -517,7 +551,7 @@ def main():
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "zones": {},
     }
-    for chain_id in ZONES:
+    for chain_id in zones:
         if chain_id not in all_zone_data:
             continue
         output["zones"][chain_id] = {
@@ -531,11 +565,11 @@ def main():
             "validators": all_rows.get(chain_id, []),
         }
 
-    with open(f"{SCRIPT_DIR}/drift.json", "w") as f:
+    with open(output_dir / "drift.json", "w") as f:
         json.dump(output, f, indent=2)
 
     # Write report.md
-    decimals_map = {chain_id: cfg["decimals"] for chain_id, cfg in ZONES.items()}
+    decimals_map = {chain_id: cfg["decimals"] for chain_id, cfg in zones.items()}
     report_lines = ["# Stride Delegation Drift Report", ""]
     report_lines.append(f"Generated: {output['generated_at']}")
     report_lines.append("")
@@ -545,7 +579,7 @@ def main():
     report_lines.append("")
     report_lines.append("## Per-Zone Detail (validators with nonzero diff)")
     report_lines.append("")
-    for chain_id in ZONES:
+    for chain_id in zones:
         if chain_id not in all_zone_data:
             continue
         report_lines.append(
@@ -557,10 +591,10 @@ def main():
             )
         )
 
-    with open(f"{SCRIPT_DIR}/report.md", "w") as f:
+    with open(output_dir / "report.md", "w") as f:
         f.write("\n".join(report_lines))
 
-    print("\nDone. Wrote drift.json and report.md")
+    print(f"\nDone. Wrote {output_dir / 'drift.json'} and {output_dir / 'report.md'}")
 
 
 if __name__ == "__main__":
