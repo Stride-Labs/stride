@@ -22,8 +22,7 @@ import (
 )
 
 // Wind-down admin txs (spec §7). The helpers are shared by every command; each Cmd* function
-// below is a stub that its task replaces (Task 3: undelegate, Task 4: transfer-from-ica,
-// Task 5: transfer-staketia-claim-balance; PR 5 adds sweep-tokens-off-stride).
+// below is one command; PR 5 adds sweep-tokens-off-stride.
 
 // validatorUndelegationInput is one entry of the validators file for undelegate-from-validators
 type validatorUndelegationInput struct {
@@ -86,13 +85,6 @@ func broadcastWindDownTx(cmd *cobra.Command, build func(creator string) sdk.Msg)
 		return err
 	}
 	return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-}
-
-// notWiredYet is the RunE of every stub below
-func notWiredYet(name string) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		return fmt.Errorf("%s is wired in a later task of this PR", name)
-	}
 }
 
 const FlagUndelegateAll = "all"
