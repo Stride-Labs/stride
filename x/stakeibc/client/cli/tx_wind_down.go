@@ -2,6 +2,7 @@
 package cli
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -22,7 +23,7 @@ import (
 )
 
 // Wind-down admin txs (spec §7). The helpers are shared by every command; each Cmd* function
-// below is one command; PR 5 adds sweep-tokens-off-stride.
+// below is one command.
 
 // validatorUndelegationInput is one entry of the validators file for undelegate-from-validators
 type validatorUndelegationInput struct {
@@ -203,4 +204,77 @@ omitted or 0 moves the whole balance. Use a small amount first as the live test.
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+// CmdSweepTokensOffStride submits one sweep batch: every listed denom, for every holder in the
+// file (one bech32 address per line; blank lines and lines starting with # are ignored).
+// The file is produced by scripts/wind-down/build_sweep_batches.py
+func CmdSweepTokensOffStride() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "sweep-tokens-off-stride [denoms] [addresses-file]",
+		Short: "Sweep the listed denoms off Stride for every holder in the file (sweep operator only)",
+		Long: `Sends each listed denom that each holder in the file owns to the holder's own address on the
+destination chain: stTokens and ustrd to Osmosis over channel-5, IBC vouchers back one hop over the
+channel they arrived on (whitelisted channels only). denoms is comma-separated. The file holds one
+Stride address per line, at most 100.`,
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			denoms := parseCommaSeparated(args[0])
+			if len(denoms) == 0 {
+				return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "at least one denom is required")
+			}
+			addresses, err := readAddressesFile(args[1])
+			if err != nil {
+				return err
+			}
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			msg := types.NewMsgSweepTokensOffStride(clientCtx.GetFromAddress().String(), denoms, addresses)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func parseCommaSeparated(raw string) []string {
+	values := []string{}
+	for _, value := range strings.Split(raw, ",") {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			values = append(values, trimmed)
+		}
+	}
+	return values
+}
+
+func readAddressesFile(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to read addresses file %s: %s", path, err)
+	}
+	defer file.Close()
+
+	addresses := []string{}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		addresses = append(addresses, line)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to read addresses file %s: %s", path, err)
+	}
+	if len(addresses) == 0 {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "addresses file is empty: %s", path)
+	}
+	return addresses, nil
 }
