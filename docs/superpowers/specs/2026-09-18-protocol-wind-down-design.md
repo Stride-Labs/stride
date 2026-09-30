@@ -39,8 +39,6 @@ In scope:
 - The stakeibc user redemption records open at the upgrade (99 on 2026-09-18) and any created
   before the redeem message is removed. All finish through the existing pipeline in the ops
   window and are claimed for everyone.
-- Stakedym's 11 open unbonding records, flushed by its operator after the upgrade. Stakedym
-  is halted on mainnet today (its rate crossed its 1.1 max bound); the upgrade widens its max bounds and unhalts it so its open records can be claimed; its messages are removed and the module idles.
 - Removing every message the protocol no longer needs, moving wasm control to gov, removing
   every IBC rate limit, and deleting the epoch-hook calls that compound or move stake.
 - Four admin txs: per-validator undelegation, ICA-to-Osmosis transfer, the staketia
@@ -53,10 +51,12 @@ Out of scope, explicitly:
 - The deprecated zones comdex-1, evmos_9001-2, stargaze-1 and umee-1. Apart from setting the
   `Deprecated` flag on comdex-1 (the other three already carry it), the upgrade does not touch
   them, and none of them are unbonded, drained or given a pool. Their host chains have stopped
-  producing blocks, so nothing could be done through their ICAs anyway. Stakedym is likewise
-  never unbonded, drained or given a pool. Holders of stCMDX, stEVMOS, stSTARS, stUMEE and
+  producing blocks, so nothing could be done through their ICAs anyway. Stakedym is halted
+  on mainnet (its rate crossed its 1.1 max bound), stays halted, and is treated as deprecated:
+  its open unbonding records are not flushed and it is never unbonded, drained or given a
+  pool. Holders of stCMDX, stEVMOS, stSTARS, stUMEE and
   stDYM have no redemption path after this work, which matches their status today but is now
-  a deliberate decision.
+  a deliberate decision (for stakedym, a deliberate choice not to recover it).
 - stTokens held by Stride accounts that no key controls (contracts, interchain accounts owned
   by other chains, module accounts including the community pool). They are not swept; their
   owners, where there is one, move them out themselves before the halt (§9). Their backing
@@ -239,7 +239,7 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   (§5).
 - Staketia: 6 `UNBONDING_IN_PROGRESS`, 2 `UNBONDING_QUEUE`, 1 accumulating, 0 redemption
   records. Stakedym: 6 `UNBONDING_IN_PROGRESS`, 1 accumulating, 0 redemption records
-  (2026-09-18: 5 unbonded and 6 queued, since flushed by the operator).
+  (2026-09-18: 5 unbonded and 6 queued, since flushed by the operator) (halted; not flushed, §2).
 - Zero auctions, zero ICQ-oracle price queries, zero open LSM deposits; both airdrop-module
   airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
   Pending ICQs: haqq_11235-1 has 10 slash-path queries open (7 calibrate, 2 validator
@@ -402,16 +402,12 @@ are noted in the plan; the stale authz grant on the Osmosis trade ICA is harmles
 logic) and removes every rate limit, blacklisted denom and whitelisted address pair from the
 rate limiter. The token sweep (§7) sends most of each stToken's on-Stride supply out over one
 channel in a few days, which no limit would allow, and there is no longer a mint path that a
-limit would protect. The module and middleware stay in the stack with empty state.
+limit would protect. The module and middleware stay in the stack with empty state. Stakedym's halted zone
+re-blacklists `stadym` every block, which is left as is (stakedym is deprecated, §2), so
+the post-upgrade blacklist on mainnet holds exactly `stadym`.
 
 **Comdex.** The handler sets `Deprecated = true` on comdex-1 so it carries the same flag as
 the other three deprecated zones. `Halted` is not touched; the flag is documentation.
-
-**Stakedym.** Stakedym is halted on mainnet (rate 1.100538 against max bounds of 1.1) and its
-BeginBlocker re-halts it and re-blacklists `stadym` every block, so its unbonding records
-cannot be claimed. Before the rate-limit removal, the handler raises both max bounds to twice
-the current rate (when below that), leaves the min bounds alone, and clears `Halted`; the
-widened bounds keep the BeginBlocker check passing.
 
 **Stale in-progress flags.** For every in-scope zone whose delegation ICA channel is open
 with no unacked packet, the handler resets `DelegationChangesInProgress` to zero on every
@@ -460,7 +456,7 @@ The upgrade does not halt any zone. `Halted` would stop the flows the open redem
 along with the ones that must not run once the rate is frozen, so instead the binary deletes
 the second group's call sites from `BeforeEpochStart` and leaves the first group in place.
 Nothing is configurable and nothing can be toggled back; `Halted` stays false on every
-in-scope zone, stakedym included. The keeper functions behind the deleted calls may stay
+in-scope zone. The keeper functions behind the deleted calls may stay
 until the follow-up cleanup (§12).
 
 Deleted from `BeforeEpochStart`:
@@ -757,7 +753,7 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   since `MsgTransferFromIca` executes exactly those through the ICA (§7). A host that rejects
   the message leaves the funds in the ICA, so this is a delay, not a loss, but it belongs
   beside the channel check.
-- The staketia and stakedym operators ready to act on day 0.
+- The staketia operator ready to act on day 0.
 
 The ops window (after the upgrade, ~40 days). The redemptions open at the upgrade are queued,
 unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes all three
@@ -770,8 +766,7 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    but whose recorded balance is off. Then rerun the drift measurement (§9a) and require zero
    over-recorded validators on the zone. Same day: the staketia operator undelegates the
    entire multisig delegation on Celestia via authz (the queued records' amounts and
-   everything else, in one go); the stakedym operator sweeps and confirms the unbonded records
-   and undelegates the queued ones.
+   everything else, in one go).
 2. Day 0 to 4: the next day epoch submits the queued redemptions on every zone and flags their
    validators. Wait for those acks. A record whose submission fails (a slash between the
    refresh and the epoch) goes to `UNBONDING_RETRY_QUEUE` and is retried at the next day epoch; that
@@ -806,7 +801,6 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    `MsgTransferStaketiaClaimBalance` with a small `amount` as the live test, and once it has
    landed on the delegation ICA, again with zero for the remainder, which leaves with that
    zone's balance in step 5. No key of the claim address signs anything.
-   Stakedym: after 21 days the operator sweeps and confirms the last records.
 7. Last days: `MsgSweepTokensOffStride` in batches of up to 100 holders, each tx listing every
    denom on the sweep list, for every holder at or above the floor, built from a fresh
    export: the eleven stTokens and `ustrd` (to Osmosis) and every voucher whose outermost
@@ -828,8 +822,8 @@ Checklist to halt the chain:
 
 - Zero stakeibc user redemption records; zero `HostZoneUnbonding` records outside `CLAIMABLE`
   with a non-zero amount (`CLAIMABLE` is the terminal status of a swept record; the user
-  records under it are what the claim deletes); no claim ICA in flight. Staketia and
-  stakedym: zero unbonding records outside `CLAIMED`, zero redemption records, claim
+  records under it are what the claim deletes); no claim ICA in flight. Staketia:
+  zero unbonding records outside `CLAIMED`, zero redemption records, claim
   addresses drained.
 - No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
   `TotalDelegations` at dust on every zone except celestia, where it still carries the

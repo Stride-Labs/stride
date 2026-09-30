@@ -29,7 +29,9 @@ func DeactivateICAOracles(ctx sdk.Context, k icaoraclekeeper.Keeper) {
 // RemoveAllRateLimits empties the rate limiter: every limit, blacklisted denom and whitelisted
 // address pair. The token sweep sends most of each stToken's on-Stride supply out over channel-5
 // in a few days, which no limit would allow, and there is no mint path left to protect. The
-// module and middleware stay in the stack with empty state.
+// module and middleware stay in the stack with empty state. Stakedym's BeginBlocker re-adds
+// `stadym` to the blacklist every block while it stays halted, which is intended (stakedym is
+// deprecated and out of scope), so the post-upgrade blacklist on mainnet holds exactly `stadym`.
 func RemoveAllRateLimits(ctx sdk.Context, k *ratelimitkeeper.Keeper) {
 	for _, rateLimit := range k.GetAllRateLimits(ctx) {
 		k.RemoveRateLimit(ctx, rateLimit.Path.Denom, rateLimit.Path.ChannelOrClientId)

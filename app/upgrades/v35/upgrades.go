@@ -15,7 +15,6 @@ import (
 	autopilotkeeper "github.com/Stride-Labs/stride/v34/x/autopilot/keeper"
 	icaoraclekeeper "github.com/Stride-Labs/stride/v34/x/icaoracle/keeper"
 	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	stakedymkeeper "github.com/Stride-Labs/stride/v34/x/stakedym/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 )
 
@@ -27,11 +26,10 @@ import (
 //  2. Turn off autopilot stakeibc and drop liquid stake / redeem stake from the ICA host allow-list.
 //  3. Restrict wasm code upload to gov, then move the deploy key's contract admins to gov.
 //  4. Mark comdex-1 deprecated and delete the dYdX trade route.
-//  5. Widen stakedym's max redemption-rate bounds and unhalt it.
-//  6. Deactivate the ICA oracles and empty the rate limiter.
-//  7. Reset stale DelegationChangesInProgress flags on zones with no ICA in flight.
-//  8. Purge haqq's pending slash-path ICQs, then every pending withdrawal-balance ICQ.
-//  9. Apply the haqq delegation delta table (after its ICQs are gone).
+//  5. Deactivate the ICA oracles and empty the rate limiter.
+//  6. Reset stale DelegationChangesInProgress flags on zones with no ICA in flight.
+//  7. Purge haqq's pending slash-path ICQs, then every pending withdrawal-balance ICQ.
+//  8. Apply the haqq delegation delta table (after its ICQs are gone).
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read
@@ -46,7 +44,6 @@ func CreateUpgradeHandler(
 	wasmKeeper wasmkeeper.Keeper,
 	ratelimitKeeper *ratelimitkeeper.Keeper,
 	icaOracleKeeper icaoraclekeeper.Keeper,
-	stakedymKeeper stakedymkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
@@ -70,9 +67,6 @@ func CreateUpgradeHandler(
 		// Stakeibc state flips (spec §5)
 		DeprecateComdex(ctx, stakeibcKeeper)
 		DeleteDydxTradeRoute(ctx, stakeibcKeeper)
-
-		// Stakedym unhalt runs before the rate-limit removal, which clears its stadym blacklist entry (spec §5)
-		UnhaltStakedym(ctx, stakedymKeeper)
 
 		// Oracles and rate limits (spec §5)
 		DeactivateICAOracles(ctx, icaOracleKeeper)
