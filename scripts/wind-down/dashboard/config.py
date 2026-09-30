@@ -16,9 +16,6 @@ CHANNELS_FEED_URL = "https://channels.main.stridenet.co/api/data"
 STRIDE_CHAIN_ID = "stride-1"
 OSMOSIS_CHAIN_ID = "osmosis-1"
 
-# Stride <-> Osmosis transfer channel that the token sweep uses; it is osmosis-1's transfer channel in the feed.
-SWEEP_CHANNEL = "channel-5"
-
 
 def _polkachu_rest(name: str) -> str:
     return f"https://{name}-strd-api.polkachu.com"
@@ -109,24 +106,6 @@ class HolderRoute:
     chain: str
     osmosis_channel: str
     relayed_by: RelayedBy
-    # cosmos.directory registry name, for chains without a Polkachu endpoint (used by later tabs)
-    registry_name: str | None = None
-
-    @property
-    def rest(self) -> str | None:
-        return (
-            f"https://rest.cosmos.directory/{self.registry_name}"
-            if self.registry_name
-            else None
-        )
-
-    @property
-    def rpc(self) -> str | None:
-        return (
-            f"https://rpc.cosmos.directory/{self.registry_name}"
-            if self.registry_name
-            else None
-        )
 
 
 # From the relayer scope table in docs/wind-down/sttoken-locations.md
@@ -134,16 +113,15 @@ HOLDER_ROUTES: tuple[HolderRoute, ...] = (
     HolderRoute("Cosmos Hub", "channel-0", RelayedBy.FREE),
     HolderRoute("HAQQ", "channel-1575", RelayedBy.FREE),
     HolderRoute("Injective", "channel-122", RelayedBy.NOT_SERVED),
-    HolderRoute("Secret", "channel-88", RelayedBy.FREE, registry_name="secretnetwork"),
-    HolderRoute("Penumbra", "channel-79703", RelayedBy.OURS, registry_name="penumbra"),
-    HolderRoute("Agoric", "channel-320", RelayedBy.FREE, registry_name="agoric"),
-    HolderRoute("Neutron", "channel-874", RelayedBy.FREE, registry_name="neutron"),
-    HolderRoute("Carbon", "channel-188", RelayedBy.FREE, registry_name="carbon"),
+    HolderRoute("Secret", "channel-88", RelayedBy.FREE),
+    HolderRoute("Penumbra", "channel-79703", RelayedBy.OURS),
+    HolderRoute("Agoric", "channel-320", RelayedBy.FREE),
+    HolderRoute("Neutron", "channel-874", RelayedBy.FREE),
+    HolderRoute("Carbon", "channel-188", RelayedBy.FREE),
     HolderRoute("Terra", "channel-251", RelayedBy.FREE),
     HolderRoute(
-        "Dymension", "channel-19774", RelayedBy.FREE, registry_name="dymension"
-    ),
-    HolderRoute("Axelar", "channel-208", RelayedBy.FREE, registry_name="axelar"),
+        "Dymension", "channel-19774", RelayedBy.FREE),
+    HolderRoute("Axelar", "channel-208", RelayedBy.FREE),
     HolderRoute("Celestia", "channel-6994", RelayedBy.FREE),
     HolderRoute("Saga", "channel-38946", RelayedBy.FREE),
     HolderRoute("Juno", "channel-42", RelayedBy.FREE),

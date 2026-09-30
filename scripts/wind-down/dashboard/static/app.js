@@ -41,7 +41,7 @@ function formatDuration(seconds) {
   const total = Math.max(0, Math.round(seconds));
   if (total < 60) return `${total}s`;
   if (total < 3600) return `${Math.floor(total / 60)}m`;
-  if (total < 48 * 3600) return `${Math.floor(total / 3600)}h ${Math.floor((total % 3600) / 60)}m`;
+  if (total < 24 * 3600) return `${Math.floor(total / 3600)}h ${Math.floor((total % 3600) / 60)}m`;
   return `${(total / 86400).toFixed(1)}d`;
 }
 
@@ -79,9 +79,13 @@ function countErrors(data) {
 
 async function startApp() {
   document.querySelectorAll('.tab').forEach((button) => {
-    button.onclick = () => selectTab(button.dataset.tab);
+    button.onclick = () => {
+      selectTab(button.dataset.tab);
+      location.hash = button.dataset.tab;
+    };
   });
   document.getElementById('refreshButton').onclick = refreshActiveTab;
+  selectTab(TAB_NAMES.includes(location.hash.slice(1)) ? location.hash.slice(1) : TAB_NAMES[0]);
   document.addEventListener('click', copyOnClick);
 
   TAB_NAMES.filter((name) => !renderers[name]).forEach((name) => {

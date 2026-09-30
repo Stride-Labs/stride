@@ -1,3 +1,4 @@
+import dataclasses
 import json
 import unittest
 from typing import Any
@@ -552,6 +553,22 @@ class ZoneAssemblyTest(unittest.TestCase):
         )
         self.assertEqual(zone.accounts[-1].name, "Osmosis vault")
         self.assertIsNone(zone.accounts[-1].liquid)
+
+    def test_ica_other_balances_keep_non_host_non_zero_denoms(self) -> None:
+        side = host_side(chain_id="celestia", host_denom="utia", osmosis_channel=None)
+        side = dataclasses.replace(
+            side,
+            host_zone={"host_denom": "utia", "redemption_rate": "1", "deposit_address": "stride1deposit", **ica_host_zone()},
+            ica_balances={
+                **side.ica_balances,
+                funds.IcaType.WITHDRAWAL: {"utia": 2, "ibc/USDC": 5, "ibc/ZERO": 0},
+            },
+        )
+
+        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, open_records={})
+
+        self.assertEqual(zone.accounts[1].other_balances, [funds.Balance(denom="ibc/USDC", amount=5)])
+        self.assertEqual(zone.accounts[0].other_balances, [])
 
 
 def ica_host_zone() -> dict[str, str]:

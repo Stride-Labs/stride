@@ -15,7 +15,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.wrap { max-width: 1280px; margin: 0 auto; padding: 16px 20px 60px; }
+.wrap { max-width: 1700px; margin: 0 auto; padding: 16px 20px 60px; }
 header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
 h1 { font-size: 17px; margin: 0; }
 .meta { color: var(--muted); font-size: 12px; }
@@ -33,8 +33,8 @@ h1 { font-size: 17px; margin: 0; }
 .panel h2 { font-size: 13px; margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: center; }
 .panel h2 .sub { color: var(--muted); font-weight: 400; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-td { padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 tr:last-child td { border-bottom: 0; }
 td.num, th.num { text-align: right; }
 tr.zone td { background: var(--bg); font-weight: 650; }

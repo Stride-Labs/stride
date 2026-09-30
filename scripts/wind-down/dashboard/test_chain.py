@@ -212,7 +212,7 @@ class RpcTest(unittest.TestCase):
         with mock.patch.object(chain, "get_json", side_effect=responses) as get_json:
             result = chain.rpc_tx_search_latest(chain=CHAIN, query="recv_packet.packet_dst_channel='channel-1'")
 
-        self.assertEqual(result, chain.TxRef(height=424242, time="2026-09-30T11:00:00Z"))
+        self.assertEqual(result, chain.TxRef(height=424242, time="2026-09-30T11:00:00+00:00"))
         search_url = urllib.parse.unquote_plus(get_json.call_args_list[1].kwargs["url"])
         self.assertIn("AND tx.height>=400000", search_url)
         self.assertIn("per_page=1", search_url)
@@ -230,7 +230,7 @@ class RpcTest(unittest.TestCase):
         with mock.patch.object(chain, "get_json", side_effect=responses) as get_json:
             result = chain.rpc_tx_search_latest(chain=CHAIN, query="x='y'")
 
-        self.assertEqual(result, chain.TxRef(height=12, time="2026-01-01T00:00:00Z"))
+        self.assertEqual(result, chain.TxRef(height=12, time="2026-01-01T00:00:00+00:00"))
         self.assertNotIn("tx.height", urllib.parse.unquote_plus(get_json.call_args_list[2].kwargs["url"]))
 
     def test_latest_tx_is_none_when_the_index_holds_nothing(self) -> None:
