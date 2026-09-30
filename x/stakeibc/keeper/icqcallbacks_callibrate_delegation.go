@@ -51,8 +51,13 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 			return errorsmod.Wrapf(err, "unable to unmarshal delegator shares query response into Delegation type")
 		}
 	}
-	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Query response - Delegator: %s, Validator: %s, Shares: %v",
-		queriedDelegation.DelegatorAddress, queriedDelegation.ValidatorAddress, queriedDelegation.Shares))
+	if len(args) == 0 {
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+			"Empty query response - no delegation on host from %s to %s", hostZone.DelegationIcaAddress, queriedDelegation.ValidatorAddress))
+	} else {
+		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Query response - Delegator: %s, Validator: %s, Shares: %v",
+			queriedDelegation.DelegatorAddress, queriedDelegation.ValidatorAddress, queriedDelegation.Shares))
+	}
 
 	// Grab the validator object from the hostZone using the address returned from the query
 	validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, queriedDelegation.ValidatorAddress)
@@ -87,7 +92,7 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
 		"Previous Delegation: %v, Current Delegation: %v", validator.Delegation, delegatedTokens))
 
-	// Confirm the validator has actually been slashed
+	// Confirm the recorded delegation differs from the host
 	if delegatedTokens.Equal(validator.Delegation) {
 		k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate, "Validator delegation is correct"))
 		return nil
