@@ -349,3 +349,28 @@ func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *t
 
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
 }
+
+func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Get Host Zone
+	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrHostZoneNotFound, "host zone %s not found", msg.ChainId)
+	}
+
+	// Check the zone is halted
+	if !hostZone.Halted {
+		return nil, errorsmod.Wrapf(types.ErrHostZoneNotHalted, "host zone %s is not halted", msg.ChainId)
+	}
+
+	// remove from blacklist
+	stDenom := types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom)
+	k.RatelimitKeeper.RemoveDenomFromBlacklist(ctx, stDenom)
+
+	// Resume zone
+	hostZone.Halted = false
+	k.SetHostZone(ctx, hostZone)
+
+	return &types.MsgResumeHostZoneResponse{}, nil
+}

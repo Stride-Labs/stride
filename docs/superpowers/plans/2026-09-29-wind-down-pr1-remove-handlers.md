@@ -1,5 +1,7 @@
 # Wind-Down PR 1: Remove Tx Handlers — Implementation Plan
 
+> Note: stakeibc `ResumeHostZone` is listed as removed throughout this plan; it was restored after implementation (kept per spec §5).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers-fast:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 > **Branching:** PR 1 branches off `wind-down-design-consolidation`. Each later PR branches
