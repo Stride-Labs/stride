@@ -26,6 +26,12 @@ func TestCmdUndelegateFromValidators(t *testing.T) {
 		ExecuteCLIExpectError(t, cli.CmdUndelegateFromValidators(), []string{"cosmoshub-4", "/does/not/exist.json"}, "no such file")
 	})
 
+	t.Run("empty validators file", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "validators.json")
+		require.NoError(t, os.WriteFile(path, []byte(`[]`), 0o600))
+		ExecuteCLIExpectError(t, cli.CmdUndelegateFromValidators(), []string{"cosmoshub-4", path}, "validators file is empty; use --all for a full drain")
+	})
+
 	t.Run("bad offset in file", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "validators.json")
 		require.NoError(t, os.WriteFile(path, []byte(`[{"address":"cosmosvaloper1abc","offset":"banana"}]`), 0o600))

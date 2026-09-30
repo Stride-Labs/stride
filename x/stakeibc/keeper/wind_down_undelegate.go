@@ -67,7 +67,8 @@ func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelega
 }
 
 // checkNoQueuedUnbondings rejects the drain while any unbonding record for the zone is still
-// waiting for the day epoch (queued or retrying) with a real amount, or while a one-shot
+// waiting for the day epoch (queued or retrying) with a real amount, has an undelegate ICA
+// in flight, or while a one-shot
 // pending undelegation (the v34 mechanism) is stored for the zone: the record-less success
 // callback calls ConsumePendingUndelegation, so a drain ack would silently eat that amount
 func (k Keeper) checkNoQueuedUnbondings(ctx sdk.Context, chainId string) error {
@@ -79,6 +80,15 @@ func (k Keeper) checkNoQueuedUnbondings(ctx sdk.Context, chainId string) error {
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, chainId)
 		if !found {
 			continue
+		}
+		// A record-driven undelegate ICA that has not acked yet: UndelegationTxsInProgress is
+		// incremented on submission and decremented on every ack, success or failure, so the
+		// drain waits (spec section 6). An UNBONDING_IN_PROGRESS record with the counter at zero
+		// is just waiting out the unbonding period and does not block
+		if hostZoneUnbonding.UndelegationTxsInProgress > 0 {
+			return types.ErrHostZoneUnbondingPending.Wrapf(
+				"epoch %d record for %s has %d undelegate ICA(s) awaiting an ack; wait for them before draining",
+				epochUnbondingRecord.EpochNumber, chainId, hostZoneUnbonding.UndelegationTxsInProgress)
 		}
 		queued := hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_UNBONDING_QUEUE ||
 			hostZoneUnbonding.Status == recordstypes.HostZoneUnbonding_UNBONDING_RETRY_QUEUE

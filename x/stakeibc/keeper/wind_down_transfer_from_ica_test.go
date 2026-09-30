@@ -2,8 +2,6 @@
 package keeper_test
 
 import (
-	"time"
-
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
@@ -131,9 +129,12 @@ func (s *KeeperTestSuite) TestBuildTransferFromIcaMsg_Transfer() {
 	s.withOsmosisVault()
 	hostZone := s.hubHostZone()
 	amount := sdk.NewCoin(Atom, sdkmath.NewInt(1000))
-	timeout := uint64(s.Ctx.BlockTime().Add(24 * time.Hour).UnixNano())
+	blockTime := s.Ctx.BlockTime()
+	// The inner transfer gets twice the ICA packet's window: a late-relayed ICA packet still
+	// leaves the host to Osmosis leg a full day
+	timeout := uint64(blockTime.Add(2 * types.WindDownTransferTimeout).UnixNano())
 
-	built, err := keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_WITHDRAWAL, amount, timeout)
+	built, err := keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_WITHDRAWAL, amount, blockTime)
 	s.Require().NoError(err)
 	transfer, ok := built.(*transfertypes.MsgTransfer)
 	s.Require().True(ok, "non-osmosis zones build an ICS-20 transfer")
@@ -155,7 +156,7 @@ func (s *KeeperTestSuite) TestBuildTransferFromIcaMsg_OsmosisBankSend() {
 	hostZone.DelegationIcaAddress = "osmo_DELEGATION"
 	amount := sdk.NewCoin(Osmo, sdkmath.NewInt(500))
 
-	built, err := keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_DELEGATION, amount, 1)
+	built, err := keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_DELEGATION, amount, s.Ctx.BlockTime())
 	s.Require().NoError(err)
 	send, ok := built.(*banktypes.MsgSend)
 	s.Require().True(ok, "osmosis-1 builds a bank send")
@@ -168,11 +169,11 @@ func (s *KeeperTestSuite) TestBuildTransferFromIcaMsg_Rejections() {
 	s.withOsmosisVault()
 	hostZone := s.hubHostZone()
 
-	_, err := keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, sdk.NewCoin(Atom, sdkmath.NewInt(1)), 1)
+	_, err := keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_COMMUNITY_POOL_DEPOSIT, sdk.NewCoin(Atom, sdkmath.NewInt(1)), s.Ctx.BlockTime())
 	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest, "only the four funded ICAs")
 
 	hostZone.ChainId = "evmos_9001-2"
-	_, err = keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_DELEGATION, sdk.NewCoin(Atom, sdkmath.NewInt(1)), 1)
+	_, err = keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_DELEGATION, sdk.NewCoin(Atom, sdkmath.NewInt(1)), s.Ctx.BlockTime())
 	s.Require().ErrorIs(err, types.ErrNoOsmosisChannelForHostZone)
 }
 
@@ -186,4 +187,36 @@ func (s *KeeperTestSuite) TestMsgServer_TransferFromIca() {
 		_, err := s.GetMsgServer().TransferFromIca(s.Ctx, msg)
 		return err
 	})
+}
+
+// A non-osmosis zone whose mapped channel is empty must not silently become a bank send
+func (s *KeeperTestSuite) TestBuildTransferFromIcaMsg_EmptyChannelOnlyForOsmosis() {
+	s.withOsmosisVault()
+	hostZone := s.hubHostZone()
+	previous := types.HostToOsmosisTransferChannel[hubChainId]
+	types.HostToOsmosisTransferChannel[hubChainId] = ""
+	s.T().Cleanup(func() { types.HostToOsmosisTransferChannel[hubChainId] = previous })
+
+	_, err := keeper.BuildTransferFromIcaMsg(hostZone, types.ICAAccountType_DELEGATION, sdk.NewCoin(Atom, sdkmath.NewInt(1)), s.Ctx.BlockTime())
+	s.Require().ErrorIs(err, types.ErrNoOsmosisChannelForHostZone)
+}
+
+func (s *KeeperTestSuite) TestTransferFromIca_RejectsInvalidVault() {
+	channels := s.setupHubIcaChannels(types.ICAAccountType_DELEGATION)
+	portId, channelId := channels[types.ICAAccountType_DELEGATION][0], channels[types.ICAAccountType_DELEGATION][1]
+	msg := types.NewMsgTransferFromIca("admin", hubChainId, types.ICAAccountType_DELEGATION, sdk.NewCoin(Atom, sdkmath.NewInt(1)))
+
+	previous := types.OsmosisVaultAddress
+	s.T().Cleanup(func() { types.OsmosisVaultAddress = previous })
+
+	for _, vault := range []string{
+		"osmo1notabech32address",
+		"stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9a8n6xp0", // wrong prefix
+	} {
+		types.OsmosisVaultAddress = vault
+		startSequence := s.MustGetNextSequenceNumber(portId, channelId)
+		err := s.App.StakeibcKeeper.TransferFromIca(s.Ctx, msg)
+		s.Require().ErrorIs(err, types.ErrOsmosisVaultNotConfigured, "vault %q", vault)
+		s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(portId, channelId), "nothing submitted")
+	}
 }

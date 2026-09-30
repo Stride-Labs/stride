@@ -350,3 +350,29 @@ func (s *KeeperTestSuite) TestMsgServer_UndelegateFromValidators() {
 	s.Require().Equal(uint64(2), resp.NumBatchesSubmitted)
 	s.Require().Equal(startSequence+2, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID))
 }
+
+// Spec section 6: a record-driven batch whose undelegate ack has not landed blocks the drain,
+// whatever the record status; once acked (counter back to zero) an UNBONDING_IN_PROGRESS
+// record that is only waiting out the unbonding period does not
+func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsRecordBatchesInFlight() {
+	tc := s.SetupUndelegateFromValidators()
+	msg := types.NewMsgUndelegateFromValidators("admin", HostChainId, []types.ValidatorUndelegation{{Address: "val1"}})
+
+	s.setHostZoneUnbondingStatus(recordtypes.HostZoneUnbonding_UNBONDING_IN_PROGRESS, 100)
+	s.setUndelegationTxsInProgress(2)
+	startSequence := s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID)
+	_, err := s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, msg)
+	s.Require().ErrorIs(err, types.ErrHostZoneUnbondingPending)
+	s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID), "nothing submitted")
+
+	s.setUndelegationTxsInProgress(0)
+	_, err = s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, msg)
+	s.Require().NoError(err, "acked in-progress record must not block")
+}
+
+func (s *KeeperTestSuite) setUndelegationTxsInProgress(count uint64) {
+	record, found := s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, 1)
+	s.Require().True(found)
+	record.HostZoneUnbondings[0].UndelegationTxsInProgress = count
+	s.App.RecordsKeeper.SetEpochUnbondingRecord(s.Ctx, record)
+}

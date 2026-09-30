@@ -2,12 +2,15 @@
 package keeper
 
 import (
+	"time"
+
 	"github.com/cosmos/gogoproto/proto"
 	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
@@ -21,8 +24,8 @@ import (
 // the ICA already lives on Osmosis, so the message is a bank send. There is no callback: a
 // failed or timed-out transfer refunds the ICA on the host and ops resubmit.
 func (k Keeper) TransferFromIca(ctx sdk.Context, msg *types.MsgTransferFromIca) error {
-	if types.OsmosisVaultAddress == "" {
-		return types.ErrOsmosisVaultNotConfigured
+	if err := validateOsmosisVaultAddress(types.OsmosisVaultAddress); err != nil {
+		return err
 	}
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
@@ -30,7 +33,7 @@ func (k Keeper) TransferFromIca(ctx sdk.Context, msg *types.MsgTransferFromIca) 
 	}
 
 	timeoutTimestamp := utils.IntToUint(ctx.BlockTime().Add(types.WindDownTransferTimeout).UnixNano())
-	icaMsg, err := BuildTransferFromIcaMsg(hostZone, msg.IcaType, msg.Amount, timeoutTimestamp)
+	icaMsg, err := BuildTransferFromIcaMsg(hostZone, msg.IcaType, msg.Amount, ctx.BlockTime())
 	if err != nil {
 		return err
 	}
@@ -57,14 +60,36 @@ func (k Keeper) TransferFromIca(ctx sdk.Context, msg *types.MsgTransferFromIca) 
 	return nil
 }
 
+// validateOsmosisVaultAddress checks the hard-coded receiver is a well-formed osmo address
+// before any message is built, so a bad build-time value fails closed instead of losing funds
+func validateOsmosisVaultAddress(vault string) error {
+	if vault == "" {
+		return types.ErrOsmosisVaultNotConfigured
+	}
+	prefix, decoded, err := bech32.DecodeAndConvert(vault)
+	if err != nil {
+		return types.ErrOsmosisVaultNotConfigured.Wrapf("vault address %q is not valid bech32: %s", vault, err)
+	}
+	if prefix != types.OsmosisBech32Prefix {
+		return types.ErrOsmosisVaultNotConfigured.Wrapf("vault address prefix %q, expected %q", prefix, types.OsmosisBech32Prefix)
+	}
+	if len(decoded) != 20 && len(decoded) != 32 {
+		return types.ErrOsmosisVaultNotConfigured.Wrapf("vault address decodes to %d bytes, expected 20 or 32", len(decoded))
+	}
+	return nil
+}
+
 // BuildTransferFromIcaMsg builds the message the ICA executes on the host: an ICS-20
 // MsgTransfer over the zone's mapped channel to osmosis-1, or a bank MsgSend when the zone is
 // osmosis-1 (mapped to an empty channel). It is exported so tests can assert every field.
+// The inner transfer times out at twice the ICA packet's window (the caller gives the ICA packet
+// one WindDownTransferTimeout): a late-relayed ICA packet then still leaves the host to Osmosis
+// leg a full day.
 func BuildTransferFromIcaMsg(
 	hostZone types.HostZone,
 	icaType types.ICAAccountType,
 	amount sdk.Coin,
-	timeoutTimestamp uint64,
+	blockTime time.Time,
 ) (proto.Message, error) {
 	channelId, found := types.HostToOsmosisTransferChannel[hostZone.ChainId]
 	if !found {
@@ -75,20 +100,25 @@ func BuildTransferFromIcaMsg(
 		return nil, err
 	}
 
-	if channelId == "" {
+	if hostZone.ChainId == types.OsmosisChainId {
 		return &banktypes.MsgSend{
 			FromAddress: icaAddress,
 			ToAddress:   types.OsmosisVaultAddress,
 			Amount:      sdk.NewCoins(amount),
 		}, nil
 	}
+	// A non-osmosis zone must never fall through to a bank send
+	if channelId == "" {
+		return nil, types.ErrNoOsmosisChannelForHostZone.Wrapf("empty channel to osmosis configured for %s", hostZone.ChainId)
+	}
+	innerTimeout := utils.IntToUint(blockTime.Add(2 * types.WindDownTransferTimeout).UnixNano())
 	return &transfertypes.MsgTransfer{
 		SourcePort:       transfertypes.PortID,
 		SourceChannel:    channelId,
 		Token:            amount,
 		Sender:           icaAddress,
 		Receiver:         types.OsmosisVaultAddress,
-		TimeoutTimestamp: timeoutTimestamp,
+		TimeoutTimestamp: innerTimeout,
 		Memo:             "",
 	}, nil
 }
