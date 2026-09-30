@@ -10,6 +10,7 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
 )
 
 type RemovedHandlersTestSuite struct {
@@ -40,6 +41,9 @@ var removedMsgs = []sdk.Msg{
 	&stakeibctypes.MsgRebalanceValidators{},
 	&stakeibctypes.MsgClearBalance{},
 	&stakeibctypes.MsgResumeHostZone{},
+	&staketiatypes.MsgLiquidStake{},
+	&staketiatypes.MsgRedeemStake{},
+	&staketiatypes.MsgResumeHostZone{},
 }
 
 // keptMsgs are a sample of messages that must keep routing after the removals.
@@ -48,6 +52,7 @@ var keptMsgs = []sdk.Msg{
 	&stakeibctypes.MsgRestoreInterchainAccount{},
 	&stakeibctypes.MsgUpdateValidatorSharesExchRate{},
 	&stakeibctypes.MsgCalibrateDelegation{},
+	&staketiatypes.MsgConfirmUnbondedTokenSweep{},
 }
 
 // removedServerMethods maps each module's MsgServer interface to the method names that
@@ -60,6 +65,7 @@ var removedServerMethods = map[reflect.Type][]string{
 		"SetCommunityPoolRebate", "ToggleTradeController",
 		"RebalanceValidators", "ClearBalance", "ResumeHostZone",
 	},
+	reflect.TypeOf((*staketiatypes.MsgServer)(nil)).Elem(): {"LiquidStake", "RedeemStake", "ResumeHostZone"},
 }
 
 func (s *RemovedHandlersTestSuite) TestRemovedMessagesHaveNoRoute() {
