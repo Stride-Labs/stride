@@ -66,6 +66,10 @@ func CreateUpgradeHandler(
 		// Stale DelegationChangesInProgress flags on zones with nothing in flight (spec §5)
 		ResetStaleDelegationChangesInProgress(ctx, stakeibcKeeper)
 
+		// Pending ICQs (spec §5): the haqq slash-path purge runs before the haqq delta table
+		PurgeHaqqSlashQueries(ctx, icqKeeper, stakeibcKeeper)
+		PurgeWithdrawalBalanceQueries(ctx, icqKeeper)
+
 		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
