@@ -947,7 +947,7 @@ is run twice and published.
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3: `Unbond` calls the
 distribution hook `BeforeDelegationSharesModified`, which withdraws the accrued rewards, and
 then removes the shares; rewards are computed from delegation shares only, so an unbonding
-entry earns nothing during its 21 to 30 days. Between the upgrade and the pool being funded,
+entry earns nothing during its 7 to 28 days. Between the upgrade and the pool being funded,
 the backing therefore moves as follows:
 
 - Up: staking rewards accrue only from the upgrade until the drain executes (up to four days
