@@ -15,11 +15,12 @@ const TypeMsgCalibrateDelegation = "calibrate_delegation"
 
 var _ sdk.Msg = &MsgCalibrateDelegation{}
 
-func NewMsgCalibrateDelegation(creator, chainid, valoper string) *MsgCalibrateDelegation {
+func NewMsgCalibrateDelegation(creator, chainid, valoper string, resetDelegationChangesInProgress bool) *MsgCalibrateDelegation {
 	return &MsgCalibrateDelegation{
-		Creator: creator,
-		ChainId: chainid,
-		Valoper: valoper,
+		Creator:                          creator,
+		ChainId:                          chainid,
+		Valoper:                          valoper,
+		ResetDelegationChangesInProgress: resetDelegationChangesInProgress,
 	}
 }
 

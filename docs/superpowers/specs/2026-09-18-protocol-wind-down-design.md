@@ -385,7 +385,7 @@ always was permissionless, and it is a no-op once the last record is claimed.
 drain (§9), and nobody else can reach the slash path. The 5,000 base-unit
 `CalibrationThreshold` check is removed from the calibration callback: it existed to bound
 what a permissionless caller could move. The calibration callback instead refuses a validator with a delegation change in flight or a
-non-positive stored rate, the two cases the cap also happened to bound.
+non-positive stored rate, the two cases the cap also happened to bound. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
 
 **Entry points that bypass the router.** Autopilot: the handler sets `StakeibcActive =
 false`. ICA host: the handler removes `MsgLiquidStake` and `MsgRedeemStake` from the

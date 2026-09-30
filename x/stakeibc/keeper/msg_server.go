@@ -304,6 +304,22 @@ func (k msgServer) CalibrateDelegation(goCtx context.Context, msg *types.MsgCali
 		return nil, types.ErrHostZoneNotFound
 	}
 
+	// Ops-only override for a stale in-flight counter, which would otherwise make the callback no-op forever
+	if msg.ResetDelegationChangesInProgress {
+		validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, msg.Valoper)
+		if !found {
+			return nil, errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", msg.Valoper)
+		}
+
+		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,
+			"Resetting DelegationChangesInProgress for validator %s (previous value: %d)",
+			validator.Address, validator.DelegationChangesInProgress))
+
+		validator.DelegationChangesInProgress = 0
+		hostZone.Validators[valIndex] = &validator
+		k.SetHostZone(ctx, hostZone)
+	}
+
 	if err := k.SubmitCalibrationICQ(ctx, hostZone, msg.Valoper); err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Error submitting ICQ for delegation, error : %s", err.Error()))
 		return nil, err
