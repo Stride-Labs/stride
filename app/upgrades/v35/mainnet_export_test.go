@@ -7,14 +7,13 @@ import (
 	"os"
 	"testing"
 
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	icagenesistypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/genesis/types"
 	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	ratelimittypes "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/types"
 	"github.com/stretchr/testify/suite"
-
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	sdkmath "cosmossdk.io/math"
 
