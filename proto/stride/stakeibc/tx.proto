@@ -249,6 +249,11 @@ message MsgCalibrateDelegation {
   string chain_id = 2;
   string valoper = 3
       [ (cosmos_proto.scalar) = "cosmos.ValidatorAddressString" ];
+  // When true, the tx zeroes this validator's DelegationChangesInProgress
+  // before submitting the calibration query. Use only when the flag is known
+  // to be stale (no ICA in flight for this validator); a reset while an ICA is
+  // in flight lets the calibration double-count it.
+  bool reset_delegation_changes_in_progress = 4;
 }
 message MsgCalibrateDelegationResponse {}
 

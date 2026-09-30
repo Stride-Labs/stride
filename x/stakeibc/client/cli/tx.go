@@ -17,6 +17,8 @@ import (
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
+const FlagResetDelegationChangesInProgress = "reset-delegation-changes-in-progress"
+
 var DefaultRelativePacketTimeoutTimestamp = cast.ToUint64((time.Duration(10) * time.Minute).Nanoseconds())
 
 func GetTxCmd() *cobra.Command {
@@ -369,7 +371,15 @@ func CmdCalibrateDelegation() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "calibrate-delegation [chainid] [valoper]",
 		Short: "Broadcast message calibrate-delegation (admin only: trues up a validator's recorded delegation to the host)",
-		Args:  cobra.ExactArgs(2),
+		Long: `Broadcast message calibrate-delegation (admin only).
+
+Submits a query for the validator's delegation on the host zone; the callback then trues up the recorded delegation.
+The callback does nothing while the validator has a delegation change in flight.
+
+--reset-delegation-changes-in-progress zeroes the validator's DelegationChangesInProgress before the query is submitted.
+WARNING: use it only when the flag is known to be stale (no ICA in flight for this validator). A reset while an ICA is
+in flight lets the calibration double-count it.`,
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
 			argValoper := args[1]
@@ -379,10 +389,16 @@ func CmdCalibrateDelegation() *cobra.Command {
 				return err
 			}
 
+			resetFlag, err := cmd.Flags().GetBool(FlagResetDelegationChangesInProgress)
+			if err != nil {
+				return err
+			}
+
 			msg := types.NewMsgCalibrateDelegation(
 				clientCtx.GetFromAddress().String(),
 				argChainId,
 				argValoper,
+				resetFlag,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
@@ -391,6 +407,7 @@ func CmdCalibrateDelegation() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Bool(FlagResetDelegationChangesInProgress, false, "Zero the validator's DelegationChangesInProgress first (only if known to be stale)")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd

@@ -13,6 +13,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
 	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -959,4 +960,108 @@ func (s *KeeperTestSuite) TestGetInnerSafetyBounds() {
 	innerMinSafetyThreshold, innerMaxSafetyThreshold := s.App.StakeibcKeeper.GetInnerSafetyBounds(s.Ctx, tc.zone)
 	s.Require().Equal(tc.zone.MinRedemptionRate, innerMinSafetyThreshold, "min inner redemption rate should be set")
 	s.Require().Equal(tc.zone.MaxRedemptionRate, innerMaxSafetyThreshold, "max inner redemption rate should be set")
+}
+
+// ----------------------------------------------------
+//	              CalibrateDelegation
+// ----------------------------------------------------
+
+// Sets up a host zone with a delegation ICA (so the calibration ICQ can be submitted) and two validators,
+// where the queried validator has a stale in-flight counter
+func (s *KeeperTestSuite) SetupCalibrateDelegation() types.MsgCalibrateDelegation {
+	s.CreateTransferChannel(HostChainId)
+
+	delegationAccountOwner := fmt.Sprintf("%s.%s", HostChainId, "DELEGATION")
+	s.CreateICAChannel(delegationAccountOwner)
+
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:              HostChainId,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: s.IcaAddresses[delegationAccountOwner],
+		TotalDelegations:     sdkmath.NewInt(1_000_000),
+		Validators: []*types.Validator{
+			{Address: "valoper1", DelegationChangesInProgress: 3},
+			{
+				Address:                     ValAddress,
+				Delegation:                  sdkmath.NewInt(10_000),
+				SharesToTokensRate:          sdkmath.LegacyMustNewDecFromStr("0.75"),
+				DelegationChangesInProgress: 2,
+			},
+		},
+	})
+
+	return types.MsgCalibrateDelegation{
+		Creator: "creator",
+		ChainId: HostChainId,
+		Valoper: ValAddress,
+	}
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_ResetFlag() {
+	msg := s.SetupCalibrateDelegation()
+	msg.ResetDelegationChangesInProgress = true
+
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().NoError(err)
+
+	// Only the queried validator's flag is zeroed
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(3), hostZone.Validators[0].DelegationChangesInProgress, "other validator untouched")
+	s.Require().Equal(int64(0), hostZone.Validators[1].DelegationChangesInProgress, "queried validator reset")
+	s.Require().Equal(int64(10_000), hostZone.Validators[1].Delegation.Int64(), "delegation unchanged by the reset")
+
+	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "calibration query submitted")
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_NoReset() {
+	msg := s.SetupCalibrateDelegation()
+
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().NoError(err)
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(3), hostZone.Validators[0].DelegationChangesInProgress, "other validator untouched")
+	s.Require().Equal(int64(2), hostZone.Validators[1].DelegationChangesInProgress, "queried validator untouched")
+
+	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "calibration query submitted")
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_ResetUnknownValidator() {
+	msg := s.SetupCalibrateDelegation()
+	msg.ResetDelegationChangesInProgress = true
+	msg.Valoper = "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
+
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().ErrorIs(err, types.ErrValidatorNotFound)
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(3), hostZone.Validators[0].DelegationChangesInProgress)
+	s.Require().Equal(int64(2), hostZone.Validators[1].DelegationChangesInProgress)
+	s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), "no query submitted")
+}
+
+// A stale flag blocks the callback forever; a calibrate with the reset lets the next callback apply the correction
+func (s *KeeperTestSuite) TestCalibrateDelegation_StaleFlagBlocksUntilReset() {
+	msg := s.SetupCalibrateDelegation()
+	query := icqtypes.Query{ChainId: HostChainId}
+
+	// 20,000 shares * 0.75 = 15,000 tokens, versus the 10,000 recorded
+	queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, sdkmath.LegacyMustNewDecFromStr("20000"))
+
+	// Without the reset, the callback is a no-op
+	err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
+	s.Require().NoError(err)
+	s.Require().Equal(int64(10_000), s.MustGetHostZone(HostChainId).Validators[1].Delegation.Int64(), "blocked by stale flag")
+
+	// Calibrate with the reset, then the callback applies the correction
+	msg.ResetDelegationChangesInProgress = true
+	_, err = s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().NoError(err)
+
+	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
+	s.Require().NoError(err)
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(15_000), hostZone.Validators[1].Delegation.Int64(), "correction applied")
+	s.Require().Equal(int64(1_005_000), hostZone.TotalDelegations.Int64(), "total delegation corrected")
 }
