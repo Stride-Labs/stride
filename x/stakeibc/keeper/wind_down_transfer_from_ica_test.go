@@ -211,7 +211,7 @@ func (s *KeeperTestSuite) TestTransferFromIca_RejectsInvalidVault() {
 
 	for _, vault := range []string{
 		"osmo1notabech32address",
-		"stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9a8n6xp0", // wrong prefix
+		"stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh", // valid bech32, wrong prefix
 	} {
 		types.OsmosisVaultAddress = vault
 		startSequence := s.MustGetNextSequenceNumber(portId, channelId)
