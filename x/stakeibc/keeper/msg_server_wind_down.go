@@ -32,7 +32,11 @@ func (k msgServer) UndelegateFromValidators(goCtx context.Context, msg *types.Ms
 // TransferFromIca: ICA balance to the Osmosis vault (Task 4 replaces the body).
 // Delegates to Keeper.TransferFromIca in wind_down_transfer_from_ica.go.
 func (k msgServer) TransferFromIca(goCtx context.Context, msg *types.MsgTransferFromIca) (*types.MsgTransferFromIcaResponse, error) {
-	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgTransferFromIca is wired in a later task of this PR")
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := k.Keeper.TransferFromIca(ctx, msg); err != nil {
+		return nil, err
+	}
+	return &types.MsgTransferFromIcaResponse{}, nil
 }
 
 // TransferStaketiaClaimBalance: claim-address TIA to the celestia delegation ICA (Task 5
