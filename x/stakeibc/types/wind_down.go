@@ -57,11 +57,14 @@ const (
 	StakedymDepositAddress    = "stride1e7j8d6sdq272fqe2jfxjpgcagn04j75w9695fj"
 	StakedymRedemptionAddress = "stride1jpsnc0ynufa2aheflj6mxzzzsu7nlwqk7ff69n"
 	StakedymClaimAddress      = "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras"
+	StaketiaSafeAddress       = "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc"
+	StakedymSafeAddress       = "stride1sj8gyqeqecqhqu7em67hn2tjzhpkdf8wz5plh7"
+	StaketiaOperatorAddress   = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw"
 )
 
 // SweepProtocolAddresses lists the addresses the sweep must never touch even though each is a
 // plain 20-byte BaseAccount that passes every account-type rule: the staketia and stakedym
-// deposit, redemption and claim multisigs, which module code spends from, plus the sweep
+// deposit, redemption and claim multisigs, their safes and the staketia operator, which module code spends from, plus the sweep
 // operator when one is set. Read per tx because the operator is a var filled by the release gate
 func SweepProtocolAddresses() []string {
 	addresses := []string{
@@ -71,6 +74,9 @@ func SweepProtocolAddresses() []string {
 		StakedymDepositAddress,
 		StakedymRedemptionAddress,
 		StakedymClaimAddress,
+		StaketiaSafeAddress,
+		StakedymSafeAddress,
+		StaketiaOperatorAddress,
 	}
 	if SweepOperatorAddress != "" {
 		addresses = append(addresses, SweepOperatorAddress)
