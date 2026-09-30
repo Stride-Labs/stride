@@ -11,18 +11,15 @@ import "stride/stakeibc/validator.proto";
 option go_package = "github.com/Stride-Labs/stride/v34/x/stakeibc/types";
 
 // Msg defines the Msg service.
+//
+// v35 wind-down: the user and admin transactions that moved funds on behalf of users
+// (liquid stake, redeem, register, trade routes, rebate, rebalance, clear balance, resume)
+// have no rpc any more. Their message types remain below so historical transactions decode.
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  rpc LiquidStake(MsgLiquidStake) returns (MsgLiquidStakeResponse);
-  rpc LSMLiquidStake(MsgLSMLiquidStake) returns (MsgLSMLiquidStakeResponse);
-  rpc RedeemStake(MsgRedeemStake) returns (MsgRedeemStakeResponse);
-  rpc RegisterHostZone(MsgRegisterHostZone)
-      returns (MsgRegisterHostZoneResponse);
   rpc ClaimUndelegatedTokens(MsgClaimUndelegatedTokens)
       returns (MsgClaimUndelegatedTokensResponse);
-  rpc RebalanceValidators(MsgRebalanceValidators)
-      returns (MsgRebalanceValidatorsResponse);
   rpc AddValidators(MsgAddValidators) returns (MsgAddValidatorsResponse);
   rpc ChangeValidatorWeight(MsgChangeValidatorWeights)
       returns (MsgChangeValidatorWeightsResponse);
@@ -35,20 +32,8 @@ service Msg {
       returns (MsgUpdateValidatorSharesExchRateResponse);
   rpc CalibrateDelegation(MsgCalibrateDelegation)
       returns (MsgCalibrateDelegationResponse);
-  rpc ClearBalance(MsgClearBalance) returns (MsgClearBalanceResponse);
   rpc UpdateInnerRedemptionRateBounds(MsgUpdateInnerRedemptionRateBounds)
       returns (MsgUpdateInnerRedemptionRateBoundsResponse);
-  rpc ResumeHostZone(MsgResumeHostZone) returns (MsgResumeHostZoneResponse);
-  rpc CreateTradeRoute(MsgCreateTradeRoute)
-      returns (MsgCreateTradeRouteResponse);
-  rpc DeleteTradeRoute(MsgDeleteTradeRoute)
-      returns (MsgDeleteTradeRouteResponse);
-  rpc UpdateTradeRoute(MsgUpdateTradeRoute)
-      returns (MsgUpdateTradeRouteResponse);
-  rpc SetCommunityPoolRebate(MsgSetCommunityPoolRebate)
-      returns (MsgSetCommunityPoolRebateResponse);
-  rpc ToggleTradeController(MsgToggleTradeController)
-      returns (MsgToggleTradeControllerResponse);
   rpc UpdateHostZoneParams(MsgUpdateHostZoneParams)
       returns (MsgUpdateHostZoneParamsResponse);
   rpc DeprecateHostZone(MsgDeprecateHostZone)
