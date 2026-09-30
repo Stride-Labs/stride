@@ -49,6 +49,12 @@ func CreateUpgradeHandler(
 		DisableAutopilotStakeibc(ctx, autopilotKeeper)
 		RemoveStakeibcFromICAHostAllowList(ctx, icaHostKeeper)
 
+		// Wasm control to gov: the upload-access write is the one step that may fail the upgrade
+		if err := SetWasmUploadAccessToGov(ctx, wasmKeeper); err != nil {
+			return vm, err
+		}
+		MoveDeployKeyContractAdminsToGov(ctx, wasmKeeper)
+
 		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
