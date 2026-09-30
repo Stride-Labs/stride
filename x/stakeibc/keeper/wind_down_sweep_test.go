@@ -146,16 +146,23 @@ func (s *KeeperTestSuite) setBaseAccount(address sdk.AccAddress) {
 	s.App.AccountKeeper.SetAccount(s.Ctx, s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, address))
 }
 
+// Substitutes the sweep operator for one test and restores the (release-gate) value afterwards
+func (s *KeeperTestSuite) withSweepOperator(address string) {
+	previous := types.SweepOperatorAddress
+	types.SweepOperatorAddress = address
+	s.T().Cleanup(func() { types.SweepOperatorAddress = previous })
+}
+
 // The copies in stakeibc/types must match the staketia and stakedym constants
 func (s *KeeperTestSuite) TestSweepProtocolAddressesMatchModuleConstants() {
+	s.withSweepOperator("")
 	s.Require().ElementsMatch([]string{
 		staketiatypes.DepositAddress, staketiatypes.RedemptionAddress, staketiatypes.ClaimAddress,
 		stakedymtypes.DepositAddress, stakedymtypes.RedemptionAddress, stakedymtypes.ClaimAddress,
 		staketiatypes.SafeAddressOnStride, stakedymtypes.SafeAddressOnStride, staketiatypes.OperatorAddressOnStride,
 	}, types.SweepProtocolAddresses())
 
-	types.SweepOperatorAddress = s.TestAccs[0].String()
-	s.T().Cleanup(func() { types.SweepOperatorAddress = "" })
+	s.withSweepOperator(s.TestAccs[0].String())
 	s.Require().Contains(types.SweepProtocolAddresses(), s.TestAccs[0].String())
 }
 
@@ -250,8 +257,7 @@ func (s *KeeperTestSuite) TestSweepSkipReason() {
 	// The operator signs the sweep and is never swept itself
 	kinds["operator"] = s.TestAccs[0]
 	s.setBaseAccount(kinds["operator"])
-	types.SweepOperatorAddress = kinds["operator"].String()
-	s.T().Cleanup(func() { types.SweepOperatorAddress = "" })
+	s.withSweepOperator(kinds["operator"].String())
 	protocol := keeper.SweepProtocolAddressSetForTest()
 
 	testCases := []struct {
@@ -338,8 +344,7 @@ func (s *KeeperTestSuite) SetupSweep() sweepTestCase {
 	if s.App.AccountKeeper.GetAccount(s.Ctx, operator) == nil {
 		s.SetNewAccount(operator) // assigns the next account number before SetAccount
 	}
-	types.SweepOperatorAddress = operator.String()
-	s.T().Cleanup(func() { types.SweepOperatorAddress = "" })
+	s.withSweepOperator(operator.String())
 
 	kinds := s.setupSweepAccountKinds()
 	atomIbc := s.registerVoucher("uatom", transfertypes.NewHop(transfertypes.PortID, "channel-0"))

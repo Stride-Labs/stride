@@ -3,12 +3,14 @@ package types
 
 import "time"
 
-// Wind-down constants (spec §4, §7). The two addresses are vars so tests can set them; they
-// ship empty in this PR and are filled by the release gate, and every use fails closed while
-// they are empty (the transfer tx errors, the sweep gate rejects every signer).
+// Wind-down operator addresses (spec §4). Vars rather than consts so tests can substitute
+// them; every use fails closed if one is ever emptied again. The vault is deliberately the
+// protocol-admin multisig re-encoded with the osmo prefix (same signer set on both chains).
+// Proving each address by a test transfer and a signed spend is an ops step (spec §9) recorded
+// on the PR, not something a test asserts.
 var (
-	SweepOperatorAddress = "" // stride1..., the only signer of MsgSweepTokensOffStride
-	OsmosisVaultAddress  = "" // osmo1..., receiver of every MsgTransferFromIca
+	SweepOperatorAddress = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9" // the only signer of MsgSweepTokensOffStride
+	OsmosisVaultAddress  = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"   // receiver of every MsgTransferFromIca; pool admin and moderator
 )
 
 const (

@@ -55,21 +55,19 @@ func TestSweepUnwindChannels(t *testing.T) {
 		"the Stride->Osmosis channel unwinds to the osmo prefix")
 }
 
-// The two operator addresses are empty until the release gate; once filled they must parse
-// with the expected prefix. The test passes trivially while they are empty so CI stays green.
-func TestOperatorAddressesParse(t *testing.T) {
-	if types.OsmosisVaultAddress == "" {
-		t.Log("OsmosisVaultAddress not configured yet")
-	} else {
-		_, err := sdk.GetFromBech32(types.OsmosisVaultAddress, types.OsmosisBech32Prefix)
-		require.NoError(t, err, "osmosis vault must be an osmo bech32 address")
-	}
-	if types.SweepOperatorAddress == "" {
-		t.Log("SweepOperatorAddress not configured yet")
-	} else {
-		_, err := sdk.GetFromBech32(types.SweepOperatorAddress, "stride")
-		require.NoError(t, err, "sweep operator must be a stride bech32 address")
-	}
+// The release gate fills the two operator addresses; from here on they must be set and must
+// carry the right prefix and length. Which keys they are is decided in spec §4 and proven by
+// the signed spends recorded on the PR, not asserted here.
+func TestOperatorAddresses(t *testing.T) {
+	require.NotEmpty(t, types.OsmosisVaultAddress, "OsmosisVaultAddress must be filled by the release gate")
+	vaultBytes, err := sdk.GetFromBech32(types.OsmosisVaultAddress, types.OsmosisBech32Prefix)
+	require.NoError(t, err, "osmosis vault must be an osmo bech32 address")
+	require.Len(t, vaultBytes, 20, "osmosis vault must be a 20-byte account address")
+
+	require.NotEmpty(t, types.SweepOperatorAddress, "SweepOperatorAddress must be filled by the release gate")
+	operatorBytes, err := sdk.GetFromBech32(types.SweepOperatorAddress, "stride")
+	require.NoError(t, err, "sweep operator must be a stride bech32 address")
+	require.Len(t, operatorBytes, 20, "sweep operator must be a 20-byte account address")
 }
 
 // The transfer builder branches on the chain id, so nothing but osmosis-1 may map to ""
