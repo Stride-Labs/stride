@@ -2,7 +2,6 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -11,9 +10,6 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
-
-// CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations
-var CalibrationThreshold = sdkmath.NewInt(5000)
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
@@ -64,15 +60,11 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return nil
 	}
 
-	// if the delegation change is more than the calibration threshold constant,
-	// return nil so the query submission succeeds
+	// Apply the whole difference. The 5,000 base-unit cap that used to bound this existed to
+	// limit what a permissionless caller could move; MsgCalibrateDelegation is admin-only now
+	// (wind-down spec §5) and the day-0 refresh needs to true up drifts of any size
 	// Note: There should be no stateful changes above this line
 	delegationChange := validator.Delegation.Sub(delegatedTokens)
-	if delegationChange.Abs().GT(CalibrationThreshold) {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
-			"Delegation change is GT CalibrationThreshold, failing calibration callback"))
-		return nil
-	}
 	validator.Delegation = validator.Delegation.Sub(delegationChange)
 	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(delegationChange)
 
