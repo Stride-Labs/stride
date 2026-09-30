@@ -775,6 +775,19 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    Delegation ICA channels and relayers stay healthy until every batch acks; a dead channel
    is restored with the existing flow and the affected validators are resubmitted. From here
    on no delegation exists that any record needs.
+   **Timing: submit drain batches only between 19:00 UTC and about 08:00 UTC.** The drain
+   reuses the epoch unbonding submitter, so every batch's ICA timeout is the next day-epoch
+   start minus a buffer (a fifth of the epoch at the default `buffer_size` of 5), not a fixed
+   duration. The mainnet day epoch rolls over at 19:00 UTC (3pm Eastern), so the timeout
+   lands at about 14:12 UTC the next day: a batch sent just after 19:00 UTC has about 19
+   hours, one sent at 13:00 UTC about an hour. Between about 14:12 and 19:00 UTC the
+   computed timeout is already in the past; the send usually just fails, but if the
+   counterparty light client lags the packet can go out, time out at once and close the
+   ordered delegation channel, forcing a restore. Submitting after the 19:00 UTC day epoch
+   fits the sequence anyway: that epoch submits the queued redemptions, their acks land,
+   then the drain goes out with most of the window ahead. The ICA-transfer and
+   claim-balance txs use fixed 24h and 48h timeouts and have no window. Confirm the
+   mainnet `buffer_size` before day 0, since the REST params endpoint does not serve it.
 4. Day 0+: `MsgTransferFromIca` for the withdrawal and fee ICA balances, including foreign
    denoms such as the dYdX USDC. This is the live test of the transfer tx on small real
    amounts, and the first arrival on Osmosis confirms the mapped channel end to end and the
