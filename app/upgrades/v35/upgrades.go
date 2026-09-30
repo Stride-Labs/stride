@@ -59,6 +59,10 @@ func CreateUpgradeHandler(
 		DeprecateComdex(ctx, stakeibcKeeper)
 		DeleteDydxTradeRoute(ctx, stakeibcKeeper)
 
+		// Oracles and rate limits (spec §5)
+		DeactivateICAOracles(ctx, icaOracleKeeper)
+		RemoveAllRateLimits(ctx, ratelimitKeeper)
+
 		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
