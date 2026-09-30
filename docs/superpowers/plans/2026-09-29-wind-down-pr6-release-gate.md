@@ -27,7 +27,7 @@ PR 5 wrote them.
 ## Global Constraints
 
 - Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md`, sections §4, §9, §10, §11, §12 item 6, §13. Every value below is copied from there or from the PR 3, 4 and 5 plans.
-- The two address constants live in `x/stakeibc/types/wind_down.go` as `var SweepOperatorAddress` and `var OsmosisVaultAddress`. Their values are **whatever spec §4 holds at implementation time**. On 2026-09-29 §4 holds sweep operator `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` and Osmosis vault `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af`. The vault is the protocol-admin multisig re-encoded with the `osmo` prefix, on purpose (same signer set on both chains); which key signs the sweep is an ops choice recorded in §4, not something a test enforces. The test asserts only the bech32 prefix and the 20-byte length of each; the double-check against §4 and the signed-spend proof (Task 1 Step 2) are what guard the values.
+- The two address constants live in `x/stakeibc/types/wind_down.go` as `var SweepOperatorAddress` and `var OsmosisVaultAddress`. Their values are **whatever spec §4 holds at implementation time**. On 2026-09-29 §4 holds sweep operator `stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9` and Osmosis vault `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af`. The vault is the protocol-admin multisig re-encoded with the `osmo` prefix, on purpose (same signer set on both chains); the sweep operator is a separate key, recorded in §4, and neither relationship is something a test enforces. The test asserts only the bech32 prefix and the 20-byte length of each; the double-check against §4 and the signed-spend proof (Task 1 Step 2) are what guard the values.
 - §9 rule: every constant is proven to be an address we control before anything is sent there: a test transfer to it from any wallet, then a signed spend from it.
 - Handler helper names and order, from the PR 3 plan (Task 10 Step 1): `DisableAutopilotStakeibc`, `RemoveStakeibcFromICAHostAllowList`, `SetWasmUploadAccessToGov` (the only step that may error), `MoveDeployKeyContractAdminsToGov`, `DeprecateComdex`, `DeleteDydxTradeRoute`, `DeactivateICAOracles`, `RemoveAllRateLimits`, `ResetStaleDelegationChangesInProgress`, `PurgeHaqqSlashQueries`, `PurgeWithdrawalBalanceQueries`, `ReconcileHaqqDelegations`. Constants: `v35.UpgradeName = "v35"`, `v35.HaqqChainId`, `v35.ComdexChainId`, `v35.DydxTradeRouteRewardDenom = "uusdc"`, `v35.DydxTradeRouteHostDenom = "adydx"`, `v35.WasmDeployKey = "stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh"`, `v35.HaqqDelegationDeltas []v35.DelegationDelta{Name, Address, Delta}`, `v35.GovModuleAddress() sdk.AccAddress`.
 - Export suite conventions (v34's `app/upgrades/v34/mainnet_export_test.go`): fixture at `testdata/mainnet_export.json.gz`, `strideExport{AppState map[string]json.RawMessage}`, `s.App.AppCodec().UnmarshalJSON(raw, &genesis)` per section, one `populate*FromExport` helper per section, `s.ConfirmUpgradeSucceeded(v35.UpgradeName)` as the act, skip when the fixture is absent.
@@ -72,7 +72,7 @@ Read spec §4's table and take the `Address` column of the "Sweep operator" and 
 
 | Role | §4 value today |
 |---|---|
-| Sweep operator | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` |
+| Sweep operator | `stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9` |
 | Osmosis vault | `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` |
 
 The vault is the protocol-admin multisig with the `osmo` prefix (`strided keys parse` on both strings prints the same 20 bytes); that is the intended setup, the same signer set custodies the pools and signs the admin txs. Use exactly what §4 holds on the day; if §4 has changed since, the new strings win and nothing else in this task changes.
@@ -83,15 +83,15 @@ This is the guard on the two strings: a constant is only committed once (a) it h
 
 ```bash
 # Sweep operator, on Stride (any funded wallet first, then the operator key itself)
-strided tx bank send <any-wallet> stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh 1000000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y
-strided tx bank send stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh <any-wallet>   500000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y --from sweep-operator
+strided tx bank send <any-wallet> stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9 1000000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y
+strided tx bank send stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9 <any-wallet>   500000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y --from sweep-operator
 
 # Osmosis vault, on Osmosis (a multisig spends via `osmosisd tx multisign`; the spend proves the signer set)
 osmosisd tx bank send <any-wallet> osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af 1000000uosmo --chain-id osmosis-1 --node https://osmosis-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 2500uosmo -y
 osmosisd tx bank send osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af <any-wallet>   500000uosmo --chain-id osmosis-1 --node https://osmosis-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 2500uosmo -y --from vault
 ```
 
-Expected: all four land (`code: 0`), and `strided q bank balances stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` / `osmosisd q bank balances osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` show the remainder. The operator keeps STRD for sweep fees only (§4). `verify_constants.py` (Task 2) later re-checks the automated half of this: both accounts must show `sequence > 0` on chain.
+Expected: all four land (`code: 0`), and `strided q bank balances stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9` / `osmosisd q bank balances osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` show the remainder. The operator keeps STRD for sweep fees only (§4). `verify_constants.py` (Task 2) later re-checks the automated half of this: both accounts must show `sequence > 0` on chain.
 
 - [ ] **Step 3: Rewrite the address test as hard assertions**
 
@@ -128,7 +128,7 @@ In `x/stakeibc/types/wind_down.go` replace the `var` block with the §4 values (
 // from each before this commit (tx hashes in the commit message). Vars rather than consts so
 // tests can substitute them; every use fails closed if one is ever emptied again.
 var (
-	SweepOperatorAddress = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh" // the only signer of MsgSweepTokensOffStride
+	SweepOperatorAddress = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9" // the only signer of MsgSweepTokensOffStride
 	OsmosisVaultAddress  = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"  // receiver of every MsgTransferFromIca; pool admin and moderator
 )
 ```
@@ -1628,4 +1628,4 @@ Post the output of Steps 1 to 4 on the PR. The release tag and the `/v35` module
 
 **Review tags.** Task 1 (the two strings every transfer depends on), Task 3 (the release gate) and Task 4 (the off-chain assertion the design relies on) and Task 6 (release decision) are `yes`; the fixture assembly and the changelog are `no`.
 
-**Address keys.** Both §4 values are the protocol-admin multisig (the sweep operator on Stride, the same bytes with the `osmo` prefix as the vault); that is the decided setup, so no test compares them against `utils.Admins`. The guard is the second-person check against §4, the signed spends, and `verify_constants.py`'s sequence check.
+**Address keys.** The sweep operator is its own key (§4), and the Osmosis vault is the protocol-admin multisig with the `osmo` prefix; that is the decided setup, so no test compares either against `utils.Admins`. The guard is the second-person check against §4, the signed spends, and `verify_constants.py`'s sequence check.
