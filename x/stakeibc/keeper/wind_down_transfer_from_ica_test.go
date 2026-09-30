@@ -92,8 +92,10 @@ func (s *KeeperTestSuite) TestTransferFromIca_ForeignDenom() {
 }
 
 func (s *KeeperTestSuite) TestTransferFromIca_VaultNotConfigured() {
-	// The default is empty: the tx must fail closed
-	s.Require().Empty(types.OsmosisVaultAddress)
+	// An emptied vault constant must fail closed
+	previous := types.OsmosisVaultAddress
+	types.OsmosisVaultAddress = ""
+	s.T().Cleanup(func() { types.OsmosisVaultAddress = previous })
 	channels := s.setupHubIcaChannels(types.ICAAccountType_DELEGATION)
 	portId, channelId := channels[types.ICAAccountType_DELEGATION][0], channels[types.ICAAccountType_DELEGATION][1]
 
