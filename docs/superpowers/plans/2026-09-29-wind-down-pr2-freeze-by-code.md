@@ -121,6 +121,13 @@ func (s *KeeperTestSuite) epochInfoForHook(identifier string, epochNumber int64)
 // third zone, JUNO, carries a pending undelegation and an unbonding period of 28 (every 5th
 // day epoch, and 12 % 5 != 0), so SubmitPendingUndelegations submits it on this epoch instead
 // of deferring, and a fully claimed epoch-2 record exists for the cleanup to delete.
+//
+// ICA routing in this suite: SubmitTxs derives the ICA owner from the chain id of the
+// connection's tendermint client (GetChainIdFromConnectionId in ibc.go), not from the host
+// zone, and all three zones sit on connection-0 whose client chain id is GAIA. So every
+// undelegate ICA, OSMO's and JUNO's included, is sent on the single GAIA.DELEGATION channel
+// (TestInitiateAllHostZoneUnbondings_Successful relies on the same thing: it opens only that
+// channel and still sees OSMO's undelegation event). One channel, three ICAs expected.
 func (s *KeeperTestSuite) TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord() {
 	s.SetupInitiateAllHostZoneUnbondings()
 	gaiaOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
@@ -130,10 +137,9 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord(
 	s.Require().True(found, "GAIA delegation channel open")
 
 	// A third zone with a pending undelegation that submits on this epoch (12 % 5 != 0).
-	// Same shape as SetupSubmitPendingUndelegations: only val1 has capacity for the 200
+	// Same shape as SetupSubmitPendingUndelegations: only val1 has capacity for the 200.
+	// No channel of its own: its ICA goes out on the GAIA delegation channel (see above)
 	junoChainId := "JUNO"
-	junoOwner := types.FormatHostZoneICAOwner(junoChainId, types.ICAAccountType_DELEGATION)
-	junoChannelId, junoPortId := s.CreateICAChannel(junoOwner)
 	pendingAmount := sdkmath.NewInt(200)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
 		ChainId:              junoChainId,
@@ -164,14 +170,15 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord(
 	_, found = s.App.RecordsKeeper.GetEpochUnbondingRecord(s.Ctx, uint64(dayEpoch))
 	s.Require().False(found, "no epoch unbonding record for the new epoch before the hook")
 	gaiaStartSequence := s.MustGetNextSequenceNumber(gaiaPortId, gaiaChannelId)
-	junoStartSequence := s.MustGetNextSequenceNumber(junoPortId, junoChannelId)
 
 	s.App.StakeibcKeeper.BeforeEpochStart(s.Ctx, s.epochInfoForHook(epochstypes.DAY_EPOCH, dayEpoch))
 
-	// Kept: InitiateAllHostZoneUnbondings submitted GAIA's queued record as one undelegate ICA
-	// (two validators, batch size 32) and flagged its validators; the record is in progress
-	s.Require().Equal(gaiaStartSequence+1, s.MustGetNextSequenceNumber(gaiaPortId, gaiaChannelId),
-		"exactly one undelegate ICA on the GAIA delegation channel")
+	// Kept: InitiateAllHostZoneUnbondings submitted GAIA's and OSMO's queued records as one
+	// undelegate ICA each (batch size 32), and SubmitPendingUndelegations submitted JUNO's
+	// pending amount as a third. All three land on the GAIA delegation channel (routing note
+	// above), so the sequence advanced by exactly 3: no fourth ICA of any kind went out
+	s.Require().Equal(gaiaStartSequence+3, s.MustGetNextSequenceNumber(gaiaPortId, gaiaChannelId),
+		"exactly three undelegate ICAs (GAIA record, OSMO record, JUNO pending) on the GAIA delegation channel")
 	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, HostChainId)
 	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyHostZone, OsmoChainId)
 	gaiaUnbonding, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, 5, HostChainId)
@@ -182,10 +189,8 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord(
 		s.Require().Equal(int64(1), validator.DelegationChangesInProgress, "GAIA validator %s flagged by the batch", validator.Address)
 	}
 
-	// Kept: SubmitPendingUndelegations submitted JUNO's pending amount as one ICA and marked
-	// the batch in flight; the amount stays stored until the ack
-	s.Require().Equal(junoStartSequence+1, s.MustGetNextSequenceNumber(junoPortId, junoChannelId),
-		"exactly one undelegate ICA on the JUNO delegation channel")
+	// Kept: SubmitPendingUndelegations marked JUNO's batch in flight (its ICA is the third of
+	// the three counted above); the amount stays stored until the ack
 	s.Require().Equal(uint64(1), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, junoChainId), "JUNO batch in flight")
 	stillPending, found := s.App.StakeibcKeeper.GetPendingUndelegation(s.Ctx, junoChainId)
 	s.Require().True(found, "JUNO pending undelegation kept until the ack")
@@ -424,7 +429,7 @@ var (
 
 Notes on the fixtures, verified against the existing tests before writing this step:
 
-- `SetupInitiateAllHostZoneUnbondings` (`unbonding_test.go`) is reused as is for the day epoch; the GAIA delegation channel id and port id are read back through `ICAControllerKeeper.GetOpenActiveChannel` because the fixture does not return them. The JUNO zone mirrors `SetupSubmitPendingUndelegations` (`pending_undelegation_test.go`), with unbonding period 28 so its frequency (28/7 + 1 = 5) does not divide epoch 12.
+- `SetupInitiateAllHostZoneUnbondings` (`unbonding_test.go`) is reused as is for the day epoch; the GAIA delegation channel id and port id are read back through `ICAControllerKeeper.GetOpenActiveChannel` because the fixture does not return them. The JUNO zone mirrors `SetupSubmitPendingUndelegations` (`pending_undelegation_test.go`), with unbonding period 28 so its frequency (28/7 + 1 = 5) does not divide epoch 12. It gets no ICA channel of its own: `SubmitTxs` (`interchainaccounts.go:166-171`) builds the ICA owner from the chain id of the connection's client (`GetChainIdFromConnectionId`, `ibc.go:232-246`), and every zone in this suite uses `ibctesting.FirstConnectionID`, whose client chain id is GAIA, so OSMO's and JUNO's undelegations go out on the GAIA delegation channel just like GAIA's. That is why the assertion is a sequence delta of exactly 3 on that one channel; opening a `JUNO.DELEGATION` channel would create a port nothing ever sends on.
 - The stride-epoch fixture is assembled from `SetupDepositRecords` (`delegation_test.go`: real IBC denom, funded deposit address, `TransferChannelId: ibctesting.FirstChannelID`), `SetupSweepUnbondedTokens` (`redemption_sweep_test.go`: `EXIT_TRANSFER_QUEUE` record with a past `UnbondingTime`, and the sweep ICA leaving the record `EXIT_TRANSFER_IN_PROGRESS`, not `CLAIMABLE`, until the ack) and `SetupUpdateRedemptionRates` (`redemption_rate_test.go`: the deposit-record statuses the old formula summed). Both the reward withdrawal and the sweep go over the delegation ICA channel, which is why the channel's sequence delta of exactly 2 is the assertion that no other ICA (withdraw-address set, delegate) was sent.
 - `ClaimAccruedStakingRewardsOnHost` skips validators with zero delegation, so the stride-epoch zone's one validator carries a delegation of 5 (which also equals `TotalDelegations`).
 
@@ -436,7 +441,7 @@ Run:
 go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestBeforeEpochStart' -v 2>&1 | tail -40
 ```
 
-Expected: `TestBeforeEpochStart_StrideEpoch_RateFrozenKeptFlowsRun` FAILS on `redemption rate must not move on a stride epoch` (actual `1.200000000000000000`; if the old hook errors earlier on the withdrawal-address ICA, the first failure is instead `delegation channel carries the reward withdrawal and the sweep, nothing else` with a sequence delta above 2), `TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord` FAILS on `no epoch unbonding record created for the new epoch`, `TestBeforeEpochStart_MintEpoch_RewardCollectorUntouched` FAILS on the reward collector balance (actual 0), `TestBeforeEpochStart_SourceHasNoCompoundingCalls` FAILS on `k.UpdateRedemptionRates( must not be called`.
+Expected: `TestBeforeEpochStart_StrideEpoch_RateFrozenKeptFlowsRun` FAILS on `redemption rate must not move on a stride epoch` (actual `1.200000000000000000`; if the old hook errors earlier on the withdrawal-address ICA, the first failure is instead `delegation channel carries the reward withdrawal and the sweep, nothing else` with a sequence delta above 2), `TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord` FAILS on `no epoch unbonding record created for the new epoch` (the three-ICA sequence assertion and the kept-flow assertions before it already pass on the old hook, since none of the deleted calls run on the day epoch), `TestBeforeEpochStart_MintEpoch_RewardCollectorUntouched` FAILS on the reward collector balance (actual 0), `TestBeforeEpochStart_SourceHasNoCompoundingCalls` FAILS on `k.UpdateRedemptionRates( must not be called`.
 
 - [ ] **Step 3: Rewrite `BeforeEpochStart`**
 
@@ -514,7 +519,7 @@ Run:
 go test ./x/stakeibc/... 2>&1 | tail -5
 ```
 
-Expected: `ok  	github.com/Stride-Labs/stride/v34/x/stakeibc/keeper` and `ok` for the other stakeibc packages. In particular `TestUpdateRedemptionRatesSuccessful`, `TestLiquidStakeRewardCollectorBalance_Success`, `TestCreateDepositRecordsForEpoch` (records_test.go) and `TestStakeExistingDepositsOnHostZones` (delegation_test.go) still pass because they call the keeper functions directly.
+Expected: `ok  	github.com/Stride-Labs/stride/v34/x/stakeibc/keeper` and `ok` for the other stakeibc packages. In particular `TestUpdateRedemptionRatesSuccessful`, `TestLiquidStakeRewardCollectorBalance_Success`, `TestCreateDepositRecordsForEpoch_Successful` (`records_test.go:13`) and `TestStakeDepositRecords_Successful` (`delegation_test.go:369`) still pass because they call the keeper functions directly.
 
 - [ ] **Step 6: Commit**
 
@@ -801,6 +806,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 **Files:**
 - Modify: `x/stakeibc/types/message_update_delegation.go:40-58`
 - Modify: `x/stakeibc/types/message_calibrate_delegation.go:39-56`
+- Modify: `x/stakeibc/client/cli/tx.go:590,621` (the two `Short` help strings)
 - Create: `x/stakeibc/types/message_update_delegation_test.go`
 - Create: `x/stakeibc/types/message_calibrate_delegation_test.go`
 
@@ -1004,7 +1010,7 @@ func TestMsgCalibrateDelegation_ValidateBasic(t *testing.T) {
 }
 ```
 
-(`apptesting.SetupConfig()` sets the `stride` bech32 prefix so the admin address parses; other `message_*_test.go` files in this package rely on a `TestMain`/init that already does this. If `go test` reports `invalid creator address` for the admin case, the config was not set: keep the explicit call.)
+(`apptesting.SetupConfig()` is required, not belt-and-braces: it installs the `stride` bech32 prefix so the admin address parses at all, and it installs the address verifier from `cmd/strided/config/config.go:76-87`, which rejects any address that is not 20 or 32 bytes. Without it the `invalid creator address` case, a 7-byte address, would parse successfully and that subtest would fail; nothing in the `app` package sets the config in an `init()`, which is why every other `message_*_test.go` in this package calls it too. Keep the explicit call.)
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
@@ -1075,12 +1081,42 @@ Run:
 grep -rn "MsgUpdateValidatorSharesExchRate{\|MsgCalibrateDelegation{\|NewMsgUpdateValidatorSharesExchRate(\|NewMsgCalibrateDelegation(" --include='*.go' x/ app/ | grep -v "pb.go\|/types/message_\|/types/codec.go"
 ```
 
-Expected: only `x/stakeibc/client/cli/tx.go` (lines ~601 and ~632), which take the signer from `--from` and need no change. `scripts/local-to-mainnet/commands.sh` and its template already use `--from admin`.
+Expected: only `x/stakeibc/client/cli/tx.go` (lines ~601 and ~632), which take the signer from `--from` and need no code change. `scripts/local-to-mainnet/commands.sh` and its template already use `--from admin`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Say "admin only" in the two CLI help strings**
+
+In `x/stakeibc/client/cli/tx.go`, change the two `Short` lines so an operator reading `strided tx stakeibc --help` sees the gate. Line 590:
+
+```go
+		Short: "Broadcast message update-delegation",
+```
+
+becomes
+
+```go
+		Short: "Broadcast message update-delegation (admin only: refreshes a validator's shares-to-tokens rate and applies any slash)",
+```
+
+and line 621:
+
+```go
+		Short: "Broadcast message calibrate-delegation",
+```
+
+becomes
+
+```go
+		Short: "Broadcast message calibrate-delegation (admin only: trues up a validator's recorded delegation to the host)",
+```
+
+Run: `go build ./x/stakeibc/... && go run ./cmd/strided tx stakeibc --help | grep -A1 "update-delegation\|calibrate-delegation"`
+
+Expected: both lines print with the `(admin only: ...)` suffix.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add x/stakeibc/types/message_update_delegation.go x/stakeibc/types/message_calibrate_delegation.go x/stakeibc/types/message_update_delegation_test.go x/stakeibc/types/message_calibrate_delegation_test.go
+git add x/stakeibc/types/message_update_delegation.go x/stakeibc/types/message_calibrate_delegation.go x/stakeibc/types/message_update_delegation_test.go x/stakeibc/types/message_calibrate_delegation_test.go x/stakeibc/client/cli/tx.go
 git commit -m "feat(stakeibc): admin-gate MsgUpdateValidatorSharesExchRate and MsgCalibrateDelegation
 
 Both reach the slash path, which now corrects delegations of any size; only the

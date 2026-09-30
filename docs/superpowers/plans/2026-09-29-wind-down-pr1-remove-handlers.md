@@ -36,8 +36,8 @@
 | Path | Responsibility in this PR |
 |---|---|
 | `x/stakeibc/types/codec.go` | Add `MsgLSMLiquidStake`, `MsgCreateTradeRoute`, `MsgDeleteTradeRoute`, `MsgUpdateTradeRoute` to `RegisterImplementations` |
-| `app/testdata/historical_txs.json` (new) | Three real mainnet tx bytes (LiquidStake, RedeemStake, LSMLiquidStake) |
-| `app/historical_tx_decode_test.go` (new) | Decode + amino JSON test over the fixture |
+| `app/testdata/historical_txs.json` (new) | Three real mainnet tx bytes (LiquidStake, RedeemStake, LSMLiquidStake) with each type URL and amino name |
+| `app/historical_tx_decode_test.go` (new) | Decode test over the fixture: protobuf decode, type URL, amino JSON carrying the registered name |
 | `app/removed_handlers_test.go` (new) | Router + reflection guard for every removed message |
 | `x/stakeibc/keeper/liquid_stake.go` (new) | `Keeper.LiquidStake` (moved verbatim from the msg server) |
 | `x/stakeibc/keeper/msg_server.go` | Delete 12 handlers |
@@ -71,6 +71,7 @@ The three transactions below were fetched from `https://stride-rpc.polkachu.com`
     "hash": "DBDD161AF1D0B9FC158ADA2CCCDC50F965F289F181D47AA5C3B5DEDDC9410B7A",
     "height": 40815423,
     "type_url": "/stride.stakeibc.MsgLiquidStake",
+    "amino_name": "stakeibc/MsgLiquidStake",
     "tx_base64": "CmUKYwofL3N0cmlkZS5zdGFrZWliYy5Nc2dMaXF1aWRTdGFrZRJACi1zdHJpZGUxZmU0bXZoNWY3dDA4MzBmd2N1Y3V1bGo1dzIydnh0ZWNobHh6dTQSCDE5OTI2MzAwGgV1YmFuZBJzClEKRgofL2Nvc21vcy5jcnlwdG8uc2VjcDI1NmsxLlB1YktleRIjCiEDgP8WjsoBIbpROHVmlEY2kGJFnggb/2GUENv9j64jFqISBAoCCAEYqgQSHgoYCgVzdGluahIPNjE4ODQwNjAwMDAwMDAwENr6NRpAB/z4hQnq4bYOn7QmWvYFx2F+3gGXgHJyixIFGjoGP1ASTcFF3oYHXNL/qFxT/89ZT+kstK4BZvYX+CqyvC5a/w=="
   },
   {
@@ -78,6 +79,7 @@ The three transactions below were fetched from `https://stride-rpc.polkachu.com`
     "hash": "7D90D8E247D833F0F4486B74AB41B9F5BA96B6C4CC46C703513E553F816C6229",
     "height": 40824022,
     "type_url": "/stride.stakeibc.MsgRedeemStake",
+    "amino_name": "stakeibc/MsgRedeemStake",
     "tx_base64": "CpYBCpMBCh8vc3RyaWRlLnN0YWtlaWJjLk1zZ1JlZGVlbVN0YWtlEnAKLXN0cmlkZTE3cWNrZnJ4dWxlM3BlZnhtMHpwMnNrdjZrazdoc3hjM3hkdHhhcBIHMjA3MzY3MBoJb3Ntb3Npcy0xIitvc21vMTdxY2tmcnh1bGUzcGVmeG0wenAyc2t2NmtrN2hzeGMzZGFjMmxsEmcKUApGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQPK4L+sCuEUCEcbeS7NVu9F/BihArMFHksISmXx3rgzMhIECgIIfxhVEhMKDQoFdXN0cmQSBDE1MTQQ4rwSGkDKTehUP2Gmltpig0j2I9d6PwiZfmBB9Q6Hyc8Dx7d3JhvTji6QeebawQT+olPHlJDXGvUI7Ihhd0AvXPE1aHXy"
   },
   {
@@ -85,6 +87,7 @@ The three transactions below were fetched from `https://stride-rpc.polkachu.com`
     "hash": "4AEA3294520649BA0DD55E6F7262D2E6608A7F592460D75BE34D3B2CDB9ACC97",
     "height": 40824588,
     "type_url": "/stride.stakeibc.MsgLSMLiquidStake",
+    "amino_name": "stakeibc/MsgLSMLiquidStake",
     "tx_base64": "CqgBCqUBCiIvc3RyaWRlLnN0YWtlaWJjLk1zZ0xTTUxpcXVpZFN0YWtlEn8KLXN0cmlkZTF1YXV2Y2M4N3d2ZXk1ZGNqN2tnd3NweDV6d2pwY2ZlNTNqc3NrdRIIMjUwMDAwMDAaRGliYy84NDRFOUZBOEEwMDY0MzcxQkY4NjgwRjc3QzI1OTc1N0ZDRDM5NDVDMzczNTI2QkEyMjdDNjg5NTJDQjk4Nzk4EmgKUQpGCh8vY29zbW9zLmNyeXB0by5zZWNwMjU2azEuUHViS2V5EiMKIQN8FlofzxaPR7INHxiHvyvGdo0LUfFItHGsQCxtzSxL4xIECgIIARi8AhITCg0KBXVzdHJkEgQxOTgxEPzteBpAM2kRXPXIb6+HPW9X+WCsJUSTvg3GcbpmXHdVTjQ0MYkU7LARE/HRNWPpaItblBvUuV2X952Q2i6kakXLlwGUOg=="
   }
 ]
@@ -109,6 +112,7 @@ package app_test
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 
@@ -125,8 +129,9 @@ type historicalTx struct {
 	Name     string `json:"name"`
 	Hash     string `json:"hash"`
 	Height   int64  `json:"height"`
-	TypeURL  string `json:"type_url"`
-	TxBase64 string `json:"tx_base64"`
+	TypeURL   string `json:"type_url"`
+	AminoName string `json:"amino_name"` // the name registered in the module's RegisterCodec
+	TxBase64  string `json:"tx_base64"`
 }
 
 type HistoricalTxDecodeTestSuite struct {
@@ -166,9 +171,14 @@ func (s *HistoricalTxDecodeTestSuite) TestHistoricalTxsStillDecode() {
 			s.Require().Len(msgs, 1)
 			s.Require().Equal(fixture.TypeURL, sdk.MsgTypeURL(msgs[0]))
 
-			// Legacy amino JSON rendering of the message must still work too
-			_, err = s.App.LegacyAmino().MarshalJSON(msgs[0])
+			// Legacy amino JSON rendering must still carry the registered name. NoError alone
+			// proves nothing: go-amino's MarshalJSON on a concrete type that lost its
+			// RegisterAminoMsg line just omits the {"type": ...} wrapper and returns no error,
+			// so the name check is the assertion that fails when a registration is dropped
+			aminoJson, err := s.App.LegacyAmino().MarshalJSON(msgs[0])
 			s.Require().NoError(err, "amino JSON for %s", fixture.TypeURL)
+			s.Require().Contains(string(aminoJson), fmt.Sprintf(`"type":"%s"`, fixture.AminoName),
+				"amino JSON for %s must carry its registered name", fixture.TypeURL)
 		})
 	}
 }
@@ -244,7 +254,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `x/stakeibc/keeper/reward_allocation.go:47`
 - Modify: `x/autopilot/keeper/liquidstake.go:90-96`
 - Modify: `x/autopilot/keeper/redeem_stake.go:75-82`
-- Modify: `x/stakeibc/keeper/msg_server_test.go` (the 16 `TestLiquidStake_*` tests, lines 646-842)
+- Modify: `x/stakeibc/keeper/msg_server_test.go` (the 14 `TestLiquidStake_*` tests, lines 639-836, plus `LiquidStakeState`, `LiquidStakeTestCase` and `SetupLiquidStake`, lines 567-637)
 
 **Interfaces:**
 - Produces: `func (k Keeper) LiquidStake(ctx sdk.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error)`.
@@ -473,22 +483,22 @@ Remove the now-unused `stakeibckeeper` import from both autopilot files if the c
 Run: `go build ./... && go vet ./x/stakeibc/... ./x/autopilot/...`
 Expected: no output (clean).
 
-- [ ] **Step 5: Rewrite the sixteen LiquidStake handler tests to the keeper**
+- [ ] **Step 5: Rewrite the fourteen LiquidStake handler tests to the keeper**
 
-In `x/stakeibc/keeper/msg_server_test.go` the tests `TestLiquidStake_Successful` through `TestLiquidStake_HaltedZone` (lines 646-842) call `s.GetMsgServer().LiquidStake(`. Rewrite every occurrence:
+In `x/stakeibc/keeper/msg_server_test.go` the tests `TestLiquidStake_Successful` through `TestLiquidStake_HaltedZone` (14 tests, lines 639-836) call `s.GetMsgServer().LiquidStake(`. Rewrite every occurrence:
 
 ```bash
 sed -i '' 's/s\.GetMsgServer()\.LiquidStake(/s.App.StakeibcKeeper.LiquidStake(/g' x/stakeibc/keeper/msg_server_test.go
 ```
 
-Then move those tests, the `LiquidStakeTestCase` type and `SetupLiquidStake` (line 579) out of `msg_server_test.go` into a new `x/stakeibc/keeper/liquid_stake_test.go` (same package `keeper_test`, same imports as needed) so the tests live beside the keeper file. `sed` leaves `s.Ctx` as the first argument, which is already an `sdk.Context`, so no further edits are needed.
+Then move those tests, the `LiquidStakeState` and `LiquidStakeTestCase` types (lines 567-577; `LiquidStakeTestCase` embeds `LiquidStakeState`, so both move) and `SetupLiquidStake` (line 579) out of `msg_server_test.go` into a new `x/stakeibc/keeper/liquid_stake_test.go` (same package `keeper_test`, same imports as needed) so the tests live beside the keeper file. `sed` leaves `s.Ctx` as the first argument, which is already an `sdk.Context`, so no further edits are needed.
 
 - [ ] **Step 6: Run the moved tests**
 
 Run: `go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestLiquidStake' -v`
-Expected: all 16 PASS.
+Expected: all 14 PASS.
 
-Run: `go test ./x/autopilot/... ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/(TestOnRecvPacket_LiquidStake|TestOnRecvPacket_RedeemStake|TestLiquidStakeCommunityPoolTokens|TestRedeemCommunityPoolTokens|TestAuctionOffRewardCollectorBalance)' -v`
+Run: `go test ./x/autopilot/... ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/(TestOnRecvPacket_LiquidStake|TestOnRecvPacket_RedeemStake|TestLiquidStakeCommunityPoolTokens|TestRedeemCommunityPoolTokens|TestLiquidStakeRewardCollectorBalance)' -v`
 Expected: PASS (these are the callers; if a test name above does not exist, run the whole autopilot package and `TestKeeperTestSuite` in stakeibc instead).
 
 - [ ] **Step 7: Commit**
@@ -597,7 +607,8 @@ Leave every `message Msg...` definition in the file exactly as it is.
 make proto-gen
 git status --short | grep pb.go
 git add x/stakeibc/types/tx.pb.go
-git checkout -- $(git diff --name-only | grep 'pb.go$' | grep -v '^x/stakeibc/types/tx.pb.go$' || true)
+files=$(git diff --name-only | grep 'pb.go$' | grep -v '^x/stakeibc/types/tx.pb.go$' || true)
+[ -n "$files" ] && git checkout -- $files  # no-op when proto-gen churned nothing else
 go build ./... 2>&1 | head -40
 ```
 
@@ -605,7 +616,7 @@ Expected: the build fails only with "msgServer does not implement types.MsgServe
 
 - [ ] **Step 3: Delete the handlers from `x/stakeibc/keeper/msg_server.go`**
 
-Line numbers below are from the base branch; those after `LiquidStake` shift up by about 90 lines once Task 2 shrinks that handler, so locate each function by name. Delete these functions (and the comment blocks directly above them): `RegisterHostZone` (lines 42-45), `RebalanceValidators` (156-164), `ClearBalance` (166-211), `LiquidStake` (the delegate from Task 2), `RedeemStake` (311-314), `LSMLiquidStake` (with its 19-line comment, 315-358), `CreateTradeRoute` (with its example-proposal comment, 359-461), `DeleteTradeRoute` (with comment, 462-498), `UpdateTradeRoute` (with comment, 499-535), `ResumeHostZone` (744-767), `SetCommunityPoolRebate` (770-803), `ToggleTradeController` (with comment, 805-847). Keep `NewMsgServerImpl`, `UpdateHostZoneParams`, `DeprecateHostZone`, `AddValidators`, `DeleteValidator`, `ChangeValidatorWeight`, `RestoreInterchainAccount`, `CloseDelegationChannel`, `UpdateValidatorSharesExchRate`, `CalibrateDelegation`, `UpdateInnerRedemptionRateBounds`.
+Line numbers below are from the base branch; those after `LiquidStake` shift up by about 90 lines once Task 2 shrinks that handler, so locate each function by name. Delete these functions (and the comment blocks directly above them): `RegisterHostZone` (lines 42-45), `RebalanceValidators` (156-164), `ClearBalance` (166-211), `LiquidStake` (the delegate from Task 2), `RedeemStake` (311-314), `LSMLiquidStake` (with its 19-line comment, 316-393), `CreateTradeRoute` (with its example-proposal comment, 360-482), `DeleteTradeRoute` (with comment, 463-518), `UpdateTradeRoute` (with comment, 500-536), `ResumeHostZone` (744-767), `SetCommunityPoolRebate` (770-803), `ToggleTradeController` (with comment, 805-847, the end of the file). Keep `NewMsgServerImpl`, `UpdateHostZoneParams`, `DeprecateHostZone`, `AddValidators`, `DeleteValidator`, `ChangeValidatorWeight`, `RestoreInterchainAccount`, `CloseDelegationChannel`, `UpdateValidatorSharesExchRate`, `CalibrateDelegation`, `UpdateInnerRedemptionRateBounds`.
 
 Then run `go build ./x/stakeibc/...` and delete every import the compiler reports as unused (expected: `time`, `proto`, `ibctransfertypes`, `cast`, `banktypes` may survive via RestoreInterchainAccount, `govtypes`, `sdkmath`, `epochtypes`, `recordstypes`/`recordtypes` — keep whichever are still used).
 
@@ -641,7 +652,7 @@ In `x/stakeibc/client/cli/tx_test.go` delete `TestCmdLiquidStake`, `TestCmdLSMLi
 
 In `x/stakeibc/keeper/msg_server_test.go` delete, with their `*TestCase` types and `Setup*` helpers:
 - `ClearBalanceTestCase`, `SetupClearBalance` (469), `TestClearBalance_Successful`, `_HostChainMissing`, `_FeeAccountMissing`, `_ParseCoinError`;
-- `getLSMTokenIBCDenom` (865), `LSMLiquidStakeTestCase`, `SetupTestLSMLiquidStake` (872) and all eleven `TestLSMLiquidStake*` tests (943-1190) — first check `grep -n "getLSMTokenIBCDenom\|SetupTestLSMLiquidStake" x/stakeibc/keeper/*_test.go`; if `lsm_test.go` uses either helper, move it there instead of deleting it;
+- `LSMLiquidStakeTestCase`, `SetupTestLSMLiquidStake` (872) and all ten `TestLSMLiquidStake*` tests (939-1190). `getLSMTokenIBCDenom` (865) is NOT deleted: `icqcallbacks_validator_exchange_rate_test.go:106` calls it, so move that helper into `icqcallbacks_validator_exchange_rate_test.go` (its only remaining user) with the imports it needs;
 - `SetupTestCreateTradeRoute` (1216), `submitCreateTradeRouteAndValidate` (1314), `submitUpdateTradeRouteAndValidate` (1425), `TestDeleteTradeRoute`, `TestCreateTradeRoute_*`, `TestUpdateTradeRoute`;
 - `ResumeHostZoneTestCase`, `SetupResumeHostZone` (1991), `TestResumeHostZone_Success`, `_MissingZones`, `_UnhaltedZones`;
 - `TestSetCommunityPoolRebate`, `TestToggleTradeController`.
@@ -736,7 +747,8 @@ var keptMsgs = []sdk.Msg{
 }
 
 // removedServerMethods maps each module's MsgServer interface to the method names that
-// must no longer exist on it (the compile-time shape of the removal).
+// must no longer exist on it. Go cannot assert a method's absence at compile time, so
+// this is a runtime reflection guard over each generated MsgServer interface.
 var removedServerMethods = map[reflect.Type][]string{
 	reflect.TypeOf((*stakeibctypes.MsgServer)(nil)).Elem(): {
 		"LiquidStake", "LSMLiquidStake", "RedeemStake", "RegisterHostZone",
@@ -802,7 +814,8 @@ Common recipe for each (referenced below as "the module recipe"):
 # 1. edit proto/stride/<module>/tx.proto (rpc lines only)
 make proto-gen
 git add x/<module>/types/tx.pb.go
-git checkout -- $(git diff --name-only | grep 'pb.go$' | grep -v "^x/<module>/types/tx.pb.go$" || true)
+files=$(git diff --name-only | grep 'pb.go$' | grep -v "^x/<module>/types/tx.pb.go$" || true)
+[ -n "$files" ] && git checkout -- $files  # no-op when proto-gen churned nothing else
 # 2. delete the handler methods, CLI commands and handler tests listed in the task
 go build ./... && go vet ./x/<module>/... ./app/...
 go test ./x/<module>/... ./app/ 2>&1 | tail -5
@@ -1184,7 +1197,7 @@ Expected: `0` then `1`.
 
 ## Self-review
 
-**1. Spec coverage.** §5 removed list: stakeibc twelve → Task 4; staketia/stakedym `LiquidStake`, `RedeemStake`, `ResumeHostZone` → Tasks 6-7 (redeem keeper paths deleted per §5, helpers left for §12); icaoracle two → Task 8; icqoracle two → Task 9; auction three → Task 10; airdrop seven → Task 11; claim four → Task 12. "Types and both registrations stay" → Task 1 (adds the four missing ones) and Task 13 Step 2 (proves no codec diff elsewhere). `ClaimUndelegatedTokens` and `RestoreInterchainAccount` kept → Task 4 proto block and Task 5 `keptMsgs`. §11 "compile-time guarantee that the removed messages no longer exist" → Task 5 reflection test on each `MsgServer` interface; "decode test proving historical txs still parse" → Task 1. §13: `RegisterHostZone` tests rewritten not deleted → Task 3; `community_pool.go`, `handler.go`, `tx_test.go` → Tasks 2, 4; `msgServer.LiquidStake` → `Keeper.LiquidStake` → Task 2; keep `message_liquid_stake.go`/`message_redeem_stake.go` → Global Constraints; CLI flag constants → Task 4 Step 5; proto-gen descriptor churn → module recipe; the first dry run's `RegisterImplementations` mistake → Task 1's test.
+**1. Spec coverage.** §5 removed list: stakeibc twelve → Task 4; staketia/stakedym `LiquidStake`, `RedeemStake`, `ResumeHostZone` → Tasks 6-7 (redeem keeper paths deleted per §5, helpers left for §12); icaoracle two → Task 8; icqoracle two → Task 9; auction three → Task 10; airdrop seven → Task 11; claim four → Task 12. "Types and both registrations stay" → Task 1 (adds the four missing ones) and Task 13 Step 2 (proves no codec diff elsewhere). `ClaimUndelegatedTokens` and `RestoreInterchainAccount` kept → Task 4 proto block and Task 5 `keptMsgs`. §11 "compile-time guarantee that the removed messages no longer exist" → Task 5's runtime reflection guard on each `MsgServer` interface (Go cannot assert a method's absence at compile time; the guard plus the router check is the equivalent); "decode test proving historical txs still parse" → Task 1. §13: `RegisterHostZone` tests rewritten not deleted → Task 3; `community_pool.go`, `handler.go`, `tx_test.go` → Tasks 2, 4; `msgServer.LiquidStake` → `Keeper.LiquidStake` → Task 2; keep `message_liquid_stake.go`/`message_redeem_stake.go` → Global Constraints; CLI flag constants → Task 4 Step 5; proto-gen descriptor churn → module recipe; the first dry run's `RegisterImplementations` mistake → Task 1's test.
 
 **2. Placeholders.** None: every deletion names the function and line range; every rewrite shows the replacement; the fixture holds real bytes; the fetch commands are exact.
 

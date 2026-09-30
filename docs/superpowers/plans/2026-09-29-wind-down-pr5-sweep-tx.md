@@ -25,10 +25,10 @@ This plan's branch is `wind-down-pr5-sweep-tx`, created from `wind-down-pr4-admi
 - Only the sweep operator signs: `ValidateBasic` rejects any creator other than `types.SweepOperatorAddress`, and rejects everyone while that var is empty (fail closed; it is filled in by the release gate PR, not here).
 - `denoms` non-empty, each passing `sdk.ValidateDenom`, no duplicates. `addresses` between 1 and `types.MaxSweepAddressesPerTx` (100) valid `stride` bech32 addresses, no duplicates.
 - Destination per denom, decided once per tx before any address is read: a non-`ibc/` denom goes to `types.StrideToOsmosisTransferChannelId` (`channel-5`) with prefix `types.OsmosisBech32Prefix` (`osmo`); an `ibc/` denom goes over `Denom.Trace[0].ChannelId` (its outermost hop) with the prefix `types.SweepUnwindChannels[channel]`, and a channel absent from that map rejects the whole tx with `ErrSweepDestinationUnavailable`. An `ibc/` denom with no trace in the transfer store rejects the whole tx.
-- Per address, skipped with event `sweep_skipped` (attributes `address`, `reason`) and counted in `num_skipped`, in this order: not 20 bytes; no account in the auth store; a transfer escrow address; account type not one of `*authtypes.BaseAccount`, `*vestingtypes.ContinuousVestingAccount`, `*vestingtypes.DelayedVestingAccount`, `*vestingtypes.PeriodicVestingAccount`, `*claimvestingtypes.StridePeriodicVestingAccount` (module accounts and `*icatypes.InterchainAccount` therefore skip). Skipping moves nothing.
-- Per (address, denom): zero balance is skipped silently (no event, not counted). Otherwise one `MsgTransfer` of the full balance: `SourcePort` `transfer`, `SourceChannel` the destination channel, `Sender` the holder, `Receiver` `sdk.MustBech32ifyAddressBytes(prefix, holderBytes)`, `TimeoutTimestamp` block time + `types.WindDownTransferTimeout` (24h) in unix nanos, empty memo. A transfer error rejects the whole tx.
+- Per address, skipped with event `sweep_skipped` (attributes `address`, `reason`) and counted in `num_skipped`, in this order: not 20 bytes; a transfer escrow address (checked before the account lookup, so an escrow that has never received a transfer, and so has no account yet, is still named as an escrow); no account in the auth store; account type not one of `*authtypes.BaseAccount`, `*vestingtypes.ContinuousVestingAccount`, `*vestingtypes.DelayedVestingAccount`, `*vestingtypes.PeriodicVestingAccount`, `*claimvestingtypes.StridePeriodicVestingAccount` (module accounts and `*icatypes.InterchainAccount` therefore skip). Skipping moves nothing.
+- Per (address, denom): the amount is the holder's **spendable** balance of that denom (`SpendableCoin`: the bank balance minus whatever a vesting schedule still locks; the ICS-20 escrow is a bank send and refuses locked coins, so sweeping the total would fail the whole batch for every vesting account with locked STRD). A zero spendable balance is skipped silently (no event, not counted). Otherwise one `MsgTransfer` of that full spendable amount: `SourcePort` `transfer`, `SourceChannel` the destination channel, `Sender` the holder, `Receiver` `sdk.MustBech32ifyAddressBytes(prefix, holderBytes)`, `TimeoutTimestamp` block time + `types.WindDownTransferTimeout` (24h) in unix nanos, empty memo. A transfer error rejects the whole tx.
 - Events: `types.EventTypeSweepSkipped = "sweep_skipped"` (`address`, `reason`), `types.EventTypeSweepTransfer = "sweep_transfer"` (`address`, `denom`, `amount`, `channel`, `receiver`). Errors: `ErrSweepDestinationUnavailable` (code 1569), `ErrSweepOperatorNotConfigured` (code 1570).
-- No new keeper dependencies: escrow addresses from `k.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix(ctx, transfertypes.PortID)` + `transfertypes.GetEscrowAddress`; denom traces from `k.RecordsKeeper.TransferKeeper.GetDenom`; accounts from `k.AccountKeeper.GetAccount`; balances from `k.bankKeeper.GetBalance`; transfers from `k.RecordsKeeper.TransferKeeper.Transfer`.
+- No new keeper dependencies: escrow addresses from `k.IBCKeeper.ChannelKeeper.GetAllChannelsWithPortPrefix(ctx, transfertypes.PortID)` + `transfertypes.GetEscrowAddress`; denom traces from `k.RecordsKeeper.TransferKeeper.GetDenom`; accounts from `k.AccountKeeper.GetAccount`; sweepable balances from `k.bankKeeper.SpendableCoin` (the keeper field is the concrete `bankkeeper.Keeper`, whose embedded `BaseViewKeeper` has `SpendableCoin(ctx, addr, denom) sdk.Coin` at `x/bank/keeper/view.go:202`; the narrower `types.BankKeeper` interface in `expected_keepers.go` is not what the keeper holds, so nothing is added to it); transfers from `k.RecordsKeeper.TransferKeeper.Transfer`.
 - No host-zone accounting is read or written. No proto change. No module-path change.
 - Import path prefix `github.com/Stride-Labs/stride/v34`. Commit messages end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
 
@@ -45,12 +45,13 @@ This plan's branch is `wind-down-pr5-sweep-tx`, created from `wind-down-pr4-admi
 | `x/stakeibc/keeper/wind_down_sweep.go` | Create: `sweepDestination`, `resolveSweepDestination`, `transferEscrowAddresses`, `sweepSkipReason`, `SweepTokensOffStride`, event emitters. |
 | `x/stakeibc/keeper/wind_down_sweep_test.go` | Create: helper unit tests and the end-to-end sweep tests over real transfer channels. |
 | `x/stakeibc/keeper/msg_server_wind_down.go` | Modify: replace the PR 4 stub body with the delegate. |
-| `x/stakeibc/client/cli/tx_wind_down.go` | Modify: add `CmdSweepTokensOffStride` and register it. |
+| `x/stakeibc/client/cli/tx_wind_down.go` | Modify: add `CmdSweepTokensOffStride` (PR 4 keeps the constructors here). |
+| `x/stakeibc/client/cli/tx.go` | Modify: register the command at the end of the `AddCommand` block in `GetTxCmd`, right after PR 4's three wind-down registrations. |
 | `x/stakeibc/client/cli/tx_wind_down_test.go` | Modify (or create if PR 4 named it differently): argument-parsing tests for the new command. |
 | `scripts/wind-down/build_sweep_batches.py` | Create: export → batch files, mirroring the on-chain skip rules plus a USD floor. |
 | `scripts/wind-down/test_build_sweep_batches.py` | Create: unittest over a synthetic export. |
 
-Before starting, confirm the PR 4 names this plan relies on exist on the branch: `types.SweepOperatorAddress`, `types.OsmosisBech32Prefix`, `types.StrideToOsmosisTransferChannelId`, `types.SweepUnwindChannels`, `types.MaxSweepAddressesPerTx`, `types.WindDownTransferTimeout` in `x/stakeibc/types/wind_down.go`; `types.MsgSweepTokensOffStride`, `types.MsgSweepTokensOffStrideResponse` in `tx.pb.go`; the stub `SweepTokensOffStride` in `x/stakeibc/keeper/msg_server_wind_down.go`; `GetTxCmd` registrations in `x/stakeibc/client/cli/tx_wind_down.go` (PR 4 added its three commands there; check how it registered them, because the new command is registered the same way).
+Before starting, confirm the PR 4 names this plan relies on exist on the branch: `types.SweepOperatorAddress`, `types.OsmosisBech32Prefix`, `types.StrideToOsmosisTransferChannelId`, `types.SweepUnwindChannels`, `types.MaxSweepAddressesPerTx`, `types.WindDownTransferTimeout` in `x/stakeibc/types/wind_down.go`; `types.MsgSweepTokensOffStride`, `types.MsgSweepTokensOffStrideResponse` in `tx.pb.go`; the stub `SweepTokensOffStride` in `x/stakeibc/keeper/msg_server_wind_down.go`; the three PR 4 registrations at the end of the `AddCommand` block in `x/stakeibc/client/cli/tx.go` (PR 4 keeps the command constructors in `tx_wind_down.go` and registers them in `tx.go`; PR 1 deleted the old last line `cmd.AddCommand(CmdToggleTradeController())`, so "after PR 4's three" is the anchor, not that one).
 
 ```bash
 grep -n "SweepOperatorAddress\|OsmosisBech32Prefix\|StrideToOsmosisTransferChannelId\|SweepUnwindChannels\|MaxSweepAddressesPerTx\|WindDownTransferTimeout" x/stakeibc/types/wind_down.go
@@ -112,6 +113,9 @@ func randomStrideAddresses(n int) []string {
 }
 
 func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
+	// Nothing in the app sets the bech32 prefix at init: run in isolation, the SDK config still says
+	// "cosmos" and every "valid" case fails on the stride addresses
+	apptesting.SetupConfig()
 	operator := apptesting.SampleStrideAddress()
 	withSweepOperator(t, operator)
 
@@ -196,6 +200,7 @@ func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
 
 // While the operator constant is empty (as shipped by PR 4) the gate rejects everyone
 func TestMsgSweepTokensOffStride_ValidateBasic_OperatorNotConfigured(t *testing.T) {
+	apptesting.SetupConfig()
 	withSweepOperator(t, "")
 
 	msg := types.NewMsgSweepTokensOffStride(apptesting.SampleStrideAddress(), []string{"stuatom"}, randomStrideAddresses(1))
@@ -462,8 +467,11 @@ func (s *KeeperTestSuite) TestResolveSweepDestination() {
 func (s *KeeperTestSuite) setupSweepAccountKinds() map[string]sdk.AccAddress {
 	accounts := apptesting.CreateRandomAccounts(8)
 	kinds := map[string]sdk.AccAddress{}
+	// NewAccountWithAddress assigns the next account number. A bare NewBaseAccountWithAddress
+	// leaves it at 0, and SetAccount then panics on the auth store's unique account-number index
+	// because genesis already owns number 0 (apptesting.SetNewAccount does the same dance)
 	newBase := func(address sdk.AccAddress) *authtypes.BaseAccount {
-		return authtypes.NewBaseAccountWithAddress(address)
+		return s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, address).(*authtypes.BaseAccount)
 	}
 	vesting := sdk.NewCoins(sdk.NewInt64Coin(sweepTestStrd, 1))
 	now := s.Ctx.BlockTime().Unix()
@@ -636,12 +644,14 @@ func (k Keeper) sweepSkipReason(ctx sdk.Context, address sdk.AccAddress, escrows
 	if len(address) != 20 {
 		return "address is not 20 bytes", true
 	}
+	// Escrows are checked before the account lookup: an escrow that has never received a
+	// transfer has no account yet, and it must still be named as an escrow, not "not found"
+	if escrows[address.String()] {
+		return "transfer escrow address", true
+	}
 	account := k.AccountKeeper.GetAccount(ctx, address)
 	if account == nil {
 		return "account not found", true
-	}
-	if escrows[address.String()] {
-		return "transfer escrow address", true
 	}
 
 	// The concrete types are listed on purpose: an interchain account embeds a BaseAccount, so
@@ -710,7 +720,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Test: `x/stakeibc/keeper/wind_down_sweep_test.go` (append)
 
 **Interfaces:**
-- Consumes: Task 2 helpers; `types.WindDownTransferTimeout`; `k.bankKeeper.GetBalance`; `k.RecordsKeeper.TransferKeeper.Transfer`.
+- Consumes: Task 2 helpers; `types.WindDownTransferTimeout`; `k.bankKeeper.SpendableCoin`; `k.RecordsKeeper.TransferKeeper.Transfer`.
 - Produces: `func (k Keeper) SweepTokensOffStride(ctx sdk.Context, msg *types.MsgSweepTokensOffStride) (numTransfers, numSkipped uint64, err error)`; the `SweepTokensOffStride` msg-server handler returning `&types.MsgSweepTokensOffStrideResponse{NumTransfers, NumSkipped}`.
 - Depends on: Tasks 1, 2.
 - Review: yes (moves user balances).
@@ -766,7 +776,9 @@ func (s *KeeperTestSuite) SetupSweep() sweepTestCase {
 	s.Require().True(found, "channel-5 should exist after opening five extra channels")
 
 	operator := s.TestAccs[0]
-	s.App.AccountKeeper.SetAccount(s.Ctx, authtypes.NewBaseAccountWithAddress(operator))
+	if s.App.AccountKeeper.GetAccount(s.Ctx, operator) == nil {
+		s.SetNewAccount(operator) // assigns the next account number before SetAccount
+	}
 	types.SweepOperatorAddress = operator.String()
 	s.T().Cleanup(func() { types.SweepOperatorAddress = "" })
 
@@ -911,6 +923,44 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_SkipRulesInOneBatch() {
 	s.Require().Len(s.CheckEventTypeEmitted(types.EventTypeSweepTransfer), len(swept))
 }
 
+// A vesting account is swept for its spendable balance only: the STRD its schedule still locks
+// stays behind (the escrow send would refuse it and fail the batch), a fully locked account is
+// skipped silently like a zero balance, and its non-vesting denoms move in full
+func (s *KeeperTestSuite) TestSweepTokensOffStride_VestingSweepsOnlySpendable() {
+	tc := s.SetupSweep()
+	now := s.Ctx.BlockTime().Unix()
+	holders := apptesting.CreateRandomAccounts(2)
+	original := sdk.NewCoins(sdk.NewInt64Coin(sweepTestStrd, 1_000))
+
+	// 40% of a linear schedule has elapsed: 400 vested, 600 still locked
+	partlyVested, err := vestingtypes.NewContinuousVestingAccount(
+		s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, holders[0]).(*authtypes.BaseAccount), original, now-400, now+600)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, partlyVested)
+	s.FundAccount(holders[0], sdk.NewInt64Coin(sweepTestStrd, 1_000))
+	s.FundAccount(holders[0], sdk.NewInt64Coin(sweepTestStToken, 50))
+	s.Require().Equal(int64(600), s.App.BankKeeper.LockedCoins(s.Ctx, holders[0]).AmountOf(sweepTestStrd).Int64(), "fixture: 600 locked")
+
+	// Nothing vested yet: every ustrd is locked, nothing is spendable
+	fullyLocked, err := vestingtypes.NewContinuousVestingAccount(
+		s.App.AccountKeeper.NewAccountWithAddress(s.Ctx, holders[1]).(*authtypes.BaseAccount), original, now, now+1_000)
+	s.Require().NoError(err)
+	s.App.AccountKeeper.SetAccount(s.Ctx, fullyLocked)
+	s.FundAccount(holders[1], sdk.NewInt64Coin(sweepTestStrd, 1_000))
+
+	resp, err := s.sweep(tc, []string{sweepTestStrd, sweepTestStToken}, holders[0], holders[1])
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(2), resp.NumTransfers, "400 ustrd and 50 stuatom from the first holder; nothing from the second")
+	s.Require().Equal(uint64(0), resp.NumSkipped, "a fully locked balance is silent, not a skipped address")
+
+	s.Require().Equal(int64(600), s.App.BankKeeper.GetBalance(s.Ctx, holders[0], sweepTestStrd).Amount.Int64(), "locked ustrd stays")
+	s.Require().Zero(s.App.BankKeeper.GetBalance(s.Ctx, holders[0], sweepTestStToken).Amount.Int64(), "stToken moves in full")
+	s.Require().Equal(int64(1_000), s.App.BankKeeper.GetBalance(s.Ctx, holders[1], sweepTestStrd).Amount.Int64(), "fully locked holder untouched")
+	s.Require().Equal(int64(400), s.escrowBalance("channel-5", sweepTestStrd).Int64(), "only the spendable 400 escrowed")
+	s.CheckEventValueEmitted(types.EventTypeSweepTransfer, types.AttributeKeySweepAmount, "400")
+	s.CheckEventTypeNotEmitted(types.EventTypeSweepSkipped)
+}
+
 // A zero balance is skipped silently: no transfer, no skip event, not counted
 func (s *KeeperTestSuite) TestSweepTokensOffStride_ZeroBalanceSilent() {
 	tc := s.SetupSweep()
@@ -959,8 +1009,15 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_UnwhitelistedVoucherRejectsBa
 // In production baseapp runs every message in a cache-wrapped context and only writes it on
 // success (runMsgs / runTx), so a keeper error discards every state change the message made.
 // The keeper suite calls the keeper directly with no baseapp in front, so this test reproduces
-// that boundary by hand: it runs the sweep on s.Ctx.CacheContext(), never calls write, and then
-// asserts on s.Ctx that nothing of the first holder's transfer survived.
+// that boundary by hand: it runs the sweep on s.Ctx.CacheContext(), never calls write, first
+// proves on the cache that the first holder's transfer really happened (otherwise any
+// implementation that errors before touching a holder would pass), then asserts on s.Ctx that
+// none of it survived.
+//
+// channel-24 does not exist on the test chain. ibc-go v11's Transfer looks for a v1 channel of
+// that id, finds none, and falls through to the V2 (client-id) path, which fails on the unknown
+// id; the "channel-24" in the error text comes from this keeper's own wrap ("unable to sweep ...
+// over channel-24"), not from ibc-go, which is fine because the wrap is what ops read.
 func (s *KeeperTestSuite) TestSweepTokensOffStride_TransferErrorRejectsBatch() {
 	tc := s.SetupSweep()
 	junoVoucher := s.registerVoucher("ujuno", transfertypes.NewHop(transfertypes.PortID, "channel-24")) // whitelisted, no such channel
@@ -981,6 +1038,16 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_TransferErrorRejectsBatch() {
 	_, _, err := s.App.StakeibcKeeper.SweepTokensOffStride(cacheCtx, msg)
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "channel-24")
+
+	// Inside the cache the first transfer did happen: balance moved to escrow, one sequence
+	// consumed, one commitment written. This is what makes the rollback assertions below meaningful
+	s.Require().Zero(s.App.BankKeeper.GetBalance(cacheCtx, first, sweepTestStToken).Amount.Int64(), "first holder drained inside the cache")
+	escrowAddress := transfertypes.GetEscrowAddress(transfertypes.PortID, "channel-5")
+	s.Require().Equal(escrowBefore.AddRaw(10), s.App.BankKeeper.GetBalance(cacheCtx, escrowAddress, sweepTestStToken).Amount, "escrowed inside the cache")
+	cacheSequence, found := s.App.IBCKeeper.ChannelKeeper.GetNextSequenceSend(cacheCtx, transfertypes.PortID, "channel-5")
+	s.Require().True(found)
+	s.Require().Equal(sequenceBefore+1, cacheSequence, "one packet sequence consumed inside the cache")
+	s.Require().Len(s.App.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(cacheCtx, transfertypes.PortID, "channel-5"), 1, "one commitment inside the cache")
 
 	// Nothing written to the cache reaches s.Ctx: balances, the channel sequence, the packet
 	// commitment and the events are all as they were before the call
@@ -1037,8 +1104,9 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_TimeoutRefundsHolder() {
 ```
 
 Test-writing notes for the implementer:
-- `TestSweepTokensOffStride_TransferErrorRejectsBatch` calls the keeper on `s.Ctx.CacheContext()` and never writes it, which is exactly what baseapp does around a failing message, so the assertions on `s.Ctx` prove the whole tx rolled back (balances, sequence, commitments, events) rather than only that an error surfaced. `TestSweepTokensOffStride_SuccessfulBatchPersists` is its positive counterpart through the msg server.
+- `TestSweepTokensOffStride_TransferErrorRejectsBatch` calls the keeper on `s.Ctx.CacheContext()` and never writes it, which is exactly what baseapp does around a failing message. It first asserts on the cache that the first holder's transfer happened (balance, escrow, sequence, commitment), then on `s.Ctx` that none of it survived; without the first half, an implementation that errors before touching any holder would pass. `TestSweepTokensOffStride_SuccessfulBatchPersists` is its positive counterpart through the msg server.
 - `s.CheckEventTypeEmitted` returns the matching events; `Len` on it counts them. `CheckEventValueEmitted` asserts at least one event of the type has the attribute value.
+- `TestSweepTokensOffStride_VestingSweepsOnlySpendable` builds its vesting accounts from `NewAccountWithAddress` (next account number) and checks the fixture with `BankKeeper.LockedCoins` before sweeping, so a wrong schedule fails on the fixture line, not on the sweep assertion.
 - Bech32 decoding of the derived receiver uses `sdk.GetFromBech32(addr, "osmo")`, which ignores the SDK config prefix.
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -1081,7 +1149,10 @@ func (k Keeper) SweepTokensOffStride(
 		}
 
 		for _, denom := range msg.Denoms {
-			balance := k.bankKeeper.GetBalance(ctx, holder, denom)
+			// Spendable, not total: the ICS-20 escrow is a bank send, which refuses coins a vesting
+			// schedule still locks. Sweeping the total would fail the whole batch for every vesting
+			// account with locked STRD, so the locked remainder stays and only what can move moves
+			balance := k.bankKeeper.SpendableCoin(ctx, holder, denom)
 			if balance.IsZero() {
 				continue
 			}
@@ -1159,7 +1230,7 @@ Remove the `sdkerrors` import from that file if the stub was its only user.
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/(TestSweepTokensOffStride|TestResolveSweepDestination|TestSweepSkipReason)' -v`
-Expected: PASS, 9 sweep tests plus the two helper tests.
+Expected: PASS, 10 sweep tests plus the two helper tests.
 
 If `openExtraTransferChannels` fails on `ChanOpenTry` with a client-update error, add `s.Require().NoError(path.EndpointB.UpdateClient())` (inside `RunWithDifferentBechPrefix`) before the `ChanOpenTry` and `ChanOpenConfirm` calls; the handshake in `apptesting.CreateTransferChannel` is the reference.
 
@@ -1187,7 +1258,7 @@ Tasks 4 and 5 depend only on Tasks 1-3 (Task 4 on the message constructor; Task 
 
 **Files:**
 - Modify: `x/stakeibc/client/cli/tx_wind_down.go` (PR 4 created it with the three ICA-side commands)
-- Modify: `x/stakeibc/client/cli/tx.go` if PR 4 registered its commands there (`cmd.AddCommand(CmdSweepTokensOffStride())` beside the other three); otherwise register in the same place PR 4 did
+- Modify: `x/stakeibc/client/cli/tx.go`: append `cmd.AddCommand(CmdSweepTokensOffStride())` at the end of the `AddCommand` block in `GetTxCmd`, right after PR 4's three wind-down registrations (PR 4 keeps the constructors in `tx_wind_down.go` and registers in `tx.go`; the old last line `CmdToggleTradeController` was deleted by PR 1, so it is not an anchor)
 - Test: `x/stakeibc/client/cli/tx_wind_down_test.go` (append; create with `package cli_test` if PR 4 did not)
 
 **Interfaces:**
@@ -1309,7 +1380,7 @@ func readAddressesFile(path string) ([]string, error) {
 }
 ```
 
-Register it next to PR 4's three commands (in `GetTxCmd` in `tx.go`, or wherever PR 4 put its `AddCommand` lines):
+Register it in `x/stakeibc/client/cli/tx.go`, appended at the end of the `AddCommand` block in `GetTxCmd`, directly after PR 4's `CmdUndelegateFromValidators`, `CmdTransferFromIca` and `CmdTransferStaketiaClaimBalance` lines:
 
 ```go
 	cmd.AddCommand(CmdSweepTokensOffStride())
@@ -1342,12 +1413,12 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Test: `scripts/wind-down/test_build_sweep_batches.py`
 
 **Interfaces:**
-- Consumes: a trimmed `strided export` JSON (`app_state.bank.balances`, `app_state.auth.accounts`, `app_state.ibc.channel_genesis.channels`), a prices JSON `{denom: {"usd_per_token": float, "decimals": int}}`.
-- Produces: `<out-dir>/batch-001.txt ...` (one address per line, ≤ 100 lines, the CLI's input) and `<out-dir>/summary.json` (per batch: addresses, denoms, USD swept; the skipped list with reasons). Public functions used by the test: `load_export(path) -> Export`, `classify_holders(export, denoms, prices, floor_usd) -> HolderPlan`, `write_batches(plan, out_dir, batch_size) -> list[pathlib.Path]`, `parse_extra_denom(spec) -> ExtraDenom`, `check_denom_destination(denom, traces) -> None`, `batch_size_arg(text) -> int`; from `bech32_ref`: `encode(hrp, address_bytes) -> str`, `decode(bech) -> tuple[str, bytes]`.
+- Consumes: a trimmed `strided export` JSON (top-level `genesis_time`, `app_state.bank.balances`, `app_state.auth.accounts` including the vesting accounts' schedules, `app_state.ibc.channel_genesis.channels`, `app_state.transfer.denoms`, `app_state.wasm.contracts`), a prices JSON `{denom: {"usd_per_token": float, "decimals": int}}`.
+- Produces: `<out-dir>/batch-001.txt ...` (one address per line, ≤ 100 lines, the CLI's input) and `<out-dir>/summary.json` (per batch: addresses, denoms, USD swept; the skipped list with reasons). Public functions used by the test: `load_export(path) -> Export`, `classify_holders(export, denoms, prices, floor_usd) -> HolderPlan`, `write_batches(plan, out_dir, batch_size) -> list[pathlib.Path]`, `parse_extra_denom(spec) -> ExtraDenom`, `check_denom_destination(denom, traces) -> None`, `batch_size_arg(text) -> int`, `locked_at(schedule, as_of) -> dict[str, int]`; from `bech32_ref`: `encode(hrp, address_bytes) -> str`, `decode(bech) -> tuple[str, bytes]`.
 - Depends on: none (mirrors constants; no Go dependency).
 - Review: no.
 
-The script mirrors the on-chain rules exactly, so a batch it emits should skip nothing on chain; any `sweep_skipped` event after a submission is a disagreement worth investigating. It is stdlib plus the vendored `bech32_ref.py` (no pip dependency, so it runs in a clean checkout) and follows the repo's Python conventions (module imports, typed signatures, dataclasses, guard clauses). It also mirrors the two on-chain bounds a batch can violate: the address bound (`MAX_SWEEP_ADDRESSES_PER_TX = 100`, the value of `types.MaxSweepAddressesPerTx`) is enforced on `--batch-size`, and the destination rule is enforced on every denom in the final list, whether it came from `--denoms` or `--extra-denom`.
+The script mirrors the on-chain rules exactly, so a batch it emits should skip nothing on chain; any `sweep_skipped` event after a submission is a disagreement worth investigating. Two rules go beyond the chain's: the sweepable amount of a vesting account is its balance minus what its schedule still locks at the export's `genesis_time` (the chain sweeps `SpendableCoin`; the script must value and floor the same amount), and a wasm contract address from `app_state.wasm.contracts` is excluded (a 20-byte contract is a plain `BaseAccount` the chain cannot tell apart, and its derived Osmosis address belongs to nobody; every mainnet contract is 32-byte today and uploads go gov-only in PR 3, so this is belt and braces). It is stdlib plus the vendored `bech32_ref.py` (no pip dependency, so it runs in a clean checkout) and follows the repo's Python conventions (module imports, typed signatures, dataclasses, guard clauses). It also mirrors the two on-chain bounds a batch can violate: the address bound (`MAX_SWEEP_ADDRESSES_PER_TX = 100`, the value of `types.MaxSweepAddressesPerTx`) is enforced on `--batch-size`, and the destination rule is enforced on every denom in the final list, whether it came from `--denoms` or `--extra-denom`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1370,18 +1441,26 @@ import build_sweep_batches
 
 STRIDE_BASE = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 STRIDE_VESTING = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
-STRIDE_MODULE = "stride1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8d8v4ck"  # any 20-byte address, typed ModuleAccount below
+STRIDE_MODULE = "stride1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8y5yqan"  # the distribution module account: sha256("distribution")[:20]
+STRIDE_CONTINUOUS = "stride1am99pcvynqqhyrwqfvfmnvxjk96rn46le9j65c"  # ContinuousVestingAccount, 40% through its schedule
 STRIDE_ICA = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04"
 STRIDE_NO_ACCOUNT = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g"
 STRIDE_DUST = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd"
 ATOM_VOUCHER = "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"
 
 
+GENESIS_TIME = "2026-09-29T00:00:00Z"
+AS_OF = 1790640000  # GENESIS_TIME as unix seconds
+
+
 def synthetic_export() -> dict:
     escrow = build_sweep_batches.escrow_address("transfer", "channel-5")
+    contract = build_sweep_batches.escrow_address("transfer", "channel-999")  # any 20-byte address not otherwise used
     balances = [
         {"address": STRIDE_BASE, "coins": [{"denom": "stuatom", "amount": "10000000"}, {"denom": "ustrd", "amount": "5000000"}]},
         {"address": STRIDE_VESTING, "coins": [{"denom": "stuatom", "amount": "2000000"}]},
+        {"address": STRIDE_CONTINUOUS, "coins": [{"denom": "stuatom", "amount": "1000000"}, {"denom": "ustrd", "amount": "1000000"}]},
+        {"address": contract, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": STRIDE_MODULE, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": STRIDE_ICA, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": STRIDE_NO_ACCOUNT, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
@@ -1390,18 +1469,24 @@ def synthetic_export() -> dict:
     ]
     accounts = [
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_BASE},
-        {"@type": "/stride.vesting.StridePeriodicVestingAccount", "base_vesting_account": {"base_account": {"address": STRIDE_VESTING}}},
+        {"@type": "/stride.vesting.StridePeriodicVestingAccount", "base_vesting_account": {"base_account": {"address": STRIDE_VESTING}, "original_vesting": [], "delegated_vesting": [], "end_time": "0"}, "vesting_periods": []},
+        # 1,000,000 ustrd vesting linearly from AS_OF-400 to AS_OF+600: 400,000 vested, 600,000 locked at the export
+        {"@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount", "base_vesting_account": {"base_account": {"address": STRIDE_CONTINUOUS}, "original_vesting": [{"denom": "ustrd", "amount": "1000000"}], "delegated_vesting": [], "end_time": str(AS_OF + 600)}, "start_time": str(AS_OF - 400)},
+        {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": contract},
         {"@type": "/cosmos.auth.v1beta1.ModuleAccount", "base_account": {"address": STRIDE_MODULE}, "name": "distribution"},
         {"@type": "/ibc.applications.interchain_accounts.v1.InterchainAccount", "base_account": {"address": STRIDE_ICA}, "account_owner": "x"},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_DUST},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": escrow},
     ]
     channels = [{"port_id": "transfer", "channel_id": "channel-5", "state": "STATE_OPEN"}]
+    contracts = [{"contract_address": contract, "contract_info": {"code_id": "1"}}]
     return {
+        "genesis_time": GENESIS_TIME,
         "app_state": {
             "bank": {"balances": balances},
             "auth": {"accounts": accounts},
             "ibc": {"channel_genesis": {"channels": channels}},
+            "wasm": {"contracts": contracts},
         }
     }
 
@@ -1426,10 +1511,12 @@ class BuildSweepBatchesTest(unittest.TestCase):
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0)
 
         swept = [holder.address for holder in plan.holders]
-        self.assertEqual(swept, [STRIDE_BASE, STRIDE_VESTING], "ordered by USD, base ($100.25) before vesting ($20)")
+        self.assertEqual(swept, [STRIDE_BASE, STRIDE_VESTING, STRIDE_CONTINUOUS],
+                         "ordered by USD: base ($100.25), stride vesting ($20), continuous ($10.02 on its spendable part)")
 
         skipped = {entry.address: entry.reason for entry in plan.skipped}
         self.assertEqual(skipped[STRIDE_MODULE], "account type /cosmos.auth.v1beta1.ModuleAccount is not sweepable")
+        self.assertEqual(skipped[build_sweep_batches.escrow_address("transfer", "channel-999")], "wasm contract address")
         self.assertEqual(skipped[STRIDE_ICA], "account type /ibc.applications.interchain_accounts.v1.InterchainAccount is not sweepable")
         self.assertEqual(skipped[STRIDE_NO_ACCOUNT], "account not found")
         self.assertEqual(skipped[build_sweep_batches.escrow_address("transfer", "channel-5")], "transfer escrow address")
@@ -1441,12 +1528,25 @@ class BuildSweepBatchesTest(unittest.TestCase):
 
         files = build_sweep_batches.write_batches(plan=plan, out_dir=out_dir, batch_size=1)
 
-        self.assertEqual([path.name for path in files], ["batch-001.txt", "batch-002.txt"])
+        self.assertEqual([path.name for path in files], ["batch-001.txt", "batch-002.txt", "batch-003.txt"])
         self.assertEqual(files[0].read_text().strip(), STRIDE_BASE)
         summary = json.loads((out_dir / "summary.json").read_text())
         self.assertEqual(summary["denoms"], ["stuatom", "ustrd"])
         self.assertEqual(summary["batches"][0]["num_addresses"], 1)
-        self.assertEqual(len(summary["skipped"]), 5)
+        self.assertEqual(len(summary["skipped"]), 6)
+
+    def test_vesting_locked_balance_is_not_swept(self) -> None:
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0)
+        continuous = next(holder for holder in plan.holders if holder.address == STRIDE_CONTINUOUS)
+
+        # 1,000,000 ustrd held, 600,000 still locked at genesis_time: the chain's SpendableCoin is 400,000
+        self.assertEqual(continuous.balances, {"stuatom": 1000000, "ustrd": 400000})
+        self.assertEqual(f"{continuous.usd:.2f}", "10.02")
+
+        schedule = self.export.vesting[STRIDE_CONTINUOUS]
+        self.assertEqual(build_sweep_batches.locked_at(schedule=schedule, as_of=AS_OF), {"ustrd": 600000})
+        self.assertEqual(build_sweep_batches.locked_at(schedule=schedule, as_of=AS_OF + 600), {})
+        self.assertEqual(build_sweep_batches.locked_at(schedule=schedule, as_of=AS_OF - 400), {"ustrd": 1000000})
 
     def test_extra_denom_parsing_and_whitelist(self) -> None:
         extra = build_sweep_batches.parse_extra_denom("ustrd=0.05:6")
@@ -1627,9 +1727,11 @@ Expected: `ModuleNotFoundError: No module named 'build_sweep_batches'` (the bech
 #!/usr/bin/env python3
 """Build MsgSweepTokensOffStride batches from a strided export.
 
-Mirrors the on-chain skip rules of x/stakeibc/keeper/wind_down_sweep.go (20-byte address, account
-type, transfer escrow exclusion) and adds the off-chain USD floor, so a batch this script emits
-should skip nothing on chain. Holders are ordered by the USD value of the listed denoms they hold
+Mirrors the on-chain skip rules of x/stakeibc/keeper/wind_down_sweep.go (20-byte address, transfer
+escrow exclusion, account type) and the on-chain amount rule (a vesting account is swept for its
+spendable balance, i.e. minus what its schedule still locks at the export's genesis_time), adds the
+off-chain USD floor and excludes wasm contract addresses, so a batch this script emits should skip
+nothing on chain. Holders are ordered by the USD value of the sweepable amounts of the listed denoms
 and split into files of at most --batch-size addresses, one file per tx for
 `strided tx stakeibc sweep-tokens-off-stride DENOMS FILE`.
 
@@ -1645,10 +1747,11 @@ from app_state.transfer.denoms when present).
 
 import argparse
 import dataclasses
+import datetime
 import hashlib
 import json
 import pathlib
-from decimal import Decimal
+from decimal import ROUND_HALF_EVEN, Decimal
 
 import bech32_ref
 
@@ -1670,13 +1773,29 @@ UNWIND_CHANNELS = {
     "channel-160": "dydx",
 }
 
-SWEEPABLE_ACCOUNT_TYPES = {
-    "/cosmos.auth.v1beta1.BaseAccount",
-    "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
-    "/cosmos.vesting.v1beta1.DelayedVestingAccount",
-    "/cosmos.vesting.v1beta1.PeriodicVestingAccount",
-    "/stride.vesting.StridePeriodicVestingAccount",
-}
+CONTINUOUS_VESTING = "/cosmos.vesting.v1beta1.ContinuousVestingAccount"
+DELAYED_VESTING = "/cosmos.vesting.v1beta1.DelayedVestingAccount"
+PERIODIC_VESTING = "/cosmos.vesting.v1beta1.PeriodicVestingAccount"
+STRIDE_PERIODIC_VESTING = "/stride.vesting.StridePeriodicVestingAccount"
+VESTING_ACCOUNT_TYPES = {CONTINUOUS_VESTING, DELAYED_VESTING, PERIODIC_VESTING, STRIDE_PERIODIC_VESTING}
+SWEEPABLE_ACCOUNT_TYPES = {"/cosmos.auth.v1beta1.BaseAccount"} | VESTING_ACCOUNT_TYPES
+
+
+@dataclasses.dataclass
+class VestingPeriod:
+    start_time: int  # absolute; for SDK periodic accounts it is derived from the cumulative lengths
+    length: int
+    amount: dict[str, int]
+
+
+@dataclasses.dataclass
+class VestingSchedule:
+    account_type: str
+    original_vesting: dict[str, int]
+    delegated_vesting: dict[str, int]
+    start_time: int
+    end_time: int
+    periods: list[VestingPeriod]
 
 
 @dataclasses.dataclass
@@ -1684,7 +1803,10 @@ class Export:
     balances: dict[str, dict[str, int]]  # address -> denom -> amount
     account_types: dict[str, str]  # address -> @type
     escrow_addresses: set[str]
+    contract_addresses: set[str]  # app_state.wasm.contracts[].contract_address
     denom_traces: dict[str, list[str]]  # ibc/HASH -> ["transfer/channel-x", ...] outermost first
+    vesting: dict[str, VestingSchedule]  # address -> schedule, vesting accounts only
+    as_of: int  # genesis_time as unix seconds: the moment the export's balances and locks describe
 
 
 @dataclasses.dataclass
@@ -1759,23 +1881,132 @@ def batch_size_arg(text: str) -> int:
 
 
 def load_export(path: pathlib.Path) -> Export:
-    app_state = json.loads(path.read_text())["app_state"]
+    genesis = json.loads(path.read_text())
+    app_state = genesis["app_state"]
+    as_of = int(datetime.datetime.fromisoformat(genesis["genesis_time"].replace("Z", "+00:00")).timestamp())
 
     balances: dict[str, dict[str, int]] = {}
     for entry in app_state["bank"]["balances"]:
         balances[entry["address"]] = {coin["denom"]: int(coin["amount"]) for coin in entry["coins"]}
 
-    account_types = {account_address(account): account["@type"] for account in app_state["auth"]["accounts"]}
+    accounts = app_state["auth"]["accounts"]
+    account_types = {account_address(account): account["@type"] for account in accounts}
+    vesting = {account_address(account): vesting_schedule(account) for account in accounts if account["@type"] in VESTING_ACCOUNT_TYPES}
 
     channels = app_state.get("ibc", {}).get("channel_genesis", {}).get("channels", [])
     escrows = {escrow_address(ch["port_id"], ch["channel_id"]) for ch in channels if ch["port_id"] == TRANSFER_PORT}
+    contracts = {entry["contract_address"] for entry in app_state.get("wasm", {}).get("contracts", [])}
 
     traces: dict[str, list[str]] = {}
     for denom in app_state.get("transfer", {}).get("denoms", []):
         hops = [f"{hop['port_id']}/{hop['channel_id']}" for hop in denom.get("trace", [])]
         traces[ibc_denom(denom["base"], hops)] = hops
 
-    return Export(balances=balances, account_types=account_types, escrow_addresses=escrows, denom_traces=traces)
+    return Export(
+        balances=balances,
+        account_types=account_types,
+        escrow_addresses=escrows,
+        contract_addresses=contracts,
+        denom_traces=traces,
+        vesting=vesting,
+        as_of=as_of,
+    )
+
+
+def vesting_schedule(account: dict) -> VestingSchedule:
+    """The fields the SDK's and Stride's vesting accounts use to compute what is still locked."""
+    base = account["base_vesting_account"]
+    account_type = account["@type"]
+    start_time = int(account.get("start_time", 0))
+    periods: list[VestingPeriod] = []
+    if account_type == PERIODIC_VESTING:
+        # SDK periodic accounts store lengths only; each period starts where the previous one ended
+        cursor = start_time
+        for period in account.get("vesting_periods", []):
+            periods.append(VestingPeriod(start_time=cursor, length=int(period["length"]), amount=coins_by_denom(period["amount"])))
+            cursor += int(period["length"])
+    if account_type == STRIDE_PERIODIC_VESTING:
+        # Stride periods carry their own absolute start time and vest linearly within the period
+        periods = [
+            VestingPeriod(start_time=int(period["start_time"]), length=int(period["length"]), amount=coins_by_denom(period["amount"]))
+            for period in account.get("vesting_periods", [])
+        ]
+    return VestingSchedule(
+        account_type=account_type,
+        original_vesting=coins_by_denom(base.get("original_vesting", [])),
+        delegated_vesting=coins_by_denom(base.get("delegated_vesting", [])),
+        start_time=start_time,
+        end_time=int(base.get("end_time", 0)),
+        periods=periods,
+    )
+
+
+def locked_at(schedule: VestingSchedule, as_of: int) -> dict[str, int]:
+    """What the bank's LockedCoins reports for this account at `as_of`: original vesting minus what
+    has vested, minus the vesting coins that are delegated (min'd, the SDK's LockedCoinsFromVesting),
+    per denom, zero entries dropped. Vested amounts follow each account type's GetVestedCoins:
+    continuous is linear from start to end, delayed is all-or-nothing at end, SDK periodic vests a
+    period whole once its cumulative end has passed, and Stride periodic vests each period linearly
+    from its own start (utils.GetVestedCoinsAt). The SDK rounds its linear fractions with
+    LegacyDec.RoundInt (banker's rounding), mirrored with ROUND_HALF_EVEN; a one-unit disagreement
+    cannot matter because the chain moves its own SpendableCoin, not this number."""
+    vested = vested_at(schedule=schedule, as_of=as_of)
+    locked: dict[str, int] = {}
+    for denom, original in schedule.original_vesting.items():
+        still_vesting = max(original - vested.get(denom, 0), 0)
+        amount = still_vesting - min(still_vesting, schedule.delegated_vesting.get(denom, 0))
+        if amount > 0:
+            locked[denom] = amount
+    return locked
+
+
+def vested_at(schedule: VestingSchedule, as_of: int) -> dict[str, int]:
+    if schedule.account_type == DELAYED_VESTING:
+        return dict(schedule.original_vesting) if as_of >= schedule.end_time else {}
+
+    if schedule.account_type == CONTINUOUS_VESTING:
+        if as_of <= schedule.start_time:
+            return {}
+        if as_of >= schedule.end_time:
+            return dict(schedule.original_vesting)
+        return linear_portion(amount=schedule.original_vesting, elapsed=as_of - schedule.start_time, length=schedule.end_time - schedule.start_time)
+
+    if schedule.account_type == PERIODIC_VESTING:
+        vested: dict[str, int] = {}
+        for period in schedule.periods:
+            if as_of < period.start_time + period.length:
+                break
+            vested = add_coins(vested, period.amount)
+        return vested
+
+    # Stride periodic: every period vests on its own linear schedule, all at once past end_time
+    if as_of >= schedule.end_time and schedule.end_time > 0:
+        return dict(schedule.original_vesting)
+    vested = {}
+    for period in schedule.periods:
+        if as_of <= period.start_time:
+            continue
+        if as_of >= period.start_time + period.length:
+            vested = add_coins(vested, period.amount)
+            continue
+        vested = add_coins(vested, linear_portion(amount=period.amount, elapsed=as_of - period.start_time, length=period.length))
+    return vested
+
+
+def linear_portion(amount: dict[str, int], elapsed: int, length: int) -> dict[str, int]:
+    portion = Decimal(elapsed) / Decimal(length)
+    return {denom: int((Decimal(value) * portion).quantize(Decimal(1), rounding=ROUND_HALF_EVEN)) for denom, value in amount.items()}
+
+
+def add_coins(left: dict[str, int], right: dict[str, int]) -> dict[str, int]:
+    total = dict(left)
+    for denom, amount in right.items():
+        total[denom] = total.get(denom, 0) + amount
+    return total
+
+
+def coins_by_denom(coins: list[dict]) -> dict[str, int]:
+    return {coin["denom"]: int(coin["amount"]) for coin in coins}
 
 
 def classify_holders(export: Export, denoms: list[str], prices: dict, floor_usd: float) -> HolderPlan:
@@ -1784,7 +2015,12 @@ def classify_holders(export: Export, denoms: list[str], prices: dict, floor_usd:
     skipped: list[Skipped] = []
 
     for address, coins in export.balances.items():
-        listed = {denom: amount for denom, amount in coins.items() if denom in denoms and amount > 0}
+        # The chain sweeps SpendableCoin: a vesting account's balance minus what its schedule still
+        # locks. Value and floor the same amount, and drop a denom whose spendable part is zero the
+        # way the chain skips it silently
+        locked = locked_at(schedule=export.vesting[address], as_of=export.as_of) if address in export.vesting else {}
+        listed = {denom: amount - locked.get(denom, 0) for denom, amount in coins.items() if denom in denoms}
+        listed = {denom: amount for denom, amount in listed.items() if amount > 0}
         if not listed:
             continue
         usd = sum((usd_value(denom, amount, prices) for denom, amount in listed.items()), Decimal(0))
@@ -1803,16 +2039,19 @@ def classify_holders(export: Export, denoms: list[str], prices: dict, floor_usd:
 
 
 def skip_reason(address: str, export: Export) -> str | None:
-    """The on-chain rules, in the on-chain order; None means sweepable."""
+    """The on-chain rules, in the on-chain order (escrow before the account lookup), plus the
+    contract exclusion the chain cannot make; None means sweepable."""
     if len(address_bytes(address)) != ADDRESS_LENGTH_BYTES:
         return "address is not 20 bytes"
+    if address in export.escrow_addresses:
+        return "transfer escrow address"
     account_type = export.account_types.get(address)
     if account_type is None:
         return "account not found"
-    if address in export.escrow_addresses:
-        return "transfer escrow address"
     if account_type not in SWEEPABLE_ACCOUNT_TYPES:
         return f"account type {account_type} is not sweepable"
+    if address in export.contract_addresses:
+        return "wasm contract address"
     return None
 
 
@@ -1932,13 +2171,36 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - [ ] `go build ./...` and `go vet ./x/stakeibc/...` clean.
 - [ ] `go test ./x/stakeibc/... ./app/...` green (the pre-existing `utils` `TestCreateModuleAccount` failure on main is not in this set).
 - [ ] `make lint` clean for the touched files.
-- [ ] Gas: on localstride, submit one batch of 100 funded base accounts with three denoms each and record the gas used in the PR description; if it exceeds a comfortable fraction of the block gas limit, lower `MaxSweepAddressesPerTx` in a one-line follow-up in `wind_down.go` (a PR 4 file) and say so in the PR (spec §7 allows the bound to move after measurement).
+- [ ] Gas: measure a full batch on localstride and record `gas_used` in the PR description. The local chain's genesis has `consensus_params.block.max_gas = -1` (unlimited; `dockernet/state/stride1/config/genesis.json`), so the batch always executes locally and the number to compare against is mainnet's block limit, `100,000,000` (`/cosmos/consensus/v1/params` on 2026-09-29). The hermes `max_gas` values in `dockernet/config/hermes_config.toml` and `scripts/consumer/start_consumer.sh` are the relayer's own tx cap and are irrelevant here. Commands, from the repo root with dockernet up (`make start-docker`), using the `STRIDE_MAIN_CMD` and `STRIDE_CHAIN_ID` conventions of `dockernet/config.sh`:
+
+  ```bash
+  source dockernet/config.sh
+  # 100 fresh holders, each funded with three sweepable denoms (ustrd plus two stTokens the local
+  # chain mints in its genesis; adjust the denoms to what `$STRIDE_MAIN_CMD q bank total` lists)
+  : > /tmp/sweep-addresses.txt
+  for i in $(seq 1 100); do
+    $STRIDE_MAIN_CMD keys add sweep-$i --keyring-backend test --output json 2>/dev/null | jq -r .address >> /tmp/sweep-addresses.txt
+  done
+  for addr in $(cat /tmp/sweep-addresses.txt); do
+    $STRIDE_MAIN_CMD tx bank send val1 $addr 1000000ustrd,1000stuatom,1000stuosmo \
+      --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID --fees 1000ustrd -y >/dev/null
+    sleep 1
+  done
+  # The sweep operator is the key whose address is types.SweepOperatorAddress in this build
+  # (in the localstride binary set it to val1's address before building, since it ships empty)
+  TX=$($STRIDE_MAIN_CMD tx stakeibc sweep-tokens-off-stride ustrd,stuatom,stuosmo /tmp/sweep-addresses.txt \
+    --from val1 --keyring-backend test --chain-id $STRIDE_CHAIN_ID --gas 90000000 --fees 10000ustrd -y --output json | jq -r .txhash)
+  sleep 6
+  $STRIDE_MAIN_CMD q tx $TX --output json | jq '{code, gas_wanted, gas_used, transfers: [.events[] | select(.type=="sweep_transfer")] | length}'
+  ```
+
+  Expected: `code` 0, `transfers` 300, and a `gas_used` figure. If it is above a quarter of mainnet's `100,000,000` block limit (an ICS-20 send is roughly 100k to 150k gas, so 300 of them lands in the tens of millions and the bound may well come out below 100), lower `MaxSweepAddressesPerTx` in `x/stakeibc/types/wind_down.go` (a PR 4 file) in a one-line follow-up commit and set `MAX_SWEEP_ADDRESSES_PER_TX` in the script to match; say so in the PR. Spec §7 anticipates the bound moving after measurement.
 - [ ] PR description lists the skip rules and destination rules verbatim from §7 so the reviewer checks the code against the spec, not against the plan.
 
 ## Self-review
 
-- **Spec coverage.** §7 sweep: denom list, address bound, destination resolution per denom before any address (Task 2/3), the four skip reasons and skip-does-not-move (Tasks 2/3), silent zero balance, full-balance `MsgTransfer` with the derived receiver, one-day timeout, empty memo, transfer error rejects the tx, refund on timeout (Task 3 tests). §11 sweep list: every bullet maps to a named test in Task 3 or Task 1/2 (`batch over the bound`, `invalid denom string`, `empty denom list` are `ValidateBasic` tests in Task 1). §13 ops script: `build_sweep_batches.py` with `--extra-denom`, the whitelist refusal applied to every denom on the final list, and the 100-address bound on `--batch-size` (Task 5). The "transfer error rejecting the whole tx" bullet of §11 is proven through a cache boundary with balance, sequence, commitment and event assertions (Task 3). CLI (Task 4).
+- **Spec coverage.** §7 sweep: denom list, address bound, destination resolution per denom before any address (Task 2/3), the four skip reasons in the on-chain order (escrow before the account lookup) and skip-does-not-move (Tasks 2/3), silent zero balance, spendable-balance `MsgTransfer` with the derived receiver (a vesting account's locked STRD stays behind rather than failing the batch; Task 3's vesting test and the builder's `locked_at`), one-day timeout, empty memo, transfer error rejects the tx, refund on timeout (Task 3 tests). §11 sweep list: every bullet maps to a named test in Task 3 or Task 1/2 (`batch over the bound`, `invalid denom string`, `empty denom list` are `ValidateBasic` tests in Task 1). §13 ops script: `build_sweep_batches.py` with `--extra-denom`, the whitelist refusal applied to every denom on the final list, and the 100-address bound on `--batch-size` (Task 5). The "transfer error rejecting the whole tx" bullet of §11 is proven through a cache boundary: the cache shows the first transfer happened, `s.Ctx` shows none of it survived (Task 3). The builder also excludes wasm contract addresses and values vesting accounts by their spendable part (Task 5). CLI (Task 4), registered in `tx.go` after PR 4's three.
 - **Placeholders.** None: every code step carries its code, including the vendored `bech32_ref.py`, so the script has no dependency outside the checkout.
-- **Type consistency.** `sweepDestination{ChannelId, Bech32Prefix}` used identically in Tasks 2 and 3; `SweepTokensOffStride` returns `(uint64, uint64, error)` and the handler maps to `NumTransfers/NumSkipped`, the response field names from the PR 4 proto; error and event names match between `types` and the tests.
+- **Type consistency.** Every test base account comes from `NewAccountWithAddress` (or `SetNewAccount`), never a bare `NewBaseAccountWithAddress`, so no duplicate account number 0. The message tests call `apptesting.SetupConfig()` first. `sweepDestination{ChannelId, Bech32Prefix}` used identically in Tasks 2 and 3; `SweepTokensOffStride` returns `(uint64, uint64, error)` and the handler maps to `NumTransfers/NumSkipped`, the response field names from the PR 4 proto; error and event names match between `types` and the tests.
 - **Review tags.** Tasks 1-3 `Review: yes` (auth gate and user funds), Tasks 4-5 `Review: no`.
 - **Out of scope, noted for the parent.** The tests open extra transfer channels rather than overriding `StrideToOsmosisTransferChannelId`; if PR 4 ends up defining that constant as a `var`, the helper can be dropped and the tests can point the constant at `channel-0`, but the plan does not depend on it.

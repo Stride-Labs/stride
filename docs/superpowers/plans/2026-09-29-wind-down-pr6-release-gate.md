@@ -27,14 +27,13 @@ PR 5 wrote them.
 ## Global Constraints
 
 - Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md`, sections §4, §9, §10, §11, §12 item 6, §13. Every value below is copied from there or from the PR 3, 4 and 5 plans.
-- The two address constants live in `x/stakeibc/types/wind_down.go` as `var SweepOperatorAddress` and `var OsmosisVaultAddress`. Their values are **whatever spec §4 holds at implementation time**, re-confirmed with the user in Task 1. On 2026-09-29 §4 holds sweep operator `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` and Osmosis vault `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af`; the plan shows those values, and Task 1 explains why the first one cannot be committed as is.
-- §4 rule: the sweep operator is a key "separate from the protocol admin"; the hardened test asserts `!utils.Admins[types.SweepOperatorAddress]`.
+- The two address constants live in `x/stakeibc/types/wind_down.go` as `var SweepOperatorAddress` and `var OsmosisVaultAddress`. Their values are **whatever spec §4 holds at implementation time**. On 2026-09-29 §4 holds sweep operator `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` and Osmosis vault `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af`. The vault is the protocol-admin multisig re-encoded with the `osmo` prefix, on purpose (same signer set on both chains); which key signs the sweep is an ops choice recorded in §4, not something a test enforces. The test asserts only the bech32 prefix and the 20-byte length of each; the double-check against §4 and the signed-spend proof (Task 1 Step 2) are what guard the values.
 - §9 rule: every constant is proven to be an address we control before anything is sent there: a test transfer to it from any wallet, then a signed spend from it.
 - Handler helper names and order, from the PR 3 plan (Task 10 Step 1): `DisableAutopilotStakeibc`, `RemoveStakeibcFromICAHostAllowList`, `SetWasmUploadAccessToGov` (the only step that may error), `MoveDeployKeyContractAdminsToGov`, `DeprecateComdex`, `DeleteDydxTradeRoute`, `DeactivateICAOracles`, `RemoveAllRateLimits`, `ResetStaleDelegationChangesInProgress`, `PurgeHaqqSlashQueries`, `PurgeWithdrawalBalanceQueries`, `ReconcileHaqqDelegations`. Constants: `v35.UpgradeName = "v35"`, `v35.HaqqChainId`, `v35.ComdexChainId`, `v35.DydxTradeRouteRewardDenom = "uusdc"`, `v35.DydxTradeRouteHostDenom = "adydx"`, `v35.WasmDeployKey = "stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh"`, `v35.HaqqDelegationDeltas []v35.DelegationDelta{Name, Address, Delta}`, `v35.GovModuleAddress() sdk.AccAddress`.
 - Export suite conventions (v34's `app/upgrades/v34/mainnet_export_test.go`): fixture at `testdata/mainnet_export.json.gz`, `strideExport{AppState map[string]json.RawMessage}`, `s.App.AppCodec().UnmarshalJSON(raw, &genesis)` per section, one `populate*FromExport` helper per section, `s.ConfirmUpgradeSucceeded(v35.UpgradeName)` as the act, skip when the fixture is absent.
 - §10 coverage check, per stToken: native tokens held on Osmosis for that denom ≥ Stride bank supply of the stToken × `HostZone.RedemptionRate`; per route pool exactly that channel's escrow balance × the rate; the canonical pool the remainder.
 - Mainnet REST `https://stride-api.polkachu.com` and RPC `https://stride-rpc.polkachu.com` need a `User-Agent` header with curl (`-H 'User-Agent: curl/8.0'`); pin every fixture request to one height with `-H 'x-cosmos-block-height: <H>'`.
-- Test commands: `go test ./app/upgrades/v35/... -run 'TestMainnetExportTestSuite' -v`, `go test ./x/stakeibc/types/... -run 'TestOperatorAddresses' -v`, `python3 -m unittest scripts/wind-down/test_coverage_check.py -v`. The full suite has one pre-existing failure, `utils` `TestCreateModuleAccount`, which fails on `main` too and is not this PR's.
+- Test commands: `go test ./app/upgrades/v35/... -run 'TestMainnetExportTestSuite' -v`, `go test ./x/stakeibc/types/... -run 'TestOperatorAddresses' -v`, `cd scripts/wind-down && python3 -m unittest test_coverage_check -v` (the test imports `coverage_check` as a module, so it runs from its own directory). The full suite has one pre-existing failure, `utils` `TestCreateModuleAccount`, which fails on `main` too and is not this PR's.
 - Python: module-qualified imports (`import x.y` then `x.y.f()`), classes by name, every parameter and return typed, `X | None`, `Decimal` for token arithmetic, dataclasses for multi-field results, guard clauses, blank-line paragraphs with why-comments, no `getattr`/`hasattr`, named parameters on multi-argument calls.
 - Commit messages end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Nothing is pushed by this plan.
 
@@ -45,7 +44,7 @@ PR 5 wrote them.
 | Path | Responsibility |
 |---|---|
 | `x/stakeibc/types/wind_down.go` (modify) | The two address vars get their values. Nothing else changes. |
-| `x/stakeibc/types/wind_down_test.go` (modify) | `TestOperatorAddressesParse` becomes hard assertions plus the separate-key rule. |
+| `x/stakeibc/types/wind_down_test.go` (modify) | `TestOperatorAddressesParse` becomes hard assertions (filled, right prefix, 20 bytes). |
 | `app/upgrades/v35/testdata/mainnet_export.json.gz` (create) | Trimmed mainnet state, assembled per the README, committed during release prep only. |
 | `app/upgrades/v35/testdata/README.md` (rewrite) | The exact assembly recipe and provenance (PR 3 left a section list; this PR fills in the commands and the height). |
 | `app/upgrades/v35/testdata/verify_constants.py` (create) | Staleness gate: haqq delta table and the two channel maps against live chain state. |
@@ -63,11 +62,11 @@ PR 5 wrote them.
 - Modify: `x/stakeibc/types/wind_down_test.go` (`TestOperatorAddressesParse`)
 
 **Interfaces:**
-- Consumes: `types.SweepOperatorAddress`, `types.OsmosisVaultAddress` (PR 4), `types.OsmosisBech32Prefix`, `utils.Admins`.
+- Consumes: `types.SweepOperatorAddress`, `types.OsmosisVaultAddress` (PR 4), `types.OsmosisBech32Prefix`.
 - Produces: the filled constants every later task and the mainnet-export suite read.
 - Review: yes (these two strings are where every ICA transfer lands and who may move user balances)
 
-- [ ] **Step 1: Confirm the two addresses with the user, and resolve the §4 conflict**
+- [ ] **Step 1: Take the two addresses from spec §4**
 
 Read spec §4's table and take the `Address` column of the "Sweep operator" and "Osmosis vault" rows. On 2026-09-29 they read:
 
@@ -76,37 +75,32 @@ Read spec §4's table and take the `Address` column of the "Sweep operator" and 
 | Sweep operator | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` |
 | Osmosis vault | `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` |
 
-Two things about today's values must be settled with the user before anything is committed, in one message:
+The vault is the protocol-admin multisig with the `osmo` prefix (`strided keys parse` on both strings prints the same 20 bytes); that is the intended setup, the same signer set custodies the pools and signs the admin txs. Use exactly what §4 holds on the day; if §4 has changed since, the new strings win and nothing else in this task changes.
 
-1. `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` is the F5 protocol-admin key (`utils/admins.go`). §4 says the sweep operator is "separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius", and Step 3's test enforces that. Either the user creates the separate key and updates §4, or the user decides to drop the separation (then delete the `utils.Admins` assertion in Step 3 and amend §4's row and rationale in the same commit). Do not silently pick one.
-2. `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` is the same 20 bytes as the F5 key with the `osmo` prefix (check: `strided keys parse osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` and `strided keys parse stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` print the same hex), i.e. a single key, while §4 calls the vault a "new multisig". Confirm whether the vault is meant to be this key or a multisig whose address is still to be created (`osmosisd keys add vault --multisig ... --multisig-threshold N`), and use whatever §4 holds after that answer.
+- [ ] **Step 2: Double-check both constants against §4 and prove each with a signed spend before this PR merges (ops, §9)**
 
-Record the answer in the commit message of Step 5.
-
-- [ ] **Step 2: Prove each address before it goes into the binary (ops, §9)**
-
-A constant is only committed once the address has received a test transfer and signed a spend. Run, and paste the four tx hashes into the commit message of Step 5:
+This is the guard on the two strings: a constant is only committed once (a) it has been compared character by character with §4 by a second person, and (b) the address has received a test transfer and signed a spend. Run, and paste the four tx hashes into the commit message of Step 5:
 
 ```bash
 # Sweep operator, on Stride (any funded wallet first, then the operator key itself)
-strided tx bank send <any-wallet> <SWEEP_OPERATOR> 1000000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y
-strided tx bank send <SWEEP_OPERATOR> <any-wallet>   500000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y --from sweep-operator
+strided tx bank send <any-wallet> stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh 1000000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y
+strided tx bank send stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh <any-wallet>   500000ustrd --chain-id stride-1 --node https://stride-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 5000ustrd -y --from sweep-operator
 
 # Osmosis vault, on Osmosis (a multisig spends via `osmosisd tx multisign`; the spend proves the signer set)
-osmosisd tx bank send <any-wallet> <OSMOSIS_VAULT> 1000000uosmo --chain-id osmosis-1 --node https://osmosis-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 2500uosmo -y
-osmosisd tx bank send <OSMOSIS_VAULT> <any-wallet>   500000uosmo --chain-id osmosis-1 --node https://osmosis-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 2500uosmo -y --from vault
+osmosisd tx bank send <any-wallet> osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af 1000000uosmo --chain-id osmosis-1 --node https://osmosis-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 2500uosmo -y
+osmosisd tx bank send osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af <any-wallet>   500000uosmo --chain-id osmosis-1 --node https://osmosis-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.3 --fees 2500uosmo -y --from vault
 ```
 
-Expected: all four land (`code: 0`), and `strided q bank balances <SWEEP_OPERATOR>` / `osmosisd q bank balances <OSMOSIS_VAULT>` show the remainder. The operator keeps STRD for sweep fees only (§4).
+Expected: all four land (`code: 0`), and `strided q bank balances stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` / `osmosisd q bank balances osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` show the remainder. The operator keeps STRD for sweep fees only (§4). `verify_constants.py` (Task 2) later re-checks the automated half of this: both accounts must show `sequence > 0` on chain.
 
 - [ ] **Step 3: Rewrite the address test as hard assertions**
 
 Replace `TestOperatorAddressesParse` in `x/stakeibc/types/wind_down_test.go` (it currently logs and passes while the vars are empty) with:
 
 ```go
-// The release gate fills the two operator addresses; from here on they must be set, must
-// carry the right prefix, and the sweep operator must not be a protocol admin (spec §4: the
-// one tx that moves user balances gets its own key and its own blast radius).
+// The release gate fills the two operator addresses; from here on they must be set and must
+// carry the right prefix and length. Which keys they are is decided in spec §4 and proven by
+// the signed spends recorded in the commit that filled them, not asserted here.
 func TestOperatorAddresses(t *testing.T) {
 	require.NotEmpty(t, types.OsmosisVaultAddress, "OsmosisVaultAddress must be filled by the release gate")
 	vaultBytes, err := sdk.GetFromBech32(types.OsmosisVaultAddress, types.OsmosisBech32Prefix)
@@ -117,20 +111,17 @@ func TestOperatorAddresses(t *testing.T) {
 	operatorBytes, err := sdk.GetFromBech32(types.SweepOperatorAddress, "stride")
 	require.NoError(t, err, "sweep operator must be a stride bech32 address")
 	require.Len(t, operatorBytes, 20, "sweep operator must be a 20-byte account address")
-
-	require.False(t, utils.Admins[types.SweepOperatorAddress],
-		"sweep operator must be a key separate from the protocol admin (spec §4)")
 }
 ```
 
-Add `"github.com/Stride-Labs/stride/v34/utils"` to the test file's imports. Delete the old `TestOperatorAddressesParse`.
+Delete the old `TestOperatorAddressesParse`. No new imports are needed (`sdk`, `require` and `types` are already imported by PR 4's test file).
 
 Run: `go test ./x/stakeibc/types/... -run 'TestOperatorAddresses' -v`
 Expected: `--- FAIL: TestOperatorAddresses` with `OsmosisVaultAddress must be filled by the release gate` (the vars are still empty).
 
 - [ ] **Step 4: Fill the constants**
 
-In `x/stakeibc/types/wind_down.go` replace the `var` block with the confirmed values (shown with today's §4 values; use the ones confirmed in Step 1):
+In `x/stakeibc/types/wind_down.go` replace the `var` block with the §4 values (today's are shown; use what §4 holds on the day, per Step 1):
 
 ```go
 // Wind-down operator addresses (spec §4), proven by a test transfer to each and a signed spend
@@ -143,7 +134,7 @@ var (
 ```
 
 Run: `go test ./x/stakeibc/types/... -run 'TestOperatorAddresses|TestHostToOsmosisTransferChannel|TestSweepUnwindChannels' -v`
-Expected: `--- PASS` for all three. If `TestOperatorAddresses` fails on the `utils.Admins` line, Step 1 was not resolved: stop and resolve it.
+Expected: `--- PASS` for all three.
 
 Then confirm the fail-closed paths from PRs 4 and 5 still pass with the vars filled (their tests set and restore the vars themselves):
 
@@ -157,8 +148,8 @@ git add x/stakeibc/types/wind_down.go x/stakeibc/types/wind_down_test.go
 git commit -m "feat(stakeibc): fill the wind-down operator addresses
 
 Sweep operator <address>, proven by <tx hash in> / <tx hash out>.
-Osmosis vault <address>, proven by <tx hash in> / <tx hash out>.
-<one line on how the §4 separate-key question was resolved>
+Osmosis vault <address> (the protocol-admin multisig with the osmo prefix), proven by <tx hash in> / <tx hash out>.
+Both compared against spec §4 by <second person>.
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -201,9 +192,9 @@ curl -s -H "$UA" -H "$H" "$API/Stride-Labs/stride/autopilot/params"             
 curl -s -H "$UA" -H "$H" "$API/ibc/apps/interchain_accounts/host/v1/params"                               > icahost.json
 curl -s -H "$UA" -H "$H" "$API/cosmwasm/wasm/v1/codes/params"                                             > wasm_params.json
 curl -s -H "$UA" -H "$H" "$API/Stride-Labs/stride/icaoracle/oracles"                                      > oracles.json
-curl -s -H "$UA" -H "$H" "$API/ibc/apps/rate_limiting/v1/ratelimits"                                      > rate_limits.json
-curl -s -H "$UA" -H "$H" "$API/ibc/apps/rate_limiting/v1/blacklisted_denoms"                              > blacklist.json
-curl -s -H "$UA" -H "$H" "$API/ibc/apps/rate_limiting/v1/whitelisted_addresses"                           > whitelist.json
+curl -s -H "$UA" -H "$H" "$API/ibc/apps/rate-limiting/v1/ratelimits"                                      > rate_limits.json
+curl -s -H "$UA" -H "$H" "$API/ibc/apps/rate-limiting/v1/ratelimit/blacklisted_denoms"                    > blacklist.json
+curl -s -H "$UA" -H "$H" "$API/ibc/apps/rate-limiting/v1/ratelimit/whitelisted_addresses"                 > whitelist.json
 curl -s -H "$UA" -H "$H" "$API/Stride-Labs/stride/records/epoch_unbonding_record?pagination.limit=2000"   > epoch_unbonding.json
 
 # The four contracts whose admin is the deploy key (spec §3); re-list them right before the
@@ -224,7 +215,8 @@ jq length deploy_key_contracts.json   # expected 4 (spec §3); if not, note the 
 for chain in celestia cosmoshub-4 dydx-mainnet-1 haqq_11235-1 injective-1 juno-1 laozi-mainnet osmosis-1 phoenix-1 sommelier-3 ssc-1; do
   port="icacontroller-$chain.DELEGATION"
   conn=$(jq -r --arg c "$chain" '.host_zone[] | select(.chain_id == $c) | .connection_id' host_zones.json)
-  chan=$(curl -s -H "$UA" -H "$H" "$API/ibc/core/channel/v1/channels?pagination.limit=3000" \
+  # Channels are listed per connection (the global list paginates past what one call returns)
+  chan=$(curl -s -H "$UA" -H "$H" "$API/ibc/core/connection/v1/connections/$conn/channels?pagination.limit=1000" \
          | jq -r --arg p "$port" '[.channels[] | select(.port_id == $p and .state == "STATE_OPEN")] | last | .channel_id // empty')
   if [ -z "$chan" ]; then
     jq -n --arg c "$chain" --arg conn "$conn" '{($c): {connection_id: $conn, channel_id: "", packet_commitments: 0}}' >> delegation_channels.json.tmp
@@ -272,13 +264,32 @@ file is absent so CI stays green before release prep.
 
 ## Sections the suite consumes (all under `app_state`)
 
-<PR 3's list, verbatim, with these two additions>
-- `interchainaccounts.host_genesis_state.params`: the ICA host allow-list, as the ICA
-  genesis proto names it.
-- `delegation_channels` (not a real export field): chain id → `{connection_id,
-  channel_id, packet_commitments}` for every in-scope zone's delegation ICA, so the suite
-  can register each open active channel the way mainnet has it and assert the stale-flag
-  reset on exactly the zones with zero commitments.
+This list supersedes the one PR 3 wrote in this file: two of PR 3's entries are renamed to
+the genesis proto names the suite decodes with (`icahost.params` is now
+`interchainaccounts.host_genesis_state.params`, `icacallbacks_active_channel` is now
+`delegation_channels`, which also carries the packet-commitment count), and `wasm.codes` is
+dropped because the suite instantiates a stand-in code per contract instead of re-storing
+Hyperlane's.
+
+- `stakeibc.host_zone_list`: every host zone (the eleven in-scope zones, comdex-1 and the
+  three deprecated ones). Drives the stale-flag reset (validators'
+  `delegation_changes_in_progress`, `connection_id`), the comdex flag, the haqq delta table
+  (validators' `delegation`, `address`) and the haqq slash-flag reset (`slash_query_in_progress`).
+- `stakeibc.trade_routes`: the `uusdc`/`adydx` route.
+- `interchainquery.queries`: every pending query (`chain_id`, `callback_id`), for the two purges.
+- `autopilot.params`: `stakeibc_active`.
+- `interchainaccounts.host_genesis_state.params`: the ICA host allow-list, as the ICA genesis
+  proto names it.
+- `wasm.params` (`code_upload_access`) and `wasm.contracts[]` (`contract_address`,
+  `contract_info.admin`) for the contracts whose admin is the deploy key: the suite
+  instantiates one stand-in contract per entry with that admin and asserts on those.
+- `icaoracle.oracles`: the three active oracles.
+- `ratelimit.rate_limits`, `ratelimit.blacklisted_denoms`, `ratelimit.whitelisted_address_pairs`.
+- `records.epoch_unbonding_record_list`: every epoch unbonding record, asserted untouched.
+- `delegation_channels` (not a real export field): chain id → `{connection_id, channel_id,
+  packet_commitments}` for every in-scope zone's delegation ICA, so the suite can register
+  each open active channel the way mainnet has it and assert the stale-flag reset on exactly
+  the zones with zero commitments.
 
 ## Assembly
 
@@ -320,7 +331,9 @@ the proposal: the haqq delegation delta table (app/upgrades/v35/haqq.go), the ho
 channel map to Osmosis (x/stakeibc/types/wind_down.go, HostToOsmosisTransferChannel) and the
 sweep unwind whitelist (SweepUnwindChannels). This script recomputes each from live REST
 state and fails loudly on any difference, so a stale constant is a red pre-proposal step and
-not a silently skipped reconciliation or a transfer to the wrong chain.
+not a silently skipped reconciliation or a transfer to the wrong chain. It also checks that
+the two operator address constants have signed at least one transaction on their chain
+(account sequence > 0), the automated half of the §9 signed-spend proof.
 
 Stdlib-only. Reads the Go files relative to its own location.
 
@@ -332,6 +345,7 @@ import pathlib
 import re
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from decimal import Decimal
@@ -339,6 +353,7 @@ from decimal import Decimal
 USER_AGENT = "curl/8.0"
 TIMEOUT_SECONDS = 20
 STRIDE_API = "https://stride-api.polkachu.com"
+OSMOSIS_API = "https://osmosis-api.polkachu.com"
 CHAIN_REGISTRY = "https://raw.githubusercontent.com/cosmos/chain-registry/master"
 OSMOSIS_CHAIN_ID = "osmosis-1"
 
@@ -438,6 +453,14 @@ def parse_go_map(var_name: str) -> dict[str, str]:
     return dict(MAP_ENTRY.findall(match.group(1)))
 
 
+def parse_go_string_var(var_name: str) -> str:
+    source = WIND_DOWN_GO.read_text()
+    match = re.search(rf'{var_name}\s*=\s*"([^"]*)"', source)
+    if match is None:
+        sys.exit(f"{var_name} not found in {WIND_DOWN_GO}")
+    return match.group(1)
+
+
 # ----------------------------------------------------------------------------------------------
 # Checks
 # ----------------------------------------------------------------------------------------------
@@ -452,7 +475,7 @@ def live_haqq_deltas() -> dict[str, int]:
     while True:
         path = f"/cosmos/staking/v1beta1/delegations/{host_zone['delegation_ica_address']}?pagination.limit=200"
         if next_key:
-            path += f"&pagination.key={urllib.request.quote(next_key)}"
+            path += f"&pagination.key={urllib.parse.quote(next_key)}"
         page = fetch_from_any(HAQQ_APIS, path)
         for entry in page["delegation_responses"]:
             on_chain[entry["delegation"]["validator_address"]] = int(entry["balance"]["amount"])
@@ -520,7 +543,34 @@ def check_sweep_unwind_channels() -> None:
                state == "STATE_OPEN" and counterparty == expected_chain, f"{state}, counterparty {counterparty}")
 
 
+def account_sequence(rest: str, address: str) -> int:
+    """The signing sequence of an account; a multisig is a BaseAccount too, so one shape covers both."""
+    account = fetch_json(f"{rest}/cosmos/auth/v1beta1/accounts/{address}")["account"]
+    base = account.get("base_account", account)
+    return int(base["sequence"])
+
+
+def check_operator_addresses_have_signed() -> None:
+    """Both constants must have signed at least once on their chain: the automated half of the §9
+    proof that each address is one we control (the other half is the tx hashes in the commit)."""
+    sweep_operator = parse_go_string_var("SweepOperatorAddress")
+    vault = parse_go_string_var("OsmosisVaultAddress")
+    report("SweepOperatorAddress is filled", bool(sweep_operator))
+    report("OsmosisVaultAddress is filled", bool(vault))
+    if not sweep_operator or not vault:
+        return
+    for name, rest, address in (("sweep operator", STRIDE_API, sweep_operator), ("osmosis vault", OSMOSIS_API, vault)):
+        try:
+            sequence = account_sequence(rest=rest, address=address)
+        except (urllib.error.URLError, TimeoutError, OSError, KeyError, json.JSONDecodeError) as exc:
+            report(f"{name} {address} has signed", False, f"account query failed: {exc}")
+            continue
+        report(f"{name} {address} has signed", sequence > 0, f"sequence {sequence}")
+
+
 def main() -> int:
+    print("== operator addresses ==")
+    check_operator_addresses_have_signed()
     print("== haqq delegation delta table ==")
     check_haqq_table()
     print("== host-side channels to Osmosis ==")
@@ -540,7 +590,7 @@ if __name__ == "__main__":
 ```
 
 Run: `python3 app/upgrades/v35/testdata/verify_constants.py`
-Expected: every line `[PASS]`, `all checks passed`, exit 0. A `[FAIL] haqq delta ...` line means the table must be regenerated (PR 3 plan, Task 9 Step 7) at the fixture's height and the fixture re-assembled; a channel `[FAIL]` means a host has closed or replaced its channel to Osmosis and the map must be corrected in `wind_down.go` (with PR 4's `TestHostToOsmosisTransferChannel` rerun).
+Expected: every line `[PASS]`, `all checks passed`, exit 0. A `[FAIL] ... has signed` line means an address constant has never signed on its chain: Task 1 Step 2 was skipped or the wrong string was committed. A `[FAIL] haqq delta ...` line means the table must be regenerated (PR 3 plan, Task 9 Step 7) at the fixture's height and the fixture re-assembled; a channel `[FAIL]` means a host has closed or replaced its channel to Osmosis and the map must be corrected in `wind_down.go` (with PR 4's `TestHostToOsmosisTransferChannel` rerun).
 
 - [ ] **Step 4: Commit**
 
@@ -581,6 +631,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/keeper/testdata"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	sdkmath "cosmossdk.io/math"
@@ -702,33 +753,35 @@ func (s *MainnetExportTestSuite) populateICAHostFromExport(export strideExport) 
 	return params.AllowMessages
 }
 
-// populateWasmFromExport seeds the real upload-access params and the deploy-key contracts.
-// The fixture carries the contracts' infos but not their (Hyperlane) code, so one hackatom
-// code is stored and every contract is imported against it: the handler only reads and
-// rewrites ContractInfo.Admin, never the code.
+// populateWasmFromExport seeds the real upload-access params and one stand-in contract per
+// deploy-key contract in the fixture. The fixture carries the contracts' infos but not their
+// (Hyperlane) code, and wasmd's InitGenesis refuses a contract without a code history, so the
+// suite stores hackatom once (through the gov permission keeper, which bypasses upload
+// access) and instantiates it once per fixture entry with the deploy key as admin: the
+// handler only reads and rewrites ContractInfo.Admin, so the code behind the address does
+// not matter. What the fixture proves is the count and the admin of the real contracts;
+// what the suite proves is that every contract with that admin ends with gov as admin.
 func (s *MainnetExportTestSuite) populateWasmFromExport(export strideExport) []sdk.AccAddress {
 	var genesis wasmtypes.GenesisState
 	s.Require().NoError(s.App.AppCodec().UnmarshalJSON(s.section(export, "wasm"), &genesis))
 	s.Require().NotEmpty(genesis.Contracts, "export should carry the deploy-key contracts")
+	s.Require().NoError(s.App.WasmKeeper.SetParams(s.Ctx, genesis.Params))
 
-	wasmCode, err := os.ReadFile(hackatomPath)
-	s.Require().NoError(err, "hackatom.wasm from the wasmd testdata module cache — see the PR 3 plan Task 4 for the path")
-	creator := sdk.MustAccAddressFromBech32(v35.WasmDeployKey)
-	codeId, _, err := wasmkeeper.NewGovPermissionKeeper(s.App.WasmKeeper).Create(s.Ctx, creator, wasmCode, nil)
+	govKeeper := wasmkeeper.NewGovPermissionKeeper(s.App.WasmKeeper)
+	creator := apptesting.CreateRandomAccounts(1)[0]
+	codeId, _, err := govKeeper.Create(s.Ctx, creator, testdata.HackatomContractWasm(), nil)
+	s.Require().NoError(err, "store hackatom")
+	initMsg, err := json.Marshal(map[string]string{"verifier": creator.String(), "beneficiary": creator.String()})
 	s.Require().NoError(err)
 
+	deployKey := sdk.MustAccAddressFromBech32(v35.WasmDeployKey)
 	addresses := []sdk.AccAddress{}
-	for i := range genesis.Contracts {
-		genesis.Contracts[i].ContractInfo.CodeID = codeId
-		genesis.Contracts[i].ContractState = nil
-		genesis.Contracts[i].ContractCodeHistory = nil
-		s.Require().Equal(v35.WasmDeployKey, genesis.Contracts[i].ContractInfo.Admin, "fixture contract %d is not deploy-key administered", i)
-		addresses = append(addresses, sdk.MustAccAddressFromBech32(genesis.Contracts[i].ContractAddress))
+	for i, contract := range genesis.Contracts {
+		s.Require().Equal(v35.WasmDeployKey, contract.ContractInfo.Admin, "fixture contract %d (%s) is not deploy-key administered", i, contract.ContractAddress)
+		address, _, err := govKeeper.Instantiate(s.Ctx, codeId, creator, deployKey, initMsg, "hackatom", sdk.NewCoins())
+		s.Require().NoError(err, "instantiate stand-in for %s", contract.ContractAddress)
+		addresses = append(addresses, address)
 	}
-	genesis.Codes = nil
-	genesis.Sequences = nil
-	_, err = wasmkeeper.InitGenesis(s.Ctx, &s.App.WasmKeeper, genesis)
-	s.Require().NoError(err, "wasm genesis import of the deploy-key contracts")
 
 	params := s.App.WasmKeeper.GetParams(s.Ctx)
 	s.Require().Equal(wasmtypes.AccessTypeAnyOfAddresses, params.CodeUploadAccess.Permission)
@@ -796,14 +849,7 @@ func (s *MainnetExportTestSuite) populateDelegationChannelsFromExport(export str
 }
 ```
 
-Add, next to the imports, the hackatom path the PR 3 plan's Task 4 uses (copy its exact expression; it resolves the wasmd module cache through `go env GOMODCACHE` or embeds the file under `testdata/`, whichever PR 3 chose):
-
-```go
-// hackatomPath is the same path the synthetic suite's storeAndInstantiateHackatom uses.
-var hackatomPath = <the expression from app/upgrades/v35/wasm_test.go>
-```
-
-If PR 3 embedded the file, reference the same `//go:embed` variable instead and drop `os.ReadFile`.
+The hackatom bytes come from wasmd's testdata package (`testdata.HackatomContractWasm()`), the same call the PR 3 plan's `storeAndInstantiateHackatom` makes; no file path is involved. `os` stays imported for the fixture file.
 
 - [ ] **Step 2: Write the test body**
 
@@ -822,7 +868,7 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	resettableZones := s.populateDelegationChannelsFromExport(export, hostZones)
 
 	haqqBefore := hostZones[v35.HaqqChainId]
-	flagsBefore := map[string][]uint64{}
+	flagsBefore := map[string][]int64{}
 	for chainId, hostZone := range hostZones {
 		flagsBefore[chainId] = delegationChangeFlags(hostZone)
 	}
@@ -914,7 +960,13 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	s.Require().Equal(sum, haqqAfter.TotalDelegations, "haqq TotalDelegations == sum of validators")
 
 	// ----- assert: nothing the handler must not touch -----
-	s.Require().Equal(recordsBefore.EpochUnbondingRecordList, s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx), "unbonding records untouched")
+	// Compared by String(): Equal on structs holding sdkmath.Int is a DeepEqual over big.Int
+	// internals and can differ for equal values (v34's suite compares the same way)
+	recordsAfter := s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx)
+	s.Require().Len(recordsAfter, len(recordsBefore.EpochUnbondingRecordList), "unbonding record count untouched")
+	for i, before := range recordsBefore.EpochUnbondingRecordList {
+		s.Require().Equal(before.String(), recordsAfter[i].String(), "unbonding record %d untouched", before.EpochNumber)
+	}
 	for chainId, before := range hostZones {
 		after, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
 		s.Require().Equal(before.RedemptionRate, after.RedemptionRate, "%s redemption rate untouched", chainId)
@@ -922,8 +974,9 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	}
 }
 
-func delegationChangeFlags(hostZone stakeibctypes.HostZone) []uint64 {
-	flags := make([]uint64, 0, len(hostZone.Validators))
+// DelegationChangesInProgress is an int64 on the proto (validator.pb.go).
+func delegationChangeFlags(hostZone stakeibctypes.HostZone) []int64 {
+	flags := make([]int64, 0, len(hostZone.Validators))
 	for _, validator := range hostZone.Validators {
 		flags = append(flags, validator.DelegationChangesInProgress)
 	}
@@ -945,7 +998,7 @@ func contains(list []string, item string) bool {
 Run: `go test ./app/upgrades/v35/... -run 'TestMainnetExportTestSuite' -v`
 Expected without the fixture: `--- SKIP: TestMainnetExportTestSuite` with the README hint. With Task 2's fixture in place: `--- PASS: TestMainnetExportTestSuite/TestUpgradeFromMainnetExport`.
 
-If `populateWasmFromExport` fails inside `wasmkeeper.InitGenesis` (a `Created` or sequence validation this test app does not satisfy), fall back to instantiating one hackatom contract per fixture entry with the deploy key as admin (the PR 3 helper's shape) and assert on those addresses instead; note the fallback in the suite's doc comment. The assertion that matters is that every deploy-key-administered contract ends with gov as admin.
+If `govKeeper.Create` fails (wasmvm cannot load in the test app), that is a finding to report, not something to route around: the PR 3 synthetic suite's `TestMoveDeployKeyContractAdminsToGov` fails the same way and must be fixed first.
 
 - [ ] **Step 4: Commit**
 
@@ -965,7 +1018,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Create: `scripts/wind-down/test_coverage_check.py`
 
 **Interfaces:**
-- Consumes: a trimmed Stride export JSON (`app_state.bank.supply`, `app_state.bank.balances`, `app_state.stakeibc.host_zone_list`; `.json` or `.json.gz`), a pools file, the Osmosis REST API (vault balances, pool contract addresses, transmuter `get_total_pool_liquidity` smart queries; the same endpoints `check_transmuter_pool.py` uses).
+- Consumes: a trimmed Stride export JSON (`app_state.bank.supply`, `app_state.bank.balances`, `app_state.stakeibc.host_zone_list`, `app_state.ibc.channel_genesis.channels` for the transfer-port channel ids; `.json` or `.json.gz`), a pools file, the Osmosis REST API (vault balances, pool contract addresses, transmuter `get_total_pool_liquidity` smart queries; the same endpoints `check_transmuter_pool.py` uses).
 - Produces: a table on stdout and exit code 1 on any shortfall. `evaluate(...)` is the pure function the unit test drives with an injected liquidity fetcher.
 - Depends on: Task 1
 - Review: yes (this script is the assertion the design admits it lacks on chain, §10)
@@ -1018,6 +1071,15 @@ def synthetic_export() -> dict:
                 "host_zone_list": [
                     {"chain_id": "cosmoshub-4", "host_denom": "uatom", "redemption_rate": "1.500000000000000000"}
                 ]
+            },
+            "ibc": {
+                "channel_genesis": {
+                    "channels": [
+                        {"port_id": "transfer", "channel_id": "channel-0"},
+                        {"port_id": "icacontroller-GAIA.DELEGATION", "channel_id": "channel-1"},
+                        {"port_id": "transfer", "channel_id": "channel-5"},
+                    ]
+                }
             },
         }
     }
@@ -1083,6 +1145,17 @@ class CoverageCheckTest(unittest.TestCase):
             coverage_check.evaluate(
                 export=synthetic_export(),
                 pools={},
+                vault_balances={},
+                fetch_liquidity=lambda pool_id: {},
+            )
+
+    def test_sttoken_missing_from_supply_is_an_error(self) -> None:
+        # A typo in the pools file must not turn into "required 0, covered"
+        mistyped = {"stuatom-typo": pools()["stuatom"]}
+        with self.assertRaises(coverage_check.CoverageInputError):
+            coverage_check.evaluate(
+                export=synthetic_export(),
+                pools=mistyped,
                 vault_balances={},
                 fetch_liquidity=lambda pool_id: {},
             )
@@ -1219,7 +1292,10 @@ def evaluate(
         if spec.chain_id not in rates:
             raise CoverageInputError(f"{st_denom}: host zone {spec.chain_id} not in the export")
         rate = rates[spec.chain_id]
-        supply = supply_by_denom.get(st_denom, 0)
+        if st_denom not in supply_by_denom:
+            # A mistyped stToken denom would otherwise make the requirement zero and pass
+            raise CoverageInputError(f"{st_denom}: not in the export's bank supply")
+        supply = supply_by_denom[st_denom]
         results.append(evaluate_one(
             st_denom=st_denom, spec=spec, rate=rate, supply=supply,
             escrow_balances=escrow_balances, vault_balances=vault_balances, fetch_liquidity=fetch_liquidity,
@@ -1306,27 +1382,24 @@ def escrow_address(channel_id: str) -> str:
 
 
 def escrow_balances_by_channel(export: dict) -> dict[str, dict[str, int]]:
-    """channel id -> denom -> amount, for every transfer channel that has an escrow balance."""
+    """channel id -> denom -> amount, for every transfer-port channel in the export's IBC state."""
     balances_by_address = {
         entry["address"]: {coin["denom"]: int(coin["amount"]) for coin in entry["coins"]}
         for entry in export["app_state"]["bank"]["balances"]
     }
 
-    # Escrow accounts are not labelled in an export, so derive the address of every channel
-    # number until a long run of unused ones (mainnet is under channel-300 on 2026-09)
-    result: dict[str, dict[str, int]] = {}
-    misses = 0
-    channel_number = 0
-    while misses < 100:
-        channel_id = f"channel-{channel_number}"
-        coins = balances_by_address.get(escrow_address(channel_id=channel_id))
-        channel_number += 1
-        if coins is None:
-            misses += 1
-            continue
-        misses = 0
-        result[channel_id] = coins
-    return result
+    # Escrow accounts are not labelled in an export, but every channel is: derive the escrow
+    # address of each transfer-port channel, so no channel can be missed by a scan heuristic
+    channels = export["app_state"]["ibc"]["channel_genesis"]["channels"]
+    transfer_channel_ids = [channel["channel_id"] for channel in channels if channel["port_id"] == TRANSFER_PORT]
+    if not transfer_channel_ids:
+        raise CoverageInputError("export has no transfer channels under app_state.ibc.channel_genesis.channels")
+
+    return {
+        channel_id: balances_by_address[escrow_address(channel_id=channel_id)]
+        for channel_id in transfer_channel_ids
+        if escrow_address(channel_id=channel_id) in balances_by_address
+    }
 
 
 # ----------------------------------------------------------------------------------------------
@@ -1434,10 +1507,16 @@ if __name__ == "__main__":
 - [ ] **Step 3: Run the unit test, then a smoke run of the bech32 helper**
 
 Run: `cd scripts/wind-down && python3 -m unittest test_coverage_check -v`
-Expected: 4 tests `ok`.
+Expected: 5 tests `ok`.
 
-Run: `cd scripts/wind-down && python3 -c 'import coverage_check; print(coverage_check.escrow_address(channel_id="channel-5"))'`
-Expected: the channel-5 escrow address as `docs/wind-down/sttoken-locations.md` lists it for the Osmosis channel (compare the string; a mismatch means the bech32 or the pre-image is wrong, and the unit test would not catch it because it only checks self-consistency).
+Run:
+
+```bash
+cd scripts/wind-down && python3 -c 'import coverage_check; print(coverage_check.escrow_address(channel_id="channel-5"))'
+curl -s -H 'User-Agent: curl/8.0' 'https://stride-api.polkachu.com/ibc/apps/transfer/v1/channels/channel-5/ports/transfer/escrow_address' | jq -r .escrow_address
+```
+
+Expected: both lines print the same `stride1...` address (the chain's own derivation of the channel-5 escrow account). A mismatch means the bech32 or the pre-image is wrong, and the unit test would not catch it because it only checks self-consistency.
 
 - [ ] **Step 4: Commit**
 
@@ -1529,7 +1608,7 @@ Reproduce this table in the rehearsal write-up and tick every row before the pro
 | The two address constants, the channel map and `SweepUnwindChannels` re-verified: maps against the hosts, each address by a test transfer to it and a signed spend from it | `verify_constants.py` (both map sections `[PASS]`); the four tx hashes from Task 1 Step 2, re-checked with `strided q tx <hash>` / `osmosisd q tx <hash>` |
 | Staketia and stakedym operators ready to act on day 0 | written confirmation from each operator, linked in the write-up |
 | (§12, before the proposal) Band's light client of Stride recovered | `curl <band REST>/ibc/core/client/v1/client_states/07-tendermint-169` shows a fresh `latest_height` and the delegation ICA restore on channel-768 no longer `STATE_INIT` |
-| (§12, before the proposal) the stuck Cosmos Hub pipeline handled | either the early v34.x patch shipped and `strided q records list-epoch-unbonding-record` shows no cosmoshub-4 record in `UNBONDING_RETRY_QUEUE`, or the v35 stale-flag reset is relied on and the export suite's `resettableZones` contains `cosmoshub-4` |
+| (§12, before the proposal) the stuck Cosmos Hub pipeline cleared | the cause is two over-recorded validators, not the stale flags (§3): `strided tx stakeibc update-delegation cosmoshub-4 <NodeGuardians valoper>` and the same for Forbole have been run from the admin key and their callbacks applied (`strided q stakeibc host-zone cosmoshub-4` shows both at the chain's delegation with a sub-one `shares_to_tokens_rate`); the next four-day day epoch has passed; `strided q records list-epoch-unbonding-record` shows no cosmoshub-4 record in `UNBONDING_RETRY_QUEUE` |
 
 - [ ] **Step 5: Tag readiness note (no commit)**
 
@@ -1541,10 +1620,12 @@ Post the output of Steps 1 to 4 on the PR. The release tag and the `/v35` module
 
 **Spec coverage.** §4 addresses filled and proven (Task 1); §9 pre-proposal checklist mapped line by line (Task 6 Step 4) and the address proof (Task 1 Step 2); §10 coverage check as a script with the exact three inequalities (Task 4); §11 "Handler" mainnet-export suite asserting every §5 effect: autopilot, allow-list, wasm params and admins, comdex, trade route, oracles, rate limiter, both ICQ purges, haqq deltas applied in full with the real table, stale flags reset exactly where nothing is in flight (Task 3); §11 "Ops scripts" coverage check tested against a synthetic export (Task 4; the batch builder is PR 5's); §12 item 6 changelog and the two constants (Tasks 5, 1); §13's `verify_constants` pattern and the localstride two-binary note (Tasks 2, 6). The decode test, the "no handler" guard and the export-suite-independent handler tests are PRs 1 and 3.
 
-**Placeholders.** The two address values are the one deliberate open input, shown with today's §4 values and gated by Task 1 Step 1; `<H>`, `<date>`, `<n>` in the README and the PR numbers in the changelog are filled at execution time by the commands beside them. Every code step carries its code.
+**Placeholders.** The two address values are read from spec §4 on the day (today's values are shown in every command that uses them) and guarded by the double-check and the signed spends of Task 1 Step 2 plus `verify_constants.py`'s sequence check, not by a test of which key they are; `<H>`, `<date>`, `<n>` in the README and the PR numbers in the changelog are filled at execution time by the commands beside them. Every code step carries its code.
 
-**Consistency with the other plans.** Helper and constant names come from the PR 3 plan (Task 10 Step 1 and the helper signatures); the constants file and its existing tests from the PR 4 plan Task 1 (this plan only replaces `TestOperatorAddressesParse`); the fixture sections extend PR 3's README list by two entries and use the modules' genesis field names, which is what `AppCodec().UnmarshalJSON` into each `GenesisState` needs; the sweep operator's fail-closed behaviour and PR 4's transfer tests set the vars themselves, so filling them does not change their outcomes (Task 1 Step 4 reruns them).
+**Review fixes folded in (2026-09-29).** No admin-distinctness assertion on either address (the vault is the admin multisig by design); the Hub checklist row follows the spec's diagnosis (two over-recorded validators, cleared by `update-delegation`); `DelegationChangesInProgress` is `int64`; the wasm section instantiates a stand-in hackatom per fixture contract instead of a genesis import wasmd rejects, using `testdata.HackatomContractWasm()` like PR 3; the rate-limiting REST paths are ibc-go v11's (`rate-limiting`, `ratelimit/blacklisted_denoms`, `ratelimit/whitelisted_addresses`); the coverage check errors on a stToken missing from the supply and derives escrow addresses from the export's channel list; the bech32 smoke check compares against the chain's escrow-address endpoint; records are compared by `String()`; channels are listed per connection; `urllib.parse.quote`; `verify_constants.py` checks both address constants have a non-zero sequence.
+
+**Consistency with the other plans.** Helper and constant names come from the PR 3 plan (Task 10 Step 1 and the helper signatures); the hackatom store-and-instantiate shape is PR 3's `storeAndInstantiateHackatom`; the constants file and its existing tests from the PR 4 plan Task 1 (this plan only replaces `TestOperatorAddressesParse`); the fixture sections supersede PR 3's README list (two entries renamed to genesis names, `wasm.codes` dropped, `records` added) and use the modules' genesis field names, which is what `AppCodec().UnmarshalJSON` into each `GenesisState` needs; the sweep operator's fail-closed behaviour and PR 4's transfer tests set the vars themselves, so filling them does not change their outcomes (Task 1 Step 4 reruns them).
 
 **Review tags.** Task 1 (the two strings every transfer depends on), Task 3 (the release gate) and Task 4 (the off-chain assertion the design relies on) and Task 6 (release decision) are `yes`; the fixture assembly and the changelog are `no`.
 
-**Known open point surfaced, not decided here.** Today's §4 sweep-operator value is the F5 admin key, which the hardened test rejects by design; Task 1 Step 1 makes that the user's call before anything is committed.
+**Address keys.** Both §4 values are the protocol-admin multisig (the sweep operator on Stride, the same bytes with the `osmo` prefix as the vault); that is the decided setup, so no test compares them against `utils.Admins`. The guard is the second-person check against §4, the signed spends, and `verify_constants.py`'s sequence check.

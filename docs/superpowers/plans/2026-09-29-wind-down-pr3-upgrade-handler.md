@@ -30,7 +30,7 @@ This PR's branch is `wind-down-pr3-upgrade-handler`, created from `wind-down-pr2
 - Wasm upload access becomes `AccessConfig{Permission: AccessTypeAnyOfAddresses, Addresses: [gov module address]}`; the gov module address is `authtypes.NewModuleAddress(govtypes.ModuleName).String()`. Contract admins move only for contracts whose current admin equals `WasmDeployKey = "stride159smvptpq6evq0x6jmca6t8y7j8xmwj6kxapyh"`.
 - ICA host allow-list: remove exactly `/stride.stakeibc.MsgLiquidStake` and `/stride.stakeibc.MsgRedeemStake` from the existing list; keep `/stride.stakeibc.MsgClaimUndelegatedTokens` and everything else; never rewrite the list from a constant.
 - Trade route to delete: reward denom `uusdc`, host denom `adydx`.
-- ICQ purge, haqq: delete queries with `ChainId == "haqq_11235-1"` and `CallbackId ∈ {"delegation", "validator", "calibrate"}`; clear `SlashQueryInProgress` on every haqq validator. ICQ purge, withdrawal: delete queries with `CallbackId == "withdrawalbalance"` on every chain. Nothing else is deleted.
+- ICQ purge, haqq: delete queries with `CallbackModule == "stakeibc"`, `ChainId == "haqq_11235-1"` and `CallbackId ∈ {"delegation", "validator", "calibrate"}`; clear `SlashQueryInProgress` on every haqq validator. ICQ purge, withdrawal: delete queries with `CallbackModule == "stakeibc"` and `CallbackId == "withdrawalbalance"` on every chain. Nothing else is deleted (callback ids are only unique within a module, so the module filter is what keeps another module's query with a colliding id alive).
 - Stale-flag reset: only zones with `Deprecated == false`; only when the delegation ICA has an OPEN active channel with zero packet commitments; then every validator's `DelegationChangesInProgress` becomes 0. Otherwise log and skip the zone.
 - Haqq deltas: `Delta = actual on-chain − tracked` in `aISLM`; both signs; applied all-or-nothing through the v34 helper copied as-is (only `package v35` and the `v35:` log prefix change). The net must be negative (over-recorded) for the 2026-09-29 table.
 - Tests live in package `v35_test`, suite `UpgradeTestSuite` (`apptesting.AppTestHelper`), run with `go test ./app/upgrades/v35/... -run 'TestUpgradeTestSuite/<Name>' -v`.
@@ -56,7 +56,7 @@ This PR's branch is `wind-down-pr3-upgrade-handler`, created from `wind-down-pr2
 | `app/upgrades/v35/testdata/README.md` | what the PR 6 mainnet-export suite will need in `mainnet_export.json.gz` |
 | `app/upgrades.go` | wiring |
 | `scripts/wind-down/gen_delta_table.py`, `test_gen_delta_table.py` | drift.json → Go table literal |
-| `scripts/wind-down/measure_delegation_drift.py`, `.gitignore` | `--output-dir` (default `scripts/wind-down/drift/`, ignored) and `--chain-id` so the measurement runs from a clean checkout |
+| `scripts/wind-down/measure_delegation_drift.py`, `.gitignore` | `--output-dir` (default `drift/` beside the script, i.e. `scripts/wind-down/drift/`, ignored, whatever the working directory) and `--chain-id` so the measurement runs from a clean checkout |
 
 ---
 
@@ -263,20 +263,20 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 ```bash
 cp app/upgrades/v34/delegation_deltas.go app/upgrades/v35/delegation_deltas.go
-sed -i '' -e 's/^package v34$/package v35/' -e 's/"v34: /"v35: /g' -e 's/(injective.go, celestia.go)/(haqq.go)/' -e 's/It is shared by the Injective and\n\/\/ Celestia reconciliations./It is used by the haqq reconciliation./' app/upgrades/v35/delegation_deltas.go
+sed -i '' -e 's/^package v34$/package v35/' -e 's/"v34: /"v35: /g' -e 's/(injective.go, celestia.go)/(haqq.go)/' app/upgrades/v35/delegation_deltas.go
 ```
 
-Then open the file and fix the two comment lines the `sed` could not join: the "Chain-agnostic helpers" comment should end with `(haqq.go).` and the `reconcileHostZoneDelegations` comment should say `It is used by the haqq reconciliation.` No code line changes.
+Only the package line, the six `"v34: ` log/panic prefixes and the file-list comment change; the import path stays `github.com/Stride-Labs/stride/v34/...` (the module path is frozen until every PR lands). Then open the file and fix the one comment `sed` cannot join across lines: the `reconcileHostZoneDelegations` comment's "It is shared by the Injective and\n// Celestia reconciliations." becomes "It is used by the haqq reconciliation." No code line changes.
 
 - [ ] **Step 2: Verify the copy is code-identical**
 
-Run: `diff <(grep -v '^//' app/upgrades/v34/delegation_deltas.go | sed 's/v34/v35/g') <(grep -v '^//' app/upgrades/v35/delegation_deltas.go)`
-Expected: no output.
+Run: `diff <(grep -v '^//' app/upgrades/v34/delegation_deltas.go | sed -e 's/^package v34$/package v35/' -e 's/"v34: /"v35: /g') <(grep -v '^//' app/upgrades/v35/delegation_deltas.go)`
+Expected: no output. (A plain `s/v34/v35/g` would also rewrite the import path, which the copy must not have, and report a phantom mismatch.)
 
 - [ ] **Step 3: Build**
 
 Run: `go build ./app/...`
-Expected: no output (the helpers are unused until Task 9, which is fine for unexported functions? No: Go reports unused *imports*, not unused functions; `mustInt` and the two functions compile unused).
+Expected: no output (`mustInt` and the two helpers are unused until Task 9; Go only rejects unused imports, not unused functions).
 
 - [ ] **Step 4: Commit**
 
@@ -734,6 +734,13 @@ func DeprecateComdex(ctx sdk.Context, k stakeibckeeper.Keeper) {
 
 // DeleteDydxTradeRoute removes the one live trade route (spec §5 "Trade route"). Its USDC is
 // swept from the withdrawal ICA by MsgTransferFromIca; the converter ICAs are written off.
+// For the record (mainnet 2026-09-29, `/Stride-Labs/stride/stakeibc/trade_routes`): the route
+// is uusdc/adydx; host account (dydx-mainnet-1 WITHDRAWAL, the zone's withdrawal ICA)
+// dydx1tfcqhkf4tzqupknpl6wvdnusm7jl8ah8907cqlkvm06fsff4xj5sypzmad; reward account (noble-1
+// CONVERTER_UNWIND) noble19mapxcry0frl8esuga29w40sfw7wc3hcgf4l0d6jed92auravl2ssjsp6g; trade
+// account (osmosis-1 CONVERTER_TRADE, holds the stale authz grant to the trade controller)
+// osmo1znalva74f4e0e0flkw932ru9vlsm6dxjugpecave8x7re9ecfkdq25nnja. Deleting the route removes
+// nothing from those accounts; whatever dust they hold is written off (spec §3).
 func DeleteDydxTradeRoute(ctx sdk.Context, k stakeibckeeper.Keeper) {
 	if _, found := k.GetTradeRoute(ctx, DydxTradeRouteRewardDenom, DydxTradeRouteHostDenom); !found {
 		ctx.Logger().Info(fmt.Sprintf("v35: trade route %s/%s not found, skipping deletion",
@@ -962,10 +969,10 @@ func (s *UpgradeTestSuite) seedFlaggedZone(chainId, connectionId string, depreca
 	})
 }
 
-func (s *UpgradeTestSuite) flags(chainId string) []uint64 {
+func (s *UpgradeTestSuite) flags(chainId string) []int64 {
 	hostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, chainId)
 	s.Require().True(found)
-	flags := []uint64{}
+	flags := []int64{}
 	for _, validator := range hostZone.Validators {
 		flags = append(flags, validator.DelegationChangesInProgress)
 	}
@@ -984,7 +991,12 @@ func (s *UpgradeTestSuite) TestResetStaleDelegationChangesInProgress() {
 	s.seedFlaggedZone("cosmoshub-4", "connection-0", false)
 	s.mockDelegationChannel("cosmoshub-4", "connection-0", "channel-863")
 
-	// juno-1: open channel with an unacked packet -> skipped
+	// juno-1: open channel with an unacked packet -> skipped. The fixture is a bare packet
+	// commitment, which is exactly what ibc-go's SendPacket leaves behind for every packet
+	// until its ack or timeout is processed (channel keeper: SendPacket -> SetPacketCommitment,
+	// AcknowledgePacket/TimeoutPacket -> deletePacketCommitment); PR 2's day-epoch hook test
+	// (TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord) drives a real SubmitTxsDayEpoch
+	// and asserts the sequence advance that goes with such a commitment
 	s.seedFlaggedZone("juno-1", "connection-1", false)
 	junoPort := s.mockDelegationChannel("juno-1", "connection-1", "channel-10")
 	s.App.IBCKeeper.ChannelKeeper.SetPacketCommitment(s.Ctx, junoPort, "channel-10", 7, []byte{1})
@@ -998,10 +1010,10 @@ func (s *UpgradeTestSuite) TestResetStaleDelegationChangesInProgress() {
 
 	v35.ResetStaleDelegationChangesInProgress(s.Ctx, s.App.StakeibcKeeper)
 
-	s.Require().Equal([]uint64{0, 0, 0}, s.flags("cosmoshub-4"), "open channel, no packets: reset")
-	s.Require().Equal([]uint64{12, 1, 0}, s.flags("juno-1"), "unacked packet: untouched")
-	s.Require().Equal([]uint64{12, 1, 0}, s.flags("haqq_11235-1"), "no channel: untouched")
-	s.Require().Equal([]uint64{12, 1, 0}, s.flags("evmos_9001-2"), "deprecated: untouched")
+	s.Require().Equal([]int64{0, 0, 0}, s.flags("cosmoshub-4"), "open channel, no packets: reset")
+	s.Require().Equal([]int64{12, 1, 0}, s.flags("juno-1"), "unacked packet: untouched")
+	s.Require().Equal([]int64{12, 1, 0}, s.flags("haqq_11235-1"), "no channel: untouched")
+	s.Require().Equal([]int64{12, 1, 0}, s.flags("evmos_9001-2"), "deprecated: untouched")
 }
 
 func (s *UpgradeTestSuite) TestResetStaleDelegationChangesInProgress_NoZones() {
@@ -1134,6 +1146,9 @@ func (s *UpgradeTestSuite) seedQueries() {
 		{Id: "juno-withdrawal", ChainId: "juno-1", CallbackModule: stakeibctypes.ModuleName, CallbackId: stakeibckeeper.ICQCallbackID_WithdrawalHostBalance},
 		{Id: "juno-delegation", ChainId: "juno-1", CallbackModule: stakeibctypes.ModuleName, CallbackId: stakeibckeeper.ICQCallbackID_Delegation},
 		{Id: "comdex-calibrate", ChainId: "comdex-1", CallbackModule: stakeibctypes.ModuleName, CallbackId: stakeibckeeper.ICQCallbackID_Calibrate},
+		// Another module's queries whose callback ids collide with stakeibc's: never deleted
+		{Id: "other-haqq-delegation", ChainId: v35.HaqqChainId, CallbackModule: "records", CallbackId: stakeibckeeper.ICQCallbackID_Delegation},
+		{Id: "other-juno-withdrawal", ChainId: "juno-1", CallbackModule: "records", CallbackId: stakeibckeeper.ICQCallbackID_WithdrawalHostBalance},
 	} {
 		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 	}
@@ -1164,8 +1179,9 @@ func (s *UpgradeTestSuite) TestPurgeHaqqSlashQueries() {
 	v35.PurgeHaqqSlashQueries(s.Ctx, s.App.InterchainqueryKeeper, s.App.StakeibcKeeper)
 
 	s.Require().ElementsMatch(
-		[]string{"haqq-withdrawal", "haqq-fee", "juno-withdrawal", "juno-delegation", "comdex-calibrate"},
-		s.queryIds(), "only haqq's slash-path queries are deleted")
+		[]string{"haqq-withdrawal", "haqq-fee", "juno-withdrawal", "juno-delegation", "comdex-calibrate",
+			"other-haqq-delegation", "other-juno-withdrawal"},
+		s.queryIds(), "only stakeibc's haqq slash-path queries are deleted")
 
 	haqq, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
 	for _, validator := range haqq.Validators {
@@ -1178,7 +1194,7 @@ func (s *UpgradeTestSuite) TestPurgeHaqqSlashQueries() {
 func (s *UpgradeTestSuite) TestPurgeHaqqSlashQueries_NoZone() {
 	s.seedQueries()
 	s.Require().NotPanics(func() { v35.PurgeHaqqSlashQueries(s.Ctx, s.App.InterchainqueryKeeper, s.App.StakeibcKeeper) })
-	s.Require().Len(s.queryIds(), 5, "queries are still purged when the zone is missing")
+	s.Require().Len(s.queryIds(), 7, "queries are still purged when the zone is missing")
 }
 
 func (s *UpgradeTestSuite) TestPurgeWithdrawalBalanceQueries() {
@@ -1187,8 +1203,9 @@ func (s *UpgradeTestSuite) TestPurgeWithdrawalBalanceQueries() {
 	v35.PurgeWithdrawalBalanceQueries(s.Ctx, s.App.InterchainqueryKeeper)
 
 	s.Require().ElementsMatch(
-		[]string{"haqq-delegation", "haqq-validator", "haqq-calibrate", "haqq-fee", "juno-delegation", "comdex-calibrate"},
-		s.queryIds(), "only withdrawal-balance queries are deleted, on every chain")
+		[]string{"haqq-delegation", "haqq-validator", "haqq-calibrate", "haqq-fee", "juno-delegation", "comdex-calibrate",
+			"other-haqq-delegation", "other-juno-withdrawal"},
+		s.queryIds(), "only stakeibc's withdrawal-balance queries are deleted, on every chain")
 }
 ```
 
@@ -1209,6 +1226,7 @@ import (
 
 	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
 // haqqSlashPathCallbacks are the ICQ callbacks that correct a validator's delegation from
@@ -1227,7 +1245,8 @@ var haqqSlashPathCallbacks = map[string]bool{
 func PurgeHaqqSlashQueries(ctx sdk.Context, icq icqkeeper.Keeper, sk stakeibckeeper.Keeper) {
 	numDeleted := 0
 	for _, query := range icq.AllQueries(ctx) {
-		if query.ChainId != HaqqChainId || !haqqSlashPathCallbacks[query.CallbackId] {
+		// Callback ids are only unique within a module, so the module is part of the match
+		if query.CallbackModule != stakeibctypes.ModuleName || query.ChainId != HaqqChainId || !haqqSlashPathCallbacks[query.CallbackId] {
 			continue
 		}
 		ctx.Logger().Info(fmt.Sprintf("v35: deleting pending %s ICQ %s for %s", query.CallbackId, query.Id, HaqqChainId))
@@ -1257,7 +1276,7 @@ func PurgeHaqqSlashQueries(ctx sdk.Context, icq icqkeeper.Keeper, sk stakeibckee
 func PurgeWithdrawalBalanceQueries(ctx sdk.Context, icq icqkeeper.Keeper) {
 	numDeleted := 0
 	for _, query := range icq.AllQueries(ctx) {
-		if query.CallbackId != stakeibckeeper.ICQCallbackID_WithdrawalHostBalance {
+		if query.CallbackModule != stakeibctypes.ModuleName || query.CallbackId != stakeibckeeper.ICQCallbackID_WithdrawalHostBalance {
 			continue
 		}
 		ctx.Logger().Info(fmt.Sprintf("v35: deleting pending withdrawal-balance ICQ %s for %s", query.Id, query.ChainId))
@@ -1324,8 +1343,9 @@ Read-only. Writes drift.json and report.md into this directory.
 with
 
 ```python
-Read-only. Writes drift.json and report.md into --output-dir (default scripts/wind-down/drift/,
-git-ignored). --chain-id (repeatable) restricts the measurement to those Stride host zones.
+Read-only. Writes drift.json and report.md into --output-dir (default: the drift/ directory
+beside this script, scripts/wind-down/drift/, git-ignored; resolved from the script's own path,
+not the working directory). --chain-id (repeatable) restricts the measurement to those zones.
 ```
 
 Imports, lines 9-13: add `import argparse` and `import pathlib` (keep the module-qualified style; alphabetical order: `argparse`, `json`, `pathlib`, `time`, `urllib.request`, `urllib.error`).
@@ -1358,8 +1378,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=pathlib.Path,
-        default=pathlib.Path("scripts/wind-down/drift"),
-        help="directory for drift.json and report.md (created if missing)",
+        default=pathlib.Path(__file__).resolve().parent / "drift",
+        help="directory for drift.json and report.md (created if missing; default: drift/ beside this script)",
     )
     parser.add_argument(
         "--chain-id",
@@ -1428,7 +1448,7 @@ Append to `.gitignore` (the existing `scripts/state` and `scripts/logs` entries 
 scripts/wind-down/drift/
 ```
 
-Check: `grep -n SCRIPT_DIR scripts/wind-down/measure_delegation_drift.py` prints nothing; `python3 scripts/wind-down/measure_delegation_drift.py --help` prints both options; `python3 scripts/wind-down/measure_delegation_drift.py --chain-id nope` exits with `unknown chain id(s): nope; known: ...`.
+Check: `grep -n SCRIPT_DIR scripts/wind-down/measure_delegation_drift.py` prints nothing; `python3 scripts/wind-down/measure_delegation_drift.py --help` prints both options and shows the absolute default under `scripts/wind-down/drift`; `python3 scripts/wind-down/measure_delegation_drift.py --chain-id nope` exits with `unknown chain id(s): nope; known: ...`; `cd /tmp && python3 /Users/sampocs/Documents/Projects/stride/scripts/wind-down/measure_delegation_drift.py --help` shows the same default (it does not depend on the working directory).
 
 - [ ] **Step 2: Write the generator's failing test**
 
@@ -1702,7 +1722,8 @@ func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_MissingZone() {
 - [ ] **Step 7: Regenerate the table (record the commands; the values below are today's)**
 
 ```bash
-# From the repo root, after Step 1. Both outputs land in the git-ignored scripts/wind-down/drift/.
+# From the repo root, after Step 1. Both outputs land in the git-ignored scripts/wind-down/drift/
+# (the script's default output dir; --output-dir is passed anyway so the three paths below line up).
 python3 scripts/wind-down/measure_delegation_drift.py --chain-id haqq_11235-1 --output-dir scripts/wind-down/drift
 curl -s -A "Mozilla/5.0" "https://stride-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/haqq_11235-1" > scripts/wind-down/drift/haqq_host_zone.json
 python3 scripts/wind-down/gen_delta_table.py scripts/wind-down/drift/drift.json haqq_11235-1 --host-zone-json scripts/wind-down/drift/haqq_host_zone.json
@@ -1892,8 +1913,9 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	oracle, _ := s.App.ICAOracleKeeper.GetOracle(s.Ctx, "osmosis-1")
 	s.Require().False(oracle.Active, "oracle")
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx), "rate limiter")
-	s.Require().Equal([]uint64{0, 0, 0}, s.flags("cosmoshub-4"), "stale flags")
-	s.Require().ElementsMatch([]string{"haqq-fee", "juno-delegation", "comdex-calibrate"}, s.queryIds(), "both ICQ purges")
+	s.Require().Equal([]int64{0, 0, 0}, s.flags("cosmoshub-4"), "stale flags")
+	s.Require().ElementsMatch([]string{"haqq-fee", "juno-delegation", "comdex-calibrate", "other-haqq-delegation", "other-juno-withdrawal"},
+		s.queryIds(), "both ICQ purges")
 	haqq, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
 	s.Require().False(haqq.Validators[0].SlashQueryInProgress, "haqq slash flag")
 	for _, entry := range v35.HaqqDelegationDeltas {
@@ -1921,7 +1943,9 @@ mainnet-export suite that replays the v35 handler against real state with the re
 constants; it skips when the file is absent. This README fixes what that fixture must
 contain so it can be assembled from the public REST API right before the proposal, the
 way v34's was (see `app/upgrades/v34/testdata/README.md` for the assembly commands and
-the trimming rules).
+the trimming rules). This list is the first draft; the PR 6 plan's fixture task rewrites
+it with the final section names and the assembly commands, and that version supersedes
+this one.
 
 Sections the v35 suite consumes, all under `app_state`:
 
@@ -1965,11 +1989,11 @@ Not a code task; recorded here because the plan is where the next engineer looks
 
 ## Self-review
 
-**Spec coverage (§5, §11 handler bullet):** autopilot param (Task 3), ICA host allow-list (3), wasm params and contract admins with a real contract (4), comdex flag (5), trade-route deletion (5), oracle deactivation (6), rate-limit removal (6), stale-flag reset cleared on a zone with no unacked packet and left alone on one that does (7), haqq purge deleting only that chain's slash-path queries and clearing the flags, withdrawal-balance purge leaving every other query (8), haqq delta table applied and skipped on a stale constant, both signs, generated from the drift script (9), handler order with the purge before the table and the single error path (10), the fixture contract for the PR 6 export suite (10). The "two ValidateBasic gates and the lifted calibration cap" and the "removed messages no longer exist" tests in §11 belong to PRs 2 and 1. No store upgrade is needed.
+**Spec coverage (§5, §11 handler bullet):** autopilot param (Task 3), ICA host allow-list (3), wasm params and contract admins with a real contract (4), comdex flag (5), trade-route deletion (5), oracle deactivation (6), rate-limit removal (6), stale-flag reset cleared on a zone with no unacked packet and left alone on one that does (7), haqq purge deleting only stakeibc's slash-path queries for that chain and clearing the flags, withdrawal-balance purge leaving every other query including another module's with a colliding callback id (8), haqq delta table applied and skipped on a stale constant, both signs, generated from the drift script (9), handler order with the purge before the table and the single error path (10), the fixture contract for the PR 6 export suite (10). The "two ValidateBasic gates and the lifted calibration cap" and the "removed messages no longer exist" tests in §11 belong to PRs 2 and 1. No store upgrade is needed.
 
 **Placeholders:** none; every step carries its code, every test its body, the haqq table its measured values with an exact regeneration command that needs no edits to the repo (Task 9 Step 1 gives the drift script `--output-dir` and `--chain-id`; the old session-private `SCRIPT_DIR` is gone).
 
-**Type consistency:** `CreateUpgradeHandler` parameters are fixed in Task 1 and only consumed afterwards; helper names match between the source, the tests and the Task 10 handler body; `reconcileHostZoneDelegations` returns `(sdkmath.Int, bool)` as in v34 and `ReconcileHaqqDelegations` passes that through (v34's Injective wrapper dropped the bool; haqq's keeps it, which its tests use). Test fixtures reused by Task 10 (`storeAndInstantiateHackatom`, `seedFlaggedZone`, `mockDelegationChannel`, `flags`, `seedQueries`, `queryIds`, `setupHaqqHostZone`) are defined once in their own task's test file and shared through the package.
+**Type consistency:** `CreateUpgradeHandler` parameters are fixed in Task 1 and only consumed afterwards; helper names match between the source, the tests and the Task 10 handler body; `DelegationChangesInProgress` is `int64` (`x/stakeibc/types/validator.pb.go:36`) and the `flags` helper and its assertions use `[]int64`; `reconcileHostZoneDelegations` returns `(sdkmath.Int, bool)` as in v34 and `ReconcileHaqqDelegations` passes that through (v34's Injective wrapper dropped the bool; haqq's keeps it, which its tests use). Test fixtures reused by Task 10 (`storeAndInstantiateHackatom`, `seedFlaggedZone`, `mockDelegationChannel`, `flags`, `seedQueries`, `queryIds`, `setupHaqqHostZone`) are defined once in their own task's test file and shared through the package.
 
 **Review tags:** wasm (4), stale flags (7), haqq deltas (9) and the integration (10) are `yes`; the rest are parameter flips with no error path.
 

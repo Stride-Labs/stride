@@ -28,10 +28,10 @@ This plan is PR 4: branch `wind-down-pr4-admin-txs` off `wind-down-pr3-upgrade-h
 - `OsmosisChainId = "osmosis-1"`, `OsmosisBech32Prefix = "osmo"`, `StrideToOsmosisTransferChannelId = "channel-5"`, `WindDownTransferTimeout = 24 * time.Hour`, `MaxSweepAddressesPerTx = 100`.
 - `HostToOsmosisTransferChannel` is exactly: celestia `channel-2`, cosmoshub-4 `channel-141`, dydx-mainnet-1 `channel-3`, haqq_11235-1 `channel-2`, injective-1 `channel-8`, juno-1 `channel-0`, laozi-mainnet `channel-83`, phoenix-1 `channel-1`, sommelier-3 `channel-0`, ssc-1 `channel-1`, osmosis-1 `""` (empty selects an ICA bank send). No deprecated zone (comdex-1, evmos_9001-2, stargaze-1, umee-1) appears in it.
 - `SweepUnwindChannels` is exactly: channel-0 `cosmos`, channel-162 `celestia`, channel-5 `osmo`, channel-24 `juno`, channel-150 `somm`, channel-213 `saga`, channel-160 `dydx`.
-- Proto shapes and amino names are fixed (Task 2): `stakeibc/MsgUndelegateFromValidators`, `stakeibc/MsgTransferFromIca`, `stakeibc/MsgTransferStaketiaClaimBalance`, `stakeibc/MsgSweepTokensOffStride`. All four are added to both `RegisterCodec` and `RegisterImplementations`.
+- Proto shapes and amino names are fixed (Task 2): `stakeibc/MsgUndelegateFromValidators`, `stakeibc/MsgTransferFromIca`, `stakeibc/MsgTransferStaketiaClaimBal`, `stakeibc/MsgSweepTokensOffStride`. All four are added to both `RegisterCodec` and `RegisterImplementations`. Amino names must be at most 39 characters: `legacy.RegisterAminoMsg` panics above that (`cosmos-sdk@v0.54.3/codec/legacy/amino_msg.go:14`) and `RegisterCodec` runs at app init, so a longer name kills every `strided` invocation. `MsgTransferStaketiaClaimBalance` is therefore abbreviated, the way the codec already abbreviates `stakeibc/MsgUpdateValSharesExchRate`.
 - Error codes registered by this PR: `ErrOsmosisVaultNotConfigured` 1566, `ErrNoOsmosisChannelForHostZone` 1567, `ErrHostZoneUnbondingPending` 1568. PR 5 uses 1569 and 1570.
 - The three txs are admin-gated in `ValidateBasic` with `utils.ValidateAdminAddress(msg.Creator)`.
-- `MsgUndelegateFromValidators` rejects, before submitting anything: a deprecated zone, a zone with any `HostZoneUnbonding` in `UNBONDING_QUEUE` or `UNBONDING_RETRY_QUEUE` with a positive `NativeTokenAmount`, a listed validator with `DelegationChangesInProgress > 0`, and an amount (delegation minus offset) that is not positive. It never changes `Validator.Delegation` or `HostZone.TotalDelegations`.
+- `MsgUndelegateFromValidators` rejects, before submitting anything: a deprecated zone, a zone with any `HostZoneUnbonding` in `UNBONDING_QUEUE` or `UNBONDING_RETRY_QUEUE` with a positive `NativeTokenAmount`, a zone with a stored `PendingUndelegation` (a v34-style one-shot amount the record-less success callback would otherwise consume), a target validator with `DelegationChangesInProgress > 0` (the field is `int64`) or `SlashQueryInProgress` set, and an amount (delegation minus offset) that is not positive. It never changes `Validator.Delegation` or `HostZone.TotalDelegations`.
 - The drain submits through `BatchSubmitUndelegateICAMessages` with `nil` epoch unbonding record ids and then adds the batch count to `PendingUndelegationInFlight` for the zone.
 - ICA transfers are submitted with `SubmitICATxWithoutCallback` and an absolute timeout of block time + 24h; ICS-20 transfers from Stride go through `k.RecordsKeeper.TransferKeeper.Transfer` with the same timeout and an empty memo.
 - `MsgTransferStaketiaClaimBalance` moves only `staketiatypes.CelestiaNativeTokenIBCDenom` from `staketiatypes.ClaimAddress` to the celestia zone's `DelegationIcaAddress` over the zone's `TransferChannelId`; zero amount means the whole balance; zero balance or amount above balance is rejected.
@@ -54,15 +54,18 @@ This plan is PR 4: branch `wind-down-pr4-admin-txs` off `wind-down-pr3-upgrade-h
 | `x/stakeibc/types/message_transfer_from_ica_test.go` | Table test |
 | `x/stakeibc/types/message_transfer_staketia_claim_balance.go` | Constructor, `ValidateBasic` (admin, non-negative amount) |
 | `x/stakeibc/types/message_transfer_staketia_claim_balance_test.go` | Table test |
-| `x/stakeibc/keeper/msg_server_wind_down.go` | Thin delegates for the three txs; `ErrNotSupported` stub for the sweep |
+| `x/stakeibc/keeper/msg_server_wind_down.go` | Created in Task 2 with four `ErrNotSupported` stubs; Tasks 3–5 each replace one body; the sweep stub stays for PR 5 |
 | `x/stakeibc/keeper/wind_down_undelegate.go` | `UndelegateFromValidators`, `BuildUndelegateFromValidatorsMsgs`, queued-record guard |
 | `x/stakeibc/keeper/wind_down_undelegate_test.go` | Drain tests (§11) |
 | `x/stakeibc/keeper/wind_down_transfer_from_ica.go` | `TransferFromIca`, `BuildTransferFromIcaMsg` |
 | `x/stakeibc/keeper/wind_down_transfer_from_ica_test.go` | Transfer tests (§11) |
 | `x/stakeibc/keeper/wind_down_staketia_claim.go` | `TransferStaketiaClaimBalance`, `BuildStaketiaClaimTransferMsg` |
 | `x/stakeibc/keeper/wind_down_staketia_claim_test.go` | Claim-address tests (§11) |
-| `x/stakeibc/client/cli/tx_wind_down.go` | `undelegate-from-validators`, `transfer-from-ica`, `transfer-staketia-claim-balance` |
-| `x/stakeibc/client/cli/tx_wind_down_test.go` | Argument-parsing error tests |
+| `x/stakeibc/client/cli/tx_wind_down.go` | Created in Task 2: the full import block, the shared parsing/broadcast helpers, and three stub commands; Tasks 3–5 each replace one command body. PR 5 adds its command here |
+| `x/stakeibc/client/cli/tx_wind_down_test.go` | Created in Task 2: tests for the shared parsing helpers |
+| `x/stakeibc/client/cli/tx_wind_down_undelegate_test.go` | Task 3: `undelegate-from-validators` argument/flag errors |
+| `x/stakeibc/client/cli/tx_wind_down_transfer_from_ica_test.go` | Task 4: `transfer-from-ica` argument errors |
+| `x/stakeibc/client/cli/tx_wind_down_staketia_claim_test.go` | Task 5: `transfer-staketia-claim-balance` argument errors |
 
 ### Modified files
 
@@ -73,7 +76,7 @@ This plan is PR 4: branch `wind-down-pr4-admin-txs` off `wind-down-pr3-upgrade-h
 | `x/stakeibc/types/codec.go` | Amino names and `RegisterImplementations` for the four messages |
 | `x/stakeibc/types/errors.go` | Codes 1566–1568 |
 | `x/stakeibc/types/events.go` | `EventTypeTransferFromIca`, `EventTypeTransferStaketiaClaimBalance`, `AttributeKeyIcaType`, `AttributeKeyChannel`, `AttributeKeyAmount` |
-| `x/stakeibc/client/cli/tx.go` | Three `cmd.AddCommand(...)` lines |
+| `x/stakeibc/client/cli/tx.go` | Three `cmd.AddCommand(...)` lines appended at the end of the `AddCommand` block (Task 2 only; the wave tasks do not touch it) |
 
 ---
 
@@ -247,10 +250,13 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Modify: `x/stakeibc/types/errors.go`
 - Modify: `x/stakeibc/types/events.go`
 - Create: `x/stakeibc/keeper/msg_server_wind_down.go`
+- Create: `x/stakeibc/client/cli/tx_wind_down.go`
+- Test: `x/stakeibc/client/cli/tx_wind_down_test.go`
+- Modify: `x/stakeibc/client/cli/tx.go`
 - Generated: `x/stakeibc/types/tx.pb.go`
 
 **Interfaces:**
-- Produces: `types.MsgUndelegateFromValidators{Creator, ChainId, Validators []ValidatorUndelegation}`, `types.ValidatorUndelegation{Address string, Offset sdkmath.Int}`, `types.MsgUndelegateFromValidatorsResponse{NumBatchesSubmitted uint64}`, `types.MsgTransferFromIca{Creator, ChainId, IcaType ICAAccountType, Amount sdk.Coin}`, `types.MsgTransferFromIcaResponse{}`, `types.MsgTransferStaketiaClaimBalance{Creator, Amount sdkmath.Int}`, `types.MsgTransferStaketiaClaimBalanceResponse{Transferred sdk.Coin}`, `types.MsgSweepTokensOffStride{Creator, Denoms, Addresses []string}`, `types.MsgSweepTokensOffStrideResponse{NumTransfers, NumSkipped uint64}`; the four `MsgServer` methods; errors 1566–1568; event constants.
+- Produces: `types.MsgUndelegateFromValidators{Creator, ChainId, Validators []ValidatorUndelegation}`, `types.ValidatorUndelegation{Address string, Offset sdkmath.Int}`, `types.MsgUndelegateFromValidatorsResponse{NumBatchesSubmitted uint64}`, `types.MsgTransferFromIca{Creator, ChainId, IcaType ICAAccountType, Amount sdk.Coin}`, `types.MsgTransferFromIcaResponse{}`, `types.MsgTransferStaketiaClaimBalance{Creator, Amount sdkmath.Int}`, `types.MsgTransferStaketiaClaimBalanceResponse{Transferred sdk.Coin}`, `types.MsgSweepTokensOffStride{Creator, Denoms, Addresses []string}`, `types.MsgSweepTokensOffStrideResponse{NumTransfers, NumSkipped uint64}`; the four `MsgServer` methods; errors 1566–1568; event constants; CLI helpers `ReadValidatorUndelegations(path string) ([]types.ValidatorUndelegation, error)`, `ParseIcaType(arg string) (types.ICAAccountType, error)`, `ParseBaseUnits(arg string) (sdkmath.Int, error)`, `broadcastWindDownTx(cmd *cobra.Command, build func(creator string) sdk.Msg) error`; the three stub commands `CmdUndelegateFromValidators`, `CmdTransferFromIca`, `CmdTransferStaketiaClaimBalance` registered in `tx.go`.
 - Review: yes (the proto is the on-chain interface for all four txs and PR 5 depends on it)
 
 - [ ] **Step 1: Edit the proto**
@@ -321,7 +327,8 @@ message MsgTransferFromIcaResponse {}
 // delegation ICA. amount is in utia; zero means the whole balance.
 message MsgTransferStaketiaClaimBalance {
   option (cosmos.msg.v1.signer) = "creator";
-  option (amino.name) = "stakeibc/MsgTransferStaketiaClaimBalance";
+  // Abbreviated: amino names above 39 characters panic at RegisterAminoMsg
+  option (amino.name) = "stakeibc/MsgTransferStaketiaClaimBal";
 
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string amount = 2 [
@@ -363,7 +370,8 @@ In `x/stakeibc/types/codec.go`, append to `RegisterCodec` after the `MsgDeprecat
 ```go
 	legacy.RegisterAminoMsg(cdc, &MsgUndelegateFromValidators{}, "stakeibc/MsgUndelegateFromValidators")
 	legacy.RegisterAminoMsg(cdc, &MsgTransferFromIca{}, "stakeibc/MsgTransferFromIca")
-	legacy.RegisterAminoMsg(cdc, &MsgTransferStaketiaClaimBalance{}, "stakeibc/MsgTransferStaketiaClaimBalance")
+	// 36 chars: RegisterAminoMsg panics above 39 (ledger signing limit), so the full name cannot be used
+	legacy.RegisterAminoMsg(cdc, &MsgTransferStaketiaClaimBalance{}, "stakeibc/MsgTransferStaketiaClaimBal")
 	legacy.RegisterAminoMsg(cdc, &MsgSweepTokensOffStride{}, "stakeibc/MsgSweepTokensOffStride")
 ```
 
@@ -403,7 +411,7 @@ and to the attribute block:
 
 - [ ] **Step 5: Write the msg-server scaffold**
 
-Every method is a stub for now so the package compiles; Tasks 3–5 replace the first three bodies, PR 5 replaces the fourth.
+Every method is a stub for now so the package compiles; Tasks 3–5 replace the first three bodies, PR 5 replaces the fourth. The `sdk` import is used by the wave tasks' bodies and is kept live here by the `_ = sdk.UnwrapSDKContext` line, so no task touches the import block. Each stub carries its own doc comment: that keeps the three replaced regions separated by unchanged lines so the wave's three branches merge without conflict.
 
 ```go
 // x/stakeibc/keeper/msg_server_wind_down.go
@@ -414,6 +422,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -422,33 +431,264 @@ import (
 // Wind-down admin txs (spec §7). Each handler is a thin delegate to the keeper function in the
 // matching wind_down_*.go file. The sweep is delivered by the next PR.
 
+// Keeps the sdk import live until the handlers below use it (Tasks 3-5)
+var _ = sdk.UnwrapSDKContext
+
+// UndelegateFromValidators: the wind-down drain (Task 3 replaces the body).
+// Delegates to Keeper.UndelegateFromValidators in wind_down_undelegate.go.
 func (k msgServer) UndelegateFromValidators(goCtx context.Context, msg *types.MsgUndelegateFromValidators) (*types.MsgUndelegateFromValidatorsResponse, error) {
 	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgUndelegateFromValidators is wired in a later task of this PR")
 }
 
+// TransferFromIca: ICA balance to the Osmosis vault (Task 4 replaces the body).
+// Delegates to Keeper.TransferFromIca in wind_down_transfer_from_ica.go.
 func (k msgServer) TransferFromIca(goCtx context.Context, msg *types.MsgTransferFromIca) (*types.MsgTransferFromIcaResponse, error) {
 	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgTransferFromIca is wired in a later task of this PR")
 }
 
+// TransferStaketiaClaimBalance: claim-address TIA to the celestia delegation ICA (Task 5
+// replaces the body). Delegates to Keeper.TransferStaketiaClaimBalance in wind_down_staketia_claim.go.
 func (k msgServer) TransferStaketiaClaimBalance(goCtx context.Context, msg *types.MsgTransferStaketiaClaimBalance) (*types.MsgTransferStaketiaClaimBalanceResponse, error) {
 	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgTransferStaketiaClaimBalance is wired in a later task of this PR")
 }
 
+// SweepTokensOffStride: the batched sweep (PR 5 replaces the body).
 func (k msgServer) SweepTokensOffStride(goCtx context.Context, msg *types.MsgSweepTokensOffStride) (*types.MsgSweepTokensOffStrideResponse, error) {
 	return nil, errorsmod.Wrap(sdkerrors.ErrNotSupported, "MsgSweepTokensOffStride is delivered in the next PR")
 }
 ```
 
-- [ ] **Step 6: Build and run the existing stakeibc suites**
+- [ ] **Step 6: Write the failing CLI helper tests**
+
+The CLI file is created here, in the foundation, with its complete import block, the parsing and broadcast helpers every command shares, and one stub per command. The wave tasks then replace only their own command's function, so no branch edits the import block, the test file or `tx.go`.
+
+```go
+// x/stakeibc/client/cli/tx_wind_down_test.go
+package cli_test
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+)
+
+func TestReadValidatorUndelegations(t *testing.T) {
+	t.Run("missing file", func(t *testing.T) {
+		_, err := cli.ReadValidatorUndelegations("/does/not/exist.json")
+		require.ErrorContains(t, err, "no such file")
+	})
+
+	t.Run("bad offset", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "validators.json")
+		require.NoError(t, os.WriteFile(path, []byte(`[{"address":"cosmosvaloper1abc","offset":"banana"}]`), 0o600))
+		_, err := cli.ReadValidatorUndelegations(path)
+		require.ErrorContains(t, err, "can not convert string to int")
+	})
+
+	t.Run("offset defaults to zero", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "validators.json")
+		require.NoError(t, os.WriteFile(path, []byte(`[{"address":"cosmosvaloper1abc"},{"address":"cosmosvaloper1def","offset":"7"}]`), 0o600))
+		validators, err := cli.ReadValidatorUndelegations(path)
+		require.NoError(t, err)
+		require.Equal(t, []types.ValidatorUndelegation{
+			{Address: "cosmosvaloper1abc", Offset: sdkmath.ZeroInt()},
+			{Address: "cosmosvaloper1def", Offset: sdkmath.NewInt(7)},
+		}, validators)
+	})
+}
+
+func TestParseIcaType(t *testing.T) {
+	for _, name := range []string{"DELEGATION", "withdrawal", "Fee", "REDEMPTION"} {
+		icaType, err := cli.ParseIcaType(name)
+		require.NoError(t, err, name)
+		require.Equal(t, strings.ToUpper(name), icaType.String())
+	}
+	_, err := cli.ParseIcaType("TREASURY")
+	require.ErrorContains(t, err, "unknown ica type")
+}
+
+func TestParseBaseUnits(t *testing.T) {
+	amount, err := cli.ParseBaseUnits("1000000")
+	require.NoError(t, err)
+	require.Equal(t, sdkmath.NewInt(1_000_000), amount)
+
+	_, err = cli.ParseBaseUnits("banana")
+	require.ErrorContains(t, err, "can not convert string to int")
+}
+```
+
+- [ ] **Step 7: Run them to verify they fail**
+
+Run: `go test ./x/stakeibc/client/cli/... -run 'TestReadValidatorUndelegations|TestParseIcaType|TestParseBaseUnits' -v 2>&1 | tail -3`
+Expected: build failure, `undefined: cli.ReadValidatorUndelegations`.
+
+- [ ] **Step 8: Write the CLI file with the shared helpers and the three stubs**
+
+```go
+// x/stakeibc/client/cli/tx_wind_down.go
+package cli
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+)
+
+// Wind-down admin txs (spec §7). The helpers are shared by every command; each Cmd* function
+// below is a stub that its task replaces (Task 3: undelegate, Task 4: transfer-from-ica,
+// Task 5: transfer-staketia-claim-balance; PR 5 adds sweep-tokens-off-stride).
+
+// validatorUndelegationInput is one entry of the validators file for undelegate-from-validators
+type validatorUndelegationInput struct {
+	Address string `json:"address"`
+	Offset  string `json:"offset"` // base units, optional, default "0"
+}
+
+// ReadValidatorUndelegations parses the JSON validators file: [{"address": "...", "offset": "0"}, ...]
+func ReadValidatorUndelegations(path string) ([]types.ValidatorUndelegation, error) {
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var inputs []validatorUndelegationInput
+	if err := json.Unmarshal(contents, &inputs); err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to parse validators file: %s", err)
+	}
+
+	validators := make([]types.ValidatorUndelegation, 0, len(inputs))
+	for _, input := range inputs {
+		offset := sdkmath.ZeroInt()
+		if input.Offset != "" {
+			parsed, err := ParseBaseUnits(input.Offset)
+			if err != nil {
+				return nil, errorsmod.Wrapf(err, "offset for %s", input.Address)
+			}
+			offset = parsed
+		}
+		validators = append(validators, types.ValidatorUndelegation{Address: input.Address, Offset: offset})
+	}
+	return validators, nil
+}
+
+// ParseIcaType accepts DELEGATION, WITHDRAWAL, FEE or REDEMPTION in any case
+func ParseIcaType(arg string) (types.ICAAccountType, error) {
+	value, found := types.ICAAccountType_value[strings.ToUpper(arg)]
+	if !found {
+		return 0, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unknown ica type %s", arg)
+	}
+	return types.ICAAccountType(value), nil
+}
+
+// ParseBaseUnits parses an integer amount of base units
+func ParseBaseUnits(arg string) (sdkmath.Int, error) {
+	parsed, found := sdkmath.NewIntFromString(arg)
+	if !found {
+		return sdkmath.Int{}, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "can not convert string to int: %q", arg)
+	}
+	return parsed, nil
+}
+
+// broadcastWindDownTx builds the message with the --from address, validates it and broadcasts
+func broadcastWindDownTx(cmd *cobra.Command, build func(creator string) sdk.Msg) error {
+	clientCtx, err := client.GetClientTxContext(cmd)
+	if err != nil {
+		return err
+	}
+	msg := build(clientCtx.GetFromAddress().String())
+	if err := msg.(interface{ ValidateBasic() error }).ValidateBasic(); err != nil {
+		return err
+	}
+	return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+}
+
+// notWiredYet is the RunE of every stub below
+func notWiredYet(name string) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		return fmt.Errorf("%s is wired in a later task of this PR", name)
+	}
+}
+
+// CmdUndelegateFromValidators: the wind-down drain (Task 3 replaces this function).
+func CmdUndelegateFromValidators() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "undelegate-from-validators [chain-id]",
+		Short: "Wind-down: undelegate the recorded delegation from validators",
+		RunE:  notWiredYet("undelegate-from-validators"),
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdTransferFromIca: ICA balance to the Osmosis vault (Task 4 replaces this function).
+func CmdTransferFromIca() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer-from-ica [chain-id] [ica-type] [amount]",
+		Short: "Wind-down: transfer an ICA balance to the Osmosis vault",
+		RunE:  notWiredYet("transfer-from-ica"),
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdTransferStaketiaClaimBalance: claim-address TIA to the celestia delegation ICA (Task 5
+// replaces this function).
+func CmdTransferStaketiaClaimBalance() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer-staketia-claim-balance [amount]",
+		Short: "Wind-down: move the staketia claim address's TIA to the celestia delegation ICA",
+		RunE:  notWiredYet("transfer-staketia-claim-balance"),
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+```
+
+Register the three commands in `x/stakeibc/client/cli/tx.go` by appending at the **end** of the `cmd.AddCommand(...)` block in `GetTxCmd` (do not anchor on a specific existing line: PR 1 deleted several of them, and the last surviving line differs from today's `CmdToggleTradeController`):
+
+```go
+	// Wind-down admin txs (spec §7)
+	cmd.AddCommand(CmdUndelegateFromValidators())
+	cmd.AddCommand(CmdTransferFromIca())
+	cmd.AddCommand(CmdTransferStaketiaClaimBalance())
+```
+
+- [ ] **Step 9: Run the CLI helper tests to verify they pass**
+
+Run: `go test ./x/stakeibc/client/cli/... -run 'TestReadValidatorUndelegations|TestParseIcaType|TestParseBaseUnits' -v 2>&1 | grep -E '^(--- (PASS|FAIL)|ok|FAIL)'`
+Expected: `--- PASS` for all three (five subtests).
+
+- [ ] **Step 10: Build and run the existing stakeibc suites**
 
 Run: `go build ./... && go test ./x/stakeibc/... 2>&1 | tail -5`
-Expected: build OK; `ok  github.com/Stride-Labs/stride/v34/x/stakeibc/...` for keeper, types and cli.
+Expected: build OK; `ok  github.com/Stride-Labs/stride/v34/x/stakeibc/...` for keeper, types and cli. `strided tx stakeibc undelegate-from-validators --help` lists the stub.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 11: Commit**
 
 ```bash
-git add proto/stride/stakeibc/tx.proto x/stakeibc/types/tx.pb.go x/stakeibc/types/codec.go x/stakeibc/types/errors.go x/stakeibc/types/events.go x/stakeibc/keeper/msg_server_wind_down.go
-git commit -m "feat(stakeibc): proto and registrations for the four wind-down admin txs
+git add proto/stride/stakeibc/tx.proto x/stakeibc/types/tx.pb.go x/stakeibc/types/codec.go x/stakeibc/types/errors.go x/stakeibc/types/events.go x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx_wind_down_test.go x/stakeibc/client/cli/tx.go
+git commit -m "feat(stakeibc): proto, registrations and CLI scaffold for the four wind-down admin txs
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
@@ -457,10 +697,14 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 
 ## Parallel-safe tasks
 
-Tasks 3, 4 and 5 depend only on Tasks 1–2. Each replaces one stub body in
-`msg_server_wind_down.go` and adds one `AddCommand` line in `cli/tx.go`; that is textual
-overlap on a distinct function/line each, which the worktree merge handles. None consumes
-another's interface.
+Tasks 3, 4 and 5 depend only on Tasks 1–2. Each one creates its own keeper, message and
+CLI-test files, and replaces exactly one function in `msg_server_wind_down.go` and one in
+`cli/tx_wind_down.go`. Those two shared files were laid out in Task 2 so that every
+replaced region is separated from its neighbours by unchanged doc-comment lines and neither
+file's import block changes, which is what lets three branches merge cleanly. No wave task
+touches `cli/tx.go` or `cli/tx_wind_down_test.go`. If a merge still reports a conflict in one
+of the two shared files, the resolution is always "keep both replaced bodies". None of the
+three consumes another's interface.
 
 ---
 
@@ -471,13 +715,13 @@ another's interface.
 - Test: `x/stakeibc/types/message_undelegate_from_validators_test.go`
 - Create: `x/stakeibc/keeper/wind_down_undelegate.go`
 - Test: `x/stakeibc/keeper/wind_down_undelegate_test.go`
-- Modify: `x/stakeibc/keeper/msg_server_wind_down.go` (replace the `UndelegateFromValidators` stub)
-- Modify: `x/stakeibc/client/cli/tx_wind_down.go` (create), `x/stakeibc/client/cli/tx.go` (one line)
-- Test: `x/stakeibc/client/cli/tx_wind_down_test.go`
+- Modify: `x/stakeibc/keeper/msg_server_wind_down.go` (replace the `UndelegateFromValidators` function only)
+- Modify: `x/stakeibc/client/cli/tx_wind_down.go` (replace the `CmdUndelegateFromValidators` function only)
+- Test: `x/stakeibc/client/cli/tx_wind_down_undelegate_test.go` (create)
 
 **Interfaces:**
 - Consumes: `types.MsgUndelegateFromValidators`, `types.ValidatorUndelegation` (Task 2); `BatchSubmitUndelegateICAMessages`, `applySharesRoundingSafety`, `ValidatorUnbondCapacity`, `GetValidatorFromAddress`, `GetPendingUndelegationInFlight`/`SetPendingUndelegationInFlight`, `DefaultMaxMessagesPerIcaTx`, `CalculateTotalUnbondedInBatch`, `EmitUndelegationEvent` (existing keeper).
-- Produces: `func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelegateFromValidators) (numBatches uint64, err error)`, `func (k Keeper) BuildUndelegateFromValidatorsMsgs(hostZone types.HostZone, requested []types.ValidatorUndelegation) (msgs []proto.Message, splits []*types.SplitUndelegation, err error)`, `types.NewMsgUndelegateFromValidators(creator, chainId string, validators []types.ValidatorUndelegation)`, CLI `undelegate-from-validators`.
+- Produces: `func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelegateFromValidators) (numBatches uint64, err error)`, `func (k Keeper) BuildUndelegateFromValidatorsMsgs(hostZone types.HostZone, requested []types.ValidatorUndelegation) (msgs []proto.Message, splits []*types.SplitUndelegation, err error)`, `types.NewMsgUndelegateFromValidators(creator, chainId string, validators []types.ValidatorUndelegation)`, CLI `undelegate-from-validators [chain-id] [validators-file] --all`.
 - Depends on: Tasks 1–2
 - Review: yes (submits undelegations for the entire protocol stake)
 
@@ -501,6 +745,7 @@ import (
 )
 
 func TestMsgUndelegateFromValidators_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig() // stride bech32 prefix; without it the admin address fails to parse when the test runs alone
 	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
@@ -763,10 +1008,11 @@ func (s *KeeperTestSuite) TestUndelegateFromValidators_EmptyListDrainsEveryFunde
 
 	// val1..3 are flagged, val4 (no delegation) is untouched
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	s.Require().Equal(uint64(1), hostZone.Validators[0].DelegationChangesInProgress)
-	s.Require().Equal(uint64(1), hostZone.Validators[1].DelegationChangesInProgress)
-	s.Require().Equal(uint64(1), hostZone.Validators[2].DelegationChangesInProgress)
-	s.Require().Equal(uint64(0), hostZone.Validators[3].DelegationChangesInProgress)
+	// DelegationChangesInProgress is int64 (validator.pb.go); testify's Equal is type-strict
+	s.Require().Equal(int64(1), hostZone.Validators[0].DelegationChangesInProgress)
+	s.Require().Equal(int64(1), hostZone.Validators[1].DelegationChangesInProgress)
+	s.Require().Equal(int64(1), hostZone.Validators[2].DelegationChangesInProgress)
+	s.Require().Equal(int64(0), hostZone.Validators[3].DelegationChangesInProgress)
 
 	// Both batches are registered in flight so the record-less callback's decrement is clean
 	s.Require().Equal(uint64(2), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId))
@@ -806,8 +1052,8 @@ func (s *KeeperTestSuite) TestUndelegateFromValidators_ExplicitListWithOffset() 
 	s.Require().Equal(startSequence+1, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID))
 
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
-	s.Require().Equal(uint64(0), hostZone.Validators[0].DelegationChangesInProgress, "val1 not listed")
-	s.Require().Equal(uint64(1), hostZone.Validators[1].DelegationChangesInProgress, "val2 listed")
+	s.Require().Equal(int64(0), hostZone.Validators[0].DelegationChangesInProgress, "val1 not listed")
+	s.Require().Equal(int64(1), hostZone.Validators[1].DelegationChangesInProgress, "val2 listed")
 
 	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
 	s.Require().Len(callbackData, 1)
@@ -850,6 +1096,40 @@ func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsFlaggedValidator()
 	s.Require().ErrorIs(err, types.ErrInvalidDelegationsInProgress)
 	s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID), "nothing submitted")
 	s.Require().Equal(uint64(0), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId))
+}
+
+// A validator mid-slash-query is excluded, as in the record-driven path; ops wait for the
+// day-0 refresh callbacks (spec §9 step 1) before draining
+func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsSlashQueryInProgress() {
+	tc := s.SetupUndelegateFromValidators()
+	tc.hostZone.Validators[2].SlashQueryInProgress = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
+	startSequence := s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID)
+
+	// explicitly listed
+	msg := types.NewMsgUndelegateFromValidators("admin", HostChainId, []types.ValidatorUndelegation{{Address: "val3"}})
+	_, err := s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, msg)
+	s.Require().ErrorContains(err, "slash query in progress")
+
+	// and swept up by the empty list
+	_, err = s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, types.NewMsgUndelegateFromValidators("admin", HostChainId, nil))
+	s.Require().ErrorContains(err, "slash query in progress")
+	s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID), "nothing submitted")
+}
+
+// A stored v34-style pending undelegation would be consumed by the drain's record-less ack
+func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsPendingUndelegation() {
+	tc := s.SetupUndelegateFromValidators()
+	s.App.StakeibcKeeper.SetPendingUndelegation(s.Ctx, HostChainId, sdkmath.NewInt(100))
+	startSequence := s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID)
+
+	_, err := s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, types.NewMsgUndelegateFromValidators("admin", HostChainId, nil))
+	s.Require().ErrorContains(err, "pending undelegation")
+	s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID), "nothing submitted")
+
+	s.App.StakeibcKeeper.RemovePendingUndelegation(s.Ctx, HostChainId)
+	_, err = s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, types.NewMsgUndelegateFromValidators("admin", HostChainId, nil))
+	s.Require().NoError(err, "accepted once the pending amount is gone")
 }
 
 func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsDeprecatedZone() {
@@ -1020,7 +1300,8 @@ import (
 //
 // It refuses, before anything is submitted: a deprecated zone, a zone that still has an
 // unbonding record queued or retrying (the record-driven path could never submit it on a
-// drained zone, STRIDE-07), and a listed validator with a delegation change in progress.
+// drained zone, STRIDE-07), a zone with a stored pending undelegation, and a target validator
+// with a delegation change or a slash query in progress.
 func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelegateFromValidators) (numBatches uint64, err error) {
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
@@ -1062,8 +1343,14 @@ func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelega
 }
 
 // checkNoQueuedUnbondings rejects the drain while any unbonding record for the zone is still
-// waiting for the day epoch (queued or retrying) with a real amount
+// waiting for the day epoch (queued or retrying) with a real amount, or while a one-shot
+// pending undelegation (the v34 mechanism) is stored for the zone: the record-less success
+// callback calls ConsumePendingUndelegation, so a drain ack would silently eat that amount
 func (k Keeper) checkNoQueuedUnbondings(ctx sdk.Context, chainId string) error {
+	if pending, found := k.GetPendingUndelegation(ctx, chainId); found {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"host zone %s has a pending undelegation of %v queued by an upgrade; let the day epoch submit it before draining", chainId, pending)
+	}
 	for _, epochUnbondingRecord := range k.RecordsKeeper.GetAllEpochUnbondingRecord(ctx) {
 		hostZoneUnbonding, found := k.RecordsKeeper.GetHostZoneUnbondingByChainId(ctx, epochUnbondingRecord.EpochNumber, chainId)
 		if !found {
@@ -1109,6 +1396,12 @@ func (k Keeper) BuildUndelegateFromValidatorsMsgs(
 		if validator.DelegationChangesInProgress > 0 {
 			return nil, nil, types.ErrInvalidDelegationsInProgress.Wrapf(
 				"validator %s has %d delegation change(s) in progress", target.Address, validator.DelegationChangesInProgress)
+		}
+		// The record-driven path also excludes these; a validator mid-slash-query has a recorded
+		// delegation that may be about to move, so ops wait for the day-0 refresh callbacks
+		if validator.SlashQueryInProgress {
+			return nil, nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+				"validator %s has a slash query in progress; wait for its callback before draining", target.Address)
 		}
 
 		delegation := validator.Delegation
@@ -1157,17 +1450,20 @@ func (k msgServer) UndelegateFromValidators(goCtx context.Context, msg *types.Ms
 }
 ```
 
-and add `sdk "github.com/cosmos/cosmos-sdk/types"` to that file's imports.
+(the `sdk` import is already in that file from Task 2; leave the `var _ = sdk.UnwrapSDKContext` line alone, it is harmless and the merge gate removes it).
 
 - [ ] **Step 9: Run the keeper tests to verify they pass**
 
 Run: `go test ./x/stakeibc/keeper/... -run 'TestKeeperTestSuite/TestUndelegateFromValidators|TestKeeperTestSuite/TestBuildUndelegateFromValidatorsMsgs|TestKeeperTestSuite/TestMsgServer_UndelegateFromValidators' -v 2>&1 | grep -E '^(=== RUN|--- (PASS|FAIL)|ok|FAIL)'`
-Expected: `--- PASS` for all 13 subtests.
+Expected: `--- PASS` for all 15 subtests.
 
 - [ ] **Step 10: Write the failing CLI test**
 
+The full drain is the most consequential form of this tx, so it is never the default: the
+command requires either a validators file or an explicit `--all`, and refuses both together.
+
 ```go
-// x/stakeibc/client/cli/tx_wind_down_test.go
+// x/stakeibc/client/cli/tx_wind_down_undelegate_test.go
 package cli_test
 
 import (
@@ -1181,136 +1477,95 @@ import (
 )
 
 func TestCmdUndelegateFromValidators(t *testing.T) {
+	t.Run("neither file nor --all", func(t *testing.T) {
+		ExecuteCLIExpectError(t, cli.CmdUndelegateFromValidators(), []string{"cosmoshub-4"}, "pass a validators file or --all")
+	})
+
+	t.Run("both file and --all", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "validators.json")
+		require.NoError(t, os.WriteFile(path, []byte(`[{"address":"cosmosvaloper1abc"}]`), 0o600))
+		ExecuteCLIExpectError(t, cli.CmdUndelegateFromValidators(), []string{"cosmoshub-4", path, "--all"}, "not both")
+	})
+
 	t.Run("missing file", func(t *testing.T) {
-		cmd := cli.CmdUndelegateFromValidators()
-		ExecuteCLIExpectError(t, cmd, []string{"cosmoshub-4", "/does/not/exist.json"}, "no such file")
+		ExecuteCLIExpectError(t, cli.CmdUndelegateFromValidators(), []string{"cosmoshub-4", "/does/not/exist.json"}, "no such file")
 	})
 
 	t.Run("bad offset in file", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "validators.json")
 		require.NoError(t, os.WriteFile(path, []byte(`[{"address":"cosmosvaloper1abc","offset":"banana"}]`), 0o600))
-		cmd := cli.CmdUndelegateFromValidators()
-		ExecuteCLIExpectError(t, cmd, []string{"cosmoshub-4", path}, "can not convert string to int")
+		ExecuteCLIExpectError(t, cli.CmdUndelegateFromValidators(), []string{"cosmoshub-4", path}, "can not convert string to int")
 	})
 }
 ```
 
 - [ ] **Step 11: Run it to verify it fails**
 
-Run: `go test ./x/stakeibc/client/cli/... -run TestCmdUndelegateFromValidators -v`
-Expected: build failure, `undefined: cli.CmdUndelegateFromValidators`.
+Run: `go test ./x/stakeibc/client/cli/... -run TestCmdUndelegateFromValidators -v 2>&1 | grep -E '^(--- (PASS|FAIL)|ok|FAIL)'`
+Expected: the stub from Task 2 returns "wired in a later task", so every subtest FAILs on the expected error string.
 
 - [ ] **Step 12: Write the CLI command**
 
-Create `x/stakeibc/client/cli/tx_wind_down.go`:
+Replace the `CmdUndelegateFromValidators` function in `x/stakeibc/client/cli/tx_wind_down.go` (leave the rest of the file, including its import block, untouched; every import it needs is already there):
 
 ```go
-package cli
+const FlagUndelegateAll = "all"
 
-import (
-	"encoding/json"
-	"os"
-
-	"github.com/spf13/cobra"
-
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-)
-
-// Wind-down admin txs (spec §7)
-
-// validatorUndelegationInput is one entry of the validators file for undelegate-from-validators
-type validatorUndelegationInput struct {
-	Address string `json:"address"`
-	Offset  string `json:"offset"` // base units, optional, default "0"
-}
-
+// CmdUndelegateFromValidators: the wind-down drain.
 func CmdUndelegateFromValidators() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "undelegate-from-validators [chain-id] [validators-file]",
-		Short: "Wind-down: undelegate the recorded delegation from every validator, or from those in the file",
-		Long: `Submits MsgUndelegateFromValidators (admin only). With no file, every validator with a
-recorded delegation is drained in full. With a file, only the listed validators are drained,
-each for its recorded delegation minus the offset. The file is a JSON list:
-  [{"address": "cosmosvaloper1...", "offset": "0"}, ...]`,
+		Short: "Wind-down: undelegate the recorded delegation from the validators in the file, or from every validator with --all",
+		Long: `Submits MsgUndelegateFromValidators (admin only). With a file, only the listed validators
+are drained, each for its recorded delegation minus the offset; the file is a JSON list:
+  [{"address": "cosmosvaloper1...", "offset": "0"}, ...]
+With --all and no file, every validator with a recorded delegation is drained in full. One of
+the two is required; the full drain is never the default.`,
 		Args: cobra.RangeArgs(1, 2),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			argChainId := args[0]
+			drainAll, err := cmd.Flags().GetBool(FlagUndelegateAll)
+			if err != nil {
+				return err
+			}
+			hasFile := len(args) == 2
+			if drainAll && hasFile {
+				return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "pass a validators file or --all, not both")
+			}
+			if !drainAll && !hasFile {
+				return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "pass a validators file or --all")
+			}
 
 			validators := []types.ValidatorUndelegation{}
-			if len(args) == 2 {
-				validators, err = readValidatorUndelegations(args[1])
+			if hasFile {
+				validators, err = ReadValidatorUndelegations(args[1])
 				if err != nil {
 					return err
 				}
 			}
 
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgUndelegateFromValidators(clientCtx.GetFromAddress().String(), argChainId, validators)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return broadcastWindDownTx(cmd, func(creator string) sdk.Msg {
+				return types.NewMsgUndelegateFromValidators(creator, argChainId, validators)
+			})
 		},
 	}
 
+	cmd.Flags().Bool(FlagUndelegateAll, false, "drain every validator with a recorded delegation (instead of a validators file)")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
-
-func readValidatorUndelegations(path string) ([]types.ValidatorUndelegation, error) {
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var inputs []validatorUndelegationInput
-	if err := json.Unmarshal(contents, &inputs); err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unable to parse validators file: %s", err)
-	}
-
-	validators := make([]types.ValidatorUndelegation, 0, len(inputs))
-	for _, input := range inputs {
-		offset := sdkmath.ZeroInt()
-		if input.Offset != "" {
-			parsed, found := sdkmath.NewIntFromString(input.Offset)
-			if !found {
-				return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidType, "can not convert string to int: offset %q for %s", input.Offset, input.Address)
-			}
-			offset = parsed
-		}
-		validators = append(validators, types.ValidatorUndelegation{Address: input.Address, Offset: offset})
-	}
-	return validators, nil
-}
-```
-
-Register it in `x/stakeibc/client/cli/tx.go` after `cmd.AddCommand(CmdToggleTradeController())`:
-
-```go
-	cmd.AddCommand(CmdUndelegateFromValidators())
 ```
 
 - [ ] **Step 13: Run the CLI test and the full stakeibc suite**
 
 Run: `go test ./x/stakeibc/client/cli/... -run TestCmdUndelegateFromValidators -v && go test ./x/stakeibc/... 2>&1 | tail -4`
-Expected: PASS for both subtests; `ok` for keeper, types, cli.
+Expected: PASS for all four subtests; `ok` for keeper, types, cli.
 
 - [ ] **Step 14: Commit**
 
 ```bash
-git add x/stakeibc/types/message_undelegate_from_validators.go x/stakeibc/types/message_undelegate_from_validators_test.go x/stakeibc/keeper/wind_down_undelegate.go x/stakeibc/keeper/wind_down_undelegate_test.go x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx_wind_down_test.go x/stakeibc/client/cli/tx.go
+git add x/stakeibc/types/message_undelegate_from_validators.go x/stakeibc/types/message_undelegate_from_validators_test.go x/stakeibc/keeper/wind_down_undelegate.go x/stakeibc/keeper/wind_down_undelegate_test.go x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx_wind_down_undelegate_test.go
 git commit -m "feat(stakeibc): MsgUndelegateFromValidators, the wind-down drain
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
@@ -1325,9 +1580,9 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Test: `x/stakeibc/types/message_transfer_from_ica_test.go`
 - Create: `x/stakeibc/keeper/wind_down_transfer_from_ica.go`
 - Test: `x/stakeibc/keeper/wind_down_transfer_from_ica_test.go`
-- Modify: `x/stakeibc/keeper/msg_server_wind_down.go` (replace the `TransferFromIca` stub)
-- Modify: `x/stakeibc/client/cli/tx_wind_down.go` (add the command; create the file with the same header as Task 3 if it does not exist yet in your worktree), `x/stakeibc/client/cli/tx.go` (one line)
-- Test: `x/stakeibc/client/cli/tx_wind_down_test.go` (add a test function; create the file if absent)
+- Modify: `x/stakeibc/keeper/msg_server_wind_down.go` (replace the `TransferFromIca` function only)
+- Modify: `x/stakeibc/client/cli/tx_wind_down.go` (replace the `CmdTransferFromIca` function only)
+- Test: `x/stakeibc/client/cli/tx_wind_down_transfer_from_ica_test.go` (create)
 
 **Interfaces:**
 - Consumes: `types.MsgTransferFromIca` (Task 2), `types.OsmosisVaultAddress`, `types.HostToOsmosisTransferChannel`, `types.WindDownTransferTimeout` (Task 1), `SubmitICATxWithoutCallback`, `types.FormatHostZoneICAOwner`, `utils.IntToUint`.
@@ -1356,6 +1611,7 @@ import (
 )
 
 func TestMsgTransferFromIca_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig() // stride bech32 prefix; without it the admin address fails to parse when the test runs alone
 	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
@@ -1526,20 +1782,32 @@ func (s *KeeperTestSuite) hubHostZone() types.HostZone {
 	}
 }
 
+var transferableIcaTypes = []types.ICAAccountType{
+	types.ICAAccountType_DELEGATION,
+	types.ICAAccountType_WITHDRAWAL,
+	types.ICAAccountType_FEE,
+	types.ICAAccountType_REDEMPTION,
+}
+
+// Channels first, host zone second: the first CreateICAChannel call creates the transfer
+// channel, which replaces s.App and s.Ctx with the ibctesting chain's
+// (app/apptesting/test_helpers.go:396-398), so anything written to the store before it is lost
+func (s *KeeperTestSuite) setupHubIcaChannels(icaTypes ...types.ICAAccountType) map[types.ICAAccountType][2]string {
+	channels := map[types.ICAAccountType][2]string{}
+	for _, icaType := range icaTypes {
+		channelId, portId := s.CreateICAChannel(types.FormatHostZoneICAOwner(hubChainId, icaType))
+		channels[icaType] = [2]string{portId, channelId}
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, s.hubHostZone())
+	return channels
+}
+
 func (s *KeeperTestSuite) TestTransferFromIca_EveryIcaType() {
 	s.withOsmosisVault()
-	hostZone := s.hubHostZone()
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	channels := s.setupHubIcaChannels(transferableIcaTypes...)
 
-	for _, icaType := range []types.ICAAccountType{
-		types.ICAAccountType_DELEGATION,
-		types.ICAAccountType_WITHDRAWAL,
-		types.ICAAccountType_FEE,
-		types.ICAAccountType_REDEMPTION,
-	} {
-		owner := types.FormatHostZoneICAOwner(hubChainId, icaType)
-		channelId, portId := s.CreateICAChannel(owner)
-
+	for _, icaType := range transferableIcaTypes {
+		portId, channelId := channels[icaType][0], channels[icaType][1]
 		msg := types.NewMsgTransferFromIca("admin", hubChainId, icaType, sdk.NewCoin(Atom, sdkmath.NewInt(1000)))
 		s.CheckICATxSubmitted(portId, channelId, func() error {
 			return s.App.StakeibcKeeper.TransferFromIca(s.Ctx, msg)
@@ -1550,8 +1818,8 @@ func (s *KeeperTestSuite) TestTransferFromIca_EveryIcaType() {
 
 func (s *KeeperTestSuite) TestTransferFromIca_ForeignDenom() {
 	s.withOsmosisVault()
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, s.hubHostZone())
-	channelId, portId := s.CreateICAChannel(types.FormatHostZoneICAOwner(hubChainId, types.ICAAccountType_WITHDRAWAL))
+	channels := s.setupHubIcaChannels(types.ICAAccountType_WITHDRAWAL)
+	portId, channelId := channels[types.ICAAccountType_WITHDRAWAL][0], channels[types.ICAAccountType_WITHDRAWAL][1]
 
 	usdcOnHub := "ibc/F663521BF1836B00F5F177680F74BFB9A8B5654A694D0D2BC249E03CF2509013"
 	msg := types.NewMsgTransferFromIca("admin", hubChainId, types.ICAAccountType_WITHDRAWAL, sdk.NewCoin(usdcOnHub, sdkmath.NewInt(3_800_000)))
@@ -1563,8 +1831,8 @@ func (s *KeeperTestSuite) TestTransferFromIca_ForeignDenom() {
 func (s *KeeperTestSuite) TestTransferFromIca_VaultNotConfigured() {
 	// The default is empty: the tx must fail closed
 	s.Require().Empty(types.OsmosisVaultAddress)
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, s.hubHostZone())
-	channelId, portId := s.CreateICAChannel(types.FormatHostZoneICAOwner(hubChainId, types.ICAAccountType_DELEGATION))
+	channels := s.setupHubIcaChannels(types.ICAAccountType_DELEGATION)
+	portId, channelId := channels[types.ICAAccountType_DELEGATION][0], channels[types.ICAAccountType_DELEGATION][1]
 
 	msg := types.NewMsgTransferFromIca("admin", hubChainId, types.ICAAccountType_DELEGATION, sdk.NewCoin(Atom, sdkmath.NewInt(1)))
 	s.CheckICATxNotSubmitted(portId, channelId, func() error {
@@ -1652,8 +1920,8 @@ func (s *KeeperTestSuite) TestBuildTransferFromIcaMsg_Rejections() {
 
 func (s *KeeperTestSuite) TestMsgServer_TransferFromIca() {
 	s.withOsmosisVault()
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, s.hubHostZone())
-	channelId, portId := s.CreateICAChannel(types.FormatHostZoneICAOwner(hubChainId, types.ICAAccountType_DELEGATION))
+	channels := s.setupHubIcaChannels(types.ICAAccountType_DELEGATION)
+	portId, channelId := channels[types.ICAAccountType_DELEGATION][0], channels[types.ICAAccountType_DELEGATION][1]
 
 	msg := types.NewMsgTransferFromIca("admin", hubChainId, types.ICAAccountType_DELEGATION, sdk.NewCoin(Atom, sdkmath.NewInt(1)))
 	s.CheckICATxSubmitted(portId, channelId, func() error {
@@ -1802,7 +2070,7 @@ func (k msgServer) TransferFromIca(goCtx context.Context, msg *types.MsgTransfer
 }
 ```
 
-(add the `sdk` import if Task 3 has not already).
+(the `sdk` import is already in that file from Task 2).
 
 - [ ] **Step 9: Run the keeper tests to verify they pass**
 
@@ -1811,60 +2079,63 @@ Expected: `--- PASS` for all nine.
 
 - [ ] **Step 10: Write the failing CLI test**
 
-Add to `x/stakeibc/client/cli/tx_wind_down_test.go`:
-
 ```go
+// x/stakeibc/client/cli/tx_wind_down_transfer_from_ica_test.go
+package cli_test
+
+import (
+	"testing"
+
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/client/cli"
+)
+
 func TestCmdTransferFromIca(t *testing.T) {
 	t.Run("bad ica type", func(t *testing.T) {
-		cmd := cli.CmdTransferFromIca()
-		ExecuteCLIExpectError(t, cmd, []string{"cosmoshub-4", "TREASURY", "1000uatom"}, "unknown ica type")
+		ExecuteCLIExpectError(t, cli.CmdTransferFromIca(), []string{"cosmoshub-4", "TREASURY", "1000uatom"}, "unknown ica type")
 	})
 	t.Run("bad amount", func(t *testing.T) {
-		cmd := cli.CmdTransferFromIca()
-		ExecuteCLIExpectError(t, cmd, []string{"cosmoshub-4", "DELEGATION", "banana"}, "invalid decimal coin expression")
+		ExecuteCLIExpectError(t, cli.CmdTransferFromIca(), []string{"cosmoshub-4", "DELEGATION", "banana"}, "invalid decimal coin expression")
 	})
 }
 ```
 
 - [ ] **Step 11: Run it to verify it fails**
 
-Run: `go test ./x/stakeibc/client/cli/... -run TestCmdTransferFromIca -v`
-Expected: build failure, `undefined: cli.CmdTransferFromIca`.
+Run: `go test ./x/stakeibc/client/cli/... -run TestCmdTransferFromIca -v 2>&1 | grep -E '^(--- (PASS|FAIL)|ok|FAIL)'`
+Expected: both subtests FAIL: the Task 2 stub returns "wired in a later task", not the expected strings.
 
 - [ ] **Step 12: Write the CLI command**
 
-Add to `x/stakeibc/client/cli/tx_wind_down.go` (imports needed beyond Task 3's: `fmt`, `strings`, `sdk "github.com/cosmos/cosmos-sdk/types"`):
+Replace the `CmdTransferFromIca` function in `x/stakeibc/client/cli/tx_wind_down.go` (leave the import block alone; `ParseIcaType`, `sdk` and `fmt` are already there):
 
 ```go
+// CmdTransferFromIca: ICA balance to the Osmosis vault.
 func CmdTransferFromIca() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer-from-ica [chain-id] [ica-type] [amount]",
 		Short: "Wind-down: transfer an ICA balance to the Osmosis vault",
 		Long: `Submits MsgTransferFromIca (admin only). ica-type is one of DELEGATION, WITHDRAWAL, FEE,
 REDEMPTION; amount is a coin in the denom as it exists on the host (e.g. 1000000uatom). The
-receiver and channel are hard-coded in the binary.`,
+receiver and channel are hard-coded in the binary.
+
+Note for hand-written JSON txs (--generate-only, multisig): DELEGATION is the enum's zero
+value, so a message that omits ica_type moves the DELEGATION ICA. Always set ica_type
+explicitly and check it in the unsigned tx before signing.`,
 		Args: cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			argChainId := args[0]
-			icaTypeValue, found := types.ICAAccountType_value[strings.ToUpper(args[1])]
-			if !found {
-				return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "unknown ica type %s", args[1])
+			icaType, err := ParseIcaType(args[1])
+			if err != nil {
+				return err
 			}
 			argAmount, err := sdk.ParseCoinNormalized(args[2])
 			if err != nil {
 				return fmt.Errorf("invalid amount %q: %w", args[2], err)
 			}
 
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgTransferFromIca(clientCtx.GetFromAddress().String(), argChainId, types.ICAAccountType(icaTypeValue), argAmount)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return broadcastWindDownTx(cmd, func(creator string) sdk.Msg {
+				return types.NewMsgTransferFromIca(creator, argChainId, icaType, argAmount)
+			})
 		},
 	}
 
@@ -1872,12 +2143,6 @@ receiver and channel are hard-coded in the binary.`,
 
 	return cmd
 }
-```
-
-Register in `tx.go`:
-
-```go
-	cmd.AddCommand(CmdTransferFromIca())
 ```
 
 - [ ] **Step 13: Run the CLI test and the full stakeibc suite**
@@ -1888,7 +2153,7 @@ Expected: PASS; `ok` for keeper, types, cli.
 - [ ] **Step 14: Commit**
 
 ```bash
-git add x/stakeibc/types/message_transfer_from_ica.go x/stakeibc/types/message_transfer_from_ica_test.go x/stakeibc/keeper/wind_down_transfer_from_ica.go x/stakeibc/keeper/wind_down_transfer_from_ica_test.go x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx_wind_down_test.go x/stakeibc/client/cli/tx.go
+git add x/stakeibc/types/message_transfer_from_ica.go x/stakeibc/types/message_transfer_from_ica_test.go x/stakeibc/keeper/wind_down_transfer_from_ica.go x/stakeibc/keeper/wind_down_transfer_from_ica_test.go x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx_wind_down_transfer_from_ica_test.go
 git commit -m "feat(stakeibc): MsgTransferFromIca, ICA balance to the Osmosis vault
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
@@ -1903,9 +2168,9 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Test: `x/stakeibc/types/message_transfer_staketia_claim_balance_test.go`
 - Create: `x/stakeibc/keeper/wind_down_staketia_claim.go`
 - Test: `x/stakeibc/keeper/wind_down_staketia_claim_test.go`
-- Modify: `x/stakeibc/keeper/msg_server_wind_down.go` (replace the `TransferStaketiaClaimBalance` stub)
-- Modify: `x/stakeibc/client/cli/tx_wind_down.go` (add the command; create the file with Task 3's header if absent), `x/stakeibc/client/cli/tx.go` (one line)
-- Test: `x/stakeibc/client/cli/tx_wind_down_test.go` (add a function; create if absent)
+- Modify: `x/stakeibc/keeper/msg_server_wind_down.go` (replace the `TransferStaketiaClaimBalance` function only)
+- Modify: `x/stakeibc/client/cli/tx_wind_down.go` (replace the `CmdTransferStaketiaClaimBalance` function only)
+- Test: `x/stakeibc/client/cli/tx_wind_down_staketia_claim_test.go` (create)
 
 **Interfaces:**
 - Consumes: `types.MsgTransferStaketiaClaimBalance` (Task 2), `types.WindDownTransferTimeout` (Task 1), `staketiatypes.CelestiaChainId`, `staketiatypes.ClaimAddress`, `staketiatypes.CelestiaNativeTokenIBCDenom`, `k.RecordsKeeper.TransferKeeper.Transfer`, `k.bankKeeper.GetBalance`.
@@ -1933,6 +2198,7 @@ import (
 )
 
 func TestMsgTransferStaketiaClaimBalance_ValidateBasic(t *testing.T) {
+	apptesting.SetupConfig() // stride bech32 prefix; without it the admin address fails to parse when the test runs alone
 	validNotAdminAddress, invalidAddress := apptesting.GenerateTestAddrs()
 	validAdminAddress, ok := apptesting.GetAdminAddress()
 	require.True(t, ok)
@@ -2314,25 +2580,32 @@ Expected: `--- PASS` for all seven. If the escrow path burns instead of escrowin
 
 - [ ] **Step 10: Write the failing CLI test**
 
-Add to `x/stakeibc/client/cli/tx_wind_down_test.go`:
-
 ```go
+// x/stakeibc/client/cli/tx_wind_down_staketia_claim_test.go
+package cli_test
+
+import (
+	"testing"
+
+	"github.com/Stride-Labs/stride/v34/x/stakeibc/client/cli"
+)
+
 func TestCmdTransferStaketiaClaimBalance(t *testing.T) {
-	cmd := cli.CmdTransferStaketiaClaimBalance()
-	ExecuteCLIExpectError(t, cmd, []string{"banana"}, "can not convert string to int")
+	ExecuteCLIExpectError(t, cli.CmdTransferStaketiaClaimBalance(), []string{"banana"}, "can not convert string to int")
 }
 ```
 
 - [ ] **Step 11: Run it to verify it fails**
 
-Run: `go test ./x/stakeibc/client/cli/... -run TestCmdTransferStaketiaClaimBalance -v`
-Expected: build failure, `undefined: cli.CmdTransferStaketiaClaimBalance`.
+Run: `go test ./x/stakeibc/client/cli/... -run TestCmdTransferStaketiaClaimBalance -v 2>&1 | grep -E '^(--- (PASS|FAIL)|ok|FAIL)'`
+Expected: FAIL: the Task 2 stub returns "wired in a later task", not the expected string.
 
 - [ ] **Step 12: Write the CLI command**
 
-Add to `x/stakeibc/client/cli/tx_wind_down.go`:
+Replace the `CmdTransferStaketiaClaimBalance` function in `x/stakeibc/client/cli/tx_wind_down.go` (leave the import block alone):
 
 ```go
+// CmdTransferStaketiaClaimBalance: claim-address TIA to the celestia delegation ICA.
 func CmdTransferStaketiaClaimBalance() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "transfer-staketia-claim-balance [amount]",
@@ -2340,26 +2613,19 @@ func CmdTransferStaketiaClaimBalance() *cobra.Command {
 		Long: `Submits MsgTransferStaketiaClaimBalance (admin only). amount is in utia and is optional:
 omitted or 0 moves the whole balance. Use a small amount first as the live test.`,
 		Args: cobra.RangeArgs(0, 1),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			amount := sdkmath.ZeroInt()
 			if len(args) == 1 {
-				parsed, found := sdkmath.NewIntFromString(args[0])
-				if !found {
-					return errorsmod.Wrap(sdkerrors.ErrInvalidType, "can not convert string to int")
+				parsed, err := ParseBaseUnits(args[0])
+				if err != nil {
+					return err
 				}
 				amount = parsed
 			}
 
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgTransferStaketiaClaimBalance(clientCtx.GetFromAddress().String(), amount)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+			return broadcastWindDownTx(cmd, func(creator string) sdk.Msg {
+				return types.NewMsgTransferStaketiaClaimBalance(creator, amount)
+			})
 		},
 	}
 
@@ -2367,12 +2633,6 @@ omitted or 0 moves the whole balance. Use a small amount first as the live test.
 
 	return cmd
 }
-```
-
-Register in `tx.go`:
-
-```go
-	cmd.AddCommand(CmdTransferStaketiaClaimBalance())
 ```
 
 - [ ] **Step 13: Run the CLI test and the full stakeibc suite**
@@ -2383,7 +2643,7 @@ Expected: PASS; `ok` for keeper, types, cli.
 - [ ] **Step 14: Commit**
 
 ```bash
-git add x/stakeibc/types/message_transfer_staketia_claim_balance.go x/stakeibc/types/message_transfer_staketia_claim_balance_test.go x/stakeibc/keeper/wind_down_staketia_claim.go x/stakeibc/keeper/wind_down_staketia_claim_test.go x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx_wind_down_test.go x/stakeibc/client/cli/tx.go
+git add x/stakeibc/types/message_transfer_staketia_claim_balance.go x/stakeibc/types/message_transfer_staketia_claim_balance_test.go x/stakeibc/keeper/wind_down_staketia_claim.go x/stakeibc/keeper/wind_down_staketia_claim_test.go x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx_wind_down_staketia_claim_test.go
 git commit -m "feat(stakeibc): MsgTransferStaketiaClaimBalance, claim address TIA to the celestia delegation ICA
 
 Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
@@ -2398,9 +2658,24 @@ After Tasks 3–5 are merged back onto `wind-down-pr4-admin-txs`:
 Run: `go build ./... && go vet ./x/stakeibc/... && go test ./x/stakeibc/... ./x/staketia/... ./x/autopilot/... ./app/... 2>&1 | tail -8`
 Expected: all `ok`; the only known pre-existing failure in the repo is `utils` `TestCreateModuleAccount` (fails on main too, not in this set).
 
-Confirm no stub is left except the sweep: `grep -n "ErrNotSupported" x/stakeibc/keeper/msg_server_wind_down.go` prints exactly one line, the `SweepTokensOffStride` handler.
+Confirm no stub is left except the sweep: `grep -n "ErrNotSupported" x/stakeibc/keeper/msg_server_wind_down.go` prints exactly one line, the `SweepTokensOffStride` handler; `grep -n notWiredYet x/stakeibc/client/cli/tx_wind_down.go` prints only the helper's definition. In the merge commit delete the now-unused `notWiredYet` helper and the `var _ = sdk.UnwrapSDKContext` line (both exist only so the wave tasks never touch an import block), then rebuild.
 
 Confirm the module path was not touched: `git diff wind-down-pr3-upgrade-handler...HEAD -- go.mod` prints nothing.
+
+## Pre-proposal verification (ops, spec §9)
+
+The channel map is verified against each host before the proposal (§9). Add one check beside
+it: `MsgTransferFromIca` executes an ICS-20 `MsgTransfer` (or, on osmosis-1, a bank `MsgSend`)
+*through the host's ICA host module*, which only executes message types in its allow list. For
+every in-scope host, `curl -sA 'Mozilla/5.0' <host REST>/ibc/apps/interchain_accounts/host/v1/params`
+must list `/ibc.applications.transfer.v1.MsgTransfer` (and, for osmosis-1,
+`/cosmos.bank.v1beta1.MsgSend`) in `allow_messages`, or `host_enabled: true` with the
+allow-list wildcard `*`. A host that lacks it rejects the ICA with an error ack; the funds stay
+in the ICA and nothing is lost, but that zone cannot be drained to Osmosis until the host adds
+the message type by governance, which is a lead time of weeks and belongs in the checklist,
+not on the day. dYdX is the one host already proven (its trade route executed the same
+`MsgTransfer` from the withdrawal ICA for months); record the check's output for the other
+nine hosts in the proposal checklist.
 
 ---
 
@@ -2408,15 +2683,18 @@ Confirm the module path was not touched: `git diff wind-down-pr3-upgrade-handler
 
 **Spec coverage (§7, §11 for the three txs, §4, §13):**
 - Operator addresses as fail-closed vars, channel map, unwind whitelist, channel-5, 24h timeout, batch bound → Task 1.
-- Four protos in one proto-gen, both registrations, sweep stub → Task 2.
-- Undelegate: empty list = every funded validator; per-validator delegation − offset; rounding safety; rejects flagged validator, deprecated zone, queued/retry record (STRIDE-07); no accounting mutation; batch submit with nil ids; in-flight registration; halted zone accepted → Task 3, every §11 bullet has a named test.
+- Four protos in one proto-gen (amino name of the claim tx abbreviated to stay under the 39-char panic), both registrations, the four handler stubs, the CLI scaffold with the shared helpers and the three command registrations → Task 2.
+- Undelegate: empty list = every funded validator; per-validator delegation − offset; rounding safety; rejects flagged validator, validator with a slash query in progress, deprecated zone, queued/retry record (STRIDE-07), stored pending undelegation; no accounting mutation; batch submit with nil ids; in-flight registration; halted zone accepted; CLI requires a file or `--all` → Task 3, every §11 bullet has a named test.
 - Transfer: vault constant as receiver; mapped channel; osmosis-1 bank send; chain absent from map rejected; foreign denom; four ICA types; built `MsgTransfer` fields; no callback → Task 4. The "map covers every in-scope zone and no deprecated one" and "constants parse" tests are in Task 1.
 - Claim balance: optional amount, zero = all, over-balance and zero-balance rejected, only TIA moves, built fields, refund on timeout, keeper signs for the claim address via the records transfer keeper → Task 5.
-- CLI for all three, registered in `tx.go`.
+- CLI for all three: helpers and registration in Task 2, bodies in Tasks 3–5; the `transfer-from-ica` help warns that DELEGATION is the enum zero value.
+- Ops: the host-side ICA-host allow-list check for `MsgTransfer` is recorded in the pre-proposal section.
 - Out of scope and untouched: the sweep logic (PR 5), the release-gate address values (PR 6), the module-path bump.
 
 **Placeholder scan:** none. The one "if this helper does not exist" note in Task 5 Step 5 names the exact substitute.
 
-**Type consistency:** `BuildTransferFromIcaMsg` and `BuildStaketiaClaimTransferMsg` are package-level functions (tests call `keeper.Build...`); `BuildUndelegateFromValidatorsMsgs` and `UndelegateFromValidators`, `TransferFromIca`, `TransferStaketiaClaimBalance` are `Keeper` methods (tests call `s.App.StakeibcKeeper....`). Response field names (`NumBatchesSubmitted`, `Transferred`) match the proto in Task 2. Error names match Task 2. Event/attribute constants match Task 2.
+**Review fixes folded in (2026-09-29):** amino name length (was 40 chars, panics at init); `DelegationChangesInProgress` is `int64`; `TransferFromIca` tests create channels before `SetHostZone` because the first `CreateICAChannel` swaps `s.App`; `apptesting.SetupConfig()` in every `types_test`; no wave task touches `tx.go`, the CLI test file or an import block (add/add conflicts); pending-undelegation and slash-query guards; the ICA-host allow-list check; `--all` and the zero-value warning.
+
+**Type consistency:** `BuildTransferFromIcaMsg` and `BuildStaketiaClaimTransferMsg` are package-level functions (tests call `keeper.Build...`); `BuildUndelegateFromValidatorsMsgs` and `UndelegateFromValidators`, `TransferFromIca`, `TransferStaketiaClaimBalance` are `Keeper` methods (tests call `s.App.StakeibcKeeper....`). Response field names (`NumBatchesSubmitted`, `Transferred`) match the proto in Task 2. Error names match Task 2. Event/attribute constants match Task 2. CLI helpers `ReadValidatorUndelegations`, `ParseIcaType`, `ParseBaseUnits` are exported (Task 2 tests call them as `cli.X`); `broadcastWindDownTx` and `notWiredYet` are unexported. `Validator.DelegationChangesInProgress` is `int64` everywhere; `PendingUndelegationInFlight` is `uint64`.
 
 **Review tags:** every task is `Review: yes`; Task 1 and 2 are foundation, 3–5 are the parallel wave.

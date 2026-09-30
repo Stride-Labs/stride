@@ -153,8 +153,11 @@ Pipelines the design reuses:
   also halted. comdex-1 is neither halted nor deprecated on chain; its host chain is dead.
 - v34 has a chain-agnostic delegation delta helper (`app/upgrades/v34/delegation_deltas.go`):
   a per-validator table of on-chain minus tracked delegation, applied all-or-nothing to the
-  validators and `TotalDelegations`, skipped with a log (never an upgrade error) if any constant
-  no longer matches state, with a mainnet-export test. Injective and Celestia use it.
+  validators and `TotalDelegations`, skipped with a log (never an upgrade error) when a listed
+  validator is missing from the zone or a delta would drive a delegation negative (it does not
+  detect a tracked amount that merely changed; an unbond in the gap moves tracked and on-chain
+  by the same amount, so the delta survives it, and a slash in the gap is what the day-0
+  refresh catches), with a mainnet-export test. Injective and Celestia use it.
 - An ICA-wrapped IBC `MsgTransfer` from a host account to a third chain exists in the
   trade-route code (`BuildHostToTradeTransferMsg` sends from the withdrawal ICA on the host to
   Osmosis via Noble). Autopilot and staketia already call `transferKeeper.Transfer` from
@@ -324,10 +327,11 @@ host chain, so there is no Stride-side vault.
 | -------------- | ------- | --------------------------- | ---------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Protocol admin | Stride  | key (F5) and the gov module | exists, `utils.Admins` | `utils.Admins`         | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (F5), `stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl` (gov) | Signs `MsgUndelegateFromValidators`, `MsgTransferFromIca`, `MsgTransferStaketiaClaimBalance`, and the two admin-gated ICQ messages.                                                                               |
 | Sweep operator | Stride  | new key                     | to create              | `SweepOperatorAddress` | `stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh` (paste here)                                                | The only address that can sign `MsgSweepTokensOffStride`. Separate from the protocol admin so the sweep, the one tx that moves user balances, has its own key and its own blast radius. Holds STRD for fees only. |
-| Osmosis vault  | Osmosis | new multisig                | to create              | `OsmosisVaultAddress`  | `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af` (paste here)                                                  | Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator.                                                                                  |
+| Osmosis vault  | Osmosis | the protocol-admin multisig | exists (same key set)  | `OsmosisVaultAddress`  | `osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af`                                                               | The protocol-admin multisig re-encoded with the `osmo` prefix (same 20 bytes, same signers). Receives every ICA transfer, instantiates and funds the pools, holds the alloyed assets, and is each pool's admin and moderator. |
 
-The sweep operator and the Osmosis vault are created and proven before the upgrade PR is cut
-(a signed spend from each), and their addresses go into the binary as constants (§9). The
+The Osmosis vault is deliberately the same multisig as the protocol admin, so no new key set
+is created for it; both constants are still proven before the release-gate PR merges (a
+signed spend from each on its own chain) and double-checked against this table (§9). The
 Osmosis vault's moderator role on the pools can be split to a second multisig later with
 `assign_moderator`; that is an ops choice, not a design point.
 
@@ -724,14 +728,21 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   with any difference either in the haqq delta table or explained. The haqq delegation delta
   table, the drift measurement and the mainnet-export tests match the chain at one recent
   height. A haqq redemption unbonding at the upgrade would
-  change the drift; measure right before the proposal and expect the delta helper to skip
-  (never error) if it no longer matches, with the `offset` on the drain tx as the fallback.
+  change the drift; measure right before the proposal. The delta helper skips (never errors)
+  only on a missing validator or a negative result (§3), so a table that is merely stale is
+  applied as is; the day-0 refresh and the `offset` on the drain tx are the fallback.
 - On every in-scope host, the delegation ICA's withdraw address (distribution module query) is
   the zone's withdrawal ICA; the epoch call that re-set it every epoch is deleted (§6).
-- The two new address constants, the channel map and `SweepUnwindChannels` in the binary
+- The two address constants, the channel map and `SweepUnwindChannels` in the binary
   re-verified: the maps against the hosts, each address by a test transfer of a few tokens to
   it from any wallet followed by a signed spend from it, so every constant is proven to be an
   address we control before anything is sent there.
+- On every in-scope host, the ICA host module's `allow_messages` (REST
+  `/ibc/apps/interchain_accounts/host/v1/params`) includes
+  `/ibc.applications.transfer.v1.MsgTransfer`, and on osmosis-1 `/cosmos.bank.v1beta1.MsgSend`,
+  since `MsgTransferFromIca` executes exactly those through the ICA (§7). A host that rejects
+  the message leaves the funds in the ICA, so this is a delay, not a loss, but it belongs
+  beside the channel check.
 - The staketia and stakedym operators ready to act on day 0.
 
 The ops window (after the upgrade, ~40 days). The redemptions open at the upgrade are queued,
