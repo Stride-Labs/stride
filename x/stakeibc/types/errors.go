@@ -73,4 +73,6 @@ var (
 	ErrOsmosisVaultNotConfigured           = errorsmod.Register(ModuleName, 1566, "osmosis vault address is not configured")
 	ErrNoOsmosisChannelForHostZone         = errorsmod.Register(ModuleName, 1567, "host zone has no transfer channel to osmosis")
 	ErrHostZoneUnbondingPending            = errorsmod.Register(ModuleName, 1568, "host zone has an unbonding record queued or retrying")
+	ErrSweepDestinationUnavailable         = errorsmod.Register(ModuleName, 1569, "sweep destination unavailable for denom")
+	ErrSweepOperatorNotConfigured          = errorsmod.Register(ModuleName, 1570, "sweep operator address is not configured")
 )

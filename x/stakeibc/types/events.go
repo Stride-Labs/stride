@@ -23,6 +23,8 @@ const (
 	EventTypeUndelegationFailed                = "undelegation_failed"
 	EventTypeRedemptionSweep                   = "redemption_sweep"
 	EventTypeTransferFromIca                   = "transfer_from_ica"
+	EventTypeSweepSkipped                      = "sweep_skipped"
+	EventTypeSweepTransfer                     = "sweep_transfer"
 	EventTypeTransferStaketiaClaimBalance      = "transfer_staketia_claim_balance"
 
 	AttributeKeyHostZone         = "host_zone"
@@ -55,6 +57,13 @@ const (
 	AttributeKeySlashPercent               = "slash_percent"
 	AttributeKeySlashAmount                = "slash_amount"
 	AttributeKeyCurrentDelegation          = "current_delegation"
+
+	AttributeKeySweepAddress  = "address"
+	AttributeKeySweepReason   = "reason"
+	AttributeKeySweepDenom    = "denom"
+	AttributeKeySweepAmount   = "amount"
+	AttributeKeySweepChannel  = "channel"
+	AttributeKeySweepReceiver = "receiver"
 
 	AttributeKeyIcaType = "ica_type"
 	AttributeKeyChannel = "channel"
