@@ -21,6 +21,15 @@ import (
 // CreateUpgradeHandler returns the v35 upgrade handler, the wind-down upgrade
 // (docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md §5). Every step
 // logs and skips on missing state; only the wasm upload-access write can fail the upgrade.
+// The steps run in this order:
+//  1. RunMigrations.
+//  2. Turn off autopilot stakeibc and drop liquid stake / redeem stake from the ICA host allow-list.
+//  3. Restrict wasm code upload to gov, then move the deploy key's contract admins to gov.
+//  4. Mark comdex-1 deprecated and delete the dYdX trade route.
+//  5. Deactivate the ICA oracles and empty the rate limiter.
+//  6. Reset stale DelegationChangesInProgress flags on zones with no ICA in flight.
+//  7. Purge haqq's pending slash-path ICQs, then every pending withdrawal-balance ICQ.
+//  8. Apply the haqq delegation delta table (after its ICQs are gone).
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read
@@ -72,8 +81,6 @@ func CreateUpgradeHandler(
 
 		// Haqq delegation reconciliation, after its slash-path ICQs are gone (spec §5)
 		ReconcileHaqqDelegations(ctx, stakeibcKeeper)
-
-		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
 		return vm, nil
