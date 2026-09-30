@@ -98,7 +98,10 @@ func CmdUndelegateFromValidators() *cobra.Command {
 are drained, each for its recorded delegation minus the offset; the file is a JSON list:
   [{"address": "cosmosvaloper1...", "offset": "0"}, ...]
 With --all and no file, every validator with a recorded delegation is drained in full. One of
-the two is required; the full drain is never the default.`,
+the two is required; the full drain is never the default. An empty file is rejected.
+
+Note for hand-written JSON txs (--generate-only, multisig): an omitted or empty "validators"
+field means a full drain of every validator with a recorded delegation.`,
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			argChainId := args[0]
@@ -119,6 +122,10 @@ the two is required; the full drain is never the default.`,
 				validators, err = ReadValidatorUndelegations(args[1])
 				if err != nil {
 					return err
+				}
+				// An empty list in the message means a full drain, so an empty file must not reach it
+				if len(validators) == 0 {
+					return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "validators file is empty; use --all for a full drain")
 				}
 			}
 

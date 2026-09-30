@@ -71,3 +71,14 @@ func TestOperatorAddressesParse(t *testing.T) {
 		require.NoError(t, err, "sweep operator must be a stride bech32 address")
 	}
 }
+
+// The transfer builder branches on the chain id, so nothing but osmosis-1 may map to ""
+func TestOnlyOsmosisMapsToEmptyChannel(t *testing.T) {
+	for chainId, channelId := range types.HostToOsmosisTransferChannel {
+		if chainId == types.OsmosisChainId {
+			require.Empty(t, channelId)
+			continue
+		}
+		require.NotEmpty(t, channelId, "%s must have a channel", chainId)
+	}
+}
