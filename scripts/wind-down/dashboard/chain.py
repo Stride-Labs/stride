@@ -365,7 +365,7 @@ def _newest_tx(chain: Chain, query: str) -> TxRef | None:
         return None
 
     height = int(txs[0]["height"])
-    return TxRef(height=height, time=block_time(rpc=chain.rpc, height=height))
+    return TxRef(height=height, time=parse_timestamp(timestamp=block_time(rpc=chain.rpc, height=height)).isoformat())
 
 
 @functools.lru_cache(maxsize=256)

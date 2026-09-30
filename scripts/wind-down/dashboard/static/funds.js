@@ -47,7 +47,7 @@ function selectionPanels(data) {
 
 function stagePanel(zones) {
   const legend = STAGES.map((stage) => `<span><i style="background:var(${stage.color})"></i>${stage.label}</span>`).join('');
-  const header = `<tr><th>Zone</th><th>Progress</th><th class="num">Staked</th><th class="num">Unbonding</th><th title="earliest unbonding completion">Next maturity</th>
+  const header = `<tr><th>Zone</th><th>Progress</th><th class="num">Staked</th><th class="num">Unbonding</th><th title="earliest (and latest) unbonding completion">Next maturity</th>
     <th class="num" title="delegation + withdrawal + fee ICA balances">Liquid</th><th class="num">In flight</th><th class="num">Vault</th><th class="num">In pools</th>
     <th class="num" title="owed to open user claims, not part of the bar">Redemption</th><th class="num" title="stToken supply × redemption rate">Needed</th><th>Coverage</th></tr>`;
   return `<div class="panel"><h2>Where the backing is, per zone <span class="sub">native units · click a row for its diagram and accounts</span></h2>
@@ -86,7 +86,10 @@ function stageBar(stages) {
 function maturityCell(zone) {
   if (!zone.unbonding_earliest) return '–';
   const remaining = (Date.parse(zone.unbonding_earliest) - Date.now()) / 1000;
-  return `${shortDate(zone.unbonding_earliest)} · ${remaining > 0 ? formatDuration(remaining) : 'matured'}`;
+  const last = zone.unbonding_latest && zone.unbonding_latest !== zone.unbonding_earliest
+    ? ` · last ${shortDate(zone.unbonding_latest)}`
+    : '';
+  return `${shortDate(zone.unbonding_earliest)} · ${remaining > 0 ? formatDuration(remaining) : 'matured'}${last}`;
 }
 
 // Covered once the ratio reaches one; bad when nothing is left upstream and it has not; idle while funds still move.
@@ -240,7 +243,7 @@ function accountRow(account) {
   const others = account.other_balances.map((balance) => `also ${escapeHtml(balance.amount)} ${shortDenom(balance.denom)}`);
   const note = [account.note, ...others].filter(Boolean).join(' · ');
   return `<tr><td>${escapeHtml(account.name)}</td><td>${escapeHtml(account.chain)}</td><td>${addressCell(account.address, 14, 8)}</td>
-    ${cell(account.liquid)}${cell(account.staked)}${cell(account.unbonding)}<td class="muted">${note}</td></tr>`;
+    ${cell(account.liquid)}${cell(account.staked)}${cell(account.unbonding)}<td class="muted">${escapeHtml(note)}</td></tr>`;
 }
 
 // ---- formatting

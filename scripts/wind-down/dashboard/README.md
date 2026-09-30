@@ -77,5 +77,7 @@ Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`
   packet has no receive tx, so one sent by a hook stays unknown-age and shows as `pending` with the sequence only.
 - If a host's REST is down the zone still renders from Stride and the feed (host-side cells `n/a`, a "host REST
   unreachable" badge); its host -> Osmosis leg shows as an error row.
+- On a channel with more than 1,000 commitments the "oldest pending" sequence is the lowest among the first commitments
+  the store returns (keyed by decimal string, so lexicographic), not guaranteed to be the true minimum.
 - Funds: if Osmosis cannot be read, vault, pools and coverage are `n/a` for every zone; a timed-out ICA transfer
   shows as `settled` (its commitment is gone) although the tokens were refunded to the ICA, where they show as liquid.

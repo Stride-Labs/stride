@@ -684,16 +684,37 @@ def _staketia(
         position=position,
     )
     side_specs = [
-        AccountSpec("Staketia reward address", host.chain_id, host, staketia_zone["reward_address"], native, "rewards land here"),
-        AccountSpec("Staketia deposit address", ChainName.STRIDE, stride, staketia_zone["deposit_address"], voucher, "TIA voucher"),
-        AccountSpec("Staketia redemption address", ChainName.STRIDE, stride, staketia_zone["redemption_address"], voucher, "TIA voucher"),
         AccountSpec(
-            "Staketia claim address",
-            ChainName.STRIDE,
-            stride,
-            staketia_zone["claim_address"],
-            voucher,
-            "TIA voucher · MsgTransferStaketiaClaimBalance sends it to the delegation ICA",
+            name="Staketia reward address",
+            chain_name=host.chain_id,
+            chain_handle=host,
+            address=staketia_zone["reward_address"],
+            denom=native,
+            note="rewards land here",
+        ),
+        AccountSpec(
+            name="Staketia deposit address",
+            chain_name=ChainName.STRIDE,
+            chain_handle=stride,
+            address=staketia_zone["deposit_address"],
+            denom=voucher,
+            note="TIA voucher",
+        ),
+        AccountSpec(
+            name="Staketia redemption address",
+            chain_name=ChainName.STRIDE,
+            chain_handle=stride,
+            address=staketia_zone["redemption_address"],
+            denom=voucher,
+            note="TIA voucher",
+        ),
+        AccountSpec(
+            name="Staketia claim address",
+            chain_name=ChainName.STRIDE,
+            chain_handle=stride,
+            address=staketia_zone["claim_address"],
+            denom=voucher,
+            note="TIA voucher · MsgTransferStaketiaClaimBalance sends it to the delegation ICA",
         ),
     ]
     side_accounts = [
