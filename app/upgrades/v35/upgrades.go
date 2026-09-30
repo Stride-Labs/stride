@@ -55,6 +55,10 @@ func CreateUpgradeHandler(
 		}
 		MoveDeployKeyContractAdminsToGov(ctx, wasmKeeper)
 
+		// Stakeibc state flips (spec §5)
+		DeprecateComdex(ctx, stakeibcKeeper)
+		DeleteDydxTradeRoute(ctx, stakeibcKeeper)
+
 		// Helpers are added here by the later tasks, in the order fixed by the plan
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
