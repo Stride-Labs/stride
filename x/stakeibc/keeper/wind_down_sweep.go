@@ -15,7 +15,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	claimvestingtypes "github.com/Stride-Labs/stride/v34/x/claim/vesting/types"
-	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
 )
@@ -70,18 +69,18 @@ func (k Keeper) resolveSweepDestination(ctx sdk.Context, denom string) (sweepDes
 	return sweepDestination{ChannelId: outerChannel, Bech32Prefix: prefix}, nil
 }
 
-// isSweepableNativeDenom accepts only ustrd and the stTokens: those of every stakeibc host zone
-// and of staketia and stakedym (whose native denoms are constants, as stakeibc has no keeper
-// for them). Any other native denom has no known supply on Osmosis to route to
+// isSweepableNativeDenom accepts only ustrd, stutia (staketia's native denom is a constant, as
+// stakeibc has no keeper for it) and the stTokens of active (non-deprecated) stakeibc host zones.
+// Any other native denom, including stadym and a deprecated zone's stToken, has no supply on
+// Osmosis to route to
 func (k Keeper) isSweepableNativeDenom(ctx sdk.Context, denom string) bool {
 	switch denom {
 	case utils.BaseStrideDenom,
-		types.StAssetDenomFromHostZoneDenom(staketiatypes.CelestiaNativeTokenDenom),
-		types.StAssetDenomFromHostZoneDenom(stakedymtypes.DymensionNativeTokenDenom):
+		types.StAssetDenomFromHostZoneDenom(staketiatypes.CelestiaNativeTokenDenom):
 		return true
 	}
 	for _, hostZone := range k.GetAllHostZone(ctx) {
-		if denom == types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) {
+		if !hostZone.Deprecated && denom == types.StAssetDenomFromHostZoneDenom(hostZone.HostDenom) {
 			return true
 		}
 	}

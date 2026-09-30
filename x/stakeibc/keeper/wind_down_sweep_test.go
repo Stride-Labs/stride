@@ -79,9 +79,14 @@ func (s *KeeperTestSuite) TestResolveSweepDestination() {
 			expected: keeper.SweepDestinationForTest{ChannelId: "channel-5", Bech32Prefix: "osmo"},
 		},
 		{
-			name:     "stakedym stToken goes to osmosis",
-			denom:    "stadym",
-			expected: keeper.SweepDestinationForTest{ChannelId: "channel-5", Bech32Prefix: "osmo"},
+			name:        "stakedym stToken is rejected: the zone is deprecated",
+			denom:       "stadym",
+			expectedErr: types.ErrSweepDestinationUnavailable,
+		},
+		{
+			name:        "stToken of a deprecated host zone is rejected",
+			denom:       "stuosmo",
+			expectedErr: types.ErrSweepDestinationUnavailable,
 		},
 		{
 			name:        "made-up native denom is rejected",
@@ -130,6 +135,7 @@ func (s *KeeperTestSuite) TestResolveSweepDestination() {
 // setSweepHostZone registers the cosmoshub host zone so stuatom is a known stToken
 func (s *KeeperTestSuite) setSweepHostZone() {
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{ChainId: "cosmoshub-4", HostDenom: "uatom"})
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{ChainId: "osmosis-1", HostDenom: "uosmo", Deprecated: true})
 }
 
 // setBaseAccount stores a plain BaseAccount at the address, replacing any account already there
@@ -145,6 +151,7 @@ func (s *KeeperTestSuite) TestSweepProtocolAddressesMatchModuleConstants() {
 	s.Require().ElementsMatch([]string{
 		staketiatypes.DepositAddress, staketiatypes.RedemptionAddress, staketiatypes.ClaimAddress,
 		stakedymtypes.DepositAddress, stakedymtypes.RedemptionAddress, stakedymtypes.ClaimAddress,
+		staketiatypes.SafeAddressOnStride, stakedymtypes.SafeAddressOnStride, staketiatypes.OperatorAddressOnStride,
 	}, types.SweepProtocolAddresses())
 
 	types.SweepOperatorAddress = s.TestAccs[0].String()

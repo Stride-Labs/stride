@@ -53,7 +53,8 @@ UNWIND_CHANNELS = {
     "channel-160": "dydx",
 }
 
-# Mirror of types.SweepProtocolAddresses (constants part): staketia S0-S2 and stakedym S4-S6
+# Mirror of types.SweepProtocolAddresses (constants part): staketia S0-S3 and stakedym S4-S7 plus
+# the staketia operator
 PROTOCOL_ADDRESSES = {
     "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
     "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption
@@ -61,7 +62,17 @@ PROTOCOL_ADDRESSES = {
     "stride1e7j8d6sdq272fqe2jfxjpgcagn04j75w9695fj",  # stakedym deposit
     "stride1jpsnc0ynufa2aheflj6mxzzzsu7nlwqk7ff69n",  # stakedym redemption
     "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras",  # stakedym claim
+    "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc",  # staketia safe
+    "stride1sj8gyqeqecqhqu7em67hn2tjzhpkdf8wz5plh7",  # stakedym safe
+    "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw",  # staketia operator
 }
+
+# Mirror of the always-allowed native denoms in isSweepableNativeDenom; the rest are the stTokens of
+# the export's non-deprecated host zones
+ALWAYS_SWEEPABLE_NATIVE_DENOMS = {"ustrd", "stutia"}
+# The default --sweep-operator (spec §4)
+DEFAULT_SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
+INTERCHAIN_ACCOUNT = "/ibc.applications.interchain_accounts.v1.InterchainAccount"
 
 # Module accounts the bank keeper blocks (app.BlacklistedModuleAccountAddrs: the names in maccPerms in
 # app/app.go except the stakeibc, reward collector, staketia and stakedym ones and
@@ -121,6 +132,8 @@ class Export:
     vesting: dict[str, VestingSchedule]  # address -> schedule, vesting accounts only
     as_of: int  # --as-of as unix seconds: the block time at the export height, when locks are measured
     module_addresses: set[str]  # sha256(name)[:20] of every ModuleAccount in auth.accounts
+    allowed_native_denoms: set[str]  # ustrd, stutia and st<host_denom> of every non-deprecated host zone
+    keyless: set[str]  # accounts with no pubkey and sequence 0: possibly keyless hash addresses
 
 
 @dataclasses.dataclass
@@ -142,6 +155,7 @@ class HolderPlan:
     denoms: list[str]
     holders: list[Holder]
     skipped: list[Skipped]
+    keyless_candidates: list[Holder] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
@@ -165,7 +179,7 @@ def main() -> None:
     # Every denom on the final list must have an on-chain destination, however it got there:
     # an ibc/ voucher passed through --denoms is checked exactly like an --extra-denom one
     for denom in denoms:
-        check_denom_destination(denom=denom, traces=export.denom_traces)
+        check_denom_destination(denom=denom, traces=export.denom_traces, allowed_native=export.allowed_native_denoms)
 
     plan = classify_holders(
         export=export, denoms=denoms, prices=prices, floor_usd=args.floor_usd, sweep_operator=args.sweep_operator
@@ -189,7 +203,11 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="block time at the export height, ISO-8601 or unix seconds (`strided q block <height>`, header.time)",
     )
-    parser.add_argument("--sweep-operator", help="stride1... operator address, excluded like the protocol addresses")
+    parser.add_argument(
+        "--sweep-operator",
+        default=DEFAULT_SWEEP_OPERATOR,
+        help="stride1... operator address, excluded like the protocol addresses (default: spec §4)",
+    )
     parser.add_argument("--batch-size", type=batch_size_arg, default=BATCH_SIZE_DEFAULT, help=f"1..{MAX_SWEEP_ADDRESSES_PER_TX}")
     parser.add_argument("--extra-denom", action="append", default=[], help="DENOM=USD_PER_TOKEN:DECIMALS")
     return parser.parse_args()
@@ -232,6 +250,12 @@ def load_export(path: pathlib.Path, as_of: int) -> Export:
     account_types = {account_address(account): account["@type"] for account in accounts}
     vesting = {account_address(account): vesting_schedule(account) for account in accounts if account["@type"] in VESTING_ACCOUNT_TYPES}
 
+    keyless = {account_address(account) for account in accounts if is_keyless(account)}
+    host_zones = app_state.get("stakeibc", {}).get("host_zone_list", [])
+    allowed_native = ALWAYS_SWEEPABLE_NATIVE_DENOMS | {
+        "st" + host_zone["host_denom"] for host_zone in host_zones if not host_zone.get("deprecated")
+    }
+
     module_addresses = {module_address(account["name"]) for account in accounts if account["@type"] == MODULE_ACCOUNT}
 
     channels = app_state.get("ibc", {}).get("channel_genesis", {}).get("channels", [])
@@ -252,7 +276,16 @@ def load_export(path: pathlib.Path, as_of: int) -> Export:
         vesting=vesting,
         as_of=as_of,
         module_addresses=module_addresses,
+        allowed_native_denoms=allowed_native,
+        keyless=keyless,
     )
+
+
+def is_keyless(account: dict) -> bool:
+    """No pubkey and sequence 0 in the export: the account has never signed, so it may be a hash
+    address nobody holds a key for (autopilot's, for one). Vesting and ICA accounts nest the base."""
+    base = account.get("base_account") or account.get("base_vesting_account", {}).get("base_account") or account
+    return not base.get("pub_key") and int(base.get("sequence", 0)) == 0
 
 
 def vesting_schedule(account: dict) -> VestingSchedule:
@@ -359,6 +392,7 @@ def classify_holders(
     blocked = export.module_addresses | {module_address(name) for name in BLOCKED_MODULE_NAMES}
     holders: list[Holder] = []
     skipped: list[Skipped] = []
+    keyless_candidates: list[Holder] = []
 
     for address, coins in export.balances.items():
         # The chain sweeps SpendableCoin: a vesting account's balance minus what its schedule still
@@ -378,10 +412,14 @@ def classify_holders(
         if usd < floor:
             skipped.append(Skipped(address=address, reason=f"below floor (${usd:.2f} < ${floor:.2f})", usd=usd))
             continue
-        holders.append(Holder(address=address, usd=usd, balances=listed))
+        holder = Holder(address=address, usd=usd, balances=listed)
+        holders.append(holder)
+        if address in export.keyless:
+            keyless_candidates.append(holder)
 
     holders.sort(key=lambda holder: holder.usd, reverse=True)
-    return HolderPlan(denoms=denoms, holders=holders, skipped=skipped)
+    keyless_candidates.sort(key=lambda holder: holder.usd, reverse=True)
+    return HolderPlan(denoms=denoms, holders=holders, skipped=skipped, keyless_candidates=keyless_candidates)
 
 
 def skip_reason(address: str, export: Export, protocol: set[str], blocked: set[str]) -> str | None:
@@ -398,6 +436,8 @@ def skip_reason(address: str, export: Export, protocol: set[str], blocked: set[s
     account_type = export.account_types.get(address)
     if account_type is None:
         return "account not found"
+    if account_type == INTERCHAIN_ACCOUNT:
+        return "interchain account"
     if account_type not in SWEEPABLE_ACCOUNT_TYPES:
         return f"account type {account_type} is not sweepable"
     if address in export.contract_addresses:
@@ -424,8 +464,15 @@ def write_batches(plan: HolderPlan, out_dir: pathlib.Path, batch_size: int) -> l
             "usd": f"{sum((holder.usd for holder in batch), Decimal(0)):.2f}",
         })
 
+    # For ops to review by hand: holders that pass every rule but never signed, so they may be keyless
+    # hash addresses. They stay in the batches; this only lists them
+    (out_dir / "keyless_candidates.txt").write_text(
+        "".join(f"{holder.address} ${holder.usd:.2f}\n" for holder in plan.keyless_candidates)
+    )
+
     summary = {
         "denoms": plan.denoms,
+        "num_keyless_candidates": len(plan.keyless_candidates),
         "batches": batches,
         "skipped": [{"address": entry.address, "reason": entry.reason, "usd": f"{entry.usd:.2f}"} for entry in plan.skipped],
     }
@@ -441,10 +488,13 @@ def parse_extra_denom(spec: str) -> ExtraDenom:
     return ExtraDenom(denom=denom, usd_per_token=float(usd_per_token), decimals=int(decimals))
 
 
-def check_denom_destination(denom: str, traces: dict[str, list[str]]) -> None:
-    """Mirror of resolveSweepDestination: a native denom always has one (channel-5), an ibc/ denom
-    only if its outermost hop is a whitelisted unwind channel. Raises ValueError naming the denom."""
+def check_denom_destination(denom: str, traces: dict[str, list[str]], allowed_native: set[str]) -> None:
+    """Mirror of resolveSweepDestination: a native denom has one (channel-5) only if it is in the
+    allow-list, an ibc/ denom only if its outermost hop is a whitelisted unwind channel. Raises
+    ValueError naming the denom."""
     if not denom.startswith(IBC_PREFIX):
+        if denom not in allowed_native:
+            raise ValueError(f"native denom {denom} is neither ustrd, stutia nor an active host zone's stToken")
         return
     hops = traces.get(denom)
     if not hops:
