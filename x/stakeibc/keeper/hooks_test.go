@@ -142,9 +142,9 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_DayEpoch_KeptFlowsRunNoNewRecord(
 	s.Require().Equal(uint64(dayEpoch), tracker.EpochNumber, "day tracker updated by the hook")
 }
 
-// The stride epoch keeps three flows: withdrawing accrued rewards to the withdrawal ICA,
-// carrying TRANSFER_QUEUE deposits to the delegation ICA, and sweeping completed unbondings
-// to the redemption ICA. Everything that compounded is gone, and the redemption rate is the
+// The stride epoch keeps two flows: carrying TRANSFER_QUEUE deposits to the delegation ICA,
+// and sweeping completed unbondings to the redemption ICA. Everything that compounded is
+// gone, and the redemption rate is the
 // proof: with deposit records and rewards present the old formula would have moved it and
 // the frozen hook leaves it exactly where it was.
 //
@@ -240,12 +240,10 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_StrideEpoch_RateFrozenKeptFlowsRu
 	hostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Equal(initialRate, hostZone.RedemptionRate, "redemption rate must not move on a stride epoch")
 
-	// Kept, on the delegation ICA channel: exactly two ICAs. One is the reward withdrawal
-	// (ClaimAccruedStakingRewards, one MsgWithdrawDelegatorReward for the one funded validator),
-	// the other the redemption sweep. The deleted SetWithdrawalAddress ICA and the deleted
-	// delegate ICA for the DELEGATION_QUEUE record would each have added one more.
-	s.Require().Equal(delegationStartSequence+2, s.MustGetNextSequenceNumber(delegationPortId, delegationChannelId),
-		"delegation channel carries the reward withdrawal and the sweep, nothing else")
+	// Only the redemption sweep uses the delegation ICA. Reward claims, withdrawal-address
+	// changes, and delegating the DELEGATION_QUEUE record must not add packets.
+	s.Require().Equal(delegationStartSequence+1, s.MustGetNextSequenceNumber(delegationPortId, delegationChannelId),
+		"delegation channel carries only the redemption sweep")
 	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeyHostZone, HostChainId)
 	s.CheckEventValueEmitted(types.EventTypeRedemptionSweep, types.AttributeKeySweptAmount, "1000000")
 	sweptRecord, found := s.App.RecordsKeeper.GetHostZoneUnbondingByChainId(s.Ctx, 1, HostChainId)
@@ -275,6 +273,42 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_StrideEpoch_RateFrozenKeptFlowsRu
 	tracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, epochstypes.STRIDE_EPOCH)
 	s.Require().True(found, "stride epoch tracker set")
 	s.Require().Equal(uint64(strideEpoch), tracker.EpochNumber, "stride tracker updated by the hook")
+}
+
+func (s *KeeperTestSuite) TestBeforeEpochStart_StrideEpoch_NoRewardICA() {
+	delegationOwner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	delegationChannelId, delegationPortId := s.CreateICAChannel(delegationOwner)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+		ChainId:              HostChainId,
+		HostDenom:            Atom,
+		ConnectionId:         ibctesting.FirstConnectionID,
+		DelegationIcaAddress: s.IcaAddresses[delegationOwner],
+		WithdrawalIcaAddress: "cosmos_WITHDRAWAL",
+		RedemptionRate:       sdkmath.LegacyOneDec(),
+		TotalDelegations:     sdkmath.NewInt(5),
+		Validators: []*types.Validator{{
+			Address: ValAddress, Delegation: sdkmath.NewInt(5), SharesToTokensRate: sdkmath.LegacyOneDec(),
+		}},
+	})
+	before := s.MustGetHostZone(HostChainId)
+	s.Require().False(before.Halted, "active validator remains funded so reward claims would send a packet")
+	delegationStartSequence := s.MustGetNextSequenceNumber(delegationPortId, delegationChannelId)
+	transferStartSequence := s.MustGetNextSequenceNumber(ibctesting.TransferPort, ibctesting.FirstChannelID)
+
+	// With no deposit or unbonding records, repeated epochs have no reason to send traffic.
+	for epochNumber := int64(7); epochNumber <= 9; epochNumber++ {
+		s.App.StakeibcKeeper.BeforeEpochStart(s.Ctx, s.epochInfoForHook(epochstypes.STRIDE_EPOCH, epochNumber))
+		s.Require().Equal(delegationStartSequence, s.MustGetNextSequenceNumber(delegationPortId, delegationChannelId),
+			"epoch %d must not submit a staking reward ICA", epochNumber)
+		s.Require().Equal(transferStartSequence, s.MustGetNextSequenceNumber(ibctesting.TransferPort, ibctesting.FirstChannelID))
+		s.Require().Equal(before, s.MustGetHostZone(HostChainId), "validator delegation and rate remain unchanged")
+		s.Require().Empty(s.App.RecordsKeeper.GetAllDepositRecord(s.Ctx))
+		s.Require().Empty(s.App.RecordsKeeper.GetAllEpochUnbondingRecord(s.Ctx))
+		s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
+		tracker, found := s.App.StakeibcKeeper.GetEpochTracker(s.Ctx, epochstypes.STRIDE_EPOCH)
+		s.Require().True(found)
+		s.Require().Equal(uint64(epochNumber), tracker.EpochNumber, "tracker advances even without ICA traffic")
+	}
 }
 
 // The mint epoch used to liquid stake 15% of the reward collector's host fees for the POA
@@ -307,6 +341,7 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_SourceHasNoCompoundingCalls() {
 	body := string(source[start:end])
 
 	deletedCalls := []string{
+		"k.ClaimAccruedStakingRewards(",
 		"k.UpdateRedemptionRates(",
 		"k.ReinvestRewards(",
 		"k.StakeExistingDepositsOnHostZones(",
@@ -326,7 +361,6 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_SourceHasNoCompoundingCalls() {
 		"k.InitiateAllHostZoneUnbondings(",
 		"k.SubmitPendingUndelegations(",
 		"k.CleanupEpochUnbondingRecords(",
-		"k.ClaimAccruedStakingRewards(",
 		"k.TransferExistingDepositsToHostZones(",
 		"k.SweepUnbondedTokensAllHostZones(",
 	}
@@ -342,6 +376,7 @@ func (s *KeeperTestSuite) TestBeforeEpochStart_SourceHasNoCompoundingCalls() {
 // dead from the hook but kept until the follow-up cleanup (spec §6, §12), and other tests
 // call them directly.
 var (
+	_ = keeper.Keeper.ClaimAccruedStakingRewards
 	_ = keeper.Keeper.UpdateRedemptionRates
 	_ = keeper.Keeper.ReinvestRewards
 	_ = keeper.Keeper.StakeExistingDepositsOnHostZones
