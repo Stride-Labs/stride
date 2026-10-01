@@ -216,7 +216,8 @@ func CmdSweepTokensOffStride() *cobra.Command {
 		Long: `Sends each listed denom that each holder in the file owns to the holder's own address on the
 destination chain: stTokens and ustrd to Osmosis over channel-5, IBC vouchers back one hop over the
 channel they arrived on (whitelisted channels only). denoms is comma-separated. The file holds one
-Stride address per line, at most 100.`,
+Stride address per line. There is no on-chain cap on the number of addresses: the tx is atomic, so
+a batch too large for the block gas limit fails as a whole (build_sweep_batches.py defaults to 100).`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			denoms := parseCommaSeparated(args[0])
