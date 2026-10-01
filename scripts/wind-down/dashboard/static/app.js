@@ -77,6 +77,18 @@ function countErrors(data) {
 
 // ---- shell
 
+// Zero cells are the bulk of every table and carry no news; dim them after each render (snapshot or
+// client-side) so the eye lands on the non-zero ones. Matches "0", "0.000000", "0 / 7", "0%", "0.00 TIA".
+const ZERO_CELL = /^[-+]?0+(\.0+)?(\s*\/\s*\d+)?(\s*%|\s+[A-Za-z]+)?$/;
+
+function muteZerosIn(root) {
+  const mute = () => root.querySelectorAll('td.num:not(.zero)').forEach((cell) => {
+    if (ZERO_CELL.test(cell.textContent.trim())) cell.classList.add('zero');
+  });
+  new MutationObserver(mute).observe(root, { childList: true, subtree: true });
+  mute();
+}
+
 async function startApp() {
   document.querySelectorAll('.tab').forEach((button) => {
     button.onclick = () => {
@@ -87,6 +99,7 @@ async function startApp() {
   document.getElementById('refreshButton').onclick = refreshActiveTab;
   selectTab(TAB_NAMES.includes(location.hash.slice(1)) ? location.hash.slice(1) : TAB_NAMES[0]);
   document.addEventListener('click', copyOnClick);
+  TAB_NAMES.forEach((name) => muteZerosIn(document.getElementById(`view-${name}`)));
 
   TAB_NAMES.filter((name) => !renderers[name]).forEach((name) => {
     document.getElementById(`view-${name}`).innerHTML = '<div class="placeholder">not built</div>';
