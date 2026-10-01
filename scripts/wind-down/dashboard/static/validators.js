@@ -145,8 +145,11 @@ function zoneRow(row, zone) {
     <td>${bondCell(row.bond_status, row.jailed)}</td></tr>`;
 }
 
+// Rate differences below 1e-6 are the host's tokens/shares ratio moving by rounding, not a slash; keep them quiet.
+const RATE_DIFF_NOTICEABLE = 1e-6;
+
 function rateDifferenceClass(difference) {
-  return difference === null || Number(difference) === 0 ? 'muted' : 't-warn';
+  return difference === null || Math.abs(Number(difference)) < RATE_DIFF_NOTICEABLE ? 'muted' : 't-warn';
 }
 
 function unbondingText(entries, max) {
