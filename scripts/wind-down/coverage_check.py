@@ -14,8 +14,14 @@ amounts round UP: rounding down could under-fund by a base unit.
 Inputs: a trimmed Stride export (bank supply and balances, stakeibc host zones), a pools file
 (see the PR 6 plan for the shape; every pool names the stToken denom it holds: the canonical
 denom for the canonical pool, the route's two-hop denom for a route pool), the Osmosis vault
-address. Reads Osmosis over REST.
-Read-only; prints a table and exits 1 on any shortfall.
+address. Reads Osmosis over REST. Before querying liquidity, validates the entire pool
+topology against REQUIRED_ROUTES, independently reviewed from the per-token "in scope"
+tables in docs/wind-down/sttoken-locations.md (excluding Stride and Osmosis). Scope changes
+must update those tables and this checked-in policy together; the consistency test detects
+drift. The CLI always uses this policy, including temporarily blocked and host-dust routes.
+Non-deprecated export zones still determine token eligibility: every such token needs a
+reviewed route policy and a canonical pool, even stSOMM with no supported foreign routes.
+Read-only; prints a table and exits 1 on any shortfall or invalid topology.
 
 Usage:
   python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json \
@@ -28,6 +34,7 @@ import gzip
 import hashlib
 import json
 import pathlib
+import re
 import sys
 import time
 import urllib.error
@@ -50,6 +57,24 @@ TRANSFER_PORT = "transfer"
 ESCROW_ADDRESS_VERSION = "ics20-1"
 STRIDE_BECH32_PREFIX = "stride"
 ST_DENOM_PREFIX = "st"
+
+# The per-token locations tables are the authority, not the relayer scope table or pool input.
+# Multi-channel rows represent distinct vouchers; preserve every listed in-scope channel.
+REQUIRED_ROUTES: dict[str, frozenset[str]] = {
+    "stuatom": frozenset({
+        "channel-0", "channel-6", "channel-11", "channel-40", "channel-47", "channel-69", "channel-123", "channel-148",
+    }),
+    "staISLM": frozenset({"channel-240"}),
+    "stutia": frozenset({"channel-148", "channel-123", "channel-47", "channel-0", "channel-197", "channel-162"}),
+    "stinj": frozenset({"channel-6", "channel-40", "channel-0"}),
+    "stuosmo": frozenset({"channel-0", "channel-40"}),
+    "stuband": frozenset({"channel-258"}),
+    "stadydx": frozenset({"channel-0", "channel-160"}),
+    "stuluna": frozenset({"channel-13", "channel-52", "channel-47"}),
+    "stusaga": frozenset({"channel-213"}),
+    "stujuno": frozenset({"channel-24"}),
+    "stusomm": frozenset(),
+}
 
 LiquidityFetcher = Callable[[str], dict[str, int]]
 
@@ -103,6 +128,7 @@ def main() -> int:
     args = parse_args()
     export = load_export(path=args.export)
     pools = load_pools(path=args.pools)
+    validate_pool_topology(export=export, pools=pools, required_routes=REQUIRED_ROUTES)
     vault_balances = fetch_vault_balances(osmosis_rest=args.osmosis_rest, vault=args.vault)
     fetcher = make_liquidity_fetcher(osmosis_rest=args.osmosis_rest)
 
@@ -122,12 +148,30 @@ def evaluate(
     pools: dict,
     vault_balances: dict[str, int],
     fetch_liquidity: LiquidityFetcher,
+    required_routes: dict[str, frozenset[str]] | None = None,
 ) -> list[CoverageResult]:
-    """Pure: the §10 arithmetic for every stToken in the pools file."""
+    """Validate all topology, then run §10 arithmetic; policy injection is for synthetic tests."""
+    policy = REQUIRED_ROUTES if required_routes is None else required_routes
+    specs = validate_pool_topology(export=export, pools=pools, required_routes=policy)
     supply_by_denom = {entry["denom"]: int(entry["amount"]) for entry in export["app_state"]["bank"]["supply"]}
     rates = {zone["chain_id"]: Decimal(zone["redemption_rate"]) for zone in export["app_state"]["stakeibc"]["host_zone_list"]}
-    transfer_channels = transfer_channel_ids(export=export)
     escrow_balances = escrow_balances_by_channel(export=export)
+
+    return [
+        evaluate_one(
+            st_denom=st_denom, spec=spec, rate=rates[spec.chain_id], supply=supply_by_denom[st_denom],
+            escrow_balances=escrow_balances, vault_balances=vault_balances, fetch_liquidity=fetch_liquidity,
+        )
+        for st_denom, spec in sorted(specs.items())
+    ]
+
+
+def validate_pool_topology(
+    export: dict,
+    pools: dict,
+    required_routes: dict[str, frozenset[str]],
+) -> dict[str, PoolSpec]:
+    """Reject missing routes and duplicate identities before any backing can be counted."""
     if not pools:
         raise CoverageInputError("pools file has no entries")
 
@@ -141,25 +185,52 @@ def evaluate(
             f"unexpected {sorted(set(pools) - in_scope)}"
         )
 
-    results = []
+    # A pool's rate must come from this token's own export zone, never another zone's rate.
+    zones_by_token = {
+        f"{ST_DENOM_PREFIX}{zone['host_denom']}": zone["chain_id"]
+        for zone in export["app_state"]["stakeibc"]["host_zone_list"] if not zone.get("deprecated", False)
+    }
+    supply_denoms = {entry["denom"] for entry in export["app_state"]["bank"]["supply"]}
+    transfer_channels = set(transfer_channel_ids(export=export))
+    specs: dict[str, PoolSpec] = {}
+    used_pool_ids: set[str] = set()
+
     for st_denom, raw_spec in sorted(pools.items()):
+        if st_denom not in required_routes:
+            raise CoverageInputError(f"{st_denom}: no reviewed route policy")
         spec = parse_pool_spec(raw=raw_spec)
-        if spec.chain_id not in rates:
-            raise CoverageInputError(f"{st_denom}: host zone {spec.chain_id} not in the export")
-        rate = rates[spec.chain_id]
+        if spec.chain_id != zones_by_token[st_denom]:
+            raise CoverageInputError(
+                f"{st_denom}: {spec.chain_id} does not match export host zone {zones_by_token[st_denom]}"
+            )
+        if st_denom not in supply_denoms:
+            raise CoverageInputError(f"{st_denom}: not in the export's bank supply")
+
+        # Duplicate routes corrupt both escrow allocation and the sum of backing. Pool IDs
+        # must be unique across every token, including canonical pools, to count backing once.
+        route_channels: set[str] = set()
         for route in spec.route_pools:
+            if route.channel_id in route_channels:
+                raise CoverageInputError(f"{st_denom}: duplicate route channel {route.channel_id}")
+            route_channels.add(route.channel_id)
             if route.channel_id not in transfer_channels:
                 # A typo'd channel would read a zero escrow and pass with a zero requirement
-                raise CoverageInputError(f"{st_denom}: route channel {route.channel_id} is not a transfer channel in the export")
-        if st_denom not in supply_by_denom:
-            # A mistyped stToken denom would otherwise make the requirement zero and pass
-            raise CoverageInputError(f"{st_denom}: not in the export's bank supply")
-        supply = supply_by_denom[st_denom]
-        results.append(evaluate_one(
-            st_denom=st_denom, spec=spec, rate=rate, supply=supply,
-            escrow_balances=escrow_balances, vault_balances=vault_balances, fetch_liquidity=fetch_liquidity,
-        ))
-    return results
+                raise CoverageInputError(
+                    f"{st_denom}: route channel {route.channel_id} is not a transfer channel in the export"
+                )
+        for pool_id in [spec.canonical_pool_id, *(route.pool_id for route in spec.route_pools)]:
+            if pool_id in used_pool_ids:
+                raise CoverageInputError(f"{st_denom}: pool ID {pool_id} reused")
+            used_pool_ids.add(pool_id)
+
+        approved_routes = required_routes[st_denom]
+        if route_channels != approved_routes:
+            raise CoverageInputError(
+                f"{st_denom}: configured and approved routes differ: missing {sorted(approved_routes - route_channels)}, "
+                f"unexpected {sorted(route_channels - approved_routes)}"
+            )
+        specs[st_denom] = spec
+    return specs
 
 
 # ----------------------------------------------------------------------------------------------
@@ -264,8 +335,18 @@ def parse_pool_spec(raw: dict) -> PoolSpec:
         )
     except KeyError as missing:
         raise CoverageInputError(f"pools entry missing {missing}") from missing
-    if spec.canonical_pool_id is not None and not spec.canonical_st_denom:
+    if spec.canonical_pool_id is None:
+        raise CoverageInputError(f"pools entry for {spec.chain_id}: canonical pool is required")
+    if not spec.canonical_st_denom:
         raise CoverageInputError(f"pools entry for {spec.chain_id} has a canonical pool but no canonical_st_denom")
+
+    # Reject aliases instead of allowing the same Osmosis pool to evade the uniqueness check.
+    for pool_id in [spec.canonical_pool_id, *(route.pool_id for route in spec.route_pools)]:
+        if not isinstance(pool_id, str) or re.fullmatch(r"[1-9][0-9]*", pool_id) is None:
+            raise CoverageInputError(f"pool ID {pool_id!r} must be a canonical positive decimal string")
+    for route in spec.route_pools:
+        if not isinstance(route.channel_id, str) or re.fullmatch(r"channel-(0|[1-9][0-9]*)", route.channel_id) is None:
+            raise CoverageInputError(f"route channel {route.channel_id!r} must be a canonical channel ID")
     return spec
 
 

@@ -710,7 +710,10 @@ the native tokens arrive.
 (§4): for each in-scope stToken, a canonical pool holding the canonical denom on Osmosis (the
 one minted by transfers over Stride's channel-5) plus the native token, and one more two-asset
 pool for every foreign route the locations table marks in scope
-(`docs/wind-down/sttoken-locations.md`; 26 route pools plus one canonical per stToken, 7 of the routes for stATOM). A pool
+(`docs/wind-down/sttoken-locations.md`; 28 route pools plus one canonical per stToken,
+8 of the routes for stATOM). Each distinct Stride channel is a separate voucher route:
+Axelar's stATOM channels 11 and 69 and Terra's stLUNA channels 13 and 52 each need separate
+pools. A pool
 never holds more than one stToken denom, so the only thing a holder can do with a flavour is
 turn it into the native token at the rate, and a compromised source chain can reach nothing
 but its own pool. Every pool uses normalization factors `1e18` for the stToken and
@@ -1151,6 +1154,25 @@ queries and has no on-chain counterpart, which is the one place this design is w
 on-chain assertion; the mitigation is that funding is a deliberate `join_pool` for the
 computed amount, so an under-funded pool can only come from a wrong number in a script that
 is run twice and published.
+
+Before querying or summing Osmosis backing, `scripts/wind-down/coverage_check.py` validates
+the complete pool topology. Its checked-in `REQUIRED_ROUTES` policy comes from the per-token
+tables' exact `in scope` rows in `docs/wind-down/sttoken-locations.md`, excluding Stride and
+Osmosis (canonical), and retaining every channel in multi-channel rows. The relayer scope
+table is not the authority: temporarily blocked Injective and host-dust routes still require
+pools, while unsupported Penumbra and all ignored foreign rows do not. A scope change must
+update the reviewed tables and the policy together; an automated consistency test fails on
+drift. The CLI always uses the trusted policy, with no operator override. Every non-deprecated
+stakeibc export zone still requires canonical coverage, including stSOMM with an empty foreign
+route set; a newly eligible token without a reviewed policy fails closed.
+
+Each pool entry must name that token's own export host zone. Route channels must match the
+approved set exactly and cannot repeat within a token; Osmosis pool IDs cannot repeat anywhere,
+including between canonical and route pools or across tokens. Pool IDs must be canonical
+positive decimal strings, and channels must use canonical `channel-N` spelling, so aliases
+cannot evade the checks. A missing route fails validation even if canonical holds enough
+native tokens for the entire supply. These checks precede the existing per-pool arithmetic:
+the route upper bound remains its original escrow balance times the frozen rate.
 
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3: `Unbond` calls the
 distribution hook `BeforeDelegationSharesModified`, which withdraws the accrued rewards, and
