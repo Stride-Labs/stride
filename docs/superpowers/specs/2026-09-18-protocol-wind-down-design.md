@@ -251,7 +251,13 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   about 3,615 DYM owed to 23 redemption records, all completing 2026-10-12 between 20:05 and
   20:11 UTC) and 1 empty accumulating record; nothing queued, and no new redemption is
   possible on the halted zone. These six are finished by the operator (§9).
-- Zero auctions, zero ICQ-oracle price queries, zero open LSM deposits; both airdrop-module
+- One open LSM deposit, stuck in `DETOKENIZATION_FAILED` since 2026-06-05: 67,850,952
+  `cosmosvaloper1xwazl8…j02r/116327` (jabbey, about 67.8 ATOM) on the cosmoshub-4 delegation
+  ICA, its 35.6 stATOM already minted and its tokens already in the redemption rate but not in
+  `TotalDelegations`. The redeem failed with `not enough delegation shares` because the
+  tokenize-share record holds 67,850,951.998 shares, the rounding failure v23, v25 and v32
+  fixed by retrying with one token less (§5).
+- Zero auctions, zero ICQ-oracle price queries; both airdrop-module
   airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
   Pending ICQs: haqq_11235-1 has 15 queries open, the oldest submitted on 2026-09-21, none
   answered; withdrawal and fee balance queries are open on haqq, juno-1, comdex-1 and
@@ -492,6 +498,15 @@ nothing is applied twice. The table is generated from `measure_delegation_drift.
 re-measured right before the proposal, and covered by a mainnet-export test. This is the
 Injective shape (real loss, no stranded liquid), not the v33 Osmosis shape (phantom stake
 credited back as a deposit record).
+
+**Failed LSM deposit.** The handler requeues the one `DETOKENIZATION_FAILED` deposit (§3) as
+`DETOKENIZATION_QUEUE` with its amount reduced by one (67,850,951), as v32 did for the last
+one, and only if the record is still exactly that status and amount. The EndBlocker retries
+it on the next block; the success callback books about 67.8 ATOM to jabbey (unbonded and
+jailed on the Hub, so its undelegation completes at once) and the drain unbonds it with the
+rest. The rate is frozen, so nothing moves; one token of dust stays in the ICA. Ops drain
+jabbey only after the retry's ack has landed, which the drain enforces anyway (it refuses a
+validator with a change in progress).
 
 ## §6. What keeps running and what stops
 

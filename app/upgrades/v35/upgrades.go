@@ -30,10 +30,11 @@ import (
 //  6. Reset stale DelegationChangesInProgress flags on zones with no ICA in flight.
 //  7. Purge haqq's pending slash-path ICQs, then all withdrawal-balance and calibration ICQs.
 //  8. Apply the haqq delegation delta table (after its ICQs are gone).
+//  9. Requeue the one failed LSM detokenization with its amount reduced by one.
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read
-// through the stakeibc keeper's exported fields.
+// through the stakeibc keeper's exported fields, as is the records keeper used by the LSM reset.
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
@@ -82,6 +83,9 @@ func CreateUpgradeHandler(
 
 		// Haqq delegation reconciliation, after its slash-path ICQs are gone (spec §5)
 		ReconcileHaqqDelegations(ctx, stakeibcKeeper)
+
+		// The failed LSM detokenization, retried by the EndBlocker with one token less (spec §5)
+		ResetFailedLSMDeposit(ctx, stakeibcKeeper.RecordsKeeper)
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
 		return vm, nil

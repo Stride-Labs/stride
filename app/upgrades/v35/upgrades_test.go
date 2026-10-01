@@ -15,6 +15,7 @@ import (
 	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
 	autopilottypes "github.com/Stride-Labs/stride/v34/x/autopilot/types"
 	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
@@ -68,6 +69,7 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	haqqZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
 	haqqZone.Validators[0].SlashQueryInProgress = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haqqZone)
+	s.setFailedLSMDeposit(recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED, v35.FailedLSMDepositAmount)
 
 	// ----- act -----
 	s.ConfirmUpgradeSucceeded(v35.UpgradeName)
@@ -98,6 +100,9 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		s.Require().Equal(haqqTracked[entry.Address].Add(entry.Delta), validator.Delegation, "haqq delta %s", entry.Name)
 	}
 	s.Require().True(haqq.TotalDelegations.LT(haqqTrackedTotal), "haqq total dropped")
+	lsmDeposit := s.mustGetFailedLSMDeposit()
+	s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, lsmDeposit.Status, "LSM deposit requeued")
+	s.Require().Equal(int64(67_850_951), lsmDeposit.Amount.Int64(), "LSM deposit amount")
 }
 
 // withInBoundsRates gives a fixture host zone a redemption rate inside its safety bounds so the
