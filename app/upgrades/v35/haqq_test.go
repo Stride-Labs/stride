@@ -113,14 +113,43 @@ func (s *UpgradeTestSuite) TestHaqqExpectedTrackedDelegations_MatchesTable() {
 	}
 }
 
-// A slash booked between table generation and the upgrade changes a tracked delegation; applying the
-// table on top would double-apply it, so one mismatching row must skip every row
-func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_TrackedMismatchSkipsAll() {
+// A slash booked between table generation and the upgrade changes that row's tracked delegation;
+// applying its delta on top would double-apply the slash, so that row is skipped and every other row
+// still applies
+func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_TrackedMismatchSkipsOnlyThatRow() {
 	tracked, trackedTotal := s.setupHaqqHostZone()
 	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
-	hostZone.Validators[3].Delegation = hostZone.Validators[3].Delegation.SubRaw(1)
+	hostZone.Validators[0].Delegation = hostZone.Validators[0].Delegation.SubRaw(1)
+	hostZone.TotalDelegations = hostZone.TotalDelegations.SubRaw(1)
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
-	mismatched := hostZone.Validators[3]
+	mismatched := hostZone.Validators[0]
+
+	appliedDelta, applied := v35.ReconcileHaqqDelegations(s.Ctx, s.App.StakeibcKeeper)
+	s.Require().True(applied)
+
+	expectedDelta := sdkmath.ZeroInt()
+	after, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
+	for _, entry := range v35.HaqqDelegationDeltas {
+		validator, _, _ := stakeibckeeper.GetValidatorFromAddress(after.Validators, entry.Address)
+		if entry.Address == mismatched.Address {
+			s.Require().Equal(tracked[entry.Address].SubRaw(1), validator.Delegation, "%s untouched", entry.Name)
+			continue
+		}
+		s.Require().Equal(tracked[entry.Address].Add(entry.Delta), validator.Delegation, "%s moves by its delta", entry.Name)
+		expectedDelta = expectedDelta.Add(entry.Delta)
+	}
+	s.Require().Equal(expectedDelta, appliedDelta, "returned delta excludes the skipped row")
+	s.Require().Equal(trackedTotal.SubRaw(1).Add(expectedDelta), after.TotalDelegations, "TotalDelegations moves by the applied rows only")
+}
+
+// When every row's tracked delegation has moved, nothing is applied
+func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_AllRowsMismatchedAppliesNothing() {
+	tracked, trackedTotal := s.setupHaqqHostZone()
+	hostZone, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
+	for _, validator := range hostZone.Validators {
+		validator.Delegation = validator.Delegation.AddRaw(1)
+	}
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
 	appliedDelta, applied := v35.ReconcileHaqqDelegations(s.Ctx, s.App.StakeibcKeeper)
 	s.Require().False(applied)
@@ -129,10 +158,6 @@ func (s *UpgradeTestSuite) TestReconcileHaqqDelegations_TrackedMismatchSkipsAll(
 	after, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
 	s.Require().Equal(trackedTotal, after.TotalDelegations, "nothing written")
 	for _, validator := range after.Validators {
-		expected := tracked[validator.Address]
-		if validator.Address == mismatched.Address {
-			expected = expected.SubRaw(1)
-		}
-		s.Require().Equal(expected, validator.Delegation, "%s untouched", validator.Name)
+		s.Require().Equal(tracked[validator.Address].AddRaw(1), validator.Delegation, "%s untouched", validator.Name)
 	}
 }

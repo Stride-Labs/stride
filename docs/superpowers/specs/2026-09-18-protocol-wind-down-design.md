@@ -440,9 +440,11 @@ upgrade (§6), so this no longer flows into the stISLM redemption rate; the rate
 0.0014% above the backing (1,393 ISLM against 101M stISLM, roughly $6), which the rewards
 accrued until the drain cover many times over and the coverage check (§10) reports either
 way. The table also pins each row's tracked delegation
-(`HaqqExpectedTrackedDelegations`, read from the live host zone when generated) and is
-skipped whole, with an error log, on any mismatch, so a slash booked between generation and
-the upgrade cannot be applied twice. The stored
+(`HaqqExpectedTrackedDelegations`, read from the live host zone when generated) and skips,
+with an error log, each row whose tracked delegation no longer matches its pin, so a slash
+booked between generation and the upgrade cannot be applied twice; the other rows still
+apply. The pin compares Stride's tracked value only: a slash on haqq that no query has booked
+on Stride leaves its pin matching, the row applies, and the day-0 refresh books that slash. The stored
 `SharesToTokensRate` is deliberately left as is: the day-0 refresh updates it, and the slash
 callback then finds tracked delegation equal to on-chain shares × the refreshed rate, so
 nothing is applied twice. The table is generated from `measure_delegation_drift.py`,
@@ -972,7 +974,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 
 - Handler (§5): tests against a mainnet export (`app/upgrades/v35/testdata/`, v34-style) for
   the trade route deletion, the comdex-1 `Deprecated` flag, the Haqq delta table (applied, and
-  skipped on a stale constant), the two ICQ purges (the haqq purge deletes only that chain's
+  a row skipped on a stale pin), the two ICQ purges (the haqq purge deletes only that chain's
   slash-path queries and clears the validator flags; the withdrawal-balance purge leaves every
   other query), the autopilot param, the ICA host allow-list, wasm params and contract admins,
   oracle deactivation, rate-limit removal, the stale-flag reset (cleared on a zone whose

@@ -49,22 +49,27 @@ var HaqqDelegationDeltas = []DelegationDelta{
 
 // ReconcileHaqqDelegations applies HaqqDelegationDeltas to the haqq_11235-1 host zone so that
 // tracked validator delegations (and TotalDelegations) match what is staked on Haqq. It
-// returns the net delta applied and whether the table was applied at all; the table is
-// applied all-or-nothing and never as an upgrade error (see reconcileHostZoneDelegations).
-// The table is skipped whole if any tracked delegation differs from HaqqExpectedTrackedDelegations.
-// Nothing is queued afterwards: the wind-down drains every delegation by admin tx.
+// returns the net delta applied and whether any row was applied; it never returns an upgrade
+// error (see reconcileHostZoneDelegations). A row whose tracked delegation differs from
+// HaqqExpectedTrackedDelegations is skipped on its own; the remaining rows are applied
+// all-or-nothing. Nothing is queued afterwards: the wind-down drains every delegation by admin tx.
 func ReconcileHaqqDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (appliedDelta sdkmath.Int, applied bool) {
-	if hostZone, found := sk.GetHostZone(ctx, HaqqChainId); found && !haqqTrackedDelegationsMatch(ctx, hostZone) {
+	deltas := HaqqDelegationDeltas
+	if hostZone, found := sk.GetHostZone(ctx, HaqqChainId); found {
+		deltas = haqqRowsMatchingPins(ctx, hostZone)
+	}
+	if len(deltas) == 0 {
+		ctx.Logger().Error("v35: no haqq delegation table row matches its pin, nothing applied")
 		return sdkmath.ZeroInt(), false
 	}
-	return reconcileHostZoneDelegations(ctx, sk, HaqqChainId, HaqqDelegationDeltas)
+	return reconcileHostZoneDelegations(ctx, sk, HaqqChainId, deltas)
 }
 
 // HaqqExpectedTrackedDelegations pins HaqqDelegationDeltas to the state it was measured against:
 // each table validator's tracked Delegation (host base denom) on 2026-09-29, read from the Stride
-// host_zone query. A slash detected between generation and the upgrade changes a tracked value, and
-// applying the table on top would double-apply it, so ReconcileHaqqDelegations skips the whole table
-// on any mismatch. Emitted by gen_delta_table.py from --host-zone-json.
+// host_zone query. A slash booked between generation and the upgrade changes that validator's
+// tracked value, and applying its delta on top would double-apply the slash, so
+// ReconcileHaqqDelegations skips that row. Emitted by gen_delta_table.py from --host-zone-json.
 var HaqqExpectedTrackedDelegations = map[string]sdkmath.Int{
 	"haqqvaloper1a57vprf7lswm3aqy2g5gy509235wmtsfvf9q73": mustInt("8550624701423372833667126"),
 	"haqqvaloper1a4qnqnk5ag0um6z3unkdth92v9c46x0dcpe2n0": mustInt("1977324198402384201312159"),
@@ -84,13 +89,15 @@ var HaqqExpectedTrackedDelegations = map[string]sdkmath.Int{
 	"haqqvaloper1xp597fjhgu6dx3a525htulkn36fqqntjaqvhct": mustInt("2539004185409864107364697"),
 }
 
-// haqqTrackedDelegationsMatch requires every table row's validator to be tracked at exactly its
-// expected value, and logs an error naming the first one that is not. A validator missing from the
-// host zone is left to reconcileHostZoneDelegations, which skips the table for it.
-func haqqTrackedDelegationsMatch(ctx sdk.Context, hostZone stakeibctypes.HostZone) bool {
+// haqqRowsMatchingPins returns the table rows whose validator is tracked at exactly its expected
+// value, logging an error for each row it drops. A validator missing from the host zone is kept,
+// so reconcileHostZoneDelegations sees it and skips the table, as for any missing validator.
+func haqqRowsMatchingPins(ctx sdk.Context, hostZone stakeibctypes.HostZone) []DelegationDelta {
+	matching := []DelegationDelta{}
 	for _, entry := range HaqqDelegationDeltas {
 		validator, _, found := stakeibckeeper.GetValidatorFromAddress(hostZone.Validators, entry.Address)
 		if !found {
+			matching = append(matching, entry)
 			continue
 		}
 
@@ -101,11 +108,12 @@ func haqqTrackedDelegationsMatch(ctx sdk.Context, hostZone stakeibctypes.HostZon
 		}
 		expected, hasExpected := HaqqExpectedTrackedDelegations[entry.Address]
 		if !hasExpected || !tracked.Equal(expected) {
-			ctx.Logger().Error(fmt.Sprintf("v35: validator %s (%s) tracked delegation is %v, expected %v; the haqq delegation "+
-				"table was measured against different state and is NOT applied, regenerate it and reconcile in a later upgrade",
-				entry.Name, entry.Address, validator.Delegation, expected))
-			return false
+			ctx.Logger().Error(fmt.Sprintf("v35: validator %s (%s) tracked delegation is %v, expected %v; its haqq delegation "+
+				"delta (%v) was measured against different state and is NOT applied, reconcile it after the upgrade",
+				entry.Name, entry.Address, tracked, expected, entry.Delta))
+			continue
 		}
+		matching = append(matching, entry)
 	}
-	return true
+	return matching
 }
