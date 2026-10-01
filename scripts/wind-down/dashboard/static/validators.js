@@ -102,7 +102,7 @@ function zoneBody(zone) {
 // The stacked all-zones view trades the tiles for one summary line per zone.
 function zoneSummary(zone) {
   const totals = zone.totals;
-  const amount = (value) => `${formatAmount(value, zone.decimals, 6)} ${zone.symbol}`;
+  const amount = (value) => `${formatAmount(value, zone.decimals, 6)} ${escapeHtml(zone.symbol)}`;
   const diffClass = BigInt(totals.diff) > 0n ? 't-warn' : '';
   return `recorded ${amount(totals.recorded)} · actual ${amount(totals.actual)} · diff <span class="${diffClass}">${amount(totals.diff)}</span> (${totals.over_count} over, ${totals.red_count} red) · ${totals.in_progress_count} in progress`;
 }
@@ -182,10 +182,8 @@ function multisigBody(entry) {
   const summary = selectedChainId === ALL_ZONES
     ? `actual ${amount(entry.actual_total)} · remaining delegated ${amount(entry.remaining_delegated_balance)} · diff <span class="${diffClass}">${amount(entry.diff)}</span> · `
     : '';
-  // The multisig has no per-validator recorded amounts, so the diff filters have nothing to match; the table only shows unfiltered.
-  const table = filterActive()
-    ? '<div class="note">no per-validator diffs for the multisig; untick the filters to list its delegations</div>'
-    : `<div class="table-scroll"><table>
+  // The multisig has no per-validator recorded amounts, so the diff filters do not apply; its few rows always show.
+  const table = `<div class="table-scroll"><table>
         <tr><th>Validator</th><th>Operator</th><th class="num">Actual</th><th>Bond status</th></tr>
         ${entry.validators.map((row) => `<tr><td>${escapeHtml(row.moniker)}</td><td>${addressCell(row.address)}</td>
           <td class="num">${formatAmount(row.actual, entry.decimals, 6)}</td><td>${bondCell(row.bond_status, row.jailed)}</td></tr>`).join('')}
