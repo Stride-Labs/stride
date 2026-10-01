@@ -821,6 +821,14 @@ The ops window (after the upgrade, ~35 days). The redemptions open at the upgrad
 unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes all three
 (§6) while the rest proceeds:
 
+**Accepted LSM tail risk.** New LSM liquid stakes are disabled at the upgrade and none are
+expected to remain, but an earlier request may still have callbacks or a deposit in flight.
+Any such negligible remainder may finish through the existing pipeline while the chain is
+running; if it does not finish in time, it is ignored. Do not add an LSM-specific drain or
+halt prerequisite, or extend the ops window for it. Existing ICA-safety and coverage checks
+remain unchanged; this is an accepted residual risk, not a guarantee that every LSM request
+will settle.
+
 1. Day 0, before anything else (including every other zone's refresh and calibration): the
    haqq sequence. Haqq goes first because its blocks are slow, its handshakes take hours, and
    it has a hard deadline: everything through 1f must finish before haqq's first unbonding
