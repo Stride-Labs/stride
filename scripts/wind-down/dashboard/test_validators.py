@@ -11,6 +11,7 @@ import validators
 OPERATOR_A = "valoperA"
 OPERATOR_B = "valoperB"
 OPERATOR_C = "valoperC"
+OPERATOR_D = "valoperD"
 STRIDE_ZONE_REST_ZONE = config.ZONES[0]
 
 
@@ -55,6 +56,31 @@ class SeverityTest(unittest.TestCase):
 
     def test_one_unit_over_a_tiny_recorded_amount_is_red(self) -> None:
         self.assertEqual(validators.severity_of(recorded=5, actual=4), validators.Severity.RED)
+
+    def test_over_within_the_drain_buffer_is_buffered_only_below_rate_one(self) -> None:
+        # 614 INJ in wei: the drain shaves recorded // 1e17 = 6,141 wei off a full drain of a slashed validator.
+        recorded = 614_119_069_304_957_234_390
+        buffer = recorded // validators.DRAIN_BUFFER_DIVISOR
+        slashed = Decimal("0.999900000000000001")
+        self.assertEqual(
+            validators.severity_of(recorded=recorded, actual=recorded - buffer, stride_rate=slashed),
+            validators.Severity.BUFFERED,
+        )
+        self.assertEqual(
+            validators.severity_of(recorded=recorded, actual=recorded - buffer - 1, stride_rate=slashed),
+            validators.Severity.AMBER,
+        )
+        # No buffer exists at a rate of exactly 1 (or without a rate), so the same overage is a real overage.
+        self.assertEqual(
+            validators.severity_of(recorded=recorded, actual=recorded - 2, stride_rate=Decimal(1)), validators.Severity.AMBER
+        )
+        self.assertEqual(validators.severity_of(recorded=recorded, actual=recorded - 2), validators.Severity.AMBER)
+
+    def test_buffer_is_at_least_one_unit(self) -> None:
+        self.assertEqual(
+            validators.severity_of(recorded=5, actual=4, stride_rate=Decimal("0.9")), validators.Severity.BUFFERED
+        )
+        self.assertEqual(validators.severity_of(recorded=5, actual=3, stride_rate=Decimal("0.9")), validators.Severity.RED)
 
     def test_boundary_is_exact_at_eighteen_decimals(self) -> None:
         recorded = 10**24 + 7
@@ -192,20 +218,22 @@ class SummarizeTest(unittest.TestCase):
             stride_validators=[
                 stride_validator(address=OPERATOR_A, delegation=10_000_000, delegation_changes_in_progress=1),
                 stride_validator(address=OPERATOR_B, delegation=1_000),
+                stride_validator(address=OPERATOR_D, delegation=2_000, rate=Decimal("0.99")),
             ],
-            delegations={OPERATOR_A: 9_999_991, OPERATOR_C: 40},
+            delegations={OPERATOR_A: 9_999_991, OPERATOR_C: 40, OPERATOR_D: 1_999},
             host_validators=None,
             unbonding_entries=None,
         )
 
         totals = validators.summarize(rows=rows)
 
-        # A is over by 9 (amber), B is over by 1000 with nothing on the host (red), C is unregistered.
-        self.assertEqual(totals.validator_count, 3)
-        self.assertEqual(totals.delegated_count, 2)
-        self.assertEqual((totals.recorded, totals.actual, totals.diff), (10_001_000, 10_000_031, 969))
+        # A is over by 9 (amber), B is over by 1000 with nothing on the host (red), C is unregistered,
+        # D is over by 1 on a slashed validator (buffered, not counted as over).
+        self.assertEqual(totals.validator_count, 4)
+        self.assertEqual(totals.delegated_count, 3)
+        self.assertEqual((totals.recorded, totals.actual, totals.diff), (10_003_000, 10_002_030, 970))
         self.assertEqual((totals.over_count, totals.red_count, totals.in_progress_count), (2, 1, 1))
-        self.assertEqual(totals.payload()["diff"], "969")
+        self.assertEqual(totals.payload()["diff"], "970")
 
 
 class CollectTest(unittest.TestCase):

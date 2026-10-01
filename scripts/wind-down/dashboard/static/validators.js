@@ -2,7 +2,8 @@
 (() => {
 
 const MULTISIG = 'multisig';
-const SEVERITY_CLASS = { neutral: '', amber: 't-warn', red: 't-bad' };
+const SEVERITY_CLASS = { neutral: '', buffered: 'muted', amber: 't-warn', red: 't-bad' };
+const BUFFERED_TITLE = 'over, but within the rounding buffer a full drain leaves on a validator whose stored rate is below 1';
 const SEVERITY_PILL = { amber: 'warn', red: 'bad' };
 
 const ALL_ZONES = 'all';
@@ -135,7 +136,7 @@ function zoneRow(row, zone) {
     <td class="num">${escapeHtml(row.weight_percent)}%</td>
     <td class="num">${amount(row.recorded)}</td>
     <td class="num">${amount(row.actual)}</td>
-    <td class="num ${severityClass}">${amount(row.diff)}</td>
+    <td class="num ${severityClass}" ${row.severity === 'buffered' ? `title="${BUFFERED_TITLE}"` : ''}>${amount(row.diff)}</td>
     <td class="num ${severityClass}">${row.diff_percent === null ? '<span class="muted">–</span>' : escapeHtml(row.diff_percent) + '%'}</td>
     <td class="num ${rateDifferenceClass(row.rate_difference)}">${row.rate_difference === null ? '<span class="muted">n/a</span>' : escapeHtml(row.rate_difference)}</td>
     <td class="num ${unbondingClass(row.unbonding_entries, zone.max_unbonding_entries)}">${unbondingText(row.unbonding_entries, zone.max_unbonding_entries)}</td>

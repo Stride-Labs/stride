@@ -42,7 +42,10 @@ Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`
   out of a maximum of 7.
 - A host delegation Stride has no entry for gets an unregistered row: recorded 0 and a `not registered` badge.
 - Severity: the host holding less than recorded is neutral; over by any amount is amber; over by at least 0.0001% of the
-  recorded delegation is red.
+  recorded delegation is red. Over by no more than the drain's rounding buffer (recorded ÷ 1e17, at least one base unit)
+  on a validator whose stored rate is below 1 is `buffered`: shown muted and not counted as over, because
+  `applySharesRoundingSafety` shaves that much off a full drain, so the overage cannot fail it. The buffer does not
+  exist at a rate of exactly 1, where any overage counts.
 - The staketia chip compares the multisig's delegations on Celestia with Stride's `remaining_delegated_balance`.
 - Delegations are the one required lookup (a failure gives the zone an error row). The validator list and the unbonding
   entries are optional: if they fail, those cells show `n/a` and the row falls back to Stride's name.
