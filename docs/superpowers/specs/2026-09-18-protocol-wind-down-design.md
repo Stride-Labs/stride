@@ -461,7 +461,7 @@ way. The table also pins each row's tracked delegation
 with an error log, each row whose tracked delegation no longer matches its pin, so a slash
 booked between generation and the upgrade cannot be applied twice; the other rows still
 apply. The pin compares Stride's tracked value only: a slash on haqq that no query has booked
-on Stride leaves its pin matching, the row applies, and the day-0 refresh books that slash. The stored
+on Stride leaves its pin matching, the row applies, and the day-0 refresh books that slash (§9c). The stored
 `SharesToTokensRate` is deliberately left as is: the day-0 refresh updates it, and the slash
 callback then finds tracked delegation equal to on-chain shares × the refreshed rate, so
 nothing is applied twice. The table is generated from `measure_delegation_drift.py`,
@@ -758,9 +758,12 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   with any difference either in the haqq delta table or explained. The haqq delegation delta
   table, the drift measurement and the mainnet-export tests match the chain at one recent
   height. A haqq redemption unbonding at the upgrade would
-  change the drift; measure right before the proposal. The delta helper skips (never errors)
-  only on a missing validator or a negative result (§3), so a table that is merely stale is
-  applied as is; the day-0 refresh and the `offset` on the drain tx are the fallback.
+  change the drift; measure right before the proposal. Haqq's ICA channel stays closed until
+  after the upgrade (§9c). The table is skipped whole if any haqq validator's tracked
+  delegation on Stride no longer equals its pin (§5); otherwise the helper skips (never
+  errors) only on a missing validator or a negative result, so a table whose on-chain side
+  has moved (a slash on haqq not yet booked on Stride) is applied as is and the day-0
+  refresh books the rest; the `offset` on the drain tx is the last fallback.
 - On every in-scope host, the delegation ICA's withdraw address (distribution module query) is
   the zone's withdrawal ICA; the epoch call that re-set it every epoch is deleted (§6).
 - The two address constants, the channel map and `SweepUnwindChannels` in the binary
@@ -780,7 +783,9 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
 (§6) while the rest proceeds:
 
 1. Day 0: refresh every validator's exchange rate with `UpdateValidatorSharesExchRate` (CLI
-   `update-delegation`) on every in-scope zone and wait for the callbacks. Where the rate
+   `update-delegation`) on every in-scope zone and wait for the callbacks. Haqq runs its own
+   sequence first (close, restore, then refresh; §9c), with a hard deadline at its first
+   unbonding epoch after the upgrade. Where the rate
    moved, the callback applies the slash to the recorded delegation (the redemption rate is no
    longer rewritten, §6). Use `CalibrateDelegation` for a validator whose rate is unchanged
    but whose recorded balance is off. Then rerun the drift measurement (§9a) and require zero
@@ -871,6 +876,82 @@ Checklist to halt the chain:
   channel-5 or a whitelisted channel.
 - Validators and STRD delegators have withdrawn their rewards; interchain-account holders
   have been notified and given time to move out.
+
+### §9c. Haqq: keep the channel closed, then close and restore after the upgrade
+
+State on 2026-10-01:
+
+- Stride's haqq delegation channel-869 is CLOSED (packet 84 timed out). Packets 85-98 are
+  still committed on Stride and were never delivered; haqq's end of the channel (icahost
+  channel-29, connection-8) is still OPEN. The earlier haqq delegation channels 647, 667
+  and 837 are closed on both ends.
+- 30 haqq validators carry `DelegationChangesInProgress = 1` for those packets. The v35
+  reset skips haqq because its channel is not open (§5), so these flags survive the
+  upgrade. Only `restore-interchain-account` clears them.
+- 3 validators (Neuler, Kioqq, StakingCabin) are flagged `SlashQueryInProgress` with a
+  delegation query open, plus about a dozen other haqq queries. The upgrade deletes all of
+  them and clears the flags (§5).
+- Two haqq redemption records are queued: epochs 1487 and 1488, 3,722.03 stISLM for
+  3,947.22 ISLM. Haqq unbonds on day epochs divisible by 4 (unbonding period 21, frequency
+  4): 19:00 UTC on 2026-10-04, 10-08, 10-12, 10-16 and so on. The 2026-09-30 epoch left
+  them queued, because a closed channel fails the submission without changing state.
+- Light clients. Stride's client of haqq (`07-tendermint-143`, connection-143) is Active
+  with a 17.8-day trusting period, but was last updated 2026-09-30 01:30 UTC, so it expires
+  around 2026-10-17 21:30 UTC unless something updates it. Every relay toward Stride does
+  (an ICQ answer, an ack, a handshake step). Haqq's client of Stride (`07-tendermint-6`,
+  11.9-day period) was updated 2026-10-01. The stale Stride side is consistent with no
+  haqq ICQ being answered since 2026-09-30.
+- Haqq blocks are slow and bursty: about 400 a day (one every ~3.5 minutes on average),
+  with stretches of one every 6 minutes and bursts of one every 25 seconds. Handshakes and
+  ICA packets only take longer. A delegation ICQ has a 1-hour timeout and is resubmitted
+  (`interchainqueries.go:135`), so it lands only when the relayer gets a fresh haqq header
+  and proof in within the hour.
+
+Before the upgrade: leave the channel closed, and do not restore it. Restoring reopens the
+v34 epoch flows on haqq: the 2026-10-04 and 10-08 epochs would submit the queued
+unbondings, and delegation, reinvestment and rebalancing would follow. Any of them changes
+a tracked delegation and skips the whole delta table (§5). With the channel closed, a
+slash on haqq is the only way the ICA's delegations can change. That moves the on-chain
+side only, so the table still applies and the day-0 refresh books the slash. What does
+skip the table is a Stride-side change before the upgrade: a haqq delegation query or
+calibration answered, or anyone sending `update-delegation` or `calibrate-delegation` for
+a haqq validator. Ops send none. On the last day of the vote, re-read the haqq host zone
+against `HaqqExpectedTrackedDelegations`. Both `restore-interchain-account` and closing a
+channel are permissionless. Restoring early is blocked in practice while channel-29 is
+OPEN, because haqq's ICA host refuses a second active channel for the same owner. A third
+party could still close channel-29 and then restore, so watch for a new haqq channel during
+the vote.
+
+After the upgrade, in this order, all finished before haqq's first unbonding epoch after
+the upgrade (2026-10-12 19:00 UTC if the upgrade lands between 10-08 and 10-12). Missing
+that epoch moves the queued records, and the haqq drain behind them, back four days, to
+10-16. Past 10-17 the Stride client of haqq expires unless relaying has kept it updated,
+and then the whole sequence needs a client-recovery proposal first.
+
+1. Confirm the upgrade's haqq work: the `v35:` logs show the delta table applied, not
+   skipped, and every row matches the host zone. No haqq slash-path query remains, and no
+   haqq validator has `SlashQueryInProgress`. If the table was skipped, stop and decide
+   by hand before restoring.
+2. Close haqq's channel-29. The relayer submits `MsgChannelCloseConfirm` on haqq for
+   `icahost`/channel-29, proving channel-869 CLOSED on Stride. This needs haqq's client of
+   Stride Active. Verify channel-29 is CLOSED on haqq.
+3. Do not relay timeouts for packets 85-98. The restore zeroes their flags; a timeout
+   processed after that hits the zero check in `DecrementValidatorDelegationChangesInProgress`
+   and errors. Whether that is harmless for every packet type in 85-98 is unverified, so it
+   is not left to chance.
+4. `strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143
+   haqq_11235-1.DELEGATION`. The four-step handshake runs across haqq's slow blocks (allow
+   hours). It also updates Stride's client of haqq. Verify: a new delegation channel OPEN on
+   both ends, `HostZone.DelegationIcaAddress` unchanged, every haqq validator at
+   `DelegationChangesInProgress = 0`, and the queued records still in `UNBONDING_QUEUE`.
+5. Prove an ICQ round trip: `update-delegation` for one haqq validator. Wait for both the
+   rate callback and the delegator-shares callback on Stride. If the second one keeps
+   timing out, fix the relayer (frequent client updates toward Stride) before step 6.
+6. The day-0 refresh on haqq for every validator, then the drift measurement (§9a). Require
+   zero over-recorded haqq validators, because one fails the whole undelegate batch on the
+   host.
+7. The haqq unbonding epoch submits the queued records and flags their validators. Wait for
+   the acks, then drain haqq as in step 3 of the ops window.
 
 ### §9b. Live-test validator per zone
 
@@ -1075,11 +1156,12 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   second, unrelated cleanup that the v35 handler does (§5); why they accumulate is not yet
   understood (every callback path decrements them and nothing is unacked), which is worth a
   look before the upgrade so the reset is not papering over a live leak.
-- **Stale flags the handler cannot reset** (measured 2026-09-29): haqq_11235-1's delegation channel-869 is CLOSED with 14 packet commitments (sequences 85-98) and 30 flagged validators, so haqq needs `restore-interchain-account` before the day-0 refresh and the drain; juno-1's open channel-491 has pending commitments from sequence 5729, so its 21 flags clear only once those packets are relayed. The v35 reset skips both zones by design.
+- **Stale flags the handler cannot reset** (measured 2026-09-29): haqq_11235-1's delegation channel-869 is CLOSED with 14 packet commitments (sequences 85-98) and 30 flagged validators, so haqq needs channel-29 closed and `restore-interchain-account` after the upgrade, before the day-0 refresh and its first unbonding epoch (§9c); juno-1's open channel-491 has pending commitments from sequence 5729, so its 21 flags clear only once those packets are relayed. The v35 reset skips both zones by design.
 - **Haqq's chain health** (§3): with one block every few minutes since at least
   2026-09-21 and no ICQ answered in that time, decide before the proposal whether haqq
   stays in scope. If it does, every haqq correction rides on the delta table (no refresh is
-  possible) and the drain's ICA relaying must be watched by hand; if Haqq halts for good,
+  possible before the upgrade) and the drain's ICA relaying must be watched by hand (§9c);
+  Stride's client of haqq expires around 2026-10-17 if nothing relays toward Stride; if Haqq halts for good,
   stISLM moves to the unrecoverable set and its holders get no pool.
 - **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
   connection `connection-146`, last header 2026-08-05; the delegation ICA restore is stuck in
