@@ -734,13 +734,15 @@ corrupted (`mark_corrupted_assets [native]`). The contract then refuses any acti
 the native balance, so the only possible movement is stToken in, native out: nobody can buy
 stTokens from a pool, and de-hopping a foreign route through two pools (route → native →
 canonical) is impossible. Redemptions by router swap and by join-then-exit are unaffected
-(tested 2026-09-25). A top-up therefore means unmark, join, re-mark; and when a pool's native
-balance reaches zero the contract removes the native asset, after which `add_new_assets` at
-the same factor plus a join restores it with the rate exact (tested). The canonical denom's
+(tested 2026-09-25). Completing an initial allocation after a test deposit therefore means
+unmark, join, re-mark. If the test deposit's native balance reaches zero, the contract removes
+the native asset; `add_new_assets` at the same factor before the remaining funding join
+restores it with the rate exact (tested). This completes the allocation, not a replenishment
+of redeemed funds. The canonical denom's
 counterfeit risk is a forged Stride header, handled by the key destruction after the halt
 (§9).
 
-**Funding** is one `join_pool` per pool with native tokens only, once every source for that
+**Funding** uses `join_pool` with native tokens only, once every source for that
 native denom has arrived: the delegation ICA transfer and the withdrawal, fee and redemption
 ICA sweeps (for stTIA the delegation ICA transfer includes the former multisig balance,
 routed through the claim address). Each route pool receives exactly `escrow_route ×
@@ -748,6 +750,14 @@ RedemptionRate` native tokens, where `escrow_route` is the balance of Stride's e
 for that route's channel in the halt export; the canonical pool receives everything else
 (§10). A stToken's pools can be created and funded as soon as its native denom is complete;
 zones finish unbonding on different days and nothing couples them.
+
+A small test deposit counts toward the pool's total allocation. The remaining deposit is
+the allocation minus all prior confirmed native funding deposits, **not** the allocation
+minus the pool's current native balance. For example, a 100-ATOM allocation funded with a
+1-ATOM test receives another 99 ATOM, even if the test ATOM has already been redeemed.
+Once a foreign-route pool has received its full allocation, do not fund it again: native
+tokens paid out through redemptions are never replenished. The coverage check is not a
+cumulative funding audit (§10).
 
 **Foreign-route denoms.** A stToken that left Stride to chain X and is sent from X to Osmosis
 arrives as a two-hop denom (`transfer/<osmosis-X channel>/transfer/<X-stride channel>/st...`),
@@ -969,6 +979,9 @@ Checklist to halt the chain:
   unbondings complete, its balance on Osmosis.
 - Every pool, canonical and per route, created, funded and passing the coverage check (§10)
   against a fresh export.
+- For each foreign-route pool, confirmed native funding deposits, including any test deposit,
+  total exactly its allocation (§8); no redemption payouts have been replenished. Check the
+  deposits, not just the remaining pool balance.
 - The sweep complete: no sweepable account at or above the floor holds any in-scope stToken,
   `ustrd`, or a whitelisted voucher on the sweep list, and no sweep packet outstanding on
   channel-5 or a whitelisted channel.
@@ -1172,7 +1185,11 @@ including between canonical and route pools or across tokens. Pool IDs must be c
 positive decimal strings, and channels must use canonical `channel-N` spelling, so aliases
 cannot evade the checks. A missing route fails validation even if canonical holds enough
 native tokens for the entire supply. These checks precede the existing per-pool arithmetic:
-the route upper bound remains its original escrow balance times the frozen rate.
+the route upper bound remains its original escrow balance times the frozen rate. This checks
+the current native balance, not cumulative funding: extra deposits after redemptions can
+remain below that bound and pass. Ops therefore verify the total confirmed funding deposits
+against the allocation and follow the no-replenishment rule (§8/§9); the checker does not
+replace that funding check.
 
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3: `Unbond` calls the
 distribution hook `BeforeDelegationSharesModified`, which withdraws the accrued rewards, and
