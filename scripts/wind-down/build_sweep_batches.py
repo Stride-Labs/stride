@@ -35,9 +35,9 @@ from decimal import ROUND_HALF_EVEN, Decimal
 
 import bech32_ref
 
-# Mirror of types.MaxSweepAddressesPerTx; a batch above it fails ValidateBasic on chain
-MAX_SWEEP_ADDRESSES_PER_TX = 100
-BATCH_SIZE_DEFAULT = MAX_SWEEP_ADDRESSES_PER_TX
+# The chain has no cap on addresses per tx (a batch over the block gas limit fails atomically), so this is
+# only a default; the real size comes from the localstride gas measurement
+BATCH_SIZE_DEFAULT = 100
 ADDRESS_LENGTH_BYTES = 20
 TRANSFER_PORT = "transfer"
 IBC_PREFIX = "ibc/"
@@ -208,7 +208,13 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_SWEEP_OPERATOR,
         help="stride1... operator address, excluded like the protocol addresses (default: spec §4)",
     )
-    parser.add_argument("--batch-size", type=batch_size_arg, default=BATCH_SIZE_DEFAULT, help=f"1..{MAX_SWEEP_ADDRESSES_PER_TX}")
+    parser.add_argument(
+        "--batch-size",
+        type=batch_size_arg,
+        default=BATCH_SIZE_DEFAULT,
+        help=f"addresses per tx, at least 1 (default {BATCH_SIZE_DEFAULT}); set it from the localstride gas "
+        "measurement: the chain has no cap and a batch over the block gas limit fails atomically",
+    )
     parser.add_argument("--extra-denom", action="append", default=[], help="DENOM=USD_PER_TOKEN:DECIMALS")
     return parser.parse_args()
 
@@ -229,10 +235,10 @@ def as_of_arg(text: str) -> int:
 
 
 def batch_size_arg(text: str) -> int:
-    """argparse type for --batch-size: the chain rejects a tx with more than MAX_SWEEP_ADDRESSES_PER_TX addresses."""
+    """argparse type for --batch-size: any positive size; the chain has no cap, only the block gas limit."""
     value = int(text)
-    if value < 1 or value > MAX_SWEEP_ADDRESSES_PER_TX:
-        raise argparse.ArgumentTypeError(f"batch size must be between 1 and {MAX_SWEEP_ADDRESSES_PER_TX}, got {value}")
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"batch size must be at least 1, got {value}")
     return value
 
 
@@ -446,9 +452,6 @@ def skip_reason(address: str, export: Export, protocol: set[str], blocked: set[s
 
 
 def write_batches(plan: HolderPlan, out_dir: pathlib.Path, batch_size: int) -> list[pathlib.Path]:
-    # Guarded here too so a caller that bypasses parse_args cannot emit a batch the chain rejects
-    if batch_size < 1 or batch_size > MAX_SWEEP_ADDRESSES_PER_TX:
-        raise ValueError(f"batch size must be between 1 and {MAX_SWEEP_ADDRESSES_PER_TX}, got {batch_size}")
     out_dir.mkdir(parents=True, exist_ok=True)
     files: list[pathlib.Path] = []
     batches: list[dict] = []

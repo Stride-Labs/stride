@@ -16,7 +16,6 @@ const (
 	OsmosisBech32Prefix              = "osmo"
 	StrideToOsmosisTransferChannelId = "channel-5"
 	WindDownTransferTimeout          = 24 * time.Hour
-	MaxSweepAddressesPerTx           = 100
 )
 
 // Host-side transfer channel to osmosis-1 per in-scope zone (chain registry 2026-09-24, re-verified
