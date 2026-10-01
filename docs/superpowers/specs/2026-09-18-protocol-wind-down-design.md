@@ -762,8 +762,10 @@ DeFi protocols on other chains withdraw there and transfer to Osmosis directly.
 **Shutdown.** Once every pool is funded, the sweep is complete and the halt checklist (§9)
 passes, validators set a `halt-height` and the chain stops. Stride's IBC clients on other
 chains expire after their trusting periods; stTokens on those chains stay ordinary vouchers
-and keep working in the pools, and any packet toward Stride that was never relayed times out
-and refunds on its source chain. The pools outlive the chain. Backing that is never claimed is
+and keep working in the pools. Clear channels in both directions before halting (§9): a late
+packet toward Stride is not guaranteed to time out and refund on its source chain, since the
+required non-receipt proof may need a Stride height or timestamp the halted chain never reaches.
+The pools outlive the chain. Backing that is never claimed is
 reclaimed later by exiting the pools with the alloyed asset; that timing is a policy decision
 outside this design.
 
@@ -929,8 +931,12 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    the four host channels outside the whitelist are announced as self-service. Resubmit any
    address whose transfer timed out (its balance is back on Stride). Relayers on channel-5 and
    on every whitelisted channel stay up until the last packet acks.
-9. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
-   every balance is sent.
+9. Transfer-channel relayers stay up until the halt. Before stopping, check and clear the
+   channels in both directions, including pending receives and acknowledgements, not just
+   the outbound sweep packets. ICA channels can be left to close once every balance is sent
+   and its acknowledgements are cleared. Announce that nobody should send funds to Stride
+   near or after the halt: late inbound packets may be unrecoverable, and that sender risk
+   is accepted rather than adding a new shutdown mechanism.
 10. After the halt: every validator rotates or destroys its consensus key, and Stride Labs
    confirms it in writing from each. Osmosis's light client of Stride (`07-tendermint-2119`,
    12-day trusting period) accepts any header signed by two thirds of the last trusted
@@ -955,6 +961,9 @@ Checklist to halt the chain:
 - The sweep complete: no sweepable account at or above the floor holds any in-scope stToken,
   `ustrd`, or a whitelisted voucher on the sweep list, and no sweep packet outstanding on
   channel-5 or a whitelisted channel.
+- Channel queues checked and cleared in both directions: no outstanding receives or
+  acknowledgements on the channels used during the ops window, including inbound transfers
+  to Stride. Do not assume a packet left toward the halted chain will automatically refund.
 - Validators and STRD delegators have withdrawn their rewards; interchain-account holders
   have been notified and given time to move out.
 
