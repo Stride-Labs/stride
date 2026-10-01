@@ -23,6 +23,9 @@ STAKETIA_HOST_CHAIN_ID = "celestia"  # the chain the staketia multisig delegates
 MAX_UNBONDING_ENTRIES = 7
 # Over by at least this fraction of the recorded delegation is red: 0.0001% = 1 / 1,000,000.
 RED_FRACTION_DENOMINATOR = 1_000_000
+# x/stakeibc UndelegationSharesSafetyDivisor: a full drain of a validator whose stored rate is below 1 is
+# shaved by recorded / this (at least 1 base unit), so an overage within that buffer cannot fail the drain.
+DRAIN_BUFFER_DIVISOR = 100_000_000_000_000_000
 BOND_STATUS_PREFIX = "BOND_STATUS_"
 
 ZONE_WORKERS = 16
@@ -34,6 +37,7 @@ CONTEXT = decimal.Context(prec=60)
 
 class Severity(StrEnum):
     NEUTRAL = "neutral"  # recorded at or under the host amount
+    BUFFERED = "buffered"  # over, but within the rounding buffer the drain leaves on a slashed validator
     AMBER = "amber"  # recorded over the host amount by any amount
     RED = "red"  # over by at least 0.0001% of the recorded delegation
 
@@ -158,15 +162,25 @@ def collect() -> dict[str, Any]:
     return {"zones": zones}
 
 
-def severity_of(recorded: int, actual: int) -> Severity:
-    """Over by any amount is amber; over by at least 0.0001% of the recorded delegation is red."""
+def severity_of(recorded: int, actual: int, stride_rate: Decimal | None = None) -> Severity:
+    """Over by any amount is amber; over by at least 0.0001% of the recorded delegation is red.
+
+    An overage no larger than the drain's rounding buffer is `buffered` (harmless): that buffer only exists
+    when Stride's stored rate is below 1, mirroring applySharesRoundingSafety.
+    """
     diff = recorded - actual
     if diff <= 0:
         return Severity.NEUTRAL
+    if stride_rate is not None and stride_rate < 1 and diff <= drain_buffer(recorded=recorded):
+        return Severity.BUFFERED
     # Exact integer form of diff / recorded >= 0.0001%; recorded > 0 here because actual >= 0.
     return (
         Severity.RED if diff * RED_FRACTION_DENOMINATOR >= recorded else Severity.AMBER
     )
+
+
+def drain_buffer(recorded: int) -> int:
+    return max(1, recorded // DRAIN_BUFFER_DIVISOR)
 
 
 def build_rows(
@@ -220,7 +234,7 @@ def summarize(rows: list[ValidatorRow]) -> ZoneTotals:
         actual=actual,
         diff=recorded - actual,
         in_progress_count=sum(1 for row in rows if row.in_progress),
-        over_count=sum(1 for row in rows if row.severity != Severity.NEUTRAL),
+        over_count=sum(1 for row in rows if row.severity in (Severity.AMBER, Severity.RED)),
         red_count=sum(1 for row in rows if row.severity == Severity.RED),
     )
 
@@ -482,7 +496,7 @@ def _row(
         slash_query_in_progress=slash_query_in_progress,
         bond_status=host_validator.status if host_validator else None,
         jailed=host_validator.jailed if host_validator else None,
-        severity=severity_of(recorded=recorded, actual=actual),
+        severity=severity_of(recorded=recorded, actual=actual, stride_rate=stride_rate),
     )
 
 
