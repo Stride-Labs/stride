@@ -143,16 +143,15 @@ func (k Keeper) SubmitDelegationICQ(ctx sdk.Context, hostZone types.HostZone, va
 	return nil
 }
 
-// Submits an ICQ to get a validator's delegations
-// This is called after the validator's sharesToTokens rate is determined
-// The timeoutDuration parameter represents the length of the timeout (not to be confused with an actual timestamp)
+// SubmitCalibrationICQ queries delegator shares for an admin correction using the stored
+// shares-to-tokens rate. Snapshot the recorded delegation to reject overlapping ICA changes.
 func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
 	}
 
 	// ensure the validator is in the set for this host
-	_, _, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
+	validator, _, found := GetValidatorFromAddress(hostZone.Validators, validatorAddress)
 	if !found {
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", validatorAddress)
 	}
@@ -168,6 +167,13 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 	}
 	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
+	callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
+		InitialValidatorDelegation: validator.Delegation,
+	})
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to marshal calibration callback data")
+	}
+
 	// Submit delegator shares ICQ
 	query := icqtypes.Query{
 		ChainId:         hostZone.ChainId,
@@ -176,11 +182,13 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 		RequestData:     queryData,
 		CallbackModule:  types.ModuleName,
 		CallbackId:      ICQCallbackID_Calibrate,
-		CallbackData:    []byte{},
+		CallbackData:    callbackDataBz,
 		TimeoutDuration: time.Hour,
 		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
-	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, false); err != nil {
+
+	// Each admin submission must keep its own snapshot and never revive a purged query ID.
+	if err := k.InterchainQueryKeeper.SubmitICQRequest(ctx, query, true); err != nil {
 		return err
 	}
 

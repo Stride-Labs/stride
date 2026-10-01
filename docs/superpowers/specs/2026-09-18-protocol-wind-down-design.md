@@ -251,7 +251,13 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   about 3,615 DYM owed to 23 redemption records, all completing 2026-10-12 between 20:05 and
   20:11 UTC) and 1 empty accumulating record; nothing queued, and no new redemption is
   possible on the halted zone. These six are finished by the operator (§9).
-- Zero auctions, zero ICQ-oracle price queries, zero open LSM deposits; both airdrop-module
+- One open LSM deposit, stuck in `DETOKENIZATION_FAILED` since 2026-06-05: 67,850,952
+  `cosmosvaloper1xwazl8…j02r/116327` (jabbey, about 67.8 ATOM) on the cosmoshub-4 delegation
+  ICA, its 35.6 stATOM already minted and its tokens already in the redemption rate but not in
+  `TotalDelegations`. The redeem failed with `not enough delegation shares` because the
+  tokenize-share record holds 67,850,951.998 shares, the rounding failure v23, v25 and v32
+  fixed by retrying with one token less (§5).
+- Zero auctions, zero ICQ-oracle price queries; both airdrop-module
   airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
   Pending ICQs: haqq_11235-1 has 15 queries open, the oldest submitted on 2026-09-21, none
   answered; withdrawal and fee balance queries are open on haqq, juno-1, comdex-1 and
@@ -408,8 +414,13 @@ always was permissionless, and it is a no-op once the last record is claimed.
 `utils.ValidateAdminAddress` in ValidateBasic: ops use them to refresh slashes before the
 drain (§9), and nobody else can reach the slash path. The 5,000 base-unit
 `CalibrationThreshold` check is removed from the calibration callback: it existed to bound
-what a permissionless caller could move. The calibration callback instead refuses a validator with a delegation change in flight or a
-non-positive stored rate, the two cases the cap also happened to bound. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
+what a permissionless caller could move. New calibration queries snapshot the validator's
+recorded delegation in `DelegatorSharesQueryCallback`. The callback discards a response if
+that delegation changed while the query was in flight or a delegation-changing ICA is
+still active; this also catches a completed undelegation whose in-progress counter is zero.
+Missing or malformed snapshots and nil or non-positive stored rates are successful no-ops.
+An admin may submit a fresh calibration after a stale response is discarded; the callback
+does not start a retry loop. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
 
 **Entry points that bypass the router.** Autopilot: the handler sets `StakeibcActive =
 false`. ICA host: the handler removes `MsgLiquidStake` and `MsgRedeemStake` from the
@@ -451,7 +462,7 @@ drain refuse it, and today the Hub, Juno and Haqq carry dozens of them (§3, §9
 with an unacked packet is skipped and logged; ops clear it with the restore flow after the
 upgrade.
 
-**Pending ICQs.** The handler throws out two kinds of pending interchain query. For
+**Pending ICQs.** The handler throws out three kinds of pending stakeibc interchain query. For
 haqq_11235-1 it deletes every slash-path query (validator exchange rate, delegator shares,
 calibration callbacks) and clears `SlashQueryInProgress` on every haqq validator, before the
 delta table below is applied: a query submitted against the pre-delta state has no reason to
@@ -459,7 +470,10 @@ exist, and unlike v34's `DeleteStuckQueries` and `ResetStuckSlashQueries`, which
 and validator addresses, this is dynamic and cannot go stale between measurement and
 execution (haqq had 10 such queries open and one flagged validator on 2026-09-29). For every
 zone it deletes the pending withdrawal-balance queries, because their callback delegates and
-the call that submits them is gone (§6).
+the call that submits them is gone (§6), and all pending calibration queries, because old
+permissionless requests lack the delegation snapshots now required by admin calibration.
+Queries belonging to other modules are preserved even when their callback IDs collide.
+Late responses to deleted queries remain successful no-ops in the ICQ message handler.
 
 **Haqq delegation reconciliation.** The handler applies a per-validator delta table to
 haqq_11235-1 with the v34 helper, exactly as v34 did for Injective. The 2026-09-29
@@ -484,6 +498,15 @@ nothing is applied twice. The table is generated from `measure_delegation_drift.
 re-measured right before the proposal, and covered by a mainnet-export test. This is the
 Injective shape (real loss, no stranded liquid), not the v33 Osmosis shape (phantom stake
 credited back as a deposit record).
+
+**Failed LSM deposit.** The handler requeues the one `DETOKENIZATION_FAILED` deposit (§3) as
+`DETOKENIZATION_QUEUE` with its amount reduced by one (67,850,951), as v32 did for the last
+one, and only if the record is still exactly that status and amount. The EndBlocker retries
+it on the next block; the success callback books about 67.8 ATOM to jabbey (unbonded and
+jailed on the Hub, so its undelegation completes at once) and the drain unbonds it with the
+rest. The rate is frozen, so nothing moves; one token of dust stays in the ICA. Ops drain
+jabbey only after the retry's ack has landed, which the drain enforces anyway (it refuses a
+validator with a change in progress).
 
 ## §6. What keeps running and what stops
 
@@ -702,7 +725,10 @@ the native tokens arrive.
 (§4): for each in-scope stToken, a canonical pool holding the canonical denom on Osmosis (the
 one minted by transfers over Stride's channel-5) plus the native token, and one more two-asset
 pool for every foreign route the locations table marks in scope
-(`docs/wind-down/sttoken-locations.md`; 26 route pools plus one canonical per stToken, 7 of the routes for stATOM). A pool
+(`docs/wind-down/sttoken-locations.md`; 28 route pools plus one canonical per stToken,
+8 of the routes for stATOM). Each distinct Stride channel is a separate voucher route:
+Axelar's stATOM channels 11 and 69 and Terra's stLUNA channels 13 and 52 each need separate
+pools. A pool
 never holds more than one stToken denom, so the only thing a holder can do with a flavour is
 turn it into the native token at the rate, and a compromised source chain can reach nothing
 but its own pool. Every pool uses normalization factors `1e18` for the stToken and
@@ -723,13 +749,15 @@ corrupted (`mark_corrupted_assets [native]`). The contract then refuses any acti
 the native balance, so the only possible movement is stToken in, native out: nobody can buy
 stTokens from a pool, and de-hopping a foreign route through two pools (route → native →
 canonical) is impossible. Redemptions by router swap and by join-then-exit are unaffected
-(tested 2026-09-25). A top-up therefore means unmark, join, re-mark; and when a pool's native
-balance reaches zero the contract removes the native asset, after which `add_new_assets` at
-the same factor plus a join restores it with the rate exact (tested). The canonical denom's
+(tested 2026-09-25). Completing an initial allocation after a test deposit therefore means
+unmark, join, re-mark. If the test deposit's native balance reaches zero, the contract removes
+the native asset; `add_new_assets` at the same factor before the remaining funding join
+restores it with the rate exact (tested). This completes the allocation, not a replenishment
+of redeemed funds. The canonical denom's
 counterfeit risk is a forged Stride header, handled by the key destruction after the halt
 (§9).
 
-**Funding** is one `join_pool` per pool with native tokens only, once every source for that
+**Funding** uses `join_pool` with native tokens only, once every source for that
 native denom has arrived: the delegation ICA transfer and the withdrawal, fee and redemption
 ICA sweeps (for stTIA the delegation ICA transfer includes the former multisig balance,
 routed through the claim address). Each route pool receives exactly `escrow_route ×
@@ -737,6 +765,14 @@ RedemptionRate` native tokens, where `escrow_route` is the balance of Stride's e
 for that route's channel in the halt export; the canonical pool receives everything else
 (§10). A stToken's pools can be created and funded as soon as its native denom is complete;
 zones finish unbonding on different days and nothing couples them.
+
+A small test deposit counts toward the pool's total allocation. The remaining deposit is
+the allocation minus all prior confirmed native funding deposits, **not** the allocation
+minus the pool's current native balance. For example, a 100-ATOM allocation funded with a
+1-ATOM test receives another 99 ATOM, even if the test ATOM has already been redeemed.
+Once a foreign-route pool has received its full allocation, do not fund it again: native
+tokens paid out through redemptions are never replenished. The coverage check is not a
+cumulative funding audit (§10).
 
 **Foreign-route denoms.** A stToken that left Stride to chain X and is sent from X to Osmosis
 arrives as a two-hop denom (`transfer/<osmosis-X channel>/transfer/<X-stride channel>/st...`),
@@ -754,8 +790,10 @@ DeFi protocols on other chains withdraw there and transfer to Osmosis directly.
 **Shutdown.** Once every pool is funded, the sweep is complete and the halt checklist (§9)
 passes, validators set a `halt-height` and the chain stops. Stride's IBC clients on other
 chains expire after their trusting periods; stTokens on those chains stay ordinary vouchers
-and keep working in the pools, and any packet toward Stride that was never relayed times out
-and refunds on its source chain. The pools outlive the chain. Backing that is never claimed is
+and keep working in the pools. Clear channels in both directions before halting (§9): a late
+packet toward Stride is not guaranteed to time out and refund on its source chain, since the
+required non-receipt proof may need a Stride height or timestamp the halted chain never reaches.
+The pools outlive the chain. Backing that is never claimed is
 reclaimed later by exiting the pools with the alloyed asset; that timing is a policy decision
 outside this design.
 
@@ -810,6 +848,14 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
 The ops window (after the upgrade, ~35 days). The redemptions open at the upgrade are queued,
 unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes all three
 (§6) while the rest proceeds:
+
+**Accepted LSM tail risk.** New LSM liquid stakes are disabled at the upgrade and none are
+expected to remain, but an earlier request may still have callbacks or a deposit in flight.
+Any such negligible remainder may finish through the existing pipeline while the chain is
+running; if it does not finish in time, it is ignored. Do not add an LSM-specific drain or
+halt prerequisite, or extend the ops window for it. Existing ICA-safety and coverage checks
+remain unchanged; this is an accepted residual risk, not a guarantee that every LSM request
+will settle.
 
 1. Day 0, before anything else (including every other zone's refresh and calibration): the
    haqq sequence. Haqq goes first because its blocks are slow, its handshakes take hours, and
@@ -921,8 +967,12 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    the four host channels outside the whitelist are announced as self-service. Resubmit any
    address whose transfer timed out (its balance is back on Stride). Relayers on channel-5 and
    on every whitelisted channel stay up until the last packet acks.
-9. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
-   every balance is sent.
+9. Transfer-channel relayers stay up until the halt. Before stopping, check and clear the
+   channels in both directions, including pending receives and acknowledgements, not just
+   the outbound sweep packets. ICA channels can be left to close once every balance is sent
+   and its acknowledgements are cleared. Announce that nobody should send funds to Stride
+   near or after the halt: late inbound packets may be unrecoverable, and that sender risk
+   is accepted rather than adding a new shutdown mechanism.
 10. After the halt: every validator rotates or destroys its consensus key, and Stride Labs
    confirms it in writing from each. Osmosis's light client of Stride (`07-tendermint-2119`,
    12-day trusting period) accepts any header signed by two thirds of the last trusted
@@ -944,9 +994,15 @@ Checklist to halt the chain:
   unbondings complete, its balance on Osmosis.
 - Every pool, canonical and per route, created, funded and passing the coverage check (§10)
   against a fresh export.
+- For each foreign-route pool, confirmed native funding deposits, including any test deposit,
+  total exactly its allocation (§8); no redemption payouts have been replenished. Check the
+  deposits, not just the remaining pool balance.
 - The sweep complete: no sweepable account at or above the floor holds any in-scope stToken,
   `ustrd`, or a whitelisted voucher on the sweep list, and no sweep packet outstanding on
   channel-5 or a whitelisted channel.
+- Channel queues checked and cleared in both directions: no outstanding receives or
+  acknowledgements on the channels used during the ops window, including inbound transfers
+  to Stride. Do not assume a packet left toward the halted chain will automatically refund.
 - Validators and STRD delegators have withdrawn their rewards; interchain-account holders
   have been notified and given time to move out.
 
@@ -1126,6 +1182,29 @@ queries and has no on-chain counterpart, which is the one place this design is w
 on-chain assertion; the mitigation is that funding is a deliberate `join_pool` for the
 computed amount, so an under-funded pool can only come from a wrong number in a script that
 is run twice and published.
+
+Before querying or summing Osmosis backing, `scripts/wind-down/coverage_check.py` validates
+the complete pool topology. Its checked-in `REQUIRED_ROUTES` policy comes from the per-token
+tables' exact `in scope` rows in `docs/wind-down/sttoken-locations.md`, excluding Stride and
+Osmosis (canonical), and retaining every channel in multi-channel rows. The relayer scope
+table is not the authority: temporarily blocked Injective and host-dust routes still require
+pools, while unsupported Penumbra and all ignored foreign rows do not. A scope change must
+update the reviewed tables and the policy together; an automated consistency test fails on
+drift. The CLI always uses the trusted policy, with no operator override. Every non-deprecated
+stakeibc export zone still requires canonical coverage, including stSOMM with an empty foreign
+route set; a newly eligible token without a reviewed policy fails closed.
+
+Each pool entry must name that token's own export host zone. Route channels must match the
+approved set exactly and cannot repeat within a token; Osmosis pool IDs cannot repeat anywhere,
+including between canonical and route pools or across tokens. Pool IDs must be canonical
+positive decimal strings, and channels must use canonical `channel-N` spelling, so aliases
+cannot evade the checks. A missing route fails validation even if canonical holds enough
+native tokens for the entire supply. These checks precede the existing per-pool arithmetic:
+the route upper bound remains its original escrow balance times the frozen rate. This checks
+the current native balance, not cumulative funding: extra deposits after redemptions can
+remain below that bound and pass. Ops therefore verify the total confirmed funding deposits
+against the allocation and follow the no-replenishment rule (§8/§9); the checker does not
+replace that funding check.
 
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3: `Unbond` calls the
 distribution hook `BeforeDelegationSharesModified`, which withdraws the accrued rewards, and

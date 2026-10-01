@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"github.com/cosmos/gogoproto/proto"
+
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,17 +13,9 @@ import (
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
-// DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
-//
-// In an attempt to get the ICA's delegation amount on a given validator, we have to query:
-//  1. the validator's internal shares to tokens rate
-//  2. the Delegation ICA's delegated shares
-//     And apply the following equation:
-//     numTokens = numShares * sharesToTokensRate
-//
-// This is the callback from query #2
-//
-// Note: for now, to get proofs in your ICQs, you need to query the entire store on the host zone! e.g. "store/bank/key"
+// CalibrateDelegationCallback applies an admin correction from queried shares and the
+// stored shares-to-tokens rate, only while the query's recorded delegation remains current.
+// Stale or unusable snapshots are discarded; admins may submit a fresh calibration.
 func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query icqtypes.Query) error {
 	k.Logger(ctx).Info(utils.LogICQCallbackWithHostZone(query.ChainId, ICQCallbackID_Calibrate,
 		"Starting delegator shares callback, QueryId: %vs, QueryType: %s, Connection: %s", query.Id, query.QueryType, query.ConnectionId))
@@ -48,12 +42,21 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
-	// Skip if there is an active delegation change ICA for this validator, since the queried
-	// shares race the recorded delegation
-	if validator.DelegationChangesInProgress > 0 {
+	// Old calibration queries are purged at v35, so a missing snapshot is never safe to apply.
+	var callbackData types.DelegatorSharesQueryCallback
+	if err := proto.Unmarshal(query.CallbackData, &callbackData); err != nil || callbackData.InitialValidatorDelegation.IsNil() {
 		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
-			"Validator (%s) has %d delegation changing ICAs in progress, skipping calibration",
-			validator.Address, validator.DelegationChangesInProgress))
+			"Validator (%s) has missing or invalid calibration snapshot, skipping calibration", validator.Address))
+		return nil
+	}
+
+	// A completed ICA has already cleared its in-progress counter, but the snapshot still
+	// detects its delegation change. Discard the response rather than retrying indefinitely.
+	overlapped, err := k.CheckDelegationChangedDuringQuery(ctx, validator, callbackData.InitialValidatorDelegation, validator.Delegation)
+	if err != nil {
+		return err
+	}
+	if overlapped {
 		return nil
 	}
 

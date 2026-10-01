@@ -137,17 +137,17 @@ func (k Keeper) CheckDelegationChangedDuringQuery(
 	currentInternalDelegation sdkmath.Int,
 ) (overlapped bool, err error) {
 	// Confirm the delegation total in the internal record keeping has not changed while the query was inflight
-	// If it has changed, exit this callback (to prevent any accounting errors) and resubmit the query
+	// The caller decides whether to retry or discard an overlapping query.
 	if !currentInternalDelegation.Equal(previousInternalDelegation) {
 		k.Logger(ctx).Error(fmt.Sprintf(
-			"Validator (%s) delegation changed while delegator shares query was in flight. Resubmitting query", validator.Address))
+			"Validator (%s) delegation changed while delegator shares query was in flight", validator.Address))
 		return true, nil
 	}
 
 	// Confirm there isn't currently an active delegation change ICA for this validator
 	if validator.DelegationChangesInProgress > 0 {
 		k.Logger(ctx).Error(fmt.Sprintf(
-			"Validator (%s) has %d delegation changing ICAs in progress. Resubmitting query ",
+			"Validator (%s) has %d delegation changing ICAs in progress",
 			validator.Address, validator.DelegationChangesInProgress))
 		return true, nil
 	}
