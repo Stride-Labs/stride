@@ -145,7 +145,7 @@ def render(candidates: list[Candidate], price_source: str) -> str:
         f"Prices: {price_source}.",
         "",
         "The first `MsgUndelegateFromValidators` on each zone drains exactly one validator in full, as the live test of the tx",
-        "and its callback, before the empty-list drain of the rest (spec §7, §9 step 3). The pick is the validator with the",
+        "and its callback, before the empty-list drain of the rest (spec §7, §9 step 4). The pick is the validator with the",
         "smallest recorded delegation of at least one whole token that has no unbonding entry in flight from the delegation ICA (the SDK allows 7",
         "concurrent entries per delegator-validator pair; a validator drained in full never needs a second one). \"Next\" is the",
         "second-smallest delegation, to show how much the pick matters.",
