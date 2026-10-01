@@ -119,6 +119,8 @@ class BuildRowsTest(unittest.TestCase):
         self.assertIsNone(row.rate_difference)
         self.assertEqual((row.weight_percent, row.bond_status, row.jailed), (Decimal(0), "unbonding", True))
         self.assertEqual(row.severity, validators.Severity.NEUTRAL)
+        self.assertEqual((row.delegation_changes_in_progress, row.slash_query_in_progress), (None, None))
+        self.assertFalse(row.in_progress)
 
     def test_zero_balance_host_delegation_is_not_an_unregistered_row(self) -> None:
         rows = self.build(delegations={OPERATOR_A: 900_000, OPERATOR_C: 0})
@@ -158,11 +160,16 @@ class BuildRowsTest(unittest.TestCase):
         )
         by_address = rows_by_address(rows)
 
-        self.assertEqual(by_address[OPERATOR_A].in_progress_detail, "slash query in progress")
-        self.assertEqual(by_address[OPERATOR_B].in_progress_detail, "2 delegation change(s) in progress")
+        self.assertEqual(
+            (by_address[OPERATOR_A].slash_query_in_progress, by_address[OPERATOR_A].delegation_changes_in_progress),
+            (True, 0),
+        )
+        self.assertEqual(
+            (by_address[OPERATOR_B].slash_query_in_progress, by_address[OPERATOR_B].delegation_changes_in_progress),
+            (False, 2),
+        )
         self.assertTrue(by_address[OPERATOR_A].in_progress and by_address[OPERATOR_B].in_progress)
         self.assertFalse(by_address[OPERATOR_C].in_progress)
-        self.assertIsNone(by_address[OPERATOR_C].in_progress_detail)
 
     def test_eighteen_decimal_amounts_stay_exact(self) -> None:
         recorded = 107_130_613_496_529_123_456_789

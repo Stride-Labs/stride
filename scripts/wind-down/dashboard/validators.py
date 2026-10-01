@@ -75,13 +75,17 @@ class ValidatorRow:
     chain_rate: Decimal | None
     rate_difference: Decimal | None  # stride_rate - chain_rate
     unbonding_entries: int | None  # None when the lookup failed
-    in_progress: bool
-    in_progress_detail: str | None
+    delegation_changes_in_progress: int | None  # None for a validator Stride does not track
+    slash_query_in_progress: bool | None
     bond_status: (
         str | None
     )  # None when the host validator list could not be read or lacks the validator
     jailed: bool | None
     severity: Severity
+
+    @property
+    def in_progress(self) -> bool:
+        return bool(self.delegation_changes_in_progress) or bool(self.slash_query_in_progress)
 
     def payload(self) -> dict[str, Any]:
         return {
@@ -97,8 +101,8 @@ class ValidatorRow:
             "chain_rate": _optional_decimal_text(value=self.chain_rate),
             "rate_difference": _optional_decimal_text(value=self.rate_difference),
             "unbonding_entries": self.unbonding_entries,
-            "in_progress": self.in_progress,
-            "in_progress_detail": self.in_progress_detail,
+            "delegation_changes_in_progress": self.delegation_changes_in_progress,
+            "slash_query_in_progress": self.slash_query_in_progress,
             "bond_status": self.bond_status,
             "jailed": self.jailed,
             "severity": self.severity,
@@ -413,7 +417,8 @@ def _registered_row(
         stride_rate=validator.rate,
         host_validator=host_validator,
         unbonding_entries=unbonding_entries,
-        in_progress_detail=_in_progress_detail(validator=validator),
+        delegation_changes_in_progress=validator.delegation_changes_in_progress,
+        slash_query_in_progress=validator.slash_query_in_progress,
     )
 
 
@@ -433,7 +438,8 @@ def _unregistered_row(
         stride_rate=None,
         host_validator=host_validator,
         unbonding_entries=unbonding_entries,
-        in_progress_detail=None,
+        delegation_changes_in_progress=None,
+        slash_query_in_progress=None,
     )
 
 
@@ -447,7 +453,8 @@ def _row(
     stride_rate: Decimal | None,
     host_validator: HostValidator | None,
     unbonding_entries: int | None,
-    in_progress_detail: str | None,
+    delegation_changes_in_progress: int | None,
+    slash_query_in_progress: bool | None,
 ) -> ValidatorRow:
     diff = recorded - actual
     chain_rate = host_validator.rate if host_validator else None
@@ -471,8 +478,8 @@ def _row(
         chain_rate=chain_rate,
         rate_difference=rate_difference,
         unbonding_entries=unbonding_entries,
-        in_progress=in_progress_detail is not None,
-        in_progress_detail=in_progress_detail,
+        delegation_changes_in_progress=delegation_changes_in_progress,
+        slash_query_in_progress=slash_query_in_progress,
         bond_status=host_validator.status if host_validator else None,
         jailed=host_validator.jailed if host_validator else None,
         severity=severity_of(recorded=recorded, actual=actual),
@@ -490,19 +497,6 @@ def _multisig_row(
         jailed=host_validator.jailed if host_validator else None,
     )
 
-
-def _in_progress_detail(validator: StrideValidator) -> str | None:
-    reasons = [
-        *(["slash query in progress"] if validator.slash_query_in_progress else []),
-        *(
-            [
-                f"{validator.delegation_changes_in_progress} delegation change(s) in progress"
-            ]
-            if validator.delegation_changes_in_progress
-            else []
-        ),
-    ]
-    return ", ".join(reasons) or None
 
 
 def _entries_for(unbonding: dict[str, int] | None, address: str) -> int | None:

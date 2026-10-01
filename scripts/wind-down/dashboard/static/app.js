@@ -149,7 +149,10 @@ function showWaiting(name, status, body) {
 function updateBadge(name, body) {
   const badge = document.querySelector(`.tab[data-tab="${name}"] .badge`);
   const errors = countErrors(body.data);
-  badge.hidden = errors === 0;
+  // `.badge` sets display, so the hidden attribute never applied; show the count and colour it instead.
+  badge.hidden = false;
+  badge.classList.toggle('bad', errors > 0);
+  badge.classList.toggle('ok', errors === 0);
   badge.textContent = `${errors} error${errors === 1 ? '' : 's'}`;
 }
 
