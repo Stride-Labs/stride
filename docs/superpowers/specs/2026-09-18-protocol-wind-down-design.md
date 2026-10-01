@@ -54,8 +54,9 @@ Out of scope, explicitly:
   them, and none of them are unbonded, drained or given a pool. Their host chains have stopped
   producing blocks, so nothing could be done through their ICAs anyway. Stakedym is halted
   on mainnet (its rate crossed its 1.1 max bound), stays halted, and is treated as deprecated:
-  its open unbonding records are not flushed and it is never unbonded, drained or given a
-  pool. Holders of stCMDX, stEVMOS, stSTARS, stUMEE and
+  it is never unbonded further, drained or given a pool. The one exception is the
+  redemptions already in flight when it halted: the operator finishes those cycles and the
+  binary lets the claims pay out on the halted zone (§6, §9). Holders of stCMDX, stEVMOS, stSTARS, stUMEE and
   stDYM have no redemption path after this work, which matches their status today but is now
   a deliberate decision (for stakedym, a deliberate choice not to recover it).
 - stTokens held by Stride accounts that no key controls (contracts, interchain accounts owned
@@ -246,8 +247,10 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   skip a validator and would make the drain refuse it, which is why the handler resets them
   (§5).
 - Staketia: 6 `UNBONDING_IN_PROGRESS`, 2 `UNBONDING_QUEUE`, 1 accumulating, 0 redemption
-  records. Stakedym: 6 `UNBONDING_IN_PROGRESS`, 1 accumulating, 0 redemption records
-  (the 2026-09-18 records were flushed by the operator before it halted; the rest stay, §2).
+  records. Stakedym (re-measured 2026-10-01): 6 `UNBONDING_IN_PROGRESS` (records 1444-1464,
+  about 3,615 DYM owed to 23 redemption records, all completing 2026-10-12 between 20:05 and
+  20:11 UTC) and 1 empty accumulating record; nothing queued, and no new redemption is
+  possible on the halted zone. These six are finished by the operator (§9).
 - Zero auctions, zero ICQ-oracle price queries, zero open LSM deposits; both airdrop-module
   airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
   Pending ICQs: haqq_11235-1 has 15 queries open, the oldest submitted on 2026-09-21, none
@@ -538,6 +541,14 @@ mistimed drain fails rather than races or strands anyone (§7).
 The redemption ICA is drained only after a zone's claims are done, since it holds the tokens
 of claimable records.
 
+Stakedym is the one halted zone with redemptions in flight (§3). Its hooks are untouched and
+it stays halted, which already stops everything that mints, redeems or moves the rate.
+Of the steps that finish a redemption, marking a record `UNBONDED` (hour epoch) and the
+operator's `MsgConfirmUnbondedTokenSweep` ignore the halt; only `DistributeClaims` (hour
+epoch) refused a halted zone. The binary drops that check: a claim pays a fixed native
+amount the operator has already swept to the claim address and never reads the rate, so
+paying it on a halted zone is safe, and it lets the six open records finish (§9).
+
 ## §7. The four admin txs
 
 All four are gated in ValidateBasic: the undelegate, ICA transfer and claim-address txs on the
@@ -789,7 +800,12 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   since `MsgTransferFromIca` executes exactly those through the ICA (§7). A host that rejects
   the message leaves the funds in the ICA, so this is a delay, not a loss, but it belongs
   beside the channel check.
-- The staketia operator ready to act on day 0.
+- The staketia operator ready to act on day 0, and the stakedym operator ready for
+  2026-10-12, when stakedym's last six records finish unbonding (§9 step 7).
+- A relayer on Stride `channel-197` ↔ Dymension from 2026-10-12 until the halt: it carries
+  the stakedym operator's sweep to the claim address and the redeemers' DYM home (DYM is not
+  on the sweep whitelist, since Dymension addresses do not share Stride's bytes, so redeemers
+  move it themselves).
 
 The ops window (after the upgrade, ~35 days). The redemptions open at the upgrade are queued,
 unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes all three
@@ -889,6 +905,14 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    `MsgTransferStaketiaClaimBalance` with a small `amount` as the live test, and once it has
    landed on the delegation ICA, again with zero for the remainder, which leaves with that
    zone's balance in step 5. No key of the claim address signs anything.
+   Stakedym, 2026-10-12 after about 20:11 UTC: the hour epoch marks records 1444-1464
+   `UNBONDED`; the stakedym operator sends the unbonded DYM from the Dymension delegation
+   account to the stakedym claim address over `channel-197`, exactly as in its normal cycle,
+   and `MsgConfirmUnbondedTokenSweep` for each record (the claim address must hold at least
+   the record's native amount). The next hour epoch pays the 23 redeemers from the claim
+   address even though the zone is halted (§6), and the records archive as `CLAIMED`.
+   Announce that redeemers must move their DYM to Dymension themselves before the halt.
+   Nothing else on stakedym runs: no delegation, no new unbonding, no pool.
 8. Last days: `MsgSweepTokensOffStride` in batches (size set from the gas measurement; the builder defaults to 100), each tx listing every
    denom on the sweep list, for every holder at or above the floor, built from a fresh
    export: the eleven stTokens and `ustrd` (to Osmosis) and every voucher whose outermost
@@ -1285,7 +1309,8 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
      and the batch-builder script that mirrors them. The one tx that moves user balances gets
      a review with nothing else in the diff.
   6. Release gate: the mainnet-export suite over the full handler, the coverage-check script,
-     the changelog, and the two address constants once the accounts exist.
+     the changelog, the two address constants once the accounts exist, and stakedym's
+     `DistributeClaims` paying on a halted zone (§6).
      Its plan is written like the others, but it is the one PR that cannot merge until the
      two accounts exist and are proven (§9), since it fills their constants.
      The module-path bump to `/v35` stays outside all six as a manual step after they land:

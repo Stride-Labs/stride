@@ -257,7 +257,10 @@ func (k Keeper) ConfirmUnbondedTokenSweep(ctx sdk.Context, recordId uint64, txHa
 func (k Keeper) DistributeClaims(ctx sdk.Context) error {
 	// Get the claim address which will be the sender
 	// The token denom will be the native host zone token in it's IBC form as it lives on stride
-	hostZone, err := k.GetUnhaltedHostZone(ctx)
+	// Claims are paid even while the zone is halted: each pays a fixed native amount the operator
+	// already swept to the claim address, so the halted rate is never used. This lets the
+	// redemptions in flight when stakedym was halted finish during the wind-down
+	hostZone, err := k.GetHostZone(ctx)
 	if err != nil {
 		return err
 	}
