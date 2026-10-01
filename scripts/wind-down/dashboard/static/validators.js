@@ -71,7 +71,7 @@ function zoneBody(zone) {
 
 function zoneHeader() {
   return `<tr><th>Validator</th><th>Operator</th><th class="num">Weight</th><th class="num">Recorded</th><th class="num">Actual</th>
-    <th class="num">Diff</th><th class="num">Diff %</th><th class="num">Rate diff</th><th class="num">Unbonding</th><th>In progress</th><th>Bond status</th></tr>`;
+    <th class="num">Diff</th><th class="num">Diff %</th><th class="num">Rate diff</th><th class="num">Unbonding</th><th class="num" title="delegation_changes_in_progress">Δ in progress</th><th title="slash_query_in_progress">Slash query</th><th>Bond status</th></tr>`;
 }
 
 function zoneRow(row, zone) {
@@ -88,7 +88,8 @@ function zoneRow(row, zone) {
     <td class="num ${severityClass}">${row.diff_percent === null ? '<span class="muted">–</span>' : escapeHtml(row.diff_percent) + '%'}</td>
     <td class="num ${rateDifferenceClass(row.rate_difference)}">${row.rate_difference === null ? '<span class="muted">n/a</span>' : escapeHtml(row.rate_difference)}</td>
     <td class="num ${unbondingClass(row.unbonding_entries, zone.max_unbonding_entries)}">${unbondingText(row.unbonding_entries, zone.max_unbonding_entries)}</td>
-    <td>${inProgressCell(row)}</td>
+    <td class="num ${row.delegation_changes_in_progress ? 't-warn' : 'muted'}">${row.delegation_changes_in_progress === null ? '–' : row.delegation_changes_in_progress}</td>
+    <td>${slashQueryCell(row.slash_query_in_progress)}</td>
     <td>${bondCell(row.bond_status, row.jailed)}</td></tr>`;
 }
 
@@ -105,9 +106,9 @@ function unbondingClass(entries, max) {
   return entries >= max ? 't-bad' : '';
 }
 
-function inProgressCell(row) {
-  if (!row.in_progress) return '<span class="muted">–</span>';
-  return `<span title="${escapeHtml(row.in_progress_detail)}">${pill('warn', 'in progress')}</span>`;
+function slashQueryCell(inProgress) {
+  if (inProgress === null) return '<span class="muted">–</span>';
+  return inProgress ? pill('warn', 'in progress') : '<span class="muted">no</span>';
 }
 
 function bondCell(status, jailed) {

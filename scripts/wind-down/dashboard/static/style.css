@@ -42,6 +42,7 @@ tr.zone td .sub { font-weight: 400; color: var(--muted); margin-left: 8px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .muted { color: var(--muted); }
 .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; }
+.badge:empty { display: none; }  /* a tab's error badge has no text until its first snapshot */
 .ok { color: var(--ok); background: var(--ok-bg); } .warn { color: var(--warn); background: var(--warn-bg); }
 .bad { color: var(--bad); background: var(--bad-bg); } .idle { color: var(--idle); background: var(--idle-bg); }
 .t-bad { color: var(--bad); font-weight: 600; } .t-warn { color: var(--warn); font-weight: 600; }
