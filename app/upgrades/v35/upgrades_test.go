@@ -89,8 +89,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx), "blacklisted denoms")
 	s.Require().Empty(s.App.RatelimitKeeper.GetAllWhitelistedAddressPairs(s.Ctx), "whitelisted pairs")
 	s.Require().Equal([]int64{0, 0, 0}, s.flags("cosmoshub-4"), "stale flags")
-	s.Require().ElementsMatch([]string{"haqq-fee", "juno-delegation", "comdex-calibrate", "other-haqq-delegation", "other-juno-withdrawal"},
-		s.queryIds(), "both ICQ purges")
+	s.Require().ElementsMatch([]string{"haqq-fee", "juno-delegation", "other-haqq-delegation", "other-juno-withdrawal"},
+		s.queryIds(), "all ICQ purges")
 	haqq, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)
 	s.Require().False(haqq.Validators[0].SlashQueryInProgress, "haqq slash flag")
 	for _, entry := range v35.HaqqDelegationDeltas {

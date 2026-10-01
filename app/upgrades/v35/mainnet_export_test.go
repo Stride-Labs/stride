@@ -363,7 +363,9 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 		isHaqqSlashPath := query.ChainId == v35.HaqqChainId && (query.CallbackId == stakeibckeeper.ICQCallbackID_Delegation ||
 			query.CallbackId == stakeibckeeper.ICQCallbackID_Validator || query.CallbackId == stakeibckeeper.ICQCallbackID_Calibrate)
 		isWithdrawalBalance := query.CallbackId == stakeibckeeper.ICQCallbackID_WithdrawalHostBalance
-		s.Require().Equal(!(isHaqqSlashPath || isWithdrawalBalance), stillThere,
+		isCalibration := query.CallbackId == stakeibckeeper.ICQCallbackID_Calibrate
+		shouldPurge := query.CallbackModule == stakeibctypes.ModuleName && (isHaqqSlashPath || isWithdrawalBalance || isCalibration)
+		s.Require().Equal(!shouldPurge, stillThere,
 			"query %s (%s %s) purge decision", query.Id, query.ChainId, query.CallbackId)
 	}
 	haqqAfter, _ := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.HaqqChainId)

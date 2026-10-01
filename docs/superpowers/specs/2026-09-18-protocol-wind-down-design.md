@@ -408,8 +408,13 @@ always was permissionless, and it is a no-op once the last record is claimed.
 `utils.ValidateAdminAddress` in ValidateBasic: ops use them to refresh slashes before the
 drain (§9), and nobody else can reach the slash path. The 5,000 base-unit
 `CalibrationThreshold` check is removed from the calibration callback: it existed to bound
-what a permissionless caller could move. The calibration callback instead refuses a validator with a delegation change in flight or a
-non-positive stored rate, the two cases the cap also happened to bound. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
+what a permissionless caller could move. New calibration queries snapshot the validator's
+recorded delegation in `DelegatorSharesQueryCallback`. The callback discards a response if
+that delegation changed while the query was in flight or a delegation-changing ICA is
+still active; this also catches a completed undelegation whose in-progress counter is zero.
+Missing or malformed snapshots and nil or non-positive stored rates are successful no-ops.
+An admin may submit a fresh calibration after a stale response is discarded; the callback
+does not start a retry loop. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
 
 **Entry points that bypass the router.** Autopilot: the handler sets `StakeibcActive =
 false`. ICA host: the handler removes `MsgLiquidStake` and `MsgRedeemStake` from the
@@ -451,7 +456,7 @@ drain refuse it, and today the Hub, Juno and Haqq carry dozens of them (§3, §9
 with an unacked packet is skipped and logged; ops clear it with the restore flow after the
 upgrade.
 
-**Pending ICQs.** The handler throws out two kinds of pending interchain query. For
+**Pending ICQs.** The handler throws out three kinds of pending stakeibc interchain query. For
 haqq_11235-1 it deletes every slash-path query (validator exchange rate, delegator shares,
 calibration callbacks) and clears `SlashQueryInProgress` on every haqq validator, before the
 delta table below is applied: a query submitted against the pre-delta state has no reason to
@@ -459,7 +464,10 @@ exist, and unlike v34's `DeleteStuckQueries` and `ResetStuckSlashQueries`, which
 and validator addresses, this is dynamic and cannot go stale between measurement and
 execution (haqq had 10 such queries open and one flagged validator on 2026-09-29). For every
 zone it deletes the pending withdrawal-balance queries, because their callback delegates and
-the call that submits them is gone (§6).
+the call that submits them is gone (§6), and all pending calibration queries, because old
+permissionless requests lack the delegation snapshots now required by admin calibration.
+Queries belonging to other modules are preserved even when their callback IDs collide.
+Late responses to deleted queries remain successful no-ops in the ICQ message handler.
 
 **Haqq delegation reconciliation.** The handler applies a per-validator delta table to
 haqq_11235-1 with the v34 helper, exactly as v34 did for Injective. The 2026-09-29

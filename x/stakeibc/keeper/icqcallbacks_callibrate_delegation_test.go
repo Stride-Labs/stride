@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"github.com/cosmos/gogoproto/proto"
+
 	sdkmath "cosmossdk.io/math"
 
 	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
@@ -28,6 +30,13 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 		sharesToTokensRate    sdkmath.LegacyDec
 		expectedEndDelegation sdkmath.Int
 	}{
+		{
+			name:                  "zero recorded delegation snapshot remains usable",
+			currentDelegation:     sdkmath.ZeroInt(),
+			sharesInQueryResponse: sdkmath.LegacyNewDec(20_000),
+			sharesToTokensRate:    sdkmath.LegacyOneDec(),
+			expectedEndDelegation: sdkmath.NewInt(20_000),
+		},
 		{
 			// Current delegation: 10,000 tokens
 			// Query response:     13,334 shares * 0.75 sharesToTokens = 10,000 tokens (+0)
@@ -113,8 +122,8 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 		}
 		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
 
-		// Mock out the query response and confirm the callback succeede
-		query := icqtypes.Query{ChainId: HostChainId}
+		// Snapshot the recorded delegation when the query is submitted.
+		query := s.calibrationQuery(tc.currentDelegation)
 		queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, tc.sharesInQueryResponse)
 
 		err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
@@ -185,6 +194,10 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_NoOp() {
 			// A nil rate is unset and would compute a meaningless token amount
 			name: "nil shares to tokens rate",
 		},
+		{
+			name:               "negative shares to tokens rate",
+			sharesToTokensRate: sdkmath.LegacyNewDec(-1),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -199,7 +212,7 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_NoOp() {
 			}},
 		})
 
-		query := icqtypes.Query{ChainId: HostChainId}
+		query := s.calibrationQuery(initialDelegation)
 		queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, sdkmath.LegacyMustNewDecFromStr("10000"))
 
 		err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
@@ -211,5 +224,53 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_NoOp() {
 			"%s - validator delegation should be unchanged", tc.name)
 		s.Require().Equal(initialTotalDelegations.Int64(), updatedHostZone.TotalDelegations.Int64(),
 			"%s - host zone total delegation should be unchanged", tc.name)
+	}
+}
+
+func (s *KeeperTestSuite) calibrationQuery(initialDelegation sdkmath.Int) icqtypes.Query {
+	callbackData, err := proto.Marshal(&types.DelegatorSharesQueryCallback{InitialValidatorDelegation: initialDelegation})
+	s.Require().NoError(err)
+	return icqtypes.Query{ChainId: HostChainId, CallbackData: callbackData}
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_CompletedUndelegation() {
+	tc := s.SetupUndelegateCallbackNoRecords()
+	hostZone := s.MustGetHostZone(HostChainId)
+	hostZone.Validators[0].SharesToTokensRate = sdkmath.LegacyOneDec()
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	query := s.calibrationQuery(hostZone.Validators[0].Delegation)
+	queryResponse := s.CreateDelegatorSharesQueryResponse(hostZone.Validators[0].Address,
+		sdkmath.LegacyNewDecFromInt(hostZone.Validators[0].Delegation))
+
+	// Complete the real ICA callback before the older calibration answer arrives.
+	err := s.App.StakeibcKeeper.UndelegateCallback(s.Ctx, tc.validArgs.packet, tc.validArgs.ackResponse, tc.validArgs.args)
+	s.Require().NoError(err)
+	afterUndelegation := s.MustGetHostZone(HostChainId)
+	s.Require().Zero(afterUndelegation.Validators[0].DelegationChangesInProgress)
+	s.Require().Equal(tc.initialState.val1Bal.Sub(tc.val1UndelegationAmount), afterUndelegation.Validators[0].Delegation)
+
+	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
+	s.Require().NoError(err)
+	s.Require().Equal(afterUndelegation, s.MustGetHostZone(HostChainId), "stale shares must not resurrect undelegated tokens")
+	s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), "stale calibration does not start a retry loop")
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_InvalidCallbackData() {
+	for _, callbackData := range [][]byte{nil, {}, {1, 2, 3}, {0x10, 0x01}} {
+		hostZone := types.HostZone{
+			ChainId: HostChainId, TotalDelegations: sdkmath.NewInt(10_000),
+			Validators: []*types.Validator{{
+				Address: ValAddress, Delegation: sdkmath.NewInt(10_000),
+				SharesToTokensRate: sdkmath.LegacyOneDec(),
+			}},
+		}
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+		before := s.MustGetHostZone(HostChainId)
+		queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, sdkmath.LegacyNewDec(20_000))
+		err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse,
+			icqtypes.Query{ChainId: HostChainId, CallbackData: callbackData})
+		s.Require().NoError(err)
+		s.Require().Equal(before, s.MustGetHostZone(HostChainId), "missing or malformed snapshot must not change accounting")
+		s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx))
 	}
 }

@@ -13,7 +13,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
 	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -1131,25 +1130,63 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_ResetUnknownValidator() {
 // A stale flag blocks the callback forever; a calibrate with the reset lets the next callback apply the correction
 func (s *KeeperTestSuite) TestCalibrateDelegation_StaleFlagBlocksUntilReset() {
 	msg := s.SetupCalibrateDelegation()
-	query := icqtypes.Query{ChainId: HostChainId}
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().NoError(err)
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1)
+	query := queries[0]
 
 	// 20,000 shares * 0.75 = 15,000 tokens, versus the 10,000 recorded
 	queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, sdkmath.LegacyMustNewDecFromStr("20000"))
 
 	// Without the reset, the callback is a no-op
-	err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
+	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
 	s.Require().NoError(err)
 	s.Require().Equal(int64(10_000), s.MustGetHostZone(HostChainId).Validators[1].Delegation.Int64(), "blocked by stale flag")
+
+	// SubmitQueryResponse consumes a query before invoking its successful callback.
+	s.App.InterchainqueryKeeper.DeleteQuery(s.Ctx, query.Id)
 
 	// Calibrate with the reset, then the callback applies the correction
 	msg.ResetDelegationChangesInProgress = true
 	_, err = s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
 	s.Require().NoError(err)
+	queries = s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1)
+	s.Require().NotEqual(query.Id, queries[0].Id, "the next admin request has its own query identity")
 
-	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
+	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, queries[0])
 	s.Require().NoError(err)
 
 	hostZone := s.MustGetHostZone(HostChainId)
 	s.Require().Equal(int64(15_000), hostZone.Validators[1].Delegation.Int64(), "correction applied")
 	s.Require().Equal(int64(1_005_000), hostZone.TotalDelegations.Int64(), "total delegation corrected")
+}
+
+func (s *KeeperTestSuite) TestCalibrateDelegation_RepeatedRequestsKeepSnapshots() {
+	msg := s.SetupCalibrateDelegation()
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().NoError(err)
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1)
+	firstQuery := queries[0]
+
+	// The second request snapshots a changed delegation; the third repeats it in the same block.
+	hostZone := s.MustGetHostZone(HostChainId)
+	hostZone.Validators[1].Delegation = sdkmath.NewInt(9_000)
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	for requestNumber := 2; requestNumber <= 3; requestNumber++ {
+		_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+		s.Require().NoError(err)
+		queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+		s.Require().Len(queries, requestNumber, "same-block submissions remain separately pending")
+		storedFirstQuery, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, firstQuery.Id)
+		s.Require().True(found)
+		s.Require().Equal(firstQuery, storedFirstQuery, "new requests must not overwrite the original delegation snapshot")
+		for _, query := range queries {
+			if query.Id != firstQuery.Id {
+				s.Require().Equal(s.calibrationQuery(sdkmath.NewInt(9_000)).CallbackData, query.CallbackData)
+			}
+		}
+	}
 }

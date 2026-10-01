@@ -28,7 +28,7 @@ import (
 //  4. Mark comdex-1 deprecated and delete the dYdX trade route.
 //  5. Deactivate the ICA oracles and empty the rate limiter.
 //  6. Reset stale DelegationChangesInProgress flags on zones with no ICA in flight.
-//  7. Purge haqq's pending slash-path ICQs, then every pending withdrawal-balance ICQ.
+//  7. Purge haqq's pending slash-path ICQs, then all withdrawal-balance and calibration ICQs.
 //  8. Apply the haqq delegation delta table (after its ICQs are gone).
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
@@ -78,6 +78,7 @@ func CreateUpgradeHandler(
 		// Pending ICQs (spec §5): the haqq slash-path purge runs before the haqq delta table
 		PurgeHaqqSlashQueries(ctx, icqKeeper, stakeibcKeeper)
 		PurgeWithdrawalBalanceQueries(ctx, icqKeeper)
+		PurgeCalibrationQueries(ctx, icqKeeper)
 
 		// Haqq delegation reconciliation, after its slash-path ICQs are gone (spec §5)
 		ReconcileHaqqDelegations(ctx, stakeibcKeeper)
