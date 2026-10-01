@@ -704,3 +704,82 @@ func (s *KeeperTestSuite) TestSweepTokensOffStride_TimeoutRefundsHolder() {
 	s.Require().Equal(int64(1_000), s.App.BankKeeper.GetBalance(s.Ctx, holder, sweepTestStToken).Amount.Int64(), "refunded")
 	s.Require().Zero(s.escrowBalance("channel-5", sweepTestStToken).Int64())
 }
+
+// TestSweepRealMainnetValues pins values read from Stride mainnet REST on 2026-09-30, so the
+// denom hashes, destination lookups, address derivation and escrow address are checked against
+// reality rather than against constants the code under test also produced
+func (s *KeeperTestSuite) TestSweepRealMainnetValues() {
+	s.Run("denom hashes resolve to the expected channel and prefix", func() {
+		testCases := []struct {
+			name           string
+			base           string
+			hops           []transfertypes.Hop
+			expectedDenom  string
+			expectedTarget keeper.SweepDestinationForTest
+		}{
+			{
+				name:           "atom over channel-0",
+				base:           "uatom",
+				hops:           []transfertypes.Hop{transfertypes.NewHop(transfertypes.PortID, "channel-0")},
+				expectedDenom:  "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+				expectedTarget: keeper.SweepDestinationForTest{ChannelId: "channel-0", Bech32Prefix: "cosmos"},
+			},
+			{
+				name:           "tia over channel-162",
+				base:           "utia",
+				hops:           []transfertypes.Hop{transfertypes.NewHop(transfertypes.PortID, "channel-162")},
+				expectedDenom:  "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801",
+				expectedTarget: keeper.SweepDestinationForTest{ChannelId: "channel-162", Bech32Prefix: "celestia"},
+			},
+			{
+				name:           "osmo over channel-5",
+				base:           "uosmo",
+				hops:           []transfertypes.Hop{transfertypes.NewHop(transfertypes.PortID, "channel-5")},
+				expectedDenom:  "ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34",
+				expectedTarget: keeper.SweepDestinationForTest{ChannelId: "channel-5", Bech32Prefix: "osmo"},
+			},
+			{
+				name: "atom routed through osmosis (channel-5 outermost, then channel-0)",
+				base: "uatom",
+				hops: []transfertypes.Hop{
+					transfertypes.NewHop(transfertypes.PortID, "channel-5"),
+					transfertypes.NewHop(transfertypes.PortID, "channel-0"),
+				},
+				expectedDenom:  "ibc/070039AB58034252D2E86210276E05FE25B2FB41D15603185FD57960AFBAEDB6",
+				expectedTarget: keeper.SweepDestinationForTest{ChannelId: "channel-5", Bech32Prefix: "osmo"},
+			},
+		}
+		for _, tc := range testCases {
+			denom := transfertypes.NewDenom(tc.base, tc.hops...)
+			s.App.TransferKeeper.SetDenom(s.Ctx, denom)
+			s.Require().Equal(tc.expectedDenom, denom.IBCDenom(), tc.name)
+
+			destination, err := keeper.ResolveSweepDestinationForTest(s.App.StakeibcKeeper, s.Ctx, tc.expectedDenom)
+			s.Require().NoError(err, tc.name)
+			s.Require().Equal(tc.expectedTarget, destination, tc.name)
+		}
+
+		s.Require().Equal(staketiatypes.CelestiaNativeTokenIBCDenom,
+			"ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801")
+	})
+
+	s.Run("stride address converts to the real osmo address", func() {
+		holder := sdk.MustAccAddressFromBech32("stride1am99pcvynqqhyrwqfvfmnvxjk96rn46le9j65c")
+
+		// Same derivation the keeper uses for the receiver
+		osmoAddress := sdk.MustBech32ifyAddressBytes("osmo", holder)
+		s.Require().Equal("osmo1am99pcvynqqhyrwqfvfmnvxjk96rn46lj4pkkx", osmoAddress)
+
+		cosmosAddress := sdk.MustBech32ifyAddressBytes("cosmos", holder)
+		roundTripped, err := sdk.GetFromBech32(cosmosAddress, "cosmos")
+		s.Require().NoError(err)
+		s.Require().Len(roundTripped, 20)
+		s.Require().Equal([]byte(holder), roundTripped)
+	})
+
+	s.Run("channel-5 escrow address", func() {
+		escrow := transfertypes.GetEscrowAddress(transfertypes.PortID, "channel-5")
+		s.Require().Equal("stride16h2ynrzwhxgjnd0hswkvdvq9nav9kklq08fhf4",
+			sdk.MustBech32ifyAddressBytes("stride", escrow))
+	})
+}

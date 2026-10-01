@@ -35,7 +35,8 @@ func (msg *MsgSweepTokensOffStride) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-// ValidateBasic gates the sweep on the sweep operator (spec §4, §7) and bounds the batch.
+// ValidateBasic gates the sweep on the sweep operator (spec §4, §7). The batch size is deliberately
+// unbounded here: the tx is operator-gated and atomic, so an over-large batch just fails on gas.
 // The operator var ships empty and is filled by the release gate; while it is empty the gate
 // rejects every signer, so an unconfigured binary can never sweep.
 func (msg *MsgSweepTokensOffStride) ValidateBasic() error {
@@ -65,10 +66,6 @@ func (msg *MsgSweepTokensOffStride) ValidateBasic() error {
 
 	if len(msg.Addresses) == 0 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "at least one address is required")
-	}
-	if len(msg.Addresses) > MaxSweepAddressesPerTx {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "%d addresses exceeds the batch bound of %d",
-			len(msg.Addresses), MaxSweepAddressesPerTx)
 	}
 	seenAddresses := map[string]bool{}
 	for _, address := range msg.Addresses {

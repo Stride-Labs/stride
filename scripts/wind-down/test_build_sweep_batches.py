@@ -254,17 +254,12 @@ class BuildSweepBatchesTest(unittest.TestCase):
         self.assertEqual((out_dir / "keyless_candidates.txt").read_text(), f"{STRIDE_VESTING} $20.00\n")
         self.assertEqual(json.loads((out_dir / "summary.json").read_text())["num_keyless_candidates"], 1)
 
-    def test_batch_size_is_bounded_by_the_chain_maximum(self) -> None:
+    def test_batch_size_has_no_upper_bound(self) -> None:
         self.assertEqual(build_sweep_batches.batch_size_arg("100"), 100)
         self.assertEqual(build_sweep_batches.batch_size_arg("1"), 1)
-        with self.assertRaises(argparse.ArgumentTypeError):
-            build_sweep_batches.batch_size_arg("101")
+        self.assertEqual(build_sweep_batches.batch_size_arg("101"), 101)
         with self.assertRaises(argparse.ArgumentTypeError):
             build_sweep_batches.batch_size_arg("0")
-
-        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
-        with self.assertRaises(ValueError):
-            build_sweep_batches.write_batches(plan=plan, out_dir=pathlib.Path(self.tmp.name) / "out", batch_size=101)
 
     def test_protocol_addresses_mirror_the_go_constants(self) -> None:
         source = (REPO_ROOT / "x/stakeibc/types/wind_down.go").read_text()
@@ -312,6 +307,18 @@ class BuildSweepBatchesTest(unittest.TestCase):
         self.assertEqual(bech32_ref.encode("stride", address), "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh")
         with self.assertRaises(ValueError):
             bech32_ref.decode("stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlx")  # bad checksum
+
+    def test_real_mainnet_address_pair_and_channel_5_escrow(self) -> None:
+        # Values verified against Stride mainnet REST on 2026-09-30; the Go keeper test pins the same pair
+        hrp, address_bytes = bech32_ref.decode("stride1am99pcvynqqhyrwqfvfmnvxjk96rn46le9j65c")
+        self.assertEqual(hrp, "stride")
+        self.assertEqual(
+            bech32_ref.encode("osmo", address_bytes), "osmo1am99pcvynqqhyrwqfvfmnvxjk96rn46lj4pkkx"
+        )
+        self.assertEqual(
+            build_sweep_batches.escrow_address("transfer", "channel-5"),
+            "stride16h2ynrzwhxgjnd0hswkvdvq9nav9kklq08fhf4",
+        )
 
 
 if __name__ == "__main__":

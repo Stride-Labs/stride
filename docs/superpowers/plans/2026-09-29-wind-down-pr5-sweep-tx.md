@@ -23,7 +23,7 @@ This plan's branch is `wind-down-pr5-sweep-tx`, created from `wind-down-pr4-admi
 
 - Spec: `docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md` §7 "MsgSweepTokensOffStride", §11 "Sweep, the highest-review item", §13 "Admin txs" (sweep skip rules) and "Ops scripts".
 - Only the sweep operator signs: `ValidateBasic` rejects any creator other than `types.SweepOperatorAddress`, and rejects everyone while that var is empty (fail closed; it is filled in by the release gate PR, not here).
-- `denoms` non-empty, each passing `sdk.ValidateDenom`, no duplicates. `addresses` between 1 and `types.MaxSweepAddressesPerTx` (100) valid `stride` bech32 addresses, no duplicates.
+- `denoms` non-empty, each passing `sdk.ValidateDenom`, no duplicates. `addresses` a non-empty list of valid `stride` bech32 addresses, no duplicates, and no upper bound (the tx is operator-gated and atomic; a batch over the block gas limit fails on gas).
 - Destination per denom, decided once per tx before any address is read: a non-`ibc/` denom goes to `types.StrideToOsmosisTransferChannelId` (`channel-5`) with prefix `types.OsmosisBech32Prefix` (`osmo`); an `ibc/` denom goes over `Denom.Trace[0].ChannelId` (its outermost hop) with the prefix `types.SweepUnwindChannels[channel]`, and a channel absent from that map rejects the whole tx with `ErrSweepDestinationUnavailable`. An `ibc/` denom with no trace in the transfer store rejects the whole tx.
 - Per address, skipped with event `sweep_skipped` (attributes `address`, `reason`) and counted in `num_skipped`, in this order: not 20 bytes; a transfer escrow address (checked before the account lookup, so an escrow that has never received a transfer, and so has no account yet, is still named as an escrow); no account in the auth store; account type not one of `*authtypes.BaseAccount`, `*vestingtypes.ContinuousVestingAccount`, `*vestingtypes.DelayedVestingAccount`, `*vestingtypes.PeriodicVestingAccount`, `*claimvestingtypes.StridePeriodicVestingAccount` (module accounts and `*icatypes.InterchainAccount` therefore skip). Skipping moves nothing.
 - Per (address, denom): the amount is the holder's **spendable** balance of that denom (`SpendableCoin`: the bank balance minus whatever a vesting schedule still locks; the ICS-20 escrow is a bank send and refuses locked coins, so sweeping the total would fail the whole batch for every vesting account with locked STRD). A zero spendable balance is skipped silently (no event, not counted). Otherwise one `MsgTransfer` of that full spendable amount: `SourcePort` `transfer`, `SourceChannel` the destination channel, `Sender` the holder, `Receiver` `sdk.MustBech32ifyAddressBytes(prefix, holderBytes)`, `TimeoutTimestamp` block time + `types.WindDownTransferTimeout` (24h) in unix nanos, empty memo. A transfer error rejects the whole tx.
@@ -51,10 +51,10 @@ This plan's branch is `wind-down-pr5-sweep-tx`, created from `wind-down-pr4-admi
 | `scripts/wind-down/build_sweep_batches.py` | Create: export → batch files, mirroring the on-chain skip rules plus a USD floor. |
 | `scripts/wind-down/test_build_sweep_batches.py` | Create: unittest over a synthetic export. |
 
-Before starting, confirm the PR 4 names this plan relies on exist on the branch: `types.SweepOperatorAddress`, `types.OsmosisBech32Prefix`, `types.StrideToOsmosisTransferChannelId`, `types.SweepUnwindChannels`, `types.MaxSweepAddressesPerTx`, `types.WindDownTransferTimeout` in `x/stakeibc/types/wind_down.go`; `types.MsgSweepTokensOffStride`, `types.MsgSweepTokensOffStrideResponse` in `tx.pb.go`; the stub `SweepTokensOffStride` in `x/stakeibc/keeper/msg_server_wind_down.go`; the three PR 4 registrations at the end of the `AddCommand` block in `x/stakeibc/client/cli/tx.go` (PR 4 keeps the command constructors in `tx_wind_down.go` and registers them in `tx.go`; PR 1 deleted the old last line `cmd.AddCommand(CmdToggleTradeController())`, so "after PR 4's three" is the anchor, not that one).
+Before starting, confirm the PR 4 names this plan relies on exist on the branch: `types.SweepOperatorAddress`, `types.OsmosisBech32Prefix`, `types.StrideToOsmosisTransferChannelId`, `types.SweepUnwindChannels`, `types.WindDownTransferTimeout` in `x/stakeibc/types/wind_down.go`; `types.MsgSweepTokensOffStride`, `types.MsgSweepTokensOffStrideResponse` in `tx.pb.go`; the stub `SweepTokensOffStride` in `x/stakeibc/keeper/msg_server_wind_down.go`; the three PR 4 registrations at the end of the `AddCommand` block in `x/stakeibc/client/cli/tx.go` (PR 4 keeps the command constructors in `tx_wind_down.go` and registers them in `tx.go`; PR 1 deleted the old last line `cmd.AddCommand(CmdToggleTradeController())`, so "after PR 4's three" is the anchor, not that one).
 
 ```bash
-grep -n "SweepOperatorAddress\|OsmosisBech32Prefix\|StrideToOsmosisTransferChannelId\|SweepUnwindChannels\|MaxSweepAddressesPerTx\|WindDownTransferTimeout" x/stakeibc/types/wind_down.go
+grep -n "SweepOperatorAddress\|OsmosisBech32Prefix\|StrideToOsmosisTransferChannelId\|SweepUnwindChannels\|WindDownTransferTimeout" x/stakeibc/types/wind_down.go
 grep -n "SweepTokensOffStride" x/stakeibc/keeper/msg_server_wind_down.go x/stakeibc/types/tx.pb.go | head
 grep -n "AddCommand\|func Cmd" x/stakeibc/client/cli/tx_wind_down.go x/stakeibc/client/cli/tx.go | head -30
 ```
@@ -72,7 +72,7 @@ Expected: every name found. If the stub or a constant is missing, stop and repor
 - Test: `x/stakeibc/types/message_sweep_tokens_off_stride_test.go`
 
 **Interfaces:**
-- Consumes: `types.SweepOperatorAddress` (var), `types.MaxSweepAddressesPerTx` (const) from PR 4; generated `MsgSweepTokensOffStride`.
+- Consumes: `types.SweepOperatorAddress` (var) from PR 4; generated `MsgSweepTokensOffStride`.
 - Produces: `NewMsgSweepTokensOffStride(creator string, denoms, addresses []string) *MsgSweepTokensOffStride`; `(*MsgSweepTokensOffStride).ValidateBasic() error`; `types.ErrSweepDestinationUnavailable`, `types.ErrSweepOperatorNotConfigured`; `types.EventTypeSweepSkipped`, `types.EventTypeSweepTransfer`, `types.AttributeKeySweepAddress`, `types.AttributeKeySweepReason`, `types.AttributeKeySweepDenom`, `types.AttributeKeySweepAmount`, `types.AttributeKeySweepChannel`, `types.AttributeKeySweepReceiver`.
 - Review: yes (the gate on the only tx that moves user balances).
 
@@ -120,8 +120,7 @@ func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
 	withSweepOperator(t, operator)
 
 	holders := randomStrideAddresses(3)
-	tooMany := randomStrideAddresses(types.MaxSweepAddressesPerTx + 1)
-	atCap := randomStrideAddresses(types.MaxSweepAddressesPerTx)
+	largeBatch := randomStrideAddresses(250)
 
 	tests := []struct {
 		name string
@@ -133,9 +132,9 @@ func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
 			msg:  *types.NewMsgSweepTokensOffStride(operator, []string{"stuatom"}, holders),
 		},
 		{
-			name: "valid: three denoms incl. an ibc voucher, at the address cap",
+			name: "valid: three denoms incl. an ibc voucher, a batch of more than 100 addresses",
 			msg: *types.NewMsgSweepTokensOffStride(operator,
-				[]string{"stuatom", "ustrd", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}, atCap),
+				[]string{"stuatom", "ustrd", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}, largeBatch),
 		},
 		{
 			name: "invalid creator address",
@@ -165,11 +164,6 @@ func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
 		{
 			name: "empty address list",
 			msg:  *types.NewMsgSweepTokensOffStride(operator, []string{"stuatom"}, []string{}),
-			err:  sdkerrors.ErrInvalidRequest,
-		},
-		{
-			name: "batch over the cap",
-			msg:  *types.NewMsgSweepTokensOffStride(operator, []string{"stuatom"}, tooMany),
 			err:  sdkerrors.ErrInvalidRequest,
 		},
 		{
@@ -279,7 +273,7 @@ func (msg *MsgSweepTokensOffStride) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-// ValidateBasic gates the sweep on the sweep operator (spec §4, §7) and bounds the batch.
+// ValidateBasic gates the sweep on the sweep operator (spec §4, §7); the batch size is unbounded.
 // The operator var ships empty and is filled by the release gate; while it is empty the gate
 // rejects every signer, so an unconfigured binary can never sweep.
 func (msg *MsgSweepTokensOffStride) ValidateBasic() error {
@@ -309,10 +303,6 @@ func (msg *MsgSweepTokensOffStride) ValidateBasic() error {
 
 	if len(msg.Addresses) == 0 {
 		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "at least one address is required")
-	}
-	if len(msg.Addresses) > MaxSweepAddressesPerTx {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "%d addresses exceeds the batch bound of %d",
-			len(msg.Addresses), MaxSweepAddressesPerTx)
 	}
 	seenAddresses := map[string]bool{}
 	for _, address := range msg.Addresses {
@@ -1418,7 +1408,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 - Depends on: none (mirrors constants; no Go dependency).
 - Review: no.
 
-The script mirrors the on-chain rules exactly, so a batch it emits should skip nothing on chain; any `sweep_skipped` event after a submission is a disagreement worth investigating. Two rules go beyond the chain's: the sweepable amount of a vesting account is its balance minus what its schedule still locks at the export's `genesis_time` (the chain sweeps `SpendableCoin`; the script must value and floor the same amount), and a wasm contract address from `app_state.wasm.contracts` is excluded (a 20-byte contract is a plain `BaseAccount` the chain cannot tell apart, and its derived Osmosis address belongs to nobody; every mainnet contract is 32-byte today and uploads go gov-only in PR 3, so this is belt and braces). It is stdlib plus the vendored `bech32_ref.py` (no pip dependency, so it runs in a clean checkout) and follows the repo's Python conventions (module imports, typed signatures, dataclasses, guard clauses). It also mirrors the two on-chain bounds a batch can violate: the address bound (`MAX_SWEEP_ADDRESSES_PER_TX = 100`, the value of `types.MaxSweepAddressesPerTx`) is enforced on `--batch-size`, and the destination rule is enforced on every denom in the final list, whether it came from `--denoms` or `--extra-denom`.
+The script mirrors the on-chain rules exactly, so a batch it emits should skip nothing on chain; any `sweep_skipped` event after a submission is a disagreement worth investigating. Two rules go beyond the chain's: the sweepable amount of a vesting account is its balance minus what its schedule still locks at the export's `genesis_time` (the chain sweeps `SpendableCoin`; the script must value and floor the same amount), and a wasm contract address from `app_state.wasm.contracts` is excluded (a 20-byte contract is a plain `BaseAccount` the chain cannot tell apart, and its derived Osmosis address belongs to nobody; every mainnet contract is 32-byte today and uploads go gov-only in PR 3, so this is belt and braces). It is stdlib plus the vendored `bech32_ref.py` (no pip dependency, so it runs in a clean checkout) and follows the repo's Python conventions (module imports, typed signatures, dataclasses, guard clauses). `--batch-size` (default 100, at least 1) has no upper bound because the chain has none; it is set from the gas measurement. The destination rule is enforced on every denom in the final list, whether it came from `--denoms` or `--extra-denom`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1569,17 +1559,12 @@ class BuildSweepBatchesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_sweep_batches.check_denom_destination(denom="ibc/BBBB", traces=traces)  # no trace at all
 
-    def test_batch_size_is_bounded_by_the_chain_maximum(self) -> None:
+    def test_batch_size_has_no_upper_bound(self) -> None:
         self.assertEqual(build_sweep_batches.batch_size_arg("100"), 100)
         self.assertEqual(build_sweep_batches.batch_size_arg("1"), 1)
-        with self.assertRaises(argparse.ArgumentTypeError):
-            build_sweep_batches.batch_size_arg("101")
+        self.assertEqual(build_sweep_batches.batch_size_arg("101"), 101)
         with self.assertRaises(argparse.ArgumentTypeError):
             build_sweep_batches.batch_size_arg("0")
-
-        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
-        with self.assertRaises(ValueError):
-            build_sweep_batches.write_batches(plan=plan, out_dir=pathlib.Path(self.tmp.name) / "out", batch_size=101)
 
     def test_bech32_round_trip_matches_the_on_chain_derivation(self) -> None:
         # The stride and osmo forms of the F5 key are the same 20 bytes under two prefixes
@@ -1755,9 +1740,8 @@ from decimal import ROUND_HALF_EVEN, Decimal
 
 import bech32_ref
 
-# Mirror of types.MaxSweepAddressesPerTx; a batch above it fails ValidateBasic on chain
-MAX_SWEEP_ADDRESSES_PER_TX = 100
-BATCH_SIZE_DEFAULT = MAX_SWEEP_ADDRESSES_PER_TX
+# The chain has no cap on addresses per tx; the real size comes from the localstride gas measurement
+BATCH_SIZE_DEFAULT = 100
 ADDRESS_LENGTH_BYTES = 20
 TRANSFER_PORT = "transfer"
 IBC_PREFIX = "ibc/"
@@ -1867,16 +1851,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--denoms", required=True, help="comma-separated denoms to sweep")
     parser.add_argument("--floor-usd", type=float, required=True)
     parser.add_argument("--out-dir", type=pathlib.Path, required=True)
-    parser.add_argument("--batch-size", type=batch_size_arg, default=BATCH_SIZE_DEFAULT, help=f"1..{MAX_SWEEP_ADDRESSES_PER_TX}")
+    parser.add_argument("--batch-size", type=batch_size_arg, default=BATCH_SIZE_DEFAULT, help="addresses per tx, at least 1; set from the localstride gas measurement")
     parser.add_argument("--extra-denom", action="append", default=[], help="DENOM=USD_PER_TOKEN:DECIMALS")
     return parser.parse_args()
 
 
 def batch_size_arg(text: str) -> int:
-    """argparse type for --batch-size: the chain rejects a tx with more than MAX_SWEEP_ADDRESSES_PER_TX addresses."""
+    """argparse type for --batch-size: any positive size; the chain has no cap."""
     value = int(text)
-    if value < 1 or value > MAX_SWEEP_ADDRESSES_PER_TX:
-        raise argparse.ArgumentTypeError(f"batch size must be between 1 and {MAX_SWEEP_ADDRESSES_PER_TX}, got {value}")
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"batch size must be at least 1, got {value}")
     return value
 
 
@@ -2056,9 +2040,6 @@ def skip_reason(address: str, export: Export) -> str | None:
 
 
 def write_batches(plan: HolderPlan, out_dir: pathlib.Path, batch_size: int) -> list[pathlib.Path]:
-    # Guarded here too so a caller that bypasses parse_args cannot emit a batch the chain rejects
-    if batch_size < 1 or batch_size > MAX_SWEEP_ADDRESSES_PER_TX:
-        raise ValueError(f"batch size must be between 1 and {MAX_SWEEP_ADDRESSES_PER_TX}, got {batch_size}")
     out_dir.mkdir(parents=True, exist_ok=True)
     files: list[pathlib.Path] = []
     batches: list[dict] = []
@@ -2157,7 +2138,7 @@ Expected: 7 tests, `OK`. Then, from a clean shell with no site-packages bech32, 
 
 ```bash
 git add scripts/wind-down/bech32_ref.py scripts/wind-down/build_sweep_batches.py scripts/wind-down/test_build_sweep_batches.py
-git commit -m "ops: build_sweep_batches.py mirrors the on-chain sweep skip rules and bounds with a USD floor
+git commit -m "ops: build_sweep_batches.py mirrors the on-chain sweep skip rules with a USD floor
 
 Vendors the BIP-173 bech32 reference implementation so the script runs in a clean checkout.
 
@@ -2194,7 +2175,7 @@ Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
   $STRIDE_MAIN_CMD q tx $TX --output json | jq '{code, gas_wanted, gas_used, transfers: [.events[] | select(.type=="sweep_transfer")] | length}'
   ```
 
-  Expected: `code` 0, `transfers` 300, and a `gas_used` figure. If it is above a quarter of mainnet's `100,000,000` block limit (an ICS-20 send is roughly 100k to 150k gas, so 300 of them lands in the tens of millions and the bound may well come out below 100), lower `MaxSweepAddressesPerTx` in `x/stakeibc/types/wind_down.go` (a PR 4 file) in a one-line follow-up commit and set `MAX_SWEEP_ADDRESSES_PER_TX` in the script to match; say so in the PR. Spec §7 anticipates the bound moving after measurement.
+  Expected: `code` 0, `transfers` 300, and a `gas_used` figure. If it is above a quarter of mainnet's `100,000,000` block limit (an ICS-20 send is roughly 100k to 150k gas, so 300 of them lands in the tens of millions and the bound may well come out below 100), use a smaller `--batch-size` for the real run (there is no on-chain bound to change); say so in the PR.
 - [ ] PR description lists the skip rules and destination rules verbatim from §7 so the reviewer checks the code against the spec, not against the plan.
 
 ## Self-review

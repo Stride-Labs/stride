@@ -37,8 +37,7 @@ func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
 	withSweepOperator(t, operator)
 
 	holders := randomStrideAddresses(3)
-	tooMany := randomStrideAddresses(types.MaxSweepAddressesPerTx + 1)
-	atCap := randomStrideAddresses(types.MaxSweepAddressesPerTx)
+	largeBatch := randomStrideAddresses(250)
 
 	tests := []struct {
 		name string
@@ -50,9 +49,9 @@ func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
 			msg:  *types.NewMsgSweepTokensOffStride(operator, []string{"stuatom"}, holders),
 		},
 		{
-			name: "valid: three denoms incl. an ibc voucher, at the address cap",
+			name: "valid: three denoms incl. an ibc voucher, a batch of more than 100 addresses",
 			msg: *types.NewMsgSweepTokensOffStride(operator,
-				[]string{"stuatom", "ustrd", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}, atCap),
+				[]string{"stuatom", "ustrd", "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2"}, largeBatch),
 		},
 		{
 			name: "invalid creator address",
@@ -82,11 +81,6 @@ func TestMsgSweepTokensOffStride_ValidateBasic(t *testing.T) {
 		{
 			name: "empty address list",
 			msg:  *types.NewMsgSweepTokensOffStride(operator, []string{"stuatom"}, []string{}),
-			err:  sdkerrors.ErrInvalidRequest,
-		},
-		{
-			name: "batch over the cap",
-			msg:  *types.NewMsgSweepTokensOffStride(operator, []string{"stuatom"}, tooMany),
 			err:  sdkerrors.ErrInvalidRequest,
 		},
 		{

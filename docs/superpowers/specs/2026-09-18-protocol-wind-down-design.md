@@ -614,8 +614,9 @@ worth it.
 
 **`MsgSweepTokensOffStride { creator, denoms: [string], addresses: [string] }`**, the
 batched token sweep. `denoms` is a non-empty list of bank denoms and `addresses` a non-empty
-list of at most 100 entries (the batch bound that keeps a tx inside the block gas limit; the
-plan measures the real cost and can raise it). Taking a list of denoms lets the off-chain
+list with no on-chain bound (the tx is operator-gated and atomic, so a batch that exceeds the
+block gas limit simply fails atomically; the batch size is an ops choice set from the localstride gas
+measurement, and the builder defaults to 100). Taking a list of denoms lets the off-chain
 builder walk holders once, by value, and sweep everything each holder has in one tx instead
 of one pass per denom. Each denom's destination is decided once per tx, before any address is
 looked at, and is a (channel, bech32 prefix) pair:
@@ -662,7 +663,7 @@ Then, for every listed address, and for every listed denom it holds:
 
 Every destination is therefore the canonical form on Osmosis, the native form on the source
 chain, or one hop closer to it; the sweep never adds a hop to any denom and never needs a
-forwarding memo. One tx sweeps up to 100 holders across the listed denoms; the whole sweep at
+forwarding memo. One tx sweeps a batch of holders (size set from the gas measurement, no on-chain bound) across the listed denoms; the whole sweep at
 the chosen floor is a few thousand packets over a few days (§3). There is no floor on chain: only the
 sweep operator can sign the tx, so nobody can spam it, and the floor is an ops choice made
 from prices on the day and stated in the announcement. Every account that clears the floor is
@@ -834,7 +835,7 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    `MsgTransferStaketiaClaimBalance` with a small `amount` as the live test, and once it has
    landed on the delegation ICA, again with zero for the remainder, which leaves with that
    zone's balance in step 5. No key of the claim address signs anything.
-7. Last days: `MsgSweepTokensOffStride` in batches of up to 100 holders, each tx listing every
+7. Last days: `MsgSweepTokensOffStride` in batches (size set from the gas measurement; the builder defaults to 100), each tx listing every
    denom on the sweep list, for every holder at or above the floor, built from a fresh
    export: the eleven stTokens and `ustrd` (to Osmosis) and every voucher whose outermost
    channel is whitelisted and that is worth sweeping (ATOM to the Hub, TIA to Celestia, and so
@@ -1042,7 +1043,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   table-driven tests for a base account and each vesting type (swept), an escrow address, a
   module account, an interchain account, a 32-byte address and an unknown account (each
   skipped with its reason in the event while the rest of the batch is sent and `num_skipped`
-  counts it), a zero balance (skipped silently), a batch over the bound, an invalid denom
+  counts it), a zero balance (skipped silently), a batch of more than 100 addresses (accepted: no bound), an invalid denom
   string, an empty denom list, a holder with two of three listed denoms (two transfers), a
   transfer error rejecting the whole tx,
   an stToken and `ustrd` landing on channel-5 with the `osmo` prefix, a single-hop voucher on
@@ -1119,7 +1120,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 - Exact proto shapes and enum names for the four admin txs; the constants: the two new
   addresses in §4 once created, the channel-5 constant and the `SweepUnwindChannels`
   whitelist for the sweep, and the `chain_id → host-side channel to Osmosis` map; the batch
-  bound after measuring gas.
+  size after measuring gas (an ops choice, not an on-chain bound).
 - The plans: one per PR, written from this spec on 2026-09-29 (the two plans written
   for the earlier two-upgrade sequencing were deleted the same day; what they had learned is
   in §13). The work is delivered as six stacked PRs, each reviewable on its own, in the order
