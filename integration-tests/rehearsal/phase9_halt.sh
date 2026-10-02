@@ -6,7 +6,8 @@ log "## Phase 9: halt"
 
 STATOM_CANON=ibc/$(printf 'transfer/channel-0/stuatom' | shasum -a 256 | cut -d' ' -f1 | tr a-f A-F)
 ATOM_ON_OSMO=ibc/$(printf 'transfer/channel-1/uatom' | shasum -a 256 | cut -d' ' -f1 | tr a-f A-F)
-OSMOSIS_REST_LOCAL=${OSMOSIS_REST:-http://localhost:11317}
+OSMOSIS_REST=${OSMOSIS_REST:-https://osmosis-api.internal.stridenet.co}
+OSMOSIS_REST_LOCAL=$OSMOSIS_REST
 
 zero_user_redemption_records() {
   strided_new q records list-user-redemption-record -o json | jq -e '.user_redemption_record | length == 0'
@@ -35,11 +36,15 @@ checkpoint "channels clear both ways" channels_clear_both_ways
 # --- Coverage: coverage_check.py reads Osmosis over REST, so forward the pod's REST port to the laptop ---
 EXPORT_PRE_HALT=$REHEARSAL_DIR/export_pre_halt.json
 bash "$REHEARSAL_DIR/export.sh" "$EXPORT_PRE_HALT"
-if [[ -z "${OSMOSIS_REST:-}" ]]; then
+if [[ "${OSMOSIS_REST_PORTFORWARD:-}" == 1 ]]; then
+  OSMOSIS_REST_LOCAL=http://localhost:11317
   $KX port-forward pod/osmosis-validator-0 11317:1317 >/dev/null 2>&1 &
   PORT_FORWARD_PID=$!
   trap 'kill $PORT_FORWARD_PID 2>/dev/null || true' EXIT
-  sleep 3
+  for _ in $(seq 1 15); do
+    curl -sf "$OSMOSIS_REST_LOCAL/cosmos/base/tendermint/v1beta1/node_info" >/dev/null && break
+    sleep 1
+  done
 fi
 checkpoint "coverage before halt" python3 "$REPO/scripts/wind-down/coverage_check.py" \
   --export "$EXPORT_PRE_HALT" --pools "$POOLS_FILE" --vault "$VAULT_MS_OSMO" --osmosis-rest "$OSMOSIS_REST_LOCAL"
@@ -53,13 +58,15 @@ for i in 0 1 2 3; do
     sed -i 's/^halt-height = .*/halt-height = $HALT_HEIGHT/' /home/validator/.stride/config/app.toml
     grep -q '^halt-height = $HALT_HEIGHT' /home/validator/.stride/config/app.toml
     pid=\$(pgrep -x strided || ps -o pid,comm | awk '\$2==\"strided\" {print \$1}')
-    kill \$pid"
+    [ -n \"\$pid\" ] || exit 1
+    kill \$pid" || true
 done
 
 # The node logs this line when it stops at the configured height (also after a restart that lands on it again)
 stride_halted() {
-  { $KX logs stride-validator-0 -c validator --tail=300; $KX logs stride-validator-0 -c validator --previous --tail=300; } 2>/dev/null |
-    grep -q 'halting node per configuration'
+  local logs
+  logs=$({ $KX logs stride-validator-0 -c validator --tail=300; $KX logs stride-validator-0 -c validator --previous --tail=300; } 2>/dev/null || true)
+  grep -q 'halt per configuration' <<<"$logs"
 }
 if ! wait_until 300 "stride halted at $HALT_HEIGHT" stride_halted; then
   log "app.toml halt did not take; scaling the validator statefulset to 0 instead"
