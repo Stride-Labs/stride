@@ -1026,10 +1026,7 @@ then, so confirm by hand before signing:
   it cannot cover).
 - `REDEMPTION`: the zone has no user redemption record left, and so no claim in flight
   (`claim_is_pending`); REST `/Stride-Labs/stride/records/user_redemption_record`. A record
-  that cannot be claimed is settled by hand first. On 2026-10-02 one in-scope record had a
-  claim pending, `dydx-mainnet-1` epoch 1436 for 5,752 DYDX, and the count of pending claims
-  had not moved since 2026-09-29 (§3), which suggests it is stuck rather than in transit. It
-  blocks the halt checklist too, so resolve it early.
+  that cannot be claimed is settled by hand first.
 - `WITHDRAWAL` and `FEE`: nothing to confirm; no redemption is paid from either.
 - `MsgTransferStaketiaClaimBalance`: staketia has no redemption record left (REST
   `/Stride-Labs/stride/staketia/redemption_records`), meaning the hour epoch has paid every
