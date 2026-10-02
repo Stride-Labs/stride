@@ -59,6 +59,15 @@ func (k Keeper) ValidateQuery(ctx sdk.Context, query types.Query) error {
 	if query.TimeoutDuration == time.Duration(0) {
 		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "timeout duration must be set")
 	}
+
+	// An empty response only proves the key is absent when the response carries a proof, which
+	// VerifyKeyProof checks for "key" query types alone
+	queryTypeParts := strings.Split(query.QueryType, "/")
+	if query.InvokeCallbackOnEmptyResponse && queryTypeParts[len(queryTypeParts)-1] != "key" {
+		return errorsmod.Wrapf(types.ErrInvalidICQRequest,
+			"only a proof query can invoke its callback on an empty response (query type %s)", query.QueryType)
+	}
+
 	if _, exists := k.callbacks[query.CallbackModule]; !exists {
 		return errorsmod.Wrapf(types.ErrInvalidICQRequest, "no callback handler registered for module (%s)", query.CallbackModule)
 	}

@@ -89,6 +89,9 @@ message DelegatorSharesQueryCallback {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  // Validator the query is for. Only set by the calibration query: an empty
+  // response carries no Delegation to read the validator from
+  string validator_address = 2;
 }
 
 message CommunityPoolBalanceQueryCallback {

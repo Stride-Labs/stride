@@ -7,14 +7,24 @@ plus every pool's native liquidity) must cover Stride's bank supply of the stTok
 frozen HostZone.RedemptionRate; each route pool must hold its channel's escrow balance times
 the rate and no more (spec §8/§10 require exact funding); the canonical pool the remainder.
 Bank supply is the right reference because stTokens that left Stride over IBC are escrowed,
-not burned. A pool that already served redemptions holds stTokens too: those stTokens are
-already paid for, so the native requirement is (escrow - stTokens in the pool) x rate. Required
-amounts round UP: rounding down could under-fund by a base unit.
+not burned. A pool that already served a redemption swap holds that stToken and has paid out
+the native, so the native requirement is (escrow - stTokens in the pool) x rate. But the
+transmuter's join_pool is permissionless: a holder can deposit stTokens and take alloyed
+shares (the pool's LP token) instead of native, and those shares still exit for native. So
+stTokens in a pool are not all redeemed ones: every pool's alloyed supply not held by the
+vault (the vault holds the shares its own funding joins minted) is a remaining claim and is
+added 1:1 to that pool's native requirement (one share is one native base unit; the pool gate
+check_transmuter_pool.py asserts the alloyed and native normalization factors are equal).
+That term cannot see a join with the NATIVE token into a route pool (possible only while native
+is not marked corrupted, spec §8): the over-funded bound below is unchanged, so the route reads
+as over-funded by the joined amount until the joiner exits or redemptions pay it out, and
+holding fewer vault shares just moves the same amount to a shortfall.
+Required amounts round UP: rounding down could under-fund by a base unit.
 
 Inputs: a trimmed Stride export (bank supply and balances, stakeibc host zones), a pools file
 (see the PR 6 plan for the shape; every pool names the stToken denom it holds: the canonical
 denom for the canonical pool, the route's two-hop denom for a route pool), the Osmosis vault
-address. Reads Osmosis over REST. Before querying liquidity, validates the entire pool
+address. Reads Osmosis over REST. Before querying any pool, validates the entire pool
 topology against REQUIRED_ROUTES, independently reviewed from the per-token "in scope"
 tables in docs/wind-down/sttoken-locations.md (excluding Stride and Osmosis). Scope changes
 must update those tables and this checked-in policy together; the consistency test detects
@@ -38,6 +48,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from decimal import ROUND_CEILING, Decimal, localcontext
@@ -76,7 +87,17 @@ REQUIRED_ROUTES: dict[str, frozenset[str]] = {
     "stusomm": frozenset(),
 }
 
-LiquidityFetcher = Callable[[str], dict[str, int]]
+
+@dataclass(frozen=True)
+class PoolState:
+    liquidity: dict[str, int]  # denom -> amount held by the pool contract
+    alloyed_denom: str  # the pool's LP (share) denom
+    alloyed_supply: int  # total supply of alloyed_denom on Osmosis
+
+
+# Required input to evaluate: there is deliberately no default, so a caller cannot silently
+# treat every alloyed share as vault-held
+PoolStateFetcher = Callable[[str], PoolState]
 
 
 class CoverageInputError(Exception):
@@ -112,6 +133,8 @@ class CoverageResult:
     route_overfunded: dict[str, int] = field(default_factory=dict)
     canonical_expected: int = 0
     canonical_actual: int = 0
+    route_outside_shares: dict[str, int] = field(default_factory=dict)  # only non-zero entries
+    canonical_outside_shares: int = 0
 
     @property
     def covered(self) -> bool:
@@ -130,9 +153,9 @@ def main() -> int:
     pools = load_pools(path=args.pools)
     validate_pool_topology(export=export, pools=pools, required_routes=REQUIRED_ROUTES)
     vault_balances = fetch_vault_balances(osmosis_rest=args.osmosis_rest, vault=args.vault)
-    fetcher = make_liquidity_fetcher(osmosis_rest=args.osmosis_rest)
+    fetcher = make_pool_state_fetcher(osmosis_rest=args.osmosis_rest)
 
-    results = evaluate(export=export, pools=pools, vault_balances=vault_balances, fetch_liquidity=fetcher)
+    results = evaluate(export=export, pools=pools, vault_balances=vault_balances, fetch_pool_state=fetcher)
     print_table(results)
 
     shortfalls = [result for result in results if not result.covered]
@@ -147,7 +170,7 @@ def evaluate(
     export: dict,
     pools: dict,
     vault_balances: dict[str, int],
-    fetch_liquidity: LiquidityFetcher,
+    fetch_pool_state: PoolStateFetcher,
     required_routes: dict[str, frozenset[str]] | None = None,
 ) -> list[CoverageResult]:
     """Validate all topology, then run §10 arithmetic; policy injection is for synthetic tests."""
@@ -160,7 +183,7 @@ def evaluate(
     return [
         evaluate_one(
             st_denom=st_denom, spec=spec, rate=rates[spec.chain_id], supply=supply_by_denom[st_denom],
-            escrow_balances=escrow_balances, vault_balances=vault_balances, fetch_liquidity=fetch_liquidity,
+            escrow_balances=escrow_balances, vault_balances=vault_balances, fetch_pool_state=fetch_pool_state,
         )
         for st_denom, spec in sorted(specs.items())
     ]
@@ -244,7 +267,7 @@ def evaluate_one(
     supply: int,
     escrow_balances: dict[str, dict[str, int]],
     vault_balances: dict[str, int],
-    fetch_liquidity: LiquidityFetcher,
+    fetch_pool_state: PoolStateFetcher,
 ) -> CoverageResult:
     native = spec.native_denom_on_osmosis
     result = CoverageResult(
@@ -252,19 +275,27 @@ def evaluate_one(
         required_native=0, native_on_osmosis=vault_balances.get(native, 0),
     )
     st_in_pools = 0
+    outside_shares_total = 0
 
-    # Each route pool must hold its channel's escrow share, less what it already paid out: a pool
-    # below that cannot pay every holder on that chain, a pool above the full escrow x rate is
-    # over-funded (spec §8/§10 fund exactly)
+    # Each route pool must hold its channel's escrow share, less what it already paid out, plus
+    # the alloyed shares held outside the vault (a joiner's shares still redeem for native): a
+    # pool below that cannot pay every holder on that chain, a pool above the full escrow x rate
+    # is over-funded (spec §8/§10 fund exactly). The over-funded bound deliberately ignores outside
+    # shares, so an outsider's native join of N (possible only while native is not marked
+    # corrupted) reads as over-funded by N, and vault shares short by N read as short by N
     route_escrow_total = 0
     for route in spec.route_pools:
         escrow = escrow_balances.get(route.channel_id, {}).get(st_denom, 0)
         route_escrow_total += escrow
-        liquidity = fetch_liquidity(route.pool_id)
-        actual = liquidity.get(native, 0)
-        st_in_pool = liquidity.get(route.st_denom, 0)
+        state = fetch_pool_state(route.pool_id)
+        actual = state.liquidity.get(native, 0)
+        st_in_pool = state.liquidity.get(route.st_denom, 0)
         st_in_pools += st_in_pool
-        expected = native_for(st_amount=max(escrow - st_in_pool, 0), rate=rate)
+        outside_shares = shares_outside_vault(state=state, vault_balances=vault_balances)
+        outside_shares_total += outside_shares
+        if outside_shares:
+            result.route_outside_shares[route.channel_id] = outside_shares
+        expected = native_for(st_amount=max(escrow - st_in_pool, 0), rate=rate) + outside_shares
         result.route_expected[route.channel_id] = expected
         result.native_on_osmosis += actual
         if actual < expected:
@@ -273,19 +304,30 @@ def evaluate_one(
             result.route_overfunded[route.channel_id] = actual - native_for(st_amount=escrow, rate=rate)
 
     # The canonical pool covers every other holder: everything not in a route escrow, less the
-    # stTokens it already took in
+    # stTokens it already took in, plus its own outside shares
     canonical_st_in_pool = 0
     if spec.canonical_pool_id is not None:
-        liquidity = fetch_liquidity(spec.canonical_pool_id)
-        result.canonical_actual = liquidity.get(native, 0)
-        canonical_st_in_pool = liquidity.get(spec.canonical_st_denom, 0)
+        state = fetch_pool_state(spec.canonical_pool_id)
+        result.canonical_actual = state.liquidity.get(native, 0)
+        canonical_st_in_pool = state.liquidity.get(spec.canonical_st_denom, 0)
         st_in_pools += canonical_st_in_pool
+        result.canonical_outside_shares = shares_outside_vault(state=state, vault_balances=vault_balances)
+        outside_shares_total += result.canonical_outside_shares
         result.native_on_osmosis += result.canonical_actual
     result.canonical_expected = native_for(
         st_amount=max(supply - route_escrow_total - canonical_st_in_pool, 0), rate=rate,
-    )
-    result.required_native = native_for(st_amount=max(supply - st_in_pools, 0), rate=rate)
+    ) + result.canonical_outside_shares
+    result.required_native = native_for(st_amount=max(supply - st_in_pools, 0), rate=rate) + outside_shares_total
     return result
+
+
+def shares_outside_vault(state: PoolState, vault_balances: dict[str, int]) -> int:
+    """Alloyed shares of this pool held by anyone but the vault: a remaining native claim, 1:1.
+
+    The clamp is defensive: a vault balance above the supply is inconsistent data, and a negative
+    count would lower the requirement.
+    """
+    return max(state.alloyed_supply - vault_balances.get(state.alloyed_denom, 0), 0)
 
 
 def in_scope_st_denoms(export: dict) -> set[str]:
@@ -404,13 +446,27 @@ def fetch_vault_balances(osmosis_rest: str, vault: str) -> dict[str, int]:
     return {coin["denom"]: int(coin["amount"]) for coin in page["balances"]}
 
 
-def make_liquidity_fetcher(osmosis_rest: str) -> LiquidityFetcher:
-    def fetch(pool_id: str) -> dict[str, int]:
+def smart_query(osmosis_rest: str, contract: str, query: dict) -> dict:
+    encoded = base64.b64encode(json.dumps(query).encode()).decode()
+    return get_json(f"{osmosis_rest}/cosmwasm/wasm/v1/contract/{contract}/smart/{encoded}")["data"]
+
+
+def make_pool_state_fetcher(osmosis_rest: str) -> PoolStateFetcher:
+    def fetch(pool_id: str) -> PoolState:
         pool = get_json(f"{osmosis_rest}/osmosis/poolmanager/v1beta1/pools/{pool_id}")["pool"]
         contract = pool["contract_address"]
-        query = base64.b64encode(json.dumps({"get_total_pool_liquidity": {}}).encode()).decode()
-        response = get_json(f"{osmosis_rest}/cosmwasm/wasm/v1/contract/{contract}/smart/{query}")
-        return {coin["denom"]: int(coin["amount"]) for coin in response["data"]["total_pool_liquidity"]}
+        liquidity = smart_query(osmosis_rest=osmosis_rest, contract=contract, query={"get_total_pool_liquidity": {}})
+        share = smart_query(osmosis_rest=osmosis_rest, contract=contract, query={"get_share_denom": {}})
+        alloyed_denom = share["share_denom"]
+
+        # The alloyed denom contains slashes, so it only fits the query-parameter form, URL-encoded
+        encoded_denom = urllib.parse.quote(alloyed_denom, safe="")
+        supply = get_json(f"{osmosis_rest}/cosmos/bank/v1beta1/supply/by_denom?denom={encoded_denom}")
+        return PoolState(
+            liquidity={coin["denom"]: int(coin["amount"]) for coin in liquidity["total_pool_liquidity"]},
+            alloyed_denom=alloyed_denom,
+            alloyed_supply=int(supply["amount"]["amount"]),
+        )
     return fetch
 
 
@@ -426,6 +482,11 @@ def print_table(results: list[CoverageResult]) -> None:
         status = "OK" if result.covered else "SHORT"
         print(f"{result.st_denom:<14}{result.chain_id:<16}{result.supply:>20}{str(result.rate):>22}"
               f"{result.required_native:>22}{result.native_on_osmosis:>22}  {status}")
+        for channel_id, shares in sorted(result.route_outside_shares.items()):
+            print(f"    route {channel_id}: {shares} alloyed shares held outside the vault (counted as owed)")
+        if result.canonical_outside_shares:
+            canonical_shares = result.canonical_outside_shares
+            print(f"    canonical: {canonical_shares} alloyed shares held outside the vault (counted as owed)")
         for channel_id, shortfall in sorted(result.route_shortfalls.items()):
             print(f"    route {channel_id}: short by {shortfall} (expected {result.route_expected[channel_id]})")
         for channel_id, surplus in sorted(result.route_overfunded.items()):

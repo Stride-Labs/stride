@@ -420,7 +420,7 @@ that delegation changed while the query was in flight or a delegation-changing I
 still active; this also catches a completed undelegation whose in-progress counter is zero.
 Missing or malformed snapshots and nil or non-positive stored rates are successful no-ops.
 An admin may submit a fresh calibration after a stale response is discarded; the callback
-does not start a retry loop. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
+does not start a retry loop. An empty response, which proves the delegation ICA has no delegation to that validator on the host, also reaches the callback and corrects the recorded delegation to zero whatever the stored rate (the rate no-op above applies to a non-empty response only). The interchain-query module drops an empty response for every other query; only the calibration query opts in, the module accepts the opt-in only on a query whose response carries a proof, and the query carries the validator address in its callback data because an empty response has no delegation to read it from. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale. The tx rejects the reset unless the zone's delegation channel is open with no packet commitment outstanding, the same condition the upgrade handler's reset uses: with a packet in flight the flag is not stale, and its ack would fail on the zeroed counter and wedge the ordered channel; with the channel closed, `RestoreInterchainAccount` resets every flag anyway.
 
 **Entry points that bypass the router.** Autopilot: the handler sets `StakeibcActive =
 false`. ICA host: the handler removes `MsgLiquidStake` and `MsgRedeemStake` from the
@@ -486,7 +486,8 @@ upgrade (§6), so this no longer flows into the stISLM redemption rate; the rate
 0.0014% above the backing (1,393 ISLM against 101M stISLM, roughly $6), which the rewards
 accrued until the drain cover many times over and the coverage check (§10) reports either
 way. The table also pins each row's tracked delegation
-(`HaqqExpectedTrackedDelegations`, read from the live host zone when generated) and skips,
+(`HaqqExpectedTrackedDelegations`, each row's `recorded` value from the same `drift.json` as
+its delta; a host zone file passed to the generator only cross-checks them) and skips,
 with an error log, each row whose tracked delegation no longer matches its pin, so a slash
 booked between generation and the upgrade cannot be applied twice; the other rows still
 apply. The pin compares Stride's tracked value only: a slash on haqq that no query has booked
@@ -594,7 +595,14 @@ non-zero amount. The last one exists because of a known bug in the record-driven
 (`GetTargetValAmtsForHostZone` errors when the delegation left after an unbond is not
 positive, so a record can never be submitted on a drained zone and would retry forever with
 its stTokens escrowed and its backing already on Osmosis); the guard turns "drained too
-early" into a rejected transaction instead of a stranded holder. The messages go through
+early" into a rejected transaction instead of a stranded holder. A validator with
+`SlashQueryInProgress` is not refused, unlike in the record-driven path: only an ICQ callback
+clears that flag and no admin tx can, so a query that is never answered would strand the
+validator's stake, while an amount the slash has made stale only fails its batch on the host
+and the error ack releases its delegation-change counters with no balance moved. Correct such
+a validator with `CalibrateDelegation`, which ignores the slash flag, rather than with an
+`offset`: an offset drain that empties the host delegation leaves the offset recorded on
+Stride until a calibration zeroes it. The messages go through
 `BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, in the zone's usual
 batch size, and the tx registers the batches as in flight so the callback's record-less
 accounting stays clean.
@@ -750,7 +758,10 @@ the native balance, so the only possible movement is stToken in, native out: nob
 stTokens from a pool, and de-hopping a foreign route through two pools (route → native →
 canonical) is impossible. Redemptions by router swap and by join-then-exit are unaffected
 (tested 2026-09-25). Completing an initial allocation after a test deposit therefore means
-unmark, join, re-mark. If the test deposit's native balance reaches zero, the contract removes
+unmark, join, re-mark. The mark also closes the window in which an outsider can join a route
+pool with native (§10), so the funding join and the mark go out back to back, and a route pool
+is checked for outside alloyed shares before funding. If the test deposit's native balance
+reaches zero, the contract removes
 the native asset; `add_new_assets` at the same factor before the remaining funding join
 restores it with the rate exact (tested). This completes the allocation, not a replenishment
 of redeemed funds. The canonical denom's
@@ -819,13 +830,16 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   delegation equals the delegation ICA's on-chain delegation (the drift measurement, §9a),
   with any difference either in the haqq delta table or explained. The haqq delegation delta
   table, the drift measurement and the mainnet-export tests match the chain at one recent
-  height. A haqq redemption unbonding at the upgrade would
-  change the drift; measure right before the proposal. Haqq's ICA channel stays closed until
-  after the upgrade (§9c). A row whose validator's tracked delegation on Stride no longer
-  equals its pin is skipped on its own (§5); otherwise the helper skips the table (never
-  errors) only on a missing validator or a negative result, so a row whose on-chain side
-  has moved (a slash on haqq not yet booked on Stride) is applied as is and the day-0
-  refresh books the rest; the `offset` on the drain tx is the last fallback.
+  height. A haqq redemption unbonding at the upgrade would change the drift; measure right
+  before the proposal. Regenerate in this order, immediately before the proposal: the drift
+  measurement, then the delta table from that same `drift.json` (the deltas and the pins both
+  come from it, so they cannot disagree), then `app/upgrades/v35/testdata/verify_constants.py`
+  against the chain. Haqq's ICA channel stays closed until after the upgrade (§9c). A row
+  whose validator's tracked delegation on Stride no longer equals its pin is skipped on its
+  own (§5); otherwise the helper skips the table (never errors) only on a missing validator or
+  a negative result, so a row whose on-chain side has moved (a slash on haqq not yet booked on
+  Stride) is applied as is and the day-0 refresh books the rest; the `offset` on the drain tx
+  is the last fallback.
 - On every in-scope host, the delegation ICA's withdraw address (distribution module query) is
   the zone's withdrawal ICA; the epoch call that re-set it every epoch is deleted (§6).
 - The two address constants, the channel map and `SweepUnwindChannels` in the binary
@@ -917,6 +931,26 @@ will settle.
    Delegation ICA channels and relayers stay healthy until every batch acks; a dead channel
    is restored with the existing flow and the affected validators are resubmitted. From here
    on no delegation exists that any record needs.
+   **If a batch executes on the host but its ack never reaches Stride.** Acks cannot be
+   delivered on a closed channel, so if a later packet's timeout closes the ordered channel
+   first, the batches that did execute stay unacknowledged and the restore zeroes their
+   flags: Stride still records the full delegation on validators the host has already
+   unbonded. This applies to the record-driven batches of step 3 as much as to drain batches,
+   and there it is worse: the restore requeues the record, every retry asks the emptied
+   validator again, the host rejects the batch, and the record stays in
+   `UNBONDING_RETRY_QUEUE`, which the drain refuses. So prevent it: when clearing a zone's
+   undelegate packets, relay acknowledgements before timeouts, and do not relay a timeout
+   while an earlier sequence's ack is outstanding. If it happens anyway, read the delegation
+   ICA's delegations and unbonding entries on the host and run `CalibrateDelegation` on every
+   validator a lost batch emptied or reduced: an empty answer corrects the record to zero and
+   a non-empty one to what is left (§5). A drain is then resubmitted as usual. A requeued
+   record is retried at the zone's next submission epoch (every 3 to 5 day epochs, §3) for
+   the amount still unacknowledged (batches whose ack did arrive were already deducted), on
+   top of what the lost batch already unbonded, so the zone's remaining recorded delegation
+   must exceed the unacknowledged total of its queued records; if it does not, the record
+   cannot be submitted (the §7 bug) and the zone's drain stays refused. The tokens of the batches that
+   did execute, the surplus included, still reach the delegation ICA when their unbonding
+   completes and leave with its balance, so the backing is unaffected.
    **Timing: submit drain batches only between 19:00 UTC and about 08:00 UTC.** The drain
    reuses the epoch unbonding submitter, so every batch's ICA timeout is the next day-epoch
    start minus a buffer (a fifth of the epoch at the default `buffer_size` of 5), not a fixed
@@ -941,16 +975,18 @@ will settle.
    `ClaimUndelegatedTokens` for every record (permissionless, as today; a record whose host
    receiver rejects the bank send is handled by hand). Once a zone has no record outside
    `CLAIMABLE` with a non-zero amount, no user redemption record, and no claim ICA in
-   flight: `MsgTransferFromIca DELEGATION` for the full
+   flight (confirmed by hand with the transfer checklist below, since the tx checks none of
+   it): `MsgTransferFromIca DELEGATION` for the full
    remaining balance, `WITHDRAWAL` again for the auto-withdrawn rewards, and `REDEMPTION` for
    whatever dust the claims left. Then create and fund that stToken's pools (§8), the
    canonical one and one per in-scope route, once the coverage check passes (§10).
 7. Staketia, day 21: the operator IBCs the whole unbonded balance via authz to the claim
    address (no memo; the grant forbids one) and `MsgConfirmUnbondedTokenSweep` for each open
-   record; the hour-epoch hook pays the redeemers from the claim address. Then
+   record; the hour-epoch hook pays the redeemers from the claim address. Then, once the
+   transfer checklist below confirms every redeemer is paid,
    `MsgTransferStaketiaClaimBalance` with a small `amount` as the live test, and once it has
    landed on the delegation ICA, again with zero for the remainder, which leaves with that
-   zone's balance in step 5. No key of the claim address signs anything.
+   zone's balance in step 6. No key of the claim address signs anything.
    Stakedym, 2026-10-12 after about 20:11 UTC: the hour epoch marks records 1444-1464
    `UNBONDED`; the stakedym operator sends the unbonded DYM from the Dymension delegation
    account to the stakedym claim address over `channel-197`, exactly as in its normal cycle,
@@ -979,6 +1015,31 @@ will settle.
    validator set until it expires; a forged header could mint canonical stToken vouchers on
    Osmosis, which the pools would honour. Keys gone means the window is closed on day 0 rather
    than day 12. No relayer is asked to update that client after the halt.
+
+Checklist before each balance transfer (steps 5 to 7). Neither `MsgTransferFromIca` nor
+`MsgTransferStaketiaClaimBalance` checks anything against open records, by choice: mainnet
+has had records sit for weeks behind a dead channel or a pending claim, and an on-chain guard
+would turn one such record into a lock on the zone's whole balance with no way around it. A
+transfer sent early is recoverable (the Osmosis vault sends the tokens back to the ICA on the
+host and the pipeline retries by itself), but it stops every redeemer on that zone until
+then, so confirm by hand before signing:
+
+- `DELEGATION`: the zone has no `HostZoneUnbonding` record with a non-zero amount in any
+  status before `CLAIMABLE` (`UNBONDING_QUEUE`, `UNBONDING_IN_PROGRESS`,
+  `UNBONDING_RETRY_QUEUE`, `EXIT_TRANSFER_QUEUE`, `EXIT_TRANSFER_IN_PROGRESS`); REST
+  `/Stride-Labs/stride/records/epoch_unbonding_record`, filtered on the zone. The sweep moves
+  all of a zone's unbonded records out of the delegation ICA in one bank send, so a balance
+  short by one record fails the sweep for every record, every stride epoch (injective-1
+  sweeps one record per send, oldest first, so there a short balance fails only the records
+  it cannot cover).
+- `REDEMPTION`: the zone has no user redemption record left, and so no claim in flight
+  (`claim_is_pending`); REST `/Stride-Labs/stride/records/user_redemption_record`. A record
+  that cannot be claimed is settled by hand first.
+- `WITHDRAWAL` and `FEE`: nothing to confirm; no redemption is paid from either.
+- `MsgTransferStaketiaClaimBalance`: staketia has no redemption record left (REST
+  `/Stride-Labs/stride/staketia/redemption_records`), meaning the hour epoch has paid every
+  confirmed unbonding record and archived it as `CLAIMED`. An omitted or zero `amount` means
+  the whole balance, so the small live test passes an explicit amount.
 
 Checklist to halt the chain:
 
@@ -1205,6 +1266,17 @@ the current native balance, not cumulative funding: extra deposits after redempt
 remain below that bound and pass. Ops therefore verify the total confirmed funding deposits
 against the allocation and follow the no-replenishment rule (§8/§9); the checker does not
 replace that funding check.
+
+`join_pool` is permissionless, so the stTokens a pool holds are not all redeemed ones: a holder
+who joined with stTokens and has not exited holds alloyed shares that still redeem for native.
+The checker therefore adds each pool's alloyed supply not held by the vault to that pool's
+native requirement, one share being one native base unit (the pool gate asserts the alloyed and
+native factors are equal), so a join with stTokens can neither hide a shortfall nor block the
+gate. A join with the native token into a route pool is possible only while native is not
+marked corrupted (§8). The over-funded bound is unchanged, so the checker reports that route as
+over-funded by the joined amount until the joiner exits or redemptions pay out that much, and
+the vault cannot clear it by holding fewer shares, because the same amount then shows as a
+shortfall.
 
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3: `Unbond` calls the
 distribution hook `BeforeDelegationSharesModified`, which withdraws the accrued rewards, and

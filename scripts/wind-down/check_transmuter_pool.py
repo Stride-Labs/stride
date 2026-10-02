@@ -50,11 +50,15 @@ class PoolSpec:
 # CONSTANTS: edit these, nothing else takes input.
 # ----------------------------------------------------------------------------------------------
 
-ADMIN = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # Osmosis vault (transmuter admin)
-MODERATOR = "osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc"  # freeze / corrupted-asset key
+# The Osmosis vault (spec §4) is both admin and moderator of every pool; it equals OsmosisVaultAddress
+# in x/stakeibc/types/wind_down.go (test_check_transmuter_pool.py asserts that).
+ADMIN = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"  # Osmosis vault (transmuter admin)
+MODERATOR = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"  # Osmosis vault (freeze / corrupted-asset key)
 
 POOLS = [
     # 2026-09-25 per-route test pools. Replace with the real pools as they are created: one entry per route.
+    # The test pools are administered by the test key osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc, so every
+    # entry here fails the admin and moderator checks against the vault until the list is replaced.
     PoolSpec(chain_id="cosmoshub-4", pool_id="3595", rate_at_creation="2.002036647211047463", route_trace=None),
     PoolSpec(
         chain_id="cosmoshub-4",
@@ -75,7 +79,9 @@ POOLS = [
 # ----------------------------------------------------------------------------------------------
 
 # Osmosis's transfer channel to each in-scope host zone: this is where the native token's
-# canonical Osmosis denom comes from (verified against the chain registry on 2026-09-23).
+# canonical Osmosis denom comes from (verified against the chain registry on 2026-09-23;
+# sommelier-3 was verified on chain on 2026-10-02: transfer/channel-165 is STATE_OPEN, its client
+# 07-tendermint-1745 tracks sommelier-3, counterparty channel-0).
 OSMOSIS_CHANNEL_TO_HOST = {
     "cosmoshub-4": "channel-0",
     "celestia": "channel-6994",
@@ -85,6 +91,7 @@ OSMOSIS_CHANNEL_TO_HOST = {
     "juno-1": "channel-42",
     "laozi-mainnet": "channel-148",
     "phoenix-1": "channel-251",
+    "sommelier-3": "channel-165",
     "ssc-1": "channel-38946",
 }
 

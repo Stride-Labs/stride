@@ -28,6 +28,10 @@ message Query {
   uint64 timeout_timestamp = 9;
   bool request_sent = 11;
   uint64 submission_height = 16;
+  // When true, an empty response (a proven absence of the queried key) still
+  // invokes the callback, with empty args, instead of being dropped. Opt-in,
+  // so queries that do not set it keep the contentless-response behavior.
+  bool invoke_callback_on_empty_response = 17;
 }
 
 message DataPoint {

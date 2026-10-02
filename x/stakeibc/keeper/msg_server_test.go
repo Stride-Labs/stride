@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
@@ -10,6 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v34/app/apptesting"
@@ -1084,9 +1086,32 @@ func (s *KeeperTestSuite) SetupCalibrateDelegation() types.MsgCalibrateDelegatio
 	}
 }
 
+// Returns the delegation ICA channel and port created by SetupCalibrateDelegation
+func (s *KeeperTestSuite) calibrateDelegationChannel() (channelId, portId string) {
+	owner := types.FormatHostZoneICAOwner(HostChainId, types.ICAAccountType_DELEGATION)
+	portId, err := icatypes.NewControllerPortID(owner)
+	s.Require().NoError(err)
+
+	channelId, found := s.App.ICAControllerKeeper.GetOpenActiveChannel(s.Ctx, ibctesting.FirstConnectionID, portId)
+	s.Require().True(found, "delegation channel should be open")
+
+	return channelId, portId
+}
+
+// Checks that neither validator's flag moved from the values seeded by SetupCalibrateDelegation
+func (s *KeeperTestSuite) checkCalibrateFlagsUnchanged() {
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(3), hostZone.Validators[0].DelegationChangesInProgress, "other validator untouched")
+	s.Require().Equal(int64(2), hostZone.Validators[1].DelegationChangesInProgress, "queried validator untouched")
+}
+
 func (s *KeeperTestSuite) TestCalibrateDelegation_ResetFlag() {
 	msg := s.SetupCalibrateDelegation()
 	msg.ResetDelegationChangesInProgress = true
+
+	// The channel is open with nothing in flight, so the flag is stale and the reset is allowed
+	channelId, portId := s.calibrateDelegationChannel()
+	s.Require().Empty(s.App.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(s.Ctx, portId, channelId))
 
 	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
 	s.Require().NoError(err)
@@ -1098,6 +1123,41 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_ResetFlag() {
 	s.Require().Equal(int64(10_000), hostZone.Validators[1].Delegation.Int64(), "delegation unchanged by the reset")
 
 	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "calibration query submitted")
+}
+
+// A packet in flight means the flag is not stale: its ack would fail on the zeroed counter and wedge the channel
+func (s *KeeperTestSuite) TestCalibrateDelegation_ResetPacketsInFlight() {
+	msg := s.SetupCalibrateDelegation()
+	msg.ResetDelegationChangesInProgress = true
+
+	channelId, portId := s.calibrateDelegationChannel()
+	s.App.IBCKeeper.ChannelKeeper.SetPacketCommitment(s.Ctx, portId, channelId, 1, []byte{1})
+	s.App.IBCKeeper.ChannelKeeper.SetPacketCommitment(s.Ctx, portId, channelId, 2, []byte{2})
+
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+	s.Require().ErrorContains(err, fmt.Sprintf("2 unacked packet(s) on delegation channel %s", channelId))
+	s.Require().ErrorContains(err, "wait for them to be relayed")
+
+	s.checkCalibrateFlagsUnchanged()
+	s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), "no query submitted")
+}
+
+// With no open delegation channel, the flags are reset by RestoreInterchainAccount instead
+func (s *KeeperTestSuite) TestCalibrateDelegation_ResetChannelClosed() {
+	msg := s.SetupCalibrateDelegation()
+	msg.ResetDelegationChangesInProgress = true
+
+	channelId, portId := s.calibrateDelegationChannel()
+	s.UpdateChannelState(portId, channelId, channeltypes.CLOSED)
+
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().ErrorIs(err, sdkerrors.ErrInvalidRequest)
+	s.Require().ErrorContains(err, "no open delegation channel")
+	s.Require().ErrorContains(err, "RestoreInterchainAccount")
+
+	s.checkCalibrateFlagsUnchanged()
+	s.Require().Empty(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), "no query submitted")
 }
 
 func (s *KeeperTestSuite) TestCalibrateDelegation_NoReset() {
@@ -1113,10 +1173,28 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_NoReset() {
 	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "calibration query submitted")
 }
 
+// The guard only applies to the reset: a plain calibration goes through with a packet in flight
+func (s *KeeperTestSuite) TestCalibrateDelegation_NoResetPacketsInFlight() {
+	msg := s.SetupCalibrateDelegation()
+
+	channelId, portId := s.calibrateDelegationChannel()
+	s.App.IBCKeeper.ChannelKeeper.SetPacketCommitment(s.Ctx, portId, channelId, 1, []byte{1})
+
+	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
+	s.Require().NoError(err)
+
+	s.checkCalibrateFlagsUnchanged()
+	s.Require().Len(s.App.InterchainqueryKeeper.AllQueries(s.Ctx), 1, "calibration query submitted")
+}
+
 func (s *KeeperTestSuite) TestCalibrateDelegation_ResetUnknownValidator() {
 	msg := s.SetupCalibrateDelegation()
 	msg.ResetDelegationChangesInProgress = true
 	msg.Valoper = "cosmosvaloper1pcag0cj4ttxg8l7pcg0q4ksuglswuuedadj7ne"
+
+	// A packet in flight would fail the channel guard, so this also checks the validator lookup comes first
+	channelId, portId := s.calibrateDelegationChannel()
+	s.App.IBCKeeper.ChannelKeeper.SetPacketCommitment(s.Ctx, portId, channelId, 1, []byte{1})
 
 	_, err := s.GetMsgServer().CalibrateDelegation(s.Ctx, &msg)
 	s.Require().ErrorIs(err, types.ErrValidatorNotFound)

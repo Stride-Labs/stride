@@ -1,9 +1,15 @@
 """Unit test for coverage_check.evaluate on a synthetic export with an injected fetcher."""
 
+import base64
+import contextlib
+import io
+import json
 import pathlib
 import re
 import unittest
+import urllib.parse
 from decimal import Decimal
+from unittest import mock
 
 import coverage_check
 
@@ -15,6 +21,16 @@ NATIVE = "ibc/NATIVE"
 CANONICAL_ST = "ibc/STUATOM"
 ROUTE_ST = "ibc/STUATOM_TWO_HOP"
 REQUIRED_ROUTES = {"stuatom": frozenset({"channel-0"})}
+ALLOYED_CANONICAL = "factory/osmo1canonical/alloyed/stuatom"
+ALLOYED_ROUTE = "factory/osmo1route/alloyed/stuatom"
+
+
+def pool_state(
+    liquidity: dict[str, int],
+    alloyed_denom: str = ALLOYED_CANONICAL,
+    alloyed_supply: int = 0,
+) -> coverage_check.PoolState:
+    return coverage_check.PoolState(liquidity=liquidity, alloyed_denom=alloyed_denom, alloyed_supply=alloyed_supply)
 
 
 def synthetic_export() -> dict:
@@ -70,7 +86,7 @@ class CoverageCheckTest(unittest.TestCase):
             coverage_check.evaluate(
                 required_routes=REQUIRED_ROUTES,
                 export=synthetic_export(), pools=bad, vault_balances={},
-                fetch_liquidity=lambda pool_id: liquidity[pool_id],
+                fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
             )
 
     def test_missing_route_cannot_allocate_its_liability_to_canonical(self) -> None:
@@ -82,7 +98,7 @@ class CoverageCheckTest(unittest.TestCase):
             coverage_check.evaluate(
                 required_routes=REQUIRED_ROUTES,
                 export=synthetic_export(), pools=bad, vault_balances={},
-                fetch_liquidity=lambda pool_id: {NATIVE: 1_500_000},
+                fetch_pool_state=lambda pool_id: pool_state(liquidity={NATIVE: 1_500_000}),
             )
 
     def test_covered_when_every_pool_holds_its_share(self) -> None:
@@ -94,7 +110,7 @@ class CoverageCheckTest(unittest.TestCase):
             export=synthetic_export(),
             pools=pools(),
             vault_balances={NATIVE: 10_000},
-            fetch_liquidity=lambda pool_id: liquidity[pool_id],
+            fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
         )
         self.assertEqual(len(results), 1)
         result = results[0]
@@ -198,13 +214,13 @@ class CoverageCheckTest(unittest.TestCase):
         bad = {"stnew": pools()["stuatom"]}
         with self.assertRaisesRegex(coverage_check.CoverageInputError, "no reviewed route policy"):
             coverage_check.evaluate(
-                export=export, pools=bad, vault_balances={}, fetch_liquidity=unexpected_fetch,
+                export=export, pools=bad, vault_balances={}, fetch_pool_state=unexpected_fetch,
             )
 
     def test_default_policy_cannot_be_derived_from_pool_config(self) -> None:
         with self.assertRaisesRegex(coverage_check.CoverageInputError, "approved routes differ"):
             coverage_check.evaluate(
-                export=synthetic_export(), pools=pools(), vault_balances={}, fetch_liquidity=unexpected_fetch,
+                export=synthetic_export(), pools=pools(), vault_balances={}, fetch_pool_state=unexpected_fetch,
             )
 
     def test_somm_keeps_canonical_coverage_without_foreign_routes(self) -> None:
@@ -217,7 +233,7 @@ class CoverageCheckTest(unittest.TestCase):
         config["route_pools"] = []
         result = coverage_check.evaluate(
             export=export, pools={"stusomm": config}, vault_balances={},
-            fetch_liquidity=lambda pool_id: {NATIVE: 1_500_000},
+            fetch_pool_state=lambda pool_id: pool_state(liquidity={NATIVE: 1_500_000}),
         )[0]
         self.assertTrue(result.covered)
         self.assertEqual(result.canonical_expected, 1_500_000)
@@ -236,7 +252,8 @@ class CoverageCheckTest(unittest.TestCase):
         }
         liquidity = {"1": {NATIVE: 1_350_000}, "2": {NATIVE: 150_000}, "3": {"ibc/JUNO": 11}, "4": {}}
         results = coverage_check.evaluate(
-            export=export, pools=config, vault_balances={}, fetch_liquidity=lambda pool_id: liquidity[pool_id],
+            export=export, pools=config, vault_balances={},
+            fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
             required_routes={"stuatom": frozenset({"channel-0"}), "stujuno": frozenset({"channel-0"})},
         )
         self.assertTrue(all(result.covered for result in results))
@@ -251,7 +268,7 @@ class CoverageCheckTest(unittest.TestCase):
         with self.assertRaisesRegex(coverage_check.CoverageInputError, message):
             coverage_check.evaluate(
                 export=synthetic_export() if export is None else export, pools=pool_config, vault_balances={},
-                fetch_liquidity=unexpected_fetch,
+                fetch_pool_state=unexpected_fetch,
                 required_routes=REQUIRED_ROUTES if required_routes is None else required_routes,
             )
 
@@ -262,7 +279,7 @@ class CoverageCheckTest(unittest.TestCase):
             export=synthetic_export(),
             pools=pools(),
             vault_balances={},
-            fetch_liquidity=lambda pool_id: liquidity[pool_id],
+            fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
         )[0]
         self.assertFalse(result.covered)
         self.assertEqual(result.native_on_osmosis, 1_149_999)
@@ -277,7 +294,7 @@ class CoverageCheckTest(unittest.TestCase):
             export=export,
             pools=pools(),
             vault_balances={NATIVE: 2_000_000},
-            fetch_liquidity=lambda pool_id: {NATIVE: 0},
+            fetch_pool_state=lambda pool_id: pool_state(liquidity={NATIVE: 0}),
         )[0]
         self.assertEqual(result.required_native, 1_333_334)
         self.assertEqual(result.route_expected["channel-0"], 133_334)
@@ -295,7 +312,7 @@ class CoverageCheckTest(unittest.TestCase):
             export=synthetic_export(),
             pools=pools(),
             vault_balances={},
-            fetch_liquidity=lambda pool_id: liquidity[pool_id],
+            fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
         )[0]
         self.assertEqual(result.required_native, 1_140_000)
         self.assertEqual(result.route_expected["channel-0"], 90_000)
@@ -307,7 +324,8 @@ class CoverageCheckTest(unittest.TestCase):
         liquidity = {"1": {NATIVE: 1_350_000}, "2": {NATIVE: 89_999, ROUTE_ST: 40_000}}
         result = coverage_check.evaluate(
             required_routes=REQUIRED_ROUTES,
-            export=synthetic_export(), pools=pools(), vault_balances={}, fetch_liquidity=lambda pool_id: liquidity[pool_id],
+            export=synthetic_export(), pools=pools(), vault_balances={},
+            fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
         )[0]
         self.assertEqual(result.route_shortfalls, {"channel-0": 1})
         self.assertFalse(result.covered)
@@ -317,7 +335,8 @@ class CoverageCheckTest(unittest.TestCase):
         liquidity = {"1": {NATIVE: 1_350_000}, "2": {NATIVE: 150_001}}
         result = coverage_check.evaluate(
             required_routes=REQUIRED_ROUTES,
-            export=synthetic_export(), pools=pools(), vault_balances={}, fetch_liquidity=lambda pool_id: liquidity[pool_id],
+            export=synthetic_export(), pools=pools(), vault_balances={},
+            fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
         )[0]
         self.assertEqual(result.route_overfunded, {"channel-0": 1})
         self.assertFalse(result.covered)
@@ -330,7 +349,8 @@ class CoverageCheckTest(unittest.TestCase):
             with self.assertRaises(coverage_check.CoverageInputError):
                 coverage_check.evaluate(
                     required_routes=REQUIRED_ROUTES,
-                    export=synthetic_export(), pools=bad, vault_balances={}, fetch_liquidity=lambda pool_id: {},
+                    export=synthetic_export(), pools=bad, vault_balances={},
+                    fetch_pool_state=lambda pool_id: pool_state(liquidity={}),
                 )
 
     def test_route_pool_without_st_denom_is_an_error(self) -> None:
@@ -339,7 +359,8 @@ class CoverageCheckTest(unittest.TestCase):
         with self.assertRaises(coverage_check.CoverageInputError):
             coverage_check.evaluate(
                 required_routes=REQUIRED_ROUTES,
-                export=synthetic_export(), pools=bad, vault_balances={}, fetch_liquidity=lambda pool_id: {},
+                export=synthetic_export(), pools=bad, vault_balances={},
+                fetch_pool_state=lambda pool_id: pool_state(liquidity={}),
             )
 
     def test_missing_pool_entry_is_an_error(self) -> None:
@@ -349,7 +370,7 @@ class CoverageCheckTest(unittest.TestCase):
                 export=synthetic_export(),
                 pools={},
                 vault_balances={},
-                fetch_liquidity=lambda pool_id: {},
+                fetch_pool_state=lambda pool_id: pool_state(liquidity={}),
             )
 
     def test_sttoken_missing_from_supply_is_an_error(self) -> None:
@@ -361,7 +382,7 @@ class CoverageCheckTest(unittest.TestCase):
                 export=synthetic_export(),
                 pools=mistyped,
                 vault_balances={},
-                fetch_liquidity=lambda pool_id: {},
+                fetch_pool_state=lambda pool_id: pool_state(liquidity={}),
             )
 
     def test_in_scope_sttoken_missing_from_pools_is_an_error(self) -> None:
@@ -372,7 +393,8 @@ class CoverageCheckTest(unittest.TestCase):
         with self.assertRaises(coverage_check.CoverageInputError):
             coverage_check.evaluate(
                 required_routes=REQUIRED_ROUTES,
-                export=export, pools=pools(), vault_balances={}, fetch_liquidity=lambda pool_id: {},
+                export=export, pools=pools(), vault_balances={},
+                fetch_pool_state=lambda pool_id: pool_state(liquidity={}),
             )
 
     def test_deprecated_zone_is_out_of_scope(self) -> None:
@@ -383,13 +405,271 @@ class CoverageCheckTest(unittest.TestCase):
         liquidity = {"1": {NATIVE: 1_350_000}, "2": {NATIVE: 150_000}}
         results = coverage_check.evaluate(
             required_routes=REQUIRED_ROUTES,
-            export=export, pools=pools(), vault_balances={}, fetch_liquidity=lambda pool_id: liquidity[pool_id],
+            export=export, pools=pools(), vault_balances={},
+            fetch_pool_state=lambda pool_id: pool_state(liquidity=liquidity[pool_id]),
         )
         self.assertEqual([result.st_denom for result in results], ["stuatom"])
 
 
-def unexpected_fetch(pool_id: str) -> dict[str, int]:
-    raise AssertionError(f"invalid topology fetched liquidity for pool {pool_id}")
+def unexpected_fetch(pool_id: str) -> coverage_check.PoolState:
+    raise AssertionError(f"invalid topology fetched state for pool {pool_id}")
+
+
+class AlloyedSharesOutsideVaultTest(unittest.TestCase):
+    """join_pool is permissionless: shares held by anyone but the vault still redeem for native.
+
+    Synthetic export: supply 1,000,000 stuatom at rate 1.5, route escrow 100,000 (channel-0).
+    """
+
+    def test_canonical_joiner_shares_are_owed_native_on_top_of_the_redeemed_requirement(self) -> None:
+        # A joiner put 37,000 stTokens into the canonical pool and holds 55,500 shares (x 1.5). The
+        # native for the stTokens not in the pool is (1,000,000 - 100,000 - 37,000) x 1.5 = 1,294,500
+        result = self.evaluate_joiners(
+            canonical_native=1_294_500, route_native=150_000, canonical_joiner=True, route_joiner=False,
+        )
+
+        self.assertEqual(result.canonical_outside_shares, 55_500)
+        self.assertEqual(result.canonical_expected, 1_294_500 + 55_500)
+        self.assertEqual(result.required_native, (1_000_000 - 37_000) * 3 // 2 + 55_500)
+        self.assertEqual(result.route_outside_shares, {})
+        self.assertLess(result.canonical_actual, result.canonical_expected)
+        self.assertFalse(result.covered)
+
+    def test_canonical_covered_once_native_is_raised_by_exactly_the_outside_shares(self) -> None:
+        result = self.evaluate_joiners(
+            canonical_native=1_294_500 + 55_500, route_native=150_000, canonical_joiner=True, route_joiner=False,
+        )
+
+        self.assertEqual(result.native_on_osmosis, result.required_native)
+        self.assertEqual(result.canonical_actual, result.canonical_expected)
+        self.assertTrue(result.covered)
+
+    def test_route_joiner_shares_are_a_route_shortfall_of_exactly_the_outside_shares(self) -> None:
+        # 20,000 stTokens joined the route pool for 30,000 shares: it owes (100,000 - 20,000) x 1.5 = 120,000
+        # for the rest of the escrow plus those 30,000
+        result = self.evaluate_joiners(
+            canonical_native=1_350_000, route_native=120_000, canonical_joiner=False, route_joiner=True,
+        )
+
+        self.assertEqual(result.route_outside_shares, {"channel-0": 30_000})
+        self.assertEqual(result.route_expected, {"channel-0": 150_000})
+        self.assertEqual(result.route_shortfalls, {"channel-0": 30_000})
+        self.assertEqual(result.required_native, (1_000_000 - 20_000) * 3 // 2 + 30_000)
+        self.assertEqual(result.canonical_outside_shares, 0)
+        self.assertFalse(result.covered)
+
+    def test_route_covered_once_topped_up_and_not_over_funded(self) -> None:
+        result = self.evaluate_joiners(
+            canonical_native=1_350_000, route_native=150_000, canonical_joiner=False, route_joiner=True,
+        )
+
+        self.assertEqual(result.route_shortfalls, {})
+        self.assertEqual(result.route_overfunded, {})
+        self.assertTrue(result.covered)
+
+    def test_route_pool_above_escrow_times_rate_is_still_over_funded(self) -> None:
+        # The over-funded test ignores outside shares: 150,001 > escrow 100,000 x 1.5
+        result = self.evaluate_joiners(
+            canonical_native=1_350_000, route_native=150_001, canonical_joiner=False, route_joiner=True,
+        )
+
+        self.assertEqual(result.route_overfunded, {"channel-0": 1})
+        self.assertFalse(result.covered)
+
+    def test_route_native_join_reads_as_over_funded_by_the_joined_amount(self) -> None:
+        # An outsider joined the route pool with 10 native and holds 10 shares, on top of the vault's full
+        # funding: the shares are counted as owed, but the over-funded bound ignores them, so 150,010 is
+        # over escrow 100,000 x 1.5 by the 10 joined
+        states = {
+            "1": pool_state(liquidity={NATIVE: 1_350_000}, alloyed_denom=ALLOYED_CANONICAL, alloyed_supply=1_350_000),
+            "2": pool_state(liquidity={NATIVE: 150_010}, alloyed_denom=ALLOYED_ROUTE, alloyed_supply=150_010),
+        }
+        result = self.evaluate_states(
+            states=states, vault_balances={ALLOYED_CANONICAL: 1_350_000, ALLOYED_ROUTE: 150_000},
+        )
+
+        self.assertEqual(result.route_outside_shares, {"channel-0": 10})
+        self.assertEqual(result.route_expected, {"channel-0": 150_010})
+        self.assertEqual(result.route_shortfalls, {})
+        self.assertEqual(result.route_overfunded, {"channel-0": 10})
+        self.assertFalse(result.covered)
+
+    def test_vault_holding_fewer_shares_cannot_clear_a_route_native_join(self) -> None:
+        # The same 10 as a shortfall instead: the vault holds 149,990 of 150,000 shares, so the 10 outside
+        # shares are owed against a pool that holds exactly escrow x rate
+        states = {
+            "1": pool_state(liquidity={NATIVE: 1_350_000}, alloyed_denom=ALLOYED_CANONICAL, alloyed_supply=1_350_000),
+            "2": pool_state(liquidity={NATIVE: 150_000}, alloyed_denom=ALLOYED_ROUTE, alloyed_supply=150_000),
+        }
+        result = self.evaluate_states(
+            states=states, vault_balances={ALLOYED_CANONICAL: 1_350_000, ALLOYED_ROUTE: 149_990},
+        )
+
+        self.assertEqual(result.route_shortfalls, {"channel-0": 10})
+        self.assertEqual(result.route_overfunded, {})
+        self.assertFalse(result.covered)
+
+    def test_shares_fully_held_by_the_vault_leave_the_requirement_unchanged(self) -> None:
+        # The partly-redeemed case of CoverageCheckTest, with every share held by the vault
+        states = {
+            "1": pool_state(
+                liquidity={NATIVE: 1_050_000, CANONICAL_ST: 200_000},
+                alloyed_denom=ALLOYED_CANONICAL, alloyed_supply=1_050_000,
+            ),
+            "2": pool_state(
+                liquidity={NATIVE: 90_000, ROUTE_ST: 40_000}, alloyed_denom=ALLOYED_ROUTE, alloyed_supply=90_000,
+            ),
+        }
+        result = self.evaluate_states(
+            states=states, vault_balances={ALLOYED_CANONICAL: 1_050_000, ALLOYED_ROUTE: 90_000},
+        )
+
+        self.assertEqual(result.required_native, 1_140_000)
+        self.assertEqual(result.route_expected, {"channel-0": 90_000})
+        self.assertEqual(result.canonical_expected, 1_050_000)
+        self.assertEqual(result.route_outside_shares, {})
+        self.assertEqual(result.canonical_outside_shares, 0)
+        self.assertTrue(result.covered)
+
+    def test_vault_balance_above_supply_clamps_to_zero_outside_shares(self) -> None:
+        states = {
+            "1": pool_state(liquidity={NATIVE: 1_350_000}, alloyed_denom=ALLOYED_CANONICAL, alloyed_supply=1_000_000),
+            "2": pool_state(liquidity={NATIVE: 150_000}, alloyed_denom=ALLOYED_ROUTE, alloyed_supply=150_000),
+        }
+        result = self.evaluate_states(
+            states=states, vault_balances={ALLOYED_CANONICAL: 2_000_000, ALLOYED_ROUTE: 500_000},
+        )
+
+        self.assertEqual(result.canonical_outside_shares, 0)
+        self.assertEqual(result.route_outside_shares, {})
+        self.assertEqual(result.canonical_expected, 1_350_000)
+        self.assertEqual(result.route_expected, {"channel-0": 150_000})
+        self.assertEqual(result.required_native, 1_500_000)
+        self.assertTrue(result.covered)
+
+    def test_vault_shares_of_another_pool_do_not_offset_outside_shares(self) -> None:
+        # The vault holds plenty of the route pool's shares, none of the canonical pool's
+        states = {
+            "1": pool_state(liquidity={NATIVE: 1_350_000}, alloyed_denom=ALLOYED_CANONICAL, alloyed_supply=1_350_000),
+            "2": pool_state(liquidity={NATIVE: 150_000}, alloyed_denom=ALLOYED_ROUTE, alloyed_supply=150_000),
+        }
+        result = self.evaluate_states(states=states, vault_balances={ALLOYED_ROUTE: 150_000})
+
+        self.assertEqual(result.canonical_outside_shares, 1_350_000)
+        self.assertEqual(result.route_outside_shares, {})
+        self.assertEqual(result.required_native, 1_500_000 + 1_350_000)
+        self.assertFalse(result.covered)
+
+    def test_table_prints_outside_shares_for_a_covered_token(self) -> None:
+        result = self.evaluate_joiners(
+            canonical_native=1_294_500 + 55_500, route_native=150_000, canonical_joiner=True, route_joiner=True,
+        )
+
+        lines = self.printed_lines(results=[result])
+
+        self.assertTrue(result.covered)
+        self.assertIn("    route channel-0: 30000 alloyed shares held outside the vault (counted as owed)", lines)
+        self.assertIn("    canonical: 55500 alloyed shares held outside the vault (counted as owed)", lines)
+
+    def test_table_prints_outside_shares_for_an_uncovered_token(self) -> None:
+        result = self.evaluate_joiners(
+            canonical_native=1_294_500, route_native=120_000, canonical_joiner=True, route_joiner=True,
+        )
+
+        lines = self.printed_lines(results=[result])
+
+        self.assertFalse(result.covered)
+        self.assertIn("    route channel-0: 30000 alloyed shares held outside the vault (counted as owed)", lines)
+        self.assertIn("    canonical: 55500 alloyed shares held outside the vault (counted as owed)", lines)
+
+    def test_table_prints_no_outside_shares_line_when_there_are_none(self) -> None:
+        states = {
+            "1": pool_state(liquidity={NATIVE: 1_350_000}, alloyed_denom=ALLOYED_CANONICAL, alloyed_supply=1_350_000),
+            "2": pool_state(liquidity={NATIVE: 150_000}, alloyed_denom=ALLOYED_ROUTE, alloyed_supply=150_000),
+        }
+        result = self.evaluate_states(
+            states=states, vault_balances={ALLOYED_CANONICAL: 1_350_000, ALLOYED_ROUTE: 150_000},
+        )
+
+        self.assertNotIn("alloyed shares", "\n".join(self.printed_lines(results=[result])))
+
+    def evaluate_joiners(
+        self, canonical_native: int, route_native: int, canonical_joiner: bool, route_joiner: bool,
+    ) -> coverage_check.CoverageResult:
+        """The vault holds the shares its funding joins minted; a joiner's shares are on top of those:
+        55,500 canonical shares (37,000 stTokens x 1.5) and 30,000 route shares (20,000 stTokens x 1.5)."""
+        canonical_liquidity = {NATIVE: canonical_native}
+        route_liquidity = {NATIVE: route_native}
+        canonical_vault_shares = 1_350_000
+        route_vault_shares = 150_000
+        canonical_supply = canonical_vault_shares
+        route_supply = route_vault_shares
+        if canonical_joiner:
+            canonical_liquidity[CANONICAL_ST] = 37_000
+            canonical_supply += 55_500
+        if route_joiner:
+            route_liquidity[ROUTE_ST] = 20_000
+            route_supply += 30_000
+        states = {
+            "1": pool_state(
+                liquidity=canonical_liquidity, alloyed_denom=ALLOYED_CANONICAL, alloyed_supply=canonical_supply,
+            ),
+            "2": pool_state(liquidity=route_liquidity, alloyed_denom=ALLOYED_ROUTE, alloyed_supply=route_supply),
+        }
+        return self.evaluate_states(
+            states=states,
+            vault_balances={ALLOYED_CANONICAL: canonical_vault_shares, ALLOYED_ROUTE: route_vault_shares},
+        )
+
+    def evaluate_states(
+        self, states: dict[str, coverage_check.PoolState], vault_balances: dict[str, int],
+    ) -> coverage_check.CoverageResult:
+        return coverage_check.evaluate(
+            required_routes=REQUIRED_ROUTES, export=synthetic_export(), pools=pools(),
+            vault_balances=vault_balances, fetch_pool_state=lambda pool_id: states[pool_id],
+        )[0]
+
+    def printed_lines(self, results: list[coverage_check.CoverageResult]) -> list[str]:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            coverage_check.print_table(results)
+        return output.getvalue().splitlines()
+
+
+class PoolStateFetcherTest(unittest.TestCase):
+    def test_reads_liquidity_share_denom_and_supply_from_osmosis(self) -> None:
+        rest = "https://osmosis.example"
+        share_denom = "factory/osmo1contract/alloyed/stuatom"
+        responses = {
+            "get_total_pool_liquidity": {"total_pool_liquidity": [
+                {"denom": NATIVE, "amount": "1294500"}, {"denom": CANONICAL_ST, "amount": "37000"},
+            ]},
+            "get_share_denom": {"share_denom": share_denom},
+        }
+
+        def fake_get_json(url: str) -> dict:
+            if url == f"{rest}/osmosis/poolmanager/v1beta1/pools/7":
+                return {"pool": {"contract_address": "osmo1contract"}}
+            smart_prefix = f"{rest}/cosmwasm/wasm/v1/contract/osmo1contract/smart/"
+            if url.startswith(smart_prefix):
+                (query_name,) = json.loads(base64.b64decode(urllib.parse.unquote(url.removeprefix(smart_prefix))))
+                return {"data": responses[query_name]}
+            # The share denom has slashes: only the URL-encoded query-parameter form addresses it
+            if url == f"{rest}/cosmos/bank/v1beta1/supply/by_denom?denom=factory%2Fosmo1contract%2Falloyed%2Fstuatom":
+                return {"amount": {"denom": share_denom, "amount": "1349500"}}
+            raise AssertionError(f"unexpected request {url}")
+
+        with mock.patch.object(coverage_check, "get_json", side_effect=fake_get_json):
+            state = coverage_check.make_pool_state_fetcher(osmosis_rest=rest)("7")
+
+        self.assertEqual(
+            state,
+            coverage_check.PoolState(
+                liquidity={NATIVE: 1_294_500, CANONICAL_ST: 37_000},
+                alloyed_denom=share_denom,
+                alloyed_supply=1_349_500,
+            ),
+        )
 
 
 class ApprovedRoutePolicyTest(unittest.TestCase):
