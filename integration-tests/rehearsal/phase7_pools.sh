@@ -27,15 +27,32 @@ user_tx() { # label cmd...
   wait_tx osmosisd "$hash"
 }
 
+# A refused tx must fail for the expected reason, not for an unrelated error (gas, sequence, typo)
+REFUSAL_REASON_RE='Corrupted asset|must not increase'
+
+assert_refusal_reason() { # captured-output
+  if grep -qE "$REFUSAL_REASON_RE" <<<"$1"; then
+    log "refused for the expected reason: $(grep -oE "$REFUSAL_REASON_RE" <<<"$1" | head -1)"
+    return 0
+  fi
+  log "refused, but NOT for the expected reason ($REFUSAL_REASON_RE): $(printf '%s' "$1" | tail -3 | head -c 400)"
+  return 1
+}
+
 # A tx that must be refused: either the CLI fails (simulation under --gas auto) or the chain returns code != 0
 tx_refused() { # cmd...
   local out
-  out=$("$@" 2>&1) || { log "refused at simulation: $(printf '%s' "$out" | tail -1 | head -c 300)"; return 0; }
-  jq -e '.code != 0' <<<"$(printf '%s\n' "$out" | grep '^{' | tail -1)" >/dev/null
+  out=$("$@" 2>&1) && out=$(printf '%s\n' "$out" | grep '^{' | tail -1) || { assert_refusal_reason "$out"; return; }
+  [[ "$(jq -r '.code' <<<"$out")" != 0 ]] || { log "tx was accepted, expected a refusal"; return 1; }
+  assert_refusal_reason "$(jq -r '.raw_log' <<<"$out")"
 }
 
-# Vault multisig tx that must fail on chain
-vault_tx_refused() { ! ms_tx osmosisd vault-ms m1,m2,m3 -- "$@" >/dev/null 2>&1; }
+# Vault multisig tx that must fail on chain (ms_tx logs the tx raw_log to stderr via wait_tx)
+vault_tx_refused() {
+  local out
+  out=$(ms_tx osmosisd vault-ms m1,m2,m3 -- "$@" 2>&1) && { log "vault tx was accepted, expected a refusal"; return 1; }
+  assert_refusal_reason "$out"
+}
 
 # Sets LAST_POOL_ID (a global: this must not run in a command substitution, ms_tx logs to stdout on failure)
 create_pool() { # name sttoken native rate subdenom
@@ -43,11 +60,18 @@ create_pool() { # name sttoken native rate subdenom
   inst=$(bash "$REHEARSAL_DIR/instantiate_pool.sh" "$2" "$3" "$4" "$5" "$VAULT_MS_OSMO")
   log "instantiate message for pool $1: $(jq -c . <<<"$inst")"
 
-  ms_tx osmosisd vault-ms m1,m2,m3 -- cosmwasmpool create-pool 1 "$(jq -c . <<<"$inst")" >/dev/null
+  # Instantiating the transmuter inside create-pool needs far more gas than the multisig default
+  MS_GAS=2500000 ms_tx osmosisd vault-ms m1,m2,m3 -- cosmwasmpool create-pool 1 "$(jq -c . <<<"$inst")" >/dev/null
 
   # Pool ids are sequential across all pool types, so the newest pool's id is the pool count
   LAST_POOL_ID=$(osmosisd q poolmanager num-pools -o json | jq -r '.num_pools')
   [[ "$LAST_POOL_ID" =~ ^[1-9][0-9]*$ ]] || { log "bad pool count '$LAST_POOL_ID'"; return 1; }
+
+  # Guard against a pool id that points at some other pool: the contract must list the expected stToken
+  local configs
+  configs=$(osmosisd q wasm contract-state smart "$(pool_contract "$LAST_POOL_ID")" '{"list_asset_configs":{}}' -o json)
+  jq -e --arg denom "$2" '[.. | .denom? // empty] | index($denom)' <<<"$configs" >/dev/null \
+    || { log "pool $LAST_POOL_ID asset configs lack $2: $(jq -c . <<<"$configs")"; return 1; }
 }
 
 pool_contract() { osmosisd q poolmanager pool "$1" -o json | jq -r '.pool.contract_address'; }
@@ -193,5 +217,6 @@ source = re.sub(r'^COSMWASMPOOL_MODULE = .*$', lambda _: f'COSMWASMPOOL_MODULE =
 source = source.replace('zone.chain_id == "osmosis-1"', 'zone.chain_id == "osmosis-test-1"')
 path.write_text(source)
 PY
+grep -q 'osmosis-test-1' "$GATE" || { log "pool gate was not patched for osmosis-test-1"; exit 1; }
 grep -q REHEARSAL_FILL_IN "$GATE" && { log "pool gate still has REHEARSAL_FILL_IN"; exit 1; }
 checkpoint "pool gate" python3 "$GATE"

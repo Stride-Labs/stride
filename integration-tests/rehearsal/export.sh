@@ -6,8 +6,11 @@
 source "$(dirname "$0")/lib.sh"
 OUT=${1:?usage: export.sh <out.json>}
 POD=stride-validator-3
-HOME_DIR=/home/validator/.stride
 FIND_PID='pid=$(pgrep -x strided || ps -o pid,comm | awk '"'"'$2=="strided"{print $1}'"'"' | head -1)'
+
+# The pod's own DAEMON_HOME wins; the fallback is the default layout of the test network
+HOME_DIR=$($KX exec $POD -c validator -- sh -c 'echo $DAEMON_HOME' 2>/dev/null)
+HOME_DIR=${HOME_DIR:-/home/validator/.stride}
 
 if stride_is_v35; then BIN=$NEW_BIN; else BIN=strided; fi
 EXPORT_CMD="$BIN export --home $HOME_DIR 2>/dev/null"
@@ -28,6 +31,12 @@ export_killed() {
 }
 
 if [[ "${EXPORT_KILL:-0}" == 1 ]]; then export_killed; else export_frozen; fi
+
+# A frozen export that leaves an empty or invalid file falls back to the kill-mode export once
+if [[ "${EXPORT_KILL:-0}" != 1 ]] && ! jq -e . "$OUT" >/dev/null 2>&1; then
+  log "frozen export left an empty or invalid file; retrying in kill mode"
+  export_killed
+fi
 
 jq -e '.app_state.bank.supply' "$OUT" >/dev/null || {
   log "export FAILED for $OUT (a locked database shows as empty output: rerun with EXPORT_KILL=1)"; exit 1; }
