@@ -62,6 +62,11 @@ osmo_retry_record_present() {
 staketia_queue_ready() { [[ -n "$(staketia_queue_record_id)" ]]; }
 
 ############################################
+# SEED_RESUME=1 skips Part A and the already-done top of Part B (zones registered, liquid stakes sent)
+# and continues at the "osmo delegated" wait. HIST_TX is then the first liquid-stake tx found on chain.
+############################################
+if [[ "${SEED_RESUME:-0}" != 1 ]]; then
+############################################
 # Part A: multisigs, zones, validators
 ############################################
 
@@ -119,6 +124,14 @@ tx_step "liquid stake 1000 ATOM" strided_old tx stakeibc liquid-stake 1000000000
 HIST_TX=$(grep -Eo '"txhash": ?"[0-9A-Fa-f]{64}"' <<<"$LAST_OUT" | head -1 | grep -Eo '[0-9A-Fa-f]{64}')
 tx_step "liquid stake 300 OSMO"  strided_old tx stakeibc liquid-stake 300000000 uosmo --from user1 $STRIDE_TX
 wait_until 600 "hub delegated"  zone_delegations_above cosmoshub-test-1 900000000
+else
+  log "SEED_RESUME=1: skipping Part A and the first half of Part B"
+  HUB_VALS=$(gaiad q staking validators -o json 2>/dev/null | jq -r '.validators | sort_by(.description.moniker) | .[].operator_address' | tr '\n' ' '); HUB_VALS=${HUB_VALS% }
+  OSMO_VALS=$(osmosisd q staking validators -o json | jq -r '.validators | sort_by(.description.moniker) | .[].operator_address' | tr '\n' ' '); OSMO_VALS=${OSMO_VALS% }
+  HIST_TX=$(strided_old q txs --query "message.action='/stride.stakeibc.MsgLiquidStake'" --limit 1 -o json 2>/dev/null | jq -r '.txs[0].txhash // empty')
+  [[ -n "$HIST_TX" ]] || HIST_TX=$(strided_old q txs --query "message.module='stakeibc'" --limit 1 -o json 2>/dev/null | jq -r '.txs[0].txhash // empty')
+  log "resume: HIST_TX=$HIST_TX, $(wc -w <<<"$HUB_VALS") hub validators, $(wc -w <<<"$OSMO_VALS") osmosis validators"
+fi
 wait_until 600 "osmo delegated" zone_delegations_above osmosis-test-1 250000000
 
 # Holders: base, vesting (delayed, 1 year), distribution module (fund-community-pool), escrow (via IBC out)
