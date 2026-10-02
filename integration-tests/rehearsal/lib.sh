@@ -58,7 +58,10 @@ day_epoch_next_start() { strided q stakeibc show-epoch-tracker day -o json | jq 
 sleep_until() { [[ -n "${1:-}" ]] || return 0; local now; now=$(date +%s); (( $1 > now )) && sleep $(( $1 - now )) || true; }
 ms_tx() { # chain multisig-name members-csv -- tx args...
   local chain=$1 ms=$2 members=$3; shift 4
-  local m1=${members%%,*} rest=${members#*,} m2=${rest%%,*} chainid gasprice bin pod
+  # One assignment per line: bash 3.2 expands every word of a `local` line before assigning any of them
+  local m1 rest m2 chainid gasprice bin pod
+  m1=${members%%,*}; rest=${members#*,}; m2=${rest%%,*}
+  [[ -n $m1 && -n $m2 && $m1 != "$m2" ]] || { log "ms_tx: need two distinct members, got '$members'"; return 1; }
   case $chain in
     strided_new)         chainid=stride-test-1;    gasprice=1ustrd;    bin=$NEW_BIN; pod=stride-validator-0;;
     strided_old)         chainid=stride-test-1;    gasprice=1ustrd;    bin=strided;  pod=stride-validator-0;;
@@ -69,17 +72,17 @@ ms_tx() { # chain multisig-name members-csv -- tx args...
   esac
   # The pod runs the whole generate / sign / multisign / broadcast pipeline so no file leaves the container
   local args; args=$(printf ' %q' "$@")
-  local raw hash
+  local raw hash errfile; errfile=$(mktemp)
+  # Each step's stderr goes to the pod-side err file; on failure it is printed (minus proto noise) so the log says why
   raw=$($KX exec $pod -c validator -- sh -c "
-    set -e
-    d=\$(mktemp -d)
-    $bin tx $args --from $ms --generate-only --keyring-backend test --chain-id $chainid --gas ${MS_GAS:-600000} --gas-prices $gasprice > \$d/unsigned.json
-    $bin tx sign \$d/unsigned.json --from $m1 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s1.json
-    $bin tx sign \$d/unsigned.json --from $m2 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s2.json
-    $bin tx multisign \$d/unsigned.json $ms \$d/s1.json \$d/s2.json --keyring-backend test --chain-id $chainid --output-document \$d/signed.json
-    $bin tx broadcast \$d/signed.json --chain-id $chainid -o json
-    rm -rf \$d")
-  printf '%s\n' "broadcast output ($chain):" '```' "$raw" '```' >> "$LOG"
+    d=\$(mktemp -d); step() { \"\$@\" 2>>\$d/err || { echo \"ms_tx step failed: \$1 \$2 \$3\" >&2; grep -vE 'proto:|already registered' \$d/err >&2; rm -rf \$d; exit 1; }; }
+    step $bin tx $args --from $ms --generate-only --keyring-backend test --chain-id $chainid --gas ${MS_GAS:-600000} --gas-prices $gasprice > \$d/unsigned.json
+    step $bin tx sign \$d/unsigned.json --from $m1 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s1.json
+    step $bin tx sign \$d/unsigned.json --from $m2 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s2.json
+    step $bin tx multisign \$d/unsigned.json $ms \$d/s1.json \$d/s2.json --keyring-backend test --chain-id $chainid --output-document \$d/signed.json
+    step $bin tx broadcast \$d/signed.json --chain-id $chainid -o json
+    rm -rf \$d" 2>"$errfile")
+  printf '%s\n' "broadcast output ($chain):" '```' "$raw" "$(grep -vE 'proto:|already registered' "$errfile")" '```' >> "$LOG"; rm -f "$errfile"
   hash=$(tx_hash <<<"$raw")
   [[ -n "$hash" && "$hash" != null ]] || { log "ms_tx: no txhash in broadcast output for $chain"; return 1; }
   echo "$hash"; wait_tx $chain "$hash"

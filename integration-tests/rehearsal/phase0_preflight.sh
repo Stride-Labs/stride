@@ -10,11 +10,11 @@ channel_open() { # chain-wrapper channel
 }
 channel_counterparty_chain() { # chain-wrapper channel expected-chain-id
   "$1" q ibc channel client-state transfer "$2" -o json \
-    | jq -e --arg chain "$3" '.identified_client_state.client_state.chain_id == $chain'
+    | jq -e --arg chain "$3" '(.identified_client_state.client_state.chain_id // .client_state.chain_id) == $chain'
 }
 ica_host_allows() { # chain-wrapper msg-type-url
   "$1" q interchain-accounts host params -o json \
-    | jq -e --arg msg "$2" '.params.allow_messages | (index($msg) != null) or (index("*") != null)'
+    | jq -e --arg msg "$2" '(.params // .) | .allow_messages | (index($msg) != null) or (index("*") != null)'
 }
 rest_reachable() { # host
   curl -s -m 10 "https://$1-api.internal.stridenet.co/cosmos/base/tendermint/v1beta1/node_info" \
