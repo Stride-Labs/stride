@@ -486,7 +486,8 @@ upgrade (§6), so this no longer flows into the stISLM redemption rate; the rate
 0.0014% above the backing (1,393 ISLM against 101M stISLM, roughly $6), which the rewards
 accrued until the drain cover many times over and the coverage check (§10) reports either
 way. The table also pins each row's tracked delegation
-(`HaqqExpectedTrackedDelegations`, read from the live host zone when generated) and skips,
+(`HaqqExpectedTrackedDelegations`, each row's `recorded` value from the same `drift.json` as
+its delta; a host zone file passed to the generator only cross-checks them) and skips,
 with an error log, each row whose tracked delegation no longer matches its pin, so a slash
 booked between generation and the upgrade cannot be applied twice; the other rows still
 apply. The pin compares Stride's tracked value only: a slash on haqq that no query has booked
@@ -822,13 +823,16 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   delegation equals the delegation ICA's on-chain delegation (the drift measurement, §9a),
   with any difference either in the haqq delta table or explained. The haqq delegation delta
   table, the drift measurement and the mainnet-export tests match the chain at one recent
-  height. A haqq redemption unbonding at the upgrade would
-  change the drift; measure right before the proposal. Haqq's ICA channel stays closed until
-  after the upgrade (§9c). A row whose validator's tracked delegation on Stride no longer
-  equals its pin is skipped on its own (§5); otherwise the helper skips the table (never
-  errors) only on a missing validator or a negative result, so a row whose on-chain side
-  has moved (a slash on haqq not yet booked on Stride) is applied as is and the day-0
-  refresh books the rest; the `offset` on the drain tx is the last fallback.
+  height. A haqq redemption unbonding at the upgrade would change the drift; measure right
+  before the proposal. Regenerate in this order, immediately before the proposal: the drift
+  measurement, then the delta table from that same `drift.json` (the deltas and the pins both
+  come from it, so they cannot disagree), then `app/upgrades/v35/testdata/verify_constants.py`
+  against the chain. Haqq's ICA channel stays closed until after the upgrade (§9c). A row
+  whose validator's tracked delegation on Stride no longer equals its pin is skipped on its
+  own (§5); otherwise the helper skips the table (never errors) only on a missing validator or
+  a negative result, so a row whose on-chain side has moved (a slash on haqq not yet booked on
+  Stride) is applied as is and the day-0 refresh books the rest; the `offset` on the drain tx
+  is the last fallback.
 - On every in-scope host, the delegation ICA's withdraw address (distribution module query) is
   the zone's withdrawal ICA; the epoch call that re-set it every epoch is deleted (§6).
 - The two address constants, the channel map and `SweepUnwindChannels` in the binary
