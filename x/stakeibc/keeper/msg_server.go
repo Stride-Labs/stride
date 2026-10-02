@@ -305,10 +305,16 @@ func (k msgServer) CalibrateDelegation(goCtx context.Context, msg *types.MsgCali
 	}
 
 	// Ops-only override for a stale in-flight counter, which would otherwise make the callback no-op forever
+	// It is rejected unless the delegation channel is open with no packets in flight, since the ack of an
+	// in-flight packet would fail on the zeroed counter and wedge the ordered channel
 	if msg.ResetDelegationChangesInProgress {
 		validator, valIndex, found := GetValidatorFromAddress(hostZone.Validators, msg.Valoper)
 		if !found {
 			return nil, errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", msg.Valoper)
+		}
+
+		if err := k.CheckDelegationChangesInProgressResettable(ctx, hostZone); err != nil {
+			return nil, err
 		}
 
 		k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId,

@@ -420,7 +420,7 @@ that delegation changed while the query was in flight or a delegation-changing I
 still active; this also catches a completed undelegation whose in-progress counter is zero.
 Missing or malformed snapshots and nil or non-positive stored rates are successful no-ops.
 An admin may submit a fresh calibration after a stale response is discarded; the callback
-does not start a retry loop. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
+does not start a retry loop. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale. The tx rejects the reset unless the zone's delegation channel is open with no packet commitment outstanding, the same condition the upgrade handler's reset uses: with a packet in flight the flag is not stale, and its ack would fail on the zeroed counter and wedge the ordered channel; with the channel closed, `RestoreInterchainAccount` resets every flag anyway.
 
 **Entry points that bypass the router.** Autopilot: the handler sets `StakeibcActive =
 false`. ICA host: the handler removes `MsgLiquidStake` and `MsgRedeemStake` from the
