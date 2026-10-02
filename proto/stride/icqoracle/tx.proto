@@ -13,14 +13,6 @@ option go_package = "github.com/Stride-Labs/stride/v34/x/icqoracle/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // RegisterTokenPriceQuery registers a new token to track prices for
-  rpc RegisterTokenPriceQuery(MsgRegisterTokenPriceQuery)
-      returns (MsgRegisterTokenPriceQueryResponse);
-
-  // RemoveTokenPriceQuery removes a token from price tracking
-  rpc RemoveTokenPriceQuery(MsgRemoveTokenPriceQuery)
-      returns (MsgRemoveTokenPriceQueryResponse);
-
   // UpdateParams defines a governance operation for updating the x/icqoracle
   // module parameters. The authority is defined in the keeper.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);

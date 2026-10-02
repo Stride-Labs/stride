@@ -35,11 +35,20 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	legacy.RegisterAminoMsg(cdc, &MsgToggleTradeController{}, "stakeibc/MsgToggleTradeController")
 	legacy.RegisterAminoMsg(cdc, &MsgUpdateHostZoneParams{}, "stakeibc/MsgUpdateHostZoneParams")
 	legacy.RegisterAminoMsg(cdc, &MsgDeprecateHostZone{}, "stakeibc/MsgDeprecateHostZone")
+	legacy.RegisterAminoMsg(cdc, &MsgUndelegateFromValidators{}, "stakeibc/MsgUndelegateFromValidators")
+	legacy.RegisterAminoMsg(cdc, &MsgTransferFromIca{}, "stakeibc/MsgTransferFromIca")
+	// 36 chars: RegisterAminoMsg panics above 39 (ledger signing limit), so the full name cannot be used
+	legacy.RegisterAminoMsg(cdc, &MsgTransferStaketiaClaimBalance{}, "stakeibc/MsgTransferStaketiaClaimBal")
+	legacy.RegisterAminoMsg(cdc, &MsgSweepTokensOffStride{}, "stakeibc/MsgSweepTokensOffStride")
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	// Every message type stays registered here even after its rpc is removed (v35 wind-down):
+	// the interface registry is what decodes historical transactions, and once the rpc is gone
+	// msgservice.RegisterMsgServiceDesc no longer registers the type for us
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgLiquidStake{},
+		&MsgLSMLiquidStake{},
 		&MsgClearBalance{},
 		&MsgRegisterHostZone{},
 		&MsgRedeemStake{},
@@ -54,10 +63,17 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCalibrateDelegation{},
 		&MsgUpdateInnerRedemptionRateBounds{},
 		&MsgResumeHostZone{},
+		&MsgCreateTradeRoute{},
+		&MsgDeleteTradeRoute{},
+		&MsgUpdateTradeRoute{},
 		&MsgSetCommunityPoolRebate{},
 		&MsgToggleTradeController{},
 		&MsgUpdateHostZoneParams{},
 		&MsgDeprecateHostZone{},
+		&MsgUndelegateFromValidators{},
+		&MsgTransferFromIca{},
+		&MsgTransferStaketiaClaimBalance{},
+		&MsgSweepTokensOffStride{},
 	)
 
 	registry.RegisterImplementations((*govtypes.Content)(nil),

@@ -175,15 +175,13 @@ func (k Keeper) LiquidStakeCommunityPoolTokens(ctx sdk.Context, hostZone types.H
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Liquid staking community pool tokens: %+v", nativeTokens))
 
-	// TODO: Move LS function to keeper method instead of message server
 	// Liquid stake the balance in the stake holding account
-	msgServer := NewMsgServerImpl(k)
 	liquidStakeRequest := types.MsgLiquidStake{
 		Creator:   hostZone.CommunityPoolStakeHoldingAddress,
 		Amount:    nativeTokens.Amount,
 		HostDenom: hostZone.HostDenom,
 	}
-	resp, err := msgServer.LiquidStake(ctx, &liquidStakeRequest)
+	resp, err := k.LiquidStake(ctx, &liquidStakeRequest)
 	if err != nil {
 		return errorsmod.Wrap(err, "failed to liquid stake community pool tokens")
 	}
@@ -210,17 +208,15 @@ func (k Keeper) RedeemCommunityPoolTokens(ctx sdk.Context, hostZone types.HostZo
 	}
 	k.Logger(ctx).Info(utils.LogWithHostZone(hostZone.ChainId, "Redeeming community pool tokens: %+v", stTokens))
 
-	// TODO: Move Redeem function to keeper method instead of message server
 	// Redeem the stTokens in the redeem holding account
 	// The return ICA address will be the recipient of the claim
-	msgServer := NewMsgServerImpl(k)
 	redeemStakeRequest := types.MsgRedeemStake{
 		Creator:  hostZone.CommunityPoolRedeemHoldingAddress,
 		Amount:   stTokens.Amount,
 		HostZone: hostZone.ChainId,
 		Receiver: hostZone.CommunityPoolReturnIcaAddress,
 	}
-	if _, err := msgServer.RedeemStake(ctx, &redeemStakeRequest); err != nil {
+	if _, err := k.RedeemStake(ctx, &redeemStakeRequest); err != nil {
 		return errorsmod.Wrap(err, "failed to redeem community pool tokens")
 	}
 

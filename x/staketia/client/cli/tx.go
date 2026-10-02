@@ -37,62 +37,15 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		CmdRedeemStake(),
 		CmdConfirmDelegation(),
 		CmdConfirmUndelegation(),
 		CmdConfirmUnbondedTokensSwept(),
 		CmdAdjustDelegatedBalance(),
 		CmdUpdateInnerRedemptionRateBounds(),
-		CmdResumeHostZone(),
 		CmdOverwriteRecord(),
 		CmdRefreshRedemptionRate(),
 		CmdSetOperatorAddress(),
 	)
-
-	return cmd
-}
-
-// User transaction to redeem stake stTokens into native tokens
-func CmdRedeemStake() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "redeem-stake [amount] [reciever]",
-		Short: "Redeems stTokens tokens for native tokens",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Redeems stTokens tokens for native tokens. 
-Native tokens will land in the redeeming address after they unbond
-
-Example:
-  $ %[1]s tx %[2]s redeem-stake 10000
-`, version.AppName, types.ModuleName),
-		),
-		Args: cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			amount, ok := sdkmath.NewIntFromString(args[0])
-			if !ok {
-				return errors.New("unable to parse amount")
-			}
-			receiver := args[1]
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgRedeemStake(
-				clientCtx.GetFromAddress().String(),
-				amount,
-				receiver,
-			)
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
@@ -311,40 +264,6 @@ Example:
 				clientCtx.GetFromAddress().String(),
 				minInnerRedemptionRate,
 				maxInnerRedemptionRate,
-			)
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-// Unhalts the host zone if redemption rates were exceeded
-func CmdResumeHostZone() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "resume-host-zone",
-		Short: "Resumes a host zone after a halt",
-		Args:  cobra.ExactArgs(0),
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Resumes a host zone after it was halted
-
-Example:
-  $ %[1]s tx %[2]s resume-host-zone
-`, version.AppName, types.ModuleName),
-		),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgResumeHostZone(
-				clientCtx.GetFromAddress().String(),
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

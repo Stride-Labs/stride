@@ -10,31 +10,6 @@ import (
 )
 
 // ----------------------------------------------
-//                MsgLiquidStake
-// ----------------------------------------------
-
-// More granular testing of liquid stake is done in the keeper function
-// This just tests the msg server wrapper
-func (s *KeeperTestSuite) TestMsgServerLiquidStake() {
-	tc := s.DefaultSetupTestLiquidStake()
-
-	// Attempt a successful liquid stake
-	validMsg := types.MsgLiquidStake{
-		Staker:       tc.stakerAddress.String(),
-		NativeAmount: tc.liquidStakeAmount,
-	}
-	resp, err := s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
-	s.Require().NoError(err, "no error expected during liquid stake")
-	s.Require().Equal(tc.expectedStAmount.Int64(), resp.StToken.Amount.Int64(), "stToken amount")
-
-	s.ConfirmLiquidStakeTokenTransfer(tc)
-
-	// Attempt a liquid stake again, it should fail now that the staker is out of funds
-	_, err = s.GetMsgServer().LiquidStake(sdk.UnwrapSDKContext(s.Ctx), &validMsg)
-	s.Require().ErrorContains(err, "insufficient funds")
-}
-
-// ----------------------------------------------
 //            MsgConfirmDelegation
 // ----------------------------------------------
 
@@ -304,73 +279,6 @@ func (s *KeeperTestSuite) TestUpdateInnerRedemptionRateBounds() {
 
 	// Attempt to update bounds with a non-admin address, it should fail
 	_, err = s.GetMsgServer().UpdateInnerRedemptionRateBounds(s.Ctx, &nonAdminMsg)
-	s.Require().ErrorContains(err, "signer is not an admin")
-}
-
-// ----------------------------------------------
-//             MsgResumeHostZone
-// ----------------------------------------------
-
-// Test cases
-// - Zone is not halted
-// - Zone is halted - unhalt it
-func (s *KeeperTestSuite) TestResumeHostZone() {
-	// TODO [stdym]: verify denom blacklisting removal works
-
-	adminAddress, ok := apptesting.GetAdminAddress()
-	s.Require().True(ok)
-
-	zone := types.HostZone{
-		ChainId:          HostChainId,
-		RedemptionRate:   sdkmath.LegacyNewDec(1),
-		Halted:           false,
-		NativeTokenDenom: HostNativeDenom,
-	}
-	s.App.StakedymKeeper.SetHostZone(s.Ctx, zone)
-
-	msg := types.MsgResumeHostZone{
-		Creator: adminAddress,
-	}
-
-	// TEST 1: Zone is not halted
-	// Try to unhalt the unhalted zone
-	_, err := s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
-	s.Require().ErrorContains(err, "zone is not halted")
-
-	// Verify the denom is not in the blacklist
-	blacklist := s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
-	s.Require().NotContains(blacklist, StDenom, "denom should not be blacklisted")
-
-	// Confirm the zone is not halted
-	zone, err = s.App.StakedymKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "should not throw an error")
-	s.Require().False(zone.Halted, "zone should not be halted")
-
-	// TEST 2: Zone is halted
-	// Halt the zone
-	s.App.StakedymKeeper.HaltZone(s.Ctx)
-
-	// Verify the denom is in the blacklist
-	blacklist = s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
-	s.Require().Contains(blacklist, StDenom, "denom should be blacklisted")
-
-	// Try to unhalt the halted zone
-	_, err = s.GetMsgServer().ResumeHostZone(s.Ctx, &msg)
-	s.Require().NoError(err, "should not throw an error")
-
-	// Confirm the zone is not halted
-	zone, err = s.App.StakedymKeeper.GetHostZone(s.Ctx)
-	s.Require().NoError(err, "should not throw an error")
-	s.Require().False(zone.Halted, "zone should not be halted")
-
-	// Verify the denom is not in the blacklist
-	blacklist = s.App.RatelimitKeeper.GetAllBlacklistedDenoms(s.Ctx)
-	s.Require().NotContains(blacklist, StDenom, "denom should not be blacklisted")
-
-	// Attempt to resume with a non-admin address, it should fail
-	_, err = s.GetMsgServer().ResumeHostZone(s.Ctx, &types.MsgResumeHostZone{
-		Creator: "non-admin",
-	})
 	s.Require().ErrorContains(err, "signer is not an admin")
 }
 

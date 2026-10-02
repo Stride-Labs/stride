@@ -16,90 +16,51 @@ import (
 
 const StrideEpochsPerDayEpoch = uint64(4)
 
+// BeforeEpochStart runs the flows that finish open redemptions and transfer queued deposits
+// after the v35 upgrade. The protocol is winding down
+// (docs/superpowers/specs/2026-09-18-protocol-wind-down-design.md, §6):
+// the calls that compounded or moved stake (rate refresh, reinvest, delegate, rebalance,
+// reward claims, reward-token transfer, withdrawal-address set, deposit and epoch-unbonding
+// record creation, the reward-collector auction) were deleted rather than gated, so the redemption rate of every
+// host zone is frozen at its last pre-upgrade value and cannot be toggled back. Their keeper
+// functions remain defined until the follow-up cleanup.
 func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {
 	ctx := sdk.UnwrapSDKContext(context)
 
-	// Update the stakeibc epoch tracker
+	// Update the stakeibc epoch tracker: the day tracker feeds the ICA timeout of every
+	// undelegate batch and the stride tracker feeds the redemption sweep ICA
 	epochNumber, err := k.UpdateEpochTracker(ctx, epochInfo)
 	if err != nil {
 		k.Logger(ctx).Error(fmt.Sprintf("Unable to update epoch tracker, err: %s", err.Error()))
 		return
 	}
 
-	// Day Epoch - Process Unbondings
+	// Day Epoch - submit and clean up unbondings
 	if epochInfo.Identifier == epochstypes.DAY_EPOCH {
-		// Initiate unbondings from any hostZone where it's appropriate
+		// Submit the queued redemption records of any host zone that unbonds this epoch
 		k.InitiateAllHostZoneUnbondings(ctx, epochNumber)
 		// Submit any one-shot undelegations queued by an upgrade handler (e.g. the v34 Injective
 		// reconciliation). Store-driven, so this is a no-op when nothing is pending. A host zone
 		// that unbonds this epoch is deferred so the two flows don't compete for validator capacity
 		k.SubmitPendingUndelegations(ctx, epochNumber)
-		// Cleanup any records that are no longer needed
+		// Delete epoch unbonding records once every host zone's unbonding on them is claimed
 		k.CleanupEpochUnbondingRecords(ctx, epochNumber)
-		// Create an empty unbonding record for this epoch
-		k.CreateEpochUnbondingRecord(ctx, epochNumber)
 	}
 
-	// Stride Epoch - Process Deposits and Delegations
+	// Stride Epoch - move what is already in flight toward the redemption accounts
 	if epochInfo.Identifier == epochstypes.STRIDE_EPOCH {
-		// Get cadence intervals
-		redemptionRateInterval := k.GetParam(ctx, types.KeyRedemptionRateInterval)
 		depositInterval := k.GetParam(ctx, types.KeyDepositInterval)
-		delegationInterval := k.GetParam(ctx, types.KeyDelegateInterval)
-		reinvestInterval := k.GetParam(ctx, types.KeyReinvestInterval)
 
-		// Claim accrued staking rewards at the beginning of the epoch
-		k.ClaimAccruedStakingRewards(ctx)
-
-		// Create a new deposit record for each host zone and the grab all deposit records
-		k.CreateDepositRecordsForEpoch(ctx, epochNumber)
-		depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
-
-		// TODO: move this to an external function that anyone can call, so that we don't have to call it every epoch
-		k.SetWithdrawalAddress(ctx)
-
-		// Update the redemption rate
-		if epochNumber%redemptionRateInterval == 0 {
-			k.UpdateRedemptionRates(ctx, depositRecords)
-		}
-
-		// Transfer deposited funds from the controller account to the delegation account on the host zone
+		// Transfer the amount of any remaining TRANSFER_QUEUE deposit record to the delegation ICA
+		// so it leaves with the ICA balance instead of being stranded on Stride
 		if epochNumber%depositInterval == 0 {
+			depositRecords := k.RecordsKeeper.GetAllDepositRecord(ctx)
 			k.TransferExistingDepositsToHostZones(ctx, epochNumber, depositRecords)
 		}
 
-		// Delegate tokens from the delegation account
-		if epochNumber%delegationInterval == 0 {
-			k.StakeExistingDepositsOnHostZones(ctx, epochNumber, depositRecords)
-		}
-
-		// Reinvest staking rewards
-		if epochNumber%reinvestInterval == 0 { // allow a few blocks from UpdateUndelegatedBal to avoid conflicts
-			k.ReinvestRewards(ctx)
-		}
-
-		// Rebalance stake according to validator weights
-		// This should only be run once per day, but it should not be run on a stride epoch that
-		//   overlaps the day epoch, otherwise the unbondings could cause a redelegation to fail
-		// On mainnet, the stride epoch overlaps the day epoch when `epochNumber % 4 == 1`,
-		//   so this will trigger the epoch before the unbonding
-		if epochNumber%StrideEpochsPerDayEpoch == 0 {
-			k.RebalanceAllHostZones(ctx)
-		}
-
-		// Check previous epochs to see if unbondings finished, and sends the relevant tokens
+		// Check previous epochs to see if unbondings finished, and send the relevant tokens
 		// to the redemption account
 		k.SweepUnbondedTokensAllHostZones(ctx)
-
-		// NOTE: Disabled in v28 as this feature is no longer being used. Uncomment to re-enable
-		// Transfers in and out of tokens for hostZones which have community pools
-		// k.ProcessAllCommunityPoolTokens(ctx)
-
-		// Do transfers for all reward and swapped tokens defined by the trade routes every stride epoch
-		k.TransferAllRewardTokens(ctx)
-	}
-	if epochInfo.Identifier == epochstypes.MINT_EPOCH {
-		k.AuctionOffRewardCollectorBalance(ctx)
 	}
 }
 

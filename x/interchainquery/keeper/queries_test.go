@@ -195,6 +195,32 @@ func (s *KeeperTestSuite) TestValidateQuery() {
 			},
 			expectedError: "callback-id (fake-callback) is not registered for module (stakeibc)",
 		},
+		{
+			name: "empty response opt-in on a proof query",
+			query: types.Query{
+				ChainId:                       validChainId,
+				ConnectionId:                  validConnectionId,
+				QueryType:                     types.STAKING_STORE_QUERY_WITH_PROOF,
+				CallbackModule:                validCallbackModule,
+				CallbackId:                    validCallbackId,
+				TimeoutDuration:               validTimeout,
+				InvokeCallbackOnEmptyResponse: true,
+			},
+		},
+		{
+			// Without a proof, an empty result from any sender would reach the callback
+			name: "empty response opt-in on a query without a proof",
+			query: types.Query{
+				ChainId:                       validChainId,
+				ConnectionId:                  validConnectionId,
+				QueryType:                     validQueryType,
+				CallbackModule:                validCallbackModule,
+				CallbackId:                    validCallbackId,
+				TimeoutDuration:               validTimeout,
+				InvokeCallbackOnEmptyResponse: true,
+			},
+			expectedError: "only a proof query can invoke its callback on an empty response",
+		},
 	}
 
 	for _, tc := range testCases {

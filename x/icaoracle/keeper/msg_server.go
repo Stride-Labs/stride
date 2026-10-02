@@ -2,13 +2,9 @@ package keeper
 
 import (
 	"context"
-	"encoding/json"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	proto "github.com/cosmos/gogoproto/proto"
 	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -30,146 +26,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
-
-// Adds a new oracle as a destination for metric updates
-// Registers a new ICA account along this connection
-func (k msgServer) AddOracle(goCtx context.Context, msg *types.MsgAddOracle) (*types.MsgAddOracleResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Grab the connection and confirm it exists
-	controllerConnectionId := msg.ConnectionId
-	connectionEnd, found := k.ConnectionKeeper.GetConnection(ctx, controllerConnectionId)
-	if !found {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "connection (%s) not found", controllerConnectionId)
-	}
-
-	// Get chain id from the connection
-	clientState, found := k.ClientKeeper.GetClientState(ctx, connectionEnd.ClientId)
-	if !found {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "client (%s) not found", connectionEnd.ClientId)
-	}
-	client, ok := clientState.(*ibctmtypes.ClientState)
-	if !ok {
-		return nil, types.ErrClientStateNotTendermint
-	}
-	chainId := client.ChainId
-
-	// Confirm oracle was not already created
-	_, found = k.GetOracle(ctx, chainId)
-	if found {
-		return nil, types.ErrOracleAlreadyExists
-	}
-
-	// Create the oracle struct, marked as inactive
-	oracle := types.Oracle{
-		ChainId:      chainId,
-		ConnectionId: controllerConnectionId,
-		Active:       false,
-	}
-	k.SetOracle(ctx, oracle)
-
-	// Get the expected port ID for the ICA channel
-	owner := types.FormatICAAccountOwner(chainId, types.ICAAccountType_Oracle)
-	portID, err := icatypes.NewControllerPortID(owner)
-	if err != nil {
-		return nil, err
-	}
-
-	// Check if an ICA account has already been created for this oracle
-	// (in the event that an oracle was removed and then added back)
-	// If so, there's no need to register a new ICA
-	channelID, channelFound := k.ICAControllerKeeper.GetOpenActiveChannel(ctx, controllerConnectionId, portID)
-	icaAddress, icaFound := k.ICAControllerKeeper.GetInterchainAccountAddress(ctx, controllerConnectionId, portID)
-
-	if channelFound && icaFound {
-		oracle.IcaAddress = icaAddress
-		oracle.ChannelId = channelID
-		oracle.PortId = portID
-
-		k.SetOracle(ctx, oracle)
-
-		return &types.MsgAddOracleResponse{}, nil
-	}
-
-	// Get the corresponding connection on the host
-	hostConnectionId := connectionEnd.Counterparty.ConnectionId
-	if hostConnectionId == "" {
-		return nil, types.ErrHostConnectionNotFound
-	}
-
-	// Register the oracle interchain account
-	appVersion := string(icatypes.ModuleCdc.MustMarshalJSON(&icatypes.Metadata{
-		Version:                icatypes.Version,
-		ControllerConnectionId: controllerConnectionId,
-		HostConnectionId:       hostConnectionId,
-		Encoding:               icatypes.EncodingProtobuf,
-		TxType:                 icatypes.TxTypeSDKMultiMsg,
-	}))
-
-	if err := k.ICAControllerKeeper.RegisterInterchainAccount(ctx, controllerConnectionId, owner, appVersion, channeltypes.ORDERED); err != nil {
-		return nil, errorsmod.Wrapf(err, "unable to register oracle interchain account")
-	}
-
-	return &types.MsgAddOracleResponse{}, nil
-}
-
-// Instantiates the oracle cosmwasm contract
-func (k msgServer) InstantiateOracle(goCtx context.Context, msg *types.MsgInstantiateOracle) (*types.MsgInstantiateOracleResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Confirm the oracle has already been added, but has not yet been instantiated
-	oracle, found := k.GetOracle(ctx, msg.OracleChainId)
-	if !found {
-		return nil, types.ErrOracleNotFound
-	}
-	if oracle.ContractAddress != "" {
-		return nil, types.ErrOracleAlreadyInstantiated
-	}
-
-	// Confirm the oracle ICA was registered
-	if err := oracle.ValidateICASetup(); err != nil {
-		return nil, err
-	}
-
-	// Build the contract-specific instantiation message
-	contractMsg := types.MsgInstantiateOracleContract{
-		AdminAddress:      oracle.IcaAddress,
-		TransferChannelId: msg.TransferChannelOnOracle,
-	}
-	contractMsgBz, err := json.Marshal(contractMsg)
-	if err != nil {
-		return nil, errorsmod.Wrapf(err, "unable to marshal instantiate oracle contract")
-	}
-
-	// Build the ICA message to instantiate the contract
-	msgs := []proto.Message{&wasmtypes.MsgInstantiateContract{
-		Sender: oracle.IcaAddress,
-		Admin:  oracle.IcaAddress,
-		CodeID: msg.ContractCodeId,
-		Label:  "Stride ICA Oracle",
-		Msg:    contractMsgBz,
-	}}
-
-	// Submit the ICA
-	callbackArgs := types.InstantiateOracleCallback{
-		OracleChainId: oracle.ChainId,
-	}
-	icaTx := types.ICATx{
-		ConnectionId:    oracle.ConnectionId,
-		ChannelId:       oracle.ChannelId,
-		PortId:          oracle.PortId,
-		Owner:           types.FormatICAAccountOwner(oracle.ChainId, types.ICAAccountType_Oracle),
-		Messages:        msgs,
-		RelativeTimeout: InstantiateOracleTimeout,
-		CallbackArgs:    &callbackArgs,
-		CallbackId:      ICACallbackID_InstantiateOracle,
-	}
-	if err := k.SubmitICATx(ctx, icaTx); err != nil {
-		return nil, errorsmod.Wrapf(err, "unable to submit instantiate oracle contract ICA")
-	}
-
-	return &types.MsgInstantiateOracleResponse{}, nil
-}
 
 // Creates a new ICA channel and restores the oracle ICA account after a channel closer
 func (k msgServer) RestoreOracleICA(goCtx context.Context, msg *types.MsgRestoreOracleICA) (*types.MsgRestoreOracleICAResponse, error) {

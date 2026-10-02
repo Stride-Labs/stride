@@ -7,17 +7,20 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v34/utils"
 )
 
 const TypeMsgCalibrateDelegation = "calibrate_delegation"
 
 var _ sdk.Msg = &MsgCalibrateDelegation{}
 
-func NewMsgCalibrateDelegation(creator, chainid, valoper string) *MsgCalibrateDelegation {
+func NewMsgCalibrateDelegation(creator, chainid, valoper string, resetDelegationChangesInProgress bool) *MsgCalibrateDelegation {
 	return &MsgCalibrateDelegation{
-		Creator: creator,
-		ChainId: chainid,
-		Valoper: valoper,
+		Creator:                          creator,
+		ChainId:                          chainid,
+		Valoper:                          valoper,
+		ResetDelegationChangesInProgress: resetDelegationChangesInProgress,
 	}
 }
 
@@ -41,6 +44,11 @@ func (msg *MsgCalibrateDelegation) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	// Admin-only for the wind-down: this message reaches the slash path, which corrects
+	// delegations of any size now that the calibration cap is gone (spec §5)
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return err
 	}
 
 	if len(msg.ChainId) == 0 {

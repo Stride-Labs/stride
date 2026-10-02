@@ -9,21 +9,10 @@ import "stride/auction/auction.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v34/x/auction/types";
 
-// Msg defines the Msg service.
+// v35 wind-down: every auction transaction was removed; message types remain for
+// historical decoding.
 service Msg {
   option (cosmos.msg.v1.service) = true;
-
-  // User messages
-
-  // PlaceBid places a bid to buy a token off an auction
-  rpc PlaceBid(MsgPlaceBid) returns (MsgPlaceBidResponse);
-
-  // Admin messages
-
-  // CreateAuction creates a new auction
-  rpc CreateAuction(MsgCreateAuction) returns (MsgCreateAuctionResponse);
-  // CreateAuction updates an existing auction
-  rpc UpdateAuction(MsgUpdateAuction) returns (MsgUpdateAuctionResponse);
 }
 
 // MsgPlaceBid defines the message for bidding in a token auction

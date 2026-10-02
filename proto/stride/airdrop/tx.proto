@@ -10,33 +10,10 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/Stride-Labs/stride/v34/x/airdrop/types";
 
-// Msg defines the Msg service.
+// v35 wind-down: every airdrop transaction was removed (both airdrops ended December
+// 2024); message types remain for historical decoding.
 service Msg {
   option (cosmos.msg.v1.service) = true;
-
-  // User transaction to claim all the pending daily airdrop rewards
-  rpc ClaimDaily(MsgClaimDaily) returns (MsgClaimDailyResponse);
-
-  // User transaction to claim a portion of their total amount now, and forfeit
-  // the remainder to be clawed back
-  rpc ClaimEarly(MsgClaimEarly) returns (MsgClaimEarlyResponse);
-
-  // Admin transaction to create a new airdrop
-  rpc CreateAirdrop(MsgCreateAirdrop) returns (MsgCreateAirdropResponse);
-
-  // Admin transaction to update an existing airdrop
-  rpc UpdateAirdrop(MsgUpdateAirdrop) returns (MsgUpdateAirdropResponse);
-
-  // Admin transaction to add multiple user allocations for a given airdrop
-  rpc AddAllocations(MsgAddAllocations) returns (MsgAddAllocationsResponse);
-
-  // Admin transaction to update a user's allocation to an airdrop
-  rpc UpdateUserAllocation(MsgUpdateUserAllocation)
-      returns (MsgUpdateUserAllocationResponse);
-
-  // Admin address to link a stride and non-stride address, merging their
-  // allocations
-  rpc LinkAddresses(MsgLinkAddresses) returns (MsgLinkAddressesResponse);
 }
 
 // ClaimDaily
