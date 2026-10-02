@@ -42,3 +42,26 @@ func RemoveStakeibcFromICAHostAllowList(ctx sdk.Context, k *icahostkeeper.Keeper
 	params.AllowMessages = kept
 	k.SetParams(ctx, params)
 }
+
+// RemoveStakingFromICAHostAllowList drops the BlockedStakingMsgTypeUrls (delegate, redelegate,
+// create validator, cancel unbonding) from the ICA host allow-list so an interchain account on
+// Stride cannot re-lock STRD after the mass undelegation; the ante decorator closes the tx path
+// (authority spec §3-4). MsgUndelegate stays. The existing list is filtered in place.
+func RemoveStakingFromICAHostAllowList(ctx sdk.Context, k *icahostkeeper.Keeper) {
+	removed := map[string]bool{}
+	for _, msgTypeUrl := range BlockedStakingMsgTypeUrls {
+		removed[msgTypeUrl] = true
+	}
+
+	params := k.GetParams(ctx)
+	kept := make([]string, 0, len(params.AllowMessages))
+	for _, msgTypeUrl := range params.AllowMessages {
+		if removed[msgTypeUrl] {
+			ctx.Logger().Info(fmt.Sprintf("v35: removing %s from the ICA host allow-list", msgTypeUrl))
+			continue
+		}
+		kept = append(kept, msgTypeUrl)
+	}
+	params.AllowMessages = kept
+	k.SetParams(ctx, params)
+}

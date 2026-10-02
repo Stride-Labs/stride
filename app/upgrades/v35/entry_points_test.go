@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
 	autopilottypes "github.com/Stride-Labs/stride/v35/x/autopilot/types"
@@ -58,4 +59,35 @@ func (s *UpgradeTestSuite) TestRemoveStakeibcFromICAHostAllowList_Idempotent() {
 
 	after := s.App.ICAHostKeeper.GetParams(s.Ctx)
 	s.Require().Equal([]string{"/cosmos.bank.v1beta1.MsgSend", "/stride.stakeibc.MsgClaimUndelegatedTokens"}, after.AllowMessages)
+}
+
+func (s *UpgradeTestSuite) TestRemoveStakingFromICAHostAllowList() {
+	before := []string{
+		sdk.MsgTypeURL(&banktypes.MsgSend{}),
+		sdk.MsgTypeURL(&stakingtypes.MsgDelegate{}),
+		sdk.MsgTypeURL(&stakingtypes.MsgUndelegate{}),
+		sdk.MsgTypeURL(&stakingtypes.MsgBeginRedelegate{}),
+		sdk.MsgTypeURL(&stakingtypes.MsgCreateValidator{}),
+		"/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+		sdk.MsgTypeURL(&stakingtypes.MsgCancelUnbondingDelegation{}),
+		sdk.MsgTypeURL(&stakeibctypes.MsgClaimUndelegatedTokens{}),
+	}
+	s.App.ICAHostKeeper.SetParams(s.Ctx, icahosttypes.Params{HostEnabled: true, AllowMessages: before})
+
+	v35.RemoveStakingFromICAHostAllowList(s.Ctx, s.App.ICAHostKeeper)
+
+	after := s.App.ICAHostKeeper.GetParams(s.Ctx)
+	s.Require().True(after.HostEnabled, "host stays enabled")
+	s.Require().Equal([]string{before[0], before[2], before[5], before[7]}, after.AllowMessages,
+		"exactly the four blocked staking messages are removed, MsgSend and MsgUndelegate kept, order preserved")
+}
+
+func (s *UpgradeTestSuite) TestRemoveStakingFromICAHostAllowList_EmptyList() {
+	s.App.ICAHostKeeper.SetParams(s.Ctx, icahosttypes.Params{HostEnabled: true, AllowMessages: []string{}})
+
+	v35.RemoveStakingFromICAHostAllowList(s.Ctx, s.App.ICAHostKeeper)
+
+	after := s.App.ICAHostKeeper.GetParams(s.Ctx)
+	s.Require().True(after.HostEnabled)
+	s.Require().Empty(after.AllowMessages, "an empty list is a no-op")
 }

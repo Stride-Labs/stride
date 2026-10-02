@@ -477,6 +477,9 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.WasmKeeper,
 			&app.RatelimitKeeper,
 			app.ICAOracleKeeper,
+			app.ConsensusParamsKeeper,
+			app.GovKeeper,
+			app.StakingKeeper,
 		),
 	)
 
