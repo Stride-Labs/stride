@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/Stride-Labs/stride/v34/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v35/x/airdrop/types"
 )
 
 type msgServer struct {

@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/v34/x/icqoracle/types"
+	"github.com/Stride-Labs/stride/v35/x/icqoracle/types"
 )
 
 type msgServer struct {

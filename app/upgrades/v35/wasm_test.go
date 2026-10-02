@@ -9,8 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
 )
 
 func (s *UpgradeTestSuite) TestSetWasmUploadAccessToGov() {

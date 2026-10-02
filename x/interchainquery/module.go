@@ -18,9 +18,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/Stride-Labs/stride/v34/x/interchainquery/client/cli"
-	"github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	"github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v35/x/interchainquery/client/cli"
+	"github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
+	"github.com/Stride-Labs/stride/v35/x/interchainquery/types"
 )
 
 var (

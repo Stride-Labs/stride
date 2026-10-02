@@ -5,8 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	icaoracletypes "github.com/Stride-Labs/stride/v35/x/icaoracle/types"
 )
 
 func (s *UpgradeTestSuite) TestDeactivateICAOracles() {

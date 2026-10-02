@@ -8,11 +8,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v8 "github.com/Stride-Labs/stride/v34/app/upgrades/v8"
-	autopilottypes "github.com/Stride-Labs/stride/v34/x/autopilot/types"
-	"github.com/Stride-Labs/stride/v34/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v34/x/claim/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v8 "github.com/Stride-Labs/stride/v35/app/upgrades/v8"
+	autopilottypes "github.com/Stride-Labs/stride/v35/x/autopilot/types"
+	"github.com/Stride-Labs/stride/v35/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v35/x/claim/types"
 )
 
 var (

@@ -3,9 +3,9 @@ package v34_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	v34 "github.com/Stride-Labs/stride/v35/app/upgrades/v34"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // Seeds the injective-1 host zone with every validator in the delta table, each tracked at a

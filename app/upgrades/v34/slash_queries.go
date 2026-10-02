@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // ResetStuckSlashQueries clears SlashQueryInProgress on the validators in

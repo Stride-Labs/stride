@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
 )
 
 // DeprecateComdex flags comdex-1 as deprecated so it carries the same flag as the other three

@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	"github.com/Stride-Labs/stride/v34/x/mint/types"
+	epochstypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	"github.com/Stride-Labs/stride/v35/x/mint/types"
 )
 
 func (k Keeper) BeforeEpochStart(context context.Context, epochInfo epochstypes.EpochInfo) {

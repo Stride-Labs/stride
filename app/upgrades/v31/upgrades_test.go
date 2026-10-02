@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v31 "github.com/Stride-Labs/stride/v34/app/upgrades/v31"
-	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v31 "github.com/Stride-Labs/stride/v35/app/upgrades/v31"
+	staketiatypes "github.com/Stride-Labs/stride/v35/x/staketia/types"
 )
 
 type UpgradeTestSuite struct {

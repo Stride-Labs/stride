@@ -12,10 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
-	minttypes "github.com/Stride-Labs/stride/v34/x/mint/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
+	minttypes "github.com/Stride-Labs/stride/v35/x/mint/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 type DelegatorSharesICQCallbackArgs struct {

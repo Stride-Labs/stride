@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
 )
 
 const (

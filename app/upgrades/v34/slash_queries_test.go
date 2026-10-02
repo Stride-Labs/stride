@@ -3,10 +3,10 @@ package v34_test
 import (
 	"time"
 
-	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
-	"github.com/Stride-Labs/stride/v34/utils"
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	v34 "github.com/Stride-Labs/stride/v35/app/upgrades/v34"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 const (

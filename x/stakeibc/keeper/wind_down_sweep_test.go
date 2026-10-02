@@ -16,13 +16,13 @@ import (
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	auctiontypes "github.com/Stride-Labs/stride/v34/x/auction/types"
-	claimvestingtypes "github.com/Stride-Labs/stride/v34/x/claim/vesting/types"
-	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	auctiontypes "github.com/Stride-Labs/stride/v35/x/auction/types"
+	claimvestingtypes "github.com/Stride-Labs/stride/v35/x/claim/vesting/types"
+	stakedymtypes "github.com/Stride-Labs/stride/v35/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v35/x/staketia/types"
 )
 
 const (

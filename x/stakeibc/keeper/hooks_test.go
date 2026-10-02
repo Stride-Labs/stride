@@ -12,11 +12,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochstypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	minttypes "github.com/Stride-Labs/stride/v34/x/mint/types"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	epochstypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	minttypes "github.com/Stride-Labs/stride/v35/x/mint/types"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // Every test in this file runs the real BeforeEpochStart on non-halted host zones and asserts

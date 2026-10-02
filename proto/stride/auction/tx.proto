@@ -7,13 +7,11 @@ import "cosmos/msg/v1/msg.proto";
 import "gogoproto/gogo.proto";
 import "stride/auction/auction.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v34/x/auction/types";
+option go_package = "github.com/Stride-Labs/stride/v35/x/auction/types";
 
-// v35 wind-down: every auction transaction was removed; message types remain for
-// historical decoding.
-service Msg {
-  option (cosmos.msg.v1.service) = true;
-}
+// v35 wind-down: every auction transaction was removed; message types remain
+// for historical decoding.
+service Msg { option (cosmos.msg.v1.service) = true; }
 
 // MsgPlaceBid defines the message for bidding in a token auction
 message MsgPlaceBid {

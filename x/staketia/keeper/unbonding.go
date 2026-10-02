@@ -9,9 +9,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-	"github.com/Stride-Labs/stride/v34/x/staketia/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/x/staketia/types"
 )
 
 // Calls redeem stake for any requested redemption amount that exceeds what's in the staketia account

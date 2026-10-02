@@ -13,10 +13,10 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	claimvestingtypes "github.com/Stride-Labs/stride/v34/x/claim/vesting/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	claimvestingtypes "github.com/Stride-Labs/stride/v35/x/claim/vesting/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v35/x/staketia/types"
 )
 
 // sweepDestination is where a denom leaves Stride: the transfer channel and the bech32 prefix

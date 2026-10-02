@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	"github.com/Stride-Labs/stride/v34/x/stakedym/types"
+	"github.com/Stride-Labs/stride/v35/x/stakedym/types"
 )
 
 const (

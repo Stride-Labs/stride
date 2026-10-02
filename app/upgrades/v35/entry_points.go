@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	autopilotkeeper "github.com/Stride-Labs/stride/v34/x/autopilot/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	autopilotkeeper "github.com/Stride-Labs/stride/v35/x/autopilot/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // DisableAutopilotStakeibc turns off the autopilot liquid-stake and redeem paths, which

@@ -16,12 +16,12 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	icacallbackskeeper "github.com/Stride-Labs/stride/v34/x/icacallbacks/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	staketiakeeper "github.com/Stride-Labs/stride/v34/x/staketia/keeper"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v35/x/icacallbacks/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v35/x/records/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	staketiakeeper "github.com/Stride-Labs/stride/v35/x/staketia/keeper"
 )
 
 // CreateUpgradeHandler returns the v34 upgrade handler, which swaps two POA

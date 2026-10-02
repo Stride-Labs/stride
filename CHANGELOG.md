@@ -52,13 +52,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 4. v35: wind-down admin txs `MsgUndelegateFromValidators` (refuses an empty validators file and a zone with record batches in flight), `MsgTransferFromIca` (to the hard-coded Osmosis vault, validated as an osmo address, over a hard-coded per-host channel with a 24h packet timeout and a 2× inner transfer timeout) and `MsgTransferStaketiaClaimBalance` ([#1534](https://github.com/Stride-Labs/stride/pull/1534))
 5. v35: `MsgSweepTokensOffStride`, the sweep-operator-gated batched transfer of ustrd, stutia and non-deprecated stakeibc stTokens to holders' Osmosis addresses and of whitelisted vouchers back to their source chains; skips protocol multisigs, safes, the operator, module and blocked addresses ([#1535](https://github.com/Stride-Labs/stride/pull/1535))
 6. v35: release gate — sweep operator and Osmosis vault address constants, mainnet-export handler suite with the real constants, `verify_constants.py` staleness gate, `coverage_check.py` (spec §10) ([#1536](https://github.com/Stride-Labs/stride/pull/1536))
-7. v34: swap POA validators — remove Citadel.one and Cosmostation, add cosmosrescue and CitizenWeb3 (POA set + `utils/poa.go` stToken payout registry)
-8. v34: reset stuck `SlashQueryInProgress` flags on 12 cosmoshub-4 validators and delete 30 timed-out ICQs
-9. v34: lower gov quorum from 33.4% to 25% and lengthen the voting period from 3 to 5 days
-10. v34: reconcile injective-1 delegations, queue a one-shot undelegation of the excess, and sweep injective-1 redemptions per record ([#1526](https://github.com/Stride-Labs/stride/pull/1526))
-11. v34: reconcile celestia delegations executed without acknowledgement (+15,440 TIA) and retire the equivalent phantom deposit records; redemption rate unchanged ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
-12. v34: close the stranded cosmoshub-4 LSM detokenization for stakewithus (+11 ATOM) ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
-13. v34: correct staketia `remaining_delegated_balance` by −40,077 TIA (v25 migration straddle of unbonding record 884) ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
+7. v35 version ([#1543](https://github.com/Stride-Labs/stride/pull/1543))
+
+## [v34.1.0](https://github.com/Stride-Labs/stride/releases/tag/v34.1.0) - 2026-09-18
+
+### On-Chain changes
+
+1. Reconcile celestia delegations executed without acknowledgement (+15,440 TIA) and retire the equivalent phantom deposit records; redemption rate unchanged ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
+2. Close the stranded cosmoshub-4 LSM detokenization for stakewithus (+11 ATOM) ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
+3. Correct staketia `remaining_delegated_balance` by −40,077 TIA (v25 migration straddle of unbonding record 884) ([#1527](https://github.com/Stride-Labs/stride/pull/1527))
+
+## [v34.0.0](https://github.com/Stride-Labs/stride/releases/tag/v34.0.0) - 2026-09-17
+
+### On-Chain changes
+
+1. Swap POA validators — remove Citadel.one and Cosmostation, add cosmosrescue and CitizenWeb3 (POA set + `utils/poa.go` stToken payout registry) ([#1522](https://github.com/Stride-Labs/stride/pull/1522))
+2. V34 version ([#1523](https://github.com/Stride-Labs/stride/pull/1523))
+3. Reset stuck `SlashQueryInProgress` flags on 12 cosmoshub-4 validators and delete 30 timed-out ICQs ([#1525](https://github.com/Stride-Labs/stride/pull/1525))
+4. Lower gov quorum from 33.4% to 25% and lengthen the voting period from 3 to 5 days ([#1525](https://github.com/Stride-Labs/stride/pull/1525))
+5. Reconcile injective-1 delegations, queue a one-shot undelegation of the excess, and sweep injective-1 redemptions per record ([#1526](https://github.com/Stride-Labs/stride/pull/1526))
 
 ## [v33.0.0]
 

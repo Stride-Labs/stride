@@ -11,7 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
 )
 
 // historicalTx is one entry of app/testdata/historical_txs.json: a real signed mainnet

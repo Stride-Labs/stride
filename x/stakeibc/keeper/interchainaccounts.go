@@ -16,10 +16,10 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	epochstypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	epochstypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 const (

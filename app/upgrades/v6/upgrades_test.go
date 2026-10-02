@@ -10,11 +10,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	"github.com/Stride-Labs/stride/v34/app"
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v6 "github.com/Stride-Labs/stride/v34/app/upgrades/v6"
-	"github.com/Stride-Labs/stride/v34/x/claim/types"
-	claimtypes "github.com/Stride-Labs/stride/v34/x/claim/types"
+	"github.com/Stride-Labs/stride/v35/app"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v6 "github.com/Stride-Labs/stride/v35/app/upgrades/v6"
+	"github.com/Stride-Labs/stride/v35/x/claim/types"
+	claimtypes "github.com/Stride-Labs/stride/v35/x/claim/types"
 )
 
 type UpgradeTestSuite struct {

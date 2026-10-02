@@ -3,8 +3,8 @@ package v35_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
 )
 
 // setFailedLSMDeposit stores the mainnet deposit with the given status and amount

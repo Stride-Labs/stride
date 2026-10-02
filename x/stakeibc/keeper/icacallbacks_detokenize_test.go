@@ -8,10 +8,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	icacallbacktypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 type DetokenizeCallbackTestCase struct {

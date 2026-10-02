@@ -3,9 +3,9 @@ package v35_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // Seeds the haqq host zone with every validator in the delta table, each tracked at the value

@@ -15,9 +15,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 
-	"github.com/Stride-Labs/stride/v34/testutil/network"
-	"github.com/Stride-Labs/stride/v34/x/records/client/cli"
-	"github.com/Stride-Labs/stride/v34/x/records/types"
+	"github.com/Stride-Labs/stride/v35/testutil/network"
+	"github.com/Stride-Labs/stride/v35/x/records/client/cli"
+	"github.com/Stride-Labs/stride/v35/x/records/types"
 )
 
 // TODO [cleanup] - Migrate to new CLI testing framework

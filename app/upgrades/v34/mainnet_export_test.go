@@ -19,14 +19,14 @@ import (
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
-	"github.com/Stride-Labs/stride/v34/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v34 "github.com/Stride-Labs/stride/v35/app/upgrades/v34"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v35/x/staketia/types"
 )
 
 // mainnetExportPath is relative to this package — read directly from the

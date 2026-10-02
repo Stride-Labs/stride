@@ -41,8 +41,8 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v34/app"
-	"github.com/Stride-Labs/stride/v34/utils"
+	"github.com/Stride-Labs/stride/v35/app"
+	"github.com/Stride-Labs/stride/v35/utils"
 )
 
 var (

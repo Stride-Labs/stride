@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
+	recordskeeper "github.com/Stride-Labs/stride/v35/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
 )
 
 // The one LSM deposit stuck in DETOKENIZATION_FAILED on mainnet (spec §3). Its detokenization

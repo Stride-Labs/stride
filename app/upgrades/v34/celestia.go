@@ -11,12 +11,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icacallbackskeeper "github.com/Stride-Labs/stride/v34/x/icacallbacks/keeper"
-	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-	staketiakeeper "github.com/Stride-Labs/stride/v34/x/staketia/keeper"
+	icacallbackskeeper "github.com/Stride-Labs/stride/v35/x/icacallbacks/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v35/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	staketiakeeper "github.com/Stride-Labs/stride/v35/x/staketia/keeper"
 )
 
 const CelestiaChainId = "celestia"

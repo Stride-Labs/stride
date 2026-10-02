@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	epochtypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // LiquidStake exchanges native tokens for stTokens at the current redemption rate.
