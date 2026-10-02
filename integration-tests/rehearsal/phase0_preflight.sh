@@ -47,18 +47,19 @@ for host in stride cosmoshub osmosis; do
   checkpoint "REST $host reachable" rest_reachable "$host"
 done
 
-# Host zones exist only after the seed, so everything below is skipped on the first (post-start) run
-if host_zone_exists cosmoshub-test-1; then
-  # seed.sh adds vault-ms after phase 0's first run; add it here (idempotent) before the vault spend
-  osmosisd keys add vault-ms --multisig "$ADMIN_MS_MEMBERS" --multisig-threshold 2 --keyring-backend test || true
+# Prove the constants on the first run (they need only the genesis keys, not the host zones): a test
+# transfer in and a signed spend out of the vault and the sweep operator. seed.sh adds vault-ms later
+# too, so the add here is idempotent.
+osmosisd keys add vault-ms --multisig "$ADMIN_MS_MEMBERS" --multisig-threshold 2 --keyring-backend test || true
+checkpoint "vault receives" tx_ok osmosisd tx bank send user1 "$VAULT_MS_OSMO" 1000000uosmo $OSMO_TX
+checkpoint "vault spends (multisig)" ms_tx osmosisd vault-ms "$ADMIN_MS_MEMBERS" -- bank send "$VAULT_MS_OSMO" "$USER1_OSMO" 1uosmo
+checkpoint "sweep operator spends" tx_ok strided_old tx bank send sweep-operator "$USER1_STRIDE" 1ustrd $STRIDE_TX
 
-  # Prove the constants: a test transfer in and a signed spend out of the vault and the sweep operator
-  checkpoint "vault receives" tx_ok osmosisd tx bank send user1 "$VAULT_MS_OSMO" 1000000uosmo $OSMO_TX
-  checkpoint "vault spends (multisig)" ms_tx osmosisd vault-ms "$ADMIN_MS_MEMBERS" -- bank send "$VAULT_MS_OSMO" "$USER1_OSMO" 1uosmo
-  checkpoint "sweep operator spends" tx_ok strided_old tx bank send sweep-operator "$USER1_STRIDE" 1ustrd $STRIDE_TX
+# Host zones exist only after the seed, so the withdraw-address check is skipped on the first run
+if host_zone_exists cosmoshub-test-1; then
   log_cmd "withdraw addresses" withdraw_addresses
 else
-  log "host zones not seeded yet: skipping vault, sweep operator and withdraw-address checks"
+  log "host zones not seeded yet: skipping the withdraw-address check"
 fi
 
 log "gaia $(gaiad version 2>&1 | tail -1), osmosis $(osmosisd version 2>&1 | tail -1), strided $(strided_old version 2>&1 | tail -1)"
