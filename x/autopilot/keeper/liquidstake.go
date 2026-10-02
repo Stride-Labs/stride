@@ -15,7 +15,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	"github.com/Stride-Labs/stride/v34/x/autopilot/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
@@ -89,11 +88,7 @@ func (k Keeper) RunLiquidStake(
 		return err
 	}
 
-	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
-	msgResponse, err := msgServer.LiquidStake(
-		ctx,
-		msg,
-	)
+	msgResponse, err := k.stakeibcKeeper.LiquidStake(ctx, msg)
 	if err != nil {
 		return errorsmod.Wrapf(err, "failed to liquid stake")
 	}

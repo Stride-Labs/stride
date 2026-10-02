@@ -22,21 +22,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// User transaction to liquid stake native tokens into stTokens
-func (k msgServer) LiquidStake(goCtx context.Context, msg *types.MsgLiquidStake) (*types.MsgLiquidStakeResponse, error) { //nolint:staticcheck // MsgLiquidStake is deprecated; this stub keeps the disabled path compatible with old clients
-	return nil, errors.New("Liquid staking is no longer enabled in staketia, use stakeibc instead")
-}
-
-// User transaction to redeem stake stTokens into native tokens
-func (k msgServer) RedeemStake(goCtx context.Context, msg *types.MsgRedeemStake) (*types.MsgRedeemStakeResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	nativeToken, err := k.Keeper.RedeemStake(ctx, msg.Redeemer, msg.Receiver, msg.StTokenAmount)
-	if err != nil {
-		return nil, err
-	}
-	return &types.MsgRedeemStakeResponse{NativeToken: nativeToken}, nil
-}
-
 // Operator transaction to confirm a delegation was submitted on the host chain
 func (k msgServer) ConfirmDelegation(goCtx context.Context, msg *types.MsgConfirmDelegation) (*types.MsgConfirmDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -142,13 +127,6 @@ func (k msgServer) AdjustDelegatedBalance(goCtx context.Context, msg *types.MsgA
 func (k msgServer) UpdateInnerRedemptionRateBounds(goCtx context.Context, msg *types.MsgUpdateInnerRedemptionRateBounds) (*types.MsgUpdateInnerRedemptionRateBoundsResponse, error) {
 	_ = sdk.UnwrapSDKContext(goCtx)
 	return &types.MsgUpdateInnerRedemptionRateBoundsResponse{}, nil
-}
-
-// Unhalts the host zone if redemption rates were exceeded
-// BOUNDS: verified in ValidateBasic
-func (k msgServer) ResumeHostZone(goCtx context.Context, msg *types.MsgResumeHostZone) (*types.MsgResumeHostZoneResponse, error) {
-	_ = sdk.UnwrapSDKContext(goCtx)
-	return &types.MsgResumeHostZoneResponse{}, nil
 }
 
 // trigger updating the redemption rate

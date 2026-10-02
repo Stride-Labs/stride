@@ -16,8 +16,9 @@ user owns is left on a dead chain. The guiding constraints, in order: least risk
 loses funds, least new code, most reuse of code that already runs on mainnet, and a chain that
 stops rather than one that idles for a year.
 
-The shape is one upgrade, v35, followed by one ops window of roughly 40 days that ends with a
-coordinated halt: the longest unbonding period plus a few days of ops on either side. The
+The shape is one upgrade, v35, followed by one ops window of roughly 35 days that ends with a
+coordinated halt: the longest unbonding period (28 days on Juno and Sommelier) plus a few days
+of ops on either side. The
 upgrade lands on a live chain and does not need it quiet. The redemptions open at that moment
 finish through the pipeline that already exists (undelegate at the day epoch, sweep on
 completion, claim), in parallel with the admin drain of everything else, and the redemption
@@ -201,8 +202,15 @@ Staketia:
 
 State on mainnet (refreshed 2026-09-29 unless dated otherwise):
 
-- Unbonding periods: osmosis-1 14 days, dydx-mainnet-1 30, juno-1 and sommelier-3 28, all
-  others 21. Zones submit undelegations every 4 day-epochs.
+- Real unbonding times (host staking params, 2026-09-30): haqq_11235-1 7 days, osmosis-1
+  and celestia 14, juno-1 and sommelier-3 28, every other in-scope zone 21, dydx-mainnet-1
+  included. Stride's stored `HostZone.UnbondingPeriod` is stale on three zones (dydx 30,
+  celestia 21, haqq 21); it only sets the submission cadence, `period / 7 + 1` day epochs
+  (3 for osmosis-1, 5 for dydx, juno and sommelier, 4 for the rest), while the sweep waits
+  for the completion time the host returns in the undelegate ack, so the stale values cost
+  nothing. Day epochs roll over at 19:00 UTC, and a zone submits on the day epochs divisible
+  by its cadence, so all three cadences coincide every 60 epochs, next on epoch 1500,
+  Monday 12 October 2026 19:00 UTC.
 - 127 open stakeibc user redemption records, 3 with a claim pending. `HostZoneUnbonding`
   records with a non-zero amount: 17 `UNBONDING_QUEUE` (cosmoshub-4 4, phoenix-1 3, ssc-1 3,
   juno-1 2, osmosis-1 2, dydx-mainnet-1 1, laozi-mainnet 1, sommelier-3 1), 4
@@ -361,7 +369,7 @@ while staketia's and stakedym's redeem keeper paths go with their handlers.
 
 - stakeibc: `LiquidStake`, `LSMLiquidStake`, `RedeemStake`, `RegisterHostZone`,
   `CreateTradeRoute`, `UpdateTradeRoute`, `DeleteTradeRoute`, `SetCommunityPoolRebate`,
-  `ToggleTradeController`, `RebalanceValidators`, `ClearBalance`, `ResumeHostZone`.
+  `ToggleTradeController`, `RebalanceValidators`, `ClearBalance`.
 - staketia and stakedym: `RedeemStake` (their `LiquidStake` is already a disabled stub; remove
   the stub too), `ResumeHostZone`.
 - icaoracle: `AddOracle`, `InstantiateOracle`. icqoracle: `RegisterTokenPriceQuery`,
@@ -370,7 +378,7 @@ while staketia's and stakedym's redeem keeper paths go with their handlers.
 
 `ClaimUndelegatedTokens` is kept: it pays the redemptions that finish after the upgrade, it
 always was permissionless, and it is a no-op once the last record is claimed.
-`RestoreInterchainAccount` is kept for the drain's timeout path (§7).
+`RestoreInterchainAccount` is kept for the drain's timeout path (§7). `ResumeHostZone` is kept for stakeibc: a zone can still halt during the ops window through the safety-bounds check (a mis-set `UpdateInnerRedemptionRateBounds` is enough), a halted zone drops out of every kept epoch flow, and without the resume tx only an upgrade could bring it back.
 
 **Messages gated.** `UpdateValidatorSharesExchRate` and `CalibrateDelegation` gain
 `utils.ValidateAdminAddress` in ValidateBasic: ops use them to refresh slashes before the
@@ -748,7 +756,7 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   beside the channel check.
 - The staketia and stakedym operators ready to act on day 0.
 
-The ops window (after the upgrade, ~40 days). The redemptions open at the upgrade are queued,
+The ops window (after the upgrade, ~35 days). The redemptions open at the upgrade are queued,
 unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes all three
 (§6) while the rest proceeds:
 
@@ -793,7 +801,8 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    amounts, and the first arrival on Osmosis confirms the mapped channel end to end and the
    denom each zone lands as. Not yet the redemption ICA: it holds the tokens of claimable
    records until they are claimed.
-5. Day 14 to 34, as each zone's unbondings complete: the pipeline sweeps each record's amount
+5. Day 7 to 29, as each zone's unbondings complete (Haqq after 7 days, Osmosis and Celestia
+   after 14, most zones after 21, Juno and Sommelier after 28): the pipeline sweeps each record's amount
    to the redemption ICA at the next stride epoch and the record goes `CLAIMABLE`; ops run
    `ClaimUndelegatedTokens` for every record (permissionless, as today; a record whose host
    receiver rejects the bank send is handled by hand). Once a zone has no record outside
@@ -938,7 +947,7 @@ is run twice and published.
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3: `Unbond` calls the
 distribution hook `BeforeDelegationSharesModified`, which withdraws the accrued rewards, and
 then removes the shares; rewards are computed from delegation shares only, so an unbonding
-entry earns nothing during its 21 to 30 days. Between the upgrade and the pool being funded,
+entry earns nothing during its 7 to 28 days. Between the upgrade and the pool being funded,
 the backing therefore moves as follows:
 
 - Up: staking rewards accrue only from the upgrade until the drain executes (up to four days
@@ -1087,7 +1096,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   `wind-down-pr2-freeze-by-code`, `wind-down-pr3-upgrade-handler`, `wind-down-pr4-admin-txs`,
   `wind-down-pr5-sweep-tx`, `wind-down-pr6-release-gate`.
   1. Remove tx handlers: pure deletions across stakeibc, staketia, stakedym, icaoracle,
-     icqoracle, auction, airdrop and claim, plus rebalance, clear-balance and resume; types
+     icqoracle, auction, airdrop and claim, plus rebalance and clear-balance (staketia and stakedym also drop resume; stakeibc keeps it); types
      and registrations stay; the "no handler" guard test and the historical-tx decode test.
      Large diff, no logic.
   2. Freeze by code: the nine hook-call deletions, the slash callback's rate rewrite removed,

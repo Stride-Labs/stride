@@ -13,7 +13,6 @@ import (
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	"github.com/Stride-Labs/stride/v34/x/autopilot/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
 
@@ -74,8 +73,7 @@ func (k Keeper) RunRedeemStake(ctx sdk.Context, strideAddress, redemptionReceive
 		return err
 	}
 
-	msgServer := stakeibckeeper.NewMsgServerImpl(k.stakeibcKeeper)
-	if _, err = msgServer.RedeemStake(ctx, msg); err != nil {
+	if _, err = k.stakeibcKeeper.RedeemStake(ctx, msg); err != nil {
 		return errorsmod.Wrapf(err, "redeem stake failed")
 	}
 
