@@ -115,7 +115,7 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 	expectedCompletion := s.Ctx.BlockTime().Add(unbondingTime)
 
 	// ----- act -----
-	v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper)
+	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
 
 	// ----- assert: only the broken delegation remains, untouched -----
 	remaining, err := s.App.StakingKeeper.GetAllDelegations(s.Ctx)
@@ -182,13 +182,13 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_AfterRaiseMaxUnbondingEn
 	s.Ctx = s.Ctx.WithBlockHeight(10)
 
 	// At the mainnet cap the pair is skipped and the delegation stays
-	v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper)
+	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
 	s.Require().True(s.hasDelegation(delegator, valAddr), "skipped at max entries")
 	s.Require().Len(s.unbondingEntries(delegator, valAddr), 7)
 
 	// After the raise the same delegation unbonds as the eighth entry
 	s.Require().NoError(v35.RaiseMaxUnbondingEntries(s.Ctx, s.App.StakingKeeper))
-	v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper)
+	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
 	s.Require().False(s.hasDelegation(delegator, valAddr), "undelegated after the raise")
 	entries := s.unbondingEntries(delegator, valAddr)
 	s.Require().Len(entries, 8)

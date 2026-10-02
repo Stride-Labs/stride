@@ -27,7 +27,8 @@ import (
 // (docs/superpowers/specs/2026-10-02-v35-authority-and-undelegation-design.md §3, "authority
 // spec"). Every step logs and skips on missing state, except the writes that would leave the
 // chain without an upgrade path if skipped: the wasm upload-access write and the consensus
-// authority, gov deposit and staking max-entries writes fail the upgrade. The steps run in
+// authority, gov deposit and staking max-entries writes fail the upgrade, as does a failure to
+// list the delegations to undelegate. The steps run in
 // this order:
 //  1. RunMigrations.
 //  2. Turn off autopilot stakeibc and drop liquid stake / redeem stake from the ICA host allow-list.
@@ -42,7 +43,7 @@ import (
 //  11. Close gov submission by raising both deposits above total supply.
 //  12. Raise staking max unbonding entries to 100.
 //  13. Drop delegate, redelegate, create validator and cancel unbonding from the ICA host allow-list.
-//  14. Undelegate every delegation in full, skipping and logging any that fail.
+//  14. Undelegate every delegation in full, skipping and logging any single one that fails.
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read
@@ -116,7 +117,9 @@ func CreateUpgradeHandler(
 
 		// Close the ICA path that could re-lock STRD, then unbond everything (authority spec §3)
 		RemoveStakingFromICAHostAllowList(ctx, icaHostKeeper)
-		UndelegateAllDelegations(ctx, stakingKeeper)
+		if err := UndelegateAllDelegations(ctx, stakingKeeper); err != nil {
+			return vm, err
+		}
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
 		return vm, nil

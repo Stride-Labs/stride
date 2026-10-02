@@ -77,9 +77,11 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    not-bonded pool. No events, no per-delegation success log (tens of thousands of lines).
    Deterministic order comes from store iteration. Expected and accepted side effects:
    rewards withdrawn to each delegator by the distribution hook; operators jailed when
-   self-delegation drops below minimum; every validator left at zero tokens, moved to
-   unbonding by the EndBlocker and removed after 14 days with commission paid out by the
-   distribution `AfterValidatorRemoved` hook. In-flight unbondings and redelegations are
+   self-delegation drops below minimum; every bonded validator left at zero tokens, moved to
+   unbonding by the EndBlocker and removed after 14 days; every already-unbonded validator
+   (125 on mainnet) removed on the spot by `Unbond` once its shares hit zero. Either way the
+   distribution `AfterValidatorRemoved` hook pays out commission at removal. A failure to
+   list the delegations fails the upgrade. In-flight unbondings and redelegations are
    untouched and complete on their own clocks.
 
 Handler doc comment and the ordered step list get entries 10–14.
