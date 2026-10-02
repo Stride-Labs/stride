@@ -47,6 +47,7 @@ class CheckTransmuterPoolConstantsTest(unittest.TestCase):
         self.assertEqual(vault, check_transmuter_pool.ADMIN)
         self.assertEqual(vault, check_transmuter_pool.MODERATOR)
 
+    @unittest.skip("mainnet table; rehearsal branch")
     def test_every_in_scope_zone_has_an_osmosis_channel(self) -> None:
         zones = set(go_string_map(name="HostToOsmosisTransferChannel")) - {
             OSMOSIS_CHAIN_ID
@@ -57,6 +58,7 @@ class CheckTransmuterPoolConstantsTest(unittest.TestCase):
             set(), zones - set(check_transmuter_pool.OSMOSIS_CHANNEL_TO_HOST)
         )
 
+    @unittest.skip("mainnet table; rehearsal branch")
     def test_sommelier_channel_is_the_verified_one(self) -> None:
         self.assertEqual(
             "channel-165", check_transmuter_pool.OSMOSIS_CHANNEL_TO_HOST["sommelier-3"]

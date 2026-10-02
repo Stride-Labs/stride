@@ -18,26 +18,18 @@ from decimal import Decimal, getcontext
 
 getcontext().prec = 60
 
-STRIDE_REST = "https://stride-api.polkachu.com"
+STRIDE_REST = "https://stride-api.internal.stridenet.co"
 UA_HEADER = {"User-Agent": "curl/8.0"}
 
 # Stride chain_id -> (chain-registry directory name, decimals for human-readable column)
 ZONES = {
-    "celestia": {"registry": "celestia", "decimals": 6},
-    "comdex-1": {"registry": "comdex", "decimals": 6},
-    "dydx-mainnet-1": {"registry": "dydx", "decimals": 18},
-    "haqq_11235-1": {"registry": "haqq", "decimals": 18},
-    "juno-1": {"registry": "juno", "decimals": 6},
-    "laozi-mainnet": {"registry": "bandchain", "decimals": 6},
-    "osmosis-1": {"registry": "osmosis", "decimals": 6},
-    "phoenix-1": {"registry": "terra2", "decimals": 6},
-    "sommelier-3": {"registry": "sommelier", "decimals": 6},
-    "ssc-1": {"registry": "saga", "decimals": 6},
+    "cosmoshub-test-1": {"registry": None, "decimals": 6},
+    "osmosis-test-1": {"registry": None, "decimals": 6},
 }
 
 EXTRA_ENDPOINTS = {
-    "celestia": ["https://celestia.rpc.uquad.org:443"],
-    "sommelier-3": ["https://rest.cosmos.directory/sommelier"],
+    "cosmoshub-test-1": ["https://cosmoshub-api.internal.stridenet.co"],
+    "osmosis-test-1": ["https://osmosis-api.internal.stridenet.co"],
 }
 
 HTTP_TIMEOUT = 20
@@ -62,7 +54,9 @@ def fetch_stride_host_zones() -> list[dict]:
     return data["host_zone"]
 
 
-def fetch_registry_rest_endpoints(registry_name: str) -> list[str]:
+def fetch_registry_rest_endpoints(registry_name: str | None) -> list[str]:
+    if registry_name is None:
+        return []
     url = f"https://raw.githubusercontent.com/cosmos/chain-registry/master/{registry_name}/chain.json"
     data = http_get_json(url)
     endpoints = [
@@ -152,7 +146,7 @@ import urllib.parse  # noqa: E402  (placed after usage above for clarity of grou
 
 
 def build_zone_data(
-    stride_chain_id: str, stride_zone: dict, registry_name: str
+    stride_chain_id: str, stride_zone: dict, registry_name: str | None
 ) -> dict:
     print(f"=== {stride_chain_id} ===")
     delegation_ica_address = stride_zone["delegation_ica_address"]

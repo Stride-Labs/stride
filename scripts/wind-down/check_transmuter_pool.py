@@ -26,14 +26,14 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
-STRIDE_REST_DEFAULT = "https://stride-api.polkachu.com"
+OSMOSIS_REST_DEFAULT = "https://osmosis-api.internal.stridenet.co"
+STRIDE_REST_DEFAULT = "https://stride-api.internal.stridenet.co"
 USER_AGENT = "curl/8.0"
 
-TRANSMUTER_CODE_ID = "996"
+TRANSMUTER_CODE_ID = "1"
 TRANSMUTER_VERSION = "3.2.0"
-COSMWASMPOOL_MODULE = "osmo1rxjakgd8yhks2j7hc7pt6a22z3zd64grexpyf7"
-STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS = "channel-326"
+COSMWASMPOOL_MODULE = "REHEARSAL_FILL_IN"
+STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS = "channel-0"
 UINT128_MAX = 2**128 - 1
 RATE_DECIMALS = 10**18
 
@@ -52,29 +52,10 @@ class PoolSpec:
 
 # The Osmosis vault (spec §4) is both admin and moderator of every pool; it equals OsmosisVaultAddress
 # in x/stakeibc/types/wind_down.go (test_check_transmuter_pool.py asserts that).
-ADMIN = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"  # Osmosis vault (transmuter admin)
-MODERATOR = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"  # Osmosis vault (freeze / corrupted-asset key)
+ADMIN = "osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"  # Osmosis vault (transmuter admin)
+MODERATOR = "osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"  # Osmosis vault (freeze / corrupted-asset key)
 
-POOLS = [
-    # 2026-09-25 per-route test pools. Replace with the real pools as they are created: one entry per route.
-    # The test pools are administered by the test key osmo1v0694qqq6ztzxvzl807dgq7h3e857hdxvpmdlc, so every
-    # entry here fails the admin and moderator checks against the vault until the list is replaced.
-    PoolSpec(chain_id="cosmoshub-4", pool_id="3595", rate_at_creation="2.002036647211047463", route_trace=None),
-    PoolSpec(
-        chain_id="cosmoshub-4",
-        pool_id="3596",
-        rate_at_creation="2.002036647211047463",
-        route_trace="transfer/channel-0/transfer/channel-391/stuatom",  # Hub route
-    ),
-    PoolSpec(
-        chain_id="cosmoshub-4",
-        pool_id="3597",
-        rate_at_creation="2.002036647211047463",
-        route_trace="transfer/channel-88/transfer/channel-37/stuatom",  # Secret route
-    ),
-    # Deliberately inverted factors: this entry must FAIL, proving the script catches it.
-    PoolSpec(chain_id="cosmoshub-4", pool_id="3598", rate_at_creation="2.002036647211047463", route_trace=None),
-]
+POOLS: list[PoolSpec] = []  # phase 7 appends the three pool specs once the pool ids exist
 
 # ----------------------------------------------------------------------------------------------
 
@@ -83,16 +64,7 @@ POOLS = [
 # sommelier-3 was verified on chain on 2026-10-02: transfer/channel-165 is STATE_OPEN, its client
 # 07-tendermint-1745 tracks sommelier-3, counterparty channel-0).
 OSMOSIS_CHANNEL_TO_HOST = {
-    "cosmoshub-4": "channel-0",
-    "celestia": "channel-6994",
-    "dydx-mainnet-1": "channel-6787",
-    "haqq_11235-1": "channel-1575",
-    "injective-1": "channel-122",
-    "juno-1": "channel-42",
-    "laozi-mainnet": "channel-148",
-    "phoenix-1": "channel-251",
-    "sommelier-3": "channel-165",
-    "ssc-1": "channel-38946",
+    "cosmoshub-test-1": "channel-1",
 }
 
 
@@ -718,6 +690,10 @@ def check_pool(spec: PoolSpec, use_color: bool) -> Report:
 
 
 def main() -> int:
+    unfilled = [name for name, value in globals().items() if name.isupper() and value == "REHEARSAL_FILL_IN"]
+    if unfilled:
+        print(f"{', '.join(unfilled)} still REHEARSAL_FILL_IN; fill in before running", file=sys.stderr)
+        return 2
     use_color = sys.stdout.isatty()
     failed_pools = [
         spec.pool_id

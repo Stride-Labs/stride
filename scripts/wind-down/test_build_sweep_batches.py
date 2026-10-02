@@ -31,17 +31,17 @@ ATOM_VOUCHER = "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E
 # builder must never use it for vesting, only --as-of
 GENESIS_TIME = "2020-01-01T00:00:00Z"
 AS_OF = 1790640000  # 2026-09-29T00:00:00Z, the block time at the export height
-SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
+SWEEP_OPERATOR = "stride1rjmd9gjxsexh0jg7n9wdvx9385hxxc8rjg9zzy"
 PROTOCOL_ADDRESSES = [
-    "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
-    "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption
-    "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd",  # staketia claim
+    "stride1ju3xt2f8xuhzxqg6590sazctlz6l4md0wc5w6c",  # staketia deposit
+    "stride19ksqv50zmntzjfflfmnegj75tdfkk89vl2q5yu",  # staketia redemption
+    "stride1pjw24gg0fm26758hxee3wta35kq9jpszcslm6z",  # staketia claim
     "stride1e7j8d6sdq272fqe2jfxjpgcagn04j75w9695fj",  # stakedym deposit
     "stride1jpsnc0ynufa2aheflj6mxzzzsu7nlwqk7ff69n",  # stakedym redemption
     "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras",  # stakedym claim
-    "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc",  # staketia safe
+    "stride1tpzfseenwg4kq54sf9hdp3mkra652fvqtsuclq",  # staketia safe
     "stride1sj8gyqeqecqhqu7em67hn2tjzhpkdf8wz5plh7",  # stakedym safe
-    "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw",  # staketia operator
+    "stride19xm04qaah8t2eupyeglz63vkaxzytpyc8m7kk4",  # staketia operator
 ]
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -241,7 +241,7 @@ class BuildSweepBatchesTest(unittest.TestCase):
     def test_sweep_operator_defaults_to_the_spec_address(self) -> None:
         argv = ["x", "--export", "e", "--prices", "p", "--denoms", "ustrd", "--floor-usd", "1", "--out-dir", "o", "--as-of", "0"]
         with mock.patch("sys.argv", argv):
-            self.assertEqual(build_sweep_batches.parse_args().sweep_operator, "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9")
+            self.assertEqual(build_sweep_batches.parse_args().sweep_operator, "stride1rjmd9gjxsexh0jg7n9wdvx9385hxxc8rjg9zzy")
 
     def test_keyless_candidates_are_listed_for_review(self) -> None:
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0, sweep_operator=SWEEP_OPERATOR)

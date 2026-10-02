@@ -35,7 +35,7 @@ Read-only; prints a table and exits 1 on any shortfall or invalid topology.
 
 Usage:
   python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json \
-      --vault osmo1... [--osmosis-rest https://osmosis-api.polkachu.com]
+      --vault osmo1... [--osmosis-rest https://osmosis-api.internal.stridenet.co]
 """
 
 import argparse
@@ -56,7 +56,7 @@ from typing import Callable
 
 import bech32_ref
 
-OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
+OSMOSIS_REST_DEFAULT = "https://osmosis-api.internal.stridenet.co"
 USER_AGENT = "curl/8.0"
 TIMEOUT_SECONDS = 30
 MAX_ATTEMPTS = 6
@@ -72,19 +72,8 @@ ST_DENOM_PREFIX = "st"
 # The per-token locations tables are the authority, not the relayer scope table or pool input.
 # Multi-channel rows represent distinct vouchers; preserve every listed in-scope channel.
 REQUIRED_ROUTES: dict[str, frozenset[str]] = {
-    "stuatom": frozenset({
-        "channel-0", "channel-6", "channel-11", "channel-40", "channel-47", "channel-69", "channel-123", "channel-148",
-    }),
-    "staISLM": frozenset({"channel-240"}),
-    "stutia": frozenset({"channel-148", "channel-123", "channel-47", "channel-0", "channel-197", "channel-162"}),
-    "stinj": frozenset({"channel-6", "channel-40", "channel-0"}),
-    "stuosmo": frozenset({"channel-0", "channel-40"}),
-    "stuband": frozenset({"channel-258"}),
-    "stadydx": frozenset({"channel-0", "channel-160"}),
-    "stuluna": frozenset({"channel-13", "channel-52", "channel-47"}),
-    "stusaga": frozenset({"channel-213"}),
-    "stujuno": frozenset({"channel-24"}),
-    "stusomm": frozenset(),
+    "stuatom": frozenset({"channel-0"}),
+    "stuosmo": frozenset(),
 }
 
 

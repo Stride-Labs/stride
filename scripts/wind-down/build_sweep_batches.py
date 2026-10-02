@@ -45,33 +45,28 @@ IBC_PREFIX = "ibc/"
 # Mirror of types.SweepUnwindChannels; keep in sync with x/stakeibc/types/wind_down.go
 UNWIND_CHANNELS = {
     "channel-0": "cosmos",
-    "channel-162": "celestia",
-    "channel-5": "osmo",
-    "channel-24": "juno",
-    "channel-150": "somm",
-    "channel-213": "saga",
-    "channel-160": "dydx",
+    "channel-1": "osmo",
 }
 
 # Mirror of types.SweepProtocolAddresses (constants part): staketia S0-S3 and stakedym S4-S7 plus
 # the staketia operator
 PROTOCOL_ADDRESSES = {
-    "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
-    "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption
-    "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd",  # staketia claim
+    "stride1ju3xt2f8xuhzxqg6590sazctlz6l4md0wc5w6c",  # staketia deposit
+    "stride19ksqv50zmntzjfflfmnegj75tdfkk89vl2q5yu",  # staketia redemption
+    "stride1pjw24gg0fm26758hxee3wta35kq9jpszcslm6z",  # staketia claim
     "stride1e7j8d6sdq272fqe2jfxjpgcagn04j75w9695fj",  # stakedym deposit
     "stride1jpsnc0ynufa2aheflj6mxzzzsu7nlwqk7ff69n",  # stakedym redemption
     "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras",  # stakedym claim
-    "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc",  # staketia safe
+    "stride1tpzfseenwg4kq54sf9hdp3mkra652fvqtsuclq",  # staketia safe
     "stride1sj8gyqeqecqhqu7em67hn2tjzhpkdf8wz5plh7",  # stakedym safe
-    "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw",  # staketia operator
+    "stride19xm04qaah8t2eupyeglz63vkaxzytpyc8m7kk4",  # staketia operator
 }
 
 # Mirror of the always-allowed native denoms in isSweepableNativeDenom; the rest are the stTokens of
 # the export's non-deprecated host zones
 ALWAYS_SWEEPABLE_NATIVE_DENOMS = {"ustrd", "stutia"}
 # The default --sweep-operator (spec §4)
-DEFAULT_SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
+DEFAULT_SWEEP_OPERATOR = "stride1rjmd9gjxsexh0jg7n9wdvx9385hxxc8rjg9zzy"
 INTERCHAIN_ACCOUNT = "/ibc.applications.interchain_accounts.v1.InterchainAccount"
 
 # Module accounts the bank keeper blocks (app.BlacklistedModuleAccountAddrs: the names in maccPerms in
