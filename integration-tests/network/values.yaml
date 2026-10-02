@@ -20,23 +20,16 @@ relayers:
     type: relayer
     chainA: stride
     chainB: osmosis
-  # We start with hermes as a backup relayer
-  - name: stride-cosmoshub
-    type: hermes
-    chainA: stride
-    chainB: cosmoshub
-    createPaths: false
-  - name: stride-osmosis
-    type: hermes
-    chainA: stride
+  - name: cosmoshub-osmosis
+    type: relayer
+    chainA: cosmoshub
     chainB: osmosis
-    createPaths: false
 
 chainConfigs:
   stride:
     binary: strided
     version: latest
-    numValidators: 3
+    numValidators: 4
     home: .stride
     denom: ustrd
     decimals: 6
@@ -44,7 +37,7 @@ chainConfigs:
   cosmoshub:
     binary: gaiad
     version: v22.1.0
-    numValidators: 1
+    numValidators: 8
     home: .gaia
     denom: uatom
     decimals: 6
@@ -52,7 +45,7 @@ chainConfigs:
   osmosis:
     binary: osmosisd
     version: v28.0.0
-    numValidators: 1
+    numValidators: 3
     home: .osmosisd
     denom: uosmo
     decimals: 6

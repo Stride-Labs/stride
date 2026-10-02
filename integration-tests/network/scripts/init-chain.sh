@@ -56,6 +56,17 @@ add_genesis_account() {
     $BINARY $chain_genesis_command add-genesis-account $address $balance
 }
 
+# Helper function to add an account to the keyring only (no genesis balance)
+# The key arg is a JSON string with "name" and "mnemonic" fields
+add_key_only() {
+    key="$1"
+
+    name=$(echo $key | jq -r '.name')
+    mnemonic=$(echo $key | jq -r '.mnemonic')
+
+    echo "$mnemonic" | $BINARY keys add $name --recover
+}
+
 # Adds each validator to the genesis file, generates per-validator priv_val keys
 # in a separate home directory, and accumulates a POA-genesis-shaped JSON array
 # of validator entries which is later injected into app_state.poa.validators.
@@ -127,6 +138,19 @@ add_accounts() {
     jq -c '.users[]' $KEYS_FILE | while IFS= read -r user_keys; do
         add_genesis_account "$user_keys" ${RELAYER_BALANCE}${DENOM}
     done
+
+    # Rehearsal accounts go on every chain so each pod can sign with them
+    echo "Adding rehearsal accounts..."
+    jq -c '.multisig_members[], .hub_multisig_members[], .sweep_operator, .staketia.operator, .staketia.reward, .holders.base' \
+        $REHEARSAL_KEYS_FILE | while IFS= read -r rehearsal_key; do
+        add_genesis_account "$rehearsal_key" ${USER_BALANCE}${DENOM}
+    done
+
+    # Keyring only: module-adjacent staketia accounts and the vesting holder (created by tx in the seed)
+    jq -c '.staketia.deposit, .staketia.redemption, .staketia.claim, .staketia.safe, .holders.vesting' \
+        $REHEARSAL_KEYS_FILE | while IFS= read -r rehearsal_key; do
+        add_key_only "$rehearsal_key"
+    done
 }
 
 # Updates the genesis config with defaults
@@ -170,16 +194,46 @@ update_stride_genesis() {
     jq_inplace '.app_state.icqoracle.params.osmosis_connection_id |= "'$ICQORACLE_OSMOSIS_CONNECTION_ID'"' $genesis_json
     jq_inplace '.app_state.icqoracle.params.update_interval_sec |= "'$ICQORACLE_UPDATE_INTERVAL_SEC'"' $genesis_json
     jq_inplace '.app_state.icqoracle.params.price_expiration_timeout_sec |= "'$ICQORACLE_PRICE_EXPIRATION_TIMEOUT_SEC'"' $genesis_json
+
+    source configs/rehearsal-addresses.env
+    jq_inplace '(.app_state.epochs.epochs[] | select(.identifier=="hour") ).duration |= "'$STRIDE_HOUR_EPOCH_DURATION'"' $genesis_json
+
+    # staketia against the Hub (the Hub plays celestia). 50 ATOM already "delegated" by the Hub multisig.
+    jq_inplace '.app_state.staketia.host_zone.chain_id = "cosmoshub-test-1"
+      | .app_state.staketia.host_zone.native_token_denom = "uatom"
+      | .app_state.staketia.host_zone.native_token_ibc_denom = "'$ATOM_ON_STRIDE'"
+      | .app_state.staketia.host_zone.transfer_channel_id = "channel-0"
+      | .app_state.staketia.host_zone.unbonding_period_seconds = "240"
+      | .app_state.staketia.host_zone.delegation_address = "'$HUB_MS_COSMOS'"
+      | .app_state.staketia.host_zone.reward_address = "'$HUB_REWARD'"
+      | .app_state.staketia.host_zone.deposit_address = "'$STAKETIA_DEPOSIT'"
+      | .app_state.staketia.host_zone.redemption_address = "'$STAKETIA_REDEMPTION'"
+      | .app_state.staketia.host_zone.claim_address = "'$STAKETIA_CLAIM'"
+      | .app_state.staketia.host_zone.safe_address_on_stride = "'$STAKETIA_SAFE'"
+      | .app_state.staketia.host_zone.operator_address_on_stride = "'$STAKETIA_OPERATOR_STRIDE'"
+      | .app_state.staketia.host_zone.remaining_delegated_balance = "50000000"' $genesis_json
 }
 
 # Genesis updates specific to non-stride chains
 update_host_genesis() {
     echo "Updating genesis.json with host configuration..."
 
+    # Downtime slashing fast and visible: 1% after ~30 missed blocks, on both hosts
+    jq_inplace '.app_state.slashing.params.signed_blocks_window = "60"
+      | .app_state.slashing.params.min_signed_per_window = "0.500000000000000000"
+      | .app_state.slashing.params.downtime_jail_duration = "60s"
+      | .app_state.slashing.params.slash_fraction_downtime = "0.010000000000000000"' $genesis_json
+
     if [[ "$CHAIN_NAME" == "osmosis" ]]; then
         strd_on_osmo="ibc/FF6C2E86490C1C4FBBD24F55032831D2415B9D7882F85C3CC9C2401D79362BEA"
         atom_on_osmo="ibc/6CDD4663F2F09CD62285E2D45891FC149A3568E316CE3EBBE201A71A78A69388" # through stride
-        jq_inplace '.app_state.concentratedliquidity.params.is_permissionless_pool_creation_enabled |= true' $genesis_json 
+        jq_inplace '.app_state.concentratedliquidity.params.is_permissionless_pool_creation_enabled |= true' $genesis_json
+
+        jq_inplace '.app_state.wasm.params.code_upload_access.permission = "Everybody"
+          | .app_state.wasm.params.instantiate_default_permission = "Everybody"
+          | .app_state.cosmwasmpool.params.code_id_whitelist = ["1"]
+          | .app_state.cosmwasmpool.params.pool_migration_limit = "20"
+          | .app_state.poolmanager.params.pool_creation_fee = [{"denom":"uosmo","amount":"1000000"}]' $genesis_json
     fi
 }
 

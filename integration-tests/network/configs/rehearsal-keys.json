@@ -1,0 +1,70 @@
+{
+  "multisig_members": [
+    {
+      "name": "m1",
+      "mnemonic": "half sign shock explain spend vibrant build rude equip deer ramp broccoli winner below rabbit know debate enforce patch silver elite summer ability now"
+    },
+    {
+      "name": "m2",
+      "mnemonic": "deer verb bag rose seminar prize winter mirror deputy idea lift senior ready fresh gift expose fault shock hedgehog size wide pottery affair prize"
+    },
+    {
+      "name": "m3",
+      "mnemonic": "foot glimpse lab sock toast problem eye violin style state very coffee include evil teach auto horror crop ensure edit run cancel banner salon"
+    }
+  ],
+  "hub_multisig_members": [
+    {
+      "name": "d1",
+      "mnemonic": "bronze buddy erase tower hero slow little desk strategy engage forward health general brown arctic range fossil captain certain mad head wire staff quit"
+    },
+    {
+      "name": "d2",
+      "mnemonic": "drum game fish give cheese pumpkin frog upgrade scale idea stick process genre peanut vintage bean arm mind churn fork human now spin quantum"
+    },
+    {
+      "name": "d3",
+      "mnemonic": "flash lonely swamp slim stumble educate erupt regular palace panda evil garbage slim manual actress since exchange fashion scheme artist nut wage sound maximum"
+    }
+  ],
+  "sweep_operator": {
+    "name": "sweep-operator",
+    "mnemonic": "swamp corn never matter beach rude common organ awesome brave trash accident cement fork guess twenty sail never hollow december toe doctor work spawn"
+  },
+  "staketia": {
+    "deposit": {
+      "name": "st-deposit",
+      "mnemonic": "upper arrive expect jewel polar dune skate idle churn rifle neutral dress daring nothing tilt mask bird light seminar divorce say prosper protect fabric"
+    },
+    "redemption": {
+      "name": "st-redemption",
+      "mnemonic": "evolve program casino toy kiwi bomb episode day chaos learn earn trigger miss firm answer wisdom razor reason build manual bone rate exit piece"
+    },
+    "claim": {
+      "name": "st-claim",
+      "mnemonic": "treat dignity mesh advice sort gospel horn one ozone nerve leaf zero around nephew acid vacant view wood reduce frog era lesson punch expand"
+    },
+    "safe": {
+      "name": "st-safe",
+      "mnemonic": "august kiss estate cement table gasp blanket grocery coral direct hair pass give shed mushroom holiday toast destroy enemy marine sun flat gain sketch"
+    },
+    "operator": {
+      "name": "st-operator",
+      "mnemonic": "mix loop stadium sting word price pair begin tube flat usual reason mosquito coast present tray jungle guitar online neck festival visit return throw"
+    },
+    "reward": {
+      "name": "st-reward",
+      "mnemonic": "dragon rapid link poem bird spice empty play flower royal soccer bus bubble shed worth ritual head practice season rely illegal text burden unaware"
+    }
+  },
+  "holders": {
+    "base": {
+      "name": "holder-base",
+      "mnemonic": "example rival predict ramp stay sting fiscal client toy renew naive carpet visit jump empty travel boil pink happy phone umbrella later provide tiger"
+    },
+    "vesting": {
+      "name": "holder-vesting",
+      "mnemonic": "two surge pool blind liar must program hour lab list siege palm motor chest noise explain fantasy decide meadow pride initial viable embody hold"
+    }
+  }
+}

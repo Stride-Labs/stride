@@ -67,3 +67,8 @@ paths:
       chain-id: stride-test-1
     dst:
       chain-id: osmosis-test-1
+  cosmoshub-osmosis:
+    src:
+      chain-id: cosmoshub-test-1
+    dst:
+      chain-id: osmosis-test-1

@@ -11,6 +11,8 @@ STRIDED0="kubectl exec -it stride-validator-0 -c validator -n $NAMESPACE -- stri
 STRIDED1="kubectl exec -it stride-validator-1 -c validator -n $NAMESPACE -- strided"
 STRIDED2="kubectl exec -it stride-validator-2 -c validator -n $NAMESPACE -- strided"
 
+STRIDED3="kubectl exec -it stride-validator-3 -c validator -n $NAMESPACE -- strided"
+
 UPGRADE_BUFFER=45 # blocks
 
 trim_tx() {
@@ -19,7 +21,7 @@ trim_tx() {
 
 upgrade_name=$(kubectl exec stride-validator-0 -c validator -- printenv UPGRADE_NAME)
 latest_height=$($STRIDED0 status | jq -r 'if .SyncInfo then .SyncInfo.latest_block_height else .sync_info.latest_block_height end')
-upgrade_height=$((latest_height+UPGRADE_BUFFER))
+upgrade_height=${UPGRADE_HEIGHT:-$((latest_height+UPGRADE_BUFFER))}
 
 echo -e "\nSubmitting proposal for $upgrade_name at height $upgrade_height...\n"
 $EXEC0 bash scripts/propose_upgrade.sh $upgrade_name $upgrade_height | trim_tx
@@ -37,6 +39,8 @@ echo "Val2:"
 $STRIDED1 tx gov vote $proposal_id yes --from val2 -y | trim_tx
 echo "Val3:"
 $STRIDED2 tx gov vote $proposal_id yes --from val3 -y | trim_tx
+echo "Val4:"
+$STRIDED3 tx gov vote $proposal_id yes --from val4 -y | trim_tx
 
 sleep 5
 echo -e "\nVote confirmation:\n"
