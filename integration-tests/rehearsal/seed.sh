@@ -48,7 +48,7 @@ staketia_queue_record_amount() { # id
 }
 hub_unbondings_in() { # status -> number of Hub host-zone unbondings in that status
   strided_old q records list-epoch-unbonding-record -o json | jq -r --arg status "$1" \
-    '[.epoch_unbonding_records[].host_zone_unbondings[]? | select(.host_zone_id == "cosmoshub-test-1" and .status == $status)] | length'
+    '[.epoch_unbonding_record[].host_zone_unbondings[]? | select(.host_zone_id == "cosmoshub-test-1" and .status == $status)] | length'
 }
 hub_has_unbondings() { (( $(hub_unbondings_in "$1") >= $2 )); } # status, minimum count
 hub_deposit_in_transfer_queue() {
@@ -57,7 +57,7 @@ hub_deposit_in_transfer_queue() {
 }
 osmo_retry_record_present() {
   strided_old q records list-epoch-unbonding-record -o json \
-    | jq -e '[.epoch_unbonding_records[].host_zone_unbondings[]? | select(.host_zone_id == "osmosis-test-1" and .status == "UNBONDING_RETRY_QUEUE")] | length > 0'
+    | jq -e '[.epoch_unbonding_record[].host_zone_unbondings[]? | select(.host_zone_id == "osmosis-test-1" and .status == "UNBONDING_RETRY_QUEUE")] | length > 0'
 }
 staketia_queue_ready() { [[ -n "$(staketia_queue_record_id)" ]]; }
 
@@ -253,25 +253,27 @@ tx_step "hub RD redeem (queue)" strided_old tx stakeibc redeem-stake 10000000 co
 tx_step "staketia R2" strided_old tx staketia redeem-stake 20000000 "$USER1_STRIDE" --from user1 $STRIDE_TX
 tx_step "staketia R3 spillover" strided_old tx staketia redeem-stake 40000000 "$USER1_STRIDE" --from user1 $STRIDE_TX
 
+# The record mix the post-upgrade phases depend on. All hard checkpoints run before the U-20 deposit so the seed cannot overrun U.
+# The retry needs the failed ICA ack (up to one more day epoch after RE); cap the wait so it ends by U-30.
+RETRY_WAIT=$(( U - 30 - $(date +%s) ))
+(( RETRY_WAIT < 10 )) && RETRY_WAIT=10
+wait_until "$RETRY_WAIT" "osmo RE in UNBONDING_RETRY_QUEUE" osmo_retry_record_present
+checkpoint "hub RA CLAIMABLE"              hub_has_unbondings CLAIMABLE 1
+checkpoint "hub RB+RC EXIT_TRANSFER_QUEUE" hub_has_unbondings EXIT_TRANSFER_QUEUE 2
+checkpoint "hub RD UNBONDING_QUEUE"        hub_has_unbondings UNBONDING_QUEUE 1
+
 # Pre-upgrade liquid stake so a deposit record is still TRANSFER_QUEUE at U (delegation happens at the next
 # stride epoch, 45s, so it must land just before U)
 sleep_until $((U - 20))
 tx_step "deposit in flight" strided_old tx stakeibc liquid-stake 10000000 uatom --from user1 $STRIDE_TX
+# Timing-sensitive (the deposit record only stays TRANSFER_QUEUE for one stride epoch)
+CHECKPOINT_SOFT=1 checkpoint "hub deposit in TRANSFER_QUEUE" hub_deposit_in_transfer_queue
 
 RATE_HUB=$(rate_of cosmoshub-test-1)
 RATE_OSMO=$(rate_of osmosis-test-1)
 log "pre-upgrade rates: hub=$RATE_HUB osmo=$RATE_OSMO"
 printf 'RATE_HUB=%s\nRATE_OSMO=%s\nU=%s\nHIST_TX=%s\n' "$RATE_HUB" "$RATE_OSMO" "$U" "$HIST_TX" >> "$REHEARSAL_DIR/state.env"
 checkpoint "state.env has HIST_TX" test -n "$HIST_TX"
-
-# The record mix the post-upgrade phases depend on
-checkpoint "hub RA CLAIMABLE"              hub_has_unbondings CLAIMABLE 1
-checkpoint "hub RB+RC EXIT_TRANSFER_QUEUE" hub_has_unbondings EXIT_TRANSFER_QUEUE 2
-checkpoint "hub RD UNBONDING_QUEUE"        hub_has_unbondings UNBONDING_QUEUE 1
-# Timing-sensitive (the deposit record only stays TRANSFER_QUEUE for one stride epoch)
-CHECKPOINT_SOFT=1 checkpoint "hub deposit in TRANSFER_QUEUE" hub_deposit_in_transfer_queue
-# The retry needs the failed ICA ack, which can take up to one more day epoch
-wait_until 400 "osmo RE in UNBONDING_RETRY_QUEUE" osmo_retry_record_present
 
 log_cmd "records at upgrade" strided_old q records list-epoch-unbonding-record -o json
 log_cmd "staketia records at upgrade" strided_old q staketia unbonding-records -o json
