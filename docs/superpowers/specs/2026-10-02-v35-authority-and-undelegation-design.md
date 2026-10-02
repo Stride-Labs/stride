@@ -87,8 +87,8 @@ Handler doc comment and the ordered step list get entries 10–14.
 ## §4. Ante decorator
 
 `app/ante_blocked_msgs.go`: `BlockedMsgsDecorator` holding a `map[string]bool` of type
-URLs, exported as `BlockedStakingMsgTypeUrls` = `MsgDelegate`, `MsgBeginRedelegate`,
-`MsgCreateValidator`, `MsgCancelUnbondingDelegation`. `AnteHandle` walks `tx.GetMsgs()`;
+URLs, constructed from `v35.BlockedStakingMsgTypeUrls` = `MsgDelegate`, `MsgBeginRedelegate`,
+`MsgCreateValidator`, `MsgCancelUnbondingDelegation` (the one list, in `constants.go`). `AnteHandle` walks `tx.GetMsgs()`;
 for an authz `MsgExec` it unpacks `GetMessages()` and walks those too (recursively, since an
 exec can nest). Any hit rejects the whole tx with `sdkerrors.ErrUnauthorized` wrapping
 `"<type url> is disabled: the chain is winding down"`. Simulation and check are treated the
