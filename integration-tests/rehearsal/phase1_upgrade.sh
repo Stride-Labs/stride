@@ -6,18 +6,30 @@ source "$REHEARSAL_DIR/state.env"
 log "## Phase 1: upgrade to v35"
 
 MIN_UPGRADE_LEAD_BLOCKS=60
+ADMIN_MEMBERS=m1,m2,m3
 GOV_MODULE_ADDRESS=stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl
 AUTOPILOT_LIQUID_STAKE_MEMO='{"autopilot":{"receiver":"'$USER1_STRIDE'","stakeibc":{"action":"LiquidStake"}}}'
 LIQUID_STAKE_ICA_MSG_TYPE=/stride.stakeibc.MsgLiquidStake
 
 v35_applied() { strided_new q upgrade applied v35 -o json | jq -e '(.height | tonumber) > 0'; }
 handler_log_lines() { $KX logs stride-validator-0 -c validator --since=60m | grep -E 'v35|wind-down|Upgrade v35' || true; }
-# CometBFT puts the level before the message ("ERR v35: ..."); expected skip-path lines are allow-listed
+# CometBFT puts the level before the message ("ERR v35: ..."); expected skip-path lines are allow-listed. The v34 binary
+# itself logs 'ERR UPGRADE "v35" NEEDED at height' and CONSENSUS FAILURE lines right before cosmovisor swaps binaries.
 handler_log_errors() {
   local matched
-  matched=$($KX logs stride-validator-0 -c validator --since=60m | grep -E 'ERR .*v35|v35.*panic' | grep -vE 'haqq|comdex|trade route|LSM|oracle|contract' || true)
+  matched=$($KX logs stride-validator-0 -c validator --since=60m | grep -E 'ERR .*v35|v35.*panic' | grep -vE 'haqq|comdex|trade route|LSM|oracle|contract|UPGRADE "v35" NEEDED|CONSENSUS FAILURE' || true)
   log "handler error lines: ${matched:-none}"
   [[ -z "$matched" ]]
+}
+hub_deposit_in_transfer_queue() {
+  strided_old q records list-deposit-record -o json \
+    | jq -e '[.deposit_record[]? | select(.host_zone_id == "cosmoshub-test-1" and .status == "TRANSFER_QUEUE")] | length > 0'
+}
+# The drain guard (x/stakeibc/keeper/wind_down_undelegate.go checkNoQueuedUnbondings) must refuse while the Hub RD record is queued
+hub_drain_refused() {
+  local out
+  out=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators cosmoshub-test-1 --all 2>&1) && return 1
+  grep -qiE 'wait for the day epoch|let the day epoch|awaiting an ack|pending undelegation|UNBONDING_QUEUE|UNBONDING_RETRY_QUEUE' <<<"$out"
 }
 liquid_stake_unroutable() {
   strided_new tx stakeibc liquid-stake 1000 uatom --from user1 $STRIDE_TX 2>&1 | grep -qiE "can't route|unknown command|not found"
@@ -41,23 +53,33 @@ stride_balance() { # address denom -> amount ("0" when absent)
 # Schedule and apply the upgrade
 ############################################
 
-# U was fixed by the seed; aim the upgrade height at it, but never closer than the proposal needs to pass (30s voting)
+# U was fixed by the seed; aim the upgrade height at it (1s blocks). The proposal needs ~60s to pass, and the upgrade
+# must land before D5 (U + 30s) so the queued Hub redemption is still pending: never push the height later than U.
 height=$(strided_old status | jq -r '.sync_info.latest_block_height // .SyncInfo.latest_block_height')
 now=$(date +%s)
 lead_blocks=$(( U - now ))
 if (( lead_blocks < MIN_UPGRADE_LEAD_BLOCKS )); then
-  log "only ${lead_blocks}s to U: using a ${MIN_UPGRADE_LEAD_BLOCKS}-block lead so the proposal can pass first"
-  lead_blocks=$MIN_UPGRADE_LEAD_BLOCKS
+  log "ABORT: only ${lead_blocks}s to U (need >= ${MIN_UPGRADE_LEAD_BLOCKS}s for the proposal to pass); pushing the height out would cross D5. Re-seed."
+  exit 1
 fi
-(( U - now < 60 )) && log "WARNING: only $(( U - now ))s remain to U; the proposal may not pass before the upgrade height"
 UPGRADE_HEIGHT=$(( height + lead_blocks ))
 log "upgrade height $UPGRADE_HEIGHT (now $height, target time $U)"
 UPGRADE_HEIGHT=$UPGRADE_HEIGHT bash "$REPO/integration-tests/network/scripts/upgrade.sh" | tee -a "$LOG"
+
+# Pre-upgrade liquid stake so a deposit record is still TRANSFER_QUEUE at U (delegation happens at the next
+# stride epoch, 45s, so it must land just before U). The proposal has passed; the chain is still on v34.
+sleep_until $((U - 20))
+log_cmd "deposit in flight" strided_old tx stakeibc liquid-stake 10000000 uatom --from user1 $STRIDE_TX
+# Timing-sensitive (the deposit record only stays TRANSFER_QUEUE for one stride epoch)
+CHECKPOINT_SOFT=1 checkpoint "hub deposit in TRANSFER_QUEUE" hub_deposit_in_transfer_queue
 
 # The chain halts at the height, cosmovisor swaps the binary, then the node serves v35 queries
 wait_until 600 "v35 running" v35_applied
 log_cmd "handler log lines" handler_log_lines
 checkpoint "no handler error" handler_log_errors
+
+# Only valid until D5 (the day epoch after D4 submits the queued RD record), so it runs first
+CHECKPOINT_SOFT=1 checkpoint "drain refused while RD queued (hub)" hub_drain_refused
 
 ############################################
 # Entry points and state the handler changed

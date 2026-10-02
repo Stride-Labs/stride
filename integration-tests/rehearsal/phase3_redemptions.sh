@@ -24,8 +24,12 @@ stranded_deposit_queued() {
   strided_new q records list-deposit-record -o json | jq -e '[.deposit_record[] | select(.status=="DELEGATION_QUEUE")] | length >= 1'
 }
 
-latest_unbonding_epoch() {
-  strided_new q records list-epoch-unbonding-record -o json | jq -r '[.epoch_unbonding_record[].epoch_number | tonumber] | (max // 0)'
+day_epoch_number() { strided_new q stakeibc show-epoch-tracker day -o json | jq -r '.epoch_tracker.epoch_number'; }
+
+# Fully-claimed records are deleted at the next day epoch, so the max epoch can drop: compare against the tracker instead
+no_unbonding_record_after() { # epoch
+  strided_new q records list-epoch-unbonding-record -o json \
+    | jq -e --argjson epoch "$1" '[.epoch_unbonding_record[] | select((.epoch_number | tonumber) > $epoch)] | length == 0'
 }
 
 no_reinvest_or_reward_ica() {
@@ -43,9 +47,9 @@ log_cmd "deposit records" strided_new q records list-deposit-record -o json
 checkpoint "stranded deposit never staked" stranded_deposit_queued
 
 # Wait past at least one full day epoch (180s) so a new unbonding record would have been created
-EPOCH_BEFORE=$(latest_unbonding_epoch)
+EPOCH_BEFORE=$(day_epoch_number)
 sleep 200
 checkpoint "hub rate frozen"  assert_rate_unchanged cosmoshub-test-1 "$RATE_HUB"
 checkpoint "osmo rate frozen" assert_rate_unchanged osmosis-test-1 "$RATE_OSMO"
-checkpoint "no new epoch unbonding records" test "$(latest_unbonding_epoch)" = "$EPOCH_BEFORE"
+checkpoint "no new epoch unbonding records" no_unbonding_record_after "$EPOCH_BEFORE"
 checkpoint "no reinvest/claim-rewards ICA" no_reinvest_or_reward_ica

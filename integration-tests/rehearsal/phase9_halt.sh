@@ -89,6 +89,10 @@ canonical_pool_surplus_nonnegative() {
   pool_liquidity "$POOL_ATOM" | jq -e --arg denom "$ATOM_ON_OSMO" '[.data.total_pool_liquidity[] | select(.denom==$denom) | .amount | tonumber] | .[0] >= 0'
 }
 
+# holder-vesting has no uosmo on Osmosis, so it cannot pay the swap fee until it is funded
+fund_hash=$(osmosisd tx bank send faucet "$HOLDER_VESTING_OSMO" 1000000uosmo $OSMO_TX | tx_hash)
+wait_tx osmosisd "$fund_hash"
+
 for holder in user1 holder-base holder-vesting; do
   holder_addr=$(osmosisd keys show "$holder" -a --keyring-backend test | tr -d '\r\n')
   bal=$(osmosisd q bank balance "$holder_addr" "$STATOM_CANON" -o json | jq -r '.balance.amount')

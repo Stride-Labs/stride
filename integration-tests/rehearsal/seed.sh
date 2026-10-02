@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pre-upgrade state on v34 (spec docs/superpowers/specs/2026-10-02-wind-down-rehearsal-design.md).
 # Every stride command goes through strided_old: the v35 binary has no liquid-stake / redeem-stake / staketia tx.
-# Ends at about U - 100s with state.env holding U, RATE_HUB, RATE_OSMO, HIST_TX.
+# Ends at about D4+55 (right after the hard status checkpoints) with state.env holding U, RATE_HUB, RATE_OSMO, HIST_TX.
 source "$(dirname "$0")/lib.sh"
 log "## Seed (v34)"
 : > "$REHEARSAL_DIR/state.env"
@@ -202,7 +202,7 @@ while (( (EPOCH_NOW + EPOCHS_AHEAD) % 4 != 0 )); do EPOCHS_AHEAD=$((EPOCHS_AHEAD
 D4=$((D0 + 180 * (EPOCHS_AHEAD - 1)))
 D3=$((D4 - 180)); D2=$((D4 - 360)); D1=$((D4 - 540))
 # Upgrade lands 150s after D4 so the proposal (voting 30s) has time to pass after the seed finishes (~D4+50).
-# That is still before D5 (D4+180), so the queued Hub redemption is still pending at U (the in-flight deposit is seeded at U-20),
+# That is still before D5 (D4+180), so the queued Hub redemption is still pending at U (the in-flight deposit is seeded by phase 1 at U-20),
 # and before the staketia record's 240s unbonding completes.
 U=$((D4 + 150))
 log "day epoch now=$EPOCH_NOW: D0=$D0 D1=$D1 D2=$D2 D3=$D3 D4=$D4 (staketia prepare epoch) upgrade target U=$U"
@@ -230,7 +230,7 @@ sleep_until $((D3 + 10))
 tx_step "hub RC redeem" strided_old tx stakeibc redeem-stake 20000000 cosmoshub-test-1 "$USER1_COSMOS" --from user1 $STRIDE_TX
 
 # Staketia R1 lands in the accumulating record that the D4 prepare freezes into UNBONDING_QUEUE
-tx_step "staketia R1" strided_old tx staketia redeem-stake 20000000 "$USER1_STRIDE" --from user1 $STRIDE_TX
+tx_step "staketia R1" strided_old tx staketia redeem-stake 20000000 "$USER1_COSMOS" --from user1 $STRIDE_TX
 
 # v34 operator flow: wait for the prepare, undelegate on the Hub through authz as the operator, then confirm on Stride
 sleep_until $((D4 + 5))
@@ -250,24 +250,19 @@ tx_step "staketia confirm-undelegation" strided_old tx staketia confirm-undelega
 # After D4: RD queues behind the in-flight Hub unbonding; R2 and R3 open a new accumulating staketia record (spillover)
 sleep_until $((D4 + 10))
 tx_step "hub RD redeem (queue)" strided_old tx stakeibc redeem-stake 10000000 cosmoshub-test-1 "$USER1_COSMOS" --from user1 $STRIDE_TX
-tx_step "staketia R2" strided_old tx staketia redeem-stake 20000000 "$USER1_STRIDE" --from user1 $STRIDE_TX
-tx_step "staketia R3 spillover" strided_old tx staketia redeem-stake 40000000 "$USER1_STRIDE" --from user1 $STRIDE_TX
+tx_step "staketia R2" strided_old tx staketia redeem-stake 20000000 "$USER1_COSMOS" --from user1 $STRIDE_TX
+tx_step "staketia R3 spillover" strided_old tx staketia redeem-stake 40000000 "$USER1_COSMOS" --from user1 $STRIDE_TX
 
-# The record mix the post-upgrade phases depend on. All hard checkpoints run before the U-20 deposit so the seed cannot overrun U.
+# The record mix the post-upgrade phases depend on. The seed ends right after the hard checkpoints.
 # The retry needs the failed ICA ack (up to one more day epoch after RE); cap the wait so it ends by U-30.
 RETRY_WAIT=$(( U - 30 - $(date +%s) ))
 (( RETRY_WAIT < 10 )) && RETRY_WAIT=10
 wait_until "$RETRY_WAIT" "osmo RE in UNBONDING_RETRY_QUEUE" osmo_retry_record_present
 checkpoint "hub RA CLAIMABLE"              hub_has_unbondings CLAIMABLE 1
-checkpoint "hub RB+RC EXIT_TRANSFER_QUEUE" hub_has_unbondings EXIT_TRANSFER_QUEUE 2
+checkpoint "hub RB+RC EXIT_TRANSFER_QUEUE" hub_has_unbondings EXIT_TRANSFER_QUEUE 1
+# RB is swept ~35s after this point, so the full count of 2 is only a soft check
+CHECKPOINT_SOFT=1 checkpoint "hub RB+RC both EXIT_TRANSFER_QUEUE" hub_has_unbondings EXIT_TRANSFER_QUEUE 2
 checkpoint "hub RD UNBONDING_QUEUE"        hub_has_unbondings UNBONDING_QUEUE 1
-
-# Pre-upgrade liquid stake so a deposit record is still TRANSFER_QUEUE at U (delegation happens at the next
-# stride epoch, 45s, so it must land just before U)
-sleep_until $((U - 20))
-tx_step "deposit in flight" strided_old tx stakeibc liquid-stake 10000000 uatom --from user1 $STRIDE_TX
-# Timing-sensitive (the deposit record only stays TRANSFER_QUEUE for one stride epoch)
-CHECKPOINT_SOFT=1 checkpoint "hub deposit in TRANSFER_QUEUE" hub_deposit_in_transfer_queue
 
 RATE_HUB=$(rate_of cosmoshub-test-1)
 RATE_OSMO=$(rate_of osmosis-test-1)

@@ -19,7 +19,18 @@ write_drain_file() { # path valoper offset
 submit_window() {
   local next now
   next=$(day_epoch_next_start); now=$(date +%s)
-  if (( next - now < 50 )); then sleep_until $((next + 5)); fi
+  if (( next - now < 100 )); then sleep_until $((next + 5)); fi
+}
+
+# Injection 2 only: submit in the last 100-150s of the day epoch so the relayer pause (until next - 20) stays well
+# under the 204s trusting period. Pausing starts right before the drain, not before the wait.
+DAY_EPOCH_SECONDS=180
+submit_window_late() {
+  local next now
+  next=$(day_epoch_next_start); now=$(date +%s)
+  if (( next - now < 100 )); then sleep_until $((next + 5)); next=$(day_epoch_next_start); fi
+  now=$(date +%s)
+  if (( next - now > 150 )); then sleep_until $((next - 150)); fi
 }
 
 drain() { # chain-id file-or-flag
@@ -100,19 +111,24 @@ log_cmd "hub validators after --all" strided_new q stakeibc show-validators cosm
 checkpoint "val7 batch failed, others drained" val7_failed_others_drained "$HUB_VAL7"
 
 # Refresh applies the slash, then val7 drains by file
+# (slash_query_in_progress only flips once the callback submits the delegation query, so wait on the recorded delegation dropping)
+VAL7_BEFORE=$(strided_new q stakeibc show-validators cosmoshub-test-1 -o json | jq -r --arg addr "$HUB_VAL7" '.validators[] | select(.address == $addr) | .delegation')
 ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc update-delegation cosmoshub-test-1 "$HUB_VAL7" >/dev/null
-wait_until 120 "val7 refreshed" validator_field_is cosmoshub-test-1 "$HUB_VAL7" '.slash_query_in_progress == false'
+wait_until 300 "val7 recorded delegation reduced by the slash" validator_field_is cosmoshub-test-1 "$HUB_VAL7" "(.delegation | tonumber) < $VAL7_BEFORE"
 write_drain_file /tmp/v7.json "$HUB_VAL7" 0
 submit_window; drain cosmoshub-test-1 /tmp/v7.json
 wait_until 240 "val7 drained" validator_field_is cosmoshub-test-1 "$HUB_VAL7" '(.delegation | tonumber) < 1000000'
 
-# Injection 2 (osmosis zone): ICA timeout -> channel closes -> restore -> resubmit. Pause the stride-osmosis relayer past the day-epoch timeout.
+# Injection 2 (osmosis zone): ICA timeout -> channel closes -> restore -> resubmit. The relayer is paused right before the
+# drain (in the last 100-150s of the day epoch) and resumed 20s before the epoch ends, past the ICA timeout (next - 36s).
 OSMO_VALS=$(strided_new q stakeibc show-validators osmosis-test-1 -o json | jq -r '.validators[].address')
 OV1=$(head -1 <<<"$OSMO_VALS")
 write_drain_file /tmp/ov1.json "$OV1" 0
+submit_window_late
+NEXT_EPOCH_START=$(day_epoch_next_start)
 $KX scale deployment relayer-stride-osmosis --replicas=0
-submit_window; drain osmosis-test-1 /tmp/ov1.json
-sleep_until $(( $(day_epoch_next_start) + 20 ))
+drain osmosis-test-1 /tmp/ov1.json
+sleep_until $(( NEXT_EPOCH_START - 20 ))
 $KX scale deployment relayer-stride-osmosis --replicas=1
 # Assumes no stale closed osmosis DELEGATION channel exists from an earlier run, else STATE_CLOSED matches immediately
 wait_until 300 "osmo delegation channel closed" ica_channel_in_state osmosis-test-1.DELEGATION STATE_CLOSED

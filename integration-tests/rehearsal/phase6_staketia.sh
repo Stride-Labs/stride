@@ -54,6 +54,35 @@ transfer_rejected() {
   gaiad q tx "$hash" -o json | jq -r '.raw_log' | grep -qiE "$GRANT_DENIAL"
 }
 
+# Phase 2 confirmed only the records that existed then. The R2/R3 record leaves ACCUMULATING at the next %4 day epoch,
+# which can be several day epochs away: wait for it to become UNBONDING_QUEUE (or for nothing to accumulate), confirm
+# every queued record against phase 2's Hub undelegation, then wait for the hour epoch to mark them UNBONDED.
+staketia_unbondings_in() { # status -> ids, space-separated
+  strided_new q staketia unbonding-records -o json | jq -r --arg status "$1" '[.unbonding_records[] | select(.status == $status) | .id] | join(" ")'
+}
+staketia_nothing_accumulating_or_queued() {
+  strided_new q staketia unbonding-records -o json | jq -e '
+    ([.unbonding_records[] | select(.status == "ACCUMULATING" and (.native_amount | tonumber) > 0)] | length == 0)
+    or ([.unbonding_records[] | select(.status == "UNBONDING_QUEUE")] | length > 0)'
+}
+confirmed_records_unbonded() { # ids
+  local id
+  for id in $1; do
+    [[ "$(strided_new q staketia unbonding-records -o json | jq -r --arg id "$id" '.unbonding_records[] | select(.id == $id) | .status')" == UNBONDED ]] || return 1
+  done
+}
+
+log "waiting (up to 800s) for the accumulating staketia record to be frozen into UNBONDING_QUEUE at the next %4 day epoch"
+wait_until 800 "no ACCUMULATING record with amount, or an UNBONDING_QUEUE record exists" staketia_nothing_accumulating_or_queued
+CONFIRM_IDS=$(staketia_unbondings_in UNBONDING_QUEUE)
+log "confirming staketia unbonding records [${CONFIRM_IDS:-none}] against phase 2's Hub undelegation $STK_UNBOND_HASH"
+for id in $CONFIRM_IDS; do
+  out=$(log_cmd "confirm-undelegation $id" strided_new tx staketia confirm-undelegation "$id" "$STK_UNBOND_HASH" --from st-operator $STRIDE_TX)
+  wait_tx strided_new "$(grep '^{' <<<"$out" | tx_hash)"
+done
+log "waiting (up to 300s) for confirmed records [${CONFIRM_IDS:-none}] to reach UNBONDED (hour epoch)"
+wait_until 300 "confirmed staketia records UNBONDED" confirmed_records_unbonded "$CONFIRM_IDS"
+
 wait_until 400 "hub multisig unbonding matured" hub_unbonding_done
 BAL=$(hub_bal "$HUB_MS_COSMOS")
 
