@@ -53,6 +53,7 @@ wait_until 120 "osmo bank-send form landed" vault_above uosmo "$O0"
 # Injection: a transfer that times out and refunds. The ICA-wrapped host->Osmosis transfer uses an inner
 # timeout of 2 x 15 min, so the relayer stays paused 32 minutes (not 16) before a refund is possible
 $KX scale deployment relayer-cosmoshub-osmosis --replicas=0
+trap '$KX scale deployment relayer-cosmoshub-osmosis --replicas=1' EXIT
 W=$(ica_bal gaiad "$HUB_ZONE" WITHDRAWAL uatom)
 if [[ "$W" == 0 ]]; then
   WITHDRAWAL_ICA=$(strided_new q stakeibc show-host-zone "$HUB_ZONE" -o json | jq -r .host_zone.withdrawal_ica_address)
@@ -64,6 +65,7 @@ ms_tx "${ADMIN_TX[@]}" stakeibc transfer-from-ica "$HUB_ZONE" WITHDRAWAL "${W}ua
 log "sleeping 32 minutes: the ICA-wrapped transfer's inner timeout is 2 x the 15-minute WindDownTransferTimeout"
 sleep 1920
 $KX scale deployment relayer-cosmoshub-osmosis --replicas=1
+trap - EXIT
 wait_until 300 "timed-out transfer refunded to the withdrawal ICA" ica_at_least gaiad "$HUB_ZONE" WITHDRAWAL uatom "$W"
 ms_tx "${ADMIN_TX[@]}" stakeibc transfer-from-ica "$HUB_ZONE" WITHDRAWAL "${W}uatom" >/dev/null
 wait_until 300 "resubmission landed" ica_below gaiad "$HUB_ZONE" WITHDRAWAL uatom "$W"

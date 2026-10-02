@@ -21,23 +21,37 @@ all_unbondings_claimed() {
     jq -e '[.unbonding_records[] | select(.status != "CLAIMED" and (.native_amount|tonumber) > 0)] | length == 0'
 }
 
-# receiver memo amount -> tx hash: the staketia operator executes the multisig's grant-limited transfer
+# receiver memo amount -> broadcast JSON (pipe to tx_hash): the staketia operator executes the multisig's grant-limited transfer
 exec_transfer() {
+  # assumes the laptop and cluster clocks agree
   local timeout_ns=$(( ($(date +%s) + 900) * 1000000000 ))
   cat > "$TRANSFER_JSON" <<JSON
 {"body":{"messages":[{"@type":"/ibc.applications.transfer.v1.MsgTransfer","source_port":"transfer","source_channel":"channel-0","token":{"denom":"uatom","amount":"$3"},
  "sender":"$HUB_MS_COSMOS","receiver":"$1","timeout_height":{"revision_number":"0","revision_height":"0"},"timeout_timestamp":"$timeout_ns","memo":"$2"}]}}
 JSON
   $KX cp "$TRANSFER_JSON" cosmoshub-validator-0:/tmp/xfer.json -c validator >/dev/null
-  gaiad tx authz exec /tmp/xfer.json --from st-operator $HUB_TX | tx_hash
+  gaiad tx authz exec /tmp/xfer.json --from st-operator $HUB_TX
 }
 
-# receiver memo amount: succeeds only if the grant blocks the transfer (no hash from simulation/CheckTx, or a failed tx)
+# ibc-go v11 transfer_authorization.go ("not allowed receiver address for transfer", "not allowed memo",
+# "memo must be empty ...") and authz ("authorization not found"), plus the SDK's "unauthorized"
+GRANT_DENIAL='not allowed receiver|not allowed memo|memo must be empty|authorization not found|unauthorized'
+
+# receiver memo amount: passes only when the grant blocks the transfer (CheckTx/simulation error or a failed tx
+# whose log names the grant denial); a cp or key failure matches no denial text and so fails the checkpoint
 transfer_rejected() {
-  local hash
-  hash=$(exec_transfer "$1" "$2" "$3" 2>/dev/null) || return 0
-  [[ -n "$hash" && "$hash" != null ]] || return 0
-  ! wait_tx gaiad "$hash"
+  local out hash
+  out=$(exec_transfer "$1" "$2" "$3" 2>&1) || { log "$out"; grep -qiE "$GRANT_DENIAL" <<<"$out"; return; }
+
+  # CheckTx rejection still returns JSON with a non-zero code
+  if [[ "$(jq -r '.code // 0' <<<"$out" 2>/dev/null)" != 0 ]]; then
+    log "$out"; jq -r '.raw_log' <<<"$out" | grep -qiE "$GRANT_DENIAL"; return
+  fi
+
+  hash=$(tx_hash <<<"$out")
+  [[ -n "$hash" && "$hash" != null ]] || return 1
+  wait_tx gaiad "$hash" && return 1
+  gaiad q tx "$hash" -o json | jq -r '.raw_log' | grep -qiE "$GRANT_DENIAL"
 }
 
 wait_until 400 "hub multisig unbonding matured" hub_unbonding_done
@@ -46,13 +60,16 @@ BAL=$(hub_bal "$HUB_MS_COSMOS")
 checkpoint "transfer with memo rejected by grant" transfer_rejected "$STAKETIA_CLAIM" hello 1000
 checkpoint "transfer to other receiver rejected" transfer_rejected "$USER1_STRIDE" "" 1000
 
-H=$(exec_transfer "$STAKETIA_CLAIM" "" "$BAL")
+# Not rerun-safe once the balance is swept, hence the guard
+(( BAL > 0 )) || { log "hub multisig balance is 0, sweep already done"; exit 1; }
+H=$(exec_transfer "$STAKETIA_CLAIM" "" "$BAL" | tx_hash)
 wait_tx gaiad "$H"
 wait_until 120 "claim address funded" claim_at_least "$BAL"
 
 # Confirm every matured unbonding record against the sweep transfer
 for id in $(strided_new q staketia unbonding-records -o json | jq -r '.unbonding_records[] | select(.status=="UNBONDED") | .id'); do
-  log_cmd "confirm-sweep $id" strided_new tx staketia confirm-sweep "$id" "$H" --from st-operator $STRIDE_TX
+  out=$(log_cmd "confirm-sweep $id" strided_new tx staketia confirm-sweep "$id" "$H" --from st-operator $STRIDE_TX)
+  wait_tx strided_new "$(grep '^{' <<<"$out" | tx_hash)"
 done
 wait_until 120 "redeemers paid (hour epoch)" no_redemption_records
 checkpoint "every unbonding record CLAIMED or empty" all_unbondings_claimed
