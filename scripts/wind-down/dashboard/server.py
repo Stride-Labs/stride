@@ -3,7 +3,8 @@
     python3 scripts/wind-down/dashboard/server.py        # then open http://localhost:8787
 
 Each registered collector is refreshed on its own interval in a background thread; the page polls the
-cached snapshots, so the browser never talks to a chain.
+cached snapshots, so the browser never talks to a chain. The Ops tab is the exception: it has no collector, and
+`GET /api/ops` / `POST /api/ops/check` read and write the plan and status files directly (see ops.py).
 """
 
 import datetime
@@ -22,6 +23,7 @@ import channels
 import config
 import validators
 import funds
+import ops
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -117,6 +119,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(
                 status=200, body={"intervals": config.REFRESH_INTERVAL_SECONDS}
             )
+        elif path == "/api/ops":
+            self._get_ops()
         elif path.startswith("/api/"):
             self._get_snapshot(tab=path.removeprefix("/api/"))
         else:
@@ -124,6 +128,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = self.path.split("?")[0]
+        if path == "/api/ops/check":
+            self._post_ops_check()
+            return
+
         prefix = "/api/refresh/"
         cache = (
             CACHES.get(path.removeprefix(prefix)) if path.startswith(prefix) else None
@@ -137,6 +145,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A002 - signature fixed by the base class
         """Silence per-request logging; the page polls every few seconds."""
+
+    def _get_ops(self) -> None:
+        """The Ops tab has no collector: the plan and status are read from disk on every request."""
+        try:
+            body = {"plan": ops.load_plan(), "status": ops.load_status(), "today": ops.today()}
+        except (OSError, json.JSONDecodeError) as error:
+            self._send_json(status=500, body={"error": f"ops files unreadable: {error}"})
+            return
+
+        self._send_json(status=200, body=body)
+
+    def _post_ops_check(self) -> None:
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            request = ops.parse_check_request(body=json.loads(self.rfile.read(length) or b"null"))
+            status = ops.record_check(check_id=request.check_id, done=request.done, by=request.by)
+        except (ValueError, OSError) as error:
+            # json.JSONDecodeError and ops.InvalidCheckError are ValueErrors; a missing plan is an OSError.
+            code = 400 if isinstance(error, ValueError) else 500
+            self._send_json(status=code, body={"error": str(error)})
+            return
+
+        self._send_json(status=200, body=status)
 
     def _get_snapshot(self, tab: str) -> None:
         cache = CACHES.get(tab)
