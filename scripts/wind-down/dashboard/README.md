@@ -68,6 +68,9 @@ Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`
   drained of native, whose stToken it holds (by denom trace); canonical when the stToken came over channel-326.
 - Click a row for the zone's diagram, its transfer list and its accounts (ICAs, deposit address, staketia addresses
   for celestia, vault, pools, operators). Every integer in the payload is a string; the page uses BigInt.
+- Click the Staked or Unbonding node in the diagram for the per-validator breakdown (`validator_positions`): every
+  validator the delegation ICA, and for celestia the multisig, has stake or unbonding entries on, with a bar per
+  validator split into its staked amount and one segment per unbonding entry (hover for the amount and completion).
 
 ## Known gaps
 

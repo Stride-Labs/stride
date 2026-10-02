@@ -89,3 +89,14 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-funds tr[data-zone]:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
 #view-funds tr[data-zone].sel:hover td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 #view-funds .bar { min-width: 170px; }
+#view-funds svg .clickable { cursor: pointer; }
+#view-funds svg .clickable:hover .node, #view-funds svg .clickable.on .node { stroke: var(--accent); }
+#view-funds svg .hint { fill: var(--accent); font-size: 10.5px; font-weight: 600; }
+#view-funds .close { margin-left: auto; cursor: pointer; color: var(--muted); font-weight: 400; font-size: 15px; line-height: 1; }
+#view-funds .close:hover { color: var(--text); }
+#view-funds .posbar { display: flex; gap: 1px; height: 12px; width: 320px; }
+#view-funds .posbar span { display: block; height: 100%; min-width: 2px; }
+#view-funds .posbar .staked { background: var(--s-staked); border-radius: 2px 0 0 2px; }
+#view-funds .posbar .unbond { background: var(--s-unbond); }
+#view-funds .posbar span:last-child { border-radius: 0 2px 2px 0; }
+#view-funds .posbar span:hover { filter: brightness(.85); }
