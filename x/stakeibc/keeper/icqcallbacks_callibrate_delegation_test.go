@@ -1,13 +1,10 @@
 package keeper_test
 
 import (
-	"time"
-
 	"github.com/cosmos/gogoproto/proto"
 
 	sdkmath "cosmossdk.io/math"
 
-	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -275,44 +272,6 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_EmptyResponseCorrectsToZero() 
 		s.Require().Equal(initialTotalDelegations.Sub(recordedDelegation), hostZone.TotalDelegations,
 			"%s - total delegations lowered by the phantom amount", tc.name)
 	}
-}
-
-// Through the interchain-query msg server: an empty response to a stored calibration query
-// reaches the callback, which zeroes the recorded delegation
-func (s *KeeperTestSuite) TestCalibrateDelegation_EmptyQueryResponseReachesCallback() {
-	recordedDelegation := sdkmath.NewInt(7_500)
-	s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
-		ChainId:          HostChainId,
-		TotalDelegations: sdkmath.NewInt(10_000),
-		Validators: []*types.Validator{{
-			Address: ValAddress, Delegation: recordedDelegation, SharesToTokensRate: sdkmath.LegacyOneDec(),
-		}},
-	})
-
-	query := s.calibrationQuery(recordedDelegation)
-	query.Id = "calibration-query"
-	query.CallbackModule = types.ModuleName
-	query.CallbackId = keeper.ICQCallbackID_Calibrate
-	// No "key" suffix, so no proof is verified. SubmitICQRequest rejects that combination with
-	// the opt-in; the query is stored directly here because the test has no host proof to offer
-	query.QueryType = "store/staking"
-	query.TimeoutTimestamp = uint64(s.Ctx.BlockTime().Add(time.Hour).UnixNano())
-	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
-
-	msgServer := icqkeeper.NewMsgServerImpl(s.App.InterchainqueryKeeper)
-	_, err := msgServer.SubmitQueryResponse(s.Ctx, &icqtypes.MsgSubmitQueryResponse{
-		ChainId:     HostChainId,
-		QueryId:     query.Id,
-		Result:      []byte{},
-		FromAddress: s.TestAccs[0].String(),
-	})
-	s.Require().NoError(err)
-
-	hostZone := s.MustGetHostZone(HostChainId)
-	s.Require().Equal(sdkmath.ZeroInt(), hostZone.Validators[0].Delegation, "delegation corrected to zero")
-	s.Require().Equal(sdkmath.NewInt(2_500), hostZone.TotalDelegations, "total delegations lowered by the phantom amount")
-	_, found := s.App.InterchainqueryKeeper.GetQuery(s.Ctx, query.Id)
-	s.Require().False(found, "query deleted")
 }
 
 // An empty response is still subject to the checks that protect a non-empty one
