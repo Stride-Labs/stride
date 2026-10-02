@@ -239,7 +239,7 @@ function breakdownPanel(zone) {
   const rows = [...zone.validator_positions].sort(breakdown === 'unbonding' ? byUnbonding : byStaked);
   const widest = rows.reduce((max, row) => { const total = BigInt(row.staked) + unbondingOf(row); return total > max ? total : max; }, 0n);
   const sub = `${rows.length} validators · sorted by ${breakdown} · hover a bar segment for its amount`;
-  const header = `<tr><th>Validator</th><th>Operator</th><th class="num">Staked</th><th class="num">Unbonding</th><th class="num">Entries</th><th>Staked vs unbonding</th></tr>`;
+  const header = `<tr><th>Validator</th><th>Operator</th><th class="num">Staked</th><th class="num">Unbonding</th><th class="num">Entries</th><th>Next completes</th><th>Staked vs unbonding</th></tr>`;
   const body = rows.map((row) => breakdownRow(row, zone, widest)).join('');
   return `<div class="panel"><h2>Validators · ${escapeHtml(zone.chain_id)} <span class="sub">${sub}</span><span class="close" data-breakdown="${breakdown}" title="close">×</span></h2>
     <div class="table-scroll"><table>${header}${body}</table></div></div>`;
@@ -252,7 +252,16 @@ function breakdownRow(row, zone, widest) {
   const moniker = row.moniker === row.address ? '<span class="muted">not tracked by Stride</span>' : escapeHtml(row.moniker);
   return `<tr><td>${moniker}${source}</td><td>${addressCell(row.address)}</td>
     <td class="num">${amount(row.staked, zone.decimals, 6)}</td><td class="num">${amount(unbonding.toString(), zone.decimals, 6)}</td>
-    <td class="num">${row.entries.length || '<span class="muted">–</span>'}</td><td>${positionBar(row, zone, widest)}</td></tr>`;
+    <td class="num">${row.entries.length || '<span class="muted">–</span>'}</td><td>${nextCompletion(row)}</td><td>${positionBar(row, zone, widest)}</td></tr>`;
+}
+
+// Entries are sorted by completion, so the first one is the next to mature; the last one is shown when it differs.
+function nextCompletion(row) {
+  if (row.entries.length === 0) return '<span class="muted">–</span>';
+  const first = row.entries[0].completion;
+  const last = row.entries[row.entries.length - 1].completion;
+  const inDays = formatDuration((Date.parse(first) - Date.now()) / 1000);
+  return escapeHtml(`${shortDateTime(first)} · ${inDays}`) + (last !== first ? `<span class="muted"> · last ${escapeHtml(shortDate(last))}</span>` : '');
 }
 
 // One bar per validator, scaled to the largest total in the table: a staked segment then one segment per
