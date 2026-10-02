@@ -750,7 +750,10 @@ the native balance, so the only possible movement is stToken in, native out: nob
 stTokens from a pool, and de-hopping a foreign route through two pools (route → native →
 canonical) is impossible. Redemptions by router swap and by join-then-exit are unaffected
 (tested 2026-09-25). Completing an initial allocation after a test deposit therefore means
-unmark, join, re-mark. If the test deposit's native balance reaches zero, the contract removes
+unmark, join, re-mark. The mark also closes the window in which an outsider can join a route
+pool with native (§10), so the funding join and the mark go out back to back, and a route pool
+is checked for outside alloyed shares before funding. If the test deposit's native balance
+reaches zero, the contract removes
 the native asset; `add_new_assets` at the same factor before the remaining funding join
 restores it with the rate exact (tested). This completes the allocation, not a replenishment
 of redeemed funds. The canonical denom's
@@ -1255,6 +1258,17 @@ the current native balance, not cumulative funding: extra deposits after redempt
 remain below that bound and pass. Ops therefore verify the total confirmed funding deposits
 against the allocation and follow the no-replenishment rule (§8/§9); the checker does not
 replace that funding check.
+
+`join_pool` is permissionless, so the stTokens a pool holds are not all redeemed ones: a holder
+who joined with stTokens and has not exited holds alloyed shares that still redeem for native.
+The checker therefore adds each pool's alloyed supply not held by the vault to that pool's
+native requirement, one share being one native base unit (the pool gate asserts the alloyed and
+native factors are equal), so a join with stTokens can neither hide a shortfall nor block the
+gate. A join with the native token into a route pool is possible only while native is not
+marked corrupted (§8). The over-funded bound is unchanged, so the checker reports that route as
+over-funded by the joined amount until the joiner exits or redemptions pay out that much, and
+the vault cannot clear it by holding fewer shares, because the same amount then shows as a
+shortfall.
 
 Why a frozen rate is covered. Confirmed against cosmos-sdk v0.54.3: `Unbond` calls the
 distribution hook `BeforeDelegationSharesModified`, which withdraws the accrued rewards, and
