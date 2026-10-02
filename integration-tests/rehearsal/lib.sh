@@ -7,13 +7,18 @@ LOG=$REPO/docs/wind-down/rehearsal-log.md
 source "$REHEARSAL_DIR/addresses.env"
 
 [[ "$(kubectl config current-context)" == "integration" ]] || { echo "kube context must be 'integration'"; exit 1; }
-KX="kubectl -n integration"
+KX="kubectl --context integration -n integration"
 NEW_BIN=/home/validator/.stride/cosmovisor/upgrades/v35/bin/strided
 
 strided_old() { $KX exec stride-validator-0 -c validator -- strided "$@"; }
 strided_new() { $KX exec stride-validator-0 -c validator -- $NEW_BIN "$@"; }
-# version prints on stderr or stdout depending on the release, so match on either
-strided() { if strided_old version 2>&1 | grep -q '^v34'; then strided_old "$@"; else strided_new "$@"; fi; }
+# The pod's cosmovisor `current` symlink points at upgrades/v35 once the upgrade has applied
+stride_is_v35() {
+  local target
+  target=$($KX exec stride-validator-0 -c validator -- readlink /home/validator/.stride/cosmovisor/current)
+  [[ $target == *v35* ]]
+}
+strided() { if stride_is_v35; then strided_new "$@"; else strided_old "$@"; fi; }
 strided_pod() { local pod=$1; shift; $KX exec "$pod" -c validator -- strided "$@"; }
 gaiad()    { $KX exec cosmoshub-validator-0 -c validator -- gaiad "$@"; }
 osmosisd() { $KX exec osmosis-validator-0 -c validator -- osmosisd "$@"; }
@@ -24,11 +29,12 @@ HUB_TX="--keyring-backend test --chain-id cosmoshub-test-1 --gas auto --gas-adju
 OSMO_TX="--keyring-backend test --chain-id osmosis-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 0.04uosmo -y -o json"
 
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$LOG"; }
-log_cmd() { # label, then the command
+log_cmd() { # label, then the command; returns the command's exit status
   local label=$1; shift
   log "### $label"; printf '```\n$ %s\n' "$*" >> "$LOG"
-  local out; out=$("$@" 2>&1) || true
+  local out status=0; out=$("$@" 2>&1) || status=$?
   printf '%s\n```\n' "$out" >> "$LOG"; printf '%s\n' "$out"
+  return $status
 }
 tx_hash() { jq -r '.txhash'; }
 wait_tx() { # chain hash
@@ -49,25 +55,33 @@ wait_until() { # timeout-s description cmd...
 }
 # next_epoch_start_time is nanoseconds; cut keeps the seconds
 day_epoch_next_start() { strided q stakeibc show-epoch-tracker day -o json | jq -r '.epoch_tracker.next_epoch_start_time' | cut -c1-10; }
-sleep_until() { local now; now=$(date +%s); (( $1 > now )) && sleep $(( $1 - now )) || true; }
+sleep_until() { [[ -n "${1:-}" ]] || return 0; local now; now=$(date +%s); (( $1 > now )) && sleep $(( $1 - now )) || true; }
 ms_tx() { # chain multisig-name members-csv -- tx args...
   local chain=$1 ms=$2 members=$3; shift 4
   local m1=${members%%,*} rest=${members#*,} m2=${rest%%,*} chainid gasprice bin pod
   case $chain in
     strided_new)         chainid=stride-test-1;    gasprice=1ustrd;    bin=$NEW_BIN; pod=stride-validator-0;;
-    strided_old|strided) chainid=stride-test-1;    gasprice=1ustrd;    bin=strided;  pod=stride-validator-0;;
+    strided_old)         chainid=stride-test-1;    gasprice=1ustrd;    bin=strided;  pod=stride-validator-0;;
+    strided)             chainid=stride-test-1;    gasprice=1ustrd;    pod=stride-validator-0
+                         if stride_is_v35; then bin=$NEW_BIN; else bin=strided; fi;;
     gaiad)               chainid=cosmoshub-test-1; gasprice=1uatom;    bin=gaiad;    pod=cosmoshub-validator-0;;
     osmosisd)            chainid=osmosis-test-1;   gasprice=0.04uosmo; bin=osmosisd; pod=osmosis-validator-0;;
   esac
   # The pod runs the whole generate / sign / multisign / broadcast pipeline so no file leaves the container
   local args; args=$(printf ' %q' "$@")
-  local hash; hash=$($KX exec $pod -c validator -- sh -c "
+  local raw hash
+  raw=$($KX exec $pod -c validator -- sh -c "
     set -e
-    $bin tx $args --from $ms --generate-only --keyring-backend test --chain-id $chainid --gas 600000 --gas-prices $gasprice > /tmp/unsigned.json
-    $bin tx sign /tmp/unsigned.json --from $m1 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document /tmp/s1.json
-    $bin tx sign /tmp/unsigned.json --from $m2 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document /tmp/s2.json
-    $bin tx multisign /tmp/unsigned.json $ms /tmp/s1.json /tmp/s2.json --keyring-backend test --chain-id $chainid --output-document /tmp/signed.json
-    $bin tx broadcast /tmp/signed.json --chain-id $chainid -o json" | tee -a "$LOG" | tx_hash)
+    d=\$(mktemp -d)
+    $bin tx $args --from $ms --generate-only --keyring-backend test --chain-id $chainid --gas 600000 --gas-prices $gasprice > \$d/unsigned.json
+    $bin tx sign \$d/unsigned.json --from $m1 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s1.json
+    $bin tx sign \$d/unsigned.json --from $m2 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s2.json
+    $bin tx multisign \$d/unsigned.json $ms \$d/s1.json \$d/s2.json --keyring-backend test --chain-id $chainid --output-document \$d/signed.json
+    $bin tx broadcast \$d/signed.json --chain-id $chainid -o json
+    rm -rf \$d")
+  printf '%s\n' "broadcast output ($chain):" '```' "$raw" '```' >> "$LOG"
+  hash=$(tx_hash <<<"$raw")
+  [[ -n "$hash" && "$hash" != null ]] || { log "ms_tx: no txhash in broadcast output for $chain"; return 1; }
   echo "$hash"; wait_tx $chain "$hash"
 }
 checkpoint() { # name cmd...
@@ -79,5 +93,5 @@ assert_rate_unchanged() { # chain-id expected
   [[ "$(rate_of "$1")" == "$2" ]]
 }
 
-export -f strided_old strided_new strided strided_pod gaiad osmosisd tx_hash wait_tx
+export -f strided_old strided_new strided strided_pod gaiad osmosisd tx_hash wait_tx log rate_of day_epoch_next_start stride_is_v35 checkpoint
 export KX NEW_BIN LOG
