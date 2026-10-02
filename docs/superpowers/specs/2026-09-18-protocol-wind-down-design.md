@@ -420,7 +420,7 @@ that delegation changed while the query was in flight or a delegation-changing I
 still active; this also catches a completed undelegation whose in-progress counter is zero.
 Missing or malformed snapshots and nil or non-positive stored rates are successful no-ops.
 An admin may submit a fresh calibration after a stale response is discarded; the callback
-does not start a retry loop. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale. The tx rejects the reset unless the zone's delegation channel is open with no packet commitment outstanding, the same condition the upgrade handler's reset uses: with a packet in flight the flag is not stale, and its ack would fail on the zeroed counter and wedge the ordered channel; with the channel closed, `RestoreInterchainAccount` resets every flag anyway.
+does not start a retry loop. An empty response, which proves the delegation ICA has no delegation to that validator on the host, also reaches the callback and corrects the recorded delegation to zero whatever the stored rate (the rate no-op above applies to a non-empty response only). The interchain-query module drops an empty response for every other query; only the calibration query opts in, the module accepts the opt-in only on a query whose response carries a proof, and the query carries the validator address in its callback data because an empty response has no delegation to read it from. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale. The tx rejects the reset unless the zone's delegation channel is open with no packet commitment outstanding, the same condition the upgrade handler's reset uses: with a packet in flight the flag is not stale, and its ack would fail on the zeroed counter and wedge the ordered channel; with the channel closed, `RestoreInterchainAccount` resets every flag anyway.
 
 **Entry points that bypass the router.** Autopilot: the handler sets `StakeibcActive =
 false`. ICA host: the handler removes `MsgLiquidStake` and `MsgRedeemStake` from the
@@ -602,7 +602,7 @@ validator's stake, while an amount the slash has made stale only fails its batch
 and the error ack releases its delegation-change counters with no balance moved. Correct such
 a validator with `CalibrateDelegation`, which ignores the slash flag, rather than with an
 `offset`: an offset drain that empties the host delegation leaves the offset recorded on
-Stride with nothing able to clear it. The messages go through
+Stride until a calibration zeroes it. The messages go through
 `BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, in the zone's usual
 batch size, and the tx registers the batches as in flight so the callback's record-less
 accounting stays clean.
@@ -935,21 +935,22 @@ will settle.
    delivered on a closed channel, so if a later packet's timeout closes the ordered channel
    first, the batches that did execute stay unacknowledged and the restore zeroes their
    flags: Stride still records the full delegation on validators the host has already
-   unbonded. Calibration cannot repair a validator the drain emptied. The delegation no
-   longer exists on the host, the query comes back empty, and the interchain-query module
-   drops an empty response before the callback runs (a calibration that corrects to zero was
-   written and reverted, 4150e47ba and c32c06c26, as too invasive a change for a
-   contingency); where the drain left a remainder on the host, the query is not empty and a
-   calibration does correct the record. So prevent it: when clearing a
-   drain's packets, relay acknowledgements before timeouts, and do not relay a timeout while
-   an earlier sequence's ack is outstanding. If it happens anyway, read the delegation ICA's
-   delegations and unbonding entries on the host before resubmitting, and resubmit with an
-   explicit validator list that leaves out every validator the host has already unbonded; an
-   empty list would include them and fail their batches whole. Those validators' recorded
-   delegations and the zone's `TotalDelegations` then stay overstated by the stranded amount.
-   Nothing reads either once the rate is frozen and no record is queued, and the tokens still
-   reach the delegation ICA when the unbonding completes and leave with its balance, so the
-   backing is unaffected; the halt checklist takes it as a documented exception.
+   unbonded. This applies to the record-driven batches of step 3 as much as to drain batches,
+   and there it is worse: the restore requeues the record, every retry asks the emptied
+   validator again, the host rejects the batch, and the record stays in
+   `UNBONDING_RETRY_QUEUE`, which the drain refuses. So prevent it: when clearing a zone's
+   undelegate packets, relay acknowledgements before timeouts, and do not relay a timeout
+   while an earlier sequence's ack is outstanding. If it happens anyway, read the delegation
+   ICA's delegations and unbonding entries on the host and run `CalibrateDelegation` on every
+   validator a lost batch emptied or reduced: an empty answer corrects the record to zero and
+   a non-empty one to what is left (§5). A drain is then resubmitted as usual. A requeued
+   record is retried at the zone's next submission epoch (every 3 to 5 day epochs, §3) for
+   the amount still unacknowledged (batches whose ack did arrive were already deducted), on
+   top of what the lost batch already unbonded, so the zone's remaining recorded delegation
+   must exceed the unacknowledged total of its queued records; if it does not, the record
+   cannot be submitted (the §7 bug) and the zone's drain stays refused. The tokens of the batches that
+   did execute, the surplus included, still reach the delegation ICA when their unbonding
+   completes and leave with its balance, so the backing is unaffected.
    **Timing: submit drain batches only between 19:00 UTC and about 08:00 UTC.** The drain
    reuses the epoch unbonding submitter, so every batch's ICA timeout is the next day-epoch
    start minus a buffer (a fifth of the epoch at the default `buffer_size` of 5), not a fixed
@@ -1049,8 +1050,7 @@ Checklist to halt the chain:
   addresses drained.
 - No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
   `TotalDelegations` at dust on every zone except celestia, where it still carries the
-  multisig portion (the per-validator unbond only touches ICA validators), and any zone with
-  a stranded drain ack, which stays overstated by exactly that amount (step 4).
+  multisig portion (the per-validator unbond only touches ICA validators).
 - All four ICA balances at dust on every zone. Celestia multisig delegation zero, its
   unbondings complete, its balance on Osmosis.
 - Every pool, canonical and per route, created, funded and passing the coverage check (§10)

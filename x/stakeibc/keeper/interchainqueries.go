@@ -145,6 +145,8 @@ func (k Keeper) SubmitDelegationICQ(ctx sdk.Context, hostZone types.HostZone, va
 
 // SubmitCalibrationICQ queries delegator shares for an admin correction using the stored
 // shares-to-tokens rate. Snapshot the recorded delegation to reject overlapping ICA changes.
+// The query opts into its callback for an empty response, so a delegation that no longer
+// exists on the host is corrected to zero instead of being dropped.
 func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, validatorAddress string) error {
 	if hostZone.DelegationIcaAddress == "" {
 		return errorsmod.Wrapf(types.ErrICAAccountNotFound, "no delegation address found for %s", hostZone.ChainId)
@@ -167,8 +169,11 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 	}
 	queryData := stakingtypes.GetDelegationKey(delegatorAddressBz, validatorAddressBz)
 
+	// The validator address rides in the callback data because an empty response carries no
+	// Delegation to read it from
 	callbackDataBz, err := proto.Marshal(&types.DelegatorSharesQueryCallback{
 		InitialValidatorDelegation: validator.Delegation,
+		ValidatorAddress:           validatorAddress,
 	})
 	if err != nil {
 		return errorsmod.Wrapf(err, "unable to marshal calibration callback data")
@@ -176,15 +181,16 @@ func (k Keeper) SubmitCalibrationICQ(ctx sdk.Context, hostZone types.HostZone, v
 
 	// Submit delegator shares ICQ
 	query := icqtypes.Query{
-		ChainId:         hostZone.ChainId,
-		ConnectionId:    hostZone.ConnectionId,
-		QueryType:       icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
-		RequestData:     queryData,
-		CallbackModule:  types.ModuleName,
-		CallbackId:      ICQCallbackID_Calibrate,
-		CallbackData:    callbackDataBz,
-		TimeoutDuration: time.Hour,
-		TimeoutPolicy:   icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
+		ChainId:                       hostZone.ChainId,
+		ConnectionId:                  hostZone.ConnectionId,
+		QueryType:                     icqtypes.STAKING_STORE_QUERY_WITH_PROOF,
+		RequestData:                   queryData,
+		CallbackModule:                types.ModuleName,
+		CallbackId:                    ICQCallbackID_Calibrate,
+		CallbackData:                  callbackDataBz,
+		InvokeCallbackOnEmptyResponse: true,
+		TimeoutDuration:               time.Hour,
+		TimeoutPolicy:                 icqtypes.TimeoutPolicy_RETRY_QUERY_REQUEST,
 	}
 
 	// Each admin submission must keep its own snapshot and never revive a purged query ID.

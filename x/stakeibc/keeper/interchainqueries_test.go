@@ -175,7 +175,18 @@ func (s *KeeperTestSuite) TestSubmitCalibrationICQ_SnapshotsDelegation() {
 	var callbackData types.DelegatorSharesQueryCallback
 	s.Require().NoError(proto.Unmarshal(queries[0].CallbackData, &callbackData))
 	s.Require().Equal(validator.Delegation, callbackData.InitialValidatorDelegation)
+	s.Require().Equal(validator.Address, callbackData.ValidatorAddress, "an empty response has no Delegation to read the validator from")
+	s.Require().True(queries[0].InvokeCallbackOnEmptyResponse, "calibration opts into the callback for an empty response")
 	s.Require().Equal(before, s.MustGetHostZone(HostChainId), "snapshot creation does not change validator accounting")
+}
+
+// Only calibration opts in: an empty slash-query response keeps being dropped
+func (s *KeeperTestSuite) TestSubmitDelegationICQ_DoesNotOptIntoEmptyResponse() {
+	hostZone, validator := s.SetupSubmitDelegationICQ()
+	s.Require().NoError(s.App.StakeibcKeeper.SubmitDelegationICQ(s.Ctx, hostZone, validator.Address))
+	queries := s.App.InterchainqueryKeeper.AllQueries(s.Ctx)
+	s.Require().Len(queries, 1)
+	s.Require().False(queries[0].InvokeCallbackOnEmptyResponse)
 }
 
 func (s *KeeperTestSuite) TestSubmitCalibrationICQ_PurgedLegacyIDRemainsAbsent() {
