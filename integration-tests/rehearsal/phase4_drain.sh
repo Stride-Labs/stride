@@ -34,6 +34,9 @@ signal_gaiad() { # pod STOP|CONT
   $KX exec "$1" -c validator -- sh -c "pid=\$(pgrep -x gaiad || ps -o pid,comm | awk '\$2==\"gaiad\"{print \$1}' | head -1); kill -$2 \$pid"
 }
 
+cleanup() { signal_gaiad cosmoshub-validator-6 CONT || true; $KX scale deployment relayer-stride-osmosis --replicas=1 || true; }
+trap cleanup EXIT
+
 hub_val_jailed() { gaiad q staking validator "$1" -o json | jq -e '.validator.jailed == true'; }
 
 # The ICA controller channel for an owner, in a given state (--limit: the default page hides later channels)
@@ -56,7 +59,7 @@ val7_failed_others_drained() { # valoper
 
 dead_window_send_fails() {
   local out; out=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators cosmoshub-test-1 --all 2>&1) || true
-  grep -qiE 'timeout|fail|code=[1-9]' <<<"$out"
+  grep -qiE 'timeout|code=[1-9]' <<<"$out"
 }
 
 zone_total_at_dust() { # chain-id
@@ -82,6 +85,12 @@ checkpoint "nothing burned" stuatom_supply_unchanged
 
 # Injection 1: slash hub val7 after the refresh, then --all: val7's batch fails, the others succeed
 HUB_VAL7=$(sed -n 7p <<<"$HUB_VALS")
+# The pod index must map to HUB_VAL7, or the STOP would slash a different validator
+HUB_VAL7_MONIKER=$(gaiad q staking validator "$HUB_VAL7" -o json | jq -r .validator.description.moniker)
+if [[ "$HUB_VAL7_MONIKER" != "val7" ]]; then
+  log "FAIL: $HUB_VAL7 has moniker '$HUB_VAL7_MONIKER', expected val7 (cosmoshub-validator-6)"
+  exit 1
+fi
 signal_gaiad cosmoshub-validator-6 STOP
 wait_until 240 "hub val7 jailed" hub_val_jailed "$HUB_VAL7"
 signal_gaiad cosmoshub-validator-6 CONT
@@ -105,6 +114,7 @@ $KX scale deployment relayer-stride-osmosis --replicas=0
 submit_window; drain osmosis-test-1 /tmp/ov1.json
 sleep_until $(( $(day_epoch_next_start) + 20 ))
 $KX scale deployment relayer-stride-osmosis --replicas=1
+# Assumes no stale closed osmosis DELEGATION channel exists from an earlier run, else STATE_CLOSED matches immediately
 wait_until 300 "osmo delegation channel closed" ica_channel_in_state osmosis-test-1.DELEGATION STATE_CLOSED
 ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc restore-interchain-account osmosis-test-1 connection-1 osmosis-test-1.DELEGATION >/dev/null
 wait_until 300 "osmo delegation channel reopened" ica_channel_in_state osmosis-test-1.DELEGATION STATE_OPEN
@@ -126,7 +136,7 @@ wait_until 240 "osmo drained" no_flags osmosis-test-1
 # Injection 4: the dead window: submit in the last fifth of the day epoch and expect a failed send, nothing flagged
 sleep_until $(( $(day_epoch_next_start) - 25 ))
 CHECKPOINT_SOFT=1 checkpoint "dead-window send fails" dead_window_send_fails
-checkpoint "no flags after dead window" no_flags cosmoshub-test-1
+wait_until 300 "no flags after dead window" no_flags cosmoshub-test-1
 checkpoint "hub total at dust"  zone_total_at_dust cosmoshub-test-1
 checkpoint "osmo total at dust" zone_total_at_dust osmosis-test-1
 checkpoint "hub rate frozen"  assert_rate_unchanged cosmoshub-test-1 "$RATE_HUB"

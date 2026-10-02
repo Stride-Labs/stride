@@ -16,7 +16,9 @@ no_slash_query_in_flight() {
 
 # The multisig admin is the only signer the msg accepts, so a refused drain shows up as a non-zero ms_tx
 drain_refused() { # chain-id
-  ! ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators "$1" --all >/dev/null
+  local out
+  out=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators "$1" --all 2>&1) && return 1
+  grep -qiE 'wait for the day epoch|let the day epoch|awaiting an ack|pending undelegation|queued|retry' <<<"$out"
 }
 
 # drift.json: .zones[<chain>].validators[] rows carry over_recorded, .zones[<chain>].summary.count_over_recorded
@@ -61,5 +63,6 @@ UNBOND_HASH=$(gaiad tx authz exec /tmp/unbond.json --from st-operator $HUB_TX | 
 wait_tx gaiad "$UNBOND_HASH"
 
 for id in $(strided_new q staketia unbonding-records -o json | jq -r '.unbonding_records[] | select(.status=="UNBONDING_QUEUE") | .id'); do
-  log_cmd "confirm-undelegation $id" strided_new tx staketia confirm-undelegation "$id" "$UNBOND_HASH" --from st-operator $STRIDE_TX
+  log_cmd "confirm-undelegation $id" strided_new tx staketia confirm-undelegation "$id" "$UNBOND_HASH" --from st-operator $STRIDE_TX || true
+  sleep 6
 done

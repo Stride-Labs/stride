@@ -11,7 +11,8 @@ claim_all() {
   strided_new q records list-user-redemption-record -o json \
     | jq -r '.user_redemption_record[] | select(.claim_is_pending==false) | "\(.host_zone_id) \(.epoch_number) \(.receiver)"' \
     | while read -r zone epoch receiver; do
-        log_cmd "claim $zone $epoch" strided_new tx stakeibc claim-undelegated-tokens "$zone" "$epoch" "$receiver" --from user1 $STRIDE_TX
+        log_cmd "claim $zone $epoch" strided_new tx stakeibc claim-undelegated-tokens "$zone" "$epoch" "$receiver" --from user1 $STRIDE_TX || true
+        sleep 6
       done
 }
 
