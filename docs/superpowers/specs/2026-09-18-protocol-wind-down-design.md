@@ -250,9 +250,18 @@ State on mainnet (refreshed 2026-09-29 unless dated otherwise):
   (the 2026-09-18 records were flushed by the operator before it halted; the rest stay, §2).
 - Zero auctions, zero ICQ-oracle price queries, zero open LSM deposits; both airdrop-module
   airdrops ended December 2024. Three ICA oracles active (injective-1, neutron-1, osmosis-1).
-  Pending ICQs: haqq_11235-1 has 10 slash-path queries open (7 calibrate, 2 validator
-  exchange rate, 1 delegation) and one validator flagged `SlashQueryInProgress`; withdrawal
-  and fee balance queries are open on haqq, juno-1, comdex-1 and laozi-mainnet.
+  Pending ICQs: haqq_11235-1 has 15 queries open, the oldest submitted on 2026-09-21, none
+  answered; withdrawal and fee balance queries are open on haqq, juno-1, comdex-1 and
+  laozi-mainnet.
+- **Haqq is barely producing blocks.** Its height advanced 2,382 blocks between 2026-09-21
+  and 2026-09-30, about one block every five minutes against a normal six seconds, and no
+  ICQ response for haqq has landed on Stride in that time: the seven slash refreshes sent on
+  2026-09-29 (§9a) applied on Terra and Injective within minutes, but on Haqq only the ones
+  whose second query happened to be answered did. Nothing on Haqq can be fixed by a
+  refresh while this lasts, which is the reason the haqq delta table at the upgrade covers
+  every drifted validator rather than only the dust cases. ICA transactions on a chain this
+  slow still fit the one-day timeouts, but if Haqq stops for good before the drain, stISLM
+  (about $417k) joins the unrecoverable set with the four dead zones (§12).
 - Native vouchers stranded on Stride are dust: the eleven deposit addresses, the reward
   collector and the auction module together hold about $3 of in-scope native denoms. Nothing
   on Stride except the staketia claim address will hold a native balance worth moving. User
@@ -912,6 +921,18 @@ rerun as the gate before the drain).
   sub-token dust, net over by 1,758.26 ISLM, unchanged since the 2026-09-21 measurement
   (one validator has since moved to exact).
 
+Refreshes run on 2026-09-29 from the hot wallet, after this measurement: the Hub's
+NodeGuardians and Forbole (§3), Terra's Mario and Y, Injective's Allnodes, and Haqq's kioqq,
+gmocoin, StakingCabin and "shut down". Every non-Haqq one applied within minutes and the
+record now equals the chain (Y was rewritten to the live number, which had grown since the
+measurement). On Haqq only gmocoin completed; kioqq and StakingCabin got their rate but their
+shares query is unanswered, and "shut down" got nothing, because Haqq's chain is crawling
+(§3). The over-recorded validators a refresh cannot reach, because their stored rate already
+equals the chain's, are Haqq's Neuler, SureStake and Islamic Staking and Injective's rounding
+dust; the ones it cannot reach because of a stale in-progress flag are Juno's SmartNodes
+(9.39 JUNO) and Haqq's TakamulFi (91 ISLM) and AlxVoy. The delta table and the drain's
+`offset` cover all of these; the measurement is rerun before the proposal.
+
 In every over-recorded case Stride's stored exchange rate is above the chain's, i.e. an
 undetected downtime slash, and recomputing each validator as on-chain shares × the chain's
 current rate reproduces the on-chain balance exactly, so the day-0 refresh leaves no rounding
@@ -1054,6 +1075,11 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   understood (every callback path decrements them and nothing is unacked), which is worth a
   look before the upgrade so the reset is not papering over a live leak.
 - **Stale flags the handler cannot reset** (measured 2026-09-29): haqq_11235-1's delegation channel-869 is CLOSED with 14 packet commitments (sequences 85-98) and 30 flagged validators, so haqq needs `restore-interchain-account` before the day-0 refresh and the drain; juno-1's open channel-491 has pending commitments from sequence 5729, so its 21 flags clear only once those packets are relayed. The v35 reset skips both zones by design.
+- **Haqq's chain health** (§3): with one block every few minutes since at least
+  2026-09-21 and no ICQ answered in that time, decide before the proposal whether haqq
+  stays in scope. If it does, every haqq correction rides on the delta table (no refresh is
+  possible) and the drain's ICA relaying must be watched by hand; if Haqq halts for good,
+  stISLM moves to the unrecoverable set and its holders get no pool.
 - **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
   connection `connection-146`, last header 2026-08-05; the delegation ICA restore is stuck in
   `STATE_INIT` on channel-768). No ICA tx, and no Stride→Band transfer, can be delivered

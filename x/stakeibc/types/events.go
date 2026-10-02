@@ -22,6 +22,8 @@ const (
 	EventTypeUndelegation                      = "undelegation"
 	EventTypeUndelegationFailed                = "undelegation_failed"
 	EventTypeRedemptionSweep                   = "redemption_sweep"
+	EventTypeTransferFromIca                   = "transfer_from_ica"
+	EventTypeTransferStaketiaClaimBalance      = "transfer_staketia_claim_balance"
 
 	AttributeKeyHostZone         = "host_zone"
 	AttributeKeyConnectionId     = "connection_id"
@@ -53,6 +55,10 @@ const (
 	AttributeKeySlashPercent               = "slash_percent"
 	AttributeKeySlashAmount                = "slash_amount"
 	AttributeKeyCurrentDelegation          = "current_delegation"
+
+	AttributeKeyIcaType = "ica_type"
+	AttributeKeyChannel = "channel"
+	AttributeKeyAmount  = "amount"
 
 	AttributeKeyError = "error"
 

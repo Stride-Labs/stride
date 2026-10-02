@@ -42,6 +42,11 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdUpdateInnerRedemptionRateBounds())
 	cmd.AddCommand(CmdResumeHostZone())
 
+	// Wind-down admin txs (spec §7)
+	cmd.AddCommand(CmdUndelegateFromValidators())
+	cmd.AddCommand(CmdTransferFromIca())
+	cmd.AddCommand(CmdTransferStaketiaClaimBalance())
+
 	return cmd
 }
 
