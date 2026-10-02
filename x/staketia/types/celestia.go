@@ -2,24 +2,24 @@
 package types
 
 const (
-	CelestiaChainId                   = "celestia"
-	StrideToCelestiaTransferChannelId = "channel-162"
-	CelestiaNativeTokenDenom          = "utia"
-	CelestiaNativeTokenIBCDenom       = "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801" // #nosec G101
+	CelestiaChainId                   = "cosmoshub-test-1"
+	StrideToCelestiaTransferChannelId = "channel-0"
+	CelestiaNativeTokenDenom          = "uatom"
+	CelestiaNativeTokenIBCDenom       = "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2" // #nosec G101
 
-	DelegationAddressOnCelestia = "celestia1d6ntc7s8gs86tpdyn422vsqc6uaz9cejnxz5p5" // C0
-	RewardAddressOnCelestia     = "celestia15up3hegy8zuqhy0p9m8luh0c984ptu2g5p4xpf" // C1
+	DelegationAddressOnCelestia = "cosmos1h0dup2qw23uhgn9nxyhyze4cxzrgu8rtrcnv7d" // C0
+	RewardAddressOnCelestia     = "cosmos1mnx78sx5wcnutphpy6sfxfan6xnen07mrd2us6" // C1
 
-	DepositAddress    = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04" // S0
-	RedemptionAddress = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g" // S1
-	ClaimAddress      = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd" // S2
+	DepositAddress    = "stride1ju3xt2f8xuhzxqg6590sazctlz6l4md0wc5w6c" // S0
+	RedemptionAddress = "stride19ksqv50zmntzjfflfmnegj75tdfkk89vl2q5yu" // S1
+	ClaimAddress      = "stride1pjw24gg0fm26758hxee3wta35kq9jpszcslm6z" // S2
 
-	SafeAddressOnStride            = "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc" // S3
-	OperatorAddressOnStride        = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw" // OP-STRIDE
-	CelestiaUnbondingPeriodSeconds = uint64(1213200)                                 // 14 days and one hour
+	SafeAddressOnStride            = "stride1tpzfseenwg4kq54sf9hdp3mkra652fvqtsuclq" // S3
+	OperatorAddressOnStride        = "stride19xm04qaah8t2eupyeglz63vkaxzytpyc8m7kk4" // OP-STRIDE
+	CelestiaUnbondingPeriodSeconds = uint64(240)                                     // rehearsal: 240s (mainnet: 14 days and one hour)
 
-	CelestiaBechPrefix = "celestia"
+	CelestiaBechPrefix = "cosmos"
 )
 
 // The connection ID is stored as a var so it can be overriden in tests
-var CelestiaConnectionId = "connection-125"
+var CelestiaConnectionId = "connection-0"

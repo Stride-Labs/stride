@@ -9,58 +9,44 @@ import "time"
 // Proving each address by a test transfer and a signed spend is an ops step (spec §9) recorded
 // on the PR, not something a test asserts.
 var (
-	SweepOperatorAddress = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9" // the only signer of MsgSweepTokensOffStride
-	OsmosisVaultAddress  = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"   // receiver of every MsgTransferFromIca; pool admin and moderator
+	SweepOperatorAddress = "stride1rjmd9gjxsexh0jg7n9wdvx9385hxxc8rjg9zzy" // the only signer of MsgSweepTokensOffStride (rehearsal: k8s test operator)
+	OsmosisVaultAddress  = "osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"   // receiver of every MsgTransferFromIca; pool admin and moderator (rehearsal: k8s test vault)
 )
 
 const (
-	OsmosisChainId                   = "osmosis-1"
+	OsmosisChainId                   = "osmosis-test-1" // rehearsal: mainnet is osmosis-1
 	OsmosisBech32Prefix              = "osmo"
-	StrideToOsmosisTransferChannelId = "channel-5"
-	WindDownTransferTimeout          = 24 * time.Hour
+	StrideToOsmosisTransferChannelId = "channel-1"      // rehearsal: mainnet is channel-5
+	WindDownTransferTimeout          = 15 * time.Minute // rehearsal: mainnet is 24h
 )
 
-// Host-side transfer channel to osmosis-1 per in-scope zone (chain registry 2026-09-24, re-verified
-// against each host before the proposal). osmosis-1 maps to "" which selects an ICA bank send.
+// Host-side transfer channel to osmosis per in-scope zone (rehearsal: k8s test network; mainnet map
+// covered every in-scope zone). The osmosis chain maps to "" which selects an ICA bank send.
 var HostToOsmosisTransferChannel = map[string]string{
-	"celestia":       "channel-2",
-	"cosmoshub-4":    "channel-141",
-	"dydx-mainnet-1": "channel-3",
-	"haqq_11235-1":   "channel-2",
-	"injective-1":    "channel-8",
-	"juno-1":         "channel-0",
-	"laozi-mainnet":  "channel-83",
-	"phoenix-1":      "channel-1",
-	"sommelier-3":    "channel-0",
-	"ssc-1":          "channel-1",
-	"osmosis-1":      "",
+	"cosmoshub-test-1": "channel-1",
+	"osmosis-test-1":   "",
 }
 
 // Stride transfer channels a voucher may be unwound over, with the counterparty's bech32 prefix:
 // exactly the chains whose wallets derive the same address bytes as Stride (spec §3, §7).
 var SweepUnwindChannels = map[string]string{
-	"channel-0":   "cosmos",
-	"channel-162": "celestia",
-	"channel-5":   "osmo",
-	"channel-24":  "juno",
-	"channel-150": "somm",
-	"channel-213": "saga",
-	"channel-160": "dydx",
+	"channel-0": "cosmos",
+	"channel-1": "osmo",
 }
 
 // The staketia (S0-S2) and stakedym (S4-S6) multisigs, copied here because those packages import
 // this one. A keeper test asserts they equal the constants in x/staketia/types/celestia.go and
 // x/stakedym/types/dymension.go, so a drift fails the build of the suite
 const (
-	StaketiaDepositAddress    = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04"
-	StaketiaRedemptionAddress = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g"
-	StaketiaClaimAddress      = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd"
+	StaketiaDepositAddress    = "stride1ju3xt2f8xuhzxqg6590sazctlz6l4md0wc5w6c"
+	StaketiaRedemptionAddress = "stride19ksqv50zmntzjfflfmnegj75tdfkk89vl2q5yu"
+	StaketiaClaimAddress      = "stride1pjw24gg0fm26758hxee3wta35kq9jpszcslm6z"
 	StakedymDepositAddress    = "stride1e7j8d6sdq272fqe2jfxjpgcagn04j75w9695fj"
 	StakedymRedemptionAddress = "stride1jpsnc0ynufa2aheflj6mxzzzsu7nlwqk7ff69n"
 	StakedymClaimAddress      = "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras"
-	StaketiaSafeAddress       = "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc"
+	StaketiaSafeAddress       = "stride1tpzfseenwg4kq54sf9hdp3mkra652fvqtsuclq"
 	StakedymSafeAddress       = "stride1sj8gyqeqecqhqu7em67hn2tjzhpkdf8wz5plh7"
-	StaketiaOperatorAddress   = "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw"
+	StaketiaOperatorAddress   = "stride19xm04qaah8t2eupyeglz63vkaxzytpyc8m7kk4"
 )
 
 // SweepProtocolAddresses lists the addresses the sweep must never touch even though each is a
