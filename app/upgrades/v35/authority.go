@@ -32,8 +32,9 @@ func SetConsensusAuthority(ctx sdk.Context, k consensusparamkeeper.Keeper) error
 	return nil
 }
 
-// CloseGovSubmission raises both gov deposits to GovUnreachableDeposit, far above total supply,
-// so no proposal can be submitted once the multisig is the authority (authority spec §3). Every
+// CloseGovSubmission raises the gov min deposit to GovUnreachableDeposit and the expedited min
+// deposit to GovUnreachableExpeditedDeposit (strictly greater, as gov params validation requires),
+// both far above total supply, so no proposal can be submitted once the multisig is the authority (authority spec §3). Every
 // other gov param is kept as read; the multisig can lower the deposits again through gov
 // MsgUpdateParams.
 func CloseGovSubmission(ctx sdk.Context, k govkeeper.Keeper) error {
@@ -41,12 +42,13 @@ func CloseGovSubmission(ctx sdk.Context, k govkeeper.Keeper) error {
 	if err != nil {
 		return err
 	}
-	unreachable := sdk.NewCoins(sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(GovUnreachableDeposit)))
-	params.MinDeposit = unreachable
-	params.ExpeditedMinDeposit = unreachable
+	minDeposit := sdk.NewCoins(sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(GovUnreachableDeposit)))
+	expeditedMinDeposit := sdk.NewCoins(sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(GovUnreachableExpeditedDeposit)))
+	params.MinDeposit = minDeposit
+	params.ExpeditedMinDeposit = expeditedMinDeposit
 	if err := k.Params.Set(ctx, params); err != nil {
 		return err
 	}
-	ctx.Logger().Info(fmt.Sprintf("v35: gov min deposit and expedited min deposit set to %s", unreachable))
+	ctx.Logger().Info(fmt.Sprintf("v35: gov min deposit and expedited min deposit set to %s and %s", minDeposit, expeditedMinDeposit))
 	return nil
 }

@@ -53,7 +53,7 @@ func (s *UpgradeTestSuite) assertUpgradeAuthorityState() {
 	govParams, err := s.App.GovKeeper.Params.Get(s.Ctx)
 	s.Require().NoError(err)
 	s.Require().True(unreachableDeposit().Equal(govParams.MinDeposit), "gov min deposit %s", govParams.MinDeposit)
-	s.Require().True(unreachableDeposit().Equal(govParams.ExpeditedMinDeposit), "gov expedited min deposit %s", govParams.ExpeditedMinDeposit)
+	s.Require().True(unreachableExpeditedDeposit().Equal(govParams.ExpeditedMinDeposit), "gov expedited min deposit %s", govParams.ExpeditedMinDeposit)
 
 	stakingParams, err := s.App.StakingKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err)

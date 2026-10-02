@@ -416,7 +416,7 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	govParams, err := s.App.GovKeeper.Params.Get(s.Ctx)
 	s.Require().NoError(err)
 	s.Require().True(unreachableDeposit().Equal(govParams.MinDeposit), "gov min deposit %s", govParams.MinDeposit)
-	s.Require().True(unreachableDeposit().Equal(govParams.ExpeditedMinDeposit), "gov expedited min deposit %s", govParams.ExpeditedMinDeposit)
+	s.Require().True(unreachableExpeditedDeposit().Equal(govParams.ExpeditedMinDeposit), "gov expedited min deposit %s", govParams.ExpeditedMinDeposit)
 
 	// ----- assert: nothing the handler must not touch -----
 	// Compared by String(): Equal on structs holding sdkmath.Int is a DeepEqual over big.Int

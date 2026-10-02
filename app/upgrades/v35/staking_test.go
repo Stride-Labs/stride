@@ -8,10 +8,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v35/app/apptesting"
 	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	"github.com/Stride-Labs/stride/v35/utils"
 )
 
 func (s *UpgradeTestSuite) TestRaiseMaxUnbondingEntries() {
@@ -87,7 +90,7 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 	// Three validators (authority spec §5): bonded with a self-delegation that will drop below the
 	// minimum, unbonded, and bonded with a pre-existing unbonding entry and a broken delegation
 	jailedVal, operator := s.seedValidator(1, stakingtypes.Bonded, 1_000)
-	unbondedVal, _ := s.seedValidator(2, stakingtypes.Unbonded, 1)
+	unbondedVal, unbondedOperator := s.seedValidator(2, stakingtypes.Unbonded, 1)
 	bondedVal, _ := s.seedValidator(3, stakingtypes.Bonded, 1)
 	delegators := apptesting.CreateRandomAccounts(4)
 
@@ -96,6 +99,15 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 	unbondedValTokens := s.delegate(delegators[1], unbondedVal, 3_000)
 	bondedValTokens := s.delegate(delegators[2], bondedVal, 8_000)
 	skippedTokens := s.delegate(delegators[3], bondedVal, 2_000)
+
+	// The unbonded validator earns 10% commission on 1,000 ustrd of rewards, so removing it in the
+	// handler runs the commission payout in AfterValidatorRemoved (operator 100, delegator 900)
+	s.setCommissionRate(unbondedVal, "0.1")
+	s.FundModuleAccount(distrtypes.ModuleName, sdk.NewInt64Coin(utils.BaseStrideDenom, 1_000))
+	s.Require().NoError(s.App.DistrKeeper.AllocateTokensToValidator(s.Ctx, s.mustGetValidator(unbondedVal),
+		sdk.NewDecCoins(sdk.NewInt64DecCoin(utils.BaseStrideDenom, 1_000))))
+	operatorBalanceBefore := s.App.BankKeeper.GetBalance(s.Ctx, unbondedOperator, utils.BaseStrideDenom)
+	delegatorBalanceBefore := s.App.BankKeeper.GetBalance(s.Ctx, delegators[1], utils.BaseStrideDenom)
 
 	// A pre-existing unbonding entry from an earlier block, which the handler must leave alone
 	earlierTime := s.Ctx.BlockTime().Add(-time.Hour)
@@ -114,8 +126,16 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 	s.Require().NoError(err)
 	expectedCompletion := s.Ctx.BlockTime().Add(unbondingTime)
 
+	// A fresh event manager so only the handler's own events are inspected
+	s.Ctx = s.Ctx.WithEventManager(sdk.NewEventManager())
+
 	// ----- act -----
 	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
+
+	// ----- assert: no events reach the block result (the loop runs on a throwaway manager) -----
+	for _, event := range s.Ctx.EventManager().Events() {
+		s.Require().NotEqual(distrtypes.EventTypeWithdrawRewards, event.Type, "hook events must not be emitted")
+	}
 
 	// ----- assert: only the broken delegation remains, untouched -----
 	remaining, err := s.App.StakingKeeper.GetAllDelegations(s.Ctx)
@@ -158,6 +178,20 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 	s.Require().True(s.mustGetValidator(jailedVal).Tokens.IsZero())
 	_, err = s.App.StakingKeeper.GetValidator(s.Ctx, unbondedVal)
 	s.Require().ErrorIs(err, stakingtypes.ErrNoValidatorFound, "unbonded validator removed once empty")
+
+	// Removal paid out the commission to the operator and the rest went to the delegator; the
+	// distribution records for the removed validator are cleared
+	operatorBalanceAfter := s.App.BankKeeper.GetBalance(s.Ctx, unbondedOperator, utils.BaseStrideDenom)
+	delegatorBalanceAfter := s.App.BankKeeper.GetBalance(s.Ctx, delegators[1], utils.BaseStrideDenom)
+	s.Require().Equal(sdkmath.NewInt(100), operatorBalanceAfter.Amount.Sub(operatorBalanceBefore.Amount), "commission paid to operator")
+	s.Require().Equal(sdkmath.NewInt(900), delegatorBalanceAfter.Amount.Sub(delegatorBalanceBefore.Amount), "remaining rewards paid to delegator")
+	outstanding, err := s.App.DistrKeeper.GetValidatorOutstandingRewards(s.Ctx, unbondedVal)
+	s.Require().NoError(err)
+	s.Require().True(outstanding.Rewards.IsZero(), "outstanding rewards cleared")
+	commission, err := s.App.DistrKeeper.GetValidatorAccumulatedCommission(s.Ctx, unbondedVal)
+	s.Require().NoError(err)
+	s.Require().True(commission.Commission.IsZero(), "accumulated commission cleared")
+
 	s.Require().False(s.mustGetValidator(bondedVal).Jailed)
 	s.Require().Equal(skippedTokens, s.mustGetValidator(bondedVal).Tokens, "only the skipped delegation's tokens stay on the validator")
 }
@@ -193,4 +227,61 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_AfterRaiseMaxUnbondingEn
 	entries := s.unbondingEntries(delegator, valAddr)
 	s.Require().Len(entries, 8)
 	s.Require().Equal(tokens, entries[7].Balance)
+}
+
+// setCommissionRate gives a seeded validator a non-zero commission rate
+func (s *UpgradeTestSuite) setCommissionRate(valAddr sdk.ValAddress, rate string) {
+	validator := s.mustGetValidator(valAddr)
+	validator.Commission = stakingtypes.NewCommission(sdkmath.LegacyMustNewDecFromStr(rate), sdkmath.LegacyOneDec(), sdkmath.LegacyOneDec())
+	s.Require().NoError(s.App.StakingKeeper.SetValidator(s.Ctx, validator))
+}
+
+// If a delegation's undelegation fails after Unbond has already written (here the bonded pool is
+// empty, so moving tokens to the not-bonded pool fails), the cache context discards the partial
+// write: the delegation is skipped intact, not left deleted without an unbonding entry.
+func (s *UpgradeTestSuite) TestUndelegateAllDelegations_FailureAfterUnbondIsRolledBack() {
+	valAddr, _ := s.seedValidator(5, stakingtypes.Bonded, 1)
+	delegator := apptesting.CreateRandomAccounts(1)[0]
+	tokens := s.delegate(delegator, valAddr, 6_000)
+
+	// Drain the bonded pool so bondedTokensToNotBonded fails for the bonded validator
+	bondedPool := authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
+	s.Require().NoError(s.App.BankKeeper.SendCoinsFromModuleToAccount(
+		s.Ctx, stakingtypes.BondedPoolName, apptesting.CreateRandomAccounts(1)[0], s.App.BankKeeper.GetAllBalances(s.Ctx, bondedPool)))
+
+	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
+
+	delegation, err := s.App.StakingKeeper.GetDelegation(s.Ctx, delegator, valAddr)
+	s.Require().NoError(err, "delegation kept")
+	s.Require().Equal(sdkmath.LegacyNewDecFromInt(tokens), delegation.Shares, "original shares")
+	s.Require().Equal(tokens, s.mustGetValidator(valAddr).Tokens, "validator keeps its tokens")
+	_, err = s.App.StakingKeeper.GetUnbondingDelegation(s.Ctx, delegator, valAddr)
+	s.Require().ErrorIs(err, stakingtypes.ErrNoUnbondingDelegation, "no unbonding entry")
+}
+
+// Removing the empty unbonded validator runs distribution's AfterValidatorRemoved, which panics
+// when accumulated commission exceeds outstanding rewards. The panic must become a skip for that
+// delegation only, not halt the upgrade.
+func (s *UpgradeTestSuite) TestUndelegateAllDelegations_PanicIsSkipped() {
+	unbondedVal, _ := s.seedValidator(6, stakingtypes.Unbonded, 1)
+	bondedVal, _ := s.seedValidator(7, stakingtypes.Bonded, 1)
+	delegators := apptesting.CreateRandomAccounts(2)
+	panicTokens := s.delegate(delegators[0], unbondedVal, 3_000)
+	s.delegate(delegators[1], bondedVal, 4_000)
+
+	// 1 ustrd of commission against zero outstanding rewards underflows outstanding.Sub(commission)
+	s.Require().NoError(s.App.DistrKeeper.SetValidatorAccumulatedCommission(s.Ctx, unbondedVal, distrtypes.ValidatorAccumulatedCommission{
+		Commission: sdk.NewDecCoins(sdk.NewInt64DecCoin(utils.BaseStrideDenom, 1)),
+	}))
+
+	s.Require().NotPanics(func() {
+		s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
+	})
+
+	delegation, err := s.App.StakingKeeper.GetDelegation(s.Ctx, delegators[0], unbondedVal)
+	s.Require().NoError(err, "panicking delegation skipped, still present")
+	s.Require().Equal(sdkmath.LegacyNewDecFromInt(panicTokens), delegation.Shares)
+	s.Require().Equal(panicTokens, s.mustGetValidator(unbondedVal).Tokens)
+	s.Require().False(s.hasDelegation(delegators[1], bondedVal), "other delegations still unbond")
+	s.Require().Len(s.unbondingEntries(delegators[1], bondedVal), 1)
 }

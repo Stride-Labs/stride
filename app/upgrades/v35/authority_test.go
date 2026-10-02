@@ -14,9 +14,14 @@ import (
 	"github.com/Stride-Labs/stride/v35/utils"
 )
 
-// unreachableDeposit is the gov deposit the handler writes: 1e18 ustrd (authority spec §3)
+// unreachableDeposit is the gov min deposit the handler writes: 1e18 ustrd (authority spec §3)
 func unreachableDeposit() sdk.Coins {
 	return sdk.NewCoins(sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(v35.GovUnreachableDeposit)))
+}
+
+// unreachableExpeditedDeposit is the gov expedited min deposit the handler writes: 2e18 ustrd
+func unreachableExpeditedDeposit() sdk.Coins {
+	return sdk.NewCoins(sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(v35.GovUnreachableExpeditedDeposit)))
 }
 
 func (s *UpgradeTestSuite) TestSetConsensusAuthority() {
@@ -73,7 +78,7 @@ func (s *UpgradeTestSuite) TestCloseGovSubmission() {
 		ExpeditedThreshold:         "0.71",
 		MinInitialDepositRatio:     "0.21",
 		ProposalCancelRatio:        "0.51",
-		ProposalCancelDest:         "stride1canceldest",
+		ProposalCancelDest:         v35.UpgradeAuthority,
 		MinDepositRatio:            "0.011",
 		BurnVoteQuorum:             true,
 		BurnProposalDepositPrevote: true,
@@ -86,11 +91,12 @@ func (s *UpgradeTestSuite) TestCloseGovSubmission() {
 	after, err := s.App.GovKeeper.Params.Get(s.Ctx)
 	s.Require().NoError(err)
 	s.Require().True(unreachableDeposit().Equal(after.MinDeposit), "min deposit %s", after.MinDeposit)
-	s.Require().True(unreachableDeposit().Equal(after.ExpeditedMinDeposit), "expedited min deposit %s", after.ExpeditedMinDeposit)
+	s.Require().True(unreachableExpeditedDeposit().Equal(after.ExpeditedMinDeposit), "expedited min deposit %s", after.ExpeditedMinDeposit)
+	s.Require().NoError(after.ValidateBasic(), "stored params must pass gov validation")
 
 	// Everything but the two deposits is kept as read (compared by String: Coins hold big.Ints)
 	expected := before
 	expected.MinDeposit = unreachableDeposit()
-	expected.ExpeditedMinDeposit = unreachableDeposit()
+	expected.ExpeditedMinDeposit = unreachableExpeditedDeposit()
 	s.Require().Equal(expected.String(), after.String(), "only the deposits change")
 }

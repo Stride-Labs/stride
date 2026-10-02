@@ -18,6 +18,10 @@ const (
 	// can lower it again through gov MsgUpdateParams (authority spec §3).
 	GovUnreachableDeposit = 1_000_000_000_000_000_000
 
+	// GovUnreachableExpeditedDeposit (ustrd) is the expedited counterpart: gov params validation
+	// requires the expedited min deposit to be strictly greater than the min deposit.
+	GovUnreachableExpeditedDeposit = 2_000_000_000_000_000_000
+
 	// StakingMaxEntries replaces mainnet's 7 so the mass undelegation never hits
 	// ErrMaxUnbondingDelegationEntries on a pair that already holds 7 entries (authority spec §3).
 	StakingMaxEntries = 100

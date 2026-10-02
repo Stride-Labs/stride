@@ -61,9 +61,10 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    mainnet today), `ParamsStore.Set`. Returns the error: this step fails the upgrade,
    because skipping it would leave the chain with no upgrade path once stake is gone.
    `UpgradeAuthority` is a constant in `constants.go`.
-2. **`CloseGovSubmission(ctx, govKeeper) error`** — set `MinDeposit` and
-   `ExpeditedMinDeposit` to `GovUnreachableDeposit` = 1e18 ustrd (total supply is
-   ~3.78e13 ustrd). Every other gov param is kept as read. Returns the error (param write).
+2. **`CloseGovSubmission(ctx, govKeeper) error`** — set `MinDeposit` to
+   `GovUnreachableDeposit` = 1e18 ustrd (total supply is ~3.78e13 ustrd) and
+   `ExpeditedMinDeposit` to `GovUnreachableExpeditedDeposit` = 2e18 ustrd (gov params
+   validation requires expedited to be strictly greater than min). Every other gov param is kept as read. Returns the error (param write).
 3. **`RaiseMaxUnbondingEntries(ctx, stakingKeeper) error`** — set staking `MaxEntries` to
    100. A pair can hold 7 entries today and the handler adds one; with delegation blocked
    afterwards (§4) no pair can approach 100. Returns the error.
