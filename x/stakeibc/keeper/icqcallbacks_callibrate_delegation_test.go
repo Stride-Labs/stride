@@ -58,7 +58,7 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 		{
 			// Current delegation: 12,500 tokens
 			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-5,000)
-			name:                  "negative delegation change at threshold boundary",
+			name:                  "large negative delegation change",
 			currentDelegation:     sdkmath.NewInt(12_500),
 			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("10000"),
 			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
@@ -67,7 +67,7 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 		{
 			// Current delegation: 10,000 tokens
 			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+5,000)
-			name:                  "positive delegation change at threshold boundary",
+			name:                  "large positive delegation change",
 			currentDelegation:     sdkmath.NewInt(10_000),
 			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("20000"),
 			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
@@ -76,20 +76,30 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Success() {
 		{
 			// Current delegation: 12,501 tokens
 			// Query response:     10,000 shares * 0.75 sharesToTokens = 7,500 tokens (-5,001)
-			name:                  "negative delegation change exceeds threshold",
+			// There is no longer a cap on the change (wind-down spec §5), so this applies too
+			name:                  "negative delegation change above the former cap",
 			currentDelegation:     sdkmath.NewInt(12_501),
 			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("10000"),
 			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
-			expectedEndDelegation: sdkmath.NewInt(12_501), // no change
+			expectedEndDelegation: sdkmath.NewInt(7_500),
 		},
 		{
 			// Current delegation: 9,999 tokens
 			// Query response:     20,000 shares * 0.75 sharesToTokens = 15,000 tokens (+5,001)
-			name:                  "positive delegation change exceeds threshold",
+			name:                  "positive delegation change above the former cap",
 			currentDelegation:     sdkmath.NewInt(9_999),
 			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("20000"),
 			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.75"),
-			expectedEndDelegation: sdkmath.NewInt(9_999), // no change
+			expectedEndDelegation: sdkmath.NewInt(15_000),
+		},
+		{
+			// Current delegation: 1,000,000,000 tokens (the whole zone)
+			// Query response:     1,000,000,000 shares * 0.5 sharesToTokens = 500,000,000 tokens (-500,000,000)
+			name:                  "delegation change of half the zone",
+			currentDelegation:     sdkmath.NewInt(1_000_000_000),
+			sharesInQueryResponse: sdkmath.LegacyMustNewDecFromStr("1000000000"),
+			sharesToTokensRate:    sdkmath.LegacyMustNewDecFromStr("0.5"),
+			expectedEndDelegation: sdkmath.NewInt(500_000_000),
 		},
 	}
 
@@ -148,4 +158,58 @@ func (s *KeeperTestSuite) TestCalibrateDelegation_Failure() {
 	invalidQueryResponse = s.CreateDelegatorSharesQueryResponse("non-existent validator", sdkmath.LegacyNewDec(1000))
 	err = keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, invalidQueryResponse, validQuery)
 	s.Require().ErrorContains(err, "validator not found")
+}
+
+// The callback must leave state untouched when the queried shares can't be trusted
+func (s *KeeperTestSuite) TestCalibrateDelegation_NoOp() {
+	initialDelegation := sdkmath.NewInt(10_000)
+	initialTotalDelegations := sdkmath.NewInt(1_000_000)
+
+	testCases := []struct {
+		name                        string
+		delegationChangesInProgress int64
+		sharesToTokensRate          sdkmath.LegacyDec
+	}{
+		{
+			// A delegation ICA is in flight, so the queried shares race the recorded delegation
+			name:                        "delegation change in progress",
+			delegationChangesInProgress: 1,
+			sharesToTokensRate:          sdkmath.LegacyMustNewDecFromStr("0.75"),
+		},
+		{
+			// A zero rate would compute zero tokens and wipe the recorded delegation
+			name:               "zero shares to tokens rate",
+			sharesToTokensRate: sdkmath.LegacyZeroDec(),
+		},
+		{
+			// A nil rate is unset and would compute a meaningless token amount
+			name: "nil shares to tokens rate",
+		},
+	}
+
+	for _, tc := range testCases {
+		s.App.StakeibcKeeper.SetHostZone(s.Ctx, types.HostZone{
+			ChainId:          HostChainId,
+			TotalDelegations: initialTotalDelegations,
+			Validators: []*types.Validator{{
+				Address:                     ValAddress,
+				Delegation:                  initialDelegation,
+				SharesToTokensRate:          tc.sharesToTokensRate,
+				DelegationChangesInProgress: tc.delegationChangesInProgress,
+			}},
+		})
+
+		query := icqtypes.Query{ChainId: HostChainId}
+		queryResponse := s.CreateDelegatorSharesQueryResponse(ValAddress, sdkmath.LegacyMustNewDecFromStr("10000"))
+
+		err := keeper.CalibrateDelegationCallback(s.App.StakeibcKeeper, s.Ctx, queryResponse, query)
+		s.Require().NoError(err, "%s - no error expected", tc.name)
+
+		updatedHostZone, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, HostChainId)
+		s.Require().True(found, "%s - host zone should have been found", tc.name)
+		s.Require().Equal(initialDelegation.Int64(), updatedHostZone.Validators[0].Delegation.Int64(),
+			"%s - validator delegation should be unchanged", tc.name)
+		s.Require().Equal(initialTotalDelegations.Int64(), updatedHostZone.TotalDelegations.Int64(),
+			"%s - host zone total delegation should be unchanged", tc.name)
+	}
 }

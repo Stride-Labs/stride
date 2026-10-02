@@ -2,7 +2,6 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -11,9 +10,6 @@ import (
 	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
 )
-
-// CalibrationThreshold is the max amount of tokens by which a calibration can alter internal record keeping of delegations
-var CalibrationThreshold = sdkmath.NewInt(5000)
 
 // DelegatorSharesCallback is a callback handler for UpdateValidatorSharesExchRate queries.
 //
@@ -52,6 +48,24 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return errorsmod.Wrapf(types.ErrValidatorNotFound, "no registered validator for address (%s)", queriedDelegation.ValidatorAddress)
 	}
 
+	// Skip if there is an active delegation change ICA for this validator, since the queried
+	// shares race the recorded delegation
+	if validator.DelegationChangesInProgress > 0 {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+			"Validator (%s) has %d delegation changing ICAs in progress, skipping calibration",
+			validator.Address, validator.DelegationChangesInProgress))
+		return nil
+	}
+
+	// Skip if the stored rate is unusable, since the computed token amount would be meaningless
+	// and would wipe the recorded delegation
+	if validator.SharesToTokensRate.IsNil() || !validator.SharesToTokensRate.IsPositive() {
+		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
+			"Validator (%s) has a non-positive shares to tokens rate (%v), skipping calibration",
+			validator.Address, validator.SharesToTokensRate))
+		return nil
+	}
+
 	// Calculate the number of tokens delegated (using the internal sharesToTokensRate)
 	// note: truncateInt per https://github.com/cosmos/cosmos-sdk/blob/cb31043d35bad90c4daa923bb109f38fd092feda/x/staking/types/validator.go#L431
 	delegatedTokens := queriedDelegation.Shares.Mul(validator.SharesToTokensRate).TruncateInt()
@@ -64,15 +78,11 @@ func CalibrateDelegationCallback(k Keeper, ctx sdk.Context, args []byte, query i
 		return nil
 	}
 
-	// if the delegation change is more than the calibration threshold constant,
-	// return nil so the query submission succeeds
+	// Apply the whole difference. The 5,000 base-unit cap that used to bound this existed to
+	// limit what a permissionless caller could move; MsgCalibrateDelegation is admin-only now
+	// (wind-down spec §5) and the day-0 refresh needs to true up drifts of any size
 	// Note: There should be no stateful changes above this line
 	delegationChange := validator.Delegation.Sub(delegatedTokens)
-	if delegationChange.Abs().GT(CalibrationThreshold) {
-		k.Logger(ctx).Error(utils.LogICQCallbackWithHostZone(chainId, ICQCallbackID_Calibrate,
-			"Delegation change is GT CalibrationThreshold, failing calibration callback"))
-		return nil
-	}
 	validator.Delegation = validator.Delegation.Sub(delegationChange)
 	hostZone.TotalDelegations = hostZone.TotalDelegations.Sub(delegationChange)
 

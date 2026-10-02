@@ -384,7 +384,8 @@ always was permissionless, and it is a no-op once the last record is claimed.
 `utils.ValidateAdminAddress` in ValidateBasic: ops use them to refresh slashes before the
 drain (§9), and nobody else can reach the slash path. The 5,000 base-unit
 `CalibrationThreshold` check is removed from the calibration callback: it existed to bound
-what a permissionless caller could move.
+what a permissionless caller could move. The calibration callback instead refuses a validator with a delegation change in flight or a
+non-positive stored rate, the two cases the cap also happened to bound. `MsgCalibrateDelegation` also takes an optional `reset_delegation_changes_in_progress` (default false) that zeroes the validator's flag before the query is submitted, for a flag known to be stale; there is no on-chain check that nothing is in flight, so it is an ops-only override.
 
 **Entry points that bypass the router.** Autopilot: the handler sets `StakeibcActive =
 false`. ICA host: the handler removes `MsgLiquidStake` and `MsgRedeemStake` from the
@@ -1132,7 +1133,10 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 - Keeper code left unreferenced by the removals (stakeibc's LSM liquid-stake entry points, the
   trade-route authz and ICA registration helpers, `EnableRedemptions`, the keeper functions
   behind the deleted hook calls) is dead but harmless; deleting it is a follow-up cleanup, not
-  part of the upgrade.
+  part of the upgrade. Epoch unbonding records whose host zone entries never reach CLAIMABLE (zero-stToken entries
+  are never submitted) are not deleted by `CleanupEpochUnbondingRecords`, so the record for the
+  upgrade's day epoch stays in state permanently; harmless, and no new records are created after
+  the upgrade.
 
 ## §13. Notes for the plan, carried over from the earlier plans and their dry run
 
