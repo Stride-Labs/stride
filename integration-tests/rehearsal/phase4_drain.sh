@@ -70,7 +70,7 @@ val7_failed_others_drained() { # valoper
 
 dead_window_send_fails() {
   local out; out=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators cosmoshub-test-1 --all 2>&1) || true
-  grep -qiE 'timeout|code=[1-9]' <<<"$out"
+  grep -qiE 'timeout' <<<"$out"  # a bare non-zero code could also be "nothing left to drain", so require the timeout reason
 }
 
 zone_total_at_dust() { # chain-id
