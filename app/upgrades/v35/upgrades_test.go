@@ -10,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v35/app/apptesting"
 	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
@@ -36,6 +37,27 @@ func TestUpgradeTestSuite(t *testing.T) {
 // (every helper skips with a log); this is also the non-mainnet localnet case.
 func (s *UpgradeTestSuite) TestUpgrade_EmptyState() {
 	s.ConfirmUpgradeSucceeded(v35.UpgradeName)
+
+	// The authority hand-off does not depend on any state and must land even here
+	s.assertUpgradeAuthorityState()
+}
+
+// assertUpgradeAuthorityState checks the three param writes of authority spec §3 after the whole
+// handler has run: consensus authority, gov deposits and staking max entries.
+func (s *UpgradeTestSuite) assertUpgradeAuthorityState() {
+	consensusParams, err := s.App.ConsensusParamsKeeper.ParamsStore.Get(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().NotNil(consensusParams.Authority, "consensus authority set")
+	s.Require().Equal(v35.UpgradeAuthority, consensusParams.Authority.Authority, "consensus authority")
+
+	govParams, err := s.App.GovKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().True(unreachableDeposit().Equal(govParams.MinDeposit), "gov min deposit %s", govParams.MinDeposit)
+	s.Require().True(unreachableExpeditedDeposit().Equal(govParams.ExpeditedMinDeposit), "gov expedited min deposit %s", govParams.ExpeditedMinDeposit)
+
+	stakingParams, err := s.App.StakingKeeper.GetParams(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(uint32(v35.StakingMaxEntries), stakingParams.MaxEntries, "staking max entries")
 }
 
 // TestUpgrade runs the whole handler through the upgrade module on a state that exercises
@@ -48,6 +70,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 		sdk.MsgTypeURL(&stakeibctypes.MsgLiquidStake{}),
 		sdk.MsgTypeURL(&stakeibctypes.MsgRedeemStake{}),
 		sdk.MsgTypeURL(&stakeibctypes.MsgClaimUndelegatedTokens{}),
+		sdk.MsgTypeURL(&stakingtypes.MsgDelegate{}),
+		sdk.MsgTypeURL(&stakingtypes.MsgUndelegate{}),
 	}})
 	deployKeyContract := s.storeAndInstantiateHackatom(sdk.MustAccAddressFromBech32(v35.WasmDeployKey))
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, withInBoundsRates(stakeibctypes.HostZone{ChainId: v35.ComdexChainId}))
@@ -70,13 +94,16 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	haqqZone.Validators[0].SlashQueryInProgress = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, haqqZone)
 	s.setFailedLSMDeposit(recordstypes.LSMTokenDeposit_DETOKENIZATION_FAILED, v35.FailedLSMDepositAmount)
+	valAddr, _ := s.seedValidator(9, stakingtypes.Bonded, 1)
+	delegator := apptesting.CreateRandomAccounts(1)[0]
+	delegated := s.delegate(delegator, valAddr, 4_000)
 
 	// ----- act -----
 	s.ConfirmUpgradeSucceeded(v35.UpgradeName)
 
 	// ----- assert -----
 	s.Require().False(s.App.AutopilotKeeper.GetParams(s.Ctx).StakeibcActive, "autopilot")
-	s.Require().Equal([]string{"/cosmos.bank.v1beta1.MsgSend", "/stride.stakeibc.MsgClaimUndelegatedTokens"},
+	s.Require().Equal([]string{"/cosmos.bank.v1beta1.MsgSend", "/stride.stakeibc.MsgClaimUndelegatedTokens", "/cosmos.staking.v1beta1.MsgUndelegate"},
 		s.App.ICAHostKeeper.GetParams(s.Ctx).AllowMessages, "ICA host allow-list")
 	s.Require().Equal([]string{v35.GovModuleAddress().String()}, s.App.WasmKeeper.GetParams(s.Ctx).CodeUploadAccess.Addresses, "wasm upload")
 	s.Require().Equal(v35.GovModuleAddress().String(), s.App.WasmKeeper.GetContractInfo(s.Ctx, deployKeyContract).Admin, "contract admin")
@@ -103,6 +130,11 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	lsmDeposit := s.mustGetFailedLSMDeposit()
 	s.Require().Equal(recordstypes.LSMTokenDeposit_DETOKENIZATION_QUEUE, lsmDeposit.Status, "LSM deposit requeued")
 	s.Require().Equal(int64(67_850_951), lsmDeposit.Amount.Int64(), "LSM deposit amount")
+	s.assertUpgradeAuthorityState()
+	s.Require().False(s.hasDelegation(delegator, valAddr), "delegation undelegated")
+	entries := s.unbondingEntries(delegator, valAddr)
+	s.Require().Len(entries, 1, "one unbonding entry from the handler")
+	s.Require().Equal(delegated, entries[0].Balance, "unbonding balance")
 }
 
 // withInBoundsRates gives a fixture host zone a redemption rate inside its safety bounds so the
