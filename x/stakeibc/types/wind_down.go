@@ -17,7 +17,7 @@ const (
 	OsmosisChainId                   = "osmosis-test-1" // rehearsal: mainnet is osmosis-1
 	OsmosisBech32Prefix              = "osmo"
 	StrideToOsmosisTransferChannelId = "channel-1"      // rehearsal: mainnet is channel-5
-	WindDownTransferTimeout          = 15 * time.Minute // rehearsal: mainnet is 24h
+	WindDownTransferTimeout          = 60 * time.Second // rehearsal: mainnet is 24h
 )
 
 // Host-side transfer channel to osmosis per in-scope zone (rehearsal: k8s test network; mainnet map
