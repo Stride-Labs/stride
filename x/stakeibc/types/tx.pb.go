@@ -2519,9 +2519,9 @@ func (m *MsgUpdateHostZoneParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateHostZoneParamsResponse proto.InternalMessageInfo
 
-// One validator to drain: the amount undelegated is the validator's recorded delegation minus
-// offset (default zero), so a full drain is the common case and offset is the lever for a
-// validator that drifted since the last refresh.
+// One validator to drain: the amount undelegated is the validator's recorded
+// delegation minus offset (default zero), so a full drain is the common case
+// and offset is the lever for a validator that drifted since the last refresh.
 type ValidatorUndelegation struct {
 	Address string                `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	Offset  cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=offset,proto3,customtype=cosmossdk.io/math.Int" json:"offset"`
@@ -2567,8 +2567,8 @@ func (m *ValidatorUndelegation) GetAddress() string {
 	return ""
 }
 
-// Admin drain of a host zone's delegations. An empty validators list means every validator
-// with a positive recorded delegation.
+// Admin drain of a host zone's delegations. An empty validators list means
+// every validator with a positive recorded delegation.
 type MsgUndelegateFromValidators struct {
 	Creator    string                  `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	ChainId    string                  `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
@@ -2673,9 +2673,10 @@ func (m *MsgUndelegateFromValidatorsResponse) GetNumBatchesSubmitted() uint64 {
 	return 0
 }
 
-// Admin ICA transfer of one of the four funded ICAs' balance (delegation, withdrawal, fee,
-// redemption) to the Osmosis vault over the host's mapped channel to osmosis-1. The receiver
-// and channel are hard-coded constants, not tx inputs.
+// Admin ICA transfer of one of the four funded ICAs' balance (delegation,
+// withdrawal, fee, redemption) to the Osmosis vault over the host's mapped
+// channel to osmosis-1. The receiver and channel are hard-coded constants, not
+// tx inputs.
 type MsgTransferFromIca struct {
 	Creator string         `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	ChainId string         `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
@@ -2780,8 +2781,8 @@ func (m *MsgTransferFromIcaResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgTransferFromIcaResponse proto.InternalMessageInfo
 
-// Admin transfer of the staketia claim address's TIA vouchers to the stakeibc celestia
-// delegation ICA. amount is in utia; zero means the whole balance.
+// Admin transfer of the staketia claim address's TIA vouchers to the stakeibc
+// celestia delegation ICA. amount is in utia; zero means the whole balance.
 type MsgTransferStaketiaClaimBalance struct {
 	Creator string                `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
 	Amount  cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=cosmossdk.io/math.Int" json:"amount"`
@@ -3235,9 +3236,9 @@ var fileDescriptor_9b7e09c9ad51cd54 = []byte{
 	0x0d, 0xaa, 0xd3, 0x65, 0x9f, 0x3b, 0xff, 0xfa, 0x27, 0x6f, 0xaf, 0x64, 0xb6, 0xef, 0xbc, 0xfb,
 	0xd1, 0x7c, 0xe6, 0xbd, 0x8f, 0xe6, 0x33, 0x1f, 0x7e, 0x34, 0x9f, 0xf9, 0xf1, 0xc7, 0xf3, 0xe7,
 	0xde, 0xfb, 0x78, 0xfe, 0xdc, 0x9f, 0x3f, 0x9e, 0x3f, 0xf7, 0xea, 0x46, 0xe4, 0xc7, 0x9e, 0x7c,
-	0xed, 0xea, 0x1d, 0x54, 0x26, 0x05, 0xf1, 0xb3, 0xe7, 0xc3, 0xcd, 0xeb, 0x85, 0x46, 0xe4, 0x57,
+	0xed, 0xea, 0x1d, 0x54, 0x26, 0x05, 0xf1, 0xb3, 0xe7, 0xc3, 0xcd, 0x1b, 0x85, 0x46, 0xe4, 0x57,
 	0xdc, 0xc7, 0x35, 0x4c, 0xca, 0x83, 0xec, 0x77, 0xcf, 0x9b, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff,
-	0xc5, 0x80, 0x56, 0x66, 0xe5, 0x2d, 0x00, 0x00,
+	0x52, 0x26, 0x4b, 0x81, 0xe5, 0x2d, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.

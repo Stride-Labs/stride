@@ -13,9 +13,10 @@ option go_package = "github.com/Stride-Labs/stride/v35/x/stakeibc/types";
 
 // Msg defines the Msg service.
 //
-// v35 wind-down: the user and admin transactions that moved funds on behalf of users
-// (liquid stake, redeem, register, trade routes, rebate, rebalance, clear balance)
-// have no rpc any more. Their message types remain below so historical transactions decode.
+// v35 wind-down: the user and admin transactions that moved funds on behalf of
+// users (liquid stake, redeem, register, trade routes, rebate, rebalance, clear
+// balance) have no rpc any more. Their message types remain below so historical
+// transactions decode.
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
@@ -494,9 +495,9 @@ message MsgUpdateHostZoneParamsResponse {}
 // Wind-down admin txs (spec §7)
 // ---------------------------------------------------------------------------
 
-// One validator to drain: the amount undelegated is the validator's recorded delegation minus
-// offset (default zero), so a full drain is the common case and offset is the lever for a
-// validator that drifted since the last refresh.
+// One validator to drain: the amount undelegated is the validator's recorded
+// delegation minus offset (default zero), so a full drain is the common case
+// and offset is the lever for a validator that drifted since the last refresh.
 message ValidatorUndelegation {
   string address = 1;
   string offset = 2 [
@@ -505,21 +506,25 @@ message ValidatorUndelegation {
   ];
 }
 
-// Admin drain of a host zone's delegations. An empty validators list means every validator
-// with a positive recorded delegation.
+// Admin drain of a host zone's delegations. An empty validators list means
+// every validator with a positive recorded delegation.
 message MsgUndelegateFromValidators {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakeibc/MsgUndelegateFromValidators";
 
   string creator = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string chain_id = 2;
-  repeated ValidatorUndelegation validators = 3 [ (gogoproto.nullable) = false ];
+  repeated ValidatorUndelegation validators = 3
+      [ (gogoproto.nullable) = false ];
 }
-message MsgUndelegateFromValidatorsResponse { uint64 num_batches_submitted = 1; }
+message MsgUndelegateFromValidatorsResponse {
+  uint64 num_batches_submitted = 1;
+}
 
-// Admin ICA transfer of one of the four funded ICAs' balance (delegation, withdrawal, fee,
-// redemption) to the Osmosis vault over the host's mapped channel to osmosis-1. The receiver
-// and channel are hard-coded constants, not tx inputs.
+// Admin ICA transfer of one of the four funded ICAs' balance (delegation,
+// withdrawal, fee, redemption) to the Osmosis vault over the host's mapped
+// channel to osmosis-1. The receiver and channel are hard-coded constants, not
+// tx inputs.
 message MsgTransferFromIca {
   option (cosmos.msg.v1.signer) = "creator";
   option (amino.name) = "stakeibc/MsgTransferFromIca";
@@ -531,8 +536,8 @@ message MsgTransferFromIca {
 }
 message MsgTransferFromIcaResponse {}
 
-// Admin transfer of the staketia claim address's TIA vouchers to the stakeibc celestia
-// delegation ICA. amount is in utia; zero means the whole balance.
+// Admin transfer of the staketia claim address's TIA vouchers to the stakeibc
+// celestia delegation ICA. amount is in utia; zero means the whole balance.
 message MsgTransferStaketiaClaimBalance {
   option (cosmos.msg.v1.signer) = "creator";
   // Abbreviated: amino names above 39 characters panic at RegisterAminoMsg
