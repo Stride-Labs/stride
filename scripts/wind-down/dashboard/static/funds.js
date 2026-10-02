@@ -247,8 +247,10 @@ function breakdownPanel(zone) {
 
 function breakdownRow(row, zone, widest) {
   const unbonding = unbondingOf(row);
-  const source = row.source === 'multisig' ? ` ${pill('idle', 'multisig')}` : '';
-  return `<tr><td>${escapeHtml(row.moniker)}${source}</td><td>${addressCell(row.address)}</td>
+  // Both sources are tagged on celestia, since the ICA and the multisig can share a validator.
+  const source = zone.staketia ? ` ${pill('idle', row.source)}` : '';
+  const moniker = row.moniker === row.address ? '<span class="muted">not tracked by Stride</span>' : escapeHtml(row.moniker);
+  return `<tr><td>${moniker}${source}</td><td>${addressCell(row.address)}</td>
     <td class="num">${amount(row.staked, zone.decimals, 6)}</td><td class="num">${amount(unbonding.toString(), zone.decimals, 6)}</td>
     <td class="num">${row.entries.length || '<span class="muted">–</span>'}</td><td>${positionBar(row, zone, widest)}</td></tr>`;
 }
