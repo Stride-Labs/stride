@@ -793,15 +793,28 @@ func (s *KeeperTestSuite) TestDistributeClaims_Success() {
 }
 
 func (s *KeeperTestSuite) TestDistributeClaims_HostHalted() {
-	s.SetupTestDistributeClaims()
+	tc := s.SetupTestDistributeClaims()
 
-	// Halt the host zone, then attempt to call distribute claims, it should fail
+	// Halt the host zone, claims should still be distributed
 	hostZone := s.MustGetHostZone()
 	hostZone.Halted = true
 	s.App.StakedymKeeper.SetHostZone(s.Ctx, hostZone)
 
 	err := s.App.StakedymKeeper.DistributeClaims(s.Ctx)
-	s.Require().ErrorContains(err, "host zone is halted")
+	s.Require().NoError(err, "no error expected during claim on a halted zone")
+
+	// Confirm the claim balance was depleted and the CLAIMABLE records were archived
+	actualClaimBalance := s.App.BankKeeper.GetBalance(s.Ctx, tc.claimAddress, HostIBCDenom)
+	s.Require().Equal(tc.expectedFinalClaimBalance.Int64(), actualClaimBalance.Amount.Int64(),
+		"claim balance should have been depleted")
+
+	archivedRecords := s.App.StakedymKeeper.GetAllArchivedUnbondingRecords(s.Ctx)
+	s.Require().Len(archivedRecords, 2, "there should be two archived records")
+	archivedIds := []uint64{archivedRecords[0].Id, archivedRecords[1].Id}
+	s.Require().ElementsMatch(tc.claimableRecordIds, archivedIds, "claimable records should now be archived")
+
+	// The zone stays halted
+	s.Require().True(s.MustGetHostZone().Halted, "host zone should still be halted")
 }
 
 func (s *KeeperTestSuite) TestDistributeClaims_InsufficientFunds() {

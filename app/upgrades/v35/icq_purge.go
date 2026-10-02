@@ -66,3 +66,19 @@ func PurgeWithdrawalBalanceQueries(ctx sdk.Context, icq icqkeeper.Keeper) {
 	}
 	ctx.Logger().Info(fmt.Sprintf("v35: %d pending withdrawal-balance ICQ(s) deleted", numDeleted))
 }
+
+// PurgeCalibrationQueries deletes stakeibc calibration queries on every chain. Their empty
+// pre-upgrade callback data cannot detect delegation changes while the query was in flight,
+// and permissionless requests must not apply corrections after calibration becomes admin-only.
+func PurgeCalibrationQueries(ctx sdk.Context, icq icqkeeper.Keeper) {
+	numDeleted := 0
+	for _, query := range icq.AllQueries(ctx) {
+		if query.CallbackModule != stakeibctypes.ModuleName || query.CallbackId != stakeibckeeper.ICQCallbackID_Calibrate {
+			continue
+		}
+		ctx.Logger().Info(fmt.Sprintf("v35: deleting pending calibration ICQ %s for %s", query.Id, query.ChainId))
+		icq.DeleteQuery(ctx, query.Id)
+		numDeleted++
+	}
+	ctx.Logger().Info(fmt.Sprintf("v35: %d pending calibration ICQ(s) deleted", numDeleted))
+}

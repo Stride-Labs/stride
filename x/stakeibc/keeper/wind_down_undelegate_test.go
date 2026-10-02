@@ -184,9 +184,9 @@ func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsFlaggedValidator()
 	s.Require().Equal(uint64(0), s.App.StakeibcKeeper.GetPendingUndelegationInFlight(s.Ctx, HostChainId))
 }
 
-// A validator mid-slash-query is excluded, as in the record-driven path; ops wait for the
-// day-0 refresh callbacks (spec §9 steps 1-2) before draining
-func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsSlashQueryInProgress() {
+// A slash query in progress does not block the drain: only an ICQ callback clears the flag,
+// so a query that is never answered would otherwise strand the validator's stake
+func (s *KeeperTestSuite) TestUndelegateFromValidators_SlashQueryInProgressDoesNotBlock() {
 	tc := s.SetupUndelegateFromValidators()
 	tc.hostZone.Validators[2].SlashQueryInProgress = true
 	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
@@ -194,13 +194,37 @@ func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsSlashQueryInProgre
 
 	// explicitly listed
 	msg := types.NewMsgUndelegateFromValidators("admin", HostChainId, []types.ValidatorUndelegation{{Address: "val3"}})
-	_, err := s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, msg)
-	s.Require().ErrorContains(err, "slash query in progress")
+	numBatches, err := s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, msg)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(1), numBatches)
+	s.Require().Equal(startSequence+1, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID), "one ICA submitted")
 
-	// and swept up by the empty list
-	_, err = s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, types.NewMsgUndelegateFromValidators("admin", HostChainId, nil))
-	s.Require().ErrorContains(err, "slash query in progress")
-	s.Require().Equal(startSequence, s.MustGetNextSequenceNumber(tc.delegationPortID, tc.delegationChannelID), "nothing submitted")
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(1), hostZone.Validators[2].DelegationChangesInProgress, "val3 flagged by the drain")
+	s.Require().True(hostZone.Validators[2].SlashQueryInProgress, "the drain leaves the slash flag alone")
+
+	callbackData := s.App.IcacallbacksKeeper.GetAllCallbackData(s.Ctx)
+	s.Require().Len(callbackData, 1)
+	var callback types.UndelegateCallback
+	s.Require().NoError(proto.Unmarshal(callbackData[0].CallbackArgs, &callback))
+	s.Require().Len(callback.SplitUndelegations, 1)
+	s.Require().Equal("val3", callback.SplitUndelegations[0].Validator)
+	s.Require().Equal(sdkmath.NewInt(2999), callback.SplitUndelegations[0].NativeTokenAmount)
+}
+
+// The empty list still takes in a validator with a slash query in progress
+func (s *KeeperTestSuite) TestUndelegateFromValidators_EmptyListIncludesSlashQueryInProgress() {
+	tc := s.SetupUndelegateFromValidators()
+	tc.hostZone.Validators[2].SlashQueryInProgress = true
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, tc.hostZone)
+
+	numBatches, err := s.App.StakeibcKeeper.UndelegateFromValidators(s.Ctx, types.NewMsgUndelegateFromValidators("admin", HostChainId, nil))
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(2), numBatches, "3 messages in batches of 2")
+
+	hostZone := s.MustGetHostZone(HostChainId)
+	s.Require().Equal(int64(1), hostZone.Validators[2].DelegationChangesInProgress, "val3 drained with the rest")
+	s.CheckEventValueEmitted(types.EventTypeUndelegation, types.AttributeKeyTotalUnbondAmount, "5999")
 }
 
 // A stored v34-style pending undelegation would be consumed by the drain's record-less ack

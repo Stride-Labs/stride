@@ -66,10 +66,11 @@ func ReconcileHaqqDelegations(ctx sdk.Context, sk stakeibckeeper.Keeper) (applie
 }
 
 // HaqqExpectedTrackedDelegations pins HaqqDelegationDeltas to the state it was measured against:
-// each table validator's tracked Delegation (host base denom) on 2026-09-29, read from the Stride
-// host_zone query. A slash booked between generation and the upgrade changes that validator's
+// each table validator's tracked Delegation (host base denom) as the 2026-09-30 drift measurement
+// recorded it. A slash booked between generation and the upgrade changes that validator's
 // tracked value, and applying its delta on top would double-apply the slash, so
-// ReconcileHaqqDelegations skips that row. Emitted by gen_delta_table.py from --host-zone-json.
+// ReconcileHaqqDelegations skips that row. Emitted by gen_delta_table.py from the same drift.json
+// rows as the deltas (their `recorded` value).
 var HaqqExpectedTrackedDelegations = map[string]sdkmath.Int{
 	"haqqvaloper1a57vprf7lswm3aqy2g5gy509235wmtsfvf9q73": mustInt("8550624701423372833667126"),
 	"haqqvaloper1a4qnqnk5ag0um6z3unkdth92v9c46x0dcpe2n0": mustInt("1977324198402384201312159"),

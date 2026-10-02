@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"math"
 
+	icatypes "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"github.com/Stride-Labs/stride/v34/utils"
 	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -229,6 +232,36 @@ func (k Keeper) DecrementValidatorDelegationChangesInProgress(hostZone *types.Ho
 	}
 	validator.DelegationChangesInProgress -= 1
 	hostZone.Validators[valIndex] = &validator
+	return nil
+}
+
+// Checks that a validator's DelegationChangesInProgress flag can be zeroed by an admin. It can only
+// be stale if the delegation ICA channel is open with no packet commitment outstanding (the same
+// condition the v35 upgrade handler uses). With a packet in flight the flag is not stale: its ack
+// would hit the zeroed counter in DecrementValidatorDelegationChangesInProgress, the ack tx would
+// fail, and the ordered channel would be stuck behind it. With the channel closed, the flags are
+// reset by RestoreInterchainAccount instead.
+func (k Keeper) CheckDelegationChangesInProgressResettable(ctx sdk.Context, hostZone types.HostZone) error {
+	delegationOwner := types.FormatHostZoneICAOwner(hostZone.ChainId, types.ICAAccountType_DELEGATION)
+	delegationPortId, err := icatypes.NewControllerPortID(delegationOwner)
+	if err != nil {
+		return errorsmod.Wrapf(err, "unable to build the delegation port id for %s", hostZone.ChainId)
+	}
+
+	delegationChannelId, found := k.ICAControllerKeeper.GetOpenActiveChannel(ctx, hostZone.ConnectionId, delegationPortId)
+	if !found {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"no open delegation channel on %s: the flags are reset by RestoreInterchainAccount when the channel is restored",
+			hostZone.ChainId)
+	}
+
+	unackedPackets := k.IBCKeeper.ChannelKeeper.GetAllPacketCommitmentsAtChannel(ctx, delegationPortId, delegationChannelId)
+	if len(unackedPackets) > 0 {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
+			"%d unacked packet(s) on delegation channel %s: the flag is not stale, wait for them to be relayed",
+			len(unackedPackets), delegationChannelId)
+	}
+
 	return nil
 }
 

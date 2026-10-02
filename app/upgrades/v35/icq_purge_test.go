@@ -1,7 +1,12 @@
 package v35_test
 
 import (
+	sdkmath "cosmossdk.io/math"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
+	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
 	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
 	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
 	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
@@ -23,6 +28,35 @@ func (s *UpgradeTestSuite) seedQueries() {
 	} {
 		s.App.InterchainqueryKeeper.SetQuery(s.Ctx, query)
 	}
+}
+
+func (s *UpgradeTestSuite) TestUpgrade_PurgedCalibrationResponse() {
+	s.seedQueries()
+	s.App.InterchainqueryKeeper.SetQuery(s.Ctx, icqtypes.Query{
+		Id: "other-comdex-calibrate", ChainId: v35.ComdexChainId,
+		CallbackModule: "records", CallbackId: stakeibckeeper.ICQCallbackID_Calibrate,
+	})
+	hostZone := withInBoundsRates(stakeibctypes.HostZone{
+		ChainId: v35.ComdexChainId, Deprecated: true,
+		TotalDelegations: sdkmath.NewInt(100), Validators: []*stakeibctypes.Validator{{
+			Address: "comdexvaloper1", Delegation: sdkmath.NewInt(100), SharesToTokensRate: sdkmath.LegacyOneDec(),
+		}},
+	})
+	s.App.StakeibcKeeper.SetHostZone(s.Ctx, hostZone)
+	s.ConfirmUpgradeSucceeded(v35.UpgradeName)
+	s.Require().ElementsMatch([]string{
+		"haqq-fee", "juno-delegation", "other-haqq-delegation",
+		"other-juno-withdrawal", "other-comdex-calibrate",
+	}, s.queryIds(), "calibrations on every zone are purged without module collisions")
+	before, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.ComdexChainId)
+	s.Require().True(found)
+	response := s.App.AppCodec().MustMarshal(&stakingtypes.Delegation{ValidatorAddress: "comdexvaloper1", Shares: sdkmath.LegacyNewDec(200)})
+	_, err := icqkeeper.NewMsgServerImpl(s.App.InterchainqueryKeeper).SubmitQueryResponse(s.Ctx,
+		&icqtypes.MsgSubmitQueryResponse{QueryId: "comdex-calibrate", Result: response})
+	s.Require().NoError(err, "late response for a purged query remains a successful no-op")
+	after, found := s.App.StakeibcKeeper.GetHostZone(s.Ctx, v35.ComdexChainId)
+	s.Require().True(found)
+	s.Require().Equal(before, after, "purged calibration cannot change delegation accounting")
 }
 
 func (s *UpgradeTestSuite) queryIds() []string {

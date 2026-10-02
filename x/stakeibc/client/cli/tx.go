@@ -384,8 +384,9 @@ Submits a query for the validator's delegation on the host zone; the callback th
 The callback does nothing while the validator has a delegation change in flight.
 
 --reset-delegation-changes-in-progress zeroes the validator's DelegationChangesInProgress before the query is submitted.
-WARNING: use it only when the flag is known to be stale (no ICA in flight for this validator). A reset while an ICA is
-in flight lets the calibration double-count it.`,
+Use it only when the flag is known to be stale. The tx is rejected unless the zone's delegation channel is open with no
+packets in flight: with a packet in flight the flag is not stale, and its ack would fail on the zeroed counter and wedge
+the ordered channel. With the channel closed, RestoreInterchainAccount resets the flags when the channel is restored.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argChainId := args[0]
@@ -414,7 +415,7 @@ in flight lets the calibration double-count it.`,
 		},
 	}
 
-	cmd.Flags().Bool(FlagResetDelegationChangesInProgress, false, "Zero the validator's DelegationChangesInProgress first (only if known to be stale)")
+	cmd.Flags().Bool(FlagResetDelegationChangesInProgress, false, "Zero the validator's DelegationChangesInProgress first (only if known to be stale; rejected unless the delegation channel is open with no packets in flight)")
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
