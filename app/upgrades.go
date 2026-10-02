@@ -45,6 +45,7 @@ import (
 	v32 "github.com/Stride-Labs/stride/v34/app/upgrades/v32"
 	v33 "github.com/Stride-Labs/stride/v34/app/upgrades/v33"
 	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
+	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
 	v4 "github.com/Stride-Labs/stride/v34/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v34/app/upgrades/v5"
 	v6 "github.com/Stride-Labs/stride/v34/app/upgrades/v6"
@@ -460,6 +461,22 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.StaketiaKeeper,
 			app.InterchainqueryKeeper,
 			app.GovKeeper,
+		),
+	)
+
+	// v35 upgrade handler (protocol wind-down)
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v35.UpgradeName,
+		v35.CreateUpgradeHandler(
+			app.ModuleManager,
+			app.configurator,
+			app.StakeibcKeeper,
+			app.InterchainqueryKeeper,
+			app.AutopilotKeeper,
+			app.ICAHostKeeper,
+			app.WasmKeeper,
+			&app.RatelimitKeeper,
+			app.ICAOracleKeeper,
 		),
 	)
 
