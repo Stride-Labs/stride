@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 4. v35: wind-down admin txs `MsgUndelegateFromValidators` (refuses an empty validators file and a zone with record batches in flight), `MsgTransferFromIca` (to the hard-coded Osmosis vault, validated as an osmo address, over a hard-coded per-host channel with a 24h packet timeout and a 2× inner transfer timeout) and `MsgTransferStaketiaClaimBalance` ([#1534](https://github.com/Stride-Labs/stride/pull/1534))
 5. v35: `MsgSweepTokensOffStride`, the sweep-operator-gated batched transfer of ustrd, stutia and non-deprecated stakeibc stTokens to holders' Osmosis addresses and of whitelisted vouchers back to their source chains; skips protocol multisigs, safes, the operator, module and blocked addresses ([#1535](https://github.com/Stride-Labs/stride/pull/1535))
 6. v35: release gate — sweep operator and Osmosis vault address constants, mainnet-export handler suite with the real constants, `verify_constants.py` staleness gate, `coverage_check.py` (spec §10) ([#1536](https://github.com/Stride-Labs/stride/pull/1536))
-7. v35 version (PR_PLACEHOLDER)
+7. v35 version ([#1543](https://github.com/Stride-Labs/stride/pull/1543))
 
 ## [v34.1.0](https://github.com/Stride-Labs/stride/releases/tag/v34.1.0) - 2026-09-18
 
