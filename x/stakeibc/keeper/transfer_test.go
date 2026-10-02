@@ -10,8 +10,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 const chainId = "GAIA"

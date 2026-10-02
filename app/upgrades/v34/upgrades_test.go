@@ -15,11 +15,11 @@ import (
 	poatypes "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
-	"github.com/Stride-Labs/stride/v34/utils"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v34 "github.com/Stride-Labs/stride/v35/app/upgrades/v34"
+	"github.com/Stride-Labs/stride/v35/utils"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
 )
 
 // continuingMonikers are the POA validators the upgrade must not touch.

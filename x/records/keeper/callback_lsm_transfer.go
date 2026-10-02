@@ -8,9 +8,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v34/x/records/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v35/x/records/types"
 )
 
 // Callback after an LSM token is IBC tranferred to the host zone

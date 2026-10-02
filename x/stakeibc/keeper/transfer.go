@@ -15,10 +15,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	epochstypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	epochstypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // Iterate each deposit record marked TRANSFER_QUEUE and IBC transfer tokens from the Stride controller account to the delegation ICAs on each host zone

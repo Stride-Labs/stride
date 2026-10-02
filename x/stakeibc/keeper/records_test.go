@@ -5,9 +5,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) TestCreateDepositRecordsForEpoch_Successful() {

@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v34/x/records/types"
+	icacallbackstypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v35/x/records/types"
 )
 
 func (k Keeper) MarshalTransferCallbackArgs(ctx sdk.Context, delegateCallback types.TransferCallback) ([]byte, error) {

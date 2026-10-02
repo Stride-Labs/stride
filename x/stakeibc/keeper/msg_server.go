@@ -16,10 +16,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 type msgServer struct {

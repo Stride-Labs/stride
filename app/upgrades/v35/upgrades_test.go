@@ -11,13 +11,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	autopilottypes "github.com/Stride-Labs/stride/v34/x/autopilot/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	autopilottypes "github.com/Stride-Labs/stride/v35/x/autopilot/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v35/x/icaoracle/types"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 type UpgradeTestSuite struct {

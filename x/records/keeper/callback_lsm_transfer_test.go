@@ -7,9 +7,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 	_ "github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	"github.com/Stride-Labs/stride/v34/x/records/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	"github.com/Stride-Labs/stride/v35/x/records/types"
 )
 
 var LSMTokenDenom = "cosmosvaloperxxx/42"

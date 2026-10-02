@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // HaqqDelegationDeltas trues up the haqq_11235-1 host zone's tracked delegations to what is

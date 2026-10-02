@@ -7,9 +7,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 type SweepUnbondedTokensTestCase struct {

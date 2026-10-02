@@ -6,7 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // Wind-down admin txs (spec §7). Each handler is a thin delegate to the keeper function in the

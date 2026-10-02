@@ -7,7 +7,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/Stride-Labs/stride/v34/x/claim/types";
+option go_package = "github.com/Stride-Labs/stride/v35/x/claim/types";
 
 // v35 wind-down: every legacy claim transaction was removed; message types remain for
 // historical decoding.

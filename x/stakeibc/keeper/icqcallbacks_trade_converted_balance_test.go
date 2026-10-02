@@ -8,10 +8,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 func (s *KeeperTestSuite) SetupTradeConvertedBalanceCallbackTestCase() BalanceQueryCallbackTestCase {

@@ -5,8 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // seedFlaggedZone stores a host zone with two validators carrying non-zero in-progress counters

@@ -16,11 +16,11 @@ import (
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 var (

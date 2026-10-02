@@ -8,9 +8,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	icacallbacktypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	icacallbacktypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 type ClaimCallbackState struct {

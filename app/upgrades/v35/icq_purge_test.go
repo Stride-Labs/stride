@@ -5,11 +5,11 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 func (s *UpgradeTestSuite) seedQueries() {

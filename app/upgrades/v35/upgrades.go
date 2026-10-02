@@ -12,10 +12,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	autopilotkeeper "github.com/Stride-Labs/stride/v34/x/autopilot/keeper"
-	icaoraclekeeper "github.com/Stride-Labs/stride/v34/x/icaoracle/keeper"
-	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	autopilotkeeper "github.com/Stride-Labs/stride/v35/x/autopilot/keeper"
+	icaoraclekeeper "github.com/Stride-Labs/stride/v35/x/icaoracle/keeper"
+	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
 )
 
 // CreateUpgradeHandler returns the v35 upgrade handler, the wind-down upgrade

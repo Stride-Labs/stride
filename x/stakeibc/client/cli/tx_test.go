@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/client/cli"
 )
 
 func TestCmdClaimUndelegatedTokens(t *testing.T) {

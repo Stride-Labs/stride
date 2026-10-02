@@ -17,10 +17,10 @@ import (
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v28 "github.com/Stride-Labs/stride/v34/app/upgrades/v28"
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v28 "github.com/Stride-Labs/stride/v35/app/upgrades/v28"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 type UpdateRedemptionRateBounds struct {

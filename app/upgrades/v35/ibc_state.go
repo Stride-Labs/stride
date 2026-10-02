@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	icaoraclekeeper "github.com/Stride-Labs/stride/v34/x/icaoracle/keeper"
+	icaoraclekeeper "github.com/Stride-Labs/stride/v35/x/icaoracle/keeper"
 )
 
 // DeactivateICAOracles turns every ICA oracle off (spec §5 "Oracles and rate limits"). The

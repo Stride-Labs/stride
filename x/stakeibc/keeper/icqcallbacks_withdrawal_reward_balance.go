@@ -8,10 +8,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	icqkeeper "github.com/Stride-Labs/stride/v34/x/interchainquery/keeper"
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icqkeeper "github.com/Stride-Labs/stride/v35/x/interchainquery/keeper"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // WithdrawalRewardBalanceCallback is a callback handler for WithdrawalRewardBalance queries.

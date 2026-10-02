@@ -7,8 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
-	"github.com/Stride-Labs/stride/v34/utils"
+	v34 "github.com/Stride-Labs/stride/v35/app/upgrades/v34"
+	"github.com/Stride-Labs/stride/v35/utils"
 )
 
 func (s *UpgradeTestSuite) TestUpgradeUpdatesGovParams() {

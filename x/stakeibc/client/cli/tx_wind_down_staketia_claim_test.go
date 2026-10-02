@@ -4,7 +4,7 @@ package cli_test
 import (
 	"testing"
 
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/client/cli"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/client/cli"
 )
 
 func TestCmdTransferStaketiaClaimBalance(t *testing.T) {

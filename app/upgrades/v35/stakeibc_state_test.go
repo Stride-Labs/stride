@@ -1,8 +1,8 @@
 package v35_test
 
 import (
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 func (s *UpgradeTestSuite) TestDeprecateComdex() {

@@ -10,9 +10,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/x/icqoracle/keeper"
-	"github.com/Stride-Labs/stride/v34/x/icqoracle/types"
-	icqtypes "github.com/Stride-Labs/stride/v34/x/interchainquery/types"
+	"github.com/Stride-Labs/stride/v35/x/icqoracle/keeper"
+	"github.com/Stride-Labs/stride/v35/x/icqoracle/types"
+	icqtypes "github.com/Stride-Labs/stride/v35/x/interchainquery/types"
 )
 
 // Mock ICQ Keeper struct

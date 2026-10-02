@@ -11,12 +11,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochtypes "github.com/Stride-Labs/stride/v34/x/epochs/types"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	epochtypes "github.com/Stride-Labs/stride/v35/x/epochs/types"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // ----------------------------------------------------

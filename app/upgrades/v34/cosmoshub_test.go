@@ -3,11 +3,11 @@ package v34_test
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	v34 "github.com/Stride-Labs/stride/v34/app/upgrades/v34"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	v34 "github.com/Stride-Labs/stride/v35/app/upgrades/v34"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 const (

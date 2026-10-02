@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/Stride-Labs/stride/v34/x/epochs/types"
+	"github.com/Stride-Labs/stride/v35/x/epochs/types"
 )
 
 // AfterEpochEnd executes the indicated hook after epochs ends

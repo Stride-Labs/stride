@@ -6,9 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
-	v35 "github.com/Stride-Labs/stride/v34/app/upgrades/v35"
-	autopilottypes "github.com/Stride-Labs/stride/v34/x/autopilot/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	autopilottypes "github.com/Stride-Labs/stride/v35/x/autopilot/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 func (s *UpgradeTestSuite) TestDisableAutopilotStakeibc() {

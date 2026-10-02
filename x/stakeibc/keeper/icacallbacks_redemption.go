@@ -11,10 +11,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/Stride-Labs/stride/v34/utils"
-	icacallbackstypes "github.com/Stride-Labs/stride/v34/x/icacallbacks/types"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/utils"
+	icacallbackstypes "github.com/Stride-Labs/stride/v35/x/icacallbacks/types"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 // Marshalls redemption callback arguments

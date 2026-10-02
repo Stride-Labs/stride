@@ -9,8 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/x/records/types"
-	recordtypes "github.com/Stride-Labs/stride/v34/x/records/types"
+	"github.com/Stride-Labs/stride/v35/x/records/types"
+	recordtypes "github.com/Stride-Labs/stride/v35/x/records/types"
 )
 
 type TransferTestCase struct {

@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	"github.com/Stride-Labs/stride/v34/x/airdrop/keeper"
-	"github.com/Stride-Labs/stride/v34/x/airdrop/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	"github.com/Stride-Labs/stride/v35/x/airdrop/keeper"
+	"github.com/Stride-Labs/stride/v35/x/airdrop/types"
 )
 
 var (

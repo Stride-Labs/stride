@@ -14,7 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 
-	"github.com/Stride-Labs/stride/v34/x/stakeibc/types"
+	"github.com/Stride-Labs/stride/v35/x/stakeibc/types"
 )
 
 const FlagResetDelegationChangesInProgress = "reset-delegation-changes-in-progress"

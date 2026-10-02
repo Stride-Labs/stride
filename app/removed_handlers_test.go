@@ -8,15 +8,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/Stride-Labs/stride/v34/app/apptesting"
-	airdroptypes "github.com/Stride-Labs/stride/v34/x/airdrop/types"
-	auctiontypes "github.com/Stride-Labs/stride/v34/x/auction/types"
-	claimtypes "github.com/Stride-Labs/stride/v34/x/claim/types"
-	icaoracletypes "github.com/Stride-Labs/stride/v34/x/icaoracle/types"
-	icqoracletypes "github.com/Stride-Labs/stride/v34/x/icqoracle/types"
-	stakedymtypes "github.com/Stride-Labs/stride/v34/x/stakedym/types"
-	stakeibctypes "github.com/Stride-Labs/stride/v34/x/stakeibc/types"
-	staketiatypes "github.com/Stride-Labs/stride/v34/x/staketia/types"
+	"github.com/Stride-Labs/stride/v35/app/apptesting"
+	airdroptypes "github.com/Stride-Labs/stride/v35/x/airdrop/types"
+	auctiontypes "github.com/Stride-Labs/stride/v35/x/auction/types"
+	claimtypes "github.com/Stride-Labs/stride/v35/x/claim/types"
+	icaoracletypes "github.com/Stride-Labs/stride/v35/x/icaoracle/types"
+	icqoracletypes "github.com/Stride-Labs/stride/v35/x/icqoracle/types"
+	stakedymtypes "github.com/Stride-Labs/stride/v35/x/stakedym/types"
+	stakeibctypes "github.com/Stride-Labs/stride/v35/x/stakeibc/types"
+	staketiatypes "github.com/Stride-Labs/stride/v35/x/staketia/types"
 )
 
 type RemovedHandlersTestSuite struct {

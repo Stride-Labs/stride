@@ -7,9 +7,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	recordskeeper "github.com/Stride-Labs/stride/v34/x/records/keeper"
-	recordstypes "github.com/Stride-Labs/stride/v34/x/records/types"
-	stakeibckeeper "github.com/Stride-Labs/stride/v34/x/stakeibc/keeper"
+	recordskeeper "github.com/Stride-Labs/stride/v35/x/records/keeper"
+	recordstypes "github.com/Stride-Labs/stride/v35/x/records/types"
+	stakeibckeeper "github.com/Stride-Labs/stride/v35/x/stakeibc/keeper"
 )
 
 const CosmosHubChainId = "cosmoshub-4"
