@@ -21,7 +21,10 @@ stride_is_v35() {
 strided() { if stride_is_v35; then strided_new "$@"; else strided_old "$@"; fi; }
 strided_pod() { local pod=$1; shift; $KX exec "$pod" -c validator -- strided "$@"; }
 gaiad()    { $KX exec cosmoshub-validator-0 -c validator -- gaiad "$@"; }
-osmosisd() { $KX exec osmosis-validator-0 -c validator -- osmosisd "$@"; }
+# osmosisd v28 prints autocli query output (bank, staking, auth, wasm) on stderr and the rest on stdout:
+# merge the streams and drop the proto-registration noise so callers can pipe into jq. pipefail keeps
+# the exec's exit status.
+osmosisd() { $KX exec osmosis-validator-0 -c validator -- osmosisd "$@" 2>&1 | { grep -vE 'proto: duplicate|already registered' || true; }; }
 
 # Intentionally unquoted at call sites: these are word-split into flags
 STRIDE_TX="--keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json"
