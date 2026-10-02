@@ -2,13 +2,15 @@
 //
 // A tab module calls registerTab(name, render) once; render(data, root, snapshot) fills `root` with the
 // tab's HTML whenever a new snapshot arrives. `data` is the collector's result, `snapshot` is the whole
-// API body ({fetched_at, duration_seconds, refreshing, data}).
+// API body ({fetched_at, duration_seconds, refreshing, data}). A tab with no collector behind it (Ops) calls
+// registerSelfPollingTab(name, start) instead: the shell calls start() once and the module polls its own route.
 
-const TAB_NAMES = ['channels', 'validators', 'funds'];
+const TAB_NAMES = ['ops', 'channels', 'validators', 'funds'];
 const POLL_MS = 5000;
 const STALE_AFTER_INTERVALS = 3;
 
 const renderers = {};
+const selfPolling = {}; // tab name -> start(), for tabs that own their data route (no snapshot, stale badge or refresh)
 const snapshots = {}; // tab name -> latest API body
 const renderedAt = {}; // tab name -> fetched_at of the snapshot currently drawn
 let intervals = { channels: 60, funds: 120, validators: 300 };
@@ -16,6 +18,10 @@ let activeTab = TAB_NAMES[0];
 
 function registerTab(name, render) {
   renderers[name] = render;
+}
+
+function registerSelfPollingTab(name, start) {
+  selfPolling[name] = start;
 }
 
 // ---- shared formatters
@@ -88,12 +94,13 @@ async function startApp() {
   selectTab(TAB_NAMES.includes(location.hash.slice(1)) ? location.hash.slice(1) : TAB_NAMES[0]);
   document.addEventListener('click', copyOnClick);
 
-  TAB_NAMES.filter((name) => !renderers[name]).forEach((name) => {
+  TAB_NAMES.filter((name) => !renderers[name] && !selfPolling[name]).forEach((name) => {
     document.getElementById(`view-${name}`).innerHTML = '<div class="placeholder">not built</div>';
   });
-  TAB_NAMES.filter((name) => renderers[name]).forEach((name) => {
+  TAB_NAMES.filter((name) => renderers[name] || selfPolling[name]).forEach((name) => {
     document.getElementById(`view-${name}`).innerHTML = '<div class="placeholder">loading…</div>';
   });
+  Object.values(selfPolling).forEach((start) => start());
 
   intervals = { ...intervals, ...(await fetchJson('/api/config')).body?.intervals };
   TAB_NAMES.forEach(pollTab);
@@ -162,6 +169,11 @@ function updateHeader() {
   const body = snapshots[activeTab];
 
   label.classList.remove('stale');
+  if (selfPolling[activeTab]) {
+    label.textContent = 'plan and status are read from disk · reload to pick up edits';
+    button.disabled = true;
+    return;
+  }
   if (!renderers[activeTab]) {
     label.textContent = 'not built';
     button.disabled = true;

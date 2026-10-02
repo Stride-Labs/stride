@@ -18,8 +18,25 @@ first snapshot). `POST /api/refresh/<tab>` refreshes now; `GET /api/config` retu
 A refresh that raises anything other than a per-zone network or decode error keeps the previous snapshot and logs the
 traceback to stderr. The page marks a snapshot stale after three intervals.
 
-Adding a tab: write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`), add one line to `COLLECTORS`, write
+Adding a tab (the Ops tab is the exception, see below): write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`), add one line to `COLLECTORS`, write
 `static/<tab>.js` calling `registerTab(name, render)`, and uncomment its `<script>` line in `static/index.html`.
+
+## Ops tab
+
+The first tab and the default (`#ops`): the dated wind-down checklist, one collapsible section per block, with the current
+block and the next one open. It is not a collector: it has no snapshot, stale badge or refresh button.
+
+- `ops/plan.json` is the plan (anchors, then `days` of blocks with `windows` of `steps`; steps with `zones` get one
+  sub-tick per zone, ids `<id>:<zone>`). It is reviewed like the spec and read from disk on every request, so an edit
+  shows on reload.
+- `ops/status.json` holds the ticks: `{"<id>": {"done": true, "at": "<iso utc>", "by": "<name>"}}`.
+- Routes: `GET /api/ops` returns `{plan, status, today}` (today is the UTC date); `POST /api/ops/check` with
+  `{"id", "done", "by"}` records or (when `done` is false) deletes a tick and returns the full status. 400 for a bad body
+  or an id that is not in the plan.
+
+To tick, type your name in the "you are" field (kept in your browser) and click the checkbox. The server rewrites
+`status.json` atomically with sorted keys, so each tick is a one-line diff. Ticks are committed like any other file:
+commit and push `ops/status.json` so the team sees the same state. Logic lives in `ops.py`; `server.py` only routes.
 
 ## Channels tab
 
