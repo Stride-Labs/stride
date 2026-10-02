@@ -941,16 +941,18 @@ will settle.
    `ClaimUndelegatedTokens` for every record (permissionless, as today; a record whose host
    receiver rejects the bank send is handled by hand). Once a zone has no record outside
    `CLAIMABLE` with a non-zero amount, no user redemption record, and no claim ICA in
-   flight: `MsgTransferFromIca DELEGATION` for the full
+   flight (confirmed by hand with the transfer checklist below, since the tx checks none of
+   it): `MsgTransferFromIca DELEGATION` for the full
    remaining balance, `WITHDRAWAL` again for the auto-withdrawn rewards, and `REDEMPTION` for
    whatever dust the claims left. Then create and fund that stToken's pools (§8), the
    canonical one and one per in-scope route, once the coverage check passes (§10).
 7. Staketia, day 21: the operator IBCs the whole unbonded balance via authz to the claim
    address (no memo; the grant forbids one) and `MsgConfirmUnbondedTokenSweep` for each open
-   record; the hour-epoch hook pays the redeemers from the claim address. Then
+   record; the hour-epoch hook pays the redeemers from the claim address. Then, once the
+   transfer checklist below confirms every redeemer is paid,
    `MsgTransferStaketiaClaimBalance` with a small `amount` as the live test, and once it has
    landed on the delegation ICA, again with zero for the remainder, which leaves with that
-   zone's balance in step 5. No key of the claim address signs anything.
+   zone's balance in step 6. No key of the claim address signs anything.
    Stakedym, 2026-10-12 after about 20:11 UTC: the hour epoch marks records 1444-1464
    `UNBONDED`; the stakedym operator sends the unbonded DYM from the Dymension delegation
    account to the stakedym claim address over `channel-197`, exactly as in its normal cycle,
@@ -979,6 +981,34 @@ will settle.
    validator set until it expires; a forged header could mint canonical stToken vouchers on
    Osmosis, which the pools would honour. Keys gone means the window is closed on day 0 rather
    than day 12. No relayer is asked to update that client after the halt.
+
+Checklist before each balance transfer (steps 5 to 7). Neither `MsgTransferFromIca` nor
+`MsgTransferStaketiaClaimBalance` checks anything against open records, by choice: mainnet
+has had records sit for weeks behind a dead channel or a pending claim, and an on-chain guard
+would turn one such record into a lock on the zone's whole balance with no way around it. A
+transfer sent early is recoverable (the Osmosis vault sends the tokens back to the ICA on the
+host and the pipeline retries by itself), but it stops every redeemer on that zone until
+then, so confirm by hand before signing:
+
+- `DELEGATION`: the zone has no `HostZoneUnbonding` record with a non-zero amount in any
+  status before `CLAIMABLE` (`UNBONDING_QUEUE`, `UNBONDING_IN_PROGRESS`,
+  `UNBONDING_RETRY_QUEUE`, `EXIT_TRANSFER_QUEUE`, `EXIT_TRANSFER_IN_PROGRESS`); REST
+  `/Stride-Labs/stride/records/epoch_unbonding_record`, filtered on the zone. The sweep moves
+  all of a zone's unbonded records out of the delegation ICA in one bank send, so a balance
+  short by one record fails the sweep for every record, every stride epoch (injective-1
+  sweeps one record per send, oldest first, so there a short balance fails only the records
+  it cannot cover).
+- `REDEMPTION`: the zone has no user redemption record left, and so no claim in flight
+  (`claim_is_pending`); REST `/Stride-Labs/stride/records/user_redemption_record`. A record
+  that cannot be claimed is settled by hand first. On 2026-10-02 one in-scope record had a
+  claim pending, `dydx-mainnet-1` epoch 1436 for 5,752 DYDX, and the count of pending claims
+  had not moved since 2026-09-29 (§3), which suggests it is stuck rather than in transit. It
+  blocks the halt checklist too, so resolve it early.
+- `WITHDRAWAL` and `FEE`: nothing to confirm; no redemption is paid from either.
+- `MsgTransferStaketiaClaimBalance`: staketia has no redemption record left (REST
+  `/Stride-Labs/stride/staketia/redemption_records`), meaning the hour epoch has paid every
+  confirmed unbonding record and archived it as `CLAIMED`. An omitted or zero `amount` means
+  the whole balance, so the small live test passes an explicit amount.
 
 Checklist to halt the chain:
 
