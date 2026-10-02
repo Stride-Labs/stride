@@ -18,6 +18,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/Stride-Labs/stride/v35/app/apptesting"
 	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
@@ -141,6 +142,10 @@ func (s *MainnetExportTestSuite) populateICAHostFromExport(export strideExport) 
 	s.Require().Contains(params.AllowMessages, sdk.MsgTypeURL(&stakeibctypes.MsgLiquidStake{}))
 	s.Require().Contains(params.AllowMessages, sdk.MsgTypeURL(&stakeibctypes.MsgRedeemStake{}))
 	s.Require().Contains(params.AllowMessages, sdk.MsgTypeURL(&stakeibctypes.MsgClaimUndelegatedTokens{}))
+	// Authority spec §2: mainnet allows delegate and redelegate (but not create validator or cancel unbonding)
+	s.Require().Contains(params.AllowMessages, sdk.MsgTypeURL(&stakingtypes.MsgDelegate{}))
+	s.Require().Contains(params.AllowMessages, sdk.MsgTypeURL(&stakingtypes.MsgBeginRedelegate{}))
+	s.Require().Contains(params.AllowMessages, sdk.MsgTypeURL(&stakingtypes.MsgUndelegate{}))
 	s.App.ICAHostKeeper.SetParams(s.Ctx, params)
 	return params.AllowMessages
 }
@@ -305,7 +310,10 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 	s.Require().NotContains(allowAfter, sdk.MsgTypeURL(&stakeibctypes.MsgLiquidStake{}))
 	s.Require().NotContains(allowAfter, sdk.MsgTypeURL(&stakeibctypes.MsgRedeemStake{}))
 	s.Require().Contains(allowAfter, sdk.MsgTypeURL(&stakeibctypes.MsgClaimUndelegatedTokens{}))
-	s.Require().Len(allowAfter, len(allowBefore)-2, "exactly the two stakeibc messages leave the allow-list")
+	s.Require().NotContains(allowAfter, sdk.MsgTypeURL(&stakingtypes.MsgDelegate{}))
+	s.Require().NotContains(allowAfter, sdk.MsgTypeURL(&stakingtypes.MsgBeginRedelegate{}))
+	s.Require().Contains(allowAfter, sdk.MsgTypeURL(&stakingtypes.MsgUndelegate{}))
+	s.Require().Len(allowAfter, len(allowBefore)-4, "exactly the two stakeibc and the two staking messages mainnet allows leave the allow-list")
 
 	// ----- assert: wasm -----
 	uploadAccess := s.App.WasmKeeper.GetParams(s.Ctx).CodeUploadAccess
@@ -399,6 +407,16 @@ func (s *MainnetExportTestSuite) TestUpgradeFromMainnetExport() {
 		sum = sum.Add(trackedDelegation(*validator))
 	}
 	s.Require().Equal(sum, haqqAfter.TotalDelegations, "haqq TotalDelegations == sum of validators")
+
+	// ----- assert: upgrade path without gov (authority spec §3) -----
+	consensusParams, err := s.App.ConsensusParamsKeeper.ParamsStore.Get(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().NotNil(consensusParams.Authority, "consensus authority set")
+	s.Require().Equal(v35.UpgradeAuthority, consensusParams.Authority.Authority, "consensus authority is the multisig")
+	govParams, err := s.App.GovKeeper.Params.Get(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().True(unreachableDeposit().Equal(govParams.MinDeposit), "gov min deposit %s", govParams.MinDeposit)
+	s.Require().True(unreachableDeposit().Equal(govParams.ExpeditedMinDeposit), "gov expedited min deposit %s", govParams.ExpeditedMinDeposit)
 
 	// ----- assert: nothing the handler must not touch -----
 	// Compared by String(): Equal on structs holding sdkmath.Int is a DeepEqual over big.Int
