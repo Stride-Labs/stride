@@ -12,7 +12,13 @@ LIQUID_STAKE_ICA_MSG_TYPE=/stride.stakeibc.MsgLiquidStake
 
 v35_applied() { strided_new q upgrade applied v35 -o json | jq -e '(.height | tonumber) > 0'; }
 handler_log_lines() { $KX logs stride-validator-0 -c validator --since=60m | grep -E 'v35|wind-down|Upgrade v35' || true; }
-handler_log_errors() { ! $KX logs stride-validator-0 -c validator --since=60m | grep -E 'v35.*(error|ERR|panic)'; }
+# CometBFT puts the level before the message ("ERR v35: ..."); expected skip-path lines are allow-listed
+handler_log_errors() {
+  local matched
+  matched=$($KX logs stride-validator-0 -c validator --since=60m | grep -E 'ERR .*v35|v35.*panic' | grep -vE 'haqq|comdex|trade route|LSM|oracle|contract' || true)
+  log "handler error lines: ${matched:-none}"
+  [[ -z "$matched" ]]
+}
 liquid_stake_unroutable() {
   strided_new tx stakeibc liquid-stake 1000 uatom --from user1 $STRIDE_TX 2>&1 | grep -qiE "can't route|unknown command|not found"
 }
@@ -43,6 +49,7 @@ if (( lead_blocks < MIN_UPGRADE_LEAD_BLOCKS )); then
   log "only ${lead_blocks}s to U: using a ${MIN_UPGRADE_LEAD_BLOCKS}-block lead so the proposal can pass first"
   lead_blocks=$MIN_UPGRADE_LEAD_BLOCKS
 fi
+(( U - now < 60 )) && log "WARNING: only $(( U - now ))s remain to U; the proposal may not pass before the upgrade height"
 UPGRADE_HEIGHT=$(( height + lead_blocks ))
 log "upgrade height $UPGRADE_HEIGHT (now $height, target time $U)"
 UPGRADE_HEIGHT=$UPGRADE_HEIGHT bash "$REPO/integration-tests/network/scripts/upgrade.sh" | tee -a "$LOG"
