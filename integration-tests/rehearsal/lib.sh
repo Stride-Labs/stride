@@ -73,7 +73,7 @@ ms_tx() { # chain multisig-name members-csv -- tx args...
   raw=$($KX exec $pod -c validator -- sh -c "
     set -e
     d=\$(mktemp -d)
-    $bin tx $args --from $ms --generate-only --keyring-backend test --chain-id $chainid --gas 600000 --gas-prices $gasprice > \$d/unsigned.json
+    $bin tx $args --from $ms --generate-only --keyring-backend test --chain-id $chainid --gas ${MS_GAS:-600000} --gas-prices $gasprice > \$d/unsigned.json
     $bin tx sign \$d/unsigned.json --from $m1 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s1.json
     $bin tx sign \$d/unsigned.json --from $m2 --multisig $ms --sign-mode amino-json --keyring-backend test --chain-id $chainid --output-document \$d/s2.json
     $bin tx multisign \$d/unsigned.json $ms \$d/s1.json \$d/s2.json --keyring-backend test --chain-id $chainid --output-document \$d/signed.json
