@@ -263,6 +263,55 @@ class UnbondingSummaryTest(unittest.TestCase):
         )
 
 
+class ValidatorPositionsTest(unittest.TestCase):
+    def test_rows_join_delegations_and_entries_largest_stake_first(self) -> None:
+        delegations = [
+            {"delegation": {"validator_address": "valA"}, "balance": {"amount": "100"}},
+            {"delegation": {"validator_address": "valB"}, "balance": {"amount": "900"}},
+            {"delegation": {"validator_address": "valZero"}, "balance": {"amount": "0"}},
+        ]
+        unbonding = [
+            {
+                "validator_address": "valA",
+                "entries": [
+                    {"balance": "7", "completion_time": "2026-10-09T00:00:00Z"},
+                    {"balance": "5", "completion_time": "2026-10-03T00:00:00Z"},
+                ],
+            },
+            {"validator_address": "valOnlyUnbonding", "entries": [{"balance": "2", "completion_time": "2026-10-04T00:00:00Z"}]},
+        ]
+
+        rows = funds.validator_positions(
+            delegations=delegations,
+            unbonding_responses=unbonding,
+            names={"valA": "Alpha", "valB": "Beta"},
+            source=funds.StakeSource.ICA,
+        )
+
+        self.assertEqual([row.address for row in rows], ["valB", "valA", "valOnlyUnbonding"])
+        self.assertEqual([row.moniker for row in rows], ["Beta", "Alpha", "valOnlyUnbonding"])
+        self.assertEqual([row.staked for row in rows], [900, 100, 0])
+        # Entries are ordered by completion, and a validator with no delegation but an entry still appears.
+        self.assertEqual(
+            rows[1].entries,
+            [
+                funds.UnbondingEntry(amount=5, completion="2026-10-03T00:00:00+00:00"),
+                funds.UnbondingEntry(amount=7, completion="2026-10-09T00:00:00+00:00"),
+            ],
+        )
+        self.assertEqual(rows[2].entries, [funds.UnbondingEntry(amount=2, completion="2026-10-04T00:00:00+00:00")])
+        self.assertTrue(all(row.source == funds.StakeSource.ICA for row in rows))
+
+    def test_nothing_staked_and_nothing_unbonding_is_omitted(self) -> None:
+        rows = funds.validator_positions(
+            delegations=[{"delegation": {"validator_address": "valZero"}, "balance": {"amount": "0"}}],
+            unbonding_responses=[{"validator_address": "valEmpty", "entries": []}],
+            names={},
+            source=funds.StakeSource.MULTISIG,
+        )
+        self.assertEqual(rows, [])
+
+
 class TransfersTest(unittest.TestCase):
     def parse(self, txs: list[dict[str, Any]]) -> list[funds.SentTransfer]:
         return funds.parse_sent_transfers(

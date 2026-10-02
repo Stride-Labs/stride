@@ -14,6 +14,7 @@ const STAGE_TABLE_COLUMNS = 12;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 let selectedZone = null; // chain id of the zone whose diagram and accounts are shown; survives re-renders
+let breakdown = null; // 'staked' | 'unbonding' when the per-validator panel is open, sorted by that column
 let latest = null; // the last payload, so a click re-renders without a refetch
 
 registerTab('funds', renderFunds);
@@ -29,18 +30,30 @@ function renderFunds(data, root) {
   root.querySelectorAll('tr[data-zone]').forEach((row) => {
     row.onclick = () => selectZone(root, row.dataset.zone);
   });
+  wireBreakdown(root);
+}
+
+function wireBreakdown(root) {
+  root.querySelectorAll('[data-breakdown]').forEach((element) => {
+    element.onclick = () => {
+      breakdown = breakdown === element.dataset.breakdown ? null : element.dataset.breakdown;
+      root.querySelector('#fundsSelection').innerHTML = selectionPanels(latest);
+      wireBreakdown(root);
+    };
+  });
 }
 
 function selectZone(root, chainId) {
   selectedZone = chainId;
   root.querySelectorAll('tr[data-zone]').forEach((row) => row.classList.toggle('sel', row.dataset.zone === chainId));
   root.querySelector('#fundsSelection').innerHTML = selectionPanels(latest);
+  wireBreakdown(root);
 }
 
 function selectionPanels(data) {
   const zone = data.zones.find((candidate) => candidate.chain_id === selectedZone);
   if (!zone) return '<div class="placeholder">no zone to show</div>';
-  return diagramPanel(zone) + transfersPanel(zone) + accountsPanel(zone, data.operators);
+  return diagramPanel(zone) + (breakdown ? breakdownPanel(zone) : '') + transfersPanel(zone) + accountsPanel(zone, data.operators);
 }
 
 // ---- stage table
@@ -141,9 +154,9 @@ function hostLane(zone) {
     : `in flight: ${tokens(stages.in_flight)} (${zone.transfers.filter((transfer) => transfer.status === 'in flight').length} packet(s))`;
   const leg = zone.host_channel ? `${zone.host_channel} → ${zone.osmosis_channel || '?'} (osmosis)` : 'bank MsgSend on Osmosis';
   return [
-    node(20, 50, 180, 62, `Staked · ${zone.validators} validators`, tokens(stages.staked), 'delegation ICA' + (zone.staketia ? ' + multisig' : '')),
+    clickableNode('staked', 20, 50, 180, 62, `Staked · ${zone.validators} validators`, tokens(stages.staked), 'delegation ICA' + (zone.staketia ? ' + multisig' : '')),
     edge('M200,81 L236,81'), text(204, 44, 'tx', 'MsgUndelegateFromValidators'),
-    node(238, 50, 180, 62, `Unbonding · ${zone.unbonding_entries} entries`, tokens(stages.unbonding), maturity),
+    clickableNode('unbonding', 238, 50, 180, 62, `Unbonding · ${zone.unbonding_entries} entries`, tokens(stages.unbonding), maturity),
     edge('M418,81 L446,81'),
     `<rect x="448" y="34" width="190" height="258" rx="9" fill="none" stroke="var(--line)" stroke-dasharray="4 3"/>`,
     ...icas.map(([ica, label], index) => node(456, 50 + 58 * index, 174, 50, label, tokens(zone.ica_liquid[ica]))),
@@ -200,6 +213,13 @@ function staketiaLane(zone) {
   ].join('');
 }
 
+// A node that opens the per-validator breakdown, marked by a small caret in its corner.
+function clickableNode(key, x, y, width, height, label, value, sub) {
+  const on = breakdown === key ? ' on' : '';
+  return `<g class="clickable${on}" data-breakdown="${key}"><title>click for the per-validator breakdown</title>${node(x, y, width, height, label, value, sub)}`
+    + `<text x="${x + width - 8}" y="${y + 16}" class="hint" text-anchor="end">${breakdown === key ? '▴' : '▾'}</text></g>`;
+}
+
 function node(x, y, width, height, label, value, sub) {
   return `<rect class="node" x="${x}" y="${y}" width="${width}" height="${height}" rx="7"/>`
     + text(x + 10, y + 18, 'lbl', label) + text(x + 10, y + 38, 'amt', value) + (sub ? text(x + 10, y + 54, 'lbl', sub) : '');
@@ -211,6 +231,51 @@ function edge(path) {
 
 function text(x, y, cssClass, content) {
   return `<text x="${x}" y="${y}" class="${cssClass}">${escapeHtml(content)}</text>`;
+}
+
+// ---- per-validator breakdown
+
+function breakdownPanel(zone) {
+  const rows = [...zone.validator_positions].sort(breakdown === 'unbonding' ? byUnbonding : byStaked);
+  const widest = rows.reduce((max, row) => { const total = BigInt(row.staked) + unbondingOf(row); return total > max ? total : max; }, 0n);
+  const sub = `${rows.length} validators · sorted by ${breakdown} · hover a bar segment for its amount`;
+  const header = `<tr><th>Validator</th><th>Operator</th><th class="num">Staked</th><th class="num">Unbonding</th><th class="num">Entries</th><th>Staked vs unbonding</th></tr>`;
+  const body = rows.map((row) => breakdownRow(row, zone, widest)).join('');
+  return `<div class="panel"><h2>Validators · ${escapeHtml(zone.chain_id)} <span class="sub">${sub}</span><span class="close" data-breakdown="${breakdown}" title="close">×</span></h2>
+    <div class="table-scroll"><table>${header}${body}</table></div></div>`;
+}
+
+function breakdownRow(row, zone, widest) {
+  const unbonding = unbondingOf(row);
+  const source = row.source === 'multisig' ? ` ${pill('idle', 'multisig')}` : '';
+  return `<tr><td>${escapeHtml(row.moniker)}${source}</td><td>${addressCell(row.address)}</td>
+    <td class="num">${amount(row.staked, zone.decimals, 6)}</td><td class="num">${amount(unbonding.toString(), zone.decimals, 6)}</td>
+    <td class="num">${row.entries.length || '<span class="muted">–</span>'}</td><td>${positionBar(row, zone, widest)}</td></tr>`;
+}
+
+// One bar per validator, scaled to the largest total in the table: a staked segment then one segment per
+// unbonding entry (earliest completion first), each carrying its amount for the hover.
+function positionBar(row, zone, widest) {
+  if (widest === 0n) return '';
+  const width = (value) => Number((BigInt(value) * 10000n) / widest) / 100; // percent of the widest row
+  const segment = (cssClass, value, title) => `<span class="${cssClass}" style="width:${width(value)}%" title="${escapeHtml(title)}"></span>`;
+  const staked = BigInt(row.staked) > 0n ? segment('staked', row.staked, `staked ${tokenAmount(row.staked, zone)}`) : '';
+  const entries = row.entries.map((entry) => segment('unbond', entry.amount, `unbonding ${tokenAmount(entry.amount, zone)} · completes ${shortDateTime(entry.completion)}`)).join('');
+  return `<div class="posbar">${staked}${entries}</div>`;
+}
+
+function unbondingOf(row) {
+  return row.entries.reduce((total, entry) => total + BigInt(entry.amount), 0n);
+}
+
+function byStaked(left, right) {
+  const difference = BigInt(right.staked) - BigInt(left.staked);
+  return difference === 0n ? left.address.localeCompare(right.address) : difference > 0n ? 1 : -1;
+}
+
+function byUnbonding(left, right) {
+  const difference = unbondingOf(right) - unbondingOf(left);
+  return difference === 0n ? byStaked(left, right) : difference > 0n ? 1 : -1;
 }
 
 // ---- transfers and accounts

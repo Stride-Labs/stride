@@ -46,6 +46,11 @@ class IcaType(StrEnum):
     REDEMPTION = "REDEMPTION"
 
 
+class StakeSource(StrEnum):
+    ICA = "ica"  # the zone's delegation ICA
+    MULTISIG = "multisig"  # the staketia multisig on Celestia
+
+
 class PoolKind(StrEnum):
     CANONICAL = "canonical"
     ROUTE = "route"
@@ -128,6 +133,23 @@ class Pool:
 
 
 @dataclass(frozen=True)
+class UnbondingEntry:
+    amount: int
+    completion: str  # ISO timestamp
+
+
+@dataclass(frozen=True)
+class ValidatorPosition:
+    """One validator's staked amount and unbonding entries for one delegator, for the breakdown under the diagram."""
+
+    address: str
+    moniker: str  # Stride's name for the validator, or the address when Stride does not track it
+    source: StakeSource
+    staked: int
+    entries: list[UnbondingEntry]
+
+
+@dataclass(frozen=True)
 class Staketia:
     """The staketia lane of the celestia diagram: the multisig on Celestia and the claim address on Stride."""
 
@@ -141,6 +163,7 @@ class Staketia:
     claim_address: str
     claim_balance: int
     unbonding_records: int | None
+    per_validator: list[ValidatorPosition] = dataclasses.field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -177,6 +200,7 @@ class ZoneFunds:
     pools: list[Pool] | None  # None when Osmosis could not be read
     accounts: list[Account]
     staketia: Staketia | None
+    validator_positions: list[ValidatorPosition]  # ICA then multisig, largest stake first, zero/zero omitted
 
 
 # ---- internal structures
@@ -195,6 +219,7 @@ class StakingPosition:
     staked: int
     validators: int
     unbonding: UnbondingSummary
+    per_validator: list[ValidatorPosition] = dataclasses.field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -393,6 +418,43 @@ def build_stages(
     )
 
 
+def validator_positions(
+    delegations: list[dict[str, Any]],
+    unbonding_responses: list[dict[str, Any]],
+    names: dict[str, str],
+    source: StakeSource,
+) -> list[ValidatorPosition]:
+    """One row per validator the delegator has stake or unbonding entries on, largest stake first."""
+    staked = {
+        delegation["delegation"]["validator_address"]: int(delegation["balance"]["amount"])
+        for delegation in delegations
+    }
+    entries = {
+        response["validator_address"]: [
+            UnbondingEntry(
+                amount=int(entry["balance"]),
+                completion=chain.parse_timestamp(timestamp=entry["completion_time"]).isoformat(),
+            )
+            for entry in response["entries"]
+        ]
+        for response in unbonding_responses
+    }
+    rows = [
+        ValidatorPosition(
+            address=address,
+            moniker=names.get(address, address),
+            source=source,
+            staked=staked.get(address, 0),
+            entries=sorted(entries.get(address, []), key=lambda entry: entry.completion),
+        )
+        for address in staked.keys() | entries.keys()
+    ]
+    return sorted(
+        (row for row in rows if row.staked or row.entries),
+        key=lambda row: (-row.staked, row.address),
+    )
+
+
 def summarize_unbonding(unbonding_responses: list[dict[str, Any]]) -> UnbondingSummary:
     """Total, entry count, and the earliest and latest completion time across every validator's entries."""
     entries = [
@@ -567,7 +629,9 @@ def _host_side(
     )
 
     staketia = (
-        _staketia(stride=stride, host=host, zone=zone)
+        _staketia(
+            stride=stride, host=host, zone=zone, names=_validator_names(host_zone=host_zone)
+        )
         if zone.chain_id == CELESTIA_CHAIN_ID
         else None
     )
@@ -580,7 +644,12 @@ def _host_side(
             ica: _balances(chain_handle=host, address=address)
             for ica, address in icas.items()
         },
-        position=_staking_position(host=host, delegator=icas[IcaType.DELEGATION]),
+        position=_staking_position(
+            host=host,
+            delegator=icas[IcaType.DELEGATION],
+            names=_validator_names(host_zone=host_zone),
+            source=StakeSource.ICA,
+        ),
         transfers=transfers,
         deposit_balance=_balances(
             chain_handle=stride, address=host_zone["deposit_address"]
@@ -590,7 +659,9 @@ def _host_side(
     )
 
 
-def _staking_position(host: chain.Chain, delegator: str) -> StakingPosition:
+def _staking_position(
+    host: chain.Chain, delegator: str, names: dict[str, str], source: StakeSource
+) -> StakingPosition:
     delegations = chain.rest_get_all_pages(
         chain=host,
         path=f"/cosmos/staking/v1beta1/delegations/{delegator}",
@@ -606,6 +677,9 @@ def _staking_position(host: chain.Chain, delegator: str) -> StakingPosition:
         staked=sum(balances),
         validators=sum(1 for balance in balances if balance),
         unbonding=summarize_unbonding(unbonding_responses=unbonding),
+        per_validator=validator_positions(
+            delegations=delegations, unbonding_responses=unbonding, names=names, source=source
+        ),
     )
 
 
@@ -649,7 +723,7 @@ def _unreceived_acks(host: chain.Chain, channel: str, sequences: list[int]) -> s
 
 
 def _staketia(
-    stride: chain.Chain, host: chain.Chain, zone: config.ZoneConfig
+    stride: chain.Chain, host: chain.Chain, zone: config.ZoneConfig, names: dict[str, str]
 ) -> StaketiaRead:
     """The staketia multisig on Celestia and its Stride-side addresses; only the multisig and the claim address
     feed the stages, the rest are shown in the accounts table."""
@@ -660,7 +734,9 @@ def _staketia(
     voucher = staketia_zone["native_token_ibc_denom"]
     native = staketia_zone["native_token_denom"]
 
-    position = _staking_position(host=host, delegator=multisig)
+    position = _staking_position(
+        host=host, delegator=multisig, names=names, source=StakeSource.MULTISIG
+    )
     multisig_balances = _balances(chain_handle=host, address=multisig)
     claim_balance = _balances(
         chain_handle=stride, address=staketia_zone["claim_address"]
@@ -741,6 +817,7 @@ def _staketia(
             claim_address=staketia_zone["claim_address"],
             claim_balance=claim_balance,
             unbonding_records=unbonding_records,
+            per_validator=position.per_validator,
         ),
         accounts=[multisig_account] + side_accounts,
     )
@@ -924,7 +1001,13 @@ def _zone_funds(
             side=side, vault=vault, pools=pools, record_count=record_count
         ),
         staketia=side.staketia,
+        validator_positions=side.position.per_validator
+        + (side.staketia.per_validator if side.staketia else []),
     )
+
+
+def _validator_names(host_zone: dict[str, Any]) -> dict[str, str]:
+    return {validator["address"]: validator["name"] for validator in host_zone["validators"]}
 
 
 def _zone_accounts(
