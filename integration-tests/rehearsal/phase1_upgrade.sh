@@ -28,6 +28,11 @@ hub_deposit_in_transfer_queue() {
 # The drain guard (x/stakeibc/keeper/wind_down_undelegate.go checkNoQueuedUnbondings) must refuse while the Hub RD record is queued
 hub_drain_refused() {
   local out
+  # Only probe while RD is still queued and the day epoch (D5) is >15s away: once D5 submits RD and
+  # its ack lands, the guard passes and this would be a REAL drain of the Hub zone
+  (( $(date +%s) < $(day_epoch_next_start) - 15 )) || { log "hub drain-refusal probe skipped: D5 too close"; return 1; }
+  strided_new q records list-epoch-unbonding-record -o json | jq -e '[.epoch_unbonding_record[].host_zone_unbondings[]? | select(.host_zone_id=="cosmoshub-test-1" and .status=="UNBONDING_QUEUE")] | length > 0' >/dev/null \
+    || { log "hub drain-refusal probe skipped: RD no longer queued"; return 1; }
   out=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators cosmoshub-test-1 --all 2>&1) && return 1
   grep -qiE 'wait for the day epoch|let the day epoch|awaiting an ack|pending undelegation|UNBONDING_QUEUE|UNBONDING_RETRY_QUEUE' <<<"$out"
 }

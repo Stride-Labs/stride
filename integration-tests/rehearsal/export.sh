@@ -23,7 +23,7 @@ $KX exec $POD -c validator -- sh -c "
   [ -n \"\$pid\" ] || exit 1
   kill -STOP \$pid
   status=0
-  cp -a $HOME_DIR/config $HOME_DIR/data $EXPORT_HOME/ || status=\$?
+  mkdir -p $EXPORT_HOME/data && cp -a $HOME_DIR/config $EXPORT_HOME/ && cp -a $HOME_DIR/data/application.db $EXPORT_HOME/data/ && { [ -d $HOME_DIR/data/wasm ] && cp -a $HOME_DIR/data/wasm $EXPORT_HOME/data/ || true; } || status=\$?
   kill -CONT \$pid
   exit \$status"
 

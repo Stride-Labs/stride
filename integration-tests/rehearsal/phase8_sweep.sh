@@ -83,7 +83,7 @@ NONEMPTY=()
 for batch in "${BATCHES[@]}"; do
   if [[ -s "$batch" ]]; then NONEMPTY+=("$batch"); else rm -f "$batch"; fi
 done
-BATCHES=("${NONEMPTY[@]}")
+BATCHES=("${NONEMPTY[@]+"${NONEMPTY[@]}"}")  # bash 3.2: empty-array safe under set -u
 [[ -e "${BATCHES[0]:-}" ]] || { log "every batch was empty after the exclusion filter"; exit 1; }
 
 checkpoint "admin cannot sweep" admin_cannot_sweep "${BATCHES[0]}"
