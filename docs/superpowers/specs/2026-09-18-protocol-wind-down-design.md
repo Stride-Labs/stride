@@ -917,6 +917,25 @@ will settle.
    Delegation ICA channels and relayers stay healthy until every batch acks; a dead channel
    is restored with the existing flow and the affected validators are resubmitted. From here
    on no delegation exists that any record needs.
+   **If a batch executes on the host but its ack never reaches Stride.** Acks cannot be
+   delivered on a closed channel, so if a later packet's timeout closes the ordered channel
+   first, the batches that did execute stay unacknowledged and the restore zeroes their
+   flags: Stride still records the full delegation on validators the host has already
+   unbonded. Calibration cannot repair a validator the drain emptied. The delegation no
+   longer exists on the host, the query comes back empty, and the interchain-query module
+   drops an empty response before the callback runs (a calibration that corrects to zero was
+   written and reverted, 4150e47ba and c32c06c26, as too invasive a change for a
+   contingency); where the drain left a remainder on the host, the query is not empty and a
+   calibration does correct the record. So prevent it: when clearing a
+   drain's packets, relay acknowledgements before timeouts, and do not relay a timeout while
+   an earlier sequence's ack is outstanding. If it happens anyway, read the delegation ICA's
+   delegations and unbonding entries on the host before resubmitting, and resubmit with an
+   explicit validator list that leaves out every validator the host has already unbonded; an
+   empty list would include them and fail their batches whole. Those validators' recorded
+   delegations and the zone's `TotalDelegations` then stay overstated by the stranded amount.
+   Nothing reads either once the rate is frozen and no record is queued, and the tokens still
+   reach the delegation ICA when the unbonding completes and leave with its balance, so the
+   backing is unaffected; the halt checklist takes it as a documented exception.
    **Timing: submit drain batches only between 19:00 UTC and about 08:00 UTC.** The drain
    reuses the epoch unbonding submitter, so every batch's ICA timeout is the next day-epoch
    start minus a buffer (a fifth of the epoch at the default `buffer_size` of 5), not a fixed
@@ -1019,7 +1038,8 @@ Checklist to halt the chain:
   addresses drained.
 - No undelegate batch in flight (no validator with `DelegationChangesInProgress`) and
   `TotalDelegations` at dust on every zone except celestia, where it still carries the
-  multisig portion (the per-validator unbond only touches ICA validators).
+  multisig portion (the per-validator unbond only touches ICA validators), and any zone with
+  a stranded drain ack, which stays overstated by exactly that amount (step 4).
 - All four ICA balances at dust on every zone. Celestia multisig delegation zero, its
   unbondings complete, its balance on Osmosis.
 - Every pool, canonical and per route, created, funded and passing the coverage check (§10)
