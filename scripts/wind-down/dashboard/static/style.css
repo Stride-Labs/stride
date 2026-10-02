@@ -117,7 +117,8 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-ops .ops-step.done .ops-text { color: var(--muted); text-decoration: line-through; }
 #view-ops .ops-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
 #view-ops .ops-row label { cursor: pointer; }
-#view-ops .ops-zones { margin: 4px 0 2px 26px; }
+#view-ops .ops-zones { margin: 4px 0 2px 26px; display: flex; flex-wrap: wrap; gap: 2px 18px; }  /* eleven zones fit on one or two lines */
+#view-ops .ops-zones .ops-row { white-space: nowrap; }
 #view-ops .ops-by { font-size: 12px; }
 #view-ops .ops-detail { margin-left: 22px; }
 #view-ops .ops-detail > summary { cursor: pointer; font-size: 12px; }
