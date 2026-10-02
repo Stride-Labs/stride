@@ -595,7 +595,14 @@ non-zero amount. The last one exists because of a known bug in the record-driven
 (`GetTargetValAmtsForHostZone` errors when the delegation left after an unbond is not
 positive, so a record can never be submitted on a drained zone and would retry forever with
 its stTokens escrowed and its backing already on Osmosis); the guard turns "drained too
-early" into a rejected transaction instead of a stranded holder. The messages go through
+early" into a rejected transaction instead of a stranded holder. A validator with
+`SlashQueryInProgress` is not refused, unlike in the record-driven path: only an ICQ callback
+clears that flag and no admin tx can, so a query that is never answered would strand the
+validator's stake, while an amount the slash has made stale only fails its batch on the host
+and the error ack releases its delegation-change counters with no balance moved. Correct such
+a validator with `CalibrateDelegation`, which ignores the slash flag, rather than with an
+`offset`: an offset drain that empties the host delegation leaves the offset recorded on
+Stride with nothing able to clear it. The messages go through
 `BatchSubmitUndelegateICAMessages` with no epoch unbonding record ids, in the zone's usual
 batch size, and the tx registers the batches as in flight so the callback's record-less
 accounting stays clean.

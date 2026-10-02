@@ -25,7 +25,13 @@ import (
 // It refuses, before anything is submitted: a deprecated zone, a zone that still has an
 // unbonding record queued or retrying (the record-driven path could never submit it on a
 // drained zone, STRIDE-07), a zone with a stored pending undelegation, and a target validator
-// with a delegation change or a slash query in progress.
+// with a delegation change in progress.
+//
+// A slash query in progress does not block the drain, unlike the record-driven path. Only an
+// ICQ callback clears that flag and no admin tx can, so a query that is never answered would
+// strand the validator's stake. An amount the slash has made stale fails its batch on the
+// host, and the error ack releases the batch's delegation-change counters with no balance
+// moved; calibration, which ignores the slash flag, then corrects the record.
 func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelegateFromValidators) (numBatches uint64, err error) {
 	hostZone, found := k.GetHostZone(ctx, msg.ChainId)
 	if !found {
@@ -130,12 +136,6 @@ func (k Keeper) BuildUndelegateFromValidatorsMsgs(
 		if validator.DelegationChangesInProgress > 0 {
 			return nil, nil, types.ErrInvalidDelegationsInProgress.Wrapf(
 				"validator %s has %d delegation change(s) in progress", target.Address, validator.DelegationChangesInProgress)
-		}
-		// The record-driven path also excludes these; a validator mid-slash-query has a recorded
-		// delegation that may be about to move, so ops wait for the day-0 refresh callbacks
-		if validator.SlashQueryInProgress {
-			return nil, nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-				"validator %s has a slash query in progress; wait for its callback before draining", target.Address)
 		}
 
 		delegation := validator.Delegation
