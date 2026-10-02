@@ -72,7 +72,11 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    as `RemoveStakeibcFromICAHostAllowList`, dropping the four `BlockedStakingMsgTypeUrls`
    (§4). Logs each removal; cannot fail.
 5. **`UndelegateAllDelegations(ctx, stakingKeeper)`** — `GetAllDelegations`, then for each
-   delegation `Undelegate(delegator, validator, delegation.Shares)`. On error, log
+   delegation `Undelegate(delegator, validator, delegation.Shares)` inside its own cache
+   context via `utils.ApplyFuncIfNoError`, so state is written only on success and a panic in
+   a hook (distribution's `AfterValidatorRemoved` underflows on dust) becomes a skip instead
+   of a halt. The loop runs on a throwaway event manager so the ~50k `withdraw_rewards` hook
+   events never reach the block result. On error, log
    `v35: skipping undelegation of <delegator> from <validator>: <err>` and continue. Track
    and log a final summary: undelegated count, skipped count, total ustrd returned to the
    not-bonded pool. No events, no per-delegation success log (tens of thousands of lines).
