@@ -28,8 +28,7 @@ import (
 // spec"). Every step logs and skips on missing state, except the writes that would leave the
 // chain without an upgrade path if skipped: the wasm upload-access write and the consensus
 // authority, gov deposit and staking max-entries writes fail the upgrade, as does a failure to
-// list the delegations to undelegate. The steps run in
-// this order:
+// list the delegations to undelegate. The steps run in this order:
 //  1. RunMigrations.
 //  2. Turn off autopilot stakeibc and drop liquid stake / redeem stake from the ICA host allow-list.
 //  3. Restrict wasm code upload to gov, then move the deploy key's contract admins to gov.

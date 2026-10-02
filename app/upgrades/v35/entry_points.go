@@ -25,22 +25,10 @@ func DisableAutopilotStakeibc(ctx sdk.Context, k autopilotkeeper.Keeper) {
 // MsgClaimUndelegatedTokens stays: ICA-originated claims keep paying the open redemptions.
 // The existing list is filtered in place, never rewritten from a constant.
 func RemoveStakeibcFromICAHostAllowList(ctx sdk.Context, k *icahostkeeper.Keeper) {
-	removed := map[string]bool{
-		sdk.MsgTypeURL(&stakeibctypes.MsgLiquidStake{}): true,
-		sdk.MsgTypeURL(&stakeibctypes.MsgRedeemStake{}): true,
-	}
-
-	params := k.GetParams(ctx)
-	kept := make([]string, 0, len(params.AllowMessages))
-	for _, msgTypeUrl := range params.AllowMessages {
-		if removed[msgTypeUrl] {
-			ctx.Logger().Info(fmt.Sprintf("v35: removing %s from the ICA host allow-list", msgTypeUrl))
-			continue
-		}
-		kept = append(kept, msgTypeUrl)
-	}
-	params.AllowMessages = kept
-	k.SetParams(ctx, params)
+	removeFromICAHostAllowList(ctx, k, []string{
+		sdk.MsgTypeURL(&stakeibctypes.MsgLiquidStake{}),
+		sdk.MsgTypeURL(&stakeibctypes.MsgRedeemStake{}),
+	})
 }
 
 // RemoveStakingFromICAHostAllowList drops the BlockedStakingMsgTypeUrls (delegate, redelegate,
@@ -48,8 +36,13 @@ func RemoveStakeibcFromICAHostAllowList(ctx sdk.Context, k *icahostkeeper.Keeper
 // Stride cannot re-lock STRD after the mass undelegation; the ante decorator closes the tx path
 // (authority spec §3-4). MsgUndelegate stays. The existing list is filtered in place.
 func RemoveStakingFromICAHostAllowList(ctx sdk.Context, k *icahostkeeper.Keeper) {
+	removeFromICAHostAllowList(ctx, k, BlockedStakingMsgTypeUrls)
+}
+
+// removeFromICAHostAllowList filters the given type URLs out of the existing allow-list in place.
+func removeFromICAHostAllowList(ctx sdk.Context, k *icahostkeeper.Keeper, removedTypeUrls []string) {
 	removed := map[string]bool{}
-	for _, msgTypeUrl := range BlockedStakingMsgTypeUrls {
+	for _, msgTypeUrl := range removedTypeUrls {
 		removed[msgTypeUrl] = true
 	}
 

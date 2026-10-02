@@ -57,6 +57,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		// ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
+		// After ValidateBasic and before fee deduction, so a blocked tx is rejected in CheckTx without paying a fee.
 		NewBlockedMsgsDecorator(v35.BlockedStakingMsgTypeUrls),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
