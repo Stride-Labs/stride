@@ -185,7 +185,7 @@ func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsFlaggedValidator()
 }
 
 // A validator mid-slash-query is excluded, as in the record-driven path; ops wait for the
-// day-0 refresh callbacks (spec §9 step 1) before draining
+// day-0 refresh callbacks (spec §9 steps 1-2) before draining
 func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsSlashQueryInProgress() {
 	tc := s.SetupUndelegateFromValidators()
 	tc.hostZone.Validators[2].SlashQueryInProgress = true

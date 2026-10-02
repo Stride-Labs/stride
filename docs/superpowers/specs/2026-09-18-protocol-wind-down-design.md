@@ -461,7 +461,8 @@ way. The table also pins each row's tracked delegation
 with an error log, each row whose tracked delegation no longer matches its pin, so a slash
 booked between generation and the upgrade cannot be applied twice; the other rows still
 apply. The pin compares Stride's tracked value only: a slash on haqq that no query has booked
-on Stride leaves its pin matching, the row applies, and the day-0 refresh books that slash. The stored
+on Stride leaves its pin matching, the row applies, and the day-0 refresh books that slash
+(§9c). The stored
 `SharesToTokensRate` is deliberately left as is: the day-0 refresh updates it, and the slash
 callback then finds tracked delegation equal to on-chain shares × the refreshed rate, so
 nothing is applied twice. The table is generated from `measure_delegation_drift.py`,
@@ -614,8 +615,9 @@ worth it.
 
 **`MsgSweepTokensOffStride { creator, denoms: [string], addresses: [string] }`**, the
 batched token sweep. `denoms` is a non-empty list of bank denoms and `addresses` a non-empty
-list of at most 100 entries (the batch bound that keeps a tx inside the block gas limit; the
-plan measures the real cost and can raise it). Taking a list of denoms lets the off-chain
+list with no on-chain bound (the tx is operator-gated and atomic, so a batch that exceeds the
+block gas limit simply fails atomically; the batch size is an ops choice set from the localstride gas
+measurement, and the builder defaults to 100). Taking a list of denoms lets the off-chain
 builder walk holders once, by value, and sweep everything each holder has in one tx instead
 of one pass per denom. Each denom's destination is decided once per tx, before any address is
 looked at, and is a (channel, bech32 prefix) pair:
@@ -662,7 +664,7 @@ Then, for every listed address, and for every listed denom it holds:
 
 Every destination is therefore the canonical form on Osmosis, the native form on the source
 chain, or one hop closer to it; the sweep never adds a hop to any denom and never needs a
-forwarding memo. One tx sweeps up to 100 holders across the listed denoms; the whole sweep at
+forwarding memo. One tx sweeps a batch of holders (size set from the gas measurement, no on-chain bound) across the listed denoms; the whole sweep at
 the chosen floor is a few thousand packets over a few days (§3). There is no floor on chain: only the
 sweep operator can sign the tx, so nobody can spam it, and the floor is an ops choice made
 from prices on the day and stated in the announcement. Every account that clears the floor is
@@ -757,9 +759,12 @@ Checklist to propose the upgrade (there is no "nothing in flight" condition):
   with any difference either in the haqq delta table or explained. The haqq delegation delta
   table, the drift measurement and the mainnet-export tests match the chain at one recent
   height. A haqq redemption unbonding at the upgrade would
-  change the drift; measure right before the proposal. The delta helper skips (never errors)
-  only on a missing validator or a negative result (§3), so a table that is merely stale is
-  applied as is; the day-0 refresh and the `offset` on the drain tx are the fallback.
+  change the drift; measure right before the proposal. Haqq's ICA channel stays closed until
+  after the upgrade (§9c). A row whose validator's tracked delegation on Stride no longer
+  equals its pin is skipped on its own (§5); otherwise the helper skips the table (never
+  errors) only on a missing validator or a negative result, so a row whose on-chain side
+  has moved (a slash on haqq not yet booked on Stride) is applied as is and the day-0
+  refresh books the rest; the `offset` on the drain tx is the last fallback.
 - On every in-scope host, the delegation ICA's withdraw address (distribution module query) is
   the zone's withdrawal ICA; the epoch call that re-set it every epoch is deleted (§6).
 - The two address constants, the channel map and `SweepUnwindChannels` in the binary
@@ -778,21 +783,59 @@ The ops window (after the upgrade, ~35 days). The redemptions open at the upgrad
 unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes all three
 (§6) while the rest proceeds:
 
-1. Day 0: refresh every validator's exchange rate with `UpdateValidatorSharesExchRate` (CLI
-   `update-delegation`) on every in-scope zone and wait for the callbacks. Where the rate
+1. Day 0, before anything else (including every other zone's refresh and calibration): the
+   haqq sequence. Haqq goes first because its blocks are slow, its handshakes take hours, and
+   it has a hard deadline: everything through 1f must finish before haqq's first unbonding
+   epoch after the upgrade (2026-10-12 19:00 UTC if the upgrade lands between 10-08 and
+   10-12). Missing that epoch moves the queued records, and the haqq drain behind them, back
+   four days, to 10-16. Both light clients must stay alive through the sequence: haqq's
+   client of Stride expires 2026-10-13 06:27 UTC and Stride's client of haqq 2026-10-17
+   21:30 UTC unless relaying updates them. The haqq relayer comes back on at the upgrade
+   (§9c). Background and the pre-upgrade rules are in §9c.
+   a. Confirm the upgrade's haqq work: the `v35:` logs show the delta table applied, not
+      skipped, and which rows (if any) were skipped on a stale pin. No haqq slash-path query
+      remains, and no haqq validator has `SlashQueryInProgress`. A skipped row is one whose
+      slash was already booked on Stride; the refresh in step 1f confirms it. If the whole
+      table was skipped (a missing validator), stop and decide by hand before restoring.
+   b. Close haqq's channel-29. The relayer submits `MsgChannelCloseConfirm` on haqq for
+      `icahost`/channel-29, proving channel-869 CLOSED on Stride. This needs haqq's client of
+      Stride Active. Verify channel-29 is CLOSED on haqq.
+   c. Do not relay timeouts for packets 85-98. The restore zeroes their flags; a timeout
+      processed after that hits the zero check in `DecrementValidatorDelegationChangesInProgress`
+      and errors. Whether that is harmless for every packet type in 85-98 is unverified, so it
+      is not left to chance.
+   d. `strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143
+      haqq_11235-1.DELEGATION`. The four-step handshake runs across haqq's slow blocks (allow
+      hours). It also updates Stride's client of haqq. Verify: a new delegation channel OPEN on
+      both ends, `HostZone.DelegationIcaAddress` unchanged, every haqq validator at
+      `DelegationChangesInProgress = 0`, and the queued records still in `UNBONDING_QUEUE`.
+      Then the same for `haqq_11235-1.WITHDRAWAL`: its channel-668 is also CLOSED, and
+      `MsgTransferFromIca WITHDRAWAL` (steps 5 and 6) needs it. It touches no delegation, so it
+      can wait until after 1f if the handshakes are slow.
+   e. Prove an ICQ round trip: `update-delegation` for one haqq validator. Wait for both the
+      rate callback and the delegator-shares callback on Stride. If the second one keeps
+      timing out, fix the relayer (frequent client updates toward Stride) before step 1f.
+   f. The day-0 refresh on haqq for every validator, then the drift measurement (§9a). Require
+      zero over-recorded haqq validators, because one fails the whole undelegate batch on the
+      host.
+   g. The haqq unbonding epoch submits the queued records and flags their validators. Wait for
+      the acks, then drain haqq as in step 4.
+2. Day 0: refresh every validator's exchange rate with `UpdateValidatorSharesExchRate` (CLI
+   `update-delegation`) on every in-scope zone other than haqq (done in step 1) and wait for
+   the callbacks. Where the rate
    moved, the callback applies the slash to the recorded delegation (the redemption rate is no
    longer rewritten, §6). Use `CalibrateDelegation` for a validator whose rate is unchanged
    but whose recorded balance is off. Then rerun the drift measurement (§9a) and require zero
    over-recorded validators on the zone. Same day: the staketia operator undelegates the
    entire multisig delegation on Celestia via authz (the queued records' amounts and
    everything else, in one go).
-2. Day 0 to 4: the next day epoch submits the queued redemptions on every zone and flags their
+3. Day 0 to 4: the next day epoch submits the queued redemptions on every zone and flags their
    validators. Wait for those acks. A record whose submission fails (a slash between the
    refresh and the epoch) goes to `UNBONDING_RETRY_QUEUE` and is retried at the next day epoch; that
    zone's drain waits for it.
-3. Then `MsgUndelegateFromValidators` per zone: first for a single small validator as a live
+4. Then `MsgUndelegateFromValidators` per zone: first for a single small validator as a live
    test of the tx and the callback, then with an empty list for the rest. The tx refuses the
-   zone while any record is still queued or retrying (§7), so step 2 cannot be skipped by
+   zone while any record is still queued or retrying (§7), so step 3 cannot be skipped by
    accident. An ICA tx is atomic,
    so one over-recorded validator fails its whole batch; after the refresh there are none. If
    a slash lands between the refresh and the submission, that batch fails, ops rerun the
@@ -813,12 +856,12 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    then the drain goes out with most of the window ahead. The ICA-transfer and
    claim-balance txs use fixed 24h and 48h timeouts and have no window. Confirm the
    mainnet `buffer_size` before day 0, since the REST params endpoint does not serve it.
-4. Day 0+: `MsgTransferFromIca` for the withdrawal and fee ICA balances, including foreign
+5. Day 0+: `MsgTransferFromIca` for the withdrawal and fee ICA balances, including foreign
    denoms such as the dYdX USDC. This is the live test of the transfer tx on small real
    amounts, and the first arrival on Osmosis confirms the mapped channel end to end and the
    denom each zone lands as. Not yet the redemption ICA: it holds the tokens of claimable
    records until they are claimed.
-5. Day 7 to 29, as each zone's unbondings complete (Haqq after 7 days, Osmosis and Celestia
+6. Day 7 to 29, as each zone's unbondings complete (Haqq after 7 days, Osmosis and Celestia
    after 14, most zones after 21, Juno and Sommelier after 28): the pipeline sweeps each record's amount
    to the redemption ICA at the next stride epoch and the record goes `CLAIMABLE`; ops run
    `ClaimUndelegatedTokens` for every record (permissionless, as today; a record whose host
@@ -828,13 +871,13 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    remaining balance, `WITHDRAWAL` again for the auto-withdrawn rewards, and `REDEMPTION` for
    whatever dust the claims left. Then create and fund that stToken's pools (§8), the
    canonical one and one per in-scope route, once the coverage check passes (§10).
-6. Staketia, day 21: the operator IBCs the whole unbonded balance via authz to the claim
+7. Staketia, day 21: the operator IBCs the whole unbonded balance via authz to the claim
    address (no memo; the grant forbids one) and `MsgConfirmUnbondedTokenSweep` for each open
    record; the hour-epoch hook pays the redeemers from the claim address. Then
    `MsgTransferStaketiaClaimBalance` with a small `amount` as the live test, and once it has
    landed on the delegation ICA, again with zero for the remainder, which leaves with that
    zone's balance in step 5. No key of the claim address signs anything.
-7. Last days: `MsgSweepTokensOffStride` in batches of up to 100 holders, each tx listing every
+8. Last days: `MsgSweepTokensOffStride` in batches (size set from the gas measurement; the builder defaults to 100), each tx listing every
    denom on the sweep list, for every holder at or above the floor, built from a fresh
    export: the eleven stTokens and `ustrd` (to Osmosis) and every voucher whose outermost
    channel is whitelisted and that is worth sweeping (ATOM to the Hub, TIA to Celestia, and so
@@ -842,9 +885,9 @@ unbonding, or unbonded and waiting for a sweep or a claim; the pipeline finishes
    the four host channels outside the whitelist are announced as self-service. Resubmit any
    address whose transfer timed out (its balance is back on Stride). Relayers on channel-5 and
    on every whitelisted channel stay up until the last packet acks.
-8. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
+9. Transfer-channel relayers stay up until the halt. ICA channels can be left to close once
    every balance is sent.
-9. After the halt: every validator rotates or destroys its consensus key, and Stride Labs
+10. After the halt: every validator rotates or destroys its consensus key, and Stride Labs
    confirms it in writing from each. Osmosis's light client of Stride (`07-tendermint-2119`,
    12-day trusting period) accepts any header signed by two thirds of the last trusted
    validator set until it expires; a forged header could mint canonical stToken vouchers on
@@ -871,6 +914,82 @@ Checklist to halt the chain:
 - Validators and STRD delegators have withdrawn their rewards; interchain-account holders
   have been notified and given time to move out.
 
+### §9c. Haqq: keep the channel closed, then close and restore after the upgrade
+
+State on 2026-10-01:
+
+- Stride's haqq delegation channel-869 is CLOSED (packet 84 timed out). Packets 85-98 are
+  still committed on Stride and were never delivered; haqq's end of the channel (icahost
+  channel-29, connection-8) is still OPEN. The earlier haqq delegation channels 647, 667
+  and 837 are closed on both ends.
+- 30 haqq validators carry `DelegationChangesInProgress = 1` for those packets. The v35
+  reset skips haqq because its channel is not open (§5), so these flags survive the
+  upgrade. Only `restore-interchain-account` clears them.
+- 3 validators (Neuler, Kioqq, StakingCabin) are flagged `SlashQueryInProgress` with a
+  delegation query open, plus about a dozen other haqq queries. The upgrade deletes all of
+  them and clears the flags (§5).
+- Two haqq redemption records are queued: epochs 1487 and 1488, 3,722.03 stISLM for
+  3,947.22 ISLM. Haqq unbonds on day epochs divisible by 4 (unbonding period 21, frequency
+  4): 19:00 UTC on 2026-10-04, 10-08, 10-12, 10-16 and so on. The 2026-09-30 epoch left
+  them queued, because a closed channel fails the submission without changing state.
+- Light clients. Stride's client of haqq (`07-tendermint-143`, connection-143) is Active
+  with a 17.8-day trusting period, but was last updated 2026-09-30 01:30 UTC, so it expires
+  2026-10-17 21:30 UTC unless something updates it. Every relay toward Stride does (an ICQ
+  answer, an ack, a handshake step). Haqq's client of Stride (`07-tendermint-6`, 11.9-day
+  trusting period against Stride's 14-day unbonding) was updated 2026-10-01 09:27 UTC and
+  expires 2026-10-13 06:27 UTC if nothing relays toward haqq; closing channel-29 and the
+  restore handshake both need it. The stale Stride side is consistent with no haqq ICQ
+  being answered since 2026-09-30.
+- Haqq has since cut its unbonding to 7 days (`unbonding_time` 604800s). Stride's client of
+  haqq was created for the old 21 days (`unbonding_period` 1814400s) and expiry follows its
+  own 17.8-day trusting period, so the dates above stand, but that trusting period is now
+  longer than haqq's unbonding: a validator set that unbonded more than 7 days before a
+  header could sign a forged one without being slashable. The tail risk is a forged ICQ
+  proof or ack on Stride; keeping the client fresh shrinks the window. Stride's host zone
+  still records `unbonding_period` 21, so the unbonding frequency stays 4, and haqq
+  unbondings complete in 7 days rather than the 21 Stride expects.
+- Haqq blocks are slow and bursty: about 400 a day (one every ~3.5 minutes on average),
+  with stretches of one every 6 minutes and bursts of one every 25 seconds. Handshakes and
+  ICA packets only take longer. A delegation ICQ has a 1-hour timeout and is resubmitted
+  (`interchainqueries.go:135`), so it lands only when the relayer gets a fresh haqq header
+  and proof in within the hour.
+
+Before the upgrade: leave the channel closed, and do not restore it. Restoring reopens the
+v34 epoch flows on haqq: the 2026-10-04 and 10-08 epochs would submit the queued
+unbondings, and delegation, reinvestment and rebalancing would follow. Each changes
+tracked delegations, and every row whose tracked value moves is skipped (§5). With the channel closed, a
+slash on haqq is the only way the ICA's delegations can change. That moves the on-chain
+side only, so the table still applies and the day-0 refresh books the slash. What does
+skip a row is a Stride-side change to it before the upgrade: a haqq delegation query or
+calibration answered, or anyone sending `update-delegation` or `calibrate-delegation` for
+a haqq validator. Ops send none. On the last day of the vote, re-read the haqq host zone
+against `HaqqExpectedTrackedDelegations`. Both `restore-interchain-account` and closing a
+channel are permissionless. Restoring early is blocked in practice while channel-29 is
+OPEN, because haqq's ICA host refuses a second active channel for the same owner. A third
+party could still close channel-29 and then restore, so watch for a new haqq channel during
+the vote.
+
+The haqq relayer (packets and ICQ responses) is off until the upgrade, so no haqq query can
+be answered and no row can move. It comes back on at the upgrade, not at the deadline: step 1
+of the ops window needs hours of handshakes before 2026-10-12 19:00 UTC. While it is off:
+
+- Neither haqq light client is updated, so the upgrade and the relayer's return must both
+  come before 2026-10-13 06:27 UTC (haqq's client of Stride). If the vote slips, send a bare
+  client update in both directions a few days before that. It moves no packet and answers
+  no query.
+- Transfers on channel-240 time out and refund, and haqq liquid stakes wait in their
+  deposit records.
+- Nothing may be sent on haqq's open ICA channels (FEE channel-614, REDEMPTION channel-244,
+  COMMUNITY_POOL_DEPOSIT channel-245, COMMUNITY_POOL_RETURN channel-246). An unrelayed packet
+  times out once the relayer is back, and the timeout closes that ordered channel. Those
+  ICAs are sent from query callbacks or for completed unbondings, so with no query answered
+  and no haqq unbonding in progress, none should be sent; check their packet commitments
+  before turning the relayer back on.
+- Anyone can run a haqq relayer, so turning ours off does not guarantee nothing is relayed.
+  The per-row pin check is the backstop.
+
+After the upgrade, the haqq sequence is step 1 of the ops window (§9).
+
 ### §9b. Live-test validator per zone
 
 <!-- live-test-validators:start -->
@@ -879,7 +998,7 @@ Generated 2026-09-29 by `scripts/wind-down/pick_live_test_validators.py`; rerun 
 Prices: the snapshot in sttoken-locations.md (total USD / (supply × rate) per token).
 
 The first `MsgUndelegateFromValidators` on each zone drains exactly one validator in full, as the live test of the tx
-and its callback, before the empty-list drain of the rest (spec §7, §9 step 3). The pick is the validator with the
+and its callback, before the empty-list drain of the rest (spec §7, §9 step 4). The pick is the validator with the
 smallest recorded delegation of at least one whole token that has no unbonding entry in flight from the delegation ICA (the SDK allows 7
 concurrent entries per delegator-validator pair; a validator drained in full never needs a second one). "Next" is the
 second-smallest delegation, to show how much the pick matters.
@@ -1042,7 +1161,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   table-driven tests for a base account and each vesting type (swept), an escrow address, a
   module account, an interchain account, a 32-byte address and an unknown account (each
   skipped with its reason in the event while the rest of the batch is sent and `num_skipped`
-  counts it), a zero balance (skipped silently), a batch over the bound, an invalid denom
+  counts it), a zero balance (skipped silently), a batch of more than 100 addresses (accepted: no bound), an invalid denom
   string, an empty denom list, a holder with two of three listed denoms (two transfers), a
   transfer error rejecting the whole tx,
   an stToken and `ustrd` landing on channel-5 with the `osmo` prefix, a single-hop voucher on
@@ -1074,11 +1193,12 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
   second, unrelated cleanup that the v35 handler does (§5); why they accumulate is not yet
   understood (every callback path decrements them and nothing is unacked), which is worth a
   look before the upgrade so the reset is not papering over a live leak.
-- **Stale flags the handler cannot reset** (measured 2026-09-29): haqq_11235-1's delegation channel-869 is CLOSED with 14 packet commitments (sequences 85-98) and 30 flagged validators, so haqq needs `restore-interchain-account` before the day-0 refresh and the drain; juno-1's open channel-491 has pending commitments from sequence 5729, so its 21 flags clear only once those packets are relayed. The v35 reset skips both zones by design.
+- **Stale flags the handler cannot reset** (measured 2026-09-29): haqq_11235-1's delegation channel-869 is CLOSED with 14 packet commitments (sequences 85-98) and 30 flagged validators, so haqq needs channel-29 closed and `restore-interchain-account` after the upgrade, before the day-0 refresh and its first unbonding epoch (§9c); juno-1's open channel-491 has pending commitments from sequence 5729, so its 21 flags clear only once those packets are relayed. The v35 reset skips both zones by design.
 - **Haqq's chain health** (§3): with one block every few minutes since at least
   2026-09-21 and no ICQ answered in that time, decide before the proposal whether haqq
   stays in scope. If it does, every haqq correction rides on the delta table (no refresh is
-  possible) and the drain's ICA relaying must be watched by hand; if Haqq halts for good,
+  possible before the upgrade) and the drain's ICA relaying must be watched by hand (§9c);
+  Stride's client of haqq expires around 2026-10-17 if nothing relays toward Stride; if Haqq halts for good,
   stISLM moves to the unrecoverable set and its holders get no pool.
 - **Band's light client of Stride is expired** (laozi-mainnet `07-tendermint-169` on the ICA
   connection `connection-146`, last header 2026-08-05; the delegation ICA restore is stuck in
@@ -1119,7 +1239,7 @@ stTokens, which they then move to Osmosis themselves) before the halt (§9).
 - Exact proto shapes and enum names for the four admin txs; the constants: the two new
   addresses in §4 once created, the channel-5 constant and the `SweepUnwindChannels`
   whitelist for the sweep, and the `chain_id → host-side channel to Osmosis` map; the batch
-  bound after measuring gas.
+  size after measuring gas (an ops choice, not an on-chain bound).
 - The plans: one per PR, written from this spec on 2026-09-29 (the two plans written
   for the earlier two-upgrade sequencing were deleted the same day; what they had learned is
   in §13). The work is delivered as six stacked PRs, each reviewable on its own, in the order

@@ -25,7 +25,7 @@ This plan is PR 4: branch `wind-down-pr4-admin-txs` off `wind-down-pr3-upgrade-h
 
 - Module path stays `github.com/Stride-Labs/stride/v34`. Never edit `go.mod`'s module line or any import path's version.
 - `SweepOperatorAddress` and `OsmosisVaultAddress` ship as empty package `var`s. `MsgTransferFromIca` must error with `ErrOsmosisVaultNotConfigured` while the vault is empty. The release gate (PR 6) fills both.
-- `OsmosisChainId = "osmosis-1"`, `OsmosisBech32Prefix = "osmo"`, `StrideToOsmosisTransferChannelId = "channel-5"`, `WindDownTransferTimeout = 24 * time.Hour`, `MaxSweepAddressesPerTx = 100`.
+- `OsmosisChainId = "osmosis-1"`, `OsmosisBech32Prefix = "osmo"`, `StrideToOsmosisTransferChannelId = "channel-5"`, `WindDownTransferTimeout = 24 * time.Hour`.
 - `HostToOsmosisTransferChannel` is exactly: celestia `channel-2`, cosmoshub-4 `channel-141`, dydx-mainnet-1 `channel-3`, haqq_11235-1 `channel-2`, injective-1 `channel-8`, juno-1 `channel-0`, laozi-mainnet `channel-83`, phoenix-1 `channel-1`, sommelier-3 `channel-0`, ssc-1 `channel-1`, osmosis-1 `""` (empty selects an ICA bank send). No deprecated zone (comdex-1, evmos_9001-2, stargaze-1, umee-1) appears in it.
 - `SweepUnwindChannels` is exactly: channel-0 `cosmos`, channel-162 `celestia`, channel-5 `osmo`, channel-24 `juno`, channel-150 `somm`, channel-213 `saga`, channel-160 `dydx`.
 - Proto shapes and amino names are fixed (Task 2): `stakeibc/MsgUndelegateFromValidators`, `stakeibc/MsgTransferFromIca`, `stakeibc/MsgTransferStaketiaClaimBal`, `stakeibc/MsgSweepTokensOffStride`. All four are added to both `RegisterCodec` and `RegisterImplementations`. Amino names must be at most 39 characters: `legacy.RegisterAminoMsg` panics above that (`cosmos-sdk@v0.54.3/codec/legacy/amino_msg.go:14`) and `RegisterCodec` runs at app init, so a longer name kills every `strided` invocation. `MsgTransferStaketiaClaimBalance` is therefore abbreviated, the way the codec already abbreviates `stakeibc/MsgUpdateValSharesExchRate`.
@@ -87,7 +87,7 @@ This plan is PR 4: branch `wind-down-pr4-admin-txs` off `wind-down-pr3-upgrade-h
 - Test: `x/stakeibc/types/wind_down_test.go`
 
 **Interfaces:**
-- Produces: `types.SweepOperatorAddress`, `types.OsmosisVaultAddress` (vars), `types.OsmosisChainId`, `types.OsmosisBech32Prefix`, `types.StrideToOsmosisTransferChannelId`, `types.WindDownTransferTimeout`, `types.MaxSweepAddressesPerTx`, `types.HostToOsmosisTransferChannel map[string]string`, `types.SweepUnwindChannels map[string]string`.
+- Produces: `types.SweepOperatorAddress`, `types.OsmosisVaultAddress` (vars), `types.OsmosisChainId`, `types.OsmosisBech32Prefix`, `types.StrideToOsmosisTransferChannelId`, `types.WindDownTransferTimeout`, `types.HostToOsmosisTransferChannel map[string]string`, `types.SweepUnwindChannels map[string]string`.
 - Review: yes (every destination in the wind-down is one of these constants)
 
 - [ ] **Step 1: Write the failing tests**
@@ -194,7 +194,6 @@ const (
 	OsmosisBech32Prefix              = "osmo"
 	StrideToOsmosisTransferChannelId = "channel-5"
 	WindDownTransferTimeout          = 24 * time.Hour
-	MaxSweepAddressesPerTx           = 100
 )
 
 // Host-side transfer channel to osmosis-1 per in-scope zone (chain registry 2026-09-24, re-verified
@@ -1099,7 +1098,7 @@ func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsFlaggedValidator()
 }
 
 // A validator mid-slash-query is excluded, as in the record-driven path; ops wait for the
-// day-0 refresh callbacks (spec §9 step 1) before draining
+// day-0 refresh callbacks (spec §9 steps 1-2) before draining
 func (s *KeeperTestSuite) TestUndelegateFromValidators_RejectsSlashQueryInProgress() {
 	tc := s.SetupUndelegateFromValidators()
 	tc.hostZone.Validators[2].SlashQueryInProgress = true
