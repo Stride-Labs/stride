@@ -52,7 +52,7 @@ func (k Keeper) UndelegateFromValidators(ctx sdk.Context, msg *types.MsgUndelega
 	// Same batch size as the epochly unbonding; a zone that never set it gets the default
 	batchSize := int(utils.UintToInt(hostZone.MaxMessagesPerIcaTx))
 	if batchSize == 0 {
-		batchSize = int(DefaultMaxMessagesPerIcaTx)
+		batchSize = int(utils.UintToInt(DefaultMaxMessagesPerIcaTx))
 	}
 	numBatches, err = k.BatchSubmitUndelegateICAMessages(ctx, hostZone, nil, msgs, splits, batchSize)
 	if err != nil {
