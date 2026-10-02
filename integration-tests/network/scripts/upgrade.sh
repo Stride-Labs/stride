@@ -19,7 +19,7 @@ trim_tx() {
     grep -E "code:|txhash:" | sed 's/^[[:space:]]*//'
 }
 
-upgrade_name=$(kubectl exec stride-validator-0 -c validator -- printenv UPGRADE_NAME)
+upgrade_name=$(kubectl exec -n integration stride-validator-0 -c validator -- printenv UPGRADE_NAME)
 latest_height=$($STRIDED0 status | jq -r 'if .SyncInfo then .SyncInfo.latest_block_height else .sync_info.latest_block_height end')
 upgrade_height=${UPGRADE_HEIGHT:-$((latest_height+UPGRADE_BUFFER))}
 
