@@ -1,0 +1,22 @@
+{
+  "stuatom": {
+    "chain_id": "cosmoshub-test-1",
+    "native_denom_on_osmosis": "ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9",
+    "canonical_pool_id": "1",
+    "canonical_st_denom": "ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F",
+    "route_pools": [
+      {
+        "channel_id": "channel-0",
+        "pool_id": "3",
+        "st_denom": "ibc/9B7179CAFC8B901DD609834C12CE266F209A68D399646599952D145AF2DC1396"
+      }
+    ]
+  },
+  "stuosmo": {
+    "chain_id": "osmosis-test-1",
+    "native_denom_on_osmosis": "uosmo",
+    "canonical_pool_id": "2",
+    "canonical_st_denom": "ibc/4263C1D1EEEA066572F679EF212BDD522ADF0E57C86819AF260C8BC82BD87602",
+    "route_pools": []
+  }
+}

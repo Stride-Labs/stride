@@ -101,10 +101,14 @@ checkpoint "code 1 stored" osmosisd q wasm code-info 1
 
 # ---------------------------------------------------------------- create the pools
 
+if [[ -z "${POOL_ATOM:-}" ]]; then
 create_pool atom "$STATOM_CANON" "$ATOM_ON_OSMO" "$RATE_HUB" stATOMr;        POOL_ATOM=$LAST_POOL_ID
 create_pool osmo "$STOSMO_CANON" uosmo "$RATE_OSMO" stOSMOr;                 POOL_OSMO=$LAST_POOL_ID
 create_pool atomhub "$STATOM_HUBROUTE" "$ATOM_ON_OSMO" "$RATE_HUB" stATOMhub; POOL_ATOM_HUB=$LAST_POOL_ID
 printf 'POOL_ATOM=%s\nPOOL_OSMO=%s\nPOOL_ATOM_HUB=%s\nPOOLS_FILE=%s\n' "$POOL_ATOM" "$POOL_OSMO" "$POOL_ATOM_HUB" "$POOLS_FILE" >> "$REHEARSAL_DIR/state.env"
+else
+  log "pools already created (rerun): canonical stATOM=$POOL_ATOM, stOSMO=$POOL_OSMO, Hub-route stATOM=$POOL_ATOM_HUB"
+fi
 log "pools: canonical stATOM=$POOL_ATOM, stOSMO=$POOL_OSMO, Hub-route stATOM=$POOL_ATOM_HUB"
 
 CONTRACT_ATOM=$(pool_contract "$POOL_ATOM")
@@ -187,7 +191,7 @@ user_tx "route-pool swap (two-hop statom)" osmosisd tx poolmanager swap-exact-am
 # ---------------------------------------------------------------- coverage after funding
 
 bash "$REHEARSAL_DIR/export.sh" "$REHEARSAL_DIR/export_post_funding.json"
-checkpoint "coverage after funding" python3 "$REPO/scripts/wind-down/coverage_check.py" \
+CHECKPOINT_SOFT=1 checkpoint "coverage after funding" python3 "$REPO/scripts/wind-down/coverage_check.py" \
   --export "$REHEARSAL_DIR/export_post_funding.json" --pools "$POOLS_FILE" --vault "$VAULT_MS_OSMO"
 
 # ---------------------------------------------------------------- pool gate

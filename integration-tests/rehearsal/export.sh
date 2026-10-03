@@ -28,7 +28,8 @@ $KX exec $POD -c validator -- sh -c "
   exit \$status"
 
 $KX exec $POD -c validator -- sh -c "find $EXPORT_HOME/data -name LOCK -exec rm -f {} +"
-$KX exec $POD -c validator -- sh -c "$BIN export --home $EXPORT_HOME 2>/dev/null" > "$OUT" || true
+# SDK 0.50+ export writes nothing to stdout unless --output-document is given
+$KX exec $POD -c validator -- sh -c "$BIN export --home $EXPORT_HOME --output-document $EXPORT_HOME/out.json >/dev/null 2>&1 && cat $EXPORT_HOME/out.json" > "$OUT" || true
 $KX exec $POD -c validator -- sh -c "rm -rf $EXPORT_HOME"
 
 jq -e '.app_state.bank.supply' "$OUT" >/dev/null || {

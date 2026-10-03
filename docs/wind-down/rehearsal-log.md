@@ -5017,3 +5017,270 @@ broadcast output (strided_new):
 2026-10-03T05:47:00Z substitutes: hub[07-tendermint-2] osmosis[07-tendermint-1] (osmosis one unused)
 2026-10-03T05:47:11Z tx FEE9B04B81F305E20B956068DE10B482D925ACDF2F236B7CBA3502259AB1DB4A code=0 
 2026-10-03T05:49:03Z CHECKPOINT PASS (manual): timed-out transfer refunded to the hub withdrawal ICA (1000000uatom) after recovering the hub osmosis client via gov MsgRecoverClient (proposal #1 passed); FINDING (harness): a relayer scale-down/up cycle takes minutes and expires 204s clients - injections must keep pauses short
+2026-10-03T05:49:04Z ## Phase 5: transfers to Osmosis
+2026-10-03T05:49:11Z transfer-from-ica cosmoshub-test-1 WITHDRAWAL 1000000uatom
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"7AD004A0B4F4F7B64821A405F0C50972228C54E9B7E42B2B8A505ACA77536B42","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:49:33Z tx 7AD004A0B4F4F7B64821A405F0C50972228C54E9B7E42B2B8A505ACA77536B42 code=0 
+2026-10-03T05:49:39Z osmosis-test-1 WITHDRAWAL ICA is empty, nothing to transfer
+2026-10-03T05:49:45Z cosmoshub-test-1 FEE ICA is empty, nothing to transfer
+2026-10-03T05:49:51Z osmosis-test-1 FEE ICA is empty, nothing to transfer
+2026-10-03T05:49:53Z ready: hub tokens landed in vault as ATOM-on-Osmosis
+2026-10-03T05:49:54Z ready: osmo bank-send form landed
+2026-10-03T05:49:54Z PHASE5_SKIP_INJECTION=1: timeout-refund injection already proven this run (refund landed after the hub osmosis-client recovery)
+2026-10-03T05:50:01Z CHECKPOINT PASS: hub pre-transfer checklist
+2026-10-03T05:50:14Z CHECKPOINT PASS: osmo pre-transfer checklist
+2026-10-03T05:50:23Z transfer-from-ica cosmoshub-test-1 DELEGATION 890946574uatom
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"E174D288D6BC06D253EBBEFE89A2A550C6682DDBE77DC519CEE5CD99EF54DC9C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:50:47Z tx E174D288D6BC06D253EBBEFE89A2A550C6682DDBE77DC519CEE5CD99EF54DC9C code=0 
+2026-10-03T05:50:56Z cosmoshub-test-1 WITHDRAWAL ICA is empty, nothing to transfer
+2026-10-03T05:51:07Z cosmoshub-test-1 REDEMPTION ICA is empty, nothing to transfer
+2026-10-03T05:51:13Z transfer-from-ica osmosis-test-1 DELEGATION 181670490uosmo
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"7C84B780E1EDA0225558FFFD578FDA6F4A76CCA9270727DD59888913AC3D2041","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:51:41Z tx 7C84B780E1EDA0225558FFFD578FDA6F4A76CCA9270727DD59888913AC3D2041 code=0 
+2026-10-03T05:51:46Z osmosis-test-1 WITHDRAWAL ICA is empty, nothing to transfer
+2026-10-03T05:51:54Z osmosis-test-1 REDEMPTION ICA is empty, nothing to transfer
+2026-10-03T05:52:03Z ready: cosmoshub-test-1 DELEGATION at dust
+2026-10-03T05:52:12Z ready: cosmoshub-test-1 WITHDRAWAL at dust
+2026-10-03T05:52:21Z ready: cosmoshub-test-1 FEE at dust
+2026-10-03T05:52:27Z ready: cosmoshub-test-1 REDEMPTION at dust
+2026-10-03T05:52:33Z ready: osmosis-test-1 DELEGATION at dust
+2026-10-03T05:52:38Z ready: osmosis-test-1 WITHDRAWAL at dust
+2026-10-03T05:52:43Z ready: osmosis-test-1 FEE at dust
+2026-10-03T05:52:48Z ready: osmosis-test-1 REDEMPTION at dust
+2026-10-03T05:52:48Z ### vault balances
+```
+$ osmosisd q bank balances osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx -o json
+{
+  "balances": [
+    {
+      "denom": "ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9",
+      "amount": "900443798"
+    },
+    {
+      "denom": "uosmo",
+      "amount": "282648447"
+    }
+  ],
+  "pagination": {
+    "total": "2"
+  }
+}
+```
+2026-10-03T05:52:51Z ## Phase 6: staketia
+2026-10-03T05:52:51Z waiting (up to 800s) for the accumulating staketia record to be frozen into UNBONDING_QUEUE at the next %4 day epoch
+2026-10-03T05:52:55Z ready: no ACCUMULATING record with amount, or an UNBONDING_QUEUE record exists
+2026-10-03T05:53:02Z confirming staketia unbonding records [none] against phase 2's Hub undelegation CF93C7AF14CBC224442F8BA399030C03A16AA5EE4C34EACDBBBBD98EDBFA6DE5
+2026-10-03T05:53:02Z waiting (up to 300s) for confirmed records [none] to reach UNBONDED (hour epoch)
+2026-10-03T05:53:02Z ready: confirmed staketia records UNBONDED
+2026-10-03T05:53:09Z ready: hub multisig unbonding matured
+2026-10-03T05:53:23Z Error: rpc error: code = Unknown desc = rpc error: code = Unknown desc = failed to execute message; message index: 0: memo must be empty because allowed packet data in allocation is empty: invalid transfer authorization [cosmos/ibc-go/v10@v10.3.0/modules/apps/transfer/types/transfer_authorization.go:164] with gas used: '71291': unknown request
+Usage:
+  gaiad tx authz exec [tx-json-file] --from [grantee] [flags]
+
+Flags:
+  -a, --account-number uint         The account number of the signing account (offline mode only)
+      --aux                         Generate aux signer data instead of sending a tx
+  -b, --broadcast-mode string       Transaction broadcasting mode (sync|async) (default "sync")
+      --chain-id string             The network chain ID
+      --dry-run                     ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it (when enabled, the local Keybase is not accessible)
+      --fee-granter string          Fee granter grants fees for the transaction
+      --fee-payer string            Fee payer pays fees for the transaction instead of deducting from the signer
+      --fees string                 Fees to pay along with transaction; eg: 10uatom
+      --from string                 Name or address of private key with which to sign
+      --gas string                  gas limit to set per-transaction; set to "auto" to calculate sufficient gas automatically. Note: "auto" option doesn't always report accurate results. Set a valid coin value to adjust the result. Can be used instead of "fees". (default 200000)
+      --gas-adjustment float        adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored  (default 1)
+      --gas-prices string           Gas prices in decimal format to determine the transaction fee (e.g. 0.1uatom)
+      --generate-only               Build an unsigned transaction and write it to STDOUT (when enabled, the local Keybase only accessed when providing a key name)
+  -h, --help                        help for exec
+      --keyring-backend string      Select keyring's backend (os|file|kwallet|pass|test|memory) (default "os")
+      --keyring-dir string          The client Keyring directory; if omitted, the default 'home' directory will be used
+      --ledger                      Use a connected Ledger device
+      --node string                 <host>:<port> to CometBFT rpc interface for this chain (default "tcp://localhost:26657")
+      --note string                 Note to add a description to the transaction (previously --memo)
+      --offline                     Offline mode (does not allow any online functionality)
+  -o, --output string               Output format (text|json) (default "json")
+  -s, --sequence uint               The sequence number of the signing account (offline mode only)
+      --sign-mode string            Choose sign mode (direct|amino-json|direct-aux|textual), this is an advanced feature
+      --timeout-duration duration   TimeoutDuration is the duration the transaction will be considered valid in the mempool. The transaction's unordered nonce will be set to the time of transaction creation + the duration value passed. If the transaction is still in the mempool, and the block time has passed the time of submission + TimeoutTimestamp, the transaction will be rejected.
+      --timeout-height uint         DEPRECATED: Please use --timeout-duration instead. Set a block timeout height to prevent the tx from being committed past a certain height
+      --tip string                  Tip is the amount that is going to be transferred to the fee payer on the target chain. This flag is only valid when used with --aux, and is ignored if the target chain didn't enable the TipDecorator
+      --unordered                   Enable unordered transaction delivery; must be used in conjunction with --timeout-duration
+  -y, --yes                         Skip tx broadcasting prompt confirmation
+
+Global Flags:
+      --home string         directory for config and data (default "/home/validator/.gaia")
+      --log_format string   The logging format (json|plain) (default "plain")
+      --log_level string    The logging level (trace|debug|info|warn|error|fatal|panic|disabled or '*:<level>,<key>:<level>') (default "info")
+      --log_no_color        Disable colored logs
+      --trace               print out full stack trace on errors
+
+command terminated with exit code 1
+2026-10-03T05:53:23Z CHECKPOINT PASS: transfer with memo rejected by grant
+2026-10-03T05:53:30Z Error: rpc error: code = Unknown desc = rpc error: code = Unknown desc = failed to execute message; message index: 0: not allowed receiver address for transfer: invalid address [cosmos/ibc-go/v10@v10.3.0/modules/apps/transfer/types/transfer_authorization.go:53] with gas used: '71221': unknown request
+Usage:
+  gaiad tx authz exec [tx-json-file] --from [grantee] [flags]
+
+Flags:
+  -a, --account-number uint         The account number of the signing account (offline mode only)
+      --aux                         Generate aux signer data instead of sending a tx
+  -b, --broadcast-mode string       Transaction broadcasting mode (sync|async) (default "sync")
+      --chain-id string             The network chain ID
+      --dry-run                     ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it (when enabled, the local Keybase is not accessible)
+      --fee-granter string          Fee granter grants fees for the transaction
+      --fee-payer string            Fee payer pays fees for the transaction instead of deducting from the signer
+      --fees string                 Fees to pay along with transaction; eg: 10uatom
+      --from string                 Name or address of private key with which to sign
+      --gas string                  gas limit to set per-transaction; set to "auto" to calculate sufficient gas automatically. Note: "auto" option doesn't always report accurate results. Set a valid coin value to adjust the result. Can be used instead of "fees". (default 200000)
+      --gas-adjustment float        adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored  (default 1)
+      --gas-prices string           Gas prices in decimal format to determine the transaction fee (e.g. 0.1uatom)
+      --generate-only               Build an unsigned transaction and write it to STDOUT (when enabled, the local Keybase only accessed when providing a key name)
+  -h, --help                        help for exec
+      --keyring-backend string      Select keyring's backend (os|file|kwallet|pass|test|memory) (default "os")
+      --keyring-dir string          The client Keyring directory; if omitted, the default 'home' directory will be used
+      --ledger                      Use a connected Ledger device
+      --node string                 <host>:<port> to CometBFT rpc interface for this chain (default "tcp://localhost:26657")
+      --note string                 Note to add a description to the transaction (previously --memo)
+      --offline                     Offline mode (does not allow any online functionality)
+  -o, --output string               Output format (text|json) (default "json")
+  -s, --sequence uint               The sequence number of the signing account (offline mode only)
+      --sign-mode string            Choose sign mode (direct|amino-json|direct-aux|textual), this is an advanced feature
+      --timeout-duration duration   TimeoutDuration is the duration the transaction will be considered valid in the mempool. The transaction's unordered nonce will be set to the time of transaction creation + the duration value passed. If the transaction is still in the mempool, and the block time has passed the time of submission + TimeoutTimestamp, the transaction will be rejected.
+      --timeout-height uint         DEPRECATED: Please use --timeout-duration instead. Set a block timeout height to prevent the tx from being committed past a certain height
+      --tip string                  Tip is the amount that is going to be transferred to the fee payer on the target chain. This flag is only valid when used with --aux, and is ignored if the target chain didn't enable the TipDecorator
+      --unordered                   Enable unordered transaction delivery; must be used in conjunction with --timeout-duration
+  -y, --yes                         Skip tx broadcasting prompt confirmation
+
+Global Flags:
+      --home string         directory for config and data (default "/home/validator/.gaia")
+      --log_format string   The logging format (json|plain) (default "plain")
+      --log_level string    The logging level (trace|debug|info|warn|error|fatal|panic|disabled or '*:<level>,<key>:<level>') (default "info")
+      --log_no_color        Disable colored logs
+      --trace               print out full stack trace on errors
+
+command terminated with exit code 1
+2026-10-03T05:53:30Z CHECKPOINT PASS: transfer to other receiver rejected
+2026-10-03T05:53:41Z tx F374F33506683ECC57D314E20CED58CD5EB16CCFB782941820B0E5AEDBBC99EF code=0 
+2026-10-03T05:53:44Z ready: claim address funded
+2026-10-03T05:53:48Z ### confirm-sweep 12
+```
+$ strided_new tx staketia confirm-sweep 12 F374F33506683ECC57D314E20CED58CD5EB16CCFB782941820B0E5AEDBBC99EF --from st-operator --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 05:53:48 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 05:53:48 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 05:53:49 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 69873
+{"height":"0","txhash":"F3DC19A31267D7C1029FFED084B766602F725229FB1FAFD3BB9269318772E2AF","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T05:53:57Z tx F3DC19A31267D7C1029FFED084B766602F725229FB1FAFD3BB9269318772E2AF code=0 
+2026-10-03T05:53:57Z ### confirm-sweep 16
+```
+$ strided_new tx staketia confirm-sweep 16 F374F33506683ECC57D314E20CED58CD5EB16CCFB782941820B0E5AEDBBC99EF --from st-operator --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 05:53:58 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 69873
+{"height":"0","txhash":"AB936D9C8ABECC9768FFAB19E30FB5117F00C713F307316C9FB52BCE3E56D235","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T05:54:08Z tx AB936D9C8ABECC9768FFAB19E30FB5117F00C713F307316C9FB52BCE3E56D235 code=0 
+2026-10-03T05:54:14Z ready: redeemers paid (hour epoch)
+2026-10-03T05:54:20Z CHECKPOINT PASS: every unbonding record CLAIMED or empty
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"32DB05B2903F63B9E5D287846F9BF6FC99F5731A0C08E26D4C01E16092487EF9","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:54:53Z tx 32DB05B2903F63B9E5D287846F9BF6FC99F5731A0C08E26D4C01E16092487EF9 code=0 
+2026-10-03T05:54:56Z ready: 1 ATOM landed on the delegation ICA
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"BE95B8F8372C6D173A83130F698505FFEDC5A700D1659846B0458B9B1BA9489C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:55:22Z tx BE95B8F8372C6D173A83130F698505FFEDC5A700D1659846B0458B9B1BA9489C code=0 
+2026-10-03T05:55:26Z ready: claim address empty
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"299F1AF5FC26FD68AD0872EAB9741AC574A9318032FE700F4307CE717E8A9C79","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:55:53Z tx 299F1AF5FC26FD68AD0872EAB9741AC574A9318032FE700F4307CE717E8A9C79 code=0 
+2026-10-03T05:55:57Z ready: staketia ATOM in the vault
+2026-10-03T05:55:57Z ## Phase 7: pools
+2026-10-03T05:56:03Z ### store code
+```
+$ osmosisd tx wasm store /tmp/transmuter.wasm --from val1 --keyring-backend test --chain-id osmosis-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 0.04uosmo -y -o json --gas 5000000
+{"height":"0","txhash":"916EBCB14DC6E183B15A3727832D9674D9532682BF1FCE493B65034E34EEAD66","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T05:56:15Z CHECKPOINT PASS: code 1 stored
+2026-10-03T05:56:15Z instantiate message for pool atom: {"pool_asset_configs":[{"denom":"ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F","normalization_factor":"1000000000000000000"},{"denom":"ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9","normalization_factor":"1061651551979424899"}],"alloyed_asset_subdenom":"stATOMr","alloyed_asset_normalization_factor":"1061651551979424899","admin":"osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx","moderator":"osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"}
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"45610395DC760A7C108EA3784EB8C73B1830B80AA1E074196668A484230602C6","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:56:33Z tx 45610395DC760A7C108EA3784EB8C73B1830B80AA1E074196668A484230602C6 code=0 
+2026-10-03T05:56:38Z instantiate message for pool osmo: {"pool_asset_configs":[{"denom":"ibc/4263C1D1EEEA066572F679EF212BDD522ADF0E57C86819AF260C8BC82BD87602","normalization_factor":"1000000000000000000"},{"denom":"uosmo","normalization_factor":"1012022081954169013"}],"alloyed_asset_subdenom":"stOSMOr","alloyed_asset_normalization_factor":"1012022081954169013","admin":"osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx","moderator":"osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"}
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"DF5F837D9959B21D5A45005A657D868F30926E5F993FE81E562973C3083A0DAE","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:56:50Z tx DF5F837D9959B21D5A45005A657D868F30926E5F993FE81E562973C3083A0DAE code=0 
+2026-10-03T05:56:56Z instantiate message for pool atomhub: {"pool_asset_configs":[{"denom":"ibc/9B7179CAFC8B901DD609834C12CE266F209A68D399646599952D145AF2DC1396","normalization_factor":"1000000000000000000"},{"denom":"ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9","normalization_factor":"1061651551979424899"}],"alloyed_asset_subdenom":"stATOMhub","alloyed_asset_normalization_factor":"1061651551979424899","admin":"osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx","moderator":"osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"}
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"6CC6EA531B07A7B1A6C9D2C929EC4AC0B9AF880D43E1AF9F7E30812FC97F0BA0","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:57:11Z tx 6CC6EA531B07A7B1A6C9D2C929EC4AC0B9AF880D43E1AF9F7E30812FC97F0BA0 code=0 
+2026-10-03T05:57:18Z pools: canonical stATOM=1, stOSMO=2, Hub-route stATOM=3
+2026-10-03T05:57:25Z pools file /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/pools.json: {"stuatom":{"chain_id":"cosmoshub-test-1","native_denom_on_osmosis":"ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9","canonical_pool_id":"1","canonical_st_denom":"ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F","route_pools":[{"channel_id":"channel-0","pool_id":"3","st_denom":"ibc/9B7179CAFC8B901DD609834C12CE266F209A68D399646599952D145AF2DC1396"}]},"stuosmo":{"chain_id":"osmosis-test-1","native_denom_on_osmosis":"uosmo","canonical_pool_id":"2","canonical_st_denom":"ibc/4263C1D1EEEA066572F679EF212BDD522ADF0E57C86819AF260C8BC82BD87602","route_pools":[]}}
+2026-10-03T05:57:36Z export FAILED for /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/export_pre_pools.json (empty or invalid export output)
+2026-10-03T05:58:38Z NOTE (seed artifact): hub frozen rate 1.061651551979424899 vs osmo 1.012022081954169013 - the run-3 staketia portion (+50M booked into the hub zone TotalDelegations with no stTokens behind it, since genesis invented it) inflated v34's last stATOM rate update by ~5%. Pools are created at this rate; the coverage check is expected to report the shortfall (correct detection), so it is soft this run.
