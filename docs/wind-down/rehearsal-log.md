@@ -4998,3 +4998,22 @@ broadcast output (strided_new):
 ```
 2026-10-03T05:28:53Z tx 7257EC65CCD761AD40CEC416F93961679712B5821104FED5E880E9E37AA7EE79 code=0 
 2026-10-03T05:33:56Z TIMEOUT waiting for: hub tokens landed in vault as ATOM-on-Osmosis
+2026-10-03T05:35:07Z ## Phase 5: transfers to Osmosis
+2026-10-03T05:35:16Z cosmoshub-test-1 WITHDRAWAL ICA is empty, nothing to transfer
+2026-10-03T05:35:22Z osmosis-test-1 WITHDRAWAL ICA is empty, nothing to transfer
+2026-10-03T05:35:31Z cosmoshub-test-1 FEE ICA is empty, nothing to transfer
+2026-10-03T05:35:37Z osmosis-test-1 FEE ICA is empty, nothing to transfer
+2026-10-03T05:35:40Z ready: hub tokens landed in vault as ATOM-on-Osmosis
+2026-10-03T05:35:42Z ready: osmo bank-send form landed
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"57AC8C3C778E8D28A0F7B82EFA95F96CDBB492CCCCF9EBE390A6B2CFBC73D498","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:36:18Z tx 57AC8C3C778E8D28A0F7B82EFA95F96CDBB492CCCCF9EBE390A6B2CFBC73D498 code=0 
+2026-10-03T05:36:18Z sleeping 140s: the ICA-wrapped transfer's inner timeout is 2 x the 60s WindDownTransferTimeout (120s) plus margin
+2026-10-03T05:43:45Z TIMEOUT waiting for: timed-out transfer refunded to the withdrawal ICA
+2026-10-03T05:46:55Z ## Client recovery: hub 07-tendermint-1 (osmosis) expired during the phase-5 relayer pause
+2026-10-03T05:47:00Z substitutes: hub[07-tendermint-2] osmosis[07-tendermint-1] (osmosis one unused)
+2026-10-03T05:47:11Z tx FEE9B04B81F305E20B956068DE10B482D925ACDF2F236B7CBA3502259AB1DB4A code=0 
+2026-10-03T05:49:03Z CHECKPOINT PASS (manual): timed-out transfer refunded to the hub withdrawal ICA (1000000uatom) after recovering the hub osmosis client via gov MsgRecoverClient (proposal #1 passed); FINDING (harness): a relayer scale-down/up cycle takes minutes and expires 204s clients - injections must keep pauses short

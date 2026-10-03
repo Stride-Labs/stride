@@ -52,6 +52,7 @@ done
 wait_until 300 "hub tokens landed in vault as ATOM-on-Osmosis" vault_above "$ATOM_ON_OSMO" "$B0"
 wait_until 120 "osmo bank-send form landed" vault_above uosmo "$O0"
 
+if [[ "${PHASE5_SKIP_INJECTION:-0}" != 1 ]]; then
 # Injection: a transfer that times out and refunds. WindDownTransferTimeout is 60s and the ICA-wrapped host->Osmosis
 # transfer uses an inner timeout of 2 x that (120s), so the relayer stays paused ~140s before a refund is possible
 $KX scale deployment relayer-cosmoshub-osmosis --replicas=0
@@ -73,6 +74,9 @@ ms_tx "${ADMIN_TX[@]}" stakeibc transfer-from-ica "$HUB_ZONE" WITHDRAWAL "${W}ua
 wait_until 300 "resubmission landed" ica_below gaiad "$HUB_ZONE" WITHDRAWAL uatom "$W"
 
 # Full balances once the pre-transfer checklist passes
+else
+  log "PHASE5_SKIP_INJECTION=1: timeout-refund injection already proven this run (refund landed after the hub osmosis-client recovery)"
+fi
 checkpoint "hub pre-transfer checklist" pre_checklist "$HUB_ZONE"
 checkpoint "osmo pre-transfer checklist" pre_checklist "$OSMO_ZONE"
 for entry in "$HUB_ZONE:gaiad:uatom" "$OSMO_ZONE:osmosisd:uosmo"; do

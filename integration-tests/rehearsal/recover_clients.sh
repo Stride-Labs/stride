@@ -36,7 +36,7 @@ submit_proposal() { # chain-wrapper pod denom deposit messages-json title
   out=$($KX exec "$2" -c validator -- $bin tx gov submit-proposal /tmp/recover.json --from val1 --keyring-backend test \
     --chain-id $chainid --gas 600000 --gas-prices 1$3 -y -o json 2>&1)
   hash=$(tx_hash <<<"$out"); wait_tx "$1" "$hash" >&2 || { log "proposal submit failed on $chainid: $(head -c 300 <<<"$out")"; return 1; }
-  $1 q gov proposals -o json 2>/dev/null | grep -E '^\{' | jq -r '.proposals | max_by(.id | tonumber).id'
+  $1 q gov proposals -o json 2>/dev/null | sed -n '/^{/,$p' | jq -r '.proposals | max_by(.id | tonumber).id'
 }
 
 vote() { # pod binary chain-id denom proposal key
@@ -45,10 +45,10 @@ vote() { # pod binary chain-id denom proposal key
 }
 
 proposal_passed() { # chain-wrapper id
-  [[ "$($1 q gov proposal "$2" -o json 2>/dev/null | grep -E '^\{' | jq -r '.proposal.status // .status')" == PROPOSAL_STATUS_PASSED ]]
+  [[ "$($1 q gov proposal "$2" -o json 2>/dev/null | sed -n '/^{/,$p' | jq -r '.proposal.status // .status')" == PROPOSAL_STATUS_PASSED ]]
 }
 client_active() { # chain-wrapper client
-  [[ "$($1 q ibc client status "$2" -o json 2>/dev/null | grep -E '^\{' | jq -r .status)" == Active ]]
+  [[ "$($1 q ibc client status "$2" -o json 2>/dev/null | sed -n '/^{/,$p' | jq -r .status)" == Active ]]
 }
 
 # 1. Substitutes: stride-cosmoshub path (src stride, dst hub) and cosmoshub-osmosis path (src hub, dst osmosis)
