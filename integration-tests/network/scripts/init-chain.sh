@@ -212,7 +212,7 @@ update_stride_genesis() {
       | .app_state.staketia.host_zone.claim_address = "'$STAKETIA_CLAIM'"
       | .app_state.staketia.host_zone.safe_address_on_stride = "'$STAKETIA_SAFE'"
       | .app_state.staketia.host_zone.operator_address_on_stride = "'$STAKETIA_OPERATOR_STRIDE'"
-      | .app_state.staketia.host_zone.remaining_delegated_balance = "50000000"' $genesis_json
+      | .app_state.staketia.host_zone.remaining_delegated_balance = "0"' $genesis_json
 }
 
 # Genesis updates specific to non-stride chains

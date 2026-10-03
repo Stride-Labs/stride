@@ -116,7 +116,7 @@ checkpoint "nothing burned" stuatom_supply_unchanged
 # Injection 4 (dead window) on osmo val3 by file: submit in the last ~25s of the day epoch
 OV3=$(sed -n 3p <<<"$OSMO_VALS")
 write_drain_file /tmp/ov3.json "$OV3" 0
-sleep_until $(( $(day_epoch_next_start) - 25 ))
+sleep_until $(( $(day_epoch_next_start) - 50 ))
 DW_OUT=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators osmosis-test-1 /tmp/ov3.json 2>&1 || true)
 log "dead-window send: $(grep -iE 'timeout|code=' <<<"$DW_OUT" | head -2 | tr '\n' ' ')"
 dw_timeout() { grep -qiE timeout <<<"$DW_OUT"; }; CHECKPOINT_SOFT=1 checkpoint "dead-window send fails with a timeout reason" dw_timeout

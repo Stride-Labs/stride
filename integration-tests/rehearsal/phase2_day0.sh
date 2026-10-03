@@ -50,6 +50,10 @@ for v in $OSMO_VALS; do ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc up
 # Refresh queries answer asynchronously through the relayer. The slash_query_in_progress flag is only set once the
 # callback submits the delegation query, so waiting on it alone is vacuous: wait for val3's recorded delegation to drop
 wait_until 300 "osmo val3 recorded delegation reduced by the slash" val3_delegation_reduced
+# v35 has no rebalancing: a record that fully drains a zero-weight validator with rate < 1 comes up short by the
+# rounding-safety trim and retries forever (run-2 finding). The surviving escape hatch is change-validator-weight.
+OSMO_VAL3=$(strided_new q stakeibc show-validators osmosis-test-1 -o json | jq -r '.validators[] | select(.weight=="0") | .address')
+[[ -n "$OSMO_VAL3" ]] && ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc change-validator-weight osmosis-test-1 "$OSMO_VAL3" 10 >/dev/null
 wait_until 300 "no slash query in flight" no_slash_query_in_flight
 log_cmd "osmo validators after refresh" strided_new q stakeibc show-validators osmosis-test-1 -o json
 checkpoint "osmo rate still frozen" assert_rate_unchanged osmosis-test-1 "$RATE_OSMO"

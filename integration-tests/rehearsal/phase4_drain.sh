@@ -150,7 +150,7 @@ submit_window; drain osmosis-test-1 --all
 wait_until 240 "osmo drained" no_flags osmosis-test-1
 
 # Injection 4: the dead window: submit in the last fifth of the day epoch and expect a failed send, nothing flagged
-sleep_until $(( $(day_epoch_next_start) - 25 ))
+sleep_until $(( $(day_epoch_next_start) - 50 ))
 CHECKPOINT_SOFT=1 checkpoint "dead-window send fails" dead_window_send_fails
 wait_until 300 "no flags after dead window" no_flags cosmoshub-test-1
 checkpoint "hub total at dust"  zone_total_at_dust cosmoshub-test-1

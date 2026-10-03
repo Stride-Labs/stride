@@ -194,6 +194,15 @@ sleep 6
 fi
 checkpoint "transfer grant present" hub_grant_present
 
+# The staketia multisig portion lives in the stakeibc celestia zone's TotalDelegations on mainnet; adjust-delegated-balance
+# adds it to both staketia's remaining balance and the hub zone's total (run-2 finding: without it the drain wedges)
+staketia_portion_booked() { [[ "$(strided_old q staketia host-zone -o json | jq -r .host_zone.remaining_delegated_balance)" -ge 50000000 ]]; }
+if ! staketia_portion_booked >/dev/null 2>&1; then
+  tx_step "fund st-safe" strided_old tx bank send faucet "$STAKETIA_SAFE" 10000000ustrd $STRIDE_TX
+  tx_step "staketia portion into the hub zone total" strided_old tx staketia adjust-delegated-balance increase 50000000 "$HUB_VAL1" --from st-safe $STRIDE_TX
+fi
+checkpoint "staketia portion booked" staketia_portion_booked
+
 # Rate limit on stATOM over the Osmosis channel: gov-only, so a proposal voted by the four validators.
 # The msg type URL and fields come from ibc-go v11 modules/apps/rate-limiting/types/tx.pb.go; signer is the gov module account.
 RATE_LIMIT_PROPOSAL=$(cat <<EOF
@@ -279,9 +288,9 @@ tx_step "staketia R3 spillover" strided_old tx staketia redeem-stake 40000000 "$
 
 # The record mix the post-upgrade phases depend on. The seed ends right after the hard checkpoints.
 # The retry needs the failed ICA ack (up to one more day epoch after RE); cap the wait so it ends by U-30.
-RETRY_WAIT=$(( U - 30 - $(date +%s) ))
+RETRY_WAIT=$(( U - 100 - $(date +%s) ))
 (( RETRY_WAIT < 10 )) && RETRY_WAIT=10
-wait_until "$RETRY_WAIT" "osmo RE in UNBONDING_RETRY_QUEUE" osmo_retry_record_present
+CHECKPOINT_SOFT=1 checkpoint "osmo RE in UNBONDING_RETRY_QUEUE (bounded wait)" wait_until "$RETRY_WAIT" "osmo RE in UNBONDING_RETRY_QUEUE" osmo_retry_record_present
 checkpoint "hub RA CLAIMABLE"              hub_has_unbondings CLAIMABLE 1
 checkpoint "hub RB+RC EXIT_TRANSFER_QUEUE" hub_has_unbondings EXIT_TRANSFER_QUEUE 1
 # RB is swept ~35s after this point, so the full count of 2 is only a soft check

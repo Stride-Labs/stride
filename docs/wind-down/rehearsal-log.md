@@ -3277,3 +3277,11 @@ broadcast output (strided_new):
 2026-10-03T03:25:12Z CHECKPOINT PASS: osmo total at dust
 2026-10-03T03:25:18Z CHECKPOINT PASS: osmo rate frozen
 2026-10-03T03:25:27Z CHECKPOINT PASS: hub rate frozen
+2026-10-03T03:25:36Z ## Phase 5: transfers to Osmosis
+2026-10-03T03:25:57Z transfer-from-ica cosmoshub-test-1 WITHDRAWAL 2004996uatom
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"FEE4102A9D66BEB596D6FC698D58B656B4C7583602B67674FABB550AA9374FA4","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T03:26:36Z tx FEE4102A9D66BEB596D6FC698D58B656B4C7583602B67674FABB550AA9374FA4 code=29 failed to execute message; message index: 0: unable to submit WITHDRAWAL ICA transfer for cosmoshub-test-1: unable to send ICA tx: cannot send packet using client (07-tendermint-0) with status Expired: client state is not active

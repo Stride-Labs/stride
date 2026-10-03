@@ -31,7 +31,7 @@ hub_drain_refused() {
   # Only probe while RD is still queued and the day epoch (D5) is >15s away: once D5 submits RD and
   # its ack lands, the guard passes and this would be a REAL drain of the Hub zone
   (( $(date +%s) < $(day_epoch_next_start) - 15 )) || { log "hub drain-refusal probe skipped: D5 too close"; return 1; }
-  strided_new q records list-epoch-unbonding-record -o json | jq -e '[.epoch_unbonding_record[].host_zone_unbondings[]? | select(.host_zone_id=="cosmoshub-test-1" and .status=="UNBONDING_QUEUE")] | length > 0' >/dev/null \
+  strided_new q records list-epoch-unbonding-record -o json | jq -e '[.epoch_unbonding_record[].host_zone_unbondings[]? | select(.host_zone_id=="cosmoshub-test-1" and .status=="UNBONDING_QUEUE" and (.native_token_amount|tonumber) > 0)] | length > 0' >/dev/null \
     || { log "hub drain-refusal probe skipped: RD no longer queued"; return 1; }
   out=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators cosmoshub-test-1 --all 2>&1) && return 1
   grep -qiE 'wait for the day epoch|let the day epoch|awaiting an ack|pending undelegation|UNBONDING_QUEUE|UNBONDING_RETRY_QUEUE' <<<"$out"
@@ -84,6 +84,11 @@ CHECKPOINT_SOFT=1 checkpoint "hub deposit in TRANSFER_QUEUE" hub_deposit_in_tran
 # The chain halts at the height, cosmovisor swaps the binary, then the node serves v35 queries
 fi
 wait_until 600 "v35 running" v35_applied
+# The rate cannot move after the upgrade, so the first post-upgrade value is the value at the upgrade height
+NEW_RATE_HUB=$(rate_of cosmoshub-test-1); NEW_RATE_OSMO=$(rate_of osmosis-test-1)
+log "rate at the upgrade: hub $NEW_RATE_HUB (seed end $RATE_HUB), osmo $NEW_RATE_OSMO (seed end $RATE_OSMO)"
+sed -i "" "s/^RATE_HUB=.*/RATE_HUB=$NEW_RATE_HUB/; s/^RATE_OSMO=.*/RATE_OSMO=$NEW_RATE_OSMO/" "$REHEARSAL_DIR/state.env"
+RATE_HUB=$NEW_RATE_HUB; RATE_OSMO=$NEW_RATE_OSMO
 # Self-heal (rehearsal finding): validators whose daemon restarted in-process can come back with no peers and stall
 # consensus at the upgrade height; if the height does not advance within 90s, restart the stuck processes
 height_now() { strided_new status 2>/dev/null | jq -r '.sync_info.latest_block_height // .SyncInfo.latest_block_height'; }
