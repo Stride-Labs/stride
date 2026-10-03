@@ -3154,3 +3154,126 @@ service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
 2026-10-03T03:12:01Z CHECKPOINT PASS: osmo rate frozen
 2026-10-03T03:12:08Z CHECKPOINT PASS: no new epoch unbonding records
 2026-10-03T03:12:09Z CHECKPOINT PASS: no reinvest/claim-rewards ICA
+2026-10-03T03:12:42Z ## Phase 4: admin drain
+2026-10-03T03:12:48Z ready: osmo flags clear
+2026-10-03T03:13:00Z STATOM_SUPPLY=840515683
+2026-10-03T03:13:00Z ## Phase 4 (osmosis zone; the hub zone was already drained by --all in phase 1, which exercised the 3-batch split and, via recovery, the lost-ack path)
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"984A7F2BD92871481F37FA3338FFA391C34BEB3526244DCCD970138307844D22","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T03:14:12Z tx 984A7F2BD92871481F37FA3338FFA391C34BEB3526244DCCD970138307844D22 code=0 
+2026-10-03T03:15:20Z ready: osmo delegation channel closed
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"63CA25B03B02D5B27B2692EBF520E044B7596C38913D88FD24A849C93DDF96B2","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T03:16:05Z tx 63CA25B03B02D5B27B2692EBF520E044B7596C38913D88FD24A849C93DDF96B2 code=0 
+2026-10-03T03:16:12Z ready: osmo delegation channel reopened
+2026-10-03T03:16:20Z CHECKPOINT PASS: flags reset by restore
+2026-10-03T03:16:27Z ### osmo host-side delegations of the delegation ICA after restore
+```
+$ osmosisd q staking delegations osmo1vtlszxt9sdgm26vaqhkjxwhslye6c63qg23qehtzlga87kcanzkqh596sr -o json
+{
+  "delegation_responses": [
+    {
+      "delegation": {
+        "delegator_address": "osmo1vtlszxt9sdgm26vaqhkjxwhslye6c63qg23qehtzlga87kcanzkqh596sr",
+        "validator_address": "osmovaloper1nnurja9zt97huqvsfuartetyjx63tc5z3qt4u4",
+        "shares": "61167451190847026636236497"
+      },
+      "balance": {
+        "denom": "uosmo",
+        "amount": "60555982"
+      }
+    },
+    {
+      "delegation": {
+        "delegator_address": "osmo1vtlszxt9sdgm26vaqhkjxwhslye6c63qg23qehtzlga87kcanzkqh596sr",
+        "validator_address": "osmovaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6n3re8",
+        "shares": "60555984000000000000000000"
+      },
+      "balance": {
+        "denom": "uosmo",
+        "amount": "60555984"
+      }
+    },
+    {
+      "delegation": {
+        "delegator_address": "osmo1vtlszxt9sdgm26vaqhkjxwhslye6c63qg23qehtzlga87kcanzkqh596sr",
+        "validator_address": "osmovaloper17kht2x2ped6qytr2kklevtvmxpw7wq9r2mr7dy",
+        "shares": "60555982000000000000000000"
+      },
+      "balance": {
+        "denom": "uosmo",
+        "amount": "60555982"
+      }
+    }
+  ],
+  "pagination": {
+    "total": "3"
+  }
+}
+```
+2026-10-03T03:16:32Z ### osmo validators after restore
+```
+$ strided_new q stakeibc show-validators osmosis-test-1 -o json
+2026/10/03 03:16:33 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:16:33 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:16:34 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+{"validators":[{"name":"val1","address":"osmovaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6n3re8","weight":"10","delegation":"60555984","slash_query_progress_tracker":"0","slash_query_checkpoint":"0","shares_to_tokens_rate":"1.000000000000000000","delegation_changes_in_progress":"0","slash_query_in_progress":false},{"name":"val2","address":"osmovaloper17kht2x2ped6qytr2kklevtvmxpw7wq9r2mr7dy","weight":"10","delegation":"60555982","slash_query_progress_tracker":"0","slash_query_checkpoint":"0","shares_to_tokens_rate":"1.000000000000000000","delegation_changes_in_progress":"0","slash_query_in_progress":false},{"name":"val3","address":"osmovaloper1nnurja9zt97huqvsfuartetyjx63tc5z3qt4u4","weight":"10","delegation":"60555982","slash_query_progress_tracker":"0","slash_query_checkpoint":"0","shares_to_tokens_rate":"0.990003367348911271","delegation_changes_in_progress":"0","slash_query_in_progress":false}]}
+```
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"082BC686704BB3D6C1C790DC592D86700B24911D092352E45EF160B35032CD98","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T03:19:04Z tx 082BC686704BB3D6C1C790DC592D86700B24911D092352E45EF160B35032CD98 code=0 
+2026-10-03T03:19:12Z ready: osmo val1 drained
+2026-10-03T03:19:20Z CHECKPOINT PASS: nothing burned
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"1A2F42B39F66B7F2852DACFBFF2C2EF621A4FE65E42711D69E7740FDD6044190","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T03:21:29Z tx 1A2F42B39F66B7F2852DACFBFF2C2EF621A4FE65E42711D69E7740FDD6044190 code=0 
+2026-10-03T03:21:29Z dead-window send: 2026-10-03T03:21:29Z tx 1A2F42B39F66B7F2852DACFBFF2C2EF621A4FE65E42711D69E7740FDD6044190 code=0  
+2026-10-03T03:21:29Z CHECKPOINT FAIL: dead-window send fails with a timeout reason
+2026-10-03T03:21:37Z ready: no flags after dead window
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"1F6E4F5D6D81A315DAF4FF2EBC34DF59826F13FBCBFCDB9B918C2B01A2DDFEB0","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T03:22:43Z tx 1F6E4F5D6D81A315DAF4FF2EBC34DF59826F13FBCBFCDB9B918C2B01A2DDFEB0 code=0 
+2026-10-03T03:22:52Z ready: offset ack
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"7CC62390A357DEDE80D18859FC8EE4063590B5798D1CBD93AE2B61AD01C554B5","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T03:24:57Z tx 7CC62390A357DEDE80D18859FC8EE4063590B5798D1CBD93AE2B61AD01C554B5 code=0 
+2026-10-03T03:25:04Z ready: osmo drained
+2026-10-03T03:25:12Z CHECKPOINT PASS: osmo total at dust
+2026-10-03T03:25:18Z CHECKPOINT PASS: osmo rate frozen
+2026-10-03T03:25:27Z CHECKPOINT PASS: hub rate frozen
