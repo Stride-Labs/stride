@@ -7,7 +7,8 @@ source "$(dirname "$0")/lib.sh"
 OUT=${1:?usage: export.sh <out.json>}
 POD=stride-validator-3
 EXPORT_HOME=/tmp/exphome
-FIND_PID='pid=$(pgrep -x strided || ps -o pid,comm | awk '"'"'$2=="strided"{print $1}'"'"' | head -1)'
+# The node process only ("strided start"): a bare pgrep can match a concurrent "strided q ..." and leave the node running
+FIND_PID='pid=$(ps -o pid,args | grep "bin/strided start" | grep -v grep | awk "{print \$1}" | head -1)'
 
 # The pod's own DAEMON_HOME wins; the fallback is the default layout of the test network
 HOME_DIR=$($KX exec $POD -c validator -- sh -c 'echo $DAEMON_HOME' 2>/dev/null)

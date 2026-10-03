@@ -5404,3 +5404,8 @@ gas estimate: 418557
 2026-10-03T06:07:11Z sleeping 80s: past the 60s WindDownTransferTimeout (plus margin) with the relayer paused
 2026-10-03T06:18:32Z TIMEOUT waiting for: timed-out sweep refunded to user1
 2026-10-03T06:19:55Z Phase 8 sweep timeout-refund NOT exercised: the stride-osmosis relayer delivered the 1-address sweep during its 30s graceful shutdown (packet received on osmosis, nothing timed out). ICS-20 timeout refund was proven in phase 5 instead (1 ATOM back to the hub withdrawal ICA).
+2026-10-03T06:20:00Z ## Phase 9: halt
+2026-10-03T06:20:05Z CHECKPOINT PASS: zero user redemption records
+2026-10-03T06:20:15Z CHECKPOINT PASS: no flags
+2026-10-03T06:20:18Z CHECKPOINT PASS: staketia clean
+2026-10-03T06:20:36Z CHECKPOINT PASS: channels clear both ways
