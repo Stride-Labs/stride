@@ -663,3 +663,10 @@ $ kubectl --context integration -n integration exec cosmoshub-validator-0 -c val
 {"height":"0","txhash":"75666F8E7605777CE72F5BBCBA517D3BE18C0C45DC288833ABF099D6A3C28CCC","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
 ```
 2026-10-03T00:02:24Z CHECKPOINT FAIL: transfer grant present
+2026-10-03T00:03:24Z ## Seed (v34)
+2026-10-03T00:03:49Z CHECKPOINT PASS: admin-ms address
+2026-10-03T00:03:53Z CHECKPOINT PASS: vault-ms address
+2026-10-03T00:04:00Z CHECKPOINT PASS: hub-ms address
+2026-10-03T00:04:00Z ### fund admin-ms
+```
+$ strided_old tx bank send faucet stride1mymazvsd79f9yhjq4n84dchyf6zvfmd8ed2nxc 1000000000ustrd --from faucet --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json

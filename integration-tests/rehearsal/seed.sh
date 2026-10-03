@@ -65,7 +65,7 @@ staketia_queue_ready() { [[ -n "$(staketia_queue_record_id)" ]]; }
 # SEED_RESUME=1 skips Part A and the already-done top of Part B (zones registered, liquid stakes sent)
 # and continues at the "osmo delegated" wait. HIST_TX is then the first liquid-stake tx found on chain.
 ############################################
-if [[ "${SEED_RESUME:-0}" != 1 ]]; then
+if [[ "${SEED_RESUME:-0}" -eq 0 ]]; then
 ############################################
 # Part A: multisigs, zones, validators
 ############################################
