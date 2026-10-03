@@ -704,3 +704,46 @@ service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
 gas estimate: 205068
 {"height":"0","txhash":"296C45AAC1E0888A471F74886EF88E64017D6F0AB64B86DC0A6B2E974EBF075F","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
 ```
+2026-10-03T00:07:28Z ## Seed (v34)
+2026-10-03T00:07:28Z SEED_RESUME=1: skipping Part A and the first half of Part B
+2026-10-03T00:07:45Z resume: HIST_TX=F62787B4B2297B2C8779363D02C33DFC27E92D64368C660F6173C0387AFA76DA,        8 hub validators,        3 osmosis validators
+2026-10-03T00:07:52Z ready: osmo delegated
+2026-10-03T00:07:52Z SEED_RESUME=2: skipping the holders/transfers half of Part B
+2026-10-03T00:07:58Z staketia grants already present: skipping the multisig delegate and grants (rerun)
+2026-10-03T00:08:04Z CHECKPOINT PASS: transfer grant present
+2026-10-03T00:08:05Z ### rate limit proposal
+```
+$ strided_old tx gov submit-proposal /tmp/ratelimit.json --from val1 --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 00:08:05 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 00:08:05 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 00:08:06 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 204429
+{"height":"0","txhash":"81CFA2FF428BB9E4D5FB66DB93FF3ABC33B220BC14856A8C5F4BF2CCAC3C5261","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T00:08:41Z tx F7E7FB8A391A53DB5F0177A36518CB535BC275E74459070B83B3611005A8A6AC code=11 out of gas in location: WritePerByte; gasWanted: 54894, gasUsed: 56271: out of gas
+2026-10-03T00:08:41Z vote from val4 failed: {"height":"0","txhash":"F7E7FB8A391A53DB5F0177A36518CB535BC275E74459070B83B3611005A8A6AC","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"
+2026-10-03T00:08:42Z tx 81D89BEE6F39B871D53CDE627E88F8345BBCA625EC518E513DCBC0CB2A738395 code=11 out of gas in location: WritePerByte; gasWanted: 54894, gasUsed: 56271: out of gas
+2026-10-03T00:08:42Z vote from val2 failed: {"height":"0","txhash":"81D89BEE6F39B871D53CDE627E88F8345BBCA625EC518E513DCBC0CB2A738395","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"
+2026-10-03T00:08:46Z tx 968865A639084186ABCC5FB3BA8489853355C65CD0C64B209ED1CBD5894A9DBF code=11 out of gas in location: WritePerByte; gasWanted: 54894, gasUsed: 56271: out of gas
+2026-10-03T00:08:46Z vote from val3 failed: {"height":"0","txhash":"968865A639084186ABCC5FB3BA8489853355C65CD0C64B209ED1CBD5894A9DBF","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"
+2026-10-03T00:08:47Z tx EFBBC92E8DFA23531A6FB586E8857AFD0D7D0A542A5CD4505CFE868A5FFF6713 code=11 out of gas in location: WritePerByte; gasWanted: 54741, gasUsed: 56169: out of gas
+2026-10-03T00:08:47Z vote from val1 failed: {"height":"0","txhash":"EFBBC92E8DFA23531A6FB586E8857AFD0D7D0A542A5CD4505CFE868A5FFF6713","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"
+2026-10-03T00:10:52Z TIMEOUT waiting for: rate limit live
