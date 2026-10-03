@@ -5391,3 +5391,16 @@ gas estimate: 418557
 2026-10-03T06:05:13Z gas used: 605223 for 4 addresses (/Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/sweep-batches/batch-001.txt)
 2026-10-03T06:05:20Z CHECKPOINT PASS: builder batch skipped nothing (/Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/sweep-batches/batch-001.txt)
 2026-10-03T06:05:44Z tx 1C266459787B2407CBC7CA213E2BE515D26CF380E45827567F1CECD2AF21DF88 code=11 out of gas in location: ReadFlat; gasWanted: 55842, gasUsed: 56396: out of gas
+2026-10-03T06:06:07Z ## Phase 8: sweep off Stride
+2026-10-03T06:06:07Z ## Phase 8 (resume at the hand-built skip batch; the builder batch already swept 4 holders, 605223 gas, 0 skipped)
+2026-10-03T06:06:27Z tx 65447F7E798CCA43A36DBB15613670F19197F8D8E437D2134936E3A21A8223F1 code=0 
+2026-10-03T06:06:34Z CHECKPOINT PASS: two skipped with reasons
+2026-10-03T06:06:35Z ready: stATOM landed on osmosis for holder-base
+2026-10-03T06:06:38Z ready: ATOM unwound to the hub for holder-base
+2026-10-03T06:06:44Z CHECKPOINT PASS: holder-base empty on stride
+2026-10-03T06:06:54Z ready: user1 funded with ustrd
+2026-10-03T06:07:08Z tx 995E38574049D3B19ECF6476A2CC7386D8F4ED9657DF4CCF59F6629E22EBBB6E code=0 
+2026-10-03T06:07:11Z ready: user1's ustrd left Stride (escrowed)
+2026-10-03T06:07:11Z sleeping 80s: past the 60s WindDownTransferTimeout (plus margin) with the relayer paused
+2026-10-03T06:18:32Z TIMEOUT waiting for: timed-out sweep refunded to user1
+2026-10-03T06:19:55Z Phase 8 sweep timeout-refund NOT exercised: the stride-osmosis relayer delivered the 1-address sweep during its 30s graceful shutdown (packet received on osmosis, nothing timed out). ICS-20 timeout refund was proven in phase 5 instead (1 ATOM back to the hub withdrawal ICA).
