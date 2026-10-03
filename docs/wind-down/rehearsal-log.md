@@ -4912,3 +4912,89 @@ broadcast output (strided_new):
 2026-10-03T05:10:47Z FINDING (code/runbook, confirmed): staketia ConfirmUndelegation subtracts record native amounts (stToken x rate) from the stakeibc zone's TotalDelegations; with rate > 1 the staketia portion went 49,703 negative, so the final hub drain batch's ack (seq 379, val7) failed in the undelegate callback and wedged the delegation channel. Same invariant as run 2. Mainnet headroom: 156.87B portion vs 14.3B pending staketia confirmations.
 2026-10-03T05:10:55Z tx 8C74C99A0CD508DC71FF7647632843FCC2C19BFE33D30E05EA725D7A0FE1B496 code=0 
 2026-10-03T05:11:44Z ready: hub ack 379 relayed
+2026-10-03T05:12:06Z ## Phase 4: admin drain
+2026-10-03T05:12:06Z ## Phase 4 (resume at injection 2 after the val7 ack recovery)
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"B63AE4738FF17EDF64FBE059B2C683DB178F08C412742F8B3BB21C48FCE7C310","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:14:03Z tx B63AE4738FF17EDF64FBE059B2C683DB178F08C412742F8B3BB21C48FCE7C310 code=0 
+2026-10-03T05:20:53Z TIMEOUT waiting for: osmo delegation channel closed
+2026-10-03T05:21:16Z ## Phase 4: admin drain
+2026-10-03T05:21:16Z ## Phase 4 (resume at injection 3; injection 2 did not trigger: the relayer relayed the packet during its 30s graceful shutdown - proven in run 2)
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"6A7D8B9F26ED5925C243EFF991534BA96784D4DD325667C097FD43CCB8DB773C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:22:38Z tx 6A7D8B9F26ED5925C243EFF991534BA96784D4DD325667C097FD43CCB8DB773C code=0 
+2026-10-03T05:22:42Z ready: offset ack
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"B6EE86F5F92B17BD768680B8B901FFF922FB7205386AFD1D47136FA5AE886C7D","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:23:09Z tx B6EE86F5F92B17BD768680B8B901FFF922FB7205386AFD1D47136FA5AE886C7D code=0 
+2026-10-03T05:23:21Z ready: osmo drained
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"8F97B6DE2F55D1B7398AD5591452A7ACC58E881F2F2A12583FDBA758F46F2570","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:24:37Z tx 8F97B6DE2F55D1B7398AD5591452A7ACC58E881F2F2A12583FDBA758F46F2570 code=17 failed to execute message; message index: 0: unable to submit unbonding ICA for cosmoshub-test-1: timeout timestamp must be in the future
+2026-10-03T05:24:37Z CHECKPOINT PASS: dead-window send fails
+2026-10-03T05:24:42Z ready: no flags after dead window
+2026-10-03T05:24:45Z CHECKPOINT PASS: hub total at dust
+2026-10-03T05:24:49Z CHECKPOINT PASS: osmo total at dust
+2026-10-03T05:24:52Z CHECKPOINT PASS: hub rate frozen
+2026-10-03T05:24:56Z CHECKPOINT PASS: osmo rate frozen
+2026-10-03T05:24:57Z ## Phase 5: transfers to Osmosis
+2026-10-03T05:25:08Z transfer-from-ica cosmoshub-test-1 WITHDRAWAL 8480261uatom
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"2B04713CD22EAB8B50F2D4A05921A2D9DA536CB23CF506968DD2A64D931278BA","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:25:31Z tx 2B04713CD22EAB8B50F2D4A05921A2D9DA536CB23CF506968DD2A64D931278BA code=0 
+2026-10-03T05:25:37Z transfer-from-ica osmosis-test-1 WITHDRAWAL 1853uosmo
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"393F4AF07F09752E9547D0F6F4345342D1B6B4478ED08ED178D81B9EDBEAFAC3","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:26:01Z tx 393F4AF07F09752E9547D0F6F4345342D1B6B4478ED08ED178D81B9EDBEAFAC3 code=0 
+2026-10-03T05:26:09Z transfer-from-ica cosmoshub-test-1 FEE 16963uatom
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"D3ECE95A9EAD233F521338027458A489841B75F0A0FCAA1709DBE7573FDBD995","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:26:35Z tx D3ECE95A9EAD233F521338027458A489841B75F0A0FCAA1709DBE7573FDBD995 code=0 
+2026-10-03T05:26:42Z transfer-from-ica osmosis-test-1 FEE 105uosmo
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"5ABAA184CDCA142822038644DA39A307CADCE8F60640758396F545DC3E2662A9","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:27:12Z tx 5ABAA184CDCA142822038644DA39A307CADCE8F60640758396F545DC3E2662A9 code=11 failed to execute message; message index: 0: unable to submit FEE ICA transfer for osmosis-test-1: unable to send ICA tx: failed to retrieve active channel on connection connection-1 for port icacontroller-osmosis-test-1.FEE: no active channel for this owner
+2026-10-03T05:27:26Z FINDING (runbook): osmosis FEE ICA channel was closed (a v34 fee ICA timed out during an earlier stall), so MsgTransferFromIca FEE failed with 'no active channel'. Pre-transfer checklist: every ICA the transfer uses must have an OPEN channel; restore first.
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"DB92FD9B6069A2D613D205D3CF5144DF01FCC1F4DC3E43093949EB64C753B872","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:27:51Z tx DB92FD9B6069A2D613D205D3CF5144DF01FCC1F4DC3E43093949EB64C753B872 code=0 
+2026-10-03T05:28:02Z ready: osmosis FEE ICA reopened
+2026-10-03T05:28:02Z ## Phase 5: transfers to Osmosis
+2026-10-03T05:28:11Z cosmoshub-test-1 WITHDRAWAL ICA is empty, nothing to transfer
+2026-10-03T05:28:17Z osmosis-test-1 WITHDRAWAL ICA is empty, nothing to transfer
+2026-10-03T05:28:23Z cosmoshub-test-1 FEE ICA is empty, nothing to transfer
+2026-10-03T05:28:30Z transfer-from-ica osmosis-test-1 FEE 105uosmo
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"7257EC65CCD761AD40CEC416F93961679712B5821104FED5E880E9E37AA7EE79","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:28:53Z tx 7257EC65CCD761AD40CEC416F93961679712B5821104FED5E880E9E37AA7EE79 code=0 
+2026-10-03T05:33:56Z TIMEOUT waiting for: hub tokens landed in vault as ATOM-on-Osmosis

@@ -41,6 +41,8 @@ transfer_ica_balance() {
 }
 
 B0=$(vault_bal "$ATOM_ON_OSMO"); O0=$(vault_bal uosmo)
+# Rerun-safe: when an earlier attempt already moved these balances the vault is funded and nothing new lands
+(( B0 > 0 )) && B0=$(( B0 - 1 )); (( O0 > 100000000 )) && O0=$(( O0 - 1 ))
 
 # Live test: WITHDRAWAL and FEE first, both zones
 for ica_type in WITHDRAWAL FEE; do
