@@ -5409,3 +5409,89 @@ gas estimate: 418557
 2026-10-03T06:20:15Z CHECKPOINT PASS: no flags
 2026-10-03T06:20:18Z CHECKPOINT PASS: staketia clean
 2026-10-03T06:20:36Z CHECKPOINT PASS: channels clear both ways
+2026-10-03T06:20:52Z ## Phase 9: halt
+2026-10-03T06:20:55Z CHECKPOINT PASS: zero user redemption records
+2026-10-03T06:21:03Z CHECKPOINT PASS: no flags
+2026-10-03T06:21:06Z CHECKPOINT PASS: staketia clean
+2026-10-03T06:21:23Z CHECKPOINT PASS: channels clear both ways
+2026-10-03T06:21:36Z export written: /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/export_pre_halt.json (  206565 bytes, binary /home/validator/.stride/cosmovisor/upgrades/v35/bin/strided)
+2026-10-03T06:21:37Z CHECKPOINT PASS: coverage before halt
+2026-10-03T06:21:44Z halting Stride at height 6887
+2026-10-03T06:39:18Z TIMEOUT waiting for: stride halted at 6887
+2026-10-03T06:39:18Z app.toml halt did not take; scaling the validator statefulset to 0 instead
+2026-10-03T06:39:18Z Stride halted; swapping every holder's balance on Osmosis
+2026-10-03T06:39:24Z tx CBDF3D937F1145B9A50F9ACD15A2F172744447C960F881689C5F889DB9F3583D code=0 
+2026-10-03T06:39:30Z tx E75550541EF9728B015918354F2D788592B7BE3389A774DEBA2DF314707EF7AC code=0 
+2026-10-03T06:39:30Z CHECKPOINT PASS: user1 swaps 692421010
+2026-10-03T06:39:35Z tx F819B6C009721333B6AB94A44A301845443D24EAA9D35CF931C92FC576E8D4CF code=0 
+2026-10-03T06:39:35Z CHECKPOINT PASS: holder-base swaps 50000000
+2026-10-03T06:39:42Z tx 993A73AA8F25B53000A678CF026A582FDF3075AE505AE0159443816D1D1AFEB3 code=0 
+2026-10-03T06:39:42Z CHECKPOINT PASS: holder-vesting swaps 30000000
+2026-10-03T06:39:42Z ### final pool liquidity
+```
+$ pool_liquidity 1
+{"data":{"total_pool_liquidity":[{"denom":"ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F","amount":"774421010"},{"denom":"ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9","amount":"63110223"}]}}
+```
+2026-10-03T06:39:46Z CHECKPOINT PASS: canonical pool surplus >= 0
+2026-10-03T06:39:46Z Phase 9 complete
+
+## Summary
+
+Three runs on the k8s `integration` network (stride-test-1 4 vals on v34.1.0 -> v35, cosmoshub-test-1 8 vals standing in for
+cosmoshub-4 and celestia, osmosis-test-1 3 vals with mainnet transmuter code 996 bytecode). Run 1 ended after phase 1 (consensus
+stall expired every client), run 2 after phase 4 (hub OOM, then my pod deletion wiped the hub), run 3 completed phases 0-9.
+Log totals: 234 checkpoint PASS, 24 FAIL (all diagnosed below; most are harness, soft, or expected).
+
+### What was proven live (run 3 unless noted)
+- Upgrade v34 -> v35 by gov with redemptions open in every status; handler logs clean; every skip path (haqq, comdex, LSM,
+  trade route, oracles) skips; rate limits/whitelists removed; autopilot off; ICA-host allow-list trimmed; wasm upload gov-only;
+  a pre-upgrade MsgLiquidStake tx still decodes; liquid-stake no longer routes; redemption rate frozen from the upgrade to the halt.
+- Day 0: multisig (amino-json, 2-of-3) admin refresh; non-admin refresh rejected; drain refused while a retry record exists
+  (guard text matched); drift script found the injected osmosis slash and then zero over-recorded validators.
+- Last redemption cycle: every hub/osmosis record reached CLAIMABLE and was claimed; stranded deposit never staked; no reinvest,
+  no claim-rewards ICA, no new epoch unbonding records.
+- Admin drain: live single-validator drain; --all split into 3 ICA batches (run 2); injected slash -> that batch failed, others
+  drained -> refresh -> resubmit; ICA timeout -> channel closed -> restore-interchain-account -> flags reset (run 2); lost-ack
+  path: close-delegation-channel -> restore -> calibrate-delegation with the empty response zeroed 8 validators (run 2);
+  offset drain left exactly the offset; nothing burned; totals at dust.
+- Transfers to Osmosis: WITHDRAWAL, FEE, DELEGATION, REDEMPTION from both zones (ICA-wrapped MsgTransfer from the hub, ICA bank
+  send on osmosis); every ICA at dust; a timed-out transfer refunded to the ICA (after a gov client recovery).
+- Staketia: authz TransferAuthorization rejected a memo and a foreign receiver; multisig unbonded balance -> claim address ->
+  redeemers paid by the hour epoch -> every record CLAIMED; MsgTransferStaketiaClaimBalance 1 ATOM then the rest -> delegation
+  ICA -> vault.
+- Pools: three transmuter pools created by the vault multisig (canonical stATOM, stOSMO, hub-route two-hop stATOM); funding
+  joins; native marked corrupted; quote == floor(1e6 x RR); ATOM->stATOM refused ("Corrupted asset"); coverage_check passes after
+  funding and before the halt; pool gate 72 PASS (the 3 FAILs are the intended corrupted mark).
+- Sweep: builder batch swept 4 holders (605,223 gas) and skipped nothing on chain; admin multisig cannot sweep; distribution module
+  and transfer escrow skipped with reasons; holders emptied on Stride and credited on Osmosis/Hub.
+- Halt: halt checklist (no records, no flags, staketia clean, channels clear, coverage) then halt-height; with Stride dead, every
+  holder swapped its whole stATOM balance and the canonical pool kept a non-negative surplus.
+- Ops procedures exercised along the way: gov MsgRecoverClient for expired clients; restore of a closed FEE ICA; the
+  change-validator-weight escape hatch.
+
+### Findings for main
+1. [code+runbook] A full drain wedges the ordered delegation channel when TotalDelegations < sum(validator delegations): the last
+   batch's ack fails in the undelegate callback ("Delegation change ... greater than total delegation amount"), the relayer can
+   never deliver it. Reached twice: a seed error (run 2) and, in run 3, staketia ConfirmUndelegation subtracting rate-scaled native
+   amounts from the zone total so the staketia portion went 49,703 negative. Mainnet today: every zone sum == total except
+   celestia (total - sum = 156.87B utia staketia portion vs 14.3B pending confirmations). Add a pre-drain check per zone; recovery
+   is close-delegation-channel -> restore -> calibrate (proven).
+2. [code] The calibration callback's empty-response correction subtracts from TotalDelegations with no non-negative guard (drove the
+   hub total to -20,169,539 in run 2; staketia ConfirmUndelegation then refused on the negative total). Consider clamping/refusing.
+3. [code+runbook] v35 deletes RebalanceAllHostZones and MsgRebalanceValidators. A queued record whose cascade fully drains a
+   zero-weight validator with stored rate < 1 comes up short by applySharesRoundingSafety's trim once the zone's excess is exhausted
+   ("unable to unbond full amount"), retries forever, and the drain refuses the zone -> deadlock. Escape hatch that still exists:
+   change-validator-weight. Mainnet: no retry records today and queued records are small relative to zones, but add a pre-upgrade
+   capacity check.
+4. [runbook] Before MsgTransferFromIca, every ICA used must have an OPEN channel (osmosis FEE was closed by an old v34 fee-ICA
+   timeout); restore first.
+5. [script] check_transmuter_pool.py has no post-funding mode: after the §8 one-way mark it always fails "no corrupted assets".
+6. [runbook/script] `strided export` (SDK 0.54) writes nothing to stdout unless --output-document is given; any export-based step
+   (coverage_check, build_sweep_batches) must use it.
+7. [harness, integration-tests] osmosisd prints node id/pubkey/autocli query output on stderr (broke peer IDs, validator.json, jq);
+   gaia create-validator needs fees; validators need >700M memory (gaia v25 OOM); validator state is emptyDir (never delete pods);
+   after the upgrade-height halt the in-process-restarted validators came back peerless and stalled consensus on every run.
+
+### Not covered
+Sweep timeout-refund and the dead-window send (relayer shutdown/epoch timing; ICS-20 refund proven in phase 5 instead); the ICA-host
+route check (a hub-controlled ICA to Stride never opened); plus everything listed in the spec's §6.
