@@ -39,11 +39,11 @@ log_cmd() { # label, then the command; returns the command's exit status
   printf '%s\n```\n' "$out" >> "$LOG"; printf '%s\n' "$out"
   return $status
 }
-tx_hash() { jq -r '.txhash'; }
+tx_hash() { grep -E '^\{' | head -1 | jq -r '.txhash // empty'; }  # the JSON line only: osmosisd merges 'gas estimate:' into the stream
 wait_tx() { # chain hash
   local chain=$1 hash=$2 res=""
   for _ in $(seq 1 30); do
-    res=$($chain q tx "$hash" -o json 2>/dev/null) && break; sleep 2
+    res=$($chain q tx "$hash" -o json 2>/dev/null | grep -E '^\{' | head -1) && [[ -n "$res" ]] && break; sleep 2
   done
   [[ -n "${res:-}" ]] || { log "tx $hash not found on $chain" >&2; return 1; }
   local code; code=$(jq -r '.code' <<<"$res")

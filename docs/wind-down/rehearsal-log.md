@@ -1479,3 +1479,51 @@ Global Flags:
 
 command terminated with exit code 1
 ```
+2026-10-03T01:05:07Z ## RUN 1 ENDED after phase 1: the post-upgrade consensus stall expired all four Stride<->host light clients (trusting period 204s). Restarting the network for RUN 2 with the harness fixes (peer redial cap, phase-1 self-heal).
+2026-10-03T01:20:18Z ## Phase 0: pre-flight
+2026-10-03T01:20:23Z CHECKPOINT PASS: stride channel-0 -> cosmoshub
+2026-10-03T01:20:29Z CHECKPOINT PASS: stride channel-0 client is cosmoshub
+2026-10-03T01:20:35Z CHECKPOINT PASS: stride channel-1 -> osmosis
+2026-10-03T01:20:39Z CHECKPOINT PASS: hub channel-1 -> osmosis
+2026-10-03T01:20:44Z CHECKPOINT PASS: hub ica host allows MsgTransfer
+2026-10-03T01:20:47Z CHECKPOINT PASS: osmo ica host allows MsgSend
+2026-10-03T01:20:48Z CHECKPOINT PASS: REST stride reachable
+2026-10-03T01:20:48Z CHECKPOINT PASS: REST cosmoshub reachable
+2026-10-03T01:20:48Z CHECKPOINT PASS: REST osmosis reachable
+2026-10-03T01:20:52Z CHECKPOINT FAIL: vault receives
+2026-10-03T01:21:22Z ## Phase 0: pre-flight
+2026-10-03T01:21:28Z CHECKPOINT PASS: stride channel-0 -> cosmoshub
+2026-10-03T01:21:35Z CHECKPOINT PASS: stride channel-0 client is cosmoshub
+2026-10-03T01:21:40Z CHECKPOINT PASS: stride channel-1 -> osmosis
+2026-10-03T01:21:47Z CHECKPOINT PASS: hub channel-1 -> osmosis
+2026-10-03T01:21:51Z CHECKPOINT PASS: hub ica host allows MsgTransfer
+2026-10-03T01:21:54Z CHECKPOINT PASS: osmo ica host allows MsgSend
+2026-10-03T01:21:55Z CHECKPOINT PASS: REST stride reachable
+2026-10-03T01:21:55Z CHECKPOINT PASS: REST cosmoshub reachable
+2026-10-03T01:21:55Z CHECKPOINT PASS: REST osmosis reachable
+2026-10-03T01:22:00Z CHECKPOINT FAIL: vault receives
+2026-10-03T01:24:18Z tx  code= 
+2026-10-03T01:24:34Z tx 171FC7CFBFED35E6D5C730201858E278A38CB30C98AED4A22A8F06BC1FCEA2A4 code=0 
+2026-10-03T01:24:38Z ## Phase 0: pre-flight
+2026-10-03T01:24:42Z CHECKPOINT PASS: stride channel-0 -> cosmoshub
+2026-10-03T01:24:46Z CHECKPOINT PASS: stride channel-0 client is cosmoshub
+2026-10-03T01:24:50Z CHECKPOINT PASS: stride channel-1 -> osmosis
+2026-10-03T01:24:56Z CHECKPOINT PASS: hub channel-1 -> osmosis
+2026-10-03T01:25:01Z CHECKPOINT PASS: hub ica host allows MsgTransfer
+2026-10-03T01:25:04Z CHECKPOINT PASS: osmo ica host allows MsgSend
+2026-10-03T01:25:04Z CHECKPOINT PASS: REST stride reachable
+2026-10-03T01:25:05Z CHECKPOINT PASS: REST cosmoshub reachable
+2026-10-03T01:25:05Z CHECKPOINT PASS: REST osmosis reachable
+2026-10-03T01:25:13Z tx C1B1036888CC3490C7EEEDA1004472F9B3D4B0DBF3BDAA53C91FD35A06C4553D code=0 
+2026-10-03T01:25:13Z CHECKPOINT PASS: vault receives
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"D6C46DEA89EC90D631D799D4EAB14B6CDEBD4542DCCC8F7B2813EFCD94AF4680","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T01:25:29Z tx D6C46DEA89EC90D631D799D4EAB14B6CDEBD4542DCCC8F7B2813EFCD94AF4680 code=0 
+2026-10-03T01:25:29Z CHECKPOINT PASS: vault spends (multisig)
+2026-10-03T01:25:43Z tx 992AC42C19F40244FAD2213D78E0CB4075E7DCF841C06A0A9C0FA9F693C54C0A code=0 
+2026-10-03T01:25:43Z CHECKPOINT PASS: sweep operator spends
+2026-10-03T01:25:48Z host zones not seeded yet: skipping the withdraw-address check
+2026-10-03T01:26:02Z gaia v25.1.0, osmosis 28.0.0, strided 
