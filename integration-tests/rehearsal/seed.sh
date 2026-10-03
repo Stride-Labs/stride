@@ -205,9 +205,11 @@ put_file stride-validator-0 /tmp/ratelimit.json "$RATE_LIMIT_PROPOSAL"
 tx_step "rate limit proposal" strided_old tx gov submit-proposal /tmp/ratelimit.json --from val1 $STRIDE_TX
 sleep 4
 PROP=$(strided_old q gov proposals -o json | jq -r '.proposals | max_by(.id | tonumber).id')
+# Vote from all four validators in parallel: sequential kubectl execs take ~13s each and the voting period is 30s
 for index in 0 1 2 3; do
-  strided_pod "stride-validator-$index" tx gov vote "$PROP" yes --from "val$((index + 1))" $STRIDE_TX >/dev/null
+  ( out=$(strided_pod "stride-validator-$index" tx gov vote "$PROP" yes --from "val$((index + 1))" $STRIDE_TX 2>/dev/null); h=$(tx_hash <<<"$out"); wait_tx strided_old "$h" >/dev/null 2>&1 || log "vote from val$((index + 1)) failed: $(head -c 200 <<<"$out")" ) &
 done
+wait
 wait_until 120 "rate limit live" rate_limit_live
 
 ############################################
