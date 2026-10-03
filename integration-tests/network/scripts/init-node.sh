@@ -44,6 +44,9 @@ update_config() {
     sed -i -E "s|127.0.0.1|0.0.0.0|g" $config_toml
     sed -i -E "s|timeout_commit = \"5s\"|timeout_commit = \"${BLOCK_TIME}\"|g" $config_toml
     sed -i -E "s|prometheus = false|prometheus = true|g" $config_toml
+    # Cap the persistent-peer redial backoff: after the upgrade-height halt, nodes whose daemon cosmovisor restarted
+    # in-process gave up redialing the main node and consensus never resumed (rehearsal finding)
+    sed -i -E "s|persistent_peers_max_dial_period = \".*\"|persistent_peers_max_dial_period = \"20s\"|g" $config_toml
 
     echo "Updating app.toml..."
     sed -i -E "s|minimum-gas-prices = \".*\"|minimum-gas-prices = \"0${DENOM}\"|g" $app_toml

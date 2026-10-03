@@ -37,7 +37,9 @@ hub_drain_refused() {
   grep -qiE 'wait for the day epoch|let the day epoch|awaiting an ack|pending undelegation|UNBONDING_QUEUE|UNBONDING_RETRY_QUEUE' <<<"$out"
 }
 liquid_stake_unroutable() {
-  strided_new tx stakeibc liquid-stake 1000 uatom --from user1 $STRIDE_TX 2>&1 | grep -qiE "can't route|unknown command|not found"
+  # Capture first: `wrapper | grep -q` under pipefail fails on SIGPIPE when grep exits early
+  local out; out=$(strided_new tx stakeibc liquid-stake 1000 uatom --from user1 $STRIDE_TX 2>&1 || true)
+  grep -qiE "can't route|unknown command|not found" <<<"$out"
 }
 autopilot_stakeibc_off() { strided_new q autopilot params -o json | jq -e '(.params.stakeibc_active // false) == false'; }
 rate_limits_removed() { strided_new q ratelimiting list-rate-limits -o json | jq -e '(.rate_limits // []) | length == 0'; }
@@ -54,6 +56,7 @@ stride_balance() { # address denom -> amount ("0" when absent)
   strided_new q bank balances "$1" -o json | jq -r --arg denom "$2" '([.balances[] | select(.denom == $denom) | .amount][0]) // "0"'
 }
 
+if [[ "${PHASE1_RESUME:-0}" != 1 ]]; then
 ############################################
 # Schedule and apply the upgrade
 ############################################
@@ -79,7 +82,17 @@ log_cmd "deposit in flight" strided_old tx stakeibc liquid-stake 10000000 uatom 
 CHECKPOINT_SOFT=1 checkpoint "hub deposit in TRANSFER_QUEUE" hub_deposit_in_transfer_queue
 
 # The chain halts at the height, cosmovisor swaps the binary, then the node serves v35 queries
+fi
 wait_until 600 "v35 running" v35_applied
+# Self-heal (rehearsal finding): validators whose daemon restarted in-process can come back with no peers and stall
+# consensus at the upgrade height; if the height does not advance within 90s, restart the stuck processes
+height_now() { strided_new status 2>/dev/null | jq -r '.sync_info.latest_block_height // .SyncInfo.latest_block_height'; }
+h0=$(height_now); sleep 90
+if [[ "$(height_now)" == "$h0" ]]; then
+  log "FINDING (harness): chain stalled at $h0 after the upgrade; restarting stride-validator-1..3 processes"
+  for i in 1 2 3; do $KX exec stride-validator-$i -c validator -- sh -c 'kill $(ps -o pid,args | grep "bin/strided start" | grep -v grep | awk "{print \$1}")' || true; done
+  wait_until 300 "chain advancing after restart" bash -c "[[ \$(strided_new status 2>/dev/null | jq -r '.sync_info.latest_block_height // .SyncInfo.latest_block_height') -gt $h0 ]]"
+fi
 log_cmd "handler log lines" handler_log_lines
 checkpoint "no handler error" handler_log_errors
 
