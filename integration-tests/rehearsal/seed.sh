@@ -196,7 +196,7 @@ checkpoint "transfer grant present" hub_grant_present
 
 # The staketia multisig portion lives in the stakeibc celestia zone's TotalDelegations on mainnet; adjust-delegated-balance
 # adds it to both staketia's remaining balance and the hub zone's total (run-2 finding: without it the drain wedges)
-staketia_portion_booked() { [[ "$(strided_old q staketia host-zone -o json | jq -r .host_zone.remaining_delegated_balance)" -ge 50000000 ]]; }
+staketia_portion_booked() { [[ "$(strided_old q staketia host-zone 2>/dev/null | grep remaining_delegated_balance | grep -oE '[0-9]+')" -ge 50000000 ]]; }  # v34 query has no -o
 if ! staketia_portion_booked >/dev/null 2>&1; then
   tx_step "fund st-safe" strided_old tx bank send faucet "$STAKETIA_SAFE" 10000000ustrd $STRIDE_TX
   tx_step "staketia portion into the hub zone total" strided_old tx staketia adjust-delegated-balance increase 50000000 "$HUB_VAL1" --from st-safe $STRIDE_TX
