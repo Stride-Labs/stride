@@ -2665,3 +2665,287 @@ command terminated with exit code 137
 2026-10-03T02:08:50Z TIMEOUT waiting for: hub-controlled ICA open on Stride
 2026-10-03T02:08:50Z CHECKPOINT FAIL: ICA host route (channel did not open; not testable)
 2026-10-03T02:08:50Z phase 1 done
+2026-10-03T02:09:00Z ## Phase 2: day 0
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"D5817F74FA671AD002BD75966950AF151943A94C46FF65A7E59CF4078B669AAB","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:09:48Z tx D5817F74FA671AD002BD75966950AF151943A94C46FF65A7E59CF4078B669AAB code=1568 failed to execute message; message index: 0: epoch 11 record for osmosis-test-1 is UNBONDING_RETRY_QUEUE with 121439456; wait for the day epoch to submit it before draining: host zone has an unbonding record queued or retrying
+2026-10-03T02:09:48Z CHECKPOINT PASS: drain refused while retry record (osmo)
+2026-10-03T02:09:55Z CHECKPOINT PASS: non-admin refresh rejected
+2026-10-03T02:10:00Z osmo val3 recorded delegation before refresh: 101370870
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"2F784D69A8F0D36A2ADE3ADA2C125B906C6F071C692A6EC6A666E1EF8371270D","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:10:33Z tx 2F784D69A8F0D36A2ADE3ADA2C125B906C6F071C692A6EC6A666E1EF8371270D code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"361D5725327E01EBDEF4B1ACDE8FE41C12BA8F4FA46AA8FBC511A26A1E99B280","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:11:05Z tx 361D5725327E01EBDEF4B1ACDE8FE41C12BA8F4FA46AA8FBC511A26A1E99B280 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"1A03328F2E19F2BE43D3E56DA2EF736B9F1D9AFB5A6046C48119983A7C15025E","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:11:33Z tx 1A03328F2E19F2BE43D3E56DA2EF736B9F1D9AFB5A6046C48119983A7C15025E code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"FD906889AF00141F815B3FF17B7E057A7FC8E8668C74F491A15E9EDA0CC41935","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:12:04Z tx FD906889AF00141F815B3FF17B7E057A7FC8E8668C74F491A15E9EDA0CC41935 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"0DF62EB1AAE35D8FEA9C9A14000893CC2885BC6C6452DF77F9C34A059D0714E9","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:12:38Z tx 0DF62EB1AAE35D8FEA9C9A14000893CC2885BC6C6452DF77F9C34A059D0714E9 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"04861ECBDB63D99DAA41BEBAF5DC75BB8980F251A861F04C91B020AFA4F56C55","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:13:11Z tx 04861ECBDB63D99DAA41BEBAF5DC75BB8980F251A861F04C91B020AFA4F56C55 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"7F6570A2FE01F1277627C390F60777A1B11F129A6854F16C6DC022331D398522","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:13:44Z tx 7F6570A2FE01F1277627C390F60777A1B11F129A6854F16C6DC022331D398522 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"0BD13888D6BA800064CE929CF92B9BF4D9C159E2623752325C878EBF5846D66E","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:14:15Z tx 0BD13888D6BA800064CE929CF92B9BF4D9C159E2623752325C878EBF5846D66E code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"0DE70360578F7FDADFB69CF0E6D7B3F1E5106E814B29308606D280661CAD38A5","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:14:47Z tx 0DE70360578F7FDADFB69CF0E6D7B3F1E5106E814B29308606D280661CAD38A5 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"50665679611C6D4534CD282A4FBDD5F856BA85B0BE80EAB5309C6F18E2B7BBB6","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:15:24Z tx 50665679611C6D4534CD282A4FBDD5F856BA85B0BE80EAB5309C6F18E2B7BBB6 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"A08FE97C73D40C3BCCDB30C1CC360A68DAC0842A629EFCF8A335F1A035C3417C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:15:59Z tx A08FE97C73D40C3BCCDB30C1CC360A68DAC0842A629EFCF8A335F1A035C3417C code=0 
+2026-10-03T02:16:05Z ready: osmo val3 recorded delegation reduced by the slash
+2026-10-03T02:16:12Z ready: no slash query in flight
+2026-10-03T02:16:12Z ### osmo validators after refresh
+```
+$ strided_new q stakeibc show-validators osmosis-test-1 -o json
+2026/10/03 02:16:12 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 02:16:12 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 02:16:13 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+{"validators":[{"name":"val1","address":"osmovaloper1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhr6n3re8","weight":"10","delegation":"101374956","slash_query_progress_tracker":"0","slash_query_checkpoint":"0","shares_to_tokens_rate":"1.000000000000000000","delegation_changes_in_progress":"0","slash_query_in_progress":false},{"name":"val2","address":"osmovaloper17kht2x2ped6qytr2kklevtvmxpw7wq9r2mr7dy","weight":"10","delegation":"101374946","slash_query_progress_tracker":"0","slash_query_checkpoint":"0","shares_to_tokens_rate":"1.000000000000000000","delegation_changes_in_progress":"0","slash_query_in_progress":false},{"name":"val3","address":"osmovaloper1nnurja9zt97huqvsfuartetyjx63tc5z3qt4u4","weight":"0","delegation":"100357502","slash_query_progress_tracker":"0","slash_query_checkpoint":"0","shares_to_tokens_rate":"0.990003367348911271","delegation_changes_in_progress":"0","slash_query_in_progress":false}]}
+```
+2026-10-03T02:16:22Z CHECKPOINT PASS: osmo rate still frozen
+2026-10-03T02:16:22Z ### drift
+```
+$ python3 /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/scripts/wind-down/measure_delegation_drift.py --chain-id cosmoshub-test-1 --chain-id osmosis-test-1
+=== cosmoshub-test-1 ===
+  using REST endpoint: https://cosmoshub-api.internal.stridenet.co
+  host delegations: 0
+=== osmosis-test-1 ===
+  using REST endpoint: https://osmosis-api.internal.stridenet.co
+  host delegations: 3
+
+Done. Wrote /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/scripts/wind-down/drift/drift.json and /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/scripts/wind-down/drift/report.md
+```
+2026-10-03T02:16:24Z CHECKPOINT FAIL: zero over-recorded
+2026-10-03T02:23:54Z ## Run 2 recovery: hub delegation channel wedged (acks 309-311 of the accidental phase-1 drain fail in the undelegate callback: TotalDelegations < sum(validators) by 20169539, a genesis setup error - staketia's 50M remaining balance was never added to the hub zone's TotalDelegations, and the seed's R1 confirm-undelegation then subtracted 20.17M). Recovery = the spec's lost-ack path: close-delegation-channel -> restore -> calibrate-delegation.
+2026-10-03T02:23:54Z FINDING (script): phase1 hub_drain_refused probe counted zero-amount UNBONDING_QUEUE entries as 'RD still queued', so after D6 had submitted RD2 it sent a REAL --all drain (the guard rightly accepted it: nothing queued).
+2026-10-03T02:23:54Z FINDING (runbook): a full drain needs TotalDelegations >= sum(validator delegations) on the zone; otherwise the last batch's ack fails in the callback and the ordered delegation channel wedges. Mainnet check 2026-10-03: every in-scope zone has sum == total except celestia (total > sum by the 156.87B utia staketia portion, safe; pending staketia confirmations 14.3B fit inside it). Add the check to the pre-drain checklist.
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"FA797396B7D16D2CA5131B36E4430538D5C70C8E7E4A72FB47A2FAB409879891","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:24:51Z tx FA797396B7D16D2CA5131B36E4430538D5C70C8E7E4A72FB47A2FAB409879891 code=0 
+2026-10-03T02:24:59Z ready: hub delegation channel-2 closed
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"FF10BC47AB47CFBA60A483ADAF852D2A130CE35B62CE6A2741E4350A57F6C874","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:26:03Z tx FF10BC47AB47CFBA60A483ADAF852D2A130CE35B62CE6A2741E4350A57F6C874 code=0 
+2026-10-03T02:26:11Z ready: hub delegation ICA reopened
+2026-10-03T02:26:24Z CHECKPOINT PASS: restore reset every in-progress flag
+2026-10-03T02:26:24Z ### host-side delegations of the hub delegation ICA after restore (lost-ack check)
+```
+$ bash -c gaiad q staking delegations $(strided_new q stakeibc show-host-zone cosmoshub-test-1 -o json 2>/dev/null | jq -r .host_zone.delegation_ica_address) -o json 2>/dev/null | jq -c '[.delegation_responses[]?]|length'
+0
+```
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"B363747CF01D728D99D7EAB48D6EC70FE1E7B85B22CCA4E811E48D4119AEB614","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:27:59Z tx B363747CF01D728D99D7EAB48D6EC70FE1E7B85B22CCA4E811E48D4119AEB614 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"85083D68C492D9E91BEB24EAB3DC5321070DB027EBD21BB37E84AB0ABCF150CC","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:28:56Z tx 85083D68C492D9E91BEB24EAB3DC5321070DB027EBD21BB37E84AB0ABCF150CC code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"E6E799E86B94ED48E3C2EF81BDBC3E2AEC128345E016B8E32EC32C560CE5B1C7","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:29:56Z tx E6E799E86B94ED48E3C2EF81BDBC3E2AEC128345E016B8E32EC32C560CE5B1C7 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"39485ADAF406839C734C28B30616F4E7A6BC5AB2FBB2D7E9D5207F4E7C3693D7","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:31:11Z tx 39485ADAF406839C734C28B30616F4E7A6BC5AB2FBB2D7E9D5207F4E7C3693D7 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"68317EAFADC0A88B70485A8EB8E2B7D762CB90C957C019D2591A0352E79FB8E7","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:32:17Z tx 68317EAFADC0A88B70485A8EB8E2B7D762CB90C957C019D2591A0352E79FB8E7 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"28D6DA95964276F1EF65EEA05B4A948774BA08B3D97136B471451D3C73FE4CF5","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:33:15Z tx 28D6DA95964276F1EF65EEA05B4A948774BA08B3D97136B471451D3C73FE4CF5 code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"7AF846F8D15A8A42B677F9E23A63674B471730342C6025F02D78B0DF728AB8FD","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:34:15Z tx 7AF846F8D15A8A42B677F9E23A63674B471730342C6025F02D78B0DF728AB8FD code=0 
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"5F1BA30167B50A1C4570ACEDF7BCF883A4C96D7E023E107189B50CACE6CD2F0A","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:35:08Z tx 5F1BA30167B50A1C4570ACEDF7BCF883A4C96D7E023E107189B50CACE6CD2F0A code=0 
+2026-10-03T02:36:08Z ### hub validators after calibration
+```
+$ bash -c strided_new q stakeibc show-validators cosmoshub-test-1 -o json 2>/dev/null | jq -c '[.validators[] | {d: .delegation, p: .delegation_changes_in_progress}]'; strided_new q stakeibc show-host-zone cosmoshub-test-1 -o json 2>/dev/null | jq -c '.host_zone | {total_delegations}'
+[{"d":"0","p":"0"},{"d":"0","p":"0"},{"d":"0","p":"0"},{"d":"0","p":"0"},{"d":"0","p":"0"},{"d":"0","p":"0"},{"d":"0","p":"0"},{"d":"0","p":"0"}]
+{"total_delegations":"-20169539"}
+```
+2026-10-03T02:36:48Z ## Phase 2: day 0
+2026-10-03T02:37:03Z ## Phase 2 (resume: drift + staketia day 0)
+2026-10-03T02:37:03Z ### drift
+```
+$ python3 /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/scripts/wind-down/measure_delegation_drift.py --chain-id cosmoshub-test-1 --chain-id osmosis-test-1
+=== cosmoshub-test-1 ===
+  using REST endpoint: https://cosmoshub-api.internal.stridenet.co
+  host delegations: 0
+=== osmosis-test-1 ===
+  using REST endpoint: https://osmosis-api.internal.stridenet.co
+  host delegations: 3
+
+Done. Wrote /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/scripts/wind-down/drift/drift.json and /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/scripts/wind-down/drift/report.md
+```
+2026-10-03T02:37:05Z CHECKPOINT PASS: zero over-recorded
+2026-10-03T02:37:35Z tx 352C62351001228032DC00DCD15B9D2D783699B34DB24563C1B61E2C872CF3DA code=0 
+2026-10-03T02:37:42Z ### confirm-undelegation 16
+```
+$ strided_new tx staketia confirm-undelegation 16 352C62351001228032DC00DCD15B9D2D783699B34DB24563C1B61E2C872CF3DA --from st-operator --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 02:37:43 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+Error: rpc error: code = Unknown desc = rpc error: code = Unknown desc = failed to execute message; message index: 0: host zone's delegated balance would be negative after undelegation: negative value not allowed [Stride-Labs/stride/v35/x/staketia/keeper/unbonding.go:154] with gas used: '49012': unknown request
+Usage:
+  strided tx staketia confirm-undelegation [record-id] [tx-hash] [flags]
+
+Flags:
+  -a, --account-number uint         The account number of the signing account (offline mode only)
+      --aux                         Generate aux signer data instead of sending a tx
+  -b, --broadcast-mode string       Transaction broadcasting mode (sync|async) (default "sync")
+      --chain-id string             The network chain ID
+      --dry-run                     ignore the --gas flag and perform a simulation of a transaction, but don't broadcast it (when enabled, the local Keybase is not accessible)
+      --fee-granter string          Fee granter grants fees for the transaction
+      --fee-payer string            Fee payer pays fees for the transaction instead of deducting from the signer
+      --fees string                 Fees to pay along with transaction; eg: 10uatom
+      --from string                 Name or address of private key with which to sign
+      --gas string                  gas limit to set per-transaction; set to "auto" to calculate sufficient gas automatically. Note: "auto" option doesn't always report accurate results. Set a valid coin value to adjust the result. Can be used instead of "fees". (default 200000)
+      --gas-adjustment float        adjustment factor to be multiplied against the estimate returned by the tx simulation; if the gas limit is set manually this flag is ignored (default 1)
+      --gas-prices string           Gas prices in decimal format to determine the transaction fee (e.g. 0.1uatom)
+      --generate-only               Build an unsigned transaction and write it to STDOUT (when enabled, the local Keybase only accessed when providing a key name)
+  -h, --help                        help for confirm-undelegation
+      --keyring-backend string      Select keyring's backend (os|file|kwallet|pass|test|memory) (default "test")
+      --keyring-dir string          The client Keyring directory; if omitted, the default 'home' directory will be used
+      --ledger                      Use a connected Ledger device
+      --node string                 <host>:<port> to CometBFT rpc interface for this chain (default "tcp://localhost:26657")
+      --note string                 Note to add a description to the transaction (previously --memo)
+      --offline                     Offline mode (does not allow any online functionality)
+  -o, --output string               Output format (text|json) (default "json")
+  -s, --sequence uint               The sequence number of the signing account (offline mode only)
+      --sign-mode string            Choose sign mode (direct|amino-json|direct-aux|textual), this is an advanced feature
+      --timeout-duration duration   TimeoutDuration is the duration the transaction will be considered valid in the mempool. The transaction's unordered nonce will be set to the time of transaction creation + the duration value passed. If the transaction is still in the mempool, and the block time has passed the time of submission + TimeoutDuration, the transaction will be rejected.
+      --timeout-height uint         DEPRECATED: Please use --timeout-duration instead. Set a block timeout height to prevent the tx from being committed past a certain height
+      --tip string                  Tip is the amount that is going to be transferred to the fee payer on the target chain. This flag is only valid when used with --aux, and is ignored if the target chain didn't enable the TipDecorator
+      --unordered                   Enable unordered transaction delivery; must be used in conjunction with --timeout-duration
+  -y, --yes                         Skip tx broadcasting prompt confirmation
+
+Global Flags:
+      --home string                directory for config and data (default "/home/validator/.stride")
+      --log_format string          The logging format (json|plain) (default "plain")
+      --log_level string           The logging level (trace|debug|info|warn|error|fatal|panic|disabled or '*:<level>,<key>:<level>') (default "info")
+      --log_no_color               Disable colored logs
+      --trace                      print out full stack trace on errors
+      --verbose_log_level string   The logging level (trace|debug|info|warn|error|fatal|panic|disabled|none) to use when performing operations which require extra verbosity (such as upgrades). When enabled, verbose mode disables any custom log filters. Set this to none to make verbose mode equivalent to normal logging. (default "debug")
+
+command terminated with exit code 1
+```
+2026-10-03T02:38:23Z Harness repair: staketia adjust-delegated-balance +80000000 (st-safe) so the hub zone's TotalDelegations (-20169539 after calibration) has headroom for the pending staketia confirmations. Compensates the genesis error; staketia's RemainingDelegatedBalance ends overstated by the same amount (irrelevant to the wind-down).
+2026-10-03T02:38:41Z tx A922A67E29714A73317A5019E70AE79D2DE46F07D2BDA7FA709ED2D81874A430 code=0 
+2026-10-03T02:39:02Z tx 554CB1D8BC08ACA3F7559051E7D37A0DA92B2BCB62BCA97226F3B4CDE9A99E16 code=0 
+2026-10-03T02:39:36Z tx 30A69EC12DDBE4BA7E45861DEC6A6435407ADF773C6DF69321F6259962191712 code=0 
+2026-10-03T02:39:36Z confirm-undelegation 16 ok
