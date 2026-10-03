@@ -2949,3 +2949,208 @@ command terminated with exit code 1
 2026-10-03T02:39:02Z tx 554CB1D8BC08ACA3F7559051E7D37A0DA92B2BCB62BCA97226F3B4CDE9A99E16 code=0 
 2026-10-03T02:39:36Z tx 30A69EC12DDBE4BA7E45861DEC6A6435407ADF773C6DF69321F6259962191712 code=0 
 2026-10-03T02:39:36Z confirm-undelegation 16 ok
+2026-10-03T02:39:52Z ## Phase 3: last redemption cycle
+2026-10-03T02:54:52Z TIMEOUT waiting for: every hub/osmo unbonding CLAIMABLE
+2026-10-03T02:56:26Z FINDING (code/runbook): v35 deletes RebalanceAllHostZones and MsgRebalanceValidators. A queued record whose amount needs a FULL drain of a zero-weight validator with stored rate < 1 comes up short by applySharesRoundingSafety's trim when the zone's excess is exhausted ('unable to unbond full amount') and retries forever; the drain refuses the zone while it is queued -> the zone deadlocks. Rehearsal: osmosis RE (121.44M) vs capacity 121.42M. Mainnet 2026-10-03: no RETRY records; queued records are small relative to their zones, but add a pre-upgrade capacity check per zone. Escape hatch that still exists in v35: change-validator-weight (used below).
+broadcast output (strided_new):
+```
+{"height":"0","txhash":"F048C62D83B8FB08957A8F06D20F204B9A000C85FAE111567004B9CDA491BD8C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T02:57:21Z tx F048C62D83B8FB08957A8F06D20F204B9A000C85FAE111567004B9CDA491BD8C code=0 
+2026-10-03T02:57:25Z ## Phase 3: last redemption cycle
+2026-10-03T03:05:34Z ready: every hub/osmo unbonding CLAIMABLE
+2026-10-03T03:05:40Z ### claim cosmoshub-test-1 11
+```
+$ strided_new tx stakeibc claim-undelegated-tokens cosmoshub-test-1 11 cosmos15lf3jnxe8k2r72hang5cm8ymkx6che7tjdeg8l --from user1 --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:05:41 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 156214
+{"height":"0","txhash":"A2E30475A64A54F9654303BD9EBD0AABEE477CE5EE51699E7D82DABFDA29E44C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T03:05:52Z ### claim cosmoshub-test-1 14
+```
+$ strided_new tx stakeibc claim-undelegated-tokens cosmoshub-test-1 14 cosmos15lf3jnxe8k2r72hang5cm8ymkx6che7tjdeg8l --from user1 --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:05:53 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 155764
+{"height":"0","txhash":"B7DCAF49B0C980C11B711850949A8A15E097FACBC093ED11F84107E10C5FFCBA","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T03:06:04Z ### claim cosmoshub-test-1 15
+```
+$ strided_new tx stakeibc claim-undelegated-tokens cosmoshub-test-1 15 cosmos15lf3jnxe8k2r72hang5cm8ymkx6che7tjdeg8l --from user1 --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 03:06:04 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:06:04 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:06:05 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 155764
+{"height":"0","txhash":"9F15826AB7284E58743DBA3278F669136FFFA295BB63524B8D19569B71E93DE6","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T03:06:18Z ### claim cosmoshub-test-1 16
+```
+$ strided_new tx stakeibc claim-undelegated-tokens cosmoshub-test-1 16 cosmos15lf3jnxe8k2r72hang5cm8ymkx6che7tjdeg8l --from user1 --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:06:18 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 155755
+{"height":"0","txhash":"470DCD3B7393CF83E88B52F989F34A057A51573825278E4254E524954F2A733A","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T03:06:31Z ### claim cosmoshub-test-1 17
+```
+$ strided_new tx stakeibc claim-undelegated-tokens cosmoshub-test-1 17 cosmos15lf3jnxe8k2r72hang5cm8ymkx6che7tjdeg8l --from user1 --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 03:06:31 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:06:31 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:06:32 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 155764
+{"height":"0","txhash":"521DACC70B688590BD2C0A5644920ACF4B9BC9CF7ECB51F440053093CA180EA2","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T03:06:44Z ### claim osmosis-test-1 11
+```
+$ strided_new tx stakeibc claim-undelegated-tokens osmosis-test-1 11 osmo15lf3jnxe8k2r72hang5cm8ymkx6che7t6k2c3d --from user1 --keyring-backend test --chain-id stride-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 1ustrd -y -o json
+2026/10/03 03:06:44 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:06:44 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:06:45 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+gas estimate: 150799
+{"height":"0","txhash":"7633EEC9EE51EA153E5AFEC7B14440E47A8ADF5392F13FC8CD79E292098074DD","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T03:08:09Z ready: zero user redemption records
+2026-10-03T03:08:09Z ### deposit records
+```
+$ strided_new q records list-deposit-record -o json
+2026/10/03 03:08:10 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pairs
+2026/10/03 03:08:10 proto: duplicate proto type registered: cosmos.store.internal.kv.v1beta1.Pair
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Snapshot
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.snapshots.v1.Metadata
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotItem
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotStoreItem
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotIAVLItem
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionMeta
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.snapshots.v1.SnapshotExtensionPayload
+error with code store:2 is already registered: invalid proof. Overwriting with current error...
+error with code store:3 is already registered: tx parse error. Overwriting with current error...
+error with code store:4 is already registered: unknown request. Overwriting with current error...
+error with code store:5 is already registered: internal logic error. Overwriting with current error...
+error with code store:6 is already registered: conflict. Overwriting with current error...
+error with code store:7 is already registered: invalid request. Overwriting with current error...
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitInfo
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreInfo
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.v1beta1.CommitID
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.v1beta1.StoreKVPair
+2026/10/03 03:08:11 proto: duplicate proto type registered: cosmos.store.v1beta1.BlockMetadata
+service cosmos.poa.v1.Msg does not have cosmos.msg.v1.service proto annotation
+{"deposit_record":[{"id":"131","amount":"10002819","denom":"uatom","host_zone_id":"cosmoshub-test-1","status":"DELEGATION_QUEUE","deposit_epoch_number":"68","source":"STRIDE","delegation_txs_in_progress":"0"},{"id":"132","amount":"8","denom":"uosmo","host_zone_id":"osmosis-test-1","status":"DELEGATION_QUEUE","deposit_epoch_number":"68","source":"STRIDE","delegation_txs_in_progress":"0"},{"id":"137","amount":"166540","denom":"uatom","host_zone_id":"cosmoshub-test-1","status":"DELEGATION_QUEUE","deposit_epoch_number":"69","source":"WITHDRAWAL_ICA","delegation_txs_in_progress":"0"}],"pagination":{"next_key":null,"total":"0"}}
+```
+2026-10-03T03:08:22Z CHECKPOINT PASS: stranded deposit never staked
+2026-10-03T03:11:54Z CHECKPOINT PASS: hub rate frozen
+2026-10-03T03:12:01Z CHECKPOINT PASS: osmo rate frozen
+2026-10-03T03:12:08Z CHECKPOINT PASS: no new epoch unbonding records
+2026-10-03T03:12:09Z CHECKPOINT PASS: no reinvest/claim-rewards ICA
