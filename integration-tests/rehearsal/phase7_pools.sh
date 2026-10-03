@@ -222,5 +222,5 @@ source = source.replace('zone.chain_id == "osmosis-1"', 'zone.chain_id == "osmos
 path.write_text(source)
 PY
 grep -q 'osmosis-test-1' "$GATE" || { log "pool gate was not patched for osmosis-test-1"; exit 1; }
-grep -q REHEARSAL_FILL_IN "$GATE" && { log "pool gate still has REHEARSAL_FILL_IN"; exit 1; }
+grep -qE '= "REHEARSAL_FILL_IN"' "$GATE" && { log "pool gate still has REHEARSAL_FILL_IN"; exit 1; }
 checkpoint "pool gate" python3 "$GATE"

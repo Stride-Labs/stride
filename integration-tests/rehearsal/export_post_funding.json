@@ -3,7 +3,7 @@
   "app_version": "",
   "genesis_time": "2026-10-03T03:40:08.302365604Z",
   "chain_id": "stride-test-1",
-  "initial_height": 5842,
+  "initial_height": 5972,
   "app_hash": null,
   "app_state": {
     "08-wasm": {
@@ -287,7 +287,7 @@
             "key": "A50rjq8Dc28AB6sRVvv9KuBEkrlil+f17GNelcoF6i6m"
           },
           "account_number": "8",
-          "sequence": "242"
+          "sequence": "243"
         },
         {
           "@type": "/cosmos.auth.v1beta1.BaseAccount",
@@ -405,7 +405,7 @@
             "key": "AtJWaZyA0h7QFYEAzdMhKB79gxVhPYIUdZDqFNYwCI6j"
           },
           "account_number": "6",
-          "sequence": "325"
+          "sequence": "326"
         },
         {
           "@type": "/cosmos.auth.v1beta1.ModuleAccount",
@@ -830,7 +830,7 @@
           "coins": [
             {
               "denom": "ustrd",
-              "amount": "19934884973"
+              "amount": "20349303541"
             }
           ]
         },
@@ -839,7 +839,7 @@
           "coins": [
             {
               "denom": "ustrd",
-              "amount": "9999931083023"
+              "amount": "9999930943039"
             }
           ]
         },
@@ -900,7 +900,7 @@
             },
             {
               "denom": "ustrd",
-              "amount": "111502631681"
+              "amount": "113849349726"
             }
           ]
         },
@@ -982,7 +982,7 @@
           "coins": [
             {
               "denom": "ustrd",
-              "amount": "9999841105048"
+              "amount": "9999840953149"
             }
           ]
         },
@@ -1098,7 +1098,7 @@
           "coins": [
             {
               "denom": "ustrd",
-              "amount": "199569490741"
+              "amount": "203769690486"
             }
           ]
         },
@@ -1160,7 +1160,7 @@
           "coins": [
             {
               "denom": "ustrd",
-              "amount": "55575712187"
+              "amount": "56745375402"
             }
           ]
         },
@@ -1169,7 +1169,7 @@
           "coins": [
             {
               "denom": "ustrd",
-              "amount": "88275686959"
+              "amount": "90133563714"
             }
           ]
         }
@@ -1193,7 +1193,7 @@
         },
         {
           "denom": "ustrd",
-          "amount": "250474600455201"
+          "amount": "250484589039646"
         }
       ],
       "denom_metadata": [
@@ -1254,7 +1254,7 @@
           },
           {
             "denom": "ustrd",
-            "amount": "2361468844.140000000525664856"
+            "amount": "2408403205.040000000525664856"
           }
         ]
       },
@@ -1266,7 +1266,7 @@
           "outstanding_rewards": [
             {
               "denom": "ustrd",
-              "amount": "27055312340.805000000000000000"
+              "amount": "27630258261.830000000000000000"
             }
           ]
         },
@@ -1275,7 +1275,7 @@
           "outstanding_rewards": [
             {
               "denom": "ustrd",
-              "amount": "27361950165.351666666491445048"
+              "amount": "27936896086.376666666491445048"
             }
           ]
         },
@@ -1284,7 +1284,7 @@
           "outstanding_rewards": [
             {
               "denom": "ustrd",
-              "amount": "27493366375.871666666491445048"
+              "amount": "28068312296.896666666491445048"
             }
           ]
         },
@@ -1293,7 +1293,7 @@
           "outstanding_rewards": [
             {
               "denom": "ustrd",
-              "amount": "27230533954.831666666491445048"
+              "amount": "27805479875.856666666491445048"
             }
           ]
         }
@@ -1305,7 +1305,7 @@
             "commission": [
               {
                 "denom": "ustrd",
-                "amount": "2705531234.080500000000000000"
+                "amount": "2763025826.183000000000000000"
               }
             ]
           }
@@ -1316,7 +1316,7 @@
             "commission": [
               {
                 "denom": "ustrd",
-                "amount": "2736195016.535166666649144504"
+                "amount": "2793689608.637666666649144504"
               }
             ]
           }
@@ -1327,7 +1327,7 @@
             "commission": [
               {
                 "denom": "ustrd",
-                "amount": "2749336637.587166666649144504"
+                "amount": "2806831229.689666666649144504"
               }
             ]
           }
@@ -1338,7 +1338,7 @@
             "commission": [
               {
                 "denom": "ustrd",
-                "amount": "2723053395.483166666649144504"
+                "amount": "2780547987.585666666649144504"
               }
             ]
           }
@@ -1385,7 +1385,7 @@
             "rewards": [
               {
                 "denom": "ustrd",
-                "amount": "24349781106.724500000000000000"
+                "amount": "24867232435.647000000000000000"
               }
             ],
             "period": "2"
@@ -1397,7 +1397,7 @@
             "rewards": [
               {
                 "denom": "ustrd",
-                "amount": "24625755148.816499999842300544"
+                "amount": "25143206477.738999999842300544"
               }
             ],
             "period": "2"
@@ -1409,7 +1409,7 @@
             "rewards": [
               {
                 "denom": "ustrd",
-                "amount": "24744029738.284499999842300544"
+                "amount": "25261481067.206999999842300544"
               }
             ],
             "period": "2"
@@ -1421,7 +1421,7 @@
             "rewards": [
               {
                 "denom": "ustrd",
-                "amount": "24507480559.348499999842300544"
+                "amount": "25024931888.270999999842300544"
               }
             ],
             "period": "2"
@@ -1474,37 +1474,37 @@
           "identifier": "day",
           "start_time": "2026-10-03T03:40:08.302365604Z",
           "duration": "180s",
-          "current_epoch": "47",
-          "current_epoch_start_time": "2026-10-03T05:58:08.302365604Z",
+          "current_epoch": "48",
+          "current_epoch_start_time": "2026-10-03T06:01:08.302365604Z",
           "epoch_counting_started": true,
-          "current_epoch_start_height": "5814"
+          "current_epoch_start_height": "5947"
         },
         {
           "identifier": "hour",
           "start_time": "2026-10-03T03:40:08.302365604Z",
           "duration": "30s",
-          "current_epoch": "278",
-          "current_epoch_start_time": "2026-10-03T05:58:38.302365604Z",
+          "current_epoch": "284",
+          "current_epoch_start_time": "2026-10-03T06:01:38.302365604Z",
           "epoch_counting_started": true,
-          "current_epoch_start_height": "5836"
+          "current_epoch_start_height": "5970"
         },
         {
           "identifier": "mint",
           "start_time": "2026-10-03T03:40:08.302365604Z",
           "duration": "5s",
-          "current_epoch": "1664",
-          "current_epoch_start_time": "2026-10-03T05:58:43.302365604Z",
+          "current_epoch": "1699",
+          "current_epoch_start_time": "2026-10-03T06:01:38.302365604Z",
           "epoch_counting_started": true,
-          "current_epoch_start_height": "5839"
+          "current_epoch_start_height": "5970"
         },
         {
           "identifier": "stride_epoch",
           "start_time": "2026-10-03T03:40:08.302365604Z",
           "duration": "45s",
-          "current_epoch": "185",
-          "current_epoch_start_time": "2026-10-03T05:58:08.302365604Z",
+          "current_epoch": "189",
+          "current_epoch_start_time": "2026-10-03T06:01:08.302365604Z",
           "epoch_counting_started": true,
-          "current_epoch_start_height": "5814"
+          "current_epoch_start_height": "5947"
         },
         {
           "identifier": "week",
@@ -1659,7 +1659,7 @@
               },
               "latest_height": {
                 "revision_number": "1",
-                "revision_height": "7527"
+                "revision_height": "7652"
               },
               "proof_specs": [
                 {
@@ -1735,7 +1735,7 @@
               },
               "latest_height": {
                 "revision_number": "1",
-                "revision_height": "5252"
+                "revision_height": "5337"
               },
               "proof_specs": [
                 {
@@ -1798,20 +1798,6 @@
           {
             "client_id": "07-tendermint-0",
             "consensus_states": [
-              {
-                "height": {
-                  "revision_number": "1",
-                  "revision_height": "5010"
-                },
-                "consensus_state": {
-                  "@type": "/ibc.lightclients.tendermint.v1.ConsensusState",
-                  "timestamp": "2026-10-03T05:13:27.775470308Z",
-                  "root": {
-                    "hash": "WDjIKOmvi4DRTctQ/3XET2gUHgfIRX2R6UDqonI6Qjw="
-                  },
-                  "next_validators_hash": "A864D582F00E866F82A1170791A5CFE4E3AECC636A42EF917115A75A88452B73"
-                }
-              },
               {
                 "height": {
                   "revision_number": "1",
@@ -2161,26 +2147,26 @@
                   },
                   "next_validators_hash": "A864D582F00E866F82A1170791A5CFE4E3AECC636A42EF917115A75A88452B73"
                 }
+              },
+              {
+                "height": {
+                  "revision_number": "1",
+                  "revision_height": "7652"
+                },
+                "consensus_state": {
+                  "@type": "/ibc.lightclients.tendermint.v1.ConsensusState",
+                  "timestamp": "2026-10-03T06:00:21.887873188Z",
+                  "root": {
+                    "hash": "UHn7rLlqTYyU1RlTG20L3N/qdMD+NSW6oV2b4Yohk0w="
+                  },
+                  "next_validators_hash": "A864D582F00E866F82A1170791A5CFE4E3AECC636A42EF917115A75A88452B73"
+                }
               }
             ]
           },
           {
             "client_id": "07-tendermint-1",
             "consensus_states": [
-              {
-                "height": {
-                  "revision_number": "1",
-                  "revision_height": "3715"
-                },
-                "consensus_state": {
-                  "@type": "/ibc.lightclients.tendermint.v1.ConsensusState",
-                  "timestamp": "2026-10-03T05:18:30.967325807Z",
-                  "root": {
-                    "hash": "98ko/Zj9Q6huOJ85rKDatBlPryId5EEcnCSuI3ipZN0="
-                  },
-                  "next_validators_hash": "706655BC42B95760D0505062B6D93E60595B2EA06BB9DA78F4EB669C311F9F7C"
-                }
-              },
               {
                 "height": {
                   "revision_number": "1",
@@ -2474,6 +2460,20 @@
                   },
                   "next_validators_hash": "ED47FB65328DCEA9CFEA3F6D259CBA15F8ED6CA4F39333B1965FA6439DB6CB73"
                 }
+              },
+              {
+                "height": {
+                  "revision_number": "1",
+                  "revision_height": "5337"
+                },
+                "consensus_state": {
+                  "@type": "/ibc.lightclients.tendermint.v1.ConsensusState",
+                  "timestamp": "2026-10-03T06:00:33.575571791Z",
+                  "root": {
+                    "hash": "YftAg5mfzrbn1CudDDjSxIQNoKiQBv5yiCQOI1UnOlg="
+                  },
+                  "next_validators_hash": "ED47FB65328DCEA9CFEA3F6D259CBA15F8ED6CA4F39333B1965FA6439DB6CB73"
+                }
               }
             ]
           }
@@ -2485,14 +2485,6 @@
               {
                 "key": "Y29ubmVjdGlvbnM=",
                 "value": "Cgxjb25uZWN0aW9uLTA="
-              },
-              {
-                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtNTAxMC9wcm9jZXNzZWRIZWlnaHQ=",
-                "value": "MS0zODI1"
-              },
-              {
-                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtNTAxMC9wcm9jZXNzZWRUaW1l",
-                "value": "GNrtBYx6Jyk="
               },
               {
                 "key": "Y29uc2Vuc3VzU3RhdGVzLzEtNTEzOS9wcm9jZXNzZWRIZWlnaHQ=",
@@ -2695,12 +2687,16 @@
                 "value": "GNrvdXkX9b8="
               },
               {
-                "key": "Y3JlYXRvcg==",
-                "value": "ssXZsdgme5pyXauHNLjCwM4F15s="
+                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtNzY1Mi9wcm9jZXNzZWRIZWlnaHQ=",
+                "value": "MS01OTE0"
               },
               {
-                "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAAE5I=",
-                "value": "Y29uc2Vuc3VzU3RhdGVzLzEtNTAxMA=="
+                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtNzY1Mi9wcm9jZXNzZWRUaW1l",
+                "value": "GNrvlMzqGe0="
+              },
+              {
+                "key": "Y3JlYXRvcg==",
+                "value": "ssXZsdgme5pyXauHNLjCwM4F15s="
               },
               {
                 "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAAFBM=",
@@ -2801,6 +2797,10 @@
               {
                 "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAAHWc=",
                 "value": "Y29uc2Vuc3VzU3RhdGVzLzEtNzUyNw=="
+              },
+              {
+                "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAAHeQ=",
+                "value": "Y29uc2Vuc3VzU3RhdGVzLzEtNzY1Mg=="
               }
             ]
           },
@@ -2810,14 +2810,6 @@
               {
                 "key": "Y29ubmVjdGlvbnM=",
                 "value": "Cgxjb25uZWN0aW9uLTE="
-              },
-              {
-                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtMzcxNS9wcm9jZXNzZWRIZWlnaHQ=",
-                "value": "MS00MDUy"
-              },
-              {
-                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtMzcxNS9wcm9jZXNzZWRUaW1l",
-                "value": "GNrtTGqk2NY="
               },
               {
                 "key": "Y29uc2Vuc3VzU3RhdGVzLzEtMzgwMi9wcm9jZXNzZWRIZWlnaHQ=",
@@ -2988,12 +2980,16 @@
                 "value": "GNrveFCv6fs="
               },
               {
-                "key": "Y3JlYXRvcg==",
-                "value": "cfg5A5dmlMf76CKdTtG9LFG2eOo="
+                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtNTMzNy9wcm9jZXNzZWRIZWlnaHQ=",
+                "value": "MS01OTIz"
               },
               {
-                "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAADoM=",
-                "value": "Y29uc2Vuc3VzU3RhdGVzLzEtMzcxNQ=="
+                "key": "Y29uc2Vuc3VzU3RhdGVzLzEtNTMzNy9wcm9jZXNzZWRUaW1l",
+                "value": "GNrvl7aToi4="
+              },
+              {
+                "key": "Y3JlYXRvcg==",
+                "value": "cfg5A5dmlMf76CKdTtG9LFG2eOo="
               },
               {
                 "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAADto=",
@@ -3078,6 +3074,10 @@
               {
                 "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAAFIQ=",
                 "value": "Y29uc2Vuc3VzU3RhdGVzLzEtNTI1Mg=="
+              },
+              {
+                "key": "aXRlcmF0ZUNvbnNlbnN1c1N0YXRlcwAAAAAAAAABAAAAAAAAFNk=",
+                "value": "Y29uc2Vuc3VzU3RhdGVzLzEtNTMzNw=="
               }
             ]
           }
@@ -4677,10 +4677,10 @@
       "blacklisted_denoms": [],
       "pending_send_packet_sequence_numbers": [],
       "hour_epoch": {
-        "epoch_number": "5",
+        "epoch_number": "6",
         "duration": "3600s",
-        "epoch_start_time": "2026-10-03T05:00:00Z",
-        "epoch_start_height": "3226"
+        "epoch_start_time": "2026-10-03T06:00:00Z",
+        "epoch_start_height": "5896"
       },
       "pending_recv_packet_sequence_numbers": []
     },
@@ -5168,7 +5168,7 @@
       "delegation_records": [],
       "unbonding_records": [
         {
-          "id": "44",
+          "id": "48",
           "status": "ACCUMULATING_REDEMPTIONS",
           "st_token_amount": "0",
           "native_amount": "0",
@@ -5268,6 +5268,15 @@
         },
         {
           "id": "40",
+          "status": "ACCUMULATING_REDEMPTIONS",
+          "st_token_amount": "0",
+          "native_amount": "0",
+          "unbonding_completion_time_seconds": "0",
+          "undelegation_tx_hash": "",
+          "unbonded_token_sweep_tx_hash": ""
+        },
+        {
+          "id": "44",
           "status": "ACCUMULATING_REDEMPTIONS",
           "st_token_amount": "0",
           "native_amount": "0",
@@ -5494,26 +5503,26 @@
       "epoch_tracker_list": [
         {
           "epoch_identifier": "day",
-          "epoch_number": "47",
-          "next_epoch_start_time": "1791007268302365604",
+          "epoch_number": "48",
+          "next_epoch_start_time": "1791007448302365604",
           "duration": "180000000000"
         },
         {
           "epoch_identifier": "hour",
-          "epoch_number": "278",
-          "next_epoch_start_time": "1791007148302365604",
+          "epoch_number": "284",
+          "next_epoch_start_time": "1791007328302365604",
           "duration": "30000000000"
         },
         {
           "epoch_identifier": "mint",
-          "epoch_number": "1664",
-          "next_epoch_start_time": "1791007128302365604",
+          "epoch_number": "1699",
+          "next_epoch_start_time": "1791007303302365604",
           "duration": "5000000000"
         },
         {
           "epoch_identifier": "stride_epoch",
-          "epoch_number": "185",
-          "next_epoch_start_time": "1791007133302365604",
+          "epoch_number": "189",
+          "next_epoch_start_time": "1791007313302365604",
           "duration": "45000000000"
         },
         {
@@ -5546,7 +5555,7 @@
       "delegation_records": [],
       "unbonding_records": [
         {
-          "id": "44",
+          "id": "48",
           "status": "ACCUMULATING_REDEMPTIONS",
           "st_token_amount": "0",
           "native_amount": "0",
@@ -5637,6 +5646,15 @@
         },
         {
           "id": "40",
+          "status": "ACCUMULATING_REDEMPTIONS",
+          "st_token_amount": "0",
+          "native_amount": "0",
+          "unbonding_completion_time_seconds": "0",
+          "undelegation_tx_hash": "",
+          "unbonded_token_sweep_tx_hash": ""
+        },
+        {
+          "id": "44",
           "status": "ACCUMULATING_REDEMPTIONS",
           "st_token_amount": "0",
           "native_amount": "0",

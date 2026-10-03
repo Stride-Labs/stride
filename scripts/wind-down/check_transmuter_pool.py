@@ -32,7 +32,7 @@ USER_AGENT = "curl/8.0"
 
 TRANSMUTER_CODE_ID = "1"
 TRANSMUTER_VERSION = "3.2.0"
-COSMWASMPOOL_MODULE = "REHEARSAL_FILL_IN"
+COSMWASMPOOL_MODULE = "osmo1rxjakgd8yhks2j7hc7pt6a22z3zd64grexpyf7"
 STRIDE_TO_OSMOSIS_CHANNEL_ON_OSMOSIS = "channel-0"
 UINT128_MAX = 2**128 - 1
 RATE_DECIMALS = 10**18
@@ -55,7 +55,7 @@ class PoolSpec:
 ADMIN = "osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"  # Osmosis vault (transmuter admin)
 MODERATOR = "osmo1mymazvsd79f9yhjq4n84dchyf6zvfmd8jaelyx"  # Osmosis vault (freeze / corrupted-asset key)
 
-POOLS: list[PoolSpec] = []  # phase 7 appends the three pool specs once the pool ids exist
+POOLS: list[PoolSpec] = [PoolSpec(chain_id="cosmoshub-test-1", pool_id="1", rate_at_creation="1.061651551979424899", route_trace=None), PoolSpec(chain_id="osmosis-test-1", pool_id="2", rate_at_creation="1.012022081954169013", route_trace=None), PoolSpec(chain_id="cosmoshub-test-1", pool_id="3", rate_at_creation="1.061651551979424899", route_trace="transfer/channel-1/transfer/channel-0/stuatom")]  # rehearsal phase 7
 
 # ----------------------------------------------------------------------------------------------
 
@@ -358,7 +358,7 @@ def expected_st_denom(zone: HostZone, route_trace: str | None) -> str:
 
 
 def native_denom_on_osmosis(zone: HostZone) -> str:
-    if zone.chain_id == "osmosis-1":
+    if zone.chain_id == "osmosis-test-1":
         return zone.host_denom
     channel = OSMOSIS_CHANNEL_TO_HOST.get(zone.chain_id)
     if channel is None:

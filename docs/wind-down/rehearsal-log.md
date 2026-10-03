@@ -5284,3 +5284,101 @@ broadcast output (osmosisd):
 2026-10-03T05:57:25Z pools file /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/pools.json: {"stuatom":{"chain_id":"cosmoshub-test-1","native_denom_on_osmosis":"ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9","canonical_pool_id":"1","canonical_st_denom":"ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F","route_pools":[{"channel_id":"channel-0","pool_id":"3","st_denom":"ibc/9B7179CAFC8B901DD609834C12CE266F209A68D399646599952D145AF2DC1396"}]},"stuosmo":{"chain_id":"osmosis-test-1","native_denom_on_osmosis":"uosmo","canonical_pool_id":"2","canonical_st_denom":"ibc/4263C1D1EEEA066572F679EF212BDD522ADF0E57C86819AF260C8BC82BD87602","route_pools":[]}}
 2026-10-03T05:57:36Z export FAILED for /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/export_pre_pools.json (empty or invalid export output)
 2026-10-03T05:58:38Z NOTE (seed artifact): hub frozen rate 1.061651551979424899 vs osmo 1.012022081954169013 - the run-3 staketia portion (+50M booked into the hub zone TotalDelegations with no stTokens behind it, since genesis invented it) inflated v34's last stATOM rate update by ~5%. Pools are created at this rate; the coverage check is expected to report the shortfall (correct detection), so it is soft this run.
+2026-10-03T05:58:39Z ## Phase 7: pools
+2026-10-03T05:58:42Z CHECKPOINT PASS: code 1 stored
+2026-10-03T05:58:42Z pools already created (rerun): canonical stATOM=1, stOSMO=2, Hub-route stATOM=3
+2026-10-03T05:58:42Z pools: canonical stATOM=1, stOSMO=2, Hub-route stATOM=3
+2026-10-03T05:58:45Z pools file /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/pools.json: {"stuatom":{"chain_id":"cosmoshub-test-1","native_denom_on_osmosis":"ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9","canonical_pool_id":"1","canonical_st_denom":"ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F","route_pools":[{"channel_id":"channel-0","pool_id":"3","st_denom":"ibc/9B7179CAFC8B901DD609834C12CE266F209A68D399646599952D145AF2DC1396"}]},"stuosmo":{"chain_id":"osmosis-test-1","native_denom_on_osmosis":"uosmo","canonical_pool_id":"2","canonical_st_denom":"ibc/4263C1D1EEEA066572F679EF212BDD522ADF0E57C86819AF260C8BC82BD87602","route_pools":[]}}
+2026-10-03T05:58:53Z export written: /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/export_pre_pools.json (  206250 bytes, binary /home/validator/.stride/cosmovisor/upgrades/v35/bin/strided)
+2026-10-03T05:58:54Z CHECKPOINT FAIL: coverage before funding (expected: shortfall)
+2026-10-03T05:59:12Z route escrow 60000000 stuatom -> route allocation 63699094; vault ATOM 947912930; uosmo to fund 274348447
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"95910E64B8BAF8F530F4747AAC7671D91DB4C7871DE29995472C0EE1D6F48067","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:59:25Z tx 95910E64B8BAF8F530F4747AAC7671D91DB4C7871DE29995472C0EE1D6F48067 code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"B95D306A3AE901BA068832BF2E5D128E6DBC70102911D68825BC2EE801C76BA3","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:59:37Z tx B95D306A3AE901BA068832BF2E5D128E6DBC70102911D68825BC2EE801C76BA3 code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"80F7603EE643E0FD1BA4E6244E451518D3B1F6D02AA709AB6DEEC90A8A34D33A","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T05:59:49Z tx 80F7603EE643E0FD1BA4E6244E451518D3B1F6D02AA709AB6DEEC90A8A34D33A code=5 failed to execute message; message index: 0: Corrupted asset: ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9 must not increase in amount or weight: execute wasm contract failed
+2026-10-03T05:59:49Z refused for the expected reason: Corrupted asset
+2026-10-03T05:59:49Z CHECKPOINT PASS: join blocked while marked
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"2212A4E77DCD3FAD0ED8184A5AB4C94969904E0B4422DA834658BB285D784AE4","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T06:00:02Z tx 2212A4E77DCD3FAD0ED8184A5AB4C94969904E0B4422DA834658BB285D784AE4 code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"040FDC44EE970C665FA4A21901DF38E97920565DF40B802CD56E393DDCFF321C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T06:00:18Z tx 040FDC44EE970C665FA4A21901DF38E97920565DF40B802CD56E393DDCFF321C code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"6BFE4811C9C08A8C31FD2AE3E806E86972CF6B6D5BCA7FACF8EF220794E303A8","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T06:00:31Z tx 6BFE4811C9C08A8C31FD2AE3E806E86972CF6B6D5BCA7FACF8EF220794E303A8 code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"4579979D29FD83F18E384318448925F97EEA5489C60F3AEDC4DD85DF14FE8083","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T06:00:44Z tx 4579979D29FD83F18E384318448925F97EEA5489C60F3AEDC4DD85DF14FE8083 code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"EF8D4A0D88015F509A1CB56CA049FCB528A9F8887CD67E433A7278B99E51E06B","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T06:00:54Z tx EF8D4A0D88015F509A1CB56CA049FCB528A9F8887CD67E433A7278B99E51E06B code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"F40E557C4ACD3C99316993B3F1F1574680859DC3549092E1E229B31293753325","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T06:01:07Z tx F40E557C4ACD3C99316993B3F1F1574680859DC3549092E1E229B31293753325 code=0 
+broadcast output (osmosisd):
+```
+{"height":"0","txhash":"C06FB46EF7DAFDC2030750B6FF70FCD1934A1EC77D82E09A463AC34B6FA4B9EE","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+
+```
+2026-10-03T06:01:22Z tx C06FB46EF7DAFDC2030750B6FF70FCD1934A1EC77D82E09A463AC34B6FA4B9EE code=0 
+2026-10-03T06:01:22Z ### outsider join
+```
+$ osmosisd tx wasm execute osmo14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sq2r9g9 {"join_pool":{}} --amount 1000000ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F --from user1 --keyring-backend test --chain-id osmosis-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 0.04uosmo -y -o json
+gas estimate: 327184
+{"height":"0","txhash":"E9AC17B32F23BA897218D1D45D142CADFDBBC6D7A8A10801A1E8E5660434CD6C","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T06:01:27Z tx E9AC17B32F23BA897218D1D45D142CADFDBBC6D7A8A10801A1E8E5660434CD6C code=0 
+2026-10-03T06:01:29Z CHECKPOINT PASS: quote = floor(1e6 x rate)
+2026-10-03T06:01:29Z ### swap statom->atom
+```
+$ osmosisd tx poolmanager swap-exact-amount-in 1000000ibc/054A44EC8D9B68B9A6F0D5708375E00A5569A28F21E0064FF12CADC3FEF1D04F 1 --swap-route-pool-ids 1 --swap-route-denoms ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9 --from user1 --keyring-backend test --chain-id osmosis-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 0.04uosmo -y -o json
+gas estimate: 439915
+{"height":"0","txhash":"0D2D2719FCF68D8D99EF5DFFFE26E62771497AAED521079692F4103658315165","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T06:01:34Z tx 0D2D2719FCF68D8D99EF5DFFFE26E62771497AAED521079692F4103658315165 code=0 
+2026-10-03T06:01:36Z refused for the expected reason: Corrupted asset
+2026-10-03T06:01:36Z CHECKPOINT PASS: atom->statom refused
+2026-10-03T06:01:36Z ### route-pool swap (two-hop statom)
+```
+$ osmosisd tx poolmanager swap-exact-amount-in 1000000ibc/9B7179CAFC8B901DD609834C12CE266F209A68D399646599952D145AF2DC1396 1 --swap-route-pool-ids 3 --swap-route-denoms ibc/C4CFF46FD6DE35CA4CF4CE031E643C8FDC9BA4B99AE598E9B0ED98FE3A2319F9 --from user1 --keyring-backend test --chain-id osmosis-test-1 --gas auto --gas-adjustment 1.5 --gas-prices 0.04uosmo -y -o json
+gas estimate: 418557
+{"height":"0","txhash":"3DD35E1B67EA98F44A060BC8C9A5C439492BC740EF7A3B24576984E915F6201E","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":"","events":[]}
+```
+2026-10-03T06:01:41Z tx 3DD35E1B67EA98F44A060BC8C9A5C439492BC740EF7A3B24576984E915F6201E code=0 
+2026-10-03T06:01:48Z export written: /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/export_post_funding.json (  206834 bytes, binary /home/validator/.stride/cosmovisor/upgrades/v35/bin/strided)
+2026-10-03T06:01:50Z CHECKPOINT PASS: coverage after funding
+2026-10-03T06:01:52Z pool gate still has REHEARSAL_FILL_IN
+2026-10-03T06:02:53Z Pool gate (check_transmuter_pool.py) on the 3 live pools: 72 PASS, 3 FAIL - all three are "no corrupted assets" (native marked corrupted, exactly as §8 requires after funding). FINDING (script): the gate has no post-funding mode - after the one-way mark it always fails; add a --funded flag that expects the native asset corrupted.
