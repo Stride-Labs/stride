@@ -34,7 +34,7 @@ osmo_val_jailed() { [[ "$(osmosisd q staking validator "$1" -o json | jq -r '.va
 rate_limit_live() { strided_old q ratelimiting list-rate-limits -o json | jq -e '.rate_limits | length > 0'; }
 hub_grant_present() {
   gaiad q authz grants "$HUB_MS_COSMOS" "$STAKETIA_OPERATOR_HUB" -o json \
-    | jq -e '.grants[] | select(.authorization["@type"] == "/ibc.applications.transfer.v1.TransferAuthorization")'
+    | jq -e '.grants[] | select((.authorization["@type"] // .authorization.type) == "/ibc.applications.transfer.v1.TransferAuthorization")'
 }
 pause_pod_process() { $KX exec "$1" -c validator -- sh -c "kill -STOP \$(pgrep -x $2)"; }
 resume_pod_process() { $KX exec "$1" -c validator -- sh -c "kill -CONT \$(pgrep -x $2)"; }
@@ -133,6 +133,7 @@ else
   log "resume: HIST_TX=$HIST_TX, $(wc -w <<<"$HUB_VALS") hub validators, $(wc -w <<<"$OSMO_VALS") osmosis validators"
 fi
 wait_until 600 "osmo delegated" zone_delegations_above osmosis-test-1 250000000
+if [[ "${SEED_RESUME:-0}" -lt 2 ]]; then
 
 # Holders: base, vesting (delayed, 1 year), distribution module (fund-community-pool), escrow (via IBC out)
 tx_step "holder base" strided_old tx bank send user1 "$HOLDER_BASE" "50000000stuatom,10000000ustrd,20000000$ATOM_ON_STRIDE" $STRIDE_TX
@@ -155,6 +156,10 @@ tx_step "fund hub withdrawal ICA"  gaiad tx bank send user1 "$(zone_field cosmos
 tx_step "fund osmo fee ICA"        osmosisd tx bank send user1 "$(zone_field osmosis-test-1 fee_ica_address)" 3000000uosmo --from user1 $OSMO_TX
 tx_step "fund osmo withdrawal ICA" osmosisd tx bank send user1 "$(zone_field osmosis-test-1 withdrawal_ica_address)" 4000000uosmo --from user1 $OSMO_TX
 
+else
+  log "SEED_RESUME=2: skipping the holders/transfers half of Part B"
+fi
+
 ############################################
 # Part C: staketia authz set and the rate limit
 ############################################
@@ -162,6 +167,9 @@ tx_step "fund osmo withdrawal ICA" osmosisd tx bank send user1 "$(zone_field osm
 # The Hub multisig delegates the 50 ATOM genesis says it holds, and grants the operator the mainnet authz set
 HUB_VAL1=${HUB_VALS%% *}
 HUB_VALS_CSV=${HUB_VALS// /,}
+if hub_grant_present >/dev/null 2>&1; then
+  log "staketia grants already present: skipping the multisig delegate and grants (rerun)"
+else
 ms_tx gaiad hub-ms "$HUB_MS_MEMBERS" -- staking delegate "$HUB_VAL1" 50000000uatom
 ms_tx gaiad hub-ms "$HUB_MS_MEMBERS" -- authz grant "$STAKETIA_OPERATOR_HUB" unbond --allowed-validators "$HUB_VALS_CSV"
 ms_tx gaiad hub-ms "$HUB_MS_MEMBERS" -- authz grant "$STAKETIA_OPERATOR_HUB" delegate --allowed-validators "$HUB_VALS_CSV"
@@ -183,6 +191,7 @@ log_cmd "multisign + broadcast transfer grant" $KX exec cosmoshub-validator-0 -c
   gaiad tx multisign /tmp/unsigned.json hub-ms /tmp/s1.json /tmp/s2.json --keyring-backend test --chain-id cosmoshub-test-1 --output-document /tmp/signed.json
   gaiad tx broadcast /tmp/signed.json --chain-id cosmoshub-test-1 -o json"
 sleep 6
+fi
 checkpoint "transfer grant present" hub_grant_present
 
 # Rate limit on stATOM over the Osmosis channel: gov-only, so a proposal voted by the four validators.
