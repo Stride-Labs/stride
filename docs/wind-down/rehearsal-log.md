@@ -5382,3 +5382,12 @@ gas estimate: 418557
 2026-10-03T06:01:50Z CHECKPOINT PASS: coverage after funding
 2026-10-03T06:01:52Z pool gate still has REHEARSAL_FILL_IN
 2026-10-03T06:02:53Z Pool gate (check_transmuter_pool.py) on the 3 live pools: 72 PASS, 3 FAIL - all three are "no corrupted assets" (native marked corrupted, exactly as §8 requires after funding). FINDING (script): the gate has no post-funding mode - after the one-way mark it always fails; add a --funded flag that expects the native asset corrupted.
+2026-10-03T06:02:59Z ## Phase 8: sweep off Stride
+2026-10-03T06:03:08Z export written: /Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/export_pre_sweep.json (  207053 bytes, binary /home/validator/.stride/cosmovisor/upgrades/v35/bin/strided)
+26 holders in 1 batches, $23027055.01 swept, 21 skipped
+2026-10-03T06:04:46Z excluding 23 infrastructure addresses from the sweep batches
+2026-10-03T06:04:51Z CHECKPOINT PASS: admin cannot sweep
+2026-10-03T06:05:06Z tx DF75C10A482239A15384197BCCC90AA6733E13086C6ED271641B6147D780ED51 code=0 
+2026-10-03T06:05:13Z gas used: 605223 for 4 addresses (/Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/sweep-batches/batch-001.txt)
+2026-10-03T06:05:20Z CHECKPOINT PASS: builder batch skipped nothing (/Users/sampocs/Documents/Projects/stride-worktrees/wind-down-rehearsal/integration-tests/rehearsal/sweep-batches/batch-001.txt)
+2026-10-03T06:05:44Z tx 1C266459787B2407CBC7CA213E2BE515D26CF380E45827567F1CECD2AF21DF88 code=11 out of gas in location: ReadFlat; gasWanted: 55842, gasUsed: 56396: out of gas

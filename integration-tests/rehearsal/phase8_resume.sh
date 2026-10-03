@@ -42,61 +42,7 @@ hub_balance_positive() { [[ $(gaiad q bank balance "$1" uatom -o json | jq -r '.
 holder_base_has_none_left() {
   strided_new q bank balances "$HOLDER_BASE" -o json | jq -e '[.balances[] | select(.denom=="stuatom" or .denom=="ustrd")] | length == 0'
 }
-
-# --- Export, prices, batches ---
-EXPORT=$REHEARSAL_DIR/export_pre_sweep.json
-bash "$REHEARSAL_DIR/export.sh" "$EXPORT"
-
-cat > "$PRICES_FILE" <<PRICES
-{"stuatom":{"usd_per_token":4,"decimals":6},"stuosmo":{"usd_per_token":0.5,"decimals":6},"ustrd":{"usd_per_token":0.1,"decimals":6},"$ATOM_ON_STRIDE":{"usd_per_token":4,"decimals":6}}
-PRICES
-
-# --as-of is the block time at the export height, which the builder uses to measure vesting locks
-EXPORT_HEIGHT=$(jq -r '.initial_height' "$EXPORT")
-ASOF=$(strided_new q block --type=height "$EXPORT_HEIGHT" -o json | jq -r '.header.time // .block.header.time')
-[[ -n "$ASOF" && "$ASOF" != null ]] || { log "could not read the block time at height $EXPORT_HEIGHT"; exit 1; }
-
-rm -rf "$BATCH_DIR"
-python3 "$REPO/scripts/wind-down/build_sweep_batches.py" --export "$EXPORT" --prices "$PRICES_FILE" --floor-usd 1 \
-  --denoms stuatom,stuosmo,ustrd --extra-denom "$ATOM_ON_STRIDE=4:6" --out-dir "$BATCH_DIR" --as-of "$ASOF" \
-  --sweep-operator "$SWEEP_OPERATOR" --batch-size 50 | tee -a "$LOG"
-
-# The builder writes batch-NNN.txt, one stride address per line: exactly what the tx's addresses-file reads
-BATCHES=("$BATCH_DIR"/batch-*.txt)
-[[ -e "${BATCHES[0]}" ]] || { log "the builder wrote no batches"; exit 1; }
-
-# The builder lists every funded genesis account at the $1 floor, which would drain the relayer keys and the faucet:
-# filter every batch against the Stride addresses of the infrastructure keys and the admin multisig
-EXCLUDE_FILE=$REHEARSAL_DIR/exclude.txt
-: > "$EXCLUDE_FILE"
-for name in faucet admin val1 val2 val3 val4 m1 m2 m3 d1 d2 d3 st-operator st-reward rly1 rly2 rly3 rly4 rly5 rly6 rly7 rly8; do
-  strided_new keys show "$name" -a --keyring-backend test 2>/dev/null | tr -d '\r' >> "$EXCLUDE_FILE" || true
-done
-echo "$ADMIN_MS_STRIDE" >> "$EXCLUDE_FILE"
-sed -i.bak '/^$/d' "$EXCLUDE_FILE" && rm -f "$EXCLUDE_FILE.bak"
-log "excluding $(wc -l < "$EXCLUDE_FILE" | tr -d ' ') infrastructure addresses from the sweep batches"
-for batch in "${BATCHES[@]}"; do
-  grep -vxF -f "$EXCLUDE_FILE" "$batch" > "$batch.filtered" || true
-  mv "$batch.filtered" "$batch"
-done
-# A batch emptied by the filter has nothing to sweep (an empty addresses-file is invalid)
-NONEMPTY=()
-for batch in "${BATCHES[@]}"; do
-  if [[ -s "$batch" ]]; then NONEMPTY+=("$batch"); else rm -f "$batch"; fi
-done
-BATCHES=("${NONEMPTY[@]+"${NONEMPTY[@]}"}")  # bash 3.2: empty-array safe under set -u
-[[ -e "${BATCHES[0]:-}" ]] || { log "every batch was empty after the exclusion filter"; exit 1; }
-
-checkpoint "admin cannot sweep" admin_cannot_sweep "${BATCHES[0]}"
-
-# --- Builder batches: each must skip nothing on chain ---
-for batch in "${BATCHES[@]}"; do
-  hash=$(send_sweep "$batch" "$SWEEP_DENOMS" sweep-operator)
-  wait_tx strided_new "$hash"
-  log "gas used: $(strided_new q tx "$hash" -o json | jq -r '.gas_used') for $(wc -l < "$batch" | tr -d ' ') addresses ($batch)"
-  checkpoint "builder batch skipped nothing ($batch)" batch_skipped_nothing "$hash"
-done
-
+log "## Phase 8 (resume at the hand-built skip batch; the builder batch already swept 4 holders, 605223 gas, 0 skipped)"
 # --- Hand-built batch: the distribution module and a transfer escrow are skipped, each with its reason ---
 DIST=$(strided_new q auth module-account distribution -o json | jq -r '.account.value.address // .account.base_account.address')
 ESCROW=$(strided_new q ibc-transfer escrow-address transfer channel-0)
