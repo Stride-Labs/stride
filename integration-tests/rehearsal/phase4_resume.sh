@@ -1,0 +1,118 @@
+#!/bin/bash
+# Phase 4: admin drain with injected failures (slash, ICA timeout, offset, dead window). Runs on v35.
+source "$(dirname "$0")/lib.sh"; source "$REHEARSAL_DIR/state.env"; log "## Phase 4: admin drain"
+
+ADMIN_MEMBERS=m1,m2,m3
+DUST=2000000
+
+no_flags() { # chain-id
+  strided_new q stakeibc show-validators "$1" -o json \
+    | jq -e '[.validators[] | (.delegation_changes_in_progress // 0 | tonumber)] | all(. == 0)'
+}
+
+# Writes a one-validator drain file into the stride pod
+write_drain_file() { # path valoper offset
+  echo "[{\"address\":\"$2\",\"offset\":\"$3\"}]" | $KX exec -i stride-validator-0 -c validator -- sh -c "cat > $1"
+}
+
+# Drain txs are only safe in the first ~130s of the day epoch; the ICA timeout is tied to the epoch end
+submit_window() {
+  local next now
+  next=$(day_epoch_next_start); now=$(date +%s)
+  if (( next - now < 100 )); then sleep_until $((next + 5)); fi
+}
+
+# Injection 2 only: submit in the last 100-150s of the day epoch so the relayer pause (until next - 20) stays well
+# under the 204s trusting period. Pausing starts right before the drain, not before the wait.
+DAY_EPOCH_SECONDS=180
+submit_window_late() {
+  local next now
+  next=$(day_epoch_next_start); now=$(date +%s)
+  if (( next - now < 100 )); then sleep_until $((next + 5)); next=$(day_epoch_next_start); fi
+  now=$(date +%s)
+  if (( next - now > 150 )); then sleep_until $((next - 150)); fi
+}
+
+drain() { # chain-id file-or-flag
+  ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators "$1" "$2" >/dev/null
+}
+
+validator_field_is() { # chain-id valoper jq-predicate
+  strided_new q stakeibc show-validators "$1" -o json | jq -e --arg addr "$2" ".validators[] | select(.address == \$addr) | $3"
+}
+
+signal_gaiad() { # pod STOP|CONT
+  $KX exec "$1" -c validator -- sh -c "pid=\$(pgrep -x gaiad || ps -o pid,comm | awk '\$2==\"gaiad\"{print \$1}' | head -1); kill -$2 \$pid"
+}
+
+cleanup() { signal_gaiad cosmoshub-validator-6 CONT || true; $KX scale deployment relayer-stride-osmosis --replicas=1 || true; }
+trap cleanup EXIT
+
+hub_val_jailed() { gaiad q staking validator "$1" -o json | jq -e '.validator.jailed == true'; }
+
+# The ICA controller channel for an owner, in a given state (--limit: the default page hides later channels)
+ica_channel_in_state() { # owner state
+  strided_new q ibc channel channels --limit 1000 -o json \
+    | jq -e --arg port "icacontroller-$1" --arg state "$2" '[.channels[] | select(.port_id | startswith($port)) | .state] | index($state) != null'
+}
+
+stuatom_supply_unchanged() {
+  [[ "$(strided_new q bank total-supply-of stuatom -o json | jq -r '.amount.amount')" == "$STATOM_SUPPLY" ]]
+}
+
+# Slash was applied on host but not on Stride: the slashed validator keeps a delegation above 1,000,000, the rest are dust
+val7_failed_others_drained() { # valoper
+  strided_new q stakeibc show-validators cosmoshub-test-1 -o json | jq -e --arg bad "$1" '
+    .validators as $vals
+    | ([$vals[] | select(.address != $bad) | (.delegation | tonumber)] | max) < 1000000
+      and ([$vals[] | select(.address == $bad) | (.delegation | tonumber)] | .[0]) > 1000000'
+}
+
+dead_window_send_fails() {
+  local out; out=$(ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc undelegate-from-validators cosmoshub-test-1 --all 2>&1) || true
+  grep -qiE 'timeout' <<<"$out"  # a bare non-zero code could also be "nothing left to drain", so require the timeout reason
+}
+
+zone_total_at_dust() { # chain-id
+  strided_new q stakeibc show-host-zone "$1" -o json | jq -e --argjson dust "$DUST" '(.host_zone.total_delegations | tonumber) < $dust'
+}
+
+log "## Phase 4 (resume at injection 2 after the val7 ack recovery)"
+# Injection 2 (osmosis zone): ICA timeout -> channel closes -> restore -> resubmit. The relayer is paused right before the
+# drain (in the last 100-150s of the day epoch) and resumed 20s before the epoch ends, past the ICA timeout (next - 36s).
+OSMO_VALS=$(strided_new q stakeibc show-validators osmosis-test-1 -o json | jq -r '.validators[].address')
+OV1=$(head -1 <<<"$OSMO_VALS")
+write_drain_file /tmp/ov1.json "$OV1" 0
+submit_window_late
+NEXT_EPOCH_START=$(day_epoch_next_start)
+$KX scale deployment relayer-stride-osmosis --replicas=0
+drain osmosis-test-1 /tmp/ov1.json
+sleep_until $(( NEXT_EPOCH_START - 20 ))
+$KX scale deployment relayer-stride-osmosis --replicas=1
+# Assumes no stale closed osmosis DELEGATION channel exists from an earlier run, else STATE_CLOSED matches immediately
+wait_until 300 "osmo delegation channel closed" ica_channel_in_state osmosis-test-1.DELEGATION STATE_CLOSED
+ms_tx strided_new admin-ms $ADMIN_MEMBERS -- stakeibc restore-interchain-account osmosis-test-1 connection-1 osmosis-test-1.DELEGATION >/dev/null
+wait_until 300 "osmo delegation channel reopened" ica_channel_in_state osmosis-test-1.DELEGATION STATE_OPEN
+checkpoint "flags reset by restore" no_flags osmosis-test-1
+
+# Lost-ack check (manual, orchestrator): did the closed channel leave an executed batch unacknowledged? Compare with Stride's record.
+OSMO_DELEGATION_ICA=$(strided_new q stakeibc show-host-zone osmosis-test-1 -o json | jq -r '.host_zone.delegation_ica_address')
+log_cmd "osmo host-side delegations of the delegation ICA after restore" osmosisd q staking delegations "$OSMO_DELEGATION_ICA" -o json
+log_cmd "osmo validators after restore" strided_new q stakeibc show-validators osmosis-test-1 -o json
+
+# Injection 3: offset drain of osmo val2, then --all for the rest; the offset stays recorded and is calibrated away
+OV2=$(sed -n 2p <<<"$OSMO_VALS")
+write_drain_file /tmp/ov2.json "$OV2" 1000000
+submit_window; drain osmosis-test-1 /tmp/ov2.json
+wait_until 240 "offset ack" validator_field_is osmosis-test-1 "$OV2" '.delegation == "1000000" and (.delegation_changes_in_progress // 0 | tonumber) == 0'
+submit_window; drain osmosis-test-1 --all
+wait_until 240 "osmo drained" no_flags osmosis-test-1
+
+# Injection 4: the dead window: submit in the last fifth of the day epoch and expect a failed send, nothing flagged
+sleep_until $(( $(day_epoch_next_start) - 50 ))
+CHECKPOINT_SOFT=1 checkpoint "dead-window send fails" dead_window_send_fails
+wait_until 300 "no flags after dead window" no_flags cosmoshub-test-1
+checkpoint "hub total at dust"  zone_total_at_dust cosmoshub-test-1
+checkpoint "osmo total at dust" zone_total_at_dust osmosis-test-1
+checkpoint "hub rate frozen"  assert_rate_unchanged cosmoshub-test-1 "$RATE_HUB"
+checkpoint "osmo rate frozen" assert_rate_unchanged osmosis-test-1 "$RATE_OSMO"
