@@ -100,19 +100,42 @@ Not fixed: after the upgrade-height halt, validators whose daemon cosmovisor res
 came back with no peers and consensus stalled until they were restarted by hand. Validator state
 is an `emptyDir`, so deleting a pod wipes its chain.
 
-## Open questions
+## Open question
 
 On mainnet the celestia zone's `TotalDelegations` exceeds its validator sum by 156.87B utia, while
 staketia's own `remaining_delegated_balance` is 69.59B. The 87B difference is part of celestia's
 frozen redemption rate and is worth explaining before the upgrade.
 
-The rehearsal did not measure the gas of `MsgUndelegateFromValidators`, and its state was too
-small to extrapolate from: every drain fit in 600,000 gas. On mainnet two costs grow with state.
-The queued-record guard reads every epoch unbonding record twice (796 records, about 4.3 MB as
-JSON on 2026-10-03), and each ICA batch rewrites the whole host zone. A rough estimate for a full
-cosmoshub-4 drain (90 funded validators, 18 batches of 5) is 25M to 35M gas against a 100M block
-limit. Measure it against the mainnet export before the upgrade, and set `--gas` explicitly: even
-a one-validator live test pays the guard's cost.
+## Drain gas on mainnet-sized state
+
+The rehearsal's state was too small to say anything about gas: every drain there fit in 600,000.
+`TestDrainGasFromMainnetExport` (`app/upgrades/v35/drain_gas_test.go`) measures
+`MsgUndelegateFromValidators` against the mainnet export instead, with every host zone and all
+793 epoch unbonding records at their real size. The block gas limit on stride-1 is 100,000,000.
+
+| Zone | Funded validators | ICA batches | One-validator drain | Full drain | One ack |
+| --- | --- | --- | --- | --- | --- |
+| cosmoshub-4 | 74 | 15 | 9.59M | 20.03M | 1.48M |
+| osmosis-1 | 23 | 5 | 9.43M | 11.83M | 1.17M |
+| ssc-1 | 16 | 16 | 8.96M | 11.41M | 0.27M |
+| laozi-mainnet | 32 | 7 | 9.01M | 10.34M | 0.37M |
+| celestia | 92 | 3 | 9.22M | 10.22M | 0.77M |
+| sommelier-3 | 19 | 4 | 9.01M | 9.67M | 0.37M |
+| injective-1 | 40 | 2 | 9.09M | 9.46M | 0.50M |
+| haqq_11235-1 | 41 | 2 | 9.08M | 9.45M | 0.48M |
+| phoenix-1 | 41 | 2 | 9.06M | 9.40M | 0.46M |
+| juno-1 | 24 | 1 | 9.08M | 9.13M | 0.49M |
+| dydx-mainnet-1 | 25 | 1 | 9.03M | 9.09M | 0.38M |
+
+- **About 9M is a fixed cost.** The queued-record guard reads every epoch unbonding record, so
+  even a one-validator live test costs 9M. Set `--gas` explicitly on the multisig tx.
+- **Each ICA batch adds about 0.7M on the Hub**, because it rewrites the whole host zone. The
+  Hub's full drain is the largest at 20% of the block limit.
+- **Acks are separate relayer txs.** A Hub ack costs about 1.5M, so a relayer that packs all 15
+  into one tx needs about 22M of gas for it.
+
+The measurement excludes the ante handler (signature checks and tx size), which is small next
+to these numbers. The test fails if a full drain or an ack exceeds half the block limit.
 
 ## Not covered
 
