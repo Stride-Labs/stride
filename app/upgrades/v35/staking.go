@@ -6,6 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -83,4 +84,49 @@ func undelegate(ctx sdk.Context, k stakingkeeper.Keeper, delegation stakingtypes
 	}
 	_, amount, err := k.Undelegate(ctx, delegator, validator, delegation.Shares)
 	return amount, err
+}
+
+// ClampValidatorCommission caps every validator's accumulated commission at its outstanding
+// rewards, per denom (authority spec §3). The mass reward withdrawal above can leave outstanding
+// a hair below commission by rounding, and when the staking EndBlocker removes the emptied
+// validators after the unbonding period, distribution's AfterValidatorRemoved subtracts commission
+// from outstanding and panics on a negative amount, with no recovery around it. The clamped dust
+// stays in the community pool, where the hook would have sent any remainder anyway.
+func ClampValidatorCommission(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, distrKeeper distrkeeper.Keeper) error {
+	validators, err := stakingKeeper.GetAllValidators(ctx)
+	if err != nil {
+		return fmt.Errorf("v35: unable to list validators: %w", err)
+	}
+
+	clamped := 0
+	for _, validator := range validators {
+		valAddr, err := sdk.ValAddressFromBech32(validator.OperatorAddress)
+		if err != nil {
+			return err
+		}
+		commission, err := distrKeeper.GetValidatorAccumulatedCommission(ctx, valAddr)
+		if err != nil {
+			return err
+		}
+		outstanding, err := distrKeeper.GetValidatorOutstandingRewardsCoins(ctx, valAddr)
+		if err != nil {
+			return err
+		}
+
+		// Intersect takes the per-denom minimum and drops denoms outstanding no longer holds
+		capped := commission.Commission.Intersect(outstanding)
+		if capped.Equal(commission.Commission) {
+			continue
+		}
+		ctx.Logger().Info(fmt.Sprintf("v35: clamping %s commission from %s to outstanding %s",
+			validator.OperatorAddress, commission.Commission, capped))
+		commission.Commission = capped
+		if err := distrKeeper.SetValidatorAccumulatedCommission(ctx, valAddr, commission); err != nil {
+			return err
+		}
+		clamped++
+	}
+
+	ctx.Logger().Info(fmt.Sprintf("v35: clamped accumulated commission on %d of %d validators", clamped, len(validators)))
+	return nil
 }

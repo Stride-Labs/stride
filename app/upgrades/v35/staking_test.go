@@ -285,3 +285,46 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_PanicIsSkipped() {
 	s.Require().False(s.hasDelegation(delegators[1], bondedVal), "other delegations still unbond")
 	s.Require().Len(s.unbondingEntries(delegators[1], bondedVal), 1)
 }
+
+// decCoins builds DecCoins from whole ustrd / second-denom amounts for the clamp tests
+func decCoins(ustrd int64, other int64) sdk.DecCoins {
+	coins := sdk.NewDecCoins(sdk.NewInt64DecCoin(utils.BaseStrideDenom, ustrd))
+	if other > 0 {
+		coins = coins.Add(sdk.NewInt64DecCoin("uosmo", other))
+	}
+	return coins
+}
+
+// After the mass withdrawal, a validator whose accumulated commission exceeds its outstanding
+// rewards (by dust or a denom outstanding no longer holds) would panic in distribution's
+// AfterValidatorRemoved when the EndBlocker removes it. The clamp caps commission at outstanding
+// per denom and leaves validators already within bounds untouched.
+func (s *UpgradeTestSuite) TestClampValidatorCommission() {
+	overVal, _ := s.seedValidator(8, stakingtypes.Unbonding, 1)
+	withinVal, _ := s.seedValidator(9, stakingtypes.Unbonding, 1)
+	s.Require().NoError(s.App.DistrKeeper.SetValidatorOutstandingRewards(s.Ctx, overVal, distrtypes.ValidatorOutstandingRewards{Rewards: decCoins(3, 0)}))
+	s.Require().NoError(s.App.DistrKeeper.SetValidatorAccumulatedCommission(s.Ctx, overVal, distrtypes.ValidatorAccumulatedCommission{Commission: decCoins(5, 2)}))
+	s.Require().NoError(s.App.DistrKeeper.SetValidatorOutstandingRewards(s.Ctx, withinVal, distrtypes.ValidatorOutstandingRewards{Rewards: decCoins(10, 0)}))
+	s.Require().NoError(s.App.DistrKeeper.SetValidatorAccumulatedCommission(s.Ctx, withinVal, distrtypes.ValidatorAccumulatedCommission{Commission: decCoins(4, 0)}))
+
+	// The hook panics on the over-committed validator before the clamp: the regression this guards
+	consAddr, err := s.mustGetValidator(overVal).GetConsAddr()
+	s.Require().NoError(err)
+	s.Require().Panics(func() {
+		cacheCtx, _ := s.Ctx.CacheContext()
+		_ = s.App.DistrKeeper.Hooks().AfterValidatorRemoved(cacheCtx, consAddr, overVal)
+	}, "hook underflows before the clamp")
+
+	s.Require().NoError(v35.ClampValidatorCommission(s.Ctx, s.App.StakingKeeper, s.App.DistrKeeper))
+
+	overAfter, err := s.App.DistrKeeper.GetValidatorAccumulatedCommission(s.Ctx, overVal)
+	s.Require().NoError(err)
+	s.Require().True(decCoins(3, 0).Equal(overAfter.Commission), "commission capped at outstanding, foreign denom dropped: %s", overAfter.Commission)
+	withinAfter, err := s.App.DistrKeeper.GetValidatorAccumulatedCommission(s.Ctx, withinVal)
+	s.Require().NoError(err)
+	s.Require().True(decCoins(4, 0).Equal(withinAfter.Commission), "commission within bounds untouched: %s", withinAfter.Commission)
+	s.Require().NotPanics(func() {
+		cacheCtx, _ := s.Ctx.CacheContext()
+		_ = s.App.DistrKeeper.Hooks().AfterValidatorRemoved(cacheCtx, consAddr, overVal)
+	}, "hook safe after the clamp")
+}

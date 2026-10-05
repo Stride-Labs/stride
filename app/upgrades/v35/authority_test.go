@@ -100,3 +100,17 @@ func (s *UpgradeTestSuite) TestCloseGovSubmission() {
 	expected.ExpeditedMinDeposit = unreachableExpeditedDeposit()
 	s.Require().Equal(expected.String(), after.String(), "only the deposits change")
 }
+
+func (s *UpgradeTestSuite) TestSetPOAAdmin() {
+	// The test app seeds the POA admin with the gov module account, as mainnet had a different
+	// multisig; either way it must end up as the upgrade authority
+	before, err := s.App.POAKeeper.GetParams(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().NotEqual(v35.UpgradeAuthority, before.Admin, "fixture starts with a different admin")
+
+	s.Require().NoError(v35.SetPOAAdmin(s.Ctx, s.App.POAKeeper))
+
+	after, err := s.App.POAKeeper.GetParams(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(v35.UpgradeAuthority, after.Admin, "POA admin")
+}

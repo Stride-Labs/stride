@@ -480,6 +480,8 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ConsensusParamsKeeper,
 			app.GovKeeper,
 			app.StakingKeeper,
+			app.POAKeeper,
+			app.DistrKeeper,
 		),
 	)
 

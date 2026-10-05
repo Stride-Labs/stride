@@ -8,9 +8,11 @@ import (
 	icahostkeeper "github.com/cosmos/ibc-go/v11/modules/apps/27-interchain-accounts/host/keeper"
 	ratelimitkeeper "github.com/cosmos/ibc-go/v11/modules/apps/rate-limiting/keeper"
 
+	poakeeper "github.com/cosmos/cosmos-sdk/enterprise/poa/x/poa/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -27,8 +29,8 @@ import (
 // (docs/superpowers/specs/2026-10-02-v35-authority-and-undelegation-design.md §3, "authority
 // spec"). Every step logs and skips on missing state, except the writes that would leave the
 // chain without an upgrade path if skipped: the wasm upload-access write and the consensus
-// authority, gov deposit and staking max-entries writes fail the upgrade, as does a failure to
-// list the delegations to undelegate. The steps run in this order:
+// authority, POA admin, gov deposit, staking max-entries and commission-clamp writes fail the
+// upgrade, as does a failure to list the delegations to undelegate. The steps run in this order:
 //  1. RunMigrations.
 //  2. Turn off autopilot stakeibc and drop liquid stake / redeem stake from the ICA host allow-list.
 //  3. Restrict wasm code upload to gov, then move the deploy key's contract admins to gov.
@@ -39,10 +41,14 @@ import (
 //  8. Apply the haqq delegation delta table (after its ICQs are gone).
 //  9. Requeue the one failed LSM detokenization with its amount reduced by one.
 //  10. Set the consensus-params authority to the team multisig (authority spec §3).
-//  11. Close gov submission by raising both deposits above total supply.
-//  12. Raise staking max unbonding entries to 100.
-//  13. Drop delegate, redelegate, create validator and cancel unbonding from the ICA host allow-list.
-//  14. Undelegate every delegation in full, skipping and logging any single one that fails.
+//  11. Point the POA admin param at the same multisig, since its msg server honours the
+//     consensus authority too.
+//  12. Close gov submission by raising both deposits above total supply.
+//  13. Raise staking max unbonding entries to 100.
+//  14. Drop delegate, redelegate, create validator and cancel unbonding from the ICA host allow-list.
+//  15. Undelegate every delegation in full, skipping and logging any single one that fails.
+//  16. Clamp each validator's accumulated commission to its outstanding rewards, so the
+//     day-14 validator removals cannot underflow in the distribution hook.
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read
@@ -60,6 +66,8 @@ func CreateUpgradeHandler(
 	consensusParamsKeeper consensusparamkeeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	stakingKeeper stakingkeeper.Keeper,
+	poaKeeper *poakeeper.Keeper,
+	distrKeeper distrkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(goCtx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx := sdk.UnwrapSDKContext(goCtx)
@@ -107,6 +115,9 @@ func CreateUpgradeHandler(
 		if err := SetConsensusAuthority(ctx, consensusParamsKeeper); err != nil {
 			return vm, err
 		}
+		if err := SetPOAAdmin(ctx, poaKeeper); err != nil {
+			return vm, err
+		}
 		if err := CloseGovSubmission(ctx, govKeeper); err != nil {
 			return vm, err
 		}
@@ -117,6 +128,9 @@ func CreateUpgradeHandler(
 		// Close the ICA path that could re-lock STRD, then unbond everything (authority spec §3)
 		RemoveStakingFromICAHostAllowList(ctx, icaHostKeeper)
 		if err := UndelegateAllDelegations(ctx, stakingKeeper); err != nil {
+			return vm, err
+		}
+		if err := ClampValidatorCommission(ctx, stakingKeeper, distrKeeper); err != nil {
 			return vm, err
 		}
 

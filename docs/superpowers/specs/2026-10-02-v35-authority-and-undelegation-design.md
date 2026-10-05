@@ -24,7 +24,14 @@ the chain needs an upgrade path that does not go through governance. v35 does bo
   set. The x/upgrade msg server (`x/upgrade/keeper/msg_server.go:30,45`), x/gov
   `MsgUpdateParams`, x/consensus `MsgUpdateParams` and every other SDK module use it.
   Stride's own modules (stakeibc, icaoracle, icqoracle) compare the string directly and stay
-  gov-gated; nothing in the wind-down needs them.
+  gov-gated; nothing in the wind-down needs them. The POA module's admin messages
+  (`enterprise/poa/x/poa/keeper/msg_server.go:56,99,150`) also go through
+  `sdk.ValidateAuthority`, so the consensus authority replaces the POA admin multisig
+  (`stride1fduug6m38gyuqt3wcgc2kcgr9nnte0n7ssn27e`, a different 2-of-3 signer set) for
+  validator-set changes. The team chose to let the F5 multisig hold everything: upgrades,
+  the validator set, every module's params, wasm super-admin and community-pool spend. There
+  is no on-chain recovery if its keys are lost; the only path is a coordinated hard fork by
+  the POA validators.
 - `MsgSoftwareUpgrade` is signed by its `authority` field. A tx from anyone else fails
   signature verification (authority = multisig) or the authority check (authority = own
   address). x/gov refuses proposals whose inner messages are not signed by the gov account
@@ -61,6 +68,9 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    mainnet today), `ParamsStore.Set`. Returns the error: this step fails the upgrade,
    because skipping it would leave the chain with no upgrade path once stake is gone.
    `UpgradeAuthority` is a constant in `constants.go`.
+1b. **`SetPOAAdmin(ctx, poaKeeper) error`** — set the POA `Admin` param to
+   `UpgradeAuthority`, so state matches who can actually sign POA messages (§2). Returns
+   the error.
 2. **`CloseGovSubmission(ctx, govKeeper) error`** — set `MinDeposit` to
    `GovUnreachableDeposit` = 1e18 ustrd (total supply is ~3.78e13 ustrd) and
    `ExpeditedMinDeposit` to `GovUnreachableExpeditedDeposit` = 2e18 ustrd (gov params
@@ -89,7 +99,16 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    list the delegations fails the upgrade. In-flight unbondings and redelegations are
    untouched and complete on their own clocks.
 
-Handler doc comment and the ordered step list get entries 10–14.
+6. **`ClampValidatorCommission(ctx, stakingKeeper, distrKeeper) error`** — for every
+   validator, cap `ValidatorAccumulatedCommission` at its outstanding rewards per denom
+   (`DecCoins.Intersect`). The mass withdrawal in step 5 caps each delegator's rewards at
+   `outstanding`, not `outstanding − commission`, so rounding can leave outstanding a hair
+   below commission; when the EndBlocker removes the emptied bonded validators 14 days
+   later, distribution's `AfterValidatorRemoved` does `outstanding.Sub(commission)` and
+   panics on a negative amount with no recovery around it. The clamped dust stays in the
+   community pool. Returns the error.
+
+Handler doc comment and the ordered step list get entries 10–16.
 
 ## §4. Ante decorator
 
