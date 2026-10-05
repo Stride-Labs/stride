@@ -63,5 +63,26 @@ class CheckTransmuterPoolConstantsTest(unittest.TestCase):
         )
 
 
+class CorruptedAssetsCheckTest(unittest.TestCase):
+    NATIVE = "ibc/NATIVE"
+    ST_TOKEN = "ibc/STTOKEN"
+
+    def check(self, corrupted: list[str], funded: bool) -> bool:
+        _, ok = check_transmuter_pool.corrupted_assets_check(
+            corrupted=corrupted, native_denom=self.NATIVE, funded=funded
+        )
+        return ok
+
+    def test_before_funding_nothing_may_be_corrupted(self) -> None:
+        self.assertTrue(self.check(corrupted=[], funded=False))
+        self.assertFalse(self.check(corrupted=[self.NATIVE], funded=False))
+
+    def test_after_funding_exactly_the_native_token_is_corrupted(self) -> None:
+        self.assertTrue(self.check(corrupted=[self.NATIVE], funded=True))
+        self.assertFalse(self.check(corrupted=[], funded=True))
+        self.assertFalse(self.check(corrupted=[self.ST_TOKEN], funded=True))
+        self.assertFalse(self.check(corrupted=[self.NATIVE, self.ST_TOKEN], funded=True))
+
+
 if __name__ == "__main__":
     unittest.main()

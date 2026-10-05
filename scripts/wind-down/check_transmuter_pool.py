@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pre-funding checks for the wind-down transmuter pools on Osmosis.
+"""Checks for the wind-down transmuter pools on Osmosis, before and after funding.
 
 Everything the script needs is in the CONSTANTS block below: the vault (admin) and moderator
 addresses, and one entry per pool with its Stride host zone, Osmosis pool id, the redemption
@@ -10,11 +10,17 @@ plus the native token, and no limiters. Run it with no arguments after
 
     python3 scripts/wind-down/check_transmuter_pool.py
 
+Once a pool is funded and its native token is marked corrupted (the one-way mark, spec §8), run
+it with --funded: the corrupted set must then be exactly the native token rather than empty.
+
+    python3 scripts/wind-down/check_transmuter_pool.py --funded
+
 For each pool it reads the on-chain state and the matching host zone and checks the asset
 set, factor orientation, the encoded rate, roles, the absence of limiters, denom traces and
 overflow headroom, one line per check, unit-test style. Exit code is 1 when any check on any pool fails.
 """
 
+import argparse
 import dataclasses
 import enum
 import hashlib
@@ -292,7 +298,18 @@ def load_pool(osmosis_rest: str, pool_id: str) -> Pool:
 # --- Checks ---------------------------------------------------------------------------------
 
 
-def check_contract(report: Report, pool: Pool) -> None:
+def corrupted_assets_check(corrupted: list[str], native_denom: str, funded: bool) -> tuple[str, bool]:
+    """The check name and result for the pool's corrupted set.
+
+    Before funding nothing may be corrupted. After funding the moderator marks the native token
+    corrupted so the pool only moves stToken in and native out (spec §8), and nothing else.
+    """
+    if funded:
+        return "only the native token is marked corrupted (one-way pool)", corrupted == [native_denom]
+    return "no corrupted assets", not corrupted
+
+
+def check_contract(report: Report, pool: Pool, native_denom: str, funded: bool) -> None:
     report.section(f"Contract (pool {pool.pool_id}, {pool.contract})")
     report.check(
         name="code id is the transmuter",
@@ -315,11 +332,10 @@ def check_contract(report: Report, pool: Pool) -> None:
         detail=f"swap_fee={pool.swap_fee}",
     )
     report.check(name="pool is active", ok=pool.is_active)
-    report.check(
-        name="no corrupted assets",
-        ok=not pool.corrupted,
-        detail=", ".join(pool.corrupted),
+    corrupted_name, corrupted_ok = corrupted_assets_check(
+        corrupted=pool.corrupted, native_denom=native_denom, funded=funded
     )
+    report.check(name=corrupted_name, ok=corrupted_ok, detail=", ".join(pool.corrupted))
     report.check(
         name="alloyed denom belongs to this contract",
         ok=pool.alloyed_denom.startswith(f"factory/{pool.contract}/alloyed/"),
@@ -667,7 +683,7 @@ def check_liquidity_and_headroom(
 # --- Main -----------------------------------------------------------------------------------
 
 
-def check_pool(spec: PoolSpec, use_color: bool) -> Report:
+def check_pool(spec: PoolSpec, use_color: bool, funded: bool) -> Report:
     report = Report(use_color=use_color)
     zone = load_host_zone(stride_rest=STRIDE_REST_DEFAULT, chain_id=spec.chain_id)
     if spec.rate_at_creation:
@@ -682,7 +698,7 @@ def check_pool(spec: PoolSpec, use_color: bool) -> Report:
         f"\n=== Pool {pool.pool_id}: {zone.st_denom} ({route}) → {zone.host_denom}, host zone {zone.chain_id} ==="
     )
 
-    check_contract(report=report, pool=pool)
+    check_contract(report=report, pool=pool, native_denom=native_denom_on_osmosis(zone), funded=funded)
     check_roles(report=report, pool=pool, admin=ADMIN, moderator=MODERATOR)
     canonical, native, routes = check_factors(
         report=report, pool=pool, zone=zone, route_trace=spec.route_trace
@@ -718,11 +734,19 @@ def check_pool(spec: PoolSpec, use_color: bool) -> Report:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--funded",
+        action="store_true",
+        help="the pools are funded and one-way: expect exactly the native token marked corrupted",
+    )
+    funded = parser.parse_args().funded
+
     use_color = sys.stdout.isatty()
     failed_pools = [
         spec.pool_id
         for spec in POOLS
-        if check_pool(spec=spec, use_color=use_color).counts[Outcome.FAIL]
+        if check_pool(spec=spec, use_color=use_color, funded=funded).counts[Outcome.FAIL]
     ]
     print()
     if failed_pools:

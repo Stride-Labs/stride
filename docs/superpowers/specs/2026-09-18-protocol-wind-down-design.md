@@ -1236,7 +1236,9 @@ update is deleted (§6) and the slash callback's rate rewrite with it, so a slas
 day-0 refresh lowers the recorded delegation, not the rate, and the coverage check reports the
 difference.
 
-Coverage check, per stToken, run from a fresh Stride export before the pools are funded and
+Coverage check, per stToken, run from a fresh Stride export (`strided export --output-document
+<file>` on a stopped node or a copy of its data; on SDK 0.54 a bare `strided export` writes
+nothing to stdout) before the pools are funded and
 again before the halt: native tokens held on Osmosis for that denom ≥ Stride bank supply of
 the stToken × `HostZone.RedemptionRate`, and, per pool, each route pool holds exactly its
 channel's escrow balance × the rate while the canonical pool holds the remainder. Bank supply
