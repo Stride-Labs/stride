@@ -119,6 +119,12 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    panics on a negative amount with no recovery around it. The same hook runs inside step 5
    for already-unbonded validators, so the clamp runs both before and after the loop. The
    clamped dust stays in the community pool. Returns the error.
+   The handler clamps only fix commission as it stands at the upgrade block. A delegation the
+   loop skips can still withdraw rewards and undelegate afterwards, and that drift would panic
+   the EndBlocker when its validator is removed. So the app also wraps distribution's staking
+   hooks (`distrwrapper.Hooks`): `AfterValidatorRemoved` runs the same per-validator clamp
+   (`distrwrapper.ClampCommissionToOutstanding`) before the stock hook, on every removal path.
+   With the wrapper in place the in-loop removals no longer panic either.
 
 Handler doc comment and the ordered step list get entries 10–18.
 
