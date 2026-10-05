@@ -529,7 +529,7 @@
             },
             {
               "id": "day0-staketia-undelegate",
-              "text": "The staketia operator undelegates the entire multisig delegation on Celestia via authz, in one go (the queued records' amounts and everything else).",
+              "text": "The staketia operator undelegates the remaining multisig delegation on Celestia via authz, in one go (69.4B utia on 2026-10-05: the 87.43B behind records 1472-1488 was already undelegated on 2026-10-05 and completes 2026-10-19 22:45 UTC).",
               "ref": "§9 step 2"
             },
             {
@@ -775,7 +775,7 @@
     {
       "date": "2026-10-19",
       "until": "2026-10-20",
-      "title": "Haqq unbonding completes (7 days)",
+      "title": "Haqq unbonding completes (7 days) · staketia tranche 1 completes",
       "estimated": true,
       "note": "Haqq cut its unbonding to 7 days; Stride still records 21, so completion is earlier than the records say.",
       "avoid": [
@@ -858,6 +858,18 @@
               "zones": [
                 "haqq_11235-1"
               ]
+            }
+          ]
+        },
+        {
+          "label": "staketia records 1472-1488 (undelegated 2026-10-05, complete 2026-10-19 22:45 UTC)",
+          "steps": [
+            {
+              "id": "tia-tranche1-sweep",
+              "text": "Once the 8 unbonding entries complete (Funds tab → celestia → multisig node: unbonding 0, liquid +87.43B), the operator IBCs the unbonded balance via authz to the claim address (no memo) and confirm-sweep for records 1472, 1476, 1484 and 1488; the hour epoch pays those redeemers from the claim address.",
+              "ref": "§9 step 7",
+              "command": "strided tx staketia confirm-sweep <RECORD_ID> <CELESTIA_TX_HASH> --from <STAKETIA_OPERATOR_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443",
+              "expect": "code: 0 per record; the records go CLAIMABLE and, after the next hour epoch, CLAIMED; /Stride-Labs/stride/staketia/redemption_records shrinks by their redeemers. Record 1492 (accumulating) and the 69.4B remainder follow the day-0 undelegation and complete on 2026-10-26."
             }
           ]
         }
@@ -977,7 +989,7 @@
             },
             {
               "id": "tia-staketia-sweep",
-              "text": "The staketia operator IBCs the whole unbonded multisig balance via authz to the claim address (no memo; the grant forbids one) and MsgConfirmUnbondedTokenSweep for each open unbonding record; the hour epoch pays the redeemers from the claim address.",
+              "text": "The staketia operator IBCs the remaining unbonded multisig balance (the 69.4B undelegated on day 0, plus record 1492) via authz to the claim address (no memo; the grant forbids one) and confirm-sweep for each open record; the hour epoch pays the redeemers from the claim address. Records 1472-1488 were swept on 2026-10-19.",
               "ref": "§9 step 7",
               "command": "strided tx staketia confirm-sweep <RECORD_ID> <CELESTIA_TX_HASH> --from <STAKETIA_OPERATOR_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443",
               "expect": "One per open unbonding record after the multisig's IBC transfer lands on the claim address; code: 0 each. The hour epoch then pays the redeemers: /Stride-Labs/stride/staketia/redemption_records empties and the Funds tab's staketia checklist line turns ready."
