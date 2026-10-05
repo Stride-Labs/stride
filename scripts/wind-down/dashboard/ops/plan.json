@@ -121,6 +121,11 @@
               "ref": "§10"
             },
             {
+              "id": "pre-celestia-total-delegations",
+              "text": "Explain celestia's TotalDelegations before the upgrade: it exceeds the validator sum by 156.87B utia (the staketia stake it includes) while staketia's own remaining_delegated_balance is 69.59B; the 87B difference is part of celestia's frozen redemption rate and must be understood, not assumed (rehearsal open question).",
+              "ref": "docs/wind-down/rehearsal-findings.md"
+            },
+            {
               "id": "pre-injective-rate-limit",
               "text": "Decide the Injective-hop stATOM/stINJ handling: Osmosis's rate limiter rejects transfer/channel-89 denoms from Injective. File the bug with Osmosis, tell Injective holders to redeem through Stride before the upgrade, or plan the Injective -> Hub -> Osmosis route and its three-hop pool after the halt.",
               "ref": "§12"
@@ -582,8 +587,8 @@
                 "sommelier-3",
                 "ssc-1"
               ],
-              "command": "echo '[{\"address\": \"<LIVE_TEST_VALOPER>\", \"offset\": \"0\"}]' > /tmp/live-test-<CHAIN_ID>.json\nstrided tx stakeibc undelegate-from-validators <CHAIN_ID> /tmp/live-test-<CHAIN_ID>.json --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0 and the ICA acks (Channels tab: the zone's DELEGATION channel back to 0 pending acks; Validators tab: the validator's recorded delegation drops to 0 and its Δ in progress back to 0). A rejection before submission names the reason (a queued or retrying record, a validator with a change or slash query in progress, a deprecated zone): resolve it, do not force. An ack error leaves the delegation unchanged: look at the host tx log for the validator the host rejected."
+              "command": "echo '[{\"address\": \"<LIVE_TEST_VALOPER>\", \"offset\": \"0\"}]' > /tmp/live-test-<CHAIN_ID>.json\nstrided tx stakeibc undelegate-from-validators <CHAIN_ID> /tmp/live-test-<CHAIN_ID>.json --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas 12000000",
+              "expect": "Gas: about 9M is a fixed cost (the queued-record guard reads every epoch unbonding record), so set --gas explicitly; 12M covers a one-validator drain on every zone. code: 0 and the ICA acks (Channels tab: the zone's DELEGATION channel back to 0 pending acks; Validators tab: the validator's recorded delegation drops to 0 and its Δ in progress back to 0). A rejection before submission names the reason (a queued or retrying record, a validator with a change or slash query in progress, a deprecated zone): resolve it, do not force. An ack error leaves the delegation unchanged: look at the host tx log for the validator the host rejected."
             },
             {
               "id": "drain-rest",
@@ -602,8 +607,8 @@
                 "sommelier-3",
                 "ssc-1"
               ],
-              "command": "strided tx stakeibc undelegate-from-validators <CHAIN_ID> --all --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: recorded delegations at dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–08:00 UTC window."
+              "command": "strided tx stakeibc undelegate-from-validators <CHAIN_ID> --all --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas <GAS>",
+              "expect": "Gas from the mainnet-export measurement: cosmoshub-4 20.03M (use 25M), osmosis-1 11.83M and ssc-1 11.41M (use 15M), every other zone under 10.5M (use 13M). The Hub's 15 acks cost about 1.5M each, so a relayer packing them into one tx needs about 22M. code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: recorded delegations at dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–08:00 UTC window."
             },
             {
               "id": "drain-offset-calibrate",
@@ -688,7 +693,7 @@
             },
             {
               "id": "post-transfer-withdrawal-fee",
-              "text": "Per zone: MsgTransferFromIca WITHDRAWAL and FEE, including foreign denoms such as the dYdX USDC: the live test of the transfer tx on small amounts; the first arrival on Osmosis confirms the mapped channel end to end and the denom each zone lands as (Funds tab: ICA transfers list, vault stage). Resubmit if a transfer refunds after its 24h timeout.",
+              "text": "Per zone: MsgTransferFromIca WITHDRAWAL and FEE, including foreign denoms such as the dYdX USDC: the live test of the transfer tx on small amounts; the first arrival on Osmosis confirms the mapped channel end to end and the denom each zone lands as (Funds tab: ICA transfers list, vault stage). Resubmit if a transfer refunds after its 24h timeout. First confirm each ICA's channel is OPEN on the Channels tab: a closed one (an old timeout) rejects the tx with 'no active channel' and needs restore-interchain-account.",
               "ref": "§9 step 5",
               "zones": [
                 "celestia",
@@ -798,7 +803,7 @@
             },
             {
               "id": "haqq-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'. Also every ICA the transfers send from has an OPEN channel (Channels tab): a fee or withdrawal ICA whose packet timed out before the upgrade left its ordered channel closed, and transfer-from-ica is rejected with 'no active channel'; restore-interchain-account it first.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -831,16 +836,18 @@
                 "haqq_11235-1"
               ],
               "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
-              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
             },
             {
               "id": "haqq-done-fund-pools",
-              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check.",
+              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check. After the one-way mark, the pool check runs with --funded (it expects exactly the native token corrupted).",
               "ref": "§8 Funding, One-way pools",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "zones": [
                 "haqq_11235-1"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py --funded",
+              "expect": "RESULT: PASS with --funded (without it the corrupted-asset check fails by design once the native token is marked). On FAIL, the named check (funding amount, roles, corrupted set) must be fixed before announcing."
             },
             {
               "id": "haqq-done-announce",
@@ -889,7 +896,7 @@
             },
             {
               "id": "osmo-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'. Also every ICA the transfers send from has an OPEN channel (Channels tab): a fee or withdrawal ICA whose packet timed out before the upgrade left its ordered channel closed, and transfer-from-ica is rejected with 'no active channel'; restore-interchain-account it first.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -922,16 +929,18 @@
                 "osmosis-1"
               ],
               "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
-              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
             },
             {
               "id": "osmo-done-fund-pools",
-              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check.",
+              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check. After the one-way mark, the pool check runs with --funded (it expects exactly the native token corrupted).",
               "ref": "§8 Funding, One-way pools",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "zones": [
                 "osmosis-1"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py --funded",
+              "expect": "RESULT: PASS with --funded (without it the corrupted-asset check fails by design once the native token is marked). On FAIL, the named check (funding amount, roles, corrupted set) must be fixed before announcing."
             },
             {
               "id": "osmo-done-announce",
@@ -992,7 +1001,7 @@
             },
             {
               "id": "tia-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'. Also every ICA the transfers send from has an OPEN channel (Channels tab): a fee or withdrawal ICA whose packet timed out before the upgrade left its ordered channel closed, and transfer-from-ica is rejected with 'no active channel'; restore-interchain-account it first.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -1025,16 +1034,18 @@
                 "celestia"
               ],
               "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
-              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
             },
             {
               "id": "tia-done-fund-pools",
-              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check.",
+              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check. After the one-way mark, the pool check runs with --funded (it expects exactly the native token corrupted).",
               "ref": "§8 Funding, One-way pools",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "zones": [
                 "celestia"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py --funded",
+              "expect": "RESULT: PASS with --funded (without it the corrupted-asset check fails by design once the native token is marked). On FAIL, the named check (funding amount, roles, corrupted set) must be fixed before announcing."
             },
             {
               "id": "tia-done-announce",
@@ -1091,7 +1102,7 @@
             },
             {
               "id": "d21-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'. Also every ICA the transfers send from has an OPEN channel (Channels tab): a fee or withdrawal ICA whose packet timed out before the upgrade left its ordered channel closed, and transfer-from-ica is rejected with 'no active channel'; restore-interchain-account it first.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -1144,11 +1155,11 @@
                 "dydx-mainnet-1"
               ],
               "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
-              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
             },
             {
               "id": "d21-done-fund-pools",
-              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check.",
+              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check. After the one-way mark, the pool check runs with --funded (it expects exactly the native token corrupted).",
               "ref": "§8 Funding, One-way pools",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "zones": [
@@ -1158,7 +1169,9 @@
                 "phoenix-1",
                 "ssc-1",
                 "dydx-mainnet-1"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py --funded",
+              "expect": "RESULT: PASS with --funded (without it the corrupted-asset check fails by design once the native token is marked). On FAIL, the named check (funding amount, roles, corrupted set) must be fixed before announcing."
             },
             {
               "id": "d21-done-announce",
@@ -1211,7 +1224,7 @@
             },
             {
               "id": "d28-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'. Also every ICA the transfers send from has an OPEN channel (Channels tab): a fee or withdrawal ICA whose packet timed out before the upgrade left its ordered channel closed, and transfer-from-ica is rejected with 'no active channel'; restore-interchain-account it first.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -1248,17 +1261,19 @@
                 "sommelier-3"
               ],
               "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
-              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
             },
             {
               "id": "d28-done-fund-pools",
-              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check.",
+              "text": "Before funding, check each route pool for alloyed shares held outside the vault (a permissionless join would have minted some); then fund the stToken's pools: one join_pool with native tokens only per pool, each route pool exactly escrow_route x rate and the canonical pool the remainder; then mark_corrupted_assets [native] on every pool; rerun check_transmuter_pool.py and the coverage check. After the one-way mark, the pool check runs with --funded (it expects exactly the native token corrupted).",
               "ref": "§8 Funding, One-way pools",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "zones": [
                 "juno-1",
                 "sommelier-3"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py --funded",
+              "expect": "RESULT: PASS with --funded (without it the corrupted-asset check fails by design once the native token is marked). On FAIL, the named check (funding amount, roles, corrupted set) must be fixed before announcing."
             },
             {
               "id": "d28-done-announce",
@@ -1291,7 +1306,7 @@
               "text": "Fresh strided export; build the batches with scripts/wind-down/build_sweep_batches.py at the announced floor: every holder at or above it, every denom on the sweep list (eleven stTokens and ustrd to Osmosis, whitelisted vouchers back one hop).",
               "ref": "§9 step 8",
               "command": "python3 scripts/wind-down/build_sweep_batches.py --export export.json --prices prices.json --denoms stuatom,stuosmo,stutia,stinj,stadydx,staISLM,stujuno,stuband,stuluna,stusomm,stusaga,ustrd --floor-usd <FLOOR> --out-dir sweep-batches --as-of <BLOCK_TIME_OF_EXPORT> [--extra-denom ibc/...=<price>:<decimals>] [--batch-size 100]",
-              "expect": "RESULT: DONE with the holder count, batch-file count and USD total. Fill in the export (strided export at the chosen height), prices.json, the announced floor and --as-of (the block time at the export height, from strided q block <height>). Each file under sweep-batches/ is one tx for the next step. A non-zero exit names the input that is malformed."
+              "expect": "RESULT: DONE with the holder count, batch-file count and USD total. Fill in the export (strided export at the chosen height), prices.json, the announced floor and --as-of (the block time at the export height, from strided q block <height>). Each file under sweep-batches/ is one tx for the next step. A non-zero exit names the input that is malformed. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
             },
             {
               "id": "sweep-submit",
@@ -1376,8 +1391,8 @@
               "id": "halt-pools",
               "text": "Every pool, canonical and per route, created, funded, marked one-way, and passing scripts/wind-down/coverage_check.py against a fresh export. Publish the output.",
               "ref": "§9 halt checklist, §10",
-              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af\npython3 scripts/wind-down/check_transmuter_pool.py",
-              "expect": "Both RESULT: PASS against a fresh export; publish the coverage output. Any FAIL blocks the halt."
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af\npython3 scripts/wind-down/check_transmuter_pool.py --funded",
+              "expect": "Both RESULT: PASS against a fresh export; publish the coverage output. Any FAIL blocks the halt. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
             },
             {
               "id": "halt-route-deposits",
