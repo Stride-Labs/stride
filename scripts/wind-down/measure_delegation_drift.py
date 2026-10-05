@@ -18,15 +18,17 @@ from decimal import Decimal, getcontext
 
 getcontext().prec = 60
 
-STRIDE_REST = "https://stride-api.polkachu.com"
+STRIDE_REST = "https://stride-strd-api.polkachu.com"  # private Polkachu; public fallback stride-api.polkachu.com
 UA_HEADER = {"User-Agent": "curl/8.0"}
 
 # Stride chain_id -> (chain-registry directory name, decimals for human-readable column)
 ZONES = {
     "celestia": {"registry": "celestia", "decimals": 6},
     "comdex-1": {"registry": "comdex", "decimals": 6},
+    "cosmoshub-4": {"registry": "cosmoshub", "decimals": 6},
     "dydx-mainnet-1": {"registry": "dydx", "decimals": 18},
     "haqq_11235-1": {"registry": "haqq", "decimals": 18},
+    "injective-1": {"registry": "injective", "decimals": 18},
     "juno-1": {"registry": "juno", "decimals": 6},
     "laozi-mainnet": {"registry": "bandchain", "decimals": 6},
     "osmosis-1": {"registry": "osmosis", "decimals": 6},
@@ -35,7 +37,25 @@ ZONES = {
     "ssc-1": {"registry": "saga", "decimals": 6},
 }
 
+# Stride Labs' private Polkachu REST per zone, tried before anything else (haqq's returns 502 as of
+# 2026-09-30, so the public haqq-api is listed after it).
+POLKACHU_STRD_REST = {
+    "celestia": "https://celestia-strd-api.polkachu.com",
+    "comdex-1": "https://comdex-strd-api.polkachu.com",
+    "cosmoshub-4": "https://cosmos-strd-api.polkachu.com",
+    "dydx-mainnet-1": "https://dydx-strd-api.polkachu.com",
+    "haqq_11235-1": "https://haqq-strd-api.polkachu.com",
+    "injective-1": "https://injective-strd-api.polkachu.com",
+    "juno-1": "https://juno-strd-api.polkachu.com",
+    "laozi-mainnet": "https://band-strd-api.polkachu.com",
+    "osmosis-1": "https://osmosis-strd-api.polkachu.com",
+    "phoenix-1": "https://terra-strd-api.polkachu.com",
+    "sommelier-3": "https://sommelier-strd-api.polkachu.com",
+    "ssc-1": "https://saga-strd-api.polkachu.com",
+}
+
 EXTRA_ENDPOINTS = {
+    "haqq_11235-1": ["https://haqq-api.polkachu.com"],
     "celestia": ["https://celestia.rpc.uquad.org:443"],
     "sommelier-3": ["https://rest.cosmos.directory/sommelier"],
 }
@@ -158,7 +178,8 @@ def build_zone_data(
     delegation_ica_address = stride_zone["delegation_ica_address"]
     host_denom = stride_zone["host_denom"]
 
-    endpoints = list(EXTRA_ENDPOINTS.get(stride_chain_id, []))
+    endpoints = [POLKACHU_STRD_REST[stride_chain_id]] if stride_chain_id in POLKACHU_STRD_REST else []
+    endpoints += EXTRA_ENDPOINTS.get(stride_chain_id, [])
     try:
         endpoints += fetch_registry_rest_endpoints(registry_name)
     except Exception as exc:

@@ -31,8 +31,9 @@ MAX_ATTEMPTS = 6
 BACKOFF_SECONDS = 5
 HTTP_TOO_MANY_REQUESTS = 429
 TIMEOUT_SECONDS = 20
-STRIDE_API = "https://stride-api.polkachu.com"
-OSMOSIS_API = "https://osmosis-api.polkachu.com"
+# Stride Labs' private Polkachu endpoints (public fallbacks: stride-api / osmosis-api.polkachu.com)
+STRIDE_API = "https://stride-strd-api.polkachu.com"
+OSMOSIS_API = "https://osmosis-strd-api.polkachu.com"
 CHAIN_REGISTRY = "https://raw.githubusercontent.com/cosmos/chain-registry/master"
 OSMOSIS_CHAIN_ID = "osmosis-1"
 
@@ -41,7 +42,22 @@ HAQQ_GO = SCRIPT_DIR.parent / "haqq.go"
 WIND_DOWN_GO = SCRIPT_DIR.parent.parent.parent.parent / "x" / "stakeibc" / "types" / "wind_down.go"
 
 HAQQ_CHAIN_ID = "haqq_11235-1"
-HAQQ_APIS = ["https://haqq-rest.publicnode.com", "https://rest.cosmos.directory/haqq"]
+HAQQ_APIS = ["https://haqq-strd-api.polkachu.com", "https://haqq-api.polkachu.com", "https://haqq-rest.publicnode.com", "https://rest.cosmos.directory/haqq"]
+
+# Stride Labs' private Polkachu REST per host, tried before the chain-registry endpoints
+POLKACHU_STRD_REST = {
+    "celestia": "https://celestia-strd-api.polkachu.com",
+    "cosmoshub-4": "https://cosmos-strd-api.polkachu.com",
+    "dydx-mainnet-1": "https://dydx-strd-api.polkachu.com",
+    "haqq_11235-1": "https://haqq-strd-api.polkachu.com",
+    "injective-1": "https://injective-strd-api.polkachu.com",
+    "juno-1": "https://juno-strd-api.polkachu.com",
+    "osmosis-1": "https://osmosis-strd-api.polkachu.com",
+    "laozi-mainnet": "https://band-strd-api.polkachu.com",
+    "phoenix-1": "https://terra-strd-api.polkachu.com",
+    "sommelier-3": "https://sommelier-strd-api.polkachu.com",
+    "ssc-1": "https://saga-strd-api.polkachu.com",
+}
 
 # Stride chain id -> chain-registry directory name, for the hosts' REST endpoints
 REGISTRY_NAMES = {
@@ -252,7 +268,7 @@ def check_host_to_osmosis_map() -> None:
         if chain_id not in REGISTRY_NAMES:
             report(f"{chain_id} has a chain-registry name", False, "add it to REGISTRY_NAMES")
             continue
-        endpoints = registry_rest_endpoints(REGISTRY_NAMES[chain_id])
+        endpoints = [POLKACHU_STRD_REST[chain_id]] + registry_rest_endpoints(REGISTRY_NAMES[chain_id])
         for rest in endpoints:
             try:
                 state, counterparty = channel_counterparty_chain_id(rest=rest, channel_id=channel_id)

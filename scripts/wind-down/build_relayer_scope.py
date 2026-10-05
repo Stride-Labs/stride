@@ -30,8 +30,9 @@ import time
 import urllib.parse
 import urllib.request
 
-STRIDE_RPC = "https://stride-rpc.polkachu.com"
-OSMOSIS_RPC = "https://osmosis-rpc.polkachu.com"
+# Stride Labs' private Polkachu endpoints (public fallbacks: stride-rpc / osmosis-rpc.polkachu.com)
+STRIDE_RPC = "https://stride-strd-rpc.polkachu.com"
+OSMOSIS_RPC = "https://osmosis-strd-rpc.polkachu.com"
 USER_AGENT = "curl/8.0"
 
 FREE_PACKET_MAX_AGE_DAYS = 7.0

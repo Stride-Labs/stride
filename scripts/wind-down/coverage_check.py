@@ -35,7 +35,7 @@ Read-only; prints a table and exits 1 on any shortfall or invalid topology.
 
 Usage:
   python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json \
-      --vault osmo1... [--osmosis-rest https://osmosis-api.polkachu.com]
+      --vault osmo1... [--osmosis-rest https://osmosis-strd-api.polkachu.com]
 """
 
 import argparse
@@ -56,7 +56,8 @@ from typing import Callable
 
 import bech32_ref
 
-OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
+# Stride Labs' private Polkachu endpoint (public fallback: osmosis-api.polkachu.com)
+OSMOSIS_REST_DEFAULT = "https://osmosis-strd-api.polkachu.com"
 USER_AGENT = "curl/8.0"
 TIMEOUT_SECONDS = 30
 MAX_ATTEMPTS = 6

@@ -19,7 +19,7 @@ import time
 import urllib.error
 import urllib.request
 
-STRIDE_REST = "https://stride-api.polkachu.com"
+STRIDE_REST = "https://stride-strd-api.polkachu.com"  # private Polkachu; public fallback stride-api.polkachu.com
 COINGECKO = "https://api.coingecko.com/api/v3/simple/price"
 USER_AGENT = "curl/8.0"
 REPO = pathlib.Path(__file__).resolve().parents[2]

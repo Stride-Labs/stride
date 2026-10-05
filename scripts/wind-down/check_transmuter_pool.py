@@ -32,8 +32,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
-STRIDE_REST_DEFAULT = "https://stride-api.polkachu.com"
+# Stride Labs' private Polkachu endpoints (public fallbacks: osmosis-api / stride-api.polkachu.com)
+OSMOSIS_REST_DEFAULT = "https://osmosis-strd-api.polkachu.com"
+STRIDE_REST_DEFAULT = "https://stride-strd-api.polkachu.com"
 USER_AGENT = "curl/8.0"
 
 TRANSMUTER_CODE_ID = "996"
