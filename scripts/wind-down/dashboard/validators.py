@@ -273,19 +273,32 @@ def pick_live_test(rows: list[ValidatorRow], decimals: int) -> LiveTestPicks:
     if not funded:
         return LiveTestPicks(pick=None, runner_up=None, reason="no registered validator holds a whole token")
 
-    eligible = sorted(
+    clean = sorted(
         (row for row in funded if not row.in_progress and row.unbonding_entries == 0),
         key=lambda row: (row.recorded, row.address),
     )
-    if not eligible:
+    if clean:
+        candidates = [LiveTestCandidate(address=row.address, moniker=row.moniker, recorded=row.recorded) for row in clean[:2]]
+        return LiveTestPicks(pick=candidates[0], runner_up=candidates[1] if len(candidates) > 1 else None, reason=None)
+
+    # Once the day epoch has touched every validator, none is entry-free; a full drain still only adds one entry,
+    # so fall back to the smallest validator with room under the host's cap (the script does the same).
+    with_room = sorted(
+        (row for row in funded if not row.in_progress and row.unbonding_entries < MAX_UNBONDING_ENTRIES),
+        key=lambda row: (row.recorded, row.address),
+    )
+    if not with_room:
         return LiveTestPicks(
             pick=None,
             runner_up=None,
-            reason=f"all {len(funded)} funded validators have an unbonding entry in flight or a change in progress",
+            reason=f"all {len(funded)} funded validators are at the entry cap or have a change in progress",
         )
-
-    candidates = [LiveTestCandidate(address=row.address, moniker=row.moniker, recorded=row.recorded) for row in eligible[:2]]
-    return LiveTestPicks(pick=candidates[0], runner_up=candidates[1] if len(candidates) > 1 else None, reason=None)
+    candidates = [LiveTestCandidate(address=row.address, moniker=row.moniker, recorded=row.recorded) for row in with_room[:2]]
+    return LiveTestPicks(
+        pick=candidates[0],
+        runner_up=candidates[1] if len(candidates) > 1 else None,
+        reason=f"no entry-free validator; the pick has {with_room[0].unbonding_entries} of {MAX_UNBONDING_ENTRIES} entries in flight",
+    )
 
 
 # ---- zones

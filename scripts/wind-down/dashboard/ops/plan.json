@@ -42,7 +42,7 @@
             },
             {
               "id": "pre-channel-map",
-              "text": "Per zone: query the host's transfer channel to Osmosis, confirm its client's counterparty chain id is osmosis-1 and the channel is OPEN (celestia channel-2, cosmoshub-4 channel-141, dydx channel-3, haqq channel-2, injective channel-8, juno channel-0, band channel-83, terra channel-1, sommelier channel-0, saga channel-1).",
+              "text": "Per zone: Channels tab → Pre-flight checks: the host's channel to Osmosis is OPEN and its client's counterparty chain id is osmosis-1 (celestia channel-2, cosmoshub-4 channel-141, dydx channel-3, haqq channel-2, injective channel-8, juno channel-0, band channel-83, terra channel-1, sommelier channel-0, saga channel-1).",
               "ref": "§9 before-1",
               "zones": [
                 "celestia",
@@ -59,7 +59,7 @@
             },
             {
               "id": "pre-withdraw-address",
-              "text": "Per zone: the delegation ICA's withdraw address (REST /cosmos/distribution/v1beta1/delegators/{delegation ICA}/withdraw_address on the host) is the zone's withdrawal ICA; the epoch call that re-set it is deleted at the upgrade.",
+              "text": "Per zone: Channels tab → Pre-flight checks: the delegation ICA's withdraw address on the host is the zone's withdrawal ICA (the epoch call that re-set it is deleted at the upgrade).",
               "ref": "§9 checklist",
               "zones": [
                 "celestia",
@@ -77,7 +77,7 @@
             },
             {
               "id": "pre-allow-messages",
-              "text": "Per zone: the ICA host module's allow_messages (REST /ibc/apps/interchain_accounts/host/v1/params on the host) includes /ibc.applications.transfer.v1.MsgTransfer, and on osmosis-1 /cosmos.bank.v1beta1.MsgSend.",
+              "text": "Per zone: Channels tab → Pre-flight checks: the ICA host module's allow_messages includes /ibc.applications.transfer.v1.MsgTransfer (or *), and on osmosis-1 /cosmos.bank.v1beta1.MsgSend.",
               "ref": "§9 checklist",
               "zones": [
                 "celestia",
@@ -105,7 +105,7 @@
           "steps": [
             {
               "id": "pre-band-client",
-              "text": "Band governance recovers Band's expired light client of Stride (laozi-mainnet 07-tendermint-169 on connection-146; MsgRecoverClient with a fresh substitute client). Without it no ICA tx reaches Band and the zone cannot be unbonded.",
+              "text": "Band governance recovers Band's expired light client of Stride (laozi-mainnet 07-tendermint-169 on connection-146; MsgRecoverClient with a fresh substitute client). Without it no ICA tx reaches Band and the zone cannot be unbonded. Channels tab → Pre-flight checks: laozi-mainnet 'host client of Stride' goes from Expired to ok.",
               "ref": "§12"
             },
             {
@@ -213,7 +213,7 @@
           "steps": [
             {
               "id": "prop-drift",
-              "text": "Rerun the drift measurement at a recent height: scripts/wind-down/measure_delegation_drift.py (a haqq redemption unbonding would change the drift, so measure right before).",
+              "text": "Rerun the drift measurement at a recent height: scripts/wind-down/measure_delegation_drift.py (its drift.json feeds the delta table in the next step, so the script runs even though the Validators tab shows the same drift live). A haqq redemption unbonding would change the drift, so measure right before.",
               "ref": "§9 checklist, §9a"
             },
             {
@@ -228,7 +228,7 @@
             },
             {
               "id": "prop-accounting",
-              "text": "Full accounting check: for every validator on every in-scope zone recorded == on-chain, with any difference in the haqq delta table or explained (Validators tab: zero unexplained over).",
+              "text": "Full accounting check: Validators tab, all zones, delegation diff ≠ 0 filter: zero unexplained over-recorded validators on every zone (buffered rows are fine); every remaining haqq difference is in the delta table.",
               "ref": "§9 checklist",
               "zones": [
                 "celestia",
@@ -341,7 +341,7 @@
             },
             {
               "id": "vote-signing-runbook",
-              "text": "Signing runbook for the protocol admin (F5 multisig): update-delegation / calibrate-delegation, MsgUndelegateFromValidators (live-test validator per zone from §9b, rerun scripts/wind-down/pick_live_test_validators.py after the day-0 refresh), MsgTransferFromIca, MsgTransferStaketiaClaimBalance; the sweep operator for MsgSweepTokensOffStride.",
+              "text": "Signing runbook for the protocol admin (F5 multisig): update-delegation / calibrate-delegation, MsgUndelegateFromValidators (the live-test validator per zone is marked 'live test' on the Validators tab, recomputed live from §9b's rule), MsgTransferFromIca, MsgTransferStaketiaClaimBalance; the sweep operator for MsgSweepTokensOffStride.",
               "ref": "§7, §9b"
             },
             {
@@ -366,7 +366,7 @@
           "steps": [
             {
               "id": "eve-channels",
-              "text": "Channels tab: every in-scope ICA channel OPEN (haqq's delegation and withdrawal channels are the known closed ones), no pending packets, every client live; the Band client recovered.",
+              "text": "Channels tab: every in-scope ICA channel OPEN (haqq's delegation and withdrawal channels are the known closed ones), no pending packets, every client live; Pre-flight checks all ok, including Band's host client of Stride.",
               "ref": "§9 step 4"
             },
             {
@@ -453,7 +453,7 @@
             },
             {
               "id": "haqq-1d",
-              "text": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION (hours across haqq's slow blocks). Verify: new delegation channel OPEN on both ends, HostZone.DelegationIcaAddress unchanged, every haqq validator at DelegationChangesInProgress = 0, the queued records still in UNBONDING_QUEUE.",
+              "text": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION (hours across haqq's slow blocks). Verify: Channels tab shows the new delegation channel OPEN on both ends; HostZone.DelegationIcaAddress unchanged; Validators tab → haqq: every validator at Δ in progress 0; Funds tab → haqq Records column still shows the 2 queued records.",
               "ref": "§9 step 1d"
             },
             {
@@ -463,12 +463,12 @@
             },
             {
               "id": "haqq-1e",
-              "text": "Prove an ICQ round trip: update-delegation for one haqq validator; wait for both the rate callback and the delegator-shares callback on Stride. If the second keeps timing out, fix the relayer (frequent client updates toward Stride) before 1f.",
+              "text": "Prove an ICQ round trip: update-delegation for one haqq validator; Validators tab → haqq: its 'slash query' pill turns on, then off, and its rate diff goes to 0. If the second callback keeps timing out, fix the relayer (frequent client updates toward Stride) before 1f.",
               "ref": "§9 step 1e"
             },
             {
               "id": "haqq-1f",
-              "text": "Day-0 refresh on every haqq validator (update-delegation), then the drift measurement; require zero over-recorded haqq validators (Validators tab: haqq 0 over).",
+              "text": "Day-0 refresh on every haqq validator (update-delegation); Validators tab → haqq: zero over-recorded, no slash query left in progress.",
               "ref": "§9 step 1f, §9a"
             }
           ]
@@ -478,7 +478,7 @@
           "steps": [
             {
               "id": "day0-refresh",
-              "text": "Per zone: update-delegation for every validator, wait for the callbacks (a moved rate books the slash on the recorded delegation; the rate no longer moves); calibrate-delegation for a validator whose rate is unchanged but whose balance is off; rerun the drift measurement; require zero over-recorded (Validators tab: 0 over).",
+              "text": "Per zone: update-delegation for every validator, wait for the callbacks (a moved rate books the slash on the recorded delegation; the rate no longer moves); calibrate-delegation for a validator whose rate is unchanged but whose balance is off; Validators tab: zero over-recorded on the zone (buffered rows are fine), no slash query in progress.",
               "ref": "§9 step 2",
               "zones": [
                 "celestia",
@@ -495,7 +495,7 @@
             },
             {
               "id": "day0-live-test-pick",
-              "text": "Rerun scripts/wind-down/pick_live_test_validators.py after the refresh for tonight's live-test validators.",
+              "text": "Read tonight's live-test validator per zone from the Validators tab ('live test' pill; it is recomputed from §9b's rule after the refresh) and put it in the runbook.",
               "ref": "§9b"
             },
             {
@@ -515,7 +515,7 @@
           "steps": [
             {
               "id": "day0-epoch-submits",
-              "text": "The day epoch submits the queued redemptions on every zone (1500 is divisible by every unbonding frequency) and flags their validators; wait for the acks. A submission that fails (a slash between the refresh and the epoch) goes to UNBONDING_RETRY_QUEUE and is retried at the zone's next unbonding epoch; that zone's drain waits.",
+              "text": "The day epoch submits the queued redemptions on every zone (1500 is divisible by every unbonding frequency) and flags their validators; wait for the acks (Channels tab: delegation channels back to 0 pending; Validators tab: Δ in progress back to 0). Funds tab → Records: a record that stays in UNBONDING_RETRY_QUEUE failed (a slash between the refresh and the epoch) and is retried at the zone's next unbonding epoch; that zone's drain waits.",
               "ref": "§9 step 3",
               "zones": [
                 "celestia",
@@ -543,7 +543,7 @@
           "steps": [
             {
               "id": "drain-live-test",
-              "text": "Per zone: MsgUndelegateFromValidators for the single live-test validator (full drain), wait for the ack and the callback (the recorded delegation drops to zero, no stTokens burned). The tx refuses the zone while any record is queued or retrying.",
+              "text": "Per zone: MsgUndelegateFromValidators for the single live-test validator (full drain); wait for the ack and the callback (Validators tab: its recorded delegation drops to zero; Funds tab: its bar moves to unbonding). The tx refuses the zone while any record is queued or retrying (Funds tab → Records).",
               "ref": "§9 step 4, §9b, §7",
               "zones": [
                 "celestia",
@@ -638,7 +638,7 @@
           "steps": [
             {
               "id": "post-drain-verified",
-              "text": "Per zone: every drain batch acked, no validator with DelegationChangesInProgress, recorded delegations at dust (Validators tab), TotalDelegations at dust except celestia's multisig portion; the Funds tab shows the backing in Unbonding.",
+              "text": "Per zone: every drain batch acked (Channels tab: no pending packets on the delegation channel), no validator with Δ in progress (Validators tab), recorded delegations at dust, TotalDelegations at dust except celestia's multisig portion; Funds tab shows the backing in Unbonding.",
               "ref": "§9 step 4",
               "zones": [
                 "celestia",
@@ -760,7 +760,7 @@
             },
             {
               "id": "haqq-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE, no user redemption record, no claim ICA in flight.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -785,7 +785,7 @@
             },
             {
               "id": "haqq-done-coverage",
-              "text": "Run scripts/wind-down/coverage_check.py for the stToken from a fresh export: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
+              "text": "Funds tab → coverage pill reaches 100% for the zone (quick view); then run scripts/wind-down/coverage_check.py for the stToken from a fresh export, which also checks each route pool exactly: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
               "ref": "§10",
               "zones": [
                 "haqq_11235-1"
@@ -845,7 +845,7 @@
             },
             {
               "id": "osmo-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE, no user redemption record, no claim ICA in flight.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -870,7 +870,7 @@
             },
             {
               "id": "osmo-done-coverage",
-              "text": "Run scripts/wind-down/coverage_check.py for the stToken from a fresh export: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
+              "text": "Funds tab → coverage pill reaches 100% for the zone (quick view); then run scripts/wind-down/coverage_check.py for the stToken from a fresh export, which also checks each route pool exactly: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
               "ref": "§10",
               "zones": [
                 "osmosis-1"
@@ -921,7 +921,7 @@
             },
             {
               "id": "tia-staketia-paid",
-              "text": "Confirm staketia has no redemption record left (REST /Stride-Labs/stride/staketia/redemption_records) and every unbonding record is CLAIMED.",
+              "text": "Funds tab → celestia → Transfer checklist: 'staketia claim balance ready' (no staketia redemption record left, every unbonding record CLAIMED).",
               "ref": "§9 transfer checklist"
             },
             {
@@ -936,7 +936,7 @@
             },
             {
               "id": "tia-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE, no user redemption record, no claim ICA in flight.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -961,7 +961,7 @@
             },
             {
               "id": "tia-done-coverage",
-              "text": "Run scripts/wind-down/coverage_check.py for the stToken from a fresh export: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
+              "text": "Funds tab → coverage pill reaches 100% for the zone (quick view); then run scripts/wind-down/coverage_check.py for the stToken from a fresh export, which also checks each route pool exactly: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
               "ref": "§10",
               "zones": [
                 "celestia"
@@ -1029,7 +1029,7 @@
             },
             {
               "id": "d21-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE, no user redemption record, no claim ICA in flight.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -1069,7 +1069,7 @@
             },
             {
               "id": "d21-done-coverage",
-              "text": "Run scripts/wind-down/coverage_check.py for the stToken from a fresh export: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
+              "text": "Funds tab → coverage pill reaches 100% for the zone (quick view); then run scripts/wind-down/coverage_check.py for the stToken from a fresh export, which also checks each route pool exactly: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
               "ref": "§10",
               "zones": [
                 "cosmoshub-4",
@@ -1143,7 +1143,7 @@
             },
             {
               "id": "d28-done-transfer-checklist",
-              "text": "Transfer checklist for the zone: no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE, no user redemption record, no claim ICA in flight.",
+              "text": "Transfer checklist for the zone: Funds tab → Transfer checklist strip: DELEGATION ready (no HostZoneUnbonding record with a non-zero amount outside CLAIMABLE) and REDEMPTION ready (no user redemption record, no claim pending); for celestia also 'staketia claim balance ready'.",
               "ref": "§9 transfer checklist",
               "detail": "Checklist before signing (the tx checks none of it, §9): DELEGATION: no HostZoneUnbonding record of the zone with a non-zero amount in UNBONDING_QUEUE, UNBONDING_IN_PROGRESS, UNBONDING_RETRY_QUEUE, EXIT_TRANSFER_QUEUE or EXIT_TRANSFER_IN_PROGRESS (REST /Stride-Labs/stride/records/epoch_unbonding_record filtered on the zone). REDEMPTION: no user redemption record left for the zone and no claim pending (REST /Stride-Labs/stride/records/user_redemption_record); a record that cannot be claimed is settled by hand first. WITHDRAWAL and FEE: nothing to confirm. A transfer sent early is recoverable (the vault sends it back to the ICA) but stops every redeemer on the zone until then.",
               "zones": [
@@ -1171,7 +1171,7 @@
             },
             {
               "id": "d28-done-coverage",
-              "text": "Run scripts/wind-down/coverage_check.py for the stToken from a fresh export: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
+              "text": "Funds tab → coverage pill reaches 100% for the zone (quick view); then run scripts/wind-down/coverage_check.py for the stToken from a fresh export, which also checks each route pool exactly: native on Osmosis >= bank supply x frozen rate, and each route pool's share = its channel's escrow x rate. Publish the output (the check is run twice and published).",
               "ref": "§10",
               "zones": [
                 "juno-1",
@@ -1257,12 +1257,12 @@
           "steps": [
             {
               "id": "halt-records",
-              "text": "Zero stakeibc user redemption records; zero HostZoneUnbonding records outside CLAIMABLE with a non-zero amount; no claim ICA in flight. Staketia: zero unbonding records outside CLAIMED, zero redemption records, claim address drained.",
+              "text": "Funds tab → every zone's Transfer checklist ready and Records column at 0 / 0: zero stakeibc user redemption records, zero HostZoneUnbonding records outside CLAIMABLE with a non-zero amount, no claim pending; celestia's staketia line ready (zero unbonding records outside CLAIMED, zero redemption records) and the claim address drained (accounts table).",
               "ref": "§9 halt checklist"
             },
             {
               "id": "halt-delegations",
-              "text": "No undelegate batch in flight (no validator with DelegationChangesInProgress) and TotalDelegations at dust on every zone except celestia's multisig portion.",
+              "text": "Validators tab: no validator with Δ in progress, recorded at dust on every zone; Funds tab: TotalDelegations at dust except celestia's multisig portion.",
               "ref": "§9 halt checklist",
               "zones": [
                 "celestia",
@@ -1313,7 +1313,7 @@
             },
             {
               "id": "halt-channels",
-              "text": "Every channel used in the ops window checked and cleared in both directions: no outstanding receives or acknowledgements, including inbound transfers to Stride (Channels tab: nothing pending).",
+              "text": "Channels tab: every channel used in the ops window shows 0 pending packets and 0 pending acks in both directions, including inbound transfers to Stride; nothing stuck.",
               "ref": "§9 halt checklist, step 9"
             },
             {

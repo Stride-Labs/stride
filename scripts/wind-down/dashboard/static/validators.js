@@ -113,7 +113,8 @@ function zoneSummary(zone) {
 function liveTestText(zone) {
   const pick = zone.live_test_pick;
   if (!pick) return `n/a (${zone.live_test_reason})`;
-  return `${pick.moniker} (${formatAmount(pick.recorded, zone.decimals, 6)} ${zone.symbol})`;
+  const caveat = zone.live_test_reason ? ` · ${zone.live_test_reason}` : '';
+  return `${pick.moniker} (${formatAmount(pick.recorded, zone.decimals, 6)} ${zone.symbol})${caveat}`;
 }
 
 function zoneTiles(zone) {

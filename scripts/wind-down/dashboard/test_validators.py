@@ -318,13 +318,31 @@ class LiveTestPickTest(unittest.TestCase):
         self.assertEqual((picks.pick, picks.runner_up), (None, None))
         self.assertEqual(picks.reason, "unbonding entries could not be read")
 
-    def test_no_pick_with_a_reason_when_nothing_qualifies(self) -> None:
-        picks = self.pick([stride_validator(address=OPERATOR_A, delegation=2 * WHOLE)], unbonding_entries={OPERATOR_A: 2})
+    def test_falls_back_to_the_smallest_validator_with_room_under_the_entry_cap(self) -> None:
+        picks = self.pick(
+            [
+                stride_validator(address=OPERATOR_A, delegation=2 * WHOLE),
+                stride_validator(address=OPERATOR_B, delegation=3 * WHOLE),
+                stride_validator(address=OPERATOR_C, delegation=1 * WHOLE),
+            ],
+            unbonding_entries={OPERATOR_A: 2, OPERATOR_B: 1, OPERATOR_C: validators.MAX_UNBONDING_ENTRIES},
+        )
+
+        # C is smallest but at the cap, so A (2 entries) is the pick and B the runner-up, with the reason attached.
+        self.assertEqual((picks.pick.address, picks.runner_up.address), (OPERATOR_A, OPERATOR_B))
+        self.assertEqual(picks.reason, "no entry-free validator; the pick has 2 of 7 entries in flight")
+
+    def test_no_pick_with_a_reason_when_every_validator_is_at_the_cap_or_in_progress(self) -> None:
+        picks = self.pick(
+            [
+                stride_validator(address=OPERATOR_A, delegation=2 * WHOLE),
+                stride_validator(address=OPERATOR_B, delegation=2 * WHOLE, delegation_changes_in_progress=1),
+            ],
+            unbonding_entries={OPERATOR_A: validators.MAX_UNBONDING_ENTRIES, OPERATOR_B: 0},
+        )
 
         self.assertEqual((picks.pick, picks.runner_up), (None, None))
-        self.assertEqual(
-            picks.reason, "all 1 funded validators have an unbonding entry in flight or a change in progress"
-        )
+        self.assertEqual(picks.reason, "all 2 funded validators are at the entry cap or have a change in progress")
 
     def test_no_pick_with_a_reason_when_no_validator_holds_a_whole_token(self) -> None:
         picks = self.pick([stride_validator(address=OPERATOR_A, delegation=WHOLE - 1)], unbonding_entries={})
