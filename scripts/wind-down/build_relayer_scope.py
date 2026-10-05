@@ -26,6 +26,7 @@ import datetime
 import json
 import pathlib
 import re
+import sys
 import time
 import urllib.parse
 import urllib.request
@@ -111,6 +112,15 @@ def main() -> None:
     splice_section(doc=LOCATIONS_DOC, section=render(chains))
     update_relayer_map(phases=phases, chains=chains)
     print(f"updated {LOCATIONS_DOC.relative_to(REPO)} and {RELAYER_MAP.relative_to(REPO)} for {len(chains)} chains")
+    print(render_result(chain_count=len(chains)))
+
+
+def render_result(chain_count: int) -> str:
+    """The one-line verdict an operator reads last."""
+    return (
+        f"RESULT: DONE — docs/wind-down/sttoken-locations.md and relayer-map.html updated for {chain_count} chains; "
+        "review the 'Relayer scope per chain' table"
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -429,5 +439,16 @@ def splice_section(doc: pathlib.Path, section: str) -> None:
     doc.write_text(text[:anchor] + section + "\n" + text[anchor:])
 
 
+def run() -> None:
+    try:
+        main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    main()
+    run()

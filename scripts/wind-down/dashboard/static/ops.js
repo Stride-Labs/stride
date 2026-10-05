@@ -194,6 +194,10 @@ function stepHtml(step) {
     ? `<details class="ops-detail" data-detail="${escapeHtml(step.id)}" ${detailsOpen.has(step.id) ? 'open' : ''}>
         <summary class="muted">details</summary><div class="note">${escapeHtml(step.detail)}</div></details>`
     : '';
+  const command = step.command
+    ? `<pre class="ops-command mono copy" data-copy="${escapeHtml(step.command)}" title="click to copy">${escapeHtml(step.command)}</pre>`
+    : '';
+  const expect = step.expect ? `<div class="muted ops-expect">expect: ${escapeHtml(step.expect)}</div>` : '';
   const checkbox = zones.length
     ? `<input type="checkbox" disabled ${stepDone(step) ? 'checked' : ''} title="done when every zone is">`
     : `<input type="checkbox" data-id="${escapeHtml(step.id)}" ${isDone(step.id) ? 'checked' : ''}>`;
@@ -203,7 +207,7 @@ function stepHtml(step) {
 
   return `<li class="ops-step ${stepDone(step) ? 'done' : ''}">
     <div class="ops-row"><label>${checkbox} <span class="ops-text">${escapeHtml(step.text)}</span></label>
-      ${tag} ${ref} ${zones.length ? '' : tickedBy(step.id)}</div>${detail}${zoneRows}</li>`;
+      ${tag} ${ref} ${zones.length ? '' : tickedBy(step.id)}</div>${command}${expect}${detail}${zoneRows}</li>`;
 }
 
 function zoneHtml(id, zone) {

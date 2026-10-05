@@ -28,6 +28,12 @@ SAMPLE_PLAN: dict[str, Any] = {
                     "steps": [
                         {"id": "close-channel", "text": "Close the channel", "zones": ["celestia", "cosmoshub-4"]},
                         {"id": "verify", "text": "Verify", "ref": "§9", "conditional": "if slipped"},
+                        {
+                            "id": "drift",
+                            "text": "Measure drift",
+                            "command": "python3 scripts/wind-down/measure_delegation_drift.py\npython3 scripts/wind-down/gen_delta_table.py",
+                            "expect": "RESULT: PASS; on FAIL refresh the delegations",
+                        },
                     ],
                 }
             ],
@@ -67,12 +73,27 @@ class RealPlanTest(unittest.TestCase):
                     self.assertTrue(step["id"], step)
                     self.assertTrue(step["text"], step)
 
+    def test_command_and_expect_are_optional_strings(self) -> None:
+        for day in self.plan["days"]:
+            for window in day["windows"]:
+                for step in window["steps"]:
+                    for field in ("command", "expect"):
+                        if field in step:
+                            self.assertIsInstance(step[field], str, step["id"])
+                            self.assertTrue(step[field].strip(), step["id"])
+
+    def test_a_step_with_command_and_expect_is_tickable_like_any_other(self) -> None:
+        step = SAMPLE_PLAN["days"][0]["windows"][0]["steps"][2]
+
+        self.assertIn("\n", step["command"])
+        self.assertIn(step["id"], ops.step_ids(plan=SAMPLE_PLAN))
+
 
 class StepIdsTest(unittest.TestCase):
     def test_zone_steps_expand_after_their_parent(self) -> None:
         self.assertEqual(
             ops.step_ids(plan=SAMPLE_PLAN),
-            ["close-channel", "close-channel:celestia", "close-channel:cosmoshub-4", "verify", "later"],
+            ["close-channel", "close-channel:celestia", "close-channel:cosmoshub-4", "verify", "drift", "later"],
         )
 
     def test_today_is_a_utc_iso_date(self) -> None:

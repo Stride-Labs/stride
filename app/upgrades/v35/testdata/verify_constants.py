@@ -15,6 +15,7 @@ Stdlib-only. Reads the Go files relative to its own location.
 Usage: python3 app/upgrades/v35/testdata/verify_constants.py
 """
 
+import argparse
 import json
 import pathlib
 import re
@@ -90,6 +91,7 @@ SWEEP_CHANNEL_CHAIN_IDS = {
 # match passes, anything larger fails
 HAQQ_DELTA_DUST_TOLERANCE = 10
 
+checked: list[str] = []
 failures: list[str] = []
 warnings: list[str] = []
 
@@ -105,6 +107,7 @@ def report(name: str, ok: bool, detail: str = "") -> None:
     status = "PASS" if ok else "FAIL"
     suffix = f" -- {detail}" if detail else ""
     print(f"[{status}] {name}{suffix}")
+    checked.append(name)
     if not ok:
         failures.append(name)
 
@@ -326,6 +329,7 @@ def check_operator_addresses_have_signed() -> None:
 
 
 def main() -> int:
+    parse_args()
     print("== operator addresses ==")
     check_operator_addresses_have_signed()
     print("== haqq delegation delta table ==")
@@ -339,10 +343,34 @@ def main() -> int:
         print(f"\n{len(warnings)} WARN (haqq dust within {HAQQ_DELTA_DUST_TOLERANCE} base units): {warnings}")
     if failures:
         print(f"\n{len(failures)} check(s) FAILED: {failures}")
+    else:
+        print("\nall checks passed" + (" (with warnings)" if warnings else ""))
+    print(render_result(total=len(checked), failed=failures, warning_count=len(warnings)))
+    return 1 if failures else 0
+
+
+def render_result(total: int, failed: list[str], warning_count: int) -> str:
+    """The one-line verdict an operator reads last."""
+    if failed:
+        return f"RESULT: FAIL — {len(failed)} check(s) failed: {failed}; see the [FAIL] lines above"
+    return f"RESULT: PASS — all {total} checks passed ({warning_count} warnings)"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    return parser.parse_args()
+
+
+def run() -> int:
+    try:
+        return main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
         return 1
-    print("\nall checks passed" + (" (with warnings)" if warnings else ""))
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())

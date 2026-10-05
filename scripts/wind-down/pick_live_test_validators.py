@@ -7,14 +7,18 @@ in flight from the delegation ICA: a full drain of it exercises the real path, c
 if something is wrong, and spends one unbonding-entry slot on a validator that needs nothing
 further. Writes the table into the spec's §9b, between the live-test-validators markers.
 
-    python3 scripts/wind-down/pick_live_test_validators.py
+    python3 scripts/wind-down/pick_live_test_validators.py [--dry-run]
+
+--dry-run prints the table instead of writing it into the spec.
 """
 
+import argparse
 import dataclasses
 import datetime
 import json
 import pathlib
 import re
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -60,11 +64,35 @@ class Candidate:
 
 
 def main() -> None:
+    args = parse_args()
     prices, price_source = load_prices()
     host_zones = get(f"{STRIDE_REST}/Stride-Labs/stride/stakeibc/host_zone")["host_zone"]
     candidates = [pick(zone, prices) for zone in host_zones if zone["chain_id"] in ZONES]
-    splice(render(candidates, price_source))
+    section = render(candidates, price_source)
+    if args.dry_run:
+        print(section)
+        print(render_result(zone_count=len(candidates), dry_run=True))
+        return
+
+    splice(section)
     print(f"updated {SPEC.relative_to(REPO)} §9b")
+    print(render_result(zone_count=len(candidates), dry_run=False))
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--dry-run", action="store_true", help="print the table without writing the spec")
+    return parser.parse_args()
+
+
+def render_result(zone_count: int, dry_run: bool) -> str:
+    """The one-line verdict an operator reads last."""
+    if dry_run:
+        return f"RESULT: DONE — picks for {zone_count} zones printed above (dry run, spec not written)"
+    return (
+        f"RESULT: DONE — picks for {zone_count} zones written to the spec §9b; "
+        "the dashboard's Validators tab shows the same picks live"
+    )
 
 
 def load_prices() -> tuple[dict[str, float], str]:
@@ -166,5 +194,16 @@ def splice(section: str) -> None:
     SPEC.write_text(text[:start] + section + text[end:])
 
 
+def run() -> None:
+    try:
+        main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    main()
+    run()

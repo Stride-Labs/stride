@@ -700,5 +700,17 @@ class ApprovedRoutePolicyTest(unittest.TestCase):
         self.assertTrue(all("channel-307" not in routes for routes in routes_by_token.values()))
 
 
+class ResultLineTest(unittest.TestCase):
+    def test_pass_line(self) -> None:
+        self.assertEqual("RESULT: PASS — every stToken is covered", coverage_check.render_result(uncovered=[]))
+
+    def test_fail_line_names_the_uncovered_tokens_and_the_next_step(self) -> None:
+        self.assertEqual(
+            "RESULT: FAIL — 2 stToken(s) not covered: ['stuatom', 'stutia']; "
+            "do not fund those pools until the shortfall is resolved",
+            coverage_check.render_result(uncovered=["stuatom", "stutia"]),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

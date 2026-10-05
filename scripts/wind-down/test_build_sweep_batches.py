@@ -321,5 +321,14 @@ class BuildSweepBatchesTest(unittest.TestCase):
         )
 
 
+class ResultLineTest(unittest.TestCase):
+    def test_done_line_says_how_to_submit(self) -> None:
+        self.assertEqual(
+            "RESULT: DONE — 250 holders in 3 batch files under sweep-batches; submit each with "
+            "strided tx stakeibc sweep-tokens-off-stride <denoms> <file> from the sweep operator",
+            build_sweep_batches.render_result(holders=250, batch_files=3, out_dir=pathlib.Path("sweep-batches")),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

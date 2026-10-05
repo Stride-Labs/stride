@@ -37,9 +37,11 @@ def entry(address: str, delta: int, recorded: int) -> gen_delta_table.DeltaEntry
 
 
 def run_main(args: list[str], stdout: io.StringIO) -> None:
-    """Run the CLI, printing into stdout; a SystemExit propagates to the caller."""
+    """Run the CLI, printing into stdout; a SystemExit propagates to the caller (also for a nonzero return)."""
     with mock.patch.object(sys, "argv", ["gen_delta_table.py", *args]), contextlib.redirect_stdout(stdout):
-        gen_delta_table.main()
+        status = gen_delta_table.main()
+    if status:
+        raise SystemExit(status)
 
 
 class GenDeltaTableTest(unittest.TestCase):
@@ -216,6 +218,53 @@ class MainTest(unittest.TestCase):
 
         self.assertIn("haqqvaloper1small: drift recorded 7, host zone tracked 6", raised.exception.code)
         self.assertEqual("", stdout.getvalue())
+
+    def go_file(self, big_delta: int) -> pathlib.Path:
+        text = (
+            "// Generated long ago\n"
+            "var HaqqDelegationDeltas = []DelegationDelta{\n"
+            f'\t{{Name: "old", Address: "haqqvaloper1big", Delta: mustInt("{big_delta}")}},\n'
+            '\t{Name: "x",   Address: "haqqvaloper1small", Delta: mustInt("5")},\n'
+            "}\n\n"
+            "var HaqqExpectedTrackedDelegations = map[string]sdkmath.Int{\n"
+            '\t"haqqvaloper1big": mustInt("900"),\n'
+            '\t"haqqvaloper1small":   mustInt("7"),\n'
+            "}\n"
+        )
+        path = pathlib.Path(tempfile.mkdtemp()) / "haqq.go"
+        path.write_text(text)
+        return path
+
+    def test_check_passes_when_the_file_already_holds_the_generated_tables(self) -> None:
+        stdout = io.StringIO()
+        check_path = self.go_file(big_delta=-853)
+
+        run_main(args=[str(self.drift_path()), CHAIN_ID, "--check", str(check_path)], stdout=stdout)
+
+        self.assertEqual(
+            f"RESULT: PASS — {check_path} already matches the measured drift (2 deltas)",
+            stdout.getvalue().splitlines()[-1],
+        )
+
+    def test_check_fails_when_the_file_is_stale(self) -> None:
+        stdout = io.StringIO()
+        check_path = self.go_file(big_delta=-800)
+
+        with self.assertRaises(SystemExit) as raised:
+            run_main(args=[str(self.drift_path()), CHAIN_ID, "--check", str(check_path)], stdout=stdout)
+
+        self.assertEqual(1, raised.exception.code)
+        last_line = stdout.getvalue().splitlines()[-1]
+        self.assertTrue(last_line.startswith(f"RESULT: FAIL — the table in {check_path} is stale: replace it"))
+
+    def test_without_check_the_last_line_is_done(self) -> None:
+        stdout = io.StringIO()
+
+        run_main(args=[str(self.drift_path()), CHAIN_ID], stdout=stdout)
+
+        self.assertEqual(
+            "RESULT: DONE — 2 deltas generated; paste into app/upgrades/v35/haqq.go", stdout.getvalue().splitlines()[-1],
+        )
 
 
 if __name__ == "__main__":

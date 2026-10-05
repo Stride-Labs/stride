@@ -668,19 +668,42 @@ def main() -> None:
     # The verdict: the gate the spec puts before the proposal (every zone at zero over, haqq allowed) and before the
     # drain (every zone at zero over). Exit 1 on any FAIL so a runbook step can rely on it.
     print("\nVerdict:")
-    passed = True
+    failed_zones = 0
     for chain_id in zones:
         if chain_id not in all_zone_data:
             continue
         ok, line = render_verdict(
             chain_id, all_zone_data[chain_id], all_rows.get(chain_id, []), chain_id in args.allow_over, decimals_map[chain_id]
         )
-        passed = passed and ok
+        failed_zones += 0 if ok else 1
         print(f"  {line}")
+    passed = failed_zones == 0
     print(f"\n{'PASS' if passed else 'FAIL'}: {'every zone is clear' if passed else 'at least one zone has blocking over-recorded validators'}")
+    print(render_result(failed_zones=failed_zones))
     if not passed:
         sys.exit(1)
 
 
+def render_result(failed_zones: int) -> str:
+    """The one-line verdict an operator reads last."""
+    if failed_zones == 0:
+        return "RESULT: PASS — every zone is clear of blocking over-recorded validators"
+    return (
+        f"RESULT: FAIL — {failed_zones} zone(s) have blocking over-recorded validators: "
+        "refresh with update-delegation / calibrate-delegation, then rerun"
+    )
+
+
+def run() -> None:
+    try:
+        main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    main()
+    run()
