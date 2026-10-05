@@ -34,7 +34,8 @@ add_keys() {
 
 create_validator() {
     echo "Creating validator..."
-    pub_key=$($BINARY tendermint show-validator)
+    # osmosisd prints the pubkey on stderr; keep only the JSON line either way
+    pub_key=$($BINARY tendermint show-validator 2>&1 | grep "^{")
 
     # For sdk 50, use validator.json file
     if $BINARY tx staking create-validator --help | grep -q validator.json; then 
@@ -49,7 +50,7 @@ create_validator() {
     "min-self-delegation": "1"
 }
 EOF
-        $BINARY tx staking create-validator validator.json --from ${VALIDATOR_NAME} -y
+        $BINARY tx staking create-validator validator.json --from ${VALIDATOR_NAME} --gas-prices 1${DENOM} --gas auto --gas-adjustment 1.4 -y
     else 
         # For sdk 47, use cli command
         min_self_delegation=""
