@@ -29,8 +29,9 @@ import (
 // (docs/superpowers/specs/2026-10-02-v35-authority-and-undelegation-design.md §3, "authority
 // spec"). Every step logs and skips on missing state, except the writes that would leave the
 // chain without an upgrade path if skipped: the wasm upload-access write and the consensus
-// authority, POA admin, gov deposit, staking max-entries and commission-clamp writes fail the
-// upgrade, as does a failure to list the delegations to undelegate. The steps run in this order:
+// authority, POA admin, gov deposit, pending-proposal cleanup, staking max-entries and
+// commission-clamp writes fail the upgrade, as does a failure to list the delegations to
+// undelegate. The steps run in this order:
 //  1. RunMigrations.
 //  2. Turn off autopilot stakeibc and drop liquid stake / redeem stake from the ICA host allow-list.
 //  3. Restrict wasm code upload to gov, then move the deploy key's contract admins to gov.
@@ -44,12 +45,13 @@ import (
 //  11. Point the POA admin param at the same multisig, since its msg server honours the
 //     consensus authority too.
 //  12. Close gov submission by raising both deposits above total supply.
-//  13. Raise staking max unbonding entries to 100.
-//  14. Drop delegate, redelegate, create validator and cancel unbonding from the ICA host allow-list.
-//  15. Clamp each validator's accumulated commission to its outstanding rewards, so the in-loop
+//  13. Reject pending gov proposals, refund deposits and remove their votes and processing queues.
+//  14. Raise staking max unbonding entries to 100.
+//  15. Drop delegate, redelegate, create validator and cancel unbonding from the ICA host allow-list.
+//  16. Clamp each validator's accumulated commission to its outstanding rewards, so the in-loop
 //     removals of already-unbonded validators cannot underflow in the distribution hook.
-//  16. Undelegate every delegation in full, skipping and logging any single one that fails.
-//  17. Clamp again, for the validators the EndBlocker removes once their unbonding matures.
+//  17. Undelegate every delegation in full, skipping and logging any single one that fails.
+//  18. Clamp again, for the validators the EndBlocker removes once their unbonding matures.
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read
@@ -120,6 +122,9 @@ func CreateUpgradeHandler(
 			return vm, err
 		}
 		if err := CloseGovSubmission(ctx, govKeeper); err != nil {
+			return vm, err
+		}
+		if err := RejectPendingGovProposals(ctx, govKeeper); err != nil {
 			return vm, err
 		}
 		if err := RaiseMaxUnbondingEntries(ctx, stakingKeeper); err != nil {

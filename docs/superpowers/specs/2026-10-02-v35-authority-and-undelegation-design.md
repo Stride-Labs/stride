@@ -35,7 +35,9 @@ the chain needs an upgrade path that does not go through governance. v35 does bo
 - `MsgSoftwareUpgrade` is signed by its `authority` field. A tx from anyone else fails
   signature verification (authority = multisig) or the authority check (authority = own
   address). x/gov refuses proposals whose inner messages are not signed by the gov account
-  (`x/gov/keeper/proposal.go:62`), so the gov door is closed from both sides.
+  (`x/gov/keeper/proposal.go:62`), so proposals cannot invoke SDK authority-gated messages
+  after the hand-off. Existing proposals with ordinary gov-signed messages can still execute
+  if skipped undelegations retain voting power; step 2b rejects them explicitly.
 - Verified on a local node (2026-10-02 spike): direct multisig `MsgSoftwareUpgrade` stores
   the plan and the node halts at the height; cancel works; the multisig can lower gov params
   back; single-key and wrong-authority submissions are rejected with the expected errors.
@@ -75,6 +77,15 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    `GovUnreachableDeposit` = 1e18 ustrd (total supply is ~3.78e13 ustrd) and
    `ExpeditedMinDeposit` to `GovUnreachableExpeditedDeposit` = 2e18 ustrd (gov params
    validation requires expedited to be strictly greater than min). Every other gov param is kept as read. Returns the error (param write).
+2b. **`RejectPendingGovProposals(ctx, govKeeper) error`** — collect proposals before
+   modifying the store. For every proposal in deposit or voting period, refund and delete
+   deposits, clear stored votes, call `DeleteProposal` to remove the active/inactive queues
+   and voting-period index, then restore the historical record with `StatusRejected` and
+   reason `Governance closed by v35 wind-down`. Finished proposals stay untouched. Merely
+   setting the status is insufficient because the gov EndBlocker processes queued proposals
+   without checking their status; expedited failures can also convert into regular proposals.
+   Cleanup runs before mass undelegation so any surviving stake cannot execute an existing
+   proposal. Any refund or cleanup error fails the upgrade.
 3. **`RaiseMaxUnbondingEntries(ctx, stakingKeeper) error`** — set staking `MaxEntries` to
    100. A pair can hold 7 entries today and the handler adds one; with delegation blocked
    afterwards (§4) no pair can approach 100. Returns the error.
@@ -109,7 +120,7 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    for already-unbonded validators, so the clamp runs both before and after the loop. The
    clamped dust stays in the community pool. Returns the error.
 
-Handler doc comment and the ordered step list get entries 10–17.
+Handler doc comment and the ordered step list get entries 10–18.
 
 ## §4. Ante decorator
 
@@ -131,6 +142,11 @@ the one-file-per-step pattern):
 - `SetConsensusAuthority`: authority nil before, equals `UpgradeAuthority` after, every
   other consensus param unchanged; a second call is idempotent.
 - `CloseGovSubmission`: both deposits equal 1e18 ustrd, voting period and thresholds unchanged.
+- Pending governance proposals: the full upgrade rejects regular, expedited and deposit-period
+  proposals, refunds every depositor, removes votes and processing queues, and preserves
+  historical records. A surviving operator delegation cannot execute a rejected proposal;
+  expedited proposals cannot convert back to regular ones. Repeated cleanup does not refund
+  twice, empty state succeeds, and a failed refund returns an error.
 - `RaiseMaxUnbondingEntries`: 100 after; unbonding time unchanged.
 - `RemoveStakingFromICAHostAllowList`: the four URLs removed, `MsgSend` and
   `MsgUndelegate` kept, empty list is a no-op.
