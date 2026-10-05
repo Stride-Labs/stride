@@ -79,7 +79,8 @@ add_validators() {
         fi
 
         # Save the node IDs and keys to the API
-        $BINARY tendermint show-node-id --home ${validator_home} > node_id.txt
+        # osmosisd prints the node id on stderr (gaiad/strided on stdout); keep only the 40-hex id either way
+        $BINARY tendermint show-node-id --home ${validator_home} 2>&1 | grep -E '^[0-9a-f]{40}$' > node_id.txt
         upload_shared_file node_id.txt ${NODE_IDS_DIR}/${CHAIN_NAME}/${name}.txt
         upload_shared_file ${validator_home}/config/priv_validator_key.json ${VALIDATOR_KEYS_DIR}/${CHAIN_NAME}/${name}.json
         upload_shared_file ${validator_home}/config/node_key.json ${NODE_KEYS_DIR}/${CHAIN_NAME}/${name}.json
