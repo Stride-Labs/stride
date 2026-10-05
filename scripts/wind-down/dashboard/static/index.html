@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stride wind-down dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Stride wind-down</h1>
+    <span class="meta" id="snapshotAge">loading</span>
+    <button class="refresh" id="refreshButton" type="button">Refresh</button>
+  </header>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="ops">Ops</button>
+    <button class="tab" data-tab="channels">Channels <span class="badge bad" hidden></span></button>
+    <button class="tab" data-tab="validators">Validators <span class="badge bad" hidden></span></button>
+    <button class="tab" data-tab="funds">Funds flow <span class="badge bad" hidden></span></button>
+  </div>
+
+  <section class="view on" id="view-ops"></section>
+  <section class="view" id="view-channels"></section>
+  <section class="view" id="view-validators"></section>
+  <section class="view" id="view-funds"></section>
+</div>
+
+<script src="/app.js"></script>
+<script src="/ops.js"></script>
+<script src="/channels.js"></script>
+<script src="/validators.js"></script>
+<script src="/funds.js"></script>
+<script>startApp();</script>
+</body>
+</html>

@@ -6,11 +6,16 @@ and actual on-chain delegations of Stride's delegation ICA on each host chain.
 Read-only. Writes drift.json and report.md into --output-dir (default: the drift/ directory
 beside this script, scripts/wind-down/drift/, git-ignored; resolved from the script's own path,
 not the working directory). --chain-id (repeatable) restricts the measurement to those zones.
+
+Ends with a verdict and exit code: PASS when no zone has a validator recorded above the host by more than the
+drain's rounding buffer (the gate the spec puts before the proposal and before the drain), FAIL (exit 1) otherwise.
+--allow-over <chain_id> exempts a zone whose overs are expected (haqq before the upgrade: the delta table books them).
 """
 
 import argparse
 import json
 import pathlib
+import sys
 import time
 import urllib.request
 import urllib.error
@@ -18,15 +23,17 @@ from decimal import Decimal, getcontext
 
 getcontext().prec = 60
 
-STRIDE_REST = "https://stride-api.polkachu.com"
+STRIDE_REST = "https://stride-strd-api.polkachu.com"  # private Polkachu; public fallback stride-api.polkachu.com
 UA_HEADER = {"User-Agent": "curl/8.0"}
 
-# Stride chain_id -> (chain-registry directory name, decimals for human-readable column)
+# Stride chain_id -> (chain-registry directory name, decimals for human-readable column); the eleven in-scope
+# zones of the wind-down (comdex-1 is deprecated and its chain has stopped, so it is not measured)
 ZONES = {
     "celestia": {"registry": "celestia", "decimals": 6},
-    "comdex-1": {"registry": "comdex", "decimals": 6},
+    "cosmoshub-4": {"registry": "cosmoshub", "decimals": 6},
     "dydx-mainnet-1": {"registry": "dydx", "decimals": 18},
     "haqq_11235-1": {"registry": "haqq", "decimals": 18},
+    "injective-1": {"registry": "injective", "decimals": 18},
     "juno-1": {"registry": "juno", "decimals": 6},
     "laozi-mainnet": {"registry": "bandchain", "decimals": 6},
     "osmosis-1": {"registry": "osmosis", "decimals": 6},
@@ -35,12 +42,34 @@ ZONES = {
     "ssc-1": {"registry": "saga", "decimals": 6},
 }
 
+# Stride Labs' private Polkachu REST per zone, tried before anything else (haqq's returns 502 as of
+# 2026-09-30, so the public haqq-api is listed after it).
+POLKACHU_STRD_REST = {
+    "celestia": "https://celestia-strd-api.polkachu.com",
+    "cosmoshub-4": "https://cosmos-strd-api.polkachu.com",
+    "dydx-mainnet-1": "https://dydx-strd-api.polkachu.com",
+    "haqq_11235-1": "https://haqq-strd-api.polkachu.com",
+    "injective-1": "https://injective-strd-api.polkachu.com",
+    "juno-1": "https://juno-strd-api.polkachu.com",
+    "laozi-mainnet": "https://band-strd-api.polkachu.com",
+    "osmosis-1": "https://osmosis-strd-api.polkachu.com",
+    "phoenix-1": "https://terra-strd-api.polkachu.com",
+    "sommelier-3": "https://sommelier-strd-api.polkachu.com",
+    "ssc-1": "https://saga-strd-api.polkachu.com",
+}
+
 EXTRA_ENDPOINTS = {
+    "haqq_11235-1": ["https://haqq-api.polkachu.com"],
     "celestia": ["https://celestia.rpc.uquad.org:443"],
     "sommelier-3": ["https://rest.cosmos.directory/sommelier"],
 }
 
 HTTP_TIMEOUT = 20
+
+# x/stakeibc UndelegationSharesSafetyDivisor: a full drain of a validator whose stored rate is below 1 is shaved by
+# recorded // this (at least one base unit), so an overage within that buffer cannot fail the drain and the verdict
+# ignores it, exactly as the dashboard's Validators tab does.
+DRAIN_BUFFER_DIVISOR = 100_000_000_000_000_000
 
 
 def http_get_json(
@@ -158,7 +187,8 @@ def build_zone_data(
     delegation_ica_address = stride_zone["delegation_ica_address"]
     host_denom = stride_zone["host_denom"]
 
-    endpoints = list(EXTRA_ENDPOINTS.get(stride_chain_id, []))
+    endpoints = [POLKACHU_STRD_REST[stride_chain_id]] if stride_chain_id in POLKACHU_STRD_REST else []
+    endpoints += EXTRA_ENDPOINTS.get(stride_chain_id, [])
     try:
         endpoints += fetch_registry_rest_endpoints(registry_name)
     except Exception as exc:
@@ -175,6 +205,7 @@ def build_zone_data(
             "delegation_ica_address": delegation_ica_address,
             "rest_endpoint": None,
             "error": "no working host REST endpoint found",
+            "deprecated": bool(stride_zone.get("deprecated")),
             "stride_validators": stride_zone.get("validators", []),
             "host_delegations": [],
             "validators_info": {},
@@ -192,6 +223,7 @@ def build_zone_data(
             "delegation_ica_address": delegation_ica_address,
             "rest_endpoint": working_base,
             "error": f"delegations query failed: {exc}",
+            "deprecated": bool(stride_zone.get("deprecated")),
             "stride_validators": stride_zone.get("validators", []),
             "host_delegations": [],
             "validators_info": {},
@@ -506,7 +538,44 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="measure only this Stride host zone (repeatable); default is every zone in ZONES",
     )
+    parser.add_argument(
+        "--allow-over",
+        action="append",
+        dest="allow_over",
+        default=[],
+        metavar="CHAIN_ID",
+        help="a zone whose over-recorded validators are expected (haqq before the upgrade: the delta table books them)",
+    )
     return parser.parse_args()
+
+
+def blocking_over_recorded(rows: list[dict]) -> list[dict]:
+    """Validators recorded above the host by more than the drain's rounding buffer: each one fails its whole
+    undelegate batch on the host, so these are what the proposal and day-0 gates require to be zero."""
+    blocking = []
+    for row in rows:
+        if not row["in_stride_list"] or row["diff"] <= 0:
+            continue
+        rate = Decimal(row["stride_rate"]) if row["stride_rate"] is not None else None
+        buffer = max(1, row["recorded"] // DRAIN_BUFFER_DIVISOR) if rate is not None and rate < 1 else 0
+        if row["diff"] > buffer:
+            blocking.append(row)
+    return blocking
+
+
+def render_verdict(chain_id: str, zone_data: dict, rows: list[dict], allowed: bool, decimals: int) -> tuple[bool, str]:
+    """One PASS/FAIL line per zone; a zone that could not be measured is a FAIL unless Stride marks it deprecated."""
+    if zone_data.get("error"):
+        deprecated = bool(zone_data.get("deprecated"))
+        return deprecated, f"{'SKIP' if deprecated else 'FAIL'}  {chain_id}: {zone_data['error']}"
+    blocking = blocking_over_recorded(rows)
+    if not blocking:
+        return True, f"PASS  {chain_id}: no validator over-recorded beyond the drain buffer"
+    worst = max(blocking, key=lambda row: row["diff"])
+    detail = f"{len(blocking)} over (largest {worst.get('moniker') or worst['validator_address']} by {human(worst['diff'], decimals)})"
+    if allowed:
+        return True, f"PASS  {chain_id}: {detail}; allowed, the delta table books them"
+    return False, f"FAIL  {chain_id}: {detail}; refresh (update-delegation / calibrate-delegation) before proceeding"
 
 
 def selected_zones(chain_ids: list[str] | None) -> dict[str, dict]:
@@ -596,6 +665,45 @@ def main() -> None:
 
     print(f"\nDone. Wrote {output_dir / 'drift.json'} and {output_dir / 'report.md'}")
 
+    # The verdict: the gate the spec puts before the proposal (every zone at zero over, haqq allowed) and before the
+    # drain (every zone at zero over). Exit 1 on any FAIL so a runbook step can rely on it.
+    print("\nVerdict:")
+    failed_zones = 0
+    for chain_id in zones:
+        if chain_id not in all_zone_data:
+            continue
+        ok, line = render_verdict(
+            chain_id, all_zone_data[chain_id], all_rows.get(chain_id, []), chain_id in args.allow_over, decimals_map[chain_id]
+        )
+        failed_zones += 0 if ok else 1
+        print(f"  {line}")
+    passed = failed_zones == 0
+    print(f"\n{'PASS' if passed else 'FAIL'}: {'every zone is clear' if passed else 'at least one zone has blocking over-recorded validators'}")
+    print(render_result(failed_zones=failed_zones))
+    if not passed:
+        sys.exit(1)
+
+
+def render_result(failed_zones: int) -> str:
+    """The one-line verdict an operator reads last."""
+    if failed_zones == 0:
+        return "RESULT: PASS — every zone is clear of blocking over-recorded validators"
+    return (
+        f"RESULT: FAIL — {failed_zones} zone(s) have blocking over-recorded validators: "
+        "refresh with update-delegation / calibrate-delegation, then rerun"
+    )
+
+
+def run() -> None:
+    try:
+        main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    main()
+    run()

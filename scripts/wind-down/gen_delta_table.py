@@ -8,6 +8,12 @@ every sign flips here. Zero diffs and validators Stride does not track are left 
 
 Usage:
     python3 gen_delta_table.py DRIFT_JSON CHAIN_ID [--host-zone-json HOST_ZONE_JSON] [--var-name NAME]
+                               [--check PATH]
+
+With --check PATH (e.g. app/upgrades/v35/haqq.go) the generated tables are also compared with the ones
+already pasted in that file (entries only: not whitespace, names or the "Generated ..." comment), and
+the run ends RESULT: PASS if they match or RESULT: FAIL if the file is stale. The last stdout line is
+always a RESULT line: PASS / FAIL, or DONE when there was nothing to check against.
 
 The second Go map (HaqqExpectedTrackedDelegations) pins the table to the state it was measured
 against: each row's pin is the drift row's own `recorded` value, Stride's tracked delegation at
@@ -28,6 +34,9 @@ import pathlib
 import re
 import sys
 from dataclasses import dataclass
+
+GO_DELTA_ROW = re.compile(r'Address:\s*"(\w+)",\s*Delta:\s*mustInt\("(-?\d+)"\)')
+GO_TRACKED_ROW = re.compile(r'"(\w+)":\s*mustInt\("(-?\d+)"\)')
 
 
 @dataclass(frozen=True)
@@ -122,13 +131,57 @@ def render_go_tracked(entries: list[DeltaEntry], var_name: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main() -> None:
+def parse_go_deltas(text: str, var_name: str) -> dict[str, int]:
+    """address -> delta from the `var NAME = []DelegationDelta{...}` block of a Go file."""
+    block = go_block(text=text, var_name=var_name)
+    return {address: int(delta) for address, delta in GO_DELTA_ROW.findall(block)}
+
+
+def parse_go_tracked(text: str, var_name: str) -> dict[str, int]:
+    """address -> pinned tracked delegation from the `var NAME = map[string]sdkmath.Int{...}` block of a Go file."""
+    block = go_block(text=text, var_name=var_name)
+    return {address: int(recorded) for address, recorded in GO_TRACKED_ROW.findall(block)}
+
+
+def go_block(text: str, var_name: str) -> str:
+    match = re.search(rf"^var {re.escape(var_name)} = .*?^}}$", text, flags=re.MULTILINE | re.DOTALL)
+    if match is None:
+        sys.exit(f"{var_name} not found in the --check file")
+    return match.group(0)
+
+
+def table_matches_file(
+    entries: list[DeltaEntry], file_text: str, var_name: str, tracked_var_name: str
+) -> bool:
+    """True when the file's two tables hold exactly the generated entries."""
+    deltas = {entry.address: entry.delta for entry in entries}
+    tracked = {entry.address: entry.recorded for entry in entries}
+    return (
+        parse_go_deltas(text=file_text, var_name=var_name) == deltas
+        and parse_go_tracked(text=file_text, var_name=tracked_var_name) == tracked
+    )
+
+
+def render_result(entries: list[DeltaEntry], check_path: pathlib.Path | None, matches: bool | None) -> str:
+    """The one-line verdict an operator reads last."""
+    if check_path is None or matches is None:
+        return f"RESULT: DONE — {len(entries)} deltas generated; paste into app/upgrades/v35/haqq.go"
+    if matches:
+        return f"RESULT: PASS — {check_path} already matches the measured drift ({len(entries)} deltas)"
+    return (
+        f"RESULT: FAIL — the table in {check_path} is stale: replace it with the output above, rebuild the binary, "
+        "and rerun app/upgrades/v35/testdata/verify_constants.py"
+    )
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("drift_json", type=pathlib.Path)
     parser.add_argument("chain_id")
     parser.add_argument("--host-zone-json", type=pathlib.Path, default=None)
     parser.add_argument("--var-name", default="HaqqDelegationDeltas")
     parser.add_argument("--tracked-var-name", default="HaqqExpectedTrackedDelegations")
+    parser.add_argument("--check", type=pathlib.Path, default=None, help="Go file whose pasted tables must match")
     args = parser.parse_args()
 
     names = load_host_zone_names(host_zone_path=args.host_zone_json)
@@ -148,6 +201,36 @@ def main() -> None:
     print()
     print(render_go_tracked(entries=entries, var_name=args.tracked_var_name), end="")
 
+    matches = None
+    if args.check is not None:
+        matches = table_matches_file(
+            entries=entries,
+            file_text=args.check.read_text(),
+            var_name=args.var_name,
+            tracked_var_name=args.tracked_var_name,
+        )
+
+    print()
+    print(render_result(entries=entries, check_path=args.check, matches=matches))
+    return 0 if matches is not False else 1
+
+
+def run() -> int:
+    try:
+        return main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {fail_summary(str(error.code))}")
+        return 1
+
+
+def fail_summary(message: str) -> str:
+    """A multi-line fatal message squeezed into one line: its first line, then its last (the 'what to do')."""
+    lines = message.splitlines()
+    return lines[0] if len(lines) == 1 else f"{lines[0]} {lines[-1]}"
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(run())

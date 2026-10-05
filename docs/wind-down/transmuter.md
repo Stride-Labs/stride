@@ -297,6 +297,13 @@ One line per check, exit 1 on any failure:
 python3 scripts/wind-down/check_transmuter_pool.py
 ```
 
+After the funding join and the one-way mark (`mark_corrupted_assets` on the native token), run it
+with `--funded`: the corrupted set must then be exactly the native token instead of empty.
+
+```bash
+python3 scripts/wind-down/check_transmuter_pool.py --funded
+```
+
 Read state:
 
 ```bash
