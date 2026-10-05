@@ -46,9 +46,10 @@ import (
 //  12. Close gov submission by raising both deposits above total supply.
 //  13. Raise staking max unbonding entries to 100.
 //  14. Drop delegate, redelegate, create validator and cancel unbonding from the ICA host allow-list.
-//  15. Undelegate every delegation in full, skipping and logging any single one that fails.
-//  16. Clamp each validator's accumulated commission to its outstanding rewards, so the
-//     day-14 validator removals cannot underflow in the distribution hook.
+//  15. Clamp each validator's accumulated commission to its outstanding rewards, so the in-loop
+//     removals of already-unbonded validators cannot underflow in the distribution hook.
+//  16. Undelegate every delegation in full, skipping and logging any single one that fails.
+//  17. Clamp again, for the validators the EndBlocker removes once their unbonding matures.
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read

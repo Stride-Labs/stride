@@ -196,8 +196,6 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 	s.Require().Equal(skippedTokens, s.mustGetValidator(bondedVal).Tokens, "only the skipped delegation's tokens stay on the validator")
 }
 
-// A pair already at mainnet's 7 entries is skipped at MaxEntries 7 and succeeds once step 3 has
-// raised the cap: the handler runs the raise before the undelegation.
 // After the unbonding period the staking EndBlocker removes the emptied bonded validator through
 // the same distribution hook; with the post-loop clamp in place that removal must not panic.
 func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalDoesNotPanic() {
@@ -241,6 +239,8 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalDoesNotPanic
 	s.Require().ErrorIs(err, stakingtypes.ErrNoValidatorFound, "emptied validator removed after the unbonding period")
 }
 
+// A pair already at mainnet's 7 entries is skipped at MaxEntries 7 and succeeds once step 3 has
+// raised the cap: the handler runs the raise before the undelegation.
 func (s *UpgradeTestSuite) TestUndelegateAllDelegations_AfterRaiseMaxUnbondingEntries() {
 	params, err := s.App.StakingKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err)

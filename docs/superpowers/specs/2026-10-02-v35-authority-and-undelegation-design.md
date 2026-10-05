@@ -109,7 +109,7 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    for already-unbonded validators, so the clamp runs both before and after the loop. The
    clamped dust stays in the community pool. Returns the error.
 
-Handler doc comment and the ordered step list get entries 10–16.
+Handler doc comment and the ordered step list get entries 10–17.
 
 ## §4. Ante decorator
 
