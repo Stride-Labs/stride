@@ -198,6 +198,49 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 
 // A pair already at mainnet's 7 entries is skipped at MaxEntries 7 and succeeds once step 3 has
 // raised the cap: the handler runs the raise before the undelegation.
+// After the unbonding period the staking EndBlocker removes the emptied bonded validator through
+// the same distribution hook; with the post-loop clamp in place that removal must not panic.
+func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalDoesNotPanic() {
+	bondedVal, _ := s.seedValidator(10, stakingtypes.Bonded, 1)
+	s.setCommissionRate(bondedVal, "0.1")
+	delegator := apptesting.CreateRandomAccounts(1)[0]
+	s.delegate(delegator, bondedVal, 5_000_000_000) // 5000 power, so the validator is in the set
+	s.FundModuleAccount(distrtypes.ModuleName, sdk.NewCoin(utils.BaseStrideDenom, sdkmath.NewInt(1_000)))
+	s.Require().NoError(s.App.DistrKeeper.AllocateTokensToValidator(s.Ctx, s.mustGetValidator(bondedVal), decCoins(1_000, 0)))
+
+	// Record the validator's last power the way prior EndBlocks have on mainnet, so the
+	// EndBlocker notices it leaving the set once its tokens are gone
+	_, err := s.App.StakingKeeper.BlockValidatorUpdates(s.Ctx)
+	s.Require().NoError(err)
+
+	// Rewards accrue only to delegations older than the current block
+	s.Ctx = s.Ctx.WithBlockHeight(s.Ctx.BlockHeight() + 1).WithBlockTime(s.Ctx.BlockTime().Add(time.Minute))
+
+	// Push commission a hair above what outstanding will hold once the delegator's rewards leave
+	commission, err := s.App.DistrKeeper.GetValidatorAccumulatedCommission(s.Ctx, bondedVal)
+	s.Require().NoError(err)
+	commission.Commission = commission.Commission.Add(sdk.NewDecCoinFromDec(utils.BaseStrideDenom, sdkmath.LegacyMustNewDecFromStr("0.5")))
+	s.Require().NoError(s.App.DistrKeeper.SetValidatorAccumulatedCommission(s.Ctx, bondedVal, commission))
+
+	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
+	s.Require().NoError(v35.ClampValidatorCommission(s.Ctx, s.App.StakingKeeper, s.App.DistrKeeper))
+
+	// The validator moves to unbonding in this EndBlock and is removed once that matures
+	unbondingTime, err := s.App.StakingKeeper.UnbondingTime(s.Ctx)
+	s.Require().NoError(err)
+	s.Require().NotPanics(func() {
+		_, err := s.App.StakingKeeper.BlockValidatorUpdates(s.Ctx)
+		s.Require().NoError(err)
+	})
+	s.Ctx = s.Ctx.WithBlockTime(s.Ctx.BlockTime().Add(unbondingTime + time.Second)).WithBlockHeight(s.Ctx.BlockHeight() + 1)
+	s.Require().NotPanics(func() {
+		_, err := s.App.StakingKeeper.BlockValidatorUpdates(s.Ctx)
+		s.Require().NoError(err)
+	})
+	_, err = s.App.StakingKeeper.GetValidator(s.Ctx, bondedVal)
+	s.Require().ErrorIs(err, stakingtypes.ErrNoValidatorFound, "emptied validator removed after the unbonding period")
+}
+
 func (s *UpgradeTestSuite) TestUndelegateAllDelegations_AfterRaiseMaxUnbondingEntries() {
 	params, err := s.App.StakingKeeper.GetParams(s.Ctx)
 	s.Require().NoError(err)

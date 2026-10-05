@@ -90,8 +90,10 @@ func undelegate(ctx sdk.Context, k stakingkeeper.Keeper, delegation stakingtypes
 // rewards, per denom (authority spec §3). The mass reward withdrawal above can leave outstanding
 // a hair below commission by rounding, and when the staking EndBlocker removes the emptied
 // validators after the unbonding period, distribution's AfterValidatorRemoved subtracts commission
-// from outstanding and panics on a negative amount, with no recovery around it. The clamped dust
-// stays in the community pool, where the hook would have sent any remainder anyway.
+// from outstanding and panics on a negative amount, with no recovery around it. The same hook runs
+// inside the undelegation loop for already-unbonded validators, so the handler clamps both before
+// and after the loop. The clamped dust stays in the community pool, where the hook would have sent
+// any remainder anyway.
 func ClampValidatorCommission(ctx sdk.Context, stakingKeeper stakingkeeper.Keeper, distrKeeper distrkeeper.Keeper) error {
 	validators, err := stakingKeeper.GetAllValidators(ctx)
 	if err != nil {
@@ -113,11 +115,12 @@ func ClampValidatorCommission(ctx sdk.Context, stakingKeeper stakingkeeper.Keepe
 			return err
 		}
 
-		// Intersect takes the per-denom minimum and drops denoms outstanding no longer holds
-		capped := commission.Commission.Intersect(outstanding)
-		if capped.Equal(commission.Commission) {
+		// SafeSub reports whether any denom of commission exceeds outstanding; Intersect then takes
+		// the per-denom minimum and drops denoms outstanding no longer holds
+		if _, exceeds := outstanding.SafeSub(commission.Commission); !exceeds {
 			continue
 		}
+		capped := commission.Commission.Intersect(outstanding)
 		ctx.Logger().Info(fmt.Sprintf("v35: clamping %s commission from %s to outstanding %s",
 			validator.OperatorAddress, commission.Commission, capped))
 		commission.Commission = capped

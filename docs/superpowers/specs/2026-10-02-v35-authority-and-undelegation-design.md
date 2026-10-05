@@ -105,8 +105,9 @@ keepers passed in: `ConsensusParamsKeeper` (value; `ParamsStore` is the collecti
    `outstanding`, not `outstanding − commission`, so rounding can leave outstanding a hair
    below commission; when the EndBlocker removes the emptied bonded validators 14 days
    later, distribution's `AfterValidatorRemoved` does `outstanding.Sub(commission)` and
-   panics on a negative amount with no recovery around it. The clamped dust stays in the
-   community pool. Returns the error.
+   panics on a negative amount with no recovery around it. The same hook runs inside step 5
+   for already-unbonded validators, so the clamp runs both before and after the loop. The
+   clamped dust stays in the community pool. Returns the error.
 
 Handler doc comment and the ordered step list get entries 10–16.
 

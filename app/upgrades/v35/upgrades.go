@@ -127,6 +127,13 @@ func CreateUpgradeHandler(
 
 		// Close the ICA path that could re-lock STRD, then unbond everything (authority spec §3)
 		RemoveStakingFromICAHostAllowList(ctx, icaHostKeeper)
+
+		// The clamp runs twice: before the loop so the in-loop removals of already-unbonded
+		// validators start from a sound commission, and after it for the validators the
+		// EndBlocker removes once their unbonding matures (authority spec §3)
+		if err := ClampValidatorCommission(ctx, stakingKeeper, distrKeeper); err != nil {
+			return vm, err
+		}
 		if err := UndelegateAllDelegations(ctx, stakingKeeper); err != nil {
 			return vm, err
 		}
