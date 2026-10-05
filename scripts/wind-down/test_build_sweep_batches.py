@@ -17,7 +17,7 @@ import bech32_ref
 import build_sweep_batches
 
 STRIDE_BASE = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-STRIDE_VESTING = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
+STRIDE_VESTING = "stride1g3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyq6d6ag"
 STRIDE_MODULE = "stride1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8y5yqan"  # the distribution module account: sha256("distribution")[:20]
 STRIDE_CONTINUOUS = "stride1am99pcvynqqhyrwqfvfmnvxjk96rn46le9j65c"  # ContinuousVestingAccount, 40% through its schedule
 STRIDE_BLOCKED_BASE = "stride1j4yzhgjm00ch3h0p9kel7g8sp6g045qfcgk6ex"  # sha256("auction")[:20] held by a plain BaseAccount
@@ -32,6 +32,7 @@ ATOM_VOUCHER = "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E
 GENESIS_TIME = "2020-01-01T00:00:00Z"
 AS_OF = 1790640000  # 2026-09-29T00:00:00Z, the block time at the export height
 SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
+F5_MULTISIG = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
 PROTOCOL_ADDRESSES = [
     "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
     "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption
@@ -61,6 +62,7 @@ def synthetic_export() -> dict:
         {"address": STRIDE_DUST, "coins": [{"denom": "stuatom", "amount": "1000"}]},
         {"address": STRIDE_BLOCKED_BASE, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": SWEEP_OPERATOR, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
+        {"address": F5_MULTISIG, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
     ] + [{"address": address, "coins": [{"denom": "stuatom", "amount": "99000000"}]} for address in PROTOCOL_ADDRESSES]
     accounts = [
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_BASE, "pub_key": {"@type": "/cosmos.crypto.secp256k1.PubKey", "key": "AAAA"}, "sequence": "4"},
@@ -74,6 +76,7 @@ def synthetic_export() -> dict:
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": escrow},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_BLOCKED_BASE},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": SWEEP_OPERATOR},
+        {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": F5_MULTISIG},
     ] + [{"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": address} for address in PROTOCOL_ADDRESSES]
     channels = [{"port_id": "transfer", "channel_id": "channel-5", "state": "STATE_OPEN"}]
     contracts = [{"contract_address": contract, "contract_info": {"code_id": "1"}}]
@@ -134,7 +137,7 @@ class BuildSweepBatchesTest(unittest.TestCase):
         summary = json.loads((out_dir / "summary.json").read_text())
         self.assertEqual(summary["denoms"], ["stuatom", "ustrd"])
         self.assertEqual(summary["batches"][0]["num_addresses"], 1)
-        self.assertEqual(len(summary["skipped"]), 6 + 2 + len(PROTOCOL_ADDRESSES))
+        self.assertEqual(len(summary["skipped"]), 6 + 3 + len(PROTOCOL_ADDRESSES))
 
     def test_vesting_locked_balance_is_not_swept(self) -> None:
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0)
@@ -183,6 +186,13 @@ class BuildSweepBatchesTest(unittest.TestCase):
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
         self.assertIn(SWEEP_OPERATOR, {holder.address for holder in plan.holders})
         self.assertEqual(len([e for e in plan.skipped if e.reason == "protocol address"]), len(PROTOCOL_ADDRESSES))
+
+    def test_f5_multisig_is_excluded_by_the_builder(self) -> None:
+        # An ordinary account with a balance far above the floor: only the builder's own list keeps it out
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
+        skipped = {entry.address: entry.reason for entry in plan.skipped}
+        self.assertEqual(skipped[F5_MULTISIG], "builder exclusion (moved manually)")
+        self.assertNotIn(F5_MULTISIG, {holder.address for holder in plan.holders})
 
     def test_blocked_module_addresses_are_excluded(self) -> None:
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
