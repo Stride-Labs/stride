@@ -10,6 +10,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/Stride-Labs/stride/v35/app/distrwrapper"
 	"github.com/Stride-Labs/stride/v35/utils"
 )
 
@@ -106,28 +107,13 @@ func ClampValidatorCommission(ctx sdk.Context, stakingKeeper stakingkeeper.Keepe
 		if err != nil {
 			return err
 		}
-		commission, err := distrKeeper.GetValidatorAccumulatedCommission(ctx, valAddr)
+		wasClamped, err := distrwrapper.ClampCommissionToOutstanding(ctx, distrKeeper, valAddr)
 		if err != nil {
 			return err
 		}
-		outstanding, err := distrKeeper.GetValidatorOutstandingRewardsCoins(ctx, valAddr)
-		if err != nil {
-			return err
+		if wasClamped {
+			clamped++
 		}
-
-		// SafeSub reports whether any denom of commission exceeds outstanding; Intersect then takes
-		// the per-denom minimum and drops denoms outstanding no longer holds
-		if _, exceeds := outstanding.SafeSub(commission.Commission); !exceeds {
-			continue
-		}
-		capped := commission.Commission.Intersect(outstanding)
-		ctx.Logger().Info(fmt.Sprintf("v35: clamping %s commission from %s to outstanding %s",
-			validator.OperatorAddress, commission.Commission, capped))
-		commission.Commission = capped
-		if err := distrKeeper.SetValidatorAccumulatedCommission(ctx, valAddr, commission); err != nil {
-			return err
-		}
-		clamped++
 	}
 
 	ctx.Logger().Info(fmt.Sprintf("v35: clamped accumulated commission on %d of %d validators", clamped, len(validators)))

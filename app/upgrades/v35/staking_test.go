@@ -196,10 +196,11 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations() {
 	s.Require().Equal(skippedTokens, s.mustGetValidator(bondedVal).Tokens, "only the skipped delegation's tokens stay on the validator")
 }
 
-// After the unbonding period the staking EndBlocker removes the emptied bonded validator through
-// the same distribution hook; with the post-loop clamp in place that removal must not panic.
-func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalDoesNotPanic() {
-	bondedVal, _ := s.seedValidator(10, stakingtypes.Bonded, 1)
+// seedDay14Validator seeds a bonded validator in the active set with one delegation and 1,000 ustrd
+// of rewards at 10% commission, moves to the next block, and pushes commission a hair above what
+// outstanding will hold once the delegator's rewards leave.
+func (s *UpgradeTestSuite) seedDay14Validator(seed byte) sdk.ValAddress {
+	bondedVal, _ := s.seedValidator(seed, stakingtypes.Bonded, 1)
 	s.setCommissionRate(bondedVal, "0.1")
 	delegator := apptesting.CreateRandomAccounts(1)[0]
 	s.delegate(delegator, bondedVal, 5_000_000_000) // 5000 power, so the validator is in the set
@@ -214,16 +215,21 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalDoesNotPanic
 	// Rewards accrue only to delegations older than the current block
 	s.Ctx = s.Ctx.WithBlockHeight(s.Ctx.BlockHeight() + 1).WithBlockTime(s.Ctx.BlockTime().Add(time.Minute))
 
-	// Push commission a hair above what outstanding will hold once the delegator's rewards leave
-	commission, err := s.App.DistrKeeper.GetValidatorAccumulatedCommission(s.Ctx, bondedVal)
+	s.addCommission(bondedVal, "0.5")
+	return bondedVal
+}
+
+// addCommission raises a validator's accumulated commission by a ustrd amount
+func (s *UpgradeTestSuite) addCommission(valAddr sdk.ValAddress, amount string) {
+	commission, err := s.App.DistrKeeper.GetValidatorAccumulatedCommission(s.Ctx, valAddr)
 	s.Require().NoError(err)
-	commission.Commission = commission.Commission.Add(sdk.NewDecCoinFromDec(utils.BaseStrideDenom, sdkmath.LegacyMustNewDecFromStr("0.5")))
-	s.Require().NoError(s.App.DistrKeeper.SetValidatorAccumulatedCommission(s.Ctx, bondedVal, commission))
+	commission.Commission = commission.Commission.Add(sdk.NewDecCoinFromDec(utils.BaseStrideDenom, sdkmath.LegacyMustNewDecFromStr(amount)))
+	s.Require().NoError(s.App.DistrKeeper.SetValidatorAccumulatedCommission(s.Ctx, valAddr, commission))
+}
 
-	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
-	s.Require().NoError(v35.ClampValidatorCommission(s.Ctx, s.App.StakingKeeper, s.App.DistrKeeper))
-
-	// The validator moves to unbonding in this EndBlock and is removed once that matures
+// requireDay14Removal runs the staking EndBlocker now, when the emptied validator moves to
+// unbonding, and again after the unbonding period, when it is removed; neither may panic.
+func (s *UpgradeTestSuite) requireDay14Removal(valAddr sdk.ValAddress) {
 	unbondingTime, err := s.App.StakingKeeper.UnbondingTime(s.Ctx)
 	s.Require().NoError(err)
 	s.Require().NotPanics(func() {
@@ -235,8 +241,35 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalDoesNotPanic
 		_, err := s.App.StakingKeeper.BlockValidatorUpdates(s.Ctx)
 		s.Require().NoError(err)
 	})
-	_, err = s.App.StakingKeeper.GetValidator(s.Ctx, bondedVal)
+	_, err = s.App.StakingKeeper.GetValidator(s.Ctx, valAddr)
 	s.Require().ErrorIs(err, stakingtypes.ErrNoValidatorFound, "emptied validator removed after the unbonding period")
+}
+
+// After the unbonding period the staking EndBlocker removes the emptied bonded validator through
+// the same distribution hook; with the post-loop clamp in place that removal must not panic.
+func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalDoesNotPanic() {
+	bondedVal := s.seedDay14Validator(10)
+
+	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
+	s.Require().NoError(v35.ClampValidatorCommission(s.Ctx, s.App.StakingKeeper, s.App.DistrKeeper))
+
+	s.requireDay14Removal(bondedVal)
+}
+
+// The handler's clamp only fixes commission as it stands at the upgrade block. A delegation left
+// behind can withdraw rewards afterwards and push commission above outstanding again before its
+// validator is removed; the app's distribution hook caps commission at removal, so the EndBlocker
+// still removes the validator without halting the chain.
+func (s *UpgradeTestSuite) TestUndelegateAllDelegations_Day14RemovalAfterLaterDriftDoesNotPanic() {
+	bondedVal := s.seedDay14Validator(11)
+
+	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
+	s.Require().NoError(v35.ClampValidatorCommission(s.Ctx, s.App.StakingKeeper, s.App.DistrKeeper))
+
+	// Drift after the clamp, as a leftover delegation's later reward withdrawals could cause
+	s.addCommission(bondedVal, "0.5")
+
+	s.requireDay14Removal(bondedVal)
 }
 
 // A pair already at mainnet's 7 entries is skipped at MaxEntries 7 and succeeds once step 3 has
@@ -303,17 +336,18 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_FailureAfterUnbondIsRoll
 	s.Require().ErrorIs(err, stakingtypes.ErrNoUnbondingDelegation, "no unbonding entry")
 }
 
-// Removing the empty unbonded validator runs distribution's AfterValidatorRemoved, which panics
-// when accumulated commission exceeds outstanding rewards. The panic must become a skip for that
-// delegation only, not halt the upgrade.
-func (s *UpgradeTestSuite) TestUndelegateAllDelegations_PanicIsSkipped() {
+// Removing the empty unbonded validator runs distribution's AfterValidatorRemoved inside the loop.
+// Commission above outstanding rewards (here by rounding in earlier withdrawals in the loop) used to
+// panic there and skip the delegation; the app's distribution hook caps commission at removal, so
+// the delegation unbonds and the validator is removed like any other.
+func (s *UpgradeTestSuite) TestUndelegateAllDelegations_OverCommittedUnbondedValidatorIsRemoved() {
 	unbondedVal, _ := s.seedValidator(6, stakingtypes.Unbonded, 1)
 	bondedVal, _ := s.seedValidator(7, stakingtypes.Bonded, 1)
 	delegators := apptesting.CreateRandomAccounts(2)
-	panicTokens := s.delegate(delegators[0], unbondedVal, 3_000)
+	tokens := s.delegate(delegators[0], unbondedVal, 3_000)
 	s.delegate(delegators[1], bondedVal, 4_000)
 
-	// 1 ustrd of commission against zero outstanding rewards underflows outstanding.Sub(commission)
+	// 1 ustrd of commission against zero outstanding rewards
 	s.Require().NoError(s.App.DistrKeeper.SetValidatorAccumulatedCommission(s.Ctx, unbondedVal, distrtypes.ValidatorAccumulatedCommission{
 		Commission: sdk.NewDecCoins(sdk.NewInt64DecCoin(utils.BaseStrideDenom, 1)),
 	}))
@@ -322,10 +356,12 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_PanicIsSkipped() {
 		s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
 	})
 
-	delegation, err := s.App.StakingKeeper.GetDelegation(s.Ctx, delegators[0], unbondedVal)
-	s.Require().NoError(err, "panicking delegation skipped, still present")
-	s.Require().Equal(sdkmath.LegacyNewDecFromInt(panicTokens), delegation.Shares)
-	s.Require().Equal(panicTokens, s.mustGetValidator(unbondedVal).Tokens)
+	s.Require().False(s.hasDelegation(delegators[0], unbondedVal), "over-committed validator's delegation unbonds")
+	entries := s.unbondingEntries(delegators[0], unbondedVal)
+	s.Require().Len(entries, 1)
+	s.Require().Equal(tokens, entries[0].Balance)
+	_, err := s.App.StakingKeeper.GetValidator(s.Ctx, unbondedVal)
+	s.Require().ErrorIs(err, stakingtypes.ErrNoValidatorFound, "emptied unbonded validator removed on the spot")
 	s.Require().False(s.hasDelegation(delegators[1], bondedVal), "other delegations still unbond")
 	s.Require().Len(s.unbondingEntries(delegators[1], bondedVal), 1)
 }
