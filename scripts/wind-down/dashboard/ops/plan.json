@@ -38,7 +38,9 @@
             {
               "id": "pre-constants",
               "text": "The two address constants, HostToOsmosisTransferChannel and SweepUnwindChannels in the binary re-verified against the chain: app/upgrades/v35/testdata/verify_constants.py.",
-              "ref": "§9 checklist"
+              "ref": "§9 checklist",
+              "command": "python3 app/upgrades/v35/testdata/verify_constants.py",
+              "expect": "RESULT: PASS. On FAIL, the [FAIL] lines name the constant or channel that disagrees with the chain; fix the binary's constant (or the chain-side expectation) and rerun. The sweep-operator 'has signed' check fails until its test spend lands."
             },
             {
               "id": "pre-channel-map",
@@ -136,7 +138,9 @@
             {
               "id": "pre-relayer-scope",
               "text": "Decide which chains get a relayer from us and which are served for free: regenerate scripts/wind-down/build_relayer_scope.py and the table in docs/wind-down/sttoken-locations.md (Penumbra and Kujira decided unsupported/ignored; Neutron and Carbon relayed by us until the upgrade).",
-              "ref": "§9 before-2, §12"
+              "ref": "§9 before-2, §12",
+              "command": "python3 scripts/wind-down/build_relayer_scope.py",
+              "expect": "RESULT: DONE. It rewrites the 'Relayer scope per chain' table in docs/wind-down/sttoken-locations.md and relayer-map.html; review the table (which legs are free / ops / none) and commit it. --offline reuses the cached packet lookups."
             },
             {
               "id": "pre-neutron-carbon-relayers",
@@ -213,18 +217,24 @@
           "steps": [
             {
               "id": "prop-drift",
-              "text": "Rerun the drift measurement at a recent height: scripts/wind-down/measure_delegation_drift.py (its drift.json feeds the delta table in the next step, so the script runs even though the Validators tab shows the same drift live). A haqq redemption unbonding would change the drift, so measure right before.",
-              "ref": "§9 checklist, §9a"
+              "text": "Rerun the drift measurement at a recent height right before submitting (a haqq redemption unbonding would change it). Its drift.json feeds the delta table in the next step, so the script runs even though the Validators tab shows the same drift live.",
+              "ref": "§9 checklist, §9a",
+              "command": "python3 scripts/wind-down/measure_delegation_drift.py --output-dir scripts/wind-down/drift --allow-over haqq_11235-1",
+              "expect": "RESULT: PASS (haqq's overs are allowed: the delta table books them). On FAIL, the verdict names each zone and its largest over-recorded validator: run update-delegation (rate moved) or calibrate-delegation (rate unchanged) for it, wait for the callback, rerun. The script always rewrites drift.json and report.md; that is expected."
             },
             {
               "id": "prop-delta-table",
-              "text": "Regenerate the haqq delta table from that same drift.json: scripts/wind-down/gen_delta_table.py (deltas and pins come from the same file so they cannot disagree), and the mainnet-export tests at the same height.",
-              "ref": "§9 checklist, §5"
+              "text": "Regenerate the haqq delta table from that same drift.json and check it against the binary (deltas and pins come from one snapshot, so they cannot disagree); the mainnet-export tests at the same height.",
+              "ref": "§9 checklist, §5",
+              "command": "curl -s -A \"curl/8.0\" \"https://stride-strd-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/haqq_11235-1\" > scripts/wind-down/drift/haqq_host_zone.json\npython3 scripts/wind-down/gen_delta_table.py scripts/wind-down/drift/drift.json haqq_11235-1 --host-zone-json scripts/wind-down/drift/haqq_host_zone.json --check app/upgrades/v35/haqq.go",
+              "expect": "RESULT: PASS means app/upgrades/v35/haqq.go already holds exactly the measured table: nothing to do. RESULT: FAIL 'stale' means replace the table in haqq.go with the printed output, rebuild the release binary, rerun this step and then verify_constants. A FAIL about stale pins means Stride's record moved since the drift run: rerun the previous step first."
             },
             {
               "id": "prop-verify-constants",
               "text": "Run app/upgrades/v35/testdata/verify_constants.py against the chain.",
-              "ref": "§9 checklist"
+              "ref": "§9 checklist",
+              "command": "python3 app/upgrades/v35/testdata/verify_constants.py",
+              "expect": "RESULT: PASS: every haqq pin matches the live host zone, both address constants have signed, the channel maps match the hosts. On FAIL, the [FAIL] lines say which; a haqq pin mismatch means rerun the drift and delta-table steps."
             },
             {
               "id": "prop-accounting",
@@ -301,7 +311,9 @@
             {
               "id": "vote-test-pools",
               "text": "Rehearse on test pools from code id 996 with the current rate: instantiate from the vault, join, swap, exit, mark_corrupted_assets, drain to zero and add_new_assets re-add, assign roles; run scripts/wind-down/check_transmuter_pool.py against them. No limiters are registered on any pool (isolation comes from the pool layout).",
-              "ref": "§8, docs/wind-down/transmuter.md"
+              "ref": "§8, docs/wind-down/transmuter.md",
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py",
+              "expect": "RESULT: PASS for every pool listed in the script's CONSTANTS block (edit POOLS there to the test pools first). On FAIL, each pool's [FAIL] lines name the check (factor ratio, roles, corrupted assets, limiters); fix the pool or the CONSTANTS entry and rerun."
             },
             {
               "id": "vote-pool-messages",
@@ -454,22 +466,30 @@
             {
               "id": "haqq-1d",
               "text": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION (hours across haqq's slow blocks). Verify: Channels tab shows the new delegation channel OPEN on both ends; HostZone.DelegationIcaAddress unchanged; Validators tab → haqq: every validator at Δ in progress 0; Funds tab → haqq Records column still shows the 2 queued records.",
-              "ref": "§9 step 1d"
+              "ref": "§9 step 1d",
+              "command": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0, then hours of handshake over haqq's slow blocks. Done when the Channels tab shows a new haqq DELEGATION channel OPEN on both ends and the Validators tab shows every haqq validator at Δ in progress 0. If the handshake stalls, check haqq's client of Stride (Channels tab: haqq host client) and the relayer's client updates."
             },
             {
               "id": "haqq-1d-withdrawal",
               "text": "The same restore for haqq_11235-1.WITHDRAWAL (channel-668 is CLOSED and MsgTransferFromIca WITHDRAWAL needs it); it touches no delegation so it may wait until after 1f if handshakes are slow.",
-              "ref": "§9 step 1d"
+              "ref": "§9 step 1d",
+              "command": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.WITHDRAWAL --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0; done when the Channels tab shows a new haqq WITHDRAWAL channel OPEN on both ends."
             },
             {
               "id": "haqq-1e",
               "text": "Prove an ICQ round trip: update-delegation for one haqq validator; Validators tab → haqq: its 'slash query' pill turns on, then off, and its rate diff goes to 0. If the second callback keeps timing out, fix the relayer (frequent client updates toward Stride) before 1f.",
-              "ref": "§9 step 1e"
+              "ref": "§9 step 1e",
+              "command": "strided tx stakeibc update-delegation haqq_11235-1 <HAQQ_VALOPER> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0; then on the Validators tab → haqq the validator's 'slash query' pill turns on (the rate callback landed and submitted the shares query) and back off (the shares callback landed). If it stays on for more than an hour the ICQ is timing out: fix the relayer's client updates toward Stride before 1f."
             },
             {
               "id": "haqq-1f",
               "text": "Day-0 refresh on every haqq validator (update-delegation); Validators tab → haqq: zero over-recorded, no slash query left in progress.",
-              "ref": "§9 step 1f, §9a"
+              "ref": "§9 step 1f, §9a",
+              "command": "for V in $(curl -s -A curl/8.0 https://stride-strd-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/haqq_11235-1 | jq -r '.host_zone.validators[].address'); do strided tx stakeibc update-delegation haqq_11235-1 $V --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 -y; done\npython3 scripts/wind-down/measure_delegation_drift.py --chain-id haqq_11235-1 --output-dir scripts/wind-down/drift",
+              "expect": "Every update-delegation lands with code: 0 and its callbacks arrive (Validators tab → haqq: slash query pills on, then off). Then RESULT: PASS for haqq with no --allow-over: after the refresh haqq must be clean. On FAIL, the named validators need calibrate-delegation; wait for the callbacks and rerun."
             }
           ]
         },
@@ -491,7 +511,9 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "command": "for V in $(curl -s -A curl/8.0 https://stride-strd-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/<CHAIN_ID> | jq -r '.host_zone.validators[].address'); do strided tx stakeibc update-delegation <CHAIN_ID> $V --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 -y; done\npython3 scripts/wind-down/measure_delegation_drift.py --output-dir scripts/wind-down/drift",
+              "expect": "Every update-delegation lands with code: 0 (one tx per validator; sequence them or use --sequence). Then the drift script: RESULT: PASS for every zone. On FAIL, the verdict names the zone and validator: calibrate-delegation when the rate is unchanged but the balance is off (strided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER>); wait for the callback (Validators tab: slash query pill off) and rerun."
             },
             {
               "id": "day0-live-test-pick",
@@ -506,7 +528,9 @@
             {
               "id": "day0-pools-instantiate",
               "text": "Instantiate the real pools from the frozen rates (can start now, finish over the next days): one canonical pool per stToken plus one per in-scope route, from the vault, code id 996, factors stToken 1e18 / native RR x 1e18 / alloyed = native, admin and moderator the vault; run check_transmuter_pool.py. Do not fund yet. Register no limiters. Record each pool's id and rate_at_creation in the CONSTANTS of scripts/wind-down/check_transmuter_pool.py and build the pools.json that scripts/wind-down/coverage_check.py --pools reads; neither script runs without them.",
-              "ref": "§8"
+              "ref": "§8",
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py",
+              "expect": "After adding each new pool's id and rate_at_creation to the CONSTANTS block: RESULT: PASS for every pool (the 'host zone is not halted' warning disappears once the rate is frozen). On FAIL, fix the pool (add_new_assets / roles) or the CONSTANTS entry and rerun before funding anything."
             }
           ]
         },
@@ -557,7 +581,9 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "command": "echo '[{\"address\": \"<LIVE_TEST_VALOPER>\", \"offset\": \"0\"}]' > /tmp/live-test-<CHAIN_ID>.json\nstrided tx stakeibc undelegate-from-validators <CHAIN_ID> /tmp/live-test-<CHAIN_ID>.json --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 and the ICA acks (Channels tab: the zone's DELEGATION channel back to 0 pending acks; Validators tab: the validator's recorded delegation drops to 0 and its Δ in progress back to 0). A rejection before submission names the reason (a queued or retrying record, a validator with a change or slash query in progress, a deprecated zone): resolve it, do not force. An ack error leaves the delegation unchanged: look at the host tx log for the validator the host rejected."
             },
             {
               "id": "drain-rest",
@@ -575,7 +601,9 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "command": "strided tx stakeibc undelegate-from-validators <CHAIN_ID> --all --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: recorded delegations at dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–08:00 UTC window."
             },
             {
               "id": "drain-offset-calibrate",
@@ -594,7 +622,9 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "command": "strided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0; after the callback the Validators tab shows the validator's recorded delegation equal to the host's (zero after a full drain)."
             },
             {
               "id": "drain-entry-cap",
@@ -610,7 +640,9 @@
             {
               "id": "dym-unbonded",
               "text": "The hour epoch marks stakedym records 1444-1464 UNBONDED; the operator sends the unbonded DYM from the Dymension delegation account to the stakedym claim address over channel-197 (as in its normal cycle) and MsgConfirmUnbondedTokenSweep for each record (the claim address must hold at least each record's native amount).",
-              "ref": "§9 step 7"
+              "ref": "§9 step 7",
+              "command": "strided tx stakedym confirm-sweep <RECORD_ID> <DYMENSION_TX_HASH> --from <STAKEDYM_OPERATOR_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443",
+              "expect": "One per record 1444-1464 after the DYM lands on the claim address (the claim address must hold at least each record's native amount, or the confirm is rejected); code: 0 each. The next hour epoch pays the redeemers and the records archive as CLAIMED (/Stride-Labs/stride/stakedym/unbonding_records)."
             },
             {
               "id": "dym-paid",
@@ -670,12 +702,16 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <AMOUNT><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> FEE <AMOUNT><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0; within minutes the Funds tab → zone → 'ICA transfers to the Osmosis vault' lists the transfer as in flight, then settled, and the vault stage shows the amount in the zone's native denom. A transfer still in flight after 24h timed out and refunded the ICA: resubmit. The amount is the ICA's full host-denom balance (Funds tab accounts table); foreign denoms (dYdX USDC) are separate transfers with their own denom."
             },
             {
               "id": "post-pools-created",
               "text": "All real pools instantiated and checked (canonical plus every in-scope route), unfunded; check_transmuter_pool.py passes for each. Pool ids and rate_at_creation recorded in check_transmuter_pool.py and pools.json for coverage_check.py --pools.",
-              "ref": "§8"
+              "ref": "§8",
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py",
+              "expect": "RESULT: PASS for every real pool. On FAIL, fix the named check and rerun; do not fund a failing pool."
             },
             {
               "id": "post-retry-epochs",
@@ -756,7 +792,9 @@
               "ref": "§9 step 6",
               "zones": [
                 "haqq_11235-1"
-              ]
+              ],
+              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
             },
             {
               "id": "haqq-done-transfer-checklist",
@@ -773,7 +811,9 @@
               "ref": "§9 step 6, §7",
               "zones": [
                 "haqq_11235-1"
-              ]
+              ],
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
             },
             {
               "id": "haqq-done-arrived",
@@ -789,7 +829,9 @@
               "ref": "§10",
               "zones": [
                 "haqq_11235-1"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
             },
             {
               "id": "haqq-done-fund-pools",
@@ -841,7 +883,9 @@
               "ref": "§9 step 6",
               "zones": [
                 "osmosis-1"
-              ]
+              ],
+              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
             },
             {
               "id": "osmo-done-transfer-checklist",
@@ -858,7 +902,9 @@
               "ref": "§9 step 6, §7",
               "zones": [
                 "osmosis-1"
-              ]
+              ],
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
             },
             {
               "id": "osmo-done-arrived",
@@ -874,7 +920,9 @@
               "ref": "§10",
               "zones": [
                 "osmosis-1"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
             },
             {
               "id": "osmo-done-fund-pools",
@@ -912,12 +960,16 @@
               "ref": "§9 step 6",
               "zones": [
                 "celestia"
-              ]
+              ],
+              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
             },
             {
               "id": "tia-staketia-sweep",
               "text": "The staketia operator IBCs the whole unbonded multisig balance via authz to the claim address (no memo; the grant forbids one) and MsgConfirmUnbondedTokenSweep for each open unbonding record; the hour epoch pays the redeemers from the claim address.",
-              "ref": "§9 step 7"
+              "ref": "§9 step 7",
+              "command": "strided tx staketia confirm-sweep <RECORD_ID> <CELESTIA_TX_HASH> --from <STAKETIA_OPERATOR_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443",
+              "expect": "One per open unbonding record after the multisig's IBC transfer lands on the claim address; code: 0 each. The hour epoch then pays the redeemers: /Stride-Labs/stride/staketia/redemption_records empties and the Funds tab's staketia checklist line turns ready."
             },
             {
               "id": "tia-staketia-paid",
@@ -927,12 +979,16 @@
             {
               "id": "tia-claim-balance-test",
               "text": "MsgTransferStaketiaClaimBalance with a small explicit amount as the live test; confirm it lands on the celestia delegation ICA as native TIA.",
-              "ref": "§9 step 7, §7"
+              "ref": "§9 step 7, §7",
+              "command": "strided tx stakeibc transfer-staketia-claim-balance <SMALL_AMOUNT_UTIA> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0; the Funds tab → celestia: the claim address balance drops by the amount and the delegation ICA's liquid TIA rises by it (one IBC hop, up to a few minutes). Only after the staketia line of the Transfer checklist is ready."
             },
             {
               "id": "tia-claim-balance-rest",
               "text": "MsgTransferStaketiaClaimBalance with amount 0 for the remainder; it leaves with the delegation ICA's balance in the DELEGATION transfer below. A timeout (48h) refunds the claim address; resubmit.",
-              "ref": "§9 step 7"
+              "ref": "§9 step 7",
+              "command": "strided tx stakeibc transfer-staketia-claim-balance 0 --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 (0 = the whole remaining balance); the claim address reads 0 TIA and the delegation ICA's liquid balance rose by the remainder. A 48h timeout refunds the claim address: resubmit."
             },
             {
               "id": "tia-done-transfer-checklist",
@@ -949,7 +1005,9 @@
               "ref": "§9 step 6, §7",
               "zones": [
                 "celestia"
-              ]
+              ],
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
             },
             {
               "id": "tia-done-arrived",
@@ -965,7 +1023,9 @@
               "ref": "§10",
               "zones": [
                 "celestia"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
             },
             {
               "id": "tia-done-fund-pools",
@@ -1025,7 +1085,9 @@
                 "phoenix-1",
                 "ssc-1",
                 "dydx-mainnet-1"
-              ]
+              ],
+              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
             },
             {
               "id": "d21-done-transfer-checklist",
@@ -1052,7 +1114,9 @@
                 "phoenix-1",
                 "ssc-1",
                 "dydx-mainnet-1"
-              ]
+              ],
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
             },
             {
               "id": "d21-done-arrived",
@@ -1078,7 +1142,9 @@
                 "phoenix-1",
                 "ssc-1",
                 "dydx-mainnet-1"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
             },
             {
               "id": "d21-done-fund-pools",
@@ -1139,7 +1205,9 @@
               "zones": [
                 "juno-1",
                 "sommelier-3"
-              ]
+              ],
+              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
             },
             {
               "id": "d28-done-transfer-checklist",
@@ -1158,7 +1226,9 @@
               "zones": [
                 "juno-1",
                 "sommelier-3"
-              ]
+              ],
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
             },
             {
               "id": "d28-done-arrived",
@@ -1176,7 +1246,9 @@
               "zones": [
                 "juno-1",
                 "sommelier-3"
-              ]
+              ],
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
+              "expect": "RESULT: PASS: 'every stToken is covered', with each route pool's required amount printed. On FAIL, the lines above name the shortfall (vault or pool short of supply x rate, a route over/under its escrow x rate): do not fund until resolved. Inputs: a fresh trimmed Stride export (see app/upgrades/v35/testdata/README.md) and pools.json listing every pool with the stToken denom it holds."
             },
             {
               "id": "d28-done-fund-pools",
@@ -1217,12 +1289,16 @@
             {
               "id": "sweep-export",
               "text": "Fresh strided export; build the batches with scripts/wind-down/build_sweep_batches.py at the announced floor: every holder at or above it, every denom on the sweep list (eleven stTokens and ustrd to Osmosis, whitelisted vouchers back one hop).",
-              "ref": "§9 step 8"
+              "ref": "§9 step 8",
+              "command": "python3 scripts/wind-down/build_sweep_batches.py --export export.json --prices prices.json --denoms stuatom,stuosmo,stutia,stinj,stadydx,staISLM,stujuno,stuband,stuluna,stusomm,stusaga,ustrd --floor-usd <FLOOR> --out-dir sweep-batches --as-of <BLOCK_TIME_OF_EXPORT> [--extra-denom ibc/...=<price>:<decimals>] [--batch-size 100]",
+              "expect": "RESULT: DONE with the holder count, batch-file count and USD total. Fill in the export (strided export at the chosen height), prices.json, the announced floor and --as-of (the block time at the export height, from strided q block <height>). Each file under sweep-batches/ is one tx for the next step. A non-zero exit names the input that is malformed."
             },
             {
               "id": "sweep-submit",
               "text": "MsgSweepTokensOffStride batches (sweep operator; up to 100 addresses each or the size from the gas measurement); watch num_skipped and the skip events; resubmit any address whose transfer timed out (its balance is back on Stride).",
-              "ref": "§9 step 8, §7"
+              "ref": "§9 step 8, §7",
+              "command": "strided tx stakeibc sweep-tokens-off-stride <DENOMS> sweep-batches/<FILE> --from <SWEEP_OPERATOR_KEY> ...",
+              "expect": "One tx per batch file; the response's num_skipped and the skip events say which addresses the chain refused (module accounts, ICAs, contracts): expected to be zero for a batch the builder produced. A transfer error (closed channel) rejects the whole tx; a timeout refunds that holder on Stride: resubmit its address."
             },
             {
               "id": "sweep-relayers",
@@ -1299,7 +1375,9 @@
             {
               "id": "halt-pools",
               "text": "Every pool, canonical and per route, created, funded, marked one-way, and passing scripts/wind-down/coverage_check.py against a fresh export. Publish the output.",
-              "ref": "§9 halt checklist, §10"
+              "ref": "§9 halt checklist, §10",
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af\npython3 scripts/wind-down/check_transmuter_pool.py",
+              "expect": "Both RESULT: PASS against a fresh export; publish the coverage output. Any FAIL blocks the halt."
             },
             {
               "id": "halt-route-deposits",
