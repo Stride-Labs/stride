@@ -14,6 +14,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
+
+	"github.com/Stride-Labs/stride/v35/app/upgrades/v35"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
@@ -55,6 +57,8 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		// ante.NewMempoolFeeDecorator(),
 		ante.NewValidateBasicDecorator(),
+		// After ValidateBasic and before fee deduction, so a blocked tx is rejected in CheckTx without paying a fee.
+		NewBlockedMsgsDecorator(v35.BlockedStakingMsgTypeUrls),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),

@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 5. v35: `MsgSweepTokensOffStride`, the sweep-operator-gated batched transfer of ustrd, stutia and non-deprecated stakeibc stTokens to holders' Osmosis addresses and of whitelisted vouchers back to their source chains; skips protocol multisigs, safes, the operator, module and blocked addresses ([#1535](https://github.com/Stride-Labs/stride/pull/1535))
 6. v35: release gate — sweep operator and Osmosis vault address constants, mainnet-export handler suite with the real constants, `verify_constants.py` staleness gate, `coverage_check.py` (spec §10) ([#1536](https://github.com/Stride-Labs/stride/pull/1536))
 7. v35 version ([#1543](https://github.com/Stride-Labs/stride/pull/1543))
+8. v35 upgrade handler: consensus-params authority and POA admin set to the team multisig so it can submit `MsgSoftwareUpgrade` directly once stake is gone, gov min deposit raised to 1e18 and expedited min deposit to 2e18 ustrd (submission closed), staking max unbonding entries raised to 100, delegate / redelegate / create validator / cancel unbonding dropped from the ICA host allow-list, every x/staking delegation undelegated in full with the stock 14-day unbonding time (failures logged and skipped), each validator's accumulated commission clamped to its outstanding rewards so the day-14 removals cannot underflow ([#1544](https://github.com/Stride-Labs/stride/pull/1544))
 
 ## [v34.1.0](https://github.com/Stride-Labs/stride/releases/tag/v34.1.0) - 2026-09-18
 

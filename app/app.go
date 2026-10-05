@@ -517,8 +517,10 @@ func NewStrideApp(
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
+	// The distribution hooks are wrapped so a validator's removal cannot panic on commission
+	// that exceeds its outstanding rewards (see distrwrapper.Hooks)
 	app.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.ClaimKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(distrwrapper.NewHooks(app.DistrKeeper), app.ClaimKeeper.Hooks()),
 	)
 
 	// Add airdrop keeper
