@@ -1,4 +1,4 @@
-// Channels tab: tiles, Stride <-> host channels, host -> Osmosis legs, holder routes into Osmosis.
+// Channels tab: tiles, Stride <-> host channels, host -> Osmosis legs, holder routes into Osmosis, pre-flight checks.
 (() => {
 
 const STUCK_AFTER_SECONDS = 30 * 60;
@@ -20,6 +20,7 @@ function renderChannels(data, root) {
     `<details class="panel" id="routesPanel" ${routesOpen ? 'open' : ''}>
       <summary><h2>Holder routes into Osmosis <span class="sub">from the relayer scope table · Osmosis side only</span></h2></summary>
       <div class="table-scroll"><table>${routeRows(data.routes, now)}</table></div></details>`,
+    preflightPanel(data.zones),
   ].join('');
 
   document.getElementById('routesPanel').ontoggle = (event) => {
@@ -161,6 +162,55 @@ function routeRows(routes, now) {
       <td>${pill(relayedClass, route.relayed_by)}</td><td>${statePills(route.state, route.state)}</td><td>${clientPill(route.client)}</td>
       ${activityCell(route.last_received, now)}${activityCell(route.last_ack, now)}<td>${statusPill(route.status)}</td></tr>`;
   }).join('');
+}
+
+// ---- pre-flight checks
+
+// One row per zone, a pill per check with its detail beside it; the header counts the zones passing every check.
+function preflightPanel(zones) {
+  const passing = zones.filter((zone) => !zone.error && zone.preflight && zone.preflight.all_ok).length;
+  const header = `<tr><th>Zone</th><th>Withdraw address</th><th>ICA host allow list</th><th>Host → Osmosis leg</th><th>Host client of Stride</th><th>All</th></tr>`;
+  const rows = zones.map((zone) => {
+    if (zone.error) return errorRow(zone.chain_id, zone.error, 6);
+    const check = zone.preflight;
+    return `<tr><td><b>${escapeHtml(zone.chain_id)}</b></td><td>${withdrawCell(check)}</td><td>${allowCell(check)}</td>
+      <td>${legCell(check)}</td><td>${clientCell(check)}</td><td>${check.all_ok ? pill('ok', 'pass') : pill('bad', 'not yet')}</td></tr>`;
+  });
+  return `<div class="panel" id="preflightPanel"><h2>Pre-flight checks <span class="sub">${passing} of ${zones.length} zones pass every check · host REST and Stride, per zone</span></h2>
+    <div class="table-scroll"><table>${header}${rows.join('')}</table></div></div>`;
+}
+
+// ok -> green, fail -> red, null (the lookup failed, or there is nothing to check) -> muted n/a.
+function checkPill(ok) {
+  if (ok === null) return pill('idle', 'n/a');
+  return ok ? pill('ok', 'ok') : pill('bad', 'fail');
+}
+
+function withdrawCell(check) {
+  const detail = check.withdraw_address_ok === false
+    ? `<span class="muted">host has</span> ${addressCell(check.withdraw_address)} <span class="muted">want</span> ${addressCell(check.withdrawal_ica_address)}`
+    : check.withdraw_address_ok ? '<span class="muted">= withdrawal ICA</span>' : '';
+  return `${checkPill(check.withdraw_address_ok)} ${detail}`;
+}
+
+function allowCell(check) {
+  if (check.allow_messages_count === null) return checkPill(check.allow_messages_ok);
+
+  const size = check.allow_messages_wildcard ? '*' : `${check.allow_messages_count} messages`;
+  const missing = check.allow_messages_missing.map((message) => message.split('.').pop()).join(', ');
+  const disabled = check.host_enabled ? '' : ` ${pill('bad', 'host disabled')}`;
+  return `${checkPill(check.allow_messages_ok)} <span class="muted">${escapeHtml(size)}</span>${missing ? ` <span class="t-bad">missing ${escapeHtml(missing)}</span>` : ''}${disabled}`;
+}
+
+function legCell(check) {
+  if (check.osmosis_leg_note) return `${checkPill(null)} <span class="muted">${escapeHtml(check.osmosis_leg_note)}</span>`;
+  const detail = check.osmosis_leg_state === null ? '' : `${check.osmosis_leg_state} · ${check.osmosis_leg_chain_id}`;
+  return `${checkPill(check.osmosis_leg_ok)} <span class="muted">${escapeHtml(detail)}</span>`;
+}
+
+function clientCell(check) {
+  const detail = check.host_client_of_stride_status === null ? '' : `${check.host_client_of_stride_status} · ${check.host_client_of_stride_id}`;
+  return `${checkPill(check.host_client_of_stride_ok)} <span class="muted">${escapeHtml(detail)}</span>`;
 }
 
 function errorRow(name, message, columns) {

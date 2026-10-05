@@ -2,6 +2,7 @@ import dataclasses
 import json
 import unittest
 from typing import Any
+from unittest import mock
 
 import chain
 import config
@@ -548,6 +549,117 @@ class PayloadTest(unittest.TestCase):
         self.assertIsNone(funds._zone_denoms(host_side=side))
 
 
+class ZoneRecordsTest(unittest.TestCase):
+    def records(self, chain_id: str = "cosmoshub-4", **fields: Any) -> funds.ZoneRecords:
+        return funds.build_zone_records(chain_id=chain_id, records=stride_records(**fields))
+
+    def test_counts_the_zones_entries_with_tokens_by_status(self) -> None:
+        zone = self.records(
+            epoch_unbondings=[
+                epoch_record(
+                    ("cosmoshub-4", "UNBONDING_QUEUE", "5"),
+                    ("cosmoshub-4", "CLAIMABLE", "7"),
+                    ("juno-1", "UNBONDING_QUEUE", "9"),
+                    ("cosmoshub-4", "EXIT_TRANSFER_QUEUE", "0"),
+                ),
+                epoch_record(
+                    ("cosmoshub-4", "UNBONDING_QUEUE", "1"),
+                    ("cosmoshub-4", "UNBONDING_RETRY_QUEUE", "2"),
+                    ("cosmoshub-4", "EXIT_TRANSFER_IN_PROGRESS", "3"),
+                    ("cosmoshub-4", "UNBONDING_IN_PROGRESS", "4"),
+                ),
+            ]
+        )
+
+        self.assertEqual(
+            zone.unbonding_by_status,
+            {
+                "UNBONDING_QUEUE": 2,
+                "CLAIMABLE": 1,
+                "UNBONDING_RETRY_QUEUE": 1,
+                "EXIT_TRANSFER_IN_PROGRESS": 1,
+                "UNBONDING_IN_PROGRESS": 1,
+            },
+        )
+        self.assertEqual(zone.pending_before_claimable, 5)
+        self.assertFalse(zone.delegation_transfer_ready)
+
+    def test_claimable_and_empty_entries_do_not_block_the_delegation_transfer(self) -> None:
+        zone = self.records(
+            epoch_unbondings=[
+                epoch_record(("cosmoshub-4", "CLAIMABLE", "7"), ("cosmoshub-4", "UNBONDING_QUEUE", "0"))
+            ]
+        )
+
+        self.assertEqual(zone.pending_before_claimable, 0)
+        self.assertTrue(zone.delegation_transfer_ready)
+
+    def test_redemption_transfer_needs_no_records_and_no_pending_claims(self) -> None:
+        clean = self.records()
+        with_records = self.records(user_redemptions=[redemption("cosmoshub-4"), redemption("juno-1")])
+        with_claim = self.records(
+            user_redemptions=[redemption("cosmoshub-4", claim_is_pending=True), redemption("cosmoshub-4")]
+        )
+
+        self.assertTrue(clean.redemption_transfer_ready)
+        self.assertEqual((with_records.user_redemption_records, with_records.claims_pending), (1, 0))
+        self.assertFalse(with_records.redemption_transfer_ready)
+        self.assertEqual((with_claim.user_redemption_records, with_claim.claims_pending), (2, 1))
+        self.assertFalse(with_claim.redemption_transfer_ready)
+
+    def test_staketia_counts_only_apply_to_celestia(self) -> None:
+        other = self.records(staketia_redemptions=102, staketia_unbonding_not_claimed=3)
+        celestia = self.records(chain_id="celestia", staketia_redemptions=102, staketia_unbonding_not_claimed=3)
+        drained = self.records(chain_id="celestia")
+        half_drained = self.records(chain_id="celestia", staketia_unbonding_not_claimed=1)
+
+        self.assertIsNone(other.staketia_redemption_records)
+        self.assertIsNone(other.staketia_claim_ready)
+        self.assertEqual(
+            (celestia.staketia_redemption_records, celestia.staketia_unbonding_records_not_claimed), (102, 3)
+        )
+        self.assertFalse(celestia.staketia_claim_ready)
+        self.assertTrue(drained.staketia_claim_ready)
+        self.assertFalse(half_drained.staketia_claim_ready)
+
+    def test_an_unreadable_table_leaves_its_fields_and_readiness_null(self) -> None:
+        zone = funds.build_zone_records(
+            chain_id="celestia",
+            records=funds.StrideRecords(
+                epoch_unbondings=None,
+                user_redemptions=None,
+                staketia_redemptions=None,
+                staketia_unbonding_not_claimed=0,
+            ),
+        )
+
+        self.assertIsNone(zone.unbonding_by_status)
+        self.assertIsNone(zone.pending_before_claimable)
+        self.assertIsNone(zone.delegation_transfer_ready)
+        self.assertIsNone(zone.user_redemption_records)
+        self.assertIsNone(zone.claims_pending)
+        self.assertIsNone(zone.redemption_transfer_ready)
+        self.assertIsNone(zone.staketia_claim_ready)
+
+
+class RecordQueriesTest(unittest.TestCase):
+    def test_staketia_unbonding_records_not_claimed_counts_every_other_status(self) -> None:
+        records = [{"status": status} for status in ("UNBONDED", "CLAIMED", "UNBONDING_QUEUE", "CLAIMED")]
+
+        with mock.patch.object(chain, "rest_get_all_pages", return_value=records) as pages:
+            count = funds._staketia_unbonding_not_claimed(stride=chain.stride_chain())
+
+        self.assertEqual(count, 2)
+        self.assertEqual(pages.call_args.kwargs["path"], "/Stride-Labs/stride/staketia/unbonding_records")
+
+    def test_staketia_redemptions_are_counted_across_pages(self) -> None:
+        with mock.patch.object(chain, "rest_get_all_pages", return_value=[{}] * 102) as pages:
+            count = funds._staketia_redemption_count(stride=chain.stride_chain())
+
+        self.assertEqual(count, 102)
+        self.assertEqual(pages.call_args.kwargs["key"], "redemption_record_responses")
+
+
 class ZoneAssemblyTest(unittest.TestCase):
     def test_zone_without_osmosis_has_null_coverage_and_merges_the_staketia_times(self) -> None:
         staketia = funds.Staketia(
@@ -582,7 +694,7 @@ class ZoneAssemblyTest(unittest.TestCase):
             staketia_accounts=[],
         )
 
-        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, open_records={"celestia": 4})
+        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, records=stride_records(user_redemptions=[redemption("celestia")] * 4))
 
         self.assertEqual(zone.needed, 1500)
         self.assertIsNone(zone.covered)
@@ -596,6 +708,8 @@ class ZoneAssemblyTest(unittest.TestCase):
         self.assertEqual(zone.ica_liquid[funds.IcaType.REDEMPTION], 4)
         self.assertEqual(zone.redemption_ica_balance, 4)
         self.assertEqual(zone.open_redemption_records, 4)
+        self.assertEqual(zone.records.user_redemption_records, 4)
+        self.assertFalse(zone.records.redemption_transfer_ready)
         self.assertEqual(
             [account.name for account in zone.accounts][:5],
             ["Delegation ICA", "Withdrawal ICA", "Fee ICA", "Redemption ICA", "Deposit address"],
@@ -614,10 +728,38 @@ class ZoneAssemblyTest(unittest.TestCase):
             },
         )
 
-        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, open_records={})
+        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, records=stride_records())
 
         self.assertEqual(zone.accounts[1].other_balances, [funds.Balance(denom="ibc/USDC", amount=5)])
         self.assertEqual(zone.accounts[0].other_balances, [])
+
+
+def stride_records(
+    epoch_unbondings: list[dict[str, Any]] | None = None,
+    user_redemptions: list[dict[str, Any]] | None = None,
+    staketia_redemptions: int | None = 0,
+    staketia_unbonding_not_claimed: int | None = 0,
+) -> funds.StrideRecords:
+    return funds.StrideRecords(
+        epoch_unbondings=[] if epoch_unbondings is None else epoch_unbondings,
+        user_redemptions=[] if user_redemptions is None else user_redemptions,
+        staketia_redemptions=staketia_redemptions,
+        staketia_unbonding_not_claimed=staketia_unbonding_not_claimed,
+    )
+
+
+def redemption(host_zone_id: str, claim_is_pending: bool = False) -> dict[str, Any]:
+    return {"host_zone_id": host_zone_id, "claim_is_pending": claim_is_pending}
+
+
+def epoch_record(*entries: tuple[str, str, str]) -> dict[str, Any]:
+    """An epoch unbonding record with one host_zone_unbonding per (host_zone_id, status, native_token_amount)."""
+    return {
+        "host_zone_unbondings": [
+            {"host_zone_id": zone_id, "status": status, "native_token_amount": amount}
+            for zone_id, status, amount in entries
+        ]
+    }
 
 
 def ica_host_zone() -> dict[str, str]:

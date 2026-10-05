@@ -103,9 +103,17 @@ function zoneBody(zone) {
 // The stacked all-zones view trades the tiles for one summary line per zone.
 function zoneSummary(zone) {
   const totals = zone.totals;
+  const liveTest = `live test ${liveTestText(zone)}`;
   const amount = (value) => `${formatAmount(value, zone.decimals, 6)} ${escapeHtml(zone.symbol)}`;
   const diffClass = BigInt(totals.diff) > 0n ? 't-warn' : '';
-  return `recorded ${amount(totals.recorded)} · actual ${amount(totals.actual)} · diff <span class="${diffClass}">${amount(totals.diff)}</span> (${totals.over_count} over, ${totals.red_count} red) · ${totals.in_progress_count} in progress`;
+  return `recorded ${amount(totals.recorded)} · actual ${amount(totals.actual)} · diff <span class="${diffClass}">${amount(totals.diff)}</span> (${totals.over_count} over, ${totals.red_count} red) · ${totals.in_progress_count} in progress · ${escapeHtml(liveTest)}`;
+}
+
+// "Colossus (1.099890 ATOM)", or why there is no pick.
+function liveTestText(zone) {
+  const pick = zone.live_test_pick;
+  if (!pick) return `n/a (${zone.live_test_reason})`;
+  return `${pick.moniker} (${formatAmount(pick.recorded, zone.decimals, 6)} ${zone.symbol})`;
 }
 
 function zoneTiles(zone) {
@@ -118,7 +126,17 @@ function zoneTiles(zone) {
       ${tile('Actual', amount(totals.actual), 'delegation ICA on the host chain')}
       ${tile('Diff', amount(totals.diff), `recorded − actual · ${totals.over_count} over (${totals.red_count} red)`, diffClass)}
       ${tile('In progress', totals.in_progress_count, 'slash queries or delegation changes')}
+      ${liveTestTile(zone)}
     </div>`;
+}
+
+function liveTestTile(zone) {
+  const pick = zone.live_test_pick;
+  if (!pick) return tile('Live test', 'n/a', zone.live_test_reason);
+
+  const next = zone.live_test_next;
+  const nextText = next ? `next ${next.moniker} (${formatAmount(next.recorded, zone.decimals, 6)} ${zone.symbol})` : 'no runner-up';
+  return tile('Live test', pick.moniker, `${formatAmount(pick.recorded, zone.decimals, 6)} ${zone.symbol} · ${nextText}`);
 }
 
 function zoneHeader() {
@@ -131,7 +149,7 @@ function zoneRow(row, zone) {
   const severityClass = SEVERITY_CLASS[row.severity];
   const notRegistered = row.registered ? '' : ` ${pill('warn', 'not registered')}`;
   return `<tr>
-    <td>${escapeHtml(row.moniker)}${notRegistered}</td>
+    <td>${escapeHtml(row.moniker)}${notRegistered}${liveTestPill(row, zone)}</td>
     <td>${addressCell(row.address)}</td>
     <td class="num">${escapeHtml(row.weight_percent)}%</td>
     <td class="num">${amount(row.recorded)}</td>
@@ -143,6 +161,13 @@ function zoneRow(row, zone) {
     <td class="num ${row.delegation_changes_in_progress ? 't-warn' : 'muted'}">${row.delegation_changes_in_progress === null ? '–' : row.delegation_changes_in_progress}</td>
     <td>${slashQueryCell(row.slash_query_in_progress)}</td>
     <td>${bondCell(row.bond_status, row.jailed)}</td></tr>`;
+}
+
+// The zone's live-test pick and its runner-up, matched by operator address.
+function liveTestPill(row, zone) {
+  if (zone.live_test_pick && zone.live_test_pick.address === row.address) return ` ${pill('ok', 'live test')}`;
+  if (zone.live_test_next && zone.live_test_next.address === row.address) return ` ${pill('idle', 'next')}`;
+  return '';
 }
 
 function rateDifferenceClass(difference) {

@@ -29,6 +29,10 @@ ST_PREFIX = "st"
 IBC_PREFIX = "ibc/"
 FACTORY_PREFIX = "factory/"
 ALLOYED_INFIX = "/alloyed/"
+RECORDS_PATH = "/Stride-Labs/stride/records"
+STAKETIA_PATH = "/Stride-Labs/stride/staketia"
+STATUS_CLAIMABLE = "CLAIMABLE"  # an epoch unbonding record status: the native tokens are on the redemption ICA
+STAKETIA_STATUS_CLAIMED = "CLAIMED"  # a staketia unbonding record status: fully paid out
 
 ZONE_WORKERS = 16
 POOL_WORKERS = 8
@@ -167,6 +171,24 @@ class Staketia:
 
 
 @dataclass(frozen=True)
+class ZoneRecords:
+    """The preconditions of the two ICA transfers to the vault, counted from Stride's record tables.
+
+    Any field is None when the table it comes from could not be read. The staketia fields are None off celestia.
+    """
+
+    unbonding_by_status: dict[str, int] | None  # epoch unbonding entries holding tokens, by status
+    pending_before_claimable: int | None  # of those, the ones not yet CLAIMABLE
+    user_redemption_records: int | None
+    claims_pending: int | None  # user redemption records with claim_is_pending
+    staketia_redemption_records: int | None
+    staketia_unbonding_records_not_claimed: int | None
+    delegation_transfer_ready: bool | None
+    redemption_transfer_ready: bool | None
+    staketia_claim_ready: bool | None
+
+
+@dataclass(frozen=True)
 class ZoneFunds:
     chain_id: str
     symbol: str
@@ -196,6 +218,7 @@ class ZoneFunds:
     ica_liquid: dict[IcaType, int]  # each ICA's host-denom balance, for the diagram
     redemption_ica_balance: int
     open_redemption_records: int | None
+    records: ZoneRecords
     transfers: list[Transfer] | None  # None when the tx index lookup failed
     pools: list[Pool] | None  # None when Osmosis could not be read
     accounts: list[Account]
@@ -204,6 +227,16 @@ class ZoneFunds:
 
 
 # ---- internal structures
+
+
+@dataclass(frozen=True)
+class StrideRecords:
+    """Stride's record tables, read once per collect; each is None when its query failed."""
+
+    epoch_unbondings: list[dict[str, Any]] | None  # epoch unbonding records, each with host_zone_unbondings
+    user_redemptions: list[dict[str, Any]] | None
+    staketia_redemptions: int | None  # staketia redemption records (celestia only)
+    staketia_unbonding_not_claimed: int | None
 
 
 @dataclass(frozen=True)
@@ -315,9 +348,10 @@ def collect() -> dict[str, Any]:
             for zone in config.ZONES
         ]
         osmosis_future = pool.submit(lambda: chain.optional(_osmosis_snapshot))
-        records_future = pool.submit(
-            lambda: chain.optional(lambda: _open_redemption_counts(stride=stride))
-        )
+        epoch_future = pool.submit(chain.optional, lambda: _epoch_unbonding_records(stride=stride))
+        redemption_future = pool.submit(chain.optional, lambda: _user_redemption_records(stride=stride))
+        staketia_redemption_future = pool.submit(chain.optional, lambda: _staketia_redemption_count(stride=stride))
+        staketia_unbonding_future = pool.submit(chain.optional, lambda: _staketia_unbonding_not_claimed(stride=stride))
         operator_futures = [
             pool.submit(_operator_account, stride=stride, name=name, address=address)
             for name, address in (
@@ -328,7 +362,12 @@ def collect() -> dict[str, Any]:
         ]
         host_sides = [future.result() for future in host_futures]
         osmosis = osmosis_future.result()
-        open_records = records_future.result()
+        records = StrideRecords(
+            epoch_unbondings=epoch_future.result(),
+            user_redemptions=redemption_future.result(),
+            staketia_redemptions=staketia_redemption_future.result(),
+            staketia_unbonding_not_claimed=staketia_unbonding_future.result(),
+        )
         operators = [future.result() for future in operator_futures]
 
     # Pools can only be assigned once every zone's Osmosis denom is known.
@@ -344,7 +383,7 @@ def collect() -> dict[str, Any]:
             side=side,
             osmosis=osmosis,
             pools_by_zone=pools_by_zone,
-            open_records=open_records,
+            records=records,
         )
         for side in host_sides
     ]
@@ -382,6 +421,54 @@ def coverage_ratio(covered: int, needed: int) -> str | None:
         DECIMAL_CONTEXT.quantize(
             DECIMAL_CONTEXT.divide(Decimal(covered), Decimal(needed)), RATE_PLACES
         )
+    )
+
+
+def build_zone_records(chain_id: str, records: StrideRecords) -> ZoneRecords:
+    """Count a zone's entries in each record table and derive whether each transfer's precondition holds.
+
+    DELEGATION transfer needs every epoch unbonding entry holding tokens to be CLAIMABLE; REDEMPTION transfer needs no
+    user redemption record left (a claim is deleted once paid); celestia's staketia claim needs both staketia tables
+    drained.
+    """
+    unbonding_by_status = (
+        None
+        if records.epoch_unbondings is None
+        else _count_by_status(unbondings=records.epoch_unbondings, chain_id=chain_id)
+    )
+    pending = (
+        None
+        if unbonding_by_status is None
+        else sum(count for status, count in unbonding_by_status.items() if status != STATUS_CLAIMABLE)
+    )
+
+    zone_redemptions = (
+        None
+        if records.user_redemptions is None
+        else [record for record in records.user_redemptions if record["host_zone_id"] == chain_id]
+    )
+    redemption_count = None if zone_redemptions is None else len(zone_redemptions)
+    claims_pending = (
+        None if zone_redemptions is None else sum(1 for record in zone_redemptions if record["claim_is_pending"])
+    )
+
+    is_celestia = chain_id == CELESTIA_CHAIN_ID
+    staketia_redemptions = records.staketia_redemptions if is_celestia else None
+    staketia_unclaimed = records.staketia_unbonding_not_claimed if is_celestia else None
+    return ZoneRecords(
+        unbonding_by_status=unbonding_by_status,
+        pending_before_claimable=pending,
+        user_redemption_records=redemption_count,
+        claims_pending=claims_pending,
+        staketia_redemption_records=staketia_redemptions,
+        staketia_unbonding_records_not_claimed=staketia_unclaimed,
+        delegation_transfer_ready=None if pending is None else pending == 0,
+        redemption_transfer_ready=None
+        if redemption_count is None
+        else redemption_count == 0 and claims_pending == 0,
+        staketia_claim_ready=None
+        if staketia_redemptions is None or staketia_unclaimed is None
+        else staketia_redemptions == 0 and staketia_unclaimed == 0,
     )
 
 
@@ -881,17 +968,30 @@ def _trace_base_denom(rest: str, denom: str) -> str:
     return trace["denom_trace"]["base_denom"]
 
 
-def _open_redemption_counts(stride: chain.Chain) -> dict[str, int]:
-    """Open user redemption records per zone; a record is deleted once claimed, so every record is open."""
-    records = chain.rest_get_all_pages(
-        chain=stride,
-        path="/Stride-Labs/stride/records/user_redemption_record",
-        key="user_redemption_record",
+def _epoch_unbonding_records(stride: chain.Chain) -> list[dict[str, Any]]:
+    return chain.rest_get_all_pages(
+        chain=stride, path=f"{RECORDS_PATH}/epoch_unbonding_record", key="epoch_unbonding_record"
     )
-    counts: dict[str, int] = {}
-    for record in records:
-        counts[record["host_zone_id"]] = counts.get(record["host_zone_id"], 0) + 1
-    return counts
+
+
+def _user_redemption_records(stride: chain.Chain) -> list[dict[str, Any]]:
+    return chain.rest_get_all_pages(
+        chain=stride, path=f"{RECORDS_PATH}/user_redemption_record", key="user_redemption_record"
+    )
+
+
+def _staketia_redemption_count(stride: chain.Chain) -> int:
+    records = chain.rest_get_all_pages(
+        chain=stride, path=f"{STAKETIA_PATH}/redemption_records", key="redemption_record_responses"
+    )
+    return len(records)
+
+
+def _staketia_unbonding_not_claimed(stride: chain.Chain) -> int:
+    records = chain.rest_get_all_pages(
+        chain=stride, path=f"{STAKETIA_PATH}/unbonding_records", key="unbonding_records"
+    )
+    return sum(1 for record in records if record["status"] != STAKETIA_STATUS_CLAIMED)
 
 
 def _operator_account(stride: chain.Chain, name: str, address: str) -> Account:
@@ -917,7 +1017,7 @@ def _zone_funds(
     side: HostSide,
     osmosis: OsmosisSnapshot | None,
     pools_by_zone: dict[str, list[Pool]] | None,
-    open_records: dict[str, int] | None,
+    records: StrideRecords,
 ) -> ZoneFunds:
     zone = side.zone
     host_zone = side.host_zone
@@ -953,9 +1053,9 @@ def _zone_funds(
         pools=pools,
         staketia=side.staketia,
     )
-    record_count = (
-        open_records.get(zone.chain_id, 0) if open_records is not None else None
-    )
+    zone_records = build_zone_records(chain_id=zone.chain_id, records=records)
+    # A user redemption record is deleted once claimed, so every record is open.
+    record_count = zone_records.user_redemption_records
     unbonding_times = [
         time
         for time in (
@@ -995,6 +1095,7 @@ def _zone_funds(
         },
         redemption_ica_balance=side.ica_balances[IcaType.REDEMPTION].get(host_denom, 0),
         open_redemption_records=record_count,
+        records=zone_records,
         transfers=side.transfers,
         pools=pools,
         accounts=_zone_accounts(
@@ -1004,6 +1105,17 @@ def _zone_funds(
         validator_positions=side.position.per_validator
         + (side.staketia.per_validator if side.staketia else []),
     )
+
+
+def _count_by_status(unbondings: list[dict[str, Any]], chain_id: str) -> dict[str, int]:
+    """Entries of the zone that hold tokens, per status; an entry with nothing to unbond is not a precondition."""
+    counts: dict[str, int] = {}
+    for record in unbondings:
+        for entry in record["host_zone_unbondings"]:
+            if entry["host_zone_id"] != chain_id or int(entry["native_token_amount"]) <= 0:
+                continue
+            counts[entry["status"]] = counts.get(entry["status"], 0) + 1
+    return counts
 
 
 def _validator_names(host_zone: dict[str, Any]) -> dict[str, str]:

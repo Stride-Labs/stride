@@ -1,5 +1,5 @@
-// Funds flow tab: the stage table per zone, the flow diagram of the selected zone, its ICA transfers to the
-// vault, and its accounts. Every integer in the payload is a string; arithmetic here is BigInt.
+// Funds flow tab: the stage table per zone, the flow diagram of the selected zone, its transfer checklist, its ICA
+// transfers to the vault, and its accounts. Every integer in the payload is a string; arithmetic here is BigInt.
 (() => {
 
 const STAGES = [
@@ -10,7 +10,7 @@ const STAGES = [
   { key: 'vault', label: 'Osmosis vault', color: '--s-vault' },
   { key: 'pools', label: 'In pools', color: '--s-pool' },
 ];
-const STAGE_TABLE_COLUMNS = 12;
+const STAGE_TABLE_COLUMNS = 13;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 let selectedZone = null; // chain id of the zone whose diagram and accounts are shown; survives re-renders
@@ -53,7 +53,7 @@ function selectZone(root, chainId) {
 function selectionPanels(data) {
   const zone = data.zones.find((candidate) => candidate.chain_id === selectedZone);
   if (!zone) return '<div class="placeholder">no zone to show</div>';
-  return diagramPanel(zone) + (breakdown ? breakdownPanel(zone) : '') + transfersPanel(zone) + accountsPanel(zone, data.operators);
+  return diagramPanel(zone) + (breakdown ? breakdownPanel(zone) : '') + checklistPanel(zone) + transfersPanel(zone) + accountsPanel(zone, data.operators);
 }
 
 // ---- stage table
@@ -62,7 +62,7 @@ function stagePanel(zones) {
   const legend = STAGES.map((stage) => `<span><i style="background:var(${stage.color})"></i>${stage.label}</span>`).join('');
   const header = `<tr><th>Zone</th><th>Progress</th><th class="num">Staked</th><th class="num">Unbonding</th><th title="earliest (and latest) unbonding completion">Next maturity</th>
     <th class="num" title="delegation + withdrawal + fee ICA balances">Liquid</th><th class="num">In flight</th><th class="num">Vault</th><th class="num">In pools</th>
-    <th class="num" title="owed to open user claims, not part of the bar">Redemption</th><th class="num" title="stToken supply × redemption rate">Needed</th><th>Coverage</th></tr>`;
+    <th class="num" title="owed to open user claims, not part of the bar">Redemption</th><th class="num" title="epoch unbonding entries not yet CLAIMABLE / user redemption records: both must be 0 before the ICA transfers">Records</th><th class="num" title="stToken supply × redemption rate">Needed</th><th>Coverage</th></tr>`;
   return `<div class="panel"><h2>Where the backing is, per zone <span class="sub">native units · click a row for its diagram and accounts</span></h2>
     <div class="legend">${legend}</div>
     <div class="table-scroll"><table>${header}${zones.map(stageRow).join('')}</table></div></div>`;
@@ -80,8 +80,14 @@ function stageRow(zone) {
     ${cell(stages.staked)}${cell(stages.unbonding)}
     <td class="muted">${maturityCell(zone)}</td>
     ${cell(stages.liquid)}${cell(stages.in_flight)}${cell(stages.vault)}${cell(stages.pools)}
-    ${cell(zone.redemption_ica_balance)}${cell(zone.needed)}
+    ${cell(zone.redemption_ica_balance)}${recordsCell(zone.records)}${cell(zone.needed)}
     <td>${coveragePill(zone)}</td></tr>`;
+}
+
+// "pending before CLAIMABLE / user redemption records", each muted at zero.
+function recordsCell(records) {
+  const count = (value) => (value === null ? '<span class="muted">n/a</span>' : value === '0' ? '<span class="muted">0</span>' : escapeHtml(value));
+  return `<td class="num">${count(records.pending_before_claimable)} / ${count(records.user_redemption_records)}</td>`;
 }
 
 function stageBar(stages) {
@@ -231,6 +237,37 @@ function edge(path) {
 
 function text(x, y, cssClass, content) {
   return `<text x="${x}" y="${y}" class="${cssClass}">${escapeHtml(content)}</text>`;
+}
+
+// ---- transfer checklist
+
+// What must be true before each ICA transfer to the vault, from Stride's record tables: one line per transfer.
+function checklistPanel(zone) {
+  const records = zone.records;
+  const lines = [
+    checklistLine('DELEGATION transfer', records.delegation_transfer_ready, delegationBlocker(records)),
+    checklistLine('REDEMPTION transfer', records.redemption_transfer_ready,
+      `${records.user_redemption_records} user redemption records, ${records.claims_pending} claims pending`),
+  ];
+  if (zone.staketia) {
+    lines.push(checklistLine('staketia claim balance', records.staketia_claim_ready,
+      `${records.staketia_redemption_records} redemption records, ${records.staketia_unbonding_records_not_claimed} unbonding records not CLAIMED`));
+  }
+  return `<div class="panel"><h2>Transfer checklist <span class="sub">from Stride's record tables · ${escapeHtml(zone.chain_id)}</span></h2>
+    <ul class="checklist">${lines.join('')}</ul></div>`;
+}
+
+function checklistLine(label, ready, blocker) {
+  if (ready === null) return `<li>${pill('idle', 'n/a')}<b>${escapeHtml(label)}</b><span class="muted">a record table could not be read</span></li>`;
+  return `<li>${ready ? pill('ok', 'ready') : pill('bad', 'blocked')}<b>${escapeHtml(label)}</b>${ready ? '' : `<span>${escapeHtml(blocker)}</span>`}</li>`;
+}
+
+// "28 records outside CLAIMABLE (UNBONDING_QUEUE 1, EXIT_TRANSFER_QUEUE 26, ...)".
+function delegationBlocker(records) {
+  const statuses = Object.entries(records.unbonding_by_status || {})
+    .filter(([status]) => status !== 'CLAIMABLE')
+    .map(([status, count]) => `${status} ${count}`);
+  return `${records.pending_before_claimable} records outside CLAIMABLE (${statuses.join(', ')})`;
 }
 
 // ---- per-validator breakdown

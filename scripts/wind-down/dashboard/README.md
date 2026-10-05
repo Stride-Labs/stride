@@ -50,6 +50,14 @@ commit and push `ops/status.json` so the team sees the same state. Logic lives i
   `received 5h ago`, otherwise `sent 45m ago`).
 - Host -> Osmosis legs: one row per zone except osmosis-1, from the host channel in `config.ZONES`.
 - Holder routes into Osmosis: `config.HOLDER_ROUTES`, queried on the Osmosis side only. Collapsed by default.
+- Pre-flight checks (last panel, `zone.preflight`): one row per zone with an `ok` / `fail` / `n/a` pill per check, and
+  "N of 11 zones pass every check" in the header. Withdraw address: the host's
+  `distribution/delegators/{delegation ICA}/withdraw_address` equals the withdrawal ICA (a mismatch shows both
+  addresses). ICA host allow list: `interchain_accounts/host/v1/params` allows `MsgTransfer` (or `*`); osmosis-1 also
+  needs `bank MsgSend`. Host -> Osmosis leg: the host's Osmosis channel is OPEN and its client tracks `osmosis-1`
+  (osmosis-1 itself has no leg: `n/a`, "bank send", and that does not fail the row). Host client of Stride: the
+  counterparty client of the ICA connection is Active (Band's is expected to be Expired). Stride's host zones are read
+  once per refresh; a failed lookup makes only its own pill `n/a`, which does not count as a pass.
 
 ## Validators tab
 
@@ -64,6 +72,12 @@ commit and push `ops/status.json` so the team sees the same state. Logic lives i
   `applySharesRoundingSafety` shaves that much off a full drain, so the overage cannot fail it. The buffer does not
   exist at a rate of exactly 1, where any overage counts.
 - The staketia chip compares the multisig's delegations on Celestia with Stride's `remaining_delegated_balance`.
+- Live test: each row carries a `live test` pill on the zone's pick and a muted `next` pill on the runner-up, the zone
+  summary and the single-zone tiles name the pick. Same rule as `pick_live_test_validators.py`: the smallest recorded
+  delegation of at least one whole token (10^decimals) with no unbonding entry in flight, excluding unregistered
+  validators and any with a delegation change or slash query in progress. When the unbonding lookup failed, or no
+  validator qualifies (for example, every funded validator already has an entry), the pick is null with
+  `live_test_reason`. The script falls back to the smallest overall in that case; the dashboard does not.
 - Delegations are the one required lookup (a failure gives the zone an error row). The validator list and the unbonding
   entries are optional: if they fail, those cells show `n/a` and the row falls back to Stride's name.
 
@@ -85,6 +99,15 @@ commit and push `ops/status.json` so the team sees the same state. Logic lives i
   drained of native, whose stToken it holds (by denom trace); canonical when the stToken came over channel-326.
 - Click a row for the zone's diagram, its transfer list and its accounts (ICAs, deposit address, staketia addresses
   for celestia, vault, pools, operators). Every integer in the payload is a string; the page uses BigInt.
+- Records column: `epoch unbonding entries not yet CLAIMABLE / user redemption records` for the zone (zero is muted).
+  Both come from Stride, read once per refresh across all pages: `records/epoch_unbonding_record` (entries with
+  `native_token_amount > 0`) and `records/user_redemption_record`. Celestia also reads the staketia redemption and
+  unbonding records. The payload's `records` object carries the counts and the `delegation_transfer_ready`,
+  `redemption_transfer_ready` and (celestia) `staketia_claim_ready` booleans.
+- Transfer checklist panel (selected zone, above the ICA transfers): DELEGATION transfer is ready when nothing is
+  outside CLAIMABLE (otherwise the count by status), REDEMPTION transfer when there are no user redemption records and
+  no pending claims, and for celestia the staketia claim balance when no staketia redemption record and no unbonding
+  record outside CLAIMED remains. `n/a` when a record table could not be read.
 - Click the Staked or Unbonding node in the diagram for the per-validator breakdown (`validator_positions`): every
   validator the delegation ICA, and for celestia the multisig, has stake or unbonding entries on, with a bar per
   validator split into its staked amount and one segment per unbonding entry (hover for the amount and completion).

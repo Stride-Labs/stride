@@ -212,6 +212,154 @@ class BuildRowsTest(unittest.TestCase):
         self.assertEqual(payload["weight_percent"], "100.00")
 
 
+WHOLE = 1_000_000  # one whole token at 6 decimals
+
+
+class LiveTestPickTest(unittest.TestCase):
+    def pick(
+        self,
+        stride_validators: list[validators.StrideValidator],
+        unbonding_entries: dict[str, int] | None = None,
+        delegations: dict[str, int] | None = None,
+        decimals: int = 6,
+    ) -> validators.LiveTestPicks:
+        rows = validators.build_rows(
+            stride_validators=stride_validators,
+            delegations=delegations or {},
+            host_validators=None,
+            unbonding_entries=unbonding_entries,
+        )
+        return validators.pick_live_test(rows=rows, decimals=decimals)
+
+    def test_smallest_recorded_wins_and_the_second_smallest_is_next(self) -> None:
+        picks = self.pick(
+            [
+                stride_validator(address=OPERATOR_A, delegation=50 * WHOLE),
+                stride_validator(address=OPERATOR_B, delegation=5 * WHOLE),
+                stride_validator(address=OPERATOR_C, delegation=9 * WHOLE),
+            ],
+            unbonding_entries={},
+        )
+
+        self.assertEqual(picks.pick, validators.LiveTestCandidate(address=OPERATOR_B, moniker=f"name-{OPERATOR_B}", recorded=5 * WHOLE))
+        self.assertEqual(picks.runner_up.address, OPERATOR_C)
+        self.assertIsNone(picks.reason)
+
+    def test_below_one_whole_token_is_skipped_and_exactly_one_qualifies(self) -> None:
+        picks = self.pick(
+            [
+                stride_validator(address=OPERATOR_A, delegation=WHOLE - 1),
+                stride_validator(address=OPERATOR_B, delegation=WHOLE),
+            ],
+            unbonding_entries={},
+        )
+
+        self.assertEqual(picks.pick.address, OPERATOR_B)
+        self.assertIsNone(picks.runner_up)
+
+    def test_the_floor_scales_with_the_zones_decimals(self) -> None:
+        validator_set = [
+            stride_validator(address=OPERATOR_A, delegation=10**18 - 1),
+            stride_validator(address=OPERATOR_B, delegation=10**18),
+        ]
+
+        self.assertEqual(self.pick(validator_set, unbonding_entries={}, decimals=18).pick.address, OPERATOR_B)
+        self.assertEqual(self.pick(validator_set, unbonding_entries={}, decimals=6).pick.address, OPERATOR_A)
+
+    def test_a_validator_with_an_unbonding_entry_in_flight_is_skipped(self) -> None:
+        picks = self.pick(
+            [
+                stride_validator(address=OPERATOR_A, delegation=2 * WHOLE),
+                stride_validator(address=OPERATOR_B, delegation=3 * WHOLE),
+                stride_validator(address=OPERATOR_C, delegation=4 * WHOLE),
+            ],
+            unbonding_entries={OPERATOR_A: 1},
+        )
+
+        self.assertEqual((picks.pick.address, picks.runner_up.address), (OPERATOR_B, OPERATOR_C))
+
+    def test_changes_or_slash_query_in_progress_are_skipped(self) -> None:
+        picks = self.pick(
+            [
+                stride_validator(address=OPERATOR_A, delegation=2 * WHOLE, delegation_changes_in_progress=1),
+                stride_validator(address=OPERATOR_B, delegation=3 * WHOLE, slash_query_in_progress=True),
+                stride_validator(address=OPERATOR_C, delegation=4 * WHOLE),
+            ],
+            unbonding_entries={},
+        )
+
+        self.assertEqual(picks.pick.address, OPERATOR_C)
+        self.assertIsNone(picks.runner_up)
+
+    def test_an_unregistered_host_delegation_is_never_picked(self) -> None:
+        picks = self.pick(
+            [stride_validator(address=OPERATOR_A, delegation=9 * WHOLE)],
+            unbonding_entries={},
+            delegations={OPERATOR_D: 2 * WHOLE},
+        )
+
+        self.assertEqual(picks.pick.address, OPERATOR_A)
+        self.assertIsNone(picks.runner_up)
+
+    def test_ties_break_on_address_so_the_pick_is_stable(self) -> None:
+        picks = self.pick(
+            [
+                stride_validator(address=OPERATOR_B, delegation=2 * WHOLE),
+                stride_validator(address=OPERATOR_A, delegation=2 * WHOLE),
+            ],
+            unbonding_entries={},
+        )
+
+        self.assertEqual((picks.pick.address, picks.runner_up.address), (OPERATOR_A, OPERATOR_B))
+
+    def test_no_pick_with_a_reason_when_the_unbonding_lookup_failed(self) -> None:
+        picks = self.pick([stride_validator(address=OPERATOR_A, delegation=2 * WHOLE)], unbonding_entries=None)
+
+        self.assertEqual((picks.pick, picks.runner_up), (None, None))
+        self.assertEqual(picks.reason, "unbonding entries could not be read")
+
+    def test_no_pick_with_a_reason_when_nothing_qualifies(self) -> None:
+        picks = self.pick([stride_validator(address=OPERATOR_A, delegation=2 * WHOLE)], unbonding_entries={OPERATOR_A: 2})
+
+        self.assertEqual((picks.pick, picks.runner_up), (None, None))
+        self.assertEqual(
+            picks.reason, "all 1 funded validators have an unbonding entry in flight or a change in progress"
+        )
+
+    def test_no_pick_with_a_reason_when_no_validator_holds_a_whole_token(self) -> None:
+        picks = self.pick([stride_validator(address=OPERATOR_A, delegation=WHOLE - 1)], unbonding_entries={})
+
+        self.assertEqual((picks.pick, picks.runner_up), (None, None))
+        self.assertEqual(picks.reason, "no registered validator holds a whole token")
+
+    def test_collect_exposes_the_pick_as_json(self) -> None:
+        zone = config.ZONES[0]
+        stride_zone = {
+            "chain_id": zone.chain_id,
+            "delegation_ica_address": "ica",
+            "validators": [
+                {"address": address, "name": f"name-{address}", "delegation": str(delegation), "weight": "5",
+                 "shares_to_tokens_rate": "1.0", "slash_query_in_progress": False, "delegation_changes_in_progress": "0"}
+                for address, delegation in ((OPERATOR_A, 3 * WHOLE), (OPERATOR_B, 2 * WHOLE))
+            ],
+        }
+
+        def fake_get_all_pages(chain: object, path: str, key: str, params: object = None, max_items: object = None) -> list[object]:
+            if key == "delegation_responses":
+                return []
+            if key == "unbonding_responses":
+                return []
+            raise json.JSONDecodeError("bad", "", 0)
+
+        with mock.patch.object(validators.chain, "rest_get_all_pages", fake_get_all_pages):
+            entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
+
+        json.dumps(entry)
+        self.assertEqual(entry["live_test_pick"], {"address": OPERATOR_B, "moniker": f"name-{OPERATOR_B}", "recorded": str(2 * WHOLE)})
+        self.assertEqual(entry["live_test_next"]["address"], OPERATOR_A)
+        self.assertIsNone(entry["live_test_reason"])
+
+
 class SummarizeTest(unittest.TestCase):
     def test_totals_and_counts(self) -> None:
         rows = validators.build_rows(

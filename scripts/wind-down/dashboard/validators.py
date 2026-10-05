@@ -114,6 +114,25 @@ class ValidatorRow:
 
 
 @dataclass(frozen=True)
+class LiveTestCandidate:
+    address: str
+    moniker: str
+    recorded: int
+
+    def payload(self) -> dict[str, Any]:
+        return {**dataclasses.asdict(self), "recorded": str(self.recorded)}
+
+
+@dataclass(frozen=True)
+class LiveTestPicks:
+    """The validator to drain in full as the live test, and the runner-up; both None with a reason when none qualifies."""
+
+    pick: LiveTestCandidate | None
+    runner_up: LiveTestCandidate | None
+    reason: str | None  # why there is no pick; None when there is one
+
+
+@dataclass(frozen=True)
 class ZoneTotals:
     validator_count: int
     delegated_count: int  # validators that hold a delegation on the host
@@ -239,6 +258,36 @@ def summarize(rows: list[ValidatorRow]) -> ZoneTotals:
     )
 
 
+def pick_live_test(rows: list[ValidatorRow], decimals: int) -> LiveTestPicks:
+    """The live-test validator: the smallest recorded delegation of at least one whole token with no unbonding entry
+    in flight (mirrors scripts/wind-down/pick_live_test_validators.py), and the second smallest by the same rule.
+
+    A validator Stride does not track, or one with a delegation change or slash query in progress, cannot be drained
+    cleanly, so it is out. Without the unbonding entries nothing can be ruled in, so there is no pick.
+    """
+    if any(row.unbonding_entries is None for row in rows):
+        return LiveTestPicks(pick=None, runner_up=None, reason="unbonding entries could not be read")
+
+    whole_token = 10**decimals
+    funded = [row for row in rows if row.registered and row.recorded >= whole_token]
+    if not funded:
+        return LiveTestPicks(pick=None, runner_up=None, reason="no registered validator holds a whole token")
+
+    eligible = sorted(
+        (row for row in funded if not row.in_progress and row.unbonding_entries == 0),
+        key=lambda row: (row.recorded, row.address),
+    )
+    if not eligible:
+        return LiveTestPicks(
+            pick=None,
+            runner_up=None,
+            reason=f"all {len(funded)} funded validators have an unbonding entry in flight or a change in progress",
+        )
+
+    candidates = [LiveTestCandidate(address=row.address, moniker=row.moniker, recorded=row.recorded) for row in eligible[:2]]
+    return LiveTestPicks(pick=candidates[0], runner_up=candidates[1] if len(candidates) > 1 else None, reason=None)
+
+
 # ---- zones
 
 
@@ -275,6 +324,7 @@ def _collect_zone(
         unbonding_entries=unbonding_entries,
     )
     totals = summarize(rows=rows)
+    live_test = pick_live_test(rows=rows, decimals=zone.decimals)
     return {
         "kind": "zone",
         "chain_id": zone.chain_id,
@@ -283,6 +333,9 @@ def _collect_zone(
         "delegation_address": ica_address,
         "max_unbonding_entries": MAX_UNBONDING_ENTRIES,
         "totals": totals.payload(),
+        "live_test_pick": _optional_payload(candidate=live_test.pick),
+        "live_test_next": _optional_payload(candidate=live_test.runner_up),
+        "live_test_reason": live_test.reason,
         "validators": [row.payload() for row in rows],
     }
 
@@ -521,6 +574,10 @@ def _entries_for(unbonding: dict[str, int] | None, address: str) -> int | None:
 def _decimal_text(value: Decimal) -> str:
     """Plain (never exponent) notation; an exact zero is just "0"."""
     return "0" if value == 0 else format(value, "f")
+
+
+def _optional_payload(candidate: LiveTestCandidate | None) -> dict[str, Any] | None:
+    return None if candidate is None else candidate.payload()
 
 
 def _optional_decimal_text(value: Decimal | None) -> str | None:

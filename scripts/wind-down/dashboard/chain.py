@@ -263,6 +263,11 @@ def ibc_client_status(chain: Chain, client_id: str) -> str:
     ]
 
 
+def ibc_client_chain_id(chain: Chain, client_id: str) -> str:
+    """The chain id a light client tracks (the counterparty chain of the connection that uses it)."""
+    return rest_get(chain=chain, path=f"/ibc/core/client/v1/client_states/{client_id}")["client_state"]["chain_id"]
+
+
 def ibc_client_health(
     chain: Chain, client_id: str, now: datetime.datetime | None = None
 ) -> ClientHealth:

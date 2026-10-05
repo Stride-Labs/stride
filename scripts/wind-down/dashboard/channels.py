@@ -17,6 +17,12 @@ STATE_OPEN = "OPEN"
 STATE_CLOSED = "CLOSED"
 STATE_UNKNOWN = "UNREACHABLE"  # the chain that owns this end could not be asked
 
+STAKEIBC_HOST_ZONE_PATH = "/Stride-Labs/stride/stakeibc/host_zone"
+MSG_TRANSFER = "/ibc.applications.transfer.v1.MsgTransfer"
+MSG_SEND = "/cosmos.bank.v1beta1.MsgSend"
+ALLOW_ALL = "*"  # an ICA host allow list that permits every message
+BANK_SEND_NOTE = "bank send"
+
 STUCK_AFTER_SECONDS = 30 * 60
 ZONE_WORKERS = 16
 CHANNEL_WORKERS = 6
@@ -112,6 +118,44 @@ class ChannelRow:
 
 
 @dataclass(frozen=True)
+class Preflight:
+    """The checks the ops plan runs before a zone's wind-down, each None (n/a) when its lookup failed.
+
+    The supporting fields carry what the page shows beside each pill.
+    """
+
+    withdraw_address_ok: bool | None  # the delegation ICA's reward withdraw address is the withdrawal ICA
+    withdraw_address: str | None  # as the host reports it
+    withdrawal_ica_address: str | None  # as Stride records it
+    delegation_ica_address: str | None
+    allow_messages_ok: bool | None  # the host's ICA allow list covers what the wind-down sends
+    allow_messages_wildcard: bool | None
+    allow_messages_count: int | None
+    allow_messages_missing: list[str] | None
+    host_enabled: bool | None
+    osmosis_leg_ok: bool | None  # the host's Osmosis channel is OPEN on a client of osmosis-1
+    osmosis_leg_state: str | None
+    osmosis_leg_chain_id: str | None  # the chain the leg's client tracks
+    osmosis_leg_note: str | None  # why there is no leg ("bank send" for osmosis-1)
+    host_client_of_stride_ok: bool | None  # the host's client of Stride is Active
+    host_client_of_stride_status: str | None
+    host_client_of_stride_id: str | None
+    all_ok: bool  # every check that applies passed (a null check or any failure fails it)
+
+
+@dataclass(frozen=True)
+class IcaHostParams:
+    host_enabled: bool
+    allow_messages: list[str]
+
+
+@dataclass(frozen=True)
+class OsmosisLeg:
+    state: str
+    chain_id: str  # the chain the leg's client tracks
+
+
+@dataclass(frozen=True)
 class ZoneChannels:
     chain_id: str
     symbol: str
@@ -122,6 +166,7 @@ class ZoneChannels:
     host_error: str | None  # why the host-side header lookups are null (host REST down), else None
     status: Status
     channels: list[ChannelRow]
+    preflight: Preflight | None = None  # None only when the zone's header could not be built
 
 
 @dataclass(frozen=True)
@@ -197,11 +242,13 @@ def collect() -> dict[str, Any]:
     now = datetime.datetime.now(datetime.UTC)
     feed = chain.get_json(url=config.CHANNELS_FEED_URL)
     feed_by_chain = {entry["chain_id"]: entry for entry in feed}
+    # Stride's host zones once for every zone's pre-flight checks; without them those checks are n/a.
+    host_zones = chain.optional(_stride_host_zones)
 
     # Zones, legs and routes are independent, so all of them share one pool.
     with concurrent.futures.ThreadPoolExecutor(max_workers=ZONE_WORKERS) as pool:
         zone_futures = [
-            pool.submit(_collect_zone, zone=zone, feed_by_chain=feed_by_chain, now=now)
+            pool.submit(_collect_zone, zone=zone, feed_by_chain=feed_by_chain, host_zones=host_zones, now=now)
             for zone in config.ZONES
         ]
         leg_futures = [
@@ -273,6 +320,35 @@ def worst_status(statuses: list[Status]) -> Status:
     return min(statuses, key=STATUS_SEVERITY.index, default=Status.OK)
 
 
+def allow_messages_missing(allow_messages: list[str], chain_id: str) -> list[str]:
+    """The messages the wind-down sends through the host's ICA that its allow list does not cover.
+
+    Every zone sends MsgTransfer (the vault transfer); osmosis-1 has no IBC leg and pays the vault with a bank
+    MsgSend. A `*` entry allows everything.
+    """
+    if ALLOW_ALL in allow_messages:
+        return []
+    required = [MSG_SEND] if chain_id == config.OSMOSIS_CHAIN_ID else []
+    return [message for message in [MSG_TRANSFER, *required] if message not in allow_messages]
+
+
+def leg_is_ok(state: str, counterparty_chain_id: str) -> bool:
+    return state == STATE_OPEN and counterparty_chain_id == config.OSMOSIS_CHAIN_ID
+
+
+def preflight_passes(
+    chain_id: str,
+    withdraw_address_ok: bool | None,
+    allow_messages_ok: bool | None,
+    osmosis_leg_ok: bool | None,
+    host_client_of_stride_ok: bool | None,
+) -> bool:
+    """Every check passed; osmosis-1 has no leg (a bank send), so its leg being n/a is not a failure."""
+    has_leg = chain_id != config.OSMOSIS_CHAIN_ID
+    checks = [withdraw_address_ok, allow_messages_ok, host_client_of_stride_ok] + ([osmosis_leg_ok] if has_leg else [])
+    return all(check is True for check in checks)
+
+
 def build_tiles(
     zones: list[ZoneChannels],
     legs: list[LegRow],
@@ -335,15 +411,22 @@ def build_tiles(
 
 
 def _collect_zone(
-    zone: config.ZoneConfig, feed_by_chain: dict[str, Any], now: datetime.datetime
+    zone: config.ZoneConfig,
+    feed_by_chain: dict[str, Any],
+    host_zones: dict[str, dict[str, Any]] | None,
+    now: datetime.datetime,
 ) -> ZoneChannels | chain.ZoneError:
     return chain.within_error_boundary(
-        chain_id=zone.chain_id, work=lambda: _zone_channels(zone=zone, feed_by_chain=feed_by_chain, now=now)
+        chain_id=zone.chain_id,
+        work=lambda: _zone_channels(zone=zone, feed_by_chain=feed_by_chain, host_zones=host_zones, now=now),
     )
 
 
 def _zone_channels(
-    zone: config.ZoneConfig, feed_by_chain: dict[str, Any], now: datetime.datetime
+    zone: config.ZoneConfig,
+    feed_by_chain: dict[str, Any],
+    host_zones: dict[str, dict[str, Any]] | None,
+    now: datetime.datetime,
 ) -> ZoneChannels:
     entry = feed_by_chain[zone.chain_id]
     stride = chain.stride_chain()
@@ -367,7 +450,94 @@ def _zone_channels(
         host_error=host_header.error,
         status=worst_status(statuses=[row.status for row in rows]),
         channels=rows,
+        preflight=_preflight(
+            zone=zone, host=host, entry=entry, host_zone=(host_zones or {}).get(zone.chain_id)
+        ),
     )
+
+
+# ---- pre-flight checks
+
+
+def _preflight(
+    zone: config.ZoneConfig, host: chain.Chain, entry: dict[str, Any], host_zone: dict[str, Any] | None
+) -> Preflight:
+    """Each check is its own optional lookup: one dead query makes that pill n/a, not the zone."""
+    delegation_ica = host_zone["delegation_ica_address"] if host_zone else None
+    withdrawal_ica = host_zone["withdrawal_ica_address"] if host_zone else None
+    withdraw_address = chain.optional(
+        lambda: _withdraw_address(host=host, delegator=delegation_ica) if delegation_ica else None
+    )
+    withdraw_address_ok = None if withdraw_address is None or withdrawal_ica is None else withdraw_address == withdrawal_ica
+
+    ica_params = chain.optional(lambda: _ica_host_params(host=host))
+    missing = (
+        None
+        if ica_params is None
+        else allow_messages_missing(allow_messages=ica_params.allow_messages, chain_id=zone.chain_id)
+    )
+
+    leg = chain.optional(lambda: _osmosis_leg(zone=zone, host=host))
+    stride_client_id = entry["counterparty_client_id"]
+    client_status = chain.optional(lambda: chain.ibc_client_status(chain=host, client_id=stride_client_id))
+    client_ok = None if client_status is None else client_status == chain.CLIENT_STATUS_ACTIVE
+
+    allow_messages_ok = None if missing is None else not missing
+    leg_ok = None if leg is None else leg_is_ok(state=leg.state, counterparty_chain_id=leg.chain_id)
+    return Preflight(
+        withdraw_address_ok=withdraw_address_ok,
+        withdraw_address=withdraw_address,
+        withdrawal_ica_address=withdrawal_ica,
+        delegation_ica_address=delegation_ica,
+        allow_messages_ok=allow_messages_ok,
+        allow_messages_wildcard=None if ica_params is None else ALLOW_ALL in ica_params.allow_messages,
+        allow_messages_count=None if ica_params is None else len(ica_params.allow_messages),
+        allow_messages_missing=missing,
+        host_enabled=None if ica_params is None else ica_params.host_enabled,
+        osmosis_leg_ok=leg_ok,
+        osmosis_leg_state=leg.state if leg else None,
+        osmosis_leg_chain_id=leg.chain_id if leg else None,
+        osmosis_leg_note=None if zone.osmosis_channel else BANK_SEND_NOTE,
+        host_client_of_stride_ok=client_ok,
+        host_client_of_stride_status=client_status,
+        host_client_of_stride_id=stride_client_id,
+        all_ok=preflight_passes(
+            chain_id=zone.chain_id,
+            withdraw_address_ok=withdraw_address_ok,
+            allow_messages_ok=allow_messages_ok,
+            osmosis_leg_ok=leg_ok,
+            host_client_of_stride_ok=client_ok,
+        ),
+    )
+
+
+def _withdraw_address(host: chain.Chain, delegator: str) -> str:
+    response = chain.rest_get(
+        chain=host, path=f"/cosmos/distribution/v1beta1/delegators/{delegator}/withdraw_address"
+    )
+    return response["withdraw_address"]
+
+
+def _ica_host_params(host: chain.Chain) -> IcaHostParams:
+    params = chain.rest_get(chain=host, path="/ibc/apps/interchain_accounts/host/v1/params")["params"]
+    return IcaHostParams(host_enabled=bool(params["host_enabled"]), allow_messages=params["allow_messages"] or [])
+
+
+def _osmosis_leg(zone: config.ZoneConfig, host: chain.Chain) -> OsmosisLeg | None:
+    """The host's channel to Osmosis (the one the leg table shows) and the chain its client tracks."""
+    if not zone.osmosis_channel:
+        return None
+
+    end = chain.ibc_channel_end(chain=host, channel_id=zone.osmosis_channel, port_id=chain.TRANSFER_PORT)
+    connection = chain.ibc_connection_end(chain=host, connection_id=end.connection_id)
+    return OsmosisLeg(
+        state=end.state, chain_id=chain.ibc_client_chain_id(chain=host, client_id=connection.client_id)
+    )
+
+
+def _stride_host_zones() -> dict[str, dict[str, Any]]:
+    response = chain.rest_get(chain=chain.stride_chain(), path=STAKEIBC_HOST_ZONE_PATH)
+    return {host_zone["chain_id"]: host_zone for host_zone in response["host_zone"]}
 
 
 def _host_header(host: chain.Chain, entry: dict[str, Any]) -> HostHeader:

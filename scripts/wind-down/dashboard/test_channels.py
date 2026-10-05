@@ -1,10 +1,13 @@
+import dataclasses
 import datetime
+import json
 import unittest
 import urllib.error
 from unittest import mock
 
 import chain
 import channels
+import config
 
 NOW = datetime.datetime(2026, 9, 30, 12, 0, 0, tzinfo=datetime.UTC)
 STRIDE = chain.Chain(chain_id="stride-1", rest="https://stride.rest", rpc="https://stride.rpc")
@@ -317,8 +320,12 @@ class HostOutageTest(unittest.TestCase):
             ),
             mock.patch.object(chain, "ibc_packet_commitments", side_effect=stride_or_fail(chain.PacketCommitments([], False))),
             mock.patch.object(chain, "rpc_tx_search_latest", side_effect=TimeoutError("slow")),
+            mock.patch.object(chain, "rest_get", side_effect=bad_gateway),
+            mock.patch.object(chain, "ibc_client_status", side_effect=bad_gateway),
         ):
-            result = channels._zone_channels(zone=zone, feed_by_chain={"haqq_11235-1": self.ENTRY}, now=NOW)
+            result = channels._zone_channels(
+                zone=zone, feed_by_chain={"haqq_11235-1": self.ENTRY}, host_zones=HOST_ZONES, now=NOW
+            )
 
         by_name = {row.name: row for row in result.channels}
         self.assertEqual(by_name["DELEGATION"].status, channels.Status.CLOSED)
@@ -331,6 +338,24 @@ class HostOutageTest(unittest.TestCase):
         self.assertIsNone(result.host_connection_state)
         self.assertEqual(result.host_error, "HTTPError: HTTP Error 502: Bad Gateway")
         self.assertEqual(result.stride_connection_state, "OPEN")
+        # Every pre-flight lookup hits the dead host: all n/a, so the zone cannot pass.
+        preflight = result.preflight
+        self.assertEqual(preflight.withdrawal_ica_address, "haqq1withdrawal")
+        self.assertEqual(
+            [
+                preflight.withdraw_address_ok,
+                preflight.allow_messages_ok,
+                preflight.osmosis_leg_ok,
+                preflight.host_client_of_stride_ok,
+            ],
+            [None, None, None, None],
+        )
+        self.assertFalse(preflight.all_ok)
+
+
+HOST_ZONES = {
+    "haqq_11235-1": {"delegation_ica_address": "haqq1delegation", "withdrawal_ica_address": "haqq1withdrawal"},
+}
 
 
 def client(chain_id: str, client_id: str, status: str = "Active", remaining: float | None = 86400.0):
@@ -354,6 +379,190 @@ def channel_row(name: str, status: channels.Status, outbound: channels.PacketFlo
         last_ack=None,
         status=status,
     )
+
+
+DELEGATION_ICA = "cosmos1delegation"
+WITHDRAWAL_ICA = "cosmos1withdrawal"
+ZONE_RECORD = {"delegation_ica_address": DELEGATION_ICA, "withdrawal_ica_address": WITHDRAWAL_ICA}
+WITHDRAW_PATH = f"/cosmos/distribution/v1beta1/delegators/{DELEGATION_ICA}/withdraw_address"
+PARAMS_PATH = "/ibc/apps/interchain_accounts/host/v1/params"
+CLIENT_STATES_PATH = "/ibc/core/client/v1/client_states/07-tendermint-9"
+
+
+class AllowMessagesTest(unittest.TestCase):
+    def missing(self, allow_messages: list[str], chain_id: str = "cosmoshub-4") -> list[str]:
+        return channels.allow_messages_missing(allow_messages=allow_messages, chain_id=chain_id)
+
+    def test_msg_transfer_is_required_everywhere(self) -> None:
+        self.assertEqual(self.missing([]), [channels.MSG_TRANSFER])
+        self.assertEqual(self.missing([channels.MSG_SEND]), [channels.MSG_TRANSFER])
+        self.assertEqual(self.missing([channels.MSG_TRANSFER]), [])
+
+    def test_a_wildcard_allows_everything_even_on_osmosis(self) -> None:
+        self.assertEqual(self.missing(["*"]), [])
+        self.assertEqual(self.missing(["*"], chain_id="osmosis-1"), [])
+
+    def test_osmosis_also_needs_the_bank_send(self) -> None:
+        self.assertEqual(self.missing([channels.MSG_TRANSFER], chain_id="osmosis-1"), [channels.MSG_SEND])
+        self.assertEqual(self.missing([channels.MSG_SEND], chain_id="osmosis-1"), [channels.MSG_TRANSFER])
+        self.assertEqual(self.missing([channels.MSG_TRANSFER, channels.MSG_SEND], chain_id="osmosis-1"), [])
+
+    def test_other_zones_do_not_need_the_bank_send(self) -> None:
+        self.assertEqual(self.missing([channels.MSG_TRANSFER, "/cosmos.gov.v1.MsgVote"]), [])
+
+
+class LegTest(unittest.TestCase):
+    def test_open_on_a_client_of_osmosis_passes(self) -> None:
+        self.assertTrue(channels.leg_is_ok(state="OPEN", counterparty_chain_id="osmosis-1"))
+
+    def test_closed_or_wrong_counterparty_fails(self) -> None:
+        self.assertFalse(channels.leg_is_ok(state="CLOSED", counterparty_chain_id="osmosis-1"))
+        self.assertFalse(channels.leg_is_ok(state="OPEN", counterparty_chain_id="osmosis-2"))
+
+
+class PassesTest(unittest.TestCase):
+    def passes(self, chain_id: str = "cosmoshub-4", **overrides: bool | None) -> bool:
+        checks = {
+            "withdraw_address_ok": True,
+            "allow_messages_ok": True,
+            "osmosis_leg_ok": True,
+            "host_client_of_stride_ok": True,
+            **overrides,
+        }
+        return channels.preflight_passes(chain_id=chain_id, **checks)
+
+    def test_all_true_passes_and_any_false_or_null_fails(self) -> None:
+        self.assertTrue(self.passes())
+        for check in ("withdraw_address_ok", "allow_messages_ok", "osmosis_leg_ok", "host_client_of_stride_ok"):
+            self.assertFalse(self.passes(**{check: False}), check)
+            self.assertFalse(self.passes(**{check: None}), check)
+
+    def test_osmosis_has_no_leg_so_a_null_leg_passes_there_only(self) -> None:
+        self.assertTrue(self.passes(chain_id="osmosis-1", osmosis_leg_ok=None))
+        self.assertFalse(self.passes(chain_id="osmosis-1", allow_messages_ok=False, osmosis_leg_ok=None))
+
+
+class PreflightTest(unittest.TestCase):
+    ENTRY = {"counterparty_client_id": "07-tendermint-5"}
+
+    def run_preflight(
+        self,
+        chain_id: str = "cosmoshub-4",
+        rest: dict[str, object] | None = None,
+        client_status: str | Exception = "Active",
+        leg_state: str = "OPEN",
+        host_zone: dict[str, str] | None = ZONE_RECORD,
+    ) -> channels.Preflight:
+        zone = config.ZONES_BY_CHAIN_ID[chain_id]
+        responses = {
+            WITHDRAW_PATH: {"withdraw_address": WITHDRAWAL_ICA},
+            PARAMS_PATH: {"params": {"host_enabled": True, "allow_messages": [channels.MSG_TRANSFER]}},
+            CLIENT_STATES_PATH: {"client_state": {"chain_id": "osmosis-1"}},
+            **(rest or {}),
+        }
+
+        def fake_rest_get(chain: chain.Chain, path: str, params: object = None) -> object:
+            response = responses[path]
+            if isinstance(response, Exception):
+                raise response
+            return response
+
+        leg_end = chain.ChannelEnd(
+            state=leg_state, counterparty_port="transfer", counterparty_channel="channel-1", connection_id="connection-3"
+        )
+        status_patch = (
+            mock.patch.object(chain, "ibc_client_status", side_effect=client_status)
+            if isinstance(client_status, Exception)
+            else mock.patch.object(chain, "ibc_client_status", return_value=client_status)
+        )
+        with (
+            mock.patch.object(chain, "rest_get", side_effect=fake_rest_get),
+            mock.patch.object(chain, "ibc_channel_end", return_value=leg_end),
+            mock.patch.object(chain, "ibc_connection_end", return_value=chain.ConnectionEnd("OPEN", "07-tendermint-9", "x", "y")),
+            status_patch,
+        ):
+            return channels._preflight(zone=zone, host=HOST, entry=self.ENTRY, host_zone=host_zone)
+
+    def test_everything_good_passes_with_the_details_filled_in(self) -> None:
+        preflight = self.run_preflight()
+
+        self.assertEqual(
+            (
+                preflight.withdraw_address_ok,
+                preflight.allow_messages_ok,
+                preflight.osmosis_leg_ok,
+                preflight.host_client_of_stride_ok,
+                preflight.all_ok,
+            ),
+            (True, True, True, True, True),
+        )
+        self.assertEqual((preflight.withdraw_address, preflight.withdrawal_ica_address), (WITHDRAWAL_ICA, WITHDRAWAL_ICA))
+        self.assertEqual((preflight.allow_messages_count, preflight.allow_messages_wildcard, preflight.host_enabled), (1, False, True))
+        self.assertEqual((preflight.osmosis_leg_state, preflight.osmosis_leg_chain_id), ("OPEN", "osmosis-1"))
+        self.assertEqual((preflight.host_client_of_stride_status, preflight.host_client_of_stride_id), ("Active", "07-tendermint-5"))
+        self.assertIsNone(preflight.osmosis_leg_note)
+        json.dumps(dataclasses.asdict(preflight))
+
+    def test_a_withdraw_address_that_is_not_the_withdrawal_ica_fails_and_carries_both(self) -> None:
+        preflight = self.run_preflight(rest={WITHDRAW_PATH: {"withdraw_address": DELEGATION_ICA}})
+
+        self.assertFalse(preflight.withdraw_address_ok)
+        self.assertEqual((preflight.withdraw_address, preflight.withdrawal_ica_address), (DELEGATION_ICA, WITHDRAWAL_ICA))
+        self.assertFalse(preflight.all_ok)
+
+    def test_the_wildcard_allow_list_passes_and_a_missing_msg_transfer_fails(self) -> None:
+        wildcard = self.run_preflight(rest={PARAMS_PATH: {"params": {"host_enabled": True, "allow_messages": ["*"]}}})
+        narrow = self.run_preflight(rest={PARAMS_PATH: {"params": {"host_enabled": True, "allow_messages": ["/x.MsgY"]}}})
+
+        self.assertEqual((wildcard.allow_messages_ok, wildcard.allow_messages_wildcard), (True, True))
+        self.assertEqual((narrow.allow_messages_ok, narrow.allow_messages_missing), (False, [channels.MSG_TRANSFER]))
+
+    def test_the_leg_fails_when_closed_or_on_the_wrong_chain(self) -> None:
+        closed = self.run_preflight(leg_state="CLOSED")
+        wrong = self.run_preflight(rest={CLIENT_STATES_PATH: {"client_state": {"chain_id": "other-1"}}})
+
+        self.assertFalse(closed.osmosis_leg_ok)
+        self.assertFalse(wrong.osmosis_leg_ok)
+        self.assertEqual(wrong.osmosis_leg_chain_id, "other-1")
+
+    def test_an_expired_host_client_of_stride_fails(self) -> None:
+        preflight = self.run_preflight(client_status="Expired")
+
+        self.assertFalse(preflight.host_client_of_stride_ok)
+        self.assertEqual(preflight.host_client_of_stride_status, "Expired")
+
+    def test_osmosis_has_no_leg_and_needs_the_bank_send(self) -> None:
+        params = {PARAMS_PATH: {"params": {"host_enabled": True, "allow_messages": [channels.MSG_TRANSFER]}}}
+        without_send = self.run_preflight(chain_id="osmosis-1", rest=params)
+        with_send = self.run_preflight(
+            chain_id="osmosis-1",
+            rest={PARAMS_PATH: {"params": {"host_enabled": True, "allow_messages": [channels.MSG_TRANSFER, channels.MSG_SEND]}}},
+        )
+
+        self.assertIsNone(without_send.osmosis_leg_ok)
+        self.assertEqual(without_send.osmosis_leg_note, "bank send")
+        self.assertFalse(without_send.allow_messages_ok)
+        self.assertFalse(without_send.all_ok)
+        self.assertTrue(with_send.all_ok)
+
+    def test_one_failed_lookup_is_null_without_hiding_the_others(self) -> None:
+        preflight = self.run_preflight(
+            rest={PARAMS_PATH: urllib.error.URLError("down")}, client_status=urllib.error.URLError("down")
+        )
+
+        self.assertIsNone(preflight.allow_messages_ok)
+        self.assertIsNone(preflight.allow_messages_count)
+        self.assertIsNone(preflight.host_client_of_stride_ok)
+        self.assertTrue(preflight.withdraw_address_ok)
+        self.assertTrue(preflight.osmosis_leg_ok)
+        self.assertFalse(preflight.all_ok)
+
+    def test_without_stride_host_zone_the_withdraw_check_is_null(self) -> None:
+        preflight = self.run_preflight(host_zone=None)
+
+        self.assertIsNone(preflight.withdraw_address_ok)
+        self.assertIsNone(preflight.withdrawal_ica_address)
+        self.assertFalse(preflight.all_ok)
 
 
 class TilesTest(unittest.TestCase):
