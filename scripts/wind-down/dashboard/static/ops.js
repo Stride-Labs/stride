@@ -23,11 +23,62 @@ function startOps() {
 
   document.getElementById('opsName').oninput = (event) => saveName(event.target.value);
   root.addEventListener('change', onTick);
+  root.addEventListener('click', onTickPassing);
   // `toggle` does not bubble, so listen in the capture phase to remember what the user opened or closed.
   root.addEventListener('toggle', onToggle, true);
 
   pollOps();
   setInterval(pollOps, OPS_POLL_MS);
+  pollLive();
+  setInterval(pollLive, OPS_POLL_MS);
+}
+
+// Live snapshots the plan's `auto` checks read: {channels: data, validators: data, funds: data}.
+const live = {};
+
+async function pollLive() {
+  const tabs = new Set(autoSources());
+  let changed = false;
+  for (const tab of tabs) {
+    const response = await fetch(`/api/${tab}`).catch(() => null);
+    if (!response || response.status !== 200) continue;
+    const body = await response.json();
+    if (live[tab] && live[tab].fetched_at === body.fetched_at) continue;
+    live[tab] = { fetched_at: body.fetched_at, data: body.data };
+    changed = true;
+  }
+  if (changed && plan) drawOps();
+}
+
+function autoSources() {
+  if (!plan) return [];
+  return plan.days.flatMap((day) => day.windows.flatMap((window) => window.steps.filter((step) => step.auto).map((step) => step.auto.tab)));
+}
+
+// The live value behind a step's `auto` check for one zone: true / false / null (n/a) / undefined (no snapshot yet).
+function autoValue(step, zone) {
+  const snapshot = live[step.auto.tab];
+  if (!snapshot) return undefined;
+  const entry = snapshot.data.zones.find((candidate) => candidate.chain_id === zone);
+  if (!entry || entry.error) return null;
+  return step.auto.path.split('.').reduce((value, key) => (value == null ? value : value[key]), entry);
+}
+
+function autoMark(value) {
+  if (value === undefined) return '';
+  if (value === true) return `<span class="ops-auto ok" title="verified live on the dashboard">✓ live</span>`;
+  if (value === false) return `<span class="ops-auto bad" title="the live check fails">✗ live</span>`;
+  return `<span class="ops-auto muted" title="could not be checked">n/a</span>`;
+}
+
+function autoSummary(step) {
+  const values = step.zones.map((zone) => autoValue(step, zone));
+  if (values.some((value) => value === undefined)) return '';
+  const passing = values.filter((value) => value === true).length;
+  const cssClass = passing === values.length ? 'ok' : 'bad';
+  const unticked = step.zones.some((zone, index) => values[index] === true && !isDone(`${step.id}:${zone}`));
+  const button = unticked ? ` <button class="ops-tick-passing" data-tick-passing="${escapeHtml(step.id)}" title="record every zone whose live check passes">tick passing</button>` : '';
+  return `<span class="ops-auto ${cssClass}" title="from the ${escapeHtml(step.auto.tab)} tab's latest snapshot">live: ${passing}/${values.length} pass</span>${button}`;
 }
 
 async function pollOps() {
@@ -44,6 +95,7 @@ async function pollOps() {
   const body = JSON.parse(raw);
   ({ plan, status, today } = body);
   drawOps();
+  pollLive(); // the plan names the tabs the live checks read, so fetch them as soon as it is known
 }
 
 function errorText(raw) {
@@ -86,6 +138,38 @@ async function onTick(event) {
   status = await response.json();
   lastBody = ''; // the stored answer is stale now; the next poll redraws from disk
   drawOps();
+}
+
+// "tick passing" on an auto-checked step: records every zone whose live check passes, in one go.
+async function onTickPassing(event) {
+  const button = event.target.closest('button[data-tick-passing]');
+  if (!button) return;
+  const by = document.getElementById('opsName').value.trim();
+  if (!by) {
+    showMessage('Enter your name in the "you are" field before ticking.');
+    return;
+  }
+  const step = findStep(button.dataset.tickPassing);
+  const pending = step.zones.filter((zone) => autoValue(step, zone) === true && !isDone(`${step.id}:${zone}`));
+  for (const zone of pending) {
+    const response = await fetch('/api/ops/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: `${step.id}:${zone}`, done: true, by }),
+    }).catch(() => null);
+    if (!response || response.status !== 200) {
+      showMessage(response ? `tick failed: ${errorText(await response.text())}` : 'server unreachable');
+      return;
+    }
+    status = await response.json();
+  }
+  showMessage('');
+  lastBody = '';
+  drawOps();
+}
+
+function findStep(stepId) {
+  return plan.days.flatMap((day) => day.windows.flatMap((window) => window.steps)).find((step) => step.id === stepId);
 }
 
 function onToggle(event) {
@@ -167,9 +251,12 @@ function blockHtml(block, { current, next }) {
   const key = `${block.date}|${block.title}`;
   const progress = stepProgress(block);
   const complete = progress.total > 0 && progress.done === progress.total;
-  // Default: past and later blocks collapsed, current and next open; a manual toggle wins from then on.
-  const open = sectionOpen.has(key) ? sectionOpen.get(key) : current || next;
-  const marker = current ? pill('warn', 'now') : next ? pill('idle', 'next') : '';
+  // Default: later blocks collapsed, current and next open, and a past block open while it still has unticked
+  // steps (they are overdue, not history); a manual toggle wins from then on.
+  const past = !current && !next && block.date < today;
+  const overdue = past && !complete;
+  const open = sectionOpen.has(key) ? sectionOpen.get(key) : current || next || overdue;
+  const marker = current ? pill('warn', 'now') : next ? pill('idle', 'next') : overdue ? pill('bad', `${progress.total - progress.done} overdue`) : '';
   const avoid = (block.avoid || []).length
     ? `<div class="ops-avoid"><b>Do not</b><ul>${block.avoid.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul></div>`
     : '';
@@ -202,17 +289,18 @@ function stepHtml(step) {
     ? `<input type="checkbox" disabled ${stepDone(step) ? 'checked' : ''} title="done when every zone is">`
     : `<input type="checkbox" data-id="${escapeHtml(step.id)}" ${isDone(step.id) ? 'checked' : ''}>`;
   const zoneRows = zones.length
-    ? `<ul class="ops-zones">${zones.map((zone) => zoneHtml(`${step.id}:${zone}`, zone)).join('')}</ul>`
+    ? `<ul class="ops-zones">${zones.map((zone) => zoneHtml(`${step.id}:${zone}`, zone, step.auto ? autoMark(autoValue(step, zone)) : '')).join('')}</ul>`
     : '';
+  const auto = step.auto && zones.length ? autoSummary(step) : '';
 
   return `<li class="ops-step ${stepDone(step) ? 'done' : ''}">
     <div class="ops-row"><label>${checkbox} <span class="ops-text">${escapeHtml(step.text)}</span></label>
-      ${tag} ${ref} ${zones.length ? '' : tickedBy(step.id)}</div>${command}${expect}${detail}${zoneRows}</li>`;
+      ${tag} ${auto} ${ref} ${zones.length ? '' : tickedBy(step.id)}</div>${command}${expect}${detail}${zoneRows}</li>`;
 }
 
-function zoneHtml(id, zone) {
+function zoneHtml(id, zone, mark = '') {
   return `<li class="ops-row"><label><input type="checkbox" data-id="${escapeHtml(id)}" ${isDone(id) ? 'checked' : ''}> ${escapeHtml(zone)}</label>
-    ${tickedBy(id)}</li>`;
+    ${mark}${tickedBy(id)}</li>`;
 }
 
 function tickedBy(id) {

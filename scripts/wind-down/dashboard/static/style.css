@@ -134,3 +134,7 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 /* funds: the transfer checklist */
 #view-funds .checklist { list-style: none; margin: 0; padding: 8px 12px; display: grid; gap: 6px; }
 #view-funds .checklist li { display: flex; gap: 10px; align-items: baseline; }
+#view-ops .ops-auto { font-size: 11px; font-weight: 600; }
+#view-ops .ops-auto.ok { color: var(--ok); }
+#view-ops .ops-auto.bad { color: var(--bad); }
+#view-ops .ops-tick-passing { font: inherit; font-size: 11px; font-weight: 600; padding: 1px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--accent); cursor: pointer; }

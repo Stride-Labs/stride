@@ -57,7 +57,11 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "auto": {
+                "tab": "channels",
+                "path": "preflight.osmosis_leg_ok"
+              }
             },
             {
               "id": "pre-withdraw-address",
@@ -75,7 +79,11 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "auto": {
+                "tab": "channels",
+                "path": "preflight.withdraw_address_ok"
+              }
             },
             {
               "id": "pre-allow-messages",
@@ -93,12 +101,11 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
-            },
-            {
-              "id": "pre-buffer-size",
-              "text": "Confirm the mainnet stakeibc buffer_size (the REST params endpoint does not serve it); the drain's ICA timeout is the next day-epoch start minus epoch/buffer_size.",
-              "ref": "§9 step 4"
+              ],
+              "auto": {
+                "tab": "channels",
+                "path": "preflight.allow_messages_ok"
+              }
             }
           ]
         },
