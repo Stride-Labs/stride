@@ -35,7 +35,7 @@ Read-only; prints a table and exits 1 on any shortfall or invalid topology.
 
 Usage:
   python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json \
-      --vault osmo1... [--osmosis-rest https://osmosis-api.polkachu.com]
+      --vault osmo1... [--osmosis-rest https://osmosis-strd-api.polkachu.com]
 """
 
 import argparse
@@ -56,7 +56,8 @@ from typing import Callable
 
 import bech32_ref
 
-OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
+# Stride Labs' private Polkachu endpoint (public fallback: osmosis-api.polkachu.com)
+OSMOSIS_REST_DEFAULT = "https://osmosis-strd-api.polkachu.com"
 USER_AGENT = "curl/8.0"
 TIMEOUT_SECONDS = 30
 MAX_ATTEMPTS = 6
@@ -161,9 +162,21 @@ def main() -> int:
     shortfalls = [result for result in results if not result.covered]
     if shortfalls:
         print(f"\n{len(shortfalls)} stToken(s) NOT covered: {[r.st_denom for r in shortfalls]}")
+        print(render_result(uncovered=[r.st_denom for r in shortfalls]))
         return 1
     print("\nevery stToken is covered")
+    print(render_result(uncovered=[]))
     return 0
+
+
+def render_result(uncovered: list[str]) -> str:
+    """The one-line verdict an operator reads last."""
+    if not uncovered:
+        return "RESULT: PASS — every stToken is covered"
+    return (
+        f"RESULT: FAIL — {len(uncovered)} stToken(s) not covered: {uncovered}; "
+        "do not fund those pools until the shortfall is resolved"
+    )
 
 
 def evaluate(
@@ -504,5 +517,16 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def run() -> int:
+    try:
+        return main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
+        return 1
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())

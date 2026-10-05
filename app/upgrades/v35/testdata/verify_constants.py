@@ -15,6 +15,7 @@ Stdlib-only. Reads the Go files relative to its own location.
 Usage: python3 app/upgrades/v35/testdata/verify_constants.py
 """
 
+import argparse
 import json
 import pathlib
 import re
@@ -31,8 +32,9 @@ MAX_ATTEMPTS = 6
 BACKOFF_SECONDS = 5
 HTTP_TOO_MANY_REQUESTS = 429
 TIMEOUT_SECONDS = 20
-STRIDE_API = "https://stride-api.polkachu.com"
-OSMOSIS_API = "https://osmosis-api.polkachu.com"
+# Stride Labs' private Polkachu endpoints (public fallbacks: stride-api / osmosis-api.polkachu.com)
+STRIDE_API = "https://stride-strd-api.polkachu.com"
+OSMOSIS_API = "https://osmosis-strd-api.polkachu.com"
 CHAIN_REGISTRY = "https://raw.githubusercontent.com/cosmos/chain-registry/master"
 OSMOSIS_CHAIN_ID = "osmosis-1"
 
@@ -41,7 +43,22 @@ HAQQ_GO = SCRIPT_DIR.parent / "haqq.go"
 WIND_DOWN_GO = SCRIPT_DIR.parent.parent.parent.parent / "x" / "stakeibc" / "types" / "wind_down.go"
 
 HAQQ_CHAIN_ID = "haqq_11235-1"
-HAQQ_APIS = ["https://haqq-rest.publicnode.com", "https://rest.cosmos.directory/haqq"]
+HAQQ_APIS = ["https://haqq-strd-api.polkachu.com", "https://haqq-api.polkachu.com", "https://haqq-rest.publicnode.com", "https://rest.cosmos.directory/haqq"]
+
+# Stride Labs' private Polkachu REST per host, tried before the chain-registry endpoints
+POLKACHU_STRD_REST = {
+    "celestia": "https://celestia-strd-api.polkachu.com",
+    "cosmoshub-4": "https://cosmos-strd-api.polkachu.com",
+    "dydx-mainnet-1": "https://dydx-strd-api.polkachu.com",
+    "haqq_11235-1": "https://haqq-strd-api.polkachu.com",
+    "injective-1": "https://injective-strd-api.polkachu.com",
+    "juno-1": "https://juno-strd-api.polkachu.com",
+    "osmosis-1": "https://osmosis-strd-api.polkachu.com",
+    "laozi-mainnet": "https://band-strd-api.polkachu.com",
+    "phoenix-1": "https://terra-strd-api.polkachu.com",
+    "sommelier-3": "https://sommelier-strd-api.polkachu.com",
+    "ssc-1": "https://saga-strd-api.polkachu.com",
+}
 
 # Stride chain id -> chain-registry directory name, for the hosts' REST endpoints
 REGISTRY_NAMES = {
@@ -74,6 +91,7 @@ SWEEP_CHANNEL_CHAIN_IDS = {
 # match passes, anything larger fails
 HAQQ_DELTA_DUST_TOLERANCE = 10
 
+checked: list[str] = []
 failures: list[str] = []
 warnings: list[str] = []
 
@@ -89,6 +107,7 @@ def report(name: str, ok: bool, detail: str = "") -> None:
     status = "PASS" if ok else "FAIL"
     suffix = f" -- {detail}" if detail else ""
     print(f"[{status}] {name}{suffix}")
+    checked.append(name)
     if not ok:
         failures.append(name)
 
@@ -252,7 +271,7 @@ def check_host_to_osmosis_map() -> None:
         if chain_id not in REGISTRY_NAMES:
             report(f"{chain_id} has a chain-registry name", False, "add it to REGISTRY_NAMES")
             continue
-        endpoints = registry_rest_endpoints(REGISTRY_NAMES[chain_id])
+        endpoints = [POLKACHU_STRD_REST[chain_id]] + registry_rest_endpoints(REGISTRY_NAMES[chain_id])
         for rest in endpoints:
             try:
                 state, counterparty = channel_counterparty_chain_id(rest=rest, channel_id=channel_id)
@@ -310,6 +329,7 @@ def check_operator_addresses_have_signed() -> None:
 
 
 def main() -> int:
+    parse_args()
     print("== operator addresses ==")
     check_operator_addresses_have_signed()
     print("== haqq delegation delta table ==")
@@ -323,10 +343,34 @@ def main() -> int:
         print(f"\n{len(warnings)} WARN (haqq dust within {HAQQ_DELTA_DUST_TOLERANCE} base units): {warnings}")
     if failures:
         print(f"\n{len(failures)} check(s) FAILED: {failures}")
+    else:
+        print("\nall checks passed" + (" (with warnings)" if warnings else ""))
+    print(render_result(total=len(checked), failed=failures, warning_count=len(warnings)))
+    return 1 if failures else 0
+
+
+def render_result(total: int, failed: list[str], warning_count: int) -> str:
+    """The one-line verdict an operator reads last."""
+    if failed:
+        return f"RESULT: FAIL — {len(failed)} check(s) failed: {failed}; see the [FAIL] lines above"
+    return f"RESULT: PASS — all {total} checks passed ({warning_count} warnings)"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    return parser.parse_args()
+
+
+def run() -> int:
+    try:
+        return main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
         return 1
-    print("\nall checks passed" + (" (with warnings)" if warnings else ""))
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())

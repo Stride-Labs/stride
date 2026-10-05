@@ -32,8 +32,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-OSMOSIS_REST_DEFAULT = "https://osmosis-api.polkachu.com"
-STRIDE_REST_DEFAULT = "https://stride-api.polkachu.com"
+# Stride Labs' private Polkachu endpoints (public fallbacks: osmosis-api / stride-api.polkachu.com)
+OSMOSIS_REST_DEFAULT = "https://osmosis-strd-api.polkachu.com"
+STRIDE_REST_DEFAULT = "https://stride-strd-api.polkachu.com"
 USER_AGENT = "curl/8.0"
 
 TRANSMUTER_CODE_ID = "996"
@@ -734,14 +735,7 @@ def check_pool(spec: PoolSpec, use_color: bool, funded: bool) -> Report:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--funded",
-        action="store_true",
-        help="the pools are funded and one-way: expect exactly the native token marked corrupted",
-    )
-    funded = parser.parse_args().funded
-
+    funded = parse_args().funded
     use_color = sys.stdout.isatty()
     failed_pools = [
         spec.pool_id
@@ -751,10 +745,42 @@ def main() -> int:
     print()
     if failed_pools:
         print(f"FAILED: pools {', '.join(failed_pools)} have failing checks")
+    else:
+        print(f"OK: all {len(POOLS)} pool(s) passed")
+    print(render_result(failed_pools=failed_pools, pool_count=len(POOLS)))
+    return 1 if failed_pools else 0
+
+
+def render_result(failed_pools: list[str], pool_count: int) -> str:
+    """The one-line verdict an operator reads last."""
+    if not failed_pools:
+        return f"RESULT: PASS — all {pool_count} pool(s) passed"
+    return (
+        f"RESULT: FAIL — pools {', '.join(failed_pools)} have failing checks; "
+        "fix them (or the CONSTANTS block) and rerun"
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--funded",
+        action="store_true",
+        help="the pools are funded and one-way: expect exactly the native token marked corrupted",
+    )
+    return parser.parse_args()
+
+
+def run() -> int:
+    try:
+        return main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
         return 1
-    print(f"OK: all {len(POOLS)} pool(s) passed")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(run())

@@ -31,6 +31,7 @@ import hashlib
 import json
 import pathlib
 import re
+import sys
 from decimal import ROUND_HALF_EVEN, Decimal
 
 import bech32_ref
@@ -188,6 +189,15 @@ def main() -> None:
 
     total_usd = sum((holder.usd for holder in plan.holders), Decimal(0))
     print(f"{len(plan.holders)} holders in {len(files)} batches, ${total_usd:.2f} swept, {len(plan.skipped)} skipped")
+    print(render_result(holders=len(plan.holders), batch_files=len(files), out_dir=args.out_dir))
+
+
+def render_result(holders: int, batch_files: int, out_dir: pathlib.Path) -> str:
+    """The one-line verdict an operator reads last."""
+    return (
+        f"RESULT: DONE — {holders} holders in {batch_files} batch files under {out_dir}; submit each with "
+        'strided tx stakeibc sweep-tokens-off-stride <denoms> <file> from the sweep operator'
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -552,5 +562,16 @@ def ibc_denom(base: str, hops: list[str]) -> str:
     return IBC_PREFIX + hashlib.sha256(full.encode()).hexdigest().upper()
 
 
+def run() -> None:
+    try:
+        main()
+    except SystemExit as error:
+        if error.code is None or isinstance(error.code, int):
+            raise
+        print(error.code, file=sys.stderr)
+        print(f"RESULT: FAIL — {error.code}")
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    main()
+    run()
