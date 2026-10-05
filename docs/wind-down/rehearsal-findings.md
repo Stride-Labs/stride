@@ -100,11 +100,25 @@ Not fixed: after the upgrade-height halt, validators whose daemon cosmovisor res
 came back with no peers and consensus stalled until they were restarted by hand. Validator state
 is an `emptyDir`, so deleting a pod wipes its chain.
 
-## Open question
+## Open question, resolved 2026-10-05
 
 On mainnet the celestia zone's `TotalDelegations` exceeds its validator sum by 156.87B utia, while
-staketia's own `remaining_delegated_balance` is 69.59B. The 87B difference is part of celestia's
-frozen redemption rate and is worth explaining before the upgrade.
+staketia's own `remaining_delegated_balance` is 69.06B. The two measure different things and both
+match the chain:
+
+- The 156.87B is the staketia multisig's whole delegation on Celestia (156.83B staked on
+  2026-10-05 plus rewards). stakeibc's celestia zone counts it in full, which is what the rate
+  needs: that stake backs stTIA that is still in supply.
+- staketia subtracts a redemption from `remaining_delegated_balance` when its unbonding record
+  is queued, before the operator undelegates. The 87.77B gap is exactly the queued records: 1472
+  (0.84B), 1476 (2.36B), 1484 (11.11B), 1488 (73.11B) and the accumulating 1492 (0.33B), all
+  still staked on Celestia. Their stTIA sits escrowed in the redemption address until the
+  undelegation is confirmed, so bank supply still counts it and the coverage check still
+  requires its backing, which the day-0 undelegation of the entire multisig delegation (spec §9
+  step 2) and the day-21 sweep (step 7) deliver. The six UNBONDED records (10.82B) are the
+  multisig's 11.0B liquid balance, waiting for the sweep to the claim address.
+
+No rate or accounting change follows; the ops plan's day-0 and completion steps already cover it.
 
 ## Drain gas on mainnet-sized state
 

@@ -128,11 +128,6 @@
               "ref": "§10"
             },
             {
-              "id": "pre-celestia-total-delegations",
-              "text": "Explain celestia's TotalDelegations before the upgrade: it exceeds the validator sum by 156.87B utia (the staketia stake it includes) while staketia's own remaining_delegated_balance is 69.59B; the 87B difference is part of celestia's frozen redemption rate and must be understood, not assumed (rehearsal open question).",
-              "ref": "docs/wind-down/rehearsal-findings.md"
-            },
-            {
               "id": "pre-injective-rate-limit",
               "text": "Decide the Injective-hop stATOM/stINJ handling: Osmosis's rate limiter rejects transfer/channel-89 denoms from Injective. File the bug with Osmosis, tell Injective holders to redeem through Stride before the upgrade, or plan the Injective -> Hub -> Osmosis route and its three-hop pool after the halt.",
               "ref": "§12"
