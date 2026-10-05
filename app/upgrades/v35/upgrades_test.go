@@ -101,6 +101,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	valAddr, _ := s.seedValidator(9, stakingtypes.Bonded, 1)
 	delegator := apptesting.CreateRandomAccounts(1)[0]
 	delegated := s.delegate(delegator, valAddr, 4_000)
+	communityPoolFunds := sdk.NewCoins(sdk.NewInt64Coin(communityPoolIbcDenom, 700))
+	s.fundCommunityPool(communityPoolFunds)
 
 	// ----- act -----
 	s.ConfirmUpgradeSucceeded(v35.UpgradeName)
@@ -139,6 +141,9 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	entries := s.unbondingEntries(delegator, valAddr)
 	s.Require().Len(entries, 1, "one unbonding entry from the handler")
 	s.Require().Equal(delegated, entries[0].Balance, "unbonding balance")
+	s.Require().Equal(communityPoolFunds.AmountOf(communityPoolIbcDenom), s.authorityBalances().AmountOf(communityPoolIbcDenom),
+		"community pool transferred")
+	s.Require().True(s.communityPool().AmountOf(communityPoolIbcDenom).IsZero(), "community pool emptied")
 }
 
 // withInBoundsRates gives a fixture host zone a redemption rate inside its safety bounds so the

@@ -5,7 +5,8 @@ Mirrors the on-chain skip rules of x/stakeibc/keeper/wind_down_sweep.go (20-byte
 address deny-list, blocked module address, transfer escrow exclusion, account type) and the
 on-chain amount rule (a vesting account is swept for its spendable balance, i.e. minus what its
 schedule still locks at --as-of), adds the
-off-chain USD floor and excludes wasm contract addresses, so a batch this script emits should skip
+off-chain USD floor and excludes wasm contract addresses and BUILDER_EXCLUDED_ADDRESSES (the F5
+team multisig, whose funds are moved by hand), so a batch this script emits should skip
 nothing on chain. Holders are ordered by the USD value of the sweepable amounts of the listed denoms
 and split into files of at most --batch-size addresses, one file per tx for
 `strided tx stakeibc sweep-tokens-off-stride DENOMS FILE`.
@@ -66,6 +67,12 @@ PROTOCOL_ADDRESSES = {
     "stride18p7xg4hj2u3zpk0v9gq68pjyuuua5wa387sjjc",  # staketia safe
     "stride1sj8gyqeqecqhqu7em67hn2tjzhpkdf8wz5plh7",  # stakedym safe
     "stride1ghhu67ttgmxrsyxljfl2tysyayswklvxs7pepw",  # staketia operator
+}
+
+# Addresses the chain would sweep but the builder leaves out, because the team moves their funds by
+# hand. Not mirrored on chain: the sweep only touches the addresses a batch lists
+BUILDER_EXCLUDED_ADDRESSES = {
+    "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",  # F5 team multisig, which v35 also sends the community pool to
 }
 
 # Mirror of the always-allowed native denoms in isSweepableNativeDenom; the rest are the stTokens of
@@ -440,7 +447,8 @@ def classify_holders(
 
 def skip_reason(address: str, export: Export, protocol: set[str], blocked: set[str]) -> str | None:
     """The on-chain rules, in the on-chain order (20 bytes, protocol, blocked, escrow, then the
-    account lookup), plus the contract exclusion the chain cannot make; None means sweepable."""
+    account lookup), plus the contract and builder exclusions the chain does not make; None means
+    sweepable."""
     if len(address_bytes(address)) != ADDRESS_LENGTH_BYTES:
         return "address is not 20 bytes"
     if address in protocol:
@@ -458,6 +466,8 @@ def skip_reason(address: str, export: Export, protocol: set[str], blocked: set[s
         return f"account type {account_type} is not sweepable"
     if address in export.contract_addresses:
         return "wasm contract address"
+    if address in BUILDER_EXCLUDED_ADDRESSES:
+        return "builder exclusion (moved manually)"
     return None
 
 

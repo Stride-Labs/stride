@@ -52,6 +52,8 @@ import (
 //     removals of already-unbonded validators cannot underflow in the distribution hook.
 //  17. Undelegate every delegation in full, skipping and logging any single one that fails.
 //  18. Clamp again, for the validators the EndBlocker removes once their unbonding matures.
+//  19. Transfer the community pool to the team multisig, last so it includes the reward
+//     remainders the undelegation's validator removals leave in the pool.
 //
 // icaHostKeeper and ratelimitKeeper are pointers because their methods have pointer
 // receivers. The ICA controller and channel keepers used by the stale-flag reset are read
@@ -146,6 +148,9 @@ func CreateUpgradeHandler(
 		if err := ClampValidatorCommission(ctx, stakingKeeper, distrKeeper); err != nil {
 			return vm, err
 		}
+
+		// Community pool to the multisig, after the undelegation's validator removals add to it
+		TransferCommunityPoolToAuthority(ctx, distrKeeper)
 
 		ctx.Logger().Info(fmt.Sprintf("Upgrade %s complete", UpgradeName))
 		return vm, nil
