@@ -290,7 +290,8 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_FailureAfterUnbondIsRoll
 	// Drain the bonded pool so bondedTokensToNotBonded fails for the bonded validator
 	bondedPool := authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
 	s.Require().NoError(s.App.BankKeeper.SendCoinsFromModuleToAccount(
-		s.Ctx, stakingtypes.BondedPoolName, apptesting.CreateRandomAccounts(1)[0], s.App.BankKeeper.GetAllBalances(s.Ctx, bondedPool)))
+		s.Ctx, stakingtypes.BondedPoolName, apptesting.CreateRandomAccounts(1)[0], s.App.BankKeeper.GetAllBalances(s.Ctx, bondedPool),
+	))
 
 	s.Require().NoError(v35.UndelegateAllDelegations(s.Ctx, s.App.StakingKeeper))
 
@@ -330,7 +331,7 @@ func (s *UpgradeTestSuite) TestUndelegateAllDelegations_PanicIsSkipped() {
 }
 
 // decCoins builds DecCoins from whole ustrd / second-denom amounts for the clamp tests
-func decCoins(ustrd int64, other int64) sdk.DecCoins {
+func decCoins(ustrd, other int64) sdk.DecCoins {
 	coins := sdk.NewDecCoins(sdk.NewInt64DecCoin(utils.BaseStrideDenom, ustrd))
 	if other > 0 {
 		coins = coins.Add(sdk.NewInt64DecCoin("uosmo", other))
