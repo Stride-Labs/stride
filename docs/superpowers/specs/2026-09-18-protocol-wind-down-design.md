@@ -1036,6 +1036,10 @@ then, so confirm by hand before signing:
   (`claim_is_pending`); REST `/Stride-Labs/stride/records/user_redemption_record`. A record
   that cannot be claimed is settled by hand first.
 - `WITHDRAWAL` and `FEE`: nothing to confirm; no redemption is paid from either.
+- Every ICA the transfer sends from has an OPEN channel (`strided q ibc channel channels`,
+  port `icacontroller-<chain-id>.<TYPE>`). A fee or reward ICA that timed out before the upgrade
+  leaves its ordered channel closed, and the tx is then rejected with "no active channel" before
+  anything is sent (rehearsal 2026-10-03). Reopen it with `restore-interchain-account` and rerun.
 - `MsgTransferStaketiaClaimBalance`: staketia has no redemption record left (REST
   `/Stride-Labs/stride/staketia/redemption_records`), meaning the hour epoch has paid every
   confirmed unbonding record and archived it as `CLAIMED`. An omitted or zero `amount` means
