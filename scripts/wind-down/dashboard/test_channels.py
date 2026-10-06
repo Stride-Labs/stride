@@ -653,5 +653,29 @@ class TilesTest(unittest.TestCase):
         self.assertEqual(tiles.pending_packets, 0)
 
 
+class HaqqStateTest(unittest.TestCase):
+    def state(self, **overrides: object) -> channels.HaqqState:
+        fields = {
+            "delegation_channel_id": channels.HAQQ_DELEGATION_CHANNEL,
+            "delegation_state_stride": channels.STATE_CLOSED,
+            "delegation_state_host": channels.STATE_OPEN,
+            "delegation_commitments": list(channels.HAQQ_DELEGATION_SEQUENCES),
+            "quiet_channel_commitments": {ica: 0 for ica in channels.HAQQ_QUIET_ICA_CHANNELS},
+            "ok": False,
+        }
+        return channels.HaqqState(**{**fields, **overrides})
+
+    def test_the_expected_pre_upgrade_state_passes(self) -> None:
+        self.assertTrue(channels.haqq_state_passes(self.state()))
+
+    def test_any_departure_fails(self) -> None:
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_channel_id="channel-900")))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_state_stride=channels.STATE_OPEN)))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_state_host=channels.STATE_CLOSED)))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_state_host=None)))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_commitments=list(range(85, 98)))))
+        self.assertFalse(channels.haqq_state_passes(self.state(quiet_channel_commitments={"FEE": 1})))
+
+
 if __name__ == "__main__":
     unittest.main()

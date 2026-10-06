@@ -245,7 +245,7 @@
             },
             {
               "id": "prop-accounting",
-              "text": "Full accounting check: Validators tab, all zones, delegation diff ≠ 0 filter: zero unexplained over-recorded validators on every zone (buffered rows are fine); every remaining haqq difference is in the delta table.",
+              "text": "Full accounting check: zero over-recorded validators on every zone except haqq, whose remaining differences the delta table books (buffered rows do not count). Live from the Validators tab: each zone's 'over' count must be 0; haqq is allowed.",
               "ref": "§9 checklist",
               "zones": [
                 "celestia",
@@ -259,12 +259,27 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "auto": {
+                "tab": "validators",
+                "path": "totals.over_count",
+                "equals": 0,
+                "allow": [
+                  "haqq_11235-1"
+                ]
+              }
             },
             {
               "id": "prop-haqq-state",
-              "text": "Haqq state as expected: channel-869 CLOSED on Stride, channel-29 still OPEN on haqq, no new haqq delegation channel, packets 85-98 still committed, no packet commitments on haqq's FEE/REDEMPTION/community-pool channels.",
-              "ref": "§9c"
+              "text": "Haqq state as expected: channel-869 CLOSED on Stride, channel-29 still OPEN on haqq, no new haqq delegation channel, packets 85-98 still committed, no packet commitments on haqq's FEE/REDEMPTION/community-pool channels. Live from the Channels tab: the haqq invariant check (delegation channel still channel-869, CLOSED on Stride and OPEN on haqq, packets 85-98 committed, nothing committed on FEE/REDEMPTION/community-pool channels).",
+              "ref": "§9c",
+              "zones": [
+                "haqq_11235-1"
+              ],
+              "auto": {
+                "tab": "channels",
+                "path": "haqq_state.ok"
+              }
             },
             {
               "id": "prop-binary",
@@ -335,7 +350,14 @@
             {
               "id": "vote-watch-haqq",
               "text": "Watch for a new haqq delegation channel during the vote (anyone can close channel-29 and restore); the per-row pin check is the backstop.",
-              "ref": "§9c"
+              "ref": "§9c",
+              "zones": [
+                "haqq_11235-1"
+              ],
+              "auto": {
+                "tab": "channels",
+                "path": "haqq_state.ok"
+              }
             },
             {
               "id": "vote-haqq-last-day",
@@ -496,7 +518,15 @@
               "text": "Day-0 refresh on every haqq validator (update-delegation); Validators tab → haqq: zero over-recorded, no slash query left in progress.",
               "ref": "§9 step 1f, §9a",
               "command": "for V in $(curl -s -A curl/8.0 https://stride-strd-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/haqq_11235-1 | jq -r '.host_zone.validators[].address'); do strided tx stakeibc update-delegation haqq_11235-1 $V --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 -y; done\npython3 scripts/wind-down/measure_delegation_drift.py --chain-id haqq_11235-1 --output-dir scripts/wind-down/drift",
-              "expect": "Every update-delegation lands with code: 0 and its callbacks arrive (Validators tab → haqq: slash query pills on, then off). Then RESULT: PASS for haqq with no --allow-over: after the refresh haqq must be clean. On FAIL, the named validators need calibrate-delegation; wait for the callbacks and rerun."
+              "expect": "Every update-delegation lands with code: 0 and its callbacks arrive (Validators tab → haqq: slash query pills on, then off). Then RESULT: PASS for haqq with no --allow-over: after the refresh haqq must be clean. On FAIL, the named validators need calibrate-delegation; wait for the callbacks and rerun.",
+              "zones": [
+                "haqq_11235-1"
+              ],
+              "auto": {
+                "tab": "validators",
+                "path": "totals.over_count",
+                "equals": 0
+              }
             }
           ]
         },
@@ -520,7 +550,12 @@
                 "ssc-1"
               ],
               "command": "for V in $(curl -s -A curl/8.0 https://stride-strd-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/<CHAIN_ID> | jq -r '.host_zone.validators[].address'); do strided tx stakeibc update-delegation <CHAIN_ID> $V --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 -y; done\npython3 scripts/wind-down/measure_delegation_drift.py --output-dir scripts/wind-down/drift",
-              "expect": "Every update-delegation lands with code: 0 (one tx per validator; sequence them or use --sequence). Then the drift script: RESULT: PASS for every zone. On FAIL, the verdict names the zone and validator: calibrate-delegation when the rate is unchanged but the balance is off (strided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER>); wait for the callback (Validators tab: slash query pill off) and rerun."
+              "expect": "Every update-delegation lands with code: 0 (one tx per validator; sequence them or use --sequence). Then the drift script: RESULT: PASS for every zone. On FAIL, the verdict names the zone and validator: calibrate-delegation when the rate is unchanged but the balance is off (strided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER>); wait for the callback (Validators tab: slash query pill off) and rerun.",
+              "auto": {
+                "tab": "validators",
+                "path": "totals.over_count",
+                "equals": 0
+              }
             },
             {
               "id": "day0-live-test-pick",

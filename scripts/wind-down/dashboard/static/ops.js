@@ -60,12 +60,18 @@ function autoValue(step, zone) {
   if (!snapshot) return undefined;
   const entry = snapshot.data.zones.find((candidate) => candidate.chain_id === zone);
   if (!entry || entry.error) return null;
-  return step.auto.path.split('.').reduce((value, key) => (value == null ? value : value[key]), entry);
+  const value = step.auto.path.split('.').reduce((inner, key) => (inner == null ? inner : inner[key]), entry);
+  if (value === null || value === undefined) return null;
+  // `equals` turns a number (an over count, a record count) into a pass/fail; without it the value is a boolean already.
+  if (step.auto.equals === undefined) return value;
+  if (String(value) === String(step.auto.equals)) return true;
+  return (step.auto.allow || []).includes(zone) ? 'allowed' : false;
 }
 
 function autoMark(value) {
   if (value === undefined) return '';
   if (value === true) return `<span class="ops-auto ok" title="verified live on the dashboard">✓ live</span>`;
+  if (value === 'allowed') return `<span class="ops-auto ok" title="not clean, but expected here (see the step text)">✓ allowed</span>`;
   if (value === false) return `<span class="ops-auto bad" title="the live check fails">✗ live</span>`;
   return `<span class="ops-auto muted" title="could not be checked">n/a</span>`;
 }
@@ -73,7 +79,7 @@ function autoMark(value) {
 function autoSummary(step) {
   const values = step.zones.map((zone) => autoValue(step, zone));
   if (values.some((value) => value === undefined)) return '';
-  const passing = values.filter((value) => value === true).length;
+  const passing = values.filter((value) => value === true || value === 'allowed').length;
   const cssClass = passing === values.length ? 'ok' : 'bad';
   return `<span class="ops-auto ${cssClass}" title="from the ${escapeHtml(step.auto.tab)} tab's latest snapshot">live: ${passing}/${values.length} pass</span>`;
 }
