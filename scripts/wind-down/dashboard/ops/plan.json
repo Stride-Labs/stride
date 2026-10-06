@@ -735,26 +735,6 @@
               ]
             },
             {
-              "id": "post-transfer-withdrawal-fee",
-              "text": "Per zone: MsgTransferFromIca WITHDRAWAL and FEE, including foreign denoms such as the dYdX USDC: the live test of the transfer tx on small amounts; the first arrival on Osmosis confirms the mapped channel end to end and the denom each zone lands as (Funds tab: ICA transfers list, vault stage). Resubmit if a transfer refunds after its 24h timeout. First confirm each ICA's channel is OPEN on the Channels tab: a closed one (an old timeout) rejects the tx with 'no active channel' and needs restore-interchain-account.",
-              "ref": "§9 step 5",
-              "zones": [
-                "celestia",
-                "cosmoshub-4",
-                "dydx-mainnet-1",
-                "haqq_11235-1",
-                "injective-1",
-                "juno-1",
-                "laozi-mainnet",
-                "osmosis-1",
-                "phoenix-1",
-                "sommelier-3",
-                "ssc-1"
-              ],
-              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <AMOUNT><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> FEE <AMOUNT><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0; within minutes the Funds tab → zone → 'ICA transfers to the Osmosis vault' lists the transfer as in flight, then settled, and the vault stage shows the amount in the zone's native denom. A transfer still in flight after 24h timed out and refunded the ICA: resubmit. The amount is the ICA's full host-denom balance (Funds tab accounts table); foreign denoms (dYdX USDC) are separate transfers with their own denom."
-            },
-            {
               "id": "post-pools-created",
               "text": "All real pools instantiated and checked (canonical plus every in-scope route), unfunded; check_transmuter_pool.py passes for each. Pool ids and rate_at_creation recorded in check_transmuter_pool.py and pools.json for coverage_check.py --pools.",
               "ref": "§8",
@@ -855,13 +835,13 @@
             },
             {
               "id": "haqq-done-transfer-delegation",
-              "text": "MsgTransferFromIca DELEGATION for the full remaining balance, WITHDRAWAL again for the auto-withdrawn rewards, and REDEMPTION for the dust the claims left (24h timeout; a refund means resubmit).",
-              "ref": "§9 step 6, §7",
+              "text": "All four ICA transfers for the zone in one session, smallest first as the live test: FEE, wait for it to land on Osmosis (it proves the channel map and the native denom), then WITHDRAWAL (the auto-withdrawn rewards), DELEGATION for the full remaining balance, and REDEMPTION for the dust the claims left. Foreign denoms in an ICA (dYdX's USDC) are separate transfers with their own denom. 24h timeout; a refund means resubmit.",
+              "ref": "§9 steps 5-6, §7",
               "zones": [
                 "haqq_11235-1"
               ],
-              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> FEE <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\n# wait for it on the Funds tab (ICA transfers list: settled; vault stage up), then\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts (balances from the accounts table). Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready and every ICA channel is OPEN. A transfer that refunds after 24h: resubmit; a 'no active channel' rejection: restore-interchain-account first."
             },
             {
               "id": "haqq-done-arrived",
@@ -960,13 +940,13 @@
             },
             {
               "id": "osmo-done-transfer-delegation",
-              "text": "MsgTransferFromIca DELEGATION for the full remaining balance, WITHDRAWAL again for the auto-withdrawn rewards, and REDEMPTION for the dust the claims left (24h timeout; a refund means resubmit).",
-              "ref": "§9 step 6, §7",
+              "text": "All four ICA transfers for the zone in one session, smallest first as the live test: FEE, wait for it to land on Osmosis (for osmosis-1 these are ICA bank sends to the vault, no channel), then WITHDRAWAL (the auto-withdrawn rewards), DELEGATION for the full remaining balance, and REDEMPTION for the dust the claims left. Foreign denoms in an ICA (dYdX's USDC) are separate transfers with their own denom. 24h timeout; a refund means resubmit.",
+              "ref": "§9 steps 5-6, §7",
               "zones": [
                 "osmosis-1"
               ],
-              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> FEE <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\n# bank MsgSend form on osmosis-1; wait for the vault balance to rise on the Funds tab, then\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts (balances from the accounts table). Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready and every ICA channel is OPEN. A transfer that refunds after 24h: resubmit; a 'no active channel' rejection: restore-interchain-account first."
             },
             {
               "id": "osmo-done-arrived",
@@ -1065,13 +1045,13 @@
             },
             {
               "id": "tia-done-transfer-delegation",
-              "text": "MsgTransferFromIca DELEGATION for the full remaining balance, WITHDRAWAL again for the auto-withdrawn rewards, and REDEMPTION for the dust the claims left (24h timeout; a refund means resubmit).",
-              "ref": "§9 step 6, §7",
+              "text": "All four ICA transfers for the zone in one session, smallest first as the live test: FEE, wait for it to land on Osmosis (it proves the channel map and the native denom), then WITHDRAWAL (the auto-withdrawn rewards), DELEGATION for the full remaining balance, and REDEMPTION for the dust the claims left. Foreign denoms in an ICA (dYdX's USDC) are separate transfers with their own denom. 24h timeout; a refund means resubmit.",
+              "ref": "§9 steps 5-6, §7",
               "zones": [
                 "celestia"
               ],
-              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> FEE <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\n# wait for it on the Funds tab (ICA transfers list: settled; vault stage up), then\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts (balances from the accounts table). Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready and every ICA channel is OPEN. A transfer that refunds after 24h: resubmit; a 'no active channel' rejection: restore-interchain-account first."
             },
             {
               "id": "tia-done-arrived",
@@ -1183,8 +1163,8 @@
             },
             {
               "id": "d21-done-transfer-delegation",
-              "text": "MsgTransferFromIca DELEGATION for the full remaining balance, WITHDRAWAL again for the auto-withdrawn rewards, and REDEMPTION for the dust the claims left (24h timeout; a refund means resubmit).",
-              "ref": "§9 step 6, §7",
+              "text": "All four ICA transfers for the zone in one session, smallest first as the live test: FEE, wait for it to land on Osmosis (it proves the channel map and the native denom), then WITHDRAWAL (the auto-withdrawn rewards), DELEGATION for the full remaining balance, and REDEMPTION for the dust the claims left. Foreign denoms in an ICA (dYdX's USDC) are separate transfers with their own denom. 24h timeout; a refund means resubmit.",
+              "ref": "§9 steps 5-6, §7",
               "zones": [
                 "cosmoshub-4",
                 "injective-1",
@@ -1193,8 +1173,8 @@
                 "ssc-1",
                 "dydx-mainnet-1"
               ],
-              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> FEE <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\n# wait for it on the Funds tab (ICA transfers list: settled; vault stage up), then\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts (balances from the accounts table). Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready and every ICA channel is OPEN. A transfer that refunds after 24h: resubmit; a 'no active channel' rejection: restore-interchain-account first."
             },
             {
               "id": "d21-done-arrived",
@@ -1301,14 +1281,14 @@
             },
             {
               "id": "d28-done-transfer-delegation",
-              "text": "MsgTransferFromIca DELEGATION for the full remaining balance, WITHDRAWAL again for the auto-withdrawn rewards, and REDEMPTION for the dust the claims left (24h timeout; a refund means resubmit).",
-              "ref": "§9 step 6, §7",
+              "text": "All four ICA transfers for the zone in one session, smallest first as the live test: FEE, wait for it to land on Osmosis (it proves the channel map and the native denom), then WITHDRAWAL (the auto-withdrawn rewards), DELEGATION for the full remaining balance, and REDEMPTION for the dust the claims left. Foreign denoms in an ICA (dYdX's USDC) are separate transfers with their own denom. 24h timeout; a refund means resubmit.",
+              "ref": "§9 steps 5-6, §7",
               "zones": [
                 "juno-1",
                 "sommelier-3"
               ],
-              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts. Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready. A transfer that refunds after 24h: resubmit."
+              "command": "strided tx stakeibc transfer-from-ica <CHAIN_ID> FEE <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\n# wait for it on the Funds tab (ICA transfers list: settled; vault stage up), then\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> WITHDRAWAL <BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> DELEGATION <FULL_BALANCE><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc transfer-from-ica <CHAIN_ID> REDEMPTION <DUST><HOST_DENOM> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
+              "expect": "code: 0 each; the Funds tab lists each transfer in flight then settled and the vault stage rises by the amounts (balances from the accounts table). Only after the Transfer checklist strip shows DELEGATION and REDEMPTION ready and every ICA channel is OPEN. A transfer that refunds after 24h: resubmit; a 'no active channel' rejection: restore-interchain-account first."
             },
             {
               "id": "d28-done-arrived",
