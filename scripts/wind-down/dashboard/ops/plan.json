@@ -1390,13 +1390,6 @@
               "ref": "§9 step 8"
             },
             {
-              "id": "sweep-community-pool",
-              "text": "After the holder sweeps: the F5 multisig moves the community pool off Stride by hand. The v35 handler sent the pool to stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh, which the batch builder leaves out (BUILDER_EXCLUDED_ADDRESSES). First spend what has accrued in the pool since the upgrade to F5 with MsgCommunityPoolSpend (F5 signs as the chain authority; with no bonded validators the staking share of fees goes to the pool every block), then IBC-transfer F5's balances out: stTokens and ustrd over channel-5 to the Osmosis vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af, whitelisted vouchers back over their own channel.",
-              "ref": "v35 handler step 19",
-              "command": "strided q distribution community-pool --node https://stride-strd-rpc.polkachu.com:443 && strided q bank balances stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh --node https://stride-strd-rpc.polkachu.com:443",
-              "expect": "Before: the pool's refill since the upgrade and F5's balances, which set the amounts to spend and transfer. After: the pool holds only sub-unit dust plus whatever accrued since the spend, and F5 keeps only what it needs for fees until the halt."
-            },
-            {
               "id": "sweep-announce",
               "text": "Announce: the sweep is done; holders below the floor and holders of non-whitelisted vouchers move themselves; nobody should send funds to Stride near or after the halt (late inbound packets may be unrecoverable).",
               "ref": "§9 steps 8-9"
