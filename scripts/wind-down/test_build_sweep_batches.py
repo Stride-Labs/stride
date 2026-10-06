@@ -33,7 +33,8 @@ GENESIS_TIME = "2020-01-01T00:00:00Z"
 AS_OF = 1790640000  # 2026-09-29T00:00:00Z, the block time at the export height
 SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
 F5_MULTISIG = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
-RELAYER_KEYS = ["stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd", "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp"]
+# Every builder exclusion other than the F5 multisig is a relayer key; the test seeds all of them.
+RELAYER_KEYS = sorted(build_sweep_batches.BUILDER_EXCLUDED_ADDRESSES - {F5_MULTISIG})
 PROTOCOL_ADDRESSES = [
     "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
     "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption

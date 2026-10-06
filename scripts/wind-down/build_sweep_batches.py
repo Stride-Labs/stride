@@ -73,8 +73,23 @@ PROTOCOL_ADDRESSES = {
 # hand. Not mirrored on chain: the sweep only touches the addresses a batch lists
 BUILDER_EXCLUDED_ADDRESSES = {
     "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",  # F5 team multisig, which v35 also sends the community pool to
-    "stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd",  # relayer key: its STRD pays for the ops-window relaying
-    "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp",  # relayer key: its STRD pays for the ops-window relaying
+    # Relayer keys: their STRD pays for the ops-window relaying. The first two by hand; the rest are the
+    # keys each `relayer-*` deployment on the stride-main cluster prints at startup (read 2026-10-06).
+    "stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd",
+    "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp",
+    "stride1x3mtu4540z8q45mmyn9tw34fmy74xqm47lh7k6",  # relayer-band
+    "stride15fd7g4g26enekm50ve9dhwaseanav09my88559",  # relayer-celestia
+    "stride18qysgypvp7aky0dntqzkl6uxv7w3zszt55uv0m",  # relayer-dydx
+    "stride1c89e5smtnem6lvmqpajhakk7hvkm2luq5cqqm3",  # relayer-dymension
+    "stride1ds5klkz9s0v3ky4j2dmn377pd7wxtyxq5c7dk3",  # relayer-gaia
+    "stride10cyp5nu07hrymlhazemfh2u8khf3m9xc2xw535",  # relayer-ics
+    "stride1ge22qnyg4avg0glvz00ruwpulhe9p7qnxe4426",  # relayer-injective
+    "stride1d5e6c09mt37qcusfrrrfvz4dwnaxlv3ltwahfn",  # relayer-juno
+    "stride1wme78wwkmtkjax588xt7ntl743fq8vdteq2kt3",  # relayer-osmosis
+    "stride1h93r6y9sm2dtq68dqwvqp36faqucge7wzfxhws",  # relayer-saga
+    "stride15s0ey2k5sqhkdu0d2770y8cykgm6emx2fyar7v",  # relayer-sei
+    "stride1qa8l9le4fvvxe4ny2m2mcd00cakgx9lz96kash",  # relayer-sommelier
+    "stride1m5st93c4elt4ttt2kdzgm9cpj953thkk5l0k9d",  # relayer-terra
 }
 
 # Mirror of the always-allowed native denoms in isSweepableNativeDenom; the rest are the stTokens of
