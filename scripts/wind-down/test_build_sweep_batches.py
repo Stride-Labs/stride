@@ -33,6 +33,7 @@ GENESIS_TIME = "2020-01-01T00:00:00Z"
 AS_OF = 1790640000  # 2026-09-29T00:00:00Z, the block time at the export height
 SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
 F5_MULTISIG = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
+RELAYER_KEYS = ["stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd", "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp"]
 PROTOCOL_ADDRESSES = [
     "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04",  # staketia deposit
     "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g",  # staketia redemption
@@ -63,7 +64,7 @@ def synthetic_export() -> dict:
         {"address": STRIDE_BLOCKED_BASE, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": SWEEP_OPERATOR, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
         {"address": F5_MULTISIG, "coins": [{"denom": "stuatom", "amount": "99000000"}]},
-    ] + [{"address": address, "coins": [{"denom": "stuatom", "amount": "99000000"}]} for address in PROTOCOL_ADDRESSES]
+    ] + [{"address": address, "coins": [{"denom": "stuatom", "amount": "99000000"}]} for address in PROTOCOL_ADDRESSES + RELAYER_KEYS]
     accounts = [
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_BASE, "pub_key": {"@type": "/cosmos.crypto.secp256k1.PubKey", "key": "AAAA"}, "sequence": "4"},
         {"@type": "/stride.vesting.StridePeriodicVestingAccount", "base_vesting_account": {"base_account": {"address": STRIDE_VESTING}, "original_vesting": [], "delegated_vesting": [], "end_time": "0"}, "vesting_periods": []},
@@ -77,6 +78,8 @@ def synthetic_export() -> dict:
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": STRIDE_BLOCKED_BASE},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": SWEEP_OPERATOR},
         {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": F5_MULTISIG},
+    ] + [
+        {"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": address} for address in RELAYER_KEYS
     ] + [{"@type": "/cosmos.auth.v1beta1.BaseAccount", "address": address} for address in PROTOCOL_ADDRESSES]
     channels = [{"port_id": "transfer", "channel_id": "channel-5", "state": "STATE_OPEN"}]
     contracts = [{"contract_address": contract, "contract_info": {"code_id": "1"}}]
@@ -137,7 +140,7 @@ class BuildSweepBatchesTest(unittest.TestCase):
         summary = json.loads((out_dir / "summary.json").read_text())
         self.assertEqual(summary["denoms"], ["stuatom", "ustrd"])
         self.assertEqual(summary["batches"][0]["num_addresses"], 1)
-        self.assertEqual(len(summary["skipped"]), 6 + 3 + len(PROTOCOL_ADDRESSES))
+        self.assertEqual(len(summary["skipped"]), 6 + 3 + len(PROTOCOL_ADDRESSES) + len(RELAYER_KEYS))
 
     def test_vesting_locked_balance_is_not_swept(self) -> None:
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom", "ustrd"], prices=PRICES, floor_usd=1.0)
@@ -193,6 +196,14 @@ class BuildSweepBatchesTest(unittest.TestCase):
         skipped = {entry.address: entry.reason for entry in plan.skipped}
         self.assertEqual(skipped[F5_MULTISIG], "builder exclusion (moved manually)")
         self.assertNotIn(F5_MULTISIG, {holder.address for holder in plan.holders})
+
+    def test_relayer_keys_are_excluded_by_the_builder(self) -> None:
+        plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)
+        skipped = {entry.address: entry.reason for entry in plan.skipped}
+        for relayer in RELAYER_KEYS:
+            self.assertEqual(skipped[relayer], "builder exclusion (moved manually)", relayer)
+            self.assertNotIn(relayer, {holder.address for holder in plan.holders})
+
 
     def test_blocked_module_addresses_are_excluded(self) -> None:
         plan = build_sweep_batches.classify_holders(export=self.export, denoms=["stuatom"], prices=PRICES, floor_usd=1.0)

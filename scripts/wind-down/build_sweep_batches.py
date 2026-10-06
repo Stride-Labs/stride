@@ -6,7 +6,7 @@ address deny-list, blocked module address, transfer escrow exclusion, account ty
 on-chain amount rule (a vesting account is swept for its spendable balance, i.e. minus what its
 schedule still locks at --as-of), adds the
 off-chain USD floor and excludes wasm contract addresses and BUILDER_EXCLUDED_ADDRESSES (the F5
-team multisig, whose funds are moved by hand), so a batch this script emits should skip
+team multisig, whose funds are moved by hand, and the relayer keys, which keep paying fees until the halt), so a batch this script emits should skip
 nothing on chain. Holders are ordered by the USD value of the sweepable amounts of the listed denoms
 and split into files of at most --batch-size addresses, one file per tx for
 `strided tx stakeibc sweep-tokens-off-stride DENOMS FILE`.
@@ -73,6 +73,8 @@ PROTOCOL_ADDRESSES = {
 # hand. Not mirrored on chain: the sweep only touches the addresses a batch lists
 BUILDER_EXCLUDED_ADDRESSES = {
     "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",  # F5 team multisig, which v35 also sends the community pool to
+    "stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd",  # relayer key: its STRD pays for the ops-window relaying
+    "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp",  # relayer key: its STRD pays for the ops-window relaying
 }
 
 # Mirror of the always-allowed native denoms in isSweepableNativeDenom; the rest are the stTokens of
