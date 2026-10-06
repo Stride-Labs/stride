@@ -310,15 +310,8 @@
               "ref": "§8"
             },
             {
-              "id": "vote-test-pools",
-              "text": "Rehearse on test pools from code id 996 with the current rate: instantiate from the vault, join, swap, exit, mark_corrupted_assets, drain to zero and add_new_assets re-add, assign roles; run scripts/wind-down/check_transmuter_pool.py against them. No limiters are registered on any pool (isolation comes from the pool layout).",
-              "ref": "§8, docs/wind-down/transmuter.md",
-              "command": "python3 scripts/wind-down/check_transmuter_pool.py",
-              "expect": "RESULT: PASS for every pool listed in the script's CONSTANTS block (edit POOLS there to the test pools first). On FAIL, each pool's [FAIL] lines name the check (factor ratio, roles, corrupted assets, limiters); fix the pool or the CONSTANTS entry and rerun."
-            },
-            {
               "id": "vote-pool-messages",
-              "text": "Pool instantiate messages prepared per route with the factor arithmetic (stToken 1e18, native RR x 1e18, alloyed = native) to be filled with the frozen rate on upgrade day.",
+              "text": "Pool instantiate messages prepared per route with the real denoms, the factor arithmetic (stToken 1e18, native RR x 1e18, alloyed = native), admin and moderator the vault, no limiters, so that on upgrade day only the frozen rate is filled in; the procedure itself was proven on the 2026-09-25 test pools and in rehearsal runs 3 and 4 (docs/wind-down/transmuter-test-log.md, rehearsal-findings.md).",
               "ref": "§8, transmuter.md"
             }
           ]
