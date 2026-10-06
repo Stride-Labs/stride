@@ -438,7 +438,8 @@
         "Do not submit drain batches between about 14:12 and 19:00 UTC: the batch's ICA timeout is the next day-epoch start minus a fifth of the epoch, so in that window it is already in the past and a lagging light client can let the packet out, time it out at once and close the ordered delegation channel (§9 step 4).",
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Do not MsgTransferFromIca the DELEGATION or REDEMPTION ICA of a zone yet: the delegation ICA receives the unbonded records and the redemption ICA holds claimable tokens until every claim is paid (§9 steps 5-6).",
-        "Do not run update-delegation or calibrate-delegation on other zones before haqq's channel-29 is closed and its restore is in flight; haqq goes first (§9 step 1)."
+        "Do not run update-delegation or calibrate-delegation on other zones before haqq's channel-29 is closed and its restore is in flight; haqq goes first (§9 step 1).",
+        "After v35, delegate, redelegate, create-validator and cancel-unbond are refused ('is disabled: the chain is winding down'), gov cannot pass anything, and any later upgrade or client recovery is a MsgSoftwareUpgrade / MsgRecoverClient signed by the multisig as the chain authority, not a proposal (#1544)."
       ],
       "windows": [
         {
@@ -446,7 +447,7 @@
           "steps": [
             {
               "id": "up-executes",
-              "text": "v35 executes and the chain resumes. Read the v35: logs: the haqq delta table applied (which rows, if any, were skipped on a stale pin), stale DelegationChangesInProgress reset on every zone whose delegation channel is open with no unacked packet (a logged skip for juno-1 and haqq is expected unless Juno was cleared), ICQ purges, rate limits removed, wasm control to gov, comdex deprecated, oracles deactivated.",
+              "text": "v35 executes and the chain resumes. Read the v35: logs: the haqq delta table applied (which rows, if any, were skipped on a stale pin), stale DelegationChangesInProgress reset on every zone whose delegation channel is open with no unacked packet (a logged skip for juno-1 and haqq is expected unless Juno was cleared), ICQ purges, rate limits removed, wasm control to gov, comdex deprecated, oracles deactivated. Also from #1544/#1548: consensus authority is the team multisig stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh and the POA admin moved to it; gov submission closed (MinDeposit 1e18 ustrd, every pending proposal rejected with 'Governance closed by v35 wind-down' and refunded); staking max_entries 100; the ICA host allow-list lost the staking and stakeibc messages; 'undelegated N delegations totaling X ustrd, skipped 0' with the bonded pool at 0 and every validator jailed and unbonding at zero tokens; validator commissions clamped; the community pool's balances (stTokens, vouchers, STRD) transferred to the multisig with only dust left.",
               "ref": "§5"
             },
             {
@@ -705,7 +706,8 @@
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Do not MsgTransferFromIca the DELEGATION or REDEMPTION ICA of a zone yet: the delegation ICA receives the unbonded records and the redemption ICA holds claimable tokens until every claim is paid (§9 steps 5-6).",
         "Do not submit drain batches between about 14:12 and 19:00 UTC: the batch's ICA timeout is the next day-epoch start minus a fifth of the epoch, so in that window it is already in the past and a lagging light client can let the packet out, time it out at once and close the ordered delegation channel (§9 step 4). Applies to any drain resubmission.",
-        "Accepted LSM tail risk: an earlier LSM liquid stake may still have callbacks or a deposit in flight; let it finish through the pipeline or ignore it. Do not add an LSM-specific drain or halt prerequisite, and do not extend the ops window for it (§9)."
+        "Accepted LSM tail risk: an earlier LSM liquid stake may still have callbacks or a deposit in flight; let it finish through the pipeline or ignore it. Do not add an LSM-specific drain or halt prerequisite, and do not extend the ops window for it (§9).",
+        "The staking redelegations query (/cosmos/staking/v1beta1/delegators/{addr}/redelegations) can fail with 'division by zero' for 14 days after v35 for a delegator whose destination validator has zero shares; the entries are intact and complete on time (rehearsal run 4)."
       ],
       "windows": [
         {
@@ -1105,6 +1107,18 @@
               ]
             }
           ]
+        },
+        {
+          "label": "STRD · the upgrade's mass undelegation completes (14 days after the upgrade block, ~12:00 UTC)",
+          "steps": [
+            {
+              "id": "strd-unbonding-complete",
+              "text": "Every STRD delegation the upgrade undelegated has matured: bonded pool 0, every former staking validator removed (the 125 already-unbonded ones waited the same 14 days), stakers' STRD liquid, blocks still produced by the POA set. From here the holder sweep can include the formerly staked STRD.",
+              "ref": "#1544, rehearsal run 4",
+              "command": "strided q staking pool --node https://stride-strd-rpc.polkachu.com:443\nstrided q staking validators --node https://stride-strd-rpc.polkachu.com:443 | grep -c operator_address",
+              "expect": "bonded_tokens: \"0\"; only the POA validators listed; the chain advancing."
+            }
+          ]
         }
       ]
     },
@@ -1365,6 +1379,12 @@
               "expect": "One tx per batch file; the response's num_skipped and the skip events say which addresses the chain refused (module accounts, ICAs, contracts): expected to be zero for a batch the builder produced. A transfer error (closed channel) rejects the whole tx; a timeout refunds that holder on Stride: resubmit its address."
             },
             {
+              "id": "sweep-community-pool",
+              "text": "After the holder sweep (which also swept the stakers' formerly staked STRD): the multisig, as the chain authority, spends the refilled community pool to itself (an ordinary key is refused), then transfers the stTokens, STRD and the OSMO voucher to the Osmosis vault and the ATOM voucher back to the Hub, keeping a fee reserve for the remaining txs.",
+              "ref": "#1548, rehearsal run 4 'sweep-community-pool'",
+              "expect": "The community pool holds dust only (strided q distribution community-pool) and the vault's balances rose by the amounts; keep enough STRD on the multisig for the halt-window txs."
+            },
+            {
               "id": "sweep-relayers",
               "text": "Relayers on channel-5 and on every whitelisted channel (channel-0, -162, -24, -150, -213, -160) up until the last sweep packet acks.",
               "ref": "§9 step 8"
@@ -1482,8 +1502,9 @@
             },
             {
               "id": "halt-height",
-              "text": "Validators set the halt-height and the chain stops.",
-              "ref": "§8 Shutdown"
+              "text": "Validators set halt-height in app.toml and restart; confirm every validator came back with peers and is advancing before the height (restarted nodes came back peerless twice on the test network), then the chain stops with 'halt per configuration height N' on every node.",
+              "ref": "§8 Shutdown",
+              "expect": "Every validator's log shows the halt line at the same height and no node continues past it; a node that did not restart does not halt."
             }
           ]
         }
