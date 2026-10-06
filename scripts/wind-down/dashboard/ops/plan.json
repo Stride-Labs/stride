@@ -7,7 +7,7 @@
     "notes": [
       "Day epoch N starts at 19:00 UTC on 2026-10-03 + (N - 1491) days; epoch 1500 is 2026-10-12 19:00 UTC and every zone's unbonding frequency (3, 4, 5) divides it.",
       "Unbonding completions use each host's real unbonding time: haqq 7d, osmosis and celestia 14d (the staketia multisig is on Celestia), cosmoshub/injective/band/terra/saga/dydx 21d, juno and sommelier 28d.",
-      "The transmuter rate is fixed at instantiation and Stride's rate freezes at the upgrade, so the real pools are instantiated after 2026-10-12; route denoms are seeded into the vault beforehand while the holder-chain relayers are up."
+      "Pools are created in the voting week at the then-current rate (accepted staleness) and joined per zone on 10-20 (haqq), 10-27 (osmosis, celestia), 11-03 (hub, injective, band, terra, saga, dydx) and 11-10 (juno, sommelier), the day after each group's unbonding completes."
     ]
   },
   "days": [
@@ -281,8 +281,7 @@
       "avoid": [
         "Do not send update-delegation or calibrate-delegation for any haqq validator, and do not restore haqq's delegation channel or close channel-29 before the upgrade: a Stride-side change to a validator makes its delta-table row skip at the upgrade (§9c).",
         "Nothing may be sent on haqq's open ICA channels (FEE channel-614, REDEMPTION channel-244, COMMUNITY_POOL_DEPOSIT channel-245, COMMUNITY_POOL_RETURN channel-246): an unrelayed packet times out when the relayer returns and closes that ordered channel (§9c).",
-        "The haqq relayer (packets and ICQ responses) stays off until the upgrade; do not relay haqq's packets 85-98 or their timeouts (§9c).",
-        "Do not instantiate the real transmuter pools yet: the rate is fixed at instantiation and Stride's rate only freezes at the upgrade (§8, §6)."
+        "The haqq relayer (packets and ICQ responses) stays off until the upgrade; do not relay haqq's packets 85-98 or their timeouts (§9c)."
       ],
       "windows": [
         {
@@ -310,9 +309,11 @@
               "ref": "§8"
             },
             {
-              "id": "vote-pool-messages",
-              "text": "Pool instantiate messages prepared per route with the real denoms, the factor arithmetic (stToken 1e18, native RR x 1e18, alloyed = native), admin and moderator the vault, no limiters, so that on upgrade day only the frozen rate is filled in; the procedure itself was proven on the 2026-09-25 test pools and in rehearsal runs 3 and 4 (docs/wind-down/transmuter-test-log.md, rehearsal-findings.md).",
-              "ref": "§8, transmuter.md"
+              "id": "vote-pools-create",
+              "text": "Instantiate the real pools now, at each zone's current RedemptionRate (decided 2026-10-06: the rate still moves until the upgrade and the pool cannot be re-priced, so the small staleness is accepted; whatever the frozen rate ends up above the pool rate stays in the pool as surplus). One canonical pool per stToken plus one per in-scope route, from the vault, code id 996, factors stToken 1e18 / native RR x 1e18 / alloyed = native, admin and moderator the vault, no limiters. Record each pool's id and rate_at_creation in the CONSTANTS block of scripts/wind-down/check_transmuter_pool.py and in the pools.json for coverage_check.py --pools. Do not fund anything yet.",
+              "ref": "§8 (dates changed 2026-10-06)",
+              "command": "python3 scripts/wind-down/check_transmuter_pool.py",
+              "expect": "RESULT: PASS for every pool listed in CONSTANTS, each with its rate_at_creation (expect the 'host zone is not halted' warning until the upgrade freezes the rate). On FAIL, fix the named check (factor ratio, roles, assets, limiters) before moving on."
             }
           ]
         },
@@ -466,7 +467,7 @@
             },
             {
               "id": "up-rates-frozen",
-              "text": "Record each zone's RedemptionRate at the upgrade height (the pools' rate; nothing moves it afterwards).",
+              "text": "Record each zone's RedemptionRate at the upgrade height (nothing moves it afterwards) next to the pool's rate_at_creation: the gap is what each swapper gives up and what stays in the pool as surplus; the coverage check reads the frozen rate from Stride and the pool rate from pools.json.",
               "ref": "§6, §10",
               "zones": [
                 "celestia",
@@ -571,13 +572,6 @@
               "id": "day0-staketia-undelegate",
               "text": "The staketia operator undelegates the remaining multisig delegation on Celestia via authz, in one go (69.4B utia on 2026-10-05: the 87.43B behind records 1472-1488 was already undelegated on 2026-10-05 and completes 2026-10-19 22:45 UTC).",
               "ref": "§9 step 2"
-            },
-            {
-              "id": "day0-pools-instantiate",
-              "text": "Instantiate the real pools from the frozen rates (can start now, finish over the next days): one canonical pool per stToken plus one per in-scope route, from the vault, code id 996, factors stToken 1e18 / native RR x 1e18 / alloyed = native, admin and moderator the vault; run check_transmuter_pool.py. Do not fund yet. Register no limiters. Record each pool's id and rate_at_creation in the CONSTANTS of scripts/wind-down/check_transmuter_pool.py and build the pools.json that scripts/wind-down/coverage_check.py --pools reads; neither script runs without them.",
-              "ref": "§8",
-              "command": "python3 scripts/wind-down/check_transmuter_pool.py",
-              "expect": "After adding each new pool's id and rate_at_creation to the CONSTANTS block: RESULT: PASS for every pool (the 'host zone is not halted' warning disappears once the rate is frozen). On FAIL, fix the pool (add_new_assets / roles) or the CONSTANTS entry and rerun before funding anything."
             }
           ]
         },
@@ -735,13 +729,6 @@
               ]
             },
             {
-              "id": "post-pools-created",
-              "text": "All real pools instantiated and checked (canonical plus every in-scope route), unfunded; check_transmuter_pool.py passes for each. Pool ids and rate_at_creation recorded in check_transmuter_pool.py and pools.json for coverage_check.py --pools.",
-              "ref": "§8",
-              "command": "python3 scripts/wind-down/check_transmuter_pool.py",
-              "expect": "RESULT: PASS for every real pool. On FAIL, fix the named check and rerun; do not fund a failing pool."
-            },
-            {
               "id": "post-retry-epochs",
               "text": "Zones whose record submission failed at epoch 1500: retried at their next unbonding epoch (10-15 for 14-day zones, 10-16 for 21-day, 10-17 for 28/30-day); wait for the acks, then drain that zone in the 19:00-08:00 UTC window.",
               "ref": "§9 step 3",
@@ -794,11 +781,10 @@
       ]
     },
     {
-      "date": "2026-10-19",
-      "until": "2026-10-20",
-      "title": "Haqq unbonding completes (7 days) · staketia tranche 1 completes",
-      "estimated": true,
-      "note": "Haqq cut its unbonding to 7 days; Stride still records 21, so completion is earlier than the records say.",
+      "date": "2026-10-20",
+      "title": "Haqq: transfer and join the stISLM pools (unbonding done 10-19) · staketia tranche 1",
+      "estimated": false,
+      "note": "All four ICA transfers for each zone, then join_pool once the coverage check passes, in one day.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
@@ -897,11 +883,10 @@
       ]
     },
     {
-      "date": "2026-10-26",
-      "until": "2026-10-27",
-      "title": "Osmosis and Celestia unbonding completes (14 days)",
-      "estimated": true,
-      "note": "The staketia multisig is on Celestia, so it completes here too (the spec's 'day 21' predates Celestia's 14-day unbonding).",
+      "date": "2026-10-27",
+      "title": "Osmosis and Celestia: transfer and join the pools (unbonding done 10-26)",
+      "estimated": false,
+      "note": "All four ICA transfers for each zone, then join_pool once the coverage check passes, in one day.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "No key of the staketia claim address signs anything; MsgTransferStaketiaClaimBalance is the only way its balance moves (§7).",
@@ -1107,11 +1092,10 @@
       ]
     },
     {
-      "date": "2026-11-02",
-      "until": "2026-11-03",
-      "title": "21-day zones complete: Cosmos Hub, Injective, Band, Terra, Saga, dYdX",
-      "estimated": true,
-      "note": "dYdX unbonds in 21 days on chain although Stride records 30.",
+      "date": "2026-11-03",
+      "title": "Cosmos Hub, Injective, Band, Terra, Saga, dYdX: transfer and join the pools (unbonding done 11-02)",
+      "estimated": false,
+      "note": "All four ICA transfers for each zone, then join_pool once the coverage check passes, in one day.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
@@ -1238,10 +1222,9 @@
       ]
     },
     {
-      "date": "2026-11-09",
-      "until": "2026-11-10",
-      "title": "28-day zones complete: Juno, Sommelier",
-      "estimated": true,
+      "date": "2026-11-10",
+      "title": "Juno, Sommelier: transfer and join the pools (unbonding done 11-09)",
+      "estimated": false,
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
@@ -1333,10 +1316,11 @@
             }
           ]
         }
-      ]
+      ],
+      "note": "All four ICA transfers for each zone, then join_pool once the coverage check passes, in one day."
     },
     {
-      "date": "2026-11-10",
+      "date": "2026-11-11",
       "until": "2026-11-13",
       "title": "Last days: the sweep",
       "estimated": true,
@@ -1385,7 +1369,8 @@
             }
           ]
         }
-      ]
+      ],
+      "note": "Starts once every pool is funded."
     },
     {
       "date": "2026-11-14",
