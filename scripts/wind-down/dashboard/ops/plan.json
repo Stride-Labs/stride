@@ -133,11 +133,6 @@
               "ref": "§12"
             },
             {
-              "id": "pre-hub-pipeline",
-              "text": "Confirm the Cosmos Hub unbonding pipeline is unstuck after the NodeGuardians/Forbole refresh: the epoch's batches all acked with results, the queued and retrying records moved on, no undelegation_failed event.",
-              "ref": "§12"
-            },
-            {
               "id": "pre-juno-491",
               "text": "Clear Juno's delegation channel-491 (30 pending acks from sequence 5729) and transfer channel-24's pending ack before the upgrade: the v35 flag reset skips a zone with an unacked packet, so Juno's 21 stale DelegationChangesInProgress flags only clear if these are relayed first; otherwise the restore flow after the upgrade.",
               "ref": "§5, §12"
@@ -290,6 +285,17 @@
         "Do not instantiate the real transmuter pools yet: the rate is fixed at instantiation and Stride's rate only freezes at the upgrade (§8, §6)."
       ],
       "windows": [
+        {
+          "label": "Thursday 2026-10-08 · after the 19:00 UTC day epoch (1496)",
+          "steps": [
+            {
+              "id": "pre-hub-pipeline",
+              "text": "Confirm the Cosmos Hub unbonding pipeline is unstuck: epoch 1496 (Thursday 19:00 UTC, the Hub's last unbonding epoch before the upgrade) resubmits record 1491, which failed at epoch 1492 while StakeLab.zone was over-recorded (refreshed 2026-10-05). All of the epoch's batches acked with results, 1491 moved to UNBONDING_IN_PROGRESS, no record left in UNBONDING_RETRY_QUEUE, no undelegation_failed event.",
+              "ref": "§12, §9 step 3",
+              "expect": "Funds tab → cosmoshub-4 → Records: nothing in UNBONDING_RETRY_QUEUE after the epoch's acks land (allow an hour for the ICA round trip); Validators tab → cosmoshub-4: 0 over and no Δ in progress left. If it fails again, the Validators tab shows which validator moved: refresh it and the record retries at epoch 1500 on upgrade day, which the drain then has to wait for."
+            }
+          ]
+        },
         {
           "label": "Osmosis side",
           "steps": [
