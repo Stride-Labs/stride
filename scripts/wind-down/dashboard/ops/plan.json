@@ -143,36 +143,9 @@
               "ref": "§5, §12"
             },
             {
-              "id": "pre-relayer-scope",
-              "text": "Decide which chains get a relayer from us and which are served for free: regenerate scripts/wind-down/build_relayer_scope.py and the table in docs/wind-down/sttoken-locations.md (Penumbra and Kujira decided unsupported/ignored; Neutron and Carbon relayed by us until the upgrade).",
-              "ref": "§9 before-2, §12",
-              "command": "python3 scripts/wind-down/build_relayer_scope.py",
-              "expect": "RESULT: DONE. It rewrites the 'Relayer scope per chain' table in docs/wind-down/sttoken-locations.md and relayer-map.html; review the table (which legs are free / ops / none) and commit it. --offline reuses the cached packet lookups."
-            },
-            {
               "id": "pre-neutron-carbon-relayers",
               "text": "Run the Neutron and Carbon <-> Stride client/relayer pairs until the upgrade (nobody else updates them; users redeem through Stride until then); they stop at the upgrade.",
               "ref": "§12"
-            },
-            {
-              "id": "pre-route-denoms",
-              "text": "List the foreign-route denoms per stToken from the escrow balances (the 'Pool routes' column of the relayer scope table), one pool each.",
-              "ref": "§9 before-1, §8"
-            },
-            {
-              "id": "pre-sweep-list",
-              "text": "Decide the sweep list and floor from the export: the eleven stTokens and ustrd to Osmosis, every whitelisted voucher worth sweeping back one hop; measure MsgSweepTokensOffStride gas and set the batch size (builder default 100).",
-              "ref": "§9 step 8, §12"
-            },
-            {
-              "id": "pre-sweep-axelar",
-              "text": "Decide whether the two Axelar USDC channels (channel-11, channel-69; about 2 USDC) join SweepUnwindChannels before the binary is cut, and confirm from a full node that the legacy claim module's 2022 airdrops are expired.",
-              "ref": "§12, §7"
-            },
-            {
-              "id": "pre-notify-holders",
-              "text": "Identify the owners of the interchain accounts on Stride that hold stTokens (2.3k stATOM in one) and the 32-byte-address holders, and notify them now so they have time to move out before the halt (the sweep cannot reach them).",
-              "ref": "§12, §9 halt checklist"
             }
           ]
         },
@@ -389,6 +362,38 @@
               "id": "vote-passes",
               "text": "2026-10-10: the proposal passes; validators confirm they have the v35 binary staged for the upgrade height.",
               "ref": "§1"
+            }
+          ]
+        },
+        {
+          "label": "Decisions and lists before the upgrade",
+          "steps": [
+            {
+              "id": "pre-relayer-scope",
+              "text": "Decide which chains get a relayer from us and which are served for free: regenerate scripts/wind-down/build_relayer_scope.py and the table in docs/wind-down/sttoken-locations.md (Penumbra and Kujira decided unsupported/ignored; Neutron and Carbon relayed by us until the upgrade).",
+              "ref": "§9 before-2, §12",
+              "command": "python3 scripts/wind-down/build_relayer_scope.py",
+              "expect": "RESULT: DONE. It rewrites the 'Relayer scope per chain' table in docs/wind-down/sttoken-locations.md and relayer-map.html; review the table (which legs are free / ops / none) and commit it. --offline reuses the cached packet lookups."
+            },
+            {
+              "id": "pre-route-denoms",
+              "text": "List the foreign-route denoms per stToken from the escrow balances (the 'Pool routes' column of the relayer scope table), one pool each.",
+              "ref": "§9 before-1, §8"
+            },
+            {
+              "id": "pre-sweep-list",
+              "text": "Decide the sweep list and floor from the export: the eleven stTokens and ustrd to Osmosis, every whitelisted voucher worth sweeping back one hop; measure MsgSweepTokensOffStride gas and set the batch size (builder default 100).",
+              "ref": "§9 step 8, §12"
+            },
+            {
+              "id": "pre-sweep-axelar",
+              "text": "Decide whether the two Axelar USDC channels (channel-11, channel-69; about 2 USDC) join SweepUnwindChannels before the binary is cut, and confirm from a full node that the legacy claim module's 2022 airdrops are expired.",
+              "ref": "§12, §7"
+            },
+            {
+              "id": "pre-notify-holders",
+              "text": "Identify the owners of the interchain accounts on Stride that hold stTokens (2.3k stATOM in one) and the 32-byte-address holders, and notify them now so they have time to move out before the halt (the sweep cannot reach them).",
+              "ref": "§12, §9 halt checklist"
             }
           ]
         }
