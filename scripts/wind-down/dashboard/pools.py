@@ -700,7 +700,7 @@ def _headroom_check(factors: list[int], native_factor: int | None, needed: int) 
     )
     if normalised < UINT128_LIMIT:
         return Check(name=CheckName.HEADROOM, ok=True, detail=detail)
-    advice = "use factors scaled to 1e6 (stToken 1000000, native round(rate x 1e6)) at creation"
+    advice = "use factors scaled to 1e6 (stToken 1000000, native floor(rate x 1e6), never rounded up) at creation"
     return Check(name=CheckName.HEADROOM, ok=False, detail=f"{detail}: {advice}")
 
 

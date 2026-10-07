@@ -557,6 +557,15 @@ class PoolFundingTest(unittest.TestCase):
         self.assertIn(f"--amount 20136{OSMOSIS_DENOM} ", test_join.commands[0].text)
         self.assertEqual((rest.ready, rest.reason), (False, "the allocation (20136) does not exceed the test join: nothing left to join"))
 
+    def test_a_zero_allocation_readies_neither_join(self) -> None:
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "0", False)]
+
+        test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
+
+        self.assertEqual((test_join.ready, test_join.reason), (False, "the allocation is 0: nothing to join"))
+        self.assertEqual((rest.ready, rest.reason), (False, "the allocation is 0: nothing to join"))
+        self.assertIn(f"--amount 0{OSMOSIS_DENOM} ", test_join.commands[0].text)
+
     def test_an_allocation_equal_to_the_test_amount_leaves_no_rest(self) -> None:
         pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "1000000", False)]
 

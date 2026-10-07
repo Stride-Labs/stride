@@ -34,6 +34,7 @@ PLACEHOLDER_REST_AMOUNT = "<ALLOCATION_MINUS_VAULT_SHARES>"
 ANYONE = "anyone"
 NO_SNAPSHOT_REASON = "waiting for the Validators snapshot"
 ALLOCATION_UNKNOWN_REASON = "the pool's allocation is not known yet (see the Pools tab)"
+ALLOCATION_EMPTY_REASON = "the allocation is 0: nothing to join"
 
 # The order the four admin transfers go out (spec §3): fees first, delegations after the withdrawals that feed them.
 ICA_ORDER = (funds.IcaType.FEE, funds.IcaType.WITHDRAWAL, funds.IcaType.DELEGATION, funds.IcaType.REDEMPTION)
@@ -456,7 +457,10 @@ def _test_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str 
     """One whole token, or the whole allocation when that is smaller; nothing goes until the allocation is known."""
     if pool["allocation"] is None:
         return str(test_amount), ALLOCATION_UNKNOWN_REASON
-    return str(min(int(pool["allocation"]), test_amount)), None
+    allocation = int(pool["allocation"])
+    if allocation <= 0:
+        return "0", ALLOCATION_EMPTY_REASON
+    return str(min(allocation, test_amount)), None
 
 
 def _rest_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str | None]:
@@ -468,6 +472,8 @@ def _rest_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str 
     allocation = int(pool["allocation"])
     vault_shares = int(pool["vault_shares"])
     remaining = str(allocation - vault_shares)
+    if allocation <= 0:
+        return remaining, ALLOCATION_EMPTY_REASON
     if pool["funded_exactly"]:
         return remaining, "the pool is already funded exactly"
     if allocation <= test_amount:

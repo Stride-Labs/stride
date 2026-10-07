@@ -56,7 +56,7 @@ Rounding and size limits:
   normalizes haqq's 1.07e26 aISLM to 1.07e44, dYdX's 4.0e23 adydx to 4.0e41 and Injective's
   2.1e22 inj to 2.1e40 — all above `Uint128::MAX`, so the funding join itself fails (a 1-token
   test join passes, 1e36). For haqq, dYdX and Injective instantiate with factors scaled to 1e6
-  instead: stToken `1000000`, native `round(RR × 1e6)`, alloyed = native. The ratio still prices
+  instead: stToken `1000000`, native `floor(RR × 1e6)` (rounded down, so the pool never prices above RR), alloyed = native. The ratio still prices
   the pool; the rate truncates at 6 decimals (~1e-7 relative, inside the accepted staleness) and
   the balances normalize to ≤1.1e32. The dashboard's Pools tab headroom check computes this bound
   from each zone's needed amount before anything is joined.

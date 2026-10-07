@@ -665,7 +665,7 @@ class ChecksTest(unittest.TestCase):
         self.assertEqual(
             check(haqq_1e18, pools.CheckName.HEADROOM).detail,
             f"needed 1.071e+26 x (lcm 1.060e+36 / native factor {HAQQ_RATE_FACTOR}) = 1.071e+44 vs 2^128 3.403e+38: "
-            "use factors scaled to 1e6 (stToken 1000000, native round(rate x 1e6)) at creation",
+            "use factors scaled to 1e6 (stToken 1000000, native floor(rate x 1e6), never rounded up) at creation",
         )
         self.assertEqual(
             check(haqq_1e6, pools.CheckName.HEADROOM).detail,
