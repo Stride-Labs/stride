@@ -134,6 +134,7 @@ class Pool:
     native: int
     st_denom: str
     st_amount: int
+    rate: str | None = None  # native factor / stToken factor: the rate the pool converts at, fixed at creation
 
 
 @dataclass(frozen=True)
@@ -221,6 +222,9 @@ class ZoneFunds:
     records: ZoneRecords
     transfers: list[Transfer] | None  # None when the tx index lookup failed
     pools: list[Pool] | None  # None when Osmosis could not be read
+    pool_rate: str | None  # the canonical pool's rate (fixed at its creation); None without a canonical pool
+    rate_gap_pct: str | None  # (redemption_rate - pool_rate) / pool_rate x 100: what a swapper gives up, what stays as surplus
+    pool_rate_known: bool  # True once a canonical pool with a readable rate exists
     accounts: list[Account]
     staketia: Staketia | None
     validator_positions: list[ValidatorPosition]  # ICA then multisig, largest stake first, zero/zero omitted
@@ -295,6 +299,7 @@ class RawPool:
     ]  # the pool's asset denoms from its config, present even at zero balance
     balances: dict[str, int]
     base_denoms: dict[str, str]  # ibc asset denom -> base denom of its trace
+    factors: dict[str, int] = dataclasses.field(default_factory=dict)  # asset denom -> normalization_factor
 
 
 @dataclass(frozen=True)
@@ -645,9 +650,33 @@ def classify_pools(
                 native=pool.balances.get(zone.osmosis_denom, 0),
                 st_denom=", ".join(st_denoms),
                 st_amount=sum(pool.balances.get(denom, 0) for denom in st_denoms),
+                rate=pool_rate(pool=pool, native_denom=zone.osmosis_denom, st_denoms=st_denoms),
             )
         )
     return assigned
+
+
+def pool_rate_of(pools: list[Pool] | None) -> str | None:
+    """The canonical pool's rate, which is the one every route pool copies."""
+    canonical = [pool for pool in pools or [] if pool.kind == PoolKind.CANONICAL and pool.rate is not None]
+    return canonical[0].rate if canonical else None
+
+
+def rate_gap_pct(redemption_rate: str, pool_rate: str | None) -> str | None:
+    """How far Stride's (frozen) rate sits above the pool's, in percent, four places."""
+    if pool_rate is None:
+        return None
+    gap = DECIMAL_CONTEXT.divide(Decimal(redemption_rate) - Decimal(pool_rate), Decimal(pool_rate)) * 100
+    return str(gap.quantize(Decimal("0.0001")))
+
+
+def pool_rate(pool: RawPool, native_denom: str, st_denoms: list[str]) -> str | None:
+    """The stToken -> native rate the pool's factors encode (native factor / stToken factor), 18 places; None when
+    either factor is missing (an asset dropped after draining) or the pool has no single stToken."""
+    if len(st_denoms) != 1 or native_denom not in pool.factors or st_denoms[0] not in pool.factors:
+        return None
+    rate = DECIMAL_CONTEXT.divide(Decimal(pool.factors[native_denom]), Decimal(pool.factors[st_denoms[0]]))
+    return str(rate.quantize(Decimal("1.000000000000000000")))
 
 
 def canonical_st_denom(st_denom: str) -> str:
@@ -941,6 +970,7 @@ def _raw_pool(osmosis: chain.Chain, contract: str) -> RawPool:
             osmosis=osmosis, contract=contract, query={"get_share_denom": {}}
         )["share_denom"],
         assets=assets,
+        factors={entry["denom"]: int(entry["normalization_factor"]) for entry in configs},
         balances=_balances(chain_handle=osmosis, address=contract),
         base_denoms={
             denom: _trace_base_denom(rest=osmosis.rest, denom=denom)
@@ -1098,6 +1128,9 @@ def _zone_funds(
         records=zone_records,
         transfers=side.transfers,
         pools=pools,
+        pool_rate=pool_rate_of(pools=pools),
+        rate_gap_pct=rate_gap_pct(redemption_rate=rate, pool_rate=pool_rate_of(pools=pools)),
+        pool_rate_known=pool_rate_of(pools=pools) is not None,
         accounts=_zone_accounts(
             side=side, vault=vault, pools=pools, record_count=record_count
         ),

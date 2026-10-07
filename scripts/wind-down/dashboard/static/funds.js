@@ -125,7 +125,10 @@ function coveragePill(zone) {
 // ---- diagram
 
 function diagramPanel(zone) {
-  const sub = `rate ${escapeHtml(shortRate(zone.redemption_rate))} · st${escapeHtml(zone.symbol)} supply ${amount(zone.st_supply, zone.decimals, 0)}`
+  const poolRate = zone.pool_rate
+    ? ` · pool rate ${escapeHtml(shortRate(zone.pool_rate))} (gap ${escapeHtml(zone.rate_gap_pct)}%: Stride's rate above the pool's, the swapper's haircut and the pool's surplus)`
+    : ' · pool rate n/a (no canonical pool yet)';
+  const sub = `rate ${escapeHtml(shortRate(zone.redemption_rate))}${poolRate} · st${escapeHtml(zone.symbol)} supply ${amount(zone.st_supply, zone.decimals, 0)}`
     + ` · needs ${amount(zone.needed, zone.decimals, 0)} ${escapeHtml(zone.symbol)} on Osmosis`;
   return `<div class="panel"><h2>${escapeHtml(zone.chain_id)} · ${escapeHtml(zone.symbol)} <span class="sub">${sub}</span></h2>${diagram(zone)}</div>`;
 }

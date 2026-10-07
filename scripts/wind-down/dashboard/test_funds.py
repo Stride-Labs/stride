@@ -517,6 +517,28 @@ class PoolsTest(unittest.TestCase):
         self.assertEqual(assigned, {"cosmoshub-4": []})
 
 
+class PoolRateTest(unittest.TestCase):
+    def test_rate_is_native_factor_over_st_factor(self) -> None:
+        pool = raw_pool(contract="osmo1pool", assets={INJ_ON_OSMOSIS: 0, CANONICAL_STINJ: 0}, base_denoms={INJ_ON_OSMOSIS: "inj", CANONICAL_STINJ: "stinj"})
+        pool = funds.RawPool(**{**pool.__dict__, "factors": {INJ_ON_OSMOSIS: 1545253821149464735, CANONICAL_STINJ: 10**18}})
+
+        self.assertEqual(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[CANONICAL_STINJ]), "1.545253821149464735")
+        self.assertIsNone(funds.pool_rate(pool=pool, native_denom="ibc/OTHER", st_denoms=[CANONICAL_STINJ]))
+        self.assertIsNone(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[]))
+
+    def test_gap_is_the_frozen_rate_over_the_pool_rate(self) -> None:
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="1.1764", pool_rate="1.1751"), "0.1106")
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="2.0", pool_rate="2.0"), "0.0000")
+        self.assertIsNone(funds.rate_gap_pct(redemption_rate="2.0", pool_rate=None))
+
+    def test_zone_rate_comes_from_the_canonical_pool(self) -> None:
+        canonical = funds.Pool(contract="a", kind=funds.PoolKind.CANONICAL, alloyed_denom="x", native=0, st_denom="s", st_amount=0, rate="1.5")
+        route = funds.Pool(contract="b", kind=funds.PoolKind.ROUTE, alloyed_denom="y", native=0, st_denom="s", st_amount=0, rate="1.5")
+        self.assertEqual(funds.pool_rate_of(pools=[route, canonical]), "1.5")
+        self.assertIsNone(funds.pool_rate_of(pools=[route]))
+        self.assertIsNone(funds.pool_rate_of(pools=None))
+
+
 class PayloadTest(unittest.TestCase):
     def test_every_int_becomes_a_string_but_bools_and_none_survive(self) -> None:
         payload = funds._stringify_ints(

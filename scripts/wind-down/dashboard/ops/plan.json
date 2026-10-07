@@ -478,7 +478,7 @@
             },
             {
               "id": "up-rates-frozen",
-              "text": "Record each zone's RedemptionRate at the upgrade height (nothing moves it afterwards) next to the pool's rate_at_creation: the gap is what each swapper gives up and what stays in the pool as surplus; the coverage check reads the frozen rate from Stride and the pool rate from pools.json.",
+              "text": "Each zone's RedemptionRate is frozen at the upgrade height; the Funds tab shows it live next to the canonical pool's rate (read from the pool's normalization factors) and the gap between them, which is what a swapper gives up and what stays in the pool as surplus. Confirm every zone shows a pool rate (live below) and note any gap above dust.",
               "ref": "§6, §10",
               "zones": [
                 "celestia",
@@ -492,7 +492,12 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "auto": {
+                "tab": "funds",
+                "path": "pool_rate_known"
+              },
+              "expect": "live: 11/11 once every canonical pool exists; the Funds tab header per zone reads 'rate X · pool rate Y (gap Z%)'. coverage_check.py reads the frozen rate from Stride and each pool's rate from pools.json."
             },
             {
               "id": "haqq-hermes-config",
