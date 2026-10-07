@@ -7,7 +7,8 @@
     "notes": [
       "Day epoch N starts at 19:00 UTC on 2026-10-03 + (N - 1491) days; epoch 1500 is 2026-10-12 19:00 UTC and every zone's unbonding frequency (3, 4, 5) divides it.",
       "Unbonding completions use each host's real unbonding time: haqq 7d, osmosis and celestia 14d (the staketia multisig is on Celestia), cosmoshub/injective/band/terra/saga/dydx 21d, juno and sommelier 28d.",
-      "Pools are created in the voting week at the then-current rate (accepted staleness) and joined per zone on 10-20 (haqq), 10-27 (osmosis, celestia), 11-03 (hub, injective, band, terra, saga, dydx) and 11-10 (juno, sommelier), the day after each group's unbonding completes."
+      "Pools are created in the voting week at the then-current rate (accepted staleness) and joined per zone on 10-20 (haqq), 10-27 (osmosis, celestia), 11-03 (hub, injective, band, terra, saga, dydx) and 11-10 (juno, sommelier), the day after each group's unbonding completes.",
+      "Times on the dashboard are US Eastern (ET); the chain's day epoch rolls at 3:00pm ET (19:00 UTC)."
     ]
   },
   "days": [
@@ -136,11 +137,6 @@
               "id": "pre-juno-491",
               "text": "Clear Juno's delegation channel-491 (30 pending acks from sequence 5729) and transfer channel-24's pending ack before the upgrade: the v35 flag reset skips a zone with an unacked packet, so Juno's 21 stale DelegationChangesInProgress flags only clear if these are relayed first; otherwise the restore flow after the upgrade.",
               "ref": "§5, §12"
-            },
-            {
-              "id": "pre-neutron-carbon-relayers",
-              "text": "Run the Neutron and Carbon <-> Stride client/relayer pairs until the upgrade (nobody else updates them; users redeem through Stride until then); they stop at the upgrade.",
-              "ref": "§12"
             }
           ]
         },
@@ -154,7 +150,7 @@
             },
             {
               "id": "pre-stakedym-operator",
-              "text": "Stakedym operator ready for 2026-10-12 about 20:11 UTC, when records 1444-1464 finish unbonding.",
+              "text": "Stakedym operator ready for 2026-10-12 about 4:11pm ET (20:11 UTC), when records 1444-1464 finish unbonding.",
               "ref": "§9 checklist, step 7"
             },
             {
@@ -164,7 +160,7 @@
             },
             {
               "id": "pre-haqq-clients",
-              "text": "Both haqq light clients must live until the upgrade: haqq's client of Stride (07-tendermint-6) expires 2026-10-13 06:27 UTC, Stride's client of haqq (07-tendermint-143) 2026-10-17 21:30 UTC. If the vote slips, send bare client updates in both directions a few days before.",
+              "text": "Both haqq light clients must live until the upgrade: haqq's client of Stride (07-tendermint-6) expires 2026-10-13 2:27am ET (06:27 UTC), Stride's client of haqq (07-tendermint-143) 2026-10-17 5:30pm ET (21:30 UTC). If the vote slips, send bare client updates in both directions a few days before.",
               "ref": "§9c",
               "conditional": "if the vote slips"
             },
@@ -285,11 +281,11 @@
       ],
       "windows": [
         {
-          "label": "Thursday 2026-10-08 · after the 19:00 UTC day epoch (1496)",
+          "label": "Thursday 2026-10-08 · after the 3:00pm ET (19:00 UTC) day epoch (1496)",
           "steps": [
             {
               "id": "pre-hub-pipeline",
-              "text": "Confirm the Cosmos Hub unbonding pipeline is unstuck: epoch 1496 (Thursday 19:00 UTC, the Hub's last unbonding epoch before the upgrade) resubmits record 1491, which failed at epoch 1492 while StakeLab.zone was over-recorded (refreshed 2026-10-05). All of the epoch's batches acked with results, 1491 moved to UNBONDING_IN_PROGRESS, no record left in UNBONDING_RETRY_QUEUE, no undelegation_failed event.",
+              "text": "Confirm the Cosmos Hub unbonding pipeline is unstuck: epoch 1496 (Thursday 3:00pm ET (19:00 UTC), the Hub's last unbonding epoch before the upgrade) resubmits record 1491, which failed at epoch 1492 while StakeLab.zone was over-recorded (refreshed 2026-10-05). All of the epoch's batches acked with results, 1491 moved to UNBONDING_IN_PROGRESS, no record left in UNBONDING_RETRY_QUEUE, no undelegation_failed event.",
               "ref": "§12, §9 step 3",
               "expect": "Funds tab → cosmoshub-4 → Records: nothing in UNBONDING_RETRY_QUEUE after the epoch's acks land (allow an hour for the ICA round trip); Validators tab → cosmoshub-4: 0 over and no Δ in progress left. If it fails again, the Validators tab shows which validator moved: refresh it and the record retries at epoch 1500 on upgrade day, which the drain then has to wait for."
             }
@@ -373,7 +369,7 @@
             {
               "id": "vote-pool-routes-and-relayers",
               "text": "Decide which stTokens and routes get transmuter pools and make sure relayers run those channels until the pools are live.",
-              "detail": "The 'Relayer scope per chain' table in docs/wind-down/sttoken-locations.md (regenerated by scripts/wind-down/build_relayer_scope.py) lists every chain holding stTokens with the Osmosis leg's status (free / ops / none) and the pool routes per token; Penumbra and Kujira are unsupported/ignored, Neutron and Carbon are relayed by us until the upgrade. One pool per route in that column; a route needs its two-hop denom seeded into the vault (the Osmosis-side step) and a relayer on the chain's Osmosis leg so holders can reach the pool.",
+              "detail": "The 'Relayer scope per chain' table in docs/wind-down/sttoken-locations.md (regenerated by scripts/wind-down/build_relayer_scope.py) lists every chain holding stTokens with the Osmosis leg's status (free / ops / none) and the pool routes per token; Penumbra and Kujira are unsupported/ignored. One pool per route in that column; a route needs its two-hop denom seeded into the vault (the Osmosis-side step) and a relayer on the chain's Osmosis leg so holders can reach the pool.",
               "ref": "§8, §9 before-1/2, §12",
               "command": "python3 scripts/wind-down/build_relayer_scope.py",
               "expect": "RESULT: DONE. It rewrites the 'Relayer scope per chain' table in docs/wind-down/sttoken-locations.md and relayer-map.html; review the table (which legs are free / ops / none) and commit it. --offline reuses the cached packet lookups."
@@ -463,33 +459,22 @@
     {
       "date": "2026-10-12",
       "title": "Upgrade day",
-      "note": "Haqq first: its sequence through 1f must finish before 19:00 UTC, haqq's unbonding epoch, or its queued records and drain move to 10-16. The spec orders every other zone's refresh after the haqq sequence; because both must finish by 19:00 UTC, the other zones start once the haqq restore (1d) is in flight, and never before 1b.",
+      "note": "Haqq first because of its deadline: its sequence through 1f must finish before 3:00pm ET (19:00 UTC), haqq's unbonding epoch, or its queued records and drain move to 10-16. The other zones' refresh runs in parallel any time before 3:00pm ET; after the eve's hot-key refresh it only covers what slashed overnight.",
       "avoid": [
         "Do not relay timeouts for haqq packets 85-98: the restore zeroes their flags and a timeout processed afterwards errors in DecrementValidatorDelegationChangesInProgress (§9 step 1c).",
-        "Do not submit drain batches between about 14:12 and 19:00 UTC: the batch's ICA timeout is the next day-epoch start minus a fifth of the epoch, so in that window it is already in the past and a lagging light client can let the packet out, time it out at once and close the ordered delegation channel (§9 step 4).",
-        "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
+        "Do not submit drain batches between about 10:12am and 3:00pm ET (14:12-19:00 UTC): the batch's ICA timeout is the next day-epoch start minus a fifth of the epoch, so in that window it is already in the past and a lagging light client can let the packet out, time it out at once and close the ordered delegation channel (§9 step 4).",
+        "When a zone's delegation channel needs clearing by hand, relay its acknowledgements first (hermes tx packet-ack / rly transact relay-acknowledgements) and only then its packets (hermes clear packets / relay-packets), and never relay a timeout while an earlier sequence's ack is outstanding: a timeout closes the ordered channel and the executed batches behind it stay unacknowledged, with Stride still recording their delegations (§9 step 4). Check the Channels tab for pending acks before clearing.",
         "Do not MsgTransferFromIca the DELEGATION or REDEMPTION ICA of a zone yet: the delegation ICA receives the unbonded records and the redemption ICA holds claimable tokens until every claim is paid (§9 steps 5-6).",
-        "Do not run update-delegation or calibrate-delegation on other zones before haqq's channel-29 is closed and its restore is in flight; haqq goes first (§9 step 1).",
         "After v35, delegate, redelegate, create-validator and cancel-unbond are refused ('is disabled: the chain is winding down'), gov cannot pass anything, and any later upgrade or client recovery is a MsgSoftwareUpgrade / MsgRecoverClient signed by the multisig as the chain authority, not a proposal (#1544)."
       ],
       "windows": [
         {
-          "label": "~12:00 UTC · upgrade height",
+          "label": "~8:00am ET (12:00 UTC) · upgrade height",
           "steps": [
             {
               "id": "up-executes",
               "text": "v35 executes and the chain resumes. Read the v35: logs: the haqq delta table applied (which rows, if any, were skipped on a stale pin), stale DelegationChangesInProgress reset on every zone whose delegation channel is open with no unacked packet (a logged skip for juno-1 and haqq is expected unless Juno was cleared), ICQ purges, rate limits removed, wasm control to gov, comdex deprecated, oracles deactivated. Also from #1544/#1548: consensus authority is the team multisig stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh and the POA admin moved to it; gov submission closed (MinDeposit 1e18 ustrd, every pending proposal rejected with 'Governance closed by v35 wind-down' and refunded); staking max_entries 100; the ICA host allow-list lost the staking and stakeibc messages; 'undelegated N delegations totaling X ustrd, skipped 0' with the bonded pool at 0 and every validator jailed and unbonding at zero tokens; validator commissions clamped; the community pool's balances (stTokens, vouchers, STRD) transferred to the multisig with only dust left.",
               "ref": "§5"
-            },
-            {
-              "id": "up-haqq-relayer-on",
-              "text": "Turn the haqq relayer on (packets and ICQ responses).",
-              "ref": "§9c"
-            },
-            {
-              "id": "up-neutron-carbon-off",
-              "text": "Stop the Neutron and Carbon relayer pairs (their Stride leg is not needed after the upgrade; the relayer scope table decides their Osmosis legs).",
-              "ref": "§12"
             },
             {
               "id": "up-rates-frozen",
@@ -508,11 +493,25 @@
                 "sommelier-3",
                 "ssc-1"
               ]
+            },
+            {
+              "id": "haqq-hermes-config",
+              "text": "Haqq relaying is done by hand with hermes, never by switching an auto-clearing relayer on: hermes.toml for the haqq_11235-1 <-> stride-1 path with clear_on_start = false and clear_interval = 0 (hermes then relays only what it is told to or observes live, and never sweeps the 14 old commitments on channel-869), and a packet_filter allowlist on both chains naming only the channels to relay: transfer channel-240/channel-7, FEE channel-614/channel-24, REDEMPTION channel-244/channel-13 (the new DELEGATION and WITHDRAWAL channels are added once the restores open them).",
+              "ref": "§9c, §9 step 1c",
+              "command": "[mode.clients] enabled = true\n[mode.connections] enabled = false\n[mode.channels] enabled = true          # relays the restore handshakes\n[mode.packets] enabled = true\nclear_interval = 0\nclear_on_start = false\n\n[[chains]]  # stride-1\nid = 'stride-1'\n[chains.packet_filter]\npolicy = 'allow'\nlist = [['transfer', 'channel-240'], ['icacontroller-haqq_11235-1.FEE', 'channel-614'], ['icacontroller-haqq_11235-1.REDEMPTION', 'channel-244']]\n\n[[chains]]  # haqq_11235-1\nid = 'haqq_11235-1'\n[chains.packet_filter]\npolicy = 'allow'\nlist = [['transfer', 'channel-7'], ['icahost', 'channel-24'], ['icahost', 'channel-13']]",
+              "expect": "hermes config validate passes; channel-869 / channel-29 appear nowhere in the allowlist, so packets 85-98 can never be timed out by this relayer."
+            },
+            {
+              "id": "haqq-clients-fresh",
+              "text": "Fresh light clients both ways before anything else (haqq's client of Stride 07-tendermint-6 expires 2:27am ET 10-13; Stride's client of haqq 07-tendermint-143 5:30pm ET 10-17).",
+              "ref": "§9c",
+              "command": "hermes --config <hermes.toml> update client --host-chain haqq_11235-1 --client 07-tendermint-6\nhermes --config <hermes.toml> update client --host-chain stride-1 --client 07-tendermint-143",
+              "expect": "Both report a new consensus height; Channels tab -> haqq: both clients live with fresh ages."
             }
           ]
         },
         {
-          "label": "12:00-19:00 UTC · the haqq sequence (deadline 19:00 UTC)",
+          "label": "8:00am-3:00pm ET (12:00-19:00 UTC) · the haqq sequence (deadline 3:00pm ET)",
           "steps": [
             {
               "id": "haqq-1a",
@@ -520,16 +519,32 @@
               "ref": "§9 step 1a"
             },
             {
+              "id": "haqq-relay-acks",
+              "text": "Relay outstanding acknowledgements on haqq's open channels first (acks before anything that could time out): the FEE and REDEMPTION ICA channels and the transfer channel, both directions where it applies.",
+              "ref": "§9 step 4 (acks before timeouts)",
+              "command": "hermes --config <hermes.toml> tx packet-ack --dst-chain stride-1 --src-chain haqq_11235-1 --src-port icahost --src-channel channel-24   # FEE\nhermes --config <hermes.toml> tx packet-ack --dst-chain stride-1 --src-chain haqq_11235-1 --src-port icahost --src-channel channel-13   # REDEMPTION\nhermes --config <hermes.toml> tx packet-ack --dst-chain stride-1 --src-chain haqq_11235-1 --src-port transfer --src-channel channel-7\nhermes --config <hermes.toml> tx packet-ack --dst-chain haqq_11235-1 --src-chain stride-1 --src-port transfer --src-channel channel-240",
+              "expect": "Each command reports the acks it relayed (or none); Channels tab -> haqq: 0 pending acks on every open channel. Only then relay packets."
+            },
+            {
+              "id": "haqq-relay-packets",
+              "text": "Then relay pending packets on the same open channels (transfers in both directions, any FEE/REDEMPTION packet).",
+              "ref": "§9c",
+              "command": "hermes --config <hermes.toml> tx packet-recv --dst-chain stride-1 --src-chain haqq_11235-1 --src-port transfer --src-channel channel-7\nhermes --config <hermes.toml> tx packet-recv --dst-chain haqq_11235-1 --src-chain stride-1 --src-port transfer --src-channel channel-240\nhermes --config <hermes.toml> tx packet-recv --dst-chain haqq_11235-1 --src-chain stride-1 --src-port icacontroller-haqq_11235-1.FEE --src-channel channel-614\nhermes --config <hermes.toml> tx packet-recv --dst-chain haqq_11235-1 --src-chain stride-1 --src-port icacontroller-haqq_11235-1.REDEMPTION --src-channel channel-244",
+              "expect": "Channels tab -> haqq: 0 pending packets on the open channels. A packet past its timeout on an ordered ICA channel closes it when relayed; that channel is then restored like the delegation one (simple, no flags involved)."
+            },
+            {
               "id": "haqq-1b",
               "text": "Close haqq's channel-29: the relayer submits MsgChannelCloseConfirm on haqq for icahost/channel-29, proving channel-869 CLOSED on Stride (needs haqq's client of Stride Active). Verify channel-29 CLOSED on haqq.",
-              "ref": "§9 step 1b"
+              "ref": "§9 step 1b",
+              "command": "hermes --config <hermes.toml> tx chan-close-confirm --dst-chain haqq_11235-1 --src-chain stride-1 --dst-connection connection-8 --dst-port icahost --src-port icacontroller-haqq_11235-1.DELEGATION --src-channel channel-869 --dst-channel channel-29",
+              "expect": "The tx lands on haqq (slow blocks: minutes); Channels tab -> haqq DELEGATION: CLOSED / CLOSED. This is the only thing ever done to channel-869/channel-29."
             },
             {
               "id": "haqq-1d",
-              "text": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION (hours across haqq's slow blocks). Verify: Channels tab shows the new delegation channel OPEN on both ends; HostZone.DelegationIcaAddress unchanged; Validators tab → haqq: every validator at Δ in progress 0; Funds tab → haqq Records column still shows the 2 queued records.",
+              "text": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION (then `hermes start` with the config above relays the four handshake steps across haqq's slow blocks; allow hours). Verify: Channels tab shows the new delegation channel OPEN on both ends; HostZone.DelegationIcaAddress unchanged; Validators tab → haqq: every validator at Δ in progress 0; Funds tab → haqq Records column still shows the 2 queued records.",
               "ref": "§9 step 1d",
-              "command": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0, then hours of handshake over haqq's slow blocks. Done when the Channels tab shows a new haqq DELEGATION channel OPEN on both ends and the Validators tab shows every haqq validator at Δ in progress 0. If the handshake stalls, check haqq's client of Stride (Channels tab: haqq host client) and the relayer's client updates."
+              "command": "strided tx stakeibc restore-interchain-account haqq_11235-1 connection-143 haqq_11235-1.DELEGATION --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nhermes --config <hermes.toml> start   # relays the OpenTry/OpenAck/OpenConfirm of the new channel; stop it when the channel is OPEN",
+              "expect": "code: 0, then hours of handshake over haqq's slow blocks. Done when the Channels tab shows a new haqq DELEGATION channel OPEN on both ends and the Validators tab shows every haqq validator at Δ in progress 0. If the handshake stalls, check haqq's client of Stride (Channels tab: haqq host client) and the relayer's client updates. When OPEN, add the new channel pair to the packet_filter allowlist on both chains and restart hermes."
             },
             {
               "id": "haqq-1d-withdrawal",
@@ -540,7 +555,7 @@
             },
             {
               "id": "haqq-1e",
-              "text": "Prove an ICQ round trip: update-delegation for one haqq validator; Validators tab → haqq: its 'slash query' pill turns on, then off, and its rate diff goes to 0. If the second callback keeps timing out, fix the relayer (frequent client updates toward Stride) before 1f.",
+              "text": "Prove an ICQ round trip (the ICQ relayer for haqq must be running; hermes does not relay ICQs): update-delegation for one haqq validator; Validators tab → haqq: its 'slash query' pill turns on, then off, and its rate diff goes to 0. If the second callback keeps timing out, fix the relayer (frequent client updates toward Stride) before 1f.",
               "ref": "§9 step 1e",
               "command": "strided tx stakeibc update-delegation haqq_11235-1 <HAQQ_VALOPER> --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
               "expect": "code: 0; then on the Validators tab → haqq the validator's 'slash query' pill turns on (the rate callback landed and submitted the shares query) and back off (the shares callback landed). If it stays on for more than an hour the ICQ is timing out: fix the relayer's client updates toward Stride before 1f."
@@ -563,18 +578,18 @@
           ]
         },
         {
-          "label": "After the haqq sequence is under way · before 19:00 UTC",
+          "label": "After the haqq sequence is under way · before 3:00pm ET (19:00 UTC)",
           "steps": [
             {
               "id": "day0-restore-closed-channels",
-              "text": "Right after the upgrade, before the 19:00 UTC epoch: restore every non-haqq delegation channel that is not OPEN (celestia channel-870 is CLOSED on both ends today; band's channel-768 is stuck in INIT until Band governance recovers its client), so the epoch's submissions and tonight's drain have a channel. Verify on the Channels tab: the zone's DELEGATION channel OPEN on both ends, nothing pending.",
+              "text": "Right after the upgrade, before the 3:00pm ET (19:00 UTC) epoch: restore every non-haqq delegation channel that is not OPEN (celestia channel-870 is CLOSED on both ends today; band's channel-768 is stuck in INIT until Band governance recovers its client), so the epoch's submissions and tonight's drain have a channel. Verify on the Channels tab: the zone's DELEGATION channel OPEN on both ends, nothing pending.",
               "ref": "§9 step 4, decision 2026-10-07",
               "zones": [
                 "celestia",
                 "laozi-mainnet"
               ],
               "command": "strided tx stakeibc restore-interchain-account celestia connection-125 celestia.DELEGATION --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5\nstrided tx stakeibc restore-interchain-account laozi-mainnet connection-146 laozi-mainnet.DELEGATION --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "code: 0 (multisig after the upgrade), then a four-step handshake: minutes on Celestia, impossible on Band until its client is Active. Channels tab: a new DELEGATION channel OPEN / OPEN for the zone, flags reset to 0 on the Validators tab. A zone still closed at 19:00 UTC has its queued records fail the epoch (retry at the next unbonding epoch) and cannot be drained tonight."
+              "expect": "code: 0 (multisig after the upgrade), then a four-step handshake: minutes on Celestia, impossible on Band until its client is Active. Channels tab: a new DELEGATION channel OPEN / OPEN for the zone, flags reset to 0 on the Validators tab. A zone still closed at 3:00pm ET (19:00 UTC) has its queued records fail the epoch (retry at the next unbonding epoch) and cannot be drained tonight."
             },
             {
               "id": "day0-refresh",
@@ -607,13 +622,13 @@
             },
             {
               "id": "day0-staketia-undelegate",
-              "text": "The staketia operator undelegates the remaining multisig delegation on Celestia via authz, in one go (69.4B utia on 2026-10-05: the 87.43B behind records 1472-1488 was already undelegated on 2026-10-05 and completes 2026-10-19 22:45 UTC).",
+              "text": "The staketia operator undelegates the remaining multisig delegation on Celestia via authz, in one go (69.4B utia on 2026-10-05: the 87.43B behind records 1472-1488 was already undelegated on 2026-10-05 and completes 2026-10-19 6:45pm ET (22:45 UTC)).",
               "ref": "§9 step 2"
             }
           ]
         },
         {
-          "label": "19:00 UTC · day epoch 1500",
+          "label": "3:00pm ET (19:00 UTC) · day epoch 1500",
           "steps": [
             {
               "id": "day0-epoch-submits",
@@ -641,7 +656,7 @@
           ]
         },
         {
-          "label": "19:00 UTC -> ~08:00 UTC · the drain window",
+          "label": "3:00pm ET -> ~4:00am ET (19:00-08:00 UTC) · the drain window",
           "steps": [
             {
               "id": "drain-live-test",
@@ -681,7 +696,7 @@
                 "ssc-1"
               ],
               "command": "strided tx stakeibc undelegate-from-validators <CHAIN_ID> --all --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas <GAS>",
-              "expect": "Gas from the mainnet-export measurement: cosmoshub-4 20.03M (use 25M), osmosis-1 11.83M and ssc-1 11.41M (use 15M), every other zone under 10.5M (use 13M). The Hub's 15 acks cost about 1.5M each, so a relayer packing them into one tx needs about 22M. code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: recorded delegations at dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–08:00 UTC window."
+              "expect": "Gas from the mainnet-export measurement: cosmoshub-4 20.03M (use 25M), osmosis-1 11.83M and ssc-1 11.41M (use 15M), every other zone under 10.5M (use 13M). The Hub's 15 acks cost about 1.5M each, so a relayer packing them into one tx needs about 22M. code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: recorded delegations at dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–4:00am ET (08:00 UTC) window."
             },
             {
               "id": "drain-offset-calibrate",
@@ -713,7 +728,7 @@
           ]
         },
         {
-          "label": "~20:11 UTC · stakedym",
+          "label": "~4:11pm ET (20:11 UTC) · stakedym",
           "steps": [
             {
               "id": "dym-unbonded",
@@ -740,7 +755,7 @@
         "Do not relay timeouts for haqq packets 85-98 (§9 step 1c).",
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Do not MsgTransferFromIca the DELEGATION or REDEMPTION ICA of a zone yet: the delegation ICA receives the unbonded records and the redemption ICA holds claimable tokens until every claim is paid (§9 steps 5-6).",
-        "Do not submit drain batches between about 14:12 and 19:00 UTC: the batch's ICA timeout is the next day-epoch start minus a fifth of the epoch, so in that window it is already in the past and a lagging light client can let the packet out, time it out at once and close the ordered delegation channel (§9 step 4). Applies to any drain resubmission.",
+        "Do not submit drain batches between about 10:12am and 3:00pm ET (14:12-19:00 UTC): the batch's ICA timeout is the next day-epoch start minus a fifth of the epoch, so in that window it is already in the past and a lagging light client can let the packet out, time it out at once and close the ordered delegation channel (§9 step 4). Applies to any drain resubmission.",
         "Accepted LSM tail risk: an earlier LSM liquid stake may still have callbacks or a deposit in flight; let it finish through the pipeline or ignore it. Do not add an LSM-specific drain or halt prerequisite, and do not extend the ops window for it (§9).",
         "The staking redelegations query (/cosmos/staking/v1beta1/delegators/{addr}/redelegations) can fail with 'division by zero' for 14 days after v35 for a delegator whose destination validator has zero shares; the entries are intact and complete on time (rehearsal run 4)."
       ],
@@ -767,7 +782,7 @@
             },
             {
               "id": "post-retry-epochs",
-              "text": "Zones whose record submission failed at epoch 1500: retried at their next unbonding epoch (10-15 for 14-day zones, 10-16 for 21-day, 10-17 for 28/30-day); wait for the acks, then drain that zone in the 19:00-08:00 UTC window.",
+              "text": "Zones whose record submission failed at epoch 1500: retried at their next unbonding epoch (10-15 for 14-day zones, 10-16 for 21-day, 10-17 for 28/30-day); wait for the acks, then drain that zone in the 19:00-4:00am ET (08:00 UTC) window.",
               "ref": "§9 step 3",
               "zones": [
                 "celestia",
@@ -906,7 +921,7 @@
           ]
         },
         {
-          "label": "staketia records 1472-1488 (undelegated 2026-10-05, complete 2026-10-19 22:45 UTC)",
+          "label": "staketia records 1472-1488 (undelegated 2026-10-05, complete 2026-10-19 6:45pm ET (22:45 UTC))",
           "steps": [
             {
               "id": "tia-tranche1-sweep",
@@ -1115,7 +1130,7 @@
           ]
         },
         {
-          "label": "STRD · the upgrade's mass undelegation completes (14 days after the upgrade block, ~12:00 UTC)",
+          "label": "STRD · the upgrade's mass undelegation completes (14 days after the upgrade block, ~8:00am ET (12:00 UTC))",
           "steps": [
             {
               "id": "strd-unbonding-complete",
