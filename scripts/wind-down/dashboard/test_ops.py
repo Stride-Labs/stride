@@ -57,7 +57,6 @@ TRANSFER_DAY_CHECKS: dict[str, dict[str, Any]] = {
     "landed": {"auto": {"tab": "funds", "path": "transfers_landed"}},
     "join-pools": {"multisig": "pool-funding", "auto": {"tab": "pools", "path": "pools_funded"}},
     "assetlist": {},
-    "announce": {},
 }
 # Celestia's extra steps, keyed by the uniform step they follow.
 CELESTIA_EXTRAS = {"claims": ["tia-staketia-sweep", "tia-staketia-paid"], "channels": ["tia-claim-balance"]}
