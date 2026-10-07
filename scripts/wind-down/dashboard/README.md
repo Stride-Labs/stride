@@ -4,6 +4,8 @@ A local, read-only page for the v35 wind-down ops window. It never signs or subm
 
     python3 scripts/wind-down/dashboard/server.py        # then open http://localhost:8787
 
+`WIND_DOWN_DASHBOARD_PORT=8788` picks another port, so a second instance (another worktree) can run beside yours.
+
 Python 3.12 standard library only; the page is vanilla JS with no build step. Tests (no network):
 
     python3 -m unittest discover -s scripts/wind-down/dashboard
