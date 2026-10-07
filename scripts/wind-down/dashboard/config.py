@@ -13,6 +13,9 @@ REFRESH_INTERVAL_SECONDS = {"channels": 60, "funds": 120, "validators": 300}
 
 CHANNELS_FEED_URL = "https://channels.main.stridenet.co/api/data"
 
+# The Stride upgrade that starts the wind-down; must equal anchors.upgrade in ops/plan.json.
+UPGRADE_TIME = "2026-10-12T12:00:00Z"
+
 STRIDE_CHAIN_ID = "stride-1"
 OSMOSIS_CHAIN_ID = "osmosis-1"
 

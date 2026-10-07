@@ -3,8 +3,9 @@
     python3 scripts/wind-down/dashboard/server.py        # then open http://localhost:8787
 
 Each registered collector is refreshed on its own interval in a background thread; the page polls the
-cached snapshots, so the browser never talks to a chain. The Ops tab is the exception: it has no collector, and
-`GET /api/ops` / `POST /api/ops/check` read and write the plan and status files directly (see ops.py).
+cached snapshots, so the browser never talks to a chain. The Ops tab is an exception: it has no collector, and
+`GET /api/ops` / `POST /api/ops/check` read and write the plan and status files directly (see ops.py). The Multisig
+tab is the other: `GET /api/multisig` is composed from the Validators cache's current view (see multisig.py).
 """
 
 import datetime
@@ -23,6 +24,7 @@ import channels
 import config
 import validators
 import funds
+import multisig
 import ops
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
@@ -121,6 +123,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             )
         elif path == "/api/ops":
             self._get_ops()
+        elif path == "/api/multisig":
+            self._get_multisig()
         elif path.startswith("/api/"):
             self._get_snapshot(tab=path.removeprefix("/api/"))
         else:
@@ -154,6 +158,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(status=500, body={"error": f"ops files unreadable: {error}"})
             return
 
+        self._send_json(status=200, body=body)
+
+    def _get_multisig(self) -> None:
+        """The Multisig tab has no collector: it renders from the Validators snapshot's current view."""
+        view = CACHES["validators"].view()
+        data = None if view.get("loading") else view["data"]
+        body = {
+            "fetched_at": view.get("fetched_at"),
+            "data": {"sets": [tx_set.payload() for tx_set in multisig.tx_sets(validators_data=data)]},
+        }
         self._send_json(status=200, body=body)
 
     def _post_ops_check(self) -> None:
