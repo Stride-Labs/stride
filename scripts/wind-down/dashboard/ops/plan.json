@@ -1360,11 +1360,13 @@
     },
     {
       "date": "2026-11-10",
-      "title": "Juno, Sommelier: transfer and join the pools (unbonding done 11-09)",
+      "title": "Juno, Sommelier: transfer and join the pools (unbonding done 11-09) · the sweep",
       "estimated": false,
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
-        "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
+        "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist).",
+        "Vouchers over the four hosts outside SweepUnwindChannels (phoenix-1, laozi-mainnet, injective-1, haqq_11235-1) are never swept; they are announced as self-service (§7).",
+        "Do not stop a transfer-channel relayer while any packet or acknowledgement is outstanding in either direction (§9 step 9)."
       ],
       "windows": [
         {
@@ -1471,22 +1473,9 @@
                 "sommelier-3"
               ]
             }
-          ]
-        }
-      ],
-      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered, in one day."
-    },
-    {
-      "date": "2026-11-11",
-      "until": "2026-11-13",
-      "title": "Last days: the sweep",
-      "estimated": true,
-      "avoid": [
-        "Vouchers over the four hosts outside SweepUnwindChannels (phoenix-1, laozi-mainnet, injective-1, haqq_11235-1) are never swept; they are announced as self-service (§7).",
-        "Do not stop a transfer-channel relayer while any packet or acknowledgement is outstanding in either direction (§9 step 9).",
-        "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
-      ],
-      "windows": [
+          ],
+          "label": "Juno, Sommelier"
+        },
         {
           "steps": [
             {
@@ -1524,10 +1513,11 @@
               "text": "Validators and STRD delegators withdraw their rewards and commission (including stTokens, which they move to Osmosis themselves); the interchain-account and 32-byte holders notified on 10-02 reminded one last time.",
               "ref": "§9 halt checklist, §10a"
             }
-          ]
+          ],
+          "label": "The sweep"
         }
       ],
-      "note": "Starts once every pool is funded."
+      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered; the sweep starts once every pool is funded."
     },
     {
       "date": "2026-11-14",
