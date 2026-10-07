@@ -637,7 +637,7 @@
           "steps": [
             {
               "id": "day0-epoch-submits",
-              "text": "The day epoch submits the queued redemptions on every zone (1500 is divisible by every unbonding frequency) and flags their validators; wait for the acks (Channels tab: delegation channels back to 0 pending; Validators tab: Δ in progress back to 0). Live below: the zone has no record left in UNBONDING_QUEUE or UNBONDING_RETRY_QUEUE, which is exactly what the drain tx refuses a zone for. A record that stays in UNBONDING_RETRY_QUEUE failed (a slash between the refresh and the epoch) and is retried at the zone's next unbonding epoch; that zone's drain waits.",
+              "text": "The day epoch submits the queued redemptions on every zone (1500 is divisible by every unbonding frequency) and flags their validators. Make sure the undelegate ICAs are relayed: every zone's rly deployment is up and its DELEGATION channel shows the packets received and acked (Channels tab: 0 pending packets, 0 pending acks; a channel with a packet sitting unreceived needs its relayer looked at, acks before anything else). Validators tab: Δ in progress back to 0. Live below: the zone has no record left in UNBONDING_QUEUE or UNBONDING_RETRY_QUEUE, which is exactly what the drain tx refuses a zone for. A record that stays in UNBONDING_RETRY_QUEUE failed (a slash between the refresh and the epoch) and is retried at the zone's next unbonding epoch; that zone's drain waits.",
               "ref": "§9 step 3",
               "zones": [
                 "celestia",
@@ -656,7 +656,9 @@
                 "tab": "funds",
                 "path": "records.queued_or_retrying",
                 "equals": 0
-              }
+              },
+              "command": "kubectl --context stride-main -n stride-main get pods -l 'app in (relayer-gaia,relayer-celestia,relayer-dydx,relayer-injective,relayer-juno,relayer-band,relayer-osmosis,relayer-terra,relayer-sommelier,relayer-saga)'\n# a stuck channel, acks first: hermes --config <hermes.toml> tx packet-ack --dst-chain stride-1 --src-chain <HOST> --src-port icahost --src-channel <HOST_CHANNEL>",
+              "expect": "All relayer pods Running; within a few minutes of 3:00pm ET every DELEGATION channel is back to 0 / 0 on the Channels tab and the live line reads 11/11 ok (haqq's relaying is the hermes sequence above, so its channel clears when that reaches 1g)."
             },
             {
               "id": "haqq-1g",
