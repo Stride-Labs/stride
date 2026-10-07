@@ -567,10 +567,10 @@
             },
             {
               "id": "haqq-1f",
-              "text": "Day-0 refresh on every haqq validator (update-delegation); Validators tab → haqq: zero over-recorded, no slash query left in progress.",
+              "text": "Day-0 refresh on haqq, from the Validators tab → haqq: update-delegation for every validator whose rate differs and whose delta is non-zero, calibrate-delegation for every validator whose delta is non-zero but whose rate is unchanged (the delta table applied at the upgrade should have left few). Live line below: haqq at 0 over before 1g.",
               "ref": "§9 step 1f, §9a",
-              "command": "for V in $(curl -s -A curl/8.0 https://stride-strd-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/haqq_11235-1 | jq -r '.host_zone.validators[].address'); do strided tx stakeibc update-delegation haqq_11235-1 $V --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 -y; done\npython3 scripts/wind-down/measure_delegation_drift.py --chain-id haqq_11235-1 --output-dir scripts/wind-down/drift",
-              "expect": "Every update-delegation lands with code: 0 and its callbacks arrive (Validators tab → haqq: slash query pills on, then off). Then RESULT: PASS for haqq with no --allow-over: after the refresh haqq must be clean. On FAIL, the named validators need calibrate-delegation; wait for the callbacks and rerun.",
+              "command": "strided tx stakeibc update-delegation haqq_11235-1 <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook\nstrided tx stakeibc calibrate-delegation haqq_11235-1 <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook",
+              "expect": "code: 0 per tx and the callbacks arrive (Validators tab → haqq: slash-query pills on, then off; the ICQ relayer for haqq must be running). Live: haqq at 0 over; the measure script is not needed here.",
               "zones": [
                 "haqq_11235-1"
               ],
@@ -598,7 +598,7 @@
             },
             {
               "id": "day0-refresh",
-              "text": "Per zone: update-delegation for every validator, wait for the callbacks (a moved rate books the slash on the recorded delegation; the rate no longer moves); calibrate-delegation for a validator whose rate is unchanged but whose balance is off; Validators tab: zero over-recorded on the zone (buffered rows are fine), no slash query in progress.",
+              "text": "Per zone, from the Validators tab (delegation diff ≠ 0 filter): run update-delegation for every validator whose rate differs and whose delta is non-zero, and calibrate-delegation for every validator whose delta is non-zero but whose rate is unchanged. Wait for the callbacks; the live line below must read 0 over on every zone before the drain.",
               "ref": "§9 step 2",
               "zones": [
                 "celestia",
@@ -612,8 +612,8 @@
                 "sommelier-3",
                 "ssc-1"
               ],
-              "command": "for V in $(curl -s -A curl/8.0 https://stride-strd-api.polkachu.com/Stride-Labs/stride/stakeibc/host_zone/<CHAIN_ID> | jq -r '.host_zone.validators[].address'); do strided tx stakeibc update-delegation <CHAIN_ID> $V --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 -y; done\npython3 scripts/wind-down/measure_delegation_drift.py --output-dir scripts/wind-down/drift",
-              "expect": "Every update-delegation lands with code: 0 (one tx per validator; sequence them or use --sequence). Then the drift script: RESULT: PASS for every zone. On FAIL, the verdict names the zone and validator: calibrate-delegation when the rate is unchanged but the balance is off (strided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER>); wait for the callback (Validators tab: slash query pill off) and rerun.",
+              "command": "strided tx stakeibc update-delegation <CHAIN_ID> <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook\nstrided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook",
+              "expect": "Each tx lands with code: 0 from the multisig and its callback arrives within minutes (Validators tab: the slash-query pill on, then off, the diff gone). Live: every non-haqq zone at 0 over. After the eve's hot-key refresh this should be only what slashed overnight.",
               "auto": {
                 "tab": "validators",
                 "path": "totals.over_count",
@@ -627,7 +627,7 @@
             },
             {
               "id": "day0-staketia-undelegate",
-              "text": "The staketia operator undelegates the remaining multisig delegation on Celestia via authz, in one go (69.4B utia on 2026-10-05: the 87.43B behind records 1472-1488 was already undelegated on 2026-10-05 and completes 2026-10-19 6:45pm ET (22:45 UTC)).",
+              "text": "The staketia operator undelegates the remaining multisig delegation on Celestia via authz, in one go, any time on upgrade day: nothing ties it to the 3:00pm ET epoch, it only starts Celestia's 14-day clock for the 10-27 join (69.4B utia on 2026-10-05: the 87.43B behind records 1472-1488 was already undelegated on 2026-10-05 and completes 2026-10-19 6:45pm ET (22:45 UTC)).",
               "ref": "§9 step 2"
             }
           ]
