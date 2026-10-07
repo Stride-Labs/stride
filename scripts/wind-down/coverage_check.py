@@ -14,7 +14,7 @@ shares (the pool's LP token) instead of native, and those shares still exit for 
 stTokens in a pool are not all redeemed ones: every pool's alloyed supply not held by the
 vault (the vault holds the shares its own funding joins minted) is a remaining claim and is
 added 1:1 to that pool's native requirement (one share is one native base unit; the pool gate
-check_transmuter_pool.py asserts the alloyed and native normalization factors are equal).
+dashboard's Pools tab checks the alloyed and native normalization factors are equal).
 That term cannot see a join with the NATIVE token into a route pool (possible only while native
 is not marked corrupted, spec §8): the over-funded bound below is unchanged, so the route reads
 as over-funded by the joined amount until the joiner exits or redemptions pay it out, and

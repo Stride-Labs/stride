@@ -1,13 +1,14 @@
-// Multisig tab: the F5 protocol-admin multisig's tx sets (one per drain step), each with one card per zone holding the
+// Multisig tab: the F5 protocol-admin multisig's tx sets (drains, ICA transfers, pool funding), each grouped by zone
+// under a heading (anchor `set-<set-id>-<chain_id>`, the target of `#multisig/<set-id>/<zone>`) with every tx's
 // generate / sign / multisign+broadcast commands and who runs each. Like Ops it has no collector: it polls
-// /api/multisig ({fetched_at, data: {sets}}), which the server composes from the Validators snapshot and the plan.
+// /api/multisig ({fetched_at, data: {sets}}), which the server composes from the collectors' snapshots and the plan.
 (() => {
 
 const MULTISIG_POLL_MS = 30 * 1000;
 const WHO_CLASS = { Sam: 'who-sam', Aidan: 'who-aidan', Riley: 'who-riley' }; // "anyone" keeps the neutral pill
 
 let lastBody = ''; // the raw /api/multisig answer last drawn, so an unchanged poll does not re-render
-let drawn = false; // the first draw honours the `#multisig/<set-id>` hash by scrolling to that set
+let drawn = false; // the first draw honours the `#multisig/<set-id>[/<zone>]` hash by scrolling to that set or zone
 const closedSets = new Set(); // set ids the user collapsed, so a redraw keeps them collapsed
 
 registerSelfPollingTab('multisig', startMultisig);
@@ -66,22 +67,47 @@ function drawSets(body) {
   scrollToHashedSet();
 }
 
+// `#multisig/<set-id>` scrolls to the set, `#multisig/<set-id>/<zone>` to that zone's heading in it (the set first,
+// when the zone is not in it).
 function scrollToHashedSet() {
-  const [tab, setId] = location.hash.slice(1).split('/');
+  const [tab, setId, zone] = location.hash.slice(1).split('/');
   if (tab !== 'multisig' || !setId) return;
-  const target = document.getElementById(`set-${setId}`);
-  if (!target) return;
-  target.open = true;
-  target.scrollIntoView();
+  const set = document.getElementById(`set-${setId}`);
+  if (!set) return;
+  set.open = true;
+  const heading = zone ? document.getElementById(`set-${setId}-${zone}`) : null;
+  (heading || set).scrollIntoView();
 }
 
 function setHtml(set) {
-  const ready = set.txs.filter((tx) => tx.ready).length;
+  const zones = txsByZone(set.txs);
   return `<details class="panel" id="set-${escapeHtml(set.id)}" data-set="${escapeHtml(set.id)}" ${closedSets.has(set.id) ? '' : 'open'}>
-    <summary><h2>${escapeHtml(set.title)} <span class="sub">${set.txs.length} zones</span>
-      <span class="ops-count">${pill(ready === set.txs.length ? 'ok' : 'idle', `${ready}/${set.txs.length} ready`)}</span></h2></summary>
+    <summary><h2>${escapeHtml(set.title)} <span class="sub">${zones.length} zones · ${set.txs.length} txs</span>
+      <span class="ops-count">${readyPill(set.txs)}</span></h2></summary>
     <div class="ms-intro">${escapeHtml(set.description)}<a href="#ops">→ Ops step</a></div>
-    ${set.txs.map(txHtml).join('')}</details>`;
+    ${zones.map(([chainId, txs]) => zoneHtml(set.id, chainId, txs)).join('')}</details>`;
+}
+
+// [chain id, its txs] in the order the server lists them (config.ZONES order, txs in submission order within a zone).
+function txsByZone(txs) {
+  const groups = new Map();
+  txs.forEach((tx) => {
+    if (!groups.has(tx.chain_id)) groups.set(tx.chain_id, []);
+    groups.get(tx.chain_id).push(tx);
+  });
+  return [...groups];
+}
+
+function readyPill(txs) {
+  const ready = txs.filter((tx) => tx.ready).length;
+  return pill(ready === txs.length ? 'ok' : 'idle', `${ready}/${txs.length} ready`);
+}
+
+// A zone's heading carries the anchor the Ops tab's `<set-id>/<zone>` links point at.
+function zoneHtml(setId, chainId, txs) {
+  return `<div class="ms-zone" id="set-${escapeHtml(setId)}-${escapeHtml(chainId)}">
+    <div class="ms-zone-head"><b>${escapeHtml(chainId)}</b> ${readyPill(txs)}</div>
+    ${txs.map(txHtml).join('')}</div>`;
 }
 
 function txHtml(tx) {

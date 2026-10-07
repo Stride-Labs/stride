@@ -10,6 +10,8 @@ Python 3.12 standard library only; the page is vanilla JS with no build step. Te
 
 ## How it works
 
+The tabs, in order: Ops, Channels, Validators, Funds flow, Pools, Multisig (`#ops` … `#multisig`).
+
 `server.py` owns one snapshot per registered collector (the `COLLECTORS` dict) and refreshes each in a background thread on
 its interval from `config.REFRESH_INTERVAL_SECONDS` (channels 60s, funds 120s, validators 300s, pools 300s). The page polls
 `GET /api/<tab>`, which returns `{fetched_at, duration_seconds, refreshing, data}` (HTTP 503 `{loading: true}` until the
@@ -32,8 +34,13 @@ block and the next one open. It is not a collector: it has no snapshot, stale ba
 - A window may carry `start` (ISO UTC). Live checks (`auto`) read `n/a` before it; a window without `start` is live from
   the day's date (Eastern) onward. Once live a check never goes back to `n/a`.
 - A step may carry `auto`: `{tab, path, equals | at_least, allow}`, a live check read from that tab's snapshot at `path`
-  (dotted). `equals` compares as strings, `at_least` is an int threshold; `allow` lists values that also pass. A step may
-  also carry `multisig`, a tx-set id from the Multisig tab, rendered as a link to `#multisig/<set-id>`.
+  (dotted; `tab` is one of channels, validators, funds, pools). `equals` compares as strings, `at_least` is an int
+  threshold; `allow` lists values that also pass. A step may also carry `multisig`, either `"<set-id>"` (a tx set on the
+  Multisig tab, linked as `#multisig/<set-id>`) or `"<set-id>/<zone>"` (that zone's heading in the set, linked as
+  `#multisig/<set-id>/<zone>`); a step with `zones` and a bare set id renders one link per zone.
+- The transfer days (10/20, 10/27, 11/3, 11/10) are one uniform group per zone set, ids `<prefix>-<suffix>` with the
+  suffixes claimable, claims, settled, channels, transfers, landed, join-pools, announce (celestia adds its staketia
+  steps); `test_ops.py` pins that shape.
 - `ops/status.json` holds the ticks: `{"<id>": {"done": true, "at": "<iso utc>", "by": "<name>"}}`.
 - Routes: `GET /api/ops` returns `{plan, status, today}` (today is the US Eastern date, `ops.today()` with `PLAN_TIMEZONE`); `POST /api/ops/check` with
   `{"id", "done", "by"}` records or (when `done` is false) deletes a tick and returns the full status. 400 for a bad body
@@ -45,11 +52,12 @@ commit and push `ops/status.json` so the team sees the same state. Logic lives i
 
 ## Multisig tab
 
-The fifth tab (`#multisig`). Like Ops it is not a collector: `GET /api/multisig` composes the Validators cache's current
-view with the plan and returns `{fetched_at, data: {sets}}` (`multisig.py`, no chain calls). One card per zone, in each
-set (live test, full drain): generate, sign x3 (Sam and Aidan by default, Riley as the backup), then multisign and
-broadcast, each tagged with who runs it. Signers need the F5 multisig key in their keyring as well as their own key.
-The files the commands share travel between people by Slack. A set deep-links as `#multisig/<set-id>`.
+The sixth tab (`#multisig`). Like Ops it is not a collector: `GET /api/multisig` composes the collectors' current
+views with the plan and returns `{fetched_at, data: {sets}}` (`multisig.py`, no chain calls). Each set's txs are
+grouped by zone under a heading (anchor `set-<set-id>-<chain_id>`); per tx: generate, sign x3 (Sam and Aidan by
+default, Riley as the backup), then multisign and broadcast, each tagged with who runs it. Signers need the F5
+multisig key in their keyring as well as their own key. The files the commands share travel between people by Slack.
+A set deep-links as `#multisig/<set-id>`, a zone's heading in it as `#multisig/<set-id>/<zone>`.
 
 ## Channels tab
 

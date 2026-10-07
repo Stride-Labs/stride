@@ -6,13 +6,13 @@
 // calls registerSelfPollingTab(name, start) instead: the shell calls start() once and the module polls its own route.
 //
 // The hash selects the tab: `#<tab>` or `#<tab>/<suffix>`, the suffix being the module's to interpret (the Multisig
-// tab scrolls to `#multisig/<set-id>`), so in-page links across tabs are plain anchors.
+// tab scrolls to `#multisig/<set-id>` or `#multisig/<set-id>/<zone>`), so in-page links across tabs are plain anchors.
 
-const TAB_NAMES = ['ops', 'channels', 'validators', 'funds', 'multisig'];
+const TAB_NAMES = ['ops', 'channels', 'validators', 'funds', 'pools', 'multisig'];
 // What the header says on a tab that polls its own route (no snapshot age, no refresh button).
 const SELF_POLLING_LABELS = {
   ops: 'plan and status are read from disk · reload to pick up edits',
-  multisig: 'composed from the Validators snapshot and the plan · refresh on the Validators tab',
+  multisig: 'composed from the Validators, Funds and Pools snapshots and the plan · refresh on those tabs',
 };
 const POLL_MS = 5000;
 const STALE_AFTER_INTERVALS = 3;
@@ -21,7 +21,7 @@ const renderers = {};
 const selfPolling = {}; // tab name -> start(), for tabs that own their data route (no snapshot, stale badge or refresh)
 const snapshots = {}; // tab name -> latest API body
 const renderedAt = {}; // tab name -> fetched_at of the snapshot currently drawn
-let intervals = { channels: 60, funds: 120, validators: 300 };
+let intervals = { channels: 60, funds: 120, validators: 300, pools: 300 };
 let activeTab = TAB_NAMES[0];
 
 function registerTab(name, render) {
