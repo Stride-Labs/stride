@@ -51,6 +51,15 @@ Rounding and size limits:
   lcm is ~2e36 and a balance of 1.3M stATOM (1.3e12 base units) normalizes to ~2.6e30, well
   under `Uint128::MAX` (3.4e38). Re-check this arithmetic whenever a pool gets a third factor
   (`add_new_assets` with a different factor raises the lcm).
+- **18-decimal zones overflow at the 1e18 scale** (found 2026-10-07): an 18-decimal balance is
+  already ~1e22-1e26 base units, and with coprime factors the lcm is ~1e36, so `weights()`
+  normalizes haqq's 1.07e26 aISLM to 1.07e44, dYdX's 4.0e23 adydx to 4.0e41 and Injective's
+  2.1e22 inj to 2.1e40 — all above `Uint128::MAX`, so the funding join itself fails (a 1-token
+  test join passes, 1e36). For haqq, dYdX and Injective instantiate with factors scaled to 1e6
+  instead: stToken `1000000`, native `round(RR × 1e6)`, alloyed = native. The ratio still prices
+  the pool; the rate truncates at 6 decimals (~1e-7 relative, inside the accepted staleness) and
+  the balances normalize to ≤1.1e32. The dashboard's Pools tab headroom check computes this bound
+  from each zone's needed amount before anything is joined.
 - `rescale_normalization_factor { numerator, denominator }` multiplies every factor
   (including the alloyed one) by the same ratio and rejects any factor the ratio does not
   divide exactly. It cannot change relative prices.
