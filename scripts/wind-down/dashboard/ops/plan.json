@@ -355,8 +355,10 @@
             },
             {
               "id": "vote-signing-runbook",
-              "text": "Signing runbook for the protocol admin (F5 multisig): update-delegation / calibrate-delegation, MsgUndelegateFromValidators (the live-test validator per zone is marked 'live test' on the Validators tab, recomputed live from §9b's rule), MsgTransferFromIca, MsgTransferStaketiaClaimBalance; the sweep operator for MsgSweepTokensOffStride.",
-              "ref": "§7, §9b"
+              "text": "Multisig signing path ready before day 0. From the upgrade on, update-delegation, calibrate-delegation, undelegate-from-validators, transfer-from-ica and transfer-staketia-claim-balance are accepted only from the F5 multisig stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh (utils.Admins; on v34 the first two are still permissionless, which is why a hot key worked on 10-05). Script the loop once: generate-only, signers sign (amino-json), multisign, broadcast, sequence incremented per tx, so that day 0's refresh of every validator (one tx each, hundreds) and the drains fit in the window. Rehearse it on mainnet with one harmless message before the upgrade. The sweep operator key signs only sweep-tokens-off-stride and is funded with STRD.",
+              "ref": "§4, §7, utils/admins.go",
+              "command": "strided tx stakeibc update-delegation <CHAIN_ID> <VALOPER> --from stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas 300000 --generate-only > tx.json\nstrided tx sign tx.json --from <SIGNER_1> --multisig stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh --sign-mode amino-json --chain-id stride-1 --node ... > sig1.json   # each signer\nstrided tx multisign tx.json <MULTISIG_KEY_NAME> sig1.json sig2.json --chain-id stride-1 --node ... > signed.json\nstrided tx broadcast signed.json --node https://stride-strd-rpc.polkachu.com:443",
+              "expect": "The rehearsal tx lands with code: 0 from the multisig (on v34 update-delegation is permissionless, so it is a safe test of the signing path, not of the gate). The scripted loop handles --sequence and --account-number explicitly for back-to-back txs. Done when the signers have run it end to end once."
             },
             {
               "id": "vote-passes",
