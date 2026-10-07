@@ -139,7 +139,7 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-ops .ops-auto { font-size: 11px; font-weight: 600; }
 #view-ops .ops-auto.ok { color: var(--ok); }
 #view-ops .ops-auto.bad { color: var(--bad); }
-#view-ops .ops-link { margin: 2px 0 2px 22px; font-size: 12px; }
+#view-ops .ops-link { margin: 2px 0 2px 22px; font-size: 12px; display: flex; flex-wrap: wrap; gap: 2px 14px; }  /* one link per zone on a transfer day */
 #view-ops .ops-link a { color: var(--accent); text-decoration: none; }
 #view-ops .ops-link a:hover { text-decoration: underline; }
 
@@ -151,6 +151,8 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-multisig .ms-intro { padding: 8px 12px; border-bottom: 1px solid var(--line); }
 #view-multisig .ms-intro a { color: var(--accent); text-decoration: none; margin-left: 8px; white-space: nowrap; }
 #view-multisig .ms-intro a:hover { text-decoration: underline; }
+#view-multisig .ms-zone-head { display: flex; gap: 10px; align-items: baseline; padding: 7px 12px; background: var(--bg); border-bottom: 1px solid var(--line); }
+#view-multisig .ms-zone + .ms-zone .ms-zone-head { border-top: 1px solid var(--line); }
 #view-multisig .ms-tx { padding: 8px 12px; border-bottom: 1px solid var(--line); }
 #view-multisig .ms-tx:last-child { border-bottom: 0; }
 #view-multisig .ms-tx-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
@@ -160,3 +162,13 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-multisig .ms-command { margin: 3px 0 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; cursor: pointer; }
 #view-multisig .ms-command:hover { border-color: var(--accent); }
 #view-multisig .ms-command.copied { border-color: var(--ok); color: var(--ok); }
+
+/* pools: the per-pool checks as a wrapping list of marks; a failing check reddens its row */
+#view-pools .panel h2 .sub .badge { vertical-align: baseline; }
+#view-pools td.pl-checks { white-space: normal; padding: 2px 8px 6px; border-top: 0; }
+#view-pools tr:has(+ tr .pl-checks) td { border-bottom: 0; }  /* the figures and their checks read as one row */
+#view-pools .pl-check { display: inline-block; margin: 0 10px 2px 0; font-size: 11px; font-weight: 600; white-space: nowrap; cursor: help; }
+#view-pools .pl-check.ok { color: var(--ok); }
+#view-pools .pl-check.bad { color: var(--bad); }
+#view-pools .pl-check.na { color: var(--muted); }
+#view-pools tr.pl-fail td { background: var(--bad-bg); }

@@ -1,7 +1,8 @@
 // Ops tab: the dated wind-down checklist. Unlike the other tabs it has no collector snapshot: it polls
 // /api/ops ({plan, status, today}) itself and ticks through POST /api/ops/check. A step's `auto` check reads another
 // tab's snapshot live, but only once its window has started (the window's `start`, else its day): before that the
-// marks read n/a. A step's `multisig` names a tx set on the Multisig tab and renders as a link to it.
+// marks read n/a. A step's `multisig` names a tx set on the Multisig tab (`<set-id>`, or `<set-id>/<zone>` for one
+// zone's heading in it) and renders as a link; a step with zones and a bare set id links to each zone's heading.
 (() => {
 
 const OPS_POLL_MS = 60 * 1000;
@@ -292,9 +293,7 @@ function stepHtml(step, gate) {
     ? `<pre class="ops-command mono copy" data-copy="${escapeHtml(step.command)}" title="click to copy">${escapeHtml(step.command)}</pre>`
     : '';
   const expect = step.expect ? `<div class="muted ops-expect">expect: ${escapeHtml(step.expect)}</div>` : '';
-  const multisig = step.multisig
-    ? `<div class="ops-link"><a href="#multisig/${escapeHtml(step.multisig)}">→ Multisig tab: ${escapeHtml(multisigSetTitle(step.multisig))}</a></div>`
-    : '';
+  const multisig = step.multisig ? multisigLinks(step) : '';
   const perZoneTicks = zones.length > 0 && !step.auto;
   const checkbox = perZoneTicks
     ? `<input type="checkbox" disabled ${stepDone(step) ? 'checked' : ''} title="done when every zone is">`
@@ -310,6 +309,20 @@ function stepHtml(step, gate) {
   return `<li class="ops-step ${stepDone(step) ? 'done' : ''}">
     <div class="ops-row"><label>${checkbox} <span class="ops-text">${escapeHtml(step.text)}</span></label>
       ${tag} ${auto} ${ref} ${perZoneTicks ? '' : tickedBy(step.id)}</div>${multisig}${command}${expect}${detail}${zoneRows}</li>`;
+}
+
+// `<set-id>/<zone>` links to that zone's heading in the set; a bare set id links to each of the step's zones' headings,
+// or to the set itself when the step has no zones.
+function multisigLinks(step) {
+  const [setId, zone] = step.multisig.split('/');
+  const zones = zone ? [zone] : step.zones && step.zones.length ? step.zones : [null];
+  return `<div class="ops-link">${zones.map((target) => multisigLink(setId, target)).join('')}</div>`;
+}
+
+function multisigLink(setId, zone) {
+  const href = zone ? `#multisig/${setId}/${zone}` : `#multisig/${setId}`;
+  const label = zone ? `${multisigSetTitle(setId)} · ${zone}` : multisigSetTitle(setId);
+  return `<a href="${escapeHtml(href)}">→ Multisig tab: ${escapeHtml(label)}</a>`;
 }
 
 function zoneHtml(id, zone) {

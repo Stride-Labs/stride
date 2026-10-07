@@ -45,8 +45,45 @@ SAMPLE_PLAN: dict[str, Any] = {
 }
 
 
+# The uniform transfer-day groups (spec §4): one per zone set, ids `<prefix>-<suffix>` in this order, every step with
+# the group's zones and the live check or Multisig link listed here.
+TRANSFER_DAY_GROUPS = ("haqq", "osmo", "tia", "d21", "d28")
+TRANSFER_DAY_CHECKS: dict[str, dict[str, Any]] = {
+    "claimable": {"auto": {"tab": "funds", "path": "records.pending_before_claimable", "equals": 0}},
+    "claims": {"auto": {"tab": "funds", "path": "records.user_redemption_records", "equals": 0}},
+    "settled": {"auto": {"tab": "funds", "path": "funds_settled"}},
+    "channels": {"auto": {"tab": "channels", "path": "ica_channels_open"}},
+    "transfers": {"multisig": "ica-transfers"},
+    "landed": {"auto": {"tab": "funds", "path": "transfers_landed"}},
+    "join-pools": {"multisig": "pool-funding", "auto": {"tab": "pools", "path": "pools_funded"}},
+    "announce": {},
+}
+# Celestia's extra steps, keyed by the uniform step they follow.
+CELESTIA_EXTRAS = {"claims": ["tia-staketia-sweep", "tia-staketia-paid"], "channels": ["tia-claim-balance"]}
+AUTO_TABS = {"channels", "validators", "funds", "pools"}
+
+
 def _write_json(path: pathlib.Path, body: dict[str, Any]) -> None:
     path.write_text(json.dumps(body))
+
+
+def _expected_group_ids(prefix: str) -> list[str]:
+    ids: list[str] = []
+    for suffix in TRANSFER_DAY_CHECKS:
+        ids.append(f"{prefix}-{suffix}")
+        if prefix == "tia":
+            ids.extend(CELESTIA_EXTRAS.get(suffix, []))
+    return ids
+
+
+def _multisig_reference_error(step: dict[str, Any], set_ids: set[str]) -> str | None:
+    """Why a step's `multisig` link (`<set-id>` or `<set-id>/<zone>`) would not resolve on the page; None when it does."""
+    set_id, _, zone = step["multisig"].partition("/")
+    if set_id not in set_ids:
+        return f"unknown tx set {set_id}"
+    if zone and zone not in step.get("zones", []):
+        return f"zone {zone} is not one of the step's zones"
+    return None
 
 
 class RealPlanTest(unittest.TestCase):
@@ -96,15 +133,70 @@ class RealPlanTest(unittest.TestCase):
     def _windows(self) -> list[dict[str, Any]]:
         return [window for day in self.plan["days"] for window in day["windows"]]
 
-    def test_every_multisig_reference_names_that_steps_tx_set(self) -> None:
-        sets_by_id = {tx_set.id: tx_set for tx_set in multisig.tx_sets(None)}
+    def _step(self, step_id: str) -> dict[str, Any]:
+        return next(step for step in self._steps() if step["id"] == step_id)
+
+    def _window_of(self, step_id: str) -> dict[str, Any]:
+        return next(window for window in self._windows() if any(step["id"] == step_id for step in window["steps"]))
+
+    def _tx_sets_by_id(self) -> dict[str, multisig.TxSet]:
+        # Three snapshots: the transfer and pool-funding sets read the Funds and Pools caches as well.
+        tx_sets = multisig.tx_sets(validators_data=None, funds_data=None, pools_data=None)
+        return {tx_set.id: tx_set for tx_set in tx_sets}
+
+    def test_every_transfer_day_group_has_the_uniform_steps_in_order(self) -> None:
+        for prefix in TRANSFER_DAY_GROUPS:
+            with self.subTest(prefix=prefix):
+                window = self._window_of(f"{prefix}-claimable")
+                self.assertEqual([step["id"] for step in window["steps"]], _expected_group_ids(prefix=prefix))
+
+    def test_transfer_day_steps_share_their_zones_and_carry_the_live_check_or_link(self) -> None:
+        for prefix in TRANSFER_DAY_GROUPS:
+            zones = self._step(f"{prefix}-claimable")["zones"]
+            self.assertTrue(zones, prefix)
+            for suffix, expected in TRANSFER_DAY_CHECKS.items():
+                step = self._step(f"{prefix}-{suffix}")
+                with self.subTest(step=step["id"]):
+                    self.assertEqual(step["zones"], zones)
+                    self.assertEqual({key: step[key] for key in ("auto", "multisig") if key in step}, expected)
+
+    def test_celestia_extras_are_live_checked_and_linked(self) -> None:
+        paid = self._step("tia-staketia-paid")
+        self.assertEqual(paid["zones"], ["celestia"])
+        self.assertEqual(paid["auto"], {"tab": "funds", "path": "records.staketia_claim_ready", "equals": True})
+        self.assertEqual(self._step("tia-claim-balance")["multisig"], "staketia-claim-balance")
+
+    def test_every_multisig_reference_resolves_to_a_set_and_one_of_the_steps_zones(self) -> None:
+        set_ids = set(self._tx_sets_by_id())
         referencing = [step for step in self._steps() if "multisig" in step]
 
         self.assertTrue(referencing)
         for step in referencing:
-            self.assertIn(step["multisig"], sets_by_id, step["id"])
-            self.assertEqual(sets_by_id[step["multisig"]].step_id, step["id"])
-            self.assertNotIn("command", step, f"{step['id']}: the Multisig tab is the source of its commands")
+            with self.subTest(step=step["id"]):
+                self.assertIsNone(_multisig_reference_error(step=step, set_ids=set_ids))
+                self.assertNotIn("command", step, "the Multisig tab is the source of its commands")
+
+    def test_drain_sets_name_their_steps(self) -> None:
+        sets_by_id = self._tx_sets_by_id()
+
+        self.assertEqual(sets_by_id["live-test-undelegate"].step_id, "drain-live-test")
+        self.assertEqual(sets_by_id["full-drain"].step_id, "drain-rest")
+
+    def test_no_step_command_names_the_retired_pool_check(self) -> None:
+        for step in self._steps():
+            self.assertNotIn("check_transmuter_pool.py", step.get("command", ""), step["id"])
+
+    def test_the_export_based_coverage_check_runs_only_at_the_halt(self) -> None:
+        running = [step["id"] for step in self._steps() if "coverage_check.py" in step.get("command", "")]
+        self.assertEqual(running, ["halt-pools"])
+
+    def test_every_auto_check_reads_a_dashboard_collector_per_zone(self) -> None:
+        autos = [step for step in self._steps() if "auto" in step]
+
+        self.assertTrue(autos)
+        for step in autos:
+            self.assertIn(step["auto"]["tab"], AUTO_TABS, step["id"])
+            self.assertTrue(step.get("zones"), f"{step['id']}: a live check is read per zone")
 
     def test_drain_rest_is_done_when_no_validator_holds_a_whole_token(self) -> None:
         step = next(step for step in self._steps() if step["id"] == "drain-rest")
@@ -130,6 +222,25 @@ class RealPlanTest(unittest.TestCase):
 
     def test_upgrade_time_matches_the_plan_anchor(self) -> None:
         self.assertEqual(config.UPGRADE_TIME, self.plan["anchors"]["upgrade"])
+
+
+class MultisigReferenceTest(unittest.TestCase):
+    """Both forms of a step's `multisig` link, resolved the way the Ops page resolves them."""
+
+    SET_IDS = {"ica-transfers"}
+
+    def test_link_forms(self) -> None:
+        cases = [
+            ({"multisig": "ica-transfers", "zones": ["celestia"]}, None),
+            ({"multisig": "ica-transfers"}, None),
+            ({"multisig": "ica-transfers/celestia", "zones": ["celestia", "osmosis-1"]}, None),
+            ({"multisig": "ica-transfers/juno-1", "zones": ["celestia"]}, "zone juno-1 is not one of the step's zones"),
+            ({"multisig": "ica-transfers/celestia"}, "zone celestia is not one of the step's zones"),
+            ({"multisig": "pool-funding", "zones": ["celestia"]}, "unknown tx set pool-funding"),
+        ]
+        for step, expected in cases:
+            with self.subTest(step=step):
+                self.assertEqual(_multisig_reference_error(step=step, set_ids=self.SET_IDS), expected)
 
 
 class StepIdsTest(unittest.TestCase):

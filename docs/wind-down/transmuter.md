@@ -288,6 +288,8 @@ osmosisd q cosmwasmpool contract-info <pool_id> --node $OSMO_NODE
 POOL=<contract address>
 ```
 
+_Retired 2026-10-07: `check_transmuter_pool.py` is replaced by the dashboard's Pools tab (`scripts/wind-down/dashboard`), which runs the same checks live on every pool the vault administers; the two commands below are kept for the record._
+
 Pre-funding check, run after `create-pool` and again after `add_new_assets` and the limiters. No
 arguments: the vault and moderator addresses and one entry per pool (host zone, pool id, the rate the
 factors were created with, the per-route caps) live in the CONSTANTS block at the top of the script.
