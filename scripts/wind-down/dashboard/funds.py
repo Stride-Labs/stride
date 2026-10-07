@@ -32,6 +32,8 @@ ALLOYED_INFIX = "/alloyed/"
 RECORDS_PATH = "/Stride-Labs/stride/records"
 STAKETIA_PATH = "/Stride-Labs/stride/staketia"
 STATUS_CLAIMABLE = "CLAIMABLE"  # an epoch unbonding record status: the native tokens are on the redemption ICA
+# The statuses the drain refuses a zone for (spec §7): queued for the next unbonding epoch, or retrying after a failure.
+STATUSES_BLOCKING_DRAIN = ("UNBONDING_QUEUE", "UNBONDING_RETRY_QUEUE")
 STAKETIA_STATUS_CLAIMED = "CLAIMED"  # a staketia unbonding record status: fully paid out
 
 ZONE_WORKERS = 16
@@ -180,6 +182,7 @@ class ZoneRecords:
 
     unbonding_by_status: dict[str, int] | None  # epoch unbonding entries holding tokens, by status
     pending_before_claimable: int | None  # of those, the ones not yet CLAIMABLE
+    queued_or_retrying: int | None  # of those, UNBONDING_QUEUE + UNBONDING_RETRY_QUEUE: what blocks the drain
     user_redemption_records: int | None
     claims_pending: int | None  # user redemption records with claim_is_pending
     staketia_redemption_records: int | None
@@ -463,6 +466,9 @@ def build_zone_records(chain_id: str, records: StrideRecords) -> ZoneRecords:
     return ZoneRecords(
         unbonding_by_status=unbonding_by_status,
         pending_before_claimable=pending,
+        queued_or_retrying=None
+        if unbonding_by_status is None
+        else sum(unbonding_by_status.get(status, 0) for status in STATUSES_BLOCKING_DRAIN),
         user_redemption_records=redemption_count,
         claims_pending=claims_pending,
         staketia_redemption_records=staketia_redemptions,

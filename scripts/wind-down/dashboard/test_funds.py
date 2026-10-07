@@ -605,6 +605,7 @@ class ZoneRecordsTest(unittest.TestCase):
         )
         self.assertEqual(zone.pending_before_claimable, 5)
         self.assertFalse(zone.delegation_transfer_ready)
+        self.assertEqual(zone.queued_or_retrying, 3)  # 2 queued + 1 retrying; in-progress and exit-transfer do not block the drain
 
     def test_claimable_and_empty_entries_do_not_block_the_delegation_transfer(self) -> None:
         zone = self.records(
@@ -615,6 +616,7 @@ class ZoneRecordsTest(unittest.TestCase):
 
         self.assertEqual(zone.pending_before_claimable, 0)
         self.assertTrue(zone.delegation_transfer_ready)
+        self.assertEqual(zone.queued_or_retrying, 0)
 
     def test_redemption_transfer_needs_no_records_and_no_pending_claims(self) -> None:
         clean = self.records()

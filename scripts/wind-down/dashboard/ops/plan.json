@@ -497,7 +497,7 @@
                 "tab": "funds",
                 "path": "pool_rate_known"
               },
-              "expect": "live: 11/11 once every canonical pool exists; the Funds tab header per zone reads 'rate X · pool rate Y (gap Z%)'. coverage_check.py reads the frozen rate from Stride and each pool's rate from pools.json."
+              "expect": "11/11 ok once every canonical pool exists; the Funds tab header per zone reads 'rate X · pool rate Y (gap Z%)'. coverage_check.py reads the frozen rate from Stride and each pool's rate from pools.json."
             },
             {
               "id": "haqq-hermes-config",
@@ -570,7 +570,7 @@
               "text": "Day-0 refresh on haqq, from the Validators tab → haqq: update-delegation for every validator whose rate differs and whose delta is non-zero, calibrate-delegation for every validator whose delta is non-zero but whose rate is unchanged (the delta table applied at the upgrade should have left few). Live line below: haqq at 0 over before 1g.",
               "ref": "§9 step 1f, §9a",
               "command": "strided tx stakeibc update-delegation haqq_11235-1 <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook\nstrided tx stakeibc calibrate-delegation haqq_11235-1 <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook",
-              "expect": "code: 0 per tx and the callbacks arrive (Validators tab → haqq: slash-query pills on, then off; the ICQ relayer for haqq must be running). Live: haqq at 0 over; the measure script is not needed here.",
+              "expect": "code: 0 per tx and the callbacks arrive (Validators tab → haqq: slash-query pills on, then off; the ICQ relayer for haqq must be running). Live check: haqq at 0 over; the measure script is not needed here.",
               "zones": [
                 "haqq_11235-1"
               ],
@@ -613,7 +613,7 @@
                 "ssc-1"
               ],
               "command": "strided tx stakeibc update-delegation <CHAIN_ID> <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook\nstrided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook",
-              "expect": "Each tx lands with code: 0 from the multisig and its callback arrives within minutes (Validators tab: the slash-query pill on, then off, the diff gone). Live: every non-haqq zone at 0 over. After the eve's hot-key refresh this should be only what slashed overnight.",
+              "expect": "Each tx lands with code: 0 from the multisig and its callback arrives within minutes (Validators tab: the slash-query pill on, then off, the diff gone). Live check: every non-haqq zone at 0 over. After the eve's hot-key refresh this should be only what slashed overnight.",
               "auto": {
                 "tab": "validators",
                 "path": "totals.over_count",
@@ -637,7 +637,7 @@
           "steps": [
             {
               "id": "day0-epoch-submits",
-              "text": "The day epoch submits the queued redemptions on every zone (1500 is divisible by every unbonding frequency) and flags their validators; wait for the acks (Channels tab: delegation channels back to 0 pending; Validators tab: Δ in progress back to 0). Funds tab → Records: a record that stays in UNBONDING_RETRY_QUEUE failed (a slash between the refresh and the epoch) and is retried at the zone's next unbonding epoch; that zone's drain waits.",
+              "text": "The day epoch submits the queued redemptions on every zone (1500 is divisible by every unbonding frequency) and flags their validators; wait for the acks (Channels tab: delegation channels back to 0 pending; Validators tab: Δ in progress back to 0). Live below: the zone has no record left in UNBONDING_QUEUE or UNBONDING_RETRY_QUEUE, which is exactly what the drain tx refuses a zone for. A record that stays in UNBONDING_RETRY_QUEUE failed (a slash between the refresh and the epoch) and is retried at the zone's next unbonding epoch; that zone's drain waits.",
               "ref": "§9 step 3",
               "zones": [
                 "celestia",
@@ -651,7 +651,12 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ]
+              ],
+              "auto": {
+                "tab": "funds",
+                "path": "records.queued_or_retrying",
+                "equals": 0
+              }
             },
             {
               "id": "haqq-1g",
@@ -802,7 +807,12 @@
                 "sommelier-3",
                 "ssc-1"
               ],
-              "conditional": "only for a zone whose submission failed"
+              "conditional": "only for a zone whose submission failed",
+              "auto": {
+                "tab": "funds",
+                "path": "records.queued_or_retrying",
+                "equals": 0
+              }
             },
             {
               "id": "post-restore",

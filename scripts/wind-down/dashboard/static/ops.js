@@ -70,9 +70,9 @@ function autoValue(step, zone) {
 
 function autoMark(value) {
   if (value === undefined) return '';
-  if (value === true) return `<span class="ops-auto ok" title="verified live on the dashboard">✓ live</span>`;
+  if (value === true) return `<span class="ops-auto ok" title="verified live on the dashboard">✓ ok</span>`;
   if (value === 'allowed') return `<span class="ops-auto ok" title="not clean, but expected here (see the step text)">✓ allowed</span>`;
-  if (value === false) return `<span class="ops-auto bad" title="the live check fails">✗ live</span>`;
+  if (value === false) return `<span class="ops-auto bad" title="the live check fails">✗ fail</span>`;
   return `<span class="ops-auto muted" title="could not be checked">n/a</span>`;
 }
 
@@ -81,7 +81,7 @@ function autoSummary(step) {
   if (values.some((value) => value === undefined)) return '';
   const passing = values.filter((value) => value === true || value === 'allowed').length;
   const cssClass = passing === values.length ? 'ok' : 'bad';
-  return `<span class="ops-auto ${cssClass}" title="from the ${escapeHtml(step.auto.tab)} tab's latest snapshot">live: ${passing}/${values.length} pass</span>`;
+  return `<span class="ops-auto ${cssClass}" title="from the ${escapeHtml(step.auto.tab)} tab's latest snapshot">${passing}/${values.length} ok</span>`;
 }
 
 async function pollOps() {
