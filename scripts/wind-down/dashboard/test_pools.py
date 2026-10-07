@@ -2,6 +2,7 @@ import dataclasses
 import importlib.util
 import json
 import pathlib
+import re
 import sys
 import unittest
 from typing import Any
@@ -169,6 +170,15 @@ class ConfigTest(unittest.TestCase):
 
     def test_required_routes_equal_the_coverage_check_policy(self) -> None:
         self.assertEqual(config.REQUIRED_ROUTES, self.coverage_check.REQUIRED_ROUTES)
+
+    def test_osmosis_channel_hosts_match_the_go_transfer_channel_map(self) -> None:
+        go_source = (WIND_DOWN_DIR.parent.parent / "x" / "stakeibc" / "types" / "wind_down.go").read_text()
+        go_map = re.search(r"HostToOsmosisTransferChannel = map\[string\]string\{(.*?)\}", go_source, re.DOTALL)
+        self.assertIsNotNone(go_map)
+
+        go_hosts = set(re.findall(r'"([^"]+)":', go_map.group(1))) - {"osmosis-1"}
+
+        self.assertEqual(go_hosts, set(config.OSMOSIS_CHANNEL_TO_HOST))
 
     def test_escrow_address_matches_the_script(self) -> None:
         self.assertEqual(

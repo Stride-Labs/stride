@@ -328,13 +328,13 @@ class IcaTransfersTest(unittest.TestCase):
     def test_foreign_denom_gets_its_own_tx_with_the_full_balance_after_its_ica(self) -> None:
         txs = transfer_txs(DYDX)
         withdrawal = [tx for tx in txs if "WITHDRAWAL ICA" in tx.title]
-        stem = "/tmp/wind-down/transfer-dydx-mainnet-1-withdrawal-denom-1a2b3c"
+        stem = "/tmp/wind-down/transfer-dydx-mainnet-1-withdrawal-denom-d3cc7f0d"
 
         self.assertEqual(len(withdrawal), 3)  # test, rest, the one non-zero foreign denom
         foreign = withdrawal[-1]
         self.assertEqual(
             command_pairs(foreign),
-            expected_commands(transfer_generate(DYDX, "WITHDRAWAL", f"12345678{FOREIGN_DENOM}", "denom-1a2b3c"), stem=stem),
+            expected_commands(transfer_generate(DYDX, "WITHDRAWAL", f"12345678{FOREIGN_DENOM}", "denom-d3cc7f0d"), stem=stem),
         )
         self.assertEqual(foreign.title, f"dydx-mainnet-1 · WITHDRAWAL ICA · foreign denom: 12345678{FOREIGN_DENOM} (full balance)")
         self.assertTrue(foreign.ready)

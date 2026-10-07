@@ -28,9 +28,7 @@ import funds
 TRANSMUTER_CODE_ID = "996"
 TRANSMUTER_VERSION = "3.2.0"
 COSMWASMPOOL_LISTING_PATH = "/osmosis/cosmwasmpool/v1beta1/pools"
-CW2_INFO_KEY = (
-    b"contract_info"  # the cw2 raw storage key that holds the contract name and version
-)
+CW2_INFO_KEY = b"contract_info"  # the cw2 raw storage key that holds the contract name and version
 UINT128_LIMIT = 2**128  # the transmuter keeps every normalised balance in a Uint128
 ROUTE_HOPS = 2  # a route pool's stToken travelled Stride -> holder chain -> Osmosis
 ST_PREFIX = "st"
@@ -101,16 +99,10 @@ class PoolReport:
     alloyed_denom: str
     alloyed_supply: int | None
     vault_shares: int
-    outside_shares: (
-        int | None
-    )  # alloyed_supply - vault_shares: joins by anyone but the vault, still a native claim
+    outside_shares: int | None  # alloyed_supply - vault_shares: joins by anyone but the vault, still a native claim
     rate: str | None  # native factor / stToken factor, fixed at creation
-    rate_gap_pct: (
-        str | None
-    )  # (stride_rate - rate) / stride_rate x 100: the surplus that stays in the canonical pool
-    escrow: (
-        int | None
-    )  # route only: Stride's escrow balance of the stToken on the route's channel
+    rate_gap_pct: str | None  # (stride_rate - rate) / stride_rate x 100: the surplus that stays in the canonical pool
+    escrow: int | None  # route only: Stride's escrow balance of the stToken on the route's channel
     allocation: int | None
     funded_exactly: (
         bool | None
@@ -136,19 +128,13 @@ class ZonePools:
     fee_reserve: int  # uosmo the vault keeps for the funding txs (osmosis-1 only, 0 elsewhere): not allocated
     pools_native: int
     native_on_osmosis: int  # vault + pools
-    coverage: (
-        str | None
-    )  # native_on_osmosis / needed, six places; None when nothing is needed
+    coverage: str | None  # native_on_osmosis / needed, six places; None when nothing is needed
     missing_routes: list[str]  # policy channels with no route pool
-    pools: list[
-        PoolReport
-    ]  # canonical first, then routes by Stride channel, unrecognised last
+    pools: list[PoolReport]  # canonical first, then routes by Stride channel, unrecognised last
     pools_ready: (
         bool | None
     )  # a canonical pool exists, no missing route, every pool ready; None while a check is unknown
-    pools_funded: (
-        bool | None
-    )  # pools_ready and every pool funded exactly and marked; None while an input is unknown
+    pools_funded: bool | None  # pools_ready and every pool funded exactly and marked; None while an input is unknown
 
 
 # ---- internal structures
@@ -186,15 +172,11 @@ class RawPool:
     """
 
     contract: str
-    pool_id: (
-        str | None
-    )  # None for an EXTRA_POOL_CONTRACTS entry the cosmwasmpool listing does not hold
+    pool_id: str | None  # None for an EXTRA_POOL_CONTRACTS entry the cosmwasmpool listing does not hold
     code_id: str | None
     admin: str | None
     alloyed_denom: str
-    assets: dict[
-        str, int
-    ]  # asset denom -> normalization factor, including the alloyed denom
+    assets: dict[str, int]  # asset denom -> normalization factor, including the alloyed denom
     liquidity: dict[str, int]
     traces: dict[str, DenomTrace]  # ibc asset denom -> its trace
     alloyed_supply: int | None
@@ -218,9 +200,7 @@ class ZoneDenoms:
     host_denom: str
     st_denom: str
     osmosis_denom: str  # the native token on Osmosis: the bare denom for osmosis-1, else the voucher over the host channel
-    native_trace: (
-        str  # what the native asset's trace must read (the bare denom for osmosis-1)
-    )
+    native_trace: str  # what the native asset's trace must read (the bare denom for osmosis-1)
     canonical_st_trace: str  # transfer/channel-326/<st_denom>
 
 

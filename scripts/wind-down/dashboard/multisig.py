@@ -9,6 +9,7 @@ per `chain_id` in `txs`, in the order they go out.
 """
 
 import dataclasses
+import hashlib
 import json
 from dataclasses import dataclass
 from decimal import Decimal
@@ -182,7 +183,8 @@ def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
             "ICA gets a test tx of one whole token first, then the rest tx for its live balance: the amount is read "
             "from the Funds snapshot when the page loads, and the rest tx stays not ready while a transfer from that "
             "ICA is in flight, since the balance it shows predates the landing. A foreign denom an ICA holds (dYdX's "
-            "USDC voucher) is its own tx for its full balance. The "
+            "USDC voucher) is its own tx for its full balance, and one is generated for every non-zero denom the ICA holds, spam "
+            "tokens included: skip any that is not worth a signing round. The "
             "transfers time out after 24h; a refund means resubmit. Do one tx at a time, end to end: generate, two "
             "signatures, multisign and broadcast, then confirm it landed before starting the next."
         ),
@@ -325,7 +327,7 @@ def _ica_transfer_txs(
         )
         txs.extend(
             _ica_transfer_tx(
-                zone=zone, ica=ica, label=f"denom-{denom[-6:].lower()}", amount=amount, denom=denom, reason=snapshot_reason,
+                zone=zone, ica=ica, label=f"denom-{hashlib.sha256(denom.encode()).hexdigest()[:8]}", amount=amount, denom=denom, reason=snapshot_reason,
                 title=f"{zone.chain_id} · {ica} ICA · foreign denom: {amount}{denom} (full balance)",
             )
             for denom, amount in _foreign_balances(balances=balances, host_denom=host_denom)

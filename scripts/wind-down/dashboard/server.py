@@ -40,8 +40,8 @@ COLLECTORS: dict[str, Callable[[], dict[str, Any]]] = {
 }
 
 
-# The snapshots the Multisig tab composes from. A cache that is not registered (the Pools collector may not be built
-# yet) counts as one that has no snapshot yet.
+# The snapshots the Multisig tab composes from. A cache missing from CACHES (tests patch it out) counts as one with no
+# snapshot yet.
 MULTISIG_SOURCES = ("validators", "funds", "pools")
 
 

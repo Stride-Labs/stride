@@ -157,7 +157,8 @@ stays only for the published-export audit at the halt.
 - Assignment: a pool belongs to the zone whose stToken it holds (the base denom of the Osmosis denom trace equals the
   zone's `st_denom`). Its kind is `canonical` when that trace is exactly `transfer/channel-326/<st_denom>`, `route` when
   it is two hops (`transfer/<c1>/transfer/<c2>/<st_denom>`) that resolve to a policy channel, else `unrecognised`
-  (reported, never allocated). The native token is the zone's denom over `config.OSMOSIS_CHANNEL_TO_HOST` (the bare
+  (reported, never allocated; an `unrecognised` vault-administered pool keeps the zone's canonical allocation null until it
+  is resolved, by removing it from the vault's admin or adding its route to `REQUIRED_ROUTES`). The native token is the zone's denom over `config.OSMOSIS_CHANNEL_TO_HOST` (the bare
   denom for osmosis-1).
 - Route resolution: `c1` is Osmosis's channel to the holder chain (its chain id from the channel's `client_state`),
   `c2` the holder's channel to Stride. The Stride channel is the one in `config.REQUIRED_ROUTES[st_denom]` (a copy of

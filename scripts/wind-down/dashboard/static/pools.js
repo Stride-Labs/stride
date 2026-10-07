@@ -52,7 +52,7 @@ function statePill(zone) {
 function headerLine(zone) {
   const tokens = (value) => tokenAmount(value, zone);
   const onOsmosis = `${tokens(zone.native_on_osmosis)} on Osmosis (vault ${tokens(zone.vault_native)} + pools ${tokens(zone.pools_native)})`;
-  const rate = zone.stride_rate === null ? 'rate n/a' : `rate ${escapeHtml(shortRate(zone.stride_rate))}`;
+  const rate = `rate ${escapeHtml(shortRate(zone.stride_rate))}`;
   return `needs ${tokens(zone.needed)} · ${onOsmosis} · ${coveragePill(zone.coverage)} · ${rate} · ${zone.pools.length} pool${zone.pools.length === 1 ? '' : 's'}`;
 }
 
@@ -102,6 +102,7 @@ function kindCell(pool) {
     const title = `Stride ${pool.route.stride_channel} ↔ ${pool.route.chain_id} ${pool.route.counterparty_channel} · escrow ${pool.escrow === null ? 'n/a' : pool.escrow}`;
     return `<b>route</b> <span class="muted" title="${escapeHtml(title)}">${escapeHtml(pool.route.chain_id)} · ${escapeHtml(pool.route.stride_channel)}</span>`;
   }
+  if (pool.kind === 'route') return `<b>route</b> <span class="muted">lookup n/a</span>`;
   return `${pill('bad', 'unrecognised')} <span class="muted mono" title="${escapeHtml(pool.st_trace)}">${escapeHtml(pool.st_trace)}</span>`;
 }
 
