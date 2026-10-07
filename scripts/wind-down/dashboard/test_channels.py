@@ -653,6 +653,20 @@ class TilesTest(unittest.TestCase):
         self.assertEqual(tiles.pending_packets, 0)
 
 
+class UnackedIcaPacketsTest(unittest.TestCase):
+    def test_sums_ica_rows_and_ignores_the_transfer_row(self) -> None:
+        rows = [
+            channel_row(name=channels.TRANSFER_NAME, status=channels.Status.PENDING, outbound=flow(None, pending_packets=900, pending_acks=30)),
+            channel_row(name="DELEGATION", status=channels.Status.PENDING, outbound=flow(None, pending_packets=14, pending_acks=0)),
+            channel_row(name="WITHDRAWAL", status=channels.Status.PENDING, outbound=flow(None, pending_packets=0, pending_acks=2)),
+        ]
+        self.assertEqual(channels.unacked_ica_packets(rows=rows), 16)
+
+    def test_unknown_count_makes_the_total_unknown(self) -> None:
+        rows = [channel_row(name="FEE", status=channels.Status.OK, outbound=flow(None, pending_packets=None, pending_acks=0))]
+        self.assertIsNone(channels.unacked_ica_packets(rows=rows))
+
+
 class HaqqStateTest(unittest.TestCase):
     def state(self, **overrides: object) -> channels.HaqqState:
         fields = {

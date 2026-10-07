@@ -166,6 +166,9 @@ class ZoneChannels:
     host_error: str | None  # why the host-side header lookups are null (host REST down), else None
     status: Status
     channels: list[ChannelRow]
+    # Commitments on the zone's ICA channels (pending packets + pending acks, Stride side); None when one could not
+    # be counted. The v35 flag reset only applies to a zone with an open delegation channel and 0 here.
+    unacked_ica_packets: int | None = None
     preflight: Preflight | None = None  # None only when the zone's header could not be built
     haqq_state: "HaqqState | None" = None  # the pre-upgrade haqq invariants (spec §9c); only on haqq_11235-1
 
@@ -489,6 +492,7 @@ def _zone_channels(
         host_error=host_header.error,
         status=worst_status(statuses=[row.status for row in rows]),
         channels=rows,
+        unacked_ica_packets=unacked_ica_packets(rows=rows),
         preflight=_preflight(
             zone=zone, host=host, entry=entry, host_zone=(host_zones or {}).get(zone.chain_id)
         ),
@@ -678,6 +682,18 @@ def _transfer_spec(
         stride_state=stride_end.state,
         host_state=host_state,
     )
+
+
+def unacked_ica_packets(rows: list[ChannelRow]) -> int | None:
+    """Sum of pending packets and pending acks over the ICA rows; None when any count is unknown."""
+    counts = [
+        (row.outbound.pending_packets, row.outbound.pending_acks)
+        for row in rows
+        if row.name != TRANSFER_NAME
+    ]
+    if any(packets is None or acks is None for packets, acks in counts):
+        return None
+    return sum(packets + acks for packets, acks in counts)
 
 
 def _ica_spec(ica: dict[str, Any]) -> ChannelSpec:

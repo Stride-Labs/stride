@@ -425,19 +425,31 @@
               "expect": "code: 0 per tx and the callbacks land within minutes (Validators tab: the slash-query pill on, then off, the diff gone). The live line here reads the Validators tab: every non-haqq zone at 0 over. A validator with a stale Δ in progress cannot be refreshed; the v35 reset clears it on zones with an open channel and no unacked packet."
             },
             {
-              "id": "eve-channels",
-              "text": "Channels tab: every in-scope ICA channel OPEN (haqq's delegation and withdrawal channels are the known closed ones), no pending packets, every client live; Pre-flight checks all ok, including Band's host client of Stride.",
-              "ref": "§9 step 4"
-            },
-            {
               "id": "eve-flags",
-              "text": "No unacked ICA packet on any zone except the known ones (haqq's closed channel-869, Juno's channel-491 if not cleared): the v35 reset only clears DelegationChangesInProgress on a zone whose delegation channel is open with no unacked packet, so expect the Hub reset and a logged skip for juno-1 and haqq.",
-              "ref": "§5, §9a"
-            },
-            {
-              "id": "eve-haqq-commitments",
-              "text": "Haqq's FEE, REDEMPTION and community-pool ICA channels have no packet commitments (checked before the relayer comes back on at the upgrade).",
-              "ref": "§9c"
+              "text": "No unacked ICA packet on any zone except haqq's known 14 on closed channel-869: the v35 reset only clears DelegationChangesInProgress on a zone whose delegation channel is open with no unacked packet, so expect a logged skip for haqq and the reset everywhere else. Live from the Channels tab: commitments across each zone's ICA channels.",
+              "ref": "§5, §9a",
+              "zones": [
+                "celestia",
+                "cosmoshub-4",
+                "dydx-mainnet-1",
+                "haqq_11235-1",
+                "injective-1",
+                "juno-1",
+                "laozi-mainnet",
+                "osmosis-1",
+                "phoenix-1",
+                "sommelier-3",
+                "ssc-1"
+              ],
+              "auto": {
+                "tab": "channels",
+                "path": "unacked_ica_packets",
+                "equals": 0,
+                "allow": [
+                  "haqq_11235-1"
+                ]
+              },
+              "expect": "0 on every zone but haqq. A zone with unacked ICA packets keeps its stale flags through the upgrade; relay the acks (or let the timeout close the channel and restore it) before the upgrade so the reset applies."
             },
             {
               "id": "eve-people",
