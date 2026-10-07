@@ -15,6 +15,7 @@ let today = '';
 let lastBody = ''; // the raw /api/ops answer last drawn, so an unchanged poll does not re-render
 const sectionOpen = new Map(); // block key -> open, once the user has toggled it by hand
 const detailsOpen = new Set(); // step ids whose "details" the user opened
+const foldOpen = new Set(); // step ids whose "more" fold (rest of the text, command, expect, details) is open
 
 registerSelfPollingTab('ops', startOps);
 
@@ -26,6 +27,7 @@ function startOps() {
 
   document.getElementById('opsName').oninput = (event) => saveName(event.target.value);
   root.addEventListener('change', onTick);
+  root.addEventListener('click', onFold);
   // `toggle` does not bubble, so listen in the capture phase to remember what the user opened or closed.
   root.addEventListener('toggle', onToggle, true);
 
@@ -184,6 +186,14 @@ function onToggle(event) {
   if (target.dataset.detail) target.open ? detailsOpen.add(target.dataset.detail) : detailsOpen.delete(target.dataset.detail);
 }
 
+// The "more / less" toggle at the end of a step's lead line; a redraw is cheap and keeps one source of truth.
+function onFold(event) {
+  const button = event.target.closest('button[data-fold]');
+  if (!button) return;
+  foldOpen.has(button.dataset.fold) ? foldOpen.delete(button.dataset.fold) : foldOpen.add(button.dataset.fold);
+  drawOps();
+}
+
 function savedName() {
   try {
     return localStorage.getItem(NAME_KEY) || '';
@@ -281,34 +291,65 @@ function windowHtml(day, window) {
   return `${label}<ul class="ops-steps">${window.steps.map((step) => stepHtml(step, gate)).join('')}</ul>`;
 }
 
+// A step shows its lead sentence on the checkbox line; the rest of the text, the command, the expectation and
+// the details sit behind a "more" fold so the plan reads as a list, not a wall. A done step collapses to its lead
+// line and who ticked it: it is history, and unticking it is still possible from the box.
 function stepHtml(step, gate) {
   const zones = step.zones || [];
-  const tag = step.conditional ? pill('warn', step.conditional) : '';
-  const ref = step.ref ? `<span class="muted mono">${escapeHtml(step.ref)}</span>` : '';
-  const detail = step.detail
-    ? `<details class="ops-detail" data-detail="${escapeHtml(step.id)}" ${detailsOpen.has(step.id) ? 'open' : ''}>
-        <summary class="muted">details</summary><div class="note">${escapeHtml(step.detail)}</div></details>`
-    : '';
-  const command = step.command
-    ? `<pre class="ops-command mono copy" data-copy="${escapeHtml(step.command)}" title="click to copy">${escapeHtml(step.command)}</pre>`
-    : '';
-  const expect = step.expect ? `<div class="muted ops-expect">expect: ${escapeHtml(step.expect)}</div>` : '';
-  const multisig = step.multisig ? multisigLinks(step) : '';
   const perZoneTicks = zones.length > 0 && !step.auto;
+  const { lead, rest } = splitLead(step.text);
   const checkbox = perZoneTicks
     ? `<input type="checkbox" disabled ${stepDone(step) ? 'checked' : ''} title="done when every zone is">`
     : `<input type="checkbox" data-id="${escapeHtml(step.id)}" ${isDone(step.id) ? 'checked' : ''}>`;
+  const label = `<label>${checkbox} <span class="ops-text">${escapeHtml(lead)}</span></label>`;
+  if (stepDone(step)) return `<li class="ops-step done"><div class="ops-row">${label} ${doneBy(step)}</div></li>`;
+
+  const tag = step.conditional ? pill('warn', step.conditional) : '';
+  const auto = step.auto && zones.length ? autoSummary(step, gate) : '';
+  const open = foldOpen.has(step.id);
+  const fold = foldHtml(step, rest);
+  // No "more" when there is nothing behind it: a one-sentence step with no command, expectation or details.
+  const more = fold ? `<button type="button" class="ops-more" data-fold="${escapeHtml(step.id)}">${open ? 'less ▾' : 'more ▸'}</button>` : '';
+  const multisig = step.multisig ? multisigLinks(step) : '';
   const zoneMark = (zone) => (gate.active ? autoMark(autoValue(step, zone)) : inactiveMark(autoValue(step, zone), gate));
   const zoneRows = perZoneTicks
     ? `<ul class="ops-zones">${zones.map((zone) => zoneHtml(`${step.id}:${zone}`, zone)).join('')}</ul>`
     : step.auto && zones.length
       ? `<ul class="ops-zones">${zones.map((zone) => `<li class="ops-row">${escapeHtml(zone)} ${zoneMark(zone)}</li>`).join('')}</ul>`
       : '';
-  const auto = step.auto && zones.length ? autoSummary(step, gate) : '';
 
-  return `<li class="ops-step ${stepDone(step) ? 'done' : ''}">
-    <div class="ops-row"><label>${checkbox} <span class="ops-text">${escapeHtml(step.text)}</span></label>
-      ${tag} ${auto} ${ref} ${perZoneTicks ? '' : tickedBy(step.id)}</div>${multisig}${command}${expect}${detail}${zoneRows}</li>`;
+  return `<li class="ops-step">
+    <div class="ops-row">${label} ${tag} ${auto} ${more}</div>
+    ${fold ? `<div class="ops-fold" ${open ? '' : 'hidden'}>${fold}</div>` : ''}${multisig}${zoneRows}</li>`;
+}
+
+// The lead sentence (up to the first ". ", keeping the period) and the rest; a text without a break is all lead.
+function splitLead(text) {
+  const index = text.indexOf('. ');
+  if (index === -1) return { lead: text, rest: '' };
+  return { lead: text.slice(0, index + 1), rest: text.slice(index + 2) };
+}
+
+function foldHtml(step, rest) {
+  const text = rest ? `<div class="ops-rest">${escapeHtml(rest)}</div>` : '';
+  const command = step.command
+    ? `<pre class="ops-command mono copy" data-copy="${escapeHtml(step.command)}" title="click to copy">${escapeHtml(step.command)}</pre>`
+    : '';
+  const expect = step.expect ? `<div class="muted ops-expect">expect: ${escapeHtml(step.expect)}</div>` : '';
+  const detail = step.detail
+    ? `<details class="ops-detail" data-detail="${escapeHtml(step.id)}" ${detailsOpen.has(step.id) ? 'open' : ''}>
+        <summary class="muted">details</summary><div class="note">${escapeHtml(step.detail)}</div></details>`
+    : '';
+  return `${text}${command}${expect}${detail}`;
+}
+
+// Who finished a step: its own tick, or for a per-zone step the latest zone tick (the one that completed it).
+function doneBy(step) {
+  const perZoneTicks = step.zones && step.zones.length && !step.auto;
+  if (!perZoneTicks) return tickedBy(step.id);
+  const ids = step.zones.map((zone) => `${step.id}:${zone}`);
+  const latest = ids.reduce((best, id) => (!best || status[id].at > status[best].at ? id : best), null);
+  return tickedBy(latest);
 }
 
 // `<set-id>/<zone>` links to that zone's heading in the set; a bare set id links to each of the step's zones' headings,

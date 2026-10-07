@@ -1,10 +1,11 @@
 """Every constant the dashboard uses: endpoints, in-scope zones, operator addresses, holder routes, intervals."""
 
+import os
 from dataclasses import dataclass
 from enum import StrEnum
 
 HOST = "127.0.0.1"
-PORT = 8787
+PORT = int(os.environ.get("WIND_DOWN_DASHBOARD_PORT", "8787"))  # a second instance can run beside yours
 
 HTTP_TIMEOUT_SECONDS = 20
 USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
