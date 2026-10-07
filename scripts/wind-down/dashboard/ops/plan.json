@@ -936,6 +936,14 @@
               }
             },
             {
+              "id": "haqq-assetlist",
+              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
+              "ref": "§8 Foreign-route denoms",
+              "zones": [
+                "haqq_11235-1"
+              ]
+            },
+            {
               "id": "haqq-announce",
               "text": "Announce that the stToken's pools are live on Osmosis (canonical denom and each route).",
               "ref": "§9 before-3",
@@ -1061,6 +1069,14 @@
               }
             },
             {
+              "id": "osmo-assetlist",
+              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
+              "ref": "§8 Foreign-route denoms",
+              "zones": [
+                "osmosis-1"
+              ]
+            },
+            {
               "id": "osmo-announce",
               "text": "Announce that the stToken's pools are live on Osmosis (canonical denom and each route).",
               "ref": "§9 before-3",
@@ -1182,6 +1198,14 @@
                 "tab": "pools",
                 "path": "pools_funded"
               }
+            },
+            {
+              "id": "tia-assetlist",
+              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
+              "ref": "§8 Foreign-route denoms",
+              "zones": [
+                "celestia"
+              ]
             },
             {
               "id": "tia-announce",
@@ -1342,6 +1366,19 @@
               }
             },
             {
+              "id": "d21-assetlist",
+              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
+              "ref": "§8 Foreign-route denoms",
+              "zones": [
+                "cosmoshub-4",
+                "injective-1",
+                "laozi-mainnet",
+                "phoenix-1",
+                "ssc-1",
+                "dydx-mainnet-1"
+              ]
+            },
+            {
               "id": "d21-announce",
               "text": "Announce that the stToken's pools are live on Osmosis (canonical denom and each route).",
               "ref": "§9 before-3",
@@ -1461,6 +1498,15 @@
                 "tab": "pools",
                 "path": "pools_funded"
               }
+            },
+            {
+              "id": "d28-assetlist",
+              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
+              "ref": "§8 Foreign-route denoms",
+              "zones": [
+                "juno-1",
+                "sommelier-3"
+              ]
             },
             {
               "id": "d28-announce",
