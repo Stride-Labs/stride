@@ -282,6 +282,7 @@
       "windows": [
         {
           "label": "Thursday 2026-10-08 · after the 3:00pm ET (19:00 UTC) day epoch (1496)",
+          "start": "2026-10-08T19:00:00Z",
           "steps": [
             {
               "id": "pre-hub-pipeline",
@@ -470,6 +471,7 @@
       "windows": [
         {
           "label": "~8:00am ET (12:00 UTC) · upgrade height",
+          "start": "2026-10-12T12:00:00Z",
           "steps": [
             {
               "id": "up-executes",
@@ -517,6 +519,7 @@
         },
         {
           "label": "8:00am-3:00pm ET (12:00-19:00 UTC) · the haqq sequence (deadline 3:00pm ET)",
+          "start": "2026-10-12T12:00:00Z",
           "steps": [
             {
               "id": "haqq-1a",
@@ -584,6 +587,7 @@
         },
         {
           "label": "After the haqq sequence is under way · before 3:00pm ET (19:00 UTC)",
+          "start": "2026-10-12T12:00:00Z",
           "steps": [
             {
               "id": "day0-restore-closed-channels",
@@ -634,6 +638,7 @@
         },
         {
           "label": "3:00pm ET (19:00 UTC) · day epoch 1500",
+          "start": "2026-10-12T19:00:00Z",
           "steps": [
             {
               "id": "day0-epoch-submits",
@@ -668,11 +673,13 @@
         },
         {
           "label": "3:00pm ET -> ~4:00am ET (19:00-08:00 UTC) · the drain window",
+          "start": "2026-10-12T19:00:00Z",
           "steps": [
             {
               "id": "drain-live-test",
-              "text": "Per zone: MsgUndelegateFromValidators for the single live-test validator (full drain); wait for the ack and the callback (Validators tab: its recorded delegation drops to zero; Funds tab: its bar moves to unbonding). The tx refuses the zone while any record is queued or retrying (Funds tab → Records).",
+              "text": "Per zone: MsgUndelegateFromValidators for the single live-test validator (full drain); wait for the ack and the callback (Validators tab: its recorded delegation drops to zero; Funds tab: its bar moves to unbonding). The tx refuses the zone while any record is queued or retrying (Funds tab → Records). Commands per zone, with who runs what, are on the Multisig tab.",
               "ref": "§9 step 4, §9b, §7",
+              "multisig": "live-test-undelegate",
               "zones": [
                 "celestia",
                 "cosmoshub-4",
@@ -686,13 +693,18 @@
                 "sommelier-3",
                 "ssc-1"
               ],
-              "command": "echo '[{\"address\": \"<LIVE_TEST_VALOPER>\", \"offset\": \"0\"}]' > /tmp/live-test-<CHAIN_ID>.json\nstrided tx stakeibc undelegate-from-validators <CHAIN_ID> /tmp/live-test-<CHAIN_ID>.json --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas 12000000",
+              "auto": {
+                "tab": "validators",
+                "path": "drained_count",
+                "at_least": 1
+              },
               "expect": "Gas: about 9M is a fixed cost (the queued-record guard reads every epoch unbonding record), so set --gas explicitly; 12M covers a one-validator drain on every zone. code: 0 and the ICA acks (Channels tab: the zone's DELEGATION channel back to 0 pending acks; Validators tab: the validator's recorded delegation drops to 0 and its Δ in progress back to 0). A rejection before submission names the reason (a queued or retrying record, a validator with a change or slash query in progress, a deprecated zone): resolve it, do not force. An ack error leaves the delegation unchanged: look at the host tx log for the validator the host rejected."
             },
             {
               "id": "drain-rest",
-              "text": "Per zone: MsgUndelegateFromValidators with an empty validator list for the rest; relay acks before timeouts; wait for every batch to ack. A failed batch (a slash since the refresh): rerun the refresh or set that validator's offset and resubmit the affected validators.",
+              "text": "Per zone: MsgUndelegateFromValidators with an empty validator list for the rest; relay acks before timeouts; wait for every batch to ack. A failed batch (a slash since the refresh): rerun the refresh or set that validator's offset and resubmit the affected validators. Commands per zone, with who runs what, are on the Multisig tab.",
               "ref": "§9 step 4",
+              "multisig": "full-drain",
               "zones": [
                 "celestia",
                 "cosmoshub-4",
@@ -706,7 +718,11 @@
                 "sommelier-3",
                 "ssc-1"
               ],
-              "command": "strided tx stakeibc undelegate-from-validators <CHAIN_ID> --all --from <PROTOCOL_ADMIN_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas <GAS>",
+              "auto": {
+                "tab": "validators",
+                "path": "totals.recorded",
+                "equals": "0"
+              },
               "expect": "Gas from the mainnet-export measurement: cosmoshub-4 20.03M (use 25M), osmosis-1 11.83M and ssc-1 11.41M (use 15M), every other zone under 10.5M (use 13M). The Hub's 15 acks cost about 1.5M each, so a relayer packing them into one tx needs about 22M. code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: recorded delegations at dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–4:00am ET (08:00 UTC) window."
             },
             {
@@ -740,6 +756,7 @@
         },
         {
           "label": "~4:11pm ET (20:11 UTC) · stakedym",
+          "start": "2026-10-12T20:11:00Z",
           "steps": [
             {
               "id": "dym-unbonded",
@@ -938,6 +955,7 @@
         },
         {
           "label": "staketia records 1472-1488 (undelegated 2026-10-05, complete 2026-10-19 6:45pm ET (22:45 UTC))",
+          "start": "2026-10-19T22:45:00Z",
           "steps": [
             {
               "id": "tia-tranche1-sweep",
@@ -1147,6 +1165,7 @@
         },
         {
           "label": "STRD · the upgrade's mass undelegation completes (14 days after the upgrade block, ~8:00am ET (12:00 UTC))",
+          "start": "2026-10-26T12:00:00Z",
           "steps": [
             {
               "id": "strd-unbonding-complete",

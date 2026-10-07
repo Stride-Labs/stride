@@ -4,6 +4,7 @@
   --idle: #6b7380; --idle-bg: #eceef1; --accent: #3056d3;
   --s-staked: #8a93a3; --s-unbond: #e0a030; --s-ica: #4a7fe0; --s-flight: #9a62d8; --s-vault: #22a3a3; --s-pool: #2f9e5a;
   --lane-host: #f1f4fb; --lane-stride: #fbf3f6; --lane-osmo: #f3f0fb;
+  --who-sam: #3056d3; --who-aidan: #b0501e; --who-riley: #7a3fb8;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -11,6 +12,7 @@
     --ok: #4cc97f; --ok-bg: #163524; --warn: #f0b14a; --warn-bg: #3a2c10; --bad: #f0746c; --bad-bg: #3d1a18;
     --idle: #8d96a5; --idle-bg: #262b34; --accent: #7d9bff;
     --lane-host: #181d29; --lane-stride: #231a20; --lane-osmo: #1e1a2b;
+    --who-sam: #8fa8ff; --who-aidan: #f0a070; --who-riley: #c99cf2;
   }
 }
 * { box-sizing: border-box; }
@@ -137,3 +139,24 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-ops .ops-auto { font-size: 11px; font-weight: 600; }
 #view-ops .ops-auto.ok { color: var(--ok); }
 #view-ops .ops-auto.bad { color: var(--bad); }
+#view-ops .ops-link { margin: 2px 0 2px 22px; font-size: 12px; }
+#view-ops .ops-link a { color: var(--accent); text-decoration: none; }
+#view-ops .ops-link a:hover { text-decoration: underline; }
+
+/* multisig: who runs a command. The person pills keep one colour each across the page; "anyone" is neutral. */
+.who { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; color: var(--idle); background: var(--idle-bg); }
+.who.who-sam { color: var(--who-sam); background: color-mix(in srgb, var(--who-sam) 14%, transparent); }
+.who.who-aidan { color: var(--who-aidan); background: color-mix(in srgb, var(--who-aidan) 14%, transparent); }
+.who.who-riley { color: var(--who-riley); background: color-mix(in srgb, var(--who-riley) 14%, transparent); }
+#view-multisig .ms-intro { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+#view-multisig .ms-intro a { color: var(--accent); text-decoration: none; margin-left: 8px; white-space: nowrap; }
+#view-multisig .ms-intro a:hover { text-decoration: underline; }
+#view-multisig .ms-tx { padding: 8px 12px; border-bottom: 1px solid var(--line); }
+#view-multisig .ms-tx:last-child { border-bottom: 0; }
+#view-multisig .ms-tx-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+#view-multisig .ms-tx-head b { font-size: 13px; }
+#view-multisig .ms-files { font-size: 12px; margin-top: 2px; }
+#view-multisig .ms-label { display: flex; gap: 8px; align-items: baseline; margin-top: 8px; font-size: 12px; }
+#view-multisig .ms-command { margin: 3px 0 0; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; cursor: pointer; }
+#view-multisig .ms-command:hover { border-color: var(--accent); }
+#view-multisig .ms-command.copied { border-color: var(--ok); color: var(--ok); }

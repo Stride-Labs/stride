@@ -11,8 +11,14 @@ import urllib.request
 from typing import Any
 from unittest import mock
 
+import config
 import ops
 import server
+
+try:
+    import multisig
+except ImportError:  # multisig.py lands with the backend chunk; the reference test waits for it
+    multisig = None
 
 SAMPLE_PLAN: dict[str, Any] = {
     "anchors": {"upgrade": "2026-10-12T12:00:00Z"},
@@ -87,6 +93,43 @@ class RealPlanTest(unittest.TestCase):
 
         self.assertIn("\n", step["command"])
         self.assertIn(step["id"], ops.step_ids(plan=SAMPLE_PLAN))
+
+    def _steps(self) -> list[dict[str, Any]]:
+        return [step for day in self.plan["days"] for window in day["windows"] for step in window["steps"]]
+
+    def _windows(self) -> list[dict[str, Any]]:
+        return [window for day in self.plan["days"] for window in day["windows"]]
+
+    @unittest.skipIf(multisig is None, "multisig.py is not merged yet")
+    def test_every_multisig_reference_names_that_steps_tx_set(self) -> None:
+        sets_by_id = {tx_set.id: tx_set for tx_set in multisig.tx_sets(None)}
+        referencing = [step for step in self._steps() if "multisig" in step]
+
+        self.assertTrue(referencing)
+        for step in referencing:
+            self.assertIn(step["multisig"], sets_by_id, step["id"])
+            self.assertEqual(sets_by_id[step["multisig"]].step_id, step["id"])
+            self.assertNotIn("command", step, f"{step['id']}: the Multisig tab is the source of its commands")
+
+    def test_every_window_start_is_an_iso_utc_timestamp(self) -> None:
+        starts = [window["start"] for window in self._windows() if "start" in window]
+
+        self.assertTrue(starts)
+        for start in starts:
+            parsed = datetime.datetime.fromisoformat(start)
+            self.assertEqual(parsed.utcoffset(), datetime.timedelta(0), start)
+
+    def test_at_least_is_an_int_and_never_combined_with_equals(self) -> None:
+        autos = [step["auto"] for step in self._steps() if "at_least" in step.get("auto", {})]
+
+        self.assertTrue(autos)
+        for auto in autos:
+            self.assertIsInstance(auto["at_least"], int, auto)
+            self.assertNotIsInstance(auto["at_least"], bool, auto)
+            self.assertNotIn("equals", auto)
+
+    def test_upgrade_time_matches_the_plan_anchor(self) -> None:
+        self.assertEqual(config.UPGRADE_TIME, self.plan["anchors"]["upgrade"])
 
 
 class StepIdsTest(unittest.TestCase):
