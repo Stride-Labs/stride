@@ -751,6 +751,12 @@
               "text": "A batch that hits the host's cap of 7 concurrent unbonding entries per delegator-validator pair fails whole (ssc-1's live-test validator already has 4 in flight): wait up to four days for the oldest entry to mature and resubmit that batch.",
               "ref": "§7",
               "conditional": "only if a batch fails on the entry cap"
+            },
+            {
+              "id": "post-restore",
+              "text": "If a zone's delegation channel closed on a timeout: restore-interchain-account, then CalibrateDelegation on every validator a lost batch emptied or reduced (an empty answer corrects the record to zero), then resubmit the drain for the affected validators. If step-3 records were in flight when the channel closed: the restore requeues them, so check the zone's remaining recorded delegation exceeds the requeued records' unacknowledged total; if it does not, the record cannot be submitted and the zone's drain stays refused until decided by hand.",
+              "ref": "§9 step 4",
+              "conditional": "only if a delegation channel closed on a timeout"
             }
           ]
         },
@@ -789,24 +795,6 @@
         {
           "steps": [
             {
-              "id": "post-drain-verified",
-              "text": "Per zone: every drain batch acked (Channels tab: no pending packets on the delegation channel), no validator with Δ in progress (Validators tab), recorded delegations at dust, TotalDelegations at dust except celestia's multisig portion; Funds tab shows the backing in Unbonding.",
-              "ref": "§9 step 4",
-              "zones": [
-                "celestia",
-                "cosmoshub-4",
-                "dydx-mainnet-1",
-                "haqq_11235-1",
-                "injective-1",
-                "juno-1",
-                "laozi-mainnet",
-                "osmosis-1",
-                "phoenix-1",
-                "sommelier-3",
-                "ssc-1"
-              ]
-            },
-            {
               "id": "post-retry-epochs",
               "text": "Zones whose record submission failed at epoch 1500: retried at their next unbonding epoch (10-15 for 14-day zones, 10-16 for 21-day, 10-17 for 28/30-day); wait for the acks, then drain that zone in the 19:00-4:00am ET (08:00 UTC) window.",
               "ref": "§9 step 3",
@@ -829,35 +817,6 @@
                 "path": "records.queued_or_retrying",
                 "equals": 0
               }
-            },
-            {
-              "id": "post-restore",
-              "text": "If a zone's delegation channel closed on a timeout: restore-interchain-account, then CalibrateDelegation on every validator a lost batch emptied or reduced (an empty answer corrects the record to zero), then resubmit the drain for the affected validators. If step-3 records were in flight when the channel closed: the restore requeues them, so check the zone's remaining recorded delegation exceeds the requeued records' unacknowledged total; if it does not, the record cannot be submitted and the zone's drain stays refused until decided by hand.",
-              "ref": "§9 step 4",
-              "zones": [
-                "celestia",
-                "cosmoshub-4",
-                "dydx-mainnet-1",
-                "haqq_11235-1",
-                "injective-1",
-                "juno-1",
-                "laozi-mainnet",
-                "osmosis-1",
-                "phoenix-1",
-                "sommelier-3",
-                "ssc-1"
-              ],
-              "conditional": "only if a channel closed"
-            },
-            {
-              "id": "post-haqq-withdrawal",
-              "text": "Haqq's WITHDRAWAL channel restored (if it waited past 1f) before its MsgTransferFromIca WITHDRAWAL.",
-              "ref": "§9 step 1d"
-            },
-            {
-              "id": "post-relayers",
-              "text": "ICA relayers on every zone, channel-5 and channel-197 kept healthy; the Channels tab stays clean (no pending acks on delegation channels).",
-              "ref": "§9 steps 4, 9"
             }
           ]
         }
@@ -901,6 +860,12 @@
               "zones": [
                 "haqq_11235-1"
               ]
+            },
+            {
+              "id": "post-haqq-withdrawal",
+              "text": "Haqq's WITHDRAWAL channel restored (if it waited past 1f on upgrade day) before the zone's MsgTransferFromIca WITHDRAWAL.",
+              "ref": "§9 step 1d",
+              "conditional": "only if the WITHDRAWAL channel is still closed"
             },
             {
               "id": "haqq-done-transfer-delegation",
