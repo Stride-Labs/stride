@@ -191,3 +191,10 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-pools .pl-check.bad { color: var(--bad); }
 #view-pools .pl-check.na { color: var(--muted); }
 #view-pools tr.pl-fail td { background: var(--bad-bg); }
+
+/* Section headers on the two checklist tabs read as headings: bigger type, more room between blocks. */
+#view-ops .ops-block, #view-multisig details.panel { margin-bottom: 26px; }
+#view-ops .ops-block > summary h2, #view-multisig details.panel > summary h2 { font-size: 17px; padding: 13px 14px; gap: 12px; }
+#view-ops .ops-block > summary h2 .ops-count { font-size: 12px; }
+#view-ops .ops-window { font-size: 14px; padding: 14px 12px 2px; }
+#view-ops .ops-block > summary h2 .sub, #view-multisig details.panel > summary h2 .sub { font-size: 13px; }
