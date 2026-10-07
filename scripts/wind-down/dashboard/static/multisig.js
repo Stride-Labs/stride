@@ -53,7 +53,8 @@ function showMessage(text) {
 function onToggle(event) {
   const target = event.target;
   if (!target.dataset.set) return;
-  target.open ? closedSets.delete(target.dataset.set) : closedSets.add(target.dataset.set);
+  if (target.open) closedSets.delete(target.dataset.set);
+  else closedSets.add(target.dataset.set);
 }
 
 // ---- page

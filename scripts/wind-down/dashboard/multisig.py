@@ -122,7 +122,7 @@ def tx_sets(validators_data: dict[str, Any] | None) -> list[TxSet]:
 
 def _live_test_tx(zone: config.ZoneConfig, snapshot_zone: dict[str, Any] | None, snapshot_reason: str | None) -> MultisigTx:
     pick = snapshot_zone.get("live_test_pick") if snapshot_zone else None
-    reason = snapshot_reason or _zone_error(snapshot_zone=snapshot_zone) or (None if pick else snapshot_zone["live_test_reason"])
+    reason = _live_test_reason(snapshot_zone=snapshot_zone, snapshot_reason=snapshot_reason, has_pick=pick is not None)
 
     valoper = pick["address"] if pick else PLACEHOLDER_VALOPER
     file_stem = f"{WORKDIR}/live-test-{zone.chain_id}"
@@ -140,6 +140,19 @@ def _live_test_tx(zone: config.ZoneConfig, snapshot_zone: dict[str, Any] | None,
         commands=_commands(generate=generate, file_stem=file_stem),
         files=_shared_files(file_stem=file_stem),
     )
+
+
+def _live_test_reason(snapshot_zone: dict[str, Any] | None, snapshot_reason: str | None, has_pick: bool) -> str | None:
+    if snapshot_reason:
+        return snapshot_reason
+
+    zone_error = _zone_error(snapshot_zone=snapshot_zone)
+    if zone_error:
+        return zone_error
+
+    if has_pick:
+        return None
+    return snapshot_zone["live_test_reason"]
 
 
 def _full_drain_tx(zone: config.ZoneConfig, snapshot_zone: dict[str, Any] | None, snapshot_reason: str | None) -> MultisigTx:
