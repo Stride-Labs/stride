@@ -526,6 +526,14 @@ class PoolRateTest(unittest.TestCase):
         self.assertIsNone(funds.pool_rate(pool=pool, native_denom="ibc/OTHER", st_denoms=[CANONICAL_STINJ]))
         self.assertIsNone(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[]))
 
+    def test_rate_is_the_same_at_the_1e6_scale(self) -> None:
+        # The 18-decimal zones' pools are created with 1e6-scaled factors (1e18-scaled ones overflow the transmuter).
+        pool = raw_pool(contract="osmo1pool", assets={INJ_ON_OSMOSIS: 0, CANONICAL_STINJ: 0}, base_denoms={INJ_ON_OSMOSIS: "inj", CANONICAL_STINJ: "stinj"})
+        pool = funds.RawPool(**{**pool.__dict__, "factors": {INJ_ON_OSMOSIS: 1_545_254, CANONICAL_STINJ: 1_000_000}})
+
+        self.assertEqual(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[CANONICAL_STINJ]), "1.545254000000000000")
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="1.545254", pool_rate="1.545254000000000000"), "0.0000")
+
     def test_gap_is_the_frozen_rate_over_the_pool_rate(self) -> None:
         self.assertEqual(funds.rate_gap_pct(redemption_rate="1.1764", pool_rate="1.1751"), "0.1106")
         self.assertEqual(funds.rate_gap_pct(redemption_rate="2.0", pool_rate="2.0"), "0.0000")
@@ -540,14 +548,20 @@ class PoolRateTest(unittest.TestCase):
 
 
 class PayloadTest(unittest.TestCase):
-    def test_every_int_becomes_a_string_but_bools_and_none_survive(self) -> None:
-        payload = funds._stringify_ints(
-            {"a": 10**26, "b": [1, {"c": None}], "d": True, "e": "x"}
-        )
+    def test_collect_serialises_every_int_through_the_shared_helper(self) -> None:
+        host_zones = {"host_zone": []}
 
-        self.assertEqual(
-            payload, {"a": str(10**26), "b": ["1", {"c": None}], "d": True, "e": "x"}
-        )
+        with (
+            mock.patch.object(chain, "rest_get", return_value=host_zones),
+            mock.patch.object(funds, "_osmosis_snapshot", return_value=funds.OsmosisSnapshot(vault_balances={}, pools=[])),
+            mock.patch.object(chain, "rest_get_all_pages", return_value=[]),
+            mock.patch.object(config, "ZONES", ()),
+            mock.patch.object(funds, "_balances", return_value={"ustrd": 10**26}),
+        ):
+            payload = funds.collect()
+
+        self.assertEqual(payload["zones"], [])
+        self.assertEqual([operator["liquid"] for operator in payload["operators"]], [str(10**26)] * 3)
 
     def test_zone_denoms_follow_the_osmosis_side_channel(self) -> None:
         side = host_side(
@@ -814,7 +828,7 @@ class SettledAndLandedTest(unittest.TestCase):
         )
 
         zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, records=stride_records())
-        payload = funds._stringify_ints(dataclasses.asdict(zone))
+        payload = chain.stringify_ints(dataclasses.asdict(zone))
 
         self.assertEqual(payload["ica_balances"]["WITHDRAWAL"], {"uatom": "0", "ibc/USDC": "5"})
         self.assertEqual(payload["ica_balances"]["DELEGATION"], {"uatom": "7000000"})

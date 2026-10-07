@@ -57,7 +57,11 @@ views with the plan and returns `{fetched_at, data: {sets}}` (`multisig.py`, no 
 grouped by zone under a heading (anchor `set-<set-id>-<chain_id>`); per tx: generate, sign x3 (Sam and Aidan by
 default, Riley as the backup), then multisign and broadcast, each tagged with who runs it. Signers need the F5
 multisig key in their keyring as well as their own key. The files the commands share travel between people by Slack.
-A set deep-links as `#multisig/<set-id>`, a zone's heading in it as `#multisig/<set-id>/<zone>`.
+A set deep-links as `#multisig/<set-id>`, a zone's heading in it as `#multisig/<set-id>/<zone>`. A tx is `ready` only
+when its inputs are known and settled: an ICA's rest transfer waits while a transfer from that ICA is in flight (the
+snapshot's balance predates the landing); a pool's test join waits for its allocation and joins the whole allocation
+when that is below one token; its rest join is `allocation - vault_shares` and waits until the Pools snapshot shows
+exactly the test join as vault shares (and never goes on a pool funded exactly).
 
 ## Channels tab
 
@@ -160,18 +164,27 @@ stays only for the published-export audit at the halt.
   sha256 of `ics20-1` NUL `transfer/<channel>`, 20 bytes, bech32 `stride`).
 - Allocation: a route pool gets `ceil(escrow x rate)` at the **pool's own** rate (what it will actually pay out; the gap
   to Stride's frozen rate stays in the canonical pool); the canonical pool gets `vault_native + every pool's native -
-  every route allocation`, null while any non-canonical pool's share is unknown. `funded_exactly` is
+  every route allocation`, null while any non-canonical pool's share is unknown. For osmosis-1 the vault's native
+  token is also its gas token, so `config.OSMO_FEE_RESERVE` (the ~10 OSMO the plan tops the vault up with) comes off
+  `vault_native` first (never below zero); the zone's `fee_reserve` field carries it (0 elsewhere). A second canonical
+  pool, or a second pool on one route channel, fails the uniqueness check on both and neither is allocated (the
+  canonical share is null while a duplicate route is unresolved). `funded_exactly` is
   `vault_shares == allocation`: shares are minted 1:1 to native joined and stay in the vault, so it is the cumulative
   funding audit (redemptions later lower `native_balance`, not `vault_shares`). `rate` is native factor / stToken factor,
   `rate_gap_pct` is `(stride_rate - rate) / stride_rate x 100`.
 - Checks per pool (`checks: [{name, ok, detail}]`, `ok` null when the lookup it needs failed; `ready` is every check
-  true): code id 996; cw2 version 3.2.0; assets are one stToken plus the native; factors (stToken 1e18, native equals
-  alloyed); rate at or below Stride's; admin and moderator are the vault; no admin transfer in flight; active; no
-  limiters; stToken trace (canonical or a resolved route); native trace; uint128 headroom (`native_balance x native
-  factor`); corrupted set (empty while the vault holds no shares, exactly the native token once it does); no alloyed
-  shares outside the vault (`outside_shares = alloyed_supply - vault_shares`, a remaining native claim).
+  true): code id 996; cw2 version 3.2.0; assets are one stToken plus the native; factors (native / stToken is exactly
+  the pool's `rate` at whatever scale, 1e18 or 1e6; native equals alloyed); rate at or below Stride's; admin and
+  moderator are the vault; no admin transfer in flight; active; no limiters; stToken trace (canonical or a resolved
+  route); native trace; uint128 headroom (transmuter v3.2.0 normalises every balance to the lcm of the pool's factors,
+  `amount x lcm / factor`, in a Uint128 on each join, swap and exit, so `needed x (lcm / native factor)` must be below
+  2^128: the three 18-decimal zones overflow with 1e18-scaled factors and need 1e6-scaled ones, which the detail
+  says); corrupted set (empty while the vault holds no shares, exactly the native token once it does); no alloyed
+  shares outside the vault (`outside_shares = alloyed_supply - vault_shares`, a remaining native claim); only pool of
+  its kind/channel (false on every duplicate).
 - Per zone: `needed` is the stToken supply times Stride's rate rounded up, `coverage` is `(vault + pools' native) /
-  needed`, `missing_routes` lists the policy channels with no route pool, `pools` are ordered canonical, routes by Stride
+  needed`, `fee_reserve` is the uosmo kept back from the osmosis-1 allocation (0 elsewhere), `missing_routes` lists the
+  policy channels with no route pool, `pools` are ordered canonical, routes by Stride
   channel, unrecognised. `pools_ready`: a canonical pool exists, no missing route, every pool ready (null while the only
   failures are unknown checks). `pools_funded`: `pools_ready` and every pool funded exactly and its native token marked
   corrupted (null while an input is unknown). Every integer in the payload is a string.

@@ -29,9 +29,10 @@ PLACEHOLDER_VALOPER = "<LIVE_TEST_VALOPER>"
 PLACEHOLDER_DENOM = "<HOST_DENOM>"
 PLACEHOLDER_BALANCE = "<BALANCE>"
 PLACEHOLDER_OSMOSIS_DENOM = "<OSMOSIS_DENOM>"
-PLACEHOLDER_REST_AMOUNT = "<ALLOCATION_MINUS_TEST>"
+PLACEHOLDER_REST_AMOUNT = "<ALLOCATION_MINUS_VAULT_SHARES>"
 ANYONE = "anyone"
 NO_SNAPSHOT_REASON = "waiting for the Validators snapshot"
+ALLOCATION_UNKNOWN_REASON = "the pool's allocation is not known yet (see the Pools tab)"
 
 # The order the four admin transfers go out (spec §3): fees first, delegations after the withdrawals that feed them.
 ICA_ORDER = (funds.IcaType.FEE, funds.IcaType.WITHDRAWAL, funds.IcaType.DELEGATION, funds.IcaType.REDEMPTION)
@@ -178,9 +179,10 @@ def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
         title="ICA transfers: send every ICA's balance to the Osmosis vault",
         description=(
             "Per zone, MsgTransferFromIca for the FEE, WITHDRAWAL, DELEGATION and REDEMPTION ICAs, in that order. Each "
-            "ICA gets a test tx of one whole token first, then the rest tx for its live balance: copy that one only "
-            "after the test has settled on the Funds tab, and the amount is read from the Funds snapshot when the page "
-            "loads. A foreign denom an ICA holds (dYdX's USDC voucher) is its own tx for its full balance. The "
+            "ICA gets a test tx of one whole token first, then the rest tx for its live balance: the amount is read "
+            "from the Funds snapshot when the page loads, and the rest tx stays not ready while a transfer from that "
+            "ICA is in flight, since the balance it shows predates the landing. A foreign denom an ICA holds (dYdX's "
+            "USDC voucher) is its own tx for its full balance. The "
             "transfers time out after 24h; a refund means resubmit. Do one tx at a time, end to end: generate, two "
             "signatures, multisign and broadcast, then confirm it landed before starting the next."
         ),
@@ -217,10 +219,12 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
         step_id="join-pools",
         title="Pool funding: join and close every transmuter pool",
         description=(
-            "Osmosis, signed by the vault. Per pool (the canonical one first): a test join of one whole native token, "
-            "the remaining allocation, then mark_corrupted_assets for the native token. Order per zone: every pool's "
-            "test join first, then verify on the Pools tab (native one token, vault shares one token, no outside "
-            "shares, rate exact), then for each pool its rest join and its mark back to back, since the mark closes "
+            "Osmosis, signed by the vault. Per pool (the canonical one first): a test join of one whole native token "
+            "(or the whole allocation when that is smaller), the rest of the allocation once the Pools snapshot shows "
+            "the test join as vault shares, then mark_corrupted_assets for the native token. Order per zone: every "
+            "pool's test join first, then verify on the Pools tab (native one token, vault shares one token, no "
+            "outside shares, rate exact), then for each pool its rest join and its mark back to back, since the mark "
+            "closes "
             "the window in which an outsider could join. The vault needs OSMO for about 3 txs per pool at 0.015 OSMO "
             "each. Do one tx at a time, end to end: generate, two signatures, multisign and broadcast, then confirm "
             "it landed."
@@ -296,6 +300,7 @@ def _ica_transfer_txs(
     """Per ICA a test and a rest tx, then one tx per foreign denom it holds; placeholders until the Funds snapshot."""
     snapshot_reason = _snapshot_reason(zone_entry=funds_zone, data=funds_data, source="Funds")
     host_denom = PLACEHOLDER_DENOM if snapshot_reason else funds_zone["host_denom"]
+    transfers = [] if snapshot_reason else funds_zone.get("transfers") or []
     test_amount = 10**zone.decimals
 
     txs: list[MultisigTx] = []
@@ -303,6 +308,7 @@ def _ica_transfer_txs(
         balances = {} if snapshot_reason else funds_zone["ica_balances"].get(ica, {})
         host_balance = None if snapshot_reason else int(balances.get(host_denom, 0))
         reason = snapshot_reason or _nothing_to_send_reason(ica=ica, balance=host_balance, test_amount=test_amount, denom=host_denom)
+        rest_reason = reason or _in_flight_reason(ica=ica, transfers=transfers)
         balance_text = PLACEHOLDER_BALANCE if host_balance is None else str(host_balance)
 
         txs.append(
@@ -313,7 +319,7 @@ def _ica_transfer_txs(
         )
         txs.append(
             _ica_transfer_tx(
-                zone=zone, ica=ica, label="rest", amount=balance_text, denom=host_denom, reason=reason,
+                zone=zone, ica=ica, label="rest", amount=balance_text, denom=host_denom, reason=rest_reason,
                 title=f"{zone.chain_id} · {ica} ICA · rest: {balance_text}{host_denom} (live balance, copy after the test has settled)",
             )
         )
@@ -330,6 +336,16 @@ def _ica_transfer_txs(
 def _nothing_to_send_reason(ica: str, balance: int | None, test_amount: int, denom: str) -> str | None:
     if balance is not None and balance < test_amount:
         return f"the {ica} ICA holds {balance}{denom}, below the {test_amount}{denom} test amount: nothing to send"
+    return None
+
+
+def _in_flight_reason(ica: str, transfers: list[dict[str, Any]]) -> str | None:
+    """The rest tx waits while a transfer from the ICA is in flight: the snapshot's balance predates its landing."""
+    in_flight = any(
+        transfer["ica"] == ica and transfer["status"] == funds.TransferStatus.IN_FLIGHT for transfer in transfers
+    )
+    if in_flight:
+        return f"a transfer from the {ica} ICA is in flight: copy once it settles and the Funds snapshot refreshes"
     return None
 
 
@@ -413,12 +429,16 @@ def _empty_pool_tx(zone: config.ZoneConfig, reason: str) -> MultisigTx:
 
 
 def _join_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str | None, test_amount: int, is_test: bool) -> MultisigTx:
-    amount_text, reason = _join_amount(pool=pool, test_amount=test_amount, is_test=is_test)
+    amount_text, reason = (
+        _test_join_amount(pool=pool, test_amount=test_amount)
+        if is_test
+        else _rest_join_amount(pool=pool, test_amount=test_amount)
+    )
     reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or reason
     label = "test" if is_test else "rest"
     denom = osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM
     file_stem = _pool_file_stem(zone=zone, pool=pool, label=label)
-    join_title = f"test join, {test_amount}{denom}" if is_test else f"join rest, {amount_text}{denom}"
+    join_title = f"{'test join' if is_test else 'join rest'}, {amount_text}{denom}"
     return _osmosis_tx(
         zone=zone,
         title=f"{zone.chain_id} · {_pool_name(pool=pool)} · {join_title}",
@@ -430,19 +450,31 @@ def _join_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str |
     )
 
 
-def _join_amount(pool: dict[str, Any], test_amount: int, is_test: bool) -> tuple[str, str | None]:
-    """The amount to join and why it cannot go yet: the test is one whole token; the rest is what the allocation leaves."""
-    if is_test:
-        return str(test_amount), None
+def _test_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str | None]:
+    """One whole token, or the whole allocation when that is smaller; nothing goes until the allocation is known."""
     if pool["allocation"] is None:
-        return PLACEHOLDER_REST_AMOUNT, "the pool's allocation is not known yet (see the Pools tab)"
+        return str(test_amount), ALLOCATION_UNKNOWN_REASON
+    return str(min(int(pool["allocation"]), test_amount)), None
 
-    remaining = int(pool["allocation"]) - test_amount
+
+def _rest_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str | None]:
+    """What the allocation leaves after the shares the vault already holds, and why it cannot go yet: it waits until
+    the Pools snapshot shows exactly the test join, so the amount is computed from what actually landed."""
+    if pool["allocation"] is None:
+        return PLACEHOLDER_REST_AMOUNT, ALLOCATION_UNKNOWN_REASON
+
+    allocation = int(pool["allocation"])
+    vault_shares = int(pool["vault_shares"])
+    remaining = str(allocation - vault_shares)
     if pool["funded_exactly"]:
-        return str(remaining), "the pool is already funded exactly"
-    if remaining <= 0:
-        return str(remaining), f"the allocation ({pool['allocation']}) does not exceed the test join: nothing left to join"
-    return str(remaining), None
+        return remaining, "the pool is already funded exactly"
+    if allocation <= test_amount:
+        return remaining, f"the allocation ({allocation}) does not exceed the test join: nothing left to join"
+    if vault_shares != test_amount:
+        return remaining, (
+            f"the Pools snapshot does not show the test join yet (vault shares {vault_shares}, expected {test_amount})"
+        )
+    return remaining, None
 
 
 def _mark_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str | None) -> MultisigTx:

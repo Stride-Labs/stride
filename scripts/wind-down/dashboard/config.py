@@ -94,6 +94,9 @@ PROTOCOL_ADMIN = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
 GOV = "stride10d07y265gmmuvt4z0w9aw880jnsr700jefnezl"
 SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
 OSMOSIS_VAULT = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"
+# The uosmo the plan tops the vault up with for the funding txs (about 10 OSMO): gas, not backing, so the osmosis-1
+# canonical pool's allocation leaves it in the vault.
+OSMO_FEE_RESERVE = 10_000_000
 
 
 class RelayedBy(StrEnum):

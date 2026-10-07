@@ -3,7 +3,9 @@
 Absorbs scripts/wind-down/check_transmuter_pool.py (the per-pool gate) and does the coverage check live: every code-996
 pool the vault administers is discovered from Osmosis, assigned to a zone by the stToken it holds, resolved to a Stride
 channel when it serves a foreign route, and given its allocation (a route pool: its channel's escrow at the pool's own
-rate; the canonical pool: everything else the zone holds on Osmosis). Every integer in the payload is a string.
+rate; the canonical pool: everything else the zone holds on Osmosis, less the vault's OSMO fee reserve for osmosis-1).
+A second pool of the same kind, or on the same route channel, is flagged and left unallocated. Every integer in the
+payload is a string.
 """
 
 import base64
@@ -12,6 +14,7 @@ import dataclasses
 import decimal
 import functools
 import json
+import math
 from collections.abc import Callable
 from dataclasses import dataclass
 from decimal import Decimal
@@ -28,12 +31,10 @@ COSMWASMPOOL_LISTING_PATH = "/osmosis/cosmwasmpool/v1beta1/pools"
 CW2_INFO_KEY = (
     b"contract_info"  # the cw2 raw storage key that holds the contract name and version
 )
-ST_FACTOR = (
-    10**18
-)  # the stToken normalization factor every wind-down pool is created with
-UINT128_LIMIT = 2**128
+UINT128_LIMIT = 2**128  # the transmuter keeps every normalised balance in a Uint128
 ROUTE_HOPS = 2  # a route pool's stToken travelled Stride -> holder chain -> Osmosis
 ST_PREFIX = "st"
+CANONICAL_SLOT = "canonical"  # the one slot every canonical pool of a zone claims; a route pool claims its channel
 
 ZONE_WORKERS = 16
 POOL_WORKERS = 8
@@ -53,7 +54,7 @@ class CheckName(StrEnum):
     CODE_ID = "code id 996"
     CW2_VERSION = "cw2 version 3.2.0"
     ASSETS = "assets: one stToken denom + the native, nothing else"
-    FACTORS = "factors: stToken 1e18, native == alloyed"
+    FACTORS = "factors: native / stToken == rate, native == alloyed"
     RATE = "rate <= Stride's rate"
     ADMIN = "admin is the vault"
     MODERATOR = "moderator is the vault"
@@ -65,6 +66,7 @@ class CheckName(StrEnum):
     HEADROOM = "uint128 headroom"
     CORRUPTED = "corrupted set"
     NO_OUTSIDE_SHARES = "no alloyed shares outside the vault"
+    UNIQUE = "only pool of its kind/channel"
 
 
 # ---- payload
@@ -131,6 +133,7 @@ class ZonePools:
     st_supply: int
     needed: int  # st_supply x stride_rate, rounded up
     vault_native: int
+    fee_reserve: int  # uosmo the vault keeps for the funding txs (osmosis-1 only, 0 elsewhere): not allocated
     pools_native: int
     native_on_osmosis: int  # vault + pools
     coverage: (
@@ -256,6 +259,11 @@ class HostZoneInfo:
     host_denom: str
     stride_rate: str
     st_supply: int
+
+    @property
+    def needed(self) -> int:
+        """What the zone's pools must hold between them: the stToken supply at Stride's rate, rounded up."""
+        return ceil_times_rate(amount=self.st_supply, rate=self.stride_rate)
 
 
 # Contracts whose admin is not the vault: adminship of someone else's pool never changes, so a negative answer is
@@ -402,11 +410,15 @@ def build_pool_report(
     st: StAsset,
     zone: ZoneDenoms,
     stride_rate: str,
+    needed: int,
     vault_shares: int,
     route_lookup: RouteLookup | None,
     escrow: int | None,
 ) -> PoolReport:
-    """A route pool's allocation is known here; a canonical pool's is filled in by `allocate` once every route is."""
+    """A route pool's allocation is known here; a canonical pool's is filled in by `allocate` once every route is.
+
+    `needed` is what the zone's pools must hold between them: the headroom check sizes the pool by it.
+    """
     kind = _kind(st=st, zone=zone, route_lookup=route_lookup)
     route = route_lookup.route if route_lookup else None
     rate = pool_rate(raw=raw, st_denom=st.denom, native_denom=zone.osmosis_denom)
@@ -425,6 +437,7 @@ def build_pool_report(
         route_lookup=route_lookup,
         rate=rate,
         stride_rate=stride_rate,
+        needed=needed,
         vault_shares=vault_shares,
         outside_shares=outside_shares,
     )
@@ -453,9 +466,15 @@ def build_pool_report(
     )
 
 
-def allocate(reports: list[PoolReport], vault_native: int) -> list[PoolReport]:
-    """Give every canonical pool the remainder: what the zone holds on Osmosis less what the routes are owed."""
-    allocation = canonical_allocation(reports=reports, vault_native=vault_native)
+def allocate(reports: list[PoolReport], vault_native: int, fee_reserve: int = 0) -> list[PoolReport]:
+    """Flag the pools that share a slot (a second canonical pool, a second pool on one route channel) and leave them
+    unallocated, then give the canonical pool the remainder: what the zone holds on Osmosis less what the routes are
+    owed."""
+    duplicates = duplicate_slots(reports=reports)
+    flagged = [_flag_duplicate(report=report, duplicates=duplicates) for report in reports]
+
+    # Every canonical pool claims the same slot, so either none is a duplicate or all are.
+    allocation = canonical_allocation(reports=flagged, vault_native=vault_native, fee_reserve=fee_reserve)
     return [
         dataclasses.replace(
             report,
@@ -464,22 +483,63 @@ def allocate(reports: list[PoolReport], vault_native: int) -> list[PoolReport]:
             if allocation is None
             else report.vault_shares == allocation,
         )
-        if report.kind == PoolKind.CANONICAL
+        if report.kind == PoolKind.CANONICAL and CANONICAL_SLOT not in duplicates
         else report
-        for report in reports
+        for report in flagged
     ]
 
 
-def canonical_allocation(reports: list[PoolReport], vault_native: int) -> int | None:
-    """vault + every pool's native - every route's allocation; None while any non-canonical pool's share is unknown."""
+def canonical_allocation(reports: list[PoolReport], vault_native: int, fee_reserve: int = 0) -> int | None:
+    """vault (less the fee reserve, never below zero) + every pool's native - every route's allocation; None while any
+    non-canonical pool's share is unknown."""
     others = [report for report in reports if report.kind != PoolKind.CANONICAL]
     if any(report.allocation is None for report in others):
         return None
     return (
-        vault_native
+        max(vault_native - fee_reserve, 0)
         + sum(report.native_balance for report in reports)
         - sum(report.allocation for report in others)
     )
+
+
+def fee_reserve(chain_id: str) -> int:
+    """The uosmo the vault keeps for the funding txs: only osmosis-1's native token is also the gas token."""
+    return config.OSMO_FEE_RESERVE if chain_id == config.OSMOSIS_CHAIN_ID else 0
+
+
+def pool_slot(kind: PoolKind, route: Route | None) -> str | None:
+    """What a pool must be the only one of: the canonical slot or its route channel; None when it claims neither."""
+    if kind == PoolKind.CANONICAL:
+        return CANONICAL_SLOT
+    if kind == PoolKind.ROUTE and route is not None:
+        return f"route on {route.stride_channel}"
+    return None
+
+
+def duplicate_slots(reports: list[PoolReport]) -> dict[str, list[str]]:
+    """Slot -> the contracts claiming it, for every slot more than one pool claims."""
+    slots = {report.contract: pool_slot(kind=report.kind, route=report.route) for report in reports}
+    claims = {
+        slot: sorted(contract for contract, claimed in slots.items() if claimed == slot)
+        for slot in set(slots.values())
+        if slot is not None
+    }
+    return {slot: contracts for slot, contracts in claims.items() if len(contracts) > 1}
+
+
+def _flag_duplicate(report: PoolReport, duplicates: dict[str, list[str]]) -> PoolReport:
+    """A pool sharing its slot gets its uniqueness check failed and nothing allocated until one of them goes."""
+    slot = pool_slot(kind=report.kind, route=report.route)
+    if slot not in duplicates:
+        return report
+
+    failed = Check(
+        name=CheckName.UNIQUE,
+        ok=False,
+        detail=f"{len(duplicates[slot])} pools claim {slot}: {', '.join(duplicates[slot])}",
+    )
+    checks = [failed if entry.name == CheckName.UNIQUE else entry for entry in report.checks]
+    return dataclasses.replace(report, allocation=None, funded_exactly=None, checks=checks, ready=False)
 
 
 def route_allocation(escrow: int | None, rate: str | None) -> int | None:
@@ -499,10 +559,13 @@ def pool_rate(raw: RawPool, st_denom: str, native_denom: str) -> str | None:
     """native factor / stToken factor, 18 places, as the Funds tab computes it; None when either asset is missing."""
     if st_denom not in raw.assets or native_denom not in raw.assets:
         return None
-    rate = DECIMAL_CONTEXT.divide(
-        Decimal(raw.assets[native_denom]), Decimal(raw.assets[st_denom])
-    )
+    rate = factor_ratio(native_factor=raw.assets[native_denom], st_factor=raw.assets[st_denom])
     return str(rate.quantize(RATE_PLACES))
+
+
+def factor_ratio(native_factor: int, st_factor: int) -> Decimal:
+    """native factor / stToken factor, exact to DECIMAL_CONTEXT: the rate the factors encode at any scale."""
+    return DECIMAL_CONTEXT.divide(Decimal(native_factor), Decimal(st_factor))
 
 
 def rate_gap_pct(stride_rate: str, rate: str | None) -> str | None:
@@ -526,15 +589,19 @@ def build_checks(
     route_lookup: RouteLookup | None,
     rate: str | None,
     stride_rate: str,
+    needed: int,
     vault_shares: int,
     outside_shares: int | None,
 ) -> list[Check]:
-    """The gate checks of check_transmuter_pool.py, each n/a (ok None) when the lookup it needs failed."""
+    """The gate checks of check_transmuter_pool.py, each n/a (ok None) when the lookup it needs failed.
+
+    The uniqueness check passes here, where only one pool is in view; `allocate` fails it on the duplicates.
+    """
     st_factor = raw.assets.get(st.denom)
     native_factor = raw.assets.get(zone.osmosis_denom)
     alloyed_factor = raw.assets.get(raw.alloyed_denom)
     assets = set(raw.assets) - {raw.alloyed_denom}
-    native_balance = raw.liquidity.get(zone.osmosis_denom, 0)
+    route = route_lookup.route if route_lookup else None
     corrupted = raw.corrupted
     limiters = raw.limiters
     candidate = raw.admin_candidate
@@ -557,10 +624,13 @@ def build_checks(
         ),
         Check(
             name=CheckName.FACTORS,
-            ok=st_factor == ST_FACTOR
-            and native_factor is not None
-            and native_factor == alloyed_factor,
-            detail=f"stToken={st_factor} native={native_factor} alloyed={alloyed_factor}",
+            ok=_factors_ok(
+                st_factor=st_factor,
+                native_factor=native_factor,
+                alloyed_factor=alloyed_factor,
+                rate=rate,
+            ),
+            detail=f"stToken={st_factor} native={native_factor} alloyed={alloyed_factor}: rate {rate or '?'}",
         ),
         Check(
             name=CheckName.RATE,
@@ -596,12 +666,10 @@ def build_checks(
             ok=zone.osmosis_denom in raw.assets,
             detail=f"expects {zone.native_trace}",
         ),
-        Check(
-            name=CheckName.HEADROOM,
-            ok=None
-            if native_factor is None
-            else native_balance * native_factor < UINT128_LIMIT,
-            detail=f"native {native_balance} x factor {native_factor or '?'}",
+        _headroom_check(
+            factors=[raw.assets[denom] for denom in assets],
+            native_factor=native_factor,
+            needed=needed,
         ),
         Check(
             name=CheckName.CORRUPTED,
@@ -619,7 +687,41 @@ def build_checks(
             ok=None if outside_shares is None else outside_shares == 0,
             detail=f"{outside_shares if outside_shares is not None else '?'} shares outside the vault",
         ),
+        Check(
+            name=CheckName.UNIQUE,
+            ok=True,
+            detail=pool_slot(kind=kind, route=route) or "claims no slot",
+        ),
     ]
+
+
+def _factors_ok(
+    st_factor: int | None, native_factor: int | None, alloyed_factor: int | None, rate: str | None
+) -> bool:
+    """The factors encode the reported rate exactly, at whatever scale, and the alloyed asset tracks the native."""
+    if st_factor is None or native_factor is None or rate is None:
+        return False
+    exact = factor_ratio(native_factor=native_factor, st_factor=st_factor) == Decimal(rate)
+    return exact and native_factor == alloyed_factor
+
+
+def _headroom_check(factors: list[int], native_factor: int | None, needed: int) -> Check:
+    """The transmuter normalises every balance to the lcm of the pool's factors (amount x lcm / factor) in a Uint128 on
+    each join, swap and exit, so the amount the pool is meant to hold (at most the zone's `needed`) must fit once
+    scaled. An 18-decimal supply with 1e18-scaled factors does not; 1e6-scaled factors leave room."""
+    if native_factor is None:
+        return Check(name=CheckName.HEADROOM, ok=None, detail=f"needed {needed:.3e}; native factor unknown")
+
+    lcm = math.lcm(*factors)
+    normalised = needed * (lcm // native_factor)
+    detail = (
+        f"needed {needed:.3e} x (lcm {lcm:.3e} / native factor {native_factor}) = {normalised:.3e} "
+        f"vs 2^128 {UINT128_LIMIT:.3e}"
+    )
+    if normalised < UINT128_LIMIT:
+        return Check(name=CheckName.HEADROOM, ok=True, detail=detail)
+    advice = "use factors scaled to 1e6 (stToken 1000000, native round(rate x 1e6)) at creation"
+    return Check(name=CheckName.HEADROOM, ok=False, detail=f"{detail}: {advice}")
 
 
 # ---- pure logic: per zone
@@ -630,9 +732,10 @@ def build_zone_pools(
     host: HostZoneInfo,
     denoms: ZoneDenoms,
     vault_native: int,
+    fee_reserve: int,
     reports: list[PoolReport],
 ) -> ZonePools:
-    needed = ceil_times_rate(amount=host.st_supply, rate=host.stride_rate)
+    needed = host.needed
     pools_native = sum(report.native_balance for report in reports)
     native_on_osmosis = vault_native + pools_native
 
@@ -653,6 +756,7 @@ def build_zone_pools(
         st_supply=host.st_supply,
         needed=needed,
         vault_native=vault_native,
+        fee_reserve=fee_reserve,
         pools_native=pools_native,
         native_on_osmosis=native_on_osmosis,
         coverage=funds.coverage_ratio(covered=native_on_osmosis, needed=needed),
@@ -792,12 +896,14 @@ def _zone_pools(
         for raw, st in assigned
     ]
     vault_native = snapshot.vault_balances.get(denoms.osmosis_denom, 0)
+    reserve = fee_reserve(chain_id=zone.chain_id)
     return build_zone_pools(
         zone=zone,
         host=host,
         denoms=denoms,
         vault_native=vault_native,
-        reports=allocate(reports=reports, vault_native=vault_native),
+        fee_reserve=reserve,
+        reports=allocate(reports=reports, vault_native=vault_native, fee_reserve=reserve),
     )
 
 
@@ -840,6 +946,7 @@ def _pool_report(
         st=st,
         zone=denoms,
         stride_rate=host.stride_rate,
+        needed=host.needed,
         vault_shares=snapshot.vault_balances.get(raw.alloyed_denom, 0),
         route_lookup=route_lookup,
         escrow=escrow,

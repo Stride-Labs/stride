@@ -398,7 +398,7 @@ def collect() -> dict[str, Any]:
         )
         for side in host_sides
     ]
-    return _stringify_ints(
+    return chain.stringify_ints(
         {
             "zones": [dataclasses.asdict(zone) for zone in zones],
             "operators": [dataclasses.asdict(operator) for operator in operators],
@@ -1371,16 +1371,3 @@ def _format_amount(amount: int, decimals: int) -> str:
     """Whole tokens with two places, for notes; the page formats every tabulated amount itself."""
     scale = 10**decimals
     return f"{amount // scale:,}.{(amount % scale) * 100 // scale:02d}"
-
-
-def _stringify_ints(value: Any) -> Any:
-    """Every int (not bool) in a JSON-ready structure as a string, so 18-decimal amounts survive JSON.parse."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int):
-        return str(value)
-    if isinstance(value, dict):
-        return {key: _stringify_ints(item) for key, item in value.items()}
-    if isinstance(value, list):
-        return [_stringify_ints(item) for item in value]
-    return value

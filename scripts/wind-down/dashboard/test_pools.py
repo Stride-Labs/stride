@@ -15,7 +15,14 @@ WIND_DOWN_DIR = pathlib.Path(__file__).resolve().parent.parent
 VAULT = config.OSMOSIS_VAULT
 STRANGER = "osmo1stranger"
 STRIDE_RATE = "1.5"
+ST_FACTOR = 10**18  # the test pools use 1e18-scaled factors, as the six-decimal zones' real pools do
 RATE_FACTOR = 1_500_000_000_000_000_000  # native factor encoding a 1.5 rate against the 1e18 stToken factor
+NEEDED = 1_500_000  # the 1_000_000 stToken supply of the test zone at the 1.5 rate
+# The haqq zone's order of magnitude: an 18-decimal supply at its rate, and the factors its pool would be created with.
+HAQQ_NEEDED = 107_131_023 * 10**18
+HAQQ_RATE_FACTOR = 1_060_496_560_022_296_837
+HUB_NEEDED = 2_174_903 * 10**6
+HUB_RATE_FACTOR = 2_013_525_450_106_978_250
 
 ATOM_TRACE = pools.DenomTrace(path="transfer/channel-0", base_denom="uatom")
 ATOM_ON_OSMOSIS = chain.ibc_denom(path=ATOM_TRACE.full)
@@ -31,6 +38,8 @@ SECRET_TRACE = pools.DenomTrace(
 SECRET_STATOM = chain.ibc_denom(path=SECRET_TRACE.full)
 INJ_TRACE = pools.DenomTrace(path="transfer/channel-326", base_denom="stinj")
 CANONICAL_STINJ = chain.ibc_denom(path=INJ_TRACE.full)
+OSMO_TRACE = pools.DenomTrace(path="transfer/channel-326", base_denom="stuosmo")
+CANONICAL_STUOSMO = chain.ibc_denom(path=OSMO_TRACE.full)
 
 ATOM_ZONE = pools.zone_denoms(chain_id="cosmoshub-4", host_denom="uatom")
 HUB_ROUTE = pools.Route(
@@ -59,7 +68,7 @@ def raw_pool(
         "admin": VAULT,
         "alloyed_denom": alloyed_denom,
         "assets": {
-            st_denom: pools.ST_FACTOR,
+            st_denom: ST_FACTOR,
             ATOM_ON_OSMOSIS: RATE_FACTOR,
             alloyed_denom: RATE_FACTOR,
         },
@@ -76,12 +85,39 @@ def raw_pool(
     return pools.RawPool(**{**fields, **overrides})
 
 
+def osmo_pool(contract: str = "osmo1osmopool", native: int = 0) -> pools.RawPool:
+    """A green canonical stOSMO pool: the osmosis-1 zone, whose native token is the bare uosmo."""
+    alloyed_denom = f"factory/{contract}/alloyed/x"
+    return raw_pool(
+        contract=contract,
+        st_denom=CANONICAL_STUOSMO,
+        st_trace=OSMO_TRACE,
+        assets={CANONICAL_STUOSMO: ST_FACTOR, "uosmo": RATE_FACTOR, alloyed_denom: RATE_FACTOR},
+        liquidity={CANONICAL_STUOSMO: 0, "uosmo": native},
+        traces={CANONICAL_STUOSMO: OSMO_TRACE},
+    )
+
+
+def scaled_pool(st_factor: int, native_factor: int, alloyed_factor: int | None = None) -> pools.RawPool:
+    """The green canonical pool with its factors replaced: the alloyed factor follows the native unless given."""
+    raw = raw_pool()
+    return dataclasses.replace(
+        raw,
+        assets={
+            CANONICAL_STATOM: st_factor,
+            ATOM_ON_OSMOSIS: native_factor,
+            raw.alloyed_denom: native_factor if alloyed_factor is None else alloyed_factor,
+        },
+    )
+
+
 def report(
     raw: pools.RawPool,
     vault_shares: int = 0,
     route_lookup: pools.RouteLookup | None = None,
     escrow: int | None = None,
     stride_rate: str = STRIDE_RATE,
+    needed: int = NEEDED,
 ) -> pools.PoolReport:
     st = pools.st_asset_of(raw=raw, zone=ATOM_ZONE)
     assert st is not None
@@ -90,6 +126,7 @@ def report(
         st=st,
         zone=ATOM_ZONE,
         stride_rate=stride_rate,
+        needed=needed,
         vault_shares=vault_shares,
         route_lookup=route_lookup,
         escrow=escrow,
@@ -110,6 +147,7 @@ def zone_pools(
         ),
         denoms=ATOM_ZONE,
         vault_native=vault_native,
+        fee_reserve=0,
         reports=reports,
     )
 
@@ -274,7 +312,7 @@ class ClassificationTest(unittest.TestCase):
         raw = raw_pool()
         raw = dataclasses.replace(
             raw,
-            assets={**raw.assets, HUB_STATOM: pools.ST_FACTOR},
+            assets={**raw.assets, HUB_STATOM: ST_FACTOR},
             traces={**raw.traces, HUB_STATOM: HUB_TRACE},
         )
 
@@ -499,7 +537,7 @@ class ChecksTest(unittest.TestCase):
         raw = raw_pool()
         raw = dataclasses.replace(
             raw,
-            assets={**raw.assets, HUB_STATOM: pools.ST_FACTOR},
+            assets={**raw.assets, HUB_STATOM: ST_FACTOR},
             traces={**raw.traces, HUB_STATOM: HUB_TRACE},
         )
 
@@ -507,18 +545,8 @@ class ChecksTest(unittest.TestCase):
 
         self.assertIn(HUB_STATOM, failing.detail)
 
-    def test_inverted_factors(self) -> None:
-        raw = raw_pool()
-        raw = dataclasses.replace(
-            raw,
-            assets={
-                CANONICAL_STATOM: RATE_FACTOR,
-                ATOM_ON_OSMOSIS: pools.ST_FACTOR,
-                raw.alloyed_denom: pools.ST_FACTOR,
-            },
-        )
-
-        pool = report(raw)
+    def test_inverted_factors_encode_no_exact_rate(self) -> None:
+        pool = report(scaled_pool(st_factor=RATE_FACTOR, native_factor=ST_FACTOR))
 
         self.assertEqual(check(pool, pools.CheckName.FACTORS).ok, False)
         self.assertEqual(pool.rate, "0.666666666666666667")
@@ -527,12 +555,40 @@ class ChecksTest(unittest.TestCase):
         )  # below Stride's rate: not a payout risk, but wrong
 
     def test_alloyed_factor_must_equal_the_native_factor(self) -> None:
-        raw = raw_pool()
-        raw = dataclasses.replace(
-            raw, assets={**raw.assets, raw.alloyed_denom: pools.ST_FACTOR}
+        failing = self.assert_fails(
+            scaled_pool(st_factor=ST_FACTOR, native_factor=RATE_FACTOR, alloyed_factor=ST_FACTOR),
+            pools.CheckName.FACTORS,
         )
 
-        self.assert_fails(raw, pools.CheckName.FACTORS)
+        self.assertEqual(failing.detail, f"stToken={ST_FACTOR} native={RATE_FACTOR} alloyed={ST_FACTOR}: rate 1.500000000000000000")
+
+    def test_factors_pass_at_the_1e18_and_the_1e6_scale(self) -> None:
+        scaled_1e18 = report(scaled_pool(st_factor=10**18, native_factor=RATE_FACTOR))
+        scaled_1e6 = report(scaled_pool(st_factor=1_000_000, native_factor=1_500_000))
+
+        for pool in (scaled_1e18, scaled_1e6):
+            self.assertEqual(check(pool, pools.CheckName.FACTORS).ok, True)
+            self.assertEqual(pool.rate, "1.500000000000000000")
+            self.assertEqual(pool.rate_gap_pct, "0.0000")
+            self.assertEqual(check(pool, pools.CheckName.RATE).ok, True)
+        self.assertIn("stToken=1000000 native=1500000 alloyed=1500000", check(scaled_1e6, pools.CheckName.FACTORS).detail)
+
+    def test_rate_gap_and_rate_check_work_at_the_1e6_scale(self) -> None:
+        raw = scaled_pool(st_factor=1_000_000, native_factor=1_500_000)
+
+        below = report(raw, stride_rate="1.6")
+        above = report(raw, stride_rate="1.499999")
+
+        self.assertEqual(below.rate_gap_pct, "6.2500")
+        self.assertEqual(check(below, pools.CheckName.RATE).ok, True)
+        self.assertEqual(check(above, pools.CheckName.RATE).ok, False)
+        self.assertEqual(above.rate_gap_pct, "-0.0001")
+
+    def test_mismatched_alloyed_factor_fails_at_the_1e6_scale(self) -> None:
+        self.assert_fails(
+            scaled_pool(st_factor=1_000_000, native_factor=1_500_000, alloyed_factor=1_000_000),
+            pools.CheckName.FACTORS,
+        )
 
     def test_a_rate_above_strides_pays_out_more_than_its_backing(self) -> None:
         pool = report(raw_pool(), stride_rate="1.499999999999999999")
@@ -570,7 +626,7 @@ class ChecksTest(unittest.TestCase):
         raw = raw_pool()
         raw = dataclasses.replace(
             raw,
-            assets={CANONICAL_STATOM: pools.ST_FACTOR, raw.alloyed_denom: RATE_FACTOR},
+            assets={CANONICAL_STATOM: ST_FACTOR, raw.alloyed_denom: RATE_FACTOR},
         )
 
         pool = report(raw)
@@ -586,14 +642,32 @@ class ChecksTest(unittest.TestCase):
         self.assertIsNone(check(pool, pools.CheckName.RATE).ok)
         self.assertIsNone(check(pool, pools.CheckName.HEADROOM).ok)
 
-    def test_uint128_headroom(self) -> None:
-        limit = pools.UINT128_LIMIT // RATE_FACTOR
+    def test_uint128_headroom_is_sized_by_needed_on_an_empty_pool(self) -> None:
+        # Every pool is empty before funding, so the balance says nothing: the zone's `needed` is what must fit once the
+        # transmuter scales it by lcm(factors) / native factor.
+        haqq_1e18 = report(scaled_pool(st_factor=10**18, native_factor=HAQQ_RATE_FACTOR), needed=HAQQ_NEEDED)
+        hub_1e18 = report(scaled_pool(st_factor=10**18, native_factor=HUB_RATE_FACTOR), needed=HUB_NEEDED)
+        haqq_1e6 = report(scaled_pool(st_factor=1_000_000, native_factor=1_060_497), needed=HAQQ_NEEDED)
 
-        fits = report(raw_pool(native=limit))
-        overflows = report(raw_pool(native=limit + 1))
+        self.assertEqual(check(haqq_1e18, pools.CheckName.HEADROOM).ok, False)
+        self.assertEqual(check(hub_1e18, pools.CheckName.HEADROOM).ok, True)
+        self.assertEqual(check(haqq_1e6, pools.CheckName.HEADROOM).ok, True)
+        self.assertEqual(
+            check(haqq_1e18, pools.CheckName.HEADROOM).detail,
+            f"needed 1.071e+26 x (lcm 1.060e+36 / native factor {HAQQ_RATE_FACTOR}) = 1.071e+44 vs 2^128 3.403e+38: "
+            "use factors scaled to 1e6 (stToken 1000000, native round(rate x 1e6)) at creation",
+        )
+        self.assertEqual(
+            check(haqq_1e6, pools.CheckName.HEADROOM).detail,
+            "needed 1.071e+26 x (lcm 1.060e+12 / native factor 1060497) = 1.071e+32 vs 2^128 3.403e+38",
+        )
+        self.assertFalse(haqq_1e18.ready)
 
-        self.assertEqual(check(fits, pools.CheckName.HEADROOM).ok, True)
-        self.assertEqual(check(overflows, pools.CheckName.HEADROOM).ok, False)
+    def test_uint128_headroom_uses_the_lcm_when_the_factors_share_a_divisor(self) -> None:
+        # The Hub-like native factor shares 250 with 1e18, so the lcm is 1e18 x native / 250 and the multiplier 4e15.
+        pool = report(scaled_pool(st_factor=10**18, native_factor=HUB_RATE_FACTOR), needed=HUB_NEEDED)
+
+        self.assertEqual(check(pool, pools.CheckName.HEADROOM).detail, "needed 2.175e+12 x (lcm 8.054e+33 / native factor 2013525450106978250) = 8.700e+27 vs 2^128 3.403e+38")
 
     def test_corrupted_set_must_match_the_funding_phase(self) -> None:
         marked_before_funding = report(
@@ -686,6 +760,63 @@ class AllocationTest(unittest.TestCase):
         self.assertEqual(allocated[1].allocation, 1_000 + 100 + 30 - 30)
         self.assertFalse(allocated[1].funded_exactly)
         self.assertEqual(allocated[0], hub)  # route reports are untouched
+
+    def test_the_osmosis_zone_keeps_the_fee_reserve_out_of_the_allocation(self) -> None:
+        canonical = report(raw_pool(native=100))
+        reserve = pools.fee_reserve(chain_id="osmosis-1")
+
+        osmosis = pools.allocate(reports=[canonical], vault_native=25_000_000, fee_reserve=reserve)
+        short = pools.allocate(reports=[canonical], vault_native=5_000_000, fee_reserve=reserve)
+        hub = pools.allocate(reports=[canonical], vault_native=25_000_000, fee_reserve=pools.fee_reserve(chain_id="cosmoshub-4"))
+
+        self.assertEqual(reserve, config.OSMO_FEE_RESERVE)
+        self.assertEqual(osmosis[0].allocation, 25_000_000 - 10_000_000 + 100)
+        self.assertEqual(short[0].allocation, 100)  # the reserve never pushes the vault below zero
+        self.assertEqual(hub[0].allocation, 25_000_000 + 100)
+
+    def test_two_canonical_pools_are_duplicates_and_neither_is_allocated(self) -> None:
+        first = report(raw_pool(contract="osmo1canonb", native=100), vault_shares=100)
+        second = report(raw_pool(contract="osmo1canona", native=50))
+
+        allocated = pools.allocate(reports=[first, second], vault_native=1_000)
+
+        self.assertEqual([pool.allocation for pool in allocated], [None, None])
+        self.assertEqual([pool.funded_exactly for pool in allocated], [None, None])
+        self.assertEqual([check(pool, pools.CheckName.UNIQUE).ok for pool in allocated], [False, False])
+        self.assertEqual(check(allocated[0], pools.CheckName.UNIQUE).detail, "2 pools claim canonical: osmo1canona, osmo1canonb")
+        self.assertEqual([pool.ready for pool in allocated], [False, False])
+
+    def test_two_route_pools_on_one_channel_are_duplicates_and_block_the_canonical_share(self) -> None:
+        canonical = report(raw_pool(native=100))
+        hub = report(
+            raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE, native=30),
+            route_lookup=HUB_LOOKUP,
+            escrow=20,
+        )
+        twin = report(
+            raw_pool(contract="osmo1hubtwin", st_denom=HUB_STATOM, st_trace=HUB_TRACE, native=30),
+            route_lookup=HUB_LOOKUP,
+            escrow=20,
+        )
+
+        allocated = pools.allocate(reports=[canonical, hub, twin], vault_native=1_000)
+
+        self.assertEqual([pool.allocation for pool in allocated], [None, None, None])
+        self.assertEqual([check(pool, pools.CheckName.UNIQUE).ok for pool in allocated], [True, False, False])
+        self.assertEqual(check(allocated[1], pools.CheckName.UNIQUE).detail, "2 pools claim route on channel-0: osmo1hub, osmo1hubtwin")
+        self.assertEqual(check(allocated[0], pools.CheckName.UNIQUE).detail, "canonical")
+        self.assertTrue(allocated[0].ready)
+        self.assertEqual([pool.ready for pool in allocated[1:]], [False, False])
+
+    def test_unrecognised_and_unresolved_pools_claim_no_slot(self) -> None:
+        unrecognised = report(
+            raw_pool(contract="osmo1secret", st_denom=SECRET_STATOM, st_trace=SECRET_TRACE),
+            route_lookup=pools.RouteLookup(chain_id="secret-4", route=None),
+        )
+        unresolved = report(raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE), route_lookup=None)
+
+        self.assertEqual(pools.duplicate_slots(reports=[unrecognised, unrecognised, unresolved, unresolved]), {})
+        self.assertEqual(check(unrecognised, pools.CheckName.UNIQUE).detail, "claims no slot")
 
     def test_canonical_is_funded_exactly_when_the_vault_holds_that_many_shares(
         self,
@@ -852,6 +983,24 @@ class ZoneTest(unittest.TestCase):
         self.assertIsNone(unknown_check.pools_ready)
         self.assertFalse(failing_and_unknown.pools_ready)
 
+    def test_duplicate_pools_keep_the_zone_not_ready(self) -> None:
+        twins = pools.allocate(
+            reports=[report(raw_pool(contract="osmo1a")), report(raw_pool(contract="osmo1b"))], vault_native=0
+        )
+        hub = self.route_report(contract="osmo1hub", stride_channel="channel-0", counterparty="channel-391")
+        hub_twin = self.route_report(contract="osmo1hubtwin", stride_channel="channel-0", counterparty="channel-391")
+        route_twins = pools.allocate(reports=[report(raw_pool()), hub, hub_twin], vault_native=0)
+
+        with mock.patch.dict(config.REQUIRED_ROUTES, {"stuatom": frozenset({"channel-0"})}):
+            two_canonical = zone_pools(reports=twins + [hub])
+            two_routes = zone_pools(reports=route_twins)
+
+        self.assertFalse(two_canonical.pools_ready)
+        self.assertFalse(two_canonical.pools_funded)
+        self.assertFalse(two_routes.pools_ready)
+        self.assertEqual(two_routes.missing_routes, [])
+        self.assertEqual([pool.allocation for pool in two_routes.pools], [None, None, None])
+
     def test_pools_funded_needs_ready_funded_exactly_and_marked_everywhere(
         self,
     ) -> None:
@@ -965,6 +1114,7 @@ class CollectTest(unittest.TestCase):
         self.assertEqual(zone.pools[1].allocation, 30)
         self.assertEqual(zone.pools[0].allocation, 5 + 1_000 + 30 - 30)
         self.assertEqual(zone.vault_native, 5)
+        self.assertEqual(zone.fee_reserve, 0)
         self.assertTrue(zone.pools_ready)
         self.assertFalse(
             zone.pools_funded
@@ -972,6 +1122,7 @@ class CollectTest(unittest.TestCase):
 
         encoded = json.loads(json.dumps(payload))
         self.assertEqual(encoded["zones"][0]["needed"], "1500000")
+        self.assertEqual(encoded["zones"][0]["fee_reserve"], "0")
         self.assertEqual(encoded["zones"][0]["pools"][0]["kind"], "canonical")
         self.assertEqual(
             encoded["zones"][0]["pools"][1]["route"], dataclasses.asdict(HUB_ROUTE)
@@ -985,6 +1136,25 @@ class CollectTest(unittest.TestCase):
         self.assertEqual(
             encoded["zones"][1], {"chain_id": "juno-1", "error": "TimeoutError: slow"}
         )
+
+    def test_the_osmosis_zone_sizes_its_pool_by_needed_and_keeps_the_fee_reserve(self) -> None:
+        pool = osmo_pool()
+        snapshot = pools.OsmosisSnapshot(vault_balances={"uosmo": 15_000_000}, pools=[pool])
+        osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
+
+        with mock.patch.object(pools, "_supply", return_value=10**6):
+            zone = pools._zone_pools(
+                zone=config.ZONES_BY_CHAIN_ID["osmosis-1"],
+                host_zone={"host_denom": "uosmo", "redemption_rate": STRIDE_RATE},
+                stride=chain.stride_chain(),
+                osmosis=osmosis,
+                snapshot=snapshot,
+            )
+
+        self.assertEqual((zone.vault_native, zone.fee_reserve), (15_000_000, config.OSMO_FEE_RESERVE))
+        self.assertEqual(zone.pools[0].allocation, 15_000_000 - config.OSMO_FEE_RESERVE)
+        self.assertEqual(zone.needed, 1_500_000)
+        self.assertIn("needed 1.500e+06", check(zone.pools[0], pools.CheckName.HEADROOM).detail)
 
     def test_a_zone_failure_becomes_an_error_entry_and_an_unreadable_osmosis_fails_every_zone(
         self,

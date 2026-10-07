@@ -231,16 +231,26 @@ def fake_funds() -> dict[str, object]:
     }
 
 
-def pool_entry(contract: str, kind: str, pool_id: str | None, allocation: str | None, funded_exactly: bool | None) -> dict[str, object]:
-    return {"contract": contract, "kind": kind, "pool_id": pool_id, "allocation": allocation, "funded_exactly": funded_exactly}
+def pool_entry(
+    contract: str, kind: str, pool_id: str | None, allocation: str | None, funded_exactly: bool | None, vault_shares: str = "0"
+) -> dict[str, object]:
+    return {
+        "contract": contract,
+        "kind": kind,
+        "pool_id": pool_id,
+        "allocation": allocation,
+        "funded_exactly": funded_exactly,
+        "vault_shares": vault_shares,
+    }
 
 
 def fake_pools(**overrides: object) -> dict[str, object]:
+    # The test joins have landed: the vault holds one token of shares in each fundable pool, so the rest joins are ready.
     pools = [
         # Route first on purpose: the set puts the canonical pool first whatever the payload order.
-        pool_entry(ROUTE_CONTRACT, "route", None, "3000000", False),
+        pool_entry(ROUTE_CONTRACT, "route", None, "3000000", False, vault_shares="1000000"),
         pool_entry("osmo1unrecognisedcontract", "unrecognised", "9", None, None),
-        pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False),
+        pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, vault_shares="1000000"),
     ]
     return {
         "zones": [
@@ -362,6 +372,33 @@ class IcaTransfersTest(unittest.TestCase):
         data = {"zones": [{"chain_id": COSMOS, "host_denom": "uatom", "ica_balances": {ica: {"uatom": "1000000"} for ica in ("FEE", "WITHDRAWAL", "DELEGATION", "REDEMPTION")}}]}
 
         self.assertTrue(all(tx.ready for tx in transfer_txs(COSMOS, funds_data=data)))
+
+    def test_an_in_flight_transfer_blocks_the_rest_but_not_the_test(self) -> None:
+        def flight(ica: str, status: str) -> dict[str, object]:
+            return {"time": "t", "height": "1", "ica": ica, "sequence": "7", "amount": "1000000", "denom": "uatom", "status": status}
+
+        data = fake_funds()
+        data["zones"][1]["transfers"] = [flight("FEE", "in flight"), flight("DELEGATION", "settled")]
+
+        txs = transfer_txs(COSMOS, funds_data=data)
+        fee_test, fee_rest = [tx for tx in txs if "FEE ICA" in tx.title]
+        delegation = [tx for tx in txs if "DELEGATION ICA" in tx.title]
+
+        self.assertEqual((fee_test.ready, fee_test.reason), (True, None))
+        self.assertEqual(
+            (fee_rest.ready, fee_rest.reason),
+            (False, "a transfer from the FEE ICA is in flight: copy once it settles and the Funds snapshot refreshes"),
+        )
+        self.assertIn("FEE 2500000uatom ", fee_rest.commands[0].text)  # the stale amount stays visible
+        self.assertEqual([(tx.ready, tx.reason) for tx in delegation], [(True, None)] * 2)
+
+    def test_an_unknown_transfer_index_does_not_block_the_rest(self) -> None:
+        data = fake_funds()
+        data["zones"][1]["transfers"] = None
+
+        fee = [tx for tx in transfer_txs(COSMOS, funds_data=data) if "FEE ICA" in tx.title]
+
+        self.assertEqual([(tx.ready, tx.reason) for tx in fee], [(True, None)] * 2)
 
     def test_zone_error_missing_zone_and_missing_snapshot_are_not_ready_with_placeholders(self) -> None:
         cases = [
@@ -487,33 +524,67 @@ class PoolFundingTest(unittest.TestCase):
     def test_unrecognised_pools_are_not_funded(self) -> None:
         self.assertFalse(any("unrecognised" in tx.title or "osmo1unrecognisedcontract" in tx.commands[0].text for tx in pool_txs()))
 
-    def test_rest_join_is_not_ready_until_the_allocation_is_known(self) -> None:
+    def test_neither_join_is_ready_until_the_allocation_is_known(self) -> None:
         pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", None, None)]
+        reason = "the pool's allocation is not known yet (see the Pools tab)"
 
-        rest = next(tx for tx in pool_txs(pools_data=fake_pools(pools=pools)) if "join rest" in tx.title)
+        txs = pool_txs(pools_data=fake_pools(pools=pools))
+        test_join, rest, mark = txs
 
-        self.assertEqual((rest.ready, rest.reason), (False, "the pool's allocation is not known yet (see the Pools tab)"))
-        self.assertIn("--amount <ALLOCATION_MINUS_TEST>" + OSMOSIS_DENOM, rest.commands[0].text)
+        self.assertEqual([(tx.ready, tx.reason) for tx in (test_join, rest)], [(False, reason)] * 2)
+        self.assertIn(f"--amount 1000000{OSMOSIS_DENOM} ", test_join.commands[0].text)
+        self.assertIn("--amount <ALLOCATION_MINUS_VAULT_SHARES>" + OSMOSIS_DENOM, rest.commands[0].text)
+        self.assertTrue(mark.ready)
 
     def test_rest_join_is_not_ready_when_the_pool_is_funded_exactly(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True)]
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000")]
 
         txs = pool_txs(pools_data=fake_pools(pools=pools))
         rest = next(tx for tx in txs if "join rest" in tx.title)
 
         self.assertEqual((rest.ready, rest.reason), (False, "the pool is already funded exactly"))
+        self.assertIn(f"--amount 0{OSMOSIS_DENOM} ", rest.commands[0].text)
         self.assertTrue(all(tx.ready for tx in txs if "join rest" not in tx.title))
 
-    def test_rest_join_is_not_ready_when_the_allocation_does_not_exceed_the_test(self) -> None:
+    def test_an_allocation_below_the_test_amount_is_joined_whole_by_the_test_and_leaves_no_rest(self) -> None:
+        # Live: the stuatom channel-11 route holds ~20,136 uatom of escrow, far below the one-token test join.
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "20136", False)]
+
+        test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
+
+        self.assertEqual((test_join.ready, test_join.reason), (True, None))
+        self.assertEqual(test_join.title, f"cosmoshub-4 · canonical pool 1234 · test join, 20136{OSMOSIS_DENOM}")
+        self.assertIn(f"--amount 20136{OSMOSIS_DENOM} ", test_join.commands[0].text)
+        self.assertEqual((rest.ready, rest.reason), (False, "the allocation (20136) does not exceed the test join: nothing left to join"))
+
+    def test_an_allocation_equal_to_the_test_amount_leaves_no_rest(self) -> None:
         pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "1000000", False)]
 
-        rest = next(tx for tx in pool_txs(pools_data=fake_pools(pools=pools)) if "join rest" in tx.title)
+        test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
 
+        self.assertIn(f"--amount 1000000{OSMOSIS_DENOM} ", test_join.commands[0].text)
+        self.assertTrue(test_join.ready)
         self.assertEqual(rest.reason, "the allocation (1000000) does not exceed the test join: nothing left to join")
         self.assertFalse(rest.ready)
 
+    def test_rest_join_waits_until_the_snapshot_shows_exactly_the_test_join(self) -> None:
+        cases = [("0", "5000000"), ("999999", "4000001"), ("2000000", "3000000")]
+        for vault_shares, remaining in cases:
+            with self.subTest(vault_shares=vault_shares):
+                pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, vault_shares=vault_shares)]
+
+                test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
+
+                self.assertTrue(test_join.ready)
+                self.assertEqual(
+                    (rest.ready, rest.reason),
+                    (False, f"the Pools snapshot does not show the test join yet (vault shares {vault_shares}, expected 1000000)"),
+                )
+                self.assertIn(f"--amount {remaining}{OSMOSIS_DENOM} ", rest.commands[0].text)
+                self.assertEqual(rest.title, f"cosmoshub-4 · canonical pool 1234 · join rest, {remaining}{OSMOSIS_DENOM}")
+
     def test_allocation_one_above_the_test_is_ready_for_a_single_unit(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "1000001", False)]
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "1000001", False, vault_shares="1000000")]
 
         rest = next(tx for tx in pool_txs(pools_data=fake_pools(pools=pools)) if "join rest" in tx.title)
 
@@ -546,6 +617,13 @@ class PoolFundingTest(unittest.TestCase):
         self.assertIn("every pool's test join first", description)
         self.assertIn("then for each pool its rest join and its mark back to back", description)
         self.assertIn("about 3 txs per pool at 0.015 OSMO each", description)
+        self.assertIn("(or the whole allocation when that is smaller)", description)
+        self.assertIn("once the Pools snapshot shows the test join as vault shares", description)
+
+    def test_transfers_description_states_the_in_flight_gate(self) -> None:
+        description = sets_by_id(None)["ica-transfers"].description
+
+        self.assertIn("stays not ready while a transfer from that ICA is in flight", description)
 
 
 class MultisigBodyTest(unittest.TestCase):

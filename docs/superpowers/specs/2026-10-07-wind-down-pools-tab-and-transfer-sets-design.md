@@ -72,27 +72,35 @@ native_marked (bool), checks: [{name, ok: bool|null, detail}], ready (bool: ever
 
 Integers are strings. `allocation`: route pool = `ceil(escrow × rate)` using the **pool's own** rate
 (what it will actually pay out; the gap to the frozen rate stays in the canonical pool); canonical =
-`vault_native + Σ pools' native − Σ route allocations` (everything else the zone has on Osmosis),
-null when any input is unknown. `funded_exactly` = `vault_shares == allocation` (shares are minted
+`vault_native + Σ pools' native − Σ route allocations` (everything else the zone has on Osmosis; for
+osmosis-1 `vault_native` less `config.OSMO_FEE_RESERVE`, the ~10 OSMO the vault keeps for gas, never
+below zero), null when any input is unknown. A second canonical pool, or a second pool on one route
+channel, fails the uniqueness check on both and neither is allocated. `funded_exactly` = `vault_shares == allocation` (shares are minted
 1:1 to native joined and stay in the vault, so this is the cumulative funding audit the spec says the
 coverage check is not; redemptions later lower `native_balance` but not `vault_shares`).
 
 Checks (ported from `check_transmuter_pool.py`, each `ok` null when its lookup failed):
 `code id 996`; `cw2 version 3.2.0` (raw key `contract_info`); `assets: one stToken denom + the native,
-nothing else`; `factors: stToken 1e18, native == alloyed`; `rate ≤ Stride's rate` (detail shows the
+nothing else`; `factors: native / stToken == rate, native == alloyed` (any scale: 1e18 for the
+six-decimal zones, 1e6 for the three 18-decimal ones, whose supply overflows otherwise; `rate` is the
+ratio at either scale); `rate ≤ Stride's rate` (detail shows the
 gap; a pool priced above the frozen rate would pay out more than its backing); `admin is the vault`;
 `moderator is the vault`; `no admin transfer in flight` (`get_admin_candidate` null); `active`;
 `no limiters`; `stToken trace` (canonical: equals `transfer/channel-326/<st_denom>`; route: two hops
 ending in `/<st_denom>` and resolved to a policy channel); `native trace equals
-transfer/<OSMOSIS_CHANNEL_TO_HOST[zone]>/<host_denom>`; `uint128 headroom` (native_balance × native
-factor < 2^128); `corrupted set` (ok when empty and `vault_shares == 0`, or exactly `[native]` and
-`vault_shares > 0`); `no alloyed shares outside the vault`.
+transfer/<OSMOSIS_CHANNEL_TO_HOST[zone]>/<host_denom>`; `uint128 headroom` (`needed × (lcm(factors) /
+native factor) < 2^128`: transmuter v3.2.0 `weight.rs` normalises every balance to the lcm of the
+pool's factors in a Uint128 on each join, swap and exit, so it is sized by what the pool is meant to
+hold, not by its balance, which is 0 before funding; the detail says to use 1e6-scaled factors when it
+fails); `corrupted set` (ok when empty and `vault_shares == 0`, or exactly `[native]` and
+`vault_shares > 0`); `no alloyed shares outside the vault`; `only pool of its kind/channel` (false on
+every duplicate).
 
 ### Per zone: `ZonePools`
 
 ```
 chain_id, symbol, decimals, st_denom, osmosis_denom, host_denom, stride_rate, st_supply, needed (supply × stride_rate, rounded up),
-vault_native, pools_native, native_on_osmosis (vault + pools), coverage (ratio str|null),
+vault_native, fee_reserve (uosmo kept back from the osmosis-1 allocation; 0 elsewhere), pools_native, native_on_osmosis (vault + pools), coverage (ratio str|null),
 missing_routes: [stride channel ids in REQUIRED_ROUTES[st_denom] with no pool],
 pools: [PoolReport] (canonical first, then routes by stride_channel),
 pools_ready: bool|null (a canonical pool exists, no missing route, every pool ready),
@@ -126,14 +134,17 @@ Commands follow the existing generate / sign ×3 / multisign+broadcast shape wit
   DELEGATION, REDEMPTION; for each ICA a `test` tx of one whole token (`10**decimals` + host denom) and a
   `rest` tx of the ICA's current host-denom balance from the Funds snapshot (title says
   "live balance, copy after the test has settled"); `ready=False` with a reason when the balance is
-  below the test amount (nothing to send) or the snapshot is missing. Each foreign denom an ICA holds
+  below the test amount (nothing to send) or the snapshot is missing, and the `rest` tx alone while a
+  transfer from that ICA is in flight in the Funds zone's `transfers` (its balance predates the landing). Each foreign denom an ICA holds
   (e.g. dYdX's USDC voucher) gets one `rest`-style tx for its full balance.
   `strided tx stakeibc transfer-from-ica <chain_id> <ICA> <amount><denom> --from <MULTISIG_ADDRESS> --generate-only --chain-id stride-1 --node <NODE> --gas 600000 --fees 3000ustrd > /tmp/wind-down/transfer-<chain_id>-<ica lower>-<test|rest|denom-suffix>.unsigned.json`.
 - **`staketia-claim-balance`** (celestia only): `test` = `1000000` utia, `rest` = `0` (the whole
   remainder): `strided tx stakeibc transfer-staketia-claim-balance <amount> …` same flags.
 - **`pool-funding`** (step suffix `join-pools`), Osmosis, per zone, per pool from the Pools snapshot
-  (canonical first): `test join` (one whole native token), `join rest` (`allocation − 10**decimals`,
-  `ready=False` when the allocation is unknown or already funded exactly), `mark corrupted`.
+  (canonical first): `test join` (one whole native token, or the whole allocation when that is smaller;
+  `ready=False` while the allocation is unknown), `join rest` (`allocation − vault_shares`, `ready=False`
+  when the allocation is unknown, does not exceed the test join, is already funded exactly, or the Pools
+  snapshot does not yet show exactly the test join as `vault_shares`), `mark corrupted`.
   Generate: `osmosisd tx wasm execute <contract> '<msg>' [--amount <n><osmosis_denom>] --from osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af --generate-only --chain-id osmosis-1 --node https://osmosis-strd-rpc.polkachu.com:443 --gas 1500000 --fees 15000uosmo > /tmp/wind-down/pool-<chain_id>-<pool_id or contract[-6:]>-<test|rest|mark>.unsigned.json`
   with `{"join_pool":{}}` for joins and `{"mark_corrupted_assets":{"denoms":["<osmosis_denom>"]}}` for
   the mark (transmuter v3.2.0 execute variants). Sign / multisign / broadcast with `osmosisd`, the same
