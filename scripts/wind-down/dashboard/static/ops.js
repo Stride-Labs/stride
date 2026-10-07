@@ -15,7 +15,7 @@ let today = '';
 let lastBody = ''; // the raw /api/ops answer last drawn, so an unchanged poll does not re-render
 const sectionOpen = new Map(); // block key -> open, once the user has toggled it by hand
 const detailsOpen = new Set(); // step ids whose "details" the user opened
-const foldOpen = new Set(); // step ids whose "more" fold (rest of the text, command, expect, ref, details) is open
+const foldOpen = new Set(); // step ids whose "more" fold (rest of the text, command, expect, details) is open
 
 registerSelfPollingTab('ops', startOps);
 
@@ -291,7 +291,7 @@ function windowHtml(day, window) {
   return `${label}<ul class="ops-steps">${window.steps.map((step) => stepHtml(step, gate)).join('')}</ul>`;
 }
 
-// A step shows its lead sentence on the checkbox line; the rest of the text, the command, the expectation, the ref and
+// A step shows its lead sentence on the checkbox line; the rest of the text, the command, the expectation and
 // the details sit behind a "more" fold so the plan reads as a list, not a wall. A done step collapses to its lead
 // line and who ticked it: it is history, and unticking it is still possible from the box.
 function stepHtml(step, gate) {
@@ -307,7 +307,9 @@ function stepHtml(step, gate) {
   const tag = step.conditional ? pill('warn', step.conditional) : '';
   const auto = step.auto && zones.length ? autoSummary(step, gate) : '';
   const open = foldOpen.has(step.id);
-  const more = `<button type="button" class="ops-more" data-fold="${escapeHtml(step.id)}">${open ? 'less ▾' : 'more ▸'}</button>`;
+  const fold = foldHtml(step, rest);
+  // No "more" when there is nothing behind it: a one-sentence step with no command, expectation or details.
+  const more = fold ? `<button type="button" class="ops-more" data-fold="${escapeHtml(step.id)}">${open ? 'less ▾' : 'more ▸'}</button>` : '';
   const multisig = step.multisig ? multisigLinks(step) : '';
   const zoneMark = (zone) => (gate.active ? autoMark(autoValue(step, zone)) : inactiveMark(autoValue(step, zone), gate));
   const zoneRows = perZoneTicks
@@ -318,7 +320,7 @@ function stepHtml(step, gate) {
 
   return `<li class="ops-step">
     <div class="ops-row">${label} ${tag} ${auto} ${more}</div>
-    <div class="ops-fold" ${open ? '' : 'hidden'}>${foldHtml(step, rest)}</div>${multisig}${zoneRows}</li>`;
+    ${fold ? `<div class="ops-fold" ${open ? '' : 'hidden'}>${fold}</div>` : ''}${multisig}${zoneRows}</li>`;
 }
 
 // The lead sentence (up to the first ". ", keeping the period) and the rest; a text without a break is all lead.
@@ -329,8 +331,7 @@ function splitLead(text) {
 }
 
 function foldHtml(step, rest) {
-  const ref = step.ref ? `<span class="muted mono">${escapeHtml(step.ref)}</span>` : '';
-  const text = rest || ref ? `<div class="ops-rest">${escapeHtml(rest)} ${ref}</div>` : '';
+  const text = rest ? `<div class="ops-rest">${escapeHtml(rest)}</div>` : '';
   const command = step.command
     ? `<pre class="ops-command mono copy" data-copy="${escapeHtml(step.command)}" title="click to copy">${escapeHtml(step.command)}</pre>`
     : '';
