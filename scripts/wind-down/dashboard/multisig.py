@@ -21,6 +21,8 @@ WORKDIR = "/tmp/wind-down"
 PLACEHOLDER_VALOPER = "<LIVE_TEST_VALOPER>"
 ANYONE = "anyone"
 NO_SNAPSHOT_REASON = "waiting for the Validators snapshot"
+# `tx sign --multisig <address>` resolves the address through the signer's own keyring, so everyone needs the F5 key.
+KEYRING_NOTE = f"needs the {MULTISIG_KEY} multisig key in your keyring: strided keys show {MULTISIG_ADDRESS}"
 
 LIVE_TEST_GAS = 12_000_000
 # Gas from the mainnet-export measurement (ops plan, drain-rest): the Hub is heaviest, osmosis-1 and ssc-1 next.
@@ -164,9 +166,7 @@ def _commands(generate: str, file_stem: str) -> list[Command]:
     sign_commands = [
         Command(
             tag=signer.tag,
-            label="Sign (online: the multisig's account number and sequence are looked up)"
-            if signer == SAM
-            else "Sign" if signer in DEFAULT_SIGNERS else "Backup signer (any two signatures suffice)",
+            label=_sign_label(signer=signer),
             text=(
                 f"strided tx sign {unsigned} --multisig {MULTISIG_ADDRESS} --from {signer.key} "
                 f"--chain-id {CHAIN_ID} --node {NODE} \\\n  --output-document {_signature_file(file_stem=file_stem, signer=signer)}"
@@ -185,6 +185,14 @@ def _commands(generate: str, file_stem: str) -> list[Command]:
         ),
     )
     return [Command(tag=ANYONE, label="Write the validators file and the unsigned tx", text=generate), *sign_commands, combine]
+
+
+def _sign_label(signer: Signer) -> str:
+    if signer == SAM:
+        return f"Sign (online: the multisig's account number and sequence are looked up; {KEYRING_NOTE})"
+    if signer in DEFAULT_SIGNERS:
+        return f"Sign ({KEYRING_NOTE})"
+    return f"Backup signer (any two signatures suffice; {KEYRING_NOTE})"
 
 
 def _generate_line(arguments: str, gas: int, file_stem: str) -> str:

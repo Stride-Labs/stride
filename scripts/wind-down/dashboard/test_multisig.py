@@ -72,6 +72,15 @@ class LiveTestCommandsTest(unittest.TestCase):
         self.assertEqual(tx.title, "celestia · live test: mhventures (celestiavaloper1q2k…), 15,861,063 utia")
         self.assertEqual(tx.files, [f"{stem}.unsigned.json", f"{stem}.FS5.json", f"{stem}.FA5.json", f"{stem}.FR5.json"])
 
+    def test_every_sign_command_says_the_signer_needs_the_multisig_key_in_their_keyring(self) -> None:
+        for tx_set in sets_by_id(fake_snapshot()).values():
+            for tx in tx_set.txs:
+                sign_commands = [command for command in tx.commands if "tx sign" in command.text]
+
+                self.assertEqual(len(sign_commands), 3)
+                for command in sign_commands:
+                    self.assertIn(f"needs the F5 multisig key in your keyring: strided keys show {ADDRESS}", command.label)
+
     def test_riley_is_labelled_as_the_backup(self) -> None:
         commands = tx_for(sets_by_id(fake_snapshot())["live-test-undelegate"], CELESTIA).commands
 

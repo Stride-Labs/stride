@@ -720,10 +720,10 @@
               ],
               "auto": {
                 "tab": "validators",
-                "path": "totals.recorded",
-                "equals": "0"
+                "path": "funded_count",
+                "equals": 0
               },
-              "expect": "Gas from the mainnet-export measurement: cosmoshub-4 20.03M (use 25M), osmosis-1 11.83M and ssc-1 11.41M (use 15M), every other zone under 10.5M (use 13M). The Hub's 15 acks cost about 1.5M each, so a relayer packing them into one tx needs about 22M. code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: recorded delegations at dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–4:00am ET (08:00 UTC) window."
+              "expect": "Gas from the mainnet-export measurement: cosmoshub-4 20.03M (use 25M), osmosis-1 11.83M and ssc-1 11.41M (use 15M), every other zone under 10.5M (use 13M). The Hub's 15 acks cost about 1.5M each, so a relayer packing them into one tx needs about 22M. code: 0, then every batch acks (Channels tab: 0 pending on the DELEGATION channel; Validators tab: no validator holds a whole token recorded, only rounding-buffer dust, Δ in progress 0; Funds tab: the zone's bar is all Unbonding). A failed batch (ack error) means a validator moved since the refresh: rerun update-delegation for it, or resubmit the batch's validators with a file and an offset, within the 19:00–4:00am ET (08:00 UTC) window."
             },
             {
               "id": "drain-offset-calibrate",

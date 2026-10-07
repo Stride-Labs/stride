@@ -18,7 +18,7 @@ first snapshot). `POST /api/refresh/<tab>` refreshes now; `GET /api/config` retu
 A refresh that raises anything other than a per-zone network or decode error keeps the previous snapshot and logs the
 traceback to stderr. The page marks a snapshot stale after three intervals.
 
-Adding a tab (the Ops tab is the exception, see below): write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`), add one line to `COLLECTORS`, write
+Adding a tab (the Ops and Multisig tabs are the exceptions, see below): write `<tab>.py` with `collect() -> dict` (`{"zones": [...], ...}`), add one line to `COLLECTORS`, write
 `static/<tab>.js` calling `registerTab(name, render)`, and uncomment its `<script>` line in `static/index.html`.
 
 ## Ops tab
@@ -29,14 +29,27 @@ block and the next one open. It is not a collector: it has no snapshot, stale ba
 - `ops/plan.json` is the plan (anchors, then `days` of blocks with `windows` of `steps`; steps with `zones` get one
   sub-tick per zone, ids `<id>:<zone>`). It is reviewed like the spec and read from disk on every request, so an edit
   shows on reload.
+- A window may carry `start` (ISO UTC). Live checks (`auto`) read `n/a` before it; a window without `start` is live from
+  the day's date (Eastern) onward. Once live a check never goes back to `n/a`.
+- A step may carry `auto`: `{tab, path, equals | at_least, allow}`, a live check read from that tab's snapshot at `path`
+  (dotted). `equals` compares as strings, `at_least` is an int threshold; `allow` lists values that also pass. A step may
+  also carry `multisig`, a tx-set id from the Multisig tab, rendered as a link to `#multisig/<set-id>`.
 - `ops/status.json` holds the ticks: `{"<id>": {"done": true, "at": "<iso utc>", "by": "<name>"}}`.
-- Routes: `GET /api/ops` returns `{plan, status, today}` (today is the UTC date); `POST /api/ops/check` with
+- Routes: `GET /api/ops` returns `{plan, status, today}` (today is the US Eastern date, `ops.today()` with `PLAN_TIMEZONE`); `POST /api/ops/check` with
   `{"id", "done", "by"}` records or (when `done` is false) deletes a tick and returns the full status. 400 for a bad body
   or an id that is not in the plan.
 
 To tick, type your name in the "you are" field (kept in your browser) and click the checkbox. The server rewrites
 `status.json` atomically with sorted keys, so each tick is a one-line diff. Ticks are committed like any other file:
 commit and push `ops/status.json` so the team sees the same state. Logic lives in `ops.py`; `server.py` only routes.
+
+## Multisig tab
+
+The fifth tab (`#multisig`). Like Ops it is not a collector: `GET /api/multisig` composes the Validators cache's current
+view with the plan and returns `{fetched_at, data: {sets}}` (`multisig.py`, no chain calls). One card per zone, in each
+set (live test, full drain): generate, sign x3 (Sam and Aidan by default, Riley as the backup), then multisign and
+broadcast, each tagged with who runs it. Signers need the F5 multisig key in their keyring as well as their own key.
+The files the commands share travel between people by Slack. A set deep-links as `#multisig/<set-id>`.
 
 ## Channels tab
 
@@ -78,6 +91,11 @@ commit and push `ops/status.json` so the team sees the same state. Logic lives i
   validators and any with a delegation change or slash query in progress. When the unbonding lookup failed, or no
   validator qualifies (for example, every funded validator already has an entry), the pick is null with
   `live_test_reason`. The script falls back to the smallest overall in that case; the dashboard does not.
+- `drained_count` (per zone, null when the unbonding entries or the host's unbonding time are unknown): validators with
+  less than a whole token (10^decimals) recorded and on the host, and an unbonding entry created after the upgrade
+  (completion after `UPGRADE_TIME` + the host's unbonding time). Not exactly zero: a full drain leaves the rounding
+  buffer (at least one base unit) recorded and as host dust. `funded_count` is the number of registered validators
+  with at least one whole token recorded; the Ops `drain-rest` check passes at 0.
 - Delegations are the one required lookup (a failure gives the zone an error row). The validator list and the unbonding
   entries are optional: if they fail, those cells show `n/a` and the row falls back to Stride's name.
 

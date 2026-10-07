@@ -12,13 +12,9 @@ from typing import Any
 from unittest import mock
 
 import config
+import multisig
 import ops
 import server
-
-try:
-    import multisig
-except ImportError:  # multisig.py lands with the backend chunk; the reference test waits for it
-    multisig = None
 
 SAMPLE_PLAN: dict[str, Any] = {
     "anchors": {"upgrade": "2026-10-12T12:00:00Z"},
@@ -100,7 +96,6 @@ class RealPlanTest(unittest.TestCase):
     def _windows(self) -> list[dict[str, Any]]:
         return [window for day in self.plan["days"] for window in day["windows"]]
 
-    @unittest.skipIf(multisig is None, "multisig.py is not merged yet")
     def test_every_multisig_reference_names_that_steps_tx_set(self) -> None:
         sets_by_id = {tx_set.id: tx_set for tx_set in multisig.tx_sets(None)}
         referencing = [step for step in self._steps() if "multisig" in step]
@@ -110,6 +105,11 @@ class RealPlanTest(unittest.TestCase):
             self.assertIn(step["multisig"], sets_by_id, step["id"])
             self.assertEqual(sets_by_id[step["multisig"]].step_id, step["id"])
             self.assertNotIn("command", step, f"{step['id']}: the Multisig tab is the source of its commands")
+
+    def test_drain_rest_is_done_when_no_validator_holds_a_whole_token(self) -> None:
+        step = next(step for step in self._steps() if step["id"] == "drain-rest")
+
+        self.assertEqual(step["auto"], {"tab": "validators", "path": "funded_count", "equals": 0})
 
     def test_every_window_start_is_an_iso_utc_timestamp(self) -> None:
         starts = [window["start"] for window in self._windows() if "start" in window]

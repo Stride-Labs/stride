@@ -396,6 +396,7 @@ class DrainedCountTest(unittest.TestCase):
         actual: dict[str, int],
         entries: dict[str, validators.UnbondingSummary] | None,
         unbonding_seconds: float | None = UNBONDING_SECONDS,
+        decimals: int = 6,
     ) -> int | None:
         rows = validators.build_rows(
             stride_validators=[stride_validator(address=address, delegation=amount) for address, amount in recorded.items()],
@@ -403,17 +404,38 @@ class DrainedCountTest(unittest.TestCase):
             host_validators=None,
             unbonding_entries=None,
         )
-        return validators.drained_count(rows=rows, unbonding=entries, unbonding_seconds=unbonding_seconds)
+        return validators.drained_count(
+            rows=rows, unbonding=entries, unbonding_seconds=unbonding_seconds, decimals=decimals
+        )
 
-    def test_counts_only_validators_at_zero_zero_with_a_post_upgrade_entry(self) -> None:
+    def test_a_buffered_drain_leaves_dust_and_still_counts_but_a_whole_token_does_not(self) -> None:
+        late = unbonding(count=1, latest_completion="2026-11-05T00:00:00Z")
+
         count = self.count(
-            recorded={OPERATOR_A: 0, OPERATOR_B: 0, OPERATOR_C: 0, OPERATOR_D: 5},
-            actual={OPERATOR_C: 7},
+            recorded={OPERATOR_A: 1, OPERATOR_B: 999_999, OPERATOR_C: 1_000_000, OPERATOR_D: 0},
+            actual={OPERATOR_A: 1, OPERATOR_B: 999_999, OPERATOR_C: 0, OPERATOR_D: 1_000_000},
+            entries={OPERATOR_A: late, OPERATOR_B: late, OPERATOR_C: late, OPERATOR_D: late},
+        )
+
+        # C is still recorded at a whole token, D still delegated at a whole token.
+        self.assertEqual(count, 2)
+
+    def test_the_whole_token_threshold_follows_the_zone_decimals(self) -> None:
+        late = unbonding(count=1, latest_completion="2026-11-05T00:00:00Z")
+        entries = {OPERATOR_A: late}
+
+        self.assertEqual(self.count(recorded={OPERATOR_A: 10**17}, actual={}, entries=entries, decimals=18), 1)
+        self.assertEqual(self.count(recorded={OPERATOR_A: 10**18}, actual={}, entries=entries, decimals=18), 0)
+
+    def test_counts_only_validators_below_a_whole_token_with_a_post_upgrade_entry(self) -> None:
+        count = self.count(
+            recorded={OPERATOR_A: 0, OPERATOR_B: 0, OPERATOR_C: 0, OPERATOR_D: 5_000_000},
+            actual={OPERATOR_C: 7_000_000},
             entries={
                 OPERATOR_A: unbonding(count=1, latest_completion="2026-11-02T12:00:01Z"),  # one second after the cutoff
                 OPERATOR_B: unbonding(count=2, latest_completion="2026-11-02T11:59:59Z"),  # pre-upgrade entries only
-                OPERATOR_C: unbonding(count=1, latest_completion="2026-11-05T00:00:00Z"),  # still delegated on the host
-                OPERATOR_D: unbonding(count=1, latest_completion="2026-11-05T00:00:00Z"),  # still recorded by Stride
+                OPERATOR_C: unbonding(count=1, latest_completion="2026-11-05T00:00:00Z"),  # still delegated on the host (whole tokens)
+                OPERATOR_D: unbonding(count=1, latest_completion="2026-11-05T00:00:00Z"),  # still recorded by Stride (whole tokens)
             },
         )
 
@@ -474,7 +496,28 @@ class DrainedCountTest(unittest.TestCase):
             entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
 
         self.assertEqual(entry["drained_count"], 1)
+        self.assertEqual(entry["funded_count"], 0)
         self.assertEqual({row["address"]: row["unbonding_entries"] for row in entry["validators"]}, {OPERATOR_A: 2, OPERATOR_B: 1})
+
+    def test_collect_zone_counts_funded_validators_by_the_whole_token_threshold(self) -> None:
+        zone = config.ZONES[0]
+        whole_token = 10**zone.decimals
+        stride_zone = {
+            "chain_id": zone.chain_id,
+            "delegation_ica_address": "ica",
+            "validators": [
+                {"address": address, "name": address, "delegation": str(amount), "weight": "5", "shares_to_tokens_rate": "1.0",
+                 "slash_query_in_progress": False, "delegation_changes_in_progress": "0"}
+                for address, amount in ((OPERATOR_A, whole_token), (OPERATOR_B, whole_token - 1), (OPERATOR_C, 5 * whole_token))
+            ],
+        }
+
+        with mock.patch.object(validators.chain, "rest_get_all_pages", return_value=[]), mock.patch.object(
+            validators.chain, "rest_get", side_effect=urllib.error.URLError("params down")
+        ):
+            entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
+
+        self.assertEqual(entry["funded_count"], 2)
 
     def test_collect_zone_has_a_null_count_when_the_params_lookup_fails(self) -> None:
         zone = config.ZONES[0]

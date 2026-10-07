@@ -18,8 +18,11 @@ has come, which is noise; they should read `n/a` until the clock reaches the ste
 
 - Txs are done end to end one at a time, online: no pre-assigned sequences (account-sequence
   batching has misbehaved before). Each signer's `tx sign` looks the multisig's sequence up.
-- The multisig key name in the keyring is `F5` (needed by `multisign`); signers only need the
-  multisig address and their own key.
+- The multisig key name in the keyring is `F5`. On cosmos-sdk v0.54.3 `tx sign --multisig
+  <address>` resolves the address through the signer's keyring (`KeyByAddress`, then
+  `getMultisigRecord`, then `isMultisigSigner`), so every signer needs the F5 multisig key in
+  their keyring as well as their own key, or the command fails with "error getting account from
+  keybase". The sign labels say so.
 - Default signers: Sam (FS5) and Aidan (FA5); Aidan collects the signatures, multisigns and
   broadcasts. Riley's (FR5) sign command is rendered as the backup for either.
 - Scope now: the two drain sets (live-test undelegate, full drain). The transfer-day sets
@@ -134,20 +137,28 @@ Plan edits:
 ## 3. Landed checks
 
 Validators collector, per zone payload, gains `drained_count`: the number of validators whose
-recorded delegation is 0, host delegation is 0, and which have at least one unbonding entry
+recorded delegation and host delegation are both under one whole token (`10**decimals`, the
+threshold `pick_live_test` uses for "funded"), and which have at least one unbonding entry
 from the delegation ICA **created after the upgrade**. "Created after the upgrade" ⇔
 `entry.completion_time > UPGRADE_TIME + host unbonding_time`, where `UPGRADE_TIME` is a new
 `config.UPGRADE_TIME = "2026-10-12T12:00:00Z"` (a test asserts it equals the plan's
 `anchors.upgrade`) and the host's unbonding time comes from
 `/cosmos/staking/v1beta1/params` (one more optional call per zone; when it or the entries
-lookup fails, `drained_count` is `null`). `_unbonding_entries` returns per validator the count
+lookup fails, `drained_count` is `null`). Not exactly zero: a full drain of a validator whose
+`SharesToTokensRate < 1` goes through `applySharesRoundingSafety`, which undelegates
+`amount - max(1, amount/1e17)`, and the ack callback subtracts only that, so at least one base
+unit stays recorded on Stride and as dust on the host. Caveat: a validator that held under a
+whole token before the drain and that the day epoch happened to drain post-upgrade also counts.
+The payload also gains `funded_count`, the number of registered validators with recorded at
+least one whole token. `_unbonding_entries` returns per validator the count
 and the latest completion time (a small dataclass) instead of a bare count.
 
 Step checks:
 - `drain-live-test`: `auto: {tab: "validators", path: "drained_count", at_least: 1}` — new
   comparator `at_least` in `autoValue` (number ≥ threshold → true, else false; `allow` applies
   as for `equals`).
-- `drain-rest`: `auto: {tab: "validators", path: "totals.recorded", equals: "0"}`.
+- `drain-rest`: `auto: {tab: "validators", path: "funded_count", equals: 0}` (nothing left at a
+  whole token; the buffer dust does not block it).
 
 Both steps keep their single tick (auto steps render zone marks, not per-zone ticks).
 
@@ -181,8 +192,8 @@ Windows that get `start` (all others inherit the day):
   with `error`), the live-test set has the exact command strings above (full string equality
   for celestia), the not-ready reasons, and the full-drain gas per zone; `tx_sets(None)` yields
   every zone not ready; set ids are unique.
-- `test_validators.py`: `drained_count` counts a validator at 0/0 with a post-upgrade entry,
-  ignores one with a pre-upgrade entry or a non-zero delegation, and is `null` when the params
+- `test_validators.py`: `drained_count` counts a validator under a whole token (dust, 1/1) with a
+  post-upgrade entry, ignores one with a pre-upgrade entry or a whole token or more, and is `null` when the params
   or entries lookup failed.
 - `test_ops.py`: every `multisig` reference resolves to a set id; every `start` parses as an
   ISO timestamp; `at_least` is an int; `config.UPGRADE_TIME == anchors.upgrade`.

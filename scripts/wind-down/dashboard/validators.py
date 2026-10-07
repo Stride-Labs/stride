@@ -268,6 +268,12 @@ def summarize(rows: list[ValidatorRow]) -> ZoneTotals:
     )
 
 
+def _funded_rows(rows: list[ValidatorRow], decimals: int) -> list[ValidatorRow]:
+    """Registered validators Stride records at least one whole token on; anything less is rounding dust."""
+    whole_token = 10**decimals
+    return [row for row in rows if row.registered and row.recorded >= whole_token]
+
+
 def pick_live_test(rows: list[ValidatorRow], decimals: int) -> LiveTestPicks:
     """The live-test validator: the smallest recorded delegation of at least one whole token with no unbonding entry
     in flight (mirrors scripts/wind-down/pick_live_test_validators.py), and the second smallest by the same rule.
@@ -278,8 +284,7 @@ def pick_live_test(rows: list[ValidatorRow], decimals: int) -> LiveTestPicks:
     if any(row.unbonding_entries is None for row in rows):
         return LiveTestPicks(pick=None, runner_up=None, reason="unbonding entries could not be read")
 
-    whole_token = 10**decimals
-    funded = [row for row in rows if row.registered and row.recorded >= whole_token]
+    funded = _funded_rows(rows=rows, decimals=decimals)
     if not funded:
         return LiveTestPicks(pick=None, runner_up=None, reason="no registered validator holds a whole token")
 
@@ -312,22 +317,28 @@ def pick_live_test(rows: list[ValidatorRow], decimals: int) -> LiveTestPicks:
 
 
 def drained_count(
-    rows: list[ValidatorRow], unbonding: dict[str, UnbondingSummary] | None, unbonding_seconds: float | None
+    rows: list[ValidatorRow], unbonding: dict[str, UnbondingSummary] | None, unbonding_seconds: float | None, decimals: int
 ) -> int | None:
-    """Validators the post-upgrade drain has landed on: nothing recorded, nothing delegated on the host, and an
-    unbonding entry created after the upgrade. None when the entries or the host's unbonding time are unknown.
+    """Validators the post-upgrade drain has landed on: less than a whole token recorded and delegated on the host,
+    and an unbonding entry created after the upgrade. None when the entries or the host's unbonding time are unknown.
+
+    Not exactly zero: a full drain of a validator whose rate is below 1 undelegates the amount minus the rounding
+    buffer (applySharesRoundingSafety), and the ack callback subtracts only that, so at least one base unit stays
+    recorded on Stride and as dust on the host. The caveat: a validator that held under a whole token before the drain
+    and that the day epoch happened to drain post-upgrade would also count.
 
     An entry is created after the upgrade exactly when it completes after UPGRADE_TIME + the host's unbonding time.
     """
     if unbonding is None or unbonding_seconds is None:
         return None
 
+    whole_token = 10**decimals
     cutoff = chain.parse_timestamp(timestamp=config.UPGRADE_TIME) + datetime.timedelta(seconds=unbonding_seconds)
     return sum(
         1
         for row in rows
-        if row.recorded == 0
-        and row.actual == 0
+        if row.recorded < whole_token
+        and row.actual < whole_token
         and row.address in unbonding
         and chain.parse_timestamp(timestamp=unbonding[row.address].latest_completion) > cutoff
     )
@@ -382,7 +393,10 @@ def _collect_zone(
         "live_test_pick": _optional_payload(candidate=live_test.pick),
         "live_test_next": _optional_payload(candidate=live_test.runner_up),
         "live_test_reason": live_test.reason,
-        "drained_count": drained_count(rows=rows, unbonding=unbonding, unbonding_seconds=unbonding_seconds),
+        "drained_count": drained_count(
+            rows=rows, unbonding=unbonding, unbonding_seconds=unbonding_seconds, decimals=zone.decimals
+        ),
+        "funded_count": len(_funded_rows(rows=rows, decimals=zone.decimals)),
         "validators": [row.payload() for row in rows],
     }
 
