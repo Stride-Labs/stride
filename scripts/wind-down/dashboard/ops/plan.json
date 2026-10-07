@@ -677,7 +677,7 @@
           "steps": [
             {
               "id": "drain-live-test",
-              "text": "Per zone: MsgUndelegateFromValidators for the single live-test validator (full drain); wait for the ack and the callback (Validators tab: its recorded delegation drops to zero; Funds tab: its bar moves to unbonding). The tx refuses the zone while any record is queued or retrying (Funds tab → Records). Commands per zone, with who runs what, are on the Multisig tab.",
+              "text": "Per zone: MsgUndelegateFromValidators for the single live-test validator (full drain); wait for the ack and the callback (Validators tab: its recorded delegation drops to zero, or to rounding dust for a slashed validator; Funds tab: its bar moves to unbonding). The tx refuses the zone while any record is queued or retrying (Funds tab → Records). Commands per zone, with who runs what, are on the Multisig tab.",
               "ref": "§9 step 4, §9b, §7",
               "multisig": "live-test-undelegate",
               "zones": [

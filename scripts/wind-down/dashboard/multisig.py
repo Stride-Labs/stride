@@ -91,7 +91,7 @@ def tx_sets(validators_data: dict[str, Any] | None) -> list[TxSet]:
         title="Live test: undelegate one validator per zone",
         description=(
             "Per zone, MsgUndelegateFromValidators for the single live-test validator, a full drain of it. Watch the "
-            "ack and the callback: its recorded delegation drops to zero on the Validators tab and the Ops step's "
+            "ack and the callback: its recorded delegation drops to zero (dust, for a slashed validator) on the Validators tab and the Ops step's "
             "check turns green once the unbonding entry lands. Do one tx at a time, end to end: generate, two "
             "signatures, multisign and broadcast, then confirm it landed before starting the next zone."
         ),
