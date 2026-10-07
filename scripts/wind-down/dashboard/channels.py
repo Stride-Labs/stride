@@ -170,6 +170,8 @@ class ZoneChannels:
     # be counted. The v35 flag reset only applies to a zone with an open delegation channel and 0 here.
     unacked_ica_packets: int | None = None
     preflight: Preflight | None = None  # None only when the zone's header could not be built
+    # Every ICA row (all but the transfer one) is OPEN on both ends; None when any end's state is unknown.
+    ica_channels_open: bool | None = None
     haqq_state: "HaqqState | None" = None  # the pre-upgrade haqq invariants (spec §9c); only on haqq_11235-1
 
 
@@ -493,6 +495,7 @@ def _zone_channels(
         status=worst_status(statuses=[row.status for row in rows]),
         channels=rows,
         unacked_ica_packets=unacked_ica_packets(rows=rows),
+        ica_channels_open=ica_channels_open(rows=rows),
         preflight=_preflight(
             zone=zone, host=host, entry=entry, host_zone=(host_zones or {}).get(zone.chain_id)
         ),
@@ -682,6 +685,15 @@ def _transfer_spec(
         stride_state=stride_end.state,
         host_state=host_state,
     )
+
+
+def ica_channels_open(rows: list[ChannelRow]) -> bool | None:
+    """Every ICA row OPEN on both ends (a closed ordered channel rejects transfer-from-ica); None when any end's state
+    is unknown or the zone has no ICA rows to judge."""
+    states = [state for row in rows if row.name != TRANSFER_NAME for state in (row.stride_state, row.host_state)]
+    if not states or None in states:
+        return None
+    return all(state == STATE_OPEN for state in states)
 
 
 def unacked_ica_packets(rows: list[ChannelRow]) -> int | None:

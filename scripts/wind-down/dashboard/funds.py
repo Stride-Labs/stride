@@ -221,6 +221,9 @@ class ZoneFunds:
     validators: int  # validators the delegation ICA has a delegation with
     ica_liquid: dict[IcaType, int]  # each ICA's host-denom balance, for the diagram
     redemption_ica_balance: int
+    ica_balances: dict[IcaType, dict[str, int]]  # every denom each ICA holds, for the foreign-denom transfers
+    funds_settled: bool | None  # staked below one whole token, nothing unbonding, nothing in flight; None when unknown
+    transfers_landed: bool | None  # every ICA's host-denom balance below one whole token and nothing in flight
     open_redemption_records: int | None
     records: ZoneRecords
     transfers: list[Transfer] | None  # None when the tx index lookup failed
@@ -404,6 +407,24 @@ def collect() -> dict[str, Any]:
 
 
 # ---- pure logic
+
+
+def is_funds_settled(stages: Stages, decimals: int) -> bool | None:
+    """Nothing left to wait for before the ICA transfers: staked is dust (below one whole token), nothing is
+    unbonding and nothing is in flight. None while the in-flight amount is unknown."""
+    if stages.in_flight is None:
+        return None
+    return stages.staked < 10**decimals and stages.unbonding == 0 and stages.in_flight == 0
+
+
+def is_transfers_landed(
+    ica_balances: dict[IcaType, dict[str, int]], host_denom: str, decimals: int, in_flight: int | None
+) -> bool | None:
+    """Every ICA is back at dust (below one whole token of the host denom) and nothing is in flight. None while the
+    in-flight amount is unknown."""
+    if in_flight is None:
+        return None
+    return in_flight == 0 and all(balances.get(host_denom, 0) < 10**decimals for balances in ica_balances.values())
 
 
 def needed_amount(st_supply: int, redemption_rate: str) -> int:
@@ -1130,6 +1151,11 @@ def _zone_funds(
             for ica, balances in side.ica_balances.items()
         },
         redemption_ica_balance=side.ica_balances[IcaType.REDEMPTION].get(host_denom, 0),
+        ica_balances=side.ica_balances,
+        funds_settled=is_funds_settled(stages=stages, decimals=zone.decimals),
+        transfers_landed=is_transfers_landed(
+            ica_balances=side.ica_balances, host_denom=host_denom, decimals=zone.decimals, in_flight=stages.in_flight
+        ),
         open_redemption_records=record_count,
         records=zone_records,
         transfers=side.transfers,

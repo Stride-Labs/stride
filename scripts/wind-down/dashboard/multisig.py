@@ -1,28 +1,70 @@
-"""Command sets for the Multisig tab: the exact generate / sign / multisign+broadcast commands per zone for the
-F5 protocol-admin multisig, built from the Validators snapshot. Pure: no chain calls.
+"""Command sets for the Multisig tab: the exact generate / sign / multisign+broadcast commands per zone, built from
+the Validators, Funds and Pools snapshots. Pure: no chain calls.
 
-Each tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the
-multisig's account number and sequence up itself.
+The Stride sets (drains, ICA transfers, staketia claim balance) are signed by the F5 protocol-admin multisig with
+`strided`; the pool-funding set is signed by the Osmosis vault (a multisig with the same member key names) with
+`osmosisd`. Each tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign`
+looks the multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous
+per `chain_id` in `txs`, in the order they go out.
 """
 
 import dataclasses
+import json
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
 import config
+import funds
 
-MULTISIG_KEY = "F5"  # the multisig's name in the keyring; `multisign` needs it
+MULTISIG_KEY = "F5"  # the multisig's name in the keyring; `multisign` needs it (the Osmosis vault uses the same name)
 MULTISIG_ADDRESS = config.PROTOCOL_ADMIN
 NODE = "https://stride-strd-rpc.polkachu.com:443"
 CHAIN_ID = "stride-1"
+OSMOSIS_NODE = "https://osmosis-strd-rpc.polkachu.com:443"
+OSMOSIS_VAULT_ADDRESS = config.OSMOSIS_VAULT
 
 WORKDIR = "/tmp/wind-down"
 PLACEHOLDER_VALOPER = "<LIVE_TEST_VALOPER>"
+PLACEHOLDER_DENOM = "<HOST_DENOM>"
+PLACEHOLDER_BALANCE = "<BALANCE>"
+PLACEHOLDER_OSMOSIS_DENOM = "<OSMOSIS_DENOM>"
+PLACEHOLDER_REST_AMOUNT = "<ALLOCATION_MINUS_TEST>"
 ANYONE = "anyone"
 NO_SNAPSHOT_REASON = "waiting for the Validators snapshot"
-# `tx sign --multisig <address>` resolves the address through the signer's own keyring, so everyone needs the F5 key.
-KEYRING_NOTE = f"needs the {MULTISIG_KEY} multisig key in your keyring: strided keys show {MULTISIG_ADDRESS}"
+
+# The order the four admin transfers go out (spec §3): fees first, delegations after the withdrawals that feed them.
+ICA_ORDER = (funds.IcaType.FEE, funds.IcaType.WITHDRAWAL, funds.IcaType.DELEGATION, funds.IcaType.REDEMPTION)
+TRANSFER_GAS = 600_000
+TRANSFER_FEES = "3000ustrd"
+STAKETIA_TEST_AMOUNT = 1_000_000  # utia
+STAKETIA_CHAIN_ID = "celestia"
+POOL_GAS = 1_500_000
+POOL_FEES = "15000uosmo"
+POOL_KIND_UNRECOGNISED = "unrecognised"  # a pool no Stride channel backs: reported on the Pools tab, never funded
+POOL_KIND_CANONICAL = "canonical"
+
+
+@dataclass(frozen=True)
+class ChainTools:
+    """The binary, chain and multisig a set's commands run against."""
+
+    binary: str
+    chain_id: str
+    node: str
+    multisig_address: str
+
+    @property
+    def keyring_note(self) -> str:
+        # `tx sign --multisig <address>` resolves the address through the signer's own keyring, so everyone needs the key.
+        return f"needs the {MULTISIG_KEY} multisig key in your keyring: {self.binary} keys show {self.multisig_address}"
+
+
+STRIDE_TOOLS = ChainTools(binary="strided", chain_id=CHAIN_ID, node=NODE, multisig_address=MULTISIG_ADDRESS)
+OSMOSIS_TOOLS = ChainTools(
+    binary="osmosisd", chain_id=config.OSMOSIS_CHAIN_ID, node=OSMOSIS_NODE, multisig_address=OSMOSIS_VAULT_ADDRESS
+)
+KEYRING_NOTE = STRIDE_TOOLS.keyring_note
 
 LIVE_TEST_GAS = 12_000_000
 # Gas from the mainnet-export measurement (ops plan, drain-rest): the Hub is heaviest, osmosis-1 and ssc-1 next.
@@ -71,7 +113,7 @@ class TxSet:
     step_id: str  # the ops step it belongs to
     title: str
     description: str
-    txs: list[MultisigTx]  # one per zone, in config.ZONES order
+    txs: list[MultisigTx]  # in config.ZONES order, the txs of one zone contiguous and in the order they go out
 
     def payload(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -80,8 +122,10 @@ class TxSet:
 # ---- public API
 
 
-def tx_sets(validators_data: dict[str, Any] | None) -> list[TxSet]:
-    """Every set, from the validators snapshot's `data` (None before the first snapshot)."""
+def tx_sets(
+    validators_data: dict[str, Any] | None, funds_data: dict[str, Any] | None, pools_data: dict[str, Any] | None
+) -> list[TxSet]:
+    """Every set, from the snapshots' `data` (None before a tab's first snapshot)."""
     zones_by_chain_id = {zone["chain_id"]: zone for zone in (validators_data or {}).get("zones", [])}
     snapshot_reason = None if validators_data is not None else NO_SNAPSHOT_REASON
 
@@ -114,7 +158,79 @@ def tx_sets(validators_data: dict[str, Any] | None) -> list[TxSet]:
             for zone in config.ZONES
         ],
     )
-    return [live_test, full_drain]
+    return [
+        live_test,
+        full_drain,
+        _ica_transfers_set(funds_data=funds_data),
+        _staketia_claim_balance_set(),
+        _pool_funding_set(pools_data=pools_data),
+    ]
+
+
+# ---- sets
+
+
+def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
+    funds_zones = _zones_by_chain_id(data=funds_data)
+    return TxSet(
+        id="ica-transfers",
+        step_id="transfers",
+        title="ICA transfers: send every ICA's balance to the Osmosis vault",
+        description=(
+            "Per zone, MsgTransferFromIca for the FEE, WITHDRAWAL, DELEGATION and REDEMPTION ICAs, in that order. Each "
+            "ICA gets a test tx of one whole token first, then the rest tx for its live balance: copy that one only "
+            "after the test has settled on the Funds tab, and the amount is read from the Funds snapshot when the page "
+            "loads. A foreign denom an ICA holds (dYdX's USDC voucher) is its own tx for its full balance. The "
+            "transfers time out after 24h; a refund means resubmit. Do one tx at a time, end to end: generate, two "
+            "signatures, multisign and broadcast, then confirm it landed before starting the next."
+        ),
+        txs=[
+            tx
+            for zone in config.ZONES
+            for tx in _ica_transfer_txs(zone=zone, funds_zone=funds_zones.get(zone.chain_id), funds_data=funds_data)
+        ],
+    )
+
+
+def _staketia_claim_balance_set() -> TxSet:
+    zone = config.ZONES_BY_CHAIN_ID[STAKETIA_CHAIN_ID]
+    return TxSet(
+        id="staketia-claim-balance",
+        step_id="tia-claim-balance",
+        title="Staketia claim balance: move the claim address's TIA to the celestia delegation ICA",
+        description=(
+            "MsgTransferStaketiaClaimBalance for celestia: 1 TIA as the test, then amount 0 for the whole remainder. "
+            "The TIA lands on the celestia delegation ICA and leaves with the DELEGATION transfer. Do one tx at a "
+            "time, end to end: generate, two signatures, multisign and broadcast, then confirm it landed."
+        ),
+        txs=[
+            _staketia_tx(zone=zone, label="test", amount=STAKETIA_TEST_AMOUNT, title_amount="1 TIA"),
+            _staketia_tx(zone=zone, label="rest", amount=0, title_amount="the whole remainder (amount 0)"),
+        ],
+    )
+
+
+def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
+    pools_zones = _zones_by_chain_id(data=pools_data)
+    return TxSet(
+        id="pool-funding",
+        step_id="join-pools",
+        title="Pool funding: join and close every transmuter pool",
+        description=(
+            "Osmosis, signed by the vault. Per pool (the canonical one first): a test join of one whole native token, "
+            "the remaining allocation, then mark_corrupted_assets for the native token. Order per zone: every pool's "
+            "test join first, then verify on the Pools tab (native one token, vault shares one token, no outside "
+            "shares, rate exact), then for each pool its rest join and its mark back to back, since the mark closes "
+            "the window in which an outsider could join. The vault needs OSMO for about 3 txs per pool at 0.015 OSMO "
+            "each. Do one tx at a time, end to end: generate, two signatures, multisign and broadcast, then confirm "
+            "it landed."
+        ),
+        txs=[
+            tx
+            for zone in config.ZONES
+            for tx in _pool_txs(zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data)
+        ],
+    )
 
 
 # ---- txs
@@ -174,15 +290,231 @@ def _full_drain_tx(zone: config.ZoneConfig, snapshot_zone: dict[str, Any] | None
     )
 
 
-def _commands(generate: str, file_stem: str) -> list[Command]:
+def _ica_transfer_txs(
+    zone: config.ZoneConfig, funds_zone: dict[str, Any] | None, funds_data: dict[str, Any] | None
+) -> list[MultisigTx]:
+    """Per ICA a test and a rest tx, then one tx per foreign denom it holds; placeholders until the Funds snapshot."""
+    snapshot_reason = _snapshot_reason(zone_entry=funds_zone, data=funds_data, source="Funds")
+    host_denom = PLACEHOLDER_DENOM if snapshot_reason else funds_zone["host_denom"]
+    test_amount = 10**zone.decimals
+
+    txs: list[MultisigTx] = []
+    for ica in ICA_ORDER:
+        balances = {} if snapshot_reason else funds_zone["ica_balances"].get(ica, {})
+        host_balance = None if snapshot_reason else int(balances.get(host_denom, 0))
+        reason = snapshot_reason or _nothing_to_send_reason(ica=ica, balance=host_balance, test_amount=test_amount, denom=host_denom)
+        balance_text = PLACEHOLDER_BALANCE if host_balance is None else str(host_balance)
+
+        txs.append(
+            _ica_transfer_tx(
+                zone=zone, ica=ica, label="test", amount=str(test_amount), denom=host_denom, reason=reason,
+                title=f"{zone.chain_id} · {ica} ICA · test: {test_amount}{host_denom}",
+            )
+        )
+        txs.append(
+            _ica_transfer_tx(
+                zone=zone, ica=ica, label="rest", amount=balance_text, denom=host_denom, reason=reason,
+                title=f"{zone.chain_id} · {ica} ICA · rest: {balance_text}{host_denom} (live balance, copy after the test has settled)",
+            )
+        )
+        txs.extend(
+            _ica_transfer_tx(
+                zone=zone, ica=ica, label=f"denom-{denom[-6:].lower()}", amount=amount, denom=denom, reason=snapshot_reason,
+                title=f"{zone.chain_id} · {ica} ICA · foreign denom: {amount}{denom} (full balance)",
+            )
+            for denom, amount in _foreign_balances(balances=balances, host_denom=host_denom)
+        )
+    return txs
+
+
+def _nothing_to_send_reason(ica: str, balance: int | None, test_amount: int, denom: str) -> str | None:
+    if balance is not None and balance < test_amount:
+        return f"the {ica} ICA holds {balance}{denom}, below the {test_amount}{denom} test amount: nothing to send"
+    return None
+
+
+def _foreign_balances(balances: dict[str, str], host_denom: str) -> list[tuple[str, str]]:
+    return [(denom, amount) for denom, amount in sorted(balances.items()) if denom != host_denom and int(amount) > 0]
+
+
+def _ica_transfer_tx(
+    zone: config.ZoneConfig, ica: str, label: str, amount: str, denom: str, reason: str | None, title: str
+) -> MultisigTx:
+    file_stem = f"{WORKDIR}/transfer-{zone.chain_id}-{ica.lower()}-{label}"
+    generate_line = _stride_generate_line(
+        subcommand=f"transfer-from-ica {zone.chain_id} {ica} {amount}{denom}", file_stem=file_stem
+    )
+    return _stride_tx(zone=zone, title=title, reason=reason, generate_line=generate_line, file_stem=file_stem)
+
+
+def _staketia_tx(zone: config.ZoneConfig, label: str, amount: int, title_amount: str) -> MultisigTx:
+    file_stem = f"{WORKDIR}/staketia-claim-balance-{label}"
+    generate_line = _stride_generate_line(subcommand=f"transfer-staketia-claim-balance {amount}", file_stem=file_stem)
+    return _stride_tx(
+        zone=zone,
+        title=f"{zone.chain_id} · staketia claim balance · {label}: {title_amount}",
+        reason=None,
+        generate_line=generate_line,
+        file_stem=file_stem,
+    )
+
+
+def _stride_tx(zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str) -> MultisigTx:
+    return MultisigTx(
+        chain_id=zone.chain_id,
+        title=title,
+        ready=reason is None,
+        reason=reason,
+        commands=_commands(
+            generate=f"mkdir -p {WORKDIR}\n{generate_line}", file_stem=file_stem, generate_label="Write the unsigned tx"
+        ),
+        files=_shared_files(file_stem=file_stem),
+    )
+
+
+def _stride_generate_line(subcommand: str, file_stem: str) -> str:
+    return (
+        f"strided tx stakeibc {subcommand} --from {MULTISIG_ADDRESS} --generate-only --chain-id {CHAIN_ID} "
+        f"--node {NODE} --gas {TRANSFER_GAS} --fees {TRANSFER_FEES} > {file_stem}.unsigned.json"
+    )
+
+
+def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> list[MultisigTx]:
+    """The zone's test joins, then each pool's rest join and mark back to back; one not-ready tx when there is nothing."""
+    snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
+    pools = [] if snapshot_reason else _fundable_pools(pools_zone=pools_zone)
+    if not pools:
+        return [_empty_pool_tx(zone=zone, reason=snapshot_reason or "no pool to fund in the Pools snapshot")]
+
+    osmosis_denom = pools_zone["osmosis_denom"]
+    test_amount = 10**zone.decimals
+    return [
+        *(_join_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom, test_amount=test_amount, is_test=True) for pool in pools),
+        *(
+            tx
+            for pool in pools
+            for tx in (
+                _join_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom, test_amount=test_amount, is_test=False),
+                _mark_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom),
+            )
+        ),
+    ]
+
+
+def _fundable_pools(pools_zone: dict[str, Any]) -> list[dict[str, Any]]:
+    fundable = [pool for pool in pools_zone["pools"] if pool["kind"] != POOL_KIND_UNRECOGNISED]
+    return sorted(fundable, key=lambda pool: pool["kind"] != POOL_KIND_CANONICAL)  # stable: canonical first
+
+
+def _empty_pool_tx(zone: config.ZoneConfig, reason: str) -> MultisigTx:
+    return MultisigTx(
+        chain_id=zone.chain_id, title=f"{zone.chain_id} · pool funding", ready=False, reason=reason, commands=[], files=[]
+    )
+
+
+def _join_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str | None, test_amount: int, is_test: bool) -> MultisigTx:
+    amount_text, reason = _join_amount(pool=pool, test_amount=test_amount, is_test=is_test)
+    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or reason
+    label = "test" if is_test else "rest"
+    denom = osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM
+    file_stem = _pool_file_stem(zone=zone, pool=pool, label=label)
+    join_title = f"test join, {test_amount}{denom}" if is_test else f"join rest, {amount_text}{denom}"
+    return _osmosis_tx(
+        zone=zone,
+        title=f"{zone.chain_id} · {_pool_name(pool=pool)} · {join_title}",
+        reason=reason,
+        generate_line=_osmosis_generate_line(
+            contract=pool["contract"], message={"join_pool": {}}, amount=f"{amount_text}{denom}", file_stem=file_stem
+        ),
+        file_stem=file_stem,
+    )
+
+
+def _join_amount(pool: dict[str, Any], test_amount: int, is_test: bool) -> tuple[str, str | None]:
+    """The amount to join and why it cannot go yet: the test is one whole token; the rest is what the allocation leaves."""
+    if is_test:
+        return str(test_amount), None
+    if pool["allocation"] is None:
+        return PLACEHOLDER_REST_AMOUNT, "the pool's allocation is not known yet (see the Pools tab)"
+
+    remaining = int(pool["allocation"]) - test_amount
+    if pool["funded_exactly"]:
+        return str(remaining), "the pool is already funded exactly"
+    if remaining <= 0:
+        return str(remaining), f"the allocation ({pool['allocation']}) does not exceed the test join: nothing left to join"
+    return str(remaining), None
+
+
+def _mark_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str | None) -> MultisigTx:
+    file_stem = _pool_file_stem(zone=zone, pool=pool, label="mark")
+    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom)
+    message = {"mark_corrupted_assets": {"denoms": [osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM]}}
+    return _osmosis_tx(
+        zone=zone,
+        title=f"{zone.chain_id} · {_pool_name(pool=pool)} · mark corrupted",
+        reason=reason,
+        generate_line=_osmosis_generate_line(contract=pool["contract"], message=message, amount=None, file_stem=file_stem),
+        file_stem=file_stem,
+    )
+
+
+def _unknown_denom_reason(osmosis_denom: str | None) -> str | None:
+    return None if osmosis_denom else "the zone's native denom on Osmosis is not known yet (see the Pools tab)"
+
+
+def _pool_name(pool: dict[str, Any]) -> str:
+    return f"{pool['kind']} pool {_pool_label(pool=pool)}"
+
+
+def _pool_label(pool: dict[str, Any]) -> str:
+    return pool["pool_id"] or pool["contract"][-6:]
+
+
+def _pool_file_stem(zone: config.ZoneConfig, pool: dict[str, Any], label: str) -> str:
+    return f"{WORKDIR}/pool-{zone.chain_id}-{_pool_label(pool=pool)}-{label}"
+
+
+def _osmosis_generate_line(contract: str, message: dict[str, Any], amount: str | None, file_stem: str) -> str:
+    # Compact JSON, single-quoted for the shell: the transmuter's execute variants take no spaces.
+    message_json = json.dumps(message, separators=(",", ":"))
+    amount_flag = f" --amount {amount}" if amount else ""
+    return (
+        f"osmosisd tx wasm execute {contract} '{message_json}'{amount_flag} --from {OSMOSIS_VAULT_ADDRESS} "
+        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {POOL_GAS} --fees {POOL_FEES} "
+        f"> {file_stem}.unsigned.json"
+    )
+
+
+def _osmosis_tx(zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str) -> MultisigTx:
+    return MultisigTx(
+        chain_id=zone.chain_id,
+        title=title,
+        ready=reason is None,
+        reason=reason,
+        commands=_commands(
+            generate=f"mkdir -p {WORKDIR}\n{generate_line}",
+            file_stem=file_stem,
+            tools=OSMOSIS_TOOLS,
+            generate_label="Write the unsigned tx",
+        ),
+        files=_shared_files(file_stem=file_stem),
+    )
+
+
+def _commands(
+    generate: str,
+    file_stem: str,
+    tools: ChainTools = STRIDE_TOOLS,
+    generate_label: str = "Write the validators file and the unsigned tx",
+) -> list[Command]:
     unsigned = f"{file_stem}.unsigned.json"
     sign_commands = [
         Command(
             tag=signer.tag,
-            label=_sign_label(signer=signer),
+            label=_sign_label(signer=signer, keyring_note=tools.keyring_note),
             text=(
-                f"strided tx sign {unsigned} --multisig {MULTISIG_ADDRESS} --from {signer.key} "
-                f"--chain-id {CHAIN_ID} --node {NODE} \\\n  --output-document {_signature_file(file_stem=file_stem, signer=signer)}"
+                f"{tools.binary} tx sign {unsigned} --multisig {tools.multisig_address} --from {signer.key} "
+                f"--chain-id {tools.chain_id} --node {tools.node} \\\n  --output-document {_signature_file(file_stem=file_stem, signer=signer)}"
             ),
         )
         for signer in SIGNERS
@@ -192,20 +524,20 @@ def _commands(generate: str, file_stem: str) -> list[Command]:
         tag=BROADCASTER.tag,
         label="Combine and broadcast",
         text=(
-            f"strided tx multisign {unsigned} {MULTISIG_KEY} {signature_files} --chain-id {CHAIN_ID} --node {NODE} "
-            f"> {file_stem}.signed.json\n"
-            f"strided tx broadcast {file_stem}.signed.json --node {NODE} --broadcast-mode sync"
+            f"{tools.binary} tx multisign {unsigned} {MULTISIG_KEY} {signature_files} --chain-id {tools.chain_id} "
+            f"--node {tools.node} > {file_stem}.signed.json\n"
+            f"{tools.binary} tx broadcast {file_stem}.signed.json --node {tools.node} --broadcast-mode sync"
         ),
     )
-    return [Command(tag=ANYONE, label="Write the validators file and the unsigned tx", text=generate), *sign_commands, combine]
+    return [Command(tag=ANYONE, label=generate_label, text=generate), *sign_commands, combine]
 
 
-def _sign_label(signer: Signer) -> str:
+def _sign_label(signer: Signer, keyring_note: str = KEYRING_NOTE) -> str:
     if signer == SAM:
-        return f"Sign (online: the multisig's account number and sequence are looked up; {KEYRING_NOTE})"
+        return f"Sign (online: the multisig's account number and sequence are looked up; {keyring_note})"
     if signer in DEFAULT_SIGNERS:
-        return f"Sign ({KEYRING_NOTE})"
-    return f"Backup signer (any two signatures suffice; {KEYRING_NOTE})"
+        return f"Sign ({keyring_note})"
+    return f"Backup signer (any two signatures suffice; {keyring_note})"
 
 
 def _generate_line(arguments: str, gas: int, file_stem: str) -> str:
@@ -225,6 +557,19 @@ def _shared_files(file_stem: str) -> list[str]:
 
 
 # ---- helpers
+
+
+def _zones_by_chain_id(data: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    return {zone["chain_id"]: zone for zone in (data or {}).get("zones", [])}
+
+
+def _snapshot_reason(zone_entry: dict[str, Any] | None, data: dict[str, Any] | None, source: str) -> str | None:
+    """Why a zone's txs cannot be built from a snapshot: not taken yet, zone missing, or the zone's own error."""
+    if data is None:
+        return f"waiting for the {source} snapshot"
+    if zone_entry is None:
+        return f"zone missing from the {source} snapshot"
+    return zone_entry.get("error")
 
 
 def _zone_error(snapshot_zone: dict[str, Any] | None) -> str | None:
