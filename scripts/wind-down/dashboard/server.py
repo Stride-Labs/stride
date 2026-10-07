@@ -5,7 +5,8 @@
 Each registered collector is refreshed on its own interval in a background thread; the page polls the
 cached snapshots, so the browser never talks to a chain. The Ops tab is an exception: it has no collector, and
 `GET /api/ops` / `POST /api/ops/check` read and write the plan and status files directly (see ops.py). The Multisig
-tab is the other: `GET /api/multisig` is composed from the Validators cache's current view (see multisig.py).
+tab is the other: `GET /api/multisig` is composed from the Validators, Funds and Pools caches' current views (see
+multisig.py).
 """
 
 import datetime
@@ -37,6 +38,28 @@ COLLECTORS: dict[str, Callable[[], dict[str, Any]]] = {
     "funds": funds.collect,
     "pools": pools.collect,
 }
+
+
+# The snapshots the Multisig tab composes from. A cache that is not registered (the Pools collector may not be built
+# yet) counts as one that has no snapshot yet.
+MULTISIG_SOURCES = ("validators", "funds", "pools")
+
+
+def multisig_views() -> dict[str, dict[str, Any]]:
+    return {name: CACHES[name].view() if name in CACHES else {"loading": True} for name in MULTISIG_SOURCES}
+
+
+def multisig_body(views: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """`GET /api/multisig`: every set built from the sources' data, as old as the oldest snapshot that exists."""
+    data = {name: None if view.get("loading") else view["data"] for name, view in views.items()}
+    fetched_at = [view["fetched_at"] for view in views.values() if view.get("fetched_at")]
+    sets = multisig.tx_sets(
+        validators_data=data["validators"], funds_data=data["funds"], pools_data=data["pools"]
+    )
+    return {
+        "fetched_at": min(fetched_at, default=None),
+        "data": {"sets": [tx_set.payload() for tx_set in sets]},
+    }
 
 
 class TabCache:
@@ -163,14 +186,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self._send_json(status=200, body=body)
 
     def _get_multisig(self) -> None:
-        """The Multisig tab has no collector: it renders from the Validators snapshot's current view."""
-        view = CACHES["validators"].view()
-        data = None if view.get("loading") else view["data"]
-        body = {
-            "fetched_at": view.get("fetched_at"),
-            "data": {"sets": [tx_set.payload() for tx_set in multisig.tx_sets(validators_data=data)]},
-        }
-        self._send_json(status=200, body=body)
+        """The Multisig tab has no collector: it renders from the current views of the caches it reads."""
+        self._send_json(status=200, body=multisig_body(views=multisig_views()))
 
     def _post_ops_check(self) -> None:
         try:

@@ -758,6 +758,80 @@ class ZoneAssemblyTest(unittest.TestCase):
         self.assertEqual(zone.accounts[0].other_balances, [])
 
 
+class SettledAndLandedTest(unittest.TestCase):
+    def stages(self, staked: int = 0, unbonding: int = 0, in_flight: int | None = 0) -> funds.Stages:
+        return funds.Stages(staked=staked, unbonding=unbonding, liquid=0, in_flight=in_flight, vault=None, pools=None)
+
+    def test_settled_when_staked_is_dust_and_nothing_unbonds_or_flies(self) -> None:
+        self.assertTrue(funds.is_funds_settled(stages=self.stages(staked=999_999), decimals=6))
+
+    def test_settled_dust_is_below_one_whole_token_of_the_zones_decimals(self) -> None:
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(staked=10**6), decimals=6))
+        self.assertTrue(funds.is_funds_settled(stages=self.stages(staked=10**6), decimals=18))
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(staked=10**18), decimals=18))
+
+    def test_not_settled_while_unbonding_or_in_flight(self) -> None:
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(unbonding=1), decimals=6))
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(in_flight=1), decimals=6))
+
+    def test_settled_is_unknown_without_the_in_flight_amount(self) -> None:
+        self.assertIsNone(funds.is_funds_settled(stages=self.stages(in_flight=None), decimals=6))
+
+    def test_landed_when_every_ica_is_dust_and_nothing_flies(self) -> None:
+        balances = ica_balances(delegation=999_999, withdrawal=1, fee=0, redemption=500_000)
+
+        self.assertTrue(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_not_landed_while_any_ica_holds_a_whole_token(self) -> None:
+        for holder in ("delegation", "withdrawal", "fee", "redemption"):
+            balances = ica_balances(**{holder: 10**6})
+
+            self.assertFalse(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_foreign_denoms_do_not_hold_up_landing(self) -> None:
+        # ica_balances() gives the withdrawal ICA 5 of ibc/USDC and, below, a large foreign balance changes nothing.
+        balances = {**ica_balances(), funds.IcaType.FEE: {"uatom": 0, "ibc/USDC": 10**9}}
+
+        self.assertTrue(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_not_landed_while_a_transfer_is_in_flight(self) -> None:
+        self.assertFalse(funds.is_transfers_landed(ica_balances=ica_balances(), host_denom="uatom", decimals=6, in_flight=3))
+
+    def test_landed_is_unknown_without_the_in_flight_amount(self) -> None:
+        self.assertIsNone(funds.is_transfers_landed(ica_balances=ica_balances(), host_denom="uatom", decimals=6, in_flight=None))
+
+    def quiet_side(self) -> funds.HostSide:
+        return dataclasses.replace(
+            host_side(chain_id="cosmoshub-4", host_denom="uatom", osmosis_channel="channel-141"),
+            host_zone={"host_denom": "uatom", "redemption_rate": "1", "deposit_address": "stride1deposit", **ica_host_zone()},
+        )
+
+    def test_zone_payload_carries_the_balances_and_both_flags(self) -> None:
+        side = dataclasses.replace(
+            self.quiet_side(),
+            ica_balances=ica_balances(delegation=7 * 10**6),
+            transfers=[transfer(amount=3, status=funds.TransferStatus.IN_FLIGHT)],
+        )
+
+        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, records=stride_records())
+        payload = funds._stringify_ints(dataclasses.asdict(zone))
+
+        self.assertEqual(payload["ica_balances"]["WITHDRAWAL"], {"uatom": "0", "ibc/USDC": "5"})
+        self.assertEqual(payload["ica_balances"]["DELEGATION"], {"uatom": "7000000"})
+        self.assertIs(payload["funds_settled"], False)
+        self.assertIs(payload["transfers_landed"], False)
+
+    def test_zone_payload_flags_are_true_when_quiet_and_null_without_the_transfer_index(self) -> None:
+        quiet = self.quiet_side()
+        blind = dataclasses.replace(quiet, transfers=None)
+
+        quiet_zone = funds._zone_funds(side=quiet, osmosis=None, pools_by_zone=None, records=stride_records())
+        blind_zone = funds._zone_funds(side=blind, osmosis=None, pools_by_zone=None, records=stride_records())
+
+        self.assertEqual((quiet_zone.funds_settled, quiet_zone.transfers_landed), (True, True))
+        self.assertEqual((blind_zone.funds_settled, blind_zone.transfers_landed), (None, None))
+
+
 def stride_records(
     epoch_unbondings: list[dict[str, Any]] | None = None,
     user_redemptions: list[dict[str, Any]] | None = None,
