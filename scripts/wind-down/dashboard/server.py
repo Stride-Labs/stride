@@ -26,6 +26,7 @@ import validators
 import funds
 import multisig
 import ops
+import pools
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -34,6 +35,7 @@ COLLECTORS: dict[str, Callable[[], dict[str, Any]]] = {
     "channels": channels.collect,
     "validators": validators.collect,
     "funds": funds.collect,
+    "pools": pools.collect,
 }
 
 

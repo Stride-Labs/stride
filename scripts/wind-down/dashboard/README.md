@@ -11,7 +11,7 @@ Python 3.12 standard library only; the page is vanilla JS with no build step. Te
 ## How it works
 
 `server.py` owns one snapshot per registered collector (the `COLLECTORS` dict) and refreshes each in a background thread on
-its interval from `config.REFRESH_INTERVAL_SECONDS` (channels 60s, funds 120s, validators 300s). The page polls
+its interval from `config.REFRESH_INTERVAL_SECONDS` (channels 60s, funds 120s, validators 300s, pools 300s). The page polls
 `GET /api/<tab>`, which returns `{fetched_at, duration_seconds, refreshing, data}` (HTTP 503 `{loading: true}` until the
 first snapshot). `POST /api/refresh/<tab>` refreshes now; `GET /api/config` returns the intervals.
 
@@ -129,6 +129,46 @@ The files the commands share travel between people by Slack. A set deep-links as
 - Click the Staked or Unbonding node in the diagram for the per-validator breakdown (`validator_positions`): every
   validator the delegation ICA, and for celestia the multisig, has stake or unbonding entries on, with a bar per
   validator split into its staked amount and one segment per unbonding entry (hover for the amount and completion).
+
+## Pools tab
+
+The per-pool gate of the retired `check_transmuter_pool.py` and the coverage math of `coverage_check.py`, live
+(`pools.py`, `GET /api/pools`, payload `{zones: [ZonePools]}`, one entry per zone in `config.ZONES`). `coverage_check.py`
+stays only for the published-export audit at the halt.
+
+- Discovery: every pool in Osmosis's `cosmwasmpool/v1beta1/pools` listing with `code_id` 996 whose `get_admin` is the
+  vault, plus `config.EXTRA_POOL_CONTRACTS` whatever their admin. A pool whose admin is not the vault is remembered for
+  the life of the process (someone else's pool never becomes ours); our own pools are re-read every refresh so an admin
+  transfer shows. If Osmosis cannot be read every zone is an error entry.
+- Assignment: a pool belongs to the zone whose stToken it holds (the base denom of the Osmosis denom trace equals the
+  zone's `st_denom`). Its kind is `canonical` when that trace is exactly `transfer/channel-326/<st_denom>`, `route` when
+  it is two hops (`transfer/<c1>/transfer/<c2>/<st_denom>`) that resolve to a policy channel, else `unrecognised`
+  (reported, never allocated). The native token is the zone's denom over `config.OSMOSIS_CHANNEL_TO_HOST` (the bare
+  denom for osmosis-1).
+- Route resolution: `c1` is Osmosis's channel to the holder chain (its chain id from the channel's `client_state`),
+  `c2` the holder's channel to Stride. The Stride channel is the one in `config.REQUIRED_ROUTES[st_denom]` (a copy of
+  `coverage_check.REQUIRED_ROUTES`; a test keeps them equal) whose counterparty is `c2` and whose client tracks that
+  chain. `escrow` is Stride's balance of the stToken on `chain.escrow_address(stride_channel)` (ibc-go's ICS-20 escrow:
+  sha256 of `ics20-1` NUL `transfer/<channel>`, 20 bytes, bech32 `stride`).
+- Allocation: a route pool gets `ceil(escrow x rate)` at the **pool's own** rate (what it will actually pay out; the gap
+  to Stride's frozen rate stays in the canonical pool); the canonical pool gets `vault_native + every pool's native -
+  every route allocation`, null while any non-canonical pool's share is unknown. `funded_exactly` is
+  `vault_shares == allocation`: shares are minted 1:1 to native joined and stay in the vault, so it is the cumulative
+  funding audit (redemptions later lower `native_balance`, not `vault_shares`). `rate` is native factor / stToken factor,
+  `rate_gap_pct` is `(stride_rate - rate) / stride_rate x 100`.
+- Checks per pool (`checks: [{name, ok, detail}]`, `ok` null when the lookup it needs failed; `ready` is every check
+  true): code id 996; cw2 version 3.2.0; assets are one stToken plus the native; factors (stToken 1e18, native equals
+  alloyed); rate at or below Stride's; admin and moderator are the vault; no admin transfer in flight; active; no
+  limiters; stToken trace (canonical or a resolved route); native trace; uint128 headroom (`native_balance x native
+  factor`); corrupted set (empty while the vault holds no shares, exactly the native token once it does); no alloyed
+  shares outside the vault (`outside_shares = alloyed_supply - vault_shares`, a remaining native claim).
+- Per zone: `needed` is the stToken supply times Stride's rate rounded up, `coverage` is `(vault + pools' native) /
+  needed`, `missing_routes` lists the policy channels with no route pool, `pools` are ordered canonical, routes by Stride
+  channel, unrecognised. `pools_ready`: a canonical pool exists, no missing route, every pool ready (null while the only
+  failures are unknown checks). `pools_funded`: `pools_ready` and every pool funded exactly and its native token marked
+  corrupted (null while an input is unknown). Every integer in the payload is a string.
+- Today the 2026-09-25 test pools are not vault-administered, so every zone shows a missing canonical pool and its
+  missing routes; add a contract to `config.EXTRA_POOL_CONTRACTS` to see the per-pool report before the real pools exist.
 
 ## Known gaps
 

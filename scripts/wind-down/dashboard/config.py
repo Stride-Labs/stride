@@ -9,7 +9,7 @@ PORT = 8787
 HTTP_TIMEOUT_SECONDS = 20
 USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 
-REFRESH_INTERVAL_SECONDS = {"channels": 60, "funds": 120, "validators": 300}
+REFRESH_INTERVAL_SECONDS = {"channels": 60, "funds": 120, "validators": 300, "pools": 300}
 
 CHANNELS_FEED_URL = "https://channels.main.stridenet.co/api/data"
 
@@ -134,3 +134,38 @@ HOLDER_ROUTES: tuple[HolderRoute, ...] = (
 # Transmuter pool contracts on Osmosis the vault has not joined yet, so the Funds tab shows them before funding.
 # Pools the vault holds an alloyed LP receipt of are discovered from its balances and need no entry here.
 EXTRA_POOL_CONTRACTS: tuple[str, ...] = ()
+
+# Osmosis's transfer channel to each in-scope host zone: where the native token's canonical Osmosis denom comes from
+# (verified against the chain registry on 2026-09-23; sommelier-3 verified on chain on 2026-10-02). osmosis-1 has no
+# entry: its native token is the bare denom.
+OSMOSIS_CHANNEL_TO_HOST: dict[str, str] = {
+    "cosmoshub-4": "channel-0",
+    "celestia": "channel-6994",
+    "dydx-mainnet-1": "channel-6787",
+    "haqq_11235-1": "channel-1575",
+    "injective-1": "channel-122",
+    "juno-1": "channel-42",
+    "laozi-mainnet": "channel-148",
+    "phoenix-1": "channel-251",
+    "sommelier-3": "channel-165",
+    "ssc-1": "channel-38946",
+}
+
+# Route policy: stToken denom -> the Stride transfer channels whose holders get a route pool. A copy of
+# scripts/wind-down/coverage_check.py's REQUIRED_ROUTES (the published-export audit at the halt keeps its own); a test
+# asserts the two are equal, so a scope change updates both and docs/wind-down/sttoken-locations.md together.
+REQUIRED_ROUTES: dict[str, frozenset[str]] = {
+    "stuatom": frozenset({
+        "channel-0", "channel-6", "channel-11", "channel-40", "channel-47", "channel-69", "channel-123", "channel-148",
+    }),
+    "staISLM": frozenset({"channel-240"}),
+    "stutia": frozenset({"channel-148", "channel-123", "channel-47", "channel-0", "channel-197", "channel-162"}),
+    "stinj": frozenset({"channel-6", "channel-40", "channel-0"}),
+    "stuosmo": frozenset({"channel-0", "channel-40"}),
+    "stuband": frozenset({"channel-258"}),
+    "stadydx": frozenset({"channel-0", "channel-160"}),
+    "stuluna": frozenset({"channel-13", "channel-52", "channel-47"}),
+    "stusaga": frozenset({"channel-213"}),
+    "stujuno": frozenset({"channel-24"}),
+    "stusomm": frozenset(),
+}
