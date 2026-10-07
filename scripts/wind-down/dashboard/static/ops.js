@@ -1,5 +1,7 @@
 // Ops tab: the dated wind-down checklist. Unlike the other tabs it has no collector snapshot: it polls
-// /api/ops ({plan, status, today}) itself and ticks through POST /api/ops/check.
+// /api/ops ({plan, status, today}) itself and ticks through POST /api/ops/check. A step's `auto` check reads another
+// tab's snapshot live, but only once its window has started (the window's `start`, else its day): before that the
+// marks read n/a. A step's `multisig` names a tx set on the Multisig tab and renders as a link to it.
 (() => {
 
 const OPS_POLL_MS = 60 * 1000;
@@ -32,11 +34,12 @@ function startOps() {
   setInterval(pollLive, OPS_POLL_MS);
 }
 
-// Live snapshots the plan's `auto` checks read: {channels: data, validators: data, funds: data}.
+// Live snapshots the plan's `auto` checks read ({channels, validators, funds}: {fetched_at, data}), plus `multisig`
+// (its tx sets, for the titles of the steps' "→ Multisig tab" links) when the plan references a set.
 const live = {};
 
 async function pollLive() {
-  const tabs = new Set(autoSources());
+  const tabs = new Set(liveSources());
   let changed = false;
   for (const tab of tabs) {
     const response = await fetch(`/api/${tab}`).catch(() => null);
@@ -49,9 +52,17 @@ async function pollLive() {
   if (changed && plan) drawOps();
 }
 
-function autoSources() {
+function liveSources() {
   if (!plan) return [];
-  return plan.days.flatMap((day) => day.windows.flatMap((window) => window.steps.filter((step) => step.auto).map((step) => step.auto.tab)));
+  const steps = plan.days.flatMap((day) => day.windows.flatMap((window) => window.steps));
+  const autoTabs = steps.filter((step) => step.auto).map((step) => step.auto.tab);
+  return steps.some((step) => step.multisig) ? [...autoTabs, 'multisig'] : autoTabs;
+}
+
+// The title of a multisig tx set, once /api/multisig has answered; the set id until then.
+function multisigSetTitle(setId) {
+  const set = live.multisig && live.multisig.data.sets.find((candidate) => candidate.id === setId);
+  return set ? set.title : setId;
 }
 
 // The live value behind a step's `auto` check for one zone: true / false / null (n/a) / undefined (no snapshot yet).
@@ -62,9 +73,11 @@ function autoValue(step, zone) {
   if (!entry || entry.error) return null;
   const value = step.auto.path.split('.').reduce((inner, key) => (inner == null ? inner : inner[key]), entry);
   if (value === null || value === undefined) return null;
-  // `equals` turns a number (an over count, a record count) into a pass/fail; without it the value is a boolean already.
-  if (step.auto.equals === undefined) return value;
-  if (String(value) === String(step.auto.equals)) return true;
+  // `equals` / `at_least` turn a number (an over count, a record count, a drained count) into a pass/fail; without
+  // either the value is a boolean already.
+  if (step.auto.equals === undefined && step.auto.at_least === undefined) return value;
+  const passes = step.auto.at_least === undefined ? String(value) === String(step.auto.equals) : Number(value) >= step.auto.at_least;
+  if (passes) return true;
   return (step.auto.allow || []).includes(zone) ? 'allowed' : false;
 }
 
@@ -76,12 +89,33 @@ function autoMark(value) {
   return `<span class="ops-auto muted" title="could not be checked">n/a</span>`;
 }
 
-function autoSummary(step) {
+// A live check before its window has started reads n/a; the title says when it applies and what it would read now.
+function inactiveMark(value, gate) {
+  const wouldRead = value === undefined ? '' : `; would read ${markText(value)}`;
+  return `<span class="ops-auto muted" title="applies from ${escapeHtml(gate.label)}${escapeHtml(wouldRead)}">n/a</span>`;
+}
+
+function markText(value) {
+  if (value === true) return '✓ ok';
+  if (value === 'allowed') return '✓ allowed';
+  if (value === false) return '✗ fail';
+  return 'n/a';
+}
+
+function autoSummary(step, gate) {
+  if (!gate.active) return `<span class="ops-auto muted" title="applies from ${escapeHtml(gate.label)}">n/a</span>`;
   const values = step.zones.map((zone) => autoValue(step, zone));
   if (values.some((value) => value === undefined)) return '';
   const passing = values.filter((value) => value === true || value === 'allowed').length;
   const cssClass = passing === values.length ? 'ok' : 'bad';
   return `<span class="ops-auto ${cssClass}" title="from the ${escapeHtml(step.auto.tab)} tab's latest snapshot">${passing}/${values.length} ok</span>`;
+}
+
+// Whether a window's live checks apply yet: from the window's `start` (ISO UTC) when it has one, else from its day
+// (the server's ET date). Activation never ends, so a check stays live once its window has started.
+function liveGate(day, window) {
+  if (window.start) return { active: Date.now() >= Date.parse(window.start), label: window.label };
+  return { active: today >= day.date, label: day.date };
 }
 
 async function pollOps() {
@@ -237,15 +271,16 @@ function blockHtml(block, { current, next }) {
     <summary><h2>${datesLabel(block)} <span>${escapeHtml(block.title)}</span> ${marker}
       <span class="sub">${escapeHtml(block.note || '')}</span>
       <span class="ops-count">${pill(complete ? 'ok' : 'idle', `${progress.done}/${progress.total}`)}</span></h2></summary>
-    ${avoid}${block.windows.map(windowHtml).join('')}</details>`;
+    ${avoid}${block.windows.map((window) => windowHtml(block, window)).join('')}</details>`;
 }
 
-function windowHtml(window) {
+function windowHtml(day, window) {
   const label = window.label ? `<div class="ops-window">${escapeHtml(window.label)}</div>` : '';
-  return `${label}<ul class="ops-steps">${window.steps.map(stepHtml).join('')}</ul>`;
+  const gate = liveGate(day, window);
+  return `${label}<ul class="ops-steps">${window.steps.map((step) => stepHtml(step, gate)).join('')}</ul>`;
 }
 
-function stepHtml(step) {
+function stepHtml(step, gate) {
   const zones = step.zones || [];
   const tag = step.conditional ? pill('warn', step.conditional) : '';
   const ref = step.ref ? `<span class="muted mono">${escapeHtml(step.ref)}</span>` : '';
@@ -257,20 +292,24 @@ function stepHtml(step) {
     ? `<pre class="ops-command mono copy" data-copy="${escapeHtml(step.command)}" title="click to copy">${escapeHtml(step.command)}</pre>`
     : '';
   const expect = step.expect ? `<div class="muted ops-expect">expect: ${escapeHtml(step.expect)}</div>` : '';
+  const multisig = step.multisig
+    ? `<div class="ops-link"><a href="#multisig/${escapeHtml(step.multisig)}">→ Multisig tab: ${escapeHtml(multisigSetTitle(step.multisig))}</a></div>`
+    : '';
   const perZoneTicks = zones.length > 0 && !step.auto;
   const checkbox = perZoneTicks
     ? `<input type="checkbox" disabled ${stepDone(step) ? 'checked' : ''} title="done when every zone is">`
     : `<input type="checkbox" data-id="${escapeHtml(step.id)}" ${isDone(step.id) ? 'checked' : ''}>`;
+  const zoneMark = (zone) => (gate.active ? autoMark(autoValue(step, zone)) : inactiveMark(autoValue(step, zone), gate));
   const zoneRows = perZoneTicks
     ? `<ul class="ops-zones">${zones.map((zone) => zoneHtml(`${step.id}:${zone}`, zone)).join('')}</ul>`
     : step.auto && zones.length
-      ? `<ul class="ops-zones">${zones.map((zone) => `<li class="ops-row">${escapeHtml(zone)} ${autoMark(autoValue(step, zone))}</li>`).join('')}</ul>`
+      ? `<ul class="ops-zones">${zones.map((zone) => `<li class="ops-row">${escapeHtml(zone)} ${zoneMark(zone)}</li>`).join('')}</ul>`
       : '';
-  const auto = step.auto && zones.length ? autoSummary(step) : '';
+  const auto = step.auto && zones.length ? autoSummary(step, gate) : '';
 
   return `<li class="ops-step ${stepDone(step) ? 'done' : ''}">
     <div class="ops-row"><label>${checkbox} <span class="ops-text">${escapeHtml(step.text)}</span></label>
-      ${tag} ${auto} ${ref} ${perZoneTicks ? '' : tickedBy(step.id)}</div>${command}${expect}${detail}${zoneRows}</li>`;
+      ${tag} ${auto} ${ref} ${perZoneTicks ? '' : tickedBy(step.id)}</div>${multisig}${command}${expect}${detail}${zoneRows}</li>`;
 }
 
 function zoneHtml(id, zone) {
