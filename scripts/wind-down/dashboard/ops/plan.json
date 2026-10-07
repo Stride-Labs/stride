@@ -836,21 +836,29 @@
           "steps": [
             {
               "id": "haqq-done-claimable",
-              "text": "Haqq: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; confirm every record of the zone reached CLAIMABLE (Funds tab: unbonding 0, redemption ICA funded).",
-              "ref": "§9 step 6",
-              "zones": [
-                "haqq_11235-1"
-              ]
-            },
-            {
-              "id": "haqq-done-claims",
-              "text": "Run ClaimUndelegatedTokens for every record of the zone (permissionless); a record whose host receiver rejects the bank send is handled by hand.",
+              "text": "Haqq: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; live below: every record of the zone is CLAIMABLE.",
               "ref": "§9 step 6",
               "zones": [
                 "haqq_11235-1"
               ],
-              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
+              "auto": {
+                "tab": "funds",
+                "path": "records.pending_before_claimable",
+                "equals": 0
+              }
+            },
+            {
+              "id": "haqq-done-claims",
+              "text": "Run the claims bot (launchpad/bots/claims); live below: no user redemption record of the zone is left (a claimed record is deleted).",
+              "ref": "§9 step 6",
+              "zones": [
+                "haqq_11235-1"
+              ],
+              "auto": {
+                "tab": "funds",
+                "path": "records.user_redemption_records",
+                "equals": 0
+              }
             },
             {
               "id": "haqq-done-transfer-checklist",
@@ -947,21 +955,29 @@
           "steps": [
             {
               "id": "osmo-done-claimable",
-              "text": "Osmosis: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; confirm every record of the zone reached CLAIMABLE (Funds tab: unbonding 0, redemption ICA funded).",
-              "ref": "§9 step 6",
-              "zones": [
-                "osmosis-1"
-              ]
-            },
-            {
-              "id": "osmo-done-claims",
-              "text": "Run ClaimUndelegatedTokens for every record of the zone (permissionless); a record whose host receiver rejects the bank send is handled by hand.",
+              "text": "Osmosis: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; live below: every record of the zone is CLAIMABLE.",
               "ref": "§9 step 6",
               "zones": [
                 "osmosis-1"
               ],
-              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
+              "auto": {
+                "tab": "funds",
+                "path": "records.pending_before_claimable",
+                "equals": 0
+              }
+            },
+            {
+              "id": "osmo-done-claims",
+              "text": "Run the claims bot (launchpad/bots/claims); live below: no user redemption record of the zone is left (a claimed record is deleted).",
+              "ref": "§9 step 6",
+              "zones": [
+                "osmosis-1"
+              ],
+              "auto": {
+                "tab": "funds",
+                "path": "records.user_redemption_records",
+                "equals": 0
+              }
             },
             {
               "id": "osmo-done-transfer-checklist",
@@ -1026,21 +1042,29 @@
           "steps": [
             {
               "id": "tia-done-claimable",
-              "text": "Celestia: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; confirm every record of the zone reached CLAIMABLE (Funds tab: unbonding 0, redemption ICA funded).",
-              "ref": "§9 step 6",
-              "zones": [
-                "celestia"
-              ]
-            },
-            {
-              "id": "tia-done-claims",
-              "text": "Run ClaimUndelegatedTokens for every record of the zone (permissionless); a record whose host receiver rejects the bank send is handled by hand.",
+              "text": "Celestia: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; live below: every record of the zone is CLAIMABLE.",
               "ref": "§9 step 6",
               "zones": [
                 "celestia"
               ],
-              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
+              "auto": {
+                "tab": "funds",
+                "path": "records.pending_before_claimable",
+                "equals": 0
+              }
+            },
+            {
+              "id": "tia-done-claims",
+              "text": "Run the claims bot (launchpad/bots/claims); live below: no user redemption record of the zone is left (a claimed record is deleted).",
+              "ref": "§9 step 6",
+              "zones": [
+                "celestia"
+              ],
+              "auto": {
+                "tab": "funds",
+                "path": "records.user_redemption_records",
+                "equals": 0
+              }
             },
             {
               "id": "tia-staketia-sweep",
@@ -1155,20 +1179,7 @@
           "steps": [
             {
               "id": "d21-done-claimable",
-              "text": "Each zone: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; confirm every record of the zone reached CLAIMABLE (Funds tab: unbonding 0, redemption ICA funded).",
-              "ref": "§9 step 6",
-              "zones": [
-                "cosmoshub-4",
-                "injective-1",
-                "laozi-mainnet",
-                "phoenix-1",
-                "ssc-1",
-                "dydx-mainnet-1"
-              ]
-            },
-            {
-              "id": "d21-done-claims",
-              "text": "Run ClaimUndelegatedTokens for every record of the zone (permissionless); a record whose host receiver rejects the bank send is handled by hand.",
+              "text": "Each zone: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; live below: every record of the zone is CLAIMABLE.",
               "ref": "§9 step 6",
               "zones": [
                 "cosmoshub-4",
@@ -1178,8 +1189,29 @@
                 "ssc-1",
                 "dydx-mainnet-1"
               ],
-              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
+              "auto": {
+                "tab": "funds",
+                "path": "records.pending_before_claimable",
+                "equals": 0
+              }
+            },
+            {
+              "id": "d21-done-claims",
+              "text": "Run the claims bot (launchpad/bots/claims); live below: no user redemption record of the zone is left (a claimed record is deleted).",
+              "ref": "§9 step 6",
+              "zones": [
+                "cosmoshub-4",
+                "injective-1",
+                "laozi-mainnet",
+                "phoenix-1",
+                "ssc-1",
+                "dydx-mainnet-1"
+              ],
+              "auto": {
+                "tab": "funds",
+                "path": "records.user_redemption_records",
+                "equals": 0
+              }
             },
             {
               "id": "d21-done-transfer-checklist",
@@ -1284,23 +1316,31 @@
           "steps": [
             {
               "id": "d28-done-claimable",
-              "text": "Each zone: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; confirm every record of the zone reached CLAIMABLE (Funds tab: unbonding 0, redemption ICA funded).",
-              "ref": "§9 step 6",
-              "zones": [
-                "juno-1",
-                "sommelier-3"
-              ]
-            },
-            {
-              "id": "d28-done-claims",
-              "text": "Run ClaimUndelegatedTokens for every record of the zone (permissionless); a record whose host receiver rejects the bank send is handled by hand.",
+              "text": "Each zone: the pipeline sweeps each completed record to the redemption ICA at the next stride epoch and the record goes CLAIMABLE; live below: every record of the zone is CLAIMABLE.",
               "ref": "§9 step 6",
               "zones": [
                 "juno-1",
                 "sommelier-3"
               ],
-              "command": "strided tx stakeibc claim-undelegated-tokens <CHAIN_ID> <EPOCH> <RECEIVER> --from <ANY_FUNDED_KEY> --chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5",
-              "expect": "Permissionless (any funded key). One tx per user redemption record (host zone, epoch, receiver from /Stride-Labs/stride/records/user_redemption_record); code: 0 and the record disappears (Funds tab → Records column: user redemption records go to 0). A record whose claim keeps failing (the host rejects the bank send) is settled by hand."
+              "auto": {
+                "tab": "funds",
+                "path": "records.pending_before_claimable",
+                "equals": 0
+              }
+            },
+            {
+              "id": "d28-done-claims",
+              "text": "Run the claims bot (launchpad/bots/claims); live below: no user redemption record of the zone is left (a claimed record is deleted).",
+              "ref": "§9 step 6",
+              "zones": [
+                "juno-1",
+                "sommelier-3"
+              ],
+              "auto": {
+                "tab": "funds",
+                "path": "records.user_redemption_records",
+                "equals": 0
+              }
             },
             {
               "id": "d28-done-transfer-checklist",
