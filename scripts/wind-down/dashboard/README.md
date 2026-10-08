@@ -191,7 +191,7 @@ stays only for the published-export audit at the halt.
   `amount x lcm / factor`, in a Uint128 on each join, swap and exit, so `needed x (lcm / native factor)` must be below
   2^128: the three 18-decimal zones overflow with 1e18-scaled factors and need 1e6-scaled ones, which the detail
   says); corrupted set (empty while the vault holds no shares, exactly the native token once it does); no alloyed
-  shares outside the vault (`outside_shares = alloyed_supply - vault_shares`, a remaining native claim); only pool of
+  the test wallet's shares (`test_wallet_shares`, from the test join; strangers' shares are not tracked); only pool of
   its kind/channel (false on every duplicate).
 - Per zone: `needed` is the stToken supply times Stride's rate rounded up, `coverage` is `(vault + pools' native) /
   needed`, `fee_reserve` is the uosmo kept back from the osmosis-1 allocation (0 elsewhere), `missing_routes` lists the

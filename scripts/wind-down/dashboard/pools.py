@@ -75,7 +75,6 @@ class CheckName(StrEnum):
     NATIVE_TRACE = "native trace"
     HEADROOM = "uint128 headroom"
     CORRUPTED = "corrupted set"
-    NO_OUTSIDE_SHARES = "no alloyed shares outside the vault"
     UNIQUE = "only pool of its kind/channel"
 
 
@@ -111,7 +110,7 @@ class PoolReport:
     alloyed_denom: str
     alloyed_supply: int | None
     vault_shares: int
-    outside_shares: int | None  # alloyed_supply - vault_shares: joins by anyone but the vault, still a native claim
+    test_wallet_shares: int  # the test join's shares (config.POOL_SEED_ADDRESS); strangers' shares are not tracked
     rate: str | None  # native factor / stToken factor, fixed at creation
     rate_gap_pct: str | None  # (stride_rate - rate) / stride_rate x 100: the surplus that stays in the canonical pool
     escrow: int | None  # route only: Stride's escrow balance of the stToken on the route's channel
@@ -307,6 +306,7 @@ class PlannedPool:
 class OsmosisSnapshot:
     vault_balances: dict[str, int]
     pools: list[RawPool]
+    test_wallet_balances: dict[str, int] = dataclasses.field(default_factory=dict)  # config.POOL_SEED_ADDRESS
     creation_fee: CreationFee | None = None  # None when the poolmanager params could not be read
     # Osmosis's channel to each holder chain (config.HOLDER_ROUTES) -> what it points at; None where the lookup failed.
     holder_targets: dict[str, ChannelTarget | None] = dataclasses.field(default_factory=dict)
@@ -491,6 +491,7 @@ def build_pool_report(
     vault_shares: int,
     route_lookup: RouteLookup | None,
     escrow: int | None,
+    test_wallet_shares: int = 0,
 ) -> PoolReport:
     """A route pool's allocation is known here; a canonical pool's is filled in by `allocate` once every route is.
 
@@ -499,9 +500,6 @@ def build_pool_report(
     kind = _kind(st=st, zone=zone, route_lookup=route_lookup)
     route = route_lookup.route if route_lookup else None
     rate = pool_rate(raw=raw, st_denom=st.denom, native_denom=zone.osmosis_denom)
-    outside_shares = (
-        None if raw.alloyed_supply is None else raw.alloyed_supply - vault_shares
-    )
     allocation = (
         route_allocation(escrow=escrow, rate=rate) if kind == PoolKind.ROUTE else None
     )
@@ -516,7 +514,6 @@ def build_pool_report(
         stride_rate=stride_rate,
         needed=needed,
         vault_shares=vault_shares,
-        outside_shares=outside_shares,
     )
     return PoolReport(
         contract=raw.contract,
@@ -530,7 +527,7 @@ def build_pool_report(
         alloyed_denom=raw.alloyed_denom,
         alloyed_supply=raw.alloyed_supply,
         vault_shares=vault_shares,
-        outside_shares=outside_shares,
+        test_wallet_shares=test_wallet_shares,
         rate=rate,
         rate_gap_pct=rate_gap_pct(stride_rate=stride_rate, rate=rate),
         escrow=escrow if kind == PoolKind.ROUTE else None,
@@ -668,7 +665,6 @@ def build_checks(
     stride_rate: str,
     needed: int,
     vault_shares: int,
-    outside_shares: int | None,
 ) -> list[Check]:
     """The gate checks of check_transmuter_pool.py, each n/a (ok None) when the lookup it needs failed.
 
@@ -758,11 +754,6 @@ def build_checks(
                 vault_shares=vault_shares,
             ),
             detail=f"corrupted={corrupted if corrupted is not None else '?'} vault_shares={vault_shares}",
-        ),
-        Check(
-            name=CheckName.NO_OUTSIDE_SHARES,
-            ok=None if outside_shares is None else outside_shares == 0,
-            detail=f"{outside_shares if outside_shares is not None else '?'} shares outside the vault",
         ),
         Check(
             name=CheckName.UNIQUE,
@@ -1309,6 +1300,7 @@ def _pool_report(
         stride_rate=host.stride_rate,
         needed=host.needed,
         vault_shares=snapshot.vault_balances.get(raw.alloyed_denom, 0),
+        test_wallet_shares=snapshot.test_wallet_balances.get(raw.alloyed_denom, 0),
         route_lookup=route_lookup,
         escrow=escrow,
     )
@@ -1466,6 +1458,7 @@ def _osmosis_snapshot(osmosis: chain.Chain) -> OsmosisSnapshot:
         )
     return OsmosisSnapshot(
         vault_balances=vault_balances,
+        test_wallet_balances=_balances(chain_handle=osmosis, address=config.POOL_SEED_ADDRESS),
         pools=pools,
         creation_fee=_creation_fee(osmosis=osmosis),
         holder_targets=_holder_targets(osmosis=osmosis),

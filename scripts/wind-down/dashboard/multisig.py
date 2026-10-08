@@ -370,7 +370,7 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
         title="Pool funding: join and close every transmuter pool",
         description="Fund each pool with a test join, then the rest of its allocation, then mark the native token corrupted.",
         notes=[
-            "Per zone: every pool's test join first, then verify on the Pools tab (native one token, vault shares one token, no outside shares, rate exact).",
+            "Per zone: every pool's test join first, then verify on the Pools tab (native one token, vault shares one token, the test wallet's shares present, rate exact).",
             "Then per pool: the rest join and the mark back to back; the mark closes the window in which an outsider could join.",
             "The rest join is ready once the Pools snapshot shows the test join as vault shares.",
             "The vault needs about 0.15 OSMO per tx, three txs per pool.",

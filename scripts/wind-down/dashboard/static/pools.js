@@ -190,7 +190,7 @@ function livePoolLink(contract, zone) {
 function poolsTable(zone) {
   if (!zone.pools.length) return `<div class="note">no pool administered by the vault holds st${escapeHtml(zone.symbol)} yet</div>`;
   const header = `<tr><th>Pool</th><th>Id</th><th class="num">Native</th><th class="num">stToken</th>
-    <th class="num" title="alloyed shares held by the vault / by anyone else">Shares vault / outside</th>
+    <th class="num" title="alloyed shares held by the vault / by the test wallet">Shares vault / test wallet</th>
     <th class="num" title="what the pool must be funded with: route = escrow × the pool's rate, canonical = the remainder">Allocation</th>
     <th title="the native token marked corrupted (one-way pool)">Corrupted</th><th class="num" title="the pool's rate and its gap below Stride's frozen rate">Rate</th></tr>`;
   return `<div class="table-scroll"><table>${header}${zone.pools.map((pool) => poolRows(pool, zone)).join('')}</table></div>`;
@@ -205,7 +205,7 @@ function poolRows(pool, zone) {
     <td>${idCell(pool)}</td>
     <td class="num">${amount(pool.native_balance, zone.decimals)}</td>
     <td class="num">${amount(pool.st_balance, zone.decimals)}</td>
-    <td class="num">${amount(pool.vault_shares, zone.decimals)} / ${amount(pool.outside_shares, zone.decimals)}</td>
+    <td class="num">${amount(pool.vault_shares, zone.decimals)} / ${amount(pool.test_wallet_shares, zone.decimals)}</td>
     <td class="num">${amount(pool.allocation, zone.decimals)} ${fundedMark(pool)}</td>
     <td>${corruptedCell(pool, zone)}</td>
     <td class="num">${rateCell(pool)}</td></tr>

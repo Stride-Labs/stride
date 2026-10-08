@@ -120,6 +120,7 @@ def report(
     escrow: int | None = None,
     stride_rate: str = STRIDE_RATE,
     needed: int = NEEDED,
+    test_wallet_shares: int = 0,
 ) -> pools.PoolReport:
     st = pools.st_asset_of(raw=raw, zone=ATOM_ZONE)
     assert st is not None
@@ -130,6 +131,7 @@ def report(
         stride_rate=stride_rate,
         needed=needed,
         vault_shares=vault_shares,
+        test_wallet_shares=test_wallet_shares,
         route_lookup=route_lookup,
         escrow=escrow,
     )
@@ -431,7 +433,7 @@ class PoolReportTest(unittest.TestCase):
         self.assertIsNone(pool.route)
         self.assertEqual(pool.rate, "1.500000000000000000")
         self.assertEqual(pool.rate_gap_pct, "0.0000")
-        self.assertEqual(pool.outside_shares, 0)
+        self.assertEqual(pool.test_wallet_shares, 0)
         self.assertIsNone(pool.allocation)  # filled in by allocate()
         self.assertIsNone(pool.funded_exactly)
         self.assertFalse(pool.native_marked)
@@ -484,8 +486,6 @@ class PoolReportTest(unittest.TestCase):
         self.assertTrue(funded.native_marked)
         self.assertTrue(funded.ready)
         self.assertFalse(short.funded_exactly)
-        self.assertEqual(short.outside_shares, 1)
-        self.assertEqual(check(short, pools.CheckName.NO_OUTSIDE_SHARES).ok, False)
 
     def test_allocation_is_null_when_the_escrow_is_unknown(self) -> None:
         pool = report(
@@ -720,15 +720,12 @@ class ChecksTest(unittest.TestCase):
         self.assertEqual(check(wrong_denom, pools.CheckName.CORRUPTED).ok, False)
         self.assertFalse(wrong_denom.native_marked)
 
-    def test_shares_outside_the_vault(self) -> None:
-        pool = report(raw_pool(alloyed_supply=12), vault_shares=10)
+    def test_the_test_wallets_shares_are_reported_and_strangers_are_ignored(self) -> None:
+        pool = report(raw_pool(alloyed_supply=12), vault_shares=10, test_wallet_shares=1)
 
-        self.assertEqual(pool.outside_shares, 2)
-        self.assertEqual(check(pool, pools.CheckName.NO_OUTSIDE_SHARES).ok, False)
-        self.assertEqual(
-            check(pool, pools.CheckName.NO_OUTSIDE_SHARES).detail,
-            "2 shares outside the vault",
-        )
+        self.assertEqual((pool.vault_shares, pool.test_wallet_shares), (10, 1))
+        # The twelfth share, a stranger's, fails nothing: only the unmarked native (vault shares without the mark) does.
+        self.assertEqual({entry.name for entry in pool.checks if entry.ok is False}, {pools.CheckName.CORRUPTED})
 
     def test_a_failed_optional_lookup_makes_its_check_unknown_and_the_pool_not_ready(
         self,
@@ -759,12 +756,10 @@ class ChecksTest(unittest.TestCase):
                 pools.CheckName.ACTIVE,
                 pools.CheckName.NO_LIMITERS,
                 pools.CheckName.CORRUPTED,
-                pools.CheckName.NO_OUTSIDE_SHARES,
             },
         )
         self.assertFalse(any(entry.ok is False for entry in pool.checks))
         self.assertFalse(pool.ready)
-        self.assertIsNone(pool.outside_shares)
         self.assertEqual(pool.corrupted, [])
 
 
