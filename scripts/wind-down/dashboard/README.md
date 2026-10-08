@@ -57,7 +57,8 @@ commit and push `ops/status.json` so the team sees the same state. Logic lives i
 The sixth tab (`#multisig`). Like Ops it is not a collector: `GET /api/multisig` composes the collectors' current
 views with the plan and returns `{fetched_at, data: {sets}}` (`multisig.py`, no chain calls). Each set's txs are
 grouped by zone under a heading (anchor `set-<set-id>-<chain_id>`); per tx: generate, sign x3 (Sam and Aidan by
-default, Riley as the backup), then multisign and broadcast, each tagged with who runs it. Signers need the F5
+default, Riley as the backup), then Sam multisigns and broadcasts with Aidan's signature file read from
+`~/Downloads` (where it lands from Slack), each tagged with who runs it. Signers need the F5
 multisig key in their keyring as well as their own key. The files the commands share travel between people by Slack.
 A set deep-links as `#multisig/<set-id>`, a zone's heading in it as `#multisig/<set-id>/<zone>`. A tx is `ready` only
 when its inputs are known and settled: an ICA's rest transfer waits while a transfer from that ICA is in flight (the

@@ -100,7 +100,8 @@ AIDAN = Signer(tag="Aidan", key="FA5")
 RILEY = Signer(tag="Riley", key="FR5")
 SIGNERS = (SAM, AIDAN, RILEY)
 DEFAULT_SIGNERS = (SAM, AIDAN)  # any two of the three suffice
-BROADCASTER = AIDAN
+BROADCASTER = SAM  # collects the other signature (it arrives in ~/Downloads), multisigns and broadcasts
+DOWNLOADS = "~/Downloads"
 
 
 @dataclass(frozen=True)
@@ -764,7 +765,7 @@ def _commands(
         )
         for signer in SIGNERS
     ]
-    signature_files = " ".join(_signature_file(file_stem=file_stem, signer=signer) for signer in DEFAULT_SIGNERS)
+    signature_files = " ".join(_signature_path(file_stem=file_stem, signer=signer) for signer in DEFAULT_SIGNERS)
     combine = Command(
         tag=BROADCASTER.tag,
         label="Combine and broadcast",
@@ -795,6 +796,14 @@ def _generate_line(arguments: str, gas: int, file_stem: str) -> str:
 
 def _signature_file(file_stem: str, signer: Signer) -> str:
     return f"{file_stem}.{signer.key}.json"
+
+
+def _signature_path(file_stem: str, signer: Signer) -> str:
+    """Where the broadcaster finds a signature: their own where they wrote it, the other signer's in their Downloads
+    (it arrives over Slack)."""
+    if signer == BROADCASTER:
+        return _signature_file(file_stem=file_stem, signer=signer)
+    return f"{DOWNLOADS}/{file_stem.rsplit('/', 1)[-1]}.{signer.key}.json"
 
 
 def _shared_files(file_stem: str) -> list[str]:

@@ -70,8 +70,8 @@ class LiveTestCommandsTest(unittest.TestCase):
                     for tag, key in (("Sam", "FS5"), ("Aidan", "FA5"), ("Riley", "FR5"))
                 ),
                 (
-                    "Aidan",
-                    f"strided tx multisign {stem}.unsigned.json F5 {stem}.FS5.json {stem}.FA5.json "
+                    "Sam",
+                    f"strided tx multisign {stem}.unsigned.json F5 {stem}.FS5.json ~/Downloads/{stem.rsplit('/', 1)[-1]}.FA5.json "
                     f"--chain-id stride-1 --node {NODE} > {stem}.signed.json\n"
                     f"strided tx broadcast {stem}.signed.json --node {NODE} --broadcast-mode sync",
                 ),
@@ -193,7 +193,7 @@ class SetsTest(unittest.TestCase):
     def test_multisig_constants(self) -> None:
         self.assertEqual((multisig.MULTISIG_KEY, multisig.MULTISIG_ADDRESS), ("F5", config.PROTOCOL_ADMIN))
         self.assertEqual([signer.key for signer in multisig.DEFAULT_SIGNERS], ["FS5", "FA5"])
-        self.assertEqual(multisig.BROADCASTER.tag, "Aidan")
+        self.assertEqual(multisig.BROADCASTER.tag, "Sam")
 
 
 # ---- transfer-day sets
@@ -286,8 +286,8 @@ def expected_commands(
             for tag, key in (("Sam", "FS5"), ("Aidan", "FA5"), ("Riley", "FR5"))
         ),
         (
-            "Aidan",
-            f"{binary} tx multisign {stem}.unsigned.json F5 {stem}.FS5.json {stem}.FA5.json "
+            "Sam",
+            f"{binary} tx multisign {stem}.unsigned.json F5 {stem}.FS5.json ~/Downloads/{stem.rsplit('/', 1)[-1]}.FA5.json "
             f"--chain-id {chain_id} --node {node} > {stem}.signed.json\n"
             f"{binary} tx broadcast {stem}.signed.json --node {node} --broadcast-mode sync",
         ),
