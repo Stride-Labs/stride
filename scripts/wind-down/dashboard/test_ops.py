@@ -55,6 +55,7 @@ TRANSFER_DAY_CHECKS: dict[str, dict[str, Any]] = {
     "channels": {"auto": {"tab": "channels", "path": "ica_channels_open"}},
     "transfers": {"multisig": "ica-transfers"},
     "landed": {"auto": {"tab": "funds", "path": "transfers_landed"}},
+    "join-pools": {"multisig": "pool-funding", "auto": {"tab": "pools", "path": "pools_funded"}},
 }
 # Celestia's extra steps, keyed by the uniform step they follow.
 CELESTIA_EXTRAS = {"claims": ["tia-staketia-sweep", "tia-staketia-paid"], "channels": ["tia-claim-balance"]}
@@ -194,15 +195,11 @@ class RealPlanTest(unittest.TestCase):
         self.assertIn("bundle 4", create["text"])
         self.assertEqual(self._step("vote-assetlist")["zones"], ALL_ZONES)
 
-    def test_the_injective_block_and_the_post_halt_funding(self) -> None:
+    def test_the_injective_block_and_the_single_assetlist_step(self) -> None:
         injective = next(day for day in self.plan["days"] if day["date"] == "2026-10-14")
         self.assertEqual([step["id"] for step in injective["windows"][0]["steps"]], ["inj-unblock", "inj-seed", "inj-create"])
         self.assertEqual(self._step("inj-create")["auto"], {"tab": "multisig", "set": "pool-creation", "path": "done", "members": ".injective"})
-        halt = next(day for day in self.plan["days"] if day["date"] == "2026-11-14")
-        self.assertEqual([step["id"] for step in halt["windows"][-1]["steps"]], ["halt-fund-pools", "halt-pools", "halt-route-deposits"])
-        fund = self._step("halt-fund-pools")
-        self.assertEqual((fund["multisig"], fund["auto"], fund["zones"]), ("pool-funding", {"tab": "pools", "path": "pools_funded"}, ALL_ZONES))
-        self.assertFalse([step["id"] for step in self._steps() if step["id"].endswith("-join-pools") or step["id"].endswith("-assetlist") and step["id"] != "vote-assetlist"])
+        self.assertEqual([step["id"] for step in self._steps() if step["id"].endswith("-assetlist")], ["vote-assetlist"])
 
     def test_pool_creation_set_is_first_and_names_its_step(self) -> None:
         # Fails until the pool-creation set lands (pool-prep spec §2, built separately): the plan references it already.

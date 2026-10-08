@@ -840,7 +840,7 @@
       "date": "2026-10-20",
       "title": "Haqq: transfer and join the stISLM pools (unbonding done 10-19) · staketia tranche 1",
       "estimated": false,
-      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt.",
+      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered, in one day.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
@@ -913,6 +913,19 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
+            },
+            {
+              "id": "haqq-join-pools",
+              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
+              "multisig": "pool-funding",
+              "zones": [
+                "haqq_11235-1"
+              ],
+              "auto": {
+                "tab": "pools",
+                "path": "pools_funded"
+              }
             }
           ]
         },
@@ -932,7 +945,7 @@
       "date": "2026-10-27",
       "title": "Osmosis and Celestia: transfer and join the pools (unbonding done 10-26)",
       "estimated": false,
-      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt.",
+      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered, in one day.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "No key of the staketia claim address signs anything; MsgTransferStaketiaClaimBalance is the only way its balance moves (§7).",
@@ -1006,6 +1019,19 @@
               "auto": {
                 "tab": "funds",
                 "path": "transfers_landed"
+              }
+            },
+            {
+              "id": "osmo-join-pools",
+              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
+              "multisig": "pool-funding",
+              "zones": [
+                "osmosis-1"
+              ],
+              "auto": {
+                "tab": "pools",
+                "path": "pools_funded"
               }
             }
           ]
@@ -1099,6 +1125,19 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
+            },
+            {
+              "id": "tia-join-pools",
+              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
+              "multisig": "pool-funding",
+              "zones": [
+                "celestia"
+              ],
+              "auto": {
+                "tab": "pools",
+                "path": "pools_funded"
+              }
             }
           ]
         },
@@ -1120,7 +1159,7 @@
       "date": "2026-11-03",
       "title": "Cosmos Hub, Injective, Band, Terra, Saga, dYdX: transfer and join the pools (unbonding done 11-02)",
       "estimated": false,
-      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt.",
+      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered, in one day.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
@@ -1223,6 +1262,24 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
+            },
+            {
+              "id": "d21-join-pools",
+              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
+              "multisig": "pool-funding",
+              "zones": [
+                "cosmoshub-4",
+                "injective-1",
+                "laozi-mainnet",
+                "phoenix-1",
+                "ssc-1",
+                "dydx-mainnet-1"
+              ],
+              "auto": {
+                "tab": "pools",
+                "path": "pools_funded"
+              }
             }
           ]
         }
@@ -1312,6 +1369,20 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
+            },
+            {
+              "id": "d28-join-pools",
+              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
+              "multisig": "pool-funding",
+              "zones": [
+                "juno-1",
+                "sommelier-3"
+              ],
+              "auto": {
+                "tab": "pools",
+                "path": "pools_funded"
+              }
             }
           ],
           "label": "Juno, Sommelier"
@@ -1351,13 +1422,13 @@
           "label": "The sweep"
         }
       ],
-      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt."
+      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered; the sweep starts once every pool is funded."
     },
     {
       "date": "2026-11-14",
       "title": "Halt",
       "estimated": true,
-      "note": "Every bullet of the halt checklist, then the halt-height, then fund the pools from the vault (Osmosis only) and destroy the keys.",
+      "note": "Every bullet of the halt checklist, then the halt-height.",
       "avoid": [
         "Do not assume a packet left toward the halted chain will refund; clear both directions first (§9 halt checklist)."
       ],
@@ -1404,6 +1475,16 @@
               ]
             },
             {
+              "id": "halt-pools",
+              "text": "Every pool, canonical and per route, created, funded, marked one-way (Pools tab: every zone's pools funded exactly and marked), and passing scripts/wind-down/coverage_check.py against a fresh export. Publish the output.",
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
+              "expect": "RESULT: PASS against a fresh export; publish the coverage output. Any FAIL blocks the halt. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
+            },
+            {
+              "id": "halt-route-deposits",
+              "text": "For each foreign-route pool, the native funding deposits (including any test deposit) total exactly its allocation; check the deposits, not the remaining balance; no redemption payout replenished."
+            },
+            {
               "id": "halt-sweep-complete",
               "text": "No sweepable account at or above the floor holds any in-scope stToken, ustrd or a whitelisted voucher; no sweep packet outstanding on channel-5 or a whitelisted channel."
             },
@@ -1428,44 +1509,6 @@
               "id": "halt-height",
               "text": "Validators set halt-height in app.toml and restart; confirm every validator came back with peers and is advancing before the height (restarted nodes came back peerless twice on the test network), then the chain stops with 'halt per configuration height N' on every node.",
               "expect": "Every validator's log shows the halt line at the same height and no node continues past it; a node that did not restart does not halt."
-            }
-          ]
-        },
-        {
-          "label": "Fund the pools (Osmosis only: Stride is halted)",
-          "steps": [
-            {
-              "id": "halt-fund-pools",
-              "text": "Join every pool: per pool a 1-token test join, check the Pools tab (native one token, the test wallet's shares present, rate exact), then the remaining allocation, then mark the native token corrupted; every pool of every zone funded exactly and marked. Live below.",
-              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
-              "zones": [
-                "celestia",
-                "cosmoshub-4",
-                "dydx-mainnet-1",
-                "haqq_11235-1",
-                "injective-1",
-                "juno-1",
-                "laozi-mainnet",
-                "osmosis-1",
-                "phoenix-1",
-                "sommelier-3",
-                "ssc-1"
-              ],
-              "multisig": "pool-funding",
-              "auto": {
-                "tab": "pools",
-                "path": "pools_funded"
-              }
-            },
-            {
-              "id": "halt-pools",
-              "text": "Every pool, canonical and per route, created, funded, marked one-way (Pools tab: every zone's pools funded exactly and marked), and passing scripts/wind-down/coverage_check.py against a fresh export. Publish the output.",
-              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
-              "expect": "RESULT: PASS against a fresh export; publish the coverage output. Any FAIL blocks the halt. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
-            },
-            {
-              "id": "halt-route-deposits",
-              "text": "For each foreign-route pool, the native funding deposits (including any test deposit) total exactly its allocation; check the deposits, not the remaining balance; no redemption payout replenished."
             }
           ]
         }
