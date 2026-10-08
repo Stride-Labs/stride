@@ -16,6 +16,7 @@ import pools
 WIND_DOWN_DIR = pathlib.Path(__file__).resolve().parent.parent
 VAULT = config.OSMOSIS_VAULT
 STRANGER = "osmo1stranger"
+MODERATOR = config.POOL_MODERATOR
 STRIDE_RATE = "1.5"
 ST_FACTOR = 10**18  # the test pools use 1e18-scaled factors, as the six-decimal zones' real pools do
 RATE_FACTOR = 1_500_000_000_000_000_000  # native factor encoding a 1.5 rate against the 1e18 stToken factor
@@ -78,7 +79,7 @@ def raw_pool(
         "traces": {st_denom: st_trace, ATOM_ON_OSMOSIS: ATOM_TRACE},
         "alloyed_supply": alloyed_supply,
         "cw2_version": pools.TRANSMUTER_VERSION,
-        "moderator": VAULT,
+        "moderator": MODERATOR,
         "admin_candidate": pools.AdminCandidate(address=None),
         "is_active": True,
         "limiters": [],
@@ -1500,7 +1501,7 @@ class PlannedPoolTest(unittest.TestCase):
                 "alloyed_asset_subdenom": "stATOM.cosmoshub",
                 "alloyed_asset_normalization_factor": "2013525450106978250",
                 "admin": VAULT,
-                "moderator": VAULT,
+                "moderator": MODERATOR,
             },
         )
         self.assertEqual(

@@ -67,7 +67,7 @@ class CheckName(StrEnum):
     FACTORS = "factors: native / stToken == rate, native == alloyed"
     RATE = "rate <= Stride's rate"
     ADMIN = "admin is the vault"
-    MODERATOR = "moderator is the vault"
+    MODERATOR = "moderator is the pool moderator"
     NO_ADMIN_TRANSFER = "no admin transfer in flight"
     ACTIVE = "active"
     NO_LIMITERS = "no limiters"
@@ -717,7 +717,7 @@ def build_checks(
         ),
         Check(
             name=CheckName.MODERATOR,
-            ok=_known(raw.moderator, lambda: raw.moderator == config.OSMOSIS_VAULT),
+            ok=_known(raw.moderator, lambda: raw.moderator == config.POOL_MODERATOR),
             detail=raw.moderator or "?",
         ),
         Check(
@@ -1048,8 +1048,8 @@ def alloyed_subdenom(st_symbol: str, route: PlannedRoute | None, shared_chain: b
 
 
 def instantiate_message(denom_on_osmosis: str, native_denom: str, factors: Factors, subdenom: str) -> dict[str, Any]:
-    """The transmuter instantiate message (docs/wind-down/transmuter.md): the vault is admin and moderator, the
-    alloyed asset tracks the native factor so one alloyed unit is one native base unit of pool value."""
+    """The transmuter instantiate message (docs/wind-down/transmuter.md): the vault is admin, config.POOL_MODERATOR the
+    moderator, and the alloyed asset tracks the native factor so one alloyed unit is one native base unit of pool value."""
     return {
         "pool_asset_configs": [
             {"denom": denom_on_osmosis, "normalization_factor": str(factors.st_factor)},
@@ -1058,7 +1058,7 @@ def instantiate_message(denom_on_osmosis: str, native_denom: str, factors: Facto
         "alloyed_asset_subdenom": subdenom,
         "alloyed_asset_normalization_factor": str(factors.native_factor),
         "admin": config.OSMOSIS_VAULT,
-        "moderator": config.OSMOSIS_VAULT,
+        "moderator": config.POOL_MODERATOR,
     }
 
 

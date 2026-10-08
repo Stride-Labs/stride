@@ -8,6 +8,7 @@ import server
 
 ADDRESS = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"
 VAULT = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"
+MODERATOR = "osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy"
 OSMOSIS_NODE = "https://osmosis-strd-rpc.polkachu.com:443"
 CELESTIA_VALOPER = "celestiavaloper1q2kaajedxm0r5xc0twdqz6atap96502d67yjyj"
 NODE = "https://stride-strd-rpc.polkachu.com:443"
@@ -516,7 +517,7 @@ def planned_entry(
         "alloyed_asset_subdenom": subdenom,
         "alloyed_asset_normalization_factor": "2013525450106978250",
         "admin": VAULT,
-        "moderator": VAULT,
+        "moderator": MODERATOR,
     }
     return {
         "kind": kind,
@@ -579,7 +580,7 @@ def hub_message(denom: str, subdenom: str) -> str:
         '{"pool_asset_configs":[{"denom":"' + denom + '","normalization_factor":"1000000000000000000"},'
         '{"denom":"' + OSMOSIS_DENOM + '","normalization_factor":"2013525450106978250"}],'
         '"alloyed_asset_subdenom":"' + subdenom + '","alloyed_asset_normalization_factor":"2013525450106978250",'
-        '"admin":"' + VAULT + '","moderator":"' + VAULT + '"}'
+        '"admin":"' + VAULT + '","moderator":"' + MODERATOR + '"}'
     )
 
 

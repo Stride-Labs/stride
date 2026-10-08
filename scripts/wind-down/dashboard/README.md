@@ -186,7 +186,7 @@ stays only for the published-export audit at the halt.
 - Checks per pool (`checks: [{name, ok, detail}]`, `ok` null when the lookup it needs failed; `ready` is every check
   true): code id 996; cw2 version 3.2.0; assets are one stToken plus the native; factors (native / stToken is exactly
   the pool's `rate` at whatever scale, 1e18 or 1e6; native equals alloyed); rate at or below Stride's; admin and
-  moderator are the vault; no admin transfer in flight; active; no limiters; stToken trace (canonical or a resolved
+  moderator are the vault and `config.POOL_MODERATOR`; no admin transfer in flight; active; no limiters; stToken trace (canonical or a resolved
   route); native trace; uint128 headroom (transmuter v3.2.0 normalises every balance to the lcm of the pool's factors,
   `amount x lcm / factor`, in a Uint128 on each join, swap and exit, so `needed x (lcm / native factor)` must be below
   2^128: the three 18-decimal zones overflow with 1e18-scaled factors and need 1e6-scaled ones, which the detail
@@ -225,7 +225,7 @@ stays only for the published-export audit at the halt.
   factors: 1e18 and `rate x 1e18` for six-decimal zones, 1e6 and `floor(rate x 1e6)` for the 18-decimal ones (1e18
   overflows the transmuter's Uint128 on their supply), at the live Stride rate; `alloyed_subdenom` is `stATOM` /
   `stATOM.cosmoshub` / `stLUNA.terra.channel13` (two policy channels to one chain); `instantiate_msg` is the exact
-  transmuter message with the vault as admin and moderator; `live_contract` is the existing pool whose stToken is
+  transmuter message with the vault as admin and `config.POOL_MODERATOR` as moderator; `live_contract` is the existing pool whose stToken is
   `denom_on_osmosis` (the planned pool is created). A route whose chain is not in `HOLDER_CHAINS`, or has no Osmosis
   channel, carries `error` and no message or commands.
 - Per zone, the voting-week gates: `routes_seeded` (every route planned pool seeded), `canonical_seeded`,
