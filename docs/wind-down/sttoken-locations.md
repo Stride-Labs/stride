@@ -7,11 +7,11 @@ are grouped as "Other".
 
 **Status values.**
 - `in scope`: the pool covers holders there (Stride itself, Osmosis, the token's host chain, plus every relayed chain
-  holding $500 or more of the token: stATOM on Injective, Secret, Agoric, Neutron, Carbon, Axelar, Terra; stTIA on
+  holding $500 or more of the token: stATOM on Injective, Secret, Agoric, Neutron, Carbon, Terra; stTIA on
   Agoric, Neutron, Carbon, Hub, Dymension; stINJ on Secret, Hub, Carbon; stOSMO on Hub, Secret; stBAND on Hub; stDYDX
   on Hub, Carbon; stLUNA on Carbon). Carbon is served through a relayer we run (decided 2026-10-08): the third party
-  that relays its Osmosis channel only does so every week or two.
-  stSOMM gets its canonical pool on Stride and Osmosis only. The minimum was $1k until 2026-10-08.
+  that relays its Osmosis channel only does so every week or two. stSOMM gets its canonical pool on Stride and
+  Osmosis only. The minimum was $1k until 2026-10-08.
 - `ignored · small`: a chain someone already relays to Osmosis, but the balance is under $500. These are the rows a
   lower minimum would bring back. Dymension counts as a live chain: it is a normal location for other stTokens.
 - `ignored · unrecoverable`: the chain has stopped producing blocks (checked 2026-09-23: Evmos, Stargaze and Umee are
@@ -19,9 +19,12 @@ are grouped as "Other".
   days old). Nothing on those chains can move again, and the stTokens whose host zone is one of them (stEVMOS,
   stSTARS, stUMEE, stCMDX) have no native side to migrate.
 - `ignored · deprecated`: stDYM only. Dymension is alive, but stakedym is a deprecated zone we will not touch.
-- `ignored · unsupported`: Penumbra only (decided 2026-09-30). The chain is alive but both its light clients (of Stride
-  and of Osmosis) are expired, and our relayers don't work with Penumbra (it is written in Rust); we will not support
-  it, and it is left off the relayer map.
+- `ignored · unsupported`: live chains we will not support; both are left off the relayer map.
+  - Penumbra (decided 2026-09-30): both its light clients (of Stride and of Osmosis) are expired, and our relayers don't
+    work with Penumbra (it is written in Rust).
+  - Axelar (decided 2026-10-08): the Stride <-> Axelar clients (channel-69 <-> channel-64) are expired. A route pool needs
+    its two-hop denom seeded by sending the stToken from Stride through Axelar, and there is no time to restore the
+    clients. Axelar -> Osmosis itself is relayed by a third party.
 - `ignored · no relayer`: a live chain nobody relays to Osmosis, whatever the balance: every chain the relayer map has
   no Osmosis route for (Canto, Acrechain, Namada, Composable, Sommelier and the other dust chains). Carbon is the one
   chain we relay ourselves (see `in scope`).
@@ -50,7 +53,7 @@ relay their own hop. The Stride leg only matters after the upgrade for hosts (ou
 On a served chain every token worth at least $500 gets a pool route. "Last in / out" is the age of the
 youngest packet received on the leg and the youngest acknowledgement delivered for the opposite direction.
 
-Served: $2,586,765 across 16 chains, of which $8,031 needs a relayer from us (Carbon). Not served: Penumbra ($29,542), Kujira ($20,850), Comdex ($5,145), Evmos ($3,395), Stargaze ($931), Canto ($748), Acrechain ($623), Namada ($611), Composable ($211), Umee ($211), Crescent ($13), Namada testnet ($4), Sei ($1), Persistence ($1), Oraichain ($1), Chihuahua ($1), Gravity Bridge ($0), Namada testnet ($0), Astria ($0), Indigo ($0), Sommelier ($0).
+Served: $2,585,445 across 15 chains, of which $8,031 needs a relayer from us (Carbon). Not served: Penumbra ($29,542), Kujira ($20,850), Comdex ($5,145), Evmos ($3,395), Axelar ($1,320), Stargaze ($931), Canto ($748), Acrechain ($623), Namada ($611), Composable ($211), Umee ($211), Crescent ($13), Namada testnet ($4), Sei ($1), Persistence ($1), Oraichain ($1), Chihuahua ($1), Gravity Bridge ($0), Namada testnet ($0), Astria ($0), Indigo ($0), Sommelier ($0).
 
 Every chain that holds any stToken is listed, largest first, whatever its status below; the USD column is the chain's
 total across tokens. Legs are shown where the relayer map has a route for the chain.
@@ -71,7 +74,7 @@ total across tokens. Legs are shown where the relayer map has a route for the ch
 | Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 1.1d / 1.1d | ICA channel, we relay it | channel-251: live 0.2d · 1.0d / 1.0d | free, someone else relays it | stATOM, stLUNA |
 | Evmos (`evmos_9001-2`) | $3,395 | channel-16 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
 | Dymension (`dymension_1100-1`) | $2,884 | channel-197 |  | channel-197: live 2.5d · 6.3d / 1.4d | not needed after the upgrade | channel-19774: live 0.2d · 1.0d / 1.1d | free, someone else relays it | stTIA |
-| Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | not needed after the upgrade | channel-208: live 0.1d · 1.0d / 1.0d | free, someone else relays it | stATOM |
+| Axelar (`axelar-dojo-1`) | $1,320 | channel-11, channel-69 |  | channel-69: expired 219.0d · never / never | not needed after the upgrade | channel-208: live 0.1d · 1.0d / 1.0d | not served: unsupported, Stride <-> Axelar clients expired (decided 2026-10-08) | – |
 | Stargaze (`stargaze-1`) | $931 | channel-19 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
 | Canto (`canto_7700-1`) | $748 | channel-74 |  | not mapped | not needed after the upgrade | not mapped | not served: no relayer | – |
 | Acrechain (`acre_9052-1`) | $623 | channel-57 |  | not mapped | not needed after the upgrade | not mapped | not served: no relayer | – |
@@ -111,7 +114,7 @@ Per-token value on each chain, with the status from the tables below:
 - Terra: stLUNA $3,107 (in scope), stATOM $821 (in scope), stINJ $309 (ignored · small), stOSMO $0 (ignored · small), stSTARS $0 (ignored · unrecoverable)
 - Evmos: stEVMOS $3,394 (ignored · unrecoverable), stINJ $1 (ignored · unrecoverable), stATOM $0 (ignored · unrecoverable), stOSMO $0 (ignored · unrecoverable), stLUNA $0 (ignored · unrecoverable), stJUNO $0 (ignored · unrecoverable), stSTARS $0 (ignored · unrecoverable)
 - Dymension: stTIA $1,981 (in scope), stDYM $903 (ignored · deprecated), stATOM $0 (ignored · small)
-- Axelar: stATOM $1,312 (in scope), stTIA $8 (ignored · small), stINJ $0 (ignored · small), stLUNA $0 (ignored · small)
+- Axelar: stATOM $1,312 (ignored · unsupported), stTIA $8 (ignored · unsupported), stINJ $0 (ignored · unsupported), stLUNA $0 (ignored · unsupported)
 - Stargaze: stSTARS $615 (ignored · unrecoverable), stATOM $316 (ignored · unrecoverable), stOSMO $0 (ignored · unrecoverable)
 - Canto: stATOM $746 (ignored · no relayer), stOSMO $2 (ignored · no relayer), stEVMOS $0 (ignored · unrecoverable), stJUNO $0 (ignored · no relayer), stSTARS $0 (ignored · unrecoverable)
 - Acrechain: stATOM $574 (ignored · no relayer), stOSMO $49 (ignored · no relayer), stEVMOS $0 (ignored · unrecoverable), stJUNO $0 (ignored · no relayer), stSTARS $0 (ignored · unrecoverable)
@@ -141,9 +144,9 @@ Per-token value on each chain, with the status from the tables below:
 
 | Token | Total USD | In scope | Ignored · small | Ignored · unrecoverable | Ignored · deprecated | Ignored · unsupported | Ignored · no relayer |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| stATOM | $4,536,859 | $4,487,323 | $144 | $25,723 | $0 | $21,831 | $1,838 |
+| stATOM | $4,536,859 | $4,486,011 | $144 | $25,723 | $0 | $23,143 | $1,838 |
 | stISLM | $416,792 | $416,571 | $221 | $0 | $0 | $0 | $0 |
-| stTIA | $331,752 | $330,921 | $467 | $3 | $0 | $215 | $146 |
+| stTIA | $331,752 | $330,921 | $459 | $3 | $0 | $223 | $146 |
 | stINJ | $164,103 | $163,502 | $309 | $292 | $0 | $0 | $0 |
 | stOSMO | $144,709 | $136,265 | $379 | $340 | $0 | $7,496 | $229 |
 | stBAND | $110,796 | $110,796 | $0 | $0 | $0 | $0 | $0 |
@@ -157,7 +160,7 @@ Per-token value on each chain, with the status from the tables below:
 | stSOMM | $678 | $677 | $1 | $0 | $0 | $0 | $0 |
 | stCMDX | $208 | $0 | $0 | $208 | $0 | $0 | $0 |
 | stUMEE | $159 | $0 | $0 | $159 | $0 | $0 | $0 |
-| **All** | **$5,790,787** | **$5,718,310** | **$1,996** | **$33,614** | **$5,112** | **$29,542** | **$2,213** |
+| **All** | **$5,790,787** | **$5,716,998** | **$1,988** | **$33,614** | **$5,112** | **$30,862** | **$2,213** |
 
 
 ## stATOM (stuatom, host cosmoshub-4)
@@ -177,7 +180,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Comdex | comdex-1 | channel-49 | 1,420.17 | 0.11% | $4,971 | ignored · unrecoverable |
 | Neutron | neutron-1 | channel-123 | 1,093.88 | 0.08% | $3,829 | in scope |
 | Carbon | carbon-1 | channel-47 | 544.71 | 0.04% | $1,907 | in scope |
-| Axelar | axelar-dojo-1 | channel-11, channel-69 | 374.77 | 0.03% | $1,312 | in scope |
+| Axelar | axelar-dojo-1 | channel-11, channel-69 | 374.77 | 0.03% | $1,312 | ignored · unsupported |
 | Terra | phoenix-1 | channel-52 | 234.48 | 0.02% | $821 | in scope |
 | Canto | canto_7700-1 | channel-74 | 213.03 | 0.02% | $746 | ignored · no relayer |
 | Acrechain | acre_9052-1 | channel-57 | 163.85 | 0.01% | $574 | ignored · no relayer |
@@ -197,7 +200,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Dymension | dymension_1100-1 | channel-197 | 0.02 | 0.00% | $0 | ignored · small |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored · no relayer |
 
-In scope $4,487,323 · small $143 · unrecoverable $25,723 · deprecated $0 · no relayer $1,838
+In scope $4,486,011 · small $143 · unrecoverable $25,723 · deprecated $0 · no relayer $1,838
 
 
 ## stISLM (staISLM, host haqq_11235-1)
@@ -232,7 +235,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 | Celestia | celestia | channel-162 | 614.16 | 0.10% | $322 | in scope |
 | Penumbra | penumbra-1 | channel-307 | 409.55 | 0.06% | $215 | ignored · unsupported |
 | Namada | namada.5f5de2dd1b88cba30586420 | channel-308 | 277.18 | 0.04% | $145 | ignored · no relayer |
-| Axelar | axelar-dojo-1 | channel-69 | 15.79 | 0.00% | $8 | ignored · small |
+| Axelar | axelar-dojo-1 | channel-69 | 15.79 | 0.00% | $8 | ignored · unsupported |
 | Injective | injective-1 | channel-6 | 8.19 | 0.00% | $4 | ignored · small |
 | Kujira | kaiyo-1 | channel-8 | 5.51 | 0.00% | $3 | ignored · unrecoverable |
 | Namada testnet | housefire-alpaca.cc0d3e0c033be | channel-306 | 1.29 | 0.00% | $1 | ignored · no relayer |
@@ -240,7 +243,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 | Umee | umee-1 | channel-29 | 0.02 | 0.00% | $0 | ignored · unrecoverable |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored · no relayer |
 
-In scope $330,921 · small $683 · unrecoverable $3 · deprecated $0 · no relayer $146
+In scope $330,921 · small $675 · unrecoverable $3 · deprecated $0 · no relayer $146
 
 
 ## stINJ (stinj, host injective-1)
@@ -258,7 +261,7 @@ Supply 13,685.82 · RR 1.543197 · $164,102 total · 64.8% escrowed off Stride
 | Terra | phoenix-1 | channel-52 | 25.76 | 0.19% | $309 | ignored · small |
 | Kujira | kaiyo-1 | channel-8 | 24.23 | 0.18% | $291 | ignored · unrecoverable |
 | Evmos | evmos_9001-2 | channel-9 | 0.10 | 0.00% | $1 | ignored · unrecoverable |
-| Axelar | axelar-dojo-1 | channel-69 | 0.00 | 0.00% | $0 | ignored · small |
+| Axelar | axelar-dojo-1 | channel-69 | 0.00 | 0.00% | $0 | ignored · unsupported |
 
 In scope $163,501 · small $309 · unrecoverable $292 · deprecated $0
 
@@ -344,7 +347,7 @@ Supply 75,786.52 · RR 1.979438 · $8,015 total · 58.4% escrowed off Stride
 | Secret | secret-4 | channel-40 | 76.62 | 0.10% | $8 | ignored · small |
 | Comdex | comdex-1 | channel-49 | 8.27 | 0.01% | $1 | ignored · unrecoverable |
 | Kujira | kaiyo-1 | channel-8 | 0.42 | 0.00% | $0 | ignored · unrecoverable |
-| Axelar | axelar-dojo-1 | channel-69 | 0.10 | 0.00% | $0 | ignored · small |
+| Axelar | axelar-dojo-1 | channel-69 | 0.10 | 0.00% | $0 | ignored · unsupported |
 | Evmos | evmos_9001-2 | channel-9 | 0.01 | 0.00% | $0 | ignored · unrecoverable |
 
 In scope $7,900 · small $115 · unrecoverable $1 · deprecated $0

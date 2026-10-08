@@ -224,7 +224,7 @@ stays only for the published-export audit at the halt.
   canonical pool only while unseeded, from Stride over channel-5). `st_factor` / `native_factor` are the creation
   factors: 1e18 and `rate x 1e18` for six-decimal zones, 1e6 and `floor(rate x 1e6)` for the 18-decimal ones (1e18
   overflows the transmuter's Uint128 on their supply), at the live Stride rate; `alloyed_subdenom` is `stATOM` /
-  `stATOM.cosmoshub` / `stATOM.axelar.channel11` (two policy channels to one chain); `instantiate_msg` is the exact
+  `stATOM.cosmoshub` / `stLUNA.terra.channel13` (two policy channels to one chain); `instantiate_msg` is the exact
   transmuter message with the vault as admin and moderator; `live_contract` is the existing pool whose stToken is
   `denom_on_osmosis` (the planned pool is created). A route whose chain is not in `HOLDER_CHAINS`, or has no Osmosis
   channel, carries `error` and no message or commands.

@@ -1381,7 +1381,7 @@ def _planned_pools(
         for channel in sorted(config.REQUIRED_ROUTES[denoms.st_denom], key=_channel_number)
     ]
 
-    # Two policy channels to one chain (Axelar, Terra) need the channel in their subdenoms to tell the pools apart.
+    # Two policy channels to one chain (Terra) need the channel in their subdenoms to tell the pools apart.
     chains = collections.Counter(route.holder_chain_id for route in routes if route.holder_chain_id)
     symbol = st_symbol(zone=zone)
     canonical = build_canonical_plan(

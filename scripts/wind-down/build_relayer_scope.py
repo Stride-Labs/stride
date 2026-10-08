@@ -41,7 +41,9 @@ MIN_USD_FOR_OPS_RELAYER = 1_000
 SMALL_TOKEN_USD = 500
 REQUEST_PAUSE_SECONDS = 0.6
 # Chains dropped by decision whatever their packet ages say: chain id -> the reason shown in the table
-DROPPED_CHAINS: dict[str, str] = {}
+DROPPED_CHAINS: dict[str, str] = {
+    "axelar-dojo-1": "unsupported, Stride <-> Axelar clients expired (decided 2026-10-08)",
+}
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 RELAYER_MAP = REPO / "docs" / "wind-down" / "relayer-map.html"
@@ -271,10 +273,10 @@ def decide(chain: ChainScope) -> None:
         chain.osmosis_decision = "destination, the pools live here"
     elif chain.dead:
         chain.osmosis_decision = "not served: chain dead"
-    elif chain.unsupported:
-        chain.osmosis_decision = "not served: unsupported (decided 2026-09-30)"
     elif chain.chain_id in DROPPED_CHAINS:
         chain.osmosis_decision = f"not served: {DROPPED_CHAINS[chain.chain_id]}"
+    elif chain.unsupported:
+        chain.osmosis_decision = "not served: unsupported (decided 2026-09-30)"
     elif chain.deprecated_only:
         chain.osmosis_decision = "not served: deprecated zone"
     elif leg is None and chain.usd < MIN_USD_FOR_OPS_RELAYER:

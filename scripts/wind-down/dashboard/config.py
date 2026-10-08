@@ -130,7 +130,7 @@ HOLDER_ROUTES: tuple[HolderRoute, ...] = (
     HolderRoute("Carbon", "channel-188", RelayedBy.OURS),
     HolderRoute("Terra", "channel-251", RelayedBy.FREE),
     HolderRoute("Dymension", "channel-19774", RelayedBy.FREE),
-    HolderRoute("Axelar", "channel-208", RelayedBy.FREE),
+    HolderRoute("Axelar", "channel-208", RelayedBy.NOT_SERVED),
     HolderRoute("Celestia", "channel-6994", RelayedBy.FREE),
     HolderRoute("Saga", "channel-38946", RelayedBy.FREE),
     HolderRoute("Juno", "channel-42", RelayedBy.FREE),
@@ -219,8 +219,7 @@ OSMOSIS_CHANNEL_TO_HOST: dict[str, str] = {
 # asserts the two are equal, so a scope change updates both and docs/wind-down/sttoken-locations.md together.
 REQUIRED_ROUTES: dict[str, frozenset[str]] = {
     "stuatom": frozenset({
-        "channel-0", "channel-6", "channel-11", "channel-40", "channel-47", "channel-52", "channel-69", "channel-123",
-        "channel-148",
+        "channel-0", "channel-6", "channel-40", "channel-47", "channel-52", "channel-123", "channel-148",
     }),
     "staISLM": frozenset({"channel-240"}),
     "stutia": frozenset({"channel-148", "channel-123", "channel-47", "channel-0", "channel-197", "channel-162"}),

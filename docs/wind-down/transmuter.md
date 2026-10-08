@@ -262,7 +262,7 @@ A transfer needs the *destination's* client of the source to be un-expired.
 | Stride ↔ Carbon (channel-47 ↔ channel-8) | both clients | Active but stale (Stride's 297 h, Carbon's 87 h old on 2026-09-24) | | Stride leg not needed after the upgrade; Osmosis leg: we relay it (decided 2026-10-08, see sttoken-locations.md) |
 | Carbon → Osmosis (channel-0 → channel-188) | Osmosis's client of carbon-1 | Active, last header 41 h old | | same; on 2026-10-07 the last packet was 12 days old and the client near its 14-day trusting period |
 | Stride ↔ Axelar (channel-69 ↔ channel-64) | both clients | **Expired** | | Axelar holders cannot redeem through Stride |
-| Axelar → Osmosis (channel-3 → channel-208) | Osmosis's client of axelar-dojo-1 | Active | | public relayers; Axelar holders are fine after the halt |
+| Axelar → Osmosis (channel-3 → channel-208) | Osmosis's client of axelar-dojo-1 | Active | | public relayers, but not served: the Stride <-> Axelar clients are expired, so the route can't be seeded (decided 2026-10-08, see sttoken-locations.md) |
 | Stride ↔ Dymension (channel-197 ↔ channel-0), Dymension → Osmosis (channel-2 → channel-19774) | all clients | Active | | stTIA holders on Dymension |
 
 Channel audit 2026-09-23: every channel id, counterparty id, client destination and `ibc/` hash in this
