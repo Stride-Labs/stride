@@ -789,14 +789,14 @@ class AllocationTest(unittest.TestCase):
         canonical = report(raw_pool(native=100))
         reserve = pools.fee_reserve(chain_id="osmosis-1")
 
-        osmosis = pools.allocate(reports=[canonical], vault_native=25_000_000, fee_reserve=reserve)
+        osmosis = pools.allocate(reports=[canonical], vault_native=40_000_000, fee_reserve=reserve)
         short = pools.allocate(reports=[canonical], vault_native=5_000_000, fee_reserve=reserve)
-        hub = pools.allocate(reports=[canonical], vault_native=25_000_000, fee_reserve=pools.fee_reserve(chain_id="cosmoshub-4"))
+        hub = pools.allocate(reports=[canonical], vault_native=40_000_000, fee_reserve=pools.fee_reserve(chain_id="cosmoshub-4"))
 
         self.assertEqual(reserve, config.OSMO_FEE_RESERVE)
-        self.assertEqual(osmosis[0].allocation, 25_000_000 - 10_000_000 + 100)
+        self.assertEqual(osmosis[0].allocation, 40_000_000 - config.OSMO_FEE_RESERVE + 100)
         self.assertEqual(short[0].allocation, 100)  # the reserve never pushes the vault below zero
-        self.assertEqual(hub[0].allocation, 25_000_000 + 100)
+        self.assertEqual(hub[0].allocation, 40_000_000 + 100)
 
     def test_two_canonical_pools_are_duplicates_and_neither_is_allocated(self) -> None:
         first = report(raw_pool(contract="osmo1canonb", native=100), vault_shares=100)
@@ -1191,7 +1191,7 @@ class CollectTest(unittest.TestCase):
 
     def test_the_osmosis_zone_sizes_its_pool_by_needed_and_keeps_the_fee_reserve(self) -> None:
         pool = osmo_pool()
-        snapshot = pools.OsmosisSnapshot(vault_balances={"uosmo": 15_000_000}, pools=[pool])
+        snapshot = pools.OsmosisSnapshot(vault_balances={"uosmo": 40_000_000}, pools=[pool])
         osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
 
         with (
@@ -1207,8 +1207,8 @@ class CollectTest(unittest.TestCase):
                 snapshot=snapshot,
             )
 
-        self.assertEqual((zone.vault_native, zone.fee_reserve), (15_000_000, config.OSMO_FEE_RESERVE))
-        self.assertEqual(zone.pools[0].allocation, 15_000_000 - config.OSMO_FEE_RESERVE)
+        self.assertEqual((zone.vault_native, zone.fee_reserve), (40_000_000, config.OSMO_FEE_RESERVE))
+        self.assertEqual(zone.pools[0].allocation, 40_000_000 - config.OSMO_FEE_RESERVE)
         self.assertEqual(zone.needed, 1_500_000)
         self.assertIn("needed 1.500e+06", check(zone.pools[0], pools.CheckName.HEADROOM).detail)
         # No fee read and every Stride channel lookup failed: the gates are unknown, the routes carry their error.
