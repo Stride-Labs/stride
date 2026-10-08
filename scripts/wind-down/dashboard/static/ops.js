@@ -105,12 +105,14 @@ function autoValue(step, zone) {
   return (step.auto.allow || []).includes(zone) ? 'allowed' : false;
 }
 
-// A bundle's value for the check: null (n/a) while the bundle is blocked, else its `seeded` / `done` flag.
+// A bundle's value for the check: 'blocked' while the bundle waits on something outside our hands (it then stays out
+// of the step's count), else its `seeded` / `done` flag.
 function bundleValue(step, label) {
   const txs = bundleTxs(step);
   if (!txs) return undefined;
   const tx = txs.find((candidate) => bundleLabel(candidate) === label);
-  if (!tx || tx.blocked) return null;
+  if (!tx) return null;
+  if (tx.blocked) return 'blocked';
   const value = tx[step.auto.path];
   return value === null || value === undefined ? null : value;
 }
@@ -120,6 +122,7 @@ function autoMark(value) {
   if (value === true) return `<span class="ops-auto ok" title="verified live on the dashboard">✓ ok</span>`;
   if (value === 'allowed') return `<span class="ops-auto ok" title="not clean, but expected here (see the step text)">✓ allowed</span>`;
   if (value === false) return `<span class="ops-auto bad" title="the live check fails">✗ fail</span>`;
+  if (value === 'blocked') return `<span class="ops-auto muted" title="waits on something outside our hands; not counted">blocked</span>`;
   return `<span class="ops-auto muted" title="could not be checked">n/a</span>`;
 }
 
@@ -138,7 +141,7 @@ function markText(value) {
 
 function autoSummary(step, gate) {
   if (!gate.active) return `<span class="ops-auto muted" title="applies from ${escapeHtml(gate.label)}">n/a</span>`;
-  const values = autoEntries(step).map((zone) => autoValue(step, zone));
+  const values = autoEntries(step).map((zone) => autoValue(step, zone)).filter((value) => value !== 'blocked');
   if (!values.length || values.some((value) => value === undefined)) return '';
   const passing = values.filter((value) => value === true || value === 'allowed').length;
   const cssClass = passing === values.length ? 'ok' : 'bad';
