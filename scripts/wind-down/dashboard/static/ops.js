@@ -69,7 +69,28 @@ function multisigSetTitle(setId) {
 }
 
 // The live value behind a step's `auto` check for one zone: true / false / null (n/a) / undefined (no snapshot yet).
+// The rows a live check reports on: the step's zones, or, for a check on a Multisig set (`auto.set`), that set's bundles
+// (by their "bundle N" label), optionally only the bundles with a member matching `auto.members`.
+function autoEntries(step) {
+  if (!step.auto || !step.auto.set) return step.zones || [];
+  const txs = bundleTxs(step);
+  return txs ? txs.map(bundleLabel) : [];
+}
+
+function bundleTxs(step) {
+  const snapshot = live.multisig;
+  if (!snapshot) return null;
+  const set = snapshot.data.sets.find((candidate) => candidate.id === step.auto.set);
+  if (!set) return [];
+  return set.txs.filter((tx) => tx.members && tx.members.length && (!step.auto.members || tx.members.some((member) => member.includes(step.auto.members))));
+}
+
+function bundleLabel(tx) {
+  return tx.title.split(' · ')[0];
+}
+
 function autoValue(step, zone) {
+  if (step.auto.set) return bundleValue(step, zone);
   const snapshot = live[step.auto.tab];
   if (!snapshot) return undefined;
   const entry = snapshot.data.zones.find((candidate) => candidate.chain_id === zone);
@@ -82,6 +103,16 @@ function autoValue(step, zone) {
   const passes = step.auto.at_least === undefined ? String(value) === String(step.auto.equals) : Number(value) >= step.auto.at_least;
   if (passes) return true;
   return (step.auto.allow || []).includes(zone) ? 'allowed' : false;
+}
+
+// A bundle's value for the check: null (n/a) while the bundle is blocked, else its `seeded` / `done` flag.
+function bundleValue(step, label) {
+  const txs = bundleTxs(step);
+  if (!txs) return undefined;
+  const tx = txs.find((candidate) => bundleLabel(candidate) === label);
+  if (!tx || tx.blocked) return null;
+  const value = tx[step.auto.path];
+  return value === null || value === undefined ? null : value;
 }
 
 function autoMark(value) {
@@ -107,8 +138,8 @@ function markText(value) {
 
 function autoSummary(step, gate) {
   if (!gate.active) return `<span class="ops-auto muted" title="applies from ${escapeHtml(gate.label)}">n/a</span>`;
-  const values = step.zones.map((zone) => autoValue(step, zone));
-  if (values.some((value) => value === undefined)) return '';
+  const values = autoEntries(step).map((zone) => autoValue(step, zone));
+  if (!values.length || values.some((value) => value === undefined)) return '';
   const passing = values.filter((value) => value === true || value === 'allowed').length;
   const cssClass = passing === values.length ? 'ok' : 'bad';
   return `<span class="ops-auto ${cssClass}" title="from the ${escapeHtml(step.auto.tab)} tab's latest snapshot">${passing}/${values.length} ok</span>`;
@@ -305,7 +336,8 @@ function stepHtml(step, gate) {
   if (stepDone(step)) return `<li class="ops-step done"><div class="ops-row">${label} ${doneBy(step)}</div></li>`;
 
   const tag = step.conditional ? pill('warn', step.conditional) : '';
-  const auto = step.auto && zones.length ? autoSummary(step, gate) : '';
+  const entries = autoEntries(step);
+  const auto = step.auto && entries.length ? autoSummary(step, gate) : '';
   const open = foldOpen.has(step.id);
   const fold = foldHtml(step, rest);
   // No "more" when there is nothing behind it: a one-sentence step with no command, expectation or details.
@@ -314,8 +346,8 @@ function stepHtml(step, gate) {
   const zoneMark = (zone) => (gate.active ? autoMark(autoValue(step, zone)) : inactiveMark(autoValue(step, zone), gate));
   const zoneRows = perZoneTicks
     ? `<ul class="ops-zones">${zones.map((zone) => zoneHtml(`${step.id}:${zone}`, zone)).join('')}</ul>`
-    : step.auto && zones.length
-      ? `<ul class="ops-zones">${zones.map((zone) => `<li class="ops-row">${escapeHtml(zone)} ${zoneMark(zone)}</li>`).join('')}</ul>`
+    : step.auto && entries.length
+      ? `<ul class="ops-zones">${entries.map((zone) => `<li class="ops-row">${escapeHtml(zone)} ${zoneMark(zone)}</li>`).join('')}</ul>`
       : '';
 
   return `<li class="ops-step">

@@ -187,7 +187,7 @@ class SetsTest(unittest.TestCase):
 
         json.dumps(payload)
         self.assertEqual(set(payload), {"id", "step_id", "title", "description", "notes", "txs"})
-        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members", "done", "blocked"})
+        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members", "done", "blocked", "seeded"})
         self.assertEqual(set(payload["txs"][0]["commands"][0]), {"tag", "label", "text"})
 
     def test_multisig_constants(self) -> None:

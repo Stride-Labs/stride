@@ -272,23 +272,11 @@
           "steps": [
             {
               "id": "vote-seed-routes",
-              "text": "Seed every in-scope foreign-route stToken denom into the Osmosis vault with a small transfer from its chain, one per pool route in the relayer scope table, so each denom has supply on Osmosis when its pool is instantiated after the upgrade. The Pools tab lists every route denom with its seed command; live below: every route denom has supply on Osmosis.",
-              "zones": [
-                "celestia",
-                "cosmoshub-4",
-                "dydx-mainnet-1",
-                "haqq_11235-1",
-                "injective-1",
-                "juno-1",
-                "laozi-mainnet",
-                "osmosis-1",
-                "phoenix-1",
-                "sommelier-3",
-                "ssc-1"
-              ],
+              "text": "Send a little of every route stToken denom to the test wallet osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe (the Pools tab lists each denom), bundles 1-3; the two Injective routes (bundle 4) wait for Osmosis's rate-limiter fix and have their own block on 2026-10-14. Live below: per bundle, every pool's denom is in the test wallet.",
               "auto": {
-                "tab": "pools",
-                "path": "routes_seeded"
+                "tab": "multisig",
+                "set": "pool-creation",
+                "path": "seeded"
               }
             },
             {
@@ -314,8 +302,17 @@
             },
             {
               "id": "vote-pools-create",
-              "text": "Instantiate the real pools now, at each zone's current RedemptionRate (decided 2026-10-06: the rate still moves until the upgrade and the pool cannot be re-priced, so the small staleness is accepted; whatever the frozen rate ends up above the pool rate stays in the pool as surplus). One canonical pool per stToken plus one per in-scope route, from the vault, code id 996, factors stToken 1e18 / native RR x 1e18 for the six-decimal zones and stToken 1e6 / native RR x 1e6 rounded down for dYdX, haqq and Injective (1e18-scaled factors overflow the transmuter's Uint128 at an 18-decimal supply; the Pools tab's headroom check says so), alloyed = native, admin and moderator the vault, no limiters. Record each pool in the pools.json for coverage_check.py --pools (the halt audit). The Pools tab lists every code-996 pool the vault administers with its checks: one canonical pool plus one per in-scope route per zone, no missing route, every check green (the rate gap to Stride is expected and shown); nothing is funded yet. Top the vault up with about 25 OSMO for the creation and funding txs (0.1 uosmo/gas). The create-pool messages are bundled 18 to a tx on the Multisig tab, with the exact denoms and factors; the vault must hold the poolmanager creation fee (20 allUSDC per pool today) — top it up first.",
+              "text": "Instantiate the real pools now, at each zone's current RedemptionRate (decided 2026-10-06: the rate still moves until the upgrade and the pool cannot be re-priced, so the small staleness is accepted; whatever the frozen rate ends up above the pool rate stays in the pool as surplus). One canonical pool per stToken plus one per in-scope route, from the vault, code id 996, factors stToken 1e18 / native RR x 1e18 for the six-decimal zones and stToken 1e6 / native RR x 1e6 rounded down for dYdX, haqq and Injective (1e18-scaled factors overflow the transmuter's Uint128 at an 18-decimal supply; the Pools tab's headroom check says so), alloyed = native, admin and moderator the vault, no limiters. Record each pool in the pools.json for coverage_check.py --pools (the halt audit). The Pools tab lists every code-996 pool the vault administers with its checks: one canonical pool plus one per in-scope route per zone, no missing route, every check green (the rate gap to Stride is expected and shown); nothing is funded yet. Top the vault up with about 25 OSMO for the creation and funding txs (0.1 uosmo/gas). The create-pool messages are bundled 18 to a tx on the Multisig tab, with the exact denoms and factors; the vault must hold the poolmanager creation fee (20 allUSDC per pool today) — top it up first. Bundles 1-3 now; bundle 4 (the two Injective route pools) is blocked by Osmosis's rate limiter and is scheduled for 2026-10-14. Live below: per bundle, every pool created.",
               "multisig": "pool-creation",
+              "auto": {
+                "tab": "multisig",
+                "set": "pool-creation",
+                "path": "done"
+              }
+            },
+            {
+              "id": "vote-assetlist",
+              "text": "Add every route stToken denom to the Osmosis assetlist now, in one osmosis-labs/assetlists PR for all zones (symbol <stToken>.<chain>, the denom trace, its pool as liquidity), plus any canonical denom not yet listed, so wallets and the Osmosis app display them; it must be merged before the first transfer day (2026-10-20).",
               "zones": [
                 "celestia",
                 "cosmoshub-4",
@@ -328,11 +325,7 @@
                 "phoenix-1",
                 "sommelier-3",
                 "ssc-1"
-              ],
-              "auto": {
-                "tab": "pools",
-                "path": "pools_ready"
-              }
+              ]
             }
           ]
         },
@@ -808,10 +801,46 @@
       ]
     },
     {
+      "date": "2026-10-14",
+      "title": "Injective routes: bundle 4, once Osmosis fixes the rate limiter",
+      "note": "The two Injective route pools (stATOM.injective, stINJ.injective) wait for Osmosis to fix the rate limiter that rejects stToken transfers from Injective. If the fix has not shipped by now, push this block out; the pools are funded with every other pool after the halt.",
+      "windows": [
+        {
+          "steps": [
+            {
+              "id": "inj-unblock",
+              "text": "Once Osmosis confirms the fix, remove injective-1 from BLOCKED_HOLDER_CHAINS in scripts/wind-down/dashboard/config.py and restart the dashboard: bundle 4 turns from blocked to not ready."
+            },
+            {
+              "id": "inj-seed",
+              "text": "Send a little stATOM and stINJ from Injective to the test wallet (the Pools tab lists the two denoms). Live below: bundle 4's denoms are in the test wallet.",
+              "auto": {
+                "tab": "multisig",
+                "set": "pool-creation",
+                "path": "seeded",
+                "members": ".injective"
+              }
+            },
+            {
+              "id": "inj-create",
+              "text": "Create bundle 4, the two Injective route pools (Multisig tab). Live below: both pools created.",
+              "multisig": "pool-creation",
+              "auto": {
+                "tab": "multisig",
+                "set": "pool-creation",
+                "path": "done",
+                "members": ".injective"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "date": "2026-10-20",
       "title": "Haqq: transfer and join the stISLM pools (unbonding done 10-19) · staketia tranche 1",
       "estimated": false,
-      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered, in one day.",
+      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
@@ -884,26 +913,6 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
-            },
-            {
-              "id": "haqq-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
-              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
-              "multisig": "pool-funding",
-              "zones": [
-                "haqq_11235-1"
-              ],
-              "auto": {
-                "tab": "pools",
-                "path": "pools_funded"
-              }
-            },
-            {
-              "id": "haqq-assetlist",
-              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
-              "zones": [
-                "haqq_11235-1"
-              ]
             }
           ]
         },
@@ -923,7 +932,7 @@
       "date": "2026-10-27",
       "title": "Osmosis and Celestia: transfer and join the pools (unbonding done 10-26)",
       "estimated": false,
-      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered, in one day.",
+      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "No key of the staketia claim address signs anything; MsgTransferStaketiaClaimBalance is the only way its balance moves (§7).",
@@ -998,26 +1007,6 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
-            },
-            {
-              "id": "osmo-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
-              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
-              "multisig": "pool-funding",
-              "zones": [
-                "osmosis-1"
-              ],
-              "auto": {
-                "tab": "pools",
-                "path": "pools_funded"
-              }
-            },
-            {
-              "id": "osmo-assetlist",
-              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
-              "zones": [
-                "osmosis-1"
-              ]
             }
           ]
         },
@@ -1110,26 +1099,6 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
-            },
-            {
-              "id": "tia-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
-              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
-              "multisig": "pool-funding",
-              "zones": [
-                "celestia"
-              ],
-              "auto": {
-                "tab": "pools",
-                "path": "pools_funded"
-              }
-            },
-            {
-              "id": "tia-assetlist",
-              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
-              "zones": [
-                "celestia"
-              ]
             }
           ]
         },
@@ -1151,7 +1120,7 @@
       "date": "2026-11-03",
       "title": "Cosmos Hub, Injective, Band, Terra, Saga, dYdX: transfer and join the pools (unbonding done 11-02)",
       "estimated": false,
-      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered, in one day.",
+      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt.",
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
         "Once a foreign-route pool has received its full allocation, do not fund it again: native paid out through redemptions is never replenished, and the halt check compares the deposits to the allocation (§8 Funding, §9 halt checklist)."
@@ -1254,36 +1223,6 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
-            },
-            {
-              "id": "d21-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
-              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
-              "multisig": "pool-funding",
-              "zones": [
-                "cosmoshub-4",
-                "injective-1",
-                "laozi-mainnet",
-                "phoenix-1",
-                "ssc-1",
-                "dydx-mainnet-1"
-              ],
-              "auto": {
-                "tab": "pools",
-                "path": "pools_funded"
-              }
-            },
-            {
-              "id": "d21-assetlist",
-              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
-              "zones": [
-                "cosmoshub-4",
-                "injective-1",
-                "laozi-mainnet",
-                "phoenix-1",
-                "ssc-1",
-                "dydx-mainnet-1"
-              ]
             }
           ]
         }
@@ -1373,28 +1312,6 @@
                 "tab": "funds",
                 "path": "transfers_landed"
               }
-            },
-            {
-              "id": "d28-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
-              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
-              "multisig": "pool-funding",
-              "zones": [
-                "juno-1",
-                "sommelier-3"
-              ],
-              "auto": {
-                "tab": "pools",
-                "path": "pools_funded"
-              }
-            },
-            {
-              "id": "d28-assetlist",
-              "text": "Add the zone's foreign-route stToken denoms (the two-hop ibc/… denoms its route pools hold, e.g. stATOM.cosmoshub for stATOM that reached Osmosis through the Hub) to the Osmosis assetlist (osmosis-labs/assetlists PR: symbol <stToken>.<chain>, the denom trace, the route pool as its liquidity), so wallets and the Osmosis app display them; the canonical denom is already listed. Open the PR early in the day; it needs to be merged before the announcement.",
-              "zones": [
-                "juno-1",
-                "sommelier-3"
-              ]
             }
           ],
           "label": "Juno, Sommelier"
@@ -1434,13 +1351,13 @@
           "label": "The sweep"
         }
       ],
-      "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered; the sweep starts once every pool is funded."
+      "note": "All four ICA transfers for each zone, in one day; the pools are funded after the halt."
     },
     {
       "date": "2026-11-14",
       "title": "Halt",
       "estimated": true,
-      "note": "Every bullet of the halt checklist, then the halt-height.",
+      "note": "Every bullet of the halt checklist, then the halt-height, then fund the pools from the vault (Osmosis only) and destroy the keys.",
       "avoid": [
         "Do not assume a packet left toward the halted chain will refund; clear both directions first (§9 halt checklist)."
       ],
@@ -1487,16 +1404,6 @@
               ]
             },
             {
-              "id": "halt-pools",
-              "text": "Every pool, canonical and per route, created, funded, marked one-way (Pools tab: every zone's pools funded exactly and marked), and passing scripts/wind-down/coverage_check.py against a fresh export. Publish the output.",
-              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
-              "expect": "RESULT: PASS against a fresh export; publish the coverage output. Any FAIL blocks the halt. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
-            },
-            {
-              "id": "halt-route-deposits",
-              "text": "For each foreign-route pool, the native funding deposits (including any test deposit) total exactly its allocation; check the deposits, not the remaining balance; no redemption payout replenished."
-            },
-            {
               "id": "halt-sweep-complete",
               "text": "No sweepable account at or above the floor holds any in-scope stToken, ustrd or a whitelisted voucher; no sweep packet outstanding on channel-5 or a whitelisted channel."
             },
@@ -1521,6 +1428,44 @@
               "id": "halt-height",
               "text": "Validators set halt-height in app.toml and restart; confirm every validator came back with peers and is advancing before the height (restarted nodes came back peerless twice on the test network), then the chain stops with 'halt per configuration height N' on every node.",
               "expect": "Every validator's log shows the halt line at the same height and no node continues past it; a node that did not restart does not halt."
+            }
+          ]
+        },
+        {
+          "label": "Fund the pools (Osmosis only: Stride is halted)",
+          "steps": [
+            {
+              "id": "halt-fund-pools",
+              "text": "Join every pool: per pool a 1-token test join, check the Pools tab (native one token, the test wallet's shares present, rate exact), then the remaining allocation, then mark the native token corrupted; every pool of every zone funded exactly and marked. Live below.",
+              "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
+              "zones": [
+                "celestia",
+                "cosmoshub-4",
+                "dydx-mainnet-1",
+                "haqq_11235-1",
+                "injective-1",
+                "juno-1",
+                "laozi-mainnet",
+                "osmosis-1",
+                "phoenix-1",
+                "sommelier-3",
+                "ssc-1"
+              ],
+              "multisig": "pool-funding",
+              "auto": {
+                "tab": "pools",
+                "path": "pools_funded"
+              }
+            },
+            {
+              "id": "halt-pools",
+              "text": "Every pool, canonical and per route, created, funded, marked one-way (Pools tab: every zone's pools funded exactly and marked), and passing scripts/wind-down/coverage_check.py against a fresh export. Publish the output.",
+              "command": "python3 scripts/wind-down/coverage_check.py --export export.json.gz --pools pools.json --vault osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af",
+              "expect": "RESULT: PASS against a fresh export; publish the coverage output. Any FAIL blocks the halt. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
+            },
+            {
+              "id": "halt-route-deposits",
+              "text": "For each foreign-route pool, the native funding deposits (including any test deposit) total exactly its allocation; check the deposits, not the remaining balance; no redemption payout replenished."
             }
           ]
         }

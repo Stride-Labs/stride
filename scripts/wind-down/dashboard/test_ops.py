@@ -55,12 +55,11 @@ TRANSFER_DAY_CHECKS: dict[str, dict[str, Any]] = {
     "channels": {"auto": {"tab": "channels", "path": "ica_channels_open"}},
     "transfers": {"multisig": "ica-transfers"},
     "landed": {"auto": {"tab": "funds", "path": "transfers_landed"}},
-    "join-pools": {"multisig": "pool-funding", "auto": {"tab": "pools", "path": "pools_funded"}},
-    "assetlist": {},
 }
 # Celestia's extra steps, keyed by the uniform step they follow.
 CELESTIA_EXTRAS = {"claims": ["tia-staketia-sweep", "tia-staketia-paid"], "channels": ["tia-claim-balance"]}
-AUTO_TABS = {"channels", "validators", "funds", "pools"}
+AUTO_TABS = {"channels", "validators", "funds", "pools", "multisig"}
+BUNDLE_PATHS = {"seeded", "done"}  # what a live check on a Multisig set's bundles can read
 ALL_ZONES = [zone.chain_id for zone in config.ZONES]  # the eleven zones in the order every eleven-zone step lists them
 
 
@@ -185,21 +184,25 @@ class RealPlanTest(unittest.TestCase):
 
     # The voting week's pool prep (pool-prep spec §4): the two seeding steps are live-checked per zone from the Pools
     # tab, the creation step links the pool-creation set per zone and keeps its pools_ready check.
-    def test_seeding_steps_are_live_checked_on_every_zone(self) -> None:
-        for step_id, path in (("vote-seed-routes", "routes_seeded"), ("vote-canonical-supply", "canonical_seeded")):
-            step = self._step(step_id)
-            with self.subTest(step=step_id):
-                self.assertEqual(step["zones"], ALL_ZONES)
-                self.assertEqual(step["auto"], {"tab": "pools", "path": path})
-                self.assertTrue(step["text"].endswith("has supply on Osmosis."), step["text"])
+    def test_seeding_and_creation_are_live_checked_per_bundle_and_the_canonical_supply_per_zone(self) -> None:
+        self.assertEqual(self._step("vote-seed-routes")["auto"], {"tab": "multisig", "set": "pool-creation", "path": "seeded"})
+        self.assertNotIn("zones", self._step("vote-seed-routes"))
+        canonical = self._step("vote-canonical-supply")
+        self.assertEqual((canonical["zones"], canonical["auto"]), (ALL_ZONES, {"tab": "pools", "path": "canonical_seeded"}))
+        create = self._step("vote-pools-create")
+        self.assertEqual((create["multisig"], create["auto"]), ("pool-creation", {"tab": "multisig", "set": "pool-creation", "path": "done"}))
+        self.assertIn("bundle 4", create["text"])
+        self.assertEqual(self._step("vote-assetlist")["zones"], ALL_ZONES)
 
-    def test_pool_creation_step_links_the_set_per_zone(self) -> None:
-        step = self._step("vote-pools-create")
-
-        self.assertEqual(step["multisig"], "pool-creation")
-        self.assertEqual(step["zones"], ALL_ZONES)
-        self.assertEqual(step["auto"], {"tab": "pools", "path": "pools_ready"})
-        self.assertIn("poolmanager creation fee", step["text"])
+    def test_the_injective_block_and_the_post_halt_funding(self) -> None:
+        injective = next(day for day in self.plan["days"] if day["date"] == "2026-10-14")
+        self.assertEqual([step["id"] for step in injective["windows"][0]["steps"]], ["inj-unblock", "inj-seed", "inj-create"])
+        self.assertEqual(self._step("inj-create")["auto"], {"tab": "multisig", "set": "pool-creation", "path": "done", "members": ".injective"})
+        halt = next(day for day in self.plan["days"] if day["date"] == "2026-11-14")
+        self.assertEqual([step["id"] for step in halt["windows"][-1]["steps"]], ["halt-fund-pools", "halt-pools", "halt-route-deposits"])
+        fund = self._step("halt-fund-pools")
+        self.assertEqual((fund["multisig"], fund["auto"], fund["zones"]), ("pool-funding", {"tab": "pools", "path": "pools_funded"}, ALL_ZONES))
+        self.assertFalse([step["id"] for step in self._steps() if step["id"].endswith("-join-pools") or step["id"].endswith("-assetlist") and step["id"] != "vote-assetlist"])
 
     def test_pool_creation_set_is_first_and_names_its_step(self) -> None:
         # Fails until the pool-creation set lands (pool-prep spec §2, built separately): the plan references it already.
@@ -220,8 +223,13 @@ class RealPlanTest(unittest.TestCase):
         autos = [step for step in self._steps() if "auto" in step]
 
         self.assertTrue(autos)
+        set_ids = {tx_set.id for tx_set in multisig.tx_sets(validators_data=None, funds_data=None, pools_data=None)}
         for step in autos:
             self.assertIn(step["auto"]["tab"], AUTO_TABS, step["id"])
+            if step["auto"]["tab"] == "multisig":  # read per bundle of a set, not per zone
+                self.assertIn(step["auto"]["set"], set_ids, step["id"])
+                self.assertIn(step["auto"]["path"], BUNDLE_PATHS, step["id"])
+                continue
             self.assertTrue(step.get("zones"), f"{step['id']}: a live check is read per zone")
 
     def test_drain_rest_is_done_when_no_validator_holds_a_whole_token(self) -> None:

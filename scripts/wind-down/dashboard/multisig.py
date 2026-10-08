@@ -122,6 +122,7 @@ class MultisigTx:
     members: list[str] = dataclasses.field(default_factory=list)  # what a bundle holds ("zone pool"), shown as chips
     done: bool = False  # the tx has landed (every pool of the bundle exists): shown, not re-run
     blocked: bool = False  # waits on something outside our hands (config.BLOCKED_HOLDER_CHAINS)
+    seeded: bool | None = None  # bundles: every pool's stToken denom is in the test wallet (created pools count)
 
     def payload(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -283,7 +284,7 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
     members = [candidate.label for candidate in bundle]
     if not to_create:
         title = f"bundle {index} of {total} · {len(bundle)} pools · done"
-        return MultisigTx(chain_id=CREATION_GROUP, title=title, ready=False, reason=None, commands=[], files=[], members=members, done=True)
+        return MultisigTx(chain_id=CREATION_GROUP, title=title, ready=False, reason=None, commands=[], files=[], members=members, done=True, seeded=True)
 
     gas = CREATE_POOL_TX_OVERHEAD_GAS + CREATE_POOL_MSG_GAS * len(to_create)
     generate_lines = [
@@ -308,6 +309,7 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
         ready=reason is None,
         reason=reason,
         blocked=bool(blocked),
+        seeded=_bundle_seeded(to_create=to_create),
         commands=_commands(
             generate="\n".join([f"mkdir -p {WORKDIR}", *generate_lines, merge_line]),
             file_stem=stem,
@@ -317,6 +319,15 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
         files=_shared_files(file_stem=stem),
         members=members,
     )
+
+
+def _bundle_seeded(to_create: list[CreationCandidate]) -> bool | None:
+    """Tri-state over the pools still to create: False if any denom is missing from the test wallet, None if any is
+    unknown (and none missing), else True."""
+    flags = [candidate.plan["seeded"] for candidate in to_create]
+    if any(flag is False for flag in flags):
+        return False
+    return None if any(flag is None for flag in flags) else True
 
 
 def _bundle_reason(bundle: list[CreationCandidate]) -> str | None:
