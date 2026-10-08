@@ -864,8 +864,23 @@ class PoolFundingTest(unittest.TestCase):
         self.assertEqual(
             command_pairs(mark_tx), pool_commands(pool_generate(CANONICAL_CONTRACT, mark, None, "1234-mark"), label="1234-mark")
         )
-        self.assertEqual([(tx.ready, tx.reason) for tx in (test_join, rest_join, mark_tx)], [(True, None)] * 3)
+        self.assertEqual([(tx.ready, tx.reason) for tx in (test_join, rest_join)], [(True, None)] * 2)
+        self.assertEqual((mark_tx.ready, mark_tx.reason), (False, "not funded exactly yet: the mark would refuse the funding join"))
         self.assertEqual(test_join.files[0], "/tmp/wind-down/pool-cosmoshub-4-1234-test.unsigned.json")
+
+    def test_the_mark_waits_for_the_funding_join_and_the_vault_as_moderator(self) -> None:
+        def mark_of(pool: dict[str, object]) -> multisig.MultisigTx:
+            return next(tx for tx in pool_txs(pools_data=fake_pools(pools=[pool])) if tx.title.endswith("mark corrupted"))
+
+        funded_vault = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000", moderator=VAULT)
+        funded_other = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000")
+        marked = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000", native_marked=True, moderator=VAULT)
+        unknown = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", None, None, moderator=VAULT)
+
+        self.assertEqual((mark_of(funded_vault).ready, mark_of(funded_vault).reason), (True, None))
+        self.assertEqual(mark_of(funded_other).reason, "the vault is not the moderator yet: send the zone's moderator → vault tx first")
+        self.assertEqual(mark_of(marked).reason, "already marked")
+        self.assertEqual(mark_of(unknown).reason, "the pool's allocation is not known yet (see the Pools tab)")
 
     def test_order_is_every_test_join_then_each_pools_rest_and_mark_canonical_first(self) -> None:
         steps = [tx.title.removeprefix("cosmoshub-4 · ").split(" · ")[:2] for tx in pool_txs()]
@@ -901,10 +916,10 @@ class PoolFundingTest(unittest.TestCase):
         self.assertEqual([(tx.ready, tx.reason) for tx in (test_join, rest)], [(False, reason)] * 2)
         self.assertIn(f"--amount 1000000{OSMOSIS_DENOM} ", test_join.commands[0].text)
         self.assertIn("--amount <ALLOCATION_MINUS_VAULT_SHARES>" + OSMOSIS_DENOM, rest.commands[0].text)
-        self.assertTrue(mark.ready)
+        self.assertEqual((mark.ready, mark.reason), (False, "the pool's allocation is not known yet (see the Pools tab)"))
 
     def test_rest_join_is_not_ready_when_the_pool_is_funded_exactly(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000")]
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000", moderator=VAULT)]
 
         txs = pool_txs(pools_data=fake_pools(pools=pools))
         rest = next(tx for tx in txs if "join rest" in tx.title)

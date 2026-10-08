@@ -802,9 +802,23 @@ def _rest_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str 
     return remaining, None
 
 
+def _mark_reason(pool: dict[str, Any]) -> str | None:
+    """A mark before the funding join would refuse that join (the mark forbids raising the native balance), so the
+    mark waits for the pool to be funded exactly; a marked pool is done."""
+    if pool.get("native_marked"):
+        return "already marked"
+    if pool.get("funded_exactly") is None:
+        return "the pool's allocation is not known yet (see the Pools tab)"
+    if not pool["funded_exactly"]:
+        return "not funded exactly yet: the mark would refuse the funding join"
+    if pool.get("moderator") not in (None, config.OSMOSIS_VAULT):
+        return "the vault is not the moderator yet: send the zone's moderator → vault tx first"
+    return None
+
+
 def _mark_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str | None) -> MultisigTx:
     file_stem = _pool_file_stem(zone=zone, pool=pool, label="mark")
-    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom)
+    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or _mark_reason(pool=pool)
     message = {"mark_corrupted_assets": {"denoms": [osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM]}}
     return _osmosis_tx(
         zone=zone,
