@@ -674,7 +674,7 @@ class PoolCreationTest(unittest.TestCase):
         self.assertNotIn("statom.unsigned.json", partial.commands[0].text.replace("statom-neutron", ""))
         self.assertIn("(1 messages, --gas 1600000)", partial.commands[0].label)
 
-    def test_deferred_holder_chains_go_to_the_back_of_the_open_bundles(self) -> None:
+    def test_deferred_holder_chains_get_bundles_of_their_own_after_the_open_ones(self) -> None:
         planned = [
             planned_entry("canonical", "stATOM", CANONICAL_STATOM),
             planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret", holder_chain_id="secret-4"),
@@ -682,11 +682,12 @@ class PoolCreationTest(unittest.TestCase):
         ]
 
         with mock.patch.object(config, "DEFERRED_HOLDER_CHAINS", frozenset({"secret-4"})):
-            (bundle, _) = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
+            (prompt, deferred, _) = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
 
-        self.assertEqual(bundle.members, ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.neutron", "cosmoshub-4 stATOM.secret"])
-        self.assertIn("create-b1-02-statom-neutron.unsigned.json", bundle.commands[0].text)
-        self.assertIn("create-b1-03-statom-secret.unsigned.json", bundle.commands[0].text)
+        self.assertEqual((prompt.title, prompt.members), ("bundle 1 of 2 · 2 pools", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.neutron"]))
+        self.assertEqual((deferred.title, deferred.members), ("bundle 2 of 2 · 1 pools", ["cosmoshub-4 stATOM.secret"]))
+        self.assertIn("create-b1-02-statom-neutron.unsigned.json", prompt.commands[0].text)
+        self.assertIn("create-b2-01-statom-secret.unsigned.json", deferred.commands[0].text)
 
     def test_blocked_pools_form_the_last_bundle_and_are_never_ready(self) -> None:
         planned = [

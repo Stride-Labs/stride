@@ -101,8 +101,8 @@ POOL_MODERATOR = "osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpg
 POOL_SEED_ADDRESS = "osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe"
 # Holder chains whose routes cannot be seeded yet: their pools wait in the last creation bundle and the Pools tab marks
 # them blocked, and the zone's readiness ignores them until the block is lifted.
-# Holder chains whose route pools go into the last open creation bundle (their denoms take longest to get into the
-# test wallet), so the first bundle can be signed without waiting on them.
+# Holder chains whose route pools get creation bundles of their own, after the open ones (their denoms take longest
+# to get into the test wallet), so the other bundles can be signed without waiting on them.
 DEFERRED_HOLDER_CHAINS: frozenset[str] = frozenset({"haqq_11235-1", "secret-4"})
 BLOCKED_HOLDER_CHAINS: dict[str, str] = {
     "injective-1": "Osmosis's rate limiter rejects stToken transfers from Injective: waiting on the Osmosis team",

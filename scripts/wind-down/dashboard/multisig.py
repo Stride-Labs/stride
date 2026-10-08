@@ -215,10 +215,11 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     # be signed without them.
     open_pools = [candidate for candidate in bundleable if not candidate.plan.get("blocked")]
     blocked_pools = [candidate for candidate in bundleable if candidate.plan.get("blocked")]
-    # Deferred holder chains (config.DEFERRED_HOLDER_CHAINS) move to the back of the open pools, i.e. the last open bundle.
+    # Deferred holder chains (config.DEFERRED_HOLDER_CHAINS) get bundles of their own after the open ones, so the open
+    # bundles can be signed as soon as their denoms are in the test wallet.
     prompt_pools = [candidate for candidate in open_pools if not _deferred(candidate)]
     deferred_pools = [candidate for candidate in open_pools if _deferred(candidate)]
-    bundles = _chunks(prompt_pools + deferred_pools) + _chunks(blocked_pools)
+    bundles = _chunks(prompt_pools) + _chunks(deferred_pools) + _chunks(blocked_pools)
     fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
