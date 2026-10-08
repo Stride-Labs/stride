@@ -215,11 +215,7 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     # be signed without them.
     open_pools = [candidate for candidate in bundleable if not candidate.plan.get("blocked")]
     blocked_pools = [candidate for candidate in bundleable if candidate.plan.get("blocked")]
-    # Deferred holder chains (config.DEFERRED_HOLDER_CHAINS) get bundles of their own after the open ones, so the open
-    # bundles can be signed as soon as their denoms are in the test wallet.
-    prompt_pools = [candidate for candidate in open_pools if not _deferred(candidate)]
-    deferred_pools = [candidate for candidate in open_pools if _deferred(candidate)]
-    bundles = _chunks(prompt_pools) + _chunks(deferred_pools) + _chunks(blocked_pools)
+    bundles = _chunks(open_pools, sizes=config.CREATE_POOL_BUNDLE_SIZES) + _chunks(blocked_pools)
     fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
@@ -263,12 +259,17 @@ def _creation_candidates(pools_zones: dict[str, dict[str, Any]], pools_data: dic
     return candidates
 
 
-def _deferred(candidate: CreationCandidate) -> bool:
-    return candidate.plan["holder_chain_id"] in config.DEFERRED_HOLDER_CHAINS and candidate.plan["kind"] != POOL_KIND_CANONICAL
-
-
-def _chunks(candidates: list[CreationCandidate]) -> list[list[CreationCandidate]]:
-    return [candidates[start : start + CREATE_POOL_BUNDLE_SIZE] for start in range(0, len(candidates), CREATE_POOL_BUNDLE_SIZE)]
+def _chunks(candidates: list[CreationCandidate], sizes: tuple[int, ...] = ()) -> list[list[CreationCandidate]]:
+    """Consecutive bundles: the given sizes first (never above the cap), then the cap at a time."""
+    chunks: list[list[CreationCandidate]] = []
+    start = 0
+    for size in [min(size, CREATE_POOL_BUNDLE_SIZE) for size in sizes]:
+        if start >= len(candidates):
+            return chunks
+        chunks.append(candidates[start : start + size])
+        start += size
+    chunks.extend(candidates[position : position + CREATE_POOL_BUNDLE_SIZE] for position in range(start, len(candidates), CREATE_POOL_BUNDLE_SIZE))
+    return chunks
 
 
 def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reason: str | None) -> MultisigTx:

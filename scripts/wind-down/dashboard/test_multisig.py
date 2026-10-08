@@ -629,7 +629,8 @@ class PoolCreationTest(unittest.TestCase):
         self.assertEqual(waiting.reason, WAITING_FOR_OTHER_ZONES)
 
     def test_bundles_split_at_eighteen_messages_and_number_their_parts_per_bundle(self) -> None:
-        txs = creation_txs(pools_data=fake_pools(planned=many_planned(20), vault_fee_balance="400000000"))
+        with mock.patch.object(config, "CREATE_POOL_BUNDLE_SIZES", ()):
+            txs = creation_txs(pools_data=fake_pools(planned=many_planned(20), vault_fee_balance="400000000"))
         first, second = txs[0], txs[1]
 
         self.assertEqual((first.title, first.members[0], first.members[-1]), ("bundle 1 of 2 · 18 pools", "cosmoshub-4 stATOM.r0", "cosmoshub-4 stATOM.r17"))
@@ -674,20 +675,14 @@ class PoolCreationTest(unittest.TestCase):
         self.assertNotIn("statom.unsigned.json", partial.commands[0].text.replace("statom-neutron", ""))
         self.assertIn("(1 messages, --gas 1600000)", partial.commands[0].label)
 
-    def test_deferred_holder_chains_get_bundles_of_their_own_after_the_open_ones(self) -> None:
-        planned = [
-            planned_entry("canonical", "stATOM", CANONICAL_STATOM),
-            planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret", holder_chain_id="secret-4"),
-            planned_entry("route", "stATOM.neutron", AXELAR_STATOM, stride_channel="channel-123", holder_name="neutron", holder_chain_id="neutron-1"),
-        ]
+    def test_bundle_sizes_split_the_open_pools_in_zone_order_then_the_cap(self) -> None:
+        planned = [planned_entry("route", f"stATOM.r{index}", AXELAR_STATOM, stride_channel=f"channel-{index}", holder_name="x") for index in range(5)]
 
-        with mock.patch.object(config, "DEFERRED_HOLDER_CHAINS", frozenset({"secret-4"})):
-            (prompt, deferred, _) = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
+        with mock.patch.object(config, "CREATE_POOL_BUNDLE_SIZES", (2, 1)):
+            txs = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="400000000"))
 
-        self.assertEqual((prompt.title, prompt.members), ("bundle 1 of 2 · 2 pools", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.neutron"]))
-        self.assertEqual((deferred.title, deferred.members), ("bundle 2 of 2 · 1 pools", ["cosmoshub-4 stATOM.secret"]))
-        self.assertIn("create-b1-02-statom-neutron.unsigned.json", prompt.commands[0].text)
-        self.assertIn("create-b2-01-statom-secret.unsigned.json", deferred.commands[0].text)
+        self.assertEqual([tx.members for tx in txs[:-1]], [["cosmoshub-4 stATOM.r0", "cosmoshub-4 stATOM.r1"], ["cosmoshub-4 stATOM.r2"], ["cosmoshub-4 stATOM.r3", "cosmoshub-4 stATOM.r4"]])
+        self.assertEqual([tx.title for tx in txs[:-1]], ["bundle 1 of 3 · 2 pools", "bundle 2 of 3 · 1 pools", "bundle 3 of 3 · 2 pools"])
 
     def test_blocked_pools_form_the_last_bundle_and_are_never_ready(self) -> None:
         planned = [
