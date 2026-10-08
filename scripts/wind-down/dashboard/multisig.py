@@ -121,6 +121,7 @@ class MultisigTx:
     files: list[str]  # the /tmp paths the commands share, for the "share these" note
     members: list[str] = dataclasses.field(default_factory=list)  # what a bundle holds ("zone pool"), shown as chips
     done: bool = False  # the tx has landed (every pool of the bundle exists): shown, not re-run
+    blocked: bool = False  # waits on something outside our hands (config.BLOCKED_HOLDER_CHAINS)
 
     def payload(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -299,6 +300,7 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
         title=title,
         ready=reason is None,
         reason=reason,
+        blocked=bool(blocked),
         commands=_commands(
             generate="\n".join([f"mkdir -p {WORKDIR}", *generate_lines, merge_line]),
             file_stem=stem,

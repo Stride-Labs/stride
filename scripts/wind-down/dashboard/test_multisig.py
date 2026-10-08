@@ -187,7 +187,7 @@ class SetsTest(unittest.TestCase):
 
         json.dumps(payload)
         self.assertEqual(set(payload), {"id", "step_id", "title", "description", "notes", "txs"})
-        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members", "done"})
+        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members", "done", "blocked"})
         self.assertEqual(set(payload["txs"][0]["commands"][0]), {"tag", "label", "text"})
 
     def test_multisig_constants(self) -> None:
@@ -700,7 +700,8 @@ class PoolCreationTest(unittest.TestCase):
         self.assertEqual((open_bundle.title, open_bundle.members), ("bundle 1 of 2 · 2 pools", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.secret"]))
         self.assertEqual((open_bundle.ready, open_bundle.reason), (True, None))
         self.assertEqual((blocked_bundle.title, blocked_bundle.members), ("bundle 2 of 2 · 1 pools (blocked)", ["cosmoshub-4 stATOM.injective"]))
-        self.assertEqual((blocked_bundle.ready, blocked_bundle.reason), (False, "blocked: rate limiter"))
+        self.assertEqual((blocked_bundle.ready, blocked_bundle.blocked, blocked_bundle.reason), (False, True, "blocked: rate limiter"))
+        self.assertFalse(open_bundle.blocked)
         self.assertIn("create-b2-01-statom-injective.unsigned.json", blocked_bundle.commands[0].text)
 
     def test_a_fee_shortfall_or_unknown_fee_blocks_every_bundle_but_keeps_its_commands(self) -> None:

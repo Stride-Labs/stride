@@ -167,7 +167,7 @@ function zoneHtml(setId, chainId, txs) {
 // A card is one title row until clicked; open, it lists the commands as rows with a Copy button each.
 function txHtml(tx, key) {
   const open = openCards.has(key);
-  const state = tx.done ? pill('ok', 'done') : tx.ready ? pill('ok', 'ready') : pill('warn', 'not ready');
+  const state = tx.done ? pill('ok', 'done') : tx.blocked ? pill('bad', 'blocked') : tx.ready ? pill('ok', 'ready') : pill('warn', 'not ready');
   const reason = tx.reason ? `<span class="muted">${escapeHtml(tx.reason)}</span>` : '';
   const body = open && tx.commands.length ? `<table class="ms-cmds">${commandRows(tx.commands, key).join('')}</table>` : '';
   return `<div class="ms-tx ${open ? 'open' : ''}">
