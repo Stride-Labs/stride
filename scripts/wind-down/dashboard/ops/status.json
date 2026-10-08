@@ -89,6 +89,11 @@
     "by": "sam",
     "done": true
   },
+  "pre-hub-pipeline": {
+    "at": "2026-10-08T19:22:17.665946+00:00",
+    "by": "sam",
+    "done": true
+  },
   "pre-injective-rate-limit": {
     "at": "2026-10-05T21:34:05.995982+00:00",
     "by": "sam",
@@ -174,13 +179,93 @@
     "by": "sam",
     "done": true
   },
+  "vote-assetlist:celestia": {
+    "at": "2026-10-08T20:12:13.745762+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:cosmoshub-4": {
+    "at": "2026-10-08T20:12:14.872029+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:dydx-mainnet-1": {
+    "at": "2026-10-08T20:12:16.171184+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:haqq_11235-1": {
+    "at": "2026-10-08T20:12:17.422158+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:injective-1": {
+    "at": "2026-10-08T20:12:18.597595+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:juno-1": {
+    "at": "2026-10-08T20:12:19.712598+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:laozi-mainnet": {
+    "at": "2026-10-08T20:12:20.723413+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:osmosis-1": {
+    "at": "2026-10-08T20:12:23.712897+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:phoenix-1": {
+    "at": "2026-10-08T20:12:23.078983+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:sommelier-3": {
+    "at": "2026-10-08T20:12:22.403768+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:ssc-1": {
+    "at": "2026-10-08T20:12:24.555697+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-canonical-supply": {
+    "at": "2026-10-08T19:43:44.285698+00:00",
+    "by": "sam",
+    "done": true
+  },
   "vote-haqq-client-update": {
     "at": "2026-10-07T15:18:27.011824+00:00",
     "by": "sam",
     "done": true
   },
+  "vote-passes": {
+    "at": "2026-10-08T19:15:19.549793+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-pool-routes-and-relayers": {
+    "at": "2026-10-08T20:12:42.155515+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-pools-create": {
+    "at": "2026-10-08T20:12:31.088456+00:00",
+    "by": "sam",
+    "done": true
+  },
   "vote-relayer-configs": {
     "at": "2026-10-07T15:18:38.074058+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-seed-routes": {
+    "at": "2026-10-08T20:12:30.077988+00:00",
     "by": "sam",
     "done": true
   },
