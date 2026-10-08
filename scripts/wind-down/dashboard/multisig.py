@@ -120,6 +120,7 @@ class MultisigTx:
     commands: list[Command]  # generate, sign for each signer (default ones, then the backup), multisign+broadcast
     files: list[str]  # the /tmp paths the commands share, for the "share these" note
     members: list[str] = dataclasses.field(default_factory=list)  # what a bundle holds ("zone pool"), shown as chips
+    done: bool = False  # the tx has landed (every pool of the bundle exists): shown, not re-run
 
     def payload(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -255,11 +256,8 @@ def _creation_candidates(pools_zones: dict[str, dict[str, Any]], pools_data: dic
             reason = snapshot_reason or "no planned pool in the Pools snapshot"
             candidates.append(CreationCandidate(zone=zone, plan=None, reason=reason))
             continue
-        candidates.extend(
-            CreationCandidate(zone=zone, plan=plan, reason=_creation_reason(plan=plan))
-            for plan in planned
-            if not plan["live_contract"]
-        )
+        # Created pools stay in their bundle (membership and numbering never shift); the bundle shows as done.
+        candidates.extend(CreationCandidate(zone=zone, plan=plan, reason=_creation_reason(plan=plan)) for plan in planned)
     return candidates
 
 
@@ -273,13 +271,19 @@ def _chunks(candidates: list[CreationCandidate]) -> list[list[CreationCandidate]
 
 def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reason: str | None) -> MultisigTx:
     stem = f"{WORKDIR}/create-b{index}"
-    gas = CREATE_POOL_TX_OVERHEAD_GAS + CREATE_POOL_MSG_GAS * len(bundle)
+    to_create = [candidate for candidate in bundle if not candidate.plan["live_contract"]]
+    members = [candidate.label for candidate in bundle]
+    if not to_create:
+        title = f"bundle {index} of {total} · {len(bundle)} pools · done"
+        return MultisigTx(chain_id=CREATION_GROUP, title=title, ready=False, reason=None, commands=[], files=[], members=members, done=True)
+
+    gas = CREATE_POOL_TX_OVERHEAD_GAS + CREATE_POOL_MSG_GAS * len(to_create)
     generate_lines = [
         f"osmosisd tx cosmwasmpool create-pool {CREATE_POOL_CODE_ID} "
         f"'{json.dumps(candidate.plan['instantiate_msg'], separators=(',', ':'))}' --from {OSMOSIS_VAULT_ADDRESS} "
         f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {gas} "
         f"--gas-prices {OSMOSIS_GAS_PRICE} > {_bundle_part_stem(stem=stem, position=position, candidate=candidate)}.unsigned.json"
-        for position, candidate in enumerate(bundle, start=1)
+        for position, candidate in enumerate(to_create, start=1)
     ]
     # The glob sorts the zero-padded parts into message order; the first file's auth_info (fee and gas) is kept.
     merge_line = (
@@ -287,8 +291,9 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
         f"{stem}-*.unsigned.json > {stem}.unsigned.json"
     )
     blocked = bundle[0].plan.get("blocked")
-    title = f"bundle {index} of {total} · {len(bundle)} pools{' (blocked)' if blocked else ''}"
-    reason = f"blocked: {blocked}" if blocked else fee_reason or _bundle_reason(bundle=bundle)
+    created = f" · {len(bundle) - len(to_create)} of {len(bundle)} created" if len(to_create) < len(bundle) else ""
+    title = f"bundle {index} of {total} · {len(bundle)} pools{' (blocked)' if blocked else ''}{created}"
+    reason = f"blocked: {blocked}" if blocked else fee_reason or _bundle_reason(bundle=to_create)
     return MultisigTx(
         chain_id=CREATION_GROUP,
         title=title,
@@ -298,10 +303,10 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
             generate="\n".join([f"mkdir -p {WORKDIR}", *generate_lines, merge_line]),
             file_stem=stem,
             tools=OSMOSIS_TOOLS,
-            generate_label=f"Write each pool's unsigned tx and merge them into one ({len(bundle)} messages, --gas {gas})",
+            generate_label=f"Write each pool's unsigned tx and merge them into one ({len(to_create)} messages, --gas {gas})",
         ),
         files=_shared_files(file_stem=stem),
-        members=[candidate.label for candidate in bundle],
+        members=members,
     )
 
 

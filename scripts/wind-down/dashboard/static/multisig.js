@@ -149,8 +149,12 @@ function txsByZone(txs) {
 }
 
 function readyPill(txs) {
+  const done = txs.filter((tx) => tx.done).length;
   const ready = txs.filter((tx) => tx.ready).length;
-  return pill(ready === txs.length ? 'ok' : 'idle', `${ready}/${txs.length} ready`);
+  const open = txs.length - done;
+  const doneText = done ? `${done} done` + (open ? ' · ' : '') : '';
+  const readyText = open ? `${ready}/${open} ready` : '';
+  return pill(open === 0 || ready === open ? 'ok' : 'idle', `${doneText}${readyText}`);
 }
 
 // A zone's heading carries the anchor the Ops tab's `<set-id>/<zone>` links point at.
@@ -163,7 +167,7 @@ function zoneHtml(setId, chainId, txs) {
 // A card is one title row until clicked; open, it lists the commands as rows with a Copy button each.
 function txHtml(tx, key) {
   const open = openCards.has(key);
-  const state = tx.ready ? pill('ok', 'ready') : pill('warn', 'not ready');
+  const state = tx.done ? pill('ok', 'done') : tx.ready ? pill('ok', 'ready') : pill('warn', 'not ready');
   const reason = tx.reason ? `<span class="muted">${escapeHtml(tx.reason)}</span>` : '';
   const body = open && tx.commands.length ? `<table class="ms-cmds">${commandRows(tx.commands, key).join('')}</table>` : '';
   return `<div class="ms-tx ${open ? 'open' : ''}">

@@ -187,7 +187,7 @@ class SetsTest(unittest.TestCase):
 
         json.dumps(payload)
         self.assertEqual(set(payload), {"id", "step_id", "title", "description", "notes", "txs"})
-        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members"})
+        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members", "done"})
         self.assertEqual(set(payload["txs"][0]["commands"][0]), {"tag", "label", "text"})
 
     def test_multisig_constants(self) -> None:
@@ -651,7 +651,7 @@ class PoolCreationTest(unittest.TestCase):
         bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
 
         # The bundle's membership is fixed from day one: the unseeded pools are in it, with the bundle not ready.
-        self.assertEqual((bundle.title, bundle.members), ("bundle 1 of 1 · 3 pools", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.axelar", "cosmoshub-4 stATOM.secret"]))
+        self.assertEqual((bundle.title, bundle.members), ("bundle 1 of 1 · 4 pools · 1 of 4 created", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.axelar", "cosmoshub-4 stATOM.secret", "cosmoshub-4 stATOM.cosmoshub"]))
         self.assertEqual((bundle.ready, bundle.reason), (False, "2 of 3 pools waiting on the test wallet: cosmoshub-4 stATOM.axelar, cosmoshub-4 stATOM.secret"))
         self.assertEqual(len(bundle.commands), 5)
         self.assertIn("create-b1-03-statom-secret.unsigned.json", bundle.commands[0].text)
@@ -659,6 +659,20 @@ class PoolCreationTest(unittest.TestCase):
         self.assertTrue(waiting.reason.startswith("celestia pool creation: zone missing from the Pools snapshot; cosmoshub-4 stATOM.channel47: carbon-1 is not in config.HOLDER_CHAINS; "))
         self.assertNotIn("stATOM.cosmoshub", waiting.reason)
         self.assertEqual(waiting.title, "not in a bundle: 11 pools without a message yet")
+        self.assertIn("cosmoshub-4 stATOM.cosmoshub", bundle.members)  # created pools keep their place in the bundle
+
+    def test_a_bundle_whose_pools_all_exist_shows_as_done_and_a_partly_created_one_keeps_its_number(self) -> None:
+        created = [planned_entry("canonical", "stATOM", CANONICAL_STATOM, live_contract="osmo1canon"), planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret", live_contract="osmo1secret")]
+        (done, _) = creation_txs(pools_data=fake_pools(planned=created))
+        partly = created[:1] + [planned_entry("route", "stATOM.neutron", AXELAR_STATOM, stride_channel="channel-123", holder_name="neutron")]
+        (partial, _) = creation_txs(pools_data=fake_pools(planned=partly))
+
+        self.assertEqual((done.title, done.done, done.ready, done.reason, done.commands), ("bundle 1 of 1 · 2 pools · done", True, False, None, []))
+        self.assertEqual(done.members, ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.secret"])
+        self.assertEqual((partial.title, partial.done, partial.ready), ("bundle 1 of 1 · 2 pools · 1 of 2 created", False, True))
+        self.assertIn("create-b1-01-statom-neutron.unsigned.json", partial.commands[0].text)
+        self.assertNotIn("statom.unsigned.json", partial.commands[0].text.replace("statom-neutron", ""))
+        self.assertIn("(1 messages, --gas 1600000)", partial.commands[0].label)
 
     def test_deferred_holder_chains_go_to_the_back_of_the_open_bundles(self) -> None:
         planned = [
