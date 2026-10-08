@@ -204,19 +204,23 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     pools_to_create = _pools_to_create(pools_zones=pools_zones)
     fee_reason = _creation_fee_reason(pools_zones=pools_zones, pools_to_create=pools_to_create)
     candidates = _creation_candidates(pools_zones=pools_zones, pools_data=pools_data)
-    ready = [candidate for candidate in candidates if candidate.reason is None]
-    waiting = [candidate for candidate in candidates if candidate.reason]
-    bundles = [ready[start : start + CREATE_POOL_BUNDLE_SIZE] for start in range(0, len(ready), CREATE_POOL_BUNDLE_SIZE)]
+    # Every pool with an instantiate message has a fixed place in a bundle from day one, so the three txs can be
+    # scaffolded before the seeding is done; a pool with no message (an unreadable zone, an unresolved route) is
+    # listed after the bundles instead.
+    bundleable = [candidate for candidate in candidates if candidate.plan and not candidate.plan["error"]]
+    unbundleable = [candidate for candidate in candidates if not (candidate.plan and not candidate.plan["error"])]
+    bundles = [bundleable[start : start + CREATE_POOL_BUNDLE_SIZE] for start in range(0, len(bundleable), CREATE_POOL_BUNDLE_SIZE)]
     fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
         step_id="vote-pools-create",
         title="Pool creation: instantiate every planned transmuter pool",
         description=(
-            "Osmosis, signed by the vault. Every planned pool on the Pools tab that is ready (its stToken denom in the "
-            f"test wallet, not created yet) goes into bundles of up to {CREATE_POOL_BUNDLE_SIZE} MsgCreateCosmWasmPool "
-            "(code 996), canonical pools first per zone, so the whole set is a couple of signing rounds instead of one "
-            "per pool. Generate: one create-pool per message with identical flags, then the jq line merges the "
+            "Osmosis, signed by the vault. Every planned pool on the Pools tab still to create goes into bundles of up "
+            f"to {CREATE_POOL_BUNDLE_SIZE} MsgCreateCosmWasmPool (code 996), zone by zone with the canonical pool first, "
+            "so the whole set is a few signing rounds instead of one per pool; a bundle is ready once the test wallet "
+            "holds every stToken denom in it and the vault can pay its fees. Generate: one create-pool per message "
+            "with identical flags, then the jq line merges the "
             "messages into the bundle's unsigned tx, which is what gets signed and broadcast. Gas is "
             f"{CREATE_POOL_MSG_GAS:,} per message plus {CREATE_POOL_TX_OVERHEAD_GAS:,} (the 09-25 creations used 1.44M "
             f"each), priced at {OSMOSIS_GAS_PRICE}/gas, about 3x the EIP-1559 base fee, since a bundle whose fee falls "
@@ -234,7 +238,7 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
                 _bundle_tx(index=index, total=len(bundles), bundle=bundle, fee_reason=fee_reason)
                 for index, bundle in enumerate(bundles, start=1)
             ),
-            *([_waiting_tx(waiting=waiting, any_ready=bool(ready))] if waiting else []),
+            *([_waiting_tx(waiting=unbundleable)] if unbundleable else []),
         ],
     )
 
@@ -275,11 +279,12 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
         f"{stem}-*.unsigned.json > {stem}.unsigned.json"
     )
     title = f"bundle {index} of {total} · {len(bundle)} pools: {bundle[0].label} … {bundle[-1].label}"
+    reason = fee_reason or _bundle_reason(bundle=bundle)
     return MultisigTx(
         chain_id=CREATION_GROUP,
         title=title,
-        ready=fee_reason is None,
-        reason=fee_reason,
+        ready=reason is None,
+        reason=reason,
         commands=_commands(
             generate="\n".join([f"mkdir -p {WORKDIR}", *generate_lines, merge_line]),
             file_stem=stem,
@@ -290,16 +295,26 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
     )
 
 
+def _bundle_reason(bundle: list[CreationCandidate]) -> str | None:
+    """What the bundle waits for: its members that the test wallet does not hold yet (or whose balance is unknown)."""
+    waiting = [candidate for candidate in bundle if candidate.reason]
+    if not waiting:
+        return None
+    shown = ", ".join(candidate.label for candidate in waiting[:WAITING_SHOWN])
+    more = f" and {len(waiting) - WAITING_SHOWN} more" if len(waiting) > WAITING_SHOWN else ""
+    return f"{len(waiting)} of {len(bundle)} pools waiting on the test wallet: {shown}{more}"
+
+
 def _bundle_part_stem(stem: str, position: int, candidate: CreationCandidate) -> str:
     return f"{stem}-{position:02d}-{candidate.plan['alloyed_subdenom'].lower().replace('.', '-')}"
 
 
-def _waiting_tx(waiting: list[CreationCandidate], any_ready: bool) -> MultisigTx:
-    """The pools no bundle holds yet, each with what it waits for, so the operator sees what to fix."""
+def _waiting_tx(waiting: list[CreationCandidate]) -> MultisigTx:
+    """The pools no bundle can hold (no instantiate message: an unreadable zone or an unresolved route), each with why."""
     shown = waiting[:WAITING_SHOWN]
     more = f"; … and {len(waiting) - WAITING_SHOWN} more" if len(waiting) > WAITING_SHOWN else ""
     reason = "; ".join(f"{candidate.label}: {candidate.reason}" for candidate in shown) + more
-    title = f"not in a bundle yet: {len(waiting)} pools" if any_ready else f"nothing ready to create: {len(waiting)} pools waiting"
+    title = f"not in a bundle: {len(waiting)} pools without a message yet"
     return MultisigTx(chain_id=CREATION_GROUP, title=title, ready=False, reason=reason, commands=[], files=[])
 
 

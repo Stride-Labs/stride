@@ -621,7 +621,7 @@ class PoolCreationTest(unittest.TestCase):
         self.assertEqual((bundle.ready, bundle.reason), (True, None))
         self.assertEqual(bundle.files, [f"{stem}.unsigned.json", f"{stem}.FS5.json", f"{stem}.FA5.json", f"{stem}.FR5.json"])
         self.assertEqual(bundle.commands[0].label, "Write each pool's unsigned tx and merge them into one (2 messages, --gas 3100000)")
-        self.assertEqual((waiting.title, waiting.ready, waiting.commands), ("not in a bundle yet: 10 pools", False, []))
+        self.assertEqual((waiting.title, waiting.ready, waiting.commands), ("not in a bundle: 10 pools without a message yet", False, []))
         self.assertEqual(waiting.reason, WAITING_FOR_OTHER_ZONES)
 
     def test_bundles_split_at_eighteen_messages_and_number_their_parts_per_bundle(self) -> None:
@@ -635,7 +635,7 @@ class PoolCreationTest(unittest.TestCase):
         self.assertIn("create-b2-*.unsigned.json > /tmp/wind-down/create-b2.unsigned.json", second.commands[0].text)
         self.assertEqual(len(txs), 3)  # plus the waiting tx for the other zones
 
-    def test_pools_that_are_not_ready_wait_outside_the_bundles_with_their_reasons(self) -> None:
+    def test_unseeded_pools_sit_in_their_bundle_not_ready_while_unresolved_ones_wait_outside(self) -> None:
         planned = [
             planned_entry("canonical", "stATOM", CANONICAL_STATOM),
             planned_entry("route", "stATOM.channel47", None, stride_channel="channel-47", holder_name=None, holder_chain_id="carbon-1", seeded=None, error="carbon-1 is not in config.HOLDER_CHAINS"),
@@ -644,14 +644,17 @@ class PoolCreationTest(unittest.TestCase):
             planned_entry("route", "stATOM.cosmoshub", AXELAR_STATOM, stride_channel="channel-0", holder_name="cosmoshub", live_contract="osmo1hub"),
         ]
 
-        bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned))
+        bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="60000000"))
 
-        self.assertEqual(bundle.title, "bundle 1 of 1 · 1 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM")
-        self.assertIn("cosmoshub-4 stATOM.channel47: carbon-1 is not in config.HOLDER_CHAINS; ", waiting.reason)
-        self.assertIn(f"cosmoshub-4 stATOM.axelar: the test wallet osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe does not hold {AXELAR_STATOM}: send it there first; ", waiting.reason)
-        self.assertIn(f"cosmoshub-4 stATOM.secret: the test wallet's balance of {AXELAR_STATOM} is not known yet (see the Pools tab); ", waiting.reason)
-        self.assertNotIn("stATOM.cosmoshub", waiting.reason)  # a created pool is simply done
-        self.assertEqual(waiting.title, "not in a bundle yet: 13 pools")
+        # The bundle's membership is fixed from day one: the unseeded pools are in it, with the bundle not ready.
+        self.assertEqual(bundle.title, "bundle 1 of 1 · 3 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.secret")
+        self.assertEqual((bundle.ready, bundle.reason), (False, "2 of 3 pools waiting on the test wallet: cosmoshub-4 stATOM.axelar, cosmoshub-4 stATOM.secret"))
+        self.assertEqual(len(bundle.commands), 5)
+        self.assertIn("create-b1-03-statom-secret.unsigned.json", bundle.commands[0].text)
+        # A route with no instantiate message cannot be bundled; a created pool is simply done.
+        self.assertTrue(waiting.reason.startswith("celestia pool creation: zone missing from the Pools snapshot; cosmoshub-4 stATOM.channel47: carbon-1 is not in config.HOLDER_CHAINS; "))
+        self.assertNotIn("stATOM.cosmoshub", waiting.reason)
+        self.assertEqual(waiting.title, "not in a bundle: 11 pools without a message yet")
 
     def test_a_fee_shortfall_or_unknown_fee_blocks_every_bundle_but_keeps_its_commands(self) -> None:
         short = creation_txs(pools_data=fake_pools(creation_fee_short=True, vault_fee_balance="0"))[0]
@@ -682,13 +685,13 @@ class PoolCreationTest(unittest.TestCase):
         self.assertEqual((short.ready, short.reason), (False, f"the vault holds 20000000 {ALLUSDC}, below 20000000 × 2 pools still to create across all zones: top it up first"))
         self.assertEqual((enough.ready, enough.reason), (True, None))
 
-    def test_nothing_ready_leaves_only_the_waiting_tx(self) -> None:
-        (waiting,) = creation_txs(pools_data=fake_pools(planned=[planned_entry("canonical", "stATOM", CANONICAL_STATOM, seeded=False)]))
+    def test_an_unseeded_pool_still_gets_its_bundle_and_a_missing_snapshot_only_the_waiting_tx(self) -> None:
+        bundle, waiting = creation_txs(pools_data=fake_pools(planned=[planned_entry("canonical", "stATOM", CANONICAL_STATOM, seeded=False)]))
         (missing,) = sets_by_id(None)["pool-creation"].txs
 
-        self.assertEqual((waiting.title, waiting.ready, waiting.commands, waiting.files), ("nothing ready to create: 11 pools waiting", False, [], []))
-        self.assertTrue(waiting.reason.startswith("celestia pool creation: zone missing from the Pools snapshot; cosmoshub-4 stATOM: the test wallet"))
-        self.assertEqual(missing.title, "nothing ready to create: 11 pools waiting")
+        self.assertEqual((bundle.title, bundle.ready, bundle.reason), ("bundle 1 of 1 · 1 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM", False, "1 of 1 pools waiting on the test wallet: cosmoshub-4 stATOM"))
+        self.assertEqual(waiting.title, "not in a bundle: 10 pools without a message yet")
+        self.assertEqual((missing.title, missing.ready, missing.commands, missing.files), ("not in a bundle: 11 pools without a message yet", False, [], []))
         self.assertTrue(missing.reason.startswith("celestia pool creation: waiting for the Pools snapshot; "))
 
     def test_description_states_the_bundle_rules_the_fee_and_the_factor_rule(self) -> None:
