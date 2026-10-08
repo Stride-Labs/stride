@@ -186,7 +186,7 @@ class SetsTest(unittest.TestCase):
 
         json.dumps(payload)
         self.assertEqual(set(payload), {"id", "step_id", "title", "description", "notes", "txs"})
-        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files"})
+        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members"})
         self.assertEqual(set(payload["txs"][0]["commands"][0]), {"tag", "label", "text"})
 
     def test_multisig_constants(self) -> None:
@@ -618,7 +618,8 @@ class PoolCreationTest(unittest.TestCase):
         )
 
         self.assertEqual(bundle.chain_id, "all zones")
-        self.assertEqual(bundle.title, "bundle 1 of 1 · 2 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.axelar.channel11")
+        self.assertEqual(bundle.title, "bundle 1 of 1 · 2 pools")
+        self.assertEqual(bundle.members, ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.axelar.channel11"])
         self.assertEqual(command_pairs(bundle), creation_commands(generate, stem=stem))
         self.assertEqual((bundle.ready, bundle.reason), (True, None))
         self.assertEqual(bundle.files, [f"{stem}.unsigned.json", f"{stem}.FS5.json", f"{stem}.FA5.json", f"{stem}.FR5.json"])
@@ -630,8 +631,8 @@ class PoolCreationTest(unittest.TestCase):
         txs = creation_txs(pools_data=fake_pools(planned=many_planned(20), vault_fee_balance="400000000"))
         first, second = txs[0], txs[1]
 
-        self.assertEqual(first.title, "bundle 1 of 2 · 18 pools: cosmoshub-4 stATOM.r0 … cosmoshub-4 stATOM.r17")
-        self.assertEqual(second.title, "bundle 2 of 2 · 2 pools: cosmoshub-4 stATOM.r18 … cosmoshub-4 stATOM.r19")
+        self.assertEqual((first.title, first.members[0], first.members[-1]), ("bundle 1 of 2 · 18 pools", "cosmoshub-4 stATOM.r0", "cosmoshub-4 stATOM.r17"))
+        self.assertEqual((second.title, second.members), ("bundle 2 of 2 · 2 pools", ["cosmoshub-4 stATOM.r18", "cosmoshub-4 stATOM.r19"]))
         self.assertIn("--gas 27100000 --gas-prices 0.1uosmo > /tmp/wind-down/create-b1-18-statom-r17.unsigned.json", first.commands[0].text)
         self.assertIn("--gas 3100000 --gas-prices 0.1uosmo > /tmp/wind-down/create-b2-01-statom-r18.unsigned.json", second.commands[0].text)
         self.assertIn("create-b2-*.unsigned.json > /tmp/wind-down/create-b2.unsigned.json", second.commands[0].text)
@@ -649,7 +650,7 @@ class PoolCreationTest(unittest.TestCase):
         bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
 
         # The bundle's membership is fixed from day one: the unseeded pools are in it, with the bundle not ready.
-        self.assertEqual(bundle.title, "bundle 1 of 1 · 3 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.secret")
+        self.assertEqual((bundle.title, bundle.members), ("bundle 1 of 1 · 3 pools", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.axelar", "cosmoshub-4 stATOM.secret"]))
         self.assertEqual((bundle.ready, bundle.reason), (False, "2 of 3 pools waiting on the test wallet: cosmoshub-4 stATOM.axelar, cosmoshub-4 stATOM.secret"))
         self.assertEqual(len(bundle.commands), 5)
         self.assertIn("create-b1-03-statom-secret.unsigned.json", bundle.commands[0].text)
@@ -668,7 +669,7 @@ class PoolCreationTest(unittest.TestCase):
         with mock.patch.object(config, "DEFERRED_HOLDER_CHAINS", frozenset({"secret-4"})):
             (bundle, _) = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
 
-        self.assertEqual(bundle.title, "bundle 1 of 1 · 3 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.secret")
+        self.assertEqual(bundle.members, ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.neutron", "cosmoshub-4 stATOM.secret"])
         self.assertIn("create-b1-02-statom-neutron.unsigned.json", bundle.commands[0].text)
         self.assertIn("create-b1-03-statom-secret.unsigned.json", bundle.commands[0].text)
 
@@ -681,9 +682,9 @@ class PoolCreationTest(unittest.TestCase):
 
         open_bundle, blocked_bundle, _ = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
 
-        self.assertEqual(open_bundle.title, "bundle 1 of 2 · 2 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.secret")
+        self.assertEqual((open_bundle.title, open_bundle.members), ("bundle 1 of 2 · 2 pools", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.secret"]))
         self.assertEqual((open_bundle.ready, open_bundle.reason), (True, None))
-        self.assertEqual(blocked_bundle.title, "bundle 2 of 2 · 1 pools (blocked): cosmoshub-4 stATOM.injective … cosmoshub-4 stATOM.injective")
+        self.assertEqual((blocked_bundle.title, blocked_bundle.members), ("bundle 2 of 2 · 1 pools (blocked)", ["cosmoshub-4 stATOM.injective"]))
         self.assertEqual((blocked_bundle.ready, blocked_bundle.reason), (False, "blocked: rate limiter"))
         self.assertIn("create-b2-01-statom-injective.unsigned.json", blocked_bundle.commands[0].text)
 
@@ -712,7 +713,7 @@ class PoolCreationTest(unittest.TestCase):
         short = creation_txs(two_zone_pools("20000000"))[0]
         enough = creation_txs(two_zone_pools("40000000"))[0]
 
-        self.assertEqual(short.title, "bundle 1 of 1 · 2 pools: cosmoshub-4 stATOM … juno-1 stJUNO")
+        self.assertEqual((short.title, short.members), ("bundle 1 of 1 · 2 pools", ["cosmoshub-4 stATOM", "juno-1 stJUNO"]))
         self.assertEqual((short.ready, short.reason), (False, "vault holds 20 allUSDC, needs 20 × 2 = 40 allUSDC: top it up first"))
         self.assertEqual((enough.ready, enough.reason), (True, None))
 
@@ -720,7 +721,7 @@ class PoolCreationTest(unittest.TestCase):
         bundle, waiting = creation_txs(pools_data=fake_pools(planned=[planned_entry("canonical", "stATOM", CANONICAL_STATOM, seeded=False)]))
         (missing,) = sets_by_id(None)["pool-creation"].txs
 
-        self.assertEqual((bundle.title, bundle.ready, bundle.reason), ("bundle 1 of 1 · 1 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM", False, "1 of 1 pools waiting on the test wallet: cosmoshub-4 stATOM"))
+        self.assertEqual((bundle.title, bundle.ready, bundle.reason), ("bundle 1 of 1 · 1 pools", False, "1 of 1 pools waiting on the test wallet: cosmoshub-4 stATOM"))
         self.assertEqual(waiting.title, "not in a bundle: 10 pools without a message yet")
         self.assertEqual((missing.title, missing.ready, missing.commands, missing.files), ("not in a bundle: 11 pools without a message yet", False, [], []))
         self.assertTrue(missing.reason.startswith("celestia pool creation: waiting for the Pools snapshot; "))

@@ -118,6 +118,7 @@ class MultisigTx:
     reason: str | None
     commands: list[Command]  # generate, sign for each signer (default ones, then the backup), multisign+broadcast
     files: list[str]  # the /tmp paths the commands share, for the "share these" note
+    members: list[str] = dataclasses.field(default_factory=list)  # what a bundle holds ("zone pool"), shown as chips
 
     def payload(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -285,7 +286,7 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
         f"{stem}-*.unsigned.json > {stem}.unsigned.json"
     )
     blocked = bundle[0].plan.get("blocked")
-    title = f"bundle {index} of {total} · {len(bundle)} pools{' (blocked)' if blocked else ''}: {bundle[0].label} … {bundle[-1].label}"
+    title = f"bundle {index} of {total} · {len(bundle)} pools{' (blocked)' if blocked else ''}"
     reason = f"blocked: {blocked}" if blocked else fee_reason or _bundle_reason(bundle=bundle)
     return MultisigTx(
         chain_id=CREATION_GROUP,
@@ -299,6 +300,7 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
             generate_label=f"Write each pool's unsigned tx and merge them into one ({len(bundle)} messages, --gas {gas})",
         ),
         files=_shared_files(file_stem=stem),
+        members=[candidate.label for candidate in bundle],
     )
 
 

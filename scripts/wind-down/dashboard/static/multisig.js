@@ -167,7 +167,20 @@ function txHtml(tx, key) {
   const reason = tx.reason ? `<span class="muted">${escapeHtml(tx.reason)}</span>` : '';
   const body = open && tx.commands.length ? `<table class="ms-cmds">${commandRows(tx.commands, key).join('')}</table>` : '';
   return `<div class="ms-tx ${open ? 'open' : ''}">
-    <div class="ms-tx-head" data-card="${escapeHtml(key)}"><span class="ms-caret">${open ? '▾' : '▸'}</span> <b>${escapeHtml(tx.title)}</b> ${state} ${reason}</div>${body}</div>`;
+    <div class="ms-tx-head" data-card="${escapeHtml(key)}"><span class="ms-caret">${open ? '▾' : '▸'}</span> <b>${escapeHtml(tx.title)}</b> ${state} ${reason}</div>${membersHtml(tx)}${body}</div>`;
+}
+
+// A bundle's pools as chips grouped by zone ("celestia: stTIA stTIA.cosmoshub …"), always visible under its title.
+function membersHtml(tx) {
+  if (!tx.members || !tx.members.length) return '';
+  const byZone = new Map();
+  for (const member of tx.members) {
+    const [zone, pool] = member.split(' ');
+    if (!byZone.has(zone)) byZone.set(zone, []);
+    byZone.get(zone).push(pool);
+  }
+  const groups = [...byZone].map(([zone, pools]) => `<span class="ms-member-zone"><span class="muted">${escapeHtml(zone)}</span> ${pools.map((pool) => `<span class="ms-member">${escapeHtml(pool)}</span>`).join(' ')}</span>`);
+  return `<div class="ms-members">${groups.join('')}</div>`;
 }
 
 // The three sign commands (Sam, Aidan, Riley as backup) fold into one "sign" row with a Copy button per person;
