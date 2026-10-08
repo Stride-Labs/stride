@@ -366,7 +366,7 @@
           "steps": [
             {
               "id": "vote-relayer-configs",
-              "text": "Relayer configs ready for day 0: the haqq relayer (packets and ICQ responses, frequent client updates toward Stride), ICA relayers for every zone, channel-5, and channel-197 from 2026-10-12."
+              "text": "Relayer configs ready for day 0: the haqq relayer (packets and ICQ responses, frequent client updates toward Stride), ICA relayers for every zone, channel-5, channel-197 from 2026-10-12, and Carbon <-> Osmosis (Osmosis channel-188 / Carbon channel-0) until the pools close: nobody else relays it reliably, so update Osmosis's client of carbon-1 first (14-day trusting period)."
             },
             {
               "id": "vote-signing-runbook",

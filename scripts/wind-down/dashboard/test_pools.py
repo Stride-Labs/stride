@@ -976,6 +976,7 @@ class ZoneTest(unittest.TestCase):
                 "channel-11",
                 "channel-40",
                 "channel-47",
+                "channel-52",
                 "channel-69",
                 "channel-123",
                 "channel-148",

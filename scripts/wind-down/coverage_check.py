@@ -74,14 +74,15 @@ ST_DENOM_PREFIX = "st"
 # Multi-channel rows represent distinct vouchers; preserve every listed in-scope channel.
 REQUIRED_ROUTES: dict[str, frozenset[str]] = {
     "stuatom": frozenset({
-        "channel-0", "channel-6", "channel-11", "channel-40", "channel-47", "channel-69", "channel-123", "channel-148",
+        "channel-0", "channel-6", "channel-11", "channel-40", "channel-47", "channel-52", "channel-69", "channel-123",
+        "channel-148",
     }),
     "staISLM": frozenset({"channel-240"}),
     "stutia": frozenset({"channel-148", "channel-123", "channel-47", "channel-0", "channel-197", "channel-162"}),
-    "stinj": frozenset({"channel-6", "channel-40", "channel-0"}),
+    "stinj": frozenset({"channel-6", "channel-40", "channel-0", "channel-47"}),
     "stuosmo": frozenset({"channel-0", "channel-40"}),
-    "stuband": frozenset({"channel-258"}),
-    "stadydx": frozenset({"channel-0", "channel-160"}),
+    "stuband": frozenset({"channel-0", "channel-258"}),
+    "stadydx": frozenset({"channel-0", "channel-160", "channel-47"}),
     "stuluna": frozenset({"channel-13", "channel-52", "channel-47"}),
     "stusaga": frozenset({"channel-213"}),
     "stujuno": frozenset({"channel-24"}),

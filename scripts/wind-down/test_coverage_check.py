@@ -692,12 +692,16 @@ class ApprovedRoutePolicyTest(unittest.TestCase):
                 channels.update(cells[2].split(", "))
             routes_by_token[token.group(1)] = frozenset(channels)
         self.assertEqual(coverage_check.REQUIRED_ROUTES, routes_by_token)
-        self.assertEqual(sum(len(routes) for routes in routes_by_token.values()), 28)
+        self.assertEqual(sum(len(routes) for routes in routes_by_token.values()), 32)
         self.assertTrue({"channel-11", "channel-69", "channel-6"} <= routes_by_token["stuatom"])
         self.assertTrue({"channel-13", "channel-52"} <= routes_by_token["stuluna"])
+        self.assertIn("channel-52", routes_by_token["stuatom"])
+        self.assertEqual(routes_by_token["stuband"], frozenset({"channel-0", "channel-258"}))
         self.assertEqual(routes_by_token["stusomm"], frozenset())
         self.assertIn("staISLM", routes_by_token)
         self.assertTrue(all("channel-307" not in routes for routes in routes_by_token.values()))
+        self.assertEqual({token for token, routes in routes_by_token.items() if "channel-47" in routes},
+                         {"stuatom", "stutia", "stinj", "stadydx", "stuluna"})
 
 
 class ResultLineTest(unittest.TestCase):
