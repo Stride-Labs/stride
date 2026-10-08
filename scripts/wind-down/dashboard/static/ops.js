@@ -356,8 +356,14 @@ function doneBy(step) {
 // or to the set itself when the step has no zones.
 function multisigLinks(step) {
   const [setId, zone] = step.multisig.split('/');
-  const zones = zone ? [zone] : step.zones && step.zones.length ? step.zones : [null];
-  return `<div class="ops-link">${zones.map((target) => multisigLink(setId, target)).join('')}</div>`;
+  const zones = zone ? [zone] : step.zones && step.zones.length ? step.zones.filter((candidate) => setHasZone(setId, candidate)) : [];
+  return `<div class="ops-link">${(zones.length ? zones : [null]).map((target) => multisigLink(setId, target)).join('')}</div>`;
+}
+
+// A set whose txs are not grouped by zone (the pool-creation bundles span every zone) gets one link to the set.
+function setHasZone(setId, zone) {
+  const set = live.multisig && live.multisig.data.sets.find((candidate) => candidate.id === setId);
+  return !set || set.txs.some((tx) => tx.chain_id === zone);
 }
 
 function multisigLink(setId, zone) {

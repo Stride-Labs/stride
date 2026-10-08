@@ -97,9 +97,10 @@ SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
 OSMOSIS_VAULT = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"
 # Holds a little of every planned pool's stToken denom: proves the denom exists on Osmosis and funds the test join.
 POOL_SEED_ADDRESS = "osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe"
-# The uosmo the plan tops the vault up with for the funding txs (about 10 OSMO): gas, not backing, so the osmosis-1
+# The uosmo the plan tops the vault up with for the creation and funding txs (about 25 OSMO at 0.1 uosmo/gas:
+# two creation bundles plus three txs per pool): gas, not backing, so the osmosis-1
 # canonical pool's allocation leaves it in the vault.
-OSMO_FEE_RESERVE = 10_000_000
+OSMO_FEE_RESERVE = 25_000_000
 
 
 class RelayedBy(StrEnum):

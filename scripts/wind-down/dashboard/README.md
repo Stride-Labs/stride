@@ -65,10 +65,12 @@ snapshot's balance predates the landing); a pool's test join waits for its alloc
 when that is below one token; its rest join is `allocation - vault_shares` and waits until the Pools snapshot shows
 exactly the test join as vault shares (and never goes on a pool funded exactly).
 
-The sets, in order: `pool-creation` (Osmosis, step `vote-pools-create`: one `osmosisd tx cosmwasmpool create-pool 996
-'<instantiate_msg>'` per planned pool from the Pools snapshot, canonical first, at the live rate; not ready while the
-route is unresolved, the pool already exists, its stToken denom has no supply on Osmosis, or the vault cannot pay the
-poolmanager creation fee times the pools still to create across all zones, the vault's one shared balance), `live-test-undelegate`, `full-drain`, `ica-transfers`,
+The sets, in order: `pool-creation` (Osmosis, step `vote-pools-create`: every planned pool that is ready — resolved,
+not created, its stToken denom in the test wallet — goes into bundles of up to 18 `MsgCreateCosmWasmPool`, one
+`osmosisd tx cosmwasmpool create-pool 996 '<instantiate_msg>' --generate-only` per message merged by a `jq` line into
+the bundle's unsigned tx, at 1.5M gas per message and 0.1 uosmo/gas; a bundle is not ready while the vault cannot pay
+the poolmanager creation fee times the pools still to create across all zones, and a trailing not-ready tx lists the
+pools no bundle holds yet with their reasons), `live-test-undelegate`, `full-drain`, `ica-transfers`,
 `staketia-claim-balance`, `pool-funding`.
 
 ## Channels tab
@@ -174,7 +176,7 @@ stays only for the published-export audit at the halt.
 - Allocation: a route pool gets `ceil(escrow x rate)` at the **pool's own** rate (what it will actually pay out; the gap
   to Stride's frozen rate stays in the canonical pool); the canonical pool gets `vault_native + every pool's native -
   every route allocation`, null while any non-canonical pool's share is unknown. For osmosis-1 the vault's native
-  token is also its gas token, so `config.OSMO_FEE_RESERVE` (the ~10 OSMO the plan tops the vault up with) comes off
+  token is also its gas token, so `config.OSMO_FEE_RESERVE` (the ~25 OSMO the plan tops the vault up with) comes off
   `vault_native` first (never below zero); the zone's `fee_reserve` field carries it (0 elsewhere). A second canonical
   pool, or a second pool on one route channel, fails the uniqueness check on both and neither is allocated (the
   canonical share is null while a duplicate route is unresolved). `funded_exactly` is
@@ -198,9 +200,10 @@ stays only for the published-export audit at the halt.
   failures are unknown checks). `pools_funded`: `pools_ready` and every pool funded exactly and its native token marked
   corrupted (null while an input is unknown). Every integer in the payload is a string.
 - Planned pools (`planned`: the canonical pool plus one per policy route) sit in a table above the zone's live rows
-  until each exists: the stToken denom on its holder chain and on Osmosis, whether that denom has supply on Osmosis
-  (`seeded`, with the supply), the factors the pool is created with, a copyable seed transfer while the denom is
-  unseeded, and a "→ create" link to the zone's txs in the `pool-creation` set on the Multisig tab. A planned pool whose
+  until each exists: the stToken denom on its holder chain and on Osmosis, whether the test wallet
+  `config.POOL_SEED_ADDRESS` holds that denom (`seeded`, with `test_wallet_balance`: it proves the denom exists on
+  Osmosis and funds the test join), the factors the pool is created with, and a "→ create" link to the
+  `pool-creation` set on the Multisig tab. A planned pool whose
   Osmosis denom a live pool already holds (`live_contract`) collapses to a "created" line linking to that row
   (`#pools/<contract>`); a route that could not be resolved shows its `error` in place of the denoms. The zone header
   adds the poolmanager creation fee × pools still to create against the vault's balance of the fee denom, red when

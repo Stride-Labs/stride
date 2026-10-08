@@ -44,10 +44,18 @@ TRANSFER_FEES = "3000ustrd"
 STAKETIA_TEST_AMOUNT = 1_000_000  # utia
 STAKETIA_CHAIN_ID = "celestia"
 POOL_GAS = 1_500_000
-POOL_FEES = "15000uosmo"
+# About 3x Osmosis's EIP-1559 base fee (0.03 uosmo/gas on 2026-10-08, floor 0.01): CheckTx rejects a fee below the
+# base fee at broadcast time, and a multisig tx cannot be re-priced without a new signing round.
+OSMOSIS_GAS_PRICE = "0.1uosmo"
 CREATE_POOL_CODE_ID = "996"  # the transmuter v3.2.0 code on osmosis-1 (pools.TRANSMUTER_CODE_ID)
-CREATE_POOL_GAS = 2_000_000
-CREATE_POOL_FEES = "20000uosmo"
+# The 2026-09-25 creations used 1.44M gas each (1M of it the tokenfactory denom creation), flat per message.
+CREATE_POOL_MSG_GAS = 1_500_000
+CREATE_POOL_TX_OVERHEAD_GAS = 100_000
+# 18 messages is ~27M gas, under half the 60M mempool cap per tx (31 would fit): a failing message reverts the whole
+# bundle and burns its fee, so the blast radius stays at half the pools.
+CREATE_POOL_BUNDLE_SIZE = 18
+CREATION_GROUP = "all zones"  # the bundles span zones, so the tab shows them under one heading
+WAITING_SHOWN = 8  # pools listed by name in the waiting tx before "and N more"
 POOL_KIND_UNRECOGNISED = "unrecognised"  # a pool no Stride channel backs: reported on the Pools tab, never funded
 POOL_KIND_CANONICAL = "canonical"
 
@@ -178,34 +186,121 @@ def tx_sets(
 # ---- sets
 
 
+@dataclass(frozen=True)
+class CreationCandidate:
+    """A planned pool and why it is not in a bundle yet (None: it is); `plan` is None when the zone's snapshot is unreadable."""
+
+    zone: config.ZoneConfig
+    plan: dict[str, Any] | None
+    reason: str | None
+
+    @property
+    def label(self) -> str:
+        return f"{self.zone.chain_id} {self.plan['alloyed_subdenom']}" if self.plan else f"{self.zone.chain_id} pool creation"
+
+
 def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     pools_zones = _zones_by_chain_id(data=pools_data)
     pools_to_create = _pools_to_create(pools_zones=pools_zones)
     fee_reason = _creation_fee_reason(pools_zones=pools_zones, pools_to_create=pools_to_create)
+    candidates = _creation_candidates(pools_zones=pools_zones, pools_data=pools_data)
+    ready = [candidate for candidate in candidates if candidate.reason is None]
+    waiting = [candidate for candidate in candidates if candidate.reason]
+    bundles = [ready[start : start + CREATE_POOL_BUNDLE_SIZE] for start in range(0, len(ready), CREATE_POOL_BUNDLE_SIZE)]
+    fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
         step_id="vote-pools-create",
         title="Pool creation: instantiate every planned transmuter pool",
         description=(
-            "Osmosis, signed by the vault. One MsgCreateCosmWasmPool (code 996) per planned pool on the Pools tab, "
-            "the canonical pool first then one per route, with the exact denoms and factors in the instantiate "
-            "message. Creation pays the poolmanager pool_creation_fee per pool "
-            f"({_creation_fee_text(pools_zones=pools_zones)} today) from the vault, which must hold it in that "
-            f"denom for all {pools_to_create} pools still to create across every zone (one shared balance): top it up first. Six-decimal zones use 1e18-scaled factors; the three 18-decimal zones (haqq, "
-            "dYdX, Injective) use 1e6-scaled ones, rounded down, because 1e18 overflows the transmuter's Uint128 on "
-            "their supply. The rate is read live when this page renders, so a pool created tomorrow carries "
-            "tomorrow's rate: copy the command the day you sign it. A route pool's stToken denom must have supply "
-            "on Osmosis before creation (seed it from the Pools tab). Do one tx at a time, end to end: generate, "
-            "two signatures, multisign and broadcast, then confirm it landed."
+            "Osmosis, signed by the vault. Every planned pool on the Pools tab that is ready (its stToken denom in the "
+            f"test wallet, not created yet) goes into bundles of up to {CREATE_POOL_BUNDLE_SIZE} MsgCreateCosmWasmPool "
+            "(code 996), canonical pools first per zone, so the whole set is a couple of signing rounds instead of one "
+            "per pool. Generate: one create-pool per message with identical flags, then the jq line merges the "
+            "messages into the bundle's unsigned tx, which is what gets signed and broadcast. Gas is "
+            f"{CREATE_POOL_MSG_GAS:,} per message plus {CREATE_POOL_TX_OVERHEAD_GAS:,} (the 09-25 creations used 1.44M "
+            f"each), priced at {OSMOSIS_GAS_PRICE}/gas, about 3x the EIP-1559 base fee, since a bundle whose fee falls "
+            "below the base fee at broadcast is rejected and must be re-signed. Creation pays the poolmanager "
+            f"pool_creation_fee per message ({fee} today) from the vault, which must hold it in that denom for all "
+            f"{pools_to_create} pools still to create across every zone (one shared balance): top it up first. "
+            "Pool ids are assigned in message order (the tx's pool_created events carry msg_index). Six-decimal zones "
+            "use 1e18-scaled factors; the three 18-decimal zones (haqq, dYdX, Injective) use 1e6-scaled ones, rounded "
+            "down, because 1e18 overflows the transmuter's Uint128 on their supply. The rate is read live when this "
+            "page renders, so generate and sign a bundle the same day. A failing message reverts the whole bundle: "
+            "confirm every pool landed on the Pools tab before the next bundle."
         ),
         txs=[
-            tx
-            for zone in config.ZONES
-            for tx in _pool_creation_txs(
-                zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data, fee_reason=fee_reason
-            )
+            *(
+                _bundle_tx(index=index, total=len(bundles), bundle=bundle, fee_reason=fee_reason)
+                for index, bundle in enumerate(bundles, start=1)
+            ),
+            *([_waiting_tx(waiting=waiting, any_ready=bool(ready))] if waiting else []),
         ],
     )
+
+
+def _creation_candidates(pools_zones: dict[str, dict[str, Any]], pools_data: dict[str, Any] | None) -> list[CreationCandidate]:
+    """Every planned pool still to create, zone by zone in config order; a zone whose snapshot is unreadable is one
+    candidate with that reason."""
+    candidates: list[CreationCandidate] = []
+    for zone in config.ZONES:
+        pools_zone = pools_zones.get(zone.chain_id)
+        snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
+        planned = [] if snapshot_reason else pools_zone.get("planned") or []
+        if not planned:
+            reason = snapshot_reason or "no planned pool in the Pools snapshot"
+            candidates.append(CreationCandidate(zone=zone, plan=None, reason=reason))
+            continue
+        candidates.extend(
+            CreationCandidate(zone=zone, plan=plan, reason=_creation_reason(plan=plan))
+            for plan in planned
+            if not plan["live_contract"]
+        )
+    return candidates
+
+
+def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reason: str | None) -> MultisigTx:
+    stem = f"{WORKDIR}/create-b{index}"
+    gas = CREATE_POOL_TX_OVERHEAD_GAS + CREATE_POOL_MSG_GAS * len(bundle)
+    generate_lines = [
+        f"osmosisd tx cosmwasmpool create-pool {CREATE_POOL_CODE_ID} "
+        f"'{json.dumps(candidate.plan['instantiate_msg'], separators=(',', ':'))}' --from {OSMOSIS_VAULT_ADDRESS} "
+        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {gas} "
+        f"--gas-prices {OSMOSIS_GAS_PRICE} > {_bundle_part_stem(stem=stem, position=position, candidate=candidate)}.unsigned.json"
+        for position, candidate in enumerate(bundle, start=1)
+    ]
+    # The glob sorts the zero-padded parts into message order; the first file's auth_info (fee and gas) is kept.
+    merge_line = (
+        "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []' "
+        f"{stem}-*.unsigned.json > {stem}.unsigned.json"
+    )
+    title = f"bundle {index} of {total} · {len(bundle)} pools: {bundle[0].label} … {bundle[-1].label}"
+    return MultisigTx(
+        chain_id=CREATION_GROUP,
+        title=title,
+        ready=fee_reason is None,
+        reason=fee_reason,
+        commands=_commands(
+            generate="\n".join([f"mkdir -p {WORKDIR}", *generate_lines, merge_line]),
+            file_stem=stem,
+            tools=OSMOSIS_TOOLS,
+            generate_label=f"Write each pool's unsigned tx and merge them into one ({len(bundle)} messages, --gas {gas})",
+        ),
+        files=_shared_files(file_stem=stem),
+    )
+
+
+def _bundle_part_stem(stem: str, position: int, candidate: CreationCandidate) -> str:
+    return f"{stem}-{position:02d}-{candidate.plan['alloyed_subdenom'].lower().replace('.', '-')}"
+
+
+def _waiting_tx(waiting: list[CreationCandidate], any_ready: bool) -> MultisigTx:
+    """The pools no bundle holds yet, each with what it waits for, so the operator sees what to fix."""
+    shown = waiting[:WAITING_SHOWN]
+    more = f"; … and {len(waiting) - WAITING_SHOWN} more" if len(waiting) > WAITING_SHOWN else ""
+    reason = "; ".join(f"{candidate.label}: {candidate.reason}" for candidate in shown) + more
+    title = f"not in a bundle yet: {len(waiting)} pools" if any_ready else f"nothing ready to create: {len(waiting)} pools waiting"
+    return MultisigTx(chain_id=CREATION_GROUP, title=title, ready=False, reason=reason, commands=[], files=[])
 
 
 def _creation_fee_text(pools_zones: dict[str, dict[str, Any]]) -> str:
@@ -270,7 +365,7 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
             "pool's test join first, then verify on the Pools tab (native one token, vault shares one token, no "
             "outside shares, rate exact), then for each pool its rest join and its mark back to back, since the mark "
             "closes "
-            "the window in which an outsider could join. The vault needs OSMO for about 3 txs per pool at 0.015 OSMO "
+            "the window in which an outsider could join. The vault needs OSMO for about 3 txs per pool at 0.15 OSMO "
             "each. Do one tx at a time, end to end: generate, two signatures, multisign and broadcast, then confirm "
             "it landed."
         ),
@@ -440,47 +535,8 @@ def _stride_generate_line(subcommand: str, file_stem: str) -> str:
     )
 
 
-def _pool_creation_txs(
-    zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None, fee_reason: str | None
-) -> list[MultisigTx]:
-    """One create-pool tx per planned pool, canonical first; one not-ready tx when the snapshot has none."""
-    snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
-    planned = [] if snapshot_reason else pools_zone.get("planned") or []
-    if not planned:
-        reason = snapshot_reason or "no planned pool in the Pools snapshot"
-        return [_empty_pool_tx(zone=zone, label="pool creation", reason=reason)]
-
-    return [_create_pool_tx(zone=zone, plan=plan, fee_reason=fee_reason) for plan in planned]
-
-
-def _create_pool_tx(zone: config.ZoneConfig, plan: dict[str, Any], fee_reason: str | None) -> MultisigTx:
-    subdenom = plan["alloyed_subdenom"]
-    title = f"{zone.chain_id} · create {subdenom} ({_planned_origin(plan=plan)})"
-    reason = _creation_reason(plan=plan, fee_reason=fee_reason)
-
-    # An unresolved or already created pool shows no command: there is nothing to run, or running it would duplicate.
-    if plan["error"] or plan["live_contract"]:
-        return MultisigTx(chain_id=zone.chain_id, title=title, ready=False, reason=reason, commands=[], files=[])
-
-    file_stem = f"{WORKDIR}/create-{zone.chain_id}-{subdenom.lower().replace('.', '-')}"
-    message_json = json.dumps(plan["instantiate_msg"], separators=(",", ":"))
-    generate_line = (
-        f"osmosisd tx cosmwasmpool create-pool {CREATE_POOL_CODE_ID} '{message_json}' --from {OSMOSIS_VAULT_ADDRESS} "
-        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {CREATE_POOL_GAS} "
-        f"--fees {CREATE_POOL_FEES} > {file_stem}.unsigned.json"
-    )
-    return _osmosis_tx(zone=zone, title=title, reason=reason, generate_line=generate_line, file_stem=file_stem)
-
-
-def _planned_origin(plan: dict[str, Any]) -> str:
-    if plan["kind"] == POOL_KIND_CANONICAL:
-        return POOL_KIND_CANONICAL
-    holder = plan["holder_name"] or plan["holder_chain_id"] or "unresolved"
-    return f"{holder} · {plan['stride_channel']}"
-
-
-def _creation_reason(plan: dict[str, Any], fee_reason: str | None) -> str | None:
-    """Why the pool cannot be created yet, in the order the operator should resolve them."""
+def _creation_reason(plan: dict[str, Any]) -> str | None:
+    """Why the pool cannot go into a bundle yet, in the order the operator should resolve them."""
     if plan["error"]:
         return plan["error"]
     if plan["live_contract"]:
@@ -489,7 +545,7 @@ def _creation_reason(plan: dict[str, Any], fee_reason: str | None) -> str | None
         return f"the test wallet's balance of {plan['denom_on_osmosis']} is not known yet (see the Pools tab)"
     if not plan["seeded"]:
         return f"the test wallet {config.POOL_SEED_ADDRESS} does not hold {plan['denom_on_osmosis']}: send it there first"
-    return fee_reason
+    return None
 
 
 def _pools_to_create(pools_zones: dict[str, dict[str, Any]]) -> int:
@@ -641,7 +697,7 @@ def _osmosis_generate_line(contract: str, message: dict[str, Any], amount: str |
     amount_flag = f" --amount {amount}" if amount else ""
     return (
         f"osmosisd tx wasm execute {contract} '{message_json}'{amount_flag} --from {OSMOSIS_VAULT_ADDRESS} "
-        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {POOL_GAS} --fees {POOL_FEES} "
+        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {POOL_GAS} --gas-prices {OSMOSIS_GAS_PRICE} "
         f"> {file_stem}.unsigned.json"
     )
 
