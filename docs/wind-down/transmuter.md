@@ -216,7 +216,7 @@ sha256 and upper-cased. Supply is live on Osmosis.
 | Kujira | channel-259 | channel-3 | `transfer/channel-259/transfer/channel-32/stuatom` | `ibc/DED75871F78AF8FC9BCFE75BEA82D66A2B2366204E210FD8E4C77A2AAEA1B1E3` | 0 |
 | Agoric | channel-320 | channel-1 | `transfer/channel-320/transfer/channel-59/stuatom` | `ibc/C86C2FA56D954AB05960450215E63605528CB3481694ABEA87CE4DB0EF17D265` | 0.782288 |
 | Neutron | channel-874 | channel-10 | `transfer/channel-874/transfer/channel-8/stuatom` | `ibc/8FCFAF3AE6BA4C5BDFF85B41449FBACE547E2BAC23895E839230404FB0EC3837` | 7.841929 |
-| Carbon | channel-188 | channel-0 | `transfer/channel-188/transfer/channel-8/stuatom` | `ibc/A1FC8CB6B2E965DEDC6F57749F04CCE3D7C15DD10FC2F7BBEEC19E16D0F82397` | 0 |
+| Carbon | channel-188 | channel-0 | `transfer/channel-188/transfer/channel-8/stuatom` | `ibc/A1FC8CB6B2E965DEDC6F57749F04CCE3D7C15DD10FC2F7BBEEC19E16D0F82397` | 0; not served, carbon-1 stopped 2026-09-25 |
 | Axelar | channel-208 | channel-3 | `transfer/channel-208/transfer/channel-64/stuatom` | `ibc/7FA89E771D836CC136CEDD28AD88DD5F2A1083883FA4681FDBBFFD1D78E04FCB` | 0 |
 
 The chain registry tags both Secret pairs preferred, but only channel-1 is a `transfer` channel;
@@ -259,8 +259,8 @@ A transfer needs the *destination's* client of the source to be un-expired.
 | Kujira → Osmosis (channel-3 → channel-259) | Osmosis's `07-tendermint-2017` | **Expired** | | same; kaiyo-1 REST endpoints are also down |
 | Stride → Neutron (channel-123 → channel-8) | Stride's client of neutron-1 | Active | | stTIA holders on Neutron; audited 2026-09-23 |
 | Neutron → Osmosis (channel-10 → channel-874) | Osmosis's `07-tendermint-2823` | Active, last header 35 h old | | no relayer keeping it fresh; we may need to relay |
-| Stride ↔ Carbon (channel-47 ↔ channel-8) | both clients | Active but stale (Stride's 297 h, Carbon's 87 h old on 2026-09-24) | | Stride leg not needed after the upgrade; Osmosis leg: we relay it (decided 2026-10-08, see sttoken-locations.md) |
-| Carbon → Osmosis (channel-0 → channel-188) | Osmosis's client of carbon-1 | Active, last header 41 h old | | same; on 2026-10-07 the last packet was 12 days old and the client near its 14-day trusting period |
+| Stride ↔ Carbon (channel-47 ↔ channel-8) | both clients | Stride's client of carbon-1 **Expired** (last header 2026-09-12) | | carbon-1 stopped producing blocks at height 100279059 (2026-09-25 20:01 UTC); not served, the chain is dead (decided 2026-10-08, see sttoken-locations.md) |
+| Carbon → Osmosis (channel-0 → channel-188) | Osmosis's `07-tendermint-1808` | Active until ~2026-10-09 10:40 UTC, last header 2026-09-25 | | same; with no new Carbon blocks the client cannot be updated and expires |
 | Stride ↔ Axelar (channel-69 ↔ channel-64) | both clients | **Expired** | | Axelar holders cannot redeem through Stride |
 | Axelar → Osmosis (channel-3 → channel-208) | Osmosis's client of axelar-dojo-1 | Active | | public relayers, but not served: the Stride <-> Axelar clients are expired, so the route can't be seeded (decided 2026-10-08, see sttoken-locations.md) |
 | Stride ↔ Dymension (channel-197 ↔ channel-0), Dymension → Osmosis (channel-2 → channel-19774) | all clients | Active | | stTIA holders on Dymension |
