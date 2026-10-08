@@ -135,6 +135,62 @@ HOLDER_ROUTES: tuple[HolderRoute, ...] = (
     HolderRoute("Band", "channel-148", RelayedBy.FREE),
 )
 
+@dataclass(frozen=True)
+class HolderChain:
+    """A chain whose stToken holders get a route pool: where the Pools tab's seed transfer is signed from.
+
+    `name` is the chain registry's short name (it names the pool's alloyed subdenom, `stATOM.cosmoshub`); `node` is
+    the RPC the seed command points at, `<RPC>` where Polkachu serves none.
+    """
+
+    name: str
+    binary: str
+    node: str
+
+
+RPC_PLACEHOLDER = "<RPC>"
+
+
+def _holder_node(chain_id: str, name: str) -> str:
+    # The private endpoint where the dashboard already has one for the chain (its ZONES entry), else the public one.
+    if chain_id in ZONES_BY_CHAIN_ID:
+        return f"{ZONES_BY_CHAIN_ID[chain_id].rpc}:443"
+    return f"https://{name}-rpc.polkachu.com:443"
+
+
+def _holder(chain_id: str, name: str, binary: str, node_override: str | None = None) -> tuple[str, HolderChain]:
+    node = node_override or _holder_node(chain_id=chain_id, name=name)
+    return chain_id, HolderChain(name=name, binary=binary, node=node)
+
+
+# Every chain a policy channel in REQUIRED_ROUTES resolves to (plus osmosis-1), keyed by chain id. A route whose chain
+# is missing here is reported with an error on the Pools tab and gets no seed or creation command. Public hostnames
+# were checked against /status on 2026-10-08; Polkachu serves no Secret or Carbon RPC, so those carry the placeholder.
+HOLDER_CHAINS: dict[str, HolderChain] = dict(
+    (
+        _holder("cosmoshub-4", "cosmoshub", "gaiad"),
+        _holder("injective-1", "injective", "injectived"),
+        _holder("axelar-dojo-1", "axelar", "axelard"),
+        _holder("phoenix-1", "terra", "terrad"),
+        _holder("juno-1", "juno", "junod"),
+        _holder("secret-4", "secret", "secretd", node_override=RPC_PLACEHOLDER),
+        _holder("neutron-1", "neutron", "neutrond"),
+        _holder("agoric-3", "agoric", "agd"),
+        _holder("dydx-mainnet-1", "dydx", "dydxprotocold"),
+        _holder("celestia", "celestia", "celestia-appd"),
+        _holder("dymension_1100-1", "dymension", "dymd"),
+        _holder("ssc-1", "saga", "sagad"),
+        _holder("haqq_11235-1", "haqq", "haqqd"),
+        _holder("laozi-mainnet", "band", "bandd"),
+        _holder("osmosis-1", "osmosis", "osmosisd"),
+        _holder("carbon-1", "carbon", "carbond", node_override=RPC_PLACEHOLDER),
+    )
+)
+
+# Where a canonical stToken is seeded from: Stride's own transfer channel to Osmosis (Osmosis's end is channel-326).
+STRIDE_CHANNEL_TO_OSMOSIS = "channel-5"
+STRIDE_HOLDER = HolderChain(name="stride", binary="strided", node=f"{STRIDE_RPC}:443")
+
 # Transmuter pool contracts on Osmosis the vault has not joined yet, so the Funds tab shows them before funding.
 # Pools the vault holds an alloyed LP receipt of are discovered from its balances and need no entry here.
 EXTRA_POOL_CONTRACTS: tuple[str, ...] = ()

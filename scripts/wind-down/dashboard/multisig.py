@@ -3,8 +3,9 @@ the Validators, Funds and Pools snapshots. Pure: no chain calls.
 
 The Stride sets (drains, ICA transfers, staketia claim balance) are signed by the F5 protocol-admin multisig with
 `strided`; the pool-funding set is signed by the Osmosis vault (a multisig with the same member key names) with
-`osmosisd`. Each tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign`
-looks the multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous
+`osmosisd`, as is the pool-creation set (one create-pool per planned pool from the Pools snapshot). Each tx is
+done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the multisig's
+account number and sequence up itself. A set may hold several txs per zone; they are contiguous
 per `chain_id` in `txs`, in the order they go out.
 """
 
@@ -44,6 +45,9 @@ STAKETIA_TEST_AMOUNT = 1_000_000  # utia
 STAKETIA_CHAIN_ID = "celestia"
 POOL_GAS = 1_500_000
 POOL_FEES = "15000uosmo"
+CREATE_POOL_CODE_ID = "996"  # the transmuter v3.2.0 code on osmosis-1 (pools.TRANSMUTER_CODE_ID)
+CREATE_POOL_GAS = 2_000_000
+CREATE_POOL_FEES = "20000uosmo"
 POOL_KIND_UNRECOGNISED = "unrecognised"  # a pool no Stride channel backs: reported on the Pools tab, never funded
 POOL_KIND_CANONICAL = "canonical"
 
@@ -162,6 +166,7 @@ def tx_sets(
         ],
     )
     return [
+        _pool_creation_set(pools_data=pools_data),
         live_test,
         full_drain,
         _ica_transfers_set(funds_data=funds_data),
@@ -171,6 +176,39 @@ def tx_sets(
 
 
 # ---- sets
+
+
+def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
+    pools_zones = _zones_by_chain_id(data=pools_data)
+    return TxSet(
+        id="pool-creation",
+        step_id="vote-pools-create",
+        title="Pool creation: instantiate every planned transmuter pool",
+        description=(
+            "Osmosis, signed by the vault. One MsgCreateCosmWasmPool (code 996) per planned pool on the Pools tab, "
+            "the canonical pool first then one per route, with the exact denoms and factors in the instantiate "
+            "message. Creation pays the poolmanager pool_creation_fee per pool "
+            f"({_creation_fee_text(pools_zones=pools_zones)} today) from the vault, which must hold it in that "
+            "denom: top it up first. Six-decimal zones use 1e18-scaled factors; the three 18-decimal zones (haqq, "
+            "dYdX, Injective) use 1e6-scaled ones, rounded down, because 1e18 overflows the transmuter's Uint128 on "
+            "their supply. The rate is read live when this page renders, so a pool created tomorrow carries "
+            "tomorrow's rate: copy the command the day you sign it. A route pool's stToken denom must have supply "
+            "on Osmosis before creation (seed it from the Pools tab). Do one tx at a time, end to end: generate, "
+            "two signatures, multisign and broadcast, then confirm it landed."
+        ),
+        txs=[
+            tx
+            for zone in config.ZONES
+            for tx in _pool_creation_txs(zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data)
+        ],
+    )
+
+
+def _creation_fee_text(pools_zones: dict[str, dict[str, Any]]) -> str:
+    """The live creation fee as any zone reports it, for the set description."""
+    fees = [zone.get("creation_fee") for zone in pools_zones.values()]
+    fee = next((fee for fee in fees if fee), None)
+    return f"{fee['amount']}{fee['denom']}" if fee else "not known yet"
 
 
 def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
@@ -398,12 +436,79 @@ def _stride_generate_line(subcommand: str, file_stem: str) -> str:
     )
 
 
+def _pool_creation_txs(
+    zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None
+) -> list[MultisigTx]:
+    """One create-pool tx per planned pool, canonical first; one not-ready tx when the snapshot has none."""
+    snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
+    planned = [] if snapshot_reason else pools_zone.get("planned") or []
+    if not planned:
+        reason = snapshot_reason or "no planned pool in the Pools snapshot"
+        return [_empty_pool_tx(zone=zone, label="pool creation", reason=reason)]
+
+    fee_reason = _creation_fee_reason(pools_zone=pools_zone)
+    return [_create_pool_tx(zone=zone, plan=plan, fee_reason=fee_reason) for plan in planned]
+
+
+def _create_pool_tx(zone: config.ZoneConfig, plan: dict[str, Any], fee_reason: str | None) -> MultisigTx:
+    subdenom = plan["alloyed_subdenom"]
+    title = f"{zone.chain_id} · create {subdenom} ({_planned_origin(plan=plan)})"
+    reason = _creation_reason(plan=plan, fee_reason=fee_reason)
+
+    # An unresolved or already created pool shows no command: there is nothing to run, or running it would duplicate.
+    if plan["error"] or plan["live_contract"]:
+        return MultisigTx(chain_id=zone.chain_id, title=title, ready=False, reason=reason, commands=[], files=[])
+
+    file_stem = f"{WORKDIR}/create-{zone.chain_id}-{subdenom.lower().replace('.', '-')}"
+    message_json = json.dumps(plan["instantiate_msg"], separators=(",", ":"))
+    generate_line = (
+        f"osmosisd tx cosmwasmpool create-pool {CREATE_POOL_CODE_ID} '{message_json}' --from {OSMOSIS_VAULT_ADDRESS} "
+        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {CREATE_POOL_GAS} "
+        f"--fees {CREATE_POOL_FEES} > {file_stem}.unsigned.json"
+    )
+    return _osmosis_tx(zone=zone, title=title, reason=reason, generate_line=generate_line, file_stem=file_stem)
+
+
+def _planned_origin(plan: dict[str, Any]) -> str:
+    if plan["kind"] == POOL_KIND_CANONICAL:
+        return POOL_KIND_CANONICAL
+    holder = plan["holder_name"] or plan["holder_chain_id"] or "unresolved"
+    return f"{holder} · {plan['stride_channel']}"
+
+
+def _creation_reason(plan: dict[str, Any], fee_reason: str | None) -> str | None:
+    """Why the pool cannot be created yet, in the order the operator should resolve them."""
+    if plan["error"]:
+        return plan["error"]
+    if plan["live_contract"]:
+        return f"already created: {plan['live_contract']}"
+    if plan["seeded"] is None:
+        return f"the supply of {plan['denom_on_osmosis']} on Osmosis is not known yet (see the Pools tab)"
+    if not plan["seeded"]:
+        return f"{plan['denom_on_osmosis']} has no supply on Osmosis: seed it first (Pools tab)"
+    return fee_reason
+
+
+def _creation_fee_reason(pools_zone: dict[str, Any]) -> str | None:
+    short = pools_zone.get("creation_fee_short")
+    if short is None:
+        return "the pool creation fee or the vault's balance of it is not known yet (see the Pools tab)"
+    if not short:
+        return None
+    fee = pools_zone["creation_fee"]
+    return (
+        f"the vault holds {pools_zone['vault_fee_balance']} {fee['denom']}, below {fee['amount']} per pool still to "
+        "create: top it up first"
+    )
+
+
 def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> list[MultisigTx]:
     """The zone's test joins, then each pool's rest join and mark back to back; one not-ready tx when there is nothing."""
     snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
     pools = [] if snapshot_reason else _fundable_pools(pools_zone=pools_zone)
     if not pools:
-        return [_empty_pool_tx(zone=zone, reason=snapshot_reason or "no pool to fund in the Pools snapshot")]
+        reason = snapshot_reason or "no pool to fund in the Pools snapshot"
+        return [_empty_pool_tx(zone=zone, label="pool funding", reason=reason)]
 
     osmosis_denom = pools_zone["osmosis_denom"]
     test_amount = 10**zone.decimals
@@ -425,9 +530,9 @@ def _fundable_pools(pools_zone: dict[str, Any]) -> list[dict[str, Any]]:
     return sorted(fundable, key=lambda pool: pool["kind"] != POOL_KIND_CANONICAL)  # stable: canonical first
 
 
-def _empty_pool_tx(zone: config.ZoneConfig, reason: str) -> MultisigTx:
+def _empty_pool_tx(zone: config.ZoneConfig, label: str, reason: str) -> MultisigTx:
     return MultisigTx(
-        chain_id=zone.chain_id, title=f"{zone.chain_id} · pool funding", ready=False, reason=reason, commands=[], files=[]
+        chain_id=zone.chain_id, title=f"{zone.chain_id} · {label}", ready=False, reason=reason, commands=[], files=[]
     )
 
 

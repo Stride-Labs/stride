@@ -6,9 +6,15 @@ channel when it serves a foreign route, and given its allocation (a route pool: 
 rate; the canonical pool: everything else the zone holds on Osmosis, less the vault's OSMO fee reserve for osmosis-1).
 A second pool of the same kind, or on the same route channel, is flagged and left unallocated. Every integer in the
 payload is a string.
+
+The planned pools are the counterpart: the canonical pool plus one per policy route a zone should have, each with the
+denoms it will hold, whether its stToken denom is seeded on Osmosis, the factors it will be created with and the
+existing pool that already holds the denom, so the Multisig tab can write the creation txs and the Pools tab shows
+what is still missing.
 """
 
 import base64
+import collections
 import concurrent.futures
 import dataclasses
 import decimal
@@ -33,6 +39,12 @@ UINT128_LIMIT = 2**128  # the transmuter keeps every normalised balance in a Uin
 ROUTE_HOPS = 2  # a route pool's stToken travelled Stride -> holder chain -> Osmosis
 ST_PREFIX = "st"
 CANONICAL_SLOT = "canonical"  # the one slot every canonical pool of a zone claims; a route pool claims its channel
+SIX_DECIMALS = 6
+ST_FACTOR_SIX_DECIMALS = 10**18  # the stToken factor a six-decimal zone's pool is created with
+ST_FACTOR_EIGHTEEN_DECIMALS = 10**6  # an 18-decimal zone's: 1e18-scaled factors overflow weights() on its supply
+SEED_AMOUNT_PLACES = 2  # the seed transfer sends 0.01 stToken: any non-zero amount gives the denom supply
+# Polkachu's REST serves the capitalised path and answers "Not Implemented" for the lower-case one; try both.
+POOLMANAGER_PARAMS_PATHS = ("/osmosis/poolmanager/v1beta1/Params", "/osmosis/poolmanager/v1beta1/params")
 
 ZONE_WORKERS = 16
 POOL_WORKERS = 8
@@ -113,30 +125,6 @@ class PoolReport:
     ready: bool  # every check ok
 
 
-@dataclass(frozen=True)
-class ZonePools:
-    chain_id: str
-    symbol: str
-    decimals: int
-    st_denom: str
-    osmosis_denom: str
-    host_denom: str
-    stride_rate: str
-    st_supply: int
-    needed: int  # st_supply x stride_rate, rounded up
-    vault_native: int
-    fee_reserve: int  # uosmo the vault keeps for the funding txs (osmosis-1 only, 0 elsewhere): not allocated
-    pools_native: int
-    native_on_osmosis: int  # vault + pools
-    coverage: str | None  # native_on_osmosis / needed, six places; None when nothing is needed
-    missing_routes: list[str]  # policy channels with no route pool
-    pools: list[PoolReport]  # canonical first, then routes by Stride channel, unrecognised last
-    pools_ready: (
-        bool | None
-    )  # a canonical pool exists, no missing route, every pool ready; None while a check is unknown
-    pools_funded: bool | None  # pools_ready and every pool funded exactly and marked; None while an input is unknown
-
-
 # ---- internal structures
 
 
@@ -189,12 +177,6 @@ class RawPool:
 
 
 @dataclass(frozen=True)
-class OsmosisSnapshot:
-    vault_balances: dict[str, int]
-    pools: list[RawPool]
-
-
-@dataclass(frozen=True)
 class ZoneDenoms:
     chain_id: str
     host_denom: str
@@ -244,6 +226,119 @@ class HostZoneInfo:
     def needed(self) -> int:
         """What the zone's pools must hold between them: the stToken supply at Stride's rate, rounded up."""
         return ceil_times_rate(amount=self.st_supply, rate=self.stride_rate)
+
+
+@dataclass(frozen=True)
+class CreationFee:
+    """The poolmanager's pool_creation_fee: one coin, paid by the creator (the vault) per pool."""
+
+    denom: str
+    amount: int
+
+
+@dataclass(frozen=True)
+class Factors:
+    """The normalization factors a pool is created with: native / stToken encodes the rate."""
+
+    st_factor: int
+    native_factor: int
+
+
+@dataclass(frozen=True)
+class PlannedRoute:
+    """One policy channel resolved to what its stToken crosses: Stride -> the holder chain X -> Osmosis.
+
+    Resolution stops at the first gap, leaving the later fields None and `error` saying where; what did resolve is
+    kept so the Pools tab can show it.
+    """
+
+    stride_channel: str
+    holder_chain_id: str | None
+    holder: config.HolderChain | None
+    counterparty_channel: str | None  # X -> Stride
+    osmosis_channel: str | None  # Osmosis -> X
+    holder_to_osmosis_channel: str | None  # X -> Osmosis
+    error: str | None
+
+
+@dataclass(frozen=True)
+class RouteDenoms:
+    """A route stToken's `ibc/` denoms on the holder chain (one hop) and on Osmosis (two hops), where resolvable."""
+
+    on_holder: str | None
+    on_osmosis: str | None
+
+
+@dataclass(frozen=True)
+class PlannedPool:
+    """A pool the zone will have: the canonical one, or one per policy route (`stride_channel`).
+
+    `seeded` is whether its stToken denom has supply on Osmosis (a cosmwasm pool cannot hold a denom with no supply);
+    `seed_command` is the single-signer IBC transfer that gives it some; `live_contract` is the existing pool that
+    already holds the denom, which replaces the planned row once created. `error` says why a route could not be
+    resolved; such a pool has no denoms, message or commands.
+    """
+
+    kind: PoolKind
+    stride_channel: str | None  # route only
+    holder_chain_id: str | None
+    holder_name: str | None
+    holder_binary: str | None
+    holder_node: str | None
+    counterparty_channel: str | None  # the holder chain's channel to Stride (None for canonical)
+    osmosis_channel: str | None  # Osmosis's channel to the holder chain (channel-326 for canonical: to Stride)
+    holder_to_osmosis_channel: str | None  # the holder chain's channel to Osmosis (channel-5 for canonical)
+    denom_on_holder: str | None  # ibc/... of transfer/<counterparty_channel>/<st_denom>; None for canonical
+    denom_on_osmosis: str | None  # the stToken as the pool will hold it
+    seeded: bool | None
+    supply_on_osmosis: int | None
+    st_factor: int
+    native_factor: int
+    alloyed_subdenom: str
+    instantiate_msg: dict[str, Any] | None
+    seed_command: str | None
+    live_contract: str | None
+    error: str | None
+
+
+@dataclass(frozen=True)
+class OsmosisSnapshot:
+    vault_balances: dict[str, int]
+    pools: list[RawPool]
+    creation_fee: CreationFee | None = None  # None when the poolmanager params could not be read
+    # Osmosis's channel to each holder chain (config.HOLDER_ROUTES) -> what it points at; None where the lookup failed.
+    holder_targets: dict[str, ChannelTarget | None] = dataclasses.field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ZonePools:
+    chain_id: str
+    symbol: str
+    decimals: int
+    st_denom: str
+    osmosis_denom: str
+    host_denom: str
+    stride_rate: str
+    st_supply: int
+    needed: int  # st_supply x stride_rate, rounded up
+    vault_native: int
+    fee_reserve: int  # uosmo the vault keeps for the funding txs (osmosis-1 only, 0 elsewhere): not allocated
+    pools_native: int
+    native_on_osmosis: int  # vault + pools
+    coverage: str | None  # native_on_osmosis / needed, six places; None when nothing is needed
+    missing_routes: list[str]  # policy channels with no route pool
+    pools: list[PoolReport]  # canonical first, then routes by Stride channel, unrecognised last
+    pools_ready: (
+        bool | None
+    )  # a canonical pool exists, no missing route, every pool ready; None while a check is unknown
+    pools_funded: bool | None  # pools_ready and every pool funded exactly and marked; None while an input is unknown
+    planned: list[PlannedPool]  # canonical first, then routes by Stride channel
+    routes_seeded: bool | None  # every route planned pool's stToken denom has supply on Osmosis
+    canonical_seeded: bool | None
+    pools_created: bool | None  # every planned pool has a live contract
+    creation_fee: CreationFee | None  # the poolmanager's pool_creation_fee; None when it could not be read
+    vault_fee_balance: int | None  # the vault's balance of the fee denom
+    creation_fee_short: bool | None  # vault_fee_balance < fee x planned pools without a live contract
 
 
 # Contracts whose admin is not the vault: adminship of someone else's pool never changes, so a negative answer is
@@ -714,6 +809,9 @@ def build_zone_pools(
     vault_native: int,
     fee_reserve: int,
     reports: list[PoolReport],
+    planned: list[PlannedPool],
+    creation_fee: CreationFee | None,
+    vault_fee_balance: int | None,
 ) -> ZonePools:
     needed = host.needed
     pools_native = sum(report.native_balance for report in reports)
@@ -725,6 +823,13 @@ def build_zone_pools(
     )
     ordered = sorted(reports, key=_pool_order)
     pools_ready = _pools_ready(reports=ordered, missing_routes=missing_routes)
+
+    # The voting-week gates: every route denom seeded, the canonical denom seeded, every planned pool created, and
+    # the vault able to pay the creation fee for what is still to create. An unresolved route keeps them unknown.
+    ordered_planned = sorted(planned, key=_planned_order)
+    route_plans = [plan for plan in ordered_planned if plan.kind == PoolKind.ROUTE]
+    canonical_plans = [plan for plan in ordered_planned if plan.kind == PoolKind.CANONICAL]
+    to_create = sum(1 for plan in ordered_planned if plan.live_contract is None)
     return ZonePools(
         chain_id=zone.chain_id,
         symbol=zone.symbol,
@@ -744,6 +849,15 @@ def build_zone_pools(
         pools=ordered,
         pools_ready=pools_ready,
         pools_funded=_pools_funded(reports=ordered, pools_ready=pools_ready),
+        planned=ordered_planned,
+        routes_seeded=tri_state(outcomes=[plan.seeded for plan in route_plans]),
+        canonical_seeded=tri_state(outcomes=[plan.seeded for plan in canonical_plans]),
+        pools_created=tri_state(
+            outcomes=[None if plan.error else plan.live_contract is not None for plan in ordered_planned]
+        ),
+        creation_fee=creation_fee,
+        vault_fee_balance=vault_fee_balance,
+        creation_fee_short=creation_fee_short(fee=creation_fee, vault_balance=vault_fee_balance, to_create=to_create),
     )
 
 
@@ -766,9 +880,7 @@ def _pools_funded(reports: list[PoolReport], pools_ready: bool | None) -> bool |
         + [report.funded_exactly for report in reports]
         + [report.native_marked for report in reports]
     )
-    if any(outcome is False for outcome in outcomes):
-        return False
-    return None if any(outcome is None for outcome in outcomes) else True
+    return tri_state(outcomes=outcomes)
 
 
 def _pool_order(report: PoolReport) -> tuple[int, int, str]:
@@ -777,6 +889,11 @@ def _pool_order(report: PoolReport) -> tuple[int, int, str]:
     ]
     channel = _channel_number(report.route.stride_channel) if report.route else 0
     return (rank, channel, report.contract)
+
+
+def _planned_order(plan: PlannedPool) -> tuple[int, int]:
+    channel = _channel_number(plan.stride_channel) if plan.stride_channel else 0
+    return (plan.kind != PoolKind.CANONICAL, channel)
 
 
 def _kind(st: StAsset, zone: ZoneDenoms, route_lookup: RouteLookup | None) -> PoolKind:
@@ -844,6 +961,254 @@ def _channel_number(channel_id: str) -> int:
     return int(channel_id.rsplit("-", 1)[1])
 
 
+# ---- pure logic: planned pools
+
+
+def plan_route(
+    stride_channel: str, target: ChannelTarget | None, holder_targets: dict[str, ChannelTarget | None]
+) -> PlannedRoute:
+    """Resolve a policy channel: the holder chain X behind Stride's channel, then Osmosis's channel to X, which is the
+    `config.HOLDER_ROUTES` entry whose channel's client tracks X (`holder_targets`), and its counterparty back."""
+    if target is None:
+        return _unresolved_route(
+            stride_channel=stride_channel,
+            error=f"Stride {stride_channel} could not be resolved (channel, connection or client lookup failed)",
+        )
+    if target.counterparty_channel is None:
+        return _unresolved_route(
+            stride_channel=stride_channel, error=f"Stride {stride_channel} has no counterparty channel yet"
+        )
+
+    holder = config.HOLDER_CHAINS.get(target.chain_id)
+    osmosis_channel = next(
+        (
+            channel
+            for channel, hop in holder_targets.items()
+            if hop is not None and hop.chain_id == target.chain_id and hop.counterparty_channel is not None
+        ),
+        None,
+    )
+    error = None
+    if holder is None:
+        error = f"{target.chain_id} is not in config.HOLDER_CHAINS"
+    elif osmosis_channel is None:
+        error = f"no channel in config.HOLDER_ROUTES tracks {target.chain_id} on Osmosis"
+    return PlannedRoute(
+        stride_channel=stride_channel,
+        holder_chain_id=target.chain_id,
+        holder=holder,
+        counterparty_channel=target.counterparty_channel,
+        osmosis_channel=osmosis_channel,
+        holder_to_osmosis_channel=holder_targets[osmosis_channel].counterparty_channel if osmosis_channel else None,
+        error=error,
+    )
+
+
+def _unresolved_route(stride_channel: str, error: str) -> PlannedRoute:
+    return PlannedRoute(
+        stride_channel=stride_channel,
+        holder_chain_id=None,
+        holder=None,
+        counterparty_channel=None,
+        osmosis_channel=None,
+        holder_to_osmosis_channel=None,
+        error=error,
+    )
+
+
+def route_denoms(route: PlannedRoute, st_denom: str) -> RouteDenoms:
+    """The stToken's denom on the holder chain (`transfer/<X -> Stride>/<st_denom>`) and on Osmosis (that path behind
+    `transfer/<Osmosis -> X>/`), each None while its channels are unresolved."""
+    if route.counterparty_channel is None:
+        return RouteDenoms(on_holder=None, on_osmosis=None)
+    holder_trace = f"{chain.TRANSFER_PORT}/{route.counterparty_channel}/{st_denom}"
+    on_osmosis = (
+        None
+        if route.osmosis_channel is None
+        else chain.ibc_denom(path=f"{chain.TRANSFER_PORT}/{route.osmosis_channel}/{holder_trace}")
+    )
+    return RouteDenoms(on_holder=chain.ibc_denom(path=holder_trace), on_osmosis=on_osmosis)
+
+
+def creation_factors(decimals: int, stride_rate: str) -> Factors:
+    """1e18-scaled for a six-decimal zone (exact: the rate has 18 places); 1e6-scaled for an 18-decimal zone, whose
+    supply overflows the transmuter's Uint128 at 1e18. The native factor is rounded down either way, so the pool
+    never prices a stToken above Stride's rate."""
+    scale = ST_FACTOR_SIX_DECIMALS if decimals == SIX_DECIMALS else ST_FACTOR_EIGHTEEN_DECIMALS
+    product = DECIMAL_CONTEXT.multiply(Decimal(stride_rate), Decimal(scale))
+    return Factors(st_factor=scale, native_factor=int(product.to_integral_value(rounding=decimal.ROUND_FLOOR)))
+
+
+def alloyed_subdenom(st_symbol: str, route: PlannedRoute | None, shared_chain: bool) -> str:
+    """`stATOM` for the canonical pool, `stATOM.cosmoshub` for a route, `stATOM.axelar.channel11` when two policy
+    channels reach the same chain (`shared_chain`); an unresolved route is named by its Stride channel alone."""
+    if route is None:
+        return st_symbol
+    if route.holder is None:
+        return f"{st_symbol}.{_dashless(route.stride_channel)}"
+    if shared_chain:
+        return f"{st_symbol}.{route.holder.name}.{_dashless(route.stride_channel)}"
+    return f"{st_symbol}.{route.holder.name}"
+
+
+def instantiate_message(denom_on_osmosis: str, native_denom: str, factors: Factors, subdenom: str) -> dict[str, Any]:
+    """The transmuter instantiate message (docs/wind-down/transmuter.md): the vault is admin and moderator, the
+    alloyed asset tracks the native factor so one alloyed unit is one native base unit of pool value."""
+    return {
+        "pool_asset_configs": [
+            {"denom": denom_on_osmosis, "normalization_factor": str(factors.st_factor)},
+            {"denom": native_denom, "normalization_factor": str(factors.native_factor)},
+        ],
+        "alloyed_asset_subdenom": subdenom,
+        "alloyed_asset_normalization_factor": str(factors.native_factor),
+        "admin": config.OSMOSIS_VAULT,
+        "moderator": config.OSMOSIS_VAULT,
+    }
+
+
+def seed_command(holder: config.HolderChain, holder_chain_id: str, channel: str, denom: str, decimals: int) -> str:
+    """A single-signer IBC transfer of 0.01 stToken from the holder chain to the vault on Osmosis: any non-zero amount
+    gives the denom supply there, and the vault can later join it into that route's pool."""
+    amount = 10 ** (decimals - SEED_AMOUNT_PLACES)
+    return (
+        f"{holder.binary} tx ibc-transfer transfer {chain.TRANSFER_PORT} {channel} {config.OSMOSIS_VAULT} "
+        f"{amount}{denom} "
+        f"--from <KEY_ON_{holder.name.upper()}> --chain-id {holder_chain_id} --node {holder.node} "
+        f"--gas auto --gas-adjustment 1.5 --fees <FEES>"
+    )
+
+
+def build_canonical_plan(
+    zone: config.ZoneConfig, denoms: ZoneDenoms, stride_rate: str, supply: int | None, reports: list[PoolReport]
+) -> PlannedPool:
+    """The canonical pool: its stToken comes straight from Stride over channel-5, so the seed (shown only while the
+    denom has no supply) is a `strided` transfer from any Stride key."""
+    denom_on_osmosis = chain.ibc_denom(path=denoms.canonical_st_trace)
+    factors = creation_factors(decimals=zone.decimals, stride_rate=stride_rate)
+    subdenom = alloyed_subdenom(st_symbol=st_symbol(zone=zone), route=None, shared_chain=False)
+    seeded = None if supply is None else supply > 0
+    seed = (
+        seed_command(
+            holder=config.STRIDE_HOLDER,
+            holder_chain_id=config.STRIDE_CHAIN_ID,
+            channel=config.STRIDE_CHANNEL_TO_OSMOSIS,
+            denom=denoms.st_denom,
+            decimals=zone.decimals,
+        )
+        if seeded is False
+        else None
+    )
+    return PlannedPool(
+        kind=PoolKind.CANONICAL,
+        stride_channel=None,
+        holder_chain_id=config.STRIDE_CHAIN_ID,
+        holder_name=config.STRIDE_HOLDER.name,
+        holder_binary=config.STRIDE_HOLDER.binary,
+        holder_node=config.STRIDE_HOLDER.node,
+        counterparty_channel=None,
+        osmosis_channel=funds.STRIDE_CHANNEL_ON_OSMOSIS,
+        holder_to_osmosis_channel=config.STRIDE_CHANNEL_TO_OSMOSIS,
+        denom_on_holder=None,
+        denom_on_osmosis=denom_on_osmosis,
+        seeded=seeded,
+        supply_on_osmosis=supply,
+        st_factor=factors.st_factor,
+        native_factor=factors.native_factor,
+        alloyed_subdenom=subdenom,
+        instantiate_msg=instantiate_message(
+            denom_on_osmosis=denom_on_osmosis, native_denom=denoms.osmosis_denom, factors=factors, subdenom=subdenom
+        ),
+        seed_command=seed,
+        live_contract=live_contract_of(denom=denom_on_osmosis, reports=reports),
+        error=None,
+    )
+
+
+def build_route_plan(
+    zone: config.ZoneConfig,
+    denoms: ZoneDenoms,
+    stride_rate: str,
+    route: PlannedRoute,
+    subdenom: str,
+    supply: int | None,
+    reports: list[PoolReport],
+) -> PlannedPool:
+    """A route pool; an unresolved route keeps whatever did resolve and carries the error instead of commands."""
+    route_denom = route_denoms(route=route, st_denom=denoms.st_denom)
+    factors = creation_factors(decimals=zone.decimals, stride_rate=stride_rate)
+    holder = route.holder
+    resolved = route.error is None and holder is not None and route_denom.on_osmosis is not None
+    seeded = None if supply is None else supply > 0
+    return PlannedPool(
+        kind=PoolKind.ROUTE,
+        stride_channel=route.stride_channel,
+        holder_chain_id=route.holder_chain_id,
+        holder_name=holder.name if holder else None,
+        holder_binary=holder.binary if holder else None,
+        holder_node=holder.node if holder else None,
+        counterparty_channel=route.counterparty_channel,
+        osmosis_channel=route.osmosis_channel,
+        holder_to_osmosis_channel=route.holder_to_osmosis_channel,
+        denom_on_holder=route_denom.on_holder,
+        denom_on_osmosis=route_denom.on_osmosis,
+        seeded=seeded,
+        supply_on_osmosis=supply,
+        st_factor=factors.st_factor,
+        native_factor=factors.native_factor,
+        alloyed_subdenom=subdenom,
+        instantiate_msg=instantiate_message(
+            denom_on_osmosis=route_denom.on_osmosis,
+            native_denom=denoms.osmosis_denom,
+            factors=factors,
+            subdenom=subdenom,
+        )
+        if resolved
+        else None,
+        seed_command=seed_command(
+            holder=holder,
+            holder_chain_id=route.holder_chain_id,
+            channel=route.holder_to_osmosis_channel,
+            denom=route_denom.on_holder,
+            decimals=zone.decimals,
+        )
+        if resolved
+        else None,
+        live_contract=live_contract_of(denom=route_denom.on_osmosis, reports=reports),
+        error=route.error,
+    )
+
+
+def live_contract_of(denom: str | None, reports: list[PoolReport]) -> str | None:
+    """The existing pool whose stToken is `denom`: the planned pool is created once one is."""
+    if denom is None:
+        return None
+    return next((report.contract for report in reports if report.st_denom == denom), None)
+
+
+def st_symbol(zone: config.ZoneConfig) -> str:
+    """The stToken's symbol as the Funds tab shows it: `st` + the zone's symbol (stATOM)."""
+    return f"{ST_PREFIX}{zone.symbol}"
+
+
+def tri_state(outcomes: list[bool | None]) -> bool | None:
+    """False when any outcome is False, None while any is unknown, else True (vacuously on nothing)."""
+    if any(outcome is False for outcome in outcomes):
+        return False
+    return None if any(outcome is None for outcome in outcomes) else True
+
+
+def creation_fee_short(fee: CreationFee | None, vault_balance: int | None, to_create: int) -> bool | None:
+    """Whether the vault cannot pay the creation fee for every pool still to create; None while either is unknown."""
+    if fee is None or vault_balance is None:
+        return None
+    return vault_balance < fee.amount * to_create
+
+
+def _dashless(channel_id: str) -> str:
+    # The subdenoms use dots as their only separator (`stATOM.axelar.channel11`), so the channel loses its dash.
+    return channel_id.replace("-", "")
+
+
 # ---- per zone: network
 
 
@@ -877,13 +1242,23 @@ def _zone_pools(
     ]
     vault_native = snapshot.vault_balances.get(denoms.osmosis_denom, 0)
     reserve = fee_reserve(chain_id=zone.chain_id)
+    allocated = allocate(reports=reports, vault_native=vault_native, fee_reserve=reserve)
+
+    # What the zone should have, matched against what it has: a planned pool with a live contract is created.
+    planned = _planned_pools(
+        zone=zone, denoms=denoms, host=host, stride=stride, osmosis=osmosis, snapshot=snapshot, reports=allocated
+    )
+    fee = snapshot.creation_fee
     return build_zone_pools(
         zone=zone,
         host=host,
         denoms=denoms,
         vault_native=vault_native,
         fee_reserve=reserve,
-        reports=allocate(reports=reports, vault_native=vault_native, fee_reserve=reserve),
+        reports=allocated,
+        planned=planned,
+        creation_fee=fee,
+        vault_fee_balance=None if fee is None else snapshot.vault_balances.get(fee.denom, 0),
     )
 
 
@@ -939,7 +1314,7 @@ def _resolve_route(
     holder_chain_id = _osmosis_channel_chain_id(osmosis=osmosis, channel_id=hops.osmosis_channel)
     policy = config.REQUIRED_ROUTES[st_denom]
     targets = {
-        channel: _stride_channel_target(stride=stride, channel_id=channel)
+        channel: _channel_target(chain_handle=stride, channel_id=channel)
         for channel in policy
     }
     return RouteLookup(
@@ -964,13 +1339,14 @@ def _osmosis_channel_chain_id(osmosis: chain.Chain, channel_id: str) -> str:
 
 
 @functools.lru_cache(maxsize=256)
-def _stride_channel_target(stride: chain.Chain, channel_id: str) -> ChannelTarget:
-    """A Stride transfer channel's counterparty and the chain behind it; fixed once open, so cached for the process."""
-    end = chain.ibc_channel_end(chain=stride, channel_id=channel_id, port_id=chain.TRANSFER_PORT)
-    connection = chain.ibc_connection_end(chain=stride, connection_id=end.connection_id)
+def _channel_target(chain_handle: chain.Chain, channel_id: str) -> ChannelTarget:
+    """A transfer channel's counterparty and the chain its connection's client tracks (Stride's policy channels and
+    Osmosis's holder channels alike); fixed once open, so cached for the process."""
+    end = chain.ibc_channel_end(chain=chain_handle, channel_id=channel_id, port_id=chain.TRANSFER_PORT)
+    connection = chain.ibc_connection_end(chain=chain_handle, connection_id=end.connection_id)
     return ChannelTarget(
         counterparty_channel=end.counterparty_channel,
-        chain_id=chain.ibc_client_chain_id(chain=stride, client_id=connection.client_id),
+        chain_id=chain.ibc_client_chain_id(chain=chain_handle, client_id=connection.client_id),
     )
 
 
@@ -982,6 +1358,64 @@ def _escrow_balance(stride: chain.Chain, channel_id: str, denom: str) -> int:
         params={"denom": denom},
     )
     return int(response["balance"]["amount"])
+
+
+def _planned_pools(
+    zone: config.ZoneConfig,
+    denoms: ZoneDenoms,
+    host: HostZoneInfo,
+    stride: chain.Chain,
+    osmosis: chain.Chain,
+    snapshot: OsmosisSnapshot,
+    reports: list[PoolReport],
+) -> list[PlannedPool]:
+    """The canonical pool, then one per policy channel by channel number; every lookup here is optional (a failure
+    leaves that pool's field n/a or carries its error) and the channel resolutions are cached for the process."""
+    routes = [
+        plan_route(
+            stride_channel=channel,
+            target=_optional_target(chain_handle=stride, channel_id=channel),
+            holder_targets=snapshot.holder_targets,
+        )
+        for channel in sorted(config.REQUIRED_ROUTES[denoms.st_denom], key=_channel_number)
+    ]
+
+    # Two policy channels to one chain (Axelar, Terra) need the channel in their subdenoms to tell the pools apart.
+    chains = collections.Counter(route.holder_chain_id for route in routes if route.holder_chain_id)
+    symbol = st_symbol(zone=zone)
+    canonical = build_canonical_plan(
+        zone=zone,
+        denoms=denoms,
+        stride_rate=host.stride_rate,
+        supply=_optional_supply(osmosis=osmosis, denom=chain.ibc_denom(path=denoms.canonical_st_trace)),
+        reports=reports,
+    )
+    planned_routes = [
+        build_route_plan(
+            zone=zone,
+            denoms=denoms,
+            stride_rate=host.stride_rate,
+            route=route,
+            subdenom=alloyed_subdenom(st_symbol=symbol, route=route, shared_chain=chains[route.holder_chain_id] > 1),
+            supply=_optional_supply(
+                osmosis=osmosis, denom=route_denoms(route=route, st_denom=denoms.st_denom).on_osmosis
+            ),
+            reports=reports,
+        )
+        for route in routes
+    ]
+    return [canonical, *planned_routes]
+
+
+def _optional_target(chain_handle: chain.Chain, channel_id: str) -> ChannelTarget | None:
+    return chain.optional(lambda: _channel_target(chain_handle=chain_handle, channel_id=channel_id))
+
+
+def _optional_supply(osmosis: chain.Chain, denom: str | None) -> int | None:
+    """Osmosis's bank supply of a denom: whether it is seeded; None for an unresolved denom or a failed lookup."""
+    if denom is None:
+        return None
+    return chain.optional(lambda: _supply(chain_handle=osmosis, denom=denom))
 
 
 # ---- once per collect: Osmosis
@@ -1023,7 +1457,37 @@ def _osmosis_snapshot(osmosis: chain.Chain) -> OsmosisSnapshot:
                 ours,
             )
         )
-    return OsmosisSnapshot(vault_balances=vault_balances, pools=pools)
+    return OsmosisSnapshot(
+        vault_balances=vault_balances,
+        pools=pools,
+        creation_fee=_creation_fee(osmosis=osmosis),
+        holder_targets=_holder_targets(osmosis=osmosis),
+    )
+
+
+def _holder_targets(osmosis: chain.Chain) -> dict[str, ChannelTarget | None]:
+    """What Osmosis's channel to each holder chain points at; a failed lookup is None (that route gets an error)."""
+    return {
+        route.osmosis_channel: _optional_target(chain_handle=osmosis, channel_id=route.osmosis_channel)
+        for route in config.HOLDER_ROUTES
+    }
+
+
+def _creation_fee(osmosis: chain.Chain) -> CreationFee | None:
+    """The poolmanager's pool_creation_fee. Polkachu's REST answers "Not Implemented" for the lower-case `params`
+    path and serves the capitalised one, so both are tried; None when neither answers."""
+    for path in POOLMANAGER_PARAMS_PATHS:
+        fee = chain.optional(lambda: _pool_creation_fee(osmosis=osmosis, path=path))
+        if fee is not None:
+            return fee
+    return None
+
+
+def _pool_creation_fee(osmosis: chain.Chain, path: str) -> CreationFee | None:
+    coins = chain.rest_get(chain=osmosis, path=path)["params"]["pool_creation_fee"]
+    if not coins:
+        return None
+    return CreationFee(denom=coins[0]["denom"], amount=int(coins[0]["amount"]))
 
 
 def _listed_pools(osmosis: chain.Chain) -> dict[str, ListedPool]:

@@ -84,7 +84,7 @@ class LiveTestCommandsTest(unittest.TestCase):
     def test_every_sign_command_says_the_signer_needs_the_multisig_key_in_their_keyring(self) -> None:
         all_sets = sets_by_id(fake_snapshot(), funds_data=fake_funds(), pools_data=fake_pools())
         for tx_set in all_sets.values():
-            binary, address = ("osmosisd", VAULT) if tx_set.id == "pool-funding" else ("strided", ADDRESS)
+            binary, address = ("osmosisd", VAULT) if tx_set.id in ("pool-funding", "pool-creation") else ("strided", ADDRESS)
             for tx in tx_set.txs:
                 sign_commands = [command for command in tx.commands if "tx sign" in command.text]
 
@@ -160,7 +160,7 @@ class FullDrainCommandsTest(unittest.TestCase):
 
 class SetsTest(unittest.TestCase):
     def test_no_snapshot_leaves_every_drain_tx_not_ready(self) -> None:
-        for tx_set in multisig.tx_sets(validators_data=None, funds_data=None, pools_data=None)[:2]:
+        for tx_set in multisig.tx_sets(validators_data=None, funds_data=None, pools_data=None)[1:3]:
             self.assertEqual([tx.chain_id for tx in tx_set.txs], [zone.chain_id for zone in config.ZONES])
             for tx in tx_set.txs:
                 self.assertEqual((tx.ready, tx.reason), (False, "waiting for the Validators snapshot"))
@@ -172,6 +172,7 @@ class SetsTest(unittest.TestCase):
         self.assertEqual(
             [(tx_set.id, tx_set.step_id) for tx_set in tx_sets],
             [
+                ("pool-creation", "vote-pools-create"),
                 ("live-test-undelegate", "drain-live-test"),
                 ("full-drain", "drain-rest"),
                 ("ica-transfers", "transfers"),
@@ -181,7 +182,7 @@ class SetsTest(unittest.TestCase):
         )
 
     def test_payload_is_json_serialisable_with_the_documented_shape(self) -> None:
-        payload = multisig.tx_sets(validators_data=fake_snapshot(), funds_data=None, pools_data=None)[0].payload()
+        payload = multisig.tx_sets(validators_data=fake_snapshot(), funds_data=None, pools_data=None)[1].payload()
 
         json.dumps(payload)
         self.assertEqual(set(payload), {"id", "step_id", "title", "description", "txs"})
@@ -254,7 +255,16 @@ def fake_pools(**overrides: object) -> dict[str, object]:
     ]
     return {
         "zones": [
-            {"chain_id": COSMOS, "osmosis_denom": OSMOSIS_DENOM, "pools": pools, **overrides},
+            {
+                "chain_id": COSMOS,
+                "osmosis_denom": OSMOSIS_DENOM,
+                "pools": pools,
+                "planned": fake_planned(),
+                "creation_fee": CREATION_FEE,
+                "vault_fee_balance": "40000000",
+                "creation_fee_short": False,
+                **overrides,
+            },
             {"chain_id": DYDX, "error": "URLError: osmosis down"},
             {"chain_id": "juno-1", "osmosis_denom": OSMOSIS_DENOM, "pools": []},
         ]
@@ -475,6 +485,192 @@ def pool_commands(generate: str, label: str) -> list[tuple[str, str]]:
     )
 
 
+CANONICAL_STATOM = "ibc/C140AFD542AE77BD7DCC83F13FDD8C5E5BB8C4929785E6EC2F4C636F98F17901"
+AXELAR_STATOM = "ibc/A5F0C3C4D7E8F9A1B2C3D4E5F60718293A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D"
+AXELAR_STATOM_ON_AXELAR = "ibc/0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
+ALLUSDC = "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC"
+CREATION_FEE = {"denom": ALLUSDC, "amount": "20000000"}
+
+
+def planned_entry(
+    kind: str,
+    subdenom: str,
+    denom_on_osmosis: str | None,
+    stride_channel: str | None = None,
+    holder_name: str | None = "stride",
+    holder_chain_id: str | None = "stride-1",
+    seeded: bool | None = True,
+    live_contract: str | None = None,
+    error: str | None = None,
+) -> dict[str, object]:
+    """A planned pool as the Pools snapshot serialises it; the message carries the Hub's factors."""
+    message = None if error else {
+        "pool_asset_configs": [
+            {"denom": denom_on_osmosis, "normalization_factor": "1000000000000000000"},
+            {"denom": OSMOSIS_DENOM, "normalization_factor": "2013525450106978250"},
+        ],
+        "alloyed_asset_subdenom": subdenom,
+        "alloyed_asset_normalization_factor": "2013525450106978250",
+        "admin": VAULT,
+        "moderator": VAULT,
+    }
+    return {
+        "kind": kind,
+        "stride_channel": stride_channel,
+        "holder_chain_id": holder_chain_id,
+        "holder_name": holder_name,
+        "holder_binary": "strided",
+        "holder_node": NODE,
+        "counterparty_channel": None,
+        "osmosis_channel": "channel-326",
+        "holder_to_osmosis_channel": "channel-5",
+        "denom_on_holder": None if kind == "canonical" else AXELAR_STATOM_ON_AXELAR,
+        "denom_on_osmosis": denom_on_osmosis,
+        "seeded": seeded,
+        "supply_on_osmosis": None if seeded is None else ("5" if seeded else "0"),
+        "st_factor": "1000000000000000000",
+        "native_factor": "2013525450106978250",
+        "alloyed_subdenom": subdenom,
+        "instantiate_msg": message,
+        "seed_command": None,
+        "live_contract": live_contract,
+        "error": error,
+    }
+
+
+def fake_planned() -> list[dict[str, object]]:
+    return [
+        planned_entry("canonical", "stATOM", CANONICAL_STATOM),
+        planned_entry(
+            "route", "stATOM.axelar.channel11", AXELAR_STATOM, stride_channel="channel-11", holder_name="axelar", holder_chain_id="axelar-dojo-1"
+        ),
+    ]
+
+
+def creation_txs(chain_id: str = COSMOS, pools_data: dict[str, object] | None = None) -> list[multisig.MultisigTx]:
+    tx_set = sets_by_id(None, pools_data=fake_pools() if pools_data is None else pools_data)["pool-creation"]
+    return [tx for tx in tx_set.txs if tx.chain_id == chain_id]
+
+
+def creation_generate(message_json: str, stem: str) -> str:
+    return (
+        "mkdir -p /tmp/wind-down\n"
+        f"osmosisd tx cosmwasmpool create-pool 996 '{message_json}' --from {VAULT} --generate-only "
+        f"--chain-id osmosis-1 --node {OSMOSIS_NODE} --gas 2000000 --fees 20000uosmo > {stem}.unsigned.json"
+    )
+
+
+def creation_commands(generate: str, stem: str) -> list[tuple[str, str]]:
+    return expected_commands(generate, stem=stem, binary="osmosisd", address=VAULT, chain_id="osmosis-1", node=OSMOSIS_NODE)
+
+
+class PoolCreationTest(unittest.TestCase):
+    def test_the_set_comes_first(self) -> None:
+        tx_sets = multisig.tx_sets(validators_data=None, funds_data=None, pools_data=fake_pools())
+
+        self.assertEqual((tx_sets[0].id, tx_sets[0].step_id), ("pool-creation", "vote-pools-create"))
+
+    def test_canonical_creation_tx_is_exact(self) -> None:
+        canonical, _ = creation_txs()
+        stem = "/tmp/wind-down/create-cosmoshub-4-statom"
+        message_json = (
+            '{"pool_asset_configs":[{"denom":"' + CANONICAL_STATOM + '","normalization_factor":"1000000000000000000"},'
+            '{"denom":"' + OSMOSIS_DENOM + '","normalization_factor":"2013525450106978250"}],'
+            '"alloyed_asset_subdenom":"stATOM","alloyed_asset_normalization_factor":"2013525450106978250",'
+            '"admin":"' + VAULT + '","moderator":"' + VAULT + '"}'
+        )
+
+        self.assertEqual(canonical.title, "cosmoshub-4 · create stATOM (canonical)")
+        self.assertEqual(command_pairs(canonical), creation_commands(creation_generate(message_json, stem), stem=stem))
+        self.assertEqual((canonical.ready, canonical.reason), (True, None))
+        self.assertEqual(canonical.files, [f"{stem}.unsigned.json", f"{stem}.FS5.json", f"{stem}.FA5.json", f"{stem}.FR5.json"])
+        self.assertEqual(canonical.commands[0].label, "Write the unsigned tx")
+
+    def test_route_creation_tx_is_exact(self) -> None:
+        _, route = creation_txs()
+        stem = "/tmp/wind-down/create-cosmoshub-4-statom-axelar-channel11"
+        message_json = (
+            '{"pool_asset_configs":[{"denom":"' + AXELAR_STATOM + '","normalization_factor":"1000000000000000000"},'
+            '{"denom":"' + OSMOSIS_DENOM + '","normalization_factor":"2013525450106978250"}],'
+            '"alloyed_asset_subdenom":"stATOM.axelar.channel11","alloyed_asset_normalization_factor":"2013525450106978250",'
+            '"admin":"' + VAULT + '","moderator":"' + VAULT + '"}'
+        )
+
+        self.assertEqual(route.title, "cosmoshub-4 · create stATOM.axelar.channel11 (axelar · channel-11)")
+        self.assertEqual(command_pairs(route), creation_commands(creation_generate(message_json, stem), stem=stem))
+        self.assertTrue(route.ready)
+
+    def test_an_unresolved_route_is_not_ready_with_its_error_and_no_commands(self) -> None:
+        planned = [planned_entry("route", "stATOM.channel47", None, stride_channel="channel-47", holder_name=None, holder_chain_id="carbon-1", seeded=None, error="carbon-1 is not in config.HOLDER_CHAINS")]
+
+        (tx,) = creation_txs(pools_data=fake_pools(planned=planned))
+
+        self.assertEqual((tx.ready, tx.reason), (False, "carbon-1 is not in config.HOLDER_CHAINS"))
+        self.assertEqual(tx.title, "cosmoshub-4 · create stATOM.channel47 (carbon-1 · channel-47)")
+        self.assertEqual((tx.commands, tx.files), ([], []))
+
+    def test_an_already_created_pool_is_not_ready_and_shows_no_command(self) -> None:
+        planned = [planned_entry("canonical", "stATOM", CANONICAL_STATOM, live_contract="osmo1canonicalcontract")]
+
+        (tx,) = creation_txs(pools_data=fake_pools(planned=planned))
+
+        self.assertEqual((tx.ready, tx.reason), (False, "already created: osmo1canonicalcontract"))
+        self.assertEqual(tx.commands, [])
+
+    def test_an_unseeded_or_unknown_denom_is_not_ready_but_keeps_the_command(self) -> None:
+        unseeded = planned_entry("canonical", "stATOM", CANONICAL_STATOM, seeded=False)
+        unknown = planned_entry("route", "stATOM.axelar", AXELAR_STATOM, stride_channel="channel-11", holder_name="axelar", seeded=None)
+
+        unseeded_tx, unknown_tx = creation_txs(pools_data=fake_pools(planned=[unseeded, unknown]))
+
+        self.assertEqual((unseeded_tx.ready, unseeded_tx.reason), (False, f"{CANONICAL_STATOM} has no supply on Osmosis: seed it first (Pools tab)"))
+        self.assertEqual((unknown_tx.ready, unknown_tx.reason), (False, f"the supply of {AXELAR_STATOM} on Osmosis is not known yet (see the Pools tab)"))
+        self.assertIn("create-pool 996 ", unseeded_tx.commands[0].text)
+        self.assertEqual(len(unknown_tx.commands), 5)
+
+    def test_a_fee_shortfall_or_unknown_fee_blocks_every_creatable_pool(self) -> None:
+        short = creation_txs(pools_data=fake_pools(creation_fee_short=True, vault_fee_balance="0"))
+        unknown = creation_txs(pools_data=fake_pools(creation_fee_short=None, creation_fee=None, vault_fee_balance=None))
+
+        self.assertEqual(
+            {(tx.ready, tx.reason) for tx in short},
+            {(False, f"the vault holds 0 {ALLUSDC}, below 20000000 per pool still to create: top it up first")},
+        )
+        self.assertEqual(
+            {(tx.ready, tx.reason) for tx in unknown},
+            {(False, "the pool creation fee or the vault's balance of it is not known yet (see the Pools tab)")},
+        )
+        self.assertTrue(all(len(tx.commands) == 5 for tx in short + unknown))
+
+    def test_the_error_outranks_created_which_outranks_seeding_which_outranks_the_fee(self) -> None:
+        created_and_unseeded = planned_entry("canonical", "stATOM", CANONICAL_STATOM, seeded=False, live_contract="osmo1x")
+        errored_and_created = planned_entry("canonical", "stATOM", None, seeded=None, live_contract="osmo1x", error="boom")
+
+        txs = creation_txs(pools_data=fake_pools(planned=[errored_and_created, created_and_unseeded], creation_fee_short=True))
+
+        self.assertEqual([tx.reason for tx in txs], ["boom", "already created: osmo1x"])
+
+    def test_zone_error_missing_zone_no_planned_and_missing_snapshot_get_one_not_ready_tx(self) -> None:
+        cases = [
+            (creation_txs(DYDX), "URLError: osmosis down"),
+            (creation_txs("juno-1"), "no planned pool in the Pools snapshot"),
+            (creation_txs("ssc-1"), "zone missing from the Pools snapshot"),
+            ([tx for tx in sets_by_id(None)["pool-creation"].txs if tx.chain_id == COSMOS], "waiting for the Pools snapshot"),
+        ]
+        for txs, reason in cases:
+            with self.subTest(reason=reason):
+                self.assertEqual([(tx.title, tx.ready, tx.reason, tx.commands, tx.files) for tx in txs], [(f"{txs[0].chain_id} · pool creation", False, reason, [], [])])
+
+    def test_description_shows_the_live_fee_and_the_factor_rule(self) -> None:
+        with_fee = sets_by_id(None, pools_data=fake_pools())["pool-creation"].description
+        without = sets_by_id(None, pools_data=fake_pools(creation_fee=None))["pool-creation"].description
+
+        self.assertIn(f"pool_creation_fee per pool (20000000{ALLUSDC} today) from the vault", with_fee)
+        self.assertIn("pool_creation_fee per pool (not known yet today)", without)
+        self.assertIn("the three 18-decimal zones (haqq, dYdX, Injective) use 1e6-scaled ones, rounded down", with_fee)
+        self.assertIn("so a pool created tomorrow carries tomorrow's rate", with_fee)
+
+
 class PoolFundingTest(unittest.TestCase):
     def test_canonical_test_join_rest_join_and_mark_are_exact(self) -> None:
         txs = pool_txs()
@@ -647,8 +843,12 @@ class MultisigBodyTest(unittest.TestCase):
 
         self.assertEqual(body["fetched_at"], "2026-10-07T12:01:00+00:00")
         sets = {tx_set["id"]: tx_set for tx_set in body["data"]["sets"]}
-        self.assertEqual(set(sets), {"live-test-undelegate", "full-drain", "ica-transfers", "staketia-claim-balance", "pool-funding"})
+        self.assertEqual(
+            set(sets),
+            {"pool-creation", "live-test-undelegate", "full-drain", "ica-transfers", "staketia-claim-balance", "pool-funding"},
+        )
         self.assertEqual(sets["pool-funding"]["txs"][0]["reason"], "waiting for the Pools snapshot")
+        self.assertEqual(sets["pool-creation"]["txs"][0]["reason"], "waiting for the Pools snapshot")
         self.assertTrue(sets["ica-transfers"]["txs"][8]["ready"])
 
     def test_nothing_loaded_yet_has_no_fetched_at(self) -> None:
