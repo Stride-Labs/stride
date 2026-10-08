@@ -1337,7 +1337,7 @@ class BlockedRouteTest(unittest.TestCase):
         # Unseeded and uncreated, yet the zone reads created and seeded: the blocked route is deferred, not missing.
         self.assertEqual(zone.missing_routes, [])
         self.assertEqual((zone.routes_seeded, zone.canonical_seeded), (True, True))  # no open route left to seed
-        self.assertEqual(zone.creation_fee_short, False)
+        self.assertTrue(zone.pools_created)  # the only open pool exists; the blocked one does not count
 
 
 def canonical_plan(supply: int | None = 5, reports: list[pools.PoolReport] | None = None) -> pools.PlannedPool:

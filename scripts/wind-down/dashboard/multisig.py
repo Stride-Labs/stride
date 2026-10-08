@@ -562,7 +562,7 @@ def _pools_to_create(pools_zones: dict[str, dict[str, Any]]) -> int:
         for zone in pools_zones.values()
         if not zone.get("error")
         for plan in zone.get("planned") or []
-        if not plan["live_contract"]
+        if not plan["live_contract"] and not plan.get("blocked")  # a blocked pool is not being created now
     )
 
 
