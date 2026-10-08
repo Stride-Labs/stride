@@ -191,6 +191,15 @@ stays only for the published-export audit at the halt.
   channel, unrecognised. `pools_ready`: a canonical pool exists, no missing route, every pool ready (null while the only
   failures are unknown checks). `pools_funded`: `pools_ready` and every pool funded exactly and its native token marked
   corrupted (null while an input is unknown). Every integer in the payload is a string.
+- Planned pools (`planned`: the canonical pool plus one per policy route) sit in a table above the zone's live rows
+  until each exists: the stToken denom on its holder chain and on Osmosis, whether that denom has supply on Osmosis
+  (`seeded`, with the supply), the factors the pool is created with, a copyable seed transfer while the denom is
+  unseeded, and a "→ create" link to the zone's txs in the `pool-creation` set on the Multisig tab. A planned pool whose
+  Osmosis denom a live pool already holds (`live_contract`) collapses to a "created" line linking to that row
+  (`#pools/<contract>`); a route that could not be resolved shows its `error` in place of the denoms. The zone header
+  adds the poolmanager creation fee × pools still to create against the vault's balance of the fee denom, red when
+  `creation_fee_short`. `routes_seeded`, `canonical_seeded` and `pools_created` are what the voting-week steps' live
+  checks read. An older payload without `planned` renders the live rows alone.
 - Today the 2026-09-25 test pools are not vault-administered, so every zone shows a missing canonical pool and its
   missing routes; add a contract to `config.EXTRA_POOL_CONTRACTS` to see the per-pool report before the real pools exist.
 

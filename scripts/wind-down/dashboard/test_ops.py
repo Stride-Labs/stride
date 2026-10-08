@@ -61,6 +61,7 @@ TRANSFER_DAY_CHECKS: dict[str, dict[str, Any]] = {
 # Celestia's extra steps, keyed by the uniform step they follow.
 CELESTIA_EXTRAS = {"claims": ["tia-staketia-sweep", "tia-staketia-paid"], "channels": ["tia-claim-balance"]}
 AUTO_TABS = {"channels", "validators", "funds", "pools"}
+ALL_ZONES = [zone.chain_id for zone in config.ZONES]  # the eleven zones in the order every eleven-zone step lists them
 
 
 def _write_json(path: pathlib.Path, body: dict[str, Any]) -> None:
@@ -181,6 +182,31 @@ class RealPlanTest(unittest.TestCase):
 
         self.assertEqual(sets_by_id["live-test-undelegate"].step_id, "drain-live-test")
         self.assertEqual(sets_by_id["full-drain"].step_id, "drain-rest")
+
+    # The voting week's pool prep (pool-prep spec §4): the two seeding steps are live-checked per zone from the Pools
+    # tab, the creation step links the pool-creation set per zone and keeps its pools_ready check.
+    def test_seeding_steps_are_live_checked_on_every_zone(self) -> None:
+        for step_id, path in (("vote-seed-routes", "routes_seeded"), ("vote-canonical-supply", "canonical_seeded")):
+            step = self._step(step_id)
+            with self.subTest(step=step_id):
+                self.assertEqual(step["zones"], ALL_ZONES)
+                self.assertEqual(step["auto"], {"tab": "pools", "path": path})
+                self.assertTrue(step["text"].endswith("has supply on Osmosis."), step["text"])
+
+    def test_pool_creation_step_links_the_set_per_zone(self) -> None:
+        step = self._step("vote-pools-create")
+
+        self.assertEqual(step["multisig"], "pool-creation")
+        self.assertEqual(step["zones"], ALL_ZONES)
+        self.assertEqual(step["auto"], {"tab": "pools", "path": "pools_ready"})
+        self.assertIn("poolmanager creation fee", step["text"])
+
+    def test_pool_creation_set_is_first_and_names_its_step(self) -> None:
+        # Fails until the pool-creation set lands (pool-prep spec §2, built separately): the plan references it already.
+        sets_by_id = self._tx_sets_by_id()
+
+        self.assertEqual(next(iter(sets_by_id)), "pool-creation")
+        self.assertEqual(sets_by_id["pool-creation"].step_id, "vote-pools-create")
 
     def test_no_step_command_names_the_retired_pool_check(self) -> None:
         for step in self._steps():

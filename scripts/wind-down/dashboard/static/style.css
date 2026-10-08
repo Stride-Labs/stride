@@ -170,9 +170,9 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-multisig .ms-cmds td { padding: 4px 8px 4px 0; border-bottom: 0; white-space: normal; vertical-align: baseline; }
 #view-multisig .ms-cmds .ms-actions { white-space: nowrap; }
 #view-multisig .ms-cmds .ms-text td { padding: 0 0 6px; }
-#view-multisig .ms-copy { font: inherit; font-size: 11px; font-weight: 600; padding: 1px 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); cursor: pointer; }
-#view-multisig .ms-copy:hover { border-color: var(--accent); color: var(--accent); }
-#view-multisig .ms-copy.copied { border-color: var(--ok); color: var(--ok); }
+.ms-copy { font: inherit; font-size: 11px; font-weight: 600; padding: 1px 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); cursor: pointer; }  /* also the Pools tab's seed button */
+.ms-copy:hover { border-color: var(--accent); color: var(--accent); }
+.ms-copy.copied { border-color: var(--ok); color: var(--ok); }
 #view-multisig .ms-copy.who-sam { color: var(--who-sam); } #view-multisig .ms-copy.who-aidan { color: var(--who-aidan); }
 #view-multisig .ms-copy.who-riley { color: var(--who-riley); }
 #view-multisig .ms-copy.backup { border-style: dashed; }  /* the backup signer: any two signatures suffice */
@@ -191,6 +191,12 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-pools .pl-check.bad { color: var(--bad); }
 #view-pools .pl-check.na { color: var(--muted); }
 #view-pools tr.pl-fail td { background: var(--bad-bg); }
+/* pools: the planned table above the live rows; the header's fee line drops to a second line when the zone line is long */
+#view-pools .panel h2 { flex-wrap: wrap; row-gap: 2px; }
+#view-pools .pl-planned { border-bottom: 1px solid var(--line); }
+#view-pools .pl-planned a { color: var(--accent); text-decoration: none; }
+#view-pools .pl-planned a:hover { text-decoration: underline; }
+#view-pools .pl-planned td.pl-error { white-space: normal; max-width: 520px; font-weight: 400; }
 
 /* Section headers on the two checklist tabs read as headings: bigger type, more room between blocks. */
 #view-ops .ops-block, #view-multisig details.panel { margin-bottom: 26px; }

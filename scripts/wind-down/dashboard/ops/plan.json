@@ -272,15 +272,50 @@
           "steps": [
             {
               "id": "vote-seed-routes",
-              "text": "Seed every in-scope foreign-route stToken denom into the Osmosis vault with a small transfer from its chain, one per pool route in the relayer scope table, so each denom has supply on Osmosis when its pool is instantiated after the upgrade."
+              "text": "Seed every in-scope foreign-route stToken denom into the Osmosis vault with a small transfer from its chain, one per pool route in the relayer scope table, so each denom has supply on Osmosis when its pool is instantiated after the upgrade. The Pools tab lists every route denom with its seed command; live below: every route denom has supply on Osmosis.",
+              "zones": [
+                "celestia",
+                "cosmoshub-4",
+                "dydx-mainnet-1",
+                "haqq_11235-1",
+                "injective-1",
+                "juno-1",
+                "laozi-mainnet",
+                "osmosis-1",
+                "phoenix-1",
+                "sommelier-3",
+                "ssc-1"
+              ],
+              "auto": {
+                "tab": "pools",
+                "path": "routes_seeded"
+              }
             },
             {
               "id": "vote-canonical-supply",
-              "text": "Confirm every canonical stToken denom (transfer/channel-326/st...) already has supply on Osmosis; seed any that does not with a transfer over channel-5."
+              "text": "Confirm every canonical stToken denom (transfer/channel-326/st...) already has supply on Osmosis; seed any that does not with a transfer over channel-5. The Pools tab lists every canonical denom, with a seed command while it has none; live below: every canonical denom has supply on Osmosis.",
+              "zones": [
+                "celestia",
+                "cosmoshub-4",
+                "dydx-mainnet-1",
+                "haqq_11235-1",
+                "injective-1",
+                "juno-1",
+                "laozi-mainnet",
+                "osmosis-1",
+                "phoenix-1",
+                "sommelier-3",
+                "ssc-1"
+              ],
+              "auto": {
+                "tab": "pools",
+                "path": "canonical_seeded"
+              }
             },
             {
               "id": "vote-pools-create",
-              "text": "Instantiate the real pools now, at each zone's current RedemptionRate (decided 2026-10-06: the rate still moves until the upgrade and the pool cannot be re-priced, so the small staleness is accepted; whatever the frozen rate ends up above the pool rate stays in the pool as surplus). One canonical pool per stToken plus one per in-scope route, from the vault, code id 996, factors stToken 1e18 / native RR x 1e18 for the six-decimal zones and stToken 1e6 / native RR x 1e6 rounded down for dYdX, haqq and Injective (1e18-scaled factors overflow the transmuter's Uint128 at an 18-decimal supply; the Pools tab's headroom check says so), alloyed = native, admin and moderator the vault, no limiters. Record each pool in the pools.json for coverage_check.py --pools (the halt audit). The Pools tab lists every code-996 pool the vault administers with its checks: one canonical pool plus one per in-scope route per zone, no missing route, every check green (the rate gap to Stride is expected and shown); nothing is funded yet. Top the vault up with about 10 OSMO for the funding txs.",
+              "text": "Instantiate the real pools now, at each zone's current RedemptionRate (decided 2026-10-06: the rate still moves until the upgrade and the pool cannot be re-priced, so the small staleness is accepted; whatever the frozen rate ends up above the pool rate stays in the pool as surplus). One canonical pool per stToken plus one per in-scope route, from the vault, code id 996, factors stToken 1e18 / native RR x 1e18 for the six-decimal zones and stToken 1e6 / native RR x 1e6 rounded down for dYdX, haqq and Injective (1e18-scaled factors overflow the transmuter's Uint128 at an 18-decimal supply; the Pools tab's headroom check says so), alloyed = native, admin and moderator the vault, no limiters. Record each pool in the pools.json for coverage_check.py --pools (the halt audit). The Pools tab lists every code-996 pool the vault administers with its checks: one canonical pool plus one per in-scope route per zone, no missing route, every check green (the rate gap to Stride is expected and shown); nothing is funded yet. Top the vault up with about 10 OSMO for the funding txs. Commands per pool, with the exact denoms and factors, are on the Multisig tab; the vault must hold the poolmanager creation fee (20 allUSDC per pool today) — top it up first.",
+              "multisig": "pool-creation",
               "zones": [
                 "celestia",
                 "cosmoshub-4",
