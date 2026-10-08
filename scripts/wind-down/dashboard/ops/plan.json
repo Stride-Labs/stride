@@ -916,7 +916,7 @@
             },
             {
               "id": "haqq-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1023,7 +1023,7 @@
             },
             {
               "id": "osmo-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1128,7 +1128,7 @@
             },
             {
               "id": "tia-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1265,7 +1265,7 @@
             },
             {
               "id": "d21-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1372,7 +1372,7 @@
             },
             {
               "id": "d28-join-pools",
-              "text": "Join the pools: per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; every pool of the zone funded exactly and marked.",
+              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [

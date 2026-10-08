@@ -434,6 +434,7 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
         notes=[
             "Per zone: every pool's test join first, then verify on the Pools tab (native one token, vault shares one token, the test wallet's shares present, rate exact).",
             "Then per pool: the rest join and the mark back to back; the mark closes the window in which an outsider could join.",
+            "The mark is the moderator's call: the first tx of each zone makes the vault the moderator of its pools, the last hands the role back to osmo1ugrn8…hjdpgy once every pool is marked.",
             "The rest join is ready once the Pools snapshot shows the test join as vault shares.",
             "The vault needs about 0.15 OSMO per tx, three txs per pool.",
             ONE_AT_A_TIME,
@@ -666,6 +667,7 @@ def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_
     osmosis_denom = pools_zone["osmosis_denom"]
     test_amount = 10**zone.decimals
     return [
+        _moderator_tx(zone=zone, pools=pools, to_vault=True),
         *(_join_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom, test_amount=test_amount, is_test=True) for pool in pools),
         *(
             tx
@@ -675,7 +677,64 @@ def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_
                 _mark_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom),
             )
         ),
+        _moderator_tx(zone=zone, pools=pools, to_vault=False),
     ]
+
+
+MODERATOR_MSG_GAS = 300_000  # assign_moderator is a storage write; the 09-25 pools took well under this
+
+
+def _moderator_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], to_vault: bool) -> MultisigTx:
+    """One tx, assign_moderator on every pool of the zone (the admin's call): the vault takes the role before the joins
+    so it can mark the native token, and hands it back to config.POOL_MODERATOR once every pool is marked."""
+    target = config.OSMOSIS_VAULT if to_vault else config.POOL_MODERATOR
+    label = "moderator-to-vault" if to_vault else "moderator-back"
+    stem = f"{WORKDIR}/pool-{zone.chain_id}-{label}"
+    gas = CREATE_POOL_TX_OVERHEAD_GAS + MODERATOR_MSG_GAS * len(pools)
+    message_json = json.dumps({"assign_moderator": {"address": target}}, separators=(",", ":"))
+    generate_lines = [
+        f"osmosisd tx wasm execute {pool['contract']} '{message_json}' --from {OSMOSIS_VAULT_ADDRESS} --generate-only "
+        f"--chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {gas} --gas-prices {OSMOSIS_GAS_PRICE} "
+        f"> {stem}-{position:02d}-{_pool_label(pool=pool)}.unsigned.json"
+        for position, pool in enumerate(pools, start=1)
+    ]
+    merge_line = (
+        "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []' "
+        f"{stem}-*.unsigned.json > {stem}.unsigned.json"
+    )
+    title = f"{zone.chain_id} · moderator → {'the vault, before the joins' if to_vault else 'osmo1ugrn8…hjdpgy, after the marks'} ({len(pools)} pools)"
+    reason = _moderator_reason(pools=pools, to_vault=to_vault)
+    return MultisigTx(
+        chain_id=zone.chain_id,
+        title=title,
+        ready=reason is None,
+        reason=reason,
+        commands=_commands(
+            generate="\n".join([f"mkdir -p {WORKDIR}", *generate_lines, merge_line]),
+            file_stem=stem,
+            tools=OSMOSIS_TOOLS,
+            generate_label=f"Write each pool's unsigned tx and merge them into one ({len(pools)} messages, --gas {gas})",
+        ),
+        files=_shared_files(file_stem=stem),
+    )
+
+
+def _moderator_reason(pools: list[dict[str, Any]], to_vault: bool) -> str | None:
+    moderators = [pool.get("moderator") for pool in pools]
+    if any(moderator is None for moderator in moderators):
+        return "a pool's moderator is not known yet (see the Pools tab)"
+    if to_vault:
+        if all(pool["native_marked"] for pool in pools):
+            return "every pool is already marked: nothing left for the vault to do as moderator"
+        if all(moderator == config.OSMOSIS_VAULT for moderator in moderators):
+            return "the vault already moderates every pool of the zone"
+        return None
+    unmarked = [pool for pool in pools if not pool["native_marked"]]
+    if unmarked:
+        return f"{len(unmarked)} of {len(pools)} pools not marked yet: the vault still needs the moderator role"
+    if all(moderator == config.POOL_MODERATOR for moderator in moderators):
+        return "the moderator is already back on every pool of the zone"
+    return None
 
 
 def _fundable_pools(pools_zone: dict[str, Any]) -> list[dict[str, Any]]:

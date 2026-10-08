@@ -626,6 +626,12 @@ class ChecksTest(unittest.TestCase):
 
         self.assertEqual(failing.detail, STRANGER)
 
+    def test_the_vault_may_hold_the_moderator_role_while_it_funds(self) -> None:
+        pool = report(raw_pool(moderator=VAULT))
+
+        self.assertEqual(pool.moderator, VAULT)
+        self.assertEqual((check(pool, pools.CheckName.MODERATOR).ok, check(pool, pools.CheckName.MODERATOR).detail), (True, "the vault (funding in progress)"))
+
     def test_foreign_moderator(self) -> None:
         self.assert_fails(raw_pool(moderator=STRANGER), pools.CheckName.MODERATOR)
 

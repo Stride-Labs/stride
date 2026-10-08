@@ -234,7 +234,14 @@ def fake_funds() -> dict[str, object]:
 
 
 def pool_entry(
-    contract: str, kind: str, pool_id: str | None, allocation: str | None, funded_exactly: bool | None, vault_shares: str = "0"
+    contract: str,
+    kind: str,
+    pool_id: str | None,
+    allocation: str | None,
+    funded_exactly: bool | None,
+    vault_shares: str = "0",
+    native_marked: bool = False,
+    moderator: str | None = MODERATOR,
 ) -> dict[str, object]:
     return {
         "contract": contract,
@@ -243,6 +250,8 @@ def pool_entry(
         "allocation": allocation,
         "funded_exactly": funded_exactly,
         "vault_shares": vault_shares,
+        "native_marked": native_marked,
+        "moderator": moderator,
     }
 
 
@@ -470,7 +479,14 @@ def pool_set(pools_data: dict[str, object] | None) -> multisig.TxSet:
 
 
 def pool_txs(chain_id: str = COSMOS, pools_data: dict[str, object] | None = None) -> list[multisig.MultisigTx]:
-    return [tx for tx in pool_set(fake_pools() if pools_data is None else pools_data).txs if tx.chain_id == chain_id]
+    """The zone's join and mark txs (the moderator hand-offs around them are `moderator_txs`)."""
+    return [tx for tx in pool_set(fake_pools() if pools_data is None else pools_data).txs if tx.chain_id == chain_id and "moderator" not in tx.title]
+
+
+def moderator_txs(chain_id: str = COSMOS, pools_data: dict[str, object] | None = None) -> tuple[multisig.MultisigTx, multisig.MultisigTx]:
+    txs = [tx for tx in pool_set(fake_pools() if pools_data is None else pools_data).txs if tx.chain_id == chain_id]
+    assert "moderator" in txs[0].title and "moderator" in txs[-1].title, [tx.title for tx in txs]
+    return txs[0], txs[-1]
 
 
 def pool_generate(contract: str, message: str, amount: str | None, label: str) -> str:
@@ -481,6 +497,10 @@ def pool_generate(contract: str, message: str, amount: str | None, label: str) -
         f"osmosisd tx wasm execute {contract} '{message}'{amount_flag} --from {VAULT} --generate-only "
         f"--chain-id osmosis-1 --node {OSMOSIS_NODE} --gas 1500000 --gas-prices 0.1uosmo > {stem}.unsigned.json"
     )
+
+
+def pool_commands_for(generate: str, stem: str) -> list[tuple[str, str]]:
+    return expected_commands(generate, stem=stem, binary="osmosisd", address=VAULT, chain_id="osmosis-1", node=OSMOSIS_NODE)
 
 
 def pool_commands(generate: str, label: str) -> list[tuple[str, str]]:
@@ -781,6 +801,48 @@ class PoolCreationTest(unittest.TestCase):
 
 
 class PoolFundingTest(unittest.TestCase):
+    def test_the_vault_takes_the_moderator_role_before_the_joins_and_hands_it_back_after_the_marks(self) -> None:
+        to_vault, back = moderator_txs()
+        stem = "/tmp/wind-down/pool-cosmoshub-4-moderator-to-vault"
+        message = '{"assign_moderator":{"address":"' + VAULT + '"}}'
+        line = lambda contract, part: (  # noqa: E731 - the expected text, per pool
+            f"osmosisd tx wasm execute {contract} '{message}' --from {VAULT} --generate-only --chain-id osmosis-1 "
+            f"--node {OSMOSIS_NODE} --gas 700000 --gas-prices 0.1uosmo > {stem}-{part}.unsigned.json"
+        )
+        generate = "\n".join([
+            "mkdir -p /tmp/wind-down",
+            line(CANONICAL_CONTRACT, "01-1234"),
+            line(ROUTE_CONTRACT, "02-abc123"),
+            "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []' "
+            f"{stem}-*.unsigned.json > {stem}.unsigned.json",
+        ])
+
+        self.assertEqual(to_vault.title, "cosmoshub-4 · moderator → the vault, before the joins (2 pools)")
+        self.assertEqual(command_pairs(to_vault), pool_commands_for(generate, stem))
+        self.assertEqual((to_vault.ready, to_vault.reason), (True, None))
+        self.assertEqual(back.title, "cosmoshub-4 · moderator → osmo1ugrn8…hjdpgy, after the marks (2 pools)")
+        self.assertEqual((back.ready, back.reason), (False, "2 of 2 pools not marked yet: the vault still needs the moderator role"))
+        self.assertIn('{"assign_moderator":{"address":"' + MODERATOR + '"}}', back.commands[0].text)
+
+    def test_moderator_hand_offs_follow_the_pools_state(self) -> None:
+        vault_holds = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, moderator=VAULT), pool_entry(ROUTE_CONTRACT, "route", None, "3000000", False, moderator=VAULT)]
+        to_vault, back = moderator_txs(pools_data=fake_pools(pools=vault_holds))
+        self.assertEqual((to_vault.ready, to_vault.reason), (False, "the vault already moderates every pool of the zone"))
+        self.assertEqual((back.ready, back.reason), (False, "2 of 2 pools not marked yet: the vault still needs the moderator role"))
+
+        marked = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, native_marked=True, moderator=VAULT), pool_entry(ROUTE_CONTRACT, "route", None, "3000000", True, native_marked=True, moderator=VAULT)]
+        to_vault, back = moderator_txs(pools_data=fake_pools(pools=marked))
+        self.assertEqual((to_vault.ready, to_vault.reason), (False, "every pool is already marked: nothing left for the vault to do as moderator"))
+        self.assertEqual((back.ready, back.reason), (True, None))
+
+        returned = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, native_marked=True)]
+        to_vault, back = moderator_txs(pools_data=fake_pools(pools=returned))
+        self.assertEqual(back.reason, "the moderator is already back on every pool of the zone")
+
+        unknown = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, moderator=None)]
+        to_vault, _ = moderator_txs(pools_data=fake_pools(pools=unknown))
+        self.assertEqual(to_vault.reason, "a pool's moderator is not known yet (see the Pools tab)")
+
     def test_canonical_test_join_rest_join_and_mark_are_exact(self) -> None:
         txs = pool_txs()
         by_title = {tx.title: tx for tx in txs}

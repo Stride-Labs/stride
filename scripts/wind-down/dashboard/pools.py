@@ -120,6 +120,7 @@ class PoolReport:
     )  # vault_shares == allocation: shares are minted 1:1 to native joined and stay in the vault
     corrupted: list[str]
     native_marked: bool  # the native token is in the corrupted set (the one-way mark after funding)
+    moderator: str | None  # who can mark and freeze: config.POOL_MODERATOR, or the vault while it funds and marks
     checks: list[Check]
     ready: bool  # every check ok
 
@@ -535,6 +536,7 @@ def build_pool_report(
         funded_exactly=None if allocation is None else vault_shares == allocation,
         corrupted=corrupted,
         native_marked=zone.osmosis_denom in corrupted,
+        moderator=raw.moderator,
         checks=checks,
         ready=all(check.ok is True for check in checks),
     )
@@ -717,8 +719,9 @@ def build_checks(
         ),
         Check(
             name=CheckName.MODERATOR,
-            ok=_known(raw.moderator, lambda: raw.moderator == config.POOL_MODERATOR),
-            detail=raw.moderator or "?",
+            # The vault takes the moderator role to mark the native token after funding, then hands it back.
+            ok=_known(raw.moderator, lambda: raw.moderator in (config.POOL_MODERATOR, config.OSMOSIS_VAULT)),
+            detail=("the vault (funding in progress)" if raw.moderator == config.OSMOSIS_VAULT else raw.moderator) or "?",
         ),
         Check(
             name=CheckName.NO_ADMIN_TRANSFER,
@@ -875,6 +878,7 @@ def _pools_funded(reports: list[PoolReport], pools_ready: bool | None) -> bool |
         [pools_ready]
         + [report.funded_exactly for report in reports]
         + [report.native_marked for report in reports]
+        + [None if report.moderator is None else report.moderator == config.POOL_MODERATOR for report in reports]
     )
     return tri_state(outcomes=outcomes)
 
