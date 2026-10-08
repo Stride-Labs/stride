@@ -1,7 +1,7 @@
 // Pools tab: per zone, the transmuter pools the vault administers on Osmosis (one canonical plus one per in-scope
 // route), what each holds, what it must be funded with, and the pre-funding checks that used to live in
 // check_transmuter_pool.py. Until a pool exists its planned row (the denoms, whether the stToken denom is seeded on
-// Osmosis, the factors, the seed command) sits above the live rows. Every integer in the payload is a string;
+// Osmosis as the test wallet's balance, the factors) sits above the live rows. Every integer in the payload is a string;
 // arithmetic here is BigInt. A zone's panel is collapsed unless something needs attention (a failing check, a missing
 // route, a pool still to create); a panel the user toggled by hand keeps that state across re-renders. A planned row's
 // "created" link is `#pools/<contract>`, which scrolls to that pool's live row.
@@ -123,9 +123,9 @@ function plannedTable(zone) {
   const planned = plannedPools(zone);
   if (!planned.length) return '';
   const header = `<tr><th>Planned</th><th>Denom on holder chain</th><th>Denom on Osmosis</th>
-    <th title="the denom's bank supply on Osmosis: a pool can only be created for a denom that exists there">Seeded</th>
+    <th title="the test wallet holds the denom on Osmosis (so it exists there, and can fund the test join)">Test wallet</th>
     <th title="the normalization factors the pool is created with: stToken, then native (the rate at that scale)">Factors</th>
-    <th>Status</th><th></th></tr>`;
+    <th>Status</th></tr>`;
   return `<div class="table-scroll pl-planned"><table>${header}${planned.map((pool) => plannedRow(pool, zone)).join('')}</table></div>`;
 }
 
@@ -134,7 +134,7 @@ function plannedTable(zone) {
 // place of its denoms.
 function plannedRow(pool, zone) {
   if (pool.live_contract) {
-    return `<tr><td>${plannedKindCell(pool)}</td><td colspan="6" class="muted">created → ${livePoolLink(pool.live_contract, zone)}</td></tr>`;
+    return `<tr><td>${plannedKindCell(pool)}</td><td colspan="5" class="muted">created → ${livePoolLink(pool.live_contract, zone)}</td></tr>`;
   }
   const denoms = pool.error
     ? `<td colspan="2" class="t-bad pl-error">${escapeHtml(pool.error)}</td>`
@@ -143,8 +143,7 @@ function plannedRow(pool, zone) {
   return `<tr><td>${plannedKindCell(pool)}</td>${denoms}
     <td>${seededMark(pool, zone)}</td>
     <td class="mono">${factorsCell(pool)}</td>
-    <td>${pill('idle', 'planned')} ${create}</td>
-    <td>${seedButton(pool)}</td></tr>`;
+    <td>${pill('idle', 'planned')} ${create}</td></tr>`;
 }
 
 // canonical, or the route's holder chain and the Stride channel its stTokens leave over; the alloyed subdenom on hover.
@@ -163,8 +162,8 @@ function holderDenomCell(pool, zone) {
 }
 
 function seededMark(pool, zone) {
-  if (pool.seeded === true) return `<span class="pl-check ok" title="bank supply on Osmosis">✓ ${amount(pool.supply_on_osmosis, zone.decimals)}</span>`;
-  if (pool.seeded === false) return `<span class="pl-check bad" title="the denom has no supply on Osmosis yet: seed it">✗</span>`;
+  if (pool.seeded === true) return `<span class="pl-check ok" title="the test wallet's balance">✓ ${amount(pool.test_wallet_balance, zone.decimals)}</span>`;
+  if (pool.seeded === false) return `<span class="pl-check bad" title="the test wallet does not hold this denom yet: send it some">✗</span>`;
   return `<span class="pl-check na" title="Osmosis's supply of the denom could not be read">n/a</span>`;
 }
 
@@ -178,11 +177,6 @@ function factorLabel(factor) {
   return match ? `1e${match[1].length}` : String(factor);
 }
 
-// The seed transfer, only while the server renders one (an unseeded route, or the canonical denom while unseeded).
-function seedButton(pool) {
-  if (!pool.seed_command) return '';
-  return `<button type="button" class="ms-copy copy" data-copy="${escapeHtml(pool.seed_command)}" title="copy the seed transfer: ${escapeHtml(pool.seed_command)}">seed</button>`;
-}
 
 // The live pool's id (its contract when the listing had no id), linking to its row below.
 function livePoolLink(contract, zone) {

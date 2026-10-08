@@ -527,7 +527,7 @@ def planned_entry(
         "denom_on_holder": None if kind == "canonical" else AXELAR_STATOM_ON_AXELAR,
         "denom_on_osmosis": denom_on_osmosis,
         "seeded": seeded,
-        "supply_on_osmosis": None if seeded is None else ("5" if seeded else "0"),
+        "test_wallet_balance": None if seeded is None else ("5" if seeded else "0"),
         "st_factor": "1000000000000000000",
         "native_factor": "2013525450106978250",
         "alloyed_subdenom": subdenom,
@@ -623,8 +623,8 @@ class PoolCreationTest(unittest.TestCase):
 
         unseeded_tx, unknown_tx = creation_txs(pools_data=fake_pools(planned=[unseeded, unknown]))
 
-        self.assertEqual((unseeded_tx.ready, unseeded_tx.reason), (False, f"{CANONICAL_STATOM} has no supply on Osmosis: seed it first (Pools tab)"))
-        self.assertEqual((unknown_tx.ready, unknown_tx.reason), (False, f"the supply of {AXELAR_STATOM} on Osmosis is not known yet (see the Pools tab)"))
+        self.assertEqual((unseeded_tx.ready, unseeded_tx.reason), (False, f"the test wallet osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe does not hold {CANONICAL_STATOM}: send it there first"))
+        self.assertEqual((unknown_tx.ready, unknown_tx.reason), (False, f"the test wallet's balance of {AXELAR_STATOM} is not known yet (see the Pools tab)"))
         self.assertIn("create-pool 996 ", unseeded_tx.commands[0].text)
         self.assertEqual(len(unknown_tx.commands), 5)
 

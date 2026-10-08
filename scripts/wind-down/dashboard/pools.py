@@ -8,7 +8,7 @@ A second pool of the same kind, or on the same route channel, is flagged and lef
 payload is a string.
 
 The planned pools are the counterpart: the canonical pool plus one per policy route a zone should have, each with the
-denoms it will hold, whether its stToken denom is seeded on Osmosis, the factors it will be created with and the
+denoms it will hold, whether the test wallet holds its stToken denom, the factors it will be created with and the
 existing pool that already holds the denom, so the Multisig tab can write the creation txs and the Pools tab shows
 what is still missing.
 """
@@ -273,7 +273,8 @@ class RouteDenoms:
 class PlannedPool:
     """A pool the zone will have: the canonical one, or one per policy route (`stride_channel`).
 
-    `seeded` is whether its stToken denom has supply on Osmosis (a cosmwasm pool cannot hold a denom with no supply);
+    `seeded` is whether the test wallet (config.POOL_SEED_ADDRESS) holds its stToken denom on Osmosis, which proves the
+    denom exists there (a cosmwasm pool cannot hold a denom with no supply) and funds the test join;
     `seed_command` is the single-signer IBC transfer that gives it some; `live_contract` is the existing pool that
     already holds the denom, which replaces the planned row once created. `error` says why a route could not be
     resolved; such a pool has no denoms, message or commands.
@@ -291,7 +292,7 @@ class PlannedPool:
     denom_on_holder: str | None  # ibc/... of transfer/<counterparty_channel>/<st_denom>; None for canonical
     denom_on_osmosis: str | None  # the stToken as the pool will hold it
     seeded: bool | None
-    supply_on_osmosis: int | None
+    test_wallet_balance: int | None
     st_factor: int
     native_factor: int
     alloyed_subdenom: str
@@ -333,7 +334,7 @@ class ZonePools:
     )  # a canonical pool exists, no missing route, every pool ready; None while a check is unknown
     pools_funded: bool | None  # pools_ready and every pool funded exactly and marked; None while an input is unknown
     planned: list[PlannedPool]  # canonical first, then routes by Stride channel
-    routes_seeded: bool | None  # every route planned pool's stToken denom has supply on Osmosis
+    routes_seeded: bool | None  # the test wallet holds every route planned pool's stToken denom
     canonical_seeded: bool | None
     pools_created: bool | None  # every planned pool has a live contract
     creation_fee: CreationFee | None  # the poolmanager's pool_creation_fee; None when it could not be read
@@ -1067,11 +1068,11 @@ def instantiate_message(denom_on_osmosis: str, native_denom: str, factors: Facto
 
 
 def seed_command(holder: config.HolderChain, holder_chain_id: str, channel: str, denom: str, decimals: int) -> str:
-    """A single-signer IBC transfer of 0.01 stToken from the holder chain to the vault on Osmosis: any non-zero amount
-    gives the denom supply there, and the vault can later join it into that route's pool."""
+    """A single-signer IBC transfer of 0.01 stToken from the holder chain to the test wallet on Osmosis: any non-zero
+    amount gives the denom supply there and funds the test join of that route's pool."""
     amount = 10 ** (decimals - SEED_AMOUNT_PLACES)
     return (
-        f"{holder.binary} tx ibc-transfer transfer {chain.TRANSFER_PORT} {channel} {config.OSMOSIS_VAULT} "
+        f"{holder.binary} tx ibc-transfer transfer {chain.TRANSFER_PORT} {channel} {config.POOL_SEED_ADDRESS} "
         f"{amount}{denom} "
         f"--from <KEY_ON_{holder.name.upper()}> --chain-id {holder_chain_id} --node {holder.node} "
         f"--gas auto --gas-adjustment 1.5 --fees <FEES>"
@@ -1111,7 +1112,7 @@ def build_canonical_plan(
         denom_on_holder=None,
         denom_on_osmosis=denom_on_osmosis,
         seeded=seeded,
-        supply_on_osmosis=supply,
+        test_wallet_balance=supply,
         st_factor=factors.st_factor,
         native_factor=factors.native_factor,
         alloyed_subdenom=subdenom,
@@ -1152,7 +1153,7 @@ def build_route_plan(
         denom_on_holder=route_denom.on_holder,
         denom_on_osmosis=route_denom.on_osmosis,
         seeded=seeded,
-        supply_on_osmosis=supply,
+        test_wallet_balance=supply,
         st_factor=factors.st_factor,
         native_factor=factors.native_factor,
         alloyed_subdenom=subdenom,
@@ -1412,10 +1413,11 @@ def _optional_target(chain_handle: chain.Chain, channel_id: str) -> ChannelTarge
 
 
 def _optional_supply(osmosis: chain.Chain, denom: str | None) -> int | None:
-    """Osmosis's bank supply of a denom: whether it is seeded; None for an unresolved denom or a failed lookup."""
+    """The test wallet's balance of a denom on Osmosis: whether it is seeded (and can fund the test join); None for an
+    unresolved denom or a failed lookup."""
     if denom is None:
         return None
-    return chain.optional(lambda: _supply(chain_handle=osmosis, denom=denom))
+    return chain.optional(lambda: _balance_of(chain_handle=osmosis, address=config.POOL_SEED_ADDRESS, denom=denom))
 
 
 # ---- once per collect: Osmosis
@@ -1614,6 +1616,15 @@ def _balances(chain_handle: chain.Chain, address: str) -> dict[str, int]:
         key="balances",
     )
     return {balance["denom"]: int(balance["amount"]) for balance in balances}
+
+
+def _balance_of(chain_handle: chain.Chain, address: str, denom: str) -> int:
+    response = chain.rest_get(
+        chain=chain_handle,
+        path=f"/cosmos/bank/v1beta1/balances/{address}/by_denom",
+        params={"denom": denom},
+    )
+    return int(response["balance"]["amount"])
 
 
 def _supply(chain_handle: chain.Chain, denom: str) -> int:

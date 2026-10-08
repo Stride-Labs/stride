@@ -486,9 +486,9 @@ def _creation_reason(plan: dict[str, Any], fee_reason: str | None) -> str | None
     if plan["live_contract"]:
         return f"already created: {plan['live_contract']}"
     if plan["seeded"] is None:
-        return f"the supply of {plan['denom_on_osmosis']} on Osmosis is not known yet (see the Pools tab)"
+        return f"the test wallet's balance of {plan['denom_on_osmosis']} is not known yet (see the Pools tab)"
     if not plan["seeded"]:
-        return f"{plan['denom_on_osmosis']} has no supply on Osmosis: seed it first (Pools tab)"
+        return f"the test wallet {config.POOL_SEED_ADDRESS} does not hold {plan['denom_on_osmosis']}: send it there first"
     return fee_reason
 
 

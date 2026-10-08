@@ -1108,6 +1108,7 @@ class CollectTest(unittest.TestCase):
 
         with (
             mock.patch.object(pools, "_supply", return_value=10**6),
+            mock.patch.object(pools, "_balance_of", return_value=10**6),
             mock.patch.object(
                 pools, "_resolve_route", return_value=HUB_LOOKUP
             ) as resolve,
@@ -1151,7 +1152,7 @@ class CollectTest(unittest.TestCase):
         # The planned pools: the canonical one and the Hub route, both created (the hub pool holds the route denom).
         self.assertEqual([plan.alloyed_subdenom for plan in zone.planned], ["stATOM", "stATOM.cosmoshub"])
         self.assertEqual([plan.live_contract for plan in zone.planned], ["osmo1canon", "osmo1hub"])
-        self.assertEqual([plan.seeded for plan in zone.planned], [True, True])  # _supply answers 10**6 for every denom
+        self.assertEqual([plan.seeded for plan in zone.planned], [True, True])  # the test wallet answers 10**6 for every denom
         self.assertEqual((zone.routes_seeded, zone.canonical_seeded, zone.pools_created), (True, True, True))
         self.assertEqual((zone.creation_fee, zone.vault_fee_balance, zone.creation_fee_short), (FEE, 25_000_000, False))
 
@@ -1161,14 +1162,14 @@ class CollectTest(unittest.TestCase):
         self.assertEqual(encoded["zones"][0]["vault_fee_balance"], "25000000")
         self.assertEqual(encoded["zones"][0]["planned"][1]["kind"], "route")
         self.assertEqual(encoded["zones"][0]["planned"][1]["st_factor"], "1000000000000000000")
-        self.assertEqual(encoded["zones"][0]["planned"][1]["supply_on_osmosis"], "1000000")
+        self.assertEqual(encoded["zones"][0]["planned"][1]["test_wallet_balance"], "1000000")
         self.assertEqual(encoded["zones"][0]["planned"][1]["instantiate_msg"]["alloyed_asset_subdenom"], "stATOM.cosmoshub")
         self.assertEqual(
             set(encoded["zones"][0]["planned"][0]),
             {
                 "kind", "stride_channel", "holder_chain_id", "holder_name", "holder_binary", "holder_node",
                 "counterparty_channel", "osmosis_channel", "holder_to_osmosis_channel", "denom_on_holder",
-                "denom_on_osmosis", "seeded", "supply_on_osmosis", "st_factor", "native_factor", "alloyed_subdenom",
+                "denom_on_osmosis", "seeded", "test_wallet_balance", "st_factor", "native_factor", "alloyed_subdenom",
                 "instantiate_msg", "seed_command", "live_contract", "error",
             },
         )
@@ -1194,6 +1195,7 @@ class CollectTest(unittest.TestCase):
 
         with (
             mock.patch.object(pools, "_supply", return_value=10**6),
+            mock.patch.object(pools, "_balance_of", return_value=10**6),
             mock.patch.object(pools, "_channel_target", side_effect=TimeoutError("slow")),
         ):
             zone = pools._zone_pools(
@@ -1469,7 +1471,7 @@ class PlannedPoolTest(unittest.TestCase):
             ("channel-391", "channel-0", "channel-141"),
         )
         self.assertEqual((plan.denom_on_holder, plan.denom_on_osmosis), (on_holder, HUB_STATOM))
-        self.assertEqual((plan.seeded, plan.supply_on_osmosis), (True, 5))
+        self.assertEqual((plan.seeded, plan.test_wallet_balance), (True, 5))
         self.assertEqual((plan.st_factor, plan.native_factor), (10**18, 2_013_525_450_106_978_250))
         self.assertEqual(plan.alloyed_subdenom, "stATOM.cosmoshub")
         self.assertEqual(
@@ -1487,7 +1489,7 @@ class PlannedPoolTest(unittest.TestCase):
         )
         self.assertEqual(
             plan.seed_command,
-            f"gaiad tx ibc-transfer transfer transfer channel-141 {VAULT} 10000{on_holder} --from <KEY_ON_COSMOSHUB> "
+            f"gaiad tx ibc-transfer transfer transfer channel-141 {config.POOL_SEED_ADDRESS} 10000{on_holder} --from <KEY_ON_COSMOSHUB> "
             "--chain-id cosmoshub-4 --node https://cosmos-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 --fees <FEES>",
         )
         self.assertIsNone(plan.live_contract)
@@ -1507,9 +1509,9 @@ class PlannedPoolTest(unittest.TestCase):
 
         self.assertEqual((plan.st_factor, plan.native_factor), (10**6, 1_060_496))
         self.assertEqual(plan.instantiate_msg["alloyed_asset_normalization_factor"], "1060496")
-        self.assertIn(f" {VAULT} {10**16}{plan.denom_on_holder} --from <KEY_ON_HAQQ> --chain-id haqq_11235-1 ", plan.seed_command)
+        self.assertIn(f" {config.POOL_SEED_ADDRESS} {10**16}{plan.denom_on_holder} --from <KEY_ON_HAQQ> --chain-id haqq_11235-1 ", plan.seed_command)
         self.assertTrue(plan.seed_command.startswith("haqqd tx ibc-transfer transfer transfer channel-2 "))
-        self.assertEqual((plan.seeded, plan.supply_on_osmosis), (False, 0))
+        self.assertEqual((plan.seeded, plan.test_wallet_balance), (False, 0))
 
     def test_seeded_is_tri_state_and_the_route_seed_command_stays(self) -> None:
         self.assertEqual((route_plan(supply=0).seeded, route_plan(supply=None).seeded), (False, None))
@@ -1556,7 +1558,7 @@ class PlannedPoolTest(unittest.TestCase):
         self.assertEqual([plan.seed_command for plan in (seeded, unknown)], [None, None])
         self.assertEqual(
             unseeded.seed_command,
-            f"strided tx ibc-transfer transfer transfer channel-5 {VAULT} 10000stuatom --from <KEY_ON_STRIDE> "
+            f"strided tx ibc-transfer transfer transfer channel-5 {config.POOL_SEED_ADDRESS} 10000stuatom --from <KEY_ON_STRIDE> "
             "--chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 --fees <FEES>",
         )
 
@@ -1641,14 +1643,15 @@ class PlannedNetworkTest(unittest.TestCase):
                 raise TimeoutError("slow")
             return targets[channel_id]
 
-        def fake_supply(chain_handle: chain.Chain, denom: str) -> int:
+        def fake_supply(chain_handle: chain.Chain, address: str, denom: str) -> int:
+            self.assertEqual(address, config.POOL_SEED_ADDRESS)
             supply_calls.append(denom)
             return supplies[denom]
 
         hub = report(raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE), route_lookup=HUB_LOOKUP, escrow=1)
         with (
             mock.patch.object(pools, "_channel_target", fake_target),
-            mock.patch.object(pools, "_supply", fake_supply),
+            mock.patch.object(pools, "_balance_of", fake_supply),
             mock.patch.dict(config.REQUIRED_ROUTES, {"stuatom": frozenset({"channel-69", "channel-0", "channel-11", "channel-6"})}),
         ):
             planned = pools._planned_pools(
@@ -1675,7 +1678,7 @@ class PlannedNetworkTest(unittest.TestCase):
     def test_a_failed_supply_lookup_leaves_seeded_unknown(self) -> None:
         osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
 
-        with mock.patch.object(pools, "_supply", side_effect=TimeoutError("slow")):
+        with mock.patch.object(pools, "_balance_of", side_effect=TimeoutError("slow")):
             self.assertIsNone(pools._optional_supply(osmosis=osmosis, denom=HUB_STATOM))
         self.assertIsNone(pools._optional_supply(osmosis=osmosis, denom=None))
 
