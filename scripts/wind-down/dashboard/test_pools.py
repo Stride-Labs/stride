@@ -974,7 +974,6 @@ class ZoneTest(unittest.TestCase):
             [
                 "channel-6",
                 "channel-40",
-                "channel-47",
                 "channel-52",
                 "channel-123",
                 "channel-148",
@@ -1277,19 +1276,13 @@ HOLDER_TARGETS = {
 POLICY_TARGETS = {
     "channel-0": ("cosmoshub-4", "channel-391"),
     "channel-6": ("injective-1", "channel-89"),
-    "channel-13": ("phoenix-1", "channel-25"),
-    "channel-24": ("juno-1", "channel-139"),
     "channel-40": ("secret-4", "channel-37"),
-    "channel-47": ("carbon-1", "channel-8"),
     "channel-52": ("phoenix-1", "channel-46"),
     "channel-123": ("neutron-1", "channel-8"),
     "channel-148": ("agoric-3", "channel-59"),
-    "channel-160": ("dydx-mainnet-1", "channel-1"),
     "channel-162": ("celestia", "channel-4"),
     "channel-197": ("dymension_1100-1", "channel-0"),
-    "channel-213": ("ssc-1", "channel-0"),
     "channel-240": ("haqq_11235-1", "channel-7"),
-    "channel-258": ("laozi-mainnet", "channel-161"),
 }
 HUB_PLANNED_ROUTE = pools.plan_route(stride_channel="channel-0", target=HUB_TARGET, holder_targets=HOLDER_TARGETS)
 ATOM_ZONE_CONFIG = config.ZONES_BY_CHAIN_ID["cosmoshub-4"]

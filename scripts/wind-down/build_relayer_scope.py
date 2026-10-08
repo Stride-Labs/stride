@@ -43,6 +43,7 @@ REQUEST_PAUSE_SECONDS = 0.6
 # Chains dropped by decision whatever their packet ages say: chain id -> the reason shown in the table
 DROPPED_CHAINS: dict[str, str] = {
     "axelar-dojo-1": "unsupported, Stride <-> Axelar clients expired (decided 2026-10-08)",
+    "carbon-1": "chain dead, no blocks since 2026-09-25 (decided 2026-10-08)",
 }
 
 REPO = pathlib.Path(__file__).resolve().parents[2]

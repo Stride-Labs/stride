@@ -6,17 +6,20 @@ the first hop out of Stride, not where the token ended up after further hops. Ch
 are grouped as "Other".
 
 **Status values.**
-- `in scope`: the pool covers holders there (Stride itself, Osmosis, the token's host chain, plus every relayed chain
-  holding $500 or more of the token: stATOM on Injective, Secret, Agoric, Neutron, Carbon, Terra; stTIA on
-  Agoric, Neutron, Carbon, Hub, Dymension; stINJ on Secret, Hub, Carbon; stOSMO on Hub, Secret; stBAND on Hub; stDYDX
-  on Hub, Carbon; stLUNA on Carbon). Carbon is served through a relayer we run (decided 2026-10-08): the third party
-  that relays its Osmosis channel only does so every week or two. stSOMM gets its canonical pool on Stride and
-  Osmosis only. The minimum was $1k until 2026-10-08.
+- `in scope`: the pool covers holders there (Stride itself, Osmosis, plus every relayed chain holding $500 or more
+  of the token, the token's host chain included: stATOM on Hub, Injective, Secret, Agoric, Neutron, Terra; stISLM on
+  HAQQ; stTIA on Agoric, Neutron, Hub, Dymension; stINJ on Injective, Secret, Hub; stOSMO on Hub, Secret; stBAND on
+  Hub; stDYDX on Hub; stLUNA on Terra). The host-chain rows under $500 (stJUNO on Juno $1, stBAND on Band $3, stSAGA
+  on Saga $65, stDYDX on dYdX $76) were dropped on 2026-10-08, as was stLUNA's channel-13 (31 stLUNA, treated as a
+  non-canonical voucher): Terra's stLUNA route is channel-52 only. stSOMM, stJUNO and stSAGA get their canonical pool
+  on Stride and Osmosis only. The minimum was $1k until 2026-10-08.
 - `ignored · small`: a chain someone already relays to Osmosis, but the balance is under $500. These are the rows a
   lower minimum would bring back. Dymension counts as a live chain: it is a normal location for other stTokens.
 - `ignored · unrecoverable`: the chain has stopped producing blocks (checked 2026-09-23: Evmos, Stargaze and Umee are
   marked killed in the chain registry with no RPC answering; Kujira has no RPC answering; Comdex's last block is 123
-  days old). Nothing on those chains can move again, and the stTokens whose host zone is one of them (stEVMOS,
+  days old). Carbon joined them on 2026-10-08: its last block is 100279059 at 2026-09-25 20:01 UTC, every public RPC
+  is down or stuck there, and Stride's client of carbon-1 has already expired (it was briefly in scope with a relayer
+  we would run, decided and reversed the same day). Nothing on those chains can move again, and the stTokens whose host zone is one of them (stEVMOS,
   stSTARS, stUMEE, stCMDX) have no native side to migrate.
 - `ignored · deprecated`: stDYM only. Dymension is alive, but stakedym is a deprecated zone we will not touch.
 - `ignored · unsupported`: live chains we will not support; both are left off the relayer map.
@@ -26,8 +29,7 @@ are grouped as "Other".
     its two-hop denom seeded by sending the stToken from Stride through Axelar, and there is no time to restore the
     clients. Axelar -> Osmosis itself is relayed by a third party.
 - `ignored · no relayer`: a live chain nobody relays to Osmosis, whatever the balance: every chain the relayer map has
-  no Osmosis route for (Canto, Acrechain, Namada, Composable, Sommelier and the other dust chains). Carbon is the one
-  chain we relay ourselves (see `in scope`).
+  no Osmosis route for (Canto, Acrechain, Namada, Composable, Sommelier and the other dust chains).
 
 Edit the Status column to change a decision. The relayer map for the in-scope paths is `relayer-map.html` in this folder.
 
@@ -53,7 +55,7 @@ relay their own hop. The Stride leg only matters after the upgrade for hosts (ou
 On a served chain every token worth at least $500 gets a pool route. "Last in / out" is the age of the
 youngest packet received on the leg and the youngest acknowledgement delivered for the opposite direction.
 
-Served: $2,585,445 across 15 chains, of which $8,031 needs a relayer from us (Carbon). Not served: Penumbra ($29,542), Kujira ($20,850), Comdex ($5,145), Evmos ($3,395), Axelar ($1,320), Stargaze ($931), Canto ($748), Acrechain ($623), Namada ($611), Composable ($211), Umee ($211), Crescent ($13), Namada testnet ($4), Sei ($1), Persistence ($1), Oraichain ($1), Chihuahua ($1), Gravity Bridge ($0), Namada testnet ($0), Astria ($0), Indigo ($0), Sommelier ($0).
+Served: $2,577,414 across 14 chains, of which $0 needs a relayer from us. Not served: Penumbra ($29,542), Kujira ($20,850), Carbon ($8,031), Comdex ($5,145), Evmos ($3,395), Axelar ($1,320), Stargaze ($931), Canto ($748), Acrechain ($623), Namada ($611), Composable ($211), Umee ($211), Crescent ($13), Namada testnet ($4), Sei ($1), Persistence ($1), Oraichain ($1), Chihuahua ($1), Gravity Bridge ($0), Namada testnet ($0), Astria ($0), Indigo ($0), Sommelier ($0).
 
 Every chain that holds any stToken is listed, largest first, whatever its status below; the USD column is the chain's
 total across tokens. Legs are shown where the relayer map has a route for the chain.
@@ -69,7 +71,7 @@ total across tokens. Legs are shown where the relayer map has a route for the ch
 | Kujira (`kaiyo-1`) | $20,850 | channel-8 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
 | Agoric (`agoric-3`) | $16,284 | channel-148 |  | channel-148: expired 1137.3d · never / never | not needed after the upgrade | channel-320: live 0.4d · 1.0d / 1.5d | free, someone else relays it | stATOM, stTIA |
 | Neutron (`neutron-1`) | $8,339 | channel-123 |  | channel-123: stale 36.3d · 8.4d / 8.4d | not needed after the upgrade | channel-874: stale 35.5d · 1.2d / 2.5d | free, someone else relays it | stATOM, stTIA |
-| Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 18.2d / never | not needed after the upgrade | channel-188: stale 40.8d · 5.2d / 9.5d | we relay it (decided 2026-10-08) | stATOM, stTIA, stINJ, stDYDX, stLUNA |
+| Carbon (`carbon-1`) | $8,031 | channel-47 |  | channel-47: stale 297.0d · 18.2d / never | not needed after the upgrade | channel-188: stale 40.8d · 5.2d / 9.5d | not served: chain dead, no blocks since 2026-09-25 (decided 2026-10-08) | – |
 | Comdex (`comdex-1`) | $5,145 | channel-49 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
 | Terra (`phoenix-1`) | $4,237 | channel-52 | yes | channel-52: live 5.3d · 1.1d / 1.1d | ICA channel, we relay it | channel-251: live 0.2d · 1.0d / 1.0d | free, someone else relays it | stATOM, stLUNA |
 | Evmos (`evmos_9001-2`) | $3,395 | channel-16 |  | not mapped | not needed after the upgrade | not mapped | not served: chain dead | – |
@@ -109,7 +111,7 @@ Per-token value on each chain, with the status from the tables below:
 - Kujira: stATOM $20,261 (ignored · unrecoverable), stOSMO $293 (ignored · unrecoverable), stINJ $291 (ignored · unrecoverable), stTIA $3 (ignored · unrecoverable), stDYDX $2 (ignored · unrecoverable), stISLM $0 (ignored · unrecoverable), stLUNA $0 (ignored · unrecoverable), stEVMOS $0 (ignored · unrecoverable), stJUNO $0 (ignored · unrecoverable), stSTARS $0 (ignored · unrecoverable), stCMDX $0 (ignored · unrecoverable), stUMEE $0 (ignored · unrecoverable)
 - Agoric: stATOM $8,488 (in scope), stTIA $7,479 (in scope), stOSMO $317 (ignored · small)
 - Neutron: stTIA $4,374 (in scope), stATOM $3,829 (in scope), stDYM $105 (ignored · deprecated), stDYDX $31 (ignored · small), stOSMO $0 (ignored · small), stSAGA $0 (ignored · small), stJUNO $0 (ignored · small)
-- Carbon: stTIA $3,455 (in scope), stATOM $1,907 (in scope), stLUNA $1,210 (in scope), stDYDX $758 (in scope), stINJ $559 (in scope), stSAGA $68 (ignored · small), stOSMO $62 (ignored · small), stSTARS $10 (ignored · unrecoverable), stEVMOS $2 (ignored · unrecoverable), stDYM $0 (ignored · deprecated), stJUNO $0 (ignored · small)
+- Carbon: stTIA $3,455 (ignored · unrecoverable), stATOM $1,907 (ignored · unrecoverable), stLUNA $1,210 (ignored · unrecoverable), stDYDX $758 (ignored · unrecoverable), stINJ $559 (ignored · unrecoverable), stSAGA $68 (ignored · unrecoverable), stOSMO $62 (ignored · unrecoverable), stSTARS $10 (ignored · unrecoverable), stEVMOS $2 (ignored · unrecoverable), stDYM $0 (ignored · deprecated), stJUNO $0 (ignored · unrecoverable)
 - Comdex: stATOM $4,971 (ignored · unrecoverable), stCMDX $160 (ignored · unrecoverable), stOSMO $12 (ignored · unrecoverable), stLUNA $1 (ignored · unrecoverable), stJUNO $1 (ignored · unrecoverable), stEVMOS $0 (ignored · unrecoverable)
 - Terra: stLUNA $3,107 (in scope), stATOM $821 (in scope), stINJ $309 (ignored · small), stOSMO $0 (ignored · small), stSTARS $0 (ignored · unrecoverable)
 - Evmos: stEVMOS $3,394 (ignored · unrecoverable), stINJ $1 (ignored · unrecoverable), stATOM $0 (ignored · unrecoverable), stOSMO $0 (ignored · unrecoverable), stLUNA $0 (ignored · unrecoverable), stJUNO $0 (ignored · unrecoverable), stSTARS $0 (ignored · unrecoverable)
@@ -144,23 +146,23 @@ Per-token value on each chain, with the status from the tables below:
 
 | Token | Total USD | In scope | Ignored · small | Ignored · unrecoverable | Ignored · deprecated | Ignored · unsupported | Ignored · no relayer |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| stATOM | $4,536,859 | $4,486,011 | $144 | $25,723 | $0 | $23,143 | $1,838 |
+| stATOM | $4,536,859 | $4,484,104 | $144 | $27,630 | $0 | $23,143 | $1,838 |
 | stISLM | $416,792 | $416,571 | $221 | $0 | $0 | $0 | $0 |
-| stTIA | $331,752 | $330,921 | $459 | $3 | $0 | $223 | $146 |
-| stINJ | $164,103 | $163,502 | $309 | $292 | $0 | $0 | $0 |
-| stOSMO | $144,709 | $136,265 | $379 | $340 | $0 | $7,496 | $229 |
-| stBAND | $110,796 | $110,796 | $0 | $0 | $0 | $0 | $0 |
-| stDYDX | $54,955 | $54,922 | $31 | $2 | $0 | $0 | $0 |
-| stLUNA | $8,015 | $7,900 | $114 | $1 | $0 | $0 | $0 |
-| stSAGA | $5,292 | $5,216 | $76 | $0 | $0 | $0 | $0 |
+| stTIA | $331,752 | $327,466 | $459 | $3,458 | $0 | $223 | $146 |
+| stINJ | $164,103 | $162,943 | $309 | $851 | $0 | $0 | $0 |
+| stOSMO | $144,709 | $136,265 | $317 | $402 | $0 | $7,496 | $229 |
+| stBAND | $110,796 | $110,793 | $3 | $0 | $0 | $0 | $0 |
+| stDYDX | $54,955 | $54,088 | $107 | $760 | $0 | $0 | $0 |
+| stLUNA | $8,015 | $6,690 | $114 | $1,211 | $0 | $0 | $0 |
+| stSAGA | $5,292 | $5,151 | $73 | $68 | $0 | $0 | $0 |
 | stEVMOS | $5,215 | $0 | $0 | $5,215 | $0 | $0 | $0 |
 | stDYM | $5,112 | $0 | $0 | $0 | $5,112 | $0 | $0 |
-| stJUNO | $4,473 | $4,217 | $254 | $2 | $0 | $0 | $0 |
+| stJUNO | $4,473 | $4,216 | $255 | $2 | $0 | $0 | $0 |
 | stSTARS | $1,669 | $0 | $0 | $1,669 | $0 | $0 | $0 |
 | stSOMM | $678 | $677 | $1 | $0 | $0 | $0 | $0 |
 | stCMDX | $208 | $0 | $0 | $208 | $0 | $0 | $0 |
 | stUMEE | $159 | $0 | $0 | $159 | $0 | $0 | $0 |
-| **All** | **$5,790,787** | **$5,716,998** | **$1,988** | **$33,614** | **$5,112** | **$30,862** | **$2,213** |
+| **All** | **$5,790,787** | **$5,708,964** | **$2,003** | **$41,633** | **$5,112** | **$30,862** | **$2,213** |
 
 
 ## stATOM (stuatom, host cosmoshub-4)
@@ -179,7 +181,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Agoric | agoric-3 | channel-148 | 2,424.99 | 0.19% | $8,488 | in scope |
 | Comdex | comdex-1 | channel-49 | 1,420.17 | 0.11% | $4,971 | ignored · unrecoverable |
 | Neutron | neutron-1 | channel-123 | 1,093.88 | 0.08% | $3,829 | in scope |
-| Carbon | carbon-1 | channel-47 | 544.71 | 0.04% | $1,907 | in scope |
+| Carbon | carbon-1 | channel-47 | 544.71 | 0.04% | $1,907 | ignored · unrecoverable |
 | Axelar | axelar-dojo-1 | channel-11, channel-69 | 374.77 | 0.03% | $1,312 | ignored · unsupported |
 | Terra | phoenix-1 | channel-52 | 234.48 | 0.02% | $821 | in scope |
 | Canto | canto_7700-1 | channel-74 | 213.03 | 0.02% | $746 | ignored · no relayer |
@@ -200,7 +202,7 @@ Supply 1,296,132.16 · RR 2.000174 · $4,536,858 total · 44.5% escrowed off Str
 | Dymension | dymension_1100-1 | channel-197 | 0.02 | 0.00% | $0 | ignored · small |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored · no relayer |
 
-In scope $4,486,011 · small $143 · unrecoverable $25,723 · deprecated $0 · no relayer $1,838
+In scope $4,484,104 · small $143 · unrecoverable $27,630 · deprecated $0 · no relayer $1,838
 
 
 ## stISLM (staISLM, host haqq_11235-1)
@@ -228,7 +230,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 | Osmosis | osmosis-1 | channel-5 | 145,282.43 | 22.95% | $76,154 | in scope |
 | Agoric | agoric-3 | channel-148 | 14,267.74 | 2.25% | $7,479 | in scope |
 | Neutron | neutron-1 | channel-123 | 8,344.59 | 1.32% | $4,374 | in scope |
-| Carbon | carbon-1 | channel-47 | 6,592.06 | 1.04% | $3,455 | in scope |
+| Carbon | carbon-1 | channel-47 | 6,592.06 | 1.04% | $3,455 | ignored · unrecoverable |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 3,809.09 | 0.60% | $1,997 | in scope |
 | Dymension | dymension_1100-1 | channel-197 | 3,779.27 | 0.60% | $1,981 | in scope |
 | Secret | secret-4 | channel-40 | 868.58 | 0.14% | $455 | ignored · small |
@@ -243,7 +245,7 @@ Supply 632,902.42 · RR 1.176364 · $331,752 total · 29.1% escrowed off Stride
 | Umee | umee-1 | channel-29 | 0.02 | 0.00% | $0 | ignored · unrecoverable |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored · no relayer |
 
-In scope $330,921 · small $675 · unrecoverable $3 · deprecated $0 · no relayer $146
+In scope $327,466 · small $675 · unrecoverable $3,458 · deprecated $0 · no relayer $146
 
 
 ## stINJ (stinj, host injective-1)
@@ -257,13 +259,13 @@ Supply 13,685.82 · RR 1.543197 · $164,102 total · 64.8% escrowed off Stride
 | Secret | secret-4 | channel-40 | 3,763.10 | 27.50% | $45,122 | in scope |
 | Osmosis | osmosis-1 | channel-5 | 283.91 | 2.07% | $3,404 | in scope |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 273.04 | 2.00% | $3,274 | in scope |
-| Carbon | carbon-1 | channel-47 | 46.61 | 0.34% | $559 | in scope |
+| Carbon | carbon-1 | channel-47 | 46.61 | 0.34% | $559 | ignored · unrecoverable |
 | Terra | phoenix-1 | channel-52 | 25.76 | 0.19% | $309 | ignored · small |
 | Kujira | kaiyo-1 | channel-8 | 24.23 | 0.18% | $291 | ignored · unrecoverable |
 | Evmos | evmos_9001-2 | channel-9 | 0.10 | 0.00% | $1 | ignored · unrecoverable |
 | Axelar | axelar-dojo-1 | channel-69 | 0.00 | 0.00% | $0 | ignored · unsupported |
 
-In scope $163,501 · small $309 · unrecoverable $292 · deprecated $0
+In scope $162,942 · small $309 · unrecoverable $851 · deprecated $0
 
 
 ## stOSMO (stuosmo, host osmosis-1)
@@ -280,7 +282,7 @@ Supply 2,703,012.20 · RR 1.461651 · $144,709 total · 60.2% escrowed off Strid
 | Agoric | agoric-3 | channel-148 | 5,920.53 | 0.22% | $317 | ignored · small |
 | Kujira | kaiyo-1 | channel-8 | 5,472.40 | 0.20% | $293 | ignored · unrecoverable |
 | Namada | namada.5f5de2dd1b88cba30586420 | channel-308 | 3,329.36 | 0.12% | $178 | ignored · no relayer |
-| Carbon | carbon-1 | channel-47 | 1,162.03 | 0.04% | $62 | ignored · small |
+| Carbon | carbon-1 | channel-47 | 1,162.03 | 0.04% | $62 | ignored · unrecoverable |
 | Acrechain | acre_9052-1 | channel-57 | 909.31 | 0.03% | $49 | ignored · no relayer |
 | Umee | umee-1 | channel-29 | 655.54 | 0.02% | $35 | ignored · unrecoverable |
 | Comdex | comdex-1 | channel-49 | 224.08 | 0.01% | $12 | ignored · unrecoverable |
@@ -296,7 +298,7 @@ Supply 2,703,012.20 · RR 1.461651 · $144,709 total · 60.2% escrowed off Strid
 | Terra | phoenix-1 | channel-52 | 0.00 | 0.00% | $0 | ignored · small |
 | Namada testnet | campfire-square.ff09671d333707 | channel-297 | 0.00 | 0.00% | $0 | ignored · no relayer |
 
-In scope $136,265 · small $379 · unrecoverable $340 · deprecated $0 · no relayer $229
+In scope $136,265 · small $317 · unrecoverable $402 · deprecated $0 · no relayer $229
 
 
 ## stBAND (stuband, host laozi-mainnet)
@@ -308,9 +310,9 @@ Supply 403,412.63 · RR 1.272885 · $110,795 total · 94.8% escrowed off Stride
 | Osmosis | osmosis-1 | channel-5 | 380,329.56 | 94.28% | $104,456 | in scope |
 | Stride | stride-1 | – | 21,071.05 | 5.22% | $5,787 | in scope |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 2,002.01 | 0.50% | $550 | in scope |
-| Band | laozi-mainnet | channel-258 | 10.01 | 0.00% | $3 | in scope |
+| Band | laozi-mainnet | channel-258 | 10.01 | 0.00% | $3 | ignored · small |
 
-In scope $110,796 · small $0 · unrecoverable $0 · deprecated $0
+In scope $110,793 · small $3 · unrecoverable $0 · deprecated $0
 
 
 ## stDYDX (stadydx, host dydx-mainnet-1)
@@ -322,15 +324,15 @@ Supply 353,378.02 · RR 1.150952 · $54,956 total · 17.5% escrowed off Stride
 | Stride | stride-1 | – | 291,469.92 | 82.48% | $45,328 | in scope |
 | Osmosis | osmosis-1 | channel-5 | 31,953.29 | 9.04% | $4,969 | in scope |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 24,376.97 | 6.90% | $3,791 | in scope |
-| Carbon | carbon-1 | channel-47 | 4,875.35 | 1.38% | $758 | in scope |
-| dYdX | dydx-mainnet-1 | channel-160 | 488.85 | 0.14% | $76 | in scope |
+| Carbon | carbon-1 | channel-47 | 4,875.35 | 1.38% | $758 | ignored · unrecoverable |
+| dYdX | dydx-mainnet-1 | channel-160 | 488.85 | 0.14% | $76 | ignored · small |
 | Neutron | neutron-1 | channel-123 | 200.01 | 0.06% | $31 | ignored · small |
 | Kujira | kaiyo-1 | channel-8 | 13.32 | 0.00% | $2 | ignored · unrecoverable |
 | Persistence | core-1 | channel-53 | 0.20 | 0.00% | $0 | ignored · no relayer |
 | Umee | umee-1 | channel-29 | 0.10 | 0.00% | $0 | ignored · unrecoverable |
 | Indigo | indigo-1 | channel-256 | 0.00 | 0.00% | $0 | ignored · no relayer |
 
-In scope $54,923 · small $31 · unrecoverable $2 · deprecated $0
+In scope $54,089 · small $107 · unrecoverable $760 · deprecated $0
 
 
 ## stLUNA (stuluna, host phoenix-1)
@@ -340,8 +342,8 @@ Supply 75,786.52 · RR 1.979438 · $8,015 total · 58.4% escrowed off Stride
 | Chain | Chain id | Stride channel(s) | Amount | % of supply | USD | Status |
 |---|---|---|---:|---:|---:|---|
 | Stride | stride-1 | – | 31,511.96 | 41.58% | $3,333 | in scope |
-| Terra | phoenix-1 | channel-13, channel-52 | 29,379.24 | 38.77% | $3,107 | in scope |
-| Carbon | carbon-1 | channel-47 | 11,436.45 | 15.09% | $1,210 | in scope |
+| Terra | phoenix-1 | channel-52 | 29,379.24 | 38.77% | $3,107 | in scope |
+| Carbon | carbon-1 | channel-47 | 11,436.45 | 15.09% | $1,210 | ignored · unrecoverable |
 | Osmosis | osmosis-1 | channel-5 | 2,366.49 | 3.12% | $250 | in scope |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 1,006.96 | 1.33% | $106 | ignored · small |
 | Secret | secret-4 | channel-40 | 76.62 | 0.10% | $8 | ignored · small |
@@ -350,7 +352,10 @@ Supply 75,786.52 · RR 1.979438 · $8,015 total · 58.4% escrowed off Stride
 | Axelar | axelar-dojo-1 | channel-69 | 0.10 | 0.00% | $0 | ignored · unsupported |
 | Evmos | evmos_9001-2 | channel-9 | 0.01 | 0.00% | $0 | ignored · unrecoverable |
 
-In scope $7,900 · small $115 · unrecoverable $1 · deprecated $0
+In scope $6,690 · small $115 · unrecoverable $1,211 · deprecated $0
+
+Terra also holds 31 stLUNA over Stride channel-13 (an older, otherwise unused channel); that voucher is treated as
+non-canonical and gets no pool (decided 2026-10-08), so the Terra route is channel-52 only.
 
 
 ## stSAGA (stusaga, host ssc-1)
@@ -361,12 +366,12 @@ Supply 109,843.16 · RR 1.279077 · $5,292 total · 13.6% escrowed off Stride
 |---|---|---|---:|---:|---:|---|
 | Stride | stride-1 | – | 94,869.65 | 86.37% | $4,571 | in scope |
 | Osmosis | osmosis-1 | channel-5 | 12,047.75 | 10.97% | $580 | in scope |
-| Carbon | carbon-1 | channel-47 | 1,404.83 | 1.28% | $68 | ignored · small |
-| Saga | ssc-1 | channel-213 | 1,352.80 | 1.23% | $65 | in scope |
+| Carbon | carbon-1 | channel-47 | 1,404.83 | 1.28% | $68 | ignored · unrecoverable |
+| Saga | ssc-1 | channel-213 | 1,352.80 | 1.23% | $65 | ignored · small |
 | Cosmos Hub | cosmoshub-4 | channel-0 | 167.50 | 0.15% | $8 | ignored · small |
 | Neutron | neutron-1 | channel-123 | 0.64 | 0.00% | $0 | ignored · small |
 
-In scope $5,216 · small $76 · unrecoverable $0 · deprecated $0
+In scope $5,151 · small $73 · unrecoverable $68 · deprecated $0
 
 
 ## stEVMOS (staevmos, host evmos_9001-2 · host zone stopped, ignored entirely)
@@ -420,16 +425,16 @@ Supply 246,844.95 · RR 1.933365 · $4,474 total · 42.9% escrowed off Stride
 | Cosmos Hub | cosmoshub-4 | channel-0 | 10,780.01 | 4.37% | $195 | ignored · small |
 | Secret | secret-4 | channel-40 | 3,253.61 | 1.32% | $59 | ignored · small |
 | Umee | umee-1 | channel-29 | 77.89 | 0.03% | $1 | ignored · unrecoverable |
-| Juno | juno-1 | channel-24 | 55.30 | 0.02% | $1 | in scope |
+| Juno | juno-1 | channel-24 | 55.30 | 0.02% | $1 | ignored · small |
 | Comdex | comdex-1 | channel-39, channel-49 | 37.57 | 0.02% | $1 | ignored · unrecoverable |
 | Evmos | evmos_9001-2 | channel-9 | 11.91 | 0.00% | $0 | ignored · unrecoverable |
 | Canto | canto_7700-1 | channel-74 | 10.00 | 0.00% | $0 | ignored · no relayer |
-| Carbon | carbon-1 | channel-47 | 4.39 | 0.00% | $0 | ignored · small |
+| Carbon | carbon-1 | channel-47 | 4.39 | 0.00% | $0 | ignored · unrecoverable |
 | Kujira | kaiyo-1 | channel-8 | 0.53 | 0.00% | $0 | ignored · unrecoverable |
 | Acrechain | acre_9052-1 | channel-57 | 0.49 | 0.00% | $0 | ignored · no relayer |
 | Neutron | neutron-1 | channel-123 | 0.35 | 0.00% | $0 | ignored · small |
 
-In scope $4,217 · small $255 · unrecoverable $2 · deprecated $0
+In scope $4,216 · small $256 · unrecoverable $2 · deprecated $0
 
 
 ## stSTARS (stustars, host stargaze-1 · host zone stopped, ignored entirely)

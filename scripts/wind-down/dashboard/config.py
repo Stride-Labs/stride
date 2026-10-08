@@ -127,7 +127,7 @@ HOLDER_ROUTES: tuple[HolderRoute, ...] = (
     HolderRoute("Penumbra", "channel-79703", RelayedBy.NOT_SERVED),
     HolderRoute("Agoric", "channel-320", RelayedBy.FREE),
     HolderRoute("Neutron", "channel-874", RelayedBy.FREE),
-    HolderRoute("Carbon", "channel-188", RelayedBy.OURS),
+    HolderRoute("Carbon", "channel-188", RelayedBy.NOT_SERVED),
     HolderRoute("Terra", "channel-251", RelayedBy.FREE),
     HolderRoute("Dymension", "channel-19774", RelayedBy.FREE),
     HolderRoute("Axelar", "channel-208", RelayedBy.NOT_SERVED),
@@ -219,16 +219,16 @@ OSMOSIS_CHANNEL_TO_HOST: dict[str, str] = {
 # asserts the two are equal, so a scope change updates both and docs/wind-down/sttoken-locations.md together.
 REQUIRED_ROUTES: dict[str, frozenset[str]] = {
     "stuatom": frozenset({
-        "channel-0", "channel-6", "channel-40", "channel-47", "channel-52", "channel-123", "channel-148",
+        "channel-0", "channel-6", "channel-40", "channel-52", "channel-123", "channel-148",
     }),
     "staISLM": frozenset({"channel-240"}),
-    "stutia": frozenset({"channel-148", "channel-123", "channel-47", "channel-0", "channel-197", "channel-162"}),
-    "stinj": frozenset({"channel-6", "channel-40", "channel-0", "channel-47"}),
+    "stutia": frozenset({"channel-148", "channel-123", "channel-0", "channel-197", "channel-162"}),
+    "stinj": frozenset({"channel-6", "channel-40", "channel-0"}),
     "stuosmo": frozenset({"channel-0", "channel-40"}),
-    "stuband": frozenset({"channel-0", "channel-258"}),
-    "stadydx": frozenset({"channel-0", "channel-160", "channel-47"}),
-    "stuluna": frozenset({"channel-13", "channel-52", "channel-47"}),
-    "stusaga": frozenset({"channel-213"}),
-    "stujuno": frozenset({"channel-24"}),
+    "stuband": frozenset({"channel-0"}),
+    "stadydx": frozenset({"channel-0"}),
+    "stuluna": frozenset({"channel-52"}),
+    "stusaga": frozenset(),
+    "stujuno": frozenset(),
     "stusomm": frozenset(),
 }
