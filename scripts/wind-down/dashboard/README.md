@@ -65,6 +65,12 @@ snapshot's balance predates the landing); a pool's test join waits for its alloc
 when that is below one token; its rest join is `allocation - vault_shares` and waits until the Pools snapshot shows
 exactly the test join as vault shares (and never goes on a pool funded exactly).
 
+The sets, in order: `pool-creation` (Osmosis, step `vote-pools-create`: one `osmosisd tx cosmwasmpool create-pool 996
+'<instantiate_msg>'` per planned pool from the Pools snapshot, canonical first, at the live rate; not ready while the
+route is unresolved, the pool already exists, its stToken denom has no supply on Osmosis, or the vault cannot pay the
+poolmanager creation fee for the pools still to create), `live-test-undelegate`, `full-drain`, `ica-transfers`,
+`staketia-claim-balance`, `pool-funding`.
+
 ## Channels tab
 
 - Stride <-> host zones: from `https://channels.main.stridenet.co/api/data` (in-scope zones, including osmosis-1's transfer
@@ -202,6 +208,28 @@ stays only for the published-export audit at the halt.
   checks read. An older payload without `planned` renders the live rows alone.
 - Today the 2026-09-25 test pools are not vault-administered, so every zone shows a missing canonical pool and its
   missing routes; add a contract to `config.EXTRA_POOL_CONTRACTS` to see the per-pool report before the real pools exist.
+- Planned pools (`planned: [PlannedPool]`, canonical first then routes by Stride channel): what the zone should have,
+  one canonical pool plus one per policy channel in `config.REQUIRED_ROUTES[st_denom]`. Each route is resolved live
+  and cached for the process: the Stride channel's counterparty and the chain its client tracks (`holder_chain_id`,
+  looked up in `config.HOLDER_CHAINS` for `holder_name` / `holder_binary` / `holder_node`), then Osmosis's channel to
+  that chain (the `config.HOLDER_ROUTES` entry whose channel's client tracks it, `osmosis_channel`) and its
+  counterparty (`holder_to_osmosis_channel`). `denom_on_holder` is `ibc/` of `transfer/<counterparty_channel>/<st_denom>`,
+  `denom_on_osmosis` of `transfer/<osmosis_channel>/transfer/<counterparty_channel>/<st_denom>` (the canonical pool's
+  is `transfer/channel-326/<st_denom>`); `seeded` is whether Osmosis's bank supply of `denom_on_osmosis` is non-zero
+  (`supply_on_osmosis`), since a pool cannot be created on a denom with no supply; `seed_command` is the single-signer
+  IBC transfer of 0.01 stToken from the holder chain to the vault that gives it some (route pools always; the
+  canonical pool only while unseeded, from Stride over channel-5). `st_factor` / `native_factor` are the creation
+  factors: 1e18 and `rate x 1e18` for six-decimal zones, 1e6 and `floor(rate x 1e6)` for the 18-decimal ones (1e18
+  overflows the transmuter's Uint128 on their supply), at the live Stride rate; `alloyed_subdenom` is `stATOM` /
+  `stATOM.cosmoshub` / `stATOM.axelar.channel11` (two policy channels to one chain); `instantiate_msg` is the exact
+  transmuter message with the vault as admin and moderator; `live_contract` is the existing pool whose stToken is
+  `denom_on_osmosis` (the planned pool is created). A route whose chain is not in `HOLDER_CHAINS`, or has no Osmosis
+  channel, carries `error` and no message or commands.
+- Per zone, the voting-week gates: `routes_seeded` (every route planned pool seeded), `canonical_seeded`,
+  `pools_created` (every planned pool has a `live_contract`; null while a route is unresolved), `creation_fee`
+  (`{denom, amount}` from poolmanager `Params`, the capitalised path Polkachu serves; null when unreadable),
+  `vault_fee_balance` (the vault's balance of that denom) and `creation_fee_short` (balance below fee x planned pools
+  without a live contract; null while either is unknown).
 
 ## Known gaps
 

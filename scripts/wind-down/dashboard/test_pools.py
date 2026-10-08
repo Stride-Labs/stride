@@ -5,6 +5,7 @@ import pathlib
 import re
 import sys
 import unittest
+import urllib.error
 from typing import Any
 from unittest import mock
 
@@ -139,7 +140,12 @@ def check(pool: pools.PoolReport, name: pools.CheckName) -> pools.Check:
 
 
 def zone_pools(
-    reports: list[pools.PoolReport], vault_native: int = 0, st_supply: int = 1_000_000
+    reports: list[pools.PoolReport],
+    vault_native: int = 0,
+    st_supply: int = 1_000_000,
+    planned: list[pools.PlannedPool] | None = None,
+    creation_fee: pools.CreationFee | None = None,
+    vault_fee_balance: int | None = None,
 ) -> pools.ZonePools:
     return pools.build_zone_pools(
         zone=config.ZONES_BY_CHAIN_ID["cosmoshub-4"],
@@ -150,6 +156,9 @@ def zone_pools(
         vault_native=vault_native,
         fee_reserve=0,
         reports=reports,
+        planned=planned or [],
+        creation_fee=creation_fee,
+        vault_fee_balance=vault_fee_balance,
     )
 
 
@@ -256,6 +265,8 @@ class DiscoveryTest(unittest.TestCase):
             mock.patch.object(pools, "_listed_pools", return_value=listed),
             mock.patch.object(pools, "_admin", fake_admin),
             mock.patch.object(pools, "_raw_pool", fake_raw_pool),
+            mock.patch.object(pools, "_creation_fee", return_value=FEE),
+            mock.patch.object(pools, "_holder_targets", return_value=HOLDER_TARGETS),
         ):
             first = pools._osmosis_snapshot(osmosis=osmosis)
             second = pools._osmosis_snapshot(osmosis=osmosis)
@@ -263,6 +274,7 @@ class DiscoveryTest(unittest.TestCase):
         self.assertEqual([pool.contract for pool in first.pools], ["osmo1ours"])
         self.assertEqual(first.pools[0].pool_id, "1")
         self.assertEqual(first.vault_balances, {ATOM_ON_OSMOSIS: 7})
+        self.assertEqual((first.creation_fee, first.holder_targets), (FEE, HOLDER_TARGETS))
         # The stranger's pool is asked once; ours is asked again so an admin transfer shows on the next refresh.
         self.assertEqual(sorted(admin_calls), ["osmo1ours", "osmo1ours", "osmo1theirs"])
         self.assertEqual([pool.contract for pool in second.pools], ["osmo1ours"])
@@ -281,6 +293,8 @@ class DiscoveryTest(unittest.TestCase):
                 ),
             ),
             mock.patch.object(config, "EXTRA_POOL_CONTRACTS", ("osmo1extra",)),
+            mock.patch.object(pools, "_creation_fee", return_value=None),
+            mock.patch.object(pools, "_holder_targets", return_value={}),
         ):
             snapshot = pools._osmosis_snapshot(osmosis=osmosis)
 
@@ -1078,8 +1092,11 @@ class CollectTest(unittest.TestCase):
                 ATOM_ON_OSMOSIS: 5,
                 canonical.alloyed_denom: 1_000,
                 hub.alloyed_denom: 30,
+                ALLUSDC: 25_000_000,
             },
             pools=[canonical, hub, inj],
+            creation_fee=FEE,
+            holder_targets=HOLDER_TARGETS,
         )
         stride = chain.stride_chain()
         osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
@@ -1095,6 +1112,7 @@ class CollectTest(unittest.TestCase):
                 pools, "_resolve_route", return_value=HUB_LOOKUP
             ) as resolve,
             mock.patch.object(pools, "_escrow_balance", fake_escrow),
+            mock.patch.object(pools, "_channel_target", return_value=HUB_TARGET),
             mock.patch.dict(
                 config.REQUIRED_ROUTES, {"stuatom": frozenset({"channel-0"})}
             ),
@@ -1130,8 +1148,30 @@ class CollectTest(unittest.TestCase):
             zone.pools_funded
         )  # the canonical pool holds 1_000 shares against a 1_005 allocation
 
+        # The planned pools: the canonical one and the Hub route, both created (the hub pool holds the route denom).
+        self.assertEqual([plan.alloyed_subdenom for plan in zone.planned], ["stATOM", "stATOM.cosmoshub"])
+        self.assertEqual([plan.live_contract for plan in zone.planned], ["osmo1canon", "osmo1hub"])
+        self.assertEqual([plan.seeded for plan in zone.planned], [True, True])  # _supply answers 10**6 for every denom
+        self.assertEqual((zone.routes_seeded, zone.canonical_seeded, zone.pools_created), (True, True, True))
+        self.assertEqual((zone.creation_fee, zone.vault_fee_balance, zone.creation_fee_short), (FEE, 25_000_000, False))
+
         encoded = json.loads(json.dumps(payload))
         self.assertEqual(encoded["zones"][0]["needed"], "1500000")
+        self.assertEqual(encoded["zones"][0]["creation_fee"], {"denom": ALLUSDC, "amount": "20000000"})
+        self.assertEqual(encoded["zones"][0]["vault_fee_balance"], "25000000")
+        self.assertEqual(encoded["zones"][0]["planned"][1]["kind"], "route")
+        self.assertEqual(encoded["zones"][0]["planned"][1]["st_factor"], "1000000000000000000")
+        self.assertEqual(encoded["zones"][0]["planned"][1]["supply_on_osmosis"], "1000000")
+        self.assertEqual(encoded["zones"][0]["planned"][1]["instantiate_msg"]["alloyed_asset_subdenom"], "stATOM.cosmoshub")
+        self.assertEqual(
+            set(encoded["zones"][0]["planned"][0]),
+            {
+                "kind", "stride_channel", "holder_chain_id", "holder_name", "holder_binary", "holder_node",
+                "counterparty_channel", "osmosis_channel", "holder_to_osmosis_channel", "denom_on_holder",
+                "denom_on_osmosis", "seeded", "supply_on_osmosis", "st_factor", "native_factor", "alloyed_subdenom",
+                "instantiate_msg", "seed_command", "live_contract", "error",
+            },
+        )
         self.assertEqual(encoded["zones"][0]["fee_reserve"], "0")
         self.assertEqual(encoded["zones"][0]["pools"][0]["kind"], "canonical")
         self.assertEqual(
@@ -1152,7 +1192,10 @@ class CollectTest(unittest.TestCase):
         snapshot = pools.OsmosisSnapshot(vault_balances={"uosmo": 15_000_000}, pools=[pool])
         osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
 
-        with mock.patch.object(pools, "_supply", return_value=10**6):
+        with (
+            mock.patch.object(pools, "_supply", return_value=10**6),
+            mock.patch.object(pools, "_channel_target", side_effect=TimeoutError("slow")),
+        ):
             zone = pools._zone_pools(
                 zone=config.ZONES_BY_CHAIN_ID["osmosis-1"],
                 host_zone={"host_denom": "uosmo", "redemption_rate": STRIDE_RATE},
@@ -1165,6 +1208,10 @@ class CollectTest(unittest.TestCase):
         self.assertEqual(zone.pools[0].allocation, 15_000_000 - config.OSMO_FEE_RESERVE)
         self.assertEqual(zone.needed, 1_500_000)
         self.assertIn("needed 1.500e+06", check(zone.pools[0], pools.CheckName.HEADROOM).detail)
+        # No fee read and every Stride channel lookup failed: the gates are unknown, the routes carry their error.
+        self.assertEqual((zone.creation_fee, zone.vault_fee_balance, zone.creation_fee_short), (None, None, None))
+        self.assertEqual([plan.error is not None for plan in zone.planned], [False, True, True])
+        self.assertEqual((zone.routes_seeded, zone.pools_created), (None, None))
 
     def test_a_zone_failure_becomes_an_error_entry_and_an_unreadable_osmosis_fails_every_zone(
         self,
@@ -1211,6 +1258,463 @@ class CollectTest(unittest.TestCase):
                 for zone in payload["zones"]
             )
         )
+
+
+# ---- planned pools
+
+HUB_RATE = "2.013525450106978250"
+HAQQ_RATE = "1.060496560022296837"
+HUB_TARGET = pools.ChannelTarget(counterparty_channel="channel-391", chain_id="cosmoshub-4")
+# Osmosis's holder channels (config.HOLDER_ROUTES) -> what they point at, as resolved on 2026-10-08.
+HOLDER_TARGETS = {
+    "channel-0": pools.ChannelTarget(counterparty_channel="channel-141", chain_id="cosmoshub-4"),
+    "channel-208": pools.ChannelTarget(counterparty_channel="channel-3", chain_id="axelar-dojo-1"),
+    "channel-88": pools.ChannelTarget(counterparty_channel="channel-1", chain_id="secret-4"),
+    "channel-874": None,  # the lookup failed
+}
+# Every policy channel in config.REQUIRED_ROUTES -> (holder chain, its channel to Stride), resolved live on 2026-10-08.
+POLICY_TARGETS = {
+    "channel-0": ("cosmoshub-4", "channel-391"),
+    "channel-6": ("injective-1", "channel-89"),
+    "channel-11": ("axelar-dojo-1", "channel-33"),
+    "channel-13": ("phoenix-1", "channel-25"),
+    "channel-24": ("juno-1", "channel-139"),
+    "channel-40": ("secret-4", "channel-37"),
+    "channel-47": ("carbon-1", "channel-8"),
+    "channel-52": ("phoenix-1", "channel-46"),
+    "channel-69": ("axelar-dojo-1", "channel-64"),
+    "channel-123": ("neutron-1", "channel-8"),
+    "channel-148": ("agoric-3", "channel-59"),
+    "channel-160": ("dydx-mainnet-1", "channel-1"),
+    "channel-162": ("celestia", "channel-4"),
+    "channel-197": ("dymension_1100-1", "channel-0"),
+    "channel-213": ("ssc-1", "channel-0"),
+    "channel-240": ("haqq_11235-1", "channel-7"),
+    "channel-258": ("laozi-mainnet", "channel-161"),
+}
+HUB_PLANNED_ROUTE = pools.plan_route(stride_channel="channel-0", target=HUB_TARGET, holder_targets=HOLDER_TARGETS)
+ATOM_ZONE_CONFIG = config.ZONES_BY_CHAIN_ID["cosmoshub-4"]
+HAQQ_ZONE_CONFIG = config.ZONES_BY_CHAIN_ID["haqq_11235-1"]
+ALLUSDC = "factory/osmo147h5x9pcj7lm0cttlaefx6sqq5vdfnmwfcqxkmjd7exqm9gc7grqhr75m0/alloyed/allUSDC"
+FEE = pools.CreationFee(denom=ALLUSDC, amount=20_000_000)
+
+
+def route_plan(
+    route: pools.PlannedRoute = HUB_PLANNED_ROUTE,
+    subdenom: str = "stATOM.cosmoshub",
+    supply: int | None = 5,
+    reports: list[pools.PoolReport] | None = None,
+    stride_rate: str = HUB_RATE,
+) -> pools.PlannedPool:
+    return pools.build_route_plan(
+        zone=ATOM_ZONE_CONFIG,
+        denoms=ATOM_ZONE,
+        stride_rate=stride_rate,
+        route=route,
+        subdenom=subdenom,
+        supply=supply,
+        reports=reports or [],
+    )
+
+
+def canonical_plan(supply: int | None = 5, reports: list[pools.PoolReport] | None = None) -> pools.PlannedPool:
+    return pools.build_canonical_plan(
+        zone=ATOM_ZONE_CONFIG, denoms=ATOM_ZONE, stride_rate=HUB_RATE, supply=supply, reports=reports or []
+    )
+
+
+class PlannedRouteTest(unittest.TestCase):
+    def test_resolves_the_holder_chain_and_both_osmosis_hops(self) -> None:
+        self.assertEqual(
+            HUB_PLANNED_ROUTE,
+            pools.PlannedRoute(
+                stride_channel="channel-0",
+                holder_chain_id="cosmoshub-4",
+                holder=config.HOLDER_CHAINS["cosmoshub-4"],
+                counterparty_channel="channel-391",
+                osmosis_channel="channel-0",
+                holder_to_osmosis_channel="channel-141",
+                error=None,
+            ),
+        )
+
+    def test_a_chain_outside_holder_chains_keeps_what_resolved_and_carries_the_error(self) -> None:
+        route = pools.plan_route(
+            stride_channel="channel-8",
+            target=pools.ChannelTarget(counterparty_channel="channel-32", chain_id="kaiyo-1"),
+            holder_targets=HOLDER_TARGETS,
+        )
+
+        self.assertEqual(route.error, "kaiyo-1 is not in config.HOLDER_CHAINS")
+        self.assertEqual((route.holder, route.holder_chain_id, route.counterparty_channel), (None, "kaiyo-1", "channel-32"))
+        self.assertEqual((route.osmosis_channel, route.holder_to_osmosis_channel), (None, None))
+
+    def test_no_osmosis_channel_tracking_the_chain_is_an_error(self) -> None:
+        unlisted = pools.plan_route(
+            stride_channel="channel-6",
+            target=pools.ChannelTarget(counterparty_channel="channel-89", chain_id="injective-1"),
+            holder_targets=HOLDER_TARGETS,
+        )
+        failed_lookup = pools.plan_route(
+            stride_channel="channel-123",
+            target=pools.ChannelTarget(counterparty_channel="channel-8", chain_id="neutron-1"),
+            holder_targets=HOLDER_TARGETS,
+        )
+
+        self.assertEqual(unlisted.error, "no channel in config.HOLDER_ROUTES tracks injective-1 on Osmosis")
+        self.assertEqual(failed_lookup.error, "no channel in config.HOLDER_ROUTES tracks neutron-1 on Osmosis")
+        self.assertEqual(unlisted.holder, config.HOLDER_CHAINS["injective-1"])
+        self.assertIsNone(unlisted.osmosis_channel)
+
+    def test_a_failed_or_half_open_stride_channel_is_an_error_with_nothing_resolved(self) -> None:
+        failed = pools.plan_route(stride_channel="channel-0", target=None, holder_targets=HOLDER_TARGETS)
+        half_open = pools.plan_route(
+            stride_channel="channel-0",
+            target=pools.ChannelTarget(counterparty_channel=None, chain_id="cosmoshub-4"),
+            holder_targets=HOLDER_TARGETS,
+        )
+
+        self.assertEqual(failed.error, "Stride channel-0 could not be resolved (channel, connection or client lookup failed)")
+        self.assertEqual(half_open.error, "Stride channel-0 has no counterparty channel yet")
+        for route in (failed, half_open):
+            self.assertEqual((route.holder_chain_id, route.holder, route.counterparty_channel, route.osmosis_channel), (None,) * 4)
+
+    def test_holder_chains_cover_every_chain_a_policy_channel_resolves_to(self) -> None:
+        policy_channels = set().union(*config.REQUIRED_ROUTES.values())
+
+        self.assertEqual(policy_channels, set(POLICY_TARGETS))  # the fixture is the whole policy
+        for channel, (chain_id, counterparty) in POLICY_TARGETS.items():
+            with self.subTest(channel=channel):
+                self.assertIn(chain_id, config.HOLDER_CHAINS)
+                route = pools.plan_route(
+                    stride_channel=channel,
+                    target=pools.ChannelTarget(counterparty_channel=counterparty, chain_id=chain_id),
+                    holder_targets={"osmo-ch": pools.ChannelTarget(counterparty_channel="x-ch", chain_id=chain_id)},
+                )
+                self.assertIsNone(route.error)
+
+    def test_holder_nodes_are_private_where_the_zone_has_one_else_public_or_a_placeholder(self) -> None:
+        self.assertEqual(config.HOLDER_CHAINS["cosmoshub-4"].node, "https://cosmos-strd-rpc.polkachu.com:443")
+        self.assertEqual(config.HOLDER_CHAINS["axelar-dojo-1"].node, "https://axelar-rpc.polkachu.com:443")
+        self.assertEqual(config.HOLDER_CHAINS["secret-4"].node, "<RPC>")
+        self.assertEqual(config.HOLDER_CHAINS["cosmoshub-4"].binary, "gaiad")
+        self.assertEqual(config.STRIDE_HOLDER, config.HolderChain(name="stride", binary="strided", node="https://stride-strd-rpc.polkachu.com:443"))
+
+
+class PlannedDenomsAndFactorsTest(unittest.TestCase):
+    def test_route_denoms_are_the_one_and_two_hop_hashes(self) -> None:
+        denoms = pools.route_denoms(route=HUB_PLANNED_ROUTE, st_denom="stuatom")
+
+        self.assertEqual(denoms.on_holder, chain.ibc_denom(path="transfer/channel-391/stuatom"))
+        self.assertEqual(denoms.on_osmosis, chain.ibc_denom(path="transfer/channel-0/transfer/channel-391/stuatom"))
+        # The hashes transmuter.md records for the Hub route.
+        self.assertEqual(denoms.on_holder, "ibc/B05539B66B72E2739B986B86391E5D08F12B8D5D2C2A7F8F8CF9ADF674DFA231")
+        self.assertEqual(denoms.on_osmosis, "ibc/7451074F46885686D3B47B12A6BF74F6D36847ED1891AC612FCFAEB7FB551E14")
+
+    def test_route_denoms_stop_where_resolution_stopped(self) -> None:
+        unknown_chain = pools.plan_route(
+            stride_channel="channel-8",
+            target=pools.ChannelTarget(counterparty_channel="channel-32", chain_id="kaiyo-1"),
+            holder_targets=HOLDER_TARGETS,
+        )
+        unresolved = pools.plan_route(stride_channel="channel-0", target=None, holder_targets=HOLDER_TARGETS)
+
+        self.assertEqual(
+            pools.route_denoms(route=unknown_chain, st_denom="stuatom"),
+            pools.RouteDenoms(on_holder=chain.ibc_denom(path="transfer/channel-32/stuatom"), on_osmosis=None),
+        )
+        self.assertEqual(pools.route_denoms(route=unresolved, st_denom="stuatom"), pools.RouteDenoms(on_holder=None, on_osmosis=None))
+
+    def test_six_decimal_factors_are_1e18_scaled_and_exact(self) -> None:
+        self.assertEqual(
+            pools.creation_factors(decimals=6, stride_rate=HUB_RATE),
+            pools.Factors(st_factor=10**18, native_factor=2_013_525_450_106_978_250),
+        )
+
+    def test_eighteen_decimal_factors_are_1e6_scaled_and_rounded_down(self) -> None:
+        # 1.060496560022296837 x 1e6 = 1060496.56...: round would give 1060497, floor gives 1060496.
+        self.assertEqual(
+            pools.creation_factors(decimals=18, stride_rate=HAQQ_RATE),
+            pools.Factors(st_factor=10**6, native_factor=1_060_496),
+        )
+        self.assertEqual(pools.creation_factors(decimals=18, stride_rate="1.0000009").native_factor, 1_000_000)
+
+    def test_subdenoms(self) -> None:
+        axelar = pools.plan_route(
+            stride_channel="channel-11",
+            target=pools.ChannelTarget(counterparty_channel="channel-33", chain_id="axelar-dojo-1"),
+            holder_targets=HOLDER_TARGETS,
+        )
+        unresolved = pools.plan_route(stride_channel="channel-47", target=None, holder_targets=HOLDER_TARGETS)
+
+        self.assertEqual(pools.alloyed_subdenom(st_symbol="stATOM", route=None, shared_chain=False), "stATOM")
+        self.assertEqual(pools.alloyed_subdenom(st_symbol="stATOM", route=HUB_PLANNED_ROUTE, shared_chain=False), "stATOM.cosmoshub")
+        self.assertEqual(pools.alloyed_subdenom(st_symbol="stATOM", route=axelar, shared_chain=True), "stATOM.axelar.channel11")
+        self.assertEqual(pools.alloyed_subdenom(st_symbol="stATOM", route=unresolved, shared_chain=False), "stATOM.channel47")
+        self.assertEqual(pools.st_symbol(zone=HAQQ_ZONE_CONFIG), "stISLM")
+
+
+class PlannedPoolTest(unittest.TestCase):
+    def test_a_route_plan_carries_the_denoms_factors_message_and_seed_command(self) -> None:
+        plan = route_plan()
+        on_holder = chain.ibc_denom(path="transfer/channel-391/stuatom")
+
+        self.assertEqual(plan.kind, pools.PoolKind.ROUTE)
+        self.assertEqual(
+            (plan.stride_channel, plan.holder_chain_id, plan.holder_name, plan.holder_binary, plan.holder_node),
+            ("channel-0", "cosmoshub-4", "cosmoshub", "gaiad", "https://cosmos-strd-rpc.polkachu.com:443"),
+        )
+        self.assertEqual(
+            (plan.counterparty_channel, plan.osmosis_channel, plan.holder_to_osmosis_channel),
+            ("channel-391", "channel-0", "channel-141"),
+        )
+        self.assertEqual((plan.denom_on_holder, plan.denom_on_osmosis), (on_holder, HUB_STATOM))
+        self.assertEqual((plan.seeded, plan.supply_on_osmosis), (True, 5))
+        self.assertEqual((plan.st_factor, plan.native_factor), (10**18, 2_013_525_450_106_978_250))
+        self.assertEqual(plan.alloyed_subdenom, "stATOM.cosmoshub")
+        self.assertEqual(
+            plan.instantiate_msg,
+            {
+                "pool_asset_configs": [
+                    {"denom": HUB_STATOM, "normalization_factor": "1000000000000000000"},
+                    {"denom": ATOM_ON_OSMOSIS, "normalization_factor": "2013525450106978250"},
+                ],
+                "alloyed_asset_subdenom": "stATOM.cosmoshub",
+                "alloyed_asset_normalization_factor": "2013525450106978250",
+                "admin": VAULT,
+                "moderator": VAULT,
+            },
+        )
+        self.assertEqual(
+            plan.seed_command,
+            f"gaiad tx ibc-transfer transfer transfer channel-141 {VAULT} 10000{on_holder} --from <KEY_ON_COSMOSHUB> "
+            "--chain-id cosmoshub-4 --node https://cosmos-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 --fees <FEES>",
+        )
+        self.assertIsNone(plan.live_contract)
+        self.assertIsNone(plan.error)
+
+    def test_an_eighteen_decimal_route_seeds_a_hundredth_of_a_token_with_1e6_factors(self) -> None:
+        haqq_denoms = pools.zone_denoms(chain_id="haqq_11235-1", host_denom="aISLM")
+        route = pools.plan_route(
+            stride_channel="channel-240",
+            target=pools.ChannelTarget(counterparty_channel="channel-7", chain_id="haqq_11235-1"),
+            holder_targets={"channel-1575": pools.ChannelTarget(counterparty_channel="channel-2", chain_id="haqq_11235-1")},
+        )
+
+        plan = pools.build_route_plan(
+            zone=HAQQ_ZONE_CONFIG, denoms=haqq_denoms, stride_rate=HAQQ_RATE, route=route, subdenom="stISLM.haqq", supply=0, reports=[]
+        )
+
+        self.assertEqual((plan.st_factor, plan.native_factor), (10**6, 1_060_496))
+        self.assertEqual(plan.instantiate_msg["alloyed_asset_normalization_factor"], "1060496")
+        self.assertIn(f" {VAULT} {10**16}{plan.denom_on_holder} --from <KEY_ON_HAQQ> --chain-id haqq_11235-1 ", plan.seed_command)
+        self.assertTrue(plan.seed_command.startswith("haqqd tx ibc-transfer transfer transfer channel-2 "))
+        self.assertEqual((plan.seeded, plan.supply_on_osmosis), (False, 0))
+
+    def test_seeded_is_tri_state_and_the_route_seed_command_stays(self) -> None:
+        self.assertEqual((route_plan(supply=0).seeded, route_plan(supply=None).seeded), (False, None))
+        self.assertIsNotNone(route_plan(supply=0).seed_command)
+        self.assertIsNotNone(route_plan(supply=None).seed_command)
+
+    def test_the_live_contract_is_the_existing_pool_holding_the_denom(self) -> None:
+        hub = report(raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE), route_lookup=HUB_LOOKUP, escrow=1)
+        canonical = report(raw_pool(contract="osmo1canon"))
+
+        self.assertEqual(route_plan(reports=[canonical, hub]).live_contract, "osmo1hub")
+        self.assertEqual(canonical_plan(reports=[canonical, hub]).live_contract, "osmo1canon")
+        self.assertIsNone(route_plan(reports=[canonical]).live_contract)
+
+    def test_an_unresolved_route_has_no_message_or_commands_but_keeps_what_resolved(self) -> None:
+        route = pools.plan_route(
+            stride_channel="channel-8",
+            target=pools.ChannelTarget(counterparty_channel="channel-32", chain_id="kaiyo-1"),
+            holder_targets=HOLDER_TARGETS,
+        )
+
+        plan = route_plan(route=route, subdenom="stATOM.channel8", supply=None)
+
+        self.assertEqual(plan.error, "kaiyo-1 is not in config.HOLDER_CHAINS")
+        self.assertEqual((plan.holder_chain_id, plan.holder_name, plan.counterparty_channel), ("kaiyo-1", None, "channel-32"))
+        self.assertEqual(plan.denom_on_holder, chain.ibc_denom(path="transfer/channel-32/stuatom"))
+        self.assertEqual((plan.denom_on_osmosis, plan.instantiate_msg, plan.seed_command, plan.seeded), (None, None, None, None))
+        self.assertEqual(plan.alloyed_subdenom, "stATOM.channel8")
+
+    def test_the_canonical_plan_seeds_from_stride_only_while_unseeded(self) -> None:
+        seeded = canonical_plan(supply=1)
+        unseeded = canonical_plan(supply=0)
+        unknown = canonical_plan(supply=None)
+
+        self.assertEqual(seeded.kind, pools.PoolKind.CANONICAL)
+        self.assertEqual(
+            (seeded.stride_channel, seeded.holder_chain_id, seeded.holder_name, seeded.holder_binary, seeded.holder_node),
+            (None, "stride-1", "stride", "strided", "https://stride-strd-rpc.polkachu.com:443"),
+        )
+        self.assertEqual((seeded.counterparty_channel, seeded.osmosis_channel, seeded.holder_to_osmosis_channel), (None, "channel-326", "channel-5"))
+        self.assertEqual((seeded.denom_on_holder, seeded.denom_on_osmosis), (None, CANONICAL_STATOM))
+        self.assertEqual(seeded.alloyed_subdenom, "stATOM")
+        self.assertEqual(seeded.instantiate_msg["pool_asset_configs"][0]["denom"], CANONICAL_STATOM)
+        self.assertEqual([plan.seed_command for plan in (seeded, unknown)], [None, None])
+        self.assertEqual(
+            unseeded.seed_command,
+            f"strided tx ibc-transfer transfer transfer channel-5 {VAULT} 10000stuatom --from <KEY_ON_STRIDE> "
+            "--chain-id stride-1 --node https://stride-strd-rpc.polkachu.com:443 --gas auto --gas-adjustment 1.5 --fees <FEES>",
+        )
+
+
+class ZonePlannedTest(unittest.TestCase):
+    def test_planned_pools_are_ordered_canonical_then_by_stride_channel(self) -> None:
+        late = route_plan(route=pools.plan_route(stride_channel="channel-148", target=HUB_TARGET, holder_targets=HOLDER_TARGETS))
+        early = route_plan()
+
+        zone = zone_pools(reports=[], planned=[late, canonical_plan(), early])
+
+        self.assertEqual([plan.stride_channel for plan in zone.planned], [None, "channel-0", "channel-148"])
+
+    def test_seeded_flags_are_tri_state_over_their_kind(self) -> None:
+        seeded = route_plan(supply=3)
+        unseeded = route_plan(supply=0)
+        unknown = route_plan(supply=None)
+
+        self.assertEqual(zone_pools(reports=[], planned=[canonical_plan(supply=0), seeded, seeded]).routes_seeded, True)
+        self.assertEqual(zone_pools(reports=[], planned=[canonical_plan(), seeded, unknown]).routes_seeded, None)
+        self.assertEqual(zone_pools(reports=[], planned=[canonical_plan(), unknown, unseeded]).routes_seeded, False)
+        self.assertEqual(zone_pools(reports=[], planned=[canonical_plan(supply=0), seeded]).canonical_seeded, False)
+        self.assertEqual(zone_pools(reports=[], planned=[canonical_plan(supply=None)]).canonical_seeded, None)
+        self.assertEqual(zone_pools(reports=[], planned=[canonical_plan(supply=1)]).canonical_seeded, True)
+        self.assertEqual(zone_pools(reports=[], planned=[canonical_plan(supply=0)]).routes_seeded, True)  # no route: vacuous
+
+    def test_pools_created_needs_a_live_contract_everywhere_and_is_unknown_on_an_error(self) -> None:
+        hub = report(raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE), route_lookup=HUB_LOOKUP, escrow=1)
+        canonical = report(raw_pool(contract="osmo1canon"))
+        errored = route_plan(route=pools.plan_route(stride_channel="channel-8", target=None, holder_targets={}), subdenom="x")
+
+        created = zone_pools(reports=[canonical, hub], planned=[canonical_plan(reports=[canonical]), route_plan(reports=[hub])])
+        missing = zone_pools(reports=[canonical], planned=[canonical_plan(reports=[canonical]), route_plan(reports=[canonical])])
+        unknown = zone_pools(reports=[canonical, hub], planned=[canonical_plan(reports=[canonical]), route_plan(reports=[hub]), errored])
+        missing_and_error = zone_pools(reports=[], planned=[canonical_plan(), errored])
+
+        self.assertEqual((created.pools_created, missing.pools_created), (True, False))
+        self.assertEqual((unknown.pools_created, missing_and_error.pools_created), (None, False))
+
+    def test_creation_fee_shortfall_counts_the_pools_still_to_create(self) -> None:
+        hub = report(raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE), route_lookup=HUB_LOOKUP, escrow=1)
+        planned = [canonical_plan(), route_plan(reports=[hub]), route_plan()]  # two still to create
+
+        short = zone_pools(reports=[hub], planned=planned, creation_fee=FEE, vault_fee_balance=39_999_999)
+        enough = zone_pools(reports=[hub], planned=planned, creation_fee=FEE, vault_fee_balance=40_000_000)
+        no_fee = zone_pools(reports=[hub], planned=planned, creation_fee=None, vault_fee_balance=None)
+        no_balance = zone_pools(reports=[hub], planned=planned, creation_fee=FEE, vault_fee_balance=None)
+        all_created = zone_pools(reports=[hub], planned=[route_plan(reports=[hub])], creation_fee=FEE, vault_fee_balance=0)
+
+        self.assertEqual((short.creation_fee_short, enough.creation_fee_short), (True, False))
+        self.assertEqual((no_fee.creation_fee_short, no_balance.creation_fee_short), (None, None))
+        self.assertEqual((short.creation_fee, short.vault_fee_balance), (FEE, 39_999_999))
+        self.assertEqual(all_created.creation_fee_short, False)
+
+    def test_tri_state(self) -> None:
+        self.assertEqual(pools.tri_state(outcomes=[]), True)
+        self.assertEqual(pools.tri_state(outcomes=[True, None]), None)
+        self.assertEqual(pools.tri_state(outcomes=[None, False]), False)
+        self.assertEqual(pools.tri_state(outcomes=[True, True]), True)
+
+
+class PlannedNetworkTest(unittest.TestCase):
+    def test_planned_pools_resolve_every_policy_channel_and_read_each_denoms_supply(self) -> None:
+        stride = chain.stride_chain()
+        osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
+        targets = {
+            "channel-0": HUB_TARGET,
+            "channel-11": pools.ChannelTarget(counterparty_channel="channel-33", chain_id="axelar-dojo-1"),
+            "channel-69": pools.ChannelTarget(counterparty_channel="channel-64", chain_id="axelar-dojo-1"),
+        }
+        supplies = {
+            CANONICAL_STATOM: 10,
+            HUB_STATOM: 0,
+            chain.ibc_denom(path="transfer/channel-208/transfer/channel-33/stuatom"): 7,
+            chain.ibc_denom(path="transfer/channel-208/transfer/channel-64/stuatom"): 0,
+        }
+        supply_calls: list[str] = []
+
+        def fake_target(chain_handle: chain.Chain, channel_id: str) -> pools.ChannelTarget:
+            self.assertEqual(chain_handle.chain_id, "stride-1")
+            if channel_id == "channel-6":
+                raise TimeoutError("slow")
+            return targets[channel_id]
+
+        def fake_supply(chain_handle: chain.Chain, denom: str) -> int:
+            supply_calls.append(denom)
+            return supplies[denom]
+
+        hub = report(raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE), route_lookup=HUB_LOOKUP, escrow=1)
+        with (
+            mock.patch.object(pools, "_channel_target", fake_target),
+            mock.patch.object(pools, "_supply", fake_supply),
+            mock.patch.dict(config.REQUIRED_ROUTES, {"stuatom": frozenset({"channel-69", "channel-0", "channel-11", "channel-6"})}),
+        ):
+            planned = pools._planned_pools(
+                zone=ATOM_ZONE_CONFIG,
+                denoms=ATOM_ZONE,
+                host=pools.HostZoneInfo(host_denom="uatom", stride_rate=HUB_RATE, st_supply=1),
+                stride=stride,
+                osmosis=osmosis,
+                snapshot=pools.OsmosisSnapshot(vault_balances={}, pools=[], holder_targets=HOLDER_TARGETS),
+                reports=[hub],
+            )
+
+        self.assertEqual([plan.stride_channel for plan in planned], [None, "channel-0", "channel-6", "channel-11", "channel-69"])
+        self.assertEqual(
+            [plan.alloyed_subdenom for plan in planned],
+            ["stATOM", "stATOM.cosmoshub", "stATOM.channel6", "stATOM.axelar.channel11", "stATOM.axelar.channel69"],
+        )
+        self.assertEqual([plan.seeded for plan in planned], [True, False, None, True, False])
+        self.assertEqual([plan.live_contract for plan in planned], [None, "osmo1hub", None, None, None])
+        self.assertEqual(planned[3].holder_to_osmosis_channel, "channel-3")
+        self.assertEqual(planned[2].error, "Stride channel-6 could not be resolved (channel, connection or client lookup failed)")
+        self.assertEqual(sorted(supply_calls), sorted(supplies))  # one supply read per resolved denom, none for the failed route
+
+    def test_a_failed_supply_lookup_leaves_seeded_unknown(self) -> None:
+        osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
+
+        with mock.patch.object(pools, "_supply", side_effect=TimeoutError("slow")):
+            self.assertIsNone(pools._optional_supply(osmosis=osmosis, denom=HUB_STATOM))
+        self.assertIsNone(pools._optional_supply(osmosis=osmosis, denom=None))
+
+    def test_creation_fee_tries_the_capitalised_path_then_the_lower_case_one(self) -> None:
+        osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
+        params = {"params": {"pool_creation_fee": [{"denom": ALLUSDC, "amount": "20000000"}]}}
+        paths: list[str] = []
+
+        def answers(chain: chain.Chain, path: str, params: dict[str, str] | None = None) -> dict[str, object]:
+            paths.append(path)
+            if path.endswith("/Params"):
+                raise urllib.error.HTTPError(url=path, code=501, msg="Not Implemented", hdrs=None, fp=None)
+            return {"params": {"pool_creation_fee": [{"denom": ALLUSDC, "amount": "20000000"}]}}
+
+        with mock.patch.object(chain, "rest_get", return_value=params):
+            self.assertEqual(pools._creation_fee(osmosis=osmosis), FEE)
+        with mock.patch.object(chain, "rest_get", answers):
+            self.assertEqual(pools._creation_fee(osmosis=osmosis), FEE)
+        with mock.patch.object(chain, "rest_get", side_effect=TimeoutError("slow")):
+            self.assertIsNone(pools._creation_fee(osmosis=osmosis))
+        with mock.patch.object(chain, "rest_get", return_value={"params": {"pool_creation_fee": []}}):
+            self.assertIsNone(pools._creation_fee(osmosis=osmosis))
+
+        self.assertEqual(paths, ["/osmosis/poolmanager/v1beta1/Params", "/osmosis/poolmanager/v1beta1/params"])
+
+    def test_holder_targets_are_read_per_holder_route_and_a_failure_is_none(self) -> None:
+        osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
+
+        def fake_target(chain_handle: chain.Chain, channel_id: str) -> pools.ChannelTarget:
+            if channel_id == "channel-88":
+                raise TimeoutError("slow")
+            return pools.ChannelTarget(counterparty_channel="x", chain_id=f"behind {channel_id}")
+
+        with mock.patch.object(pools, "_channel_target", fake_target):
+            targets = pools._holder_targets(osmosis=osmosis)
+
+        self.assertEqual(set(targets), {route.osmosis_channel for route in config.HOLDER_ROUTES})
+        self.assertIsNone(targets["channel-88"])
+        self.assertEqual(targets["channel-0"].chain_id, "behind channel-0")
 
 
 if __name__ == "__main__":
