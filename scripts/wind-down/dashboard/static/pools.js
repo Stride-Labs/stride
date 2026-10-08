@@ -119,8 +119,9 @@ function missingRoutesNote(zone) {
 
 // ---- planned table: the pools the zone will get, one row each until the pool exists
 
+// Only the pools still to create: a created one is on the live rows below, not here.
 function plannedTable(zone) {
-  const planned = plannedPools(zone);
+  const planned = plannedPools(zone).filter((pool) => !pool.live_contract);
   if (!planned.length) return '';
   const header = `<tr><th>Planned</th><th>Denom on holder chain</th><th>Denom on Osmosis</th>
     <th title="the test wallet holds the denom on Osmosis (so it exists there, and can fund the test join)">Test wallet</th>
@@ -129,13 +130,9 @@ function plannedTable(zone) {
   return `<div class="table-scroll pl-planned"><table>${header}${planned.map((pool) => plannedRow(pool, zone)).join('')}</table></div>`;
 }
 
-// A created pool keeps one line (its figures are on the live row the link scrolls to), so the table shrinks as pools
-// appear. A pool still to create shows everything its creation needs; a route that could not be resolved shows why in
-// place of its denoms.
+// A planned pool shows everything its creation needs; a route that could not be resolved shows why in place of its
+// denoms.
 function plannedRow(pool, zone) {
-  if (pool.live_contract) {
-    return `<tr><td>${plannedKindCell(pool)}</td><td colspan="5" class="muted">created → ${livePoolLink(pool.live_contract, zone)}</td></tr>`;
-  }
   const denoms = pool.error
     ? `<td colspan="2" class="t-bad pl-error">${escapeHtml(pool.error)}</td>`
     : `<td>${holderDenomCell(pool, zone)}</td><td>${addressCell(pool.denom_on_osmosis, 12, 6)}</td>`;
