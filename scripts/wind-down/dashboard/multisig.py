@@ -216,7 +216,7 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     # be signed without them.
     open_pools = [candidate for candidate in bundleable if not candidate.plan.get("blocked")]
     blocked_pools = [candidate for candidate in bundleable if candidate.plan.get("blocked")]
-    bundles = _open_bundles(open_pools=open_pools) + _chunks(blocked_pools)
+    bundles = _open_bundles(open_pools=open_pools, pool_ids=_pool_ids(pools_zones=pools_zones)) + _chunks(blocked_pools)
     fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
@@ -260,10 +260,14 @@ def _creation_candidates(pools_zones: dict[str, dict[str, Any]], pools_data: dic
     return candidates
 
 
-def _open_bundles(open_pools: list[CreationCandidate]) -> list[list[CreationCandidate]]:
-    """Created pools first, as the bundle(s) that made them; then one bundle per zone group of
-    config.CREATE_POOL_BUNDLE_ZONES; then whatever zone the groups do not name, in zone order."""
-    created = [candidate for candidate in open_pools if candidate.plan["live_contract"]]
+def _open_bundles(open_pools: list[CreationCandidate], pool_ids: dict[str, int]) -> list[list[CreationCandidate]]:
+    """Created pools first, in creation order (pool id) and in the bundles that made them
+    (config.CREATED_BUNDLE_SIZES); then one bundle per zone group of config.CREATE_POOL_BUNDLE_ZONES; then whatever
+    zone the groups do not name, in zone order."""
+    created = sorted(
+        (candidate for candidate in open_pools if candidate.plan["live_contract"]),
+        key=lambda candidate: pool_ids.get(candidate.plan["live_contract"], 0),
+    )
     remaining = [candidate for candidate in open_pools if not candidate.plan["live_contract"]]
     grouped = [
         [candidate for zone in group for candidate in remaining if candidate.zone.chain_id == zone]
@@ -271,7 +275,30 @@ def _open_bundles(open_pools: list[CreationCandidate]) -> list[list[CreationCand
     ]
     named = {zone for group in config.CREATE_POOL_BUNDLE_ZONES for zone in group}
     unnamed = [candidate for candidate in remaining if candidate.zone.chain_id not in named]
-    return _chunks(created) + [bundle for bundle in grouped if bundle] + _chunks(unnamed)
+    return _sized_chunks(created, sizes=config.CREATED_BUNDLE_SIZES) + [bundle for bundle in grouped if bundle] + _chunks(unnamed)
+
+
+def _pool_ids(pools_zones: dict[str, dict[str, Any]]) -> dict[str, int]:
+    """Contract -> pool id for every live pool the Pools snapshot holds (creation order)."""
+    return {
+        pool["contract"]: int(pool["pool_id"])
+        for zone in pools_zones.values()
+        if not zone.get("error")
+        for pool in zone.get("pools") or []
+        if pool.get("pool_id")
+    }
+
+
+def _sized_chunks(candidates: list[CreationCandidate], sizes: tuple[int, ...]) -> list[list[CreationCandidate]]:
+    """The given sizes first, then the cap at a time."""
+    chunks: list[list[CreationCandidate]] = []
+    start = 0
+    for size in sizes:
+        if start >= len(candidates):
+            return chunks
+        chunks.append(candidates[start : start + size])
+        start += size
+    return chunks + _chunks(candidates[start:])
 
 
 def _chunks(candidates: list[CreationCandidate]) -> list[list[CreationCandidate]]:

@@ -675,6 +675,23 @@ class PoolCreationTest(unittest.TestCase):
         self.assertIn("create-b2-01-statom-neutron.unsigned.json", second.commands[0].text)
         self.assertIn("(1 messages, --gas 1600000)", second.commands[0].label)
 
+    def test_created_pools_are_bundled_in_creation_order_by_the_sizes_they_were_broadcast_in(self) -> None:
+        def zone(chain_id: str, pools: list[dict[str, object]], *plans: dict[str, object]) -> dict[str, object]:
+            return {"chain_id": chain_id, "osmosis_denom": OSMOSIS_DENOM, "pools": pools, "planned": list(plans), "creation_fee": CREATION_FEE, "vault_fee_balance": "400000000", "creation_fee_short": False}
+
+        # juno's pool was created first (lower id) although cosmoshub-4 comes first in zone order.
+        data = {"zones": [
+            zone(COSMOS, [pool_entry("osmo1a", "canonical", "3630", None, None)], planned_entry("canonical", "stATOM", CANONICAL_STATOM, live_contract="osmo1a"), planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret", live_contract="osmo1c")),
+            zone("juno-1", [pool_entry("osmo1b", "canonical", "3629", None, None), pool_entry("osmo1c", "route", "3631", None, None)], planned_entry("canonical", "stJUNO", CANONICAL_STATOM, live_contract="osmo1b")),
+        ]}
+        with mock.patch.object(config, "CREATED_BUNDLE_SIZES", (2,)):
+            txs = creation_txs(pools_data=data)
+
+        self.assertEqual([(tx.title, tx.members) for tx in txs[:2]], [
+            ("bundle 1 of 2 · 2 pools · done", ["juno-1 stJUNO", "cosmoshub-4 stATOM"]),
+            ("bundle 2 of 2 · 1 pools · done", ["cosmoshub-4 stATOM.secret"]),
+        ])
+
     def test_created_pools_keep_bundle_one_and_the_rest_follow_the_zone_groups(self) -> None:
         def zone(chain_id: str, *plans: dict[str, object]) -> dict[str, object]:
             return {"chain_id": chain_id, "pools": [], "planned": list(plans), "creation_fee": CREATION_FEE, "vault_fee_balance": "400000000", "creation_fee_short": False}
@@ -685,7 +702,7 @@ class PoolCreationTest(unittest.TestCase):
             zone("juno-1", planned_entry("canonical", "stJUNO", CANONICAL_STATOM, live_contract="osmo1b")),
             zone("ssc-1", planned_entry("canonical", "stSAGA", CANONICAL_STATOM)),
         ]}
-        with mock.patch.object(config, "CREATE_POOL_BUNDLE_ZONES", (("osmosis-1",), ("ssc-1", COSMOS))):
+        with mock.patch.object(config, "CREATE_POOL_BUNDLE_ZONES", (("osmosis-1",), ("ssc-1", COSMOS))), mock.patch.object(config, "CREATED_BUNDLE_SIZES", ()):
             txs = creation_txs(pools_data=data)
 
         self.assertEqual([(tx.title, tx.members) for tx in txs[:3]], [

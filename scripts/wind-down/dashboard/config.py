@@ -101,6 +101,9 @@ POOL_MODERATOR = "osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpg
 POOL_SEED_ADDRESS = "osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe"
 # Holder chains whose routes cannot be seeded yet: their pools wait in the last creation bundle and the Pools tab marks
 # them blocked, and the zone's readiness ignores them until the block is lifted.
+# The creation bundles as they were broadcast, by size, in creation order (pool ids 3628-3645, 3646-3651, 3652-3656 on
+# 2026-10-08): created pools are shown in exactly those bundles, whatever the current grouping below says.
+CREATED_BUNDLE_SIZES: tuple[int, ...] = (18, 6, 5)
 # The creation bundles after the pools already created (which keep their bundle): one bundle per zone group, in this
 # order (decided 2026-10-08: band, osmosis, phoenix; then sommelier, saga, hub, haqq, injective). Pools of zones not
 # listed here follow in zone order, 18 at a time.
