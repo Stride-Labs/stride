@@ -658,6 +658,20 @@ class PoolCreationTest(unittest.TestCase):
         self.assertNotIn("stATOM.cosmoshub", waiting.reason)
         self.assertEqual(waiting.title, "not in a bundle: 11 pools without a message yet")
 
+    def test_deferred_holder_chains_go_to_the_back_of_the_open_bundles(self) -> None:
+        planned = [
+            planned_entry("canonical", "stATOM", CANONICAL_STATOM),
+            planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret", holder_chain_id="secret-4"),
+            planned_entry("route", "stATOM.neutron", AXELAR_STATOM, stride_channel="channel-123", holder_name="neutron", holder_chain_id="neutron-1"),
+        ]
+
+        with mock.patch.object(config, "DEFERRED_HOLDER_CHAINS", frozenset({"secret-4"})):
+            (bundle, _) = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
+
+        self.assertEqual(bundle.title, "bundle 1 of 1 · 3 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.secret")
+        self.assertIn("create-b1-02-statom-neutron.unsigned.json", bundle.commands[0].text)
+        self.assertIn("create-b1-03-statom-secret.unsigned.json", bundle.commands[0].text)
+
     def test_blocked_pools_form_the_last_bundle_and_are_never_ready(self) -> None:
         planned = [
             planned_entry("canonical", "stATOM", CANONICAL_STATOM),

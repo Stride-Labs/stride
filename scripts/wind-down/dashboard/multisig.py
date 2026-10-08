@@ -211,7 +211,10 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     # be signed without them.
     open_pools = [candidate for candidate in bundleable if not candidate.plan.get("blocked")]
     blocked_pools = [candidate for candidate in bundleable if candidate.plan.get("blocked")]
-    bundles = _chunks(open_pools) + _chunks(blocked_pools)
+    # Deferred holder chains (config.DEFERRED_HOLDER_CHAINS) move to the back of the open pools, i.e. the last open bundle.
+    prompt_pools = [candidate for candidate in open_pools if not _deferred(candidate)]
+    deferred_pools = [candidate for candidate in open_pools if _deferred(candidate)]
+    bundles = _chunks(prompt_pools + deferred_pools) + _chunks(blocked_pools)
     fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
@@ -256,6 +259,10 @@ def _creation_candidates(pools_zones: dict[str, dict[str, Any]], pools_data: dic
             if not plan["live_contract"]
         )
     return candidates
+
+
+def _deferred(candidate: CreationCandidate) -> bool:
+    return candidate.plan["holder_chain_id"] in config.DEFERRED_HOLDER_CHAINS and candidate.plan["kind"] != POOL_KIND_CANONICAL
 
 
 def _chunks(candidates: list[CreationCandidate]) -> list[list[CreationCandidate]]:
