@@ -207,7 +207,11 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     # listed after the bundles instead.
     bundleable = [candidate for candidate in candidates if candidate.plan and not candidate.plan["error"]]
     unbundleable = [candidate for candidate in candidates if not (candidate.plan and not candidate.plan["error"])]
-    bundles = [bundleable[start : start + CREATE_POOL_BUNDLE_SIZE] for start in range(0, len(bundleable), CREATE_POOL_BUNDLE_SIZE)]
+    # Blocked pools (a holder chain we cannot seed from yet) go last, in bundles of their own, so the open bundles can
+    # be signed without them.
+    open_pools = [candidate for candidate in bundleable if not candidate.plan.get("blocked")]
+    blocked_pools = [candidate for candidate in bundleable if candidate.plan.get("blocked")]
+    bundles = _chunks(open_pools) + _chunks(blocked_pools)
     fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
@@ -254,6 +258,10 @@ def _creation_candidates(pools_zones: dict[str, dict[str, Any]], pools_data: dic
     return candidates
 
 
+def _chunks(candidates: list[CreationCandidate]) -> list[list[CreationCandidate]]:
+    return [candidates[start : start + CREATE_POOL_BUNDLE_SIZE] for start in range(0, len(candidates), CREATE_POOL_BUNDLE_SIZE)]
+
+
 def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reason: str | None) -> MultisigTx:
     stem = f"{WORKDIR}/create-b{index}"
     gas = CREATE_POOL_TX_OVERHEAD_GAS + CREATE_POOL_MSG_GAS * len(bundle)
@@ -269,8 +277,9 @@ def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reas
         "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []' "
         f"{stem}-*.unsigned.json > {stem}.unsigned.json"
     )
-    title = f"bundle {index} of {total} · {len(bundle)} pools: {bundle[0].label} … {bundle[-1].label}"
-    reason = fee_reason or _bundle_reason(bundle=bundle)
+    blocked = bundle[0].plan.get("blocked")
+    title = f"bundle {index} of {total} · {len(bundle)} pools{' (blocked)' if blocked else ''}: {bundle[0].label} … {bundle[-1].label}"
+    reason = f"blocked: {blocked}" if blocked else fee_reason or _bundle_reason(bundle=bundle)
     return MultisigTx(
         chain_id=CREATION_GROUP,
         title=title,

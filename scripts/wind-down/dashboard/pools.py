@@ -300,6 +300,7 @@ class PlannedPool:
     seed_command: str | None
     live_contract: str | None
     error: str | None
+    blocked: str | None = None  # why the pool cannot be created yet (config.BLOCKED_HOLDER_CHAINS); None when it can
 
 
 @dataclass(frozen=True)
@@ -819,8 +820,9 @@ def build_zone_pools(
     native_on_osmosis = vault_native + pools_native
 
     served = {report.route.stride_channel for report in reports if report.route}
+    blocked_channels = {plan.stride_channel for plan in planned if plan.blocked and plan.stride_channel}
     missing_routes = sorted(
-        config.REQUIRED_ROUTES[denoms.st_denom] - served, key=_channel_number
+        config.REQUIRED_ROUTES[denoms.st_denom] - served - blocked_channels, key=_channel_number
     )
     ordered = sorted(reports, key=_pool_order)
     pools_ready = _pools_ready(reports=ordered, missing_routes=missing_routes)
@@ -828,9 +830,11 @@ def build_zone_pools(
     # The voting-week gates: every route denom seeded, the canonical denom seeded, every planned pool created, and
     # the vault able to pay the creation fee for what is still to create. An unresolved route keeps them unknown.
     ordered_planned = sorted(planned, key=_planned_order)
-    route_plans = [plan for plan in ordered_planned if plan.kind == PoolKind.ROUTE]
-    canonical_plans = [plan for plan in ordered_planned if plan.kind == PoolKind.CANONICAL]
-    to_create = sum(1 for plan in ordered_planned if plan.live_contract is None)
+    # A blocked pool (a holder chain we cannot seed from yet) waits outside every gate until the block is lifted.
+    open_planned = [plan for plan in ordered_planned if not plan.blocked]
+    route_plans = [plan for plan in open_planned if plan.kind == PoolKind.ROUTE]
+    canonical_plans = [plan for plan in open_planned if plan.kind == PoolKind.CANONICAL]
+    to_create = sum(1 for plan in open_planned if plan.live_contract is None)
     return ZonePools(
         chain_id=zone.chain_id,
         symbol=zone.symbol,
@@ -854,7 +858,7 @@ def build_zone_pools(
         routes_seeded=tri_state(outcomes=[plan.seeded for plan in route_plans]),
         canonical_seeded=tri_state(outcomes=[plan.seeded for plan in canonical_plans]),
         pools_created=tri_state(
-            outcomes=[None if plan.error else plan.live_contract is not None for plan in ordered_planned]
+            outcomes=[None if plan.error else plan.live_contract is not None for plan in open_planned]
         ),
         creation_fee=creation_fee,
         vault_fee_balance=vault_fee_balance,
@@ -1176,6 +1180,7 @@ def build_route_plan(
         else None,
         live_contract=live_contract_of(denom=route_denom.on_osmosis, reports=reports),
         error=route.error,
+        blocked=config.BLOCKED_HOLDER_CHAINS.get(route.holder_chain_id) if route.holder_chain_id else None,
     )
 
 

@@ -1168,7 +1168,7 @@ class CollectTest(unittest.TestCase):
                 "kind", "stride_channel", "holder_chain_id", "holder_name", "holder_binary", "holder_node",
                 "counterparty_channel", "osmosis_channel", "holder_to_osmosis_channel", "denom_on_holder",
                 "denom_on_osmosis", "seeded", "test_wallet_balance", "st_factor", "native_factor", "alloyed_subdenom",
-                "instantiate_msg", "seed_command", "live_contract", "error",
+                "instantiate_msg", "seed_command", "live_contract", "error", "blocked",
             },
         )
         self.assertEqual(encoded["zones"][0]["fee_reserve"], "0")
@@ -1307,6 +1307,37 @@ def route_plan(
         supply=supply,
         reports=reports or [],
     )
+
+
+INJECTIVE_TARGET = pools.ChannelTarget(counterparty_channel="channel-89", chain_id="injective-1")
+INJECTIVE_PLANNED_ROUTE = pools.plan_route(
+    stride_channel="channel-6",
+    target=INJECTIVE_TARGET,
+    holder_targets={**HOLDER_TARGETS, "channel-122": pools.ChannelTarget(counterparty_channel="channel-8", chain_id="injective-1")},
+)
+
+
+class BlockedRouteTest(unittest.TestCase):
+    def test_a_route_from_a_blocked_holder_chain_carries_the_reason_and_the_hub_route_does_not(self) -> None:
+        with mock.patch.dict(config.BLOCKED_HOLDER_CHAINS, {"injective-1": "rate limiter"}, clear=True):
+            blocked = route_plan(route=INJECTIVE_PLANNED_ROUTE, subdenom="stATOM.injective")
+            open_route = route_plan()
+
+        self.assertEqual((blocked.blocked, blocked.holder_chain_id), ("rate limiter", "injective-1"))
+        self.assertIsNone(open_route.blocked)
+        self.assertIsNone(canonical_plan().blocked)
+
+    def test_blocked_pools_stay_out_of_the_zone_gates_and_the_missing_routes(self) -> None:
+        with mock.patch.dict(config.BLOCKED_HOLDER_CHAINS, {"injective-1": "rate limiter"}, clear=True):
+            blocked = route_plan(route=INJECTIVE_PLANNED_ROUTE, subdenom="stATOM.injective", supply=0)
+        created_canonical = canonical_plan(reports=[report(raw_pool(native=1_000, alloyed_supply=1_000, corrupted=[ATOM_ON_OSMOSIS]), vault_shares=1_000)])
+        with mock.patch.dict(config.REQUIRED_ROUTES, {"stuatom": frozenset({"channel-6"})}):
+            zone = zone_pools(reports=[], planned=[created_canonical, blocked])
+
+        # Unseeded and uncreated, yet the zone reads created and seeded: the blocked route is deferred, not missing.
+        self.assertEqual(zone.missing_routes, [])
+        self.assertEqual((zone.routes_seeded, zone.canonical_seeded), (True, True))  # no open route left to seed
+        self.assertEqual(zone.creation_fee_short, False)
 
 
 def canonical_plan(supply: int | None = 5, reports: list[pools.PoolReport] | None = None) -> pools.PlannedPool:

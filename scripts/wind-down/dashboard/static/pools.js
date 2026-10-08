@@ -143,7 +143,7 @@ function plannedRow(pool, zone) {
   return `<tr><td>${plannedKindCell(pool)}</td>${denoms}
     <td>${seededMark(pool, zone)}</td>
     <td class="mono">${factorsCell(pool)}</td>
-    <td>${pill('idle', 'planned')} ${create}</td></tr>`;
+    <td>${pool.blocked ? `<span class="badge bad" title="${escapeHtml(pool.blocked)}">blocked</span>` : pill('idle', 'planned')} ${create}</td></tr>`;
 }
 
 // canonical, or the route's holder chain and the Stride channel its stTokens leave over; the alloyed subdenom on hover.

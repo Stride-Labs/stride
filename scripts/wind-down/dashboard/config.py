@@ -97,6 +97,11 @@ SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
 OSMOSIS_VAULT = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"
 # Holds a little of every planned pool's stToken denom: proves the denom exists on Osmosis and funds the test join.
 POOL_SEED_ADDRESS = "osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe"
+# Holder chains whose routes cannot be seeded yet: their pools wait in the last creation bundle and the Pools tab marks
+# them blocked, and the zone's readiness ignores them until the block is lifted.
+BLOCKED_HOLDER_CHAINS: dict[str, str] = {
+    "injective-1": "Osmosis's rate limiter rejects stToken transfers from Injective: waiting on the Osmosis team",
+}
 # The uosmo the plan tops the vault up with for the creation and funding txs (about 25 OSMO at 0.1 uosmo/gas:
 # two creation bundles plus three txs per pool): gas, not backing, so the osmosis-1
 # canonical pool's allocation leaves it in the vault.

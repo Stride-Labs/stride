@@ -505,6 +505,7 @@ def planned_entry(
     seeded: bool | None = True,
     live_contract: str | None = None,
     error: str | None = None,
+    blocked: str | None = None,
 ) -> dict[str, object]:
     """A planned pool as the Pools snapshot serialises it; the message carries the Hub's factors."""
     message = None if error else {
@@ -538,6 +539,7 @@ def planned_entry(
         "seed_command": None,
         "live_contract": live_contract,
         "error": error,
+        "blocked": blocked,
     }
 
 
@@ -655,6 +657,21 @@ class PoolCreationTest(unittest.TestCase):
         self.assertTrue(waiting.reason.startswith("celestia pool creation: zone missing from the Pools snapshot; cosmoshub-4 stATOM.channel47: carbon-1 is not in config.HOLDER_CHAINS; "))
         self.assertNotIn("stATOM.cosmoshub", waiting.reason)
         self.assertEqual(waiting.title, "not in a bundle: 11 pools without a message yet")
+
+    def test_blocked_pools_form_the_last_bundle_and_are_never_ready(self) -> None:
+        planned = [
+            planned_entry("canonical", "stATOM", CANONICAL_STATOM),
+            planned_entry("route", "stATOM.injective", AXELAR_STATOM, stride_channel="channel-6", holder_name="injective", blocked="rate limiter"),
+            planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret"),
+        ]
+
+        open_bundle, blocked_bundle, _ = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
+
+        self.assertEqual(open_bundle.title, "bundle 1 of 2 · 2 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.secret")
+        self.assertEqual((open_bundle.ready, open_bundle.reason), (True, None))
+        self.assertEqual(blocked_bundle.title, "bundle 2 of 2 · 1 pools (blocked): cosmoshub-4 stATOM.injective … cosmoshub-4 stATOM.injective")
+        self.assertEqual((blocked_bundle.ready, blocked_bundle.reason), (False, "blocked: rate limiter"))
+        self.assertIn("create-b2-01-statom-injective.unsigned.json", blocked_bundle.commands[0].text)
 
     def test_a_fee_shortfall_or_unknown_fee_blocks_every_bundle_but_keeps_its_commands(self) -> None:
         short = creation_txs(pools_data=fake_pools(creation_fee_short=True, vault_fee_balance="0"))[0]
