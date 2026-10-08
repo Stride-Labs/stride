@@ -72,7 +72,7 @@ class LiveTestCommandsTest(unittest.TestCase):
                 (
                     "Sam",
                     f"strided tx multisign {stem}.unsigned.json F5 {stem}.FS5.json ~/Downloads/{stem.rsplit('/', 1)[-1]}.FA5.json "
-                    f"--chain-id stride-1 --node {NODE} > {stem}.signed.json\n"
+                    f"--chain-id stride-1 --node {NODE} --output-document {stem}.signed.json\n"
                     f"strided tx broadcast {stem}.signed.json --node {NODE} --broadcast-mode sync",
                 ),
             ],
@@ -288,7 +288,7 @@ def expected_commands(
         (
             "Sam",
             f"{binary} tx multisign {stem}.unsigned.json F5 {stem}.FS5.json ~/Downloads/{stem.rsplit('/', 1)[-1]}.FA5.json "
-            f"--chain-id {chain_id} --node {node} > {stem}.signed.json\n"
+            f"--chain-id {chain_id} --node {node} --output-document {stem}.signed.json\n"
             f"{binary} tx broadcast {stem}.signed.json --node {node} --broadcast-mode sync",
         ),
     ]

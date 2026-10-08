@@ -770,8 +770,10 @@ def _commands(
         tag=BROADCASTER.tag,
         label="Combine and broadcast",
         text=(
+            # --output-document, not a shell redirect: cobra prints the signed tx to stderr in binaries that do not
+            # route cmd output to stdout (osmosisd), so `>` would leave an empty file.
             f"{tools.binary} tx multisign {unsigned} {MULTISIG_KEY} {signature_files} --chain-id {tools.chain_id} "
-            f"--node {tools.node} > {file_stem}.signed.json\n"
+            f"--node {tools.node} --output-document {file_stem}.signed.json\n"
             f"{tools.binary} tx broadcast {file_stem}.signed.json --node {tools.node} --broadcast-mode sync"
         ),
     )
