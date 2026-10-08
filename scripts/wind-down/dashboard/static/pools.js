@@ -198,18 +198,26 @@ function poolsTable(zone) {
 
 // The pool's figures, then its checks on a full-width row beneath (fifteen marks do not fit a column). The row's id is
 // what a planned row's "created" link scrolls to.
+// A pool whose every check passes folds them into one green check beside its kind (the list on hover); a pool with
+// a failing or unknown check keeps the full list under its row.
 function poolRows(pool, zone) {
+  const allOk = pool.checks.every((check) => check.ok === true);
   const cssClass = pool.checks.some((check) => check.ok === false) ? 'pl-fail' : '';
+  const checksRow = allOk ? '' : `<tr class="${cssClass}"><td class="pl-checks" colspan="8">${pool.checks.map(checkMark).join('')}</td></tr>`;
   return `<tr class="${cssClass}" id="pool-${escapeHtml(pool.contract)}">
-    <td>${kindCell(pool)}</td>
+    <td>${allOk ? allChecksMark(pool) : ''}${kindCell(pool)}</td>
     <td>${idCell(pool)}</td>
     <td class="num">${amount(pool.native_balance, zone.decimals)}</td>
     <td class="num">${amount(pool.st_balance, zone.decimals)}</td>
     <td class="num">${amount(pool.vault_shares, zone.decimals)} / ${amount(pool.test_wallet_shares, zone.decimals)}</td>
     <td class="num">${amount(pool.allocation, zone.decimals)} ${fundedMark(pool)}</td>
     <td>${corruptedCell(pool, zone)}</td>
-    <td class="num">${rateCell(pool)}</td></tr>
-    <tr class="${cssClass}"><td class="pl-checks" colspan="8">${pool.checks.map(checkMark).join('')}</td></tr>`;
+    <td class="num">${rateCell(pool)}</td></tr>${checksRow}`;
+}
+
+function allChecksMark(pool) {
+  const title = `${pool.checks.length} checks pass:\n${pool.checks.map((check) => `✓ ${check.name}`).join('\n')}`;
+  return `<span class="pl-check ok pl-all" title="${escapeHtml(title)}">✓</span> `;
 }
 
 // canonical, or the route's holder chain and the Stride channel its stTokens left over (the escrow the pool pays out).

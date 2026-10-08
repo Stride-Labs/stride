@@ -191,6 +191,7 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-pools tr:has(+ tr .pl-checks) td { border-bottom: 0; }  /* the figures and their checks read as one row */
 #view-pools .pl-check { display: inline-block; margin: 0 10px 2px 0; font-size: 11px; font-weight: 600; white-space: nowrap; cursor: help; }
 #view-pools .pl-check.ok { color: var(--ok); }
+#view-pools .pl-all { margin-right: 6px; font-size: 13px; }
 #view-pools .pl-check.bad { color: var(--bad); }
 #view-pools .pl-check.na { color: var(--muted); }
 #view-pools tr.pl-fail td { background: var(--bad-bg); }
