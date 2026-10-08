@@ -215,7 +215,7 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     # be signed without them.
     open_pools = [candidate for candidate in bundleable if not candidate.plan.get("blocked")]
     blocked_pools = [candidate for candidate in bundleable if candidate.plan.get("blocked")]
-    bundles = _chunks(open_pools, sizes=config.CREATE_POOL_BUNDLE_SIZES) + _chunks(blocked_pools)
+    bundles = _open_bundles(open_pools=open_pools) + _chunks(blocked_pools)
     fee = _creation_fee_text(pools_zones=pools_zones)
     return TxSet(
         id="pool-creation",
@@ -259,17 +259,22 @@ def _creation_candidates(pools_zones: dict[str, dict[str, Any]], pools_data: dic
     return candidates
 
 
-def _chunks(candidates: list[CreationCandidate], sizes: tuple[int, ...] = ()) -> list[list[CreationCandidate]]:
-    """Consecutive bundles: the given sizes first (never above the cap), then the cap at a time."""
-    chunks: list[list[CreationCandidate]] = []
-    start = 0
-    for size in [min(size, CREATE_POOL_BUNDLE_SIZE) for size in sizes]:
-        if start >= len(candidates):
-            return chunks
-        chunks.append(candidates[start : start + size])
-        start += size
-    chunks.extend(candidates[position : position + CREATE_POOL_BUNDLE_SIZE] for position in range(start, len(candidates), CREATE_POOL_BUNDLE_SIZE))
-    return chunks
+def _open_bundles(open_pools: list[CreationCandidate]) -> list[list[CreationCandidate]]:
+    """Created pools first, as the bundle(s) that made them; then one bundle per zone group of
+    config.CREATE_POOL_BUNDLE_ZONES; then whatever zone the groups do not name, in zone order."""
+    created = [candidate for candidate in open_pools if candidate.plan["live_contract"]]
+    remaining = [candidate for candidate in open_pools if not candidate.plan["live_contract"]]
+    grouped = [
+        [candidate for zone in group for candidate in remaining if candidate.zone.chain_id == zone]
+        for group in config.CREATE_POOL_BUNDLE_ZONES
+    ]
+    named = {zone for group in config.CREATE_POOL_BUNDLE_ZONES for zone in group}
+    unnamed = [candidate for candidate in remaining if candidate.zone.chain_id not in named]
+    return _chunks(created) + [bundle for bundle in grouped if bundle] + _chunks(unnamed)
+
+
+def _chunks(candidates: list[CreationCandidate]) -> list[list[CreationCandidate]]:
+    return [candidates[start : start + CREATE_POOL_BUNDLE_SIZE] for start in range(0, len(candidates), CREATE_POOL_BUNDLE_SIZE)]
 
 
 def _bundle_tx(index: int, total: int, bundle: list[CreationCandidate], fee_reason: str | None) -> MultisigTx:

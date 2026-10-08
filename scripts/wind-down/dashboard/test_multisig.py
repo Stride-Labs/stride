@@ -629,7 +629,7 @@ class PoolCreationTest(unittest.TestCase):
         self.assertEqual(waiting.reason, WAITING_FOR_OTHER_ZONES)
 
     def test_bundles_split_at_eighteen_messages_and_number_their_parts_per_bundle(self) -> None:
-        with mock.patch.object(config, "CREATE_POOL_BUNDLE_SIZES", ()):
+        with mock.patch.object(config, "CREATE_POOL_BUNDLE_ZONES", ()):
             txs = creation_txs(pools_data=fake_pools(planned=many_planned(20), vault_fee_balance="400000000"))
         first, second = txs[0], txs[1]
 
@@ -649,40 +649,50 @@ class PoolCreationTest(unittest.TestCase):
             planned_entry("route", "stATOM.cosmoshub", AXELAR_STATOM, stride_channel="channel-0", holder_name="cosmoshub", live_contract="osmo1hub"),
         ]
 
-        bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
+        done, bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
 
-        # The bundle's membership is fixed from day one: the unseeded pools are in it, with the bundle not ready.
-        self.assertEqual((bundle.title, bundle.members), ("bundle 1 of 1 · 4 pools · 1 of 4 created", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.axelar", "cosmoshub-4 stATOM.secret", "cosmoshub-4 stATOM.cosmoshub"]))
+        # The created pool is bundle 1, done; the unseeded pools are in bundle 2, with the bundle not ready.
+        self.assertEqual((done.title, done.done, done.members), ("bundle 1 of 2 · 1 pools · done", True, ["cosmoshub-4 stATOM.cosmoshub"]))
+        self.assertEqual((bundle.title, bundle.members), ("bundle 2 of 2 · 3 pools", ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.axelar", "cosmoshub-4 stATOM.secret"]))
         self.assertEqual((bundle.ready, bundle.reason), (False, "2 of 3 pools waiting on the test wallet: cosmoshub-4 stATOM.axelar, cosmoshub-4 stATOM.secret"))
         self.assertEqual(len(bundle.commands), 5)
-        self.assertIn("create-b1-03-statom-secret.unsigned.json", bundle.commands[0].text)
+        self.assertIn("create-b2-03-statom-secret.unsigned.json", bundle.commands[0].text)
         # A route with no instantiate message cannot be bundled; a created pool is simply done.
         self.assertTrue(waiting.reason.startswith("celestia pool creation: zone missing from the Pools snapshot; cosmoshub-4 stATOM.channel47: carbon-1 is not in config.HOLDER_CHAINS; "))
         self.assertNotIn("stATOM.cosmoshub", waiting.reason)
         self.assertEqual(waiting.title, "not in a bundle: 11 pools without a message yet")
-        self.assertIn("cosmoshub-4 stATOM.cosmoshub", bundle.members)  # created pools keep their place in the bundle
 
-    def test_a_bundle_whose_pools_all_exist_shows_as_done_and_a_partly_created_one_keeps_its_number(self) -> None:
+    def test_created_pools_are_a_done_bundle_and_the_rest_start_at_the_next_number(self) -> None:
         created = [planned_entry("canonical", "stATOM", CANONICAL_STATOM, live_contract="osmo1canon"), planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret", live_contract="osmo1secret")]
         (done, _) = creation_txs(pools_data=fake_pools(planned=created))
-        partly = created[:1] + [planned_entry("route", "stATOM.neutron", AXELAR_STATOM, stride_channel="channel-123", holder_name="neutron")]
-        (partial, _) = creation_txs(pools_data=fake_pools(planned=partly))
+        mixed = created[:1] + [planned_entry("route", "stATOM.neutron", AXELAR_STATOM, stride_channel="channel-123", holder_name="neutron")]
+        (first, second, _) = creation_txs(pools_data=fake_pools(planned=mixed))
 
         self.assertEqual((done.title, done.done, done.ready, done.reason, done.commands), ("bundle 1 of 1 · 2 pools · done", True, False, None, []))
         self.assertEqual(done.members, ["cosmoshub-4 stATOM", "cosmoshub-4 stATOM.secret"])
-        self.assertEqual((partial.title, partial.done, partial.ready), ("bundle 1 of 1 · 2 pools · 1 of 2 created", False, True))
-        self.assertIn("create-b1-01-statom-neutron.unsigned.json", partial.commands[0].text)
-        self.assertNotIn("statom.unsigned.json", partial.commands[0].text.replace("statom-neutron", ""))
-        self.assertIn("(1 messages, --gas 1600000)", partial.commands[0].label)
+        self.assertEqual((first.title, first.done, first.members), ("bundle 1 of 2 · 1 pools · done", True, ["cosmoshub-4 stATOM"]))
+        self.assertEqual((second.title, second.done, second.ready, second.members), ("bundle 2 of 2 · 1 pools", False, True, ["cosmoshub-4 stATOM.neutron"]))
+        self.assertIn("create-b2-01-statom-neutron.unsigned.json", second.commands[0].text)
+        self.assertIn("(1 messages, --gas 1600000)", second.commands[0].label)
 
-    def test_bundle_sizes_split_the_open_pools_in_zone_order_then_the_cap(self) -> None:
-        planned = [planned_entry("route", f"stATOM.r{index}", AXELAR_STATOM, stride_channel=f"channel-{index}", holder_name="x") for index in range(5)]
+    def test_created_pools_keep_bundle_one_and_the_rest_follow_the_zone_groups(self) -> None:
+        def zone(chain_id: str, *plans: dict[str, object]) -> dict[str, object]:
+            return {"chain_id": chain_id, "pools": [], "planned": list(plans), "creation_fee": CREATION_FEE, "vault_fee_balance": "400000000", "creation_fee_short": False}
 
-        with mock.patch.object(config, "CREATE_POOL_BUNDLE_SIZES", (2, 1)):
-            txs = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="400000000"))
+        data = {"zones": [
+            zone(COSMOS, planned_entry("canonical", "stATOM", CANONICAL_STATOM, live_contract="osmo1a"), planned_entry("route", "stATOM.secret", AXELAR_STATOM, stride_channel="channel-40", holder_name="secret")),
+            zone("osmosis-1", planned_entry("canonical", "stOSMO", CANONICAL_STATOM)),
+            zone("juno-1", planned_entry("canonical", "stJUNO", CANONICAL_STATOM, live_contract="osmo1b")),
+            zone("ssc-1", planned_entry("canonical", "stSAGA", CANONICAL_STATOM)),
+        ]}
+        with mock.patch.object(config, "CREATE_POOL_BUNDLE_ZONES", (("osmosis-1",), ("ssc-1", COSMOS))):
+            txs = creation_txs(pools_data=data)
 
-        self.assertEqual([tx.members for tx in txs[:-1]], [["cosmoshub-4 stATOM.r0", "cosmoshub-4 stATOM.r1"], ["cosmoshub-4 stATOM.r2"], ["cosmoshub-4 stATOM.r3", "cosmoshub-4 stATOM.r4"]])
-        self.assertEqual([tx.title for tx in txs[:-1]], ["bundle 1 of 3 · 2 pools", "bundle 2 of 3 · 1 pools", "bundle 3 of 3 · 2 pools"])
+        self.assertEqual([(tx.title, tx.members) for tx in txs[:3]], [
+            ("bundle 1 of 3 · 2 pools · done", ["cosmoshub-4 stATOM", "juno-1 stJUNO"]),
+            ("bundle 2 of 3 · 1 pools", ["osmosis-1 stOSMO"]),
+            ("bundle 3 of 3 · 2 pools", ["ssc-1 stSAGA", "cosmoshub-4 stATOM.secret"]),
+        ])
 
     def test_blocked_pools_form_the_last_bundle_and_are_never_ready(self) -> None:
         planned = [
@@ -722,8 +732,9 @@ class PoolCreationTest(unittest.TestCase):
 
             return {"zones": [zone(COSMOS, "stATOM"), zone("juno-1", "stJUNO")]}
 
-        short = creation_txs(two_zone_pools("20000000"))[0]
-        enough = creation_txs(two_zone_pools("40000000"))[0]
+        with mock.patch.object(config, "CREATE_POOL_BUNDLE_ZONES", ()):
+            short = creation_txs(two_zone_pools("20000000"))[0]
+            enough = creation_txs(two_zone_pools("40000000"))[0]
 
         self.assertEqual((short.title, short.members), ("bundle 1 of 1 · 2 pools", ["cosmoshub-4 stATOM", "juno-1 stJUNO"]))
         self.assertEqual((short.ready, short.reason), (False, "vault holds 20 allUSDC, needs 20 × 2 = 40 allUSDC: top it up first"))

@@ -101,9 +101,13 @@ POOL_MODERATOR = "osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpg
 POOL_SEED_ADDRESS = "osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe"
 # Holder chains whose routes cannot be seeded yet: their pools wait in the last creation bundle and the Pools tab marks
 # them blocked, and the zone's readiness ignores them until the block is lifted.
-# How the open (not blocked) pools, in zone order, split into creation bundles: these sizes first, then 18 at a time.
-# 18 was the first bundle (created 2026-10-08); the remaining eleven were split down the middle (decided 2026-10-08).
-CREATE_POOL_BUNDLE_SIZES: tuple[int, ...] = (18, 6, 5)
+# The creation bundles after the pools already created (which keep their bundle): one bundle per zone group, in this
+# order (decided 2026-10-08: band, osmosis, phoenix; then sommelier, saga, hub, haqq, injective). Pools of zones not
+# listed here follow in zone order, 18 at a time.
+CREATE_POOL_BUNDLE_ZONES: tuple[tuple[str, ...], ...] = (
+    ("laozi-mainnet", "osmosis-1", "phoenix-1"),
+    ("sommelier-3", "ssc-1", "cosmoshub-4", "haqq_11235-1", "injective-1"),
+)
 BLOCKED_HOLDER_CHAINS: dict[str, str] = {
     "injective-1": "Osmosis's rate limiter rejects stToken transfers from Injective: waiting on the Osmosis team",
 }
