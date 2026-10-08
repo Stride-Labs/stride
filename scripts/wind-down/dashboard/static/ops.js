@@ -363,7 +363,7 @@ function multisigLinks(step) {
 // A set whose txs are not grouped by zone (the pool-creation bundles span every zone) gets one link to the set.
 function setHasZone(setId, zone) {
   const set = live.multisig && live.multisig.data.sets.find((candidate) => candidate.id === setId);
-  return !set || set.txs.some((tx) => tx.chain_id === zone);
+  return Boolean(set) && set.txs.some((tx) => tx.chain_id === zone);
 }
 
 function multisigLink(setId, zone) {

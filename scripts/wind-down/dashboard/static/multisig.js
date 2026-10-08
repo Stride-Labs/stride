@@ -111,8 +111,7 @@ function setHtml(set) {
 // The keyring note and the files to share are the same shape for every tx of a set, so they are said once here
 // rather than on every card. Both come from the first tx that has commands (a tx waiting on a snapshot has none).
 function setNotesHtml(set) {
-  const first = set.txs.find((tx) => tx.commands.length);
-  if (!first) return '';
+  const first = set.txs.find((tx) => tx.commands.length) || { commands: [], files: [] };
   const signLabel = (first.commands.find(isSignCommand) || { label: '' }).label;
   const keyring = keyringNote(signLabel);
   const note = keyring ? `<div class="ms-note muted">signing ${escapeHtml(keyring)}</div>` : '';
@@ -120,7 +119,9 @@ function setNotesHtml(set) {
   const files = first.files.length
     ? `<div class="ms-note muted">share between people (Slack), ${perTx}${first.files.map((file) => `<span class="mono">${escapeHtml(file)}</span>`).join(', ')}</div>`
     : '';
-  return note || files ? `<div class="ms-notes">${note}${files}</div>` : '';
+  const bullets = (set.notes || []).map((line) => `<li>${escapeHtml(line)}</li>`).join('');
+  if (!bullets && !note && !files) return '';
+  return `<details class="ms-notes"><summary class="muted">details</summary>${bullets ? `<ul>${bullets}</ul>` : ''}${note}${files}</details>`;
 }
 
 // The "needs the F5 multisig key in your keyring: ..." clause the server appends to every sign label.

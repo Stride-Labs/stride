@@ -185,7 +185,7 @@ class SetsTest(unittest.TestCase):
         payload = multisig.tx_sets(validators_data=fake_snapshot(), funds_data=None, pools_data=None)[1].payload()
 
         json.dumps(payload)
-        self.assertEqual(set(payload), {"id", "step_id", "title", "description", "txs"})
+        self.assertEqual(set(payload), {"id", "step_id", "title", "description", "notes", "txs"})
         self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files"})
         self.assertEqual(set(payload["txs"][0]["commands"][0]), {"tag", "label", "text"})
 
@@ -644,7 +644,7 @@ class PoolCreationTest(unittest.TestCase):
             planned_entry("route", "stATOM.cosmoshub", AXELAR_STATOM, stride_channel="channel-0", holder_name="cosmoshub", live_contract="osmo1hub"),
         ]
 
-        bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="60000000"))
+        bundle, waiting = creation_txs(pools_data=fake_pools(planned=planned, vault_fee_balance="80000000"))
 
         # The bundle's membership is fixed from day one: the unseeded pools are in it, with the bundle not ready.
         self.assertEqual(bundle.title, "bundle 1 of 1 · 3 pools: cosmoshub-4 stATOM … cosmoshub-4 stATOM.secret")
@@ -660,7 +660,7 @@ class PoolCreationTest(unittest.TestCase):
         short = creation_txs(pools_data=fake_pools(creation_fee_short=True, vault_fee_balance="0"))[0]
         unknown = creation_txs(pools_data=fake_pools(creation_fee_short=None, creation_fee=None, vault_fee_balance=None))[0]
 
-        self.assertEqual((short.ready, short.reason), (False, f"the vault holds 0 {ALLUSDC}, below 20000000 × 2 pools still to create across all zones: top it up first"))
+        self.assertEqual((short.ready, short.reason), (False, "vault holds 0 allUSDC, needs 20 × 2 = 40 allUSDC: top it up first"))
         self.assertEqual((unknown.ready, unknown.reason), (False, "the pool creation fee or the vault's balance of it is not known yet (see the Pools tab)"))
         self.assertTrue(all(len(tx.commands) == 5 for tx in (short, unknown)))
 
@@ -682,7 +682,7 @@ class PoolCreationTest(unittest.TestCase):
         enough = creation_txs(two_zone_pools("40000000"))[0]
 
         self.assertEqual(short.title, "bundle 1 of 1 · 2 pools: cosmoshub-4 stATOM … juno-1 stJUNO")
-        self.assertEqual((short.ready, short.reason), (False, f"the vault holds 20000000 {ALLUSDC}, below 20000000 × 2 pools still to create across all zones: top it up first"))
+        self.assertEqual((short.ready, short.reason), (False, "vault holds 20 allUSDC, needs 20 × 2 = 40 allUSDC: top it up first"))
         self.assertEqual((enough.ready, enough.reason), (True, None))
 
     def test_an_unseeded_pool_still_gets_its_bundle_and_a_missing_snapshot_only_the_waiting_tx(self) -> None:
@@ -695,17 +695,17 @@ class PoolCreationTest(unittest.TestCase):
         self.assertTrue(missing.reason.startswith("celestia pool creation: waiting for the Pools snapshot; "))
 
     def test_description_states_the_bundle_rules_the_fee_and_the_factor_rule(self) -> None:
-        with_fee = sets_by_id(None, pools_data=fake_pools())["pool-creation"].description
-        without = sets_by_id(None, pools_data=fake_pools(creation_fee=None))["pool-creation"].description
+        with_fee = sets_by_id(None, pools_data=fake_pools())["pool-creation"]
+        without = sets_by_id(None, pools_data=fake_pools(creation_fee=None))["pool-creation"]
+        notes = "\n".join(with_fee.notes)
 
-        self.assertIn("bundles of up to 18 MsgCreateCosmWasmPool", with_fee)
-        self.assertIn("1,500,000 per message plus 100,000", with_fee)
-        self.assertIn("priced at 0.1uosmo/gas", with_fee)
-        self.assertIn(f"pool_creation_fee per message (20000000{ALLUSDC} today) from the vault", with_fee)
-        self.assertIn("pool_creation_fee per message (not known yet today)", without)
-        self.assertIn("for all 2 pools still to create across every zone (one shared balance)", with_fee)
-        self.assertIn("the three 18-decimal zones (haqq, dYdX, Injective) use 1e6-scaled ones, rounded down", with_fee)
-        self.assertIn("generate and sign a bundle the same day", with_fee)
+        self.assertEqual(with_fee.description, "Create every planned pool on Osmosis from the vault, 18 pools per multisig tx.")
+        self.assertIn("Creation fee: 20 allUSDC per pool, paid by the vault; 2 pools still to create.", with_fee.notes)
+        self.assertIn("Creation fee: not known yet per pool, paid by the vault; 2 pools still to create.", without.notes)
+        self.assertIn("Gas 1,500,000 per message at 0.1uosmo/gas, about 3x the base fee", notes)
+        self.assertIn("1e6 for haqq, dYdX and Injective", notes)
+        self.assertIn("generate and sign a bundle the same day", notes)
+        self.assertEqual(with_fee.notes[-1], multisig.ONE_AT_A_TIME)
 
 
 class PoolFundingTest(unittest.TestCase):
@@ -854,18 +854,19 @@ class PoolFundingTest(unittest.TestCase):
                 self.assertEqual([(tx.ready, tx.reason, tx.commands, tx.files) for tx in txs], [(False, reason, [], [])])
 
     def test_description_states_the_order_and_the_osmo_fee_note(self) -> None:
-        description = pool_set(fake_pools()).description
+        tx_set = pool_set(fake_pools())
+        notes = "\n".join(tx_set.notes)
 
-        self.assertIn("every pool's test join first", description)
-        self.assertIn("then for each pool its rest join and its mark back to back", description)
-        self.assertIn("about 3 txs per pool at 0.15 OSMO each", description)
-        self.assertIn("(or the whole allocation when that is smaller)", description)
-        self.assertIn("once the Pools snapshot shows the test join as vault shares", description)
+        self.assertEqual(tx_set.description, "Fund each pool with a test join, then the rest of its allocation, then mark the native token corrupted.")
+        self.assertIn("every pool's test join first", notes)
+        self.assertIn("the rest join and the mark back to back", notes)
+        self.assertIn("about 0.15 OSMO per tx, three txs per pool", notes)
+        self.assertIn("once the Pools snapshot shows the test join as vault shares", notes)
 
     def test_transfers_description_states_the_in_flight_gate(self) -> None:
-        description = sets_by_id(None)["ica-transfers"].description
+        notes = "\n".join(sets_by_id(None)["ica-transfers"].notes)
 
-        self.assertIn("stays not ready while a transfer from that ICA is in flight", description)
+        self.assertIn("stays not ready while a transfer from that ICA is in flight", notes)
 
 
 class MultisigBodyTest(unittest.TestCase):

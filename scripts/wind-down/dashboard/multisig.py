@@ -56,6 +56,7 @@ CREATE_POOL_TX_OVERHEAD_GAS = 100_000
 CREATE_POOL_BUNDLE_SIZE = 18
 CREATION_GROUP = "all zones"  # the bundles span zones, so the tab shows them under one heading
 WAITING_SHOWN = 8  # pools listed by name in the waiting tx before "and N more"
+ONE_AT_A_TIME = "One tx at a time: generate, two signatures, multisign, broadcast, then confirm it landed before the next."
 POOL_KIND_UNRECOGNISED = "unrecognised"  # a pool no Stride channel backs: reported on the Pools tab, never funded
 POOL_KIND_CANONICAL = "canonical"
 
@@ -127,7 +128,8 @@ class TxSet:
     id: str
     step_id: str  # the ops step it belongs to
     title: str
-    description: str
+    description: str  # one sentence: what the set does
+    notes: list[str]  # short bullets behind a fold: order, gates, fees, gotchas
     txs: list[MultisigTx]  # in config.ZONES order, the txs of one zone contiguous and in the order they go out
 
     def payload(self) -> dict[str, Any]:
@@ -148,12 +150,11 @@ def tx_sets(
         id="live-test-undelegate",
         step_id="drain-live-test",
         title="Live test: undelegate one validator per zone",
-        description=(
-            "Per zone, MsgUndelegateFromValidators for the single live-test validator, a full drain of it. Watch the "
-            "ack and the callback: its recorded delegation drops to zero (dust, for a slashed validator) on the Validators tab and the Ops step's "
-            "check turns green once the unbonding entry lands. Do one tx at a time, end to end: generate, two "
-            "signatures, multisign and broadcast, then confirm it landed before starting the next zone."
-        ),
+        description="Drain one live-test validator per zone in full with MsgUndelegateFromValidators.",
+        notes=[
+            "Validators tab: its recorded delegation drops to zero (dust, if slashed); the Ops check turns green when the unbonding entry lands.",
+            ONE_AT_A_TIME,
+        ],
         txs=[
             _live_test_tx(zone=zone, snapshot_zone=zones_by_chain_id.get(zone.chain_id), snapshot_reason=snapshot_reason)
             for zone in config.ZONES
@@ -163,11 +164,8 @@ def tx_sets(
         id="full-drain",
         step_id="drain-rest",
         title="Full drain: undelegate every remaining validator",
-        description=(
-            "Per zone, MsgUndelegateFromValidators with --all for the validators left after the live test. Relay the "
-            "acks before the timeouts and wait for every batch to ack. Do one tx at a time, end to end: generate, two "
-            "signatures, multisign and broadcast, then confirm it landed before starting the next zone."
-        ),
+        description="Undelegate every validator left after the live test, per zone, with --all.",
+        notes=["Relay the acks before the timeouts and wait for every batch to ack.", ONE_AT_A_TIME],
         txs=[
             _full_drain_tx(zone=zone, snapshot_zone=zones_by_chain_id.get(zone.chain_id), snapshot_reason=snapshot_reason)
             for zone in config.ZONES
@@ -215,24 +213,17 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
         id="pool-creation",
         step_id="vote-pools-create",
         title="Pool creation: instantiate every planned transmuter pool",
-        description=(
-            "Osmosis, signed by the vault. Every planned pool on the Pools tab still to create goes into bundles of up "
-            f"to {CREATE_POOL_BUNDLE_SIZE} MsgCreateCosmWasmPool (code 996), zone by zone with the canonical pool first, "
-            "so the whole set is a few signing rounds instead of one per pool; a bundle is ready once the test wallet "
-            "holds every stToken denom in it and the vault can pay its fees. Generate: one create-pool per message "
-            "with identical flags, then the jq line merges the "
-            "messages into the bundle's unsigned tx, which is what gets signed and broadcast. Gas is "
-            f"{CREATE_POOL_MSG_GAS:,} per message plus {CREATE_POOL_TX_OVERHEAD_GAS:,} (the 09-25 creations used 1.44M "
-            f"each), priced at {OSMOSIS_GAS_PRICE}/gas, about 3x the EIP-1559 base fee, since a bundle whose fee falls "
-            "below the base fee at broadcast is rejected and must be re-signed. Creation pays the poolmanager "
-            f"pool_creation_fee per message ({fee} today) from the vault, which must hold it in that denom for all "
-            f"{pools_to_create} pools still to create across every zone (one shared balance): top it up first. "
-            "Pool ids are assigned in message order (the tx's pool_created events carry msg_index). Six-decimal zones "
-            "use 1e18-scaled factors; the three 18-decimal zones (haqq, dYdX, Injective) use 1e6-scaled ones, rounded "
-            "down, because 1e18 overflows the transmuter's Uint128 on their supply. The rate is read live when this "
-            "page renders, so generate and sign a bundle the same day. A failing message reverts the whole bundle: "
-            "confirm every pool landed on the Pools tab before the next bundle."
-        ),
+        description=f"Create every planned pool on Osmosis from the vault, {CREATE_POOL_BUNDLE_SIZE} pools per multisig tx.",
+        notes=[
+            "A bundle is ready once the test wallet holds every stToken denom in it and the vault can pay its fees.",
+            f"Creation fee: {fee} per pool, paid by the vault; {pools_to_create} pools still to create.",
+            "Generate one create-pool per message, then the jq line merges them into the bundle's unsigned tx: that is what gets signed and broadcast.",
+            f"Gas {CREATE_POOL_MSG_GAS:,} per message at {OSMOSIS_GAS_PRICE}/gas, about 3x the base fee: a cheaper tx is rejected at broadcast and must be re-signed.",
+            "Factors: 1e18 scale for six-decimal zones; 1e6 for haqq, dYdX and Injective (1e18 overflows the contract on their supply).",
+            "The rate is read when this page renders: generate and sign a bundle the same day.",
+            "A failing message reverts the whole bundle; pool ids follow message order. Confirm on the Pools tab before the next bundle.",
+            ONE_AT_A_TIME,
+        ],
         txs=[
             *(
                 _bundle_tx(index=index, total=len(bundles), bundle=bundle, fee_reason=fee_reason)
@@ -322,7 +313,7 @@ def _creation_fee_text(pools_zones: dict[str, dict[str, Any]]) -> str:
     """The live creation fee as any zone reports it, for the set description."""
     fees = [zone.get("creation_fee") for zone in pools_zones.values()]
     fee = next((fee for fee in fees if fee), None)
-    return f"{fee['amount']}{fee['denom']}" if fee else "not known yet"
+    return f"{_whole_units(amount=int(fee['amount']))} {_denom_label(denom=fee['denom'])}" if fee else "not known yet"
 
 
 def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
@@ -331,16 +322,14 @@ def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
         id="ica-transfers",
         step_id="transfers",
         title="ICA transfers: send every ICA's balance to the Osmosis vault",
-        description=(
-            "Per zone, MsgTransferFromIca for the FEE, WITHDRAWAL, DELEGATION and REDEMPTION ICAs, in that order. Each "
-            "ICA gets a test tx of one whole token first, then the rest tx for its live balance: the amount is read "
-            "from the Funds snapshot when the page loads, and the rest tx stays not ready while a transfer from that "
-            "ICA is in flight, since the balance it shows predates the landing. A foreign denom an ICA holds (dYdX's "
-            "USDC voucher) is its own tx for its full balance, and one is generated for every non-zero denom the ICA holds, spam "
-            "tokens included: skip any that is not worth a signing round. The "
-            "transfers time out after 24h; a refund means resubmit. Do one tx at a time, end to end: generate, two "
-            "signatures, multisign and broadcast, then confirm it landed before starting the next."
-        ),
+        description="Send each zone's FEE, WITHDRAWAL, DELEGATION and REDEMPTION ICA balance to the Osmosis vault, in that order.",
+        notes=[
+            "Per ICA: a one-token test tx first, then the rest tx for the live balance once the test has settled.",
+            "The rest amount comes from the Funds snapshot and stays not ready while a transfer from that ICA is in flight.",
+            "A foreign denom an ICA holds (dYdX's USDC, spam tokens) is its own tx: skip any not worth a signing round.",
+            "24h timeout: a refund means resubmit.",
+            ONE_AT_A_TIME,
+        ],
         txs=[
             tx
             for zone in config.ZONES
@@ -355,11 +344,8 @@ def _staketia_claim_balance_set() -> TxSet:
         id="staketia-claim-balance",
         step_id="tia-claim-balance",
         title="Staketia claim balance: move the claim address's TIA to the celestia delegation ICA",
-        description=(
-            "MsgTransferStaketiaClaimBalance for celestia: 1 TIA as the test, then amount 0 for the whole remainder. "
-            "The TIA lands on the celestia delegation ICA and leaves with the DELEGATION transfer. Do one tx at a "
-            "time, end to end: generate, two signatures, multisign and broadcast, then confirm it landed."
-        ),
+        description="Move the staketia claim address's TIA to the celestia delegation ICA: 1 TIA as the test, then amount 0 for the rest.",
+        notes=["The TIA leaves Celestia with the DELEGATION transfer.", ONE_AT_A_TIME],
         txs=[
             _staketia_tx(zone=zone, label="test", amount=STAKETIA_TEST_AMOUNT, title_amount="1 TIA"),
             _staketia_tx(zone=zone, label="rest", amount=0, title_amount="the whole remainder (amount 0)"),
@@ -373,17 +359,14 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
         id="pool-funding",
         step_id="join-pools",
         title="Pool funding: join and close every transmuter pool",
-        description=(
-            "Osmosis, signed by the vault. Per pool (the canonical one first): a test join of one whole native token "
-            "(or the whole allocation when that is smaller), the rest of the allocation once the Pools snapshot shows "
-            "the test join as vault shares, then mark_corrupted_assets for the native token. Order per zone: every "
-            "pool's test join first, then verify on the Pools tab (native one token, vault shares one token, no "
-            "outside shares, rate exact), then for each pool its rest join and its mark back to back, since the mark "
-            "closes "
-            "the window in which an outsider could join. The vault needs OSMO for about 3 txs per pool at 0.15 OSMO "
-            "each. Do one tx at a time, end to end: generate, two signatures, multisign and broadcast, then confirm "
-            "it landed."
-        ),
+        description="Fund each pool with a test join, then the rest of its allocation, then mark the native token corrupted.",
+        notes=[
+            "Per zone: every pool's test join first, then verify on the Pools tab (native one token, vault shares one token, no outside shares, rate exact).",
+            "Then per pool: the rest join and the mark back to back; the mark closes the window in which an outsider could join.",
+            "The rest join is ready once the Pools snapshot shows the test join as vault shares.",
+            "The vault needs about 0.15 OSMO per tx, three txs per pool.",
+            ONE_AT_A_TIME,
+        ],
         txs=[
             tx
             for zone in config.ZONES
@@ -583,10 +566,22 @@ def _creation_fee_reason(pools_zones: dict[str, dict[str, Any]], pools_to_create
         return "the pool creation fee or the vault's balance of it is not known yet (see the Pools tab)"
     if int(balance) >= int(fee["amount"]) * pools_to_create:
         return None
+    label = _denom_label(denom=fee["denom"])
     return (
-        f"the vault holds {balance} {fee['denom']}, below {fee['amount']} × {pools_to_create} pools still to create "
-        "across all zones: top it up first"
+        f"vault holds {_whole_units(amount=int(balance))} {label}, needs {_whole_units(amount=int(fee['amount']))} × "
+        f"{pools_to_create} = {_whole_units(amount=int(fee['amount']) * pools_to_create)} {label}: top it up first"
     )
+
+
+def _denom_label(denom: str) -> str:
+    """`allUSDC` for a tokenfactory denom, the denom itself otherwise."""
+    return denom.rsplit("/", 1)[-1] if denom.startswith("factory/") else denom
+
+
+def _whole_units(amount: int) -> str:
+    """Six-decimal base units as whole tokens (the fee denoms, allUSDC and uosmo, are six-decimal)."""
+    whole, rest = divmod(amount, 10**6)
+    return f"{whole:,}" if rest == 0 else f"{whole:,}.{rest:06d}".rstrip("0")
 
 
 def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> list[MultisigTx]:
