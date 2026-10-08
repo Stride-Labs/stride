@@ -180,6 +180,8 @@ def tx_sets(
 
 def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
     pools_zones = _zones_by_chain_id(data=pools_data)
+    pools_to_create = _pools_to_create(pools_zones=pools_zones)
+    fee_reason = _creation_fee_reason(pools_zones=pools_zones, pools_to_create=pools_to_create)
     return TxSet(
         id="pool-creation",
         step_id="vote-pools-create",
@@ -189,7 +191,7 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
             "the canonical pool first then one per route, with the exact denoms and factors in the instantiate "
             "message. Creation pays the poolmanager pool_creation_fee per pool "
             f"({_creation_fee_text(pools_zones=pools_zones)} today) from the vault, which must hold it in that "
-            "denom: top it up first. Six-decimal zones use 1e18-scaled factors; the three 18-decimal zones (haqq, "
+            f"denom for all {pools_to_create} pools still to create across every zone (one shared balance): top it up first. Six-decimal zones use 1e18-scaled factors; the three 18-decimal zones (haqq, "
             "dYdX, Injective) use 1e6-scaled ones, rounded down, because 1e18 overflows the transmuter's Uint128 on "
             "their supply. The rate is read live when this page renders, so a pool created tomorrow carries "
             "tomorrow's rate: copy the command the day you sign it. A route pool's stToken denom must have supply "
@@ -199,7 +201,9 @@ def _pool_creation_set(pools_data: dict[str, Any] | None) -> TxSet:
         txs=[
             tx
             for zone in config.ZONES
-            for tx in _pool_creation_txs(zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data)
+            for tx in _pool_creation_txs(
+                zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data, fee_reason=fee_reason
+            )
         ],
     )
 
@@ -437,7 +441,7 @@ def _stride_generate_line(subcommand: str, file_stem: str) -> str:
 
 
 def _pool_creation_txs(
-    zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None
+    zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None, fee_reason: str | None
 ) -> list[MultisigTx]:
     """One create-pool tx per planned pool, canonical first; one not-ready tx when the snapshot has none."""
     snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
@@ -446,7 +450,6 @@ def _pool_creation_txs(
         reason = snapshot_reason or "no planned pool in the Pools snapshot"
         return [_empty_pool_tx(zone=zone, label="pool creation", reason=reason)]
 
-    fee_reason = _creation_fee_reason(pools_zone=pools_zone)
     return [_create_pool_tx(zone=zone, plan=plan, fee_reason=fee_reason) for plan in planned]
 
 
@@ -489,16 +492,29 @@ def _creation_reason(plan: dict[str, Any], fee_reason: str | None) -> str | None
     return fee_reason
 
 
-def _creation_fee_reason(pools_zone: dict[str, Any]) -> str | None:
-    short = pools_zone.get("creation_fee_short")
-    if short is None:
+def _pools_to_create(pools_zones: dict[str, dict[str, Any]]) -> int:
+    """Planned pools without a live contract across every readable zone: they all draw on the one vault balance."""
+    return sum(
+        1
+        for zone in pools_zones.values()
+        if not zone.get("error")
+        for plan in zone.get("planned") or []
+        if not plan["live_contract"]
+    )
+
+
+def _creation_fee_reason(pools_zones: dict[str, dict[str, Any]], pools_to_create: int) -> str | None:
+    """The vault pays every zone's fees from one balance, so the gate is the fee x all pools still to create."""
+    readable = [zone for zone in pools_zones.values() if not zone.get("error")]
+    fee = next((zone["creation_fee"] for zone in readable if zone.get("creation_fee")), None)
+    balance = next((zone["vault_fee_balance"] for zone in readable if zone.get("vault_fee_balance") is not None), None)
+    if fee is None or balance is None:
         return "the pool creation fee or the vault's balance of it is not known yet (see the Pools tab)"
-    if not short:
+    if int(balance) >= int(fee["amount"]) * pools_to_create:
         return None
-    fee = pools_zone["creation_fee"]
     return (
-        f"the vault holds {pools_zone['vault_fee_balance']} {fee['denom']}, below {fee['amount']} per pool still to "
-        "create: top it up first"
+        f"the vault holds {balance} {fee['denom']}, below {fee['amount']} × {pools_to_create} pools still to create "
+        "across all zones: top it up first"
     )
 
 

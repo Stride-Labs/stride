@@ -68,7 +68,7 @@ exactly the test join as vault shares (and never goes on a pool funded exactly).
 The sets, in order: `pool-creation` (Osmosis, step `vote-pools-create`: one `osmosisd tx cosmwasmpool create-pool 996
 '<instantiate_msg>'` per planned pool from the Pools snapshot, canonical first, at the live rate; not ready while the
 route is unresolved, the pool already exists, its stToken denom has no supply on Osmosis, or the vault cannot pay the
-poolmanager creation fee for the pools still to create), `live-test-undelegate`, `full-drain`, `ica-transfers`,
+poolmanager creation fee times the pools still to create across all zones, the vault's one shared balance), `live-test-undelegate`, `full-drain`, `ica-transfers`,
 `staketia-claim-balance`, `pool-funding`.
 
 ## Channels tab

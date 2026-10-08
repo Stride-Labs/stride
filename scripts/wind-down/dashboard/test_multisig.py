@@ -634,13 +634,36 @@ class PoolCreationTest(unittest.TestCase):
 
         self.assertEqual(
             {(tx.ready, tx.reason) for tx in short},
-            {(False, f"the vault holds 0 {ALLUSDC}, below 20000000 per pool still to create: top it up first")},
+            {(False, f"the vault holds 0 {ALLUSDC}, below 20000000 × 2 pools still to create across all zones: top it up first")},
         )
         self.assertEqual(
             {(tx.ready, tx.reason) for tx in unknown},
             {(False, "the pool creation fee or the vault's balance of it is not known yet (see the Pools tab)")},
         )
         self.assertTrue(all(len(tx.commands) == 5 for tx in short + unknown))
+
+    def test_the_fee_gate_counts_pools_across_zones_against_the_one_vault_balance(self) -> None:
+        def two_zone_pools(balance: str) -> dict[str, object]:
+            def zone(chain_id: str, subdenom: str) -> dict[str, object]:
+                return {
+                    "chain_id": chain_id,
+                    "pools": [],
+                    "planned": [planned_entry("canonical", subdenom, CANONICAL_STATOM)],
+                    "creation_fee": CREATION_FEE,
+                    "vault_fee_balance": balance,
+                    "creation_fee_short": False,
+                }
+
+            return {"zones": [zone(COSMOS, "stATOM"), zone("juno-1", "stJUNO")]}
+
+        short = creation_txs(COSMOS, two_zone_pools("20000000")) + creation_txs("juno-1", two_zone_pools("20000000"))
+        enough = creation_txs(COSMOS, two_zone_pools("40000000")) + creation_txs("juno-1", two_zone_pools("40000000"))
+
+        self.assertEqual(
+            [(tx.ready, tx.reason) for tx in short],
+            [(False, f"the vault holds 20000000 {ALLUSDC}, below 20000000 × 2 pools still to create across all zones: top it up first")] * 2,
+        )
+        self.assertEqual([(tx.ready, tx.reason) for tx in enough], [(True, None)] * 2)
 
     def test_the_error_outranks_created_which_outranks_seeding_which_outranks_the_fee(self) -> None:
         created_and_unseeded = planned_entry("canonical", "stATOM", CANONICAL_STATOM, seeded=False, live_contract="osmo1x")
@@ -667,6 +690,7 @@ class PoolCreationTest(unittest.TestCase):
 
         self.assertIn(f"pool_creation_fee per pool (20000000{ALLUSDC} today) from the vault", with_fee)
         self.assertIn("pool_creation_fee per pool (not known yet today)", without)
+        self.assertIn("for all 2 pools still to create across every zone (one shared balance)", with_fee)
         self.assertIn("the three 18-decimal zones (haqq, dYdX, Injective) use 1e6-scaled ones, rounded down", with_fee)
         self.assertIn("so a pool created tomorrow carries tomorrow's rate", with_fee)
 
