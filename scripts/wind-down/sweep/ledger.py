@@ -82,8 +82,9 @@ def confirmed(batch_id: str, tx_hash: str, at: str, height: int, gas_used: int, 
                  transfers=list(transfers), skipped=list(skipped))
 
 
-def failed(batch_id: str, tx_hash: str, at: str, code: int, codespace: str, raw_log: str) -> Event:
-    return Event(kind=Kind.FAILED, batch_id=batch_id, at=at, tx_hash=tx_hash, code=code, codespace=codespace, raw_log=raw_log)
+def failed(batch_id: str, tx_hash: str, at: str, code: int, codespace: str, raw_log: str, run_id: int | None = None) -> Event:
+    """`run_id` is set for a broadcast rejection (no `submitted` line carries it), so `latest_run_id` still sees the run."""
+    return Event(kind=Kind.FAILED, batch_id=batch_id, at=at, run_id=run_id, tx_hash=tx_hash, code=code, codespace=codespace, raw_log=raw_log)
 
 
 def lost(batch_id: str, tx_hash: str, at: str) -> Event:

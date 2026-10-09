@@ -29,6 +29,13 @@ class LedgerFileTests(unittest.TestCase):
         self.assertEqual(ledger.read(path=self.path), [submitted, confirmed])
         self.assertEqual(len(self.path.read_text().splitlines()), 2)
 
+    def test_failed_event_keeps_an_optional_run_id(self) -> None:
+        rejected = ledger.failed(batch_id="001-001", tx_hash="AB", at="t", code=13, codespace="sdk", raw_log="fee", run_id=4)
+        ledger.append(event=rejected, path=self.path)
+        self.assertEqual(ledger.read(path=self.path), [rejected])
+        self.assertEqual(ledger.latest_run_id(events=[rejected]), 4)
+        self.assertIsNone(ledger.failed(batch_id="001-001", tx_hash="AB", at="t", code=5, codespace="sdk", raw_log="x").run_id)
+
     def test_truncated_line_is_reported_with_its_number(self) -> None:
         ledger.append(event=ledger.lost(batch_id="001-001", tx_hash="AB", at="t"), path=self.path)
         with self.path.open("a") as handle:
