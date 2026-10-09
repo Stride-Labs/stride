@@ -17,10 +17,15 @@ A `plan` reads every holder of the nineteen sweep denoms and takes about six min
 ## The test (after the 10-12 upgrade, before the sweep)
 
     python3 scripts/wind-down/sweep/cli.py plan --test     # one batch: stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg
+    python3 scripts/wind-down/sweep/cli.py run --dry-run   # gas estimates only
     python3 scripts/wind-down/sweep/cli.py run
 
-Then check the same bytes under `osmo1…` hold the stToken and STRD and under `cosmos1…` the ATOM, and that the Sweep
-tab shows the batch confirmed. The test batch also calibrates gas per transfer for the real run.
+The address already holds what the test needs: STRD and stTIA (Stride-native, to Osmosis over channel-5) and a TIA
+voucher (back to Celestia over channel-162), plus dust of most other stTokens; every sweepable denom it holds moves.
+Then check the same bytes under `osmo1nwyvkxm89yg8e3fyxgruyct4zp90mg4n5x5jak` hold the STRD and stTokens and under
+`celestia1nwyvkxm89yg8e3fyxgruyct4zp90mg4ndhkj3f` the TIA, and that the Sweep tab shows the batch confirmed. The test
+batch also calibrates gas per transfer for the real run. The exact command list, with the balance checks, is the
+`sweep-test` step on the Ops tab.
 
 ## Sweep day
 
