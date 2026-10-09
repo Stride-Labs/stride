@@ -517,15 +517,51 @@ class PoolsTest(unittest.TestCase):
         self.assertEqual(assigned, {"cosmoshub-4": []})
 
 
-class PayloadTest(unittest.TestCase):
-    def test_every_int_becomes_a_string_but_bools_and_none_survive(self) -> None:
-        payload = funds._stringify_ints(
-            {"a": 10**26, "b": [1, {"c": None}], "d": True, "e": "x"}
-        )
+class PoolRateTest(unittest.TestCase):
+    def test_rate_is_native_factor_over_st_factor(self) -> None:
+        pool = raw_pool(contract="osmo1pool", assets={INJ_ON_OSMOSIS: 0, CANONICAL_STINJ: 0}, base_denoms={INJ_ON_OSMOSIS: "inj", CANONICAL_STINJ: "stinj"})
+        pool = funds.RawPool(**{**pool.__dict__, "factors": {INJ_ON_OSMOSIS: 1545253821149464735, CANONICAL_STINJ: 10**18}})
 
-        self.assertEqual(
-            payload, {"a": str(10**26), "b": ["1", {"c": None}], "d": True, "e": "x"}
-        )
+        self.assertEqual(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[CANONICAL_STINJ]), "1.545253821149464735")
+        self.assertIsNone(funds.pool_rate(pool=pool, native_denom="ibc/OTHER", st_denoms=[CANONICAL_STINJ]))
+        self.assertIsNone(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[]))
+
+    def test_rate_is_the_same_at_the_1e6_scale(self) -> None:
+        # The 18-decimal zones' pools are created with 1e6-scaled factors (1e18-scaled ones overflow the transmuter).
+        pool = raw_pool(contract="osmo1pool", assets={INJ_ON_OSMOSIS: 0, CANONICAL_STINJ: 0}, base_denoms={INJ_ON_OSMOSIS: "inj", CANONICAL_STINJ: "stinj"})
+        pool = funds.RawPool(**{**pool.__dict__, "factors": {INJ_ON_OSMOSIS: 1_545_254, CANONICAL_STINJ: 1_000_000}})
+
+        self.assertEqual(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[CANONICAL_STINJ]), "1.545254000000000000")
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="1.545254", pool_rate="1.545254000000000000"), "0.0000")
+
+    def test_gap_is_the_frozen_rate_over_the_pool_rate(self) -> None:
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="1.1764", pool_rate="1.1751"), "0.1106")
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="2.0", pool_rate="2.0"), "0.0000")
+        self.assertIsNone(funds.rate_gap_pct(redemption_rate="2.0", pool_rate=None))
+
+    def test_zone_rate_comes_from_the_canonical_pool(self) -> None:
+        canonical = funds.Pool(contract="a", kind=funds.PoolKind.CANONICAL, alloyed_denom="x", native=0, st_denom="s", st_amount=0, rate="1.5")
+        route = funds.Pool(contract="b", kind=funds.PoolKind.ROUTE, alloyed_denom="y", native=0, st_denom="s", st_amount=0, rate="1.5")
+        self.assertEqual(funds.pool_rate_of(pools=[route, canonical]), "1.5")
+        self.assertIsNone(funds.pool_rate_of(pools=[route]))
+        self.assertIsNone(funds.pool_rate_of(pools=None))
+
+
+class PayloadTest(unittest.TestCase):
+    def test_collect_serialises_every_int_through_the_shared_helper(self) -> None:
+        host_zones = {"host_zone": []}
+
+        with (
+            mock.patch.object(chain, "rest_get", return_value=host_zones),
+            mock.patch.object(funds, "_osmosis_snapshot", return_value=funds.OsmosisSnapshot(vault_balances={}, pools=[])),
+            mock.patch.object(chain, "rest_get_all_pages", return_value=[]),
+            mock.patch.object(config, "ZONES", ()),
+            mock.patch.object(funds, "_balances", return_value={"ustrd": 10**26}),
+        ):
+            payload = funds.collect()
+
+        self.assertEqual(payload["zones"], [])
+        self.assertEqual([operator["liquid"] for operator in payload["operators"]], [str(10**26)] * 3)
 
     def test_zone_denoms_follow_the_osmosis_side_channel(self) -> None:
         side = host_side(
@@ -583,6 +619,7 @@ class ZoneRecordsTest(unittest.TestCase):
         )
         self.assertEqual(zone.pending_before_claimable, 5)
         self.assertFalse(zone.delegation_transfer_ready)
+        self.assertEqual(zone.queued_or_retrying, 3)  # 2 queued + 1 retrying; in-progress and exit-transfer do not block the drain
 
     def test_claimable_and_empty_entries_do_not_block_the_delegation_transfer(self) -> None:
         zone = self.records(
@@ -593,6 +630,7 @@ class ZoneRecordsTest(unittest.TestCase):
 
         self.assertEqual(zone.pending_before_claimable, 0)
         self.assertTrue(zone.delegation_transfer_ready)
+        self.assertEqual(zone.queued_or_retrying, 0)
 
     def test_redemption_transfer_needs_no_records_and_no_pending_claims(self) -> None:
         clean = self.records()
@@ -732,6 +770,80 @@ class ZoneAssemblyTest(unittest.TestCase):
 
         self.assertEqual(zone.accounts[1].other_balances, [funds.Balance(denom="ibc/USDC", amount=5)])
         self.assertEqual(zone.accounts[0].other_balances, [])
+
+
+class SettledAndLandedTest(unittest.TestCase):
+    def stages(self, staked: int = 0, unbonding: int = 0, in_flight: int | None = 0) -> funds.Stages:
+        return funds.Stages(staked=staked, unbonding=unbonding, liquid=0, in_flight=in_flight, vault=None, pools=None)
+
+    def test_settled_when_staked_is_dust_and_nothing_unbonds_or_flies(self) -> None:
+        self.assertTrue(funds.is_funds_settled(stages=self.stages(staked=999_999), decimals=6))
+
+    def test_settled_dust_is_below_one_whole_token_of_the_zones_decimals(self) -> None:
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(staked=10**6), decimals=6))
+        self.assertTrue(funds.is_funds_settled(stages=self.stages(staked=10**6), decimals=18))
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(staked=10**18), decimals=18))
+
+    def test_not_settled_while_unbonding_or_in_flight(self) -> None:
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(unbonding=1), decimals=6))
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(in_flight=1), decimals=6))
+
+    def test_settled_is_unknown_without_the_in_flight_amount(self) -> None:
+        self.assertIsNone(funds.is_funds_settled(stages=self.stages(in_flight=None), decimals=6))
+
+    def test_landed_when_every_ica_is_dust_and_nothing_flies(self) -> None:
+        balances = ica_balances(delegation=999_999, withdrawal=1, fee=0, redemption=500_000)
+
+        self.assertTrue(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_not_landed_while_any_ica_holds_a_whole_token(self) -> None:
+        for holder in ("delegation", "withdrawal", "fee", "redemption"):
+            balances = ica_balances(**{holder: 10**6})
+
+            self.assertFalse(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_foreign_denoms_do_not_hold_up_landing(self) -> None:
+        # ica_balances() gives the withdrawal ICA 5 of ibc/USDC and, below, a large foreign balance changes nothing.
+        balances = {**ica_balances(), funds.IcaType.FEE: {"uatom": 0, "ibc/USDC": 10**9}}
+
+        self.assertTrue(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_not_landed_while_a_transfer_is_in_flight(self) -> None:
+        self.assertFalse(funds.is_transfers_landed(ica_balances=ica_balances(), host_denom="uatom", decimals=6, in_flight=3))
+
+    def test_landed_is_unknown_without_the_in_flight_amount(self) -> None:
+        self.assertIsNone(funds.is_transfers_landed(ica_balances=ica_balances(), host_denom="uatom", decimals=6, in_flight=None))
+
+    def quiet_side(self) -> funds.HostSide:
+        return dataclasses.replace(
+            host_side(chain_id="cosmoshub-4", host_denom="uatom", osmosis_channel="channel-141"),
+            host_zone={"host_denom": "uatom", "redemption_rate": "1", "deposit_address": "stride1deposit", **ica_host_zone()},
+        )
+
+    def test_zone_payload_carries_the_balances_and_both_flags(self) -> None:
+        side = dataclasses.replace(
+            self.quiet_side(),
+            ica_balances=ica_balances(delegation=7 * 10**6),
+            transfers=[transfer(amount=3, status=funds.TransferStatus.IN_FLIGHT)],
+        )
+
+        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, records=stride_records())
+        payload = chain.stringify_ints(dataclasses.asdict(zone))
+
+        self.assertEqual(payload["ica_balances"]["WITHDRAWAL"], {"uatom": "0", "ibc/USDC": "5"})
+        self.assertEqual(payload["ica_balances"]["DELEGATION"], {"uatom": "7000000"})
+        self.assertIs(payload["funds_settled"], False)
+        self.assertIs(payload["transfers_landed"], False)
+
+    def test_zone_payload_flags_are_true_when_quiet_and_null_without_the_transfer_index(self) -> None:
+        quiet = self.quiet_side()
+        blind = dataclasses.replace(quiet, transfers=None)
+
+        quiet_zone = funds._zone_funds(side=quiet, osmosis=None, pools_by_zone=None, records=stride_records())
+        blind_zone = funds._zone_funds(side=blind, osmosis=None, pools_by_zone=None, records=stride_records())
+
+        self.assertEqual((quiet_zone.funds_settled, quiet_zone.transfers_landed), (True, True))
+        self.assertEqual((blind_zone.funds_settled, blind_zone.transfers_landed), (None, None))
 
 
 def stride_records(

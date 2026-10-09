@@ -286,6 +286,13 @@ class GetJsonTest(unittest.TestCase):
         self.assertEqual(fetch.call_count, 2)
 
 
+class StringifyIntsTest(unittest.TestCase):
+    def test_every_int_becomes_a_string_but_bools_and_none_survive(self) -> None:
+        payload = chain.stringify_ints({"a": 10**26, "b": [1, {"c": None}], "d": True, "e": "x"})
+
+        self.assertEqual(payload, {"a": str(10**26), "b": ["1", {"c": None}], "d": True, "e": "x"})
+
+
 class ErrorBoundaryTest(unittest.TestCase):
     def test_network_and_decode_errors_become_zone_errors(self) -> None:
         for error in (

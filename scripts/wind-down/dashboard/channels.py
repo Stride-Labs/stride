@@ -166,7 +166,52 @@ class ZoneChannels:
     host_error: str | None  # why the host-side header lookups are null (host REST down), else None
     status: Status
     channels: list[ChannelRow]
+    # Commitments on the zone's ICA channels (pending packets + pending acks, Stride side); None when one could not
+    # be counted. The v35 flag reset only applies to a zone with an open delegation channel and 0 here.
+    unacked_ica_packets: int | None = None
     preflight: Preflight | None = None  # None only when the zone's header could not be built
+    # Every ICA row (all but the transfer one) is OPEN on both ends; None when any end's state is unknown.
+    ica_channels_open: bool | None = None
+    haqq_state: "HaqqState | None" = None  # the pre-upgrade haqq invariants (spec §9c); only on haqq_11235-1
+
+
+# The haqq channels the pre-upgrade rules name (spec §9c). The delegation channel must stay as it is until the
+# upgrade; nothing may be committed on the other ICA channels, or their ordered channels close when the relayer
+# returns.
+HAQQ_CHAIN_ID = "haqq_11235-1"
+HAQQ_DELEGATION_CHANNEL = "channel-869"
+HAQQ_DELEGATION_HOST_CHANNEL = "channel-29"
+HAQQ_DELEGATION_SEQUENCES = list(range(85, 99))
+HAQQ_QUIET_ICA_CHANNELS = {
+    "FEE": "channel-614",
+    "REDEMPTION": "channel-244",
+    "COMMUNITY_POOL_DEPOSIT": "channel-245",
+    "COMMUNITY_POOL_RETURN": "channel-246",
+}
+
+
+@dataclass(frozen=True)
+class HaqqState:
+    """Spec §9c, 'before the upgrade': the delegation channel is the closed channel-869 with packets 85-98 still
+    committed, haqq's end (channel-29) is still OPEN so nobody can restore early, and the other ICA channels hold
+    no packet commitment."""
+
+    delegation_channel_id: str  # the feed's current DELEGATION channel; a different id means someone restored
+    delegation_state_stride: str
+    delegation_state_host: str | None
+    delegation_commitments: list[int]
+    quiet_channel_commitments: dict[str, int]  # ICA type -> commitments on its channel
+    ok: bool
+
+
+def haqq_state_passes(state: "HaqqState") -> bool:
+    return (
+        state.delegation_channel_id == HAQQ_DELEGATION_CHANNEL
+        and state.delegation_state_stride == STATE_CLOSED
+        and state.delegation_state_host == STATE_OPEN
+        and state.delegation_commitments == HAQQ_DELEGATION_SEQUENCES
+        and all(count == 0 for count in state.quiet_channel_commitments.values())
+    )
 
 
 @dataclass(frozen=True)
@@ -433,9 +478,8 @@ def _zone_channels(
     host = chain.zone_chain(zone=zone)
 
     # Transfer channel first: its ends come from the chains, the ICA ends from the feed.
-    specs = [_transfer_spec(stride=stride, host=host, entry=entry)] + [
-        _ica_spec(ica) for ica in entry["ica_channels"]
-    ]
+    ica_channels = entry["ica_channels"] or _ica_channels_from_stride(stride=stride, host=host, entry=entry)
+    specs = [_transfer_spec(stride=stride, host=host, entry=entry)] + [_ica_spec(ica) for ica in ica_channels]
     with concurrent.futures.ThreadPoolExecutor(max_workers=CHANNEL_WORKERS) as pool:
         rows = list(pool.map(lambda spec: _channel_row(spec=spec, stride=stride, host=host, now=now), specs))
 
@@ -450,10 +494,73 @@ def _zone_channels(
         host_error=host_header.error,
         status=worst_status(statuses=[row.status for row in rows]),
         channels=rows,
+        unacked_ica_packets=unacked_ica_packets(rows=rows),
+        ica_channels_open=ica_channels_open(rows=rows),
         preflight=_preflight(
             zone=zone, host=host, entry=entry, host_zone=(host_zones or {}).get(zone.chain_id)
         ),
+        haqq_state=_haqq_state(stride=stride, ica_channels=ica_channels) if zone.chain_id == HAQQ_CHAIN_ID else None,
     )
+
+
+# The feed drops a zone's ICA channels when its own haqq lookups fail (seen 2026-10-06), so the current channel per
+# ICA type is read from Stride's channel list on the zone's connection: the highest channel id per controller port,
+# with the host's end asked for its state.
+def _ica_channels_from_stride(stride: chain.Chain, host: chain.Chain, entry: dict[str, Any]) -> list[dict[str, Any]]:
+    listed = chain.rest_get_all_pages(
+        chain=stride, path=f"/ibc/core/channel/v1/connections/{entry['connection_id']}/channels", key="channels"
+    )
+    controller_prefix = f"icacontroller-{entry['chain_id']}."
+    newest: dict[str, dict[str, Any]] = {}
+    for channel in listed:
+        if not channel["port_id"].startswith(controller_prefix):
+            continue
+        number = int(channel["channel_id"].rsplit("-", 1)[1])
+        current = newest.get(channel["port_id"])
+        if current is None or number > int(current["channel_id"].rsplit("-", 1)[1]):
+            newest[channel["port_id"]] = channel
+    return [
+        {
+            "type": port_id.removeprefix(controller_prefix),
+            "port_id": port_id,
+            "channel_id": channel["channel_id"],
+            "counterparty_channel_id": channel["counterparty"]["channel_id"],
+            "state": channel["state"],
+            "counterparty_state": _host_channel_state(host=host, channel_id=channel["counterparty"]["channel_id"]),
+        }
+        for port_id, channel in sorted(newest.items())
+    ]
+
+
+def _host_channel_state(host: chain.Chain, channel_id: str) -> str:
+    if not channel_id:
+        return ""
+    state = chain.optional(lambda: chain.ibc_channel_end(chain=host, channel_id=channel_id, port_id=ICA_HOST_PORT).state)
+    return f"{chain.STATE_PREFIX}{state}" if state else ""
+
+
+def _haqq_state(stride: chain.Chain, ica_channels: list[dict[str, Any]]) -> HaqqState:
+    delegation = next(ica for ica in ica_channels if ica["type"] == "DELEGATION")
+    commitments = chain.ibc_packet_commitments(
+        chain=stride, channel_id=delegation["channel_id"], port_id=delegation["port_id"]
+    ).sequences
+    quiet = {
+        ica_type: len(
+            chain.ibc_packet_commitments(
+                chain=stride, channel_id=channel_id, port_id=f"icacontroller-{HAQQ_CHAIN_ID}.{ica_type}"
+            ).sequences
+        )
+        for ica_type, channel_id in HAQQ_QUIET_ICA_CHANNELS.items()
+    }
+    state = HaqqState(
+        delegation_channel_id=delegation["channel_id"],
+        delegation_state_stride=chain.strip_state_prefix(state=delegation["state"]),
+        delegation_state_host=chain.strip_state_prefix(state=delegation["counterparty_state"]) if delegation.get("counterparty_state") else None,
+        delegation_commitments=sorted(commitments),
+        quiet_channel_commitments=quiet,
+        ok=False,
+    )
+    return dataclasses.replace(state, ok=haqq_state_passes(state))
 
 
 # ---- pre-flight checks
@@ -578,6 +685,27 @@ def _transfer_spec(
         stride_state=stride_end.state,
         host_state=host_state,
     )
+
+
+def ica_channels_open(rows: list[ChannelRow]) -> bool | None:
+    """Every ICA row OPEN on both ends (a closed ordered channel rejects transfer-from-ica); None when any end's state
+    is unknown or the zone has no ICA rows to judge."""
+    states = [state for row in rows if row.name != TRANSFER_NAME for state in (row.stride_state, row.host_state)]
+    if not states or None in states:
+        return None
+    return all(state == STATE_OPEN for state in states)
+
+
+def unacked_ica_packets(rows: list[ChannelRow]) -> int | None:
+    """Sum of pending packets and pending acks over the ICA rows; None when any count is unknown."""
+    counts = [
+        (row.outbound.pending_packets, row.outbound.pending_acks)
+        for row in rows
+        if row.name != TRANSFER_NAME
+    ]
+    if any(packets is None or acks is None for packets, acks in counts):
+        return None
+    return sum(packets + acks for packets, acks in counts)
 
 
 def _ica_spec(ica: dict[str, Any]) -> ChannelSpec:

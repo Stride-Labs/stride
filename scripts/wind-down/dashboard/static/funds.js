@@ -11,7 +11,6 @@ const STAGES = [
   { key: 'pools', label: 'In pools', color: '--s-pool' },
 ];
 const STAGE_TABLE_COLUMNS = 13;
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 let selectedZone = null; // chain id of the zone whose diagram and accounts are shown; survives re-renders
 let breakdown = null; // 'staked' | 'unbonding' when the per-validator panel is open, sorted by that column
@@ -126,7 +125,10 @@ function coveragePill(zone) {
 // ---- diagram
 
 function diagramPanel(zone) {
-  const sub = `rate ${escapeHtml(shortRate(zone.redemption_rate))} · st${escapeHtml(zone.symbol)} supply ${amount(zone.st_supply, zone.decimals, 0)}`
+  const poolRate = zone.pool_rate
+    ? ` · pool rate ${escapeHtml(shortRate(zone.pool_rate))} (gap ${escapeHtml(zone.rate_gap_pct)}%: Stride's rate above the pool's, the swapper's haircut and the pool's surplus)`
+    : ' · pool rate n/a (no canonical pool yet)';
+  const sub = `rate ${escapeHtml(shortRate(zone.redemption_rate))}${poolRate} · st${escapeHtml(zone.symbol)} supply ${amount(zone.st_supply, zone.decimals, 0)}`
     + ` · needs ${amount(zone.needed, zone.decimals, 0)} ${escapeHtml(zone.symbol)} on Osmosis`;
   return `<div class="panel"><h2>${escapeHtml(zone.chain_id)} · ${escapeHtml(zone.symbol)} <span class="sub">${sub}</span></h2>${diagram(zone)}</div>`;
 }
@@ -380,15 +382,15 @@ function shortRate(rate) {
   return Number(rate).toFixed(4);
 }
 
+// Absolute times are shown in US Eastern, the team's clock (the plan's blocks are ET dates too).
+const EASTERN = 'America/New_York';
+
 function shortDate(iso) {
-  const date = new Date(iso);
-  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCDate()}`;
+  return new Date(iso).toLocaleDateString('en-US', { timeZone: EASTERN, month: 'short', day: 'numeric' });
 }
 
 function shortDateTime(iso) {
-  const date = new Date(iso);
-  const pad = (number) => String(number).padStart(2, '0');
-  return `${shortDate(iso)} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} UTC`;
+  return `${new Date(iso).toLocaleString('en-US', { timeZone: EASTERN, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })} ET`;
 }
 
 function shortAddress(address) {

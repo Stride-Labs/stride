@@ -692,12 +692,18 @@ class ApprovedRoutePolicyTest(unittest.TestCase):
                 channels.update(cells[2].split(", "))
             routes_by_token[token.group(1)] = frozenset(channels)
         self.assertEqual(coverage_check.REQUIRED_ROUTES, routes_by_token)
-        self.assertEqual(sum(len(routes) for routes in routes_by_token.values()), 28)
-        self.assertTrue({"channel-11", "channel-69", "channel-6"} <= routes_by_token["stuatom"])
-        self.assertTrue({"channel-13", "channel-52"} <= routes_by_token["stuluna"])
+        self.assertEqual(sum(len(routes) for routes in routes_by_token.values()), 20)
+        self.assertIn("channel-6", routes_by_token["stuatom"])
+        self.assertTrue(all({"channel-11", "channel-69"}.isdisjoint(routes) for routes in routes_by_token.values()))
+        self.assertEqual(routes_by_token["stuluna"], frozenset({"channel-52"}))  # channel-13 holds 31 stLUNA: non-canonical
+        self.assertIn("channel-52", routes_by_token["stuatom"])
+        self.assertEqual(routes_by_token["stuband"], frozenset({"channel-0"}))
+        # Host-chain routes under $500 (stJUNO on Juno, stBAND on Band, stSAGA on Saga, stDYDX on dYdX) are out.
+        self.assertEqual((routes_by_token["stujuno"], routes_by_token["stusaga"], routes_by_token["stadydx"]), (frozenset(), frozenset(), frozenset({"channel-0"})))
         self.assertEqual(routes_by_token["stusomm"], frozenset())
         self.assertIn("staISLM", routes_by_token)
         self.assertTrue(all("channel-307" not in routes for routes in routes_by_token.values()))
+        self.assertTrue(all("channel-47" not in routes for routes in routes_by_token.values()))
 
 
 class ResultLineTest(unittest.TestCase):

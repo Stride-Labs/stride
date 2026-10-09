@@ -32,6 +32,8 @@ ALLOYED_INFIX = "/alloyed/"
 RECORDS_PATH = "/Stride-Labs/stride/records"
 STAKETIA_PATH = "/Stride-Labs/stride/staketia"
 STATUS_CLAIMABLE = "CLAIMABLE"  # an epoch unbonding record status: the native tokens are on the redemption ICA
+# The statuses the drain refuses a zone for (spec §7): queued for the next unbonding epoch, or retrying after a failure.
+STATUSES_BLOCKING_DRAIN = ("UNBONDING_QUEUE", "UNBONDING_RETRY_QUEUE")
 STAKETIA_STATUS_CLAIMED = "CLAIMED"  # a staketia unbonding record status: fully paid out
 
 ZONE_WORKERS = 16
@@ -134,6 +136,7 @@ class Pool:
     native: int
     st_denom: str
     st_amount: int
+    rate: str | None = None  # native factor / stToken factor: the rate the pool converts at, fixed at creation
 
 
 @dataclass(frozen=True)
@@ -179,6 +182,7 @@ class ZoneRecords:
 
     unbonding_by_status: dict[str, int] | None  # epoch unbonding entries holding tokens, by status
     pending_before_claimable: int | None  # of those, the ones not yet CLAIMABLE
+    queued_or_retrying: int | None  # of those, UNBONDING_QUEUE + UNBONDING_RETRY_QUEUE: what blocks the drain
     user_redemption_records: int | None
     claims_pending: int | None  # user redemption records with claim_is_pending
     staketia_redemption_records: int | None
@@ -217,10 +221,16 @@ class ZoneFunds:
     validators: int  # validators the delegation ICA has a delegation with
     ica_liquid: dict[IcaType, int]  # each ICA's host-denom balance, for the diagram
     redemption_ica_balance: int
+    ica_balances: dict[IcaType, dict[str, int]]  # every denom each ICA holds, for the foreign-denom transfers
+    funds_settled: bool | None  # staked below one whole token, nothing unbonding, nothing in flight; None when unknown
+    transfers_landed: bool | None  # every ICA's host-denom balance below one whole token and nothing in flight
     open_redemption_records: int | None
     records: ZoneRecords
     transfers: list[Transfer] | None  # None when the tx index lookup failed
     pools: list[Pool] | None  # None when Osmosis could not be read
+    pool_rate: str | None  # the canonical pool's rate (fixed at its creation); None without a canonical pool
+    rate_gap_pct: str | None  # (redemption_rate - pool_rate) / pool_rate x 100: what a swapper gives up, what stays as surplus
+    pool_rate_known: bool  # True once a canonical pool with a readable rate exists
     accounts: list[Account]
     staketia: Staketia | None
     validator_positions: list[ValidatorPosition]  # ICA then multisig, largest stake first, zero/zero omitted
@@ -295,6 +305,7 @@ class RawPool:
     ]  # the pool's asset denoms from its config, present even at zero balance
     balances: dict[str, int]
     base_denoms: dict[str, str]  # ibc asset denom -> base denom of its trace
+    factors: dict[str, int] = dataclasses.field(default_factory=dict)  # asset denom -> normalization_factor
 
 
 @dataclass(frozen=True)
@@ -387,7 +398,7 @@ def collect() -> dict[str, Any]:
         )
         for side in host_sides
     ]
-    return _stringify_ints(
+    return chain.stringify_ints(
         {
             "zones": [dataclasses.asdict(zone) for zone in zones],
             "operators": [dataclasses.asdict(operator) for operator in operators],
@@ -396,6 +407,24 @@ def collect() -> dict[str, Any]:
 
 
 # ---- pure logic
+
+
+def is_funds_settled(stages: Stages, decimals: int) -> bool | None:
+    """Nothing left to wait for before the ICA transfers: staked is dust (below one whole token), nothing is
+    unbonding and nothing is in flight. None while the in-flight amount is unknown."""
+    if stages.in_flight is None:
+        return None
+    return stages.staked < 10**decimals and stages.unbonding == 0 and stages.in_flight == 0
+
+
+def is_transfers_landed(
+    ica_balances: dict[IcaType, dict[str, int]], host_denom: str, decimals: int, in_flight: int | None
+) -> bool | None:
+    """Every ICA is back at dust (below one whole token of the host denom) and nothing is in flight. None while the
+    in-flight amount is unknown."""
+    if in_flight is None:
+        return None
+    return in_flight == 0 and all(balances.get(host_denom, 0) < 10**decimals for balances in ica_balances.values())
 
 
 def needed_amount(st_supply: int, redemption_rate: str) -> int:
@@ -458,6 +487,9 @@ def build_zone_records(chain_id: str, records: StrideRecords) -> ZoneRecords:
     return ZoneRecords(
         unbonding_by_status=unbonding_by_status,
         pending_before_claimable=pending,
+        queued_or_retrying=None
+        if unbonding_by_status is None
+        else sum(unbonding_by_status.get(status, 0) for status in STATUSES_BLOCKING_DRAIN),
         user_redemption_records=redemption_count,
         claims_pending=claims_pending,
         staketia_redemption_records=staketia_redemptions,
@@ -645,9 +677,33 @@ def classify_pools(
                 native=pool.balances.get(zone.osmosis_denom, 0),
                 st_denom=", ".join(st_denoms),
                 st_amount=sum(pool.balances.get(denom, 0) for denom in st_denoms),
+                rate=pool_rate(pool=pool, native_denom=zone.osmosis_denom, st_denoms=st_denoms),
             )
         )
     return assigned
+
+
+def pool_rate_of(pools: list[Pool] | None) -> str | None:
+    """The canonical pool's rate, which is the one every route pool copies."""
+    canonical = [pool for pool in pools or [] if pool.kind == PoolKind.CANONICAL and pool.rate is not None]
+    return canonical[0].rate if canonical else None
+
+
+def rate_gap_pct(redemption_rate: str, pool_rate: str | None) -> str | None:
+    """How far Stride's (frozen) rate sits above the pool's, in percent, four places."""
+    if pool_rate is None:
+        return None
+    gap = DECIMAL_CONTEXT.divide(Decimal(redemption_rate) - Decimal(pool_rate), Decimal(pool_rate)) * 100
+    return str(gap.quantize(Decimal("0.0001")))
+
+
+def pool_rate(pool: RawPool, native_denom: str, st_denoms: list[str]) -> str | None:
+    """The stToken -> native rate the pool's factors encode (native factor / stToken factor), 18 places; None when
+    either factor is missing (an asset dropped after draining) or the pool has no single stToken."""
+    if len(st_denoms) != 1 or native_denom not in pool.factors or st_denoms[0] not in pool.factors:
+        return None
+    rate = DECIMAL_CONTEXT.divide(Decimal(pool.factors[native_denom]), Decimal(pool.factors[st_denoms[0]]))
+    return str(rate.quantize(Decimal("1.000000000000000000")))
 
 
 def canonical_st_denom(st_denom: str) -> str:
@@ -941,6 +997,7 @@ def _raw_pool(osmosis: chain.Chain, contract: str) -> RawPool:
             osmosis=osmosis, contract=contract, query={"get_share_denom": {}}
         )["share_denom"],
         assets=assets,
+        factors={entry["denom"]: int(entry["normalization_factor"]) for entry in configs},
         balances=_balances(chain_handle=osmosis, address=contract),
         base_denoms={
             denom: _trace_base_denom(rest=osmosis.rest, denom=denom)
@@ -1094,10 +1151,18 @@ def _zone_funds(
             for ica, balances in side.ica_balances.items()
         },
         redemption_ica_balance=side.ica_balances[IcaType.REDEMPTION].get(host_denom, 0),
+        ica_balances=side.ica_balances,
+        funds_settled=is_funds_settled(stages=stages, decimals=zone.decimals),
+        transfers_landed=is_transfers_landed(
+            ica_balances=side.ica_balances, host_denom=host_denom, decimals=zone.decimals, in_flight=stages.in_flight
+        ),
         open_redemption_records=record_count,
         records=zone_records,
         transfers=side.transfers,
         pools=pools,
+        pool_rate=pool_rate_of(pools=pools),
+        rate_gap_pct=rate_gap_pct(redemption_rate=rate, pool_rate=pool_rate_of(pools=pools)),
+        pool_rate_known=pool_rate_of(pools=pools) is not None,
         accounts=_zone_accounts(
             side=side, vault=vault, pools=pools, record_count=record_count
         ),
@@ -1306,16 +1371,3 @@ def _format_amount(amount: int, decimals: int) -> str:
     """Whole tokens with two places, for notes; the page formats every tabulated amount itself."""
     scale = 10**decimals
     return f"{amount // scale:,}.{(amount % scale) * 100 // scale:02d}"
-
-
-def _stringify_ints(value: Any) -> Any:
-    """Every int (not bool) in a JSON-ready structure as a string, so 18-decimal amounts survive JSON.parse."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, int):
-        return str(value)
-    if isinstance(value, dict):
-        return {key: _stringify_ints(item) for key, item in value.items()}
-    if isinstance(value, list):
-        return [_stringify_ints(item) for item in value]
-    return value

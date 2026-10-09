@@ -22,6 +22,11 @@ RECENT_BLOCK_WINDOW = 100_000
 LATEST_HEIGHT_CACHE_SECONDS = 30
 
 TRANSFER_PORT = "transfer"
+# ibc-go's transfer escrow account (ADR-028): sha256("ics20-1" NUL "transfer/<channel>"), first 20 bytes, bech32.
+ESCROW_ADDRESS_VERSION = "ics20-1"
+ESCROW_HASH_BYTES = 20
+STRIDE_BECH32_PREFIX = "stride"
+BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 STATE_PREFIX = "STATE_"
 CLIENT_STATUS_ACTIVE = "Active"
 
@@ -171,6 +176,14 @@ def rpc_latest_height(chain: Chain) -> int:
 def ibc_denom(path: str) -> str:
     """The on-chain denom of an IBC voucher, from its trace path such as `transfer/channel-0/uatom`."""
     return "ibc/" + hashlib.sha256(path.encode()).hexdigest().upper()
+
+
+def escrow_address(channel_id: str) -> str:
+    """Stride's ICS-20 escrow account for a transfer channel (ibc-go's GetEscrowAddress)."""
+    pre_image = ESCROW_ADDRESS_VERSION.encode() + b"\x00" + f"{TRANSFER_PORT}/{channel_id}".encode()
+    return bech32_encode_address(
+        hrp=STRIDE_BECH32_PREFIX, address=hashlib.sha256(pre_image).digest()[:ESCROW_HASH_BYTES]
+    )
 
 
 # ---- IBC
@@ -351,6 +364,87 @@ def client_expiry(
     return parse_timestamp(timestamp=consensus_timestamp) + datetime.timedelta(
         seconds=trusting_period_seconds
     )
+
+
+def stringify_ints(value: Any) -> Any:
+    """Every int (not bool) in a JSON-ready structure as a string, so 18-decimal amounts survive JSON.parse."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, dict):
+        return {key: stringify_ints(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [stringify_ints(item) for item in value]
+    return value
+
+
+# ---- bech32 (BIP-173 reference encoder, copied from scripts/wind-down/bech32_ref.py)
+#
+# Copyright (c) 2017 Pieter Wuille. Licensed under the MIT License
+# (https://github.com/sipa/bech32/blob/master/ref/python/segwit_addr.py). The bech32_* functions and convertbits are
+# the reference code unchanged (its one-letter names included); bech32_encode_address is the cosmos-address helper.
+
+
+def bech32_polymod(values: list[int]) -> int:
+    """Internal function that computes the Bech32 checksum."""
+    generator = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3]
+    chk = 1
+    for value in values:
+        top = chk >> 25
+        chk = (chk & 0x1FFFFFF) << 5 ^ value
+        for i in range(5):
+            chk ^= generator[i] if ((top >> i) & 1) else 0
+    return chk
+
+
+def bech32_hrp_expand(hrp: str) -> list[int]:
+    """Expand the HRP into values for checksum computation."""
+    return [ord(x) >> 5 for x in hrp] + [0] + [ord(x) & 31 for x in hrp]
+
+
+def bech32_create_checksum(hrp: str, data: list[int]) -> list[int]:
+    """Compute the checksum values given HRP and data."""
+    values = bech32_hrp_expand(hrp) + data
+    polymod = bech32_polymod(values + [0, 0, 0, 0, 0, 0]) ^ 1
+    return [(polymod >> 5 * (5 - i)) & 31 for i in range(6)]
+
+
+def bech32_encode(hrp: str, data: list[int]) -> str:
+    """Compute a Bech32 string given HRP and data values."""
+    combined = data + bech32_create_checksum(hrp, data)
+    return hrp + "1" + "".join([BECH32_CHARSET[d] for d in combined])
+
+
+def convertbits(data: list[int] | bytes, frombits: int, tobits: int, pad: bool = True) -> list[int] | None:
+    """General power-of-2 base conversion."""
+    acc = 0
+    bits = 0
+    ret = []
+    maxv = (1 << tobits) - 1
+    max_acc = (1 << (frombits + tobits - 1)) - 1
+    for value in data:
+        if value < 0 or (value >> frombits):
+            return None
+        acc = ((acc << frombits) | value) & max_acc
+        bits += frombits
+        while bits >= tobits:
+            bits -= tobits
+            ret.append((acc >> bits) & maxv)
+    if pad:
+        if bits:
+            ret.append((acc << (tobits - bits)) & maxv)
+    elif bits >= frombits or ((acc << (tobits - bits)) & maxv):
+        return None
+    return ret
+
+
+def bech32_encode_address(hrp: str, address: bytes) -> str:
+    """Bech32-encode raw cosmos address bytes under the given prefix."""
+    data = convertbits(address, 8, 5)
+    if data is None:
+        raise ValueError(f"cannot convert {len(address)} address bytes to base32")
+    return bech32_encode(hrp, data)
 
 
 # ---- helpers

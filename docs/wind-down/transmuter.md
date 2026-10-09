@@ -51,6 +51,15 @@ Rounding and size limits:
   lcm is ~2e36 and a balance of 1.3M stATOM (1.3e12 base units) normalizes to ~2.6e30, well
   under `Uint128::MAX` (3.4e38). Re-check this arithmetic whenever a pool gets a third factor
   (`add_new_assets` with a different factor raises the lcm).
+- **18-decimal zones overflow at the 1e18 scale** (found 2026-10-07): an 18-decimal balance is
+  already ~1e22-1e26 base units, and with coprime factors the lcm is ~1e36, so `weights()`
+  normalizes haqq's 1.07e26 aISLM to 1.07e44, dYdX's 4.0e23 adydx to 4.0e41 and Injective's
+  2.1e22 inj to 2.1e40 — all above `Uint128::MAX`, so the funding join itself fails (a 1-token
+  test join passes, 1e36). For haqq, dYdX and Injective instantiate with factors scaled to 1e6
+  instead: stToken `1000000`, native `floor(RR × 1e6)` (rounded down, so the pool never prices above RR), alloyed = native. The ratio still prices
+  the pool; the rate truncates at 6 decimals (~1e-7 relative, inside the accepted staleness) and
+  the balances normalize to ≤1.1e32. The dashboard's Pools tab headroom check computes this bound
+  from each zone's needed amount before anything is joined.
 - `rescale_normalization_factor { numerator, denominator }` multiplies every factor
   (including the alloyed one) by the same ratio and rejects any factor the ratio does not
   divide exactly. It cannot change relative prices.
@@ -207,7 +216,7 @@ sha256 and upper-cased. Supply is live on Osmosis.
 | Kujira | channel-259 | channel-3 | `transfer/channel-259/transfer/channel-32/stuatom` | `ibc/DED75871F78AF8FC9BCFE75BEA82D66A2B2366204E210FD8E4C77A2AAEA1B1E3` | 0 |
 | Agoric | channel-320 | channel-1 | `transfer/channel-320/transfer/channel-59/stuatom` | `ibc/C86C2FA56D954AB05960450215E63605528CB3481694ABEA87CE4DB0EF17D265` | 0.782288 |
 | Neutron | channel-874 | channel-10 | `transfer/channel-874/transfer/channel-8/stuatom` | `ibc/8FCFAF3AE6BA4C5BDFF85B41449FBACE547E2BAC23895E839230404FB0EC3837` | 7.841929 |
-| Carbon | channel-188 | channel-0 | `transfer/channel-188/transfer/channel-8/stuatom` | `ibc/A1FC8CB6B2E965DEDC6F57749F04CCE3D7C15DD10FC2F7BBEEC19E16D0F82397` | 0 |
+| Carbon | channel-188 | channel-0 | `transfer/channel-188/transfer/channel-8/stuatom` | `ibc/A1FC8CB6B2E965DEDC6F57749F04CCE3D7C15DD10FC2F7BBEEC19E16D0F82397` | 0; not served, carbon-1 stopped 2026-09-25 |
 | Axelar | channel-208 | channel-3 | `transfer/channel-208/transfer/channel-64/stuatom` | `ibc/7FA89E771D836CC136CEDD28AD88DD5F2A1083883FA4681FDBBFFD1D78E04FCB` | 0 |
 
 The chain registry tags both Secret pairs preferred, but only channel-1 is a `transfer` channel;
@@ -250,10 +259,10 @@ A transfer needs the *destination's* client of the source to be un-expired.
 | Kujira → Osmosis (channel-3 → channel-259) | Osmosis's `07-tendermint-2017` | **Expired** | | same; kaiyo-1 REST endpoints are also down |
 | Stride → Neutron (channel-123 → channel-8) | Stride's client of neutron-1 | Active | | stTIA holders on Neutron; audited 2026-09-23 |
 | Neutron → Osmosis (channel-10 → channel-874) | Osmosis's `07-tendermint-2823` | Active, last header 35 h old | | no relayer keeping it fresh; we may need to relay |
-| Stride ↔ Carbon (channel-47 ↔ channel-8) | both clients | Active but stale (Stride's 297 h, Carbon's 87 h old on 2026-09-24) | | nobody relaying; we relay for window 1 |
-| Carbon → Osmosis (channel-0 → channel-188) | Osmosis's client of carbon-1 | Active, last header 41 h old | | same |
+| Stride ↔ Carbon (channel-47 ↔ channel-8) | both clients | Stride's client of carbon-1 **Expired** (last header 2026-09-12) | | carbon-1 stopped producing blocks at height 100279059 (2026-09-25 20:01 UTC); not served, the chain is dead (decided 2026-10-08, see sttoken-locations.md) |
+| Carbon → Osmosis (channel-0 → channel-188) | Osmosis's `07-tendermint-1808` | Active until ~2026-10-09 10:40 UTC, last header 2026-09-25 | | same; with no new Carbon blocks the client cannot be updated and expires |
 | Stride ↔ Axelar (channel-69 ↔ channel-64) | both clients | **Expired** | | Axelar holders cannot redeem through Stride |
-| Axelar → Osmosis (channel-3 → channel-208) | Osmosis's client of axelar-dojo-1 | Active | | public relayers; Axelar holders are fine after the halt |
+| Axelar → Osmosis (channel-3 → channel-208) | Osmosis's client of axelar-dojo-1 | Active | | public relayers, but not served: the Stride <-> Axelar clients are expired, so the route can't be seeded (decided 2026-10-08, see sttoken-locations.md) |
 | Stride ↔ Dymension (channel-197 ↔ channel-0), Dymension → Osmosis (channel-2 → channel-19774) | all clients | Active | | stTIA holders on Dymension |
 
 Channel audit 2026-09-23: every channel id, counterparty id, client destination and `ibc/` hash in this
@@ -287,6 +296,8 @@ osmosisd tx cosmwasmpool create-pool 996 "$(cat instantiate.json)" --from $KEY $
 osmosisd q cosmwasmpool contract-info <pool_id> --node $OSMO_NODE
 POOL=<contract address>
 ```
+
+_Retired 2026-10-07: `check_transmuter_pool.py` is replaced by the dashboard's Pools tab (`scripts/wind-down/dashboard`), which runs the same checks live on every pool the vault administers; the two commands below are kept for the record._
 
 Pre-funding check, run after `create-pool` and again after `add_new_assets` and the limiters. No
 arguments: the vault and moderator addresses and one entry per pool (host zone, pool id, the rate the

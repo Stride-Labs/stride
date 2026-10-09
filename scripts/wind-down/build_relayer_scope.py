@@ -38,8 +38,13 @@ USER_AGENT = "curl/8.0"
 
 FREE_PACKET_MAX_AGE_DAYS = 7.0
 MIN_USD_FOR_OPS_RELAYER = 1_000
-SMALL_TOKEN_USD = 1_000
+SMALL_TOKEN_USD = 500
 REQUEST_PAUSE_SECONDS = 0.6
+# Chains dropped by decision whatever their packet ages say: chain id -> the reason shown in the table
+DROPPED_CHAINS: dict[str, str] = {
+    "axelar-dojo-1": "unsupported, Stride <-> Axelar clients expired (decided 2026-10-08)",
+    "carbon-1": "chain dead, no blocks since 2026-09-25 (decided 2026-10-08)",
+}
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 RELAYER_MAP = REPO / "docs" / "wind-down" / "relayer-map.html"
@@ -269,23 +274,26 @@ def decide(chain: ChainScope) -> None:
         chain.osmosis_decision = "destination, the pools live here"
     elif chain.dead:
         chain.osmosis_decision = "not served: chain dead"
+    elif chain.chain_id in DROPPED_CHAINS:
+        chain.osmosis_decision = f"not served: {DROPPED_CHAINS[chain.chain_id]}"
     elif chain.unsupported:
         chain.osmosis_decision = "not served: unsupported (decided 2026-09-30)"
     elif chain.deprecated_only:
         chain.osmosis_decision = "not served: deprecated zone"
     elif leg is None and chain.usd < MIN_USD_FOR_OPS_RELAYER:
-        chain.osmosis_decision = "not served: below minimum"
+        chain.osmosis_decision = "not served: no relayer"
     elif leg is None:
         chain.osmosis_decision = "we relay it (leg not mapped yet)"
     elif chain.osmosis_status == "blocked":
-        chain.osmosis_decision = "not served: blocked (spec §12)"
+        # Served: the Osmosis team is fixing the rate limiter that rejects these packets
+        chain.osmosis_decision = "free once Osmosis fixes its rate limiter (spec §12)"
     elif leg.client_status != "expired" and leg.last_recv_days is not None and leg.last_recv_days <= FREE_PACKET_MAX_AGE_DAYS:
         # A recent packet beats the map's stale label: it proves a relayer is working the channel
         chain.osmosis_decision = "free, someone else relays it"
     elif chain.usd >= MIN_USD_FOR_OPS_RELAYER:
         chain.osmosis_decision = "we relay it, after client recovery" if leg.client_status == "expired" else "we relay it"
     else:
-        chain.osmosis_decision = "not served: below minimum"
+        chain.osmosis_decision = "not served: no relayer"
 
     served = not chain.osmosis_decision.startswith("not served")
     chain.pool_routes = [token["sym"] for token in chain.tokens if served and token["usd"] >= SMALL_TOKEN_USD and token["status"] != "ignored · deprecated"]
@@ -356,8 +364,9 @@ def update_relayer_map(phases: dict[str, dict], chains: list[ChainScope]) -> Non
         existing = {route["id"]: route for route in phase["routes"]}
         routes = []
         for chain in chains:
-            if chain.chain_id == (STRIDE_CHAIN_ID if center_is_stride else OSMOSIS_CHAIN_ID) or chain.unsupported:
-                continue  # unsupported chains are left off the map by decision
+            center = STRIDE_CHAIN_ID if center_is_stride else OSMOSIS_CHAIN_ID
+            if chain.chain_id == center or chain.unsupported or chain.chain_id in DROPPED_CHAINS:
+                continue  # unsupported and dropped chains are left off the map by decision
             route = existing.get(chain.chain_id) or unmapped_route(chain)
             if center_is_stride and chain.chain_id == OSMOSIS_CHAIN_ID:
                 route["legs"] = sweep_channel_legs(phases)

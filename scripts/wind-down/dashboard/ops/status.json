@@ -1,1 +1,277 @@
-{}
+{
+  "eve-people": {
+    "at": "2026-10-07T15:43:01.558795+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-allow-messages": {
+    "at": "2026-10-05T19:58:38.743654+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-announce": {
+    "at": "2026-10-05T21:36:22.757400+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-band-client": {
+    "at": "2026-10-05T19:59:11.235627+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map": {
+    "at": "2026-10-05T19:58:35.782329+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:celestia": {
+    "at": "2026-10-05T19:34:12.463881+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:cosmoshub-4": {
+    "at": "2026-10-05T19:34:15.566414+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:dydx-mainnet-1": {
+    "at": "2026-10-05T19:34:16.396212+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:haqq_11235-1": {
+    "at": "2026-10-05T19:34:17.390440+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:injective-1": {
+    "at": "2026-10-05T19:34:18.231357+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:juno-1": {
+    "at": "2026-10-05T19:34:19.206322+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:phoenix-1": {
+    "at": "2026-10-05T19:34:20.358691+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:sommelier-3": {
+    "at": "2026-10-05T19:34:21.531945+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-channel-map:ssc-1": {
+    "at": "2026-10-05T19:34:22.987077+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-constants": {
+    "at": "2026-10-05T19:31:49.524320+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-dym-relayer": {
+    "at": "2026-10-06T21:32:52.917518+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-haqq-clients": {
+    "at": "2026-10-06T21:34:17.807514+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-haqq-scope": {
+    "at": "2026-10-05T19:59:14.732002+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-hub-pipeline": {
+    "at": "2026-10-08T19:22:17.665946+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-injective-rate-limit": {
+    "at": "2026-10-05T21:34:05.995982+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-juno-491": {
+    "at": "2026-10-05T21:52:44.914889+00:00",
+    "by": "claude (checked on chain)",
+    "done": true
+  },
+  "pre-neutron-carbon-relayers": {
+    "at": "2026-10-06T21:29:28.723651+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-scope-consistency": {
+    "at": "2026-10-05T19:59:24.119195+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-stakedym-operator": {
+    "at": "2026-10-05T21:34:34.983975+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-staketia-operator": {
+    "at": "2026-10-05T21:34:33.845068+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-sweep-key": {
+    "at": "2026-10-05T19:25:40.337169+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-vault": {
+    "at": "2026-10-05T21:51:57.996021+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pre-withdraw-address": {
+    "at": "2026-10-05T19:58:37.946279+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-accounting": {
+    "at": "2026-10-06T12:45:26.129342+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-announce": {
+    "at": "2026-10-06T21:32:01.464414+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-binary": {
+    "at": "2026-10-06T21:31:53.770760+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-delta-table": {
+    "at": "2026-10-06T12:44:17.189391+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-drift": {
+    "at": "2026-10-06T12:44:21.130350+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-haqq-state": {
+    "at": "2026-10-06T12:45:24.656625+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-submit": {
+    "at": "2026-10-06T21:32:00.353656+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "prop-verify-constants": {
+    "at": "2026-10-06T12:37:55.040646+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:celestia": {
+    "at": "2026-10-08T20:12:13.745762+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:cosmoshub-4": {
+    "at": "2026-10-08T20:12:14.872029+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:dydx-mainnet-1": {
+    "at": "2026-10-08T20:12:16.171184+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:haqq_11235-1": {
+    "at": "2026-10-08T20:12:17.422158+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:injective-1": {
+    "at": "2026-10-08T20:12:18.597595+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:juno-1": {
+    "at": "2026-10-08T20:12:19.712598+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:laozi-mainnet": {
+    "at": "2026-10-08T20:12:20.723413+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:osmosis-1": {
+    "at": "2026-10-08T20:12:23.712897+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:phoenix-1": {
+    "at": "2026-10-08T20:12:23.078983+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:sommelier-3": {
+    "at": "2026-10-08T20:12:22.403768+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-assetlist:ssc-1": {
+    "at": "2026-10-08T20:12:24.555697+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-canonical-supply": {
+    "at": "2026-10-08T19:43:44.285698+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-haqq-client-update": {
+    "at": "2026-10-07T15:18:27.011824+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-passes": {
+    "at": "2026-10-08T19:15:19.549793+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-pool-routes-and-relayers": {
+    "at": "2026-10-08T20:12:42.155515+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-pools-create": {
+    "at": "2026-10-08T20:12:31.088456+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-relayer-configs": {
+    "at": "2026-10-07T15:18:38.074058+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-seed-routes": {
+    "at": "2026-10-08T20:12:30.077988+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-signing-runbook": {
+    "at": "2026-10-07T15:26:17.200258+00:00",
+    "by": "sam",
+    "done": true
+  }
+}
