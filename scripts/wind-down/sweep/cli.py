@@ -66,6 +66,13 @@ class TxOutcome:
 # ---- entry point
 
 
+def _positive_int(text: str) -> int:
+    value = int(text)
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, got {value}")
+    return value
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv=argv)
     try:
@@ -89,7 +96,7 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
 
     run = commands.add_parser("run", help="sign and submit the pending batches in tier order")
     run.add_argument("--tier", type=planner.TierName, choices=list(planner.TierName), default=None)
-    run.add_argument("--batches", type=int, default=None, help="stop after this many batches")
+    run.add_argument("--batches", type=_positive_int, default=None, help="stop after this many batches")
     run.add_argument("--yes", action="store_true", help="do not prompt per batch")
     run.add_argument("--dry-run", action="store_true", help="simulate and print the commands; broadcast nothing")
     run.add_argument("--continue-on-skip", action="store_true", help="keep going after a batch with sweep_skipped events")
@@ -170,6 +177,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         raise RunStopped("preflight failed")
 
     states = ledger.batch_states(events=events)
+    plan_tiers = [tier.name for tier in plan.tiers]
+    if args.tier is not None and args.tier not in plan_tiers:
+        raise RunStopped(f"no tier {args.tier} in the plan; the plan has: {', '.join(plan_tiers)}")
     todo = [(tier, batch) for tier, batch in plan.pending_batches()
             if batch.id not in states and (args.tier is None or tier.name == args.tier)]
     if args.batches is not None:
@@ -183,10 +193,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         if event is None and not args.dry_run:
             print("declined; stopping")
             break
-        if event is not None:
+        if event is not None or args.dry_run:
             done += 1
             yes = yes or _answered_all
-            if event.skipped and not args.continue_on_skip:
+            if event is not None and event.skipped and not args.continue_on_skip:
                 raise RunStopped(f"batch {batch.id} had {len(event.skipped)} skip event(s): the planner and the chain disagree; "
                                  "inspect the ledger, fix the rule, re-plan (or pass --continue-on-skip)")
     print(f"RESULT: DONE — {done} batch(es) {'simulated' if args.dry_run else 'confirmed'}")
@@ -295,7 +305,12 @@ def parse_gas_estimate(text: str) -> int | None:
 
 
 def parse_broadcast(stdout: str) -> BroadcastResult:
-    body = json.loads(stdout)
+    try:
+        body = json.loads(stdout)
+    except json.JSONDecodeError:
+        raise RunStopped(f"broadcast output is not JSON:\n{stdout}") from None
+    if not isinstance(body, dict) or not body.get("txhash"):
+        raise RunStopped(f"broadcast output has no txhash:\n{stdout}")
     return BroadcastResult(code=int(body.get("code", 0)), tx_hash=body["txhash"], codespace=body.get("codespace", ""), raw_log=body.get("raw_log", ""))
 
 
@@ -364,7 +379,7 @@ def _check_operator_key() -> Check:
 
 def _check_plan_age(plan: planner.Plan, now: datetime.datetime) -> Check:
     age = (now - datetime.datetime.fromisoformat(plan.created_at)).total_seconds()
-    return Check(name="plan age", ok=age <= config.MAX_PLAN_AGE_SECONDS, detail=f"run {plan.run_id} planned {age / 60:.0f} min ago at height {plan.height}")
+    return Check(name="plan age", ok=0 <= age <= config.MAX_PLAN_AGE_SECONDS, detail=f"run {plan.run_id} planned {age / 60:.0f} min ago at height {plan.height}")
 
 
 def _check_batch_files(plan: planner.Plan) -> Check:

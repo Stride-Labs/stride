@@ -1,7 +1,9 @@
 """The runner: preflight rows, the exact strided command line, gas-estimate parsing, the broadcast and poll loop over
 fixture responses, and the stop conditions. chainio is patched throughout."""
 
+import contextlib
 import datetime
+import io
 import json
 import pathlib
 import tempfile
@@ -62,6 +64,16 @@ class ParsingTests(unittest.TestCase):
         result = cli.parse_broadcast(stdout=json.dumps({"height": "0", "txhash": "AB12", "codespace": "", "code": 0, "raw_log": ""}))
         self.assertEqual(result, cli.BroadcastResult(code=0, tx_hash="AB12", codespace="", raw_log=""))
 
+    def test_parse_broadcast_stops_without_a_txhash(self) -> None:
+        for stdout in ["not json", "[1]", json.dumps({"code": 0}), json.dumps({"code": 0, "txhash": ""})]:
+            with self.subTest(stdout=stdout), self.assertRaises(cli.RunStopped):
+                cli.parse_broadcast(stdout=stdout)
+
+    def test_batches_must_be_positive(self) -> None:
+        for value in ["0", "-1"]:
+            with self.subTest(value=value), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                cli.parse_args(argv=["run", "--batches", value])
+
     def test_parse_tx_response_reads_sweep_events(self) -> None:
         outcome = cli.parse_tx_response(body=TX_RESPONSE)
         self.assertEqual((outcome.code, outcome.height, outcome.gas_used), (0, 4242, 201_000))
@@ -104,6 +116,7 @@ class PreflightTests(unittest.TestCase):
 
     def test_each_failure_mode(self) -> None:
         self.assertFalse(self.checks(now=NOW + datetime.timedelta(hours=7))["plan age"].ok)
+        self.assertFalse(self.checks(now=NOW - datetime.timedelta(hours=1))["plan age"].ok)
         (self.state / "batch-001-001.txt").write_text(f"{A2}\n")
         self.assertFalse(self.checks()["batch files"].ok)
         planner.write_plan(plan=self.plan, state_dir=self.state)
@@ -129,6 +142,7 @@ class PreflightTests(unittest.TestCase):
 
 class RunBatchTests(unittest.TestCase):
     def setUp(self) -> None:
+        self.enterContext(contextlib.redirect_stdout(io.StringIO()))
         self.tmp = tempfile.TemporaryDirectory()
         self.state = pathlib.Path(self.tmp.name)
         self.ledger_path = self.state / "ledger.jsonl"
@@ -236,6 +250,7 @@ class RunLoopTests(unittest.TestCase):
     """`main(["run", ...])` over a plan with two single-address batches."""
 
     def setUp(self) -> None:
+        self.enterContext(contextlib.redirect_stdout(io.StringIO()))
         self.tmp = tempfile.TemporaryDirectory()
         self.state = pathlib.Path(self.tmp.name)
         planner.write_plan(plan=make_plan(), state_dir=self.state)
@@ -272,6 +287,17 @@ class RunLoopTests(unittest.TestCase):
             self.assertEqual([e.batch_id for e in ledger.read(path=self.state / "ledger.jsonl")], ["001-001", "001-001"])
             self.assertEqual(cli.main(argv=["run", "--continue-on-skip"]), 0)
             self.assertEqual([e.batch_id for e in ledger.read(path=self.state / "ledger.jsonl")], ["001-001", "001-001", "001-002", "001-002"])
+
+    def test_unknown_tier_stops_naming_the_plan_tiers(self) -> None:
+        with mock.patch("builtins.print") as printed:
+            self.assertEqual(cli.main(argv=["run", "--tier", "keyless"]), 1)
+        self.assertIn("the plan has:", str(printed.call_args_list))
+
+    def test_dry_run_reports_the_simulated_count(self) -> None:
+        simulated = chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
+        with mock.patch.object(chainio, "strided", return_value=simulated), mock.patch("builtins.print") as printed:
+            self.assertEqual(cli.main(argv=["run", "--dry-run"]), 0)
+        self.assertIn("2 batch(es) simulated", str(printed.call_args_list))
 
     def seed_submitted(self) -> pathlib.Path:
         path = self.state / "ledger.jsonl"
