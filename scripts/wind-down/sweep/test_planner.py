@@ -46,6 +46,27 @@ class TierTests(unittest.TestCase):
         self.assertEqual(plan.tiers[0].batches[0].id, "001-001")
         self.assertTrue(plan.test)
 
+    def test_negative_canary_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            planner.build_plan(holder_set=holder_set([holder(1, 50)]), floor_usd=Decimal(10), run_id=1, canary=-1, test=False,
+                               gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, created_at="t")
+
+    def test_keyless_holder_below_the_canary_cutoff_stays_out_of_canary(self) -> None:
+        hs = holder_set([holder(1, 500), holder(2, 50), holder(3, 5, keyless=True)])
+        plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=1, canary=1, test=False, gas_per_transfer=100_000,
+                                  max_addresses=100, gas_budget=40_000_000, created_at="t")
+        tiers = {tier.name: [a.address for b in tier.batches for a in b.addresses] for tier in plan.tiers}
+        self.assertEqual(tiers[planner.TierName.CANARY], ["stride1holder0002"])
+        self.assertEqual(tiers[planner.TierName.KEYLESS], ["stride1holder0003"])
+
+    def test_canary_larger_than_the_keyed_holders_takes_them_all(self) -> None:
+        hs = holder_set([holder(1, 500), holder(2, 50), holder(3, 5, keyless=True)])
+        plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=1, canary=10, test=False, gas_per_transfer=100_000,
+                                  max_addresses=100, gas_budget=40_000_000, created_at="t")
+        tiers = {tier.name: [a.address for b in tier.batches for a in b.addresses] for tier in plan.tiers}
+        self.assertEqual(tiers[planner.TierName.CANARY], ["stride1holder0002", "stride1holder0001"])
+        self.assertEqual([tier.name for tier in plan.tiers], [planner.TierName.CANARY, planner.TierName.KEYLESS])
+
     def test_empty_tiers_are_omitted(self) -> None:
         plan = planner.build_plan(holder_set=holder_set([holder(1, 50)]), floor_usd=Decimal(10), run_id=1, canary=0, test=False,
                                   gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, created_at="t")
@@ -68,6 +89,17 @@ class PackingTests(unittest.TestCase):
         self.assertEqual([len(b.addresses) for b in batches], [2, 2, 1])
         self.assertEqual(batches[0].transfers, 4)
         self.assertEqual(batches[0].id, "001-004")
+
+    def test_a_holder_landing_exactly_on_the_gas_budget_stays_in_the_batch(self) -> None:
+        # two holders at 100,000 gas each fill a 200,000 budget exactly
+        batches = planner.pack(holder_list=[holder(i, 12) for i in range(2)], tier=planner.TierName.MAIN, run_id=1, first_index=1,
+                               gas_per_transfer=100_000, max_addresses=100, gas_budget=200_000)
+        self.assertEqual([len(b.addresses) for b in batches], [2])
+
+    def test_exactly_max_addresses_holders_make_one_batch(self) -> None:
+        batches = planner.pack(holder_list=[holder(i, 10) for i in range(3)], tier=planner.TierName.MAIN, run_id=1, first_index=1,
+                               gas_per_transfer=100_000, max_addresses=3, gas_budget=40_000_000)
+        self.assertEqual([len(b.addresses) for b in batches], [3])
 
     def test_a_single_holder_over_budget_still_gets_a_batch(self) -> None:
         batches = planner.pack(holder_list=[holder(1, 12, denoms=2)], tier=planner.TierName.MAIN, run_id=1, first_index=1,

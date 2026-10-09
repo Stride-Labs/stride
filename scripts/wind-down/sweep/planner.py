@@ -8,6 +8,7 @@ import pathlib
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
+from typing import Any
 
 from sweep import config, holders, ledger
 
@@ -121,6 +122,8 @@ def build_plan(
 
 def _tier_members(holder_list: list[holders.Holder], canary: int, test: bool) -> list[tuple[TierName, list[holders.Holder]]]:
     """Who goes in which tier, in sweep order. `holder_list` arrives sorted by USD descending."""
+    if canary < 0:
+        raise ValueError(f"canary must be >= 0, got {canary}")
     if test:
         return [(TierName.TEST, list(holder_list))]
     keyed = [h for h in holder_list if not h.keyless]
@@ -164,7 +167,7 @@ def pack(
 def _batch(members: list[holders.Holder], run_id: int, index: int, gas_per_transfer: int) -> Batch:
     batch_id = f"{run_id:03d}-{index:03d}"
     planned = [PlannedAddress(address=h.address, balances=dict(h.balances), usd=h.usd, transfers=h.transfers) for h in members]
-    content = "".join(f"{p.address}\n" for p in planned)
+    content = _addresses_file_content(addresses=[p.address for p in planned])
     transfers = sum(p.transfers for p in planned)
     return Batch(id=batch_id, file=f"{BATCH_FILE_PREFIX}{batch_id}{BATCH_FILE_SUFFIX}", sha256=batch_sha256(content=content),
                  addresses=planned, usd=sum((p.usd for p in planned), Decimal(0)), transfers=transfers,
@@ -189,7 +192,11 @@ def next_run_id(events: list[ledger.Event]) -> int:
 
 
 def batch_file_content(batch: Batch) -> str:
-    return "".join(f"{p.address}\n" for p in batch.addresses)
+    return _addresses_file_content(addresses=[p.address for p in batch.addresses])
+
+
+def _addresses_file_content(addresses: list[str]) -> str:
+    return "".join(f"{address}\n" for address in addresses)
 
 
 def batch_sha256(content: str) -> str:
@@ -198,13 +205,18 @@ def batch_sha256(content: str) -> str:
 
 def write_plan(plan: Plan, state_dir: pathlib.Path = config.STATE_DIR) -> None:
     state_dir.mkdir(parents=True, exist_ok=True)
-    for stale in state_dir.glob(f"{BATCH_FILE_PREFIX}*{BATCH_FILE_SUFFIX}"):
-        stale.unlink()
+    new_files = {batch.file for _, batch in plan.pending_batches()}
+
+    # new files and plan.json land first so a crash mid-write never leaves the old plan without its batch files
     for _, batch in plan.pending_batches():
         (state_dir / batch.file).write_text(batch_file_content(batch=batch))
     tmp = state_dir / "plan.json.tmp"
     tmp.write_text(json.dumps(plan_to_dict(plan=plan), indent=1))
     tmp.replace(state_dir / "plan.json")
+
+    for stale in state_dir.glob(f"{BATCH_FILE_PREFIX}*{BATCH_FILE_SUFFIX}"):
+        if stale.name not in new_files:
+            stale.unlink()
 
 
 def load_plan(path: pathlib.Path = config.PLAN_PATH) -> Plan | None:
@@ -217,7 +229,7 @@ def load_plan(path: pathlib.Path = config.PLAN_PATH) -> Plan | None:
         raise PlanError(f"{path}: {error}") from None
 
 
-def plan_to_dict(plan: Plan) -> dict:
+def plan_to_dict(plan: Plan) -> dict[str, Any]:
     return {
         "run_id": str(plan.run_id), "created_at": plan.created_at, "height": str(plan.height), "floor_usd": str(plan.floor_usd),
         "test": plan.test, "canary": str(plan.canary), "gas_per_transfer": str(plan.gas_per_transfer),
@@ -232,7 +244,7 @@ def plan_to_dict(plan: Plan) -> dict:
     }
 
 
-def _batch_to_dict(batch: Batch) -> dict:
+def _batch_to_dict(batch: Batch) -> dict[str, Any]:
     return {
         "id": batch.id, "file": batch.file, "sha256": batch.sha256, "usd": str(batch.usd), "transfers": str(batch.transfers),
         "estimated_gas": str(batch.estimated_gas),
@@ -241,7 +253,7 @@ def _batch_to_dict(batch: Batch) -> dict:
     }
 
 
-def _excluded_to_dict(entry: holders.Excluded) -> dict:
+def _excluded_to_dict(entry: holders.Excluded) -> dict[str, Any]:
     return {"address": entry.address, "reason": entry.reason, "usd": str(entry.usd)}
 
 
