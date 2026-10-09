@@ -11,8 +11,8 @@
       "name": "relayers",
       "reason": "their STRD pays for relaying until the halt",
       "addresses": [
-        {"address": "stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd", "label": "relayer (by hand)"},
-        {"address": "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp", "label": "relayer (by hand)"},
+        {"address": "stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd", "label": "relayer-crypto-crew"},
+        {"address": "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp", "label": "relayer-polkachu"},
         {"address": "stride1x3mtu4540z8q45mmyn9tw34fmy74xqm47lh7k6", "label": "relayer-band"},
         {"address": "stride15fd7g4g26enekm50ve9dhwaseanav09my88559", "label": "relayer-celestia"},
         {"address": "stride18qysgypvp7aky0dntqzkl6uxv7w3zszt55uv0m", "label": "relayer-dydx"},
@@ -25,7 +25,8 @@
         {"address": "stride1h93r6y9sm2dtq68dqwvqp36faqucge7wzfxhws", "label": "relayer-saga"},
         {"address": "stride15s0ey2k5sqhkdu0d2770y8cykgm6emx2fyar7v", "label": "relayer-sei"},
         {"address": "stride1qa8l9le4fvvxe4ny2m2mcd00cakgx9lz96kash", "label": "relayer-sommelier"},
-        {"address": "stride1m5st93c4elt4ttt2kdzgm9cpj953thkk5l0k9d", "label": "relayer-terra"}
+        {"address": "stride1m5st93c4elt4ttt2kdzgm9cpj953thkk5l0k9d", "label": "relayer-terra"},
+        {"address": "stride1uvmzazqskmtqapnxlus0ynpm7kyh5f6gslpnrj", "label": "relayer-team"}
       ]
     }
   ]
