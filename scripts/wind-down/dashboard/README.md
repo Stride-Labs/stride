@@ -89,8 +89,8 @@ about six minutes against Polkachu (measured 2026-10-09: 5m45s). `sweep_tab.comp
 Per address: `swept` (a confirmed `sweep_transfer` in any run and none of the transferred denoms held now), `refunded`
 (transferred, and a transferred denom is held again beyond the vesting remainder the plan recorded as `locked`: the 24 h
 timeout refunded it; the next `plan` re-sweeps it), `remaining` (in the current plan, no confirmed transfer yet). Swept and
-refunded cover every address the ledger swept, so a re-plan at a lower floor keeps the earlier runs in the Swept tile; a
-holder swept in an earlier run and absent from the current plan is assumed to have nothing locked. Tiles: swept, remaining, refunded, excluded (the exclusions file, live USD),
+refunded cover every address the ledger swept, so a re-plan at a lower floor keeps the earlier runs in the Swept tile; the
+plan's `locked` map covers every vesting holder, including one swept in an earlier run and absent from the current batches. Tiles: swept, remaining, refunded, excluded (the exclusions file, live USD),
 below floor (live holders under the plan's floor; the sub-line counts holders above the floor that are not in the
 plan, which appeared or were refunded since). The by-token table, the runs-and-batches table (every batch of the
 current plan plus earlier runs' batches from the ledger; a red `N skipped` badge means the chain disagreed with the

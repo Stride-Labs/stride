@@ -159,10 +159,10 @@ def _planned(plan: planner.Plan) -> dict[str, planner.PlannedAddress]:
 
 
 def _locked(plan: planner.Plan) -> dict[str, dict[str, int]]:
-    """A vesting account keeps its locked part after a full sweep, so that much live balance is not a refund. Only the
-    current plan knows it: an address swept in an earlier run and absent from this plan counts as having none locked, so
-    a swept vesting holder from a past run that still holds its locked part reads as refunded until it is re-planned."""
-    return {address: planned.locked for address, planned in _planned(plan=plan).items() if planned.locked}
+    """A vesting account keeps its locked part after a full sweep, so that much live balance is not a refund. The plan
+    records it for every vesting holder, planned or below the floor, so an address swept in an earlier run and absent
+    from this run's batches still has its locked part excluded from refunds."""
+    return plan.locked
 
 
 def _back(address: str, denom: str, balances: dict[str, dict[str, int]], locked: dict[str, dict[str, int]]) -> int:

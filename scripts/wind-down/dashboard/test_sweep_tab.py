@@ -1,5 +1,6 @@
 """compose(): address states from the plan, the ledger and live balances; totals; by-denom; ladder; batches."""
 
+import dataclasses
 import pathlib
 import sys
 import unittest
@@ -143,6 +144,18 @@ class VestingTests(unittest.TestCase):
         self.assertEqual(len(data["refunded"]), 1)
         self.assertEqual(data["batches"][0]["refunded"], "1")
         self.assertEqual({d["denom"]: d["refunded_addresses"] for d in data["by_denom"]}["stuatom"], "1")
+
+
+class EarlierRunLockedTests(unittest.TestCase):
+    def test_a_vesting_holder_swept_in_run_one_and_only_in_run_twos_locked_map_is_not_refunded(self) -> None:
+        plan = vesting_plan(run_id=2, addresses=["stride1pending"], locked={})
+        plan = dataclasses.replace(plan, locked={"stride1vest": {"stuatom": 400_000}})
+        live = live_with({"stride1vest": {"stuatom": "400000"}, "stride1pending": {"stuatom": "1000000"}})
+        data = sweep_tab.compose(plan=plan, events=confirmed_run(run_id=1, address="stride1vest"), live=live, exclusions={}, live_fetched_at="x")
+
+        self.assertEqual(data["totals"]["swept"], {"addresses": "1", "usd": "6.00"})
+        self.assertEqual(data["totals"]["refunded"], {"addresses": "0", "usd": "0.00"})
+        self.assertEqual(data["refunded"], [])
 
 
 class EarlierRunTests(unittest.TestCase):

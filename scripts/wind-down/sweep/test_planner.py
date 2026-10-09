@@ -168,6 +168,22 @@ class PlanFileTests(unittest.TestCase):
         loaded = planner.plan_from_dict(data=data)
         self.assertEqual([a.locked for _, batch in loaded.pending_batches() for a in batch.addresses], [{}, {}])
 
+    def test_token_prices_survive_the_round_trip_at_full_precision_and_locked_covers_below_floor(self) -> None:
+        priced = [holders.SweepDenom(denom="aislm", symbol="ISLM", decimals=18, price_usd=Decimal("0.0046"), destination="haqq", channel="channel-1")]
+        below = holder(3, 5)
+        below.locked = {"aislm": 7}
+        hs = holders.HolderSet(height=100, denoms=priced, holders=[holder(1, 500)], excluded=[], skipped=[], below_floor=[below])
+        plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+        data = planner.plan_to_dict(plan=plan)
+        self.assertEqual((data["prices"], data["denoms"][0]["price_usd"]), ({"aislm": "0.0046"}, "0.0046"))
+        self.assertEqual(data["locked"], {below.address: {"aislm": "7"}})
+
+        loaded = planner.plan_from_dict(data=data)
+        self.assertEqual((loaded.prices, loaded.denoms[0].price_usd, loaded.locked), ({"aislm": Decimal("0.0046")}, Decimal("0.0046"), {below.address: {"aislm": 7}}))
+        del data["locked"]
+        self.assertEqual(planner.plan_from_dict(data=data).locked, {})
+
     def test_usd_is_written_to_cents_half_up_and_read_back_at_any_precision(self) -> None:
         self.assertEqual(planner._usd_str(amount=Decimal("315.2230606874056179273355391")), "315.22")
         self.assertEqual(planner._usd_str(amount=Decimal("0.125")), "0.13")

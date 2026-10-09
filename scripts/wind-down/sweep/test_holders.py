@@ -153,6 +153,7 @@ class HolderTests(unittest.TestCase):
         below = {h.address: h for h in holder_set.below_floor}
         self.assertEqual((below[DUSTY].balances, below[DUSTY].usd), ({"stuatom": 2000}, Decimal("0.012")))  # floor applies to spendable
         self.assertEqual((below[LOCKED].balances, below[LOCKED].usd), ({}, Decimal("0")))  # fully locked is recorded, not dropped
+        self.assertEqual((below[LOCKED].locked, below[DUSTY].locked), ({"stuatom": 3_000_000}, {"stuatom": 2_998_000}))
         self.assertEqual(holder_set.height, 100)
 
     def test_skip_reason_order_and_unknown_accounts(self) -> None:

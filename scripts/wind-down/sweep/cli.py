@@ -11,7 +11,8 @@
 `plan` reads live holder state and writes state/plan.json plus one address file per batch. `run` walks the plan's
 batches in tier order (the keyless tier only under `--tier keyless`): preflight, then per batch a gas simulation, the
 signed broadcast from the stride-sweeper key, and a poll for the tx result, each step appended to
-state/ledger.jsonl. It stops on any skip event, failed tx, or a batch over the block gas limit. `status` reads the two files. `resolve` finishes a submission the poll gave up on.
+state/ledger.jsonl. It stops on any skip event, failed tx, or a batch over the block gas limit. `status` reads the
+two files. `resolve` finishes a submission the poll gave up on.
 """
 
 import argparse

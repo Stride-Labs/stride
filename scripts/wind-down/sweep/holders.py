@@ -326,10 +326,12 @@ def classify(
         is_vesting = account.type in config.VESTING_ACCOUNT_TYPES
         spendable = _spendable_part(address=address, coins=coins) if is_vesting else coins
         spendable_usd = usd_value(balances=spendable, denoms=by_denom) if is_vesting else usd
-        if is_vesting and (not spendable or (test_address is None and spendable_usd < floor_usd)):
-            holder_set.below_floor.append(Holder(address=address, balances=spendable, usd=spendable_usd, keyless=False))
-            continue
         locked = {denom: coins[denom] - spendable.get(denom, 0) for denom in coins if coins[denom] > spendable.get(denom, 0)} if is_vesting else {}
+        if is_vesting and (not spendable or (test_address is None and spendable_usd < floor_usd)):
+            holder_set.below_floor.append(
+                Holder(address=address, balances=spendable, usd=spendable_usd, keyless=False, locked=locked)
+            )
+            continue
         holder_set.holders.append(Holder(address=address, balances=spendable, usd=spendable_usd,
                                          keyless=not account.has_pubkey and account.sequence == 0, locked=locked))
 

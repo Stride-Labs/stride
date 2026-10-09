@@ -79,6 +79,8 @@ class Plan:
     below_floor_usd: Decimal
     ladder: list[LadderRung]
     operator_sequence: int  # the sweep operator's account sequence when planned; the runner's tx-count baseline
+    # Every vesting holder's locked remainder, including those below the floor: a fully swept holder is not planned
+    locked: dict[str, dict[str, int]] = field(default_factory=dict)
 
     def pending_batches(self) -> list[tuple[Tier, Batch]]:
         return [(tier, batch) for tier in self.tiers for batch in tier.batches]
@@ -139,6 +141,9 @@ def build_plan(
         below_floor_usd=sum((holder.usd for holder in holder_set.below_floor), Decimal(0)),
         ladder=ladder(holder_list=holder_set.holders + holder_set.below_floor, floor_usd=floor_usd),
         operator_sequence=operator_sequence,
+        locked={
+            holder.address: dict(holder.locked) for holder in holder_set.holders + holder_set.below_floor if holder.locked
+        },
     )
 
 
@@ -287,13 +292,13 @@ def plan_to_dict(plan: Plan) -> dict[str, Any]:
         "test": plan.test,
         "canary": str(plan.canary),
         "gas_per_transfer": str(plan.gas_per_transfer),
-        "prices": {denom: _usd_str(amount=price) for denom, price in plan.prices.items()},
+        "prices": {denom: str(price) for denom, price in plan.prices.items()},  # USD per whole token, not rounded
         "denoms": [
             {
                 "denom": entry.denom,
                 "symbol": entry.symbol,
                 "decimals": str(entry.decimals),
-                "price_usd": _usd_str(amount=entry.price_usd),
+                "price_usd": str(entry.price_usd),
                 "destination": entry.destination,
                 "channel": entry.channel,
             }
@@ -311,6 +316,9 @@ def plan_to_dict(plan: Plan) -> dict[str, Any]:
             for rung in plan.ladder
         ],
         "operator_sequence": str(plan.operator_sequence),
+        "locked": {
+            address: {denom: str(amount) for denom, amount in coins.items()} for address, coins in plan.locked.items()
+        },
     }
 
 
@@ -383,6 +391,10 @@ def plan_from_dict(data: dict) -> Plan:
             for rung_data in data["ladder"]
         ],
         operator_sequence=int(data["operator_sequence"]),
+        locked={
+            address: {denom: int(amount) for denom, amount in coins.items()}
+            for address, coins in data.get("locked", {}).items()
+        },
     )
 
 
