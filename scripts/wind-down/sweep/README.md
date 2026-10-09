@@ -10,7 +10,9 @@ The holder sweep of the v35 wind-down (`MsgSweepTokensOffStride`, design in
 
 The operator key is `stride-sweeper` in the **test** keyring. `config.py` holds the denoms, the rough prices, gas
 settings and limits; `exclusions.json` the accounts the team moves by hand (a section, a reason, a label per address).
-Both are enforced at `plan` and again at `run`.
+`exclusions.json` is enforced at `plan` and again at `run`.
+
+A `plan` reads every holder of the nineteen sweep denoms and takes about six minutes against Polkachu (measured 2026-10-09: 5m45s).
 
 ## The test (after the 10-12 upgrade, before the sweep)
 

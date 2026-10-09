@@ -62,7 +62,18 @@ def latest_height() -> int:
 
 def strided(args: list[str]) -> CommandResult:
     """Run the strided binary with the given arguments; the caller decides what a non-zero exit means."""
-    completed = subprocess.run([config.STRIDED_BINARY, *args], capture_output=True, text=True, check=False)
+    try:
+        completed = subprocess.run(
+            [config.STRIDED_BINARY, *args],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=config.STRIDED_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        return CommandResult(
+            returncode=-1, stdout="", stderr=f"strided timed out after {config.STRIDED_TIMEOUT_SECONDS}s"
+        )
     return CommandResult(returncode=completed.returncode, stdout=completed.stdout, stderr=completed.stderr)
 
 

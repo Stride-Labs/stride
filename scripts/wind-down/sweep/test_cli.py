@@ -2,6 +2,7 @@
 fixture responses, and the stop conditions. chainio is patched throughout."""
 
 import contextlib
+import dataclasses
 import datetime
 import io
 import json
@@ -144,6 +145,18 @@ class PreflightTests(unittest.TestCase):
         self.assertTrue(all(c.ok for c in checks.values()), [c for c in checks.values() if not c.ok])
         self.assertEqual(set(checks), {"chain id", "binary version", "operator key", "plan age", "batch files", "unresolved submissions",
                                        "operator sequence", "exclusions and protocol addresses", "channels open", "operator fee balance"})
+
+    def test_tampered_batch_file_fails_even_when_the_stored_hash_is_updated_to_match(self) -> None:
+        batch = self.plan.tiers[0].batches[0]
+        tampered = f"{A2}\n"
+        (self.state / batch.file).write_text(tampered)
+        forged = dataclasses.replace(batch, sha256=planner.batch_sha256(content=tampered))
+        forged_plan = dataclasses.replace(self.plan, tiers=[dataclasses.replace(self.plan.tiers[0], batches=[forged])])
+
+        check = cli._check_batch_files(plan=forged_plan)
+
+        self.assertFalse(check.ok)
+        self.assertIn("changed or missing", check.detail)
 
     def test_each_failure_mode(self) -> None:
         self.assertFalse(self.checks(now=NOW + datetime.timedelta(hours=7))["plan age"].ok)

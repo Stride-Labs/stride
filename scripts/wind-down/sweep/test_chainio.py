@@ -2,6 +2,7 @@
 
 import io
 import json
+import subprocess
 import unittest
 import urllib.error
 from unittest import mock
@@ -11,6 +12,15 @@ from sweep import chainio
 
 def _http_error(code: int, body: dict) -> urllib.error.HTTPError:
     return urllib.error.HTTPError(url="u", code=code, msg="m", hdrs=None, fp=io.BytesIO(json.dumps(body).encode()))
+
+
+class StridedTests(unittest.TestCase):
+    def test_timeout_becomes_a_failed_command_result(self) -> None:
+        expired = subprocess.TimeoutExpired(cmd="strided", timeout=1)
+        with mock.patch.object(chainio.subprocess, "run", side_effect=expired):
+            result = chainio.strided(args=["version"])
+        self.assertEqual(result.returncode, -1)
+        self.assertIn("timed out", result.stderr)
 
 
 class RestGetTests(unittest.TestCase):

@@ -25,13 +25,26 @@ STATE_REMAINING = "remaining"
 def collect() -> dict[str, Any]:
     denoms = holders.resolve_denoms()
     balances = holders.read_balances(denoms=denoms)
-    operator = sweep_chainio.rest_get(path=f"/cosmos/bank/v1beta1/balances/{sweep_config.SWEEP_OPERATOR}/by_denom",
-                                      params={"denom": sweep_config.FEE_DENOM})
+    operator = sweep_chainio.rest_get(
+        path=f"/cosmos/bank/v1beta1/balances/{sweep_config.SWEEP_OPERATOR}/by_denom",
+        params={"denom": sweep_config.FEE_DENOM},
+    )
     return {
         "height": str(sweep_chainio.latest_height()),
-        "denoms": [{"denom": denom.denom, "symbol": denom.symbol, "decimals": str(denom.decimals), "price_usd": str(denom.price_usd),
-                    "destination": denom.destination, "channel": denom.channel} for denom in denoms],
-        "balances": {address: {denom: str(amount) for denom, amount in coins.items()} for address, coins in balances.items()},
+        "denoms": [
+            {
+                "denom": denom.denom,
+                "symbol": denom.symbol,
+                "decimals": str(denom.decimals),
+                "price_usd": str(denom.price_usd),
+                "destination": denom.destination,
+                "channel": denom.channel,
+            }
+            for denom in denoms
+        ],
+        "balances": {
+            address: {denom: str(amount) for denom, amount in coins.items()} for address, coins in balances.items()
+        },
         "operator_strd": operator["balance"]["amount"],
     }
 
@@ -48,9 +61,18 @@ def body(view: dict[str, Any]) -> dict[str, Any]:
         events = ledger.read()
         exclusions = holders.load_exclusions()
     except (planner.PlanError, ledger.LedgerError, holders.ExclusionsError) as error:
-        return {"fetched_at": fetched_at, "refreshing": view.get("refreshing", False), "error": str(error), "data": None}
-    return {"fetched_at": fetched_at, "refreshing": view.get("refreshing", False), "last_error": view.get("last_error"),
-            "data": compose(plan=plan, events=events, live=live, exclusions=exclusions, live_fetched_at=fetched_at)}
+        return {
+            "fetched_at": fetched_at,
+            "refreshing": view.get("refreshing", False),
+            "error": str(error),
+            "data": None,
+        }
+    return {
+        "fetched_at": fetched_at,
+        "refreshing": view.get("refreshing", False),
+        "last_error": view.get("last_error"),
+        "data": compose(plan=plan, events=events, live=live, exclusions=exclusions, live_fetched_at=fetched_at),
+    }
 
 
 # ---- composition
@@ -64,8 +86,17 @@ def compose(
     live_fetched_at: str | None,
 ) -> dict[str, Any]:
     if plan is None:
-        return {"run": None, "totals": None, "by_denom": None, "batches": [], "ladder": None, "refunded": [], "exclusions": [], "keyless": None,
-                "live_fetched_at": live_fetched_at}
+        return {
+            "run": None,
+            "totals": None,
+            "by_denom": None,
+            "batches": [],
+            "ladder": None,
+            "refunded": [],
+            "exclusions": [],
+            "keyless": None,
+            "live_fetched_at": live_fetched_at,
+        }
 
     states = ledger.batch_states(events=events)
     transferred = ledger.confirmed_transfers(events=events)
@@ -76,17 +107,40 @@ def compose(
 
     return {
         "run": _run(plan=plan, states=states, live=live),
-        "totals": _totals(plan=plan, address_state=address_state, transferred=transferred, balances=balances, by_denom=by_denom)
-        if address_state is not None else None,
+        "totals": _totals(
+            plan=plan, address_state=address_state, transferred=transferred, balances=balances, by_denom=by_denom
+        )
+        if address_state is not None
+        else None,
         "by_denom": _by_denom(plan=plan, address_state=address_state, transferred=transferred, balances=balances)
-        if address_state is not None else None,
+        if address_state is not None
+        else None,
         "batches": _batches(plan=plan, events=events, states=states, refunds=refunds),
-        "ladder": _ladder(plan=plan, address_state=address_state, balances=balances, by_denom=by_denom) if address_state is not None else None,
-        "refunded": [{"address": transfer.address, "denom": transfer.denom, "amount": str(transfer.amount), "channel": transfer.channel, "batch_id": batch_id}
-                     for transfer, batch_id in refunds],
-        "exclusions": [{"section": exclusion.section, "address": exclusion.address, "label": exclusion.label, "reason": exclusion.reason,
-                        "live_usd": _money(holders.usd_value(balances=balances.get(exclusion.address, {}), denoms=by_denom)) if live is not None else None}
-                       for exclusion in exclusions.values()],
+        "ladder": _ladder(plan=plan, address_state=address_state, balances=balances, by_denom=by_denom)
+        if address_state is not None
+        else None,
+        "refunded": [
+            {
+                "address": transfer.address,
+                "denom": transfer.denom,
+                "amount": str(transfer.amount),
+                "channel": transfer.channel,
+                "batch_id": batch_id,
+            }
+            for transfer, batch_id in refunds
+        ],
+        "exclusions": [
+            {
+                "section": exclusion.section,
+                "address": exclusion.address,
+                "label": exclusion.label,
+                "reason": exclusion.reason,
+                "live_usd": _money(holders.usd_value(balances=balances.get(exclusion.address, {}), denoms=by_denom))
+                if live is not None
+                else None,
+            }
+            for exclusion in exclusions.values()
+        ],
         "keyless": _keyless(plan=plan, address_state=address_state),
         "live_fetched_at": live_fetched_at,
     }
@@ -95,7 +149,9 @@ def compose(
 def _live_balances(live: dict[str, Any] | None) -> dict[str, dict[str, int]]:
     if live is None:
         return {}
-    return {address: {denom: int(amount) for denom, amount in coins.items()} for address, coins in live["balances"].items()}
+    return {
+        address: {denom: int(amount) for denom, amount in coins.items()} for address, coins in live["balances"].items()
+    }
 
 
 def _planned(plan: planner.Plan) -> dict[str, planner.PlannedAddress]:
@@ -110,17 +166,23 @@ def _locked(plan: planner.Plan) -> dict[str, dict[str, int]]:
 
 
 def _back(address: str, denom: str, balances: dict[str, dict[str, int]], locked: dict[str, dict[str, int]]) -> int:
-    """What the address holds of `denom` beyond its locked remainder: the refunded amount, 0 when it is only the remainder."""
+    """What the address holds of `denom` beyond its locked remainder: the refunded amount, 0 if only the remainder."""
     return max(0, balances.get(address, {}).get(denom, 0) - locked.get(address, {}).get(denom, 0))
 
 
 def _known_addresses(plan: planner.Plan, transferred: dict[str, list[ledger.Transfer]]) -> set[str]:
     """Addresses already accounted for: planned, swept in any run, excluded, or skipped by the chain-side filters."""
-    return (set(_planned(plan=plan)) | set(transferred) | {excluded.address for excluded in plan.excluded}
-            | {skipped.address for skipped in plan.skipped})
+    return (
+        set(_planned(plan=plan))
+        | set(transferred)
+        | {excluded.address for excluded in plan.excluded}
+        | {skipped.address for skipped in plan.skipped}
+    )
 
 
-def _address_states(plan: planner.Plan, transferred: dict[str, list[ledger.Transfer]], balances: dict[str, dict[str, int]]) -> dict[str, str]:
+def _address_states(
+    plan: planner.Plan, transferred: dict[str, list[ledger.Transfer]], balances: dict[str, dict[str, int]]
+) -> dict[str, str]:
     """swept: transferred and holding none of it now; refunded: transferred and holding a transferred denom again;
     remaining: in the current plan with no confirmed transfer. Swept and refunded cover every address with a confirmed
     transfer in any run, so a re-plan at a lower floor does not drop the earlier runs' holders."""
@@ -128,11 +190,17 @@ def _address_states(plan: planner.Plan, transferred: dict[str, list[ledger.Trans
     states = {address: STATE_REMAINING for address in _planned(plan=plan) if address not in transferred}
     for address, transfers in transferred.items():
         moved = {transfer.denom for transfer in transfers}
-        states[address] = STATE_REFUNDED if any(_back(address=address, denom=denom, balances=balances, locked=locked) > 0 for denom in moved) else STATE_SWEPT
+        states[address] = (
+            STATE_REFUNDED
+            if any(_back(address=address, denom=denom, balances=balances, locked=locked) > 0 for denom in moved)
+            else STATE_SWEPT
+        )
     return states
 
 
-def _refunds(plan: planner.Plan, events: list[ledger.Event], balances: dict[str, dict[str, int]]) -> list[tuple[ledger.Transfer, str]]:
+def _refunds(
+    plan: planner.Plan, events: list[ledger.Event], balances: dict[str, dict[str, int]]
+) -> list[tuple[ledger.Transfer, str]]:
     locked = _locked(plan=plan)
     refunds: list[tuple[ledger.Transfer, str]] = []
     for event in events:
@@ -152,8 +220,16 @@ def _run(plan: planner.Plan, states: dict[str, ledger.BatchState], live: dict[st
     pending_gas = sum(batch.estimated_gas for batch in batches if batch.id not in states)
     fee = Decimal(pending_gas) * sweep_config.GAS_ADJUSTMENT * sweep_config.GAS_PRICE_USTRD
     return {
-        "run_id": str(plan.run_id), "floor_usd": str(plan.floor_usd), "created_at": plan.created_at, "height": str(plan.height), "test": plan.test,
-        "batches": {"total": str(len(batches)), **{state: str(count) for state, count in counts.items() if state != "pending"}, "pending": str(counts["pending"])},
+        "run_id": str(plan.run_id),
+        "floor_usd": str(plan.floor_usd),
+        "created_at": plan.created_at,
+        "height": str(plan.height),
+        "test": plan.test,
+        "batches": {
+            "total": str(len(batches)),
+            **{state: str(count) for state, count in counts.items() if state != "pending"},
+            "pending": str(counts["pending"]),
+        },
         "operator_strd": live["operator_strd"] if live is not None else None,
         "fee_estimate_ustrd": str(int(fee)),
     }
@@ -170,14 +246,32 @@ def _totals(
     refunded = [address for address, state in address_state.items() if state == STATE_REFUNDED]
     remaining = [address for address, state in address_state.items() if state == STATE_REMAINING]
 
-    swept_usd = sum((_transfer_usd(transfer=transfer, by_denom=by_denom) for address in swept for transfer in transferred[address]), Decimal(0))
+    swept_usd = sum(
+        (_transfer_usd(transfer=transfer, by_denom=by_denom) for address in swept for transfer in transferred[address]),
+        Decimal(0),
+    )
     locked = _locked(plan=plan)
-    refunded_usd = sum((_refunded_usd(address=address, transferred=transferred, balances=balances, locked=locked, by_denom=by_denom) for address in refunded), Decimal(0))
-    remaining_usd = sum((holders.usd_value(balances=balances.get(address, {}), denoms=by_denom) for address in remaining), Decimal(0))
-    excluded_usd = sum((holders.usd_value(balances=balances.get(excluded.address, {}), denoms=by_denom) for excluded in plan.excluded), Decimal(0))
+    refunded_usd = sum(
+        (
+            _refunded_usd(address=address, transferred=transferred, balances=balances, locked=locked, by_denom=by_denom)
+            for address in refunded
+        ),
+        Decimal(0),
+    )
+    remaining_usd = sum(
+        (holders.usd_value(balances=balances.get(address, {}), denoms=by_denom) for address in remaining), Decimal(0)
+    )
+    excluded_usd = sum(
+        (holders.usd_value(balances=balances.get(excluded.address, {}), denoms=by_denom) for excluded in plan.excluded),
+        Decimal(0),
+    )
 
     known = _known_addresses(plan=plan, transferred=transferred)
-    others = {address: holders.usd_value(balances=coins, denoms=by_denom) for address, coins in balances.items() if address not in known}
+    others = {
+        address: holders.usd_value(balances=coins, denoms=by_denom)
+        for address, coins in balances.items()
+        if address not in known
+    }
     below = {address: usd for address, usd in others.items() if usd < plan.floor_usd}
     unplanned = {address: usd for address, usd in others.items() if usd >= plan.floor_usd}
 
@@ -213,27 +307,64 @@ def _by_denom(
     by_denom = {denom.denom: denom for denom in plan.denoms}
     locked = _locked(plan=plan)
     known = _known_addresses(plan=plan, transferred=transferred)
-    below_floor_holders = [coins for address, coins in balances.items()
-                           if address not in known and holders.usd_value(balances=coins, denoms=by_denom) < plan.floor_usd]
+    below_floor_holders = [
+        coins
+        for address, coins in balances.items()
+        if address not in known and holders.usd_value(balances=coins, denoms=by_denom) < plan.floor_usd
+    ]
     rows = []
 
     for denom in plan.denoms:
-        swept_transfers = [transfer for transfers in transferred.values() for transfer in transfers if transfer.denom == denom.denom]
+        swept_transfers = [
+            transfer for transfers in transferred.values() for transfer in transfers if transfer.denom == denom.denom
+        ]
         swept_amount = sum(transfer.amount for transfer in swept_transfers)
-        remaining = {address: balances.get(address, {}).get(denom.denom, 0) for address, state in address_state.items() if state == STATE_REMAINING}
+        remaining = {
+            address: balances.get(address, {}).get(denom.denom, 0)
+            for address, state in address_state.items()
+            if state == STATE_REMAINING
+        }
         remaining = {address: amount for address, amount in remaining.items() if amount > 0}
         remaining_amount = sum(remaining.values())
-        refunded = [address for address, state in address_state.items() if state == STATE_REFUNDED and _back(address=address, denom=denom.denom, balances=balances, locked=locked) > 0]
-        excluded_usd = sum((_amount_usd(amount=balances.get(excluded.address, {}).get(denom.denom, 0), denom=denom) for excluded in plan.excluded), Decimal(0))
-        below_usd = sum((_amount_usd(amount=coins.get(denom.denom, 0), denom=denom) for coins in below_floor_holders), Decimal(0))
+        refunded = [
+            address
+            for address, state in address_state.items()
+            if state == STATE_REFUNDED
+            and _back(address=address, denom=denom.denom, balances=balances, locked=locked) > 0
+        ]
+        excluded_usd = sum(
+            (
+                _amount_usd(amount=balances.get(excluded.address, {}).get(denom.denom, 0), denom=denom)
+                for excluded in plan.excluded
+            ),
+            Decimal(0),
+        )
+        below_usd = sum(
+            (_amount_usd(amount=coins.get(denom.denom, 0), denom=denom) for coins in below_floor_holders), Decimal(0)
+        )
 
-        rows.append({
-            "denom": denom.denom, "symbol": denom.symbol, "decimals": str(denom.decimals), "destination": denom.destination, "channel": denom.channel,
-            "swept": {"addresses": str(len({transfer.address for transfer in swept_transfers})), "amount": str(swept_amount),
-                      "usd": _money(_amount_usd(amount=swept_amount, denom=denom))},
-            "remaining": {"addresses": str(len(remaining)), "amount": str(remaining_amount), "usd": _money(_amount_usd(amount=remaining_amount, denom=denom))},
-            "refunded_addresses": str(len(refunded)), "excluded_usd": _money(excluded_usd), "below_floor_usd": _money(below_usd),
-        })
+        rows.append(
+            {
+                "denom": denom.denom,
+                "symbol": denom.symbol,
+                "decimals": str(denom.decimals),
+                "destination": denom.destination,
+                "channel": denom.channel,
+                "swept": {
+                    "addresses": str(len({transfer.address for transfer in swept_transfers})),
+                    "amount": str(swept_amount),
+                    "usd": _money(_amount_usd(amount=swept_amount, denom=denom)),
+                },
+                "remaining": {
+                    "addresses": str(len(remaining)),
+                    "amount": str(remaining_amount),
+                    "usd": _money(_amount_usd(amount=remaining_amount, denom=denom)),
+                },
+                "refunded_addresses": str(len(refunded)),
+                "excluded_usd": _money(excluded_usd),
+                "below_floor_usd": _money(below_usd),
+            }
+        )
     return rows
 
 
@@ -254,12 +385,22 @@ def _batches(
     rows = []
     for tier, batch in plan.pending_batches():
         last = last_event.get(batch.id)
-        rows.append({
-            "run_id": str(plan.run_id), "batch_id": batch.id, "tier": tier.name.value, "addresses": str(len(batch.addresses)), "usd": _money(batch.usd),
-            "state": states.get(batch.id, ledger.BatchState.PENDING).value, "tx_hash": last.tx_hash if last else None, "at": last.at if last else None,
-            "skipped": [{"address": skip.address, "reason": skip.reason} for skip in (last.skipped if last else [])],
-            "refunded": str(refunded_per_batch.get(batch.id, 0)),
-        })
+        rows.append(
+            {
+                "run_id": str(plan.run_id),
+                "batch_id": batch.id,
+                "tier": tier.name.value,
+                "addresses": str(len(batch.addresses)),
+                "usd": _money(batch.usd),
+                "state": states.get(batch.id, ledger.BatchState.PENDING).value,
+                "tx_hash": last.tx_hash if last else None,
+                "at": last.at if last else None,
+                "skipped": [
+                    {"address": skip.address, "reason": skip.reason} for skip in (last.skipped if last else [])
+                ],
+                "refunded": str(refunded_per_batch.get(batch.id, 0)),
+            }
+        )
 
     # Batches of earlier runs, from the ledger alone (the plan file only holds the current run)
     current = {batch.id for _, batch in plan.pending_batches()}
@@ -267,12 +408,20 @@ def _batches(
         if batch_id in current:
             continue
         first = submitted.get(batch_id)
-        rows.append({
-            "run_id": batch_id.split("-")[0].lstrip("0") or "0", "batch_id": batch_id, "tier": None,
-            "addresses": str(first.addresses) if first and first.addresses is not None else None, "usd": None,
-            "state": states[batch_id].value, "tx_hash": event.tx_hash, "at": event.at,
-            "skipped": [{"address": skip.address, "reason": skip.reason} for skip in event.skipped], "refunded": str(refunded_per_batch.get(batch_id, 0)),
-        })
+        rows.append(
+            {
+                "run_id": batch_id.split("-")[0].lstrip("0") or "0",
+                "batch_id": batch_id,
+                "tier": None,
+                "addresses": str(first.addresses) if first and first.addresses is not None else None,
+                "usd": None,
+                "state": states[batch_id].value,
+                "tx_hash": event.tx_hash,
+                "at": event.at,
+                "skipped": [{"address": skip.address, "reason": skip.reason} for skip in event.skipped],
+                "refunded": str(refunded_per_batch.get(batch_id, 0)),
+            }
+        )
     rows.sort(key=lambda row: row["batch_id"])
     return rows
 
@@ -286,10 +435,18 @@ def _ladder(
     """Live holders still to sweep: everyone with a balance except the swept, the excluded and the chain-skipped."""
     out = {address for address, state in address_state.items() if state == STATE_SWEPT}
     out |= {excluded.address for excluded in plan.excluded} | {skipped.address for skipped in plan.skipped}
-    values = [holders.usd_value(balances=coins, denoms=by_denom) for address, coins in balances.items() if address not in out]
+    values = [
+        holders.usd_value(balances=coins, denoms=by_denom) for address, coins in balances.items() if address not in out
+    ]
     floors = [plan.floor_usd] + [floor for floor in sweep_config.LADDER_FLOORS if floor < plan.floor_usd]
-    return [{"floor": str(floor), "holders": str(sum(1 for value in values if value >= floor)),
-             "usd": _money(sum((value for value in values if value >= floor), Decimal(0)))} for floor in floors]
+    return [
+        {
+            "floor": str(floor),
+            "holders": str(sum(1 for value in values if value >= floor)),
+            "usd": _money(sum((value for value in values if value >= floor), Decimal(0))),
+        }
+        for floor in floors
+    ]
 
 
 def _keyless(plan: planner.Plan, address_state: dict[str, str] | None) -> dict[str, str] | None:
@@ -297,12 +454,22 @@ def _keyless(plan: planner.Plan, address_state: dict[str, str] | None) -> dict[s
     if tier is None:
         return None
     addresses = [planned for batch in tier.batches for planned in batch.addresses]
-    swept = sum(1 for planned in addresses if address_state is not None and address_state.get(planned.address) == STATE_SWEPT)
-    return {"addresses": str(len(addresses)), "usd": _money(sum((planned.usd for planned in addresses), Decimal(0))), "swept": str(swept)}
+    swept = sum(
+        1 for planned in addresses if address_state is not None and address_state.get(planned.address) == STATE_SWEPT
+    )
+    return {
+        "addresses": str(len(addresses)),
+        "usd": _money(sum((planned.usd for planned in addresses), Decimal(0))),
+        "swept": str(swept),
+    }
 
 
 def _transfer_usd(transfer: ledger.Transfer, by_denom: dict[str, holders.SweepDenom]) -> Decimal:
-    return _amount_usd(amount=transfer.amount, denom=by_denom[transfer.denom]) if transfer.denom in by_denom else Decimal(0)
+    return (
+        _amount_usd(amount=transfer.amount, denom=by_denom[transfer.denom])
+        if transfer.denom in by_denom
+        else Decimal(0)
+    )
 
 
 def _amount_usd(amount: int, denom: holders.SweepDenom) -> Decimal:

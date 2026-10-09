@@ -50,8 +50,9 @@ A new stdlib-only package `scripts/wind-down/sweep/`:
 | `test_*.py` | Unit tests, no network, `python3 -m unittest discover -s scripts/wind-down/sweep`. |
 
 `build_sweep_batches.py` and `test_build_sweep_batches.py` are deleted; `bech32_ref.py` stays (the
-sweep package and `coverage_check.py` use it). The dashboard gains `dashboard/sweep.py`,
-`dashboard/static/sweep.js`, a tab in `index.html`, a README section and `dashboard/test_sweep.py`.
+sweep package and `coverage_check.py` use it). The dashboard gains `dashboard/sweep_tab.py`,
+`dashboard/static/sweep.js`, a tab in `index.html`, a README section and `dashboard/test_sweep_tab.py`.
+The modules are `cli.py` and `sweep_tab.py`, not `sweep.py`: a module named like its package shadows it.
 The dashboard imports the sweep package by inserting `scripts/wind-down/sweep` on `sys.path` in
 `server.py` (the sweep package never imports the dashboard).
 
@@ -212,10 +213,10 @@ failed | lost}`, `ledger.unresolved(events) -> [submitted events with no termina
 ## sweep.py: the CLI
 
 ```
-python3 scripts/wind-down/sweep/sweep.py plan --floor-usd 100 [--canary 3] [--test] [--max-addresses 100] [--gas-budget 40000000]
-python3 scripts/wind-down/sweep/sweep.py run [--tier test|canary|main|keyless] [--batches N] [--yes] [--dry-run] [--continue-on-skip]
-python3 scripts/wind-down/sweep/sweep.py status
-python3 scripts/wind-down/sweep/sweep.py resolve [--wait-seconds 600]
+python3 scripts/wind-down/sweep/cli.py plan --floor-usd 100 [--canary 3] [--test] [--max-addresses 100] [--gas-budget 40000000]
+python3 scripts/wind-down/sweep/cli.py run [--tier test|canary|main|keyless] [--batches N] [--yes] [--dry-run] [--continue-on-skip]
+python3 scripts/wind-down/sweep/cli.py status
+python3 scripts/wind-down/sweep/cli.py resolve [--wait-seconds 600]
 ```
 
 **plan** reads live state, classifies, packs, writes the state files and prints: the floor, height,
@@ -279,7 +280,7 @@ so all three destination rules are exercised.
 
 ## Dashboard Sweep tab
 
-`dashboard/sweep.py` has two parts:
+`dashboard/sweep_tab.py` has two parts:
 
 - `collect() -> dict`: the expensive live read, the Sweep tab's collector in `COLLECTORS` with a
   1,800 s interval. It calls `holders.read_balances(denoms)` (the same bulk `denom_owners` reads the
@@ -303,11 +304,11 @@ Per planned address, with `transferred` = the denoms its confirmed `sweep_transf
 
 Payload `data`:
 
-- `run`: `run_id, floor_usd, created_at, height, test, batches {total, confirmed, submitted, failed, lost, pending}, operator_strd, fee_estimate_strd`.
+- `run`: `run_id, floor_usd, created_at, height, test, batches {total, confirmed, submitted, failed, lost, pending}, operator_strd, fee_estimate_ustrd`.
 - `totals`: for `swept, remaining, refunded, excluded, below_floor`: `{addresses, usd}` at the plan's prices on live balances (swept USD is the transferred amounts at plan prices).
 - `by_denom`: per sweep denom: `symbol, destination, channel, swept {addresses, amount, usd}, remaining {…}, refunded_addresses, excluded_usd, below_floor_usd`.
 - `batches`: every ledger-known and plan batch, grouped by run: `run_id, batch_id, tier, addresses, usd, state, tx_hash, at, skipped: [{address, reason}], refunded: count`.
-- `ladder`: live sweepable holders not yet swept and not excluded, at the plan's floor and at 10, 5, 1, 0 below it: `{floor, holders, usd, batches}` (batches at the plan's average addresses per batch).
+- `ladder`: live sweepable holders not yet swept and not excluded, at the plan's floor and at 10, 5, 1, 0 below it: `{floor, holders, usd}` (a per-rung `batches` count was designed but is not implemented).
 - `refunded`: `[{address, denom, amount, channel, batch_id}]`.
 - `exclusions`: the file's sections with each address's live USD.
 - `keyless`: `{addresses, usd}` of the keyless tier and how many of them are swept.
@@ -348,11 +349,11 @@ No network anywhere; `chainio` is the stub seam (REST calls and the `strided` su
   ladder counts, refusal while a submission is unresolved.
 - `sweep/test_ledger.py`: append, read, batch states, unresolved, calibration; a truncated last line
   is reported, not swallowed.
-- `sweep/test_sweep.py`: the preflight rows (each failure mode), the exact `strided` command line,
+- `sweep/test_cli.py`: the preflight rows (each failure mode), the exact `strided` command line,
   gas estimate parsing, the broadcast and poll loop against a fixture `tx_responses` with
   `sweep_transfer` and `sweep_skipped` events, stop on skip, stop on failure, `--yes`/`--batches`,
   `resolve` outcomes.
-- `dashboard/test_sweep.py`: `compose` over a plan, ledger and live snapshot → each address state,
+- `dashboard/test_sweep_tab.py`: `compose` over a plan, ledger and live snapshot → each address state,
   totals, by-denom, ladder, refunded, batches; the no-plan and no-live cases.
 - Unit tests of the existing dashboard keep passing (`python3 -m unittest discover -s scripts/wind-down/dashboard`).
 

@@ -14,6 +14,7 @@ from sweep import config, holders, ledger
 
 BATCH_FILE_PREFIX = "batch-"
 BATCH_FILE_SUFFIX = ".txt"
+USD_CENT = Decimal("0.01")
 
 
 class TierName(StrEnum):
@@ -107,34 +108,53 @@ def build_plan(
     tiers: list[Tier] = []
     index = 1
     for name, tier_holders in members:
-        batches = pack(holder_list=tier_holders, tier=name, run_id=run_id, first_index=index, gas_per_transfer=gas_per_transfer,
-                       max_addresses=max_addresses, gas_budget=gas_budget)
+        batches = pack(
+            holder_list=tier_holders,
+            tier=name,
+            run_id=run_id,
+            first_index=index,
+            gas_per_transfer=gas_per_transfer,
+            max_addresses=max_addresses,
+            gas_budget=gas_budget,
+        )
         if not batches:
             continue
         tiers.append(Tier(name=name, batches=batches))
         index += len(batches)
 
     return Plan(
-        run_id=run_id, created_at=created_at, height=holder_set.height, floor_usd=floor_usd, test=test, canary=canary,
-        gas_per_transfer=gas_per_transfer, prices={d.denom: d.price_usd for d in holder_set.denoms}, denoms=list(holder_set.denoms),
-        tiers=tiers, excluded=list(holder_set.excluded), skipped=list(holder_set.skipped),
-        below_floor_count=len(holder_set.below_floor), below_floor_usd=sum((h.usd for h in holder_set.below_floor), Decimal(0)),
+        run_id=run_id,
+        created_at=created_at,
+        height=holder_set.height,
+        floor_usd=floor_usd,
+        test=test,
+        canary=canary,
+        gas_per_transfer=gas_per_transfer,
+        prices={entry.denom: entry.price_usd for entry in holder_set.denoms},
+        denoms=list(holder_set.denoms),
+        tiers=tiers,
+        excluded=list(holder_set.excluded),
+        skipped=list(holder_set.skipped),
+        below_floor_count=len(holder_set.below_floor),
+        below_floor_usd=sum((holder.usd for holder in holder_set.below_floor), Decimal(0)),
         ladder=ladder(holder_list=holder_set.holders + holder_set.below_floor, floor_usd=floor_usd),
         operator_sequence=operator_sequence,
     )
 
 
-def _tier_members(holder_list: list[holders.Holder], canary: int, test: bool) -> list[tuple[TierName, list[holders.Holder]]]:
+def _tier_members(
+    holder_list: list[holders.Holder], canary: int, test: bool
+) -> list[tuple[TierName, list[holders.Holder]]]:
     """Who goes in which tier, in sweep order. `holder_list` arrives sorted by USD descending."""
     if canary < 0:
         raise ValueError(f"canary must be >= 0, got {canary}")
     if test:
         return [(TierName.TEST, list(holder_list))]
-    keyed = [h for h in holder_list if not h.keyless]
-    keyless = [h for h in holder_list if h.keyless]
-    canaries = sorted(keyed, key=lambda h: h.usd)[:canary]
-    canary_addresses = {h.address for h in canaries}
-    main = [h for h in keyed if h.address not in canary_addresses]
+    keyed = [holder for holder in holder_list if not holder.keyless]
+    keyless = [holder for holder in holder_list if holder.keyless]
+    canaries = sorted(keyed, key=lambda holder: holder.usd)[:canary]
+    canary_addresses = {holder.address for holder in canaries}
+    main = [holder for holder in keyed if holder.address not in canary_addresses]
     return [(TierName.CANARY, canaries), (TierName.MAIN, main), (TierName.KEYLESS, keyless)]
 
 
@@ -155,7 +175,11 @@ def pack(
 
     def close() -> None:
         if current:
-            batches.append(_batch(members=current, run_id=run_id, index=first_index + len(batches), gas_per_transfer=gas_per_transfer))
+            batches.append(
+                _batch(
+                    members=current, run_id=run_id, index=first_index + len(batches), gas_per_transfer=gas_per_transfer
+                )
+            )
 
     for holder in holder_list:
         gas = holder.transfers * gas_per_transfer
@@ -170,19 +194,39 @@ def pack(
 
 def _batch(members: list[holders.Holder], run_id: int, index: int, gas_per_transfer: int) -> Batch:
     batch_id = f"{run_id:03d}-{index:03d}"
-    planned = [PlannedAddress(address=h.address, balances=dict(h.balances), usd=h.usd, transfers=h.transfers,
-                              locked=dict(h.locked)) for h in members]
-    content = _addresses_file_content(addresses=[p.address for p in planned])
-    transfers = sum(p.transfers for p in planned)
-    return Batch(id=batch_id, file=f"{BATCH_FILE_PREFIX}{batch_id}{BATCH_FILE_SUFFIX}", sha256=batch_sha256(content=content),
-                 addresses=planned, usd=sum((p.usd for p in planned), Decimal(0)), transfers=transfers,
-                 estimated_gas=transfers * gas_per_transfer)
+    planned = [
+        PlannedAddress(
+            address=member.address,
+            balances=dict(member.balances),
+            usd=member.usd,
+            transfers=member.transfers,
+            locked=dict(member.locked),
+        )
+        for member in members
+    ]
+    content = _addresses_file_content(addresses=[entry.address for entry in planned])
+    transfers = sum(entry.transfers for entry in planned)
+    return Batch(
+        id=batch_id,
+        file=f"{BATCH_FILE_PREFIX}{batch_id}{BATCH_FILE_SUFFIX}",
+        sha256=batch_sha256(content=content),
+        addresses=planned,
+        usd=sum((entry.usd for entry in planned), Decimal(0)),
+        transfers=transfers,
+        estimated_gas=transfers * gas_per_transfer,
+    )
 
 
 def ladder(holder_list: list[holders.Holder], floor_usd: Decimal) -> list[LadderRung]:
-    floors = [floor_usd] + [f for f in config.LADDER_FLOORS if f < floor_usd]
-    return [LadderRung(floor=f, holders=sum(1 for h in holder_list if h.usd >= f), usd=sum((h.usd for h in holder_list if h.usd >= f), Decimal(0)))
-            for f in floors]
+    floors = [floor_usd] + [rung_floor for rung_floor in config.LADDER_FLOORS if rung_floor < floor_usd]
+    return [
+        LadderRung(
+            floor=rung_floor,
+            holders=sum(1 for holder in holder_list if holder.usd >= rung_floor),
+            usd=sum((holder.usd for holder in holder_list if holder.usd >= rung_floor), Decimal(0)),
+        )
+        for rung_floor in floors
+    ]
 
 
 def gas_per_transfer(events: list[ledger.Event]) -> int:
@@ -197,7 +241,7 @@ def next_run_id(events: list[ledger.Event]) -> int:
 
 
 def batch_file_content(batch: Batch) -> str:
-    return _addresses_file_content(addresses=[p.address for p in batch.addresses])
+    return _addresses_file_content(addresses=[entry.address for entry in batch.addresses])
 
 
 def _addresses_file_content(addresses: list[str]) -> str:
@@ -236,56 +280,130 @@ def load_plan(path: pathlib.Path = config.PLAN_PATH) -> Plan | None:
 
 def plan_to_dict(plan: Plan) -> dict[str, Any]:
     return {
-        "run_id": str(plan.run_id), "created_at": plan.created_at, "height": str(plan.height), "floor_usd": str(plan.floor_usd),
-        "test": plan.test, "canary": str(plan.canary), "gas_per_transfer": str(plan.gas_per_transfer),
-        "prices": {denom: str(price) for denom, price in plan.prices.items()},
-        "denoms": [{"denom": d.denom, "symbol": d.symbol, "decimals": str(d.decimals), "price_usd": str(d.price_usd),
-                    "destination": d.destination, "channel": d.channel} for d in plan.denoms],
-        "tiers": [{"name": tier.name.value, "batches": [_batch_to_dict(batch=b) for b in tier.batches]} for tier in plan.tiers],
-        "excluded": [_excluded_to_dict(entry=e) for e in plan.excluded],
-        "skipped": [_excluded_to_dict(entry=e) for e in plan.skipped],
-        "below_floor": {"count": str(plan.below_floor_count), "usd": str(plan.below_floor_usd)},
-        "ladder": [{"floor": str(r.floor), "holders": str(r.holders), "usd": str(r.usd)} for r in plan.ladder],
+        "run_id": str(plan.run_id),
+        "created_at": plan.created_at,
+        "height": str(plan.height),
+        "floor_usd": _usd_str(amount=plan.floor_usd),
+        "test": plan.test,
+        "canary": str(plan.canary),
+        "gas_per_transfer": str(plan.gas_per_transfer),
+        "prices": {denom: _usd_str(amount=price) for denom, price in plan.prices.items()},
+        "denoms": [
+            {
+                "denom": entry.denom,
+                "symbol": entry.symbol,
+                "decimals": str(entry.decimals),
+                "price_usd": _usd_str(amount=entry.price_usd),
+                "destination": entry.destination,
+                "channel": entry.channel,
+            }
+            for entry in plan.denoms
+        ],
+        "tiers": [
+            {"name": tier.name.value, "batches": [_batch_to_dict(batch=batch) for batch in tier.batches]}
+            for tier in plan.tiers
+        ],
+        "excluded": [_excluded_to_dict(entry=entry) for entry in plan.excluded],
+        "skipped": [_excluded_to_dict(entry=entry) for entry in plan.skipped],
+        "below_floor": {"count": str(plan.below_floor_count), "usd": _usd_str(amount=plan.below_floor_usd)},
+        "ladder": [
+            {"floor": _usd_str(amount=rung.floor), "holders": str(rung.holders), "usd": _usd_str(amount=rung.usd)}
+            for rung in plan.ladder
+        ],
         "operator_sequence": str(plan.operator_sequence),
     }
 
 
+def _usd_str(amount: Decimal) -> str:
+    """USD is written to cents; the plan is a review artifact and full precision is noise. Reading accepts any."""
+    return str(amount.quantize(USD_CENT, rounding=decimal.ROUND_HALF_UP))
+
+
 def _batch_to_dict(batch: Batch) -> dict[str, Any]:
     return {
-        "id": batch.id, "file": batch.file, "sha256": batch.sha256, "usd": str(batch.usd), "transfers": str(batch.transfers),
+        "id": batch.id,
+        "file": batch.file,
+        "sha256": batch.sha256,
+        "usd": _usd_str(amount=batch.usd),
+        "transfers": str(batch.transfers),
         "estimated_gas": str(batch.estimated_gas),
-        "addresses": [{"address": p.address, "balances": {d: str(a) for d, a in p.balances.items()}, "usd": str(p.usd),
-                       "transfers": str(p.transfers), "locked": {d: str(a) for d, a in p.locked.items()}} for p in batch.addresses],
+        "addresses": [
+            {
+                "address": entry.address,
+                "balances": {denom: str(amount) for denom, amount in entry.balances.items()},
+                "usd": _usd_str(amount=entry.usd),
+                "transfers": str(entry.transfers),
+                "locked": {denom: str(amount) for denom, amount in entry.locked.items()},
+            }
+            for entry in batch.addresses
+        ],
     }
 
 
 def _excluded_to_dict(entry: holders.Excluded) -> dict[str, Any]:
-    return {"address": entry.address, "reason": entry.reason, "usd": str(entry.usd)}
+    return {"address": entry.address, "reason": entry.reason, "usd": _usd_str(amount=entry.usd)}
 
 
 def plan_from_dict(data: dict) -> Plan:
     return Plan(
-        run_id=int(data["run_id"]), created_at=data["created_at"], height=int(data["height"]), floor_usd=Decimal(data["floor_usd"]),
-        test=bool(data["test"]), canary=int(data["canary"]), gas_per_transfer=int(data["gas_per_transfer"]),
+        run_id=int(data["run_id"]),
+        created_at=data["created_at"],
+        height=int(data["height"]),
+        floor_usd=Decimal(data["floor_usd"]),
+        test=bool(data["test"]),
+        canary=int(data["canary"]),
+        gas_per_transfer=int(data["gas_per_transfer"]),
         prices={denom: Decimal(price) for denom, price in data["prices"].items()},
-        denoms=[holders.SweepDenom(denom=d["denom"], symbol=d["symbol"], decimals=int(d["decimals"]), price_usd=Decimal(d["price_usd"]),
-                                   destination=d["destination"], channel=d["channel"]) for d in data["denoms"]],
-        tiers=[Tier(name=TierName(t["name"]), batches=[_batch_from_dict(data=b) for b in t["batches"]]) for t in data["tiers"]],
-        excluded=[_excluded_from_dict(data=e) for e in data["excluded"]],
-        skipped=[_excluded_from_dict(data=e) for e in data["skipped"]],
-        below_floor_count=int(data["below_floor"]["count"]), below_floor_usd=Decimal(data["below_floor"]["usd"]),
-        ladder=[LadderRung(floor=Decimal(r["floor"]), holders=int(r["holders"]), usd=Decimal(r["usd"])) for r in data["ladder"]],
+        denoms=[
+            holders.SweepDenom(
+                denom=denom_data["denom"],
+                symbol=denom_data["symbol"],
+                decimals=int(denom_data["decimals"]),
+                price_usd=Decimal(denom_data["price_usd"]),
+                destination=denom_data["destination"],
+                channel=denom_data["channel"],
+            )
+            for denom_data in data["denoms"]
+        ],
+        tiers=[
+            Tier(
+                name=TierName(tier_data["name"]),
+                batches=[_batch_from_dict(data=batch_data) for batch_data in tier_data["batches"]],
+            )
+            for tier_data in data["tiers"]
+        ],
+        excluded=[_excluded_from_dict(data=excluded_data) for excluded_data in data["excluded"]],
+        skipped=[_excluded_from_dict(data=skipped_data) for skipped_data in data["skipped"]],
+        below_floor_count=int(data["below_floor"]["count"]),
+        below_floor_usd=Decimal(data["below_floor"]["usd"]),
+        ladder=[
+            LadderRung(
+                floor=Decimal(rung_data["floor"]), holders=int(rung_data["holders"]), usd=Decimal(rung_data["usd"])
+            )
+            for rung_data in data["ladder"]
+        ],
         operator_sequence=int(data["operator_sequence"]),
     )
 
 
 def _batch_from_dict(data: dict) -> Batch:
     return Batch(
-        id=data["id"], file=data["file"], sha256=data["sha256"], usd=Decimal(data["usd"]), transfers=int(data["transfers"]),
+        id=data["id"],
+        file=data["file"],
+        sha256=data["sha256"],
+        usd=Decimal(data["usd"]),
+        transfers=int(data["transfers"]),
         estimated_gas=int(data["estimated_gas"]),
-        addresses=[PlannedAddress(address=p["address"], balances={d: int(a) for d, a in p["balances"].items()}, usd=Decimal(p["usd"]),
-                                  transfers=int(p["transfers"]), locked={d: int(a) for d, a in p.get("locked", {}).items()})
-                   for p in data["addresses"]],
+        addresses=[
+            PlannedAddress(
+                address=address_data["address"],
+                balances={denom: int(amount) for denom, amount in address_data["balances"].items()},
+                usd=Decimal(address_data["usd"]),
+                transfers=int(address_data["transfers"]),
+                locked={denom: int(amount) for denom, amount in address_data.get("locked", {}).items()},
+            )
+            for address_data in data["addresses"]
+        ],
     )
 
 

@@ -168,6 +168,14 @@ class PlanFileTests(unittest.TestCase):
         loaded = planner.plan_from_dict(data=data)
         self.assertEqual([a.locked for _, batch in loaded.pending_batches() for a in batch.addresses], [{}, {}])
 
+    def test_usd_is_written_to_cents_half_up_and_read_back_at_any_precision(self) -> None:
+        self.assertEqual(planner._usd_str(amount=Decimal("315.2230606874056179273355391")), "315.22")
+        self.assertEqual(planner._usd_str(amount=Decimal("0.125")), "0.13")
+        self.assertEqual(planner._usd_str(amount=Decimal(3)), "3.00")
+        excluded = holders.Excluded(address="stride1x", reason="r", usd=Decimal("1.005"))
+        self.assertEqual(planner._excluded_to_dict(entry=excluded)["usd"], "1.01")
+        self.assertEqual(planner._excluded_from_dict(data={"address": "a", "reason": "r", "usd": "1.23456"}).usd, Decimal("1.23456"))
+
     def test_operator_sequence_round_trips_as_a_string(self) -> None:
         plan = planner.build_plan(holder_set=holder_set([holder(1, 500)]), floor_usd=Decimal(10), run_id=1, canary=0, test=False,
                                   gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, operator_sequence=42, created_at="t")

@@ -82,7 +82,9 @@ sweep denom, read in bulk with `denom_owners_by_query`; the operator's STRD) wit
 `sweep/state/ledger.jsonl` and `sweep/exclusions.json` read from disk on every request, so a batch the runner just
 confirmed shows within ten seconds while the live read stays on demand: the "Refresh live holders" button, or
 automatically when the snapshot is missing or older than ten minutes while the tab is open (the collector's interval
-is 1,800 s as a backstop). `sweep_tab.compose()` is pure and tested in `test_sweep_tab.py`.
+is 1,800 s as a backstop). Like a `plan`, "Refresh live holders" reads every holder of the nineteen sweep denoms and takes
+about six minutes against Polkachu (measured 2026-10-09: 5m45s). `sweep_tab.compose()` is pure and tested in
+`test_sweep_tab.py`.
 
 Per address: `swept` (a confirmed `sweep_transfer` in any run and none of the transferred denoms held now), `refunded`
 (transferred, and a transferred denom is held again beyond the vesting remainder the plan recorded as `locked`: the 24 h
