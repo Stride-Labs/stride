@@ -24,7 +24,7 @@ The address already holds what the test needs: STRD and stTIA (Stride-native, to
 voucher (back to Celestia over channel-162), plus dust of most other stTokens; every sweepable denom it holds moves.
 Then check the same bytes under `osmo1nwyvkxm89yg8e3fyxgruyct4zp90mg4n5x5jak` hold the STRD and stTokens and under
 `celestia1nwyvkxm89yg8e3fyxgruyct4zp90mg4ndhkj3f` the TIA, and that the Sweep tab shows the batch confirmed. The test
-batch also calibrates gas per transfer for the real run. The exact command list, with the balance checks, is the
+batch also calibrates gas per transfer for the real run. `status` reprints the plan's tables any time. The exact command list, with the balance checks, is the
 `sweep-test` step on the Ops tab.
 
 ## Sweep day

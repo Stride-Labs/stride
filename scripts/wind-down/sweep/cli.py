@@ -662,7 +662,9 @@ def cmd_status(args: argparse.Namespace) -> int:
         print("no plan")
         return 0
     states = ledger.batch_states(events=events)
-    print(f"run {plan.run_id} · floor ${plan.floor_usd} · planned {plan.created_at} at height {plan.height}")
+    # The plan's own tables first (excluded, skipped, ladder), so an operator can review them without re-planning
+    print(render_plan(plan=plan))
+    print(f"planned {plan.created_at} at height {plan.height}")
     for tier in plan.tiers:
         counts: dict[str, int] = {}
         for batch in tier.batches:
