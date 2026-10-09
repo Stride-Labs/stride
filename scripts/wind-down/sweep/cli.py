@@ -242,7 +242,7 @@ def run_batch(
     result = parse_broadcast(stdout=broadcast.stdout)
     if result.code != 0:
         event = ledger.failed(batch_id=batch.id, tx_hash=result.tx_hash, at=chainio.now().isoformat(), code=result.code,
-                              codespace=result.codespace, raw_log=result.raw_log)
+                              codespace=result.codespace, raw_log=result.raw_log, run_id=plan.run_id)
         ledger.append(event=event, path=ledger_path)
         raise RunStopped(f"batch {batch.id}: broadcast rejected (code {result.code} {result.codespace}): {result.raw_log}")
 

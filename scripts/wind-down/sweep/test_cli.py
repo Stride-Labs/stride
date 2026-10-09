@@ -200,6 +200,28 @@ class RunBatchTests(unittest.TestCase):
         events = ledger.read(path=self.ledger_path)
         self.assertEqual([e.kind for e in events], [ledger.Kind.FAILED])
         self.assertEqual(events[0].code, 13)
+        self.assertEqual(events[0].run_id, self.plan.run_id)
+        self.assertEqual(planner.next_run_id(events=events), self.plan.run_id + 1)  # a rejection-only run is not reused
+
+    def test_simulation_without_a_gas_estimate_stops_before_broadcasting(self) -> None:
+        def no_estimate(args: list[str]) -> chainio.CommandResult:
+            self.strided_calls.append(args)
+            return chainio.CommandResult(returncode=1, stdout="", stderr="Error: rpc error")
+        with mock.patch.object(chainio, "strided", side_effect=no_estimate):
+            with self.assertRaises(cli.RunStopped):
+                cli.run_batch(plan=self.plan, tier=self.tier, batch=self.batch, state_dir=self.state, ledger_path=self.ledger_path, yes=True, dry_run=False)
+        self.assertEqual(len(self.strided_calls), 1)
+        self.assertIn("--dry-run", self.strided_calls[0])
+        self.assertFalse(self.ledger_path.exists())
+
+    def test_delivered_tx_with_a_nonzero_code_records_submitted_then_failed_and_stops(self) -> None:
+        failed_response = {"tx_response": {**TX_RESPONSE["tx_response"], "code": 5, "codespace": "sdk", "raw_log": "boom", "events": []}}
+        with mock.patch.object(chainio, "strided", side_effect=self.fake_strided), mock.patch.object(chainio, "rest_get", return_value=failed_response):
+            with self.assertRaises(cli.RunStopped):
+                cli.run_batch(plan=self.plan, tier=self.tier, batch=self.batch, state_dir=self.state, ledger_path=self.ledger_path, yes=True, dry_run=False)
+        events = ledger.read(path=self.ledger_path)
+        self.assertEqual([e.kind for e in events], [ledger.Kind.SUBMITTED, ledger.Kind.FAILED])
+        self.assertEqual((events[1].code, events[1].codespace, events[1].raw_log), (5, "sdk", "boom"))
 
     def test_unfound_tx_leaves_the_submission_unresolved(self) -> None:
         with mock.patch.object(chainio, "strided", side_effect=self.fake_strided), \
@@ -250,6 +272,62 @@ class RunLoopTests(unittest.TestCase):
             self.assertEqual([e.batch_id for e in ledger.read(path=self.state / "ledger.jsonl")], ["001-001", "001-001"])
             self.assertEqual(cli.main(argv=["run", "--continue-on-skip"]), 0)
             self.assertEqual([e.batch_id for e in ledger.read(path=self.state / "ledger.jsonl")], ["001-001", "001-001", "001-002", "001-002"])
+
+    def seed_submitted(self) -> pathlib.Path:
+        path = self.state / "ledger.jsonl"
+        ledger.append(event=ledger.submitted(run_id=1, batch_id="001-001", tx_hash="AB12", at=NOW.isoformat(), addresses=1, transfers_estimate=2, gas_wanted=1), path=path)
+        return path
+
+    def test_failed_preflight_stops_before_any_strided_call(self) -> None:
+        failing = [cli.Check(name="chain id", ok=False, detail="node reports other-1")]
+        with mock.patch.object(cli, "preflight", return_value=failing), mock.patch.object(chainio, "strided", side_effect=AssertionError("strided")) as strided:
+            self.assertEqual(cli.main(argv=["run"]), 1)
+        strided.assert_not_called()
+        self.assertFalse((self.state / "ledger.jsonl").exists())
+
+    def test_a_failed_tx_stops_the_run_before_the_second_batch(self) -> None:
+        def fake_strided(args: list[str]) -> chainio.CommandResult:
+            if "--dry-run" in args:
+                return chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
+            return chainio.CommandResult(returncode=0, stdout=json.dumps({"height": "0", "txhash": "AB12", "codespace": "", "code": 0, "raw_log": ""}), stderr="")
+        failed_response = {"tx_response": {**TX_RESPONSE["tx_response"], "code": 5, "codespace": "sdk", "raw_log": "boom", "events": []}}
+        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", return_value=failed_response):
+            self.assertEqual(cli.main(argv=["run"]), 1)
+        events = ledger.read(path=self.state / "ledger.jsonl")
+        self.assertEqual([(e.batch_id, e.kind) for e in events], [("001-001", ledger.Kind.SUBMITTED), ("001-001", ledger.Kind.FAILED)])
+
+    def test_resolve_records_confirmed_when_the_poll_finds_the_tx(self) -> None:
+        path = self.seed_submitted()
+        with mock.patch.object(chainio, "rest_get", return_value=TX_RESPONSE):
+            self.assertEqual(cli.main(argv=["resolve"]), 0)
+        self.assertEqual([e.kind for e in ledger.read(path=path)], [ledger.Kind.SUBMITTED, ledger.Kind.CONFIRMED])
+
+    def test_resolve_records_failed_when_the_poll_finds_a_nonzero_code(self) -> None:
+        path = self.seed_submitted()
+        failed_response = {"tx_response": {**TX_RESPONSE["tx_response"], "code": 5, "codespace": "sdk", "raw_log": "boom", "events": []}}
+        with mock.patch.object(chainio, "rest_get", return_value=failed_response):
+            self.assertEqual(cli.main(argv=["resolve"]), 0)
+        events = ledger.read(path=path)
+        self.assertEqual([e.kind for e in events], [ledger.Kind.SUBMITTED, ledger.Kind.FAILED])
+        self.assertEqual(events[1].code, 5)
+
+    def test_resolve_records_lost_when_the_tx_never_appears(self) -> None:
+        path = self.seed_submitted()
+        with mock.patch.object(chainio, "rest_get", side_effect=chainio.NotFound("x")):
+            self.assertEqual(cli.main(argv=["resolve", "--wait-seconds", "6"]), 0)
+        self.assertEqual([e.kind for e in ledger.read(path=path)], [ledger.Kind.SUBMITTED, ledger.Kind.LOST])
+        chainio.sleep.assert_called()
+
+    def test_plan_refuses_with_an_unresolved_submission(self) -> None:
+        self.seed_submitted()
+        with mock.patch.object(holders, "read_holder_set", side_effect=AssertionError("holders")) as read_holders:
+            self.assertEqual(cli.main(argv=["plan", "--floor-usd", "1"]), 1)
+        read_holders.assert_not_called()
+
+    def test_plan_without_test_or_floor_refuses(self) -> None:
+        with mock.patch.object(holders, "read_holder_set", side_effect=AssertionError("holders")) as read_holders:
+            self.assertEqual(cli.main(argv=["plan"]), 1)
+        read_holders.assert_not_called()
 
     def test_status_needs_no_network(self) -> None:
         with mock.patch.object(chainio, "rest_get", side_effect=AssertionError("network")), mock.patch.object(chainio, "strided", side_effect=AssertionError("subprocess")):
