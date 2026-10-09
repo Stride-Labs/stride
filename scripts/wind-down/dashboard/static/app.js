@@ -8,11 +8,12 @@
 // The hash selects the tab: `#<tab>` or `#<tab>/<suffix>`, the suffix being the module's to interpret (the Multisig
 // tab scrolls to `#multisig/<set-id>` or `#multisig/<set-id>/<zone>`), so in-page links across tabs are plain anchors.
 
-const TAB_NAMES = ['ops', 'channels', 'validators', 'funds', 'pools', 'multisig'];
+const TAB_NAMES = ['ops', 'channels', 'validators', 'funds', 'pools', 'multisig', 'sweep'];
 // What the header says on a tab that polls its own route (no snapshot age, no refresh button).
 const SELF_POLLING_LABELS = {
   ops: 'plan and status are read from disk · reload to pick up edits',
   multisig: 'composed from the Validators, Funds and Pools snapshots and the plan · refresh on those tabs',
+  sweep: 'live holders refresh on demand (button in the tab) · plan and ledger are read from disk',
 };
 const POLL_MS = 5000;
 const STALE_AFTER_INTERVALS = 3;
