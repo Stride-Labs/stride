@@ -36,6 +36,13 @@ class LedgerFileTests(unittest.TestCase):
         with self.assertRaisesRegex(ledger.LedgerError, "line 2"):
             ledger.read(path=self.path)
 
+    def test_valid_json_that_is_not_an_event_is_reported_with_its_number(self) -> None:
+        ledger.append(event=ledger.lost(batch_id="001-001", tx_hash="AB", at="t"), path=self.path)
+        with self.path.open("a") as handle:
+            handle.write("5\n")
+        with self.assertRaisesRegex(ledger.LedgerError, "line 2"):
+            ledger.read(path=self.path)
+
 
 class DerivedStateTests(unittest.TestCase):
     def test_batch_states_and_unresolved(self) -> None:

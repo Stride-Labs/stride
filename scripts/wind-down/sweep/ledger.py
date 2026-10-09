@@ -111,7 +111,7 @@ def read(path: pathlib.Path = config.LEDGER_PATH) -> list[Event]:
             continue
         try:
             events.append(event_from_dict(data=json.loads(line)))
-        except (json.JSONDecodeError, KeyError, ValueError) as error:
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
             raise LedgerError(f"{path} line {number} is unreadable: {error}") from None
     return events
 
@@ -135,8 +135,17 @@ def event_from_dict(data: dict) -> Event:
         tx_hash=data.get("tx_hash"),
         codespace=data.get("codespace"),
         raw_log=data.get("raw_log"),
-        transfers=[Transfer(address=t["address"], denom=t["denom"], amount=int(t["amount"]), channel=t["channel"], receiver=t["receiver"]) for t in data.get("transfers", [])],
-        skipped=[Skip(address=s["address"], reason=s["reason"]) for s in data.get("skipped", [])],
+        transfers=[
+            Transfer(
+                address=transfer["address"],
+                denom=transfer["denom"],
+                amount=int(transfer["amount"]),
+                channel=transfer["channel"],
+                receiver=transfer["receiver"],
+            )
+            for transfer in data.get("transfers", [])
+        ],
+        skipped=[Skip(address=skip["address"], reason=skip["reason"]) for skip in data.get("skipped", [])],
         **{name: (int(data[name]) if data.get(name) is not None else None) for name in INT_FIELDS},
     )
 
