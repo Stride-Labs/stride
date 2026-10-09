@@ -150,10 +150,11 @@ Classification, in the chain's order (`sweepSkipReason`), then the builder's own
 | `wasm contract address` | contract set (builder-only) |
 | `excluded: <section>: <label>` | exclusions file (builder-only) |
 
-Output: `HolderSet(height, denoms: [SweepDenom], holders: [Holder(address, balances, usd, keyless)],
+Output: `HolderSet(height, denoms: [SweepDenom], holders: [Holder(address, balances, usd, keyless, locked)],
 excluded: [Excluded(address, reason, usd)], below_floor: [Holder])`. `below_floor` carries every
 sweepable holder under the floor, so the planner can print the floor ladder and the dashboard can show
-"below floor".
+"below floor". `locked` is a vesting holder's total minus spendable per denom (empty otherwise); the planner
+carries it into each planned address so the dashboard does not read the remainder as a refund.
 
 ## planner.py: tiers and batches
 
@@ -229,19 +230,26 @@ test address (floor ignored for it) and the tier is `test`.
    - `strided keys show stride-sweeper --keyring-backend test -a` prints `SWEEP_OPERATOR`;
    - the plan is younger than `MAX_PLAN_AGE_SECONDS` and every batch file's sha256 matches the plan;
    - the ledger has no unresolved submitted batch (else: run `resolve`);
+   - the operator's on-chain account sequence equals `plan.operator_sequence` (read at `plan`) plus the number of
+     `submitted` lines of this run (lost ones excepted): a tx signed without a ledger line fails the run, naming both
+     numbers. The same equality is re-checked immediately before every broadcast;
    - no address in any pending batch is in the exclusions file (re-read now), the protocol set, or
      is the operator: the exclusion file is enforced at signing time, not only at planning;
    - every destination channel the plan uses is OPEN on Stride's side;
    - the operator's `ustrd` balance covers the fees of every pending batch (estimated gas × price).
-2. For each pending batch in tier order (optionally one tier, optionally at most N batches): print
+2. For each pending batch in tier order (a plain `run` skips the `keyless` tier and prints how many batches it left
+   for `run --tier keyless`; `--tier` runs only that tier; optionally at most N batches): print
    the batch (id, tier, addresses, transfers, USD, the three largest holders); unless `--yes`, ask
    `sweep batch 003-001? [y/N/a]` (`a` = yes to all for this run).
 3. Simulate: the CLI command with `--dry-run`, parsing the SDK's `gas estimate: N`. Refuse the batch
    and stop if `N × GAS_ADJUSTMENT > BLOCK_GAS_LIMIT` (re-plan with a smaller `--gas-budget`).
-   `--dry-run` on `run` stops here for every batch and prints the commands and estimates.
+   `--dry-run` on `run` stops here for every batch and prints the commands and estimates. The simulation passes
+   `--from <SWEEP_OPERATOR address>` (the SDK requires a bech32 address when simulating) and no `--gas`; the broadcast
+   passes `--from stride-sweeper`.
 4. Broadcast with `--gas <N × GAS_ADJUSTMENT> --gas-prices GAS_PRICE --broadcast-mode sync -y
    --output json`. A non-zero `code` in the response is a `failed` event and stops the run. Else
-   append `submitted`.
+   append `submitted`. A non-zero `strided` exit or an unparseable reply stops the run with nothing in the ledger
+   (the tx may have been broadcast); the next run's operator-sequence check finds out.
 5. Poll `tx/v1beta1/txs/<hash>` every `TX_POLL_SECONDS` up to `TX_WAIT_SECONDS`. Found with code 0:
    parse `sweep_transfer` and `sweep_skipped` events, append `confirmed`, print `transfers=… skipped=…
    gas_used=…`. Found with a non-zero code: `failed`, stop. Not found in time: leave it `submitted`
@@ -254,6 +262,8 @@ Each `strided` invocation is one line of this shape (the test suite asserts it):
 ```
 strided tx stakeibc sweep-tokens-off-stride <denoms> <file> --from stride-sweeper --keyring-backend test
   --chain-id stride-1 --node <RPC> --gas <n> --gas-prices 0.001ustrd --broadcast-mode sync -y --output json
+strided tx stakeibc sweep-tokens-off-stride <denoms> <file> --from <SWEEP_OPERATOR> --keyring-backend test
+  --chain-id stride-1 --node <RPC> --gas-prices 0.001ustrd --dry-run
 ```
 
 **status** needs no network: per tier, batches by state, confirmed addresses and USD, skipped and
@@ -286,8 +296,8 @@ Per planned address, with `transferred` = the denoms its confirmed `sweep_transf
 
 | state | rule |
 | --- | --- |
-| `swept` | transferred non-empty and live holds none of the transferred denoms |
-| `refunded` | transferred non-empty and live holds a transferred denom again (timeout refund) |
+| `swept` | transferred non-empty (any run) and live holds none of the transferred denoms beyond the address's planned `locked` remainder |
+| `refunded` | transferred non-empty (any run) and live holds a transferred denom above its `locked` remainder (timeout refund) |
 | `remaining` | no confirmed transfer yet (batch pending, submitted, failed or lost) |
 | `excluded` | in the plan's excluded list |
 

@@ -84,9 +84,11 @@ confirmed shows within ten seconds while the live read stays on demand: the "Ref
 automatically when the snapshot is missing or older than ten minutes while the tab is open (the collector's interval
 is 1,800 s as a backstop). `sweep_tab.compose()` is pure and tested in `test_sweep_tab.py`.
 
-Per planned address: `swept` (a confirmed `sweep_transfer` and none of the transferred denoms held now), `refunded`
-(transferred, and a transferred denom is held again: the 24 h timeout refunded it; the next `plan` re-sweeps it),
-`remaining` (no confirmed transfer yet). Tiles: swept, remaining, refunded, excluded (the exclusions file, live USD),
+Per address: `swept` (a confirmed `sweep_transfer` in any run and none of the transferred denoms held now), `refunded`
+(transferred, and a transferred denom is held again beyond the vesting remainder the plan recorded as `locked`: the 24 h
+timeout refunded it; the next `plan` re-sweeps it), `remaining` (in the current plan, no confirmed transfer yet). Swept and
+refunded cover every address the ledger swept, so a re-plan at a lower floor keeps the earlier runs in the Swept tile; a
+holder swept in an earlier run and absent from the current plan is assumed to have nothing locked. Tiles: swept, remaining, refunded, excluded (the exclusions file, live USD),
 below floor (live holders under the plan's floor; the sub-line counts holders above the floor that are not in the
 plan, which appeared or were refunded since). The by-token table, the runs-and-batches table (every batch of the
 current plan plus earlier runs' batches from the ledger; a red `N skipped` badge means the chain disagreed with the

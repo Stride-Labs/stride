@@ -136,6 +136,8 @@ class HolderTests(unittest.TestCase):
         by_address = {h.address: h for h in holder_set.holders}
         self.assertEqual(by_address[BASE].usd, Decimal("61.25"))  # 10 stATOM x 6 + 5 STRD x 0.05 + 0.25 ATOM x 4
         self.assertEqual(by_address[VESTING].balances, {"stuatom": 2_000_000, "ustrd": 40_000_000})  # spendable, not total
+        self.assertEqual(by_address[VESTING].locked, {"ustrd": 60_000_000})  # total minus spendable; stuatom is fully spendable
+        self.assertEqual((by_address[BASE].locked, by_address[KEYLESS].locked), ({}, {}))
         self.assertTrue(by_address[KEYLESS].keyless)
         self.assertFalse(by_address[BASE].keyless)
         self.assertEqual(by_address[BASE].transfers, 3)

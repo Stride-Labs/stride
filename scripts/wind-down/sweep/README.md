@@ -24,9 +24,16 @@ tab shows the batch confirmed. The test batch also calibrates gas per transfer f
 
 1. `plan --floor-usd <announced floor> --canary 3`, read the tables (excluded, skipped, ladder), `run`.
    The canary tier (the three smallest holders above the floor) goes first, then everyone by value descending.
+   A plain `run` walks the canary and main tiers only and prints how many keyless batches it left behind.
 2. Lower the floor: `plan --floor-usd 25`, `run`; repeat. Swept holders have no balance, so a re-plan never lists them;
    a transfer that timed out (24 h) refunds the holder, who reappears in the next plan.
-3. The `keyless` tier (never-signed accounts) is last in every plan; run it at the end with `run --tier keyless`.
+3. The `keyless` tier (never-signed accounts) is last in every plan and a plain `run` skips it, so those owners get the
+   most time. Run it once, at the very end, with `run --tier keyless` (it runs only that tier).
+
+`plan` records the operator's account sequence in `plan.json`. Preflight and, again right before each broadcast, `run`
+require the chain's sequence to equal that plus the run's `submitted` lines: a `strided` crash or an unreadable broadcast
+reply can leave a tx in the mempool with no ledger line, and the sequence is how the next run finds out. On a mismatch
+find the stray tx (`strided q tx`, the operator's history), record or discard it, then `plan` again.
 
 `run` stops on any `sweep_skipped` event (the planner and the chain disagree: inspect, fix, re-plan), on a failed tx,
 on a batch over the block gas limit, and when a tx is not found within three minutes (`resolve`). `--dry-run` prints

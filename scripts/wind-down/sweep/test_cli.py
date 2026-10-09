@@ -8,7 +8,9 @@ import json
 import pathlib
 import tempfile
 import unittest
+from collections.abc import Callable
 from decimal import Decimal
+from typing import Any
 from unittest import mock
 
 from sweep import chainio, cli, config, holders, ledger, planner
@@ -18,13 +20,32 @@ DENOMS = [holders.SweepDenom(denom="stuatom", symbol="stATOM", decimals=6, price
 A1 = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
 A2 = "stride1am99pcvynqqhyrwqfvfmnvxjk96rn46le9j65c"
 NOW = datetime.datetime(2026, 11, 10, 9, 0, tzinfo=datetime.UTC)
+PLAN_SEQUENCE = 5
+ACCOUNT_PATH = f"/cosmos/auth/v1beta1/accounts/{config.SWEEP_OPERATOR}"
 
 
-def make_plan(created_at: str = NOW.isoformat(), addresses: tuple[str, ...] = (A1, A2)) -> planner.Plan:
-    holder_list = [holders.Holder(address=a, balances={"stuatom": 1_000_000, "ustrd": 10}, usd=Decimal(6), keyless=False) for a in addresses]
+def operator_account(sequence: int) -> dict:
+    return {"account": {"@type": config.BASE_ACCOUNT, "address": config.SWEEP_OPERATOR, "pub_key": {"key": "x"}, "sequence": str(sequence)}}
+
+
+def serve(response: Any, sequence: Callable[[], int]) -> Callable[..., Any]:
+    """A rest_get stand-in: the operator's account at the live sequence, anything else `response` (a value or a callable)."""
+    def rest(path: str, params: dict | None = None) -> Any:
+        if path == ACCOUNT_PATH:
+            return operator_account(sequence())
+        return response(path, params) if callable(response) else response
+    return rest
+
+
+def not_found(path: str, params: dict | None = None) -> Any:
+    raise chainio.NotFound(path)
+
+
+def make_plan(created_at: str = NOW.isoformat(), addresses: tuple[str, ...] = (A1, A2), keyless: tuple[str, ...] = ()) -> planner.Plan:
+    holder_list = [holders.Holder(address=a, balances={"stuatom": 1_000_000, "ustrd": 10}, usd=Decimal(6), keyless=a in keyless) for a in addresses]
     hs = holders.HolderSet(height=100, denoms=DENOMS, holders=holder_list, excluded=[], skipped=[], below_floor=[])
     return planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
-                              max_addresses=1, gas_budget=40_000_000, created_at=created_at)
+                              max_addresses=1, gas_budget=40_000_000, operator_sequence=PLAN_SEQUENCE, created_at=created_at)
 
 
 TX_RESPONSE = {"tx_response": {
@@ -51,10 +72,13 @@ class ParsingTests(unittest.TestCase):
             "--from", "stride-sweeper", "--keyring-backend", "test", "--chain-id", "stride-1", "--node", config.RPC,
             "--gas", "260000", "--gas-prices", "0.001ustrd", "--broadcast-mode", "sync", "-y", "--output", "json",
         ])
+        # Simulation takes the bech32 address (the SDK refuses a key name there); the broadcast takes the key name
         dry = cli.command_line(denoms=["stuatom"], file=pathlib.Path("/s/b.txt"), gas=None, dry_run=True)
-        self.assertIn("--dry-run", dry)
-        self.assertNotIn("--gas", dry)
-        self.assertNotIn("-y", dry)
+        self.assertEqual(dry, [
+            "tx", "stakeibc", "sweep-tokens-off-stride", "stuatom", "/s/b.txt",
+            "--from", config.SWEEP_OPERATOR, "--keyring-backend", "test", "--chain-id", "stride-1", "--node", config.RPC,
+            "--gas-prices", "0.001ustrd", "--dry-run",
+        ])
 
     def test_parse_gas_estimate(self) -> None:
         self.assertEqual(cli.parse_gas_estimate(text="some noise\ngas estimate: 201000\n"), 201_000)
@@ -66,13 +90,19 @@ class ParsingTests(unittest.TestCase):
 
     def test_parse_broadcast_stops_without_a_txhash(self) -> None:
         for stdout in ["not json", "[1]", json.dumps({"code": 0}), json.dumps({"code": 0, "txhash": ""})]:
-            with self.subTest(stdout=stdout), self.assertRaises(cli.RunStopped):
+            with self.subTest(stdout=stdout), self.assertRaisesRegex(cli.RunStopped, "may have been broadcast.*operator sequence"):
                 cli.parse_broadcast(stdout=stdout)
 
     def test_batches_must_be_positive(self) -> None:
         for value in ["0", "-1"]:
             with self.subTest(value=value), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
                 cli.parse_args(argv=["run", "--batches", value])
+
+    def test_plan_file_round_trips_the_operator_sequence(self) -> None:
+        plan = make_plan()
+        self.assertEqual(plan.operator_sequence, PLAN_SEQUENCE)
+        self.assertEqual(planner.plan_to_dict(plan=plan)["operator_sequence"], str(PLAN_SEQUENCE))
+        self.assertEqual(planner.plan_from_dict(data=json.loads(json.dumps(planner.plan_to_dict(plan=plan)))), plan)
 
     def test_parse_tx_response_reads_sweep_events(self) -> None:
         outcome = cli.parse_tx_response(body=TX_RESPONSE)
@@ -94,6 +124,7 @@ class PreflightTests(unittest.TestCase):
             "/cosmos/base/tendermint/v1beta1/node_info": {"default_node_info": {"network": "stride-1"}},
             "/ibc/core/channel/v1/channels/channel-5/ports/transfer": {"channel": {"state": "STATE_OPEN"}},
             f"/cosmos/bank/v1beta1/balances/{config.SWEEP_OPERATOR}/by_denom": {"balance": {"denom": "ustrd", "amount": "5000000"}},
+            ACCOUNT_PATH: operator_account(PLAN_SEQUENCE),
         }
         self.commands = {
             ("version",): chainio.CommandResult(returncode=0, stdout="v35.0.0\n", stderr=""),
@@ -112,7 +143,7 @@ class PreflightTests(unittest.TestCase):
         checks = self.checks()
         self.assertTrue(all(c.ok for c in checks.values()), [c for c in checks.values() if not c.ok])
         self.assertEqual(set(checks), {"chain id", "binary version", "operator key", "plan age", "batch files", "unresolved submissions",
-                                       "exclusions and protocol addresses", "channels open", "operator fee balance"})
+                                       "operator sequence", "exclusions and protocol addresses", "channels open", "operator fee balance"})
 
     def test_each_failure_mode(self) -> None:
         self.assertFalse(self.checks(now=NOW + datetime.timedelta(hours=7))["plan age"].ok)
@@ -133,6 +164,30 @@ class PreflightTests(unittest.TestCase):
         self.commands[("keys", "show", "stride-sweeper", "--keyring-backend", "test", "-a")] = chainio.CommandResult(returncode=0, stdout="stride1other\n", stderr="")
         self.assertFalse(self.checks()["operator key"].ok)
 
+    def submitted_event(self, batch_id: str = "001-001", run_id: int = 1) -> ledger.Event:
+        return ledger.submitted(run_id=run_id, batch_id=batch_id, tx_hash="X", at="t", addresses=1, transfers_estimate=2, gas_wanted=1)
+
+    def test_operator_sequence_passes_when_the_chain_matches_the_ledger(self) -> None:
+        self.assertTrue(self.checks()["operator sequence"].ok)
+        self.rest[ACCOUNT_PATH] = operator_account(PLAN_SEQUENCE + 2)
+        events = [self.submitted_event(batch_id="001-001"), self.submitted_event(batch_id="001-002"), self.submitted_event(batch_id="000-001", run_id=0)]
+        self.assertTrue(self.checks(events=events)["operator sequence"].ok)  # an earlier run's submission is not counted
+
+    def test_operator_sequence_fails_naming_both_numbers_when_the_chain_is_ahead(self) -> None:
+        self.rest[ACCOUNT_PATH] = operator_account(PLAN_SEQUENCE + 1)
+        check = self.checks()["operator sequence"]
+        self.assertFalse(check.ok)
+        self.assertIn(f"chain at {PLAN_SEQUENCE + 1}", check.detail)
+        self.assertIn(f"expects {PLAN_SEQUENCE}", check.detail)
+        self.assertIn("find it before running", check.detail)
+
+    def test_operator_sequence_fails_when_the_chain_is_behind_the_ledger(self) -> None:
+        self.assertFalse(self.checks(events=[self.submitted_event()])["operator sequence"].ok)
+
+    def test_a_lost_submission_never_consumed_a_sequence(self) -> None:
+        events = [self.submitted_event(), ledger.lost(batch_id="001-001", tx_hash="X", at="t")]
+        self.assertTrue(self.checks(events=events)["operator sequence"].ok)
+
     def test_already_confirmed_batches_are_not_rechecked_for_exclusions(self) -> None:
         confirmed = [ledger.submitted(run_id=1, batch_id="001-001", tx_hash="X", at="t", addresses=1, transfers_estimate=2, gas_wanted=1),
                      ledger.confirmed(batch_id="001-001", tx_hash="X", at="t", height=1, gas_used=1, transfers=[], skipped=[])]
@@ -151,6 +206,8 @@ class RunBatchTests(unittest.TestCase):
         self.tier, self.batch = self.plan.pending_batches()[0]
         self.strided_calls: list[list[str]] = []
         self.tx_lookups = 0
+        self.chain_sequence = PLAN_SEQUENCE
+        mock.patch.object(chainio, "rest_get", side_effect=self.fake_rest).start()
         mock.patch.object(chainio, "now", return_value=NOW).start()
         mock.patch.object(chainio, "sleep").start()
         mock.patch.object(cli, "ask", return_value="y").start()
@@ -164,6 +221,8 @@ class RunBatchTests(unittest.TestCase):
         return chainio.CommandResult(returncode=0, stdout=json.dumps({"height": "0", "txhash": "AB12", "codespace": "", "code": 0, "raw_log": ""}), stderr="")
 
     def fake_rest(self, path: str, params: dict | None = None) -> dict:
+        if path == ACCOUNT_PATH:
+            return operator_account(self.chain_sequence)
         self.tx_lookups += 1
         if self.tx_lookups < 3:
             raise chainio.NotFound(path)
@@ -230,7 +289,7 @@ class RunBatchTests(unittest.TestCase):
 
     def test_delivered_tx_with_a_nonzero_code_records_submitted_then_failed_and_stops(self) -> None:
         failed_response = {"tx_response": {**TX_RESPONSE["tx_response"], "code": 5, "codespace": "sdk", "raw_log": "boom", "events": []}}
-        with mock.patch.object(chainio, "strided", side_effect=self.fake_strided), mock.patch.object(chainio, "rest_get", return_value=failed_response):
+        with mock.patch.object(chainio, "strided", side_effect=self.fake_strided), mock.patch.object(chainio, "rest_get", side_effect=serve(failed_response, lambda: PLAN_SEQUENCE)):
             with self.assertRaises(cli.RunStopped):
                 cli.run_batch(plan=self.plan, tier=self.tier, batch=self.batch, state_dir=self.state, ledger_path=self.ledger_path, yes=True, dry_run=False)
         events = ledger.read(path=self.ledger_path)
@@ -239,11 +298,41 @@ class RunBatchTests(unittest.TestCase):
 
     def test_unfound_tx_leaves_the_submission_unresolved(self) -> None:
         with mock.patch.object(chainio, "strided", side_effect=self.fake_strided), \
-             mock.patch.object(chainio, "rest_get", side_effect=chainio.NotFound("x")), \
+             mock.patch.object(chainio, "rest_get", side_effect=serve(not_found, lambda: PLAN_SEQUENCE)), \
              mock.patch.object(config, "TX_WAIT_SECONDS", 6):
             with self.assertRaises(cli.RunStopped):
                 cli.run_batch(plan=self.plan, tier=self.tier, batch=self.batch, state_dir=self.state, ledger_path=self.ledger_path, yes=True, dry_run=False)
         self.assertEqual([e.kind for e in ledger.read(path=self.ledger_path)], [ledger.Kind.SUBMITTED])
+
+
+    def test_a_sequence_ahead_of_the_ledger_stops_before_broadcasting(self) -> None:
+        self.chain_sequence = PLAN_SEQUENCE + 1  # the operator signed something the ledger does not know
+        with mock.patch.object(chainio, "strided", side_effect=self.fake_strided):
+            with self.assertRaisesRegex(cli.RunStopped, "find it before running"):
+                cli.run_batch(plan=self.plan, tier=self.tier, batch=self.batch, state_dir=self.state, ledger_path=self.ledger_path, yes=True, dry_run=False)
+        self.assertEqual(len(self.strided_calls), 1)  # the simulation only
+        self.assertIn("--dry-run", self.strided_calls[0])
+        self.assertFalse(self.ledger_path.exists())
+
+    def test_a_failed_strided_exit_says_the_tx_may_have_been_broadcast(self) -> None:
+        def crashed(args: list[str]) -> chainio.CommandResult:
+            if "--dry-run" in args:
+                return chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
+            return chainio.CommandResult(returncode=1, stdout="", stderr="Error: post failed")
+        with mock.patch.object(chainio, "strided", side_effect=crashed):
+            with self.assertRaisesRegex(cli.RunStopped, "may have been broadcast.*operator sequence"):
+                cli.run_batch(plan=self.plan, tier=self.tier, batch=self.batch, state_dir=self.state, ledger_path=self.ledger_path, yes=True, dry_run=False)
+        self.assertFalse(self.ledger_path.exists())
+
+    def test_an_unparseable_broadcast_reply_stops_with_nothing_in_the_ledger(self) -> None:
+        def garbled(args: list[str]) -> chainio.CommandResult:
+            if "--dry-run" in args:
+                return chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
+            return chainio.CommandResult(returncode=0, stdout="not json", stderr="")
+        with mock.patch.object(chainio, "strided", side_effect=garbled):
+            with self.assertRaisesRegex(cli.RunStopped, "may have been broadcast"):
+                cli.run_batch(plan=self.plan, tier=self.tier, batch=self.batch, state_dir=self.state, ledger_path=self.ledger_path, yes=True, dry_run=False)
+        self.assertFalse(self.ledger_path.exists())
 
 
 class RunLoopTests(unittest.TestCase):
@@ -258,6 +347,7 @@ class RunLoopTests(unittest.TestCase):
         mock.patch.object(config, "PLAN_PATH", self.state / "plan.json").start()
         mock.patch.object(config, "LEDGER_PATH", self.state / "ledger.jsonl").start()
         mock.patch.object(config, "EXCLUSIONS_PATH", self.state / "exclusions.json").start()
+        mock.patch.object(config, "ACCOUNTS_CACHE_PATH", self.state / "accounts.json").start()
         (self.state / "exclusions.json").write_text('{"sections": []}')
         mock.patch.object(cli, "preflight", return_value=[cli.Check(name="all", ok=True, detail="stubbed")]).start()
         mock.patch.object(chainio, "now", return_value=NOW).start()
@@ -267,12 +357,18 @@ class RunLoopTests(unittest.TestCase):
         self.addCleanup(mock.patch.stopall)
         self.addCleanup(self.tmp.cleanup)
 
+    def chain(self, response: Any) -> Callable[..., Any]:
+        """rest_get where the operator's sequence follows the ledger: every submitted line is one signed tx."""
+        def sequence() -> int:
+            return PLAN_SEQUENCE + sum(1 for event in ledger.read(path=self.state / "ledger.jsonl") if event.kind == ledger.Kind.SUBMITTED)
+        return serve(response, sequence)
+
     def test_stops_after_a_batch_with_a_skip_event(self) -> None:
         def fake_strided(args: list[str]) -> chainio.CommandResult:
             if "--dry-run" in args:
                 return chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
             return chainio.CommandResult(returncode=0, stdout=json.dumps({"height": "0", "txhash": "AB12", "codespace": "", "code": 0, "raw_log": ""}), stderr="")
-        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", return_value=TX_RESPONSE):
+        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", side_effect=self.chain(TX_RESPONSE)):
             self.assertEqual(cli.main(argv=["run"]), 1)
         events = ledger.read(path=self.state / "ledger.jsonl")
         self.assertEqual([e.batch_id for e in events], ["001-001", "001-001"])  # the second batch was never started
@@ -282,11 +378,41 @@ class RunLoopTests(unittest.TestCase):
             if "--dry-run" in args:
                 return chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
             return chainio.CommandResult(returncode=0, stdout=json.dumps({"height": "0", "txhash": "AB12", "codespace": "", "code": 0, "raw_log": ""}), stderr="")
-        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", return_value=TX_RESPONSE):
+        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", side_effect=self.chain(TX_RESPONSE)):
             self.assertEqual(cli.main(argv=["run", "--continue-on-skip", "--batches", "1"]), 0)
             self.assertEqual([e.batch_id for e in ledger.read(path=self.state / "ledger.jsonl")], ["001-001", "001-001"])
             self.assertEqual(cli.main(argv=["run", "--continue-on-skip"]), 0)
             self.assertEqual([e.batch_id for e in ledger.read(path=self.state / "ledger.jsonl")], ["001-001", "001-001", "001-002", "001-002"])
+
+    def test_plain_run_leaves_the_keyless_tier_for_an_explicit_run(self) -> None:
+        planner.write_plan(plan=make_plan(keyless=(A2,)), state_dir=self.state)
+        no_skips = {"tx_response": {**TX_RESPONSE["tx_response"], "events": []}}
+
+        def fake_strided(args: list[str]) -> chainio.CommandResult:
+            if "--dry-run" in args:
+                return chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
+            return chainio.CommandResult(returncode=0, stdout=json.dumps({"height": "0", "txhash": "AB12", "codespace": "", "code": 0, "raw_log": ""}), stderr="")
+
+        def confirmed_batches() -> list[str]:
+            return [event.batch_id for event in ledger.read(path=self.state / "ledger.jsonl") if event.kind == ledger.Kind.CONFIRMED]
+
+        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", side_effect=self.chain(no_skips)):
+            with mock.patch("builtins.print") as printed:
+                self.assertEqual(cli.main(argv=["run"]), 0)
+            self.assertEqual(confirmed_batches(), ["001-001"])
+            self.assertIn("1 keyless batch(es) left for `run --tier keyless`", str(printed.call_args_list))
+            self.assertIn("1 batch(es) to run", str(printed.call_args_list))
+
+            self.assertEqual(cli.main(argv=["run", "--tier", "keyless"]), 0)
+            self.assertEqual(confirmed_batches(), ["001-001", "001-002"])
+
+    def test_plan_stores_the_operator_sequence(self) -> None:
+        holder_set = holders.HolderSet(height=100, denoms=DENOMS, holders=[holders.Holder(address=A1, balances={"stuatom": 1_000_000}, usd=Decimal(6), keyless=False)],
+                                       excluded=[], skipped=[], below_floor=[])
+        with mock.patch.object(holders, "read_holder_set", return_value=holder_set), \
+             mock.patch.object(chainio, "rest_get", side_effect=serve(not_found, lambda: 9)):
+            self.assertEqual(cli.main(argv=["plan", "--floor-usd", "1"]), 0)
+        self.assertEqual(json.loads((self.state / "plan.json").read_text())["operator_sequence"], "9")
 
     def test_unknown_tier_stops_naming_the_plan_tiers(self) -> None:
         with mock.patch("builtins.print") as printed:
@@ -317,7 +443,7 @@ class RunLoopTests(unittest.TestCase):
                 return chainio.CommandResult(returncode=0, stdout="", stderr="gas estimate: 200000\n")
             return chainio.CommandResult(returncode=0, stdout=json.dumps({"height": "0", "txhash": "AB12", "codespace": "", "code": 0, "raw_log": ""}), stderr="")
         failed_response = {"tx_response": {**TX_RESPONSE["tx_response"], "code": 5, "codespace": "sdk", "raw_log": "boom", "events": []}}
-        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", return_value=failed_response):
+        with mock.patch.object(chainio, "strided", side_effect=fake_strided), mock.patch.object(chainio, "rest_get", side_effect=self.chain(failed_response)):
             self.assertEqual(cli.main(argv=["run"]), 1)
         events = ledger.read(path=self.state / "ledger.jsonl")
         self.assertEqual([(e.batch_id, e.kind) for e in events], [("001-001", ledger.Kind.SUBMITTED), ("001-001", ledger.Kind.FAILED)])

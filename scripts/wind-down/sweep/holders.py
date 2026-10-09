@@ -7,7 +7,7 @@ in the chain's order, then adds the two rules the chain cannot make: wasm contra
 
 import json
 import pathlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 
 from sweep import addresses, chainio, config
@@ -40,6 +40,8 @@ class Holder:
     balances: dict[str, int]
     usd: Decimal
     keyless: bool
+    # A vesting account's total minus spendable, per denom: what stays behind after a full sweep. Empty otherwise.
+    locked: dict[str, int] = field(default_factory=dict)
 
     @property
     def transfers(self) -> int:
@@ -327,8 +329,9 @@ def classify(
         if is_vesting and (not spendable or (test_address is None and spendable_usd < floor_usd)):
             holder_set.below_floor.append(Holder(address=address, balances=spendable, usd=spendable_usd, keyless=False))
             continue
+        locked = {denom: coins[denom] - spendable.get(denom, 0) for denom in coins if coins[denom] > spendable.get(denom, 0)} if is_vesting else {}
         holder_set.holders.append(Holder(address=address, balances=spendable, usd=spendable_usd,
-                                         keyless=not account.has_pubkey and account.sequence == 0))
+                                         keyless=not account.has_pubkey and account.sequence == 0, locked=locked))
 
     holder_set.holders.sort(key=lambda holder: holder.usd, reverse=True)
     holder_set.below_floor.sort(key=lambda holder: holder.usd, reverse=True)

@@ -102,33 +102,44 @@ def _planned(plan: planner.Plan) -> dict[str, planner.PlannedAddress]:
     return {planned.address: planned for _, batch in plan.pending_batches() for planned in batch.addresses}
 
 
-def _known_addresses(plan: planner.Plan) -> set[str]:
-    """Addresses the plan already accounts for: planned, excluded, or skipped by the chain-side filters."""
-    return set(_planned(plan=plan)) | {excluded.address for excluded in plan.excluded} | {skipped.address for skipped in plan.skipped}
+def _locked(plan: planner.Plan) -> dict[str, dict[str, int]]:
+    """A vesting account keeps its locked part after a full sweep, so that much live balance is not a refund. Only the
+    current plan knows it: an address swept in an earlier run and absent from this plan counts as having none locked, so
+    a swept vesting holder from a past run that still holds its locked part reads as refunded until it is re-planned."""
+    return {address: planned.locked for address, planned in _planned(plan=plan).items() if planned.locked}
+
+
+def _back(address: str, denom: str, balances: dict[str, dict[str, int]], locked: dict[str, dict[str, int]]) -> int:
+    """What the address holds of `denom` beyond its locked remainder: the refunded amount, 0 when it is only the remainder."""
+    return max(0, balances.get(address, {}).get(denom, 0) - locked.get(address, {}).get(denom, 0))
+
+
+def _known_addresses(plan: planner.Plan, transferred: dict[str, list[ledger.Transfer]]) -> set[str]:
+    """Addresses already accounted for: planned, swept in any run, excluded, or skipped by the chain-side filters."""
+    return (set(_planned(plan=plan)) | set(transferred) | {excluded.address for excluded in plan.excluded}
+            | {skipped.address for skipped in plan.skipped})
 
 
 def _address_states(plan: planner.Plan, transferred: dict[str, list[ledger.Transfer]], balances: dict[str, dict[str, int]]) -> dict[str, str]:
     """swept: transferred and holding none of it now; refunded: transferred and holding a transferred denom again;
-    remaining: no confirmed transfer yet."""
-    states: dict[str, str] = {}
-    for address in _planned(plan=plan):
-        moved = {transfer.denom for transfer in transferred.get(address, [])}
-        if not moved:
-            states[address] = STATE_REMAINING
-            continue
-        held = balances.get(address, {})
-        states[address] = STATE_REFUNDED if any(held.get(denom, 0) > 0 for denom in moved) else STATE_SWEPT
+    remaining: in the current plan with no confirmed transfer. Swept and refunded cover every address with a confirmed
+    transfer in any run, so a re-plan at a lower floor does not drop the earlier runs' holders."""
+    locked = _locked(plan=plan)
+    states = {address: STATE_REMAINING for address in _planned(plan=plan) if address not in transferred}
+    for address, transfers in transferred.items():
+        moved = {transfer.denom for transfer in transfers}
+        states[address] = STATE_REFUNDED if any(_back(address=address, denom=denom, balances=balances, locked=locked) > 0 for denom in moved) else STATE_SWEPT
     return states
 
 
 def _refunds(plan: planner.Plan, events: list[ledger.Event], balances: dict[str, dict[str, int]]) -> list[tuple[ledger.Transfer, str]]:
-    planned = _planned(plan=plan)
+    locked = _locked(plan=plan)
     refunds: list[tuple[ledger.Transfer, str]] = []
     for event in events:
         if event.kind != ledger.Kind.CONFIRMED:
             continue
         for transfer in event.transfers:
-            if transfer.address in planned and balances.get(transfer.address, {}).get(transfer.denom, 0) > 0:
+            if _back(address=transfer.address, denom=transfer.denom, balances=balances, locked=locked) > 0:
                 refunds.append((transfer, event.batch_id))
     return refunds
 
@@ -160,11 +171,12 @@ def _totals(
     remaining = [address for address, state in address_state.items() if state == STATE_REMAINING]
 
     swept_usd = sum((_transfer_usd(transfer=transfer, by_denom=by_denom) for address in swept for transfer in transferred[address]), Decimal(0))
-    refunded_usd = sum((_refunded_usd(address=address, transferred=transferred, balances=balances, by_denom=by_denom) for address in refunded), Decimal(0))
+    locked = _locked(plan=plan)
+    refunded_usd = sum((_refunded_usd(address=address, transferred=transferred, balances=balances, locked=locked, by_denom=by_denom) for address in refunded), Decimal(0))
     remaining_usd = sum((holders.usd_value(balances=balances.get(address, {}), denoms=by_denom) for address in remaining), Decimal(0))
     excluded_usd = sum((holders.usd_value(balances=balances.get(excluded.address, {}), denoms=by_denom) for excluded in plan.excluded), Decimal(0))
 
-    known = _known_addresses(plan=plan)
+    known = _known_addresses(plan=plan, transferred=transferred)
     others = {address: holders.usd_value(balances=coins, denoms=by_denom) for address, coins in balances.items() if address not in known}
     below = {address: usd for address, usd in others.items() if usd < plan.floor_usd}
     unplanned = {address: usd for address, usd in others.items() if usd >= plan.floor_usd}
@@ -183,11 +195,12 @@ def _refunded_usd(
     address: str,
     transferred: dict[str, list[ledger.Transfer]],
     balances: dict[str, dict[str, int]],
+    locked: dict[str, dict[str, int]],
     by_denom: dict[str, holders.SweepDenom],
 ) -> Decimal:
-    """What came back: the live balance of the transferred denoms only, at the plan's prices."""
+    """What came back: the live balance of the transferred denoms beyond the locked remainder, at the plan's prices."""
     moved = {transfer.denom for transfer in transferred[address]}
-    back = {denom: amount for denom, amount in balances.get(address, {}).items() if denom in moved}
+    back = {denom: _back(address=address, denom=denom, balances=balances, locked=locked) for denom in moved}
     return holders.usd_value(balances=back, denoms=by_denom)
 
 
@@ -198,19 +211,19 @@ def _by_denom(
     balances: dict[str, dict[str, int]],
 ) -> list[dict[str, Any]]:
     by_denom = {denom.denom: denom for denom in plan.denoms}
-    planned = _planned(plan=plan)
-    known = _known_addresses(plan=plan)
+    locked = _locked(plan=plan)
+    known = _known_addresses(plan=plan, transferred=transferred)
     below_floor_holders = [coins for address, coins in balances.items()
                            if address not in known and holders.usd_value(balances=coins, denoms=by_denom) < plan.floor_usd]
     rows = []
 
     for denom in plan.denoms:
-        swept_transfers = [transfer for address, transfers in transferred.items() if address in planned for transfer in transfers if transfer.denom == denom.denom]
+        swept_transfers = [transfer for transfers in transferred.values() for transfer in transfers if transfer.denom == denom.denom]
         swept_amount = sum(transfer.amount for transfer in swept_transfers)
         remaining = {address: balances.get(address, {}).get(denom.denom, 0) for address, state in address_state.items() if state == STATE_REMAINING}
         remaining = {address: amount for address, amount in remaining.items() if amount > 0}
         remaining_amount = sum(remaining.values())
-        refunded = [address for address, state in address_state.items() if state == STATE_REFUNDED and balances.get(address, {}).get(denom.denom, 0) > 0]
+        refunded = [address for address, state in address_state.items() if state == STATE_REFUNDED and _back(address=address, denom=denom.denom, balances=balances, locked=locked) > 0]
         excluded_usd = sum((_amount_usd(amount=balances.get(excluded.address, {}).get(denom.denom, 0), denom=denom) for excluded in plan.excluded), Decimal(0))
         below_usd = sum((_amount_usd(amount=coins.get(denom.denom, 0), denom=denom) for coins in below_floor_holders), Decimal(0))
 

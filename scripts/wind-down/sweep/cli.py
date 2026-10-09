@@ -7,8 +7,8 @@
     python3 scripts/wind-down/sweep/cli.py resolve [--wait-seconds 600]
 
 `plan` reads live holder state and writes state/plan.json plus one address file per batch. `run` walks the plan's
-batches in tier order: preflight, then per batch a gas simulation, the signed broadcast from the stride-sweeper key,
-and a poll for the tx result, each step appended to state/ledger.jsonl. It stops on any skip event, failed tx, or a
+batches in tier order (the keyless tier only under `--tier keyless`): preflight, then per batch a gas simulation, the
+signed broadcast from the stride-sweeper key, and a poll for the tx result, each step appended to state/ledger.jsonl. It stops on any skip event, failed tx, or a
 batch over the block gas limit. `status` reads the two files. `resolve` finishes a submission the poll gave up on.
 """
 
@@ -31,6 +31,8 @@ EVENT_SWEEP_SKIPPED = "sweep_skipped"
 STATE_OPEN = "STATE_OPEN"
 ANSWER_YES = "y"
 ANSWER_ALL = "a"
+AMBIGUOUS_BROADCAST_NOTE = ("the tx may have been broadcast anyway; do not re-run until the next run's preflight has checked the "
+                            "operator sequence against the ledger")
 
 
 class RunStopped(Exception):
@@ -132,7 +134,8 @@ def cmd_plan(args: argparse.Namespace) -> int:
 
     plan = planner.build_plan(holder_set=holder_set, floor_usd=floor, run_id=planner.next_run_id(events=events), canary=args.canary,
                               test=args.test, gas_per_transfer=planner.gas_per_transfer(events=events), max_addresses=args.max_addresses,
-                              gas_budget=args.gas_budget, created_at=chainio.now().isoformat())
+                              gas_budget=args.gas_budget, created_at=chainio.now().isoformat(),
+                              operator_sequence=read_operator_sequence())
     planner.write_plan(plan=plan, state_dir=config.STATE_DIR)
     print(render_plan(plan=plan))
     batches = len(plan.pending_batches())
@@ -180,8 +183,15 @@ def cmd_run(args: argparse.Namespace) -> int:
     plan_tiers = [tier.name for tier in plan.tiers]
     if args.tier is not None and args.tier not in plan_tiers:
         raise RunStopped(f"no tier {args.tier} in the plan; the plan has: {', '.join(plan_tiers)}")
-    todo = [(tier, batch) for tier, batch in plan.pending_batches()
-            if batch.id not in states and (args.tier is None or tier.name == args.tier)]
+    unstarted = [(tier, batch) for tier, batch in plan.pending_batches() if batch.id not in states]
+    if args.tier is None:
+        # The keyless owners get the most time: their tier waits for an explicit `run --tier keyless` at the end
+        todo = [(tier, batch) for tier, batch in unstarted if tier.name != planner.TierName.KEYLESS]
+        keyless_left = len(unstarted) - len(todo)
+        if keyless_left:
+            print(f"{keyless_left} keyless batch(es) left for `run --tier keyless`")
+    else:
+        todo = [(tier, batch) for tier, batch in unstarted if tier.name == args.tier]
     if args.batches is not None:
         todo = todo[: args.batches]
     print(f"{len(todo)} batch(es) to run")
@@ -246,9 +256,14 @@ def run_batch(
         print("  dry run: " + " ".join([config.STRIDED_BINARY, *command_line(denoms=denoms, file=file, gas=gas, dry_run=False)]))
         return None
 
+    # Nothing else may have signed since the preflight (or the last batch): a stray tx would make a resubmit ambiguous
+    sequence = check_operator_sequence(plan=plan, events=ledger.read(path=ledger_path))
+    if not sequence.ok:
+        raise RunStopped(f"batch {batch.id}: {sequence.detail}")
+
     broadcast = chainio.strided(args=command_line(denoms=denoms, file=file, gas=gas, dry_run=False))
     if broadcast.returncode != 0:
-        raise RunStopped(f"batch {batch.id}: strided exited {broadcast.returncode}:\n{broadcast.stderr}")
+        raise RunStopped(f"batch {batch.id}: strided exited {broadcast.returncode}; {AMBIGUOUS_BROADCAST_NOTE}:\n{broadcast.stderr}")
     result = parse_broadcast(stdout=broadcast.stdout)
     if result.code != 0:
         event = ledger.failed(batch_id=batch.id, tx_hash=result.tx_hash, at=chainio.now().isoformat(), code=result.code,
@@ -290,8 +305,10 @@ def describe_batch(tier: planner.Tier, batch: planner.Batch) -> str:
 
 def command_line(denoms: list[str], file: pathlib.Path, gas: int | None, dry_run: bool) -> list[str]:
     """The strided arguments for one batch. The test suite pins this shape."""
+    # Simulation needs a bech32 address for --from (SDK GetFromFields); the signed broadcast uses the key name
+    sender = config.SWEEP_OPERATOR if dry_run else config.SWEEP_OPERATOR_KEY
     line = ["tx", "stakeibc", "sweep-tokens-off-stride", ",".join(denoms), str(file),
-            "--from", config.SWEEP_OPERATOR_KEY, "--keyring-backend", config.KEYRING_BACKEND,
+            "--from", sender, "--keyring-backend", config.KEYRING_BACKEND,
             "--chain-id", config.CHAIN_ID, "--node", config.RPC]
     if dry_run:
         return line + ["--gas-prices", f"{config.GAS_PRICE_USTRD}{config.FEE_DENOM}", "--dry-run"]
@@ -308,9 +325,9 @@ def parse_broadcast(stdout: str) -> BroadcastResult:
     try:
         body = json.loads(stdout)
     except json.JSONDecodeError:
-        raise RunStopped(f"broadcast output is not JSON:\n{stdout}") from None
+        raise RunStopped(f"broadcast output is not JSON; {AMBIGUOUS_BROADCAST_NOTE}:\n{stdout}") from None
     if not isinstance(body, dict) or not body.get("txhash"):
-        raise RunStopped(f"broadcast output has no txhash:\n{stdout}")
+        raise RunStopped(f"broadcast output has no txhash; {AMBIGUOUS_BROADCAST_NOTE}:\n{stdout}")
     return BroadcastResult(code=int(body.get("code", 0)), tx_hash=body["txhash"], codespace=body.get("codespace", ""), raw_log=body.get("raw_log", ""))
 
 
@@ -355,6 +372,7 @@ def preflight(plan: planner.Plan, events: list[ledger.Event], exclusions: dict[s
         _check_plan_age(plan=plan, now=now),
         _check_batch_files(plan=plan),
         _check_unresolved(events=events),
+        check_operator_sequence(plan=plan, events=events),
         _check_exclusions(pending=pending, exclusions=exclusions),
         _check_channels(plan=plan),
         _check_fee_balance(pending=pending),
@@ -391,6 +409,26 @@ def _check_batch_files(plan: planner.Plan) -> Check:
 def _check_unresolved(events: list[ledger.Event]) -> Check:
     pending = ledger.unresolved(events=events)
     return Check(name="unresolved submissions", ok=not pending, detail="none" if not pending else f"run `resolve`: {', '.join(e.batch_id for e in pending)}")
+
+
+def read_operator_sequence() -> int:
+    body = chainio.rest_get(path=f"/cosmos/auth/v1beta1/accounts/{config.SWEEP_OPERATOR}")
+    return holders.account_info(account=body["account"]).sequence
+
+
+def check_operator_sequence(plan: planner.Plan, events: list[ledger.Event]) -> Check:
+    """Every tx the operator signed since the plan is a `submitted` line of this run. A tx that reached the mempool
+    without a ledger line (a crash or a garbled broadcast reply) shows up as a chain sequence ahead of the ledger. A lost
+    submission never consumed a sequence, so it is not counted."""
+    lost = {event.batch_id for event in events if event.kind == ledger.Kind.LOST}
+    submitted = sum(1 for event in events if event.kind == ledger.Kind.SUBMITTED and event.run_id == plan.run_id and event.batch_id not in lost)
+    expected = plan.operator_sequence + submitted
+    onchain = read_operator_sequence()
+    if onchain == expected:
+        return Check(name="operator sequence", ok=True, detail=f"chain at {onchain} = planned {plan.operator_sequence} + {submitted} submitted")
+    return Check(name="operator sequence", ok=False,
+                 detail=(f"chain at {onchain}, ledger expects {expected} (planned {plan.operator_sequence} + {submitted} submitted): "
+                         "the operator signed a tx the ledger does not know; find it before running"))
 
 
 def _check_exclusions(pending: list[planner.Batch], exclusions: dict[str, holders.Exclusion]) -> Check:

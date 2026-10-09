@@ -1403,9 +1403,9 @@
             },
             {
               "id": "sweep-submit",
-              "text": "Run the plan: preflight (chain id, v35 binary, stride-sweeper key in the test keyring, plan age, batch-file hashes, exclusions, channels OPEN, fee balance), then per batch a gas simulation, the signed broadcast and the poll for the result, each appended to sweep/state/ledger.jsonl. Canary tier first, then main by value, keyless last. Watch the Sweep tab; any sweep_skipped event stops the run.",
+              "text": "Run the plan: preflight (chain id, v35 binary, stride-sweeper key in the test keyring, plan age, batch-file hashes, exclusions, channels OPEN, fee balance), then per batch a gas simulation, the signed broadcast and the poll for the result, each appended to sweep/state/ledger.jsonl. Preflight also checks the operator's account sequence against the ledger. A plain run does the canary tier first, then main by value, and leaves the keyless tier (never-signed accounts) for the very end so their owners get the most time. Watch the Sweep tab; any sweep_skipped event stops the run.",
               "command": "python3 scripts/wind-down/sweep/cli.py run",
-              "expect": "Every batch prints `confirmed at <height>: N transfers, 0 skipped`. A skip means the planner and the chain disagree: inspect the ledger line, fix the rule, re-plan. A tx not found within three minutes: `cli.py resolve`. A transfer that times out (24 h) refunds the holder: the Sweep tab lists it under Refunded and the next `plan` includes it again. Commit sweep/state after each session."
+              "expect": "Every batch prints `confirmed at <height>: N transfers, 0 skipped`. A skip means the planner and the chain disagree: inspect the ledger line, fix the rule, re-plan. A tx not found within three minutes: `cli.py resolve`. A transfer that times out (24 h) refunds the holder: the Sweep tab lists it under Refunded and the next `plan` includes it again. Run the keyless tier last with `cli.py run --tier keyless`; a plain run prints how many keyless batches it left. Commit sweep/state after each session."
             },
             {
               "id": "sweep-community-pool",

@@ -26,7 +26,7 @@ def make_plan() -> planner.Plan:
         below_floor=[h(A_DUST, 100_000)],
     )
     return planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=2, canary=0, test=False, gas_per_transfer=100_000,
-                              max_addresses=1, gas_budget=40_000_000, created_at="2026-11-10T09:00:00+00:00")
+                              max_addresses=1, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00")
 
 
 def t(address: str, denom: str, amount: int) -> ledger.Transfer:
@@ -101,6 +101,72 @@ class ComposeTests(unittest.TestCase):
                                  exclusions={A_EXCLUDED: holders.Exclusion(address=A_EXCLUDED, section="team", label="F5", reason="by hand")},
                                  live_fetched_at="x")
         self.assertEqual(data["exclusions"], [{"section": "team", "address": A_EXCLUDED, "label": "F5", "reason": "by hand", "live_usd": "99.00"}])
+
+
+def vesting_plan(run_id: int, addresses: list[str], locked: dict[str, int]) -> planner.Plan:
+    holder_list = [holders.Holder(address=address, balances={"stuatom": 1_000_000}, usd=Decimal(6), keyless=False, locked=dict(locked)) for address in addresses]
+    hs = holders.HolderSet(height=100, denoms=[STATOM, STRD], holders=holder_list, excluded=[], skipped=[], below_floor=[])
+    return planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=run_id, canary=0, test=False, gas_per_transfer=100_000,
+                              max_addresses=10, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00")
+
+
+def live_with(balances: dict[str, dict[str, str]]) -> dict:
+    return {**LIVE, "balances": balances}
+
+
+def confirmed_run(run_id: int, address: str, amount: int = 1_000_000) -> list[ledger.Event]:
+    batch_id = f"{run_id:03d}-001"
+    return [ledger.submitted(run_id=run_id, batch_id=batch_id, tx_hash="V", at="t", addresses=1, transfers_estimate=1, gas_wanted=1),
+            ledger.confirmed(batch_id=batch_id, tx_hash="V", at="t", height=5, gas_used=1, transfers=[t(address, "stuatom", amount)], skipped=[])]
+
+
+class VestingTests(unittest.TestCase):
+    """A vesting holder keeps its locked remainder after the sweep; only a balance above that is a refund."""
+
+    def compose(self, live_amount: str) -> dict:
+        plan = vesting_plan(run_id=1, addresses=["stride1vest"], locked={"stuatom": 400_000})
+        return sweep_tab.compose(plan=plan, events=confirmed_run(run_id=1, address="stride1vest"),
+                                 live=live_with({"stride1vest": {"stuatom": live_amount}}), exclusions={}, live_fetched_at="x")
+
+    def test_holding_exactly_the_locked_remainder_is_swept(self) -> None:
+        data = self.compose("400000")
+        self.assertEqual(data["totals"]["swept"], {"addresses": "1", "usd": "6.00"})
+        self.assertEqual(data["totals"]["refunded"], {"addresses": "0", "usd": "0.00"})
+        self.assertEqual(data["refunded"], [])
+        self.assertEqual(data["batches"][0]["refunded"], "0")
+        self.assertEqual({d["denom"]: d["refunded_addresses"] for d in data["by_denom"]}["stuatom"], "0")
+
+    def test_holding_more_than_the_locked_remainder_is_refunded_for_the_excess(self) -> None:
+        data = self.compose("1400000")
+        self.assertEqual(data["totals"]["swept"], {"addresses": "0", "usd": "0.00"})
+        self.assertEqual(data["totals"]["refunded"], {"addresses": "1", "usd": "6.00"})  # 1.4 held - 0.4 locked = 1 stATOM back
+        self.assertEqual(len(data["refunded"]), 1)
+        self.assertEqual(data["batches"][0]["refunded"], "1")
+        self.assertEqual({d["denom"]: d["refunded_addresses"] for d in data["by_denom"]}["stuatom"], "1")
+
+
+class EarlierRunTests(unittest.TestCase):
+    def test_addresses_swept_in_an_earlier_run_stay_in_swept_after_a_replan(self) -> None:
+        events = confirmed_run(run_id=1, address="stride1runone", amount=3_000_000) + confirmed_run(run_id=2, address="stride1runtwo", amount=2_000_000)
+        plan = vesting_plan(run_id=2, addresses=["stride1runtwo", "stride1pending"], locked={})  # run 1's holder is not in this plan
+        live = live_with({"stride1pending": {"stuatom": "1000000"}})
+        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at="x")
+
+        self.assertEqual(data["totals"]["swept"], {"addresses": "2", "usd": "30.00"})  # 3 + 2 stATOM at $6
+        self.assertEqual(data["totals"]["remaining"], {"addresses": "1", "usd": "6.00"})  # only the current plan's unswept address
+        stuatom = {d["denom"]: d for d in data["by_denom"]}["stuatom"]
+        self.assertEqual(stuatom["swept"], {"addresses": "2", "amount": "5000000", "usd": "30.00"})
+        self.assertEqual(stuatom["remaining"]["addresses"], "1")
+
+    def test_an_earlier_runs_refunded_holder_is_listed_and_not_called_unplanned(self) -> None:
+        events = confirmed_run(run_id=1, address="stride1runone", amount=3_000_000)
+        plan = vesting_plan(run_id=2, addresses=["stride1pending"], locked={})
+        live = live_with({"stride1runone": {"stuatom": "3000000"}, "stride1pending": {"stuatom": "1000000"}})
+        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at="x")
+
+        self.assertEqual(data["totals"]["refunded"], {"addresses": "1", "usd": "18.00"})
+        self.assertEqual(data["totals"]["unplanned"], {"addresses": "0", "usd": "0.00"})
+        self.assertEqual([entry["address"] for entry in data["refunded"]], ["stride1runone"])
 
 
 class EdgeTests(unittest.TestCase):

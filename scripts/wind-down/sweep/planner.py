@@ -5,7 +5,7 @@ import decimal
 import hashlib
 import json
 import pathlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import StrEnum
 from typing import Any
@@ -33,6 +33,7 @@ class PlannedAddress:
     balances: dict[str, int]
     usd: Decimal
     transfers: int
+    locked: dict[str, int] = field(default_factory=dict)  # a vesting account's remainder: still held after a full sweep
 
 
 @dataclass(frozen=True)
@@ -76,6 +77,7 @@ class Plan:
     below_floor_count: int
     below_floor_usd: Decimal
     ladder: list[LadderRung]
+    operator_sequence: int  # the sweep operator's account sequence when planned; the runner's tx-count baseline
 
     def pending_batches(self) -> list[tuple[Tier, Batch]]:
         return [(tier, batch) for tier in self.tiers for batch in tier.batches]
@@ -97,6 +99,7 @@ def build_plan(
     max_addresses: int,
     gas_budget: int,
     created_at: str,
+    operator_sequence: int,
 ) -> Plan:
     members = _tier_members(holder_list=holder_set.holders, canary=canary, test=test)
 
@@ -117,6 +120,7 @@ def build_plan(
         tiers=tiers, excluded=list(holder_set.excluded), skipped=list(holder_set.skipped),
         below_floor_count=len(holder_set.below_floor), below_floor_usd=sum((h.usd for h in holder_set.below_floor), Decimal(0)),
         ladder=ladder(holder_list=holder_set.holders + holder_set.below_floor, floor_usd=floor_usd),
+        operator_sequence=operator_sequence,
     )
 
 
@@ -166,7 +170,8 @@ def pack(
 
 def _batch(members: list[holders.Holder], run_id: int, index: int, gas_per_transfer: int) -> Batch:
     batch_id = f"{run_id:03d}-{index:03d}"
-    planned = [PlannedAddress(address=h.address, balances=dict(h.balances), usd=h.usd, transfers=h.transfers) for h in members]
+    planned = [PlannedAddress(address=h.address, balances=dict(h.balances), usd=h.usd, transfers=h.transfers,
+                              locked=dict(h.locked)) for h in members]
     content = _addresses_file_content(addresses=[p.address for p in planned])
     transfers = sum(p.transfers for p in planned)
     return Batch(id=batch_id, file=f"{BATCH_FILE_PREFIX}{batch_id}{BATCH_FILE_SUFFIX}", sha256=batch_sha256(content=content),
@@ -241,6 +246,7 @@ def plan_to_dict(plan: Plan) -> dict[str, Any]:
         "skipped": [_excluded_to_dict(entry=e) for e in plan.skipped],
         "below_floor": {"count": str(plan.below_floor_count), "usd": str(plan.below_floor_usd)},
         "ladder": [{"floor": str(r.floor), "holders": str(r.holders), "usd": str(r.usd)} for r in plan.ladder],
+        "operator_sequence": str(plan.operator_sequence),
     }
 
 
@@ -249,7 +255,7 @@ def _batch_to_dict(batch: Batch) -> dict[str, Any]:
         "id": batch.id, "file": batch.file, "sha256": batch.sha256, "usd": str(batch.usd), "transfers": str(batch.transfers),
         "estimated_gas": str(batch.estimated_gas),
         "addresses": [{"address": p.address, "balances": {d: str(a) for d, a in p.balances.items()}, "usd": str(p.usd),
-                       "transfers": str(p.transfers)} for p in batch.addresses],
+                       "transfers": str(p.transfers), "locked": {d: str(a) for d, a in p.locked.items()}} for p in batch.addresses],
     }
 
 
@@ -269,6 +275,7 @@ def plan_from_dict(data: dict) -> Plan:
         skipped=[_excluded_from_dict(data=e) for e in data["skipped"]],
         below_floor_count=int(data["below_floor"]["count"]), below_floor_usd=Decimal(data["below_floor"]["usd"]),
         ladder=[LadderRung(floor=Decimal(r["floor"]), holders=int(r["holders"]), usd=Decimal(r["usd"])) for r in data["ladder"]],
+        operator_sequence=int(data["operator_sequence"]),
     )
 
 
@@ -277,7 +284,8 @@ def _batch_from_dict(data: dict) -> Batch:
         id=data["id"], file=data["file"], sha256=data["sha256"], usd=Decimal(data["usd"]), transfers=int(data["transfers"]),
         estimated_gas=int(data["estimated_gas"]),
         addresses=[PlannedAddress(address=p["address"], balances={d: int(a) for d, a in p["balances"].items()}, usd=Decimal(p["usd"]),
-                                  transfers=int(p["transfers"])) for p in data["addresses"]],
+                                  transfers=int(p["transfers"]), locked={d: int(a) for d, a in p.get("locked", {}).items()})
+                   for p in data["addresses"]],
     )
 
 
