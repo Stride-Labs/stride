@@ -6,7 +6,8 @@ Each registered collector is refreshed on its own interval in a background threa
 cached snapshots, so the browser never talks to a chain. The Ops tab is an exception: it has no collector, and
 `GET /api/ops` / `POST /api/ops/check` read and write the plan and status files directly (see ops.py). The Multisig
 tab is the other: `GET /api/multisig` is composed from the Validators, Funds and Pools caches' current views (see
-multisig.py).
+multisig.py). The Sweep tab is a third: `GET /api/sweep` composes the `sweep` collector's live holder snapshot with the plan,
+ledger and exclusions read from disk on every request (see sweep_tab.py).
 """
 
 import datetime
@@ -28,6 +29,7 @@ import funds
 import multisig
 import ops
 import pools
+import sweep_tab
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
 
@@ -37,6 +39,7 @@ COLLECTORS: dict[str, Callable[[], dict[str, Any]]] = {
     "validators": validators.collect,
     "funds": funds.collect,
     "pools": pools.collect,
+    "sweep": sweep_tab.collect,
 }
 
 
@@ -150,6 +153,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._get_ops()
         elif path == "/api/multisig":
             self._get_multisig()
+        elif path == "/api/sweep":
+            self._get_sweep()
         elif path.startswith("/api/"):
             self._get_snapshot(tab=path.removeprefix("/api/"))
         else:
@@ -188,6 +193,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _get_multisig(self) -> None:
         """The Multisig tab has no collector: it renders from the current views of the caches it reads."""
         self._send_json(status=200, body=multisig_body(views=multisig_views()))
+
+    def _get_sweep(self) -> None:
+        """The Sweep tab composes the live holder snapshot with the plan and ledger read from disk on every request."""
+        view = CACHES["sweep"].view() if "sweep" in CACHES else {"loading": True}
+        body = sweep_tab.body(view=view)
+        self._send_json(status=500 if body.get("error") else 200, body=body)
 
     def _post_ops_check(self) -> None:
         try:

@@ -10,7 +10,7 @@ PORT = int(os.environ.get("WIND_DOWN_DASHBOARD_PORT", "8787"))  # a second insta
 HTTP_TIMEOUT_SECONDS = 20
 USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 
-REFRESH_INTERVAL_SECONDS = {"channels": 60, "funds": 120, "validators": 300, "pools": 300}
+REFRESH_INTERVAL_SECONDS = {"channels": 60, "funds": 120, "validators": 300, "pools": 300, "sweep": 1800}
 
 CHANNELS_FEED_URL = "https://channels.main.stridenet.co/api/data"
 
