@@ -59,7 +59,7 @@ class HolderSet:
     holders: list[Holder]
     excluded: list[Excluded]  # the exclusions file
     skipped: list[Excluded]  # the chain's rules and the contract rule
-    below_floor: list[Holder]
+    below_floor: list[Holder]  # under the floor in spendable value; includes vesting accounts whose spendable part is empty or small
 
 
 @dataclass(frozen=True)
@@ -292,11 +292,14 @@ def classify(
             continue
         assert account is not None  # skip_reason returned None, so the account was found
 
-        # The chain moves SpendableCoin: a vesting account's locked part stays behind
-        spendable = coins if account.type not in config.VESTING_ACCOUNT_TYPES else _spendable_part(address=address, coins=coins)
-        if not spendable:
+        # The chain moves SpendableCoin: a vesting account's locked part stays behind, and the floor applies to what moves
+        is_vesting = account.type in config.VESTING_ACCOUNT_TYPES
+        spendable = _spendable_part(address=address, coins=coins) if is_vesting else coins
+        spendable_usd = usd_value(balances=spendable, denoms=by_denom) if is_vesting else usd
+        if is_vesting and (not spendable or (test_address is None and spendable_usd < floor_usd)):
+            holder_set.below_floor.append(Holder(address=address, balances=spendable, usd=spendable_usd, keyless=False))
             continue
-        holder_set.holders.append(Holder(address=address, balances=spendable, usd=usd_value(balances=spendable, denoms=by_denom),
+        holder_set.holders.append(Holder(address=address, balances=spendable, usd=spendable_usd,
                                          keyless=not account.has_pubkey and account.sequence == 0))
 
     holder_set.holders.sort(key=lambda holder: holder.usd, reverse=True)

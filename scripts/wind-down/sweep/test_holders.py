@@ -19,6 +19,8 @@ DUST = "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd"
 MODULE = addresses.module_address(name="distribution")
 ESCROW = addresses.escrow_address(channel_id="channel-5")
 CONTRACT = addresses.escrow_address(channel_id="channel-999")  # any 20-byte address not otherwise used
+LOCKED = addresses.module_address(name="locked-vesting-twenty-bytes")
+DUSTY = addresses.module_address(name="dusty-vesting-twenty-bytes")
 EXCLUDED = addresses.module_address(name="not-a-real-module-just-twenty-bytes")
 ATOM = addresses.ibc_denom(path="transfer/channel-0/uatom")
 
@@ -29,7 +31,7 @@ HOST_ZONES = [
 ]
 OWNERS = {
     "stuatom": [(BASE, "10000000"), (VESTING, "2000000"), (KEYLESS, "1000000"), (ICA, "99000000"), (MISSING, "99000000"),
-                (DUST, "1000"), (MODULE, "99000000"), (ESCROW, "99000000"), (CONTRACT, "99000000"), (EXCLUDED, "99000000")],
+                (DUST, "1000"), (LOCKED, "3000000"), (DUSTY, "3000000"), (MODULE, "99000000"), (ESCROW, "99000000"), (CONTRACT, "99000000"), (EXCLUDED, "99000000")],
     "ustrd": [(BASE, "5000000"), (VESTING, "100000000")],
     ATOM: [(BASE, "250000")],
 }
@@ -37,6 +39,10 @@ ACCOUNTS = {
     BASE: {"@type": config.BASE_ACCOUNT, "address": BASE, "pub_key": {"key": "x"}, "sequence": "4"},
     VESTING: {"@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
               "base_vesting_account": {"base_account": {"address": VESTING, "pub_key": {"key": "x"}, "sequence": "1"}}},
+    LOCKED: {"@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+              "base_vesting_account": {"base_account": {"address": LOCKED, "pub_key": {"key": "x"}, "sequence": "1"}}},
+    DUSTY: {"@type": "/cosmos.vesting.v1beta1.ContinuousVestingAccount",
+              "base_vesting_account": {"base_account": {"address": DUSTY, "pub_key": {"key": "x"}, "sequence": "1"}}},
     KEYLESS: {"@type": config.BASE_ACCOUNT, "address": KEYLESS, "pub_key": None, "sequence": "0"},
     ICA: {"@type": config.INTERCHAIN_ACCOUNT, "base_account": {"address": ICA, "pub_key": None, "sequence": "0"}},
     DUST: {"@type": config.BASE_ACCOUNT, "address": DUST, "pub_key": {"key": "x"}, "sequence": "9"},
@@ -45,7 +51,7 @@ ACCOUNTS = {
     CONTRACT: {"@type": config.BASE_ACCOUNT, "address": CONTRACT, "pub_key": None, "sequence": "0"},
     EXCLUDED: {"@type": config.BASE_ACCOUNT, "address": EXCLUDED, "pub_key": {"key": "x"}, "sequence": "2"},
 }
-SPENDABLE = {VESTING: [{"denom": "stuatom", "amount": "2000000"}, {"denom": "ustrd", "amount": "40000000"}]}
+SPENDABLE = {LOCKED: [], DUSTY: [{"denom": "stuatom", "amount": "2000"}], VESTING: [{"denom": "stuatom", "amount": "2000000"}, {"denom": "ustrd", "amount": "40000000"}]}
 
 
 def fake_rest_get(path: str, params: dict[str, str] | None = None) -> dict:
@@ -152,7 +158,10 @@ class HolderTests(unittest.TestCase):
         self.assertEqual(skipped[ESCROW], "transfer escrow address")
         self.assertEqual(skipped[CONTRACT], "wasm contract address")
         self.assertEqual([(e.address, e.reason) for e in holder_set.excluded], [(EXCLUDED, "excluded: team: F5")])
-        self.assertEqual([h.address for h in holder_set.below_floor], [DUST])
+        self.assertEqual([h.address for h in holder_set.below_floor], [DUSTY, DUST, LOCKED])
+        below = {h.address: h for h in holder_set.below_floor}
+        self.assertEqual((below[DUSTY].balances, below[DUSTY].usd), ({"stuatom": 2000}, Decimal("0.012")))  # floor applies to spendable
+        self.assertEqual((below[LOCKED].balances, below[LOCKED].usd), ({}, Decimal("0")))  # fully locked is recorded, not dropped
         self.assertEqual(holder_set.height, 100)
 
     def test_skip_reason_order_and_unknown_accounts(self) -> None:
@@ -201,6 +210,16 @@ class HolderTests(unittest.TestCase):
         exclusions = holders.load_exclusions()
         self.assertIn("stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh", exclusions)
         self.assertEqual(exclusions["stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"].section, "team")
+
+
+    def test_test_address_keeps_a_fully_locked_vesting_account_in_below_floor(self) -> None:
+        exclusions = holders.load_exclusions(path=self.exclusions_path)
+        accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
+        holder_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, test_address=LOCKED)
+        self.assertEqual(([h.address for h in holder_set.holders], [h.address for h in holder_set.below_floor]), ([], [LOCKED]))
+
+        dusty_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, test_address=DUSTY)
+        self.assertEqual(([h.address for h in dusty_set.holders], dusty_set.below_floor), ([DUSTY], []))  # floor ignored
 
 
 if __name__ == "__main__":
