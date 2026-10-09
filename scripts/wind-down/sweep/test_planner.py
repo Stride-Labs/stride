@@ -117,6 +117,25 @@ class PlanFileTests(unittest.TestCase):
         self.assertEqual(raw["tiers"][0]["batches"][0]["addresses"][0]["balances"]["stuatom"], str(500 * 1_000_000 // 6))
         self.assertIsNone(planner.load_plan(path=self.state / "missing.json"))
 
+    def test_load_plan_wraps_malformed_files_in_plan_error(self) -> None:
+        hs = holder_set([holder(1, 500)])
+        plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
+                                  max_addresses=100, gas_budget=40_000_000, created_at="t")
+        good = planner.plan_to_dict(plan=plan)
+        missing_key = {key: value for key, value in good.items() if key != "height"}
+        cases = {
+            "bad decimal": json.dumps({**good, "floor_usd": "not-a-number"}),
+            "list top level": json.dumps([1, 2]),
+            "missing key": json.dumps(missing_key),
+            "invalid json": "{not json",
+        }
+        for name, text in cases.items():
+            with self.subTest(name):
+                path = self.state / "plan.json"
+                path.write_text(text)
+                with self.assertRaises(planner.PlanError):
+                    planner.load_plan(path=path)
+
     def test_pending_batches_follow_tier_order(self) -> None:
         hs = holder_set([holder(1, 500), holder(2, 50, keyless=True), holder(3, 20)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=1, test=False, gas_per_transfer=100_000,

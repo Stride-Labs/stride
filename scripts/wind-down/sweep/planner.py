@@ -1,6 +1,7 @@
 """From a HolderSet to a plan: tiers in sweep order, batches packed under the address and gas limits, and the plan
 file plus one address file per batch (the CLI's input). The plan is overwritten by every `plan`; the ledger never is."""
 
+import decimal
 import hashlib
 import json
 import pathlib
@@ -211,7 +212,8 @@ def load_plan(path: pathlib.Path = config.PLAN_PATH) -> Plan | None:
         return None
     try:
         return plan_from_dict(data=json.loads(path.read_text()))
-    except (json.JSONDecodeError, KeyError, ValueError) as error:
+    # a hand-edited or truncated plan must surface as PlanError, not a raw decode/shape/Decimal exception
+    except (json.JSONDecodeError, KeyError, ValueError, TypeError, AttributeError, decimal.InvalidOperation) as error:
         raise PlanError(f"{path}: {error}") from None
 
 
