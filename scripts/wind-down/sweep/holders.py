@@ -13,6 +13,7 @@ from decimal import Decimal
 from sweep import addresses, chainio, config
 
 STTOKEN_PREFIX = "st"
+ACCOUNT_NOT_FOUND = "account not found"
 
 
 class ExclusionsError(Exception):
@@ -59,7 +60,8 @@ class HolderSet:
     holders: list[Holder]
     excluded: list[Excluded]  # the exclusions file
     skipped: list[Excluded]  # the chain's rules and the contract rule
-    below_floor: list[Holder]  # under the floor in spendable value; includes vesting accounts whose spendable part is empty or small
+    # Under the floor in spendable value; includes vesting accounts whose spendable part is empty or small
+    below_floor: list[Holder]
 
 
 @dataclass(frozen=True)
@@ -95,14 +97,27 @@ def load_exclusions(path: pathlib.Path = config.EXCLUSIONS_PATH) -> dict[str, Ex
 
     exclusions: dict[str, Exclusion] = {}
     for section in sections:
+        _require_keys(path=path, item=section, keys=("name", "reason", "addresses"), where="a section")
         for entry in section["addresses"]:
+            _require_keys(
+                path=path, item=entry, keys=("address", "label"), where=f"an entry in section {section['name']}")
             address = entry["address"]
             if not addresses.is_stride_address(address=address):
-                raise ExclusionsError(f"{path}: {address!r} in section {section['name']} is not a 20-byte stride address")
+                raise ExclusionsError(
+                    f"{path}: {address!r} in section {section['name']} is not a 20-byte stride address")
             if address in exclusions:
                 raise ExclusionsError(f"{path}: {address} is listed twice")
-            exclusions[address] = Exclusion(address=address, section=section["name"], label=entry["label"], reason=section["reason"])
+            exclusions[address] = Exclusion(
+                address=address, section=section["name"], label=entry["label"], reason=section["reason"])
     return exclusions
+
+
+def _require_keys(path: pathlib.Path, item: object, keys: tuple[str, ...], where: str) -> None:
+    if not isinstance(item, dict):
+        raise ExclusionsError(f"{path}: {where} is not an object")
+    missing = [key for key in keys if key not in item]
+    if missing:
+        raise ExclusionsError(f"{path}: {where} lacks {', '.join(missing)}")
 
 
 # ---- denoms
@@ -116,7 +131,8 @@ def resolve_denoms() -> list[SweepDenom]:
         STTOKEN_PREFIX + zone["host_denom"] for zone in host_zones if not zone.get("deprecated")
     }
 
-    denoms = [_native_denom(spec=spec, allowed=allowed_native, zones_by_chain=zones_by_chain) for spec in config.NATIVE_SWEEP_DENOMS]
+    denoms = [_native_denom(spec=spec, allowed=allowed_native, zones_by_chain=zones_by_chain)
+              for spec in config.NATIVE_SWEEP_DENOMS]
     denoms.extend(_voucher_denom(spec=spec) for spec in config.VOUCHER_SWEEP_DENOMS)
     return denoms
 
@@ -143,11 +159,15 @@ def _voucher_denom(spec: config.VoucherDenom) -> SweepDenom:
         trace = chainio.rest_get(path=f"/ibc/apps/transfer/v1/denoms/{denom.removeprefix(config.IBC_PREFIX)}")["denom"]
     except chainio.NotFound:
         raise DenomError(f"{spec.base} over {spec.channel}: {denom} has no denom trace on chain") from None
+    if not trace["trace"]:
+        raise DenomError(f"{spec.base} over {spec.channel}: {denom} has an empty denom trace")
     outer = trace["trace"][0]
     if outer["port_id"] != config.TRANSFER_PORT or outer["channel_id"] != spec.channel:
-        raise DenomError(f"{denom}: outermost hop is {outer['port_id']}/{outer['channel_id']}, expected transfer/{spec.channel}")
+        raise DenomError(
+            f"{denom}: outermost hop is {outer['port_id']}/{outer['channel_id']}, expected transfer/{spec.channel}")
     return SweepDenom(denom=denom, symbol=spec.symbol, decimals=spec.decimals,
-                      price_usd=config.NATIVE_PRICES_USD[spec.price_symbol], destination=spec.chain_id, channel=spec.channel)
+                      price_usd=config.NATIVE_PRICES_USD[spec.price_symbol], destination=spec.chain_id,
+                      channel=spec.channel)
 
 
 # ---- bulk reads
@@ -172,7 +192,8 @@ def read_skip_inputs() -> SkipInputs:
     module_addresses |= {addresses.module_address(name=name) for name in config.BLOCKED_MODULE_NAMES}
 
     channels = chainio.rest_get_all_pages(path="/ibc/core/channel/v1/channels", key="channels")
-    escrows = {addresses.escrow_address(channel_id=channel["channel_id"]) for channel in channels if channel["port_id"] == config.TRANSFER_PORT}
+    escrows = {addresses.escrow_address(channel_id=channel["channel_id"])
+               for channel in channels if channel["port_id"] == config.TRANSFER_PORT}
 
     contracts: set[str] = set()
     for code in chainio.rest_get_all_pages(path="/cosmwasm/wasm/v1/code", key="code_infos"):
@@ -207,11 +228,15 @@ class AccountCache:
         if not path.exists():
             return cls(entries={})
         raw = json.loads(path.read_text())
-        return cls(entries={address: AccountInfo(type=e["type"], has_pubkey=e["has_pubkey"], sequence=int(e["sequence"])) for address, e in raw.items()})
+        return cls(entries={
+            address: AccountInfo(type=entry["type"], has_pubkey=entry["has_pubkey"], sequence=int(entry["sequence"]))
+            for address, entry in raw.items()
+        })
 
     def save(self, path: pathlib.Path = config.ACCOUNTS_CACHE_PATH) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        raw = {address: {"type": e.type, "has_pubkey": e.has_pubkey, "sequence": str(e.sequence)} for address, e in sorted(self._entries.items())}
+        raw = {address: {"type": info.type, "has_pubkey": info.has_pubkey, "sequence": str(info.sequence)}
+               for address, info in sorted(self._entries.items())}
         tmp = path.with_suffix(".tmp")
         tmp.write_text(json.dumps(raw, indent=1))
         tmp.replace(path)
@@ -232,13 +257,16 @@ class AccountCache:
 def account_info(account: dict) -> AccountInfo:
     """Vesting, module and interchain accounts nest the base account."""
     base = account.get("base_account") or account.get("base_vesting_account", {}).get("base_account") or account
-    return AccountInfo(type=account["@type"], has_pubkey=bool(base.get("pub_key")), sequence=int(base.get("sequence", 0)))
+    return AccountInfo(
+        type=account["@type"], has_pubkey=bool(base.get("pub_key")), sequence=int(base.get("sequence", 0)))
 
 
 # ---- classification
 
 
-def skip_reason(address: str, account: AccountInfo | None, inputs: SkipInputs, exclusions: dict[str, Exclusion]) -> str | None:
+def skip_reason(
+    address: str, account: AccountInfo | None, inputs: SkipInputs, exclusions: dict[str, Exclusion]
+) -> str | None:
     """The chain's rules in the chain's order, then the builder's two. None means sweepable."""
     if not addresses.is_stride_address(address=address):
         return "address is not 20 bytes"
@@ -249,7 +277,7 @@ def skip_reason(address: str, account: AccountInfo | None, inputs: SkipInputs, e
     if address in inputs.escrows:
         return "transfer escrow address"
     if account is None:
-        return "account not found"
+        return ACCOUNT_NOT_FOUND
     if account.type == config.INTERCHAIN_ACCOUNT:
         return "interchain account"
     if account.type not in config.SWEEPABLE_ACCOUNT_TYPES:
@@ -284,15 +312,15 @@ def classify(
             continue
 
         # Only a candidate above the floor costs a per-address read; the skip rules need its account
-        account = accounts.lookup(address=address) if _skip_needs_account(address=address, inputs=inputs) else None
-        reason = skip_reason(address=address, account=account, inputs=inputs, exclusions=exclusions)
-        if reason is not None:
-            target = holder_set.excluded if reason.startswith("excluded:") else holder_set.skipped
-            target.append(Excluded(address=address, reason=reason, usd=usd))
+        outcome = _account_or_skip_reason(address=address, inputs=inputs, exclusions=exclusions, accounts=accounts)
+        if isinstance(outcome, str):
+            target = holder_set.excluded if outcome.startswith("excluded:") else holder_set.skipped
+            target.append(Excluded(address=address, reason=outcome, usd=usd))
             continue
-        assert account is not None  # skip_reason returned None, so the account was found
+        account = outcome
 
-        # The chain moves SpendableCoin: a vesting account's locked part stays behind, and the floor applies to what moves
+        # The chain moves SpendableCoin: a vesting account's locked part stays behind, and the floor applies to
+        # what moves
         is_vesting = account.type in config.VESTING_ACCOUNT_TYPES
         spendable = _spendable_part(address=address, coins=coins) if is_vesting else coins
         spendable_usd = usd_value(balances=spendable, denoms=by_denom) if is_vesting else usd
@@ -307,10 +335,20 @@ def classify(
     return holder_set
 
 
-def _skip_needs_account(address: str, inputs: SkipInputs) -> bool:
-    """The rules before the account lookup decide without it; skip the read when one of them already fires."""
-    return (addresses.is_stride_address(address=address) and address not in config.PROTOCOL_ADDRESSES
-            and address != config.SWEEP_OPERATOR and address not in inputs.module_addresses and address not in inputs.escrows)
+def _account_or_skip_reason(
+    address: str, inputs: SkipInputs, exclusions: dict[str, Exclusion], accounts: AccountCache
+) -> AccountInfo | str:
+    """The skip reason, or the address's account when it is sweepable. The rules before the account lookup decide
+    without it (skip_reason with no account only reaches ACCOUNT_NOT_FOUND once they all pass), so the read is skipped
+    when one of them fires."""
+    reason = skip_reason(address=address, account=None, inputs=inputs, exclusions=exclusions)
+    if reason != ACCOUNT_NOT_FOUND:
+        return reason
+
+    account = accounts.lookup(address=address)
+    if account is None:
+        return ACCOUNT_NOT_FOUND
+    return skip_reason(address=address, account=account, inputs=inputs, exclusions=exclusions) or account
 
 
 def _spendable_part(address: str, coins: dict[str, int]) -> dict[str, int]:
@@ -318,7 +356,9 @@ def _spendable_part(address: str, coins: dict[str, int]) -> dict[str, int]:
     return {denom: spendable.get(denom, 0) for denom in coins if spendable.get(denom, 0) > 0}
 
 
-def read_holder_set(floor_usd: Decimal, exclusions: dict[str, Exclusion], accounts: AccountCache, test_address: str | None) -> HolderSet:
+def read_holder_set(
+    floor_usd: Decimal, exclusions: dict[str, Exclusion], accounts: AccountCache, test_address: str | None
+) -> HolderSet:
     height = chainio.latest_height()
     denoms = resolve_denoms()
     balances = read_balances(denoms=denoms)

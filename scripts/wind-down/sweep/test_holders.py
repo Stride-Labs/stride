@@ -11,7 +11,7 @@ from unittest import mock
 from sweep import addresses, chainio, config, holders
 
 BASE = "stride1uk4ze0x4nvh4fk0xm4jdud58eqn4yxhrt52vv7"
-VESTING = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"  # also the F5 multisig in exclusions.json; the test file below overrides
+VESTING = "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh"  # also the F5 multisig in the shipped exclusions.json; setUp's exclusions file lists EXCLUDED instead
 KEYLESS = "stride1am99pcvynqqhyrwqfvfmnvxjk96rn46le9j65c"
 ICA = "stride1d6ntc7s8gs86tpdyn422vsqc6uaz9cejp8nc04"  # also a protocol address: protocol wins (checked first)
 MISSING = "stride15up3hegy8zuqhy0p9m8luh0c984ptu2gxqy20g"
@@ -85,14 +85,6 @@ def fake_rest_get(path: str, params: dict[str, str] | None = None) -> dict:
     raise AssertionError(f"unexpected path {path} {params}")
 
 
-def two_denoms() -> list[holders.SweepDenom]:
-    return [
-        holders.SweepDenom(denom="stuatom", symbol="stATOM", decimals=6, price_usd=Decimal("6"), destination="osmosis-1", channel="channel-5"),
-        holders.SweepDenom(denom="ustrd", symbol="STRD", decimals=6, price_usd=Decimal("0.05"), destination="osmosis-1", channel="channel-5"),
-        holders.SweepDenom(denom=ATOM, symbol="ATOM", decimals=6, price_usd=Decimal("4"), destination="cosmoshub-4", channel="channel-0"),
-    ]
-
-
 class HolderTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
@@ -119,10 +111,7 @@ class HolderTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_resolve_denoms_prices_sttokens_at_the_rate_and_checks_vouchers(self) -> None:
-        with mock.patch.object(config, "NATIVE_SWEEP_DENOMS", (config.NativeDenom("stuatom", "stATOM", 6, "ATOM", "cosmoshub-4"),
-                                                                 config.NativeDenom("ustrd", "STRD", 6, "STRD", None))), \
-             mock.patch.object(config, "VOUCHER_SWEEP_DENOMS", (config.VoucherDenom("uatom", "channel-0", "ATOM", 6, "ATOM", "cosmoshub-4"),)):
-            denoms = holders.resolve_denoms()
+        denoms = holders.resolve_denoms()
         self.assertEqual([(d.denom, d.price_usd, d.destination, d.channel) for d in denoms], [
             ("stuatom", Decimal("6"), "osmosis-1", "channel-5"), ("ustrd", Decimal("0.05"), "osmosis-1", "channel-5"),
             (ATOM, Decimal("4"), "cosmoshub-4", "channel-0"),
@@ -205,6 +194,79 @@ class HolderTests(unittest.TestCase):
             {"name": "x", "reason": "r", "addresses": [{"address": BASE, "label": "l"}, {"address": BASE, "label": "again"}]}]}))
         with self.assertRaises(holders.ExclusionsError):
             holders.load_exclusions(path=self.exclusions_path)
+
+    def test_skip_reason_contract_and_exclusion_rules_come_last(self) -> None:
+        base = holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=1)
+        exclusion = holders.Exclusion(address=BASE, section="team", label="F5", reason="moved by hand")
+        inputs = holders.SkipInputs(module_addresses=set(), escrows=set(), contracts={BASE})
+        self.assertEqual(holders.skip_reason(address=BASE, account=base, inputs=inputs, exclusions={BASE: exclusion}),
+                         "wasm contract address")  # a contract wins over an exclusion
+        no_contracts = holders.SkipInputs(module_addresses=set(), escrows=set(), contracts=set())
+        self.assertEqual(holders.skip_reason(address=BASE, account=base, inputs=no_contracts, exclusions={BASE: exclusion}),
+                         "excluded: team: F5")
+
+        earlier_rule = holders.SkipInputs(module_addresses={BASE}, escrows=set(), contracts={BASE})
+        self.assertEqual(holders.skip_reason(address=BASE, account=base, inputs=earlier_rule, exclusions={BASE: exclusion}),
+                         "blocked module address")
+        self.assertEqual(holders.skip_reason(address=BASE, account=None, inputs=inputs, exclusions={BASE: exclusion}),
+                         "account not found")
+
+    def test_classify_skips_a_non_20_byte_holder_and_an_unsweepable_account_type(self) -> None:
+        short = "stride1short"
+        denoms = [holders.SweepDenom(denom="ustrd", symbol="STRD", decimals=6, price_usd=Decimal(1),
+                                     destination="osmosis-1", channel="channel-5")]
+        balances = {short: {"ustrd": 5_000_000}, BASE: {"ustrd": 5_000_000}}
+        module_type = holders.AccountInfo(type=config.MODULE_ACCOUNT, has_pubkey=True, sequence=1)
+        accounts = holders.AccountCache(entries={BASE: module_type})
+        inputs = holders.SkipInputs(module_addresses=set(), escrows=set(), contracts=set())
+
+        holder_set = holders.classify(denoms=denoms, balances=balances, floor_usd=Decimal(1), exclusions={}, inputs=inputs,
+                                      accounts=accounts, test_address=None, height=1)
+
+        self.assertEqual(holder_set.holders, [])
+        self.assertEqual({entry.address: entry.reason for entry in holder_set.skipped},
+                         {short: "address is not 20 bytes", BASE: f"account type {config.MODULE_ACCOUNT} is not sweepable"})
+
+    def test_cached_keyless_entry_is_reread_until_it_has_a_pubkey_then_final(self) -> None:
+        keyless = {"@type": config.BASE_ACCOUNT, "address": KEYLESS, "pub_key": None, "sequence": "0"}
+        signed = {"@type": config.BASE_ACCOUNT, "address": KEYLESS, "pub_key": {"key": "x"}, "sequence": "1"}
+        accounts = holders.AccountCache(entries={KEYLESS: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=False, sequence=0)})
+        with mock.patch.object(chainio, "rest_get", side_effect=[{"account": keyless}, {"account": signed}]) as rest_get:
+            self.assertFalse(accounts.lookup(address=KEYLESS).has_pubkey)
+            self.assertTrue(accounts.lookup(address=KEYLESS).has_pubkey)
+            self.assertTrue(accounts.lookup(address=KEYLESS).has_pubkey)  # final now: no third read
+        self.assertEqual(rest_get.call_count, 2)
+
+    def test_test_address_absent_from_the_balances_yields_an_empty_set(self) -> None:
+        exclusions = holders.load_exclusions(path=self.exclusions_path)
+        accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
+        holder_set = holders.read_holder_set(floor_usd=Decimal("1"), exclusions=exclusions, accounts=accounts,
+                                             test_address="stride1" + "p" * 38)
+        self.assertEqual((holder_set.holders, holder_set.excluded, holder_set.skipped, holder_set.below_floor), ([], [], [], []))
+
+    def test_load_exclusions_rejects_missing_keys(self) -> None:
+        bad_files = [
+            {"sections": [{"reason": "r", "addresses": []}]},
+            {"sections": [{"name": "x", "addresses": []}]},
+            {"sections": [{"name": "x", "reason": "r"}]},
+            {"sections": [{"name": "x", "reason": "r", "addresses": [{"label": "l"}]}]},
+            {"sections": [{"name": "x", "reason": "r", "addresses": [{"address": BASE}]}]},
+        ]
+        for contents in bad_files:
+            with self.subTest(contents=contents):
+                self.exclusions_path.write_text(json.dumps(contents))
+                with self.assertRaises(holders.ExclusionsError):
+                    holders.load_exclusions(path=self.exclusions_path)
+
+    def test_resolve_denoms_refuses_an_empty_denom_trace(self) -> None:
+        def empty_trace(path: str, params: dict[str, str] | None = None) -> dict:
+            if path.startswith("/ibc/apps/transfer/v1/denoms/"):
+                return {"denom": {"base": "uatom", "trace": []}}
+            return fake_rest_get(path=path, params=params)
+
+        with mock.patch.object(chainio, "rest_get", side_effect=empty_trace):
+            with self.assertRaisesRegex(holders.DenomError, "uatom"):
+                holders.resolve_denoms()
 
     def test_shipped_exclusions_file_loads(self) -> None:
         exclusions = holders.load_exclusions()
