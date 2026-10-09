@@ -386,7 +386,7 @@
             {
               "id": "vote-finalize-sweep",
               "text": "Finalize the sweep: the denom list, the USD floor, the batch size from the gas measurement, and the builder's exclusions (F5 multisig, relayer keys).",
-              "detail": "scripts/wind-down/build_sweep_batches.py takes the denoms (the eleven stTokens and ustrd to Osmosis, whitelisted vouchers back one hop), the floor and --batch-size; BUILDER_EXCLUDED_ADDRESSES holds the F5 multisig and the 15 relayer keys. Open items folded in here: whether the two Axelar USDC channels (channel-11, channel-69, about 2 USDC) join SweepUnwindChannels before the binary is cut; confirming the legacy claim module's 2022 airdrops are expired; and notifying the interchain-account and 32-byte-address stToken holders the sweep cannot reach (2.3k stATOM in one ICA) so they move out before the halt."
+              "detail": "scripts/wind-down/sweep/config.py holds the denom list (the eleven stTokens and ustrd to Osmosis, the seven whitelisted vouchers back one hop), the rough USD prices behind the floor, and the gas budget per batch; scripts/wind-down/sweep/exclusions.json holds the F5 multisig and the relayer keys with a reason each (reviewed like the plan). The keyless accounts are swept in a final tier, not excluded. Open items folded in here: whether the two Axelar USDC channels (channel-11, channel-69, about 2 USDC) join SweepUnwindChannels before the binary is cut; confirming the legacy claim module's 2022 airdrops are expired; and notifying the interchain-account and 32-byte-address stToken holders the sweep cannot reach (2.3k stATOM in one ICA) so they move out before the halt."
             }
           ]
         }
@@ -795,6 +795,12 @@
                 "path": "records.queued_or_retrying",
                 "equals": 0
               }
+            },
+            {
+              "id": "sweep-test",
+              "text": "Mainnet rehearsal of the sweep runner on our own address stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg (fund it first with a little stATOM, some STRD and an ATOM voucher so all three destination rules run): plan the one-address batch, run it, then check the same bytes under osmo1… hold the stATOM and STRD and under cosmos1… the ATOM, and that the Sweep tab shows the batch confirmed. This batch calibrates gas per transfer for the real run.",
+              "command": "python3 scripts/wind-down/sweep/cli.py plan --test && python3 scripts/wind-down/sweep/cli.py run",
+              "expect": "One batch, tier test, `confirmed at <height>: 3 transfers, 0 skipped`; the ledger has a submitted and a confirmed line; the Sweep tab shows run 1 with 1 of 1 confirmed. Commit sweep/state."
             }
           ]
         }
@@ -1390,16 +1396,16 @@
         {
           "steps": [
             {
-              "id": "sweep-export",
-              "text": "Fresh strided export; build the batches with scripts/wind-down/build_sweep_batches.py at the announced floor: every holder at or above it, every denom on the sweep list (eleven stTokens and ustrd to Osmosis, whitelisted vouchers back one hop).",
-              "command": "python3 scripts/wind-down/build_sweep_batches.py --export export.json --prices prices.json --denoms stuatom,stuosmo,stutia,stinj,stadydx,staISLM,stujuno,stuband,stuluna,stusomm,stusaga,ustrd --floor-usd <FLOOR> --out-dir sweep-batches --as-of <BLOCK_TIME_OF_EXPORT> [--extra-denom ibc/...=<price>:<decimals>] [--batch-size 100]",
-              "expect": "RESULT: DONE with the holder count, batch-file count and USD total. Fill in the export (strided export at the chosen height), prices.json, the announced floor and --as-of (the block time at the export height, from strided q block <height>). Each file under sweep-batches/ is one tx for the next step. A non-zero exit names the input that is malformed. The export: `strided export --output-document <file>` on a stopped node or a copy of its data (on SDK 0.54 a bare `strided export` writes nothing to stdout); then trim per app/upgrades/v35/testdata/README.md."
+              "id": "sweep-plan",
+              "text": "Plan the sweep from live state at the announced floor with three canaries: every holder at or above the floor, every denom on the sweep list (eleven stTokens and ustrd to Osmosis, whitelisted vouchers back one hop); read the excluded, skipped and ladder tables before running.",
+              "command": "python3 scripts/wind-down/sweep/cli.py plan --floor-usd <FLOOR> --canary 3",
+              "expect": "RESULT: PLANNED with the run id and batch count. The excluded table is exactly sweep/exclusions.json (F5 multisig, relayer keys); the skipped table is escrows, module accounts, ICAs and contracts; the ladder shows holders and USD at the floor and below it. Re-run at a lower floor after each run completes: swept holders have no balance and never reappear; a refunded one does."
             },
             {
               "id": "sweep-submit",
-              "text": "MsgSweepTokensOffStride batches (sweep operator; up to 100 addresses each or the size from the gas measurement); watch num_skipped and the skip events; resubmit any address whose transfer timed out (its balance is back on Stride).",
-              "command": "strided tx stakeibc sweep-tokens-off-stride <DENOMS> sweep-batches/<FILE> --from <SWEEP_OPERATOR_KEY> ...",
-              "expect": "One tx per batch file; the response's num_skipped and the skip events say which addresses the chain refused (module accounts, ICAs, contracts): expected to be zero for a batch the builder produced. A transfer error (closed channel) rejects the whole tx; a timeout refunds that holder on Stride: resubmit its address."
+              "text": "Run the plan: preflight (chain id, v35 binary, stride-sweeper key in the test keyring, plan age, batch-file hashes, exclusions, channels OPEN, fee balance), then per batch a gas simulation, the signed broadcast and the poll for the result, each appended to sweep/state/ledger.jsonl. Preflight also checks the operator's account sequence against the ledger. A plain run does the canary tier first, then main by value, and leaves the keyless tier (never-signed accounts) for the very end so their owners get the most time. Watch the Sweep tab; any sweep_skipped event stops the run.",
+              "command": "python3 scripts/wind-down/sweep/cli.py run",
+              "expect": "Every batch prints `confirmed at <height>: N transfers, 0 skipped`. A skip means the planner and the chain disagree: inspect the ledger line, fix the rule, re-plan. A tx not found within three minutes: `cli.py resolve`. A transfer that times out (24 h) refunds the holder: the Sweep tab lists it under Refunded and the next `plan` includes it again. Run the keyless tier last with `cli.py run --tier keyless`; a plain run prints how many keyless batches it left. Commit sweep/state after each session."
             },
             {
               "id": "sweep-community-pool",

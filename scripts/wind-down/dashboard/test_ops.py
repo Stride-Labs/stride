@@ -442,5 +442,24 @@ class RoutesTest(unittest.TestCase):
         self.assertEqual(self._request("/api/refresh/nope", {})[0], 404)
 
 
+class SweepStepsTests(unittest.TestCase):
+    def setUp(self) -> None:
+        plan = ops.load_plan()
+        self.steps = {step["id"]: step for day in plan["days"] for window in day["windows"] for step in window["steps"]}
+        self.days = {step["id"]: day["date"] for day in plan["days"] for window in day["windows"] for step in window["steps"]}
+
+    def test_sweep_steps_name_the_runner(self) -> None:
+        self.assertNotIn("sweep-export", self.steps)
+        self.assertIn("cli.py plan --floor-usd", self.steps["sweep-plan"]["command"])
+        self.assertIn("cli.py run", self.steps["sweep-submit"]["command"])
+        self.assertIn("sweep/exclusions.json", self.steps["vote-finalize-sweep"]["detail"])
+        self.assertNotIn("build_sweep_batches", json.dumps(self.steps))
+
+    def test_sweep_test_step_sits_after_the_upgrade_and_before_the_sweep(self) -> None:
+        self.assertIn("cli.py plan --test", self.steps["sweep-test"]["command"])
+        self.assertIn("stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg", self.steps["sweep-test"]["text"])
+        self.assertEqual(self.days["sweep-test"], "2026-10-13")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -211,3 +211,17 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-multisig .ms-members { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 12px 8px 28px; font-size: 12px; }
 #view-multisig .ms-member-zone { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 #view-multisig .ms-member { padding: 1px 7px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* sweep */
+#view-sweep .callout { margin: 0 0 14px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+#view-sweep .tile { border-top: 3px solid var(--line); }
+#view-sweep .sw-swept { border-top-color: var(--s-pool); } #view-sweep .sw-remaining { border-top-color: var(--s-staked); }
+#view-sweep .sw-refund { border-top-color: var(--s-unbond); } #view-sweep .sw-excluded { border-top-color: var(--s-flight); } #view-sweep .sw-floor { border-top-color: var(--idle-bg); }
+#view-sweep .bar .sw-swept, #view-sweep .legend .sw-swept { background: var(--s-pool); }
+#view-sweep .bar .sw-remaining, #view-sweep .legend .sw-remaining { background: var(--s-staked); }
+#view-sweep .bar .sw-refund, #view-sweep .legend .sw-refund { background: var(--s-unbond); }
+#view-sweep .bar .sw-floor, #view-sweep .legend .sw-floor { background: var(--idle); }
+#view-sweep .progress { padding: 10px 12px; } #view-sweep .progress .bar { height: 18px; }
+#view-sweep .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } #view-sweep .two .panel { margin-bottom: 14px; }
+#view-sweep .ladder td.cur { font-weight: 650; color: var(--accent); }
+#view-sweep .ops-bar { display: flex; align-items: center; gap: 14px; padding: 10px 12px; }

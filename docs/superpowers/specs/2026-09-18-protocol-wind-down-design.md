@@ -995,7 +995,7 @@ will settle.
    address even though the zone is halted (§6), and the records archive as `CLAIMED`.
    Announce that redeemers must move their DYM to Dymension themselves before the halt.
    Nothing else on stakedym runs: no delegation, no new unbonding, no pool.
-8. Last days: `MsgSweepTokensOffStride` in batches (size set from the gas measurement; the builder defaults to 100), each tx listing every
+8. Last days: `MsgSweepTokensOffStride` in batches (packed under a gas budget by the runner, simulated before each broadcast), each tx listing every
    denom on the sweep list, for every holder at or above the floor, built from a fresh
    export: the eleven stTokens and `ustrd` (to Osmosis) and every voucher whose outermost
    channel is whitelisted and that is worth sweeping (ATOM to the Hub, TIA to Celestia, and so
@@ -1597,11 +1597,9 @@ fn)` for ICA submissions; `s.CreateTransferChannel(chainId)` plus
 
 Ops scripts (PRs 5 and 6):
 
-- `build_sweep_batches.py` applies the on-chain skip rules plus the dollar floor to an
-  export and writes one address file per batch that the CLI reads (`sweep-tokens-off-stride
-DENOMS FILE`, one batch of holders sweeping every listed denom they hold); extra denoms are passed as `--extra-denom DENOM=USD_PER_TOKEN:DECIMALS`, and an
-  `ibc/` extra denom is refused unless its outermost hop is in `SweepUnwindChannels`.
-  `coverage_check.py` is the §10 check over an export and the vault's Osmosis balances. Both
-  are unit-tested against a synthetic export and their real output is checked in.
+- The sweep runner (`scripts/wind-down/sweep/`, design in `2026-10-09-wind-down-sweep-runner-design.md`) replaced
+  `build_sweep_batches.py` on 2026-10-09: it plans from live state, signs and submits each batch with the sweep
+  operator key, keeps an append-only ledger, and feeds the dashboard's Sweep tab. `coverage_check.py` is the §10 check
+  over an export and the vault's Osmosis balances, unit-tested against a synthetic export.
 - The per-chain relayer scope is `build_relayer_scope.py` (§9); the pre-funding pool check is
   `check_transmuter_pool.py` (§8).

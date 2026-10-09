@@ -74,6 +74,30 @@ the poolmanager creation fee times the pools still to create across all zones, a
 pools no bundle holds yet with their reasons), `live-test-undelegate`, `full-drain`, `ica-transfers`,
 `staketia-claim-balance`, `pool-funding`. The funding set opens and closes each zone with a bundled `assign_moderator` tx: the vault takes the moderator role to mark the native token, then hands it back to `config.POOL_MODERATOR`; `pools_funded` requires the hand-back.
 
+## Sweep tab
+
+The seventh tab (`#sweep`): the holder sweep's progress, from `scripts/wind-down/sweep/` (see its README). Like Ops
+and Multisig it polls its own route: `GET /api/sweep` composes the `sweep` collector's snapshot (every holder of every
+sweep denom, read in bulk with `denom_owners_by_query`; the operator's STRD) with `sweep/state/plan.json`,
+`sweep/state/ledger.jsonl` and `sweep/exclusions.json` read from disk on every request, so a batch the runner just
+confirmed shows within ten seconds while the live read stays on demand: the "Refresh live holders" button, or
+automatically when the snapshot is missing or older than ten minutes while the tab is open (the collector's interval
+is 1,800 s as a backstop). Like a `plan`, "Refresh live holders" reads every holder of the nineteen sweep denoms and takes
+about six minutes against Polkachu (measured 2026-10-09: 5m45s). `sweep_tab.compose()` is pure and tested in
+`test_sweep_tab.py`.
+
+Per address: `swept` (a confirmed `sweep_transfer` in any run and none of the transferred denoms held now), `refunded`
+(transferred, and a transferred denom is held again beyond the vesting remainder the plan recorded as `locked`: the 24 h
+timeout refunded it; the next `plan` re-sweeps it), `remaining` (in the current plan, no confirmed transfer yet). Swept and
+refunded cover every address the ledger swept, so a re-plan at a lower floor keeps the earlier runs in the Swept tile; the
+plan's `locked` map covers every vesting holder, including one swept in an earlier run and absent from the current batches. Tiles: swept, remaining, refunded, excluded (the exclusions file, live USD),
+below floor (live holders under the plan's floor; the sub-line counts holders above the floor that are not in the
+plan, which appeared or were refunded since). The by-token table, the runs-and-batches table (every batch of the
+current plan plus earlier runs' batches from the ledger; a red `N skipped` badge means the chain disagreed with the
+planner), the next-floor ladder (live holders still to sweep at the plan's floor and at $10, $5, $1, $0), the refunded
+list, and the collapsed exclusions and keyless panels. Without a live snapshot the plan and ledger parts render and the
+live-dependent ones say so.
+
 ## Channels tab
 
 - Stride <-> host zones: from `https://channels.main.stridenet.co/api/data` (in-scope zones, including osmosis-1's transfer
