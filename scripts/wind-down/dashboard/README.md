@@ -95,8 +95,15 @@ below floor (live holders under the plan's floor; the sub-line counts holders ab
 plan, which appeared or were refunded since). The by-token table, the runs-and-batches table (every batch of the
 current plan plus earlier runs' batches from the ledger; a red `N skipped` badge means the chain disagreed with the
 planner), the next-floor ladder (live holders still to sweep at the plan's floor and at $10, $5, $1, $0), the refunded
-list, and the collapsed exclusions and keyless panels. Without a live snapshot the plan and ledger parts render and the
+list, and the collapsed exclusions, deferred and keyless panels. Without a live snapshot the plan and ledger parts render and the
 live-dependent ones say so.
+
+Deferred: holders with STRD still unbonding are left out of pass 1 (see the sweep README), so the Deferred tile, sitting
+between Remaining and Refunded, counts the plan's deferred list (above the floor) at live balances and its sub-line
+gives the chain-wide unbonding pool in USD and the latest completion date; the by-token table gains a `Deferred USD`
+column; and a collapsed Deferred panel lists the 25 largest by plan USD with their staked STRD and completion. The
+list is the plan's, while `staked_strd` in the payload is the chain-wide pool figure (`read_staking_pool`), so the two
+do not match. Deferred addresses are never counted as below floor or unplanned.
 
 ## Channels tab
 

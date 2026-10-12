@@ -14,6 +14,7 @@ from sweep import config as sweep_config  # noqa: E402
 from sweep import holders, ledger, planner  # noqa: E402
 
 CENTS = Decimal("0.01")
+DEFERRED_TOP = 25
 STATE_SWEPT = "swept"
 STATE_REFUNDED = "refunded"
 STATE_REMAINING = "remaining"
@@ -46,6 +47,7 @@ def collect() -> dict[str, Any]:
             address: {denom: str(amount) for denom, amount in coins.items()} for address, coins in balances.items()
         },
         "operator_strd": operator["balance"]["amount"],
+        "staked_ustrd": str(holders.read_staking_pool()),
     }
 
 
@@ -92,6 +94,7 @@ def compose(
             "by_denom": None,
             "batches": [],
             "ladder": None,
+            "deferred": None,
             "refunded": [],
             "exclusions": [],
             "keyless": None,
@@ -116,6 +119,7 @@ def compose(
         if address_state is not None
         else None,
         "batches": _batches(plan=plan, events=events, states=states, refunds=refunds),
+        "deferred": _deferred(plan=plan, live=live, balances=balances, by_denom=by_denom),
         "ladder": _ladder(plan=plan, address_state=address_state, balances=balances, by_denom=by_denom)
         if address_state is not None
         else None,
@@ -171,9 +175,11 @@ def _back(address: str, denom: str, balances: dict[str, dict[str, int]], locked:
 
 
 def _known_addresses(plan: planner.Plan, transferred: dict[str, list[ledger.Transfer]]) -> set[str]:
-    """Addresses already accounted for: planned, swept in any run, excluded, or skipped by the chain-side filters."""
+    """Addresses already accounted for: planned, deferred, swept in any run, excluded, or skipped by the chain-side
+    filters."""
     return (
         set(_planned(plan=plan))
+        | {deferred.address for deferred in plan.deferred}
         | set(transferred)
         | {excluded.address for excluded in plan.excluded}
         | {skipped.address for skipped in plan.skipped}
@@ -265,6 +271,7 @@ def _totals(
         (holders.usd_value(balances=balances.get(excluded.address, {}), denoms=by_denom) for excluded in plan.excluded),
         Decimal(0),
     )
+    deferred_usd = _live_deferred_usd(plan=plan, balances=balances, by_denom=by_denom)
 
     known = _known_addresses(plan=plan, transferred=transferred)
     others = {
@@ -279,6 +286,7 @@ def _totals(
         "swept": _bucket(count=len(swept), usd=swept_usd),
         "refunded": _bucket(count=len(refunded), usd=refunded_usd),
         "remaining": _bucket(count=len(remaining), usd=remaining_usd),
+        "deferred": _bucket(count=len(plan.deferred), usd=deferred_usd),
         "excluded": _bucket(count=len(plan.excluded), usd=excluded_usd),
         "below_floor": _bucket(count=len(below), usd=sum(below.values(), Decimal(0))),
         "unplanned": _bucket(count=len(unplanned), usd=sum(unplanned.values(), Decimal(0))),
@@ -342,6 +350,13 @@ def _by_denom(
         below_usd = sum(
             (_amount_usd(amount=coins.get(denom.denom, 0), denom=denom) for coins in below_floor_holders), Decimal(0)
         )
+        deferred_usd = sum(
+            (
+                _amount_usd(amount=balances.get(deferred.address, {}).get(denom.denom, 0), denom=denom)
+                for deferred in plan.deferred
+            ),
+            Decimal(0),
+        )
 
         rows.append(
             {
@@ -363,6 +378,7 @@ def _by_denom(
                 "refunded_addresses": str(len(refunded)),
                 "excluded_usd": _money(excluded_usd),
                 "below_floor_usd": _money(below_usd),
+                "deferred_usd": _money(deferred_usd),
             }
         )
     return rows
@@ -447,6 +463,53 @@ def _ladder(
         }
         for floor in floors
     ]
+
+
+def _live_deferred_usd(
+    plan: planner.Plan, balances: dict[str, dict[str, int]], by_denom: dict[str, holders.SweepDenom]
+) -> Decimal:
+    return sum(
+        (holders.usd_value(balances=balances.get(deferred.address, {}), denoms=by_denom) for deferred in plan.deferred),
+        Decimal(0),
+    )
+
+
+def _deferred(
+    plan: planner.Plan,
+    live: dict[str, Any] | None,
+    balances: dict[str, dict[str, int]],
+    by_denom: dict[str, holders.SweepDenom],
+) -> dict[str, Any]:
+    """Holders with STRD still unbonding, left out of pass 1. `staked_strd` is the chain-wide pool (live), whereas the
+    addresses and `top` are the plan's deferred list (above the floor), so the two are not expected to match."""
+    ustrd_price = by_denom[sweep_config.FEE_DENOM].price_usd if sweep_config.FEE_DENOM in by_denom else None
+    staked_ustrd = int(live["staked_ustrd"]) if live is not None and "staked_ustrd" in live else None
+    completions = [deferred.completes_at for deferred in plan.deferred if deferred.completes_at is not None]
+    largest = sorted(plan.deferred, key=lambda deferred: deferred.usd, reverse=True)[:DEFERRED_TOP]
+    usd = _live_deferred_usd(plan=plan, balances=balances, by_denom=by_denom) if live is not None else None
+
+    return {
+        "addresses": str(len(plan.deferred)),
+        "usd": _money(usd if usd is not None else sum((deferred.usd for deferred in plan.deferred), Decimal(0))),
+        "staked_strd": _money(_whole_strd(ustrd=staked_ustrd)) if staked_ustrd is not None else None,
+        "staked_usd": _money(_whole_strd(ustrd=staked_ustrd) * ustrd_price)
+        if staked_ustrd is not None and ustrd_price is not None
+        else None,
+        "completes_at": max(completions, key=holders.parse_chain_time) if completions else None,
+        "top": [
+            {
+                "address": deferred.address,
+                "usd": _money(deferred.usd),
+                "staked_strd": _money(_whole_strd(ustrd=deferred.staked_ustrd)),
+                "completes_at": deferred.completes_at,
+            }
+            for deferred in largest
+        ],
+    }
+
+
+def _whole_strd(ustrd: int) -> Decimal:
+    return Decimal(ustrd) / Decimal(10) ** 6
 
 
 def _keyless(plan: planner.Plan, address_state: dict[str, str] | None) -> dict[str, str] | None:

@@ -69,7 +69,7 @@ function draw(body) {
   document.getElementById('sweepBody').innerHTML =
     runLine(data) + tiles(data) + progress(data) + byDenomTable(data) +
     `<div class="two"><div>${batchesPanel(data)}</div><div>${ladderPanel(data)}${refundedPanel(data)}</div></div>` +
-    exclusionsPanel(data) + keylessPanel(data);
+    exclusionsPanel(data) + deferredPanel(data) + keylessPanel(data);
 }
 
 function headLine(body) {
@@ -95,14 +95,22 @@ function tiles(data) {
   const tile = (cls, label, bucket, sub) =>
     `<div class="tile ${cls}"><div class="k">${label}</div><div class="v">${Number(bucket.addresses).toLocaleString()}</div><div class="s">addresses · $${money(bucket.usd)}${sub ? ' · ' + sub : ''}</div></div>`;
   return `<div class="tiles">${tile('sw-swept', 'Swept', t.swept)}${tile('sw-remaining', 'Remaining in plan', t.remaining)}
-    ${tile('sw-refund', 'Refunded', t.refunded, 'transfer timed out; the next plan re-sweeps')}${tile('sw-excluded', 'Excluded', t.excluded)}
+    ${deferredTile(data)}${tile('sw-refund', 'Refunded', t.refunded, 'transfer timed out; the next plan re-sweeps')}${tile('sw-excluded', 'Excluded', t.excluded)}
     ${tile('sw-floor', 'Below floor', t.below_floor, `${Number(t.unplanned.addresses).toLocaleString()} unplanned above floor ($${money(t.unplanned.usd)})`)}</div>`;
+}
+
+function deferredTile(data) {
+  const d = data.deferred;
+  const until = d && d.completes_at ? d.completes_at.slice(0, 10) : null;
+  const sub = d && until && d.staked_usd !== null ? `STRD unbonding until ${until}: $${money(d.staked_usd)} chain-wide` : 'STRD unbonding until n/a: n/a chain-wide';
+  return `<div class="tile sw-deferred"><div class="k">Deferred</div><div class="v">${Number(data.totals.deferred.addresses).toLocaleString()}</div><div class="s">addresses · $${money(data.totals.deferred.usd)} · ${sub}</div></div>`;
 }
 
 function progress(data) {
   const t = data.totals;
   if (!t) return '';
   const parts = [['sw-swept', 'swept', t.swept.usd], ['sw-refund', 'refunded', t.refunded.usd], ['sw-remaining', 'remaining in plan', t.remaining.usd],
+                 ['sw-deferred', 'deferred', t.deferred.usd],
                  ['sw-floor', 'below floor', t.below_floor.usd], ['sw-floor', 'unplanned', t.unplanned.usd]];
   const total = parts.reduce((sum, [, , usd]) => sum + Number(usd), 0) || 1;
   const legend = parts.map(([cls, label, usd]) => `<span><i class="${cls}"></i>${label} ${(100 * Number(usd) / total).toFixed(1)}%</span>`).join('');
@@ -118,10 +126,10 @@ function byDenomTable(data) {
     <td class="num">${d.swept.addresses}</td><td class="num">${formatAmount(d.swept.amount, Number(d.decimals))}</td><td class="num">$${money(d.swept.usd)}</td>
     <td class="num">${d.remaining.addresses}</td><td class="num">${formatAmount(d.remaining.amount, Number(d.decimals))}</td><td class="num">$${money(d.remaining.usd)}</td>
     <td class="num ${d.refunded_addresses !== '0' ? 't-warn' : 'muted'}">${d.refunded_addresses}</td>
-    <td class="num">$${money(d.excluded_usd)}</td><td class="num">$${money(d.below_floor_usd)}</td></tr>`).join('');
+    <td class="num">$${money(d.excluded_usd)}</td><td class="num">$${money(d.below_floor_usd)}</td><td class="num">$${money(d.deferred_usd)}</td></tr>`).join('');
   return `<div class="panel"><h2>By token <span class="sub">live balances of planned and excluded holders; swept amounts from the ledger's transfer events</span></h2>
     <div class="table-scroll"><table><thead><tr><th>Token</th><th>Destination</th><th class="num">Swept addr</th><th class="num">Swept amount</th><th class="num">Swept USD</th>
-    <th class="num">Remaining addr</th><th class="num">Remaining amount</th><th class="num">Remaining USD</th><th class="num">Refunded</th><th class="num">Excluded USD</th><th class="num">Below floor USD</th></tr></thead>
+    <th class="num">Remaining addr</th><th class="num">Remaining amount</th><th class="num">Remaining USD</th><th class="num">Refunded</th><th class="num">Excluded USD</th><th class="num">Below floor USD</th><th class="num">Deferred USD</th></tr></thead>
     <tbody>${rows}</tbody></table></div></div>`;
 }
 
@@ -145,7 +153,7 @@ function ladderPanel(data) {
   if (!data.ladder) return '';
   const rows = data.ladder.map((r, i) => `<tr><td class="${i === 0 ? 'cur' : ''}">$${r.floor}${i === 0 ? ' (current plan)' : ''}</td>
     <td class="num">${Number(r.holders).toLocaleString()}</td><td class="num">$${money(r.usd)}</td></tr>`).join('');
-  return `<div class="panel"><h2>Next floor <span class="sub">live holders not yet swept, by floor</span></h2>
+  return `<div class="panel"><h2>Next floor <span class="sub">live holders not yet swept, by floor; deferred holders counted</span></h2>
     <table class="ladder"><thead><tr><th>Floor</th><th class="num">Holders</th><th class="num">USD</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
@@ -163,6 +171,16 @@ function exclusionsPanel(data) {
     <td class="muted">${escapeHtml(e.reason)}</td><td class="num">${e.live_usd === null ? 'n/a' : '$' + money(e.live_usd)}</td></tr>`).join('');
   return `<details class="panel"><summary><h2>Excluded <span class="sub">from sweep/exclusions.json · ${data.exclusions.length} addresses · $${money(String(total))} live</span></h2></summary>
     <table><thead><tr><th>Section</th><th>Address</th><th>Label</th><th>Reason</th><th class="num">Live USD</th></tr></thead><tbody>${rows}</tbody></table></details>`;
+}
+
+function deferredPanel(data) {
+  const d = data.deferred;
+  if (!d) return '';
+  const rows = d.top.map((r) => `<tr><td>${addressCell(r.address, 14, 8)}</td><td class="num">$${money(r.usd)}</td>
+    <td class="num">${money(r.staked_strd)}</td><td class="muted">${r.completes_at ? escapeHtml(r.completes_at.slice(0, 10)) : 'n/a'}</td></tr>`).join('');
+  return `<details class="panel"><summary><h2>Deferred <span class="sub">${d.addresses} addresses · $${money(d.usd)} · top ${d.top.length} by plan USD</span></h2></summary>
+    <div class="note">Holders with STRD still unbonding, any amount, left out of pass 1 so no address is processed twice; pass 2 sweeps them with the matured STRD.</div>
+    <table><thead><tr><th>Address</th><th class="num">USD</th><th class="num">Staked STRD</th><th>Completes</th></tr></thead><tbody>${rows}</tbody></table></details>`;
 }
 
 function keylessPanel(data) {

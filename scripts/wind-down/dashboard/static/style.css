@@ -216,9 +216,10 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 #view-sweep .callout { margin: 0 0 14px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-weight: 600; }
 #view-sweep .tile { border-top: 3px solid var(--line); }
 #view-sweep .sw-swept { border-top-color: var(--s-pool); } #view-sweep .sw-remaining { border-top-color: var(--s-staked); }
-#view-sweep .sw-refund { border-top-color: var(--s-unbond); } #view-sweep .sw-excluded { border-top-color: var(--s-flight); } #view-sweep .sw-floor { border-top-color: var(--idle-bg); }
+#view-sweep .sw-deferred { border-top-color: var(--s-ica); } #view-sweep .sw-refund { border-top-color: var(--s-unbond); } #view-sweep .sw-excluded { border-top-color: var(--s-flight); } #view-sweep .sw-floor { border-top-color: var(--idle-bg); }
 #view-sweep .bar .sw-swept, #view-sweep .legend .sw-swept { background: var(--s-pool); }
 #view-sweep .bar .sw-remaining, #view-sweep .legend .sw-remaining { background: var(--s-staked); }
+#view-sweep .bar .sw-deferred, #view-sweep .legend .sw-deferred { background: var(--s-ica); }
 #view-sweep .bar .sw-refund, #view-sweep .legend .sw-refund { background: var(--s-unbond); }
 #view-sweep .bar .sw-floor, #view-sweep .legend .sw-floor { background: var(--idle); }
 #view-sweep .progress { padding: 10px 12px; } #view-sweep .progress .bar { height: 18px; }

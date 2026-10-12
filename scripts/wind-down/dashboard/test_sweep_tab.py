@@ -13,7 +13,8 @@ from sweep import holders, ledger, planner  # noqa: E402
 
 STATOM = holders.SweepDenom(denom="stuatom", symbol="stATOM", decimals=6, price_usd=Decimal("6"), destination="osmosis-1", channel="channel-5")
 STRD = holders.SweepDenom(denom="ustrd", symbol="STRD", decimals=6, price_usd=Decimal("0.05"), destination="osmosis-1", channel="channel-5")
-A_SWEPT, A_REFUNDED, A_PENDING, A_EXCLUDED, A_DUST, A_NEW, A_ESCROW = (f"stride1{name}" for name in ("swept", "refund", "pend", "excl", "dust", "new", "escrow"))
+A_SWEPT, A_REFUNDED, A_PENDING, A_EXCLUDED, A_DUST, A_NEW, A_ESCROW, A_DEFERRED = (f"stride1{name}" for name in ("swept", "refund", "pend", "excl", "dust", "new", "escrow", "defer"))
+DEFERRED_COMPLETES = "2026-10-26T08:55:25.469915628Z"
 
 
 def make_plan() -> planner.Plan:
@@ -25,9 +26,11 @@ def make_plan() -> planner.Plan:
         excluded=[holders.Excluded(address=A_EXCLUDED, reason="excluded: team: F5", usd=Decimal(99))],
         skipped=[holders.Excluded(address=A_ESCROW, reason="transfer escrow address", usd=Decimal(1000))],
         below_floor=[h(A_DUST, 100_000)],
+        deferred=[holders.Deferred(holder=h(A_DEFERRED, 4_000_000), staked=holders.Staked(ustrd=7_500_000, completes_at=DEFERRED_COMPLETES))],
     )
     return planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=2, canary=0, test=False, gas_per_transfer=100_000,
-                              max_addresses=1, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00")
+                              max_addresses=1, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00",
+                              staked_ustrd=9_000_000)
 
 
 def t(address: str, denom: str, amount: int) -> ledger.Transfer:
@@ -52,8 +55,10 @@ LIVE = {
         A_DUST: {"stuatom": "100000"},
         A_NEW: {"stuatom": "3000000"},  # above the floor but not in the plan: appeared since
         A_ESCROW: {"stuatom": "999000000"},
+        A_DEFERRED: {"stuatom": "3000000", "ustrd": "2000000"},  # the live balance, not the plan's
     },
     "operator_strd": "212400000",
+    "staked_ustrd": "9000000",
 }
 
 
@@ -79,7 +84,8 @@ class ComposeTests(unittest.TestCase):
         self.assertEqual(totals["remaining"], {"addresses": "1", "usd": "12.05"})
         self.assertEqual(totals["excluded"], {"addresses": "1", "usd": "99.00"})
         self.assertEqual(totals["below_floor"], {"addresses": "1", "usd": "0.60"})
-        self.assertEqual(totals["unplanned"], {"addresses": "1", "usd": "18.00"})
+        self.assertEqual(totals["unplanned"], {"addresses": "1", "usd": "18.00"})  # the deferred holder is neither unplanned nor below floor
+        self.assertEqual(totals["deferred"], {"addresses": "1", "usd": "18.10"})  # live: 3 stATOM at $6 + 2 STRD at $0.05
         self.assertEqual(self.data["refunded"], [{"address": A_REFUNDED, "denom": "stuatom", "amount": "5000000", "channel": "channel-5", "batch_id": "002-002"}])
 
     def test_by_denom(self) -> None:
@@ -89,12 +95,28 @@ class ComposeTests(unittest.TestCase):
         self.assertEqual(by_denom["stuatom"]["refunded_addresses"], "1")
         self.assertEqual(by_denom["stuatom"]["excluded_usd"], "99.00")
         self.assertEqual(by_denom["stuatom"]["below_floor_usd"], "0.60")
+        self.assertEqual(by_denom["stuatom"]["deferred_usd"], "18.00")
+        self.assertEqual(by_denom["ustrd"]["deferred_usd"], "0.10")
+        self.assertEqual(by_denom["ustrd"]["below_floor_usd"], "0.00")
         self.assertEqual(by_denom["ustrd"]["destination"], "osmosis-1")
 
     def test_ladder_counts_live_holders_still_to_sweep(self) -> None:
-        # not yet swept and not excluded/skipped: refunded (30), pending (12.05), new (18), dust (0.60)
+        # not yet swept and not excluded/skipped: refunded (30), pending (12.05), new (18), deferred (18.10), dust (0.60)
         self.assertEqual([(r["floor"], r["holders"], r["usd"]) for r in self.data["ladder"]],
-                         [("10", "3", "60.05"), ("5", "3", "60.05"), ("1", "3", "60.05"), ("0", "4", "60.65")])
+                         [("10", "4", "78.15"), ("5", "4", "78.15"), ("1", "4", "78.15"), ("0", "5", "78.75")])
+
+    def test_deferred_object_with_a_live_snapshot(self) -> None:
+        deferred = self.data["deferred"]
+        self.assertEqual((deferred["addresses"], deferred["usd"]), ("1", "18.10"))
+        self.assertEqual((deferred["staked_strd"], deferred["staked_usd"]), ("9.00", "0.45"))  # 9 STRD chain-wide at $0.05
+        self.assertEqual(deferred["completes_at"], DEFERRED_COMPLETES)
+        self.assertEqual(deferred["top"], [{"address": A_DEFERRED, "usd": "24.05", "staked_strd": "7.50", "completes_at": DEFERRED_COMPLETES}])
+
+    def test_progress_parts_sum_to_the_whole(self) -> None:
+        totals = self.data["totals"]
+        parts = ["swept", "refunded", "remaining", "deferred", "excluded", "below_floor", "unplanned"]
+        # every live address lands in exactly one bucket: 60.05 + 30 + 12.05 + 18.10 + 99 + 0.60 + 18 (escrow is skipped, not counted)
+        self.assertEqual(sum(Decimal(totals[part]["usd"]) for part in parts), Decimal("237.80"))
 
     def test_keyless_and_exclusions_sections(self) -> None:
         self.assertEqual(self.data["keyless"], {"addresses": "1", "usd": "12.05", "swept": "0"})
@@ -108,7 +130,7 @@ def vesting_plan(run_id: int, addresses: list[str], locked: dict[str, int]) -> p
     holder_list = [holders.Holder(address=address, balances={"stuatom": 1_000_000}, usd=Decimal(6), keyless=False, locked=dict(locked)) for address in addresses]
     hs = holders.HolderSet(height=100, denoms=[STATOM, STRD], holders=holder_list, excluded=[], skipped=[], below_floor=[])
     return planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=run_id, canary=0, test=False, gas_per_transfer=100_000,
-                              max_addresses=10, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00")
+                              max_addresses=10, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00", staked_ustrd=0)
 
 
 def live_with(balances: dict[str, dict[str, str]]) -> dict:
@@ -182,11 +204,36 @@ class EarlierRunTests(unittest.TestCase):
         self.assertEqual([entry["address"] for entry in data["refunded"]], ["stride1runone"])
 
 
+class DeferredTests(unittest.TestCase):
+    def test_latest_completion_wins_and_top_is_ordered_and_capped(self) -> None:
+        def deferred_holder(index: int, completes_at: str | None) -> holders.Deferred:
+            holder = holders.Holder(address=f"stride1d{index:03d}", balances={"stuatom": (index + 1) * 1_000_000}, usd=Decimal(index + 1) * 6, keyless=False)
+            return holders.Deferred(holder=holder, staked=holders.Staked(ustrd=index * 1_000_000, completes_at=completes_at))
+
+        completions = {0: "2026-10-26T08:55:25.469915628Z", 1: "2026-10-26T08:55:25.5Z", 2: None}
+        entries = [deferred_holder(index=index, completes_at=completions.get(index, "2026-10-20T00:00:00Z")) for index in range(30)]
+        hs = holders.HolderSet(height=100, denoms=[STATOM, STRD], holders=[], excluded=[], skipped=[], below_floor=[], deferred=entries)
+        plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
+                                  max_addresses=10, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00", staked_ustrd=0)
+        data = sweep_tab.compose(plan=plan, events=[], live=None, exclusions={}, live_fetched_at=None)["deferred"]
+
+        self.assertEqual(data["completes_at"], "2026-10-26T08:55:25.5Z")  # later by the nanosecond fraction, though sorted earlier as text
+        self.assertEqual(len(data["top"]), 25)
+        self.assertEqual([row["address"] for row in data["top"][:2]], ["stride1d029", "stride1d028"])
+
+    def test_no_deferred_holders(self) -> None:
+        plan = vesting_plan(run_id=1, addresses=["stride1a"], locked={})
+        data = sweep_tab.compose(plan=plan, events=[], live={**live_with({"stride1a": {"stuatom": "1000000"}}), "staked_ustrd": "0"}, exclusions={}, live_fetched_at="x")
+        self.assertEqual(data["deferred"], {"addresses": "0", "usd": "0.00", "staked_strd": "0.00", "staked_usd": "0.00", "completes_at": None, "top": []})
+        self.assertEqual(data["totals"]["deferred"], {"addresses": "0", "usd": "0.00"})
+
+
 class EdgeTests(unittest.TestCase):
     def test_no_plan(self) -> None:
         data = sweep_tab.compose(plan=None, events=[], live=None, exclusions={}, live_fetched_at=None)
         self.assertIsNone(data["run"])
         self.assertEqual(data["batches"], [])
+        self.assertIsNone(data["deferred"])
 
     def test_no_live_snapshot_keeps_plan_and_ledger_parts(self) -> None:
         data = sweep_tab.compose(plan=make_plan(), events=EVENTS, live=None, exclusions={}, live_fetched_at=None)
@@ -194,6 +241,9 @@ class EdgeTests(unittest.TestCase):
         self.assertIsNone(data["totals"])
         self.assertIsNone(data["ladder"])
         self.assertEqual(len(data["batches"]), 3)
+        self.assertEqual(data["deferred"], {"addresses": "1", "usd": "24.05", "staked_strd": None, "staked_usd": None,
+                                            "completes_at": DEFERRED_COMPLETES,
+                                            "top": [{"address": A_DEFERRED, "usd": "24.05", "staked_strd": "7.50", "completes_at": DEFERRED_COMPLETES}]})
 
 
 if __name__ == "__main__":
