@@ -209,11 +209,18 @@ def _deferred_lines(plan: planner.Plan) -> list[str]:
     deferred_usd = sum((entry.usd for entry in plan.deferred), Decimal(0))
     completions = [entry.completes_at for entry in plan.deferred if entry.completes_at is not None]
     latest = max(completions, key=lambda text: holders.parse_chain_time(text=text)) if completions else "n/a"
-    return [
+    lines = [
         f"  deferred {len(plan.deferred)} addresses ${deferred_usd:,.2f} "
-        f"(STRD still unbonding until {latest}; swept in pass 2)",
-        f"  STRD still unbonding chain-wide: {plan.staked_ustrd / 1_000_000:,.0f} STRD",
+        f"(STRD still unbonding until {latest}; swept in pass 2)"
     ]
+    lines.extend(
+        f"    {entry.address}  ${entry.usd:,.2f}  {entry.staked_ustrd / 1_000_000:,.0f} STRD  {entry.completes_at or 'n/a'}"
+        for entry in plan.deferred[:20]
+    )
+    if len(plan.deferred) > 20:
+        lines.append(f"    ... {len(plan.deferred) - 20} more in plan.json")
+    lines.append(f"  STRD still unbonding chain-wide: {plan.staked_ustrd / 1_000_000:,.0f} STRD")
+    return lines
 
 
 # ---- run
@@ -698,7 +705,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         print("no plan")
         return 0
     states = ledger.batch_states(events=events)
-    # The plan's own tables first (excluded, skipped, ladder), so an operator can review them without re-planning
+    # The plan's own tables first (excluded, skipped, deferred, ladder), so an operator can review them without re-planning
     print(render_plan(plan=plan))
     print(f"planned {plan.created_at} at height {plan.height}")
     for tier in plan.tiers:

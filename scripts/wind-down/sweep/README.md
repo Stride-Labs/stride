@@ -51,8 +51,8 @@ same for the rest of the run); `--batches N` stops after N.
 
 The v35 upgrade undelegated everything; the STRD becomes liquid at `2026-10-26T08:55:25Z`. A holder with any STRD still
 unbonding would be swept twice (its liquid balance now, the matured STRD later), so `plan` defers it: strictly, any
-unbonding entry, no threshold. Deferred holders sit in `plan.deferred` (and `render_plan` prints their count, USD and the
-latest completion), in no tier and no batch, so `run` cannot sweep them. They still count in the ladder.
+unbonding entry, no threshold. Deferred holders sit in `plan.deferred` (and `render_plan` prints their count, USD, the
+latest completion and a table of the first 20: address, USD, staked STRD, completion), in no tier and no batch, so `run` cannot sweep them. They still count in the ladder.
 
 - **Per-delegator read.** Each candidate above the floor that passes every skip rule gets one read of
   `/cosmos/staking/v1beta1/delegators/<address>/unbonding_delegations` (all pages): the sum of the entries' `balance` and the

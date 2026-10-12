@@ -514,6 +514,37 @@ class RunLoopTests(unittest.TestCase):
         tier_end = max(index for index, line in enumerate(lines) if line.startswith("  main") or line.startswith("  canary"))
         self.assertLess(tier_end, lines.index(next(line for line in lines if line.startswith("  deferred"))))
 
+    def test_render_plan_lists_the_deferred_rows_after_the_summary_line(self) -> None:
+        plan = dataclasses.replace(make_plan(), staked_ustrd=5_000_000, deferred=[
+            planner.DeferredAddress(address=A1, usd=Decimal("1500.5"), transfers=1, staked_ustrd=3_000_000, completes_at="2026-10-26T08:55:25Z"),
+            planner.DeferredAddress(address=A2, usd=Decimal("2"), transfers=1, staked_ustrd=1_000_000, completes_at=None),
+        ])
+
+        lines = cli.render_plan(plan=plan).splitlines()
+
+        summary = next(index for index, line in enumerate(lines) if line.startswith("  deferred"))
+        self.assertEqual(lines[summary + 1], f"    {A1}  $1,500.50  3 STRD  2026-10-26T08:55:25Z")
+        self.assertEqual(lines[summary + 2], f"    {A2}  $2.00  1 STRD  n/a")
+        self.assertEqual(lines[summary + 3], "  STRD still unbonding chain-wide: 5 STRD")
+
+    def test_render_plan_caps_the_deferred_rows_at_twenty(self) -> None:
+        deferred = [planner.DeferredAddress(address=f"stride1d{index:02}", usd=Decimal(1), transfers=1, staked_ustrd=1_000_000, completes_at=None)
+                    for index in range(23)]
+        lines = cli.render_plan(plan=dataclasses.replace(make_plan(), deferred=deferred)).splitlines()
+
+        rows = [line for line in lines if line.startswith("    stride1d")]
+        self.assertEqual(len(rows), 20)
+        self.assertEqual(rows[-1].split()[0], "stride1d19")
+        self.assertIn("    ... 3 more in plan.json", lines)
+
+    def test_render_plan_has_no_more_line_at_exactly_twenty_deferred(self) -> None:
+        deferred = [planner.DeferredAddress(address=f"stride1d{index:02}", usd=Decimal(1), transfers=1, staked_ustrd=1_000_000, completes_at=None)
+                    for index in range(20)]
+        lines = cli.render_plan(plan=dataclasses.replace(make_plan(), deferred=deferred)).splitlines()
+
+        self.assertEqual(len([line for line in lines if line.startswith("    stride1d")]), 20)
+        self.assertFalse(any("more in plan.json" in line for line in lines))
+
     def test_unknown_tier_stops_naming_the_plan_tiers(self) -> None:
         with mock.patch("builtins.print") as printed:
             self.assertEqual(cli.main(argv=["run", "--tier", "keyless"]), 1)
