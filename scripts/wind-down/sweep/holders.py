@@ -1,7 +1,7 @@
 """Live holder state and the sweep's inclusion rules.
 
-Reads, all through chainio: the sweep denoms (checked the way the chain checks them), every holder of each denom in bulk,
-the auth account of each candidate above the floor (cached), the spendable balance of vesting candidates, and the
+Reads, all through chainio: the sweep denoms (checked the way the chain checks them), every holder of each denom in
+bulk, the auth account of each candidate above the floor (cached), the spendable balance of vesting candidates, and the
 module, escrow and contract address sets, and each candidate's unbonding STRD (cached; such holders are deferred).
 Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go in the chain's order,
 then adds the two rules the chain cannot make: wasm contracts and the reviewed exclusions file."""
@@ -410,7 +410,9 @@ def classify(
         is_vesting = account.type in config.VESTING_ACCOUNT_TYPES
         spendable = _spendable_part(address=address, coins=coins) if is_vesting else coins
         spendable_usd = usd_value(balances=spendable, denoms=by_denom) if is_vesting else usd
-        locked = {denom: coins[denom] - spendable.get(denom, 0) for denom in coins if coins[denom] > spendable.get(denom, 0)} if is_vesting else {}
+        locked = {
+            denom: coins[denom] - spendable.get(denom, 0) for denom in coins if coins[denom] > spendable.get(denom, 0)
+        } if is_vesting else {}
         if is_vesting and (not spendable or (test_address is None and spendable_usd < floor_usd)):
             holder_set.below_floor.append(
                 Holder(address=address, balances=spendable, usd=spendable_usd, keyless=False, locked=locked)
