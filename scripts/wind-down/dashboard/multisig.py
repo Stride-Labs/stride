@@ -110,6 +110,67 @@ VALIDATOR_WEIGHTS_FEES = "6000ustrd"
 
 
 @dataclass(frozen=True)
+class DrainRetry:
+    """A full-drain batch the host rejected, resubmitted as a validators file without the validators that made it
+    fail. On 2026-10-12 Injective rejected batch 1483 (32 validators, 18,703.52 INJ): three validators the 19:00
+    epoch had already drained in full held ~1,000 wei each with Stride's record a few wei above the host, and the
+    1-wei rounding trim cannot cover that on a sub-token balance, so the host refused their MsgUndelegate and the
+    whole batch with it. Batch 1484 succeeded. The retry drains the other 29 and leaves the dust where it is."""
+
+    chain_id: str
+    label: str
+    why: str
+    excluded: tuple[tuple[str, str], ...]  # (moniker, valoper) left out, with the dust each holds
+    validators: tuple[str, ...]  # the valopers to drain, offsets 0
+
+
+DRAIN_RETRIES = (
+    DrainRetry(
+        chain_id="injective-1",
+        label="batch 1483 retry",
+        why="batch 1483 (packet 1483 on channel-816) was rejected by Injective on 2026-10-12 because three dust validators "
+        "have records a few wei above the host; batch 1484 succeeded",
+        excluded=(
+            ("ubik", "injvaloper1h4t5dqenq86znza06thc64pzyxtme7zltyeg8k"),
+            ("stakewithus", "injvaloper1v2xylfeyry808ltt0hwxggzt0fns6uwh74mku3"),
+            ("allnodes", "injvaloper14w4qu60azpz5zkw5yrcvmaxqh6xg5sny7qm6rm"),
+        ),
+        validators=(
+        "injvaloper1acgud5qpn3frwzjrayqcdsdr9vkl3p6hrz34ts",
+        "injvaloper125fkz3mq6qxxpkmphdl3ep92t0d3y9695mhclt",
+        "injvaloper1ffsdugrhfzdyxltjve8v68n6aazyc6p97uhfn0",
+        "injvaloper134dct56cq5v7uerxcy2cn4m06mqf4dxrlgpp24",
+        "injvaloper1g4d6dmvnpg7w7yugy6kplndp7jpfmf3krtschp",
+        "injvaloper1nq37nq79w2j76xj8qhjzcn6vh0wlx0qk2r7zm6",
+        "injvaloper1esud09zs5754g5nlkmrgxsfdj276xm64cgmd3w",
+        "injvaloper1xwsnq88kc8wcrp34qenxf3dvhl5n02yj93u755",
+        "injvaloper1f2kdg34689x93cvw2y59z7y46dvz2fk8lhddfz",
+        "injvaloper1fqrdtx7pyps6eytn3356j9cs4f8zl0eevlt3rt",
+        "injvaloper10xhy8xurfwts9ckjkq0ga92mrjz9txyygymqzp",
+        "injvaloper155yk4wfn0xqye80exlsr6hu4qdfsvsgwg3jckk",
+        "injvaloper1zpy3qf7us3m0pxpqkp72gzjv55t70huy33t47x",
+        "injvaloper14yeq3lkajldaggj28hmq8xng9xux7x5g46hezv",
+        "injvaloper13v0sulppc8pgtk4907p3vaqgq54vyl9yqmf7av",
+        "injvaloper19a77dzm2lrxt2gehqca3nyzq077kq7qsgvmrp4",
+        "injvaloper1vgu49xjgle9k84smvrwlyuc38u0cakuz7q3a5f",
+        "injvaloper1nngrhnm65wm8pu7wkah6hfs3vpd0xw463ydd65",
+        "injvaloper1yljq5pdnx84kkg30jfmz6ddu4eyp7twyp4z40f",
+        "injvaloper10pe4avat38u38yzj5hvnw235uecfff6c73s8fn",
+        "injvaloper1nxq05qdle8w5gm6fagda56euwt4rgvv4ktddcc",
+        "injvaloper1mlsg82x0mnw88u2teg0kceautjktgcl08tqfs4",
+        "injvaloper1845wspsvm3z95a2zycz3t49gn7celq48dlyscc",
+        "injvaloper1vm2gflv53mzy9ak4f8cr9ml3xus980wywe9fx2",
+        "injvaloper177zqwtsnuhax28w5xpmf33wsl7l2xxf6y6xshc",
+        "injvaloper1da0shwz2mcup5rxkykquc9a7mh4s2hkeah9wuc",
+        "injvaloper1rqqpyuka5dxulzjslnzjld2ltcw5095rr0jz07",
+        "injvaloper1nm48eujr28u3htqrjumfwhytn63rmca2prtklt",
+        "injvaloper16jkt2gcm8qfxzjj8j6pvyc045ga82pmthz58mp",
+        ),
+    ),
+)
+
+
+@dataclass(frozen=True)
 class ChainTools:
     """The binary, chain and multisig a set's commands run against."""
 
@@ -218,10 +279,18 @@ def tx_sets(
         step_id="drain-rest",
         title="Full drain: undelegate every remaining validator",
         description="Undelegate every validator left after the live test, per zone, with --all.",
-        notes=["Relay the acks before the timeouts and wait for every batch to ack.", ONE_AT_A_TIME],
+        notes=[
+            "Relay the acks before the timeouts and wait for every batch to ack.",
+            "A batch the host rejects leaves its validators' records unchanged (flags cleared); the retry card under that zone resubmits the batch as a validators file without the validators that made it fail.",
+            ONE_AT_A_TIME,
+        ],
         txs=[
-            _full_drain_tx(zone=zone, snapshot_zone=zones_by_chain_id.get(zone.chain_id), snapshot_reason=snapshot_reason)
+            tx
             for zone in config.ZONES
+            for tx in (
+                _full_drain_tx(zone=zone, snapshot_zone=zones_by_chain_id.get(zone.chain_id), snapshot_reason=snapshot_reason),
+                *(_drain_retry_tx(zone=zone, retry=retry) for retry in DRAIN_RETRIES if retry.chain_id == zone.chain_id),
+            )
         ],
     )
     return [
@@ -582,6 +651,28 @@ def _full_drain_tx(zone: config.ZoneConfig, snapshot_zone: dict[str, Any] | None
         title=f"{zone.chain_id} · full drain, every remaining validator",
         ready=reason is None,
         reason=reason,
+        commands=_commands(generate=generate, file_stem=file_stem),
+        files=_shared_files(file_stem=file_stem),
+    )
+
+
+def _drain_retry_tx(zone: config.ZoneConfig, retry: DrainRetry) -> MultisigTx:
+    """The rejected batch again, as a validators file (offsets 0) that leaves out the validators that made it fail."""
+    gas = FULL_DRAIN_GAS_BY_CHAIN_ID.get(zone.chain_id, FULL_DRAIN_DEFAULT_GAS)
+    file_stem = f"{WORKDIR}/full-drain-retry-{zone.chain_id}"
+    validators_file = f"{file_stem}.json"
+    validators_json = json.dumps([{"address": valoper, "offset": "0"} for valoper in retry.validators])
+    generate = (
+        f"mkdir -p {WORKDIR}\n"
+        f"cat > {validators_file} <<'EOF'\n{validators_json}\nEOF\n"
+        f"{_generate_line(arguments=f'{zone.chain_id} {validators_file}', gas=gas, file_stem=file_stem)}"
+    )
+    excluded = ", ".join(f"{moniker} ({valoper[-6:]})" for moniker, valoper in retry.excluded)
+    return MultisigTx(
+        chain_id=zone.chain_id,
+        title=f"{zone.chain_id} · full drain {retry.label}: {len(retry.validators)} validators, without {excluded} — {retry.why}",
+        ready=True,
+        reason=None,
         commands=_commands(generate=generate, file_stem=file_stem),
         files=_shared_files(file_stem=file_stem),
     )

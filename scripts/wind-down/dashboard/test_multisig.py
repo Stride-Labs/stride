@@ -216,12 +216,35 @@ class FullDrainCommandsTest(unittest.TestCase):
         self.assertTrue(tx_for(full_drain, COSMOS).ready)
 
 
+class DrainRetryTest(unittest.TestCase):
+    def test_injective_retry_follows_its_full_drain_and_writes_the_29_validator_file(self) -> None:
+        txs = sets_by_id(fake_snapshot())["full-drain"].txs
+        index = next(i for i, tx in enumerate(txs) if tx.chain_id == "injective-1")
+        retry = txs[index + 1]
+
+        self.assertEqual(retry.chain_id, "injective-1")
+        self.assertTrue(retry.title.startswith("injective-1 · full drain batch 1483 retry: 29 validators, without ubik (tyeg8k), stakewithus (74mku3), allnodes (7qm6rm)"))
+        self.assertTrue(retry.ready)
+        generate = retry.commands[0].text
+        stem = "/tmp/wind-down/full-drain-retry-injective-1"
+        self.assertTrue(generate.startswith(f"mkdir -p /tmp/wind-down\ncat > {stem}.json <<'EOF'\n[{{\"address\": \"injvaloper1"))
+        self.assertEqual(generate.count('"offset": "0"'), 29)
+        for moniker, valoper in multisig.DRAIN_RETRIES[0].excluded:
+            self.assertNotIn(valoper, generate)
+        self.assertTrue(generate.endswith(f"--gas 13000000 --fees 65000ustrd > {stem}.unsigned.json"))
+        self.assertIn(f"undelegate-from-validators injective-1 {stem}.json", generate)
+        self.assertEqual([(command.tag, command.text) for command in retry.commands][1:], expected_commands(generate, stem=stem)[1:])
+
+
 class SetsTest(unittest.TestCase):
     def test_no_snapshot_leaves_every_drain_tx_not_ready(self) -> None:
         drain_sets = sets_by_id(None)
         for tx_set in (drain_sets["live-test-undelegate"], drain_sets["full-drain"]):
-            self.assertEqual([tx.chain_id for tx in tx_set.txs], [zone.chain_id for zone in config.ZONES])
+            retries = [tx for tx in tx_set.txs if "retry" in tx.title]
+            self.assertEqual([tx.chain_id for tx in tx_set.txs if tx not in retries], [zone.chain_id for zone in config.ZONES])
             for tx in tx_set.txs:
+                if tx in retries:
+                    continue  # a retry is a fixed validators file: ready without a snapshot
                 self.assertEqual((tx.ready, tx.reason), (False, "waiting for the Validators snapshot"))
                 self.assertEqual(len(tx.commands), 5)
 
