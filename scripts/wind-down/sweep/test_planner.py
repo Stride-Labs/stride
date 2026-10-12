@@ -30,7 +30,7 @@ class TierTests(unittest.TestCase):
     def test_canary_is_the_smallest_then_main_by_value_then_keyless_last(self) -> None:
         hs = holder_set([holder(1, 500), holder(2, 50), holder(3, 5000), holder(4, 20), holder(5, 900, keyless=True), holder(6, 30)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=2, canary=2, test=False, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         tiers = {tier.name: [a.address for b in tier.batches for a in b.addresses] for tier in plan.tiers}
         self.assertEqual([tier.name for tier in plan.tiers], [planner.TierName.CANARY, planner.TierName.MAIN, planner.TierName.KEYLESS])
         self.assertEqual(tiers[planner.TierName.CANARY], ["stride1holder0004", "stride1holder0006"])
@@ -41,7 +41,7 @@ class TierTests(unittest.TestCase):
     def test_test_plan_has_one_tier_with_one_address(self) -> None:
         hs = holder_set([holder(1, 0)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(100), run_id=1, canary=3, test=True, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         self.assertEqual([tier.name for tier in plan.tiers], [planner.TierName.TEST])
         self.assertEqual(plan.tiers[0].batches[0].id, "001-001")
         self.assertTrue(plan.test)
@@ -49,12 +49,12 @@ class TierTests(unittest.TestCase):
     def test_negative_canary_is_rejected(self) -> None:
         with self.assertRaises(ValueError):
             planner.build_plan(holder_set=holder_set([holder(1, 50)]), floor_usd=Decimal(10), run_id=1, canary=-1, test=False,
-                               gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                               gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
 
     def test_keyless_holder_below_the_canary_cutoff_stays_out_of_canary(self) -> None:
         hs = holder_set([holder(1, 500), holder(2, 50), holder(3, 5, keyless=True)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=1, canary=1, test=False, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         tiers = {tier.name: [a.address for b in tier.batches for a in b.addresses] for tier in plan.tiers}
         self.assertEqual(tiers[planner.TierName.CANARY], ["stride1holder0002"])
         self.assertEqual(tiers[planner.TierName.KEYLESS], ["stride1holder0003"])
@@ -62,15 +62,66 @@ class TierTests(unittest.TestCase):
     def test_canary_larger_than_the_keyed_holders_takes_them_all(self) -> None:
         hs = holder_set([holder(1, 500), holder(2, 50), holder(3, 5, keyless=True)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=1, canary=10, test=False, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         tiers = {tier.name: [a.address for b in tier.batches for a in b.addresses] for tier in plan.tiers}
         self.assertEqual(tiers[planner.TierName.CANARY], ["stride1holder0002", "stride1holder0001"])
         self.assertEqual([tier.name for tier in plan.tiers], [planner.TierName.CANARY, planner.TierName.KEYLESS])
 
     def test_empty_tiers_are_omitted(self) -> None:
         plan = planner.build_plan(holder_set=holder_set([holder(1, 50)]), floor_usd=Decimal(10), run_id=1, canary=0, test=False,
-                                  gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         self.assertEqual([tier.name for tier in plan.tiers], [planner.TierName.MAIN])
+
+
+def deferred_entry(index: int, usd: int, ustrd: int = 5, completes_at: str | None = "2026-10-26T08:55:25.123456789Z",
+                   locked: dict[str, int] | None = None) -> holders.Deferred:
+    staked_holder = holder(index, usd)
+    staked_holder.locked = locked or {}
+    return holders.Deferred(holder=staked_holder, staked=holders.Staked(ustrd=ustrd, completes_at=completes_at))
+
+
+class DeferralTests(unittest.TestCase):
+    def build(self, deferred: list[holders.Deferred], below: list[holders.Holder] | None = None) -> planner.Plan:
+        hs = holder_set([holder(1, 500), holder(2, 50, keyless=True)], below=below)
+        hs.deferred = deferred
+        return planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=1, test=False, gas_per_transfer=100_000,
+                                  max_addresses=1, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=7_000_000)
+
+    def test_deferred_holders_are_listed_in_order_and_sit_in_no_tier_and_no_batch(self) -> None:
+        plan = self.build([deferred_entry(7, 900, ustrd=11), deferred_entry(8, 300, ustrd=3, completes_at=None)])
+
+        self.assertEqual(plan.deferred, [
+            planner.DeferredAddress(address="stride1holder0007", usd=Decimal(900), transfers=1, staked_ustrd=11,
+                                    completes_at="2026-10-26T08:55:25.123456789Z"),
+            planner.DeferredAddress(address="stride1holder0008", usd=Decimal(300), transfers=1, staked_ustrd=3, completes_at=None),
+        ])
+        self.assertEqual(plan.staked_ustrd, 7_000_000)
+        planned = {a.address for _, batch in plan.pending_batches() for a in batch.addresses}
+        self.assertEqual(planned, {"stride1holder0001", "stride1holder0002"})
+        files = "".join(planner.batch_file_content(batch=batch) for _, batch in plan.pending_batches())
+        self.assertNotIn("holder0007", files)
+        self.assertEqual([(tier.name, len(tier.batches)) for tier in plan.tiers],
+                         [(planner.TierName.CANARY, 1), (planner.TierName.KEYLESS, 1)])  # the deferred 900 is no canary or main
+
+    def test_ladder_counts_deferred_holders_and_locked_covers_them(self) -> None:
+        plan = self.build([deferred_entry(7, 900, locked={"ustrd": 4})])
+
+        self.assertEqual((plan.ladder[0].floor, plan.ladder[0].holders, plan.ladder[0].usd), (Decimal(10), 3, Decimal(1450)))
+        self.assertEqual(plan.locked, {"stride1holder0007": {"ustrd": 4}})
+
+    def test_deferred_and_staked_round_trip_and_an_old_plan_loads(self) -> None:
+        plan = self.build([deferred_entry(7, 900, ustrd=11), deferred_entry(8, 300, completes_at=None)])
+
+        data = planner.plan_to_dict(plan=plan)
+        self.assertEqual(data["deferred"][0], {"address": "stride1holder0007", "usd": "900.00", "transfers": "1",
+                                                "staked_ustrd": "11", "completes_at": "2026-10-26T08:55:25.123456789Z"})
+        self.assertEqual(data["deferred"][1]["completes_at"], None)
+        self.assertEqual(data["staked_ustrd"], "7000000")
+        self.assertEqual(planner.plan_from_dict(data=json.loads(json.dumps(data))), plan)
+
+        del data["deferred"], data["staked_ustrd"]
+        old = planner.plan_from_dict(data=data)
+        self.assertEqual((old.deferred, old.staked_ustrd), ([], 0))
 
 
 class PackingTests(unittest.TestCase):
@@ -135,7 +186,7 @@ class PlanFileTests(unittest.TestCase):
         (self.state / "batch-000-009.txt").write_text("stale\n")
         hs = holder_set([holder(1, 500), holder(2, 50)], below=[holder(9, 3)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
-                                  max_addresses=1, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00")
+                                  max_addresses=1, gas_budget=40_000_000, operator_sequence=5, created_at="2026-11-10T09:00:00+00:00", staked_ustrd=0)
         planner.write_plan(plan=plan, state_dir=self.state)
 
         self.assertFalse((self.state / "batch-000-009.txt").exists())
@@ -154,7 +205,7 @@ class PlanFileTests(unittest.TestCase):
         vesting.locked = {"ustrd": 60_000_000}
         hs = holder_set([vesting, holder(2, 50)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         addresses = {a.address: a for _, batch in plan.pending_batches() for a in batch.addresses}
         self.assertEqual((addresses["stride1holder0001"].locked, addresses["stride1holder0002"].locked), ({"ustrd": 60_000_000}, {}))
 
@@ -174,7 +225,7 @@ class PlanFileTests(unittest.TestCase):
         below.locked = {"aislm": 7}
         hs = holders.HolderSet(height=100, denoms=priced, holders=[holder(1, 500)], excluded=[], skipped=[], below_floor=[below])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         data = planner.plan_to_dict(plan=plan)
         self.assertEqual((data["prices"], data["denoms"][0]["price_usd"]), ({"aislm": "0.0046"}, "0.0046"))
         self.assertEqual(data["locked"], {below.address: {"aislm": "7"}})
@@ -194,7 +245,7 @@ class PlanFileTests(unittest.TestCase):
 
     def test_operator_sequence_round_trips_as_a_string(self) -> None:
         plan = planner.build_plan(holder_set=holder_set([holder(1, 500)]), floor_usd=Decimal(10), run_id=1, canary=0, test=False,
-                                  gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, operator_sequence=42, created_at="t")
+                                  gas_per_transfer=100_000, max_addresses=100, gas_budget=40_000_000, operator_sequence=42, created_at="t", staked_ustrd=0)
         data = planner.plan_to_dict(plan=plan)
         self.assertEqual(data["operator_sequence"], "42")
         self.assertEqual(planner.plan_from_dict(data=data).operator_sequence, 42)
@@ -202,7 +253,7 @@ class PlanFileTests(unittest.TestCase):
     def test_load_plan_wraps_malformed_files_in_plan_error(self) -> None:
         hs = holder_set([holder(1, 500)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         good = planner.plan_to_dict(plan=plan)
         missing_key = {key: value for key, value in good.items() if key != "height"}
         cases = {
@@ -221,7 +272,7 @@ class PlanFileTests(unittest.TestCase):
     def test_pending_batches_follow_tier_order(self) -> None:
         hs = holder_set([holder(1, 500), holder(2, 50, keyless=True), holder(3, 20)])
         plan = planner.build_plan(holder_set=hs, floor_usd=Decimal(10), run_id=1, canary=1, test=False, gas_per_transfer=100_000,
-                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t")
+                                  max_addresses=100, gas_budget=40_000_000, operator_sequence=5, created_at="t", staked_ustrd=0)
         self.assertEqual([(tier.name, batch.id) for tier, batch in plan.pending_batches()],
                          [(planner.TierName.CANARY, "001-001"), (planner.TierName.MAIN, "001-002"), (planner.TierName.KEYLESS, "001-003")])
 

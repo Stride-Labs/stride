@@ -11,6 +11,7 @@ EXCLUSIONS_PATH = PACKAGE_DIR / "exclusions.json"
 PLAN_PATH = STATE_DIR / "plan.json"
 LEDGER_PATH = STATE_DIR / "ledger.jsonl"
 ACCOUNTS_CACHE_PATH = STATE_DIR / "accounts.json"
+STAKING_CACHE_PATH = STATE_DIR / "staking.json"
 
 STRIDED_BINARY = "strided"
 SWEEP_OPERATOR_KEY = "stride-sweeper"

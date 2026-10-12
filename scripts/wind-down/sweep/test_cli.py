@@ -14,7 +14,7 @@ from decimal import Decimal
 from typing import Any
 from unittest import mock
 
-from sweep import chainio, cli, config, holders, ledger, planner
+from sweep import addresses, chainio, cli, config, holders, ledger, planner
 
 DENOMS = [holders.SweepDenom(denom="stuatom", symbol="stATOM", decimals=6, price_usd=Decimal("6"), destination="osmosis-1", channel="channel-5"),
           holders.SweepDenom(denom="ustrd", symbol="STRD", decimals=6, price_usd=Decimal("0.05"), destination="osmosis-1", channel="channel-5")]
@@ -46,7 +46,7 @@ def make_plan(created_at: str = NOW.isoformat(), addresses: tuple[str, ...] = (A
     holder_list = [holders.Holder(address=a, balances={"stuatom": 1_000_000, "ustrd": 10}, usd=Decimal(6), keyless=a in keyless) for a in addresses]
     hs = holders.HolderSet(height=100, denoms=DENOMS, holders=holder_list, excluded=[], skipped=[], below_floor=[])
     return planner.build_plan(holder_set=hs, floor_usd=Decimal(1), run_id=1, canary=0, test=False, gas_per_transfer=100_000,
-                              max_addresses=1, gas_budget=40_000_000, operator_sequence=PLAN_SEQUENCE, created_at=created_at)
+                              max_addresses=1, gas_budget=40_000_000, operator_sequence=PLAN_SEQUENCE, created_at=created_at, staked_ustrd=0)
 
 
 TX_RESPONSE = {"tx_response": {
@@ -126,6 +126,10 @@ class PreflightTests(unittest.TestCase):
             "/ibc/core/channel/v1/channels/channel-5/ports/transfer": {"channel": {"state": "STATE_OPEN"}},
             f"/cosmos/bank/v1beta1/balances/{config.SWEEP_OPERATOR}/by_denom": {"balance": {"denom": "ustrd", "amount": "5000000"}},
             ACCOUNT_PATH: operator_account(PLAN_SEQUENCE),
+            "/cosmos/auth/v1beta1/module_accounts": {"accounts": []},
+            "/ibc/core/channel/v1/channels": {"channels": [{"port_id": "transfer", "channel_id": "channel-5"}]},
+            "/cosmwasm/wasm/v1/code": {"code_infos": [{"code_id": "1"}]},
+            "/cosmwasm/wasm/v1/code/1/contracts": {"contracts": []},
         }
         self.commands = {
             ("version",): chainio.CommandResult(returncode=0, stdout="v35.0.0\n", stderr=""),
@@ -144,7 +148,46 @@ class PreflightTests(unittest.TestCase):
         checks = self.checks()
         self.assertTrue(all(c.ok for c in checks.values()), [c for c in checks.values() if not c.ok])
         self.assertEqual(set(checks), {"chain id", "binary version", "operator key", "plan age", "batch files", "unresolved submissions",
-                                       "operator sequence", "exclusions and protocol addresses", "channels open", "operator fee balance"})
+                                       "operator sequence", "exclusions and protocol addresses", "module accounts, escrows and contracts",
+                                       "channels open", "operator fee balance"})
+        self.assertEqual(list(checks), [
+            "chain id", "binary version", "operator key", "plan age", "batch files", "unresolved submissions", "operator sequence",
+            "exclusions and protocol addresses", "module accounts, escrows and contracts", "channels open", "operator fee balance"])
+        self.assertIn("read ", checks["module accounts, escrows and contracts"].detail)
+
+    def test_module_row_fails_naming_each_module_escrow_or_contract_address_and_its_batch(self) -> None:
+        module = addresses.module_address(name="live-module-twenty-bytes")
+        contract = addresses.module_address(name="live-contract-twenty-bytes")
+        escrow = addresses.escrow_address(channel_id="channel-5")
+        self.plan = make_plan(addresses=(A1, module, contract, escrow))
+        planner.write_plan(plan=self.plan, state_dir=self.state)
+        self.rest["/cosmos/auth/v1beta1/module_accounts"] = {"accounts": [{"base_account": {"address": module}}]}
+        self.rest["/cosmwasm/wasm/v1/code/1/contracts"] = {"contracts": [contract]}
+
+        check = self.checks()["module accounts, escrows and contracts"]
+
+        self.assertFalse(check.ok)
+        self.assertIn(f"{module} (001-002), {contract} (001-003), {escrow} (001-004)", check.detail)
+        self.assertNotIn(A1, check.detail)
+
+    def test_module_row_reads_the_blocklist_hashes_and_fails_closed_on_a_read_error(self) -> None:
+        blocked = addresses.module_address(name=config.BLOCKED_MODULE_NAMES[0])
+        self.plan = make_plan(addresses=(A1, blocked))
+        planner.write_plan(plan=self.plan, state_dir=self.state)
+        self.assertFalse(self.checks()["module accounts, escrows and contracts"].ok)
+
+        # A failed live read raises out of preflight, so `run` stops before signing
+        with mock.patch.object(holders, "read_skip_inputs", side_effect=chainio.ChainError("channels: down")):
+            with self.assertRaises(chainio.ChainError):
+                self.checks()
+
+    def test_module_row_ignores_batches_already_confirmed(self) -> None:
+        escrow = addresses.escrow_address(channel_id="channel-5")
+        self.plan = make_plan(addresses=(escrow,))
+        planner.write_plan(plan=self.plan, state_dir=self.state)
+        confirmed = [ledger.submitted(run_id=1, batch_id="001-001", tx_hash="X", at="t", addresses=1, transfers_estimate=2, gas_wanted=1),
+                     ledger.confirmed(batch_id="001-001", tx_hash="X", at="t", height=1, gas_used=1, transfers=[], skipped=[])]
+        self.assertTrue(self.checks(events=confirmed)["module accounts, escrows and contracts"].ok)
 
     def test_tampered_batch_file_fails_even_when_the_stored_hash_is_updated_to_match(self) -> None:
         batch = self.plan.tiers[0].batches[0]
@@ -361,6 +404,7 @@ class RunLoopTests(unittest.TestCase):
         mock.patch.object(config, "LEDGER_PATH", self.state / "ledger.jsonl").start()
         mock.patch.object(config, "EXCLUSIONS_PATH", self.state / "exclusions.json").start()
         mock.patch.object(config, "ACCOUNTS_CACHE_PATH", self.state / "accounts.json").start()
+        mock.patch.object(config, "STAKING_CACHE_PATH", self.state / "staking.json").start()
         (self.state / "exclusions.json").write_text('{"sections": []}')
         mock.patch.object(cli, "preflight", return_value=[cli.Check(name="all", ok=True, detail="stubbed")]).start()
         mock.patch.object(chainio, "now", return_value=NOW).start()
@@ -423,9 +467,52 @@ class RunLoopTests(unittest.TestCase):
         holder_set = holders.HolderSet(height=100, denoms=DENOMS, holders=[holders.Holder(address=A1, balances={"stuatom": 1_000_000}, usd=Decimal(6), keyless=False)],
                                        excluded=[], skipped=[], below_floor=[])
         with mock.patch.object(holders, "read_holder_set", return_value=holder_set), \
+             mock.patch.object(holders, "read_staking_pool", return_value=0), \
              mock.patch.object(chainio, "rest_get", side_effect=serve(not_found, lambda: 9)):
             self.assertEqual(cli.main(argv=["plan", "--floor-usd", "1"]), 0)
         self.assertEqual(json.loads((self.state / "plan.json").read_text())["operator_sequence"], "9")
+
+    def test_plan_saves_the_staking_cache_and_records_the_deferred_and_the_pool(self) -> None:
+        deferred_holder = holders.Holder(address=A2, balances={"stuatom": 1_000_000}, usd=Decimal(6), keyless=False)
+
+        def read_holder_set(floor_usd: Decimal, exclusions: dict, accounts: holders.AccountCache, staking: holders.StakingCache,
+                            test_address: str | None) -> holders.HolderSet:
+            staked = staking.lookup(address=A2, now=NOW)
+            return holders.HolderSet(height=100, denoms=DENOMS, holders=[], excluded=[], skipped=[], below_floor=[],
+                                     deferred=[holders.Deferred(holder=deferred_holder, staked=staked)])
+
+        def rest(path: str, params: dict | None = None) -> Any:
+            if path == f"/cosmos/staking/v1beta1/delegators/{A2}/unbonding_delegations":
+                return {"unbonding_responses": [{"entries": [{"balance": "42", "completion_time": "2026-10-26T08:55:25Z"}]}]}
+            if path == "/cosmos/staking/v1beta1/pool":
+                return {"pool": {"not_bonded_tokens": "1000000", "bonded_tokens": "500000"}}
+            return not_found(path)
+
+        with mock.patch.object(holders, "read_holder_set", side_effect=read_holder_set), \
+             mock.patch.object(chainio, "rest_get", side_effect=serve(rest, lambda: 9)):
+            self.assertEqual(cli.main(argv=["plan", "--floor-usd", "1"]), 0)
+
+        self.assertEqual(json.loads((self.state / "staking.json").read_text()),
+                         {A2: {"ustrd": "42", "completes_at": "2026-10-26T08:55:25Z"}})
+        plan = json.loads((self.state / "plan.json").read_text())
+        self.assertEqual(plan["staked_ustrd"], "1500000")
+        self.assertEqual([(entry["address"], entry["staked_ustrd"]) for entry in plan["deferred"]], [(A2, "42")])
+        self.assertEqual(plan["tiers"], [])
+
+    def test_render_plan_prints_the_deferred_lines_and_the_ladder_label(self) -> None:
+        plan = dataclasses.replace(make_plan(), staked_ustrd=10_410_527_123_456, deferred=[
+            planner.DeferredAddress(address=A1, usd=Decimal("1500.5"), transfers=1, staked_ustrd=1, completes_at="2026-10-26T08:55:25Z"),
+            planner.DeferredAddress(address=A2, usd=Decimal("2"), transfers=1, staked_ustrd=1, completes_at="2026-10-26T08:55:25.5Z"),
+            planner.DeferredAddress(address="stride1third", usd=Decimal("3"), transfers=1, staked_ustrd=1, completes_at="2026-10-26T08:55:24Z"),
+        ])
+
+        lines = cli.render_plan(plan=plan).splitlines()
+
+        self.assertIn("  deferred 3 addresses $1,505.50 (STRD still unbonding until 2026-10-26T08:55:25.5Z; swept in pass 2)", lines)
+        self.assertIn("  STRD still unbonding chain-wide: 10,410,527 STRD", lines)
+        self.assertIn("  ladder (holders not yet swept at each floor; deferred holders counted):", lines)
+        tier_end = max(index for index, line in enumerate(lines) if line.startswith("  main") or line.startswith("  canary"))
+        self.assertLess(tier_end, lines.index(next(line for line in lines if line.startswith("  deferred"))))
 
     def test_unknown_tier_stops_naming_the_plan_tiers(self) -> None:
         with mock.patch("builtins.print") as printed:

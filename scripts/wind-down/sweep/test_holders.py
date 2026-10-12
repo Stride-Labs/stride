@@ -1,6 +1,7 @@
 """Holder classification over a synthetic chain: every skip reason, the floor, keyless detection, the exclusions file,
 and a denom the chain would refuse. chainio is patched; nothing touches the network."""
 
+import datetime
 import json
 import pathlib
 import tempfile
@@ -54,8 +55,30 @@ ACCOUNTS = {
 SPENDABLE = {LOCKED: [], DUSTY: [{"denom": "stuatom", "amount": "2000"}], VESTING: [{"denom": "stuatom", "amount": "2000000"}, {"denom": "ustrd", "amount": "40000000"}]}
 
 
+NOW = datetime.datetime(2026, 10, 14, 12, 0, tzinfo=datetime.UTC)
+COMPLETES = "2026-10-26T08:55:25.123456789Z"
+# address -> the unbonding_responses the fake chain answers with; empty means no unbonding
+UNBONDING: dict[str, list[dict]] = {}
+STAKING_READS: list[str] = []
+
+
+def NO_STAKING() -> holders.StakingCache:
+    return holders.StakingCache(entries={})
+
+
+def unbonding(address: str, *entries: tuple[str, str]) -> dict:
+    return {"delegator_address": address,
+            "entries": [{"balance": balance, "completion_time": completion} for balance, completion in entries]}
+
+
 def fake_rest_get(path: str, params: dict[str, str] | None = None) -> dict:
     params = params or {}
+    if path.startswith("/cosmos/staking/v1beta1/delegators/"):
+        address = path.split("/")[5]
+        STAKING_READS.append(address)
+        return {"unbonding_responses": UNBONDING.get(address, []), "pagination": {"next_key": None}}
+    if path == "/cosmos/staking/v1beta1/pool":
+        return {"pool": {"not_bonded_tokens": "700", "bonded_tokens": "50"}}
     if path == "/cosmos/bank/v1beta1/denom_owners_by_query":
         owners = OWNERS.get(params["denom"], [])
         return {"denom_owners": [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners],
@@ -103,6 +126,8 @@ class HolderTests(unittest.TestCase):
         patcher = mock.patch.object(chainio, "rest_get", side_effect=fake_rest_get)
         patcher.start()
         self.addCleanup(patcher.stop)
+        UNBONDING.clear()
+        STAKING_READS.clear()
         height_patcher = mock.patch.object(chainio, "latest_height", return_value=100)
         height_patcher.start()
         self.addCleanup(height_patcher.stop)
@@ -130,7 +155,7 @@ class HolderTests(unittest.TestCase):
     def test_classify_applies_every_rule(self) -> None:
         exclusions = holders.load_exclusions(path=self.exclusions_path)
         accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
-        holder_set = holders.read_holder_set(floor_usd=Decimal("1"), exclusions=exclusions, accounts=accounts, test_address=None)
+        holder_set = holders.read_holder_set(floor_usd=Decimal("1"), exclusions=exclusions, accounts=accounts, staking=NO_STAKING(), test_address=None)
 
         self.assertEqual([h.address for h in holder_set.holders], [BASE, VESTING, KEYLESS])
         by_address = {h.address: h for h in holder_set.holders}
@@ -172,7 +197,7 @@ class HolderTests(unittest.TestCase):
     def test_test_address_ignores_the_floor_and_is_the_only_holder(self) -> None:
         exclusions = holders.load_exclusions(path=self.exclusions_path)
         accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
-        holder_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, test_address=BASE)
+        holder_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, staking=NO_STAKING(), test_address=BASE)
         self.assertEqual([h.address for h in holder_set.holders], [BASE])
 
     def test_account_cache_persists_and_rereads_keyless_entries(self) -> None:
@@ -224,7 +249,7 @@ class HolderTests(unittest.TestCase):
         inputs = holders.SkipInputs(module_addresses=set(), escrows=set(), contracts=set())
 
         holder_set = holders.classify(denoms=denoms, balances=balances, floor_usd=Decimal(1), exclusions={}, inputs=inputs,
-                                      accounts=accounts, test_address=None, height=1)
+                                      accounts=accounts, staking=NO_STAKING(), now=NOW, test_address=None, height=1)
 
         self.assertEqual(holder_set.holders, [])
         self.assertEqual({entry.address: entry.reason for entry in holder_set.skipped},
@@ -243,9 +268,109 @@ class HolderTests(unittest.TestCase):
     def test_test_address_absent_from_the_balances_yields_an_empty_set(self) -> None:
         exclusions = holders.load_exclusions(path=self.exclusions_path)
         accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
-        holder_set = holders.read_holder_set(floor_usd=Decimal("1"), exclusions=exclusions, accounts=accounts,
+        holder_set = holders.read_holder_set(floor_usd=Decimal("1"), exclusions=exclusions, accounts=accounts, staking=NO_STAKING(),
                                              test_address="stride1" + "p" * 38)
         self.assertEqual((holder_set.holders, holder_set.excluded, holder_set.skipped, holder_set.below_floor), ([], [], [], []))
+
+    def read_set(self, floor: str = "1", test_address: str | None = None,
+                 staking: holders.StakingCache | None = None) -> holders.HolderSet:
+        return holders.read_holder_set(
+            floor_usd=Decimal(floor), exclusions=holders.load_exclusions(path=self.exclusions_path),
+            accounts=holders.AccountCache.load(path=self.dir / "accounts.json"),
+            staking=staking or NO_STAKING(), test_address=test_address)
+
+    def test_a_holder_with_unbonding_stake_is_deferred_with_its_balances_usd_and_locked_part(self) -> None:
+        UNBONDING[VESTING] = [unbonding(VESTING, ("5", "2026-10-26T08:55:25Z"))]
+        UNBONDING[BASE] = [unbonding(BASE, ("7", COMPLETES))]
+
+        holder_set = self.read_set()
+
+        self.assertEqual([h.address for h in holder_set.holders], [KEYLESS])
+        self.assertEqual([entry.holder.address for entry in holder_set.deferred], [BASE, VESTING])  # USD descending
+        by_address = {entry.holder.address: entry for entry in holder_set.deferred}
+        vesting = by_address[VESTING]
+        self.assertEqual(vesting.holder.balances, {"stuatom": 2_000_000, "ustrd": 40_000_000})
+        self.assertEqual(vesting.holder.usd, Decimal("14"))
+        self.assertEqual(vesting.holder.locked, {"ustrd": 60_000_000})
+        self.assertEqual(vesting.staked, holders.Staked(ustrd=5, completes_at="2026-10-26T08:55:25Z"))
+        self.assertEqual(by_address[BASE].holder.usd, Decimal("61.25"))
+        self.assertEqual(by_address[BASE].staked, holders.Staked(ustrd=7, completes_at=COMPLETES))
+
+    def test_the_test_plan_never_defers_and_reads_no_staking(self) -> None:
+        UNBONDING[BASE] = [unbonding(BASE, ("7", COMPLETES))]
+        holder_set = self.read_set(test_address=BASE)
+        self.assertEqual(([h.address for h in holder_set.holders], holder_set.deferred), ([BASE], []))
+        self.assertEqual(STAKING_READS, [])
+
+    def test_a_below_floor_staker_stays_below_floor_and_is_never_read(self) -> None:
+        UNBONDING[DUST] = [unbonding(DUST, ("7", COMPLETES))]
+        UNBONDING[DUSTY] = [unbonding(DUSTY, ("7", COMPLETES))]  # vesting, spendable value under the floor
+
+        holder_set = self.read_set()
+
+        self.assertEqual(holder_set.deferred, [])
+        self.assertIn(DUST, [h.address for h in holder_set.below_floor])
+        self.assertIn(DUSTY, [h.address for h in holder_set.below_floor])
+        self.assertNotIn(DUST, STAKING_READS)
+        self.assertNotIn(DUSTY, STAKING_READS)
+        self.assertNotIn(ICA, STAKING_READS)  # skipped holders are not read either
+
+    def test_a_keyless_staker_is_deferred_too(self) -> None:
+        UNBONDING[KEYLESS] = [unbonding(KEYLESS, ("1", COMPLETES))]
+        holder_set = self.read_set()
+        self.assertEqual([(e.holder.address, e.holder.keyless) for e in holder_set.deferred], [(KEYLESS, True)])
+
+    def test_read_staked_sums_entries_across_validators_and_keeps_the_latest_completion(self) -> None:
+        UNBONDING[BASE] = [unbonding(BASE, ("10", "2026-10-26T08:55:25.5Z"), ("20", "2026-10-26T08:55:25.123456789Z")),
+                           unbonding(BASE, ("30", "2026-10-26T08:55:24Z"))]
+        self.assertEqual(holders.read_staked(address=BASE), holders.Staked(ustrd=60, completes_at="2026-10-26T08:55:25.5Z"))
+        self.assertEqual(holders.read_staked(address=MISSING), holders.Staked(ustrd=0, completes_at=None))
+
+    def test_read_staking_pool_adds_not_bonded_and_bonded(self) -> None:
+        self.assertEqual(holders.read_staking_pool(), 750)
+
+    def test_parse_chain_time_truncates_nine_fractional_digits(self) -> None:
+        parsed = holders.parse_chain_time(text="2026-10-26T08:55:25.987654321Z")
+        self.assertEqual(parsed, datetime.datetime(2026, 10, 26, 8, 55, 25, 987654, tzinfo=datetime.UTC))
+        self.assertEqual(holders.parse_chain_time(text="2026-10-26T08:55:25Z"),
+                         datetime.datetime(2026, 10, 26, 8, 55, 25, tzinfo=datetime.UTC))
+
+    def test_staking_cache_serves_zero_forever_and_positive_until_it_completes(self) -> None:
+        zero = holders.Staked(ustrd=0, completes_at=None)
+        positive = holders.Staked(ustrd=9, completes_at="2026-10-26T08:55:25Z")
+        cache = holders.StakingCache(entries={BASE: zero, VESTING: positive})
+        UNBONDING[VESTING] = []  # by the re-read the stake has matured
+
+        far_future = datetime.datetime(2030, 1, 1, tzinfo=datetime.UTC)
+        self.assertEqual(cache.lookup(address=BASE, now=far_future), zero)
+        self.assertEqual(cache.lookup(address=VESTING, now=NOW), positive)
+        self.assertEqual(STAKING_READS, [])
+
+        completed = datetime.datetime(2026, 10, 26, 8, 55, 25, tzinfo=datetime.UTC)
+        self.assertEqual(cache.lookup(address=VESTING, now=completed), zero)  # equal to completes_at counts as completed
+        self.assertEqual(STAKING_READS, [VESTING])
+        self.assertEqual(cache.lookup(address=VESTING, now=far_future), zero)  # now a final zero
+        self.assertEqual(STAKING_READS, [VESTING])
+
+    def test_staking_cache_reads_a_new_address_once_and_round_trips_its_file(self) -> None:
+        UNBONDING[BASE] = [unbonding(BASE, ("12", COMPLETES))]
+        path = self.dir / "staking.json"
+        cache = holders.StakingCache.load(path=path)
+        cache.lookup(address=BASE, now=NOW)
+        cache.lookup(address=BASE, now=NOW)
+        cache.lookup(address=KEYLESS, now=NOW)
+        self.assertEqual(STAKING_READS, [BASE, KEYLESS])
+
+        cache.save(path=path)
+
+        self.assertEqual(json.loads(path.read_text()), {
+            BASE: {"ustrd": "12", "completes_at": COMPLETES}, KEYLESS: {"ustrd": "0", "completes_at": None}})
+        self.assertEqual(list(json.loads(path.read_text())), sorted([BASE, KEYLESS]))
+        self.assertFalse(path.with_suffix(".tmp").exists())
+        STAKING_READS.clear()
+        reloaded = holders.StakingCache.load(path=path)
+        self.assertEqual(reloaded.lookup(address=BASE, now=NOW), holders.Staked(ustrd=12, completes_at=COMPLETES))
+        self.assertEqual(STAKING_READS, [])
 
     def test_load_exclusions_rejects_missing_keys(self) -> None:
         bad_files = [
@@ -280,10 +405,10 @@ class HolderTests(unittest.TestCase):
     def test_test_address_keeps_a_fully_locked_vesting_account_in_below_floor(self) -> None:
         exclusions = holders.load_exclusions(path=self.exclusions_path)
         accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
-        holder_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, test_address=LOCKED)
+        holder_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, staking=NO_STAKING(), test_address=LOCKED)
         self.assertEqual(([h.address for h in holder_set.holders], [h.address for h in holder_set.below_floor]), ([], [LOCKED]))
 
-        dusty_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, test_address=DUSTY)
+        dusty_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, staking=NO_STAKING(), test_address=DUSTY)
         self.assertEqual(([h.address for h in dusty_set.holders], dusty_set.below_floor), ([DUSTY], []))  # floor ignored
 
 

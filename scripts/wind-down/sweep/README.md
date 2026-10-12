@@ -47,5 +47,31 @@ on a batch over the block gas limit, and when a tx is not found within three min
 every command and gas estimate without broadcasting; `--yes` skips the per-batch prompt (`a` at the prompt does the
 same for the rest of the run); `--batches N` stops after N.
 
+## Two passes: STRD still unbonding
+
+The v35 upgrade undelegated everything; the STRD becomes liquid at `2026-10-26T08:55:25Z`. A holder with any STRD still
+unbonding would be swept twice (its liquid balance now, the matured STRD later), so `plan` defers it: strictly, any
+unbonding entry, no threshold. Deferred holders sit in `plan.deferred` (and `render_plan` prints their count, USD and the
+latest completion), in no tier and no batch, so `run` cannot sweep them. They still count in the ladder.
+
+- **Per-delegator read.** Each candidate above the floor that passes every skip rule gets one read of
+  `/cosmos/staking/v1beta1/delegators/<address>/unbonding_delegations` (all pages): the sum of the entries' `balance` and the
+  latest `completion_time`. The per-validator index misses removed validators, so it is not used. Delegations are not read
+  (nothing is bonded after v35). `plan` also prints the chain-wide figure from `/cosmos/staking/v1beta1/pool`.
+- **Cache.** `state/staking.json` (`{address: {"ustrd": "N", "completes_at": "..." | null}}`, sorted) keeps every answer.
+  A zero answer is final; a positive one is served until its `completes_at`, after which the address is re-read. Re-plans
+  at a lower floor read only the new addresses.
+- **`--test` never defers**: the test address itself has STRD unbonding.
+- **Pass 2** (after 2026-10-26 08:55 UTC) needs no flag: the staking map is empty, so the same `plan` includes the
+  deferred holders and their matured STRD.
+
+## Preflight rows
+
+`run` prints eleven rows and stops on any failure: chain id, binary version, operator key, plan age, batch files,
+unresolved submissions, operator sequence, exclusions and protocol addresses, module accounts / escrows / contracts,
+channels open, operator fee balance. The module row re-reads the module accounts (plus the blocked module hashes), the
+transfer escrows and the 20-byte wasm contracts live and fails if any pending batch names one; it fails closed on a
+read error.
+
 State files under `state/` are committed like `dashboard/ops/status.json`: `plan.json` and the batch files are
 overwritten by every `plan`; `ledger.jsonl` is append-only.

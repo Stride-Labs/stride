@@ -62,6 +62,17 @@ class LadderRung:
 
 
 @dataclass(frozen=True)
+class DeferredAddress:
+    """A holder left out of every tier because STRD is still unbonding; `usd` is its spendable value now."""
+
+    address: str
+    usd: Decimal
+    transfers: int
+    staked_ustrd: int
+    completes_at: str | None
+
+
+@dataclass(frozen=True)
 class Plan:
     run_id: int
     created_at: str
@@ -81,6 +92,8 @@ class Plan:
     operator_sequence: int  # the sweep operator's account sequence when planned; the runner's tx-count baseline
     # Every vesting holder's locked remainder, including those below the floor: a fully swept holder is not planned
     locked: dict[str, dict[str, int]] = field(default_factory=dict)
+    deferred: list[DeferredAddress] = field(default_factory=list)  # in no tier and no batch; pass 2 sweeps them
+    staked_ustrd: int = 0  # STRD still unbonding chain-wide when planned
 
     def pending_batches(self) -> list[tuple[Tier, Batch]]:
         return [(tier, batch) for tier in self.tiers for batch in tier.batches]
@@ -103,6 +116,7 @@ def build_plan(
     gas_budget: int,
     created_at: str,
     operator_sequence: int,
+    staked_ustrd: int,
 ) -> Plan:
     members = _tier_members(holder_list=holder_set.holders, canary=canary, test=test)
 
@@ -139,11 +153,23 @@ def build_plan(
         skipped=list(holder_set.skipped),
         below_floor_count=len(holder_set.below_floor),
         below_floor_usd=sum((holder.usd for holder in holder_set.below_floor), Decimal(0)),
-        ladder=ladder(holder_list=holder_set.holders + holder_set.below_floor, floor_usd=floor_usd),
+        # Deferred holders are not swept yet, so the ladder counts them
+        ladder=ladder(
+            holder_list=holder_set.holders + [entry.holder for entry in holder_set.deferred] + holder_set.below_floor,
+            floor_usd=floor_usd,
+        ),
         operator_sequence=operator_sequence,
         locked={
-            holder.address: dict(holder.locked) for holder in holder_set.holders + holder_set.below_floor if holder.locked
+            holder.address: dict(holder.locked)
+            for holder in holder_set.holders + holder_set.below_floor + [entry.holder for entry in holder_set.deferred]
+            if holder.locked
         },
+        deferred=[
+            DeferredAddress(address=entry.holder.address, usd=entry.holder.usd, transfers=entry.holder.transfers,
+                            staked_ustrd=entry.staked.ustrd, completes_at=entry.staked.completes_at)
+            for entry in holder_set.deferred
+        ],
+        staked_ustrd=staked_ustrd,
     )
 
 
@@ -319,6 +345,17 @@ def plan_to_dict(plan: Plan) -> dict[str, Any]:
         "locked": {
             address: {denom: str(amount) for denom, amount in coins.items()} for address, coins in plan.locked.items()
         },
+        "deferred": [
+            {
+                "address": entry.address,
+                "usd": _usd_str(amount=entry.usd),
+                "transfers": str(entry.transfers),
+                "staked_ustrd": str(entry.staked_ustrd),
+                "completes_at": entry.completes_at,
+            }
+            for entry in plan.deferred
+        ],
+        "staked_ustrd": str(plan.staked_ustrd),
     }
 
 
@@ -395,6 +432,17 @@ def plan_from_dict(data: dict) -> Plan:
             address: {denom: int(amount) for denom, amount in coins.items()}
             for address, coins in data.get("locked", {}).items()
         },
+        deferred=[
+            DeferredAddress(
+                address=entry["address"],
+                usd=Decimal(entry["usd"]),
+                transfers=int(entry["transfers"]),
+                staked_ustrd=int(entry["staked_ustrd"]),
+                completes_at=entry["completes_at"],
+            )
+            for entry in data.get("deferred", [])
+        ],
+        staked_ustrd=int(data.get("staked_ustrd", 0)),
     )
 
 

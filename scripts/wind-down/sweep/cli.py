@@ -150,15 +150,18 @@ def cmd_plan(args: argparse.Namespace) -> int:
 
     exclusions = holders.load_exclusions(path=config.EXCLUSIONS_PATH)
     accounts = holders.AccountCache.load(path=config.ACCOUNTS_CACHE_PATH)
+    staking = holders.StakingCache.load(path=config.STAKING_CACHE_PATH)
     floor = Decimal(0) if args.test else args.floor_usd
     print(f"reading live holders at floor ${floor} ...")
     holder_set = holders.read_holder_set(
         floor_usd=floor,
         exclusions=exclusions,
         accounts=accounts,
+        staking=staking,
         test_address=config.TEST_ADDRESS if args.test else None,
     )
     accounts.save(path=config.ACCOUNTS_CACHE_PATH)
+    staking.save(path=config.STAKING_CACHE_PATH)
 
     plan = planner.build_plan(
         holder_set=holder_set,
@@ -171,6 +174,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         gas_budget=args.gas_budget,
         created_at=chainio.now().isoformat(),
         operator_sequence=read_operator_sequence(),
+        staked_ustrd=holders.read_staking_pool(),
     )
     planner.write_plan(plan=plan, state_dir=config.STATE_DIR)
     print(render_plan(plan=plan))
@@ -187,6 +191,7 @@ def render_plan(plan: planner.Plan) -> str:
         addresses = sum(len(batch.addresses) for batch in tier.batches)
         usd = sum((batch.usd for batch in tier.batches), Decimal(0))
         lines.append(f"  {tier.name:8} {len(tier.batches):4} batches {addresses:6} addresses ${usd:,.2f}")
+    lines.extend(_deferred_lines(plan=plan))
     lines.append(f"  excluded {len(plan.excluded)} (${sum((entry.usd for entry in plan.excluded), Decimal(0)):,.2f}):")
     lines.extend(f"    {entry.address}  {entry.reason}  ${entry.usd:,.2f}" for entry in plan.excluded)
     skipped_usd = sum((entry.usd for entry in plan.skipped), Decimal(0))
@@ -195,9 +200,20 @@ def render_plan(plan: planner.Plan) -> str:
     if len(plan.skipped) > 20:
         lines.append(f"    ... {len(plan.skipped) - 20} more in plan.json")
     lines.append(f"  below floor {plan.below_floor_count} addresses ${plan.below_floor_usd:,.2f}")
-    lines.append("  ladder (holders not yet swept at each floor):")
+    lines.append("  ladder (holders not yet swept at each floor; deferred holders counted):")
     lines.extend(f"    ${rung.floor:>6}  {rung.holders:6} holders  ${rung.usd:,.2f}" for rung in plan.ladder)
     return "\n".join(lines)
+
+
+def _deferred_lines(plan: planner.Plan) -> list[str]:
+    deferred_usd = sum((entry.usd for entry in plan.deferred), Decimal(0))
+    completions = [entry.completes_at for entry in plan.deferred if entry.completes_at is not None]
+    latest = max(completions, key=lambda text: holders.parse_chain_time(text=text)) if completions else "n/a"
+    return [
+        f"  deferred {len(plan.deferred)} addresses ${deferred_usd:,.2f} "
+        f"(STRD still unbonding until {latest}; swept in pass 2)",
+        f"  STRD still unbonding chain-wide: {plan.staked_ustrd / 1_000_000:,.0f} STRD",
+    ]
 
 
 # ---- run
@@ -512,6 +528,7 @@ def preflight(
         _check_unresolved(events=events),
         check_operator_sequence(plan=plan, events=events),
         _check_exclusions(pending=pending, exclusions=exclusions),
+        _check_module_addresses(pending=pending),
         _check_channels(plan=plan),
         _check_fee_balance(pending=pending),
     ]
@@ -619,6 +636,25 @@ def _check_exclusions(pending: list[planner.Batch], exclusions: dict[str, holder
         name="exclusions and protocol addresses",
         ok=not hits,
         detail="no pending batch names one" if not hits else f"in a batch: {', '.join(hits)}",
+    )
+
+
+def _check_module_addresses(pending: list[planner.Batch]) -> Check:
+    """Re-read live, not from the plan: a module account, escrow or contract must never be a sweep sender."""
+    inputs = holders.read_skip_inputs()
+    forbidden = inputs.module_addresses | inputs.escrows | inputs.contracts
+    hits = [
+        f"{planned.address} ({batch.id})"
+        for batch in pending
+        for planned in batch.addresses
+        if planned.address in forbidden
+    ]
+    counts = f"{len(inputs.module_addresses)} module, {len(inputs.escrows)} escrow, {len(inputs.contracts)} contract"
+    return Check(
+        name="module accounts, escrows and contracts",
+        ok=not hits,
+        detail=f"read {counts} addresses; no pending batch names one"
+        if not hits else f"read {counts} addresses; in a batch: {', '.join(hits)}",
     )
 
 
