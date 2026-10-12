@@ -1,12 +1,12 @@
 """Command sets for the Multisig tab: the exact generate / sign / multisign+broadcast commands per zone, built from
 the Validators, Funds and Pools snapshots. Pure: no chain calls.
 
-The Stride sets (drains, ICA transfers, staketia claim balance) are signed by the F5 protocol-admin multisig with
-`strided`; the pool-funding set is signed by the Osmosis vault (a multisig with the same member key names) with
-`osmosisd`, as is the pool-creation set (one create-pool per planned pool from the Pools snapshot). Each tx is
-done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the multisig's
-account number and sequence up itself. A set may hold several txs per zone; they are contiguous
-per `chain_id` in `txs`, in the order they go out.
+The Stride sets (slash queries, drains, ICA transfers, staketia claim balance) are signed by the F5 protocol-admin
+multisig with `strided`; the pool-funding set is signed by the Osmosis vault (a multisig with the same member key
+names) with `osmosisd`, as is the pool-creation set (one create-pool per planned pool from the Pools snapshot). Each
+tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the
+multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous per
+`chain_id` in `txs`, in the order they go out.
 """
 
 import dataclasses
@@ -42,12 +42,14 @@ ICA_ORDER = (funds.IcaType.FEE, funds.IcaType.WITHDRAWAL, funds.IcaType.DELEGATI
 TRANSFER_GAS = 600_000
 TRANSFER_FEES = "3000ustrd"
 STAKETIA_TEST_AMOUNT = 1_000_000  # utia
+SLASH_QUERY_GAS = 300_000  # an ICQ submission, no ICA: the signing runbook's figure
+SLASH_QUERY_FEES = "1500ustrd"
 STAKETIA_CHAIN_ID = "celestia"
 POOL_GAS = 1_500_000
 # About 3x Osmosis's EIP-1559 base fee (0.03 uosmo/gas on 2026-10-08, floor 0.01): CheckTx rejects a fee below the
 # base fee at broadcast time, and a multisig tx cannot be re-priced without a new signing round.
 OSMOSIS_GAS_PRICE = "0.1uosmo"
-CREATE_POOL_CODE_ID = "996"  # the transmuter v3.2.0 code on osmosis-1 (pools.TRANSMUTER_CODE_ID)
+CREATE_POOL_CODE_ID = "996"  # the transmuter v3.2.0 code on osmosis-1 (funds.TRANSMUTER_CODE_ID)
 # The 2026-09-25 creations used 1.44M gas each (1M of it the tokenfactory denom creation), flat per message.
 CREATE_POOL_MSG_GAS = 1_500_000
 CREATE_POOL_TX_OVERHEAD_GAS = 100_000
@@ -57,8 +59,54 @@ CREATE_POOL_BUNDLE_SIZE = 18
 CREATION_GROUP = "all zones"  # the bundles span zones, so the tab shows them under one heading
 WAITING_SHOWN = 8  # pools listed by name in the waiting tx before "and N more"
 ONE_AT_A_TIME = "One tx at a time: generate, two signatures, multisign, broadcast, then confirm it landed before the next."
+
 POOL_KIND_UNRECOGNISED = "unrecognised"  # a pool no Stride channel backs: reported on the Pools tab, never funded
 POOL_KIND_CANONICAL = "canonical"
+
+
+@dataclass(frozen=True)
+class SlashQuery:
+    """A validator whose shares-to-tokens rate moved after the eve's hot-key refresh: update-delegation re-queries it
+    and applies the slash. Admin-gated from v35, so the multisig signs."""
+
+    chain_id: str
+    valoper: str
+    moniker: str
+
+
+SLASH_QUERIES = (
+    SlashQuery(chain_id="juno-1", valoper="junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw", moniker="sg1"),
+    SlashQuery(chain_id="phoenix-1", valoper="terravaloper1lelhxdzwn9ddecv6sv0kcxj5tguurxnzcfs5wf", moniker="orbitalcommand"),
+)
+
+
+@dataclass(frozen=True)
+class ValidatorWeightChange:
+    """A weight the multisig sets so an epoch unbonding has slack. The epoch's split must place the whole amount into
+    the validators above their target; when every weighted validator is at or above target the capacity equals the
+    amount exactly, and the 1-base-unit trim on each fully drained slashed validator leaves a remainder nothing can
+    absorb (the Hub's epoch 1500 on 2026-10-12). Weight 1 on an empty validator puts it under target, which makes the
+    others' excess exceed the amount; nothing delegates to it, since v35 no longer rebalances."""
+
+    chain_id: str
+    valoper: str
+    moniker: str
+    weight: int
+    why: str
+
+
+VALIDATOR_WEIGHT_CHANGES = (
+    ValidatorWeightChange(
+        chain_id="cosmoshub-4",
+        valoper="cosmosvaloper1clpqr4nrk4khgkxj78fcwwh6dl3uw4epsluffn",
+        moniker="cosmostation",
+        weight=1,
+        why="epoch 1500 failed by 10 uatom with zero slack; weight 1 here gives the epoch 1504 retry ~195 ATOM of slack",
+    ),
+)
+# Rewrites the whole host zone: the Hub's 183 validators used 823,100 gas on 2026-10-12 (a 300,000 attempt ran out).
+VALIDATOR_WEIGHTS_GAS = 1_200_000
+VALIDATOR_WEIGHTS_FEES = "6000ustrd"
 
 
 @dataclass(frozen=True)
@@ -178,6 +226,8 @@ def tx_sets(
     )
     return [
         _pool_creation_set(pools_data=pools_data),
+        _slash_queries_set(),
+        _validator_weights_set(),
         live_test,
         full_drain,
         _ica_transfers_set(funds_data=funds_data),
@@ -409,6 +459,39 @@ def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
     )
 
 
+def _slash_queries_set() -> TxSet:
+    return TxSet(
+        id="slash-queries",
+        step_id="day0-refresh",
+        title="Slash queries: update-delegation for the validators whose rate moved",
+        description="Re-query the shares-to-tokens rate of each listed validator with update-delegation and apply its slash.",
+        notes=[
+            "Validators tab: the slash-query pill goes on when the tx lands and off when the callback arrives, with the diff gone.",
+            "Do not resubmit a validator while its slash-query pill is on: the follow-up delegation query is skipped until the callback clears it.",
+            f"Another validator, or calibrate-delegation where the rate is unchanged but the delta is off: {_slash_query_template()}, then the same sign and broadcast steps.",
+            ONE_AT_A_TIME,
+        ],
+        txs=[_slash_query_tx(query=query) for query in SLASH_QUERIES],
+    )
+
+
+def _validator_weights_set() -> TxSet:
+    return TxSet(
+        id="validator-weights",
+        step_id="day0-epoch-submits",
+        title="Validator weights: slack for an epoch unbonding that failed on exact capacity",
+        description="Give a zone's epoch unbonding slack by setting a small weight on an empty validator with change-validator-weights.",
+        notes=[
+            "The generate step writes the weights file next to the unsigned tx; the Validators tab shows the new weight once it lands.",
+            "Only the unbond arithmetic changes: v35 has no rebalancing, so nothing is delegated to the validator.",
+            "The zone's queued records are retried at its next unbonding epoch (unbonding period / 7 + 1 days), not at the next day epoch.",
+            f"Another zone or validator: {_validator_weights_template()}, then the same sign and broadcast steps.",
+            ONE_AT_A_TIME,
+        ],
+        txs=[_validator_weight_tx(change=change) for change in VALIDATOR_WEIGHT_CHANGES],
+    )
+
+
 def _staketia_claim_balance_set() -> TxSet:
     zone = config.ZONES_BY_CHAIN_ID[STAKETIA_CHAIN_ID]
     return TxSet(
@@ -585,6 +668,67 @@ def _staketia_tx(zone: config.ZoneConfig, label: str, amount: int, title_amount:
     )
 
 
+def _slash_query_template() -> str:
+    """The generate line for a validator the set does not list, in the step's own placeholders."""
+    return _stride_generate_line(
+        subcommand="update-delegation|calibrate-delegation <CHAIN_ID> <VALOPER>",
+        file_stem=f"{WORKDIR}/<CHAIN_ID>-<VALOPER>",
+        gas=SLASH_QUERY_GAS,
+        fees=SLASH_QUERY_FEES,
+    )
+
+
+def _slash_query_tx(query: SlashQuery) -> MultisigTx:
+    zone = config.ZONES_BY_CHAIN_ID[query.chain_id]
+    file_stem = f"{WORKDIR}/update-delegation-{zone.chain_id}-{query.valoper[-6:]}"
+    generate_line = _stride_generate_line(
+        subcommand=f"update-delegation {zone.chain_id} {query.valoper}",
+        file_stem=file_stem,
+        gas=SLASH_QUERY_GAS,
+        fees=SLASH_QUERY_FEES,
+    )
+    return _stride_tx(
+        zone=zone,
+        title=f"{zone.chain_id} · update-delegation: {query.moniker} ({query.valoper})",
+        reason=None,
+        generate_line=generate_line,
+        file_stem=file_stem,
+    )
+
+
+def _validator_weights_template() -> str:
+    """The generate line for a change the set does not list, in the step's own placeholders."""
+    return _stride_generate_line(
+        subcommand="change-validator-weights <CHAIN_ID> <WEIGHTS_FILE>",
+        file_stem=f"{WORKDIR}/validator-weights-<CHAIN_ID>",
+        gas=VALIDATOR_WEIGHTS_GAS,
+        fees=VALIDATOR_WEIGHTS_FEES,
+    )
+
+
+def _validator_weight_tx(change: ValidatorWeightChange) -> MultisigTx:
+    zone = config.ZONES_BY_CHAIN_ID[change.chain_id]
+    file_stem = f"{WORKDIR}/validator-weights-{zone.chain_id}-{change.valoper[-6:]}"
+    weights_file = f"{file_stem}.weights.json"
+    weights_json = json.dumps({"validator_weights": [{"address": change.valoper, "weight": change.weight}]})
+    generate_line = (
+        f"cat > {weights_file} <<'EOF'\n{weights_json}\nEOF\n"
+        + _stride_generate_line(
+            subcommand=f"change-validator-weights {zone.chain_id} {weights_file}",
+            file_stem=file_stem,
+            gas=VALIDATOR_WEIGHTS_GAS,
+            fees=VALIDATOR_WEIGHTS_FEES,
+        )
+    )
+    return _stride_tx(
+        zone=zone,
+        title=f"{zone.chain_id} · change-validator-weights: {change.moniker} -> {change.weight} ({change.why})",
+        reason=None,
+        generate_line=generate_line,
+        file_stem=file_stem,
+    )
+
+
 def _stride_tx(zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str) -> MultisigTx:
     return MultisigTx(
         chain_id=zone.chain_id,
@@ -598,10 +742,10 @@ def _stride_tx(zone: config.ZoneConfig, title: str, reason: str | None, generate
     )
 
 
-def _stride_generate_line(subcommand: str, file_stem: str) -> str:
+def _stride_generate_line(subcommand: str, file_stem: str, gas: int = TRANSFER_GAS, fees: str = TRANSFER_FEES) -> str:
     return (
         f"strided tx stakeibc {subcommand} --from {MULTISIG_ADDRESS} --generate-only --chain-id {CHAIN_ID} "
-        f"--node {NODE} --gas {TRANSFER_GAS} --fees {TRANSFER_FEES} > {file_stem}.unsigned.json"
+        f"--node {NODE} --gas {gas} --fees {fees} > {file_stem}.unsigned.json"
     )
 
 

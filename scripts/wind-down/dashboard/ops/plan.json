@@ -606,7 +606,7 @@
                 "sommelier-3",
                 "ssc-1"
               ],
-              "command": "strided tx stakeibc update-delegation <CHAIN_ID> <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook\nstrided tx stakeibc calibrate-delegation <CHAIN_ID> <VALOPER> --from <F5_MULTISIG> --generate-only  # then sign / multisign / broadcast per the signing runbook",
+              "multisig": "slash-queries",
               "expect": "Each tx lands with code: 0 from the multisig and its callback arrives within minutes (Validators tab: the slash-query pill on, then off, the diff gone). Live check: every non-haqq zone at 0 over. After the eve's hot-key refresh this should be only what slashed overnight.",
               "auto": {
                 "tab": "validators",

@@ -1,6 +1,86 @@
 {
+  "day0-live-test-pick": {
+    "at": "2026-10-12T18:52:30.084902+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "day0-refresh": {
+    "at": "2026-10-12T18:27:40.054318+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "day0-restore-closed-channels:celestia": {
+    "at": "2026-10-12T18:27:31.127113+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "day0-restore-closed-channels:laozi-mainnet": {
+    "at": "2026-10-12T18:27:32.061374+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "eve-flags": {
+    "at": "2026-10-12T02:30:16.865625+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "eve-hot-key-refresh": {
+    "at": "2026-10-12T02:30:17.972474+00:00",
+    "by": "sam",
+    "done": true
+  },
   "eve-people": {
     "at": "2026-10-07T15:43:01.558795+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-1a": {
+    "at": "2026-10-12T15:02:53.027928+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-1b": {
+    "at": "2026-10-12T18:27:05.629477+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-1d": {
+    "at": "2026-10-12T18:06:14.014625+00:00",
+    "by": "claude",
+    "done": true
+  },
+  "haqq-1d-withdrawal": {
+    "at": "2026-10-12T18:27:08.728523+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-1e": {
+    "at": "2026-10-12T18:27:11.963275+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-1f": {
+    "at": "2026-10-12T18:27:18.863343+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-clients-fresh": {
+    "at": "2026-10-12T15:02:03.419886+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-hermes-config": {
+    "at": "2026-10-12T15:11:17.759568+00:00",
+    "by": "claude",
+    "done": true
+  },
+  "haqq-relay-acks": {
+    "at": "2026-10-12T15:11:17.759723+00:00",
+    "by": "claude",
+    "done": true
+  },
+  "haqq-relay-packets": {
+    "at": "2026-10-12T18:27:03.127462+00:00",
     "by": "sam",
     "done": true
   },
@@ -179,6 +259,16 @@
     "by": "sam",
     "done": true
   },
+  "up-executes": {
+    "at": "2026-10-12T15:01:44.236843+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "up-rates-frozen": {
+    "at": "2026-10-12T18:52:13.270107+00:00",
+    "by": "sam",
+    "done": true
+  },
   "vote-assetlist:celestia": {
     "at": "2026-10-08T20:12:13.745762+00:00",
     "by": "sam",
@@ -239,8 +329,18 @@
     "by": "sam",
     "done": true
   },
+  "vote-finalize-sweep": {
+    "at": "2026-10-12T02:30:34.790902+00:00",
+    "by": "sam",
+    "done": true
+  },
   "vote-haqq-client-update": {
     "at": "2026-10-07T15:18:27.011824+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-haqq-last-day": {
+    "at": "2026-10-12T02:30:49.491207+00:00",
     "by": "sam",
     "done": true
   },
@@ -271,6 +371,11 @@
   },
   "vote-signing-runbook": {
     "at": "2026-10-07T15:26:17.200258+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "vote-watch-haqq": {
+    "at": "2026-10-12T02:30:24.540002+00:00",
     "by": "sam",
     "done": true
   }

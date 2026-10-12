@@ -46,6 +46,63 @@ def tx_for(tx_set: multisig.TxSet, chain_id: str) -> multisig.MultisigTx:
     return next(tx for tx in tx_set.txs if tx.chain_id == chain_id)
 
 
+class SlashQueriesTest(unittest.TestCase):
+    def test_one_update_delegation_per_listed_validator_with_exact_commands(self) -> None:
+        tx_set = sets_by_id(None)["slash-queries"]
+
+        self.assertEqual(
+            [(tx.chain_id, tx.title, tx.ready) for tx in tx_set.txs],
+            [
+                ("juno-1", "juno-1 · update-delegation: sg1 (junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw)", True),
+                ("phoenix-1", "phoenix-1 · update-delegation: orbitalcommand (terravaloper1lelhxdzwn9ddecv6sv0kcxj5tguurxnzcfs5wf)", True),
+            ],
+        )
+        generate = (
+            "mkdir -p /tmp/wind-down\n"
+            "strided tx stakeibc update-delegation juno-1 junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw "
+            f"--from {ADDRESS} --generate-only --chain-id stride-1 --node {NODE} --gas 300000 --fees 1500ustrd "
+            "> /tmp/wind-down/update-delegation-juno-1-qcnylw.unsigned.json"
+        )
+        self.assertEqual(
+            [(command.tag, command.text) for command in tx_set.txs[0].commands],
+            expected_commands(generate, stem="/tmp/wind-down/update-delegation-juno-1-qcnylw"),
+        )
+        stem = "/tmp/wind-down/update-delegation-juno-1-qcnylw"
+        self.assertEqual(tx_set.txs[0].files, [f"{stem}.unsigned.json", f"{stem}.FS5.json", f"{stem}.FA5.json", f"{stem}.FR5.json"])
+
+    def test_notes_carry_the_template_for_an_unlisted_validator_or_a_calibrate(self) -> None:
+        notes = sets_by_id(None)["slash-queries"].notes
+
+        self.assertTrue(any("calibrate-delegation <CHAIN_ID> <VALOPER>" in note and "--fees 1500ustrd" in note for note in notes))
+
+
+class ValidatorWeightsTest(unittest.TestCase):
+    def test_one_change_validator_weights_per_listed_change_with_the_weights_file_written_first(self) -> None:
+        tx_set = sets_by_id(None)["validator-weights"]
+
+        self.assertEqual([(tx.chain_id, tx.ready) for tx in tx_set.txs], [("cosmoshub-4", True)])
+        self.assertTrue(tx_set.txs[0].title.startswith("cosmoshub-4 · change-validator-weights: cosmostation -> 1 ("))
+        stem = "/tmp/wind-down/validator-weights-cosmoshub-4-sluffn"
+        generate = (
+            "mkdir -p /tmp/wind-down\n"
+            f"cat > {stem}.weights.json <<'EOF'\n"
+            '{"validator_weights": [{"address": "cosmosvaloper1clpqr4nrk4khgkxj78fcwwh6dl3uw4epsluffn", "weight": 1}]}\n'
+            "EOF\n"
+            f"strided tx stakeibc change-validator-weights cosmoshub-4 {stem}.weights.json "
+            f"--from {ADDRESS} --generate-only --chain-id stride-1 --node {NODE} --gas 1200000 --fees 6000ustrd "
+            f"> {stem}.unsigned.json"
+        )
+        self.assertEqual(
+            [(command.tag, command.text) for command in tx_set.txs[0].commands],
+            expected_commands(generate, stem=stem),
+        )
+
+    def test_notes_carry_the_template_for_another_zone(self) -> None:
+        notes = sets_by_id(None)["validator-weights"].notes
+
+        self.assertTrue(any("change-validator-weights <CHAIN_ID> <WEIGHTS_FILE>" in note and "--fees 6000ustrd" in note for note in notes))
+
+
 class LiveTestCommandsTest(unittest.TestCase):
     def test_celestia_commands_are_exact(self) -> None:
         tx = tx_for(sets_by_id(fake_snapshot())["live-test-undelegate"], CELESTIA)
@@ -161,7 +218,8 @@ class FullDrainCommandsTest(unittest.TestCase):
 
 class SetsTest(unittest.TestCase):
     def test_no_snapshot_leaves_every_drain_tx_not_ready(self) -> None:
-        for tx_set in multisig.tx_sets(validators_data=None, funds_data=None, pools_data=None)[1:3]:
+        drain_sets = sets_by_id(None)
+        for tx_set in (drain_sets["live-test-undelegate"], drain_sets["full-drain"]):
             self.assertEqual([tx.chain_id for tx in tx_set.txs], [zone.chain_id for zone in config.ZONES])
             for tx in tx_set.txs:
                 self.assertEqual((tx.ready, tx.reason), (False, "waiting for the Validators snapshot"))
@@ -174,6 +232,8 @@ class SetsTest(unittest.TestCase):
             [(tx_set.id, tx_set.step_id) for tx_set in tx_sets],
             [
                 ("pool-creation", "vote-pools-create"),
+                ("slash-queries", "day0-refresh"),
+                ("validator-weights", "day0-epoch-submits"),
                 ("live-test-undelegate", "drain-live-test"),
                 ("full-drain", "drain-rest"),
                 ("ica-transfers", "transfers"),
@@ -1032,7 +1092,16 @@ class MultisigBodyTest(unittest.TestCase):
         sets = {tx_set["id"]: tx_set for tx_set in body["data"]["sets"]}
         self.assertEqual(
             set(sets),
-            {"pool-creation", "live-test-undelegate", "full-drain", "ica-transfers", "staketia-claim-balance", "pool-funding"},
+            {
+                "pool-creation",
+                "slash-queries",
+                "validator-weights",
+                "live-test-undelegate",
+                "full-drain",
+                "ica-transfers",
+                "staketia-claim-balance",
+                "pool-funding",
+            },
         )
         self.assertEqual(sets["pool-funding"]["txs"][0]["reason"], "waiting for the Pools snapshot")
         self.assertTrue(sets["pool-creation"]["txs"][0]["reason"].startswith("celestia pool creation: waiting for the Pools snapshot; "))
