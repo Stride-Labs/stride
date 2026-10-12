@@ -2,11 +2,13 @@
 
 Reads, all through chainio: the sweep denoms (checked the way the chain checks them), every holder of each denom in bulk,
 the auth account of each candidate above the floor (cached), the spendable balance of vesting candidates, and the
-module, escrow and contract address sets. Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go
+module, escrow and contract address sets, and each candidate's unbonding STRD (cached; such holders are deferred). Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go
 in the chain's order, then adds the two rules the chain cannot make: wasm contracts and the reviewed exclusions file."""
 
+import datetime
 import json
 import pathlib
+import re
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -14,6 +16,8 @@ from sweep import addresses, chainio, config
 
 STTOKEN_PREFIX = "st"
 ACCOUNT_NOT_FOUND = "account not found"
+FRACTION_PATTERN = re.compile(r"\.(\d+)")
+FRACTION_DIGITS = 6  # datetime.fromisoformat takes at most microseconds; the chain prints nanoseconds
 
 
 class ExclusionsError(Exception):
@@ -55,6 +59,23 @@ class Excluded:
     usd: Decimal
 
 
+@dataclass(frozen=True)
+class Staked:
+    """STRD one delegator still has unbonding: the sum of its entries' balances and the latest completion time as the
+    chain prints it. `Staked(ustrd=0, completes_at=None)` means none."""
+
+    ustrd: int
+    completes_at: str | None
+
+
+@dataclass(frozen=True)
+class Deferred:
+    """An otherwise sweepable holder held back from pass 1 because it has STRD unbonding; pass 2 sweeps it."""
+
+    holder: Holder
+    staked: Staked
+
+
 @dataclass
 class HolderSet:
     height: int
@@ -64,6 +85,8 @@ class HolderSet:
     skipped: list[Excluded]  # the chain's rules and the contract rule
     # Under the floor in spendable value; includes vesting accounts whose spendable part is empty or small
     below_floor: list[Holder]
+    # Above the floor and past every skip rule, but with STRD unbonding; sorted by USD descending like `holders`
+    deferred: list[Deferred] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -205,6 +228,30 @@ def read_skip_inputs() -> SkipInputs:
     return SkipInputs(module_addresses=module_addresses, escrows=escrows, contracts=contracts)
 
 
+def parse_chain_time(text: str) -> datetime.datetime:
+    """An RFC 3339 UTC time as the chain prints it (up to nine fractional digits), as an aware datetime."""
+    truncated = FRACTION_PATTERN.sub(lambda match: "." + match.group(1)[:FRACTION_DIGITS], text, count=1)
+    return datetime.datetime.fromisoformat(truncated.replace("Z", "+00:00")).astimezone(datetime.UTC)
+
+
+def read_staked(address: str) -> Staked:
+    """One delegator's unbonding entries, all pages. Delegations are not read: after v35 nothing is bonded."""
+    responses = chainio.rest_get_all_pages(
+        path=f"/cosmos/staking/v1beta1/delegators/{address}/unbonding_delegations", key="unbonding_responses")
+    entries = [entry for response in responses for entry in response["entries"]]
+    if not entries:
+        return Staked(ustrd=0, completes_at=None)
+
+    latest = max((entry["completion_time"] for entry in entries), key=lambda text: parse_chain_time(text=text))
+    return Staked(ustrd=sum(int(entry["balance"]) for entry in entries), completes_at=latest)
+
+
+def read_staking_pool() -> int:
+    """STRD in the staking pools (not bonded plus bonded): after v35 this is what is still unbonding chain-wide."""
+    pool = chainio.rest_get(path="/cosmos/staking/v1beta1/pool")["pool"]
+    return int(pool["not_bonded_tokens"]) + int(pool["bonded_tokens"])
+
+
 def spendable_balances(address: str) -> dict[str, int]:
     coins = chainio.rest_get_all_pages(path=f"/cosmos/bank/v1beta1/spendable_balances/{address}", key="balances")
     return {coin["denom"]: int(coin["amount"]) for coin in coins}
@@ -256,6 +303,40 @@ class AccountCache:
         return info
 
 
+class StakingCache:
+    """Unbonding lookups keyed by address. A zero answer is final (nothing can create an unbonding entry after v35); a
+    positive one holds until its completion time, after which the STRD is liquid and the address is read again."""
+
+    def __init__(self, entries: dict[str, Staked]) -> None:
+        self._entries = entries
+
+    @classmethod
+    def load(cls, path: pathlib.Path = config.STAKING_CACHE_PATH) -> "StakingCache":
+        if not path.exists():
+            return cls(entries={})
+        raw = json.loads(path.read_text())
+        return cls(entries={
+            address: Staked(ustrd=int(entry["ustrd"]), completes_at=entry["completes_at"])
+            for address, entry in raw.items()
+        })
+
+    def save(self, path: pathlib.Path = config.STAKING_CACHE_PATH) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        raw = {address: {"ustrd": str(staked.ustrd), "completes_at": staked.completes_at}
+               for address, staked in sorted(self._entries.items())}
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(raw, indent=1))
+        tmp.replace(path)
+
+    def lookup(self, address: str, now: datetime.datetime) -> Staked:
+        cached = self._entries.get(address)
+        if cached is not None and (cached.ustrd == 0 or parse_chain_time(text=cached.completes_at) > now):
+            return cached
+        staked = read_staked(address=address)
+        self._entries[address] = staked
+        return staked
+
+
 def account_info(account: dict) -> AccountInfo:
     """Vesting, module and interchain accounts nest the base account."""
     base = account.get("base_account") or account.get("base_vesting_account", {}).get("base_account") or account
@@ -299,6 +380,8 @@ def classify(
     exclusions: dict[str, Exclusion],
     inputs: SkipInputs,
     accounts: AccountCache,
+    staking: StakingCache,
+    now: datetime.datetime,
     test_address: str | None,
     height: int,
 ) -> HolderSet:
@@ -332,11 +415,19 @@ def classify(
                 Holder(address=address, balances=spendable, usd=spendable_usd, keyless=False, locked=locked)
             )
             continue
-        holder_set.holders.append(Holder(address=address, balances=spendable, usd=spendable_usd,
-                                         keyless=not account.has_pubkey and account.sequence == 0, locked=locked))
+        holder = Holder(address=address, balances=spendable, usd=spendable_usd,
+                        keyless=not account.has_pubkey and account.sequence == 0, locked=locked)
+
+        # A holder with STRD still unbonding is swept once, in pass 2, with that STRD; the test plan must still run
+        staked = Staked(ustrd=0, completes_at=None) if test_address is not None else staking.lookup(address=address, now=now)
+        if staked.ustrd > 0:
+            holder_set.deferred.append(Deferred(holder=holder, staked=staked))
+            continue
+        holder_set.holders.append(holder)
 
     holder_set.holders.sort(key=lambda holder: holder.usd, reverse=True)
     holder_set.below_floor.sort(key=lambda holder: holder.usd, reverse=True)
+    holder_set.deferred.sort(key=lambda entry: entry.holder.usd, reverse=True)
     return holder_set
 
 
@@ -362,11 +453,16 @@ def _spendable_part(address: str, coins: dict[str, int]) -> dict[str, int]:
 
 
 def read_holder_set(
-    floor_usd: Decimal, exclusions: dict[str, Exclusion], accounts: AccountCache, test_address: str | None
+    floor_usd: Decimal,
+    exclusions: dict[str, Exclusion],
+    accounts: AccountCache,
+    staking: StakingCache,
+    test_address: str | None,
 ) -> HolderSet:
     height = chainio.latest_height()
     denoms = resolve_denoms()
     balances = read_balances(denoms=denoms)
     inputs = read_skip_inputs()
     return classify(denoms=denoms, balances=balances, floor_usd=floor_usd, exclusions=exclusions, inputs=inputs,
-                    accounts=accounts, test_address=test_address, height=height)
+                    accounts=accounts, staking=staking, now=chainio.now(), test_address=test_address,
+                    height=height)
