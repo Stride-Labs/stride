@@ -459,6 +459,23 @@ class SweepStepsTests(unittest.TestCase):
         self.assertIn("cli.py plan --test", self.steps["sweep-test"]["command"])
         self.assertIn("stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg", self.steps["sweep-test"]["text"])
         self.assertEqual(self.days["sweep-test"], "2026-10-13")
+        self.assertIn("module accounts, escrows and contracts", self.steps["sweep-test"]["expect"])
+        self.assertIn("eleven [ok] rows", self.steps["sweep-test"]["expect"])
+
+    def test_sweep_runs_in_two_passes(self) -> None:
+        self.assertEqual(self.days["sweep-plan"], "2026-10-14")
+        self.assertEqual(self.days["sweep-plan-final"], "2026-10-27")
+        self.assertIn("cli.py plan --floor-usd", self.steps["sweep-plan"]["command"])
+        self.assertIn("cli.py plan --floor-usd", self.steps["sweep-plan-final"]["command"])
+        self.assertIn("run --tier keyless", self.steps["sweep-submit-final"]["command"])
+        self.assertNotIn("run --tier keyless", self.steps["sweep-submit"]["command"])
+        self.assertEqual(self.days["sweep-submit-final"], "2026-10-27")
+        self.assertEqual(self.days["sweep-announce-final"], "2026-10-27")
+
+    def test_strd_unbonding_completes_on_the_26th_and_the_old_sweep_window_is_gone(self) -> None:
+        self.assertEqual(self.days["strd-unbonding-complete"], "2026-10-26")
+        stale = [step_id for step_id, date in self.days.items() if date == "2026-11-10" and step_id.startswith("sweep-")]
+        self.assertEqual(stale, [])
 
 
 if __name__ == "__main__":
