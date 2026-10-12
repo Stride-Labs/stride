@@ -23,15 +23,20 @@ the first rule. This design adds one more layer at run time, re-read live, so th
 
 1. **Deferral rule.** Strict: any unbonding entry, or any delegation the upgrade loop skipped, defers the holder.
    The `--test` plan never defers (the test address itself has STRD unbonding; the rehearsal must still run).
-2. **Bulk read, not per address.** Staked STRD is read per validator, not per candidate: `/cosmos/staking/v1beta1/validators`
-   (every status, all pages), then `/validators/{valoper}/unbonding_delegations` (all pages) and, only for a validator
-   whose `tokens` is non-zero, `/validators/{valoper}/delegations`. About a hundred requests, under a minute, and the
-   result covers every address so the ladder and the dashboard can use it below the floor too. The per-delegator
-   `/delegations` route answers `Not Implemented` on v35, which rules out the per-address form anyway.
-3. **Fail closed on an incomplete staking read.** The read reconciles against `/cosmos/staking/v1beta1/pool`:
-   bonded + not bonded must equal the sum of every validator's `tokens` plus every unbonding entry's `balance`.
-   A mismatch raises `StakingError` and `plan` stops (a missed entry would un-defer someone). The build verifies the
-   identity holds on mainnet before the rule ships; if it does not hold exactly, the check becomes a warning line.
+2. **Per-delegator read, cached.** Each candidate above the floor that passes every skip rule gets one read of
+   `/cosmos/staking/v1beta1/delegators/{address}/unbonding_delegations` (all pages): the sum of every entry's
+   `balance` and the latest `completion_time`. The per-validator index was measured on 10-12 and rejected: 16
+   validators removed from the set still carry entries (1.4M of the 10.4M STRD not bonded; 31 of 301 sampled
+   delegators had entries the index missed), so a bulk read would silently un-defer people. Delegations are not read:
+   every validator's `tokens` is 0, nothing is bonded, and the per-delegator `/delegations` route answers
+   `Not Implemented` on v35.
+3. **The cache makes re-plans cheap.** A read costs about 0.2 s, so a plan at a low floor would add minutes.
+   `StakingCache` (`state/staking.json`, the shape of `AccountCache`) keeps every answer: a zero answer is final (after
+   v35 nothing can create an unbonding entry: `MsgDelegate`, `MsgBeginRedelegate`, `MsgCreateValidator` and
+   `MsgCancelUnbondingDelegation` are refused by the ante decorator and dropped from the ICA allow-list, and no
+   delegation is left to undelegate); a positive answer is final until its `completes_at`, after which the address is
+   re-read. The whole-chain figure `plan` prints comes from `/cosmos/staking/v1beta1/pool` (`not_bonded_tokens`), one
+   read, exact.
 4. **No new tier.** Deferred holders are a list on the plan, not a tier, so `run` cannot sweep them by accident.
    After 10-26 the staking map is empty and pass 2's plan includes them with no flag or option.
 5. **Run-time module re-check.** A new preflight row re-reads the module accounts (`/cosmos/auth/v1beta1/module_accounts`
@@ -46,47 +51,49 @@ the first rule. This design adds one more layer at run time, re-read live, so th
 
 ### `sweep/holders.py`
 
-- `Staked(ustrd: int, completes_at: str | None)`: STRD still in x/staking for one delegator: unbonding balances plus
-  any delegation left bonded; `completes_at` is the latest unbonding completion as the chain prints it, `None` when a
-  delegation is still bonded (no completion exists yet).
-- `read_staked() -> dict[str, Staked]`: decision 2 and 3. Completion times are compared after `parse_chain_time()`
-  (RFC 3339 with up to nine fractional digits, truncated to six for `datetime.fromisoformat`).
+- `Staked(ustrd: int, completes_at: str | None)`: STRD still unbonding for one delegator: the sum of its entries'
+  `balance` and the latest `completion_time` as the chain prints it; `Staked(ustrd=0, completes_at=None)` when none.
+- `read_staked(address) -> Staked`: decision 2. Completion times are compared after `parse_chain_time()` (RFC 3339
+  with up to nine fractional digits, truncated to six for `datetime.fromisoformat`, UTC).
+- `read_staking_pool() -> int`: `not_bonded_tokens` plus `bonded_tokens` from `/cosmos/staking/v1beta1/pool`.
+- `StakingCache` (`load`, `save`, `lookup(address, now)`): decision 3; the file is `config.STAKING_CACHE_PATH`
+  (`state/staking.json`), written like `accounts.json` (tmp file, replace, sorted, integers as strings).
 - `Deferred(holder: Holder, staked: Staked)`; `HolderSet.deferred: list[Deferred]` (above the floor, passed every skip
-  rule, in the staking map) and `HolderSet.staked: dict[str, Staked]` (the whole map, for the ladder and the summary).
-- `classify(..., staked=...)`: after the vesting step, when the address is in `staked` and this is not a test plan,
-  the holder goes to `deferred` instead of `holders`. Below-floor holders are not deferred (the floor already rules
-  them out); keyless holders can be deferred like any other.
-- `read_holder_set()` calls `read_staked()` after `read_skip_inputs()`.
-- `StakingError(Exception)` for the reconciliation failure, caught by `cli.main` like `DenomError`.
+  rule, STRD unbonding), sorted by USD descending like `holders`.
+- `classify(..., staking: StakingCache, now: datetime)`: after the vesting step, when this is not a test plan and
+  the cache's answer has `ustrd > 0`, the holder goes to `deferred` instead of `holders`. Below-floor holders are not
+  read (the floor already rules them out); keyless holders can be deferred like any other.
+- `read_holder_set(..., staking)` passes the cache and `chainio.now()` through; `cmd_plan` loads and saves it beside
+  the account cache.
 
 ### `sweep/planner.py`
 
 - `DeferredAddress(address, usd, transfers, staked_ustrd, completes_at)`; `Plan.deferred: list[DeferredAddress]`,
-  `Plan.staked_addresses: int`, `Plan.staked_ustrd: int` (the whole map's size and total, every floor).
-- `build_plan`: deferred sorted by USD descending; the ladder is built over `holders + below_floor` minus any address
-  in `holder_set.staked`; the `locked` map also covers deferred vesting holders.
+  `Plan.staked_ustrd: int` (the chain-wide pool figure, passed into `build_plan` by `cmd_plan`).
+- `build_plan`: deferred in `holder_set` order; the ladder is built over `holders + below_floor` as today (deferred
+  holders are not yet swept, so they count; the label says so); the `locked` map also covers deferred vesting holders.
 - `plan_to_dict` / `plan_from_dict`: `"deferred": [...]` (USD to cents, integers as strings),
-  `"staked": {"addresses": "N", "ustrd": "X"}`; reading tolerates their absence like `locked`.
+  `"staked_ustrd": "X"`; reading tolerates their absence like `locked`.
 
 ### `sweep/cli.py`
 
-- `render_plan`: after the tiers, `deferred N addresses $X (STRD still unbonding until <date>; pass 2)` and
-  `staked STRD: N delegators, X STRD`; the ladder label says deferred holders are not counted.
+- `render_plan`: after the tiers, `deferred N addresses $X (STRD still unbonding until <latest completes_at>; swept
+  in pass 2)` and `STRD still unbonding chain-wide: X STRD`; the ladder label says deferred holders are counted.
 - `preflight`: new `_check_module_addresses(pending)` → `Check(name="module accounts, escrows and contracts", ...)`,
   inserted after `_check_exclusions`. It calls `holders.read_skip_inputs()`; detail names the counts read and any hit
   with its batch id.
-- `main` catches `holders.StakingError`.
 
 ### Dashboard (`dashboard/sweep_tab.py`, `static/sweep.js`, `static/style.css`)
 
-- `collect()` adds `"staked": {address: {"ustrd": str, "completes_at": str | null}}` from `holders.read_staked()`.
+- `collect()` adds `"staked_ustrd": str` from `holders.read_staking_pool()`.
 - `compose()`:
   - `totals.deferred = {addresses, usd}`: the plan's deferred addresses, USD from live balances at the plan's prices.
-  - top-level `deferred = {addresses, usd, staked_addresses, staked_strd, staked_usd, completes_at, top: [...]}`
-    where `staked_*` summarise the live map (all floors), `completes_at` its latest completion, `top` the 25 largest
-    deferred by USD as `{address, usd, staked_strd}`. Without a live snapshot `staked_*` and `usd` are `null`.
+  - top-level `deferred = {addresses, usd, staked_strd, staked_usd, completes_at, top: [...]}` where `staked_strd`
+    is the live pool figure (`null` without a snapshot), `staked_usd` prices it at the plan's STRD price,
+    `completes_at` the latest completion among the deferred, `top` the 25 largest deferred by plan USD as
+    `{address, usd, staked_strd, completes_at}`. Without a live snapshot `usd` is the plan's USD.
   - `_known_addresses` includes the deferred, so they are never "unplanned above floor".
-  - `_ladder` excludes every address in the live staking map.
+  - `_ladder` is unchanged (deferred holders are still to sweep; its label says they are counted).
   - by-token rows gain `deferred_usd` (live balance of the deferred addresses in that denom).
 - `sweep.js`: a `Deferred` tile (sub-line "STRD unbonding until <date>: N delegators, $X"), a `deferred` segment
   in the progress bar and legend, a `Deferred USD` column after `Below floor USD`, and a collapsed `Deferred` panel
@@ -112,33 +119,35 @@ the first rule. This design adds one more layer at run time, re-read live, so th
 
 ### Error handling
 
-- `read_staked` raises `ChainError` on a failed read (as every read does) and `StakingError` on the reconciliation
-  mismatch; `plan` prints the message and exits 1.
+- `read_staked` raises `ChainError` on a failed read (as every read does); `plan` prints the message and exits 1.
 - The new preflight row fails closed like the others: any hit, or a read error, stops the run before signing.
 
 ### Tests
 
-- `test_holders.py`: a holder with an unbonding entry is deferred, keeps its balances and USD; the same holder in a
-  `--test` plan is planned; a below-floor staker stays below floor; `read_staked` sums entries across validators,
-  keeps the latest completion, reads delegations only for a validator with tokens, and raises on a pool mismatch;
-  `parse_chain_time` on nine fractional digits.
-- `test_planner.py`: deferred holders appear in `plan.deferred` sorted by USD and in no tier; the ladder excludes
-  staked addresses at every rung; the plan dict round-trips `deferred` and `staked`; an old plan without them loads.
+- `test_holders.py`: a holder with an unbonding entry is deferred, keeps its balances, USD and locked part; the same
+  holder in a `--test` plan is planned; a below-floor staker stays below floor and is not read; `read_staked` sums
+  entries across validators and keeps the latest completion; `StakingCache` returns a zero answer without a read,
+  re-reads a positive answer once `now` passes `completes_at`, round-trips through its file; `parse_chain_time` on
+  nine fractional digits.
+- `test_planner.py`: deferred holders appear in `plan.deferred` and in no tier and no batch; the plan dict
+  round-trips `deferred` and `staked_ustrd`; an old plan without them loads.
 - `test_cli.py`: the new preflight row passes on a clean setup, fails naming the address and batch when a pending
-  address is a module, escrow or contract address; eleven rows in order; `render_plan` prints the deferred line.
-- `test_sweep_tab.py`: `totals.deferred`, the `deferred` object, `deferred_usd` per denom, the ladder excluding
-  staked addresses, a deferred address not counted as unplanned.
+  address is a module, escrow or contract address; eleven rows in order; `render_plan` prints the deferred line;
+  `plan` saves the staking cache.
+- `test_sweep_tab.py`: `totals.deferred`, the `deferred` object with and without a live snapshot, `deferred_usd` per
+  denom, a deferred address not counted as unplanned, the progress parts still summing to the whole.
 - `test_ops.py`: the pins above.
 
 ## Build plan
 
-Chunk 1, sweep package (files: `holders.py`, `planner.py`, `cli.py`, their tests, `sweep/README.md`). Produces
-`Staked`, `read_staked`, `parse_chain_time`, `StakingError`, `Deferred`, `HolderSet.deferred/staked`,
-`DeferredAddress`, `Plan.deferred/staked_addresses/staked_ustrd`, the preflight row. First step: a throwaway script
-verifying the pool identity on mainnet (decision 3). Depends on: none.
+Chunk 1, sweep package (files: `config.py`, `holders.py`, `planner.py`, `cli.py`, their tests, `sweep/README.md`).
+Produces `config.STAKING_CACHE_PATH`, `Staked`, `read_staked`, `read_staking_pool`, `parse_chain_time`,
+`StakingCache`, `Deferred`, `HolderSet.deferred`, `DeferredAddress`, `Plan.deferred`, `Plan.staked_ustrd`, the
+preflight row. Depends on: none.
 
 Chunk 2, dashboard (files: `sweep_tab.py`, `static/sweep.js`, `static/style.css`, `test_sweep_tab.py`,
-`dashboard/README.md`). Consumes chunk 1's `Plan.deferred`, `holders.read_staked`. Depends on: chunk 1.
+`dashboard/README.md`). Consumes chunk 1's `Plan.deferred`, `Plan.staked_ustrd`, `holders.read_staking_pool`.
+Depends on: chunk 1.
 
 Chunk 3, ops plan (files: `ops/plan.json`, `test_ops.py`). Edited by a script that round-trips the file with
 `json.dumps(plan, indent=2, ensure_ascii=False) + "\n"`; command blocks keep notes on `#` lines, no trailing comments.
