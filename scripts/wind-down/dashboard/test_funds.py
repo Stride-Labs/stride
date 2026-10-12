@@ -417,19 +417,52 @@ class TransfersTest(unittest.TestCase):
 
 
 class PoolsTest(unittest.TestCase):
-    def test_discovers_contracts_from_alloyed_receipts_plus_extras(self) -> None:
-        balances = {
-            "factory/osmo1canon/alloyed/stATOMcanon": 10,
-            "factory/osmo1other/nonalloyed": 1,
-            ATOM_ON_OSMOSIS: 5,
-            "factory/osmo1hub/alloyed/stATOMhub": 3,
+    def test_candidates_are_the_code_996_pools_not_already_ruled_out(self) -> None:
+        listed = {
+            "osmo1ours": funds.ListedPool(pool_id="1", code_id="996"),
+            "osmo1other": funds.ListedPool(pool_id="2", code_id="148"),
+            "osmo1known": funds.ListedPool(pool_id="3", code_id="996"),
         }
 
-        contracts = funds.discover_pool_contracts(
-            vault_balances=balances, extra=("osmo1new", "osmo1hub")
+        self.assertEqual(
+            funds.transmuter_candidates(listed=listed, skip={"osmo1known"}),
+            ["osmo1ours"],
         )
 
-        self.assertEqual(contracts, ["osmo1canon", "osmo1hub", "osmo1new"])
+    def test_keeps_vault_admin_pools_and_extras_only(self) -> None:
+        admins = {
+            "osmo1ours": config.OSMOSIS_VAULT,
+            "osmo1theirs": "osmo1stranger",
+            "osmo1unknown": None,
+            "osmo1extra": "osmo1stranger",
+        }
+
+        ours = funds.select_our_pools(admins=admins, extra=("osmo1extra",))
+
+        self.assertEqual(ours, ["osmo1ours", "osmo1extra"])
+
+    def test_snapshot_reads_the_pools_the_vault_administers(self) -> None:
+        # The vault holds no LP receipt before funding, so the pool set must come from the listing + get_admin.
+        discovered = funds.VaultPools(
+            listed={"osmo1canon": funds.ListedPool(pool_id="1", code_id="996")},
+            admins={"osmo1canon": config.OSMOSIS_VAULT},
+            contracts=["osmo1canon"],
+        )
+        osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
+        with (
+            mock.patch.object(chain, "zone_chain", return_value=osmosis),
+            mock.patch.object(funds, "_balances", return_value={ATOM_ON_OSMOSIS: 7}),
+            mock.patch.object(funds, "vault_pools", return_value=discovered),
+            mock.patch.object(
+                funds,
+                "_raw_pool",
+                side_effect=lambda osmosis, contract: raw_pool(contract, {ATOM_ON_OSMOSIS: 1}, {}),
+            ),
+        ):
+            snapshot = funds._osmosis_snapshot()
+
+        self.assertEqual([pool.contract for pool in snapshot.pools], ["osmo1canon"])
+        self.assertEqual(snapshot.vault_balances, {ATOM_ON_OSMOSIS: 7})
 
     def test_canonical_and_route_pools_go_to_the_zone_whose_native_denom_they_hold(
         self,

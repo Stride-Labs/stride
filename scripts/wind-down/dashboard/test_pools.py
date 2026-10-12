@@ -11,6 +11,7 @@ from unittest import mock
 
 import chain
 import config
+import funds
 import pools
 
 WIND_DOWN_DIR = pathlib.Path(__file__).resolve().parent.parent
@@ -67,7 +68,7 @@ def raw_pool(
     fields: dict[str, Any] = {
         "contract": contract,
         "pool_id": "3595",
-        "code_id": pools.TRANSMUTER_CODE_ID,
+        "code_id": funds.TRANSMUTER_CODE_ID,
         "admin": VAULT,
         "alloyed_denom": alloyed_denom,
         "assets": {
@@ -212,37 +213,13 @@ class ConfigTest(unittest.TestCase):
 
 class DiscoveryTest(unittest.TestCase):
     def setUp(self) -> None:
-        pools._NOT_OURS.clear()
-
-    def test_candidates_are_the_code_996_pools_not_already_ruled_out(self) -> None:
-        listed = {
-            "osmo1ours": pools.ListedPool(pool_id="1", code_id="996"),
-            "osmo1other": pools.ListedPool(pool_id="2", code_id="148"),
-            "osmo1known": pools.ListedPool(pool_id="3", code_id="996"),
-        }
-
-        self.assertEqual(
-            pools.transmuter_candidates(listed=listed, skip={"osmo1known"}),
-            ["osmo1ours"],
-        )
-
-    def test_keeps_vault_admin_pools_and_extras_only(self) -> None:
-        admins = {
-            "osmo1ours": VAULT,
-            "osmo1theirs": STRANGER,
-            "osmo1unknown": None,
-            "osmo1extra": STRANGER,
-        }
-
-        ours = pools.select_our_pools(admins=admins, extra=("osmo1extra",))
-
-        self.assertEqual(ours, ["osmo1ours", "osmo1extra"])
+        funds._NOT_OURS.clear()
 
     def test_snapshot_memoises_only_the_pools_that_are_not_ours(self) -> None:
         listed = {
-            "osmo1ours": pools.ListedPool(pool_id="1", code_id="996"),
-            "osmo1theirs": pools.ListedPool(pool_id="2", code_id="996"),
-            "osmo1legacy": pools.ListedPool(pool_id="3", code_id="148"),
+            "osmo1ours": funds.ListedPool(pool_id="1", code_id="996"),
+            "osmo1theirs": funds.ListedPool(pool_id="2", code_id="996"),
+            "osmo1legacy": funds.ListedPool(pool_id="3", code_id="148"),
         }
         admin_calls: list[str] = []
 
@@ -253,7 +230,7 @@ class DiscoveryTest(unittest.TestCase):
         def fake_raw_pool(
             osmosis: chain.Chain,
             contract: str,
-            listed: pools.ListedPool | None,
+            listed: funds.ListedPool | None,
             admin: str | None,
         ) -> pools.RawPool:
             return raw_pool(
@@ -265,8 +242,8 @@ class DiscoveryTest(unittest.TestCase):
         osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
         with (
             mock.patch.object(pools, "_balances", return_value={ATOM_ON_OSMOSIS: 7}),
-            mock.patch.object(pools, "_listed_pools", return_value=listed),
-            mock.patch.object(pools, "_admin", fake_admin),
+            mock.patch.object(funds, "_listed_pools", return_value=listed),
+            mock.patch.object(funds, "_admin", fake_admin),
             mock.patch.object(pools, "_raw_pool", fake_raw_pool),
             mock.patch.object(pools, "_creation_fee", return_value=FEE),
             mock.patch.object(pools, "_holder_targets", return_value=HOLDER_TARGETS),
@@ -286,8 +263,8 @@ class DiscoveryTest(unittest.TestCase):
         osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
         with (
             mock.patch.object(pools, "_balances", return_value={}),
-            mock.patch.object(pools, "_listed_pools", return_value={}),
-            mock.patch.object(pools, "_admin", side_effect=TimeoutError("slow")),
+            mock.patch.object(funds, "_listed_pools", return_value={}),
+            mock.patch.object(funds, "_admin", side_effect=TimeoutError("slow")),
             mock.patch.object(
                 pools,
                 "_raw_pool",
@@ -305,7 +282,7 @@ class DiscoveryTest(unittest.TestCase):
             [(pool.contract, pool.admin, pool.pool_id) for pool in snapshot.pools],
             [("osmo1extra", None, None)],
         )
-        self.assertEqual(pools._NOT_OURS, set())
+        self.assertEqual(funds._NOT_OURS, set())
 
 
 class ClassificationTest(unittest.TestCase):

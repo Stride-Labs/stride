@@ -31,9 +31,7 @@ import chain
 import config
 import funds
 
-TRANSMUTER_CODE_ID = "996"
 TRANSMUTER_VERSION = "3.2.0"
-COSMWASMPOOL_LISTING_PATH = "/osmosis/cosmwasmpool/v1beta1/pools"
 CW2_INFO_KEY = b"contract_info"  # the cw2 raw storage key that holds the contract name and version
 UINT128_LIMIT = 2**128  # the transmuter keeps every normalised balance in a Uint128
 ROUTE_HOPS = 2  # a route pool's stToken travelled Stride -> holder chain -> Osmosis
@@ -126,12 +124,6 @@ class PoolReport:
 
 
 # ---- internal structures
-
-
-@dataclass(frozen=True)
-class ListedPool:
-    pool_id: str
-    code_id: str
 
 
 @dataclass(frozen=True)
@@ -344,11 +336,6 @@ class ZonePools:
     creation_fee_short: bool | None  # vault_fee_balance < fee x planned pools without a live contract
 
 
-# Contracts whose admin is not the vault: adminship of someone else's pool never changes, so a negative answer is
-# memoised for the process lifetime. Our own pools are re-read every refresh so an admin transfer shows.
-_NOT_OURS: set[str] = set()
-
-
 def collect() -> dict[str, Any]:
     stride = chain.stride_chain()
     osmosis = chain.zone_chain(zone=config.ZONES_BY_CHAIN_ID[config.OSMOSIS_CHAIN_ID])
@@ -391,26 +378,6 @@ def collect() -> dict[str, Any]:
 
 
 # ---- pure logic: discovery and assignment
-
-
-def transmuter_candidates(listed: dict[str, ListedPool], skip: set[str]) -> list[str]:
-    """Contracts worth asking for their admin: the code-996 pools not already known to be someone else's."""
-    return [
-        contract
-        for contract, pool in listed.items()
-        if pool.code_id == TRANSMUTER_CODE_ID and contract not in skip
-    ]
-
-
-def select_our_pools(
-    admins: dict[str, str | None], extra: tuple[str, ...]
-) -> list[str]:
-    """The pools the vault administers, plus the configured extras whatever their admin (or if it could not be read)."""
-    return [
-        contract
-        for contract, admin in admins.items()
-        if admin == config.OSMOSIS_VAULT or contract in extra
-    ]
 
 
 def zone_denoms(chain_id: str, host_denom: str) -> ZoneDenoms:
@@ -684,7 +651,7 @@ def build_checks(
     return [
         Check(
             name=CheckName.CODE_ID,
-            ok=_known(raw.code_id, lambda: raw.code_id == TRANSMUTER_CODE_ID),
+            ok=_known(raw.code_id, lambda: raw.code_id == funds.TRANSMUTER_CODE_ID),
             detail=f"code_id={raw.code_id or '?'}",
         ),
         Check(
@@ -1426,38 +1393,17 @@ def _optional_supply(osmosis: chain.Chain, denom: str | None) -> int | None:
 
 def _osmosis_snapshot(osmosis: chain.Chain) -> OsmosisSnapshot:
     vault_balances = _balances(chain_handle=osmosis, address=config.OSMOSIS_VAULT)
-    listed = _listed_pools(osmosis=osmosis)
-    candidates = transmuter_candidates(listed=listed, skip=_NOT_OURS)
-    contracts = list(dict.fromkeys(candidates + list(config.EXTRA_POOL_CONTRACTS)))
-
-    # One get_admin per candidate; a failed answer is unknown (not memoised, and an extra still shows with admin n/a).
-    with concurrent.futures.ThreadPoolExecutor(max_workers=POOL_WORKERS) as pool:
-        answers = pool.map(
-            lambda contract: chain.optional(
-                lambda: _admin(osmosis=osmosis, contract=contract)
-            ),
-            contracts,
-        )
-        admins = dict(zip(contracts, answers))
-    _NOT_OURS.update(
-        contract
-        for contract, admin in admins.items()
-        if admin is not None
-        and admin != config.OSMOSIS_VAULT
-        and contract not in config.EXTRA_POOL_CONTRACTS
-    )
-
-    ours = select_our_pools(admins=admins, extra=config.EXTRA_POOL_CONTRACTS)
+    discovered = funds.vault_pools(osmosis=osmosis)
     with concurrent.futures.ThreadPoolExecutor(max_workers=POOL_WORKERS) as pool:
         pools = list(
             pool.map(
                 lambda contract: _raw_pool(
                     osmosis=osmosis,
                     contract=contract,
-                    listed=listed.get(contract),
-                    admin=admins[contract],
+                    listed=discovered.listed.get(contract),
+                    admin=discovered.admins[contract],
                 ),
-                ours,
+                discovered.contracts,
             )
         )
     return OsmosisSnapshot(
@@ -1494,26 +1440,11 @@ def _pool_creation_fee(osmosis: chain.Chain, path: str) -> CreationFee | None:
     return CreationFee(denom=coins[0]["denom"], amount=int(coins[0]["amount"]))
 
 
-def _listed_pools(osmosis: chain.Chain) -> dict[str, ListedPool]:
-    entries = chain.rest_get_all_pages(
-        chain=osmosis, path=COSMWASMPOOL_LISTING_PATH, key="pools"
-    )
-    return {
-        entry["contract_address"]: ListedPool(
-            pool_id=entry["pool_id"], code_id=entry["code_id"]
-        )
-        for entry in entries
-    }
-
-
-def _admin(osmosis: chain.Chain, contract: str) -> str:
-    return _smart_query(osmosis=osmosis, contract=contract, query={"get_admin": {}})[
-        "admin"
-    ]
-
-
 def _raw_pool(
-    osmosis: chain.Chain, contract: str, listed: ListedPool | None, admin: str | None
+    osmosis: chain.Chain,
+    contract: str,
+    listed: funds.ListedPool | None,
+    admin: str | None,
 ) -> RawPool:
     def query(message: dict[str, Any]) -> dict[str, Any]:
         return _smart_query(osmosis=osmosis, contract=contract, query=message)

@@ -27,8 +27,8 @@ STRD_DECIMALS = 6
 STRIDE_CHANNEL_ON_OSMOSIS = "channel-326"
 ST_PREFIX = "st"
 IBC_PREFIX = "ibc/"
-FACTORY_PREFIX = "factory/"
-ALLOYED_INFIX = "/alloyed/"
+TRANSMUTER_CODE_ID = "996"
+COSMWASMPOOL_LISTING_PATH = "/osmosis/cosmwasmpool/v1beta1/pools"
 RECORDS_PATH = "/Stride-Labs/stride/records"
 STAKETIA_PATH = "/Stride-Labs/stride/staketia"
 STATUS_CLAIMABLE = "CLAIMABLE"  # an epoch unbonding record status: the native tokens are on the redemption ICA
@@ -312,6 +312,21 @@ class RawPool:
 class OsmosisSnapshot:
     vault_balances: dict[str, int]
     pools: list[RawPool]
+
+
+@dataclass(frozen=True)
+class ListedPool:
+    pool_id: str
+    code_id: str
+
+
+@dataclass(frozen=True)
+class VaultPools:
+    """The transmuter pools the vault administers, as Osmosis's pool listing and get_admin describe them."""
+
+    listed: dict[str, ListedPool]  # every cosmwasm pool on Osmosis, by contract
+    admins: dict[str, str | None]  # get_admin per candidate; None when the answer failed
+    contracts: list[str]  # the pools the vault administers plus the configured extras
 
 
 @dataclass(frozen=True)
@@ -639,16 +654,24 @@ def mark_transfers(
     ]
 
 
-def discover_pool_contracts(
-    vault_balances: dict[str, int], extra: tuple[str, ...]
-) -> list[str]:
-    """Transmuter contracts the vault holds an alloyed LP receipt of (`factory/<contract>/alloyed/...`), plus extras."""
-    joined = [
-        denom.split("/")[1]
-        for denom in vault_balances
-        if denom.startswith(FACTORY_PREFIX) and ALLOYED_INFIX in denom
+def transmuter_candidates(listed: dict[str, ListedPool], skip: set[str]) -> list[str]:
+    """Contracts worth asking for their admin: the code-996 pools not already known to be someone else's."""
+    return [
+        contract
+        for contract, pool in listed.items()
+        if pool.code_id == TRANSMUTER_CODE_ID and contract not in skip
     ]
-    return list(dict.fromkeys(joined + list(extra)))
+
+
+def select_our_pools(
+    admins: dict[str, str | None], extra: tuple[str, ...]
+) -> list[str]:
+    """The pools the vault administers, plus the configured extras whatever their admin (or if it could not be read)."""
+    return [
+        contract
+        for contract, admin in admins.items()
+        if admin == config.OSMOSIS_VAULT or contract in extra
+    ]
 
 
 def classify_pools(
@@ -969,12 +992,16 @@ def _staketia(
 # ---- once per collect: Osmosis, redemption records, operators
 
 
+# Contracts whose admin is not the vault: adminship of someone else's pool never changes, so a negative answer is
+# memoised for the process lifetime. Our own pools are re-read every refresh so an admin transfer shows. The Funds and
+# Pools collectors share it from their own refresh threads; the worst a race costs is one repeated get_admin.
+_NOT_OURS: set[str] = set()
+
+
 def _osmosis_snapshot() -> OsmosisSnapshot:
     osmosis = chain.zone_chain(zone=config.ZONES_BY_CHAIN_ID[config.OSMOSIS_CHAIN_ID])
     vault_balances = _balances(chain_handle=osmosis, address=config.OSMOSIS_VAULT)
-    contracts = discover_pool_contracts(
-        vault_balances=vault_balances, extra=config.EXTRA_POOL_CONTRACTS
-    )
+    contracts = vault_pools(osmosis=osmosis).contracts
     with concurrent.futures.ThreadPoolExecutor(max_workers=POOL_WORKERS) as pool:
         pools = list(
             pool.map(
@@ -983,6 +1010,52 @@ def _osmosis_snapshot() -> OsmosisSnapshot:
             )
         )
     return OsmosisSnapshot(vault_balances=vault_balances, pools=pools)
+
+
+def vault_pools(osmosis: chain.Chain) -> VaultPools:
+    """Every code-996 pool whose admin is the vault, plus the configured extras. Read from the pool listing, not from
+    the vault's holdings, so a pool counts from its creation (the Funds and Pools tabs both read it)."""
+    listed = _listed_pools(osmosis=osmosis)
+    candidates = transmuter_candidates(listed=listed, skip=_NOT_OURS)
+    contracts = list(dict.fromkeys(candidates + list(config.EXTRA_POOL_CONTRACTS)))
+
+    # One get_admin per candidate; a failed answer is unknown (not memoised, and an extra still shows with admin n/a).
+    with concurrent.futures.ThreadPoolExecutor(max_workers=POOL_WORKERS) as pool:
+        answers = pool.map(
+            lambda contract: chain.optional(
+                lambda: _admin(osmosis=osmosis, contract=contract)
+            ),
+            contracts,
+        )
+        admins = dict(zip(contracts, answers))
+    _NOT_OURS.update(
+        contract
+        for contract, admin in admins.items()
+        if admin is not None
+        and admin != config.OSMOSIS_VAULT
+        and contract not in config.EXTRA_POOL_CONTRACTS
+    )
+
+    ours = select_our_pools(admins=admins, extra=config.EXTRA_POOL_CONTRACTS)
+    return VaultPools(listed=listed, admins=admins, contracts=ours)
+
+
+def _listed_pools(osmosis: chain.Chain) -> dict[str, ListedPool]:
+    entries = chain.rest_get_all_pages(
+        chain=osmosis, path=COSMWASMPOOL_LISTING_PATH, key="pools"
+    )
+    return {
+        entry["contract_address"]: ListedPool(
+            pool_id=entry["pool_id"], code_id=entry["code_id"]
+        )
+        for entry in entries
+    }
+
+
+def _admin(osmosis: chain.Chain, contract: str) -> str:
+    return _smart_query(osmosis=osmosis, contract=contract, query={"get_admin": {}})[
+        "admin"
+    ]
 
 
 def _raw_pool(osmosis: chain.Chain, contract: str) -> RawPool:
