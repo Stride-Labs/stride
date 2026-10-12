@@ -2,8 +2,9 @@
 
 Reads, all through chainio: the sweep denoms (checked the way the chain checks them), every holder of each denom in bulk,
 the auth account of each candidate above the floor (cached), the spendable balance of vesting candidates, and the
-module, escrow and contract address sets, and each candidate's unbonding STRD (cached; such holders are deferred). Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go
-in the chain's order, then adds the two rules the chain cannot make: wasm contracts and the reviewed exclusions file."""
+module, escrow and contract address sets, and each candidate's unbonding STRD (cached; such holders are deferred).
+Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go in the chain's order,
+then adds the two rules the chain cannot make: wasm contracts and the reviewed exclusions file."""
 
 import datetime
 import json
@@ -419,7 +420,11 @@ def classify(
                         keyless=not account.has_pubkey and account.sequence == 0, locked=locked)
 
         # A holder with STRD still unbonding is swept once, in pass 2, with that STRD; the test plan must still run
-        staked = Staked(ustrd=0, completes_at=None) if test_address is not None else staking.lookup(address=address, now=now)
+        staked = (
+            Staked(ustrd=0, completes_at=None)
+            if test_address is not None
+            else staking.lookup(address=address, now=now)
+        )
         if staked.ustrd > 0:
             holder_set.deferred.append(Deferred(holder=holder, staked=staked))
             continue

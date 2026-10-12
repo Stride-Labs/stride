@@ -101,8 +101,8 @@ function tiles(data) {
 
 function deferredTile(data) {
   const d = data.deferred;
-  const until = d && d.completes_at ? d.completes_at.slice(0, 10) : null;
-  const sub = d && until && d.staked_usd !== null ? `STRD unbonding until ${until}: $${money(d.staked_usd)} chain-wide` : 'STRD unbonding until n/a: n/a chain-wide';
+  const until = d && d.completes_at ? d.completes_at.slice(0, 10) : 'n/a';
+  const sub = d && d.staked_usd !== null ? `STRD unbonding until ${until}: $${money(d.staked_usd)} chain-wide` : 'STRD unbonding until n/a: n/a chain-wide';
   return `<div class="tile sw-deferred"><div class="k">Deferred</div><div class="v">${Number(data.totals.deferred.addresses).toLocaleString()}</div><div class="s">addresses · $${money(data.totals.deferred.usd)} · ${sub}</div></div>`;
 }
 

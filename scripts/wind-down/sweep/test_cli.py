@@ -523,8 +523,8 @@ class RunLoopTests(unittest.TestCase):
         lines = cli.render_plan(plan=plan).splitlines()
 
         summary = next(index for index, line in enumerate(lines) if line.startswith("  deferred"))
-        self.assertEqual(lines[summary + 1], f"    {A1}  $1,500.50  3 STRD  2026-10-26T08:55:25Z")
-        self.assertEqual(lines[summary + 2], f"    {A2}  $2.00  1 STRD  n/a")
+        self.assertEqual(lines[summary + 1], f"    {A1}  $1,500.50  3.000000 STRD  2026-10-26T08:55:25Z")
+        self.assertEqual(lines[summary + 2], f"    {A2}  $2.00  1.000000 STRD  n/a")
         self.assertEqual(lines[summary + 3], "  STRD still unbonding chain-wide: 5 STRD")
 
     def test_render_plan_caps_the_deferred_rows_at_twenty(self) -> None:

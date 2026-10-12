@@ -153,15 +153,18 @@ def cmd_plan(args: argparse.Namespace) -> int:
     staking = holders.StakingCache.load(path=config.STAKING_CACHE_PATH)
     floor = Decimal(0) if args.test else args.floor_usd
     print(f"reading live holders at floor ${floor} ...")
-    holder_set = holders.read_holder_set(
-        floor_usd=floor,
-        exclusions=exclusions,
-        accounts=accounts,
-        staking=staking,
-        test_address=config.TEST_ADDRESS if args.test else None,
-    )
-    accounts.save(path=config.ACCOUNTS_CACHE_PATH)
-    staking.save(path=config.STAKING_CACHE_PATH)
+    try:
+        holder_set = holders.read_holder_set(
+            floor_usd=floor,
+            exclusions=exclusions,
+            accounts=accounts,
+            staking=staking,
+            test_address=config.TEST_ADDRESS if args.test else None,
+        )
+    finally:
+        # Keep the reads done before a ChainError: the next plan resumes from the caches
+        accounts.save(path=config.ACCOUNTS_CACHE_PATH)
+        staking.save(path=config.STAKING_CACHE_PATH)
 
     plan = planner.build_plan(
         holder_set=holder_set,
@@ -214,7 +217,8 @@ def _deferred_lines(plan: planner.Plan) -> list[str]:
         f"(STRD still unbonding until {latest}; swept in pass 2)"
     ]
     lines.extend(
-        f"    {entry.address}  ${entry.usd:,.2f}  {entry.staked_ustrd / 1_000_000:,.0f} STRD  {entry.completes_at or 'n/a'}"
+        f"    {entry.address}  ${entry.usd:,.2f}  {entry.staked_ustrd / 1_000_000:,.6f} STRD  "
+        f"{entry.completes_at or 'n/a'}"
         for entry in plan.deferred[:20]
     )
     if len(plan.deferred) > 20:
