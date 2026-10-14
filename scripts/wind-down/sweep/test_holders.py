@@ -749,13 +749,17 @@ class ReadBalancesTests(unittest.TestCase):
         printed.assert_called_once()
         self.assertIn("ustrd", printed.call_args.args[0])
 
-    def test_a_failed_page_cancels_the_queued_pages_and_raises(self) -> None:
-        owners = {"ustrd": [(f"a{index}", "5") for index in range(20)], ATOM: []}
-        with self.assertRaises(chainio.ChainError):
-            self.run_read(owners=owners, page_size=2, workers=1, raise_at="2")
-        offsets = [call["params"]["pagination.offset"] for call in self.calls]
-        self.assertIn("2", offsets)
-        self.assertNotIn("18", offsets)
+    def test_a_failed_page_rereads_that_denom_by_key_and_cancels_its_queued_pages(self) -> None:
+        owners = {"ustrd": [(f"a{index}", "5") for index in range(20)], ATOM: [("b0", "1"), ("b1", "3")]}
+        balances, _ = self.run_read(owners=owners, page_size=2, workers=1, raise_at="2")
+
+        self.assertEqual(self.key_reads, ["ustrd"])
+        self.assertEqual(len(balances), 22)
+        self.assertEqual(balances["a19"], {"ustrd": 5})
+        self.assertEqual(balances["b1"], {ATOM: 3})
+        ustrd_offsets = [call["params"]["pagination.offset"] for call in self.calls if call["params"]["denom"] == "ustrd"]
+        self.assertIn("2", ustrd_offsets)
+        self.assertNotIn("18", ustrd_offsets)
 
 
 if __name__ == "__main__":

@@ -296,8 +296,9 @@ class CollectTests(unittest.TestCase):
         order: list[str] = []
         before = datetime.datetime(2026, 11, 10, 13, 0, tzinfo=datetime.UTC)
 
-        def read_balances(denoms: list) -> dict:
+        def read_balances(denoms: list, workers: int) -> dict:
             order.append("read_balances")
+            self.assertEqual(workers, sweep_tab.config.SWEEP_BALANCE_WORKERS)
             return {}
 
         def now() -> datetime.datetime:

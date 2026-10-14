@@ -213,7 +213,8 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) 
     the last must be full. A denom that fails the check is re-read with key pagination (`next_key`), which cannot skip
     a holder, and so is every denom when the node refuses the height on the first request (offset pages unpinned can
     drift). A key re-read is unpinned, so that denom reflects a slightly later state than the pinned ones. One line
-    names each re-read denom and why. A failed page request cancels the queued ones and raises."""
+    names each re-read denom and why. A pinned page that fails after its retries (or a backend that pruned the
+    height) cancels that denom's queued pages and sends it down the same key re-read."""
     if not denoms:
         return {}
     height: int | None = chainio.latest_height(base=config.BALANCES_REST)
@@ -235,7 +236,8 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) 
                 for sweep_denom, page in zip(denoms, first_pages)
             ]
             pages_by_denom = [
-                [page, *(future.result() for future in futures)] for page, futures in zip(first_pages, later_pages)
+                _denom_pages(sweep_denom=sweep_denom, first_page=page, futures=futures)
+                for sweep_denom, page, futures in zip(denoms, first_pages, later_pages)
             ]
         except BaseException:
             # Leaving the block would wait for every queued page, each running through its own backoff
@@ -243,9 +245,26 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) 
             raise
 
     owners_by_denom = [
-        _checked_owners(sweep_denom=sweep_denom, pages=pages) for sweep_denom, pages in zip(denoms, pages_by_denom)
+        _checked_owners(sweep_denom=sweep_denom, pages=pages) if pages is not None
+        else _owners_by_key(denom=sweep_denom.denom)
+        for sweep_denom, pages in zip(denoms, pages_by_denom)
     ]
     return _assemble_balances(denoms=denoms, owners_by_denom=owners_by_denom)
+
+
+def _denom_pages(
+    sweep_denom: SweepDenom, first_page: dict, futures: list[concurrent.futures.Future]
+) -> list[dict] | None:
+    """The denom's pinned pages, or None when one of them failed: a backend that pruned the pinned height partway
+    through a long read (cosmos.directory backends keep about a hundred blocks), or a page dead after its retries.
+    The denom's queued pages are cancelled and it is re-read by key instead."""
+    try:
+        return [first_page, *(future.result() for future in futures)]
+    except chainio.ChainError as error:
+        for future in futures:
+            future.cancel()
+        print(f"balances: {sweep_denom.denom}: a pinned page failed ({error}); re-reading by key")
+        return None
 
 
 def _checked_owners(sweep_denom: SweepDenom, pages: list[dict]) -> list[dict]:

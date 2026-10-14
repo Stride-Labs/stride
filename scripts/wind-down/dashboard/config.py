@@ -11,6 +11,8 @@ HTTP_TIMEOUT_SECONDS = 20
 USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 
 REFRESH_INTERVAL_SECONDS = {"channels": 60, "funds": 120, "validators": 300, "pools": 300, "sweep": 1800}
+# The sweep collector shares the balances host with a running `plan`; two workers keep it from starving one
+SWEEP_BALANCE_WORKERS = 2
 
 CHANNELS_FEED_URL = "https://channels.main.stridenet.co/api/data"
 

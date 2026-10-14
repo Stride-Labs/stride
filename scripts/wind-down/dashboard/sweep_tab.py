@@ -9,6 +9,7 @@ from typing import Any
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))  # the sweep package lives beside the dashboard
 
+import config  # noqa: E402
 from sweep import chainio as sweep_chainio  # noqa: E402
 from sweep import config as sweep_config  # noqa: E402
 from sweep import holders, ledger, planner  # noqa: E402
@@ -29,7 +30,7 @@ def collect() -> dict[str, Any]:
     balances miss it."""
     denoms = holders.resolve_denoms()
     balances_at = sweep_chainio.now().isoformat()
-    balances = holders.read_balances(denoms=denoms)
+    balances = holders.read_balances(denoms=denoms, workers=config.SWEEP_BALANCE_WORKERS)
     operator = sweep_chainio.rest_get(
         path=f"/cosmos/bank/v1beta1/balances/{sweep_config.SWEEP_OPERATOR}/by_denom",
         params={"denom": sweep_config.FEE_DENOM},
