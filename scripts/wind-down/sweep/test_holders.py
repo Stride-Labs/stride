@@ -71,7 +71,7 @@ def unbonding(address: str, *entries: tuple[str, str]) -> dict:
             "entries": [{"balance": balance, "completion_time": completion} for balance, completion in entries]}
 
 
-def fake_rest_get(path: str, params: dict[str, str] | None = None) -> dict:
+def fake_rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> dict:
     params = params or {}
     if path.startswith("/cosmos/staking/v1beta1/delegators/"):
         address = path.split("/")[5]
@@ -82,7 +82,7 @@ def fake_rest_get(path: str, params: dict[str, str] | None = None) -> dict:
     if path == "/cosmos/bank/v1beta1/denom_owners_by_query":
         owners = OWNERS.get(params["denom"], [])
         return {"denom_owners": [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners],
-                "pagination": {"next_key": None}}
+                "pagination": {"next_key": None, "total": str(len(owners))}}
     if path.startswith("/cosmos/auth/v1beta1/accounts/"):
         address = path.rsplit("/", 1)[1]
         if address not in ACCOUNTS:
@@ -410,6 +410,68 @@ class HolderTests(unittest.TestCase):
 
         dusty_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, staking=NO_STAKING(), test_address=DUSTY)
         self.assertEqual(([h.address for h in dusty_set.holders], dusty_set.below_floor), ([DUSTY], []))  # floor ignored
+
+
+class ReadBalancesTests(unittest.TestCase):
+    ATOM_DENOM = holders.SweepDenom(denom=ATOM, symbol="ATOM", decimals=6, price_usd=Decimal(4),
+                                    destination="cosmoshub-4", channel="channel-0")
+    STRD_DENOM = holders.SweepDenom(denom="ustrd", symbol="STRD", decimals=6, price_usd=Decimal(1),
+                                    destination="osmosis-1", channel="channel-5")
+
+    def run_read(self, owners: dict[str, list[tuple[str, str]]], page_size: int, refuse_pinned: bool = False,
+                 duplicate_first_of_page: bool = False) -> tuple[dict, list[dict]]:
+        calls: list[dict] = []
+
+        def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> dict:
+            calls.append({"params": dict(params), "height": height})
+            if refuse_pinned and height is not None:
+                raise chainio.ChainError("height not available")
+            offset = int(params["pagination.offset"])
+            window = owners[params["denom"]][offset:offset + page_size]
+            if duplicate_first_of_page and offset > 0:
+                window = [owners[params["denom"]][offset - 1], *window]
+            body = {"denom_owners": [{"address": address, "balance": {"denom": params["denom"], "amount": amount}}
+                                     for address, amount in window],
+                    "pagination": {"next_key": None}}
+            if "pagination.count_total" in params:
+                body["pagination"]["total"] = str(len(owners[params["denom"]]))
+            return body
+
+        with mock.patch.object(config, "PAGE_SIZE", page_size), \
+                mock.patch.object(chainio, "latest_height", return_value=777), \
+                mock.patch.object(chainio, "rest_get", side_effect=rest_get):
+            balances = holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM], workers=3)
+        return balances, calls
+
+    def test_pages_are_assembled_across_denoms_pinned_to_one_height(self) -> None:
+        owners = {"ustrd": [(f"a{index}", "5") for index in range(5)] + [("zero", "0")],
+                  ATOM: [("a0", "9"), ("b", "2")]}
+        balances, calls = self.run_read(owners=owners, page_size=2)
+
+        self.assertEqual(balances["a4"], {"ustrd": 5})
+        self.assertEqual(balances["a0"], {"ustrd": 5, ATOM: 9})
+        self.assertEqual(balances["b"], {ATOM: 2})
+        self.assertNotIn("zero", balances)
+        self.assertEqual(len(balances), 6)
+        self.assertEqual({call["height"] for call in calls}, {777})
+        self.assertEqual(sorted(call["params"]["pagination.offset"] for call in calls if call["params"]["denom"] == "ustrd"),
+                         ["0", "2", "4"])
+        self.assertEqual(sum("pagination.count_total" in call["params"] for call in calls), 2)
+
+    def test_a_holder_repeated_across_pages_counts_once(self) -> None:
+        owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: []}
+        balances, _ = self.run_read(owners=owners, page_size=1, duplicate_first_of_page=True)
+        self.assertEqual(balances, {"a": {"ustrd": 5}, "b": {"ustrd": 6}, "c": {"ustrd": 7}})
+
+    def test_a_refused_height_falls_back_to_unpinned_reads(self) -> None:
+        owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: [("a", "1")]}
+        with mock.patch("builtins.print") as printed:
+            balances, calls = self.run_read(owners=owners, page_size=2, refuse_pinned=True)
+
+        printed.assert_called_once_with("balances: node refused height 777; reading unpinned")
+        self.assertEqual(balances, {"a": {"ustrd": 5, ATOM: 1}, "b": {"ustrd": 6}, "c": {"ustrd": 7}})
+        self.assertEqual(calls[0]["height"], 777)
+        self.assertEqual({call["height"] for call in calls[1:]}, {None})
 
 
 if __name__ == "__main__":

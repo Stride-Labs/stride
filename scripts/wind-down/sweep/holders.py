@@ -6,6 +6,7 @@ module, escrow and contract address sets, and each candidate's unbonding STRD (c
 Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go in the chain's order,
 then adds the two rules the chain cannot make: wasm contracts and the reviewed exclusions file."""
 
+import concurrent.futures
 import datetime
 import json
 import pathlib
@@ -199,17 +200,50 @@ def _voucher_denom(spec: config.VoucherDenom) -> SweepDenom:
 # ---- bulk reads
 
 
-def read_balances(denoms: list[SweepDenom]) -> dict[str, dict[str, int]]:
-    """Every holder of every sweep denom: address -> denom -> amount, zero amounts dropped."""
+def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) -> dict[str, dict[str, int]]:
+    """Every holder of every sweep denom: address -> denom -> amount, zero amounts dropped. Every page is pinned to one
+    height so offset pages agree, and one pool serves all denoms. If the node refuses the height on the first request,
+    the whole read is redone unpinned."""
+    if not denoms:
+        return {}
+    height: int | None = chainio.latest_height()
+    try:
+        first_page = _owner_page(denom=denoms[0].denom, offset=0, height=height)
+    except chainio.ChainError:
+        print(f"balances: node refused height {height}; reading unpinned")
+        height = None
+        first_page = _owner_page(denom=denoms[0].denom, offset=0, height=height)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        other_first_pages = [
+            pool.submit(_owner_page, denom=sweep_denom.denom, offset=0, height=height) for sweep_denom in denoms[1:]
+        ]
+        first_pages = [first_page, *(future.result() for future in other_first_pages)]
+        later_pages = [
+            [pool.submit(_owner_page, denom=sweep_denom.denom, offset=offset, height=height)
+             for offset in range(config.PAGE_SIZE, int(page["pagination"]["total"]), config.PAGE_SIZE)]
+            for sweep_denom, page in zip(denoms, first_pages)
+        ]
+        pages_by_denom = [
+            [page, *(future.result() for future in futures)] for page, futures in zip(first_pages, later_pages)
+        ]
+
     balances: dict[str, dict[str, int]] = {}
-    for sweep_denom in denoms:
-        owners = chainio.rest_get_all_pages(path="/cosmos/bank/v1beta1/denom_owners_by_query", key="denom_owners",
-                                            params={"denom": sweep_denom.denom})
-        for owner in owners:
-            amount = int(owner["balance"]["amount"])
+    for sweep_denom, pages in zip(denoms, pages_by_denom):
+        # A holder listed on two pages (the unpinned fallback can drift) counts once
+        owners = {owner["address"]: int(owner["balance"]["amount"]) for page in pages for owner in page["denom_owners"]}
+        for address, amount in owners.items():
             if amount > 0:
-                balances.setdefault(owner["address"], {})[sweep_denom.denom] = amount
+                balances.setdefault(address, {})[sweep_denom.denom] = amount
     return balances
+
+
+def _owner_page(denom: str, offset: int, height: int | None) -> dict:
+    """One page of a denom's owners; the first also asks for the total, which sizes the remaining pages."""
+    params = {"denom": denom, "pagination.limit": str(config.PAGE_SIZE), "pagination.offset": str(offset)}
+    if offset == 0:
+        params["pagination.count_total"] = "true"
+    return chainio.rest_get(path="/cosmos/bank/v1beta1/denom_owners_by_query", params=params, height=height)
 
 
 def read_skip_inputs() -> SkipInputs:

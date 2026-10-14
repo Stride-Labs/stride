@@ -25,6 +25,8 @@ RPC = "https://stride-strd-rpc.polkachu.com:443"
 USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 HTTP_TIMEOUT_SECONDS = 30
 PAGE_SIZE = 1000
+READ_WORKERS = 8  # concurrent balance page reads
+REST_BACKOFF_SECONDS = (1, 2, 4, 8)  # sleeps between the five attempts at a throttled or failing REST read
 STRIDED_TIMEOUT_SECONDS = 120
 
 BECH32_PREFIX = "stride"

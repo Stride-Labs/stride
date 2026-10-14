@@ -13,6 +13,8 @@ from typing import Any
 from sweep import config
 
 SDK_NOT_FOUND_CODE = 5
+HTTP_TOO_MANY_REQUESTS = 429
+HTTP_SERVER_ERROR = 500
 
 
 class ChainError(Exception):
@@ -30,16 +32,28 @@ class CommandResult:
     stderr: str
 
 
-def rest_get(path: str, params: dict[str, str] | None = None) -> Any:
-    """GET a Stride REST path and decode the JSON body, retrying once on a network error."""
+def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> Any:
+    """GET a Stride REST path and decode the JSON body. HTTP 429, any 5xx and network errors are retried after each of
+    REST_BACKOFF_SECONDS, then raise ChainError; a missing thing is NotFound at once. With `height` the node answers
+    from that block's state (x-cosmos-block-height)."""
     query = f"?{urllib.parse.urlencode(params)}" if params else ""
     url = f"{config.REST}{path}{query}"
-    try:
-        return _fetch_json_with_retry(url=url)
-    except urllib.error.HTTPError as error:
-        raise _http_error(path=path, error=error) from error
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
-        raise ChainError(f"{path}: {error}") from error
+    headers = {"x-cosmos-block-height": str(height)} if height is not None else {}
+
+    for backoff in (*config.REST_BACKOFF_SECONDS, None):
+        try:
+            return _fetch_json(url=url, headers=headers)
+        except urllib.error.HTTPError as error:
+            chain_error = _http_error(path=path, error=error)
+            if isinstance(chain_error, NotFound) or not _is_retryable_status(code=error.code) or backoff is None:
+                raise chain_error from error
+        except (urllib.error.URLError, TimeoutError) as error:
+            if backoff is None:
+                raise ChainError(f"{path}: {error}") from error
+        except json.JSONDecodeError as error:
+            raise ChainError(f"{path}: {error}") from error
+        sleep(backoff)
+    raise AssertionError("unreachable: the last attempt returns or raises")
 
 
 def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None) -> list[Any]:
@@ -85,17 +99,12 @@ def sleep(seconds: float) -> None:
     time.sleep(seconds)
 
 
-def _fetch_json_with_retry(url: str) -> Any:
-    try:
-        return _fetch_json(url=url)
-    except urllib.error.HTTPError:
-        raise
-    except (urllib.error.URLError, TimeoutError):
-        return _fetch_json(url=url)
+def _is_retryable_status(code: int) -> bool:
+    return code == HTTP_TOO_MANY_REQUESTS or code >= HTTP_SERVER_ERROR
 
 
-def _fetch_json(url: str) -> Any:
-    request = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
+def _fetch_json(url: str, headers: dict[str, str]) -> Any:
+    request = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT, **headers})
     with urllib.request.urlopen(request, timeout=config.HTTP_TIMEOUT_SECONDS) as response:
         return json.load(response)
 
