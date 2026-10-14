@@ -1,0 +1,241 @@
+{
+ "run_id": "1",
+ "created_at": "2026-10-14T14:40:44.251748+00:00",
+ "height": "41615647",
+ "floor_usd": "0.00",
+ "test": true,
+ "canary": "0",
+ "gas_per_transfer": "150000",
+ "prices": {
+  "stuatom": "8.067042270760791136",
+  "stuosmo": "0.4397814069988605159",
+  "stutia": "1.7645453655501061140",
+  "stinj": "12.386495449260183672",
+  "stadydx": "0.5755679000987506115",
+  "staISLM": "0.004241986240089187348",
+  "stujuno": "0.1955169291253795009",
+  "stuband": "0.3900126234152833170",
+  "stuluna": "0.2011308580486553068",
+  "stusomm": "0.01080333265285735450",
+  "stusaga": "0.1310860736664598778",
+  "ustrd": "0.05",
+  "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2": "4",
+  "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801": "1.5",
+  "ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34": "0.3",
+  "ibc/DA356E369C3E5CF6A9F1DCD99CE8ED55FBD595E676A5CF033CE784C060492D5A": "0.1",
+  "ibc/B86EFF6D227E3E33D7E3B5E65D0C1BB5BD79CCB56D35A9D824F0DD5D52CA43BA": "0.01",
+  "ibc/520D9C4509027DE66C737A1D6A6021915A3071E30DBA8F758B46532B060D7AA5": "0.1",
+  "ibc/561C70B20188A047BFDE6F9946BDDC5D8AC172B9BE04FF868DFABF819E5A9CCE": "0.5"
+ },
+ "denoms": [
+  {
+   "denom": "stuatom",
+   "symbol": "stATOM",
+   "decimals": "6",
+   "price_usd": "8.067042270760791136",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stuosmo",
+   "symbol": "stOSMO",
+   "decimals": "6",
+   "price_usd": "0.4397814069988605159",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stutia",
+   "symbol": "stTIA",
+   "decimals": "6",
+   "price_usd": "1.7645453655501061140",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stinj",
+   "symbol": "stINJ",
+   "decimals": "18",
+   "price_usd": "12.386495449260183672",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stadydx",
+   "symbol": "stDYDX",
+   "decimals": "18",
+   "price_usd": "0.5755679000987506115",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "staISLM",
+   "symbol": "stISLM",
+   "decimals": "18",
+   "price_usd": "0.004241986240089187348",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stujuno",
+   "symbol": "stJUNO",
+   "decimals": "6",
+   "price_usd": "0.1955169291253795009",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stuband",
+   "symbol": "stBAND",
+   "decimals": "6",
+   "price_usd": "0.3900126234152833170",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stuluna",
+   "symbol": "stLUNA",
+   "decimals": "6",
+   "price_usd": "0.2011308580486553068",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stusomm",
+   "symbol": "stSOMM",
+   "decimals": "6",
+   "price_usd": "0.01080333265285735450",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "stusaga",
+   "symbol": "stSAGA",
+   "decimals": "6",
+   "price_usd": "0.1310860736664598778",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "ustrd",
+   "symbol": "STRD",
+   "decimals": "6",
+   "price_usd": "0.05",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+   "symbol": "ATOM",
+   "decimals": "6",
+   "price_usd": "4",
+   "destination": "cosmoshub-4",
+   "channel": "channel-0"
+  },
+  {
+   "denom": "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801",
+   "symbol": "TIA",
+   "decimals": "6",
+   "price_usd": "1.5",
+   "destination": "celestia",
+   "channel": "channel-162"
+  },
+  {
+   "denom": "ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34",
+   "symbol": "OSMO",
+   "decimals": "6",
+   "price_usd": "0.3",
+   "destination": "osmosis-1",
+   "channel": "channel-5"
+  },
+  {
+   "denom": "ibc/DA356E369C3E5CF6A9F1DCD99CE8ED55FBD595E676A5CF033CE784C060492D5A",
+   "symbol": "JUNO",
+   "decimals": "6",
+   "price_usd": "0.1",
+   "destination": "juno-1",
+   "channel": "channel-24"
+  },
+  {
+   "denom": "ibc/B86EFF6D227E3E33D7E3B5E65D0C1BB5BD79CCB56D35A9D824F0DD5D52CA43BA",
+   "symbol": "SOMM",
+   "decimals": "6",
+   "price_usd": "0.01",
+   "destination": "sommelier-3",
+   "channel": "channel-150"
+  },
+  {
+   "denom": "ibc/520D9C4509027DE66C737A1D6A6021915A3071E30DBA8F758B46532B060D7AA5",
+   "symbol": "SAGA",
+   "decimals": "6",
+   "price_usd": "0.1",
+   "destination": "ssc-1",
+   "channel": "channel-213"
+  },
+  {
+   "denom": "ibc/561C70B20188A047BFDE6F9946BDDC5D8AC172B9BE04FF868DFABF819E5A9CCE",
+   "symbol": "DYDX",
+   "decimals": "18",
+   "price_usd": "0.5",
+   "destination": "dydx-mainnet-1",
+   "channel": "channel-160"
+  }
+ ],
+ "tiers": [
+  {
+   "name": "test",
+   "batches": [
+    {
+     "id": "001-001",
+     "file": "batch-001-001.txt",
+     "sha256": "651608a5c1fccb3124b20b9c15f251756bd09ab800000ca3c1423ecb3d9b6a95",
+     "usd": "368.44",
+     "transfers": "15",
+     "estimated_gas": "2250000",
+     "addresses": [
+      {
+       "address": "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg",
+       "balances": {
+        "stuatom": "17215",
+        "stuosmo": "38403",
+        "stutia": "223980",
+        "stinj": "11137813436208699",
+        "stadydx": "14807753446035853",
+        "stujuno": "10009",
+        "stuluna": "10004",
+        "stusomm": "136198493",
+        "stusaga": "12103286",
+        "ustrd": "7074392067",
+        "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2": "13618",
+        "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801": "7266175",
+        "ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34": "25411",
+        "ibc/520D9C4509027DE66C737A1D6A6021915A3071E30DBA8F758B46532B060D7AA5": "4488",
+        "ibc/561C70B20188A047BFDE6F9946BDDC5D8AC172B9BE04FF868DFABF819E5A9CCE": "7360665566219845"
+       },
+       "usd": "368.44",
+       "transfers": "15",
+       "locked": {}
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "excluded": [],
+ "skipped": [],
+ "below_floor": {
+  "count": "0",
+  "usd": "0.00"
+ },
+ "ladder": [
+  {
+   "floor": "0.00",
+   "holders": "1",
+   "usd": "368.44"
+  }
+ ],
+ "operator_sequence": "1",
+ "locked": {},
+ "deferred": [],
+ "staked_ustrd": "8530364638080"
+}
