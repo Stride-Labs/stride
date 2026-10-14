@@ -34,9 +34,9 @@ class CommandResult:
 
 
 def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> Any:
-    """GET a Stride REST path and decode the JSON body. HTTP 429, any 5xx, network errors and undecodable bodies are retried after each of
-    REST_BACKOFF_SECONDS (with jitter), then raise ChainError; a missing thing is NotFound at once. With `height` the node answers
-    from that block's state (x-cosmos-block-height)."""
+    """GET a Stride REST path and decode the JSON body. HTTP 429, any 5xx, network errors and undecodable bodies are
+    retried after each of REST_BACKOFF_SECONDS (with jitter), then raise ChainError; a missing thing is NotFound at
+    once. With `height` the node answers from that block's state (x-cosmos-block-height)."""
     query = f"?{urllib.parse.urlencode(params)}" if params else ""
     url = f"{config.REST}{path}{query}"
     headers = {"x-cosmos-block-height": str(height)} if height is not None else {}

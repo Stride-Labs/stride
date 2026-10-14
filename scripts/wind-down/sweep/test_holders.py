@@ -690,6 +690,33 @@ class ReadBalancesTests(unittest.TestCase):
         self.assertEqual(balances["a2"], {"ustrd": 5})
         self.assertEqual(balances["b1"], {ATOM: 3})
 
+    def test_a_repeated_address_with_a_matching_count_rereads_by_key(self) -> None:
+        # Offsets drifted between pages: page 2 repeats a0 and the last page lost a5, so the count still equals the total
+        drifted = {"0": [("a0", "5"), ("a1", "5")], "2": [("a0", "5"), ("a2", "5")], "4": [("a3", "5"), ("a4", "5")]}
+        owners = {"ustrd": [(f"a{index}", "5") for index in range(6)], ATOM: []}
+
+        def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> dict:
+            window = drifted[params["pagination.offset"]] if params["denom"] == "ustrd" else []
+            body = {"denom_owners": [{"address": address, "balance": {"denom": params["denom"], "amount": amount}}
+                                     for address, amount in window], "pagination": {"next_key": None}}
+            if "pagination.count_total" in params:
+                body["pagination"]["total"] = str(len(owners[params["denom"]]))
+            return body
+
+        def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None) -> list:
+            return [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners[params["denom"]]]
+
+        with mock.patch.object(config, "PAGE_SIZE", 2), mock.patch.object(chainio, "latest_height", return_value=777), \
+                mock.patch.object(chainio, "rest_get", side_effect=rest_get), \
+                mock.patch.object(chainio, "rest_get_all_pages", side_effect=rest_get_all_pages) as key_read, \
+                mock.patch("builtins.print") as printed:
+            balances = holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM], workers=2)
+
+        self.assertEqual(key_read.call_args.kwargs["params"], {"denom": "ustrd"})
+        self.assertEqual(sorted(balances), [f"a{index}" for index in range(6)])
+        printed.assert_called_once_with("balances: ustrd: 6 rows over 3 pages for a total of 6 with a repeated address; "
+                                        "re-reading by key")
+
     def test_a_refused_height_reads_every_denom_by_key(self) -> None:
         owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: [("a", "1")]}
         balances, calls = self.run_read(owners=owners, page_size=2, refuse_pinned=True)

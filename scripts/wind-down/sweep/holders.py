@@ -211,7 +211,8 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) 
     owner rows across all pages (before dedupe) must equal the first page's `pagination.total`, and every page but
     the last must be full. A denom that fails the check is re-read with key pagination (`next_key`), which cannot skip
     a holder, and so is every denom when the node refuses the height on the first request (offset pages unpinned can
-    drift). One line names each re-read denom and why. A failed page request cancels the queued ones and raises."""
+    drift). A key re-read is unpinned, so that denom reflects a slightly later state than the pinned ones. One line
+    names each re-read denom and why. A failed page request cancels the queued ones and raises."""
     if not denoms:
         return {}
     height: int | None = chainio.latest_height()
@@ -251,11 +252,14 @@ def _checked_owners(sweep_denom: SweepDenom, pages: list[dict]) -> list[dict]:
     rows = [owner for page in pages for owner in page["denom_owners"]]
     total = int(pages[0]["pagination"]["total"])
     short_page = any(len(page["denom_owners"]) != config.PAGE_SIZE for page in pages[:-1])
-    if len(rows) == total and not short_page:
+    # A repeated address means the offsets drifted (a holder left and another arrived), even when the count matches
+    repeated = len({owner["address"] for owner in rows}) < len(rows)
+    if len(rows) == total and not short_page and not repeated:
         return rows
 
     print(f"balances: {sweep_denom.denom}: {len(rows)} rows over {len(pages)} pages for a total of {total}"
-          f"{' with a short page' if short_page else ''}; re-reading by key")
+          f"{' with a short page' if short_page else ''}{' with a repeated address' if repeated else ''}; "
+          "re-reading by key")
     return _owners_by_key(denom=sweep_denom.denom)
 
 

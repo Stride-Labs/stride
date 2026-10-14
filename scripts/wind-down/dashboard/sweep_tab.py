@@ -24,8 +24,9 @@ STATE_REMAINING = "remaining"
 
 
 def collect() -> dict[str, Any]:
-    """The live read. `balances_at` is stamped before the balances are read: the snapshot's `fetched_at` is stamped after
-    `collect` returns, so a batch confirmed during the read would look older than the snapshot though the balances miss it."""
+    """The live read. `balances_at` is stamped before the balances are read: the snapshot's `fetched_at` is stamped
+    after `collect` returns, so a batch confirmed during the read would look older than the snapshot though the
+    balances miss it."""
     denoms = holders.resolve_denoms()
     balances_at = sweep_chainio.now().isoformat()
     balances = holders.read_balances(denoms=denoms)
@@ -208,7 +209,8 @@ def _judgeable_transfers(
     events: list[ledger.Event], snapshot_at: str | None
 ) -> list[tuple[ledger.Transfer, str]]:
     """Confirmed transfers (with their batch id) that the live snapshot can judge: those confirmed no later than the
-    snapshot's balances were read (`snapshot_at`). A newer one is not in the snapshot yet, so a balance it shows says nothing about a refund."""
+    snapshot's balances were read (`snapshot_at`). A newer one is not in the snapshot yet, so a balance it shows says
+    nothing about a refund."""
     snapshot_time = holders.parse_chain_time(text=snapshot_at) if snapshot_at is not None else None
     return [
         (transfer, event.batch_id)
@@ -253,7 +255,8 @@ def _refunds(
     balances: dict[str, dict[str, int]],
     snapshot_at: str | None,
 ) -> list[tuple[ledger.Transfer, str]]:
-    """Confirmed transfers whose denom is back beyond the locked remainder, judged only by a snapshot taken after them."""
+    """Confirmed transfers whose denom is back beyond the locked remainder, judged only by a snapshot taken after
+    them."""
     locked = _locked(plan=plan)
     return [
         (transfer, batch_id)
