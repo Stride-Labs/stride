@@ -131,7 +131,7 @@ function totalSection(data) {
     ['sw-swept', 'swept', Number(total.swept[key]), text(total.swept)],
     ['sw-remaining', 'remaining', Number((total.remaining || none)[key]), total.remaining ? text(total.remaining) : 'n/a'],
     ['sw-deferred', 'deferred', Number(total.deferred[key]), text(total.deferred)]]);
-  return `<div class="panel"><h2>Total <span class="sub">every run in the ledger, chain-wide; remaining is the live holders not yet swept, excluded, skipped or deferred</span></h2>
+  return `<div class="panel"><h2>Total <span class="sub">every run in the ledger, chain-wide; remaining is the live holders worth at least $1 not yet swept, excluded, skipped or deferred</span></h2>
     ${tiles}${bar('By USD', 'usd', usdText)}${bar('By addresses', 'addresses', addressText)}</div>`;
 }
 

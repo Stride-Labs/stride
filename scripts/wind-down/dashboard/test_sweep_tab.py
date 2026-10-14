@@ -133,8 +133,8 @@ class ComposeTests(unittest.TestCase):
     def test_summary_total_is_cumulative_and_chain_wide(self) -> None:
         total = self.data["summary"]["total"]
         self.assertEqual(total["swept"], {"addresses": "1", "usd": "60.05"})
-        # refunded (30) + pending (12.05) + new (18) + dust (0.60): not swept, excluded, skipped or deferred
-        self.assertEqual(total["remaining"], {"addresses": "4", "usd": "60.65"})
+        # refunded (30) + pending (12.05) + new (18): not swept, excluded, skipped or deferred; dust (0.60) is under $1
+        self.assertEqual(total["remaining"], {"addresses": "3", "usd": "60.05"})
         self.assertEqual(total["deferred"], {"addresses": "1", "usd": "18.10"})
 
     def test_summary_plan_covers_this_plan_only(self) -> None:

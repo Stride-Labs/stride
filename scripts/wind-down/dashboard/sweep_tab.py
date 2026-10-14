@@ -428,8 +428,8 @@ def _total_summary(
 ) -> dict[str, Any]:
     """TOTAL, over every run in the ledger and the whole chain.
     swept: every address with a confirmed transfer in any run that is not refunded now (the tiles' `totals.swept`).
-    remaining: every sweepable holder not yet swept, in the live snapshot at or above $0: not swept, not excluded, not
-    skipped by the chain rules and not deferred (the ladder's $0 rung minus the deferred); None without a live snapshot.
+    remaining: every sweepable holder not yet swept, in the live snapshot at or above `config.SWEEP_TOTAL_FLOOR_USD`:
+    not swept, not excluded, not skipped by the chain rules and not deferred; None without a live snapshot.
     deferred: the current plan's deferred list (the only source), valued live when a snapshot exists."""
     swept = [address for address, state in address_state.items() if state == STATE_SWEPT]
     swept_usd = _swept_usd(addresses=swept, transferred=transferred, by_denom=by_denom)
@@ -440,7 +440,7 @@ def _total_summary(
             for address, usd in _unswept_values(
                 plan=plan, address_state=address_state, balances=balances, by_denom=by_denom
             ).items()
-            if address not in deferred_addresses
+            if address not in deferred_addresses and usd >= config.SWEEP_TOTAL_FLOOR_USD
         }
         if live is not None
         else None

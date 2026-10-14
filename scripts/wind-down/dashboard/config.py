@@ -1,6 +1,7 @@
 """Every constant the dashboard uses: endpoints, in-scope zones, operator addresses, holder routes, intervals."""
 
 import os
+from decimal import Decimal
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -13,6 +14,8 @@ USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 REFRESH_INTERVAL_SECONDS = {"channels": 60, "funds": 120, "validators": 300, "pools": 300, "sweep": 1800}
 # The sweep collector shares the balances host with a running `plan`; two workers keep it from starving one
 SWEEP_BALANCE_WORKERS = 2
+# The Sweep tab's TOTAL remaining counts holders worth at least this much: dust below it is never swept
+SWEEP_TOTAL_FLOOR_USD = Decimal(1)
 
 CHANNELS_FEED_URL = "https://channels.main.stridenet.co/api/data"
 
