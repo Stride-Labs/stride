@@ -75,7 +75,8 @@ def unbonding(address: str, *entries: tuple[str, str]) -> dict:
             "entries": [{"balance": balance, "completion_time": completion} for balance, completion in entries]}
 
 
-def fake_rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> dict:
+def fake_rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None,
+                  base: str = config.REST) -> dict:
     params = params or {}
     if path.startswith("/cosmos/staking/v1beta1/delegators/"):
         address = path.split("/")[5]
@@ -409,7 +410,7 @@ class HolderTests(unittest.TestCase):
                     holders.load_exclusions(path=self.exclusions_path)
 
     def test_resolve_denoms_refuses_an_empty_denom_trace(self) -> None:
-        def empty_trace(path: str, params: dict[str, str] | None = None) -> dict:
+        def empty_trace(path: str, params: dict[str, str] | None = None, base: str = config.REST) -> dict:
             if path.startswith("/ibc/apps/transfer/v1/denoms/"):
                 return {"denom": {"base": "uatom", "trace": []}}
             return fake_rest_get(path=path, params=params)
@@ -624,13 +625,15 @@ class ReadBalancesTests(unittest.TestCase):
         self.calls = calls
         self.key_reads: list[str] = []
 
-        def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None) -> list:
+        def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None,
+                               base: str = config.REST) -> list:
             self.assertEqual((path, key), ("/cosmos/bank/v1beta1/denom_owners_by_query", "denom_owners"))
             self.key_reads.append(params["denom"])
             return [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners[params["denom"]]]
 
-        def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> dict:
-            calls.append({"params": dict(params), "height": height})
+        def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None,
+                     base: str = config.REST) -> dict:
+            calls.append({"params": dict(params), "height": height, "base": base})
             if raise_at is not None and params["pagination.offset"] == raise_at:
                 raise chainio.ChainError("page failed")
             if raise_at is not None and params["pagination.offset"] != "0":
@@ -671,6 +674,7 @@ class ReadBalancesTests(unittest.TestCase):
         self.assertNotIn("zero", balances)
         self.assertEqual(len(balances), 6)
         self.assertEqual({call["height"] for call in calls}, {777})
+        self.assertEqual({call["base"] for call in calls}, {config.BALANCES_REST})
         self.assertEqual(sorted(call["params"]["pagination.offset"] for call in calls if call["params"]["denom"] == "ustrd"),
                          ["0", "2", "4"])
         self.assertEqual(sum("pagination.count_total" in call["params"] for call in calls), 2)
@@ -695,7 +699,8 @@ class ReadBalancesTests(unittest.TestCase):
         drifted = {"0": [("a0", "5"), ("a1", "5")], "2": [("a0", "5"), ("a2", "5")], "4": [("a3", "5"), ("a4", "5")]}
         owners = {"ustrd": [(f"a{index}", "5") for index in range(6)], ATOM: []}
 
-        def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> dict:
+        def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None,
+                     base: str = config.REST) -> dict:
             window = drifted[params["pagination.offset"]] if params["denom"] == "ustrd" else []
             body = {"denom_owners": [{"address": address, "balance": {"denom": params["denom"], "amount": amount}}
                                      for address, amount in window], "pagination": {"next_key": None}}
@@ -703,7 +708,8 @@ class ReadBalancesTests(unittest.TestCase):
                 body["pagination"]["total"] = str(len(owners[params["denom"]]))
             return body
 
-        def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None) -> list:
+        def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None,
+                               base: str = config.REST) -> list:
             return [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners[params["denom"]]]
 
         with mock.patch.object(config, "PAGE_SIZE", 2), mock.patch.object(chainio, "latest_height", return_value=777), \

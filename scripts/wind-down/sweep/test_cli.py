@@ -31,7 +31,7 @@ def operator_account(sequence: int) -> dict:
 
 def serve(response: Any, sequence: Callable[[], int]) -> Callable[..., Any]:
     """A rest_get stand-in: the operator's account at the live sequence, anything else `response` (a value or a callable)."""
-    def rest(path: str, params: dict | None = None) -> Any:
+    def rest(path: str, params: dict | None = None, height: int | None = None, base: str | None = None) -> Any:
         if path == ACCOUNT_PATH:
             return operator_account(sequence())
         return response(path, params) if callable(response) else response
@@ -135,7 +135,7 @@ class PreflightTests(unittest.TestCase):
             ("version",): chainio.CommandResult(returncode=0, stdout="v35.0.0\n", stderr=""),
             ("keys", "show", "stride-sweeper", "--keyring-backend", "test", "-a"): chainio.CommandResult(returncode=0, stdout=config.SWEEP_OPERATOR + "\n", stderr=""),
         }
-        mock.patch.object(chainio, "rest_get", side_effect=lambda path, params=None: self.rest[path]).start()
+        mock.patch.object(chainio, "rest_get", side_effect=lambda path, params=None, height=None, base=None: self.rest[path]).start()
         mock.patch.object(chainio, "strided", side_effect=lambda args: self.commands[tuple(args)]).start()
         mock.patch.object(config, "STATE_DIR", self.state).start()
         self.addCleanup(mock.patch.stopall)
@@ -469,7 +469,7 @@ class RunLoopTests(unittest.TestCase):
         files_before = {path.name for path in self.state.iterdir()}
         balances = {A1: {"stuatom": 1_000_000}, A2: {"ustrd": 10}}  # $6 and a fraction of a cent
 
-        def rest(path: str, params: dict | None = None) -> Any:
+        def rest(path: str, params: dict | None = None, height: int | None = None, base: str | None = None) -> Any:
             if path.startswith("/cosmos/auth/v1beta1/accounts/"):
                 return {"account": {"@type": config.BASE_ACCOUNT, "address": path.rsplit("/", 1)[1], "pub_key": {"key": "x"}, "sequence": "1"}}
             if path.endswith("/unbonding_delegations"):
@@ -528,7 +528,7 @@ class RunLoopTests(unittest.TestCase):
             return holders.HolderSet(height=100, denoms=DENOMS, holders=[], excluded=[], skipped=[], below_floor=[],
                                      deferred=[holders.Deferred(holder=deferred_holder, staked=staked)])
 
-        def rest(path: str, params: dict | None = None) -> Any:
+        def rest(path: str, params: dict | None = None, height: int | None = None, base: str | None = None) -> Any:
             if path == f"/cosmos/staking/v1beta1/delegators/{A2}/unbonding_delegations":
                 return {"unbonding_responses": [{"entries": [{"balance": "42", "completion_time": "2026-10-26T08:55:25Z"}]}]}
             if path == "/cosmos/staking/v1beta1/pool":

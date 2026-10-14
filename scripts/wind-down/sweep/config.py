@@ -21,6 +21,9 @@ TEST_ADDRESS = "stride1nwyvkxm89yg8e3fyxgruyct4zp90mg4nlk87lg"  # ours; the main
 CHAIN_ID = "stride-1"
 BINARY_VERSION_PREFIX = "v35"
 REST = "https://stride-strd-api.polkachu.com"
+# Bulk holder pages only: cosmos.directory balances across providers, so parallel pinned pages really run in
+# parallel (Polkachu serves about one page a second however many are in flight; measured 2026-10-14)
+BALANCES_REST = "https://rest.cosmos.directory/stride"
 RPC = "https://stride-strd-rpc.polkachu.com:443"
 USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 HTTP_TIMEOUT_SECONDS = 30

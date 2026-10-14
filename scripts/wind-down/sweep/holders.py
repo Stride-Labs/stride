@@ -207,7 +207,8 @@ def _voucher_denom(spec: config.VoucherDenom) -> SweepDenom:
 
 def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) -> dict[str, dict[str, int]]:
     """Every holder of every sweep denom: address -> denom -> amount, zero amounts dropped. Offset pages are pinned to
-    one height so they agree, and one pool serves all denoms. Each denom's pages are then checked for completeness: the
+    one height so they agree, and one pool serves all denoms; they go to `config.BALANCES_REST`, the rest of the
+    runner to `config.REST`. Each denom's pages are then checked for completeness: the
     owner rows across all pages (before dedupe) must equal the first page's `pagination.total`, and every page but
     the last must be full. A denom that fails the check is re-read with key pagination (`next_key`), which cannot skip
     a holder, and so is every denom when the node refuses the height on the first request (offset pages unpinned can
@@ -215,7 +216,7 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) 
     names each re-read denom and why. A failed page request cancels the queued ones and raises."""
     if not denoms:
         return {}
-    height: int | None = chainio.latest_height()
+    height: int | None = chainio.latest_height(base=config.BALANCES_REST)
     try:
         first_page = _owner_page(denom=denoms[0].denom, offset=0, height=height)
     except chainio.ChainError:
@@ -265,7 +266,8 @@ def _checked_owners(sweep_denom: SweepDenom, pages: list[dict]) -> list[dict]:
 
 def _owners_by_key(denom: str) -> list[dict]:
     return chainio.rest_get_all_pages(
-        path="/cosmos/bank/v1beta1/denom_owners_by_query", key="denom_owners", params={"denom": denom})
+        path="/cosmos/bank/v1beta1/denom_owners_by_query", key="denom_owners", params={"denom": denom},
+        base=config.BALANCES_REST)
 
 
 def _assemble_balances(denoms: list[SweepDenom], owners_by_denom: list[list[dict]]) -> dict[str, dict[str, int]]:
@@ -284,7 +286,8 @@ def _owner_page(denom: str, offset: int, height: int | None) -> dict:
     params = {"denom": denom, "pagination.limit": str(config.PAGE_SIZE), "pagination.offset": str(offset)}
     if offset == 0:
         params["pagination.count_total"] = "true"
-    return chainio.rest_get(path="/cosmos/bank/v1beta1/denom_owners_by_query", params=params, height=height)
+    return chainio.rest_get(path="/cosmos/bank/v1beta1/denom_owners_by_query", params=params, height=height,
+                            base=config.BALANCES_REST)
 
 
 def read_skip_inputs() -> SkipInputs:

@@ -33,12 +33,14 @@ class CommandResult:
     stderr: str
 
 
-def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> Any:
+def rest_get(
+    path: str, params: dict[str, str] | None = None, height: int | None = None, base: str = config.REST
+) -> Any:
     """GET a Stride REST path and decode the JSON body. HTTP 429, any 5xx, network errors and undecodable bodies are
     retried after each of REST_BACKOFF_SECONDS (with jitter), then raise ChainError; a missing thing is NotFound at
-    once. With `height` the node answers from that block's state (x-cosmos-block-height)."""
+    once. With `height` the node answers from that block's state (x-cosmos-block-height). `base` picks the host."""
     query = f"?{urllib.parse.urlencode(params)}" if params else ""
-    url = f"{config.REST}{path}{query}"
+    url = f"{base}{path}{query}"
     headers = {"x-cosmos-block-height": str(height)} if height is not None else {}
 
     for backoff in (*config.REST_BACKOFF_SECONDS, None):
@@ -58,12 +60,14 @@ def rest_get(path: str, params: dict[str, str] | None = None, height: int | None
     raise AssertionError("unreachable: the last attempt returns or raises")
 
 
-def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None) -> list[Any]:
+def rest_get_all_pages(
+    path: str, key: str, params: dict[str, str] | None = None, base: str = config.REST
+) -> list[Any]:
     """Collect `response[key]` across Cosmos `pagination.key` / `next_key` pages."""
     items: list[Any] = []
     page_params = {"pagination.limit": str(config.PAGE_SIZE), **(params or {})}
     while True:
-        response = rest_get(path=path, params=page_params)
+        response = rest_get(path=path, params=page_params, base=base)
         items.extend(response.get(key) or [])
         next_key = (response.get("pagination") or {}).get("next_key")
         if not next_key:
@@ -71,8 +75,8 @@ def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None
         page_params = {**page_params, "pagination.key": next_key}
 
 
-def latest_height() -> int:
-    body = rest_get(path="/cosmos/base/tendermint/v1beta1/blocks/latest")
+def latest_height(base: str = config.REST) -> int:
+    body = rest_get(path="/cosmos/base/tendermint/v1beta1/blocks/latest", base=base)
     return int(body["block"]["header"]["height"])
 
 
