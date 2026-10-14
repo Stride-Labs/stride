@@ -40,7 +40,8 @@ batch also calibrates gas per transfer for the real run. `status` reprints the p
 `warm [--floor-usd 1] [--workers 8]` answers the per-address questions (auth account, STRD unbonding) for every holder
 at or above the floor and fills the caches, so later plans only read balances. Run it once in the background after the
 first plan; it is idempotent and resumable, writes no plan or batch, and is safe alongside `plan` and `run` because
-cache saves merge with the file instead of overwriting it.
+cache saves merge with the file instead of overwriting it. It shares Polkachu with `plan` and the dashboard, hence the
+playbook runs it with `--workers 4`. It prints the holder count at each ladder rung at or above the floor.
 
 `plan` records the operator's account sequence in `plan.json`. Preflight and, again right before each broadcast, `run`
 require the chain's sequence to equal that plus the run's `submitted` lines: a `strided` crash or an unreadable broadcast

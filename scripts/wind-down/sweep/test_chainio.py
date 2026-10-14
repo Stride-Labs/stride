@@ -47,6 +47,17 @@ class RestGetTests(unittest.TestCase):
         self.assertEqual(rest_get.call_args_list[1].kwargs["params"]["pagination.key"], "k2")
 
 
+class _Raw:
+    def __init__(self, raw: bytes) -> None:
+        self._raw = raw
+
+    def __enter__(self) -> io.BytesIO:
+        return io.BytesIO(self._raw)
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+
 class _Body:
     def __init__(self, payload: dict) -> None:
         self._raw = json.dumps(payload).encode()
@@ -62,18 +73,29 @@ class BackoffTests(unittest.TestCase):
     def test_429_then_success_sleeps_with_backoff(self) -> None:
         outcomes = [_http_error(429, {}), _http_error(503, {}), urllib.error.URLError("reset"), _Body({"ok": 1})]
         with mock.patch.object(chainio.urllib.request, "urlopen", side_effect=outcomes), \
-                mock.patch.object(chainio, "sleep") as sleep:
+                mock.patch.object(chainio, "sleep") as sleep, \
+                mock.patch.object(chainio.random, "uniform", return_value=1.0):
             body = chainio.rest_get(path="/x")
         self.assertEqual(body, {"ok": 1})
         self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2, 4])
 
     def test_gives_up_after_five_attempts(self) -> None:
         with mock.patch.object(chainio.urllib.request, "urlopen", side_effect=lambda *a, **k: (_ for _ in ()).throw(TimeoutError())) as urlopen, \
-                mock.patch.object(chainio, "sleep") as sleep:
+                mock.patch.object(chainio, "sleep") as sleep, \
+                mock.patch.object(chainio.random, "uniform", return_value=1.0):
             with self.assertRaises(chainio.ChainError):
                 chainio.rest_get(path="/x")
         self.assertEqual(urlopen.call_count, 5)
         self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2, 4, 8])
+
+    def test_html_200_is_retried_then_decoded(self) -> None:
+        outcomes = [_Raw(b"<html>proxy</html>"), _Body({"ok": 1})]
+        with mock.patch.object(chainio.urllib.request, "urlopen", side_effect=outcomes), \
+                mock.patch.object(chainio, "sleep") as sleep, \
+                mock.patch.object(chainio.random, "uniform", return_value=1.0):
+            body = chainio.rest_get(path="/x")
+        self.assertEqual(body, {"ok": 1})
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [1])
 
     def test_not_found_and_client_errors_are_not_retried(self) -> None:
         for code, body, expected in ((404, {}, chainio.NotFound), (500, {"code": 5, "message": "not found"}, chainio.NotFound),

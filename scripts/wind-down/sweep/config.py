@@ -26,6 +26,7 @@ USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 HTTP_TIMEOUT_SECONDS = 30
 PAGE_SIZE = 1000
 READ_WORKERS = 8  # concurrent REST reads for balance pages and per-address prefetch
+REST_BACKOFF_JITTER = (0.5, 1.5)  # each backoff sleep is scaled by a uniform draw from this range
 REST_BACKOFF_SECONDS = (1, 2, 4, 8)  # sleeps between the five attempts at a throttled or failing REST read
 STRIDED_TIMEOUT_SECONDS = 120
 

@@ -212,6 +212,10 @@ def cmd_warm(args: argparse.Namespace) -> int:
     by_denom = {sweep_denom.denom: sweep_denom for sweep_denom in denoms}
     at_or_above = sum(1 for coins in balances.values() if holders.usd_value(balances=coins, denoms=by_denom) >= floor)
     print(f"holders at or above ${floor}: {at_or_above}")
+    for rung in sorted({*(rung for rung in config.LADDER_FLOORS if rung >= floor), floor}, reverse=True):
+        holders_at_rung = sum(
+            1 for coins in balances.values() if holders.usd_value(balances=coins, denoms=by_denom) >= rung)
+        print(f"  ${rung:>6}  {holders_at_rung:>8,} holders")
     print(f"  {len(candidates)} pass the rules that need no account read")
 
     result = holders.prefetch(addresses=candidates, accounts=accounts, staking=staking, now=chainio.now(),
