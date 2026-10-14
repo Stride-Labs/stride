@@ -680,6 +680,17 @@ class ReadBalancesTests(unittest.TestCase):
         self.assertEqual(sum("pagination.count_total" in call["params"] for call in calls), 2)
         self.assertEqual(self.key_reads, [])  # complete pages: no key-paginated read
 
+    def test_the_largest_denoms_later_pages_are_queued_first(self) -> None:
+        owners = {"ustrd": [("a", "1")], ATOM: [(f"b{index}", "2") for index in range(6)]}
+        self.run_read(owners=owners, page_size=2, workers=1)
+        later = [call["params"]["denom"] for call in self.calls if call["params"]["pagination.offset"] != "0"]
+        self.assertEqual(later, [ATOM, ATOM])  # ATOM is the larger denom here; ustrd has no later page
+
+        owners = {"ustrd": [(f"a{index}", "1") for index in range(6)], ATOM: [(f"b{index}", "2") for index in range(4)]}
+        self.run_read(owners=owners, page_size=2, workers=1)
+        later = [call["params"]["denom"] for call in self.calls if call["params"]["pagination.offset"] != "0"]
+        self.assertEqual(later, ["ustrd", "ustrd", ATOM])
+
     def test_a_holder_repeated_across_pages_triggers_a_key_read_that_counts_once(self) -> None:
         owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: []}
         balances, _ = self.run_read(owners=owners, page_size=1, duplicate_first_of_page=True)

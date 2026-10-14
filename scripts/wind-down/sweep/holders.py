@@ -205,10 +205,10 @@ def _voucher_denom(spec: config.VoucherDenom) -> SweepDenom:
 # ---- bulk reads
 
 
-def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) -> dict[str, dict[str, int]]:
+def read_balances(denoms: list[SweepDenom], workers: int = config.BALANCE_WORKERS) -> dict[str, dict[str, int]]:
     """Every holder of every sweep denom: address -> denom -> amount, zero amounts dropped. Offset pages are pinned to
-    one height so they agree, and one pool serves all denoms; they go to `config.BALANCES_REST`, the rest of the
-    runner to `config.REST`. Each denom's pages are then checked for completeness: the
+    one height so they agree, and one pool serves all denoms, largest denom first; they go to `config.BALANCES_REST`,
+    the rest of the runner to `config.REST`. Each denom's pages are then checked for completeness: the
     owner rows across all pages (before dedupe) must equal the first page's `pagination.total`, and every page but
     the last must be full. A denom that fails the check is re-read with key pagination (`next_key`), which cannot skip
     a holder, and so is every denom when the node refuses the height on the first request (offset pages unpinned can
@@ -230,11 +230,15 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) 
                 pool.submit(_owner_page, denom=sweep_denom.denom, offset=0, height=height) for sweep_denom in denoms[1:]
             ]
             first_pages = [first_page, *(future.result() for future in other_first_pages)]
-            later_pages = [
-                [pool.submit(_owner_page, denom=sweep_denom.denom, offset=offset, height=height)
-                 for offset in range(config.PAGE_SIZE, int(page["pagination"]["total"]), config.PAGE_SIZE)]
-                for sweep_denom, page in zip(denoms, first_pages)
-            ]
+            # The largest denom's pages are queued first so the longest read is done before the pin can expire
+            by_size = sorted(range(len(denoms)), key=lambda index: -int(first_pages[index]["pagination"]["total"]))
+            later_pages: list[list[concurrent.futures.Future]] = [[] for _ in denoms]
+            for index in by_size:
+                total = int(first_pages[index]["pagination"]["total"])
+                later_pages[index] = [
+                    pool.submit(_owner_page, denom=denoms[index].denom, offset=offset, height=height)
+                    for offset in range(config.PAGE_SIZE, total, config.PAGE_SIZE)
+                ]
             pages_by_denom = [
                 _denom_pages(sweep_denom=sweep_denom, first_page=page, futures=futures)
                 for sweep_denom, page, futures in zip(denoms, first_pages, later_pages)
