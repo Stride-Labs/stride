@@ -624,11 +624,13 @@ class ReadBalancesTests(unittest.TestCase):
         calls: list[dict] = []
         self.calls = calls
         self.key_reads: list[str] = []
+        self.key_bases: list[str] = []
 
         def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None,
                                base: str = config.REST) -> list:
             self.assertEqual((path, key), ("/cosmos/bank/v1beta1/denom_owners_by_query", "denom_owners"))
             self.key_reads.append(params["denom"])
+            self.key_bases.append(base)
             return [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners[params["denom"]]]
 
         def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None,
@@ -740,7 +742,22 @@ class ReadBalancesTests(unittest.TestCase):
 
         self.assertEqual(balances, {"a": {"ustrd": 5, ATOM: 1}, "b": {"ustrd": 6}, "c": {"ustrd": 7}})
         self.assertEqual(len(calls), 1)  # only the refused pinned first page
+        self.assertEqual(self.key_bases, [config.REST, config.REST])
         self.assertEqual(sorted(self.key_reads), sorted(["ustrd", ATOM]))
+
+    def test_a_dead_fast_host_falls_back_to_the_main_host_by_key(self) -> None:
+        owners = {"ustrd": [("a", "5")], ATOM: [("a", "1")]}
+        with mock.patch.object(chainio, "latest_height", side_effect=chainio.ChainError("HTTP 502")), \
+                mock.patch.object(chainio, "rest_get") as pinned, \
+                mock.patch.object(chainio, "rest_get_all_pages", side_effect=lambda path, key, params=None, base=None:
+                                  [{"address": a, "balance": {"denom": params["denom"], "amount": v}}
+                                   for a, v in owners[params["denom"]]]) as key_read, \
+                mock.patch("builtins.print"):
+            balances = holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM])
+
+        self.assertEqual(balances, {"a": {"ustrd": 5, ATOM: 1}})
+        pinned.assert_not_called()
+        self.assertEqual({call.kwargs["base"] for call in key_read.call_args_list}, {config.REST})
 
     def test_a_refused_height_prints_one_line(self) -> None:
         owners = {"ustrd": [("a", "5")], ATOM: []}
@@ -749,7 +766,8 @@ class ReadBalancesTests(unittest.TestCase):
                 mock.patch.object(chainio, "rest_get_all_pages", return_value=[]), \
                 mock.patch("builtins.print") as printed:
             holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM])
-        printed.assert_called_once_with("balances: node refused height 777; reading every denom by key")
+        printed.assert_called_once_with(
+            f"balances: {config.BALANCES_REST} unusable (no); reading every denom by key from {config.REST}")
 
     def test_an_incomplete_denom_names_itself_in_one_line(self) -> None:
         owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: []}

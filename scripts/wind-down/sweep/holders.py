@@ -211,17 +211,19 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.BALANCE_WORKER
     the rest of the runner to `config.REST`. Each denom's pages are then checked for completeness: the
     owner rows across all pages (before dedupe) must equal the first page's `pagination.total`, and every page but
     the last must be full. A denom that fails the check is re-read with key pagination (`next_key`), which cannot skip
-    a holder, and so is every denom when the node refuses the height on the first request (offset pages unpinned can
-    drift). A key re-read is unpinned, so that denom reflects a slightly later state than the pinned ones. One line
+    a holder, and so is every denom when the fast host is down or refuses the height on the first request (offset
+    pages unpinned can drift). A key re-read goes to `config.REST` unpinned, so that denom reflects a slightly later
+    state than the pinned ones. One line
     names each re-read denom and why. A pinned page that fails after its retries (or a backend that pruned the
     height) cancels that denom's queued pages and sends it down the same key re-read."""
     if not denoms:
         return {}
-    height: int | None = chainio.latest_height(base=config.BALANCES_REST)
     try:
+        height: int | None = chainio.latest_height(base=config.BALANCES_REST)
         first_page = _owner_page(denom=denoms[0].denom, offset=0, height=height)
-    except chainio.ChainError:
-        print(f"balances: node refused height {height}; reading every denom by key")
+    except chainio.ChainError as error:
+        # The fast host is down or refuses the height: the slow, dependable path on the main host
+        print(f"balances: {config.BALANCES_REST} unusable ({error}); reading every denom by key from {config.REST}")
         return _assemble_balances(denoms=denoms, owners_by_denom=[_owners_by_key(denom=d.denom) for d in denoms])
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
@@ -288,9 +290,10 @@ def _checked_owners(sweep_denom: SweepDenom, pages: list[dict]) -> list[dict]:
 
 
 def _owners_by_key(denom: str) -> list[dict]:
+    """The dependable read: key pagination cannot skip a holder, and the main host has never dropped a page."""
     return chainio.rest_get_all_pages(
         path="/cosmos/bank/v1beta1/denom_owners_by_query", key="denom_owners", params={"denom": denom},
-        base=config.BALANCES_REST)
+        base=config.REST)
 
 
 def _assemble_balances(denoms: list[SweepDenom], owners_by_denom: list[list[dict]]) -> dict[str, dict[str, int]]:
