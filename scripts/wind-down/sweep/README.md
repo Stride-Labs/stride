@@ -53,6 +53,13 @@ on a batch over the block gas limit, and when a tx is not found within three min
 every command and gas estimate without broadcasting; `--yes` skips the per-batch prompt (`a` at the prompt does the
 same for the rest of the run); `--batches N` stops after N.
 
+## Skipping a denom
+
+`plan --skip-denom stuatom` (repeatable) leaves that denom out of every batch: it is not valued, not read and not
+swept, and `run` passes the plan's denom list to the chain, so the chain never touches it either. Used on 2026-10-14
+when Osmosis's IBC rate limiter bounced stATOM (about 97,000 stATOM a week); the refunded holders reappear in the
+next plan and are planned again, for every other denom now and for stATOM once Osmosis lifts the quota.
+
 ## Two passes: STRD still unbonding
 
 The v35 upgrade undelegated everything; the STRD becomes liquid at `2026-10-26T08:55:25Z`. A holder with any STRD still

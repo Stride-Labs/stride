@@ -316,6 +316,7 @@ def _run(plan: planner.Plan, states: dict[str, ledger.BatchState], live: dict[st
         "created_at": plan.created_at,
         "height": str(plan.height),
         "test": plan.test,
+        "skipped_denoms": list(plan.skipped_denoms),
         "batches": {
             "total": str(len(batches)),
             **{state: str(count) for state, count in counts.items() if state != "pending"},

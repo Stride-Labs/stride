@@ -706,6 +706,15 @@ def _spendable_part(address: str, coins: dict[str, int]) -> dict[str, int]:
     return {denom: spendable.get(denom, 0) for denom in coins if spendable.get(denom, 0) > 0}
 
 
+def skipping_denoms(denoms: list[SweepDenom], skip_denoms: frozenset[str]) -> list[SweepDenom]:
+    """The sweep denoms without the operator's `--skip-denom` ones (a denom the destination rate-limits, say). A
+    skipped denom is neither valued nor swept; its holders are planned again once it is back on the list."""
+    unknown = skip_denoms - {sweep_denom.denom for sweep_denom in denoms}
+    if unknown:
+        raise DenomError(f"--skip-denom {', '.join(sorted(unknown))}: not a sweep denom")
+    return [sweep_denom for sweep_denom in denoms if sweep_denom.denom not in skip_denoms]
+
+
 def read_holder_set(
     floor_usd: Decimal,
     exclusions: dict[str, Exclusion],
@@ -713,9 +722,10 @@ def read_holder_set(
     staking: StakingCache,
     test_address: str | None,
     workers: int = config.READ_WORKERS,
+    skip_denoms: frozenset[str] = frozenset(),
 ) -> HolderSet:
     height = chainio.latest_height()
-    denoms = resolve_denoms()
+    denoms = skipping_denoms(denoms=resolve_denoms(), skip_denoms=skip_denoms)
     balances = read_balances(denoms=denoms)
     inputs = read_skip_inputs()
 

@@ -85,7 +85,8 @@ function runLine(data) {
   const b = run.batches;
   const fees = run.operator_strd === null ? 'operator balance n/a'
     : `operator holds ${formatAmount(run.operator_strd, 6)} STRD, ${formatAmount(run.fee_estimate_ustrd, 6)} STRD needed for the pending batches`;
-  return `<div class="callout">Run ${run.run_id}${run.test ? ' (test)' : ''} · floor $${run.floor_usd} · planned ${formatRelative(run.created_at)} at height ${run.height}
+  const skipping = (run.skipped_denoms || []).length ? ` · skipping ${run.skipped_denoms.join(', ')}` : '';
+  return `<div class="callout">Run ${run.run_id}${run.test ? ' (test)' : ''} · floor $${run.floor_usd}${skipping} · planned ${formatRelative(run.created_at)} at height ${run.height}
     · ${b.total} batches: ${b.confirmed} confirmed, ${b.submitted} submitted, ${b.failed} failed, ${b.lost} lost, ${b.pending} pending · ${fees}</div>`;
 }
 

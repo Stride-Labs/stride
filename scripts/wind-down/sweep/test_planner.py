@@ -1,5 +1,6 @@
 """Tier membership and order, batch packing by addresses and by gas, the plan file round trip, the ladder."""
 
+import dataclasses
 import json
 import pathlib
 import tempfile
@@ -119,9 +120,14 @@ class DeferralTests(unittest.TestCase):
         self.assertEqual(data["staked_ustrd"], "7000000")
         self.assertEqual(planner.plan_from_dict(data=json.loads(json.dumps(data))), plan)
 
-        del data["deferred"], data["staked_ustrd"]
+        plan_skipping = dataclasses.replace(plan, skipped_denoms=["stuatom"])
+        skipping_data = planner.plan_to_dict(plan=plan_skipping)
+        self.assertEqual(skipping_data["skipped_denoms"], ["stuatom"])
+        self.assertEqual(planner.plan_from_dict(data=json.loads(json.dumps(skipping_data))), plan_skipping)
+
+        del data["deferred"], data["staked_ustrd"], data["skipped_denoms"]
         old = planner.plan_from_dict(data=data)
-        self.assertEqual((old.deferred, old.staked_ustrd), ([], 0))
+        self.assertEqual((old.deferred, old.staked_ustrd, old.skipped_denoms), ([], 0, []))
 
 
 class PackingTests(unittest.TestCase):

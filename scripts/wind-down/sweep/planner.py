@@ -94,6 +94,7 @@ class Plan:
     locked: dict[str, dict[str, int]] = field(default_factory=dict)
     deferred: list[DeferredAddress] = field(default_factory=list)  # in no tier and no batch; pass 2 sweeps them
     staked_ustrd: int = 0  # STRD still unbonding chain-wide when planned
+    skipped_denoms: list[str] = field(default_factory=list)  # left out by --skip-denom: not valued, not swept
 
     def pending_batches(self) -> list[tuple[Tier, Batch]]:
         return [(tier, batch) for tier in self.tiers for batch in tier.batches]
@@ -117,6 +118,7 @@ def build_plan(
     created_at: str,
     operator_sequence: int,
     staked_ustrd: int,
+    skipped_denoms: list[str] | None = None,
 ) -> Plan:
     members = _tier_members(holder_list=holder_set.holders, canary=canary, test=test)
 
@@ -170,6 +172,7 @@ def build_plan(
             for entry in holder_set.deferred
         ],
         staked_ustrd=staked_ustrd,
+        skipped_denoms=list(skipped_denoms or []),
     )
 
 
@@ -356,6 +359,7 @@ def plan_to_dict(plan: Plan) -> dict[str, Any]:
             for entry in plan.deferred
         ],
         "staked_ustrd": str(plan.staked_ustrd),
+        "skipped_denoms": list(plan.skipped_denoms),
     }
 
 
@@ -443,6 +447,7 @@ def plan_from_dict(data: dict) -> Plan:
             for entry in data.get("deferred", [])
         ],
         staked_ustrd=int(data.get("staked_ustrd", 0)),
+        skipped_denoms=list(data.get("skipped_denoms", [])),
     )
 
 

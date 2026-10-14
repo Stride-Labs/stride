@@ -114,6 +114,10 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--canary", type=int, default=0, help="this many of the smallest holders above the floor go first"
     )
     plan.add_argument("--test", action="store_true", help=f"plan only the test address {config.TEST_ADDRESS}")
+    plan.add_argument(
+        "--skip-denom", action="append", default=[], metavar="DENOM",
+        help="leave this sweep denom out of every batch (repeatable; e.g. stuatom while Osmosis rate-limits it)",
+    )
     plan.add_argument("--max-addresses", type=int, default=config.MAX_ADDRESSES_PER_BATCH)
     plan.add_argument("--gas-budget", type=int, default=config.GAS_BUDGET_PER_BATCH)
     plan.set_defaults(command=cmd_plan)
@@ -168,6 +172,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
             accounts=accounts,
             staking=staking,
             test_address=config.TEST_ADDRESS if args.test else None,
+            skip_denoms=frozenset(args.skip_denom),
         )
     finally:
         # Keep the reads done before a ChainError: the next plan resumes from the caches
@@ -186,6 +191,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
         created_at=chainio.now().isoformat(),
         operator_sequence=read_operator_sequence(),
         staked_ustrd=holders.read_staking_pool(),
+        skipped_denoms=list(args.skip_denom),
     )
     planner.write_plan(plan=plan, state_dir=config.STATE_DIR)
     print(render_plan(plan=plan))
@@ -236,6 +242,9 @@ def render_plan(plan: planner.Plan) -> str:
     lines = [
         f"run {plan.run_id} · floor ${plan.floor_usd} · height {plan.height} · gas/transfer {plan.gas_per_transfer}"
     ]
+    if plan.skipped_denoms:
+        lines.append(f"  skipping denoms (--skip-denom): {', '.join(plan.skipped_denoms)}; not valued, not swept, their "
+                     "holders are planned again once the denom is back on the list")
     for tier in plan.tiers:
         addresses = sum(len(batch.addresses) for batch in tier.batches)
         usd = sum((batch.usd for batch in tier.batches), Decimal(0))

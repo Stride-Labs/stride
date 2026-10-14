@@ -523,7 +523,8 @@ class RunLoopTests(unittest.TestCase):
         deferred_holder = holders.Holder(address=A2, balances={"stuatom": 1_000_000}, usd=Decimal(6), keyless=False)
 
         def read_holder_set(floor_usd: Decimal, exclusions: dict, accounts: holders.AccountCache, staking: holders.StakingCache,
-                            test_address: str | None) -> holders.HolderSet:
+                            test_address: str | None, skip_denoms: frozenset[str] = frozenset()) -> holders.HolderSet:
+            self.assertEqual(skip_denoms, frozenset({"stuatom"}))
             staked = staking.lookup(address=A2, now=NOW)
             return holders.HolderSet(height=100, denoms=DENOMS, holders=[], excluded=[], skipped=[], below_floor=[],
                                      deferred=[holders.Deferred(holder=deferred_holder, staked=staked)])
@@ -537,7 +538,7 @@ class RunLoopTests(unittest.TestCase):
 
         with mock.patch.object(holders, "read_holder_set", side_effect=read_holder_set), \
              mock.patch.object(chainio, "rest_get", side_effect=serve(rest, lambda: 9)):
-            self.assertEqual(cli.main(argv=["plan", "--floor-usd", "1"]), 0)
+            self.assertEqual(cli.main(argv=["plan", "--floor-usd", "1", "--skip-denom", "stuatom"]), 0)
 
         self.assertEqual(json.loads((self.state / "staking.json").read_text()),
                          {A2: {"ustrd": "42", "completes_at": "2026-10-26T08:55:25Z"}})
@@ -545,6 +546,13 @@ class RunLoopTests(unittest.TestCase):
         self.assertEqual(plan["staked_ustrd"], "1500000")
         self.assertEqual([(entry["address"], entry["staked_ustrd"]) for entry in plan["deferred"]], [(A2, "42")])
         self.assertEqual(plan["tiers"], [])
+        self.assertEqual(plan["skipped_denoms"], ["stuatom"])
+
+    def test_render_plan_names_the_skipped_denoms_right_under_the_run_line(self) -> None:
+        plan = dataclasses.replace(make_plan(), skipped_denoms=["stuatom"])
+        lines = cli.render_plan(plan=plan).splitlines()
+        self.assertTrue(lines[1].startswith("  skipping denoms (--skip-denom): stuatom; not valued, not swept"))
+        self.assertNotIn("skipping denoms", cli.render_plan(plan=make_plan()))
 
     def test_render_plan_prints_the_deferred_lines_and_the_ladder_label(self) -> None:
         plan = dataclasses.replace(make_plan(), staked_ustrd=10_410_527_123_456, deferred=[

@@ -152,6 +152,26 @@ class HolderTests(unittest.TestCase):
             (ATOM, Decimal("4"), "cosmoshub-4", "channel-0"),
         ])
 
+    def test_skipping_denoms_drops_the_named_denom_and_refuses_an_unknown_one(self) -> None:
+        denoms = holders.resolve_denoms()
+        kept = holders.skipping_denoms(denoms=denoms, skip_denoms=frozenset({"stuatom"}))
+        self.assertEqual([d.denom for d in denoms if d.denom != "stuatom"], [d.denom for d in kept])
+        self.assertEqual(holders.skipping_denoms(denoms=denoms, skip_denoms=frozenset()), denoms)
+        with self.assertRaisesRegex(holders.DenomError, "--skip-denom stbogus: not a sweep denom"):
+            holders.skipping_denoms(denoms=denoms, skip_denoms=frozenset({"stbogus"}))
+
+    def test_read_holder_set_neither_values_nor_plans_a_skipped_denom(self) -> None:
+        with_atom = self.read_set(floor="1")
+        without = holders.read_holder_set(
+            floor_usd=Decimal("1"), exclusions=holders.load_exclusions(path=self.exclusions_path),
+            accounts=holders.AccountCache.load(path=self.dir / "accounts.json"), staking=NO_STAKING(),
+            test_address=None, skip_denoms=frozenset({ATOM}))
+        self.assertNotIn(ATOM, [d.denom for d in without.denoms])
+        self.assertIn(ATOM, [d.denom for d in with_atom.denoms])
+        for holder in without.holders:
+            self.assertNotIn(ATOM, holder.balances)
+        self.assertTrue(any(ATOM in holder.balances for holder in with_atom.holders))
+
     def test_resolve_denoms_refuses_a_deprecated_zone_and_an_unwhitelisted_voucher(self) -> None:
         with mock.patch.object(config, "NATIVE_SWEEP_DENOMS", (config.NativeDenom("staevmos", "stEVMOS", 18, "ATOM", "evmos_9001-2"),)), \
              mock.patch.object(config, "VOUCHER_SWEEP_DENOMS", ()):

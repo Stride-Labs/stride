@@ -71,6 +71,13 @@ class ComposeTests(unittest.TestCase):
     def setUp(self) -> None:
         self.data = sweep_tab.compose(plan=make_plan(), events=EVENTS, live=LIVE, exclusions={}, live_fetched_at=FETCHED_AT)
 
+    def test_run_carries_the_skipped_denoms(self) -> None:
+        plan = dataclasses.replace(make_plan(), skipped_denoms=["stuatom"])
+        view = sweep_tab.compose(plan=plan, events=[], live=None, exclusions={}, live_fetched_at=None)
+        self.assertEqual(view["run"]["skipped_denoms"], ["stuatom"])
+        self.assertEqual(sweep_tab.compose(plan=make_plan(), events=[], live=None, exclusions={},
+                                           live_fetched_at=None)["run"]["skipped_denoms"], [])
+
     def test_run_and_batches(self) -> None:
         run = self.data["run"]
         self.assertEqual((run["run_id"], run["floor_usd"], run["height"]), ("2", "10", "100"))
