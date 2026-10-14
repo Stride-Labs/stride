@@ -19,6 +19,26 @@
     "by": "sam",
     "done": true
   },
+  "day0-staketia-undelegate": {
+    "at": "2026-10-13T02:23:50.809352+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-entry-cap": {
+    "at": "2026-10-14T14:02:10.099319+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "dym-paid": {
+    "at": "2026-10-13T02:24:15.782948+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "dym-unbonded": {
+    "at": "2026-10-13T02:24:13.254498+00:00",
+    "by": "sam",
+    "done": true
+  },
   "eve-flags": {
     "at": "2026-10-12T02:30:16.865625+00:00",
     "by": "sam",
@@ -50,8 +70,8 @@
     "done": true
   },
   "haqq-1d-withdrawal": {
-    "at": "2026-10-12T18:27:08.728523+00:00",
-    "by": "sam",
+    "at": "2026-10-12T21:57:01.851268+00:00",
+    "by": "claude",
     "done": true
   },
   "haqq-1e": {
@@ -62,6 +82,11 @@
   "haqq-1f": {
     "at": "2026-10-12T18:27:18.863343+00:00",
     "by": "sam",
+    "done": true
+  },
+  "haqq-1g": {
+    "at": "2026-10-12T21:57:01.851268+00:00",
+    "by": "claude",
     "done": true
   },
   "haqq-clients-fresh": {
@@ -80,7 +105,12 @@
     "done": true
   },
   "haqq-relay-packets": {
-    "at": "2026-10-12T18:27:03.127462+00:00",
+    "at": "2026-10-12T21:58:45.559653+00:00",
+    "by": "claude",
+    "done": true
+  },
+  "post-restore": {
+    "at": "2026-10-14T14:02:12.402749+00:00",
     "by": "sam",
     "done": true
   },
