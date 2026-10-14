@@ -37,6 +37,11 @@ batch also calibrates gas per transfer for the real run. `status` reprints the p
 3. The `keyless` tier (never-signed accounts) is last in every plan and a plain `run` skips it, so those owners get the
    most time. Run it once, at the very end, with `run --tier keyless` (it runs only that tier).
 
+`warm [--floor-usd 1] [--workers 8]` answers the per-address questions (auth account, STRD unbonding) for every holder
+at or above the floor and fills the caches, so later plans only read balances. Run it once in the background after the
+first plan; it is idempotent and resumable, writes no plan or batch, and is safe alongside `plan` and `run` because
+cache saves merge with the file instead of overwriting it.
+
 `plan` records the operator's account sequence in `plan.json`. Preflight and, again right before each broadcast, `run`
 require the chain's sequence to equal that plus the run's `submitted` lines: a `strided` crash or an unreadable broadcast
 reply can leave a tx in the mempool with no ledger line, and the sequence is how the next run finds out. On a mismatch

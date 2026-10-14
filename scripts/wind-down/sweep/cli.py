@@ -3,12 +3,14 @@
 
     python3 scripts/wind-down/sweep/cli.py plan --floor-usd 100 [--canary 3] [--test]
         [--max-addresses 100] [--gas-budget 40000000]
+    python3 scripts/wind-down/sweep/cli.py warm [--floor-usd 1] [--workers 8]
     python3 scripts/wind-down/sweep/cli.py run [--tier test|canary|main|keyless] [--batches N] [--yes]
         [--dry-run] [--continue-on-skip]
     python3 scripts/wind-down/sweep/cli.py status
     python3 scripts/wind-down/sweep/cli.py resolve [--wait-seconds 600]
 
-`plan` reads live holder state and writes state/plan.json plus one address file per batch. `run` walks the plan's
+`plan` reads live holder state and writes state/plan.json plus one address file per batch. `warm` fills the account and
+unbonding caches for every holder at or above a low floor, so later plans only read balances; it writes no plan. `run` walks the plan's
 batches in tier order (the keyless tier only under `--tier keyless`): preflight, then per batch a gas simulation, the
 signed broadcast from the stride-sweeper key, and a poll for the tx result, each step appended to
 state/ledger.jsonl. It stops on any skip event, failed tx, or a batch over the block gas limit. `status` reads the
@@ -32,6 +34,7 @@ GAS_ESTIMATE_PATTERN = re.compile(r"gas estimate:\s*(\d+)")
 EVENT_SWEEP_TRANSFER = "sweep_transfer"
 EVENT_SWEEP_SKIPPED = "sweep_skipped"
 STATE_OPEN = "STATE_OPEN"
+WARM_PROGRESS_EVERY = 500
 ANSWER_YES = "y"
 ANSWER_ALL = "a"
 AMBIGUOUS_BROADCAST_NOTE = (
@@ -115,6 +118,11 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     plan.add_argument("--gas-budget", type=int, default=config.GAS_BUDGET_PER_BATCH)
     plan.set_defaults(command=cmd_plan)
 
+    warm = commands.add_parser("warm", help="fill the per-address caches for every holder at or above a floor")
+    warm.add_argument("--floor-usd", type=Decimal, default=Decimal(1), help="warm every holder at or above this value")
+    warm.add_argument("--workers", type=_positive_int, default=config.READ_WORKERS)
+    warm.set_defaults(command=cmd_warm)
+
     run = commands.add_parser("run", help="sign and submit the pending batches in tier order")
     run.add_argument("--tier", type=planner.TierName, choices=list(planner.TierName), default=None)
     run.add_argument("--batches", type=_positive_int, default=None, help="stop after this many batches")
@@ -184,6 +192,40 @@ def cmd_plan(args: argparse.Namespace) -> int:
     batches = len(plan.pending_batches())
     print(f"RESULT: PLANNED — run {plan.run_id}, {batches} batches under {config.STATE_DIR}; next: `cli.py run`")
     return 0
+
+
+# ---- warm
+
+
+def cmd_warm(args: argparse.Namespace) -> int:
+    exclusions = holders.load_exclusions(path=config.EXCLUSIONS_PATH)
+    accounts = holders.AccountCache.load(path=config.ACCOUNTS_CACHE_PATH)
+    staking = holders.StakingCache.load(path=config.STAKING_CACHE_PATH)
+    floor = args.floor_usd
+    print(f"reading live holders at floor ${floor} ...")
+    denoms = holders.resolve_denoms()
+    balances = holders.read_balances(denoms=denoms)
+    inputs = holders.read_skip_inputs()
+
+    candidates = holders.candidate_addresses(
+        balances=balances, denoms=denoms, floor_usd=floor, exclusions=exclusions, inputs=inputs, test_address=None)
+    by_denom = {sweep_denom.denom: sweep_denom for sweep_denom in denoms}
+    at_or_above = sum(1 for coins in balances.values() if holders.usd_value(balances=coins, denoms=by_denom) >= floor)
+    print(f"holders at or above ${floor}: {at_or_above}")
+    print(f"  {len(candidates)} pass the rules that need no account read")
+
+    result = holders.prefetch(addresses=candidates, accounts=accounts, staking=staking, now=chainio.now(),
+                              workers=args.workers, on_progress=_print_prefetch_progress)
+    print(f"RESULT: WARMED — {result.read} addresses read, {result.cached} already cached")
+    return 0
+
+
+def _print_prefetch_progress(done: int, total: int) -> None:
+    if done % WARM_PROGRESS_EVERY == 0:
+        print(f"  prefetched {done} of {total}")
+
+
+# ---- plan rendering
 
 
 def render_plan(plan: planner.Plan) -> str:

@@ -463,6 +463,50 @@ class RunLoopTests(unittest.TestCase):
             self.assertEqual(cli.main(argv=["run", "--tier", "keyless"]), 0)
             self.assertEqual(confirmed_batches(), ["001-001", "001-002"])
 
+
+    def test_warm_fills_the_caches_prints_the_result_and_leaves_the_plan_alone(self) -> None:
+        plan_before = (self.state / "plan.json").read_bytes()
+        files_before = {path.name for path in self.state.iterdir()}
+        balances = {A1: {"stuatom": 1_000_000}, A2: {"ustrd": 10}}  # $6 and a fraction of a cent
+
+        def rest(path: str, params: dict | None = None) -> Any:
+            if path.startswith("/cosmos/auth/v1beta1/accounts/"):
+                return {"account": {"@type": config.BASE_ACCOUNT, "address": path.rsplit("/", 1)[1], "pub_key": {"key": "x"}, "sequence": "1"}}
+            if path.endswith("/unbonding_delegations"):
+                return {"unbonding_responses": [], "pagination": {"next_key": None}}
+            return not_found(path)
+
+        output = io.StringIO()
+        with mock.patch.object(holders, "resolve_denoms", return_value=DENOMS), \
+             mock.patch.object(holders, "read_balances", return_value=balances) as read_balances, \
+             mock.patch.object(holders, "read_skip_inputs", return_value=holders.SkipInputs(set(), set(), set())), \
+             mock.patch.object(chainio, "rest_get", side_effect=rest) as rest_get, \
+             contextlib.redirect_stdout(output):
+            self.assertEqual(cli.main(argv=["warm", "--workers", "2"]), 0)
+
+        text = output.getvalue()
+        self.assertIn("reading live holders at floor $1 ...", text)
+        self.assertIn("holders at or above $1: 1", text)
+        self.assertIn("RESULT: WARMED — 1 addresses read, 0 already cached", text)
+        read_balances.assert_called_once_with(denoms=DENOMS)
+        self.assertEqual(sorted(call.kwargs["path"].rsplit("/", 1)[-1] for call in rest_get.call_args_list if "accounts" in call.kwargs["path"]), [A1])
+        self.assertIn(A1, json.loads((self.state / "accounts.json").read_text()))
+        self.assertIn(A1, json.loads((self.state / "staking.json").read_text()))
+        self.assertEqual((self.state / "plan.json").read_bytes(), plan_before)
+        self.assertEqual({path.name for path in self.state.iterdir()} - {"accounts.json", "staking.json"}, files_before)
+
+    def test_warm_a_second_time_reads_nothing_new(self) -> None:
+        holders.AccountCache(entries={A1: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=1)}).save(path=self.state / "accounts.json")
+        holders.StakingCache(entries={A1: holders.Staked(ustrd=0, completes_at=None)}).save(path=self.state / "staking.json")
+        output = io.StringIO()
+        with mock.patch.object(holders, "resolve_denoms", return_value=DENOMS), \
+             mock.patch.object(holders, "read_balances", return_value={A1: {"stuatom": 1_000_000}}), \
+             mock.patch.object(holders, "read_skip_inputs", return_value=holders.SkipInputs(set(), set(), set())), \
+             mock.patch.object(chainio, "rest_get", side_effect=AssertionError("no reads expected")), \
+             contextlib.redirect_stdout(output):
+            self.assertEqual(cli.main(argv=["warm", "--floor-usd", "5"]), 0)
+        self.assertIn("RESULT: WARMED — 0 addresses read, 1 already cached", output.getvalue())
+
     def test_plan_stores_the_operator_sequence(self) -> None:
         holder_set = holders.HolderSet(height=100, denoms=DENOMS, holders=[holders.Holder(address=A1, balances={"stuatom": 1_000_000}, usd=Decimal(6), keyless=False)],
                                        excluded=[], skipped=[], below_floor=[])

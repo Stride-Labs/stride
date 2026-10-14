@@ -112,6 +112,11 @@ class HolderTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = pathlib.Path(self.tmp.name)
+        # Caches built without a path save to these, never to the real state directory
+        for name in ("ACCOUNTS_CACHE_PATH", "STAKING_CACHE_PATH"):
+            path_patcher = mock.patch.object(config, name, self.dir / f"default-{name.lower()}.json")
+            path_patcher.start()
+            self.addCleanup(path_patcher.stop)
         self.exclusions_path = self.dir / "exclusions.json"
         self.exclusions_path.write_text(json.dumps({"sections": [
             {"name": "team", "reason": "moved by hand", "addresses": [{"address": EXCLUDED, "label": "F5"}]},
@@ -302,7 +307,7 @@ class HolderTests(unittest.TestCase):
         self.assertEqual(([h.address for h in holder_set.holders], holder_set.deferred), ([BASE], []))
         self.assertEqual(STAKING_READS, [])
 
-    def test_a_below_floor_staker_stays_below_floor_and_is_never_read(self) -> None:
+    def test_a_below_floor_staker_stays_below_floor_and_is_not_deferred(self) -> None:
         UNBONDING[DUST] = [unbonding(DUST, ("7", COMPLETES))]
         UNBONDING[DUSTY] = [unbonding(DUSTY, ("7", COMPLETES))]  # vesting, spendable value under the floor
 
@@ -312,7 +317,8 @@ class HolderTests(unittest.TestCase):
         self.assertIn(DUST, [h.address for h in holder_set.below_floor])
         self.assertIn(DUSTY, [h.address for h in holder_set.below_floor])
         self.assertNotIn(DUST, STAKING_READS)
-        self.assertNotIn(DUSTY, STAKING_READS)
+        # Prefetch reads by balance value, before the spendable part is known: DUSTY costs one extra read, no more
+        self.assertEqual(STAKING_READS.count(DUSTY), 1)
         self.assertNotIn(ICA, STAKING_READS)  # skipped holders are not read either
 
     def test_a_keyless_staker_is_deferred_too(self) -> None:
@@ -410,6 +416,130 @@ class HolderTests(unittest.TestCase):
 
         dusty_set = holders.read_holder_set(floor_usd=Decimal("1000"), exclusions=exclusions, accounts=accounts, staking=NO_STAKING(), test_address=DUSTY)
         self.assertEqual(([h.address for h in dusty_set.holders], dusty_set.below_floor), ([DUSTY], []))  # floor ignored
+
+
+    def test_account_cache_save_keeps_another_writers_entries(self) -> None:
+        path = self.dir / "accounts.json"
+        mine = holders.AccountCache.load(path=path)
+        other = holders.AccountCache.load(path=path)
+        other.lookup(address=BASE)
+        other.save()
+        mine.lookup(address=KEYLESS)
+        mine.save()  # started empty, saved after the other writer: must not drop BASE
+
+        raw = json.loads(path.read_text())
+        self.assertEqual(sorted(raw), sorted([BASE, KEYLESS]))
+        self.assertEqual(holders.AccountCache.load(path=path).lookup(address=BASE).sequence, 4)
+
+    def test_account_cache_save_prefers_this_processes_entry_for_the_same_address(self) -> None:
+        path = self.dir / "accounts.json"
+        path.write_text(json.dumps({KEYLESS: {"type": config.BASE_ACCOUNT, "has_pubkey": False, "sequence": "0"}}))
+        mine = holders.AccountCache(entries={KEYLESS: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=3)})
+        mine.save(path=path)
+        self.assertEqual(json.loads(path.read_text())[KEYLESS], {"type": config.BASE_ACCOUNT, "has_pubkey": True, "sequence": "3"})
+
+    def test_staking_cache_save_keeps_another_writers_entries(self) -> None:
+        path = self.dir / "staking.json"
+        mine = holders.StakingCache.load(path=path)
+        other = holders.StakingCache.load(path=path)
+        other.store(address=BASE, staked=holders.Staked(ustrd=0, completes_at=None))
+        other.save()
+        mine.store(address=VESTING, staked=holders.Staked(ustrd=7, completes_at=COMPLETES))
+        mine.save()
+
+        self.assertEqual(json.loads(path.read_text()), {
+            BASE: {"ustrd": "0", "completes_at": None},
+            VESTING: {"ustrd": "7", "completes_at": COMPLETES},
+        })
+
+    def test_prefetch_skips_final_entries_reads_the_rest_and_stores_them(self) -> None:
+        accounts = holders.AccountCache(entries={
+            BASE: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=4),
+            KEYLESS: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=False, sequence=0),  # not final: re-read
+        })
+        staking = holders.StakingCache(entries={
+            BASE: holders.Staked(ustrd=0, completes_at=None),
+            KEYLESS: holders.Staked(ustrd=9, completes_at="2026-10-13T00:00:00Z"),  # matured: not final
+        })
+        UNBONDING[KEYLESS] = [unbonding(KEYLESS, ("5", COMPLETES))]
+
+        result = holders.prefetch(addresses=[BASE, KEYLESS, VESTING, MISSING], accounts=accounts, staking=staking,
+                                  now=NOW, workers=2)
+
+        self.assertEqual(result, holders.PrefetchResult(read=3, cached=1))
+        self.assertEqual(sorted(STAKING_READS), sorted([KEYLESS, VESTING, MISSING]))  # BASE was final
+        self.assertTrue(accounts.is_final(address=VESTING))
+        self.assertFalse(accounts.is_final(address=MISSING))  # 404: no entry, as lookup would leave it
+        self.assertEqual(staking.lookup(address=KEYLESS, now=NOW), holders.Staked(ustrd=5, completes_at=COMPLETES))
+        self.assertEqual(staking.lookup(address=MISSING, now=NOW), holders.Staked(ustrd=0, completes_at=None))
+        self.assertIn(VESTING, json.loads((self.dir / "default-accounts_cache_path.json").read_text()))
+        self.assertIn(MISSING, json.loads((self.dir / "default-staking_cache_path.json").read_text()))
+
+    def test_prefetch_reads_only_what_is_not_final_per_cache(self) -> None:
+        accounts = holders.AccountCache(entries={BASE: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=4)})
+        staking = holders.StakingCache(entries={})
+        with mock.patch.object(holders, "read_account") as read_account:
+            holders.prefetch(addresses=[BASE], accounts=accounts, staking=staking, now=NOW, workers=1)
+        read_account.assert_not_called()
+        self.assertEqual(STAKING_READS, [BASE])
+
+    def test_prefetch_saves_every_n_addresses_and_at_the_end(self) -> None:
+        path = self.dir / "staking.json"
+        staking = holders.StakingCache(entries={}, path=path)
+        accounts = holders.AccountCache(entries={}, path=self.dir / "accounts.json")
+        on_disk: dict[int, int] = {}
+
+        def record(done: int, total: int) -> None:
+            on_disk[done] = len(json.loads(path.read_text())) if path.exists() else 0
+
+        with mock.patch.object(config, "PREFETCH_SAVE_EVERY", 2):
+            holders.prefetch(addresses=[BASE, VESTING, KEYLESS, MISSING, LOCKED], accounts=accounts, staking=staking,
+                             now=NOW, workers=1, on_progress=record)
+
+        # Progress fires before the save of the same address: after 3 done the file holds the first 2
+        self.assertEqual(on_disk, {1: 0, 2: 0, 3: 2, 4: 2, 5: 4})
+        self.assertEqual(len(json.loads(path.read_text())), 5)
+
+    def test_prefetch_saves_what_it_read_when_a_read_fails(self) -> None:
+        path = self.dir / "staking.json"
+        staking = holders.StakingCache(entries={}, path=path)
+        accounts = holders.AccountCache(entries={}, path=self.dir / "accounts.json")
+
+        def read_staked(address: str) -> holders.Staked:
+            if address == VESTING:
+                raise chainio.ChainError("boom")
+            return holders.Staked(ustrd=0, completes_at=None)
+
+        with mock.patch.object(holders, "read_staked", side_effect=read_staked), self.assertRaises(chainio.ChainError):
+            holders.prefetch(addresses=[BASE, VESTING], accounts=accounts, staking=staking, now=NOW, workers=1)
+        self.assertEqual(list(json.loads(path.read_text())), [BASE])
+
+    def test_read_holder_set_prefetches_only_candidates_at_or_above_the_floor(self) -> None:
+        with mock.patch.object(holders, "prefetch", wraps=holders.prefetch) as prefetch:
+            self.read_set(floor="1")
+
+        kwargs = prefetch.call_args.kwargs
+        # Not DUST (under the floor), not ICA/MISSING (protocol), MODULE or ESCROW (rules before the account), not EXCLUDED
+        self.assertEqual(sorted(kwargs["addresses"]), sorted([BASE, VESTING, KEYLESS, LOCKED, DUSTY, CONTRACT]))
+        self.assertEqual(kwargs["workers"], config.READ_WORKERS)
+
+    def test_read_holder_set_prefetches_only_the_test_address_and_takes_workers(self) -> None:
+        with mock.patch.object(holders, "prefetch", wraps=holders.prefetch) as prefetch:
+            holders.read_holder_set(
+                floor_usd=Decimal("1000"), exclusions=holders.load_exclusions(path=self.exclusions_path),
+                accounts=holders.AccountCache.load(path=self.dir / "accounts.json"), staking=NO_STAKING(),
+                test_address=BASE, workers=3)
+
+        self.assertEqual(prefetch.call_args.kwargs["addresses"], [BASE])
+        self.assertEqual(prefetch.call_args.kwargs["workers"], 3)
+
+    def test_classify_after_prefetch_makes_no_further_account_or_staking_reads(self) -> None:
+        accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
+        staking = NO_STAKING()
+        holders.read_holder_set(floor_usd=Decimal("1"), exclusions=holders.load_exclusions(path=self.exclusions_path),
+                                accounts=accounts, staking=staking, test_address=None)
+        # Every non-keyless candidate was read once; KEYLESS is re-read by lookup (its account is not final)
+        self.assertEqual(len(STAKING_READS), len(set(STAKING_READS)))
 
 
 if __name__ == "__main__":

@@ -132,6 +132,8 @@ SWEEPABLE_ACCOUNT_TYPES = frozenset({BASE_ACCOUNT}) | VESTING_ACCOUNT_TYPES
 
 # Batches: packed under a gas budget at plan time, simulated at run time, refused over the block limit.
 MAX_ADDRESSES_PER_BATCH = 100
+READ_WORKERS = 8  # concurrent REST reads for balance pages and per-address prefetch
+PREFETCH_SAVE_EVERY = 200  # addresses between cache saves while prefetching
 GAS_BUDGET_PER_BATCH = 40_000_000
 BLOCK_GAS_LIMIT = 100_000_000  # stride-1's consensus max_gas
 GAS_PER_TRANSFER_DEFAULT = 150_000  # until the ledger has a confirmed batch to calibrate from
