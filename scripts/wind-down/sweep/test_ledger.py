@@ -4,7 +4,7 @@ import pathlib
 import tempfile
 import unittest
 
-from sweep import ledger
+from sweep import config, ledger
 
 T1 = ledger.Transfer(address="stride1a", denom="stuatom", amount=1_000_000, channel="channel-5", receiver="osmo1a")
 T2 = ledger.Transfer(address="stride1a", denom="ustrd", amount=5, channel="channel-5", receiver="osmo1a")
@@ -79,6 +79,11 @@ class DerivedStateTests(unittest.TestCase):
             ledger.confirmed(batch_id="001-003", tx_hash="C", at="t", height=3, gas_used=50_000, transfers=[], skipped=[]),
         ]
         self.assertEqual(ledger.calibration(events=events), 132_000)  # 110,000 per transfer x 1.2
+
+        # Once a batch of CALIBRATION_MIN_TRANSFERS exists, the small ones (fixed-overhead heavy) no longer count
+        big = ledger.confirmed(batch_id="002-001", tx_hash="D", at="t", height=4, gas_used=5_000_000,
+                               transfers=[T1] * config.CALIBRATION_MIN_TRANSFERS, skipped=[])
+        self.assertEqual(ledger.calibration(events=[*events, big]), 120_000)  # 100,000 per transfer x 1.2
 
 
 if __name__ == "__main__":

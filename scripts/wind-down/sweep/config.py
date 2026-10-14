@@ -146,6 +146,9 @@ GAS_BUDGET_PER_BATCH = 40_000_000
 BLOCK_GAS_LIMIT = 100_000_000  # stride-1's consensus max_gas
 GAS_PER_TRANSFER_DEFAULT = 150_000  # until the ledger has a confirmed batch to calibrate from
 CALIBRATION_MARGIN = Decimal("1.2")
+# A batch this small is dominated by the tx's fixed overhead (the 15-transfer test batch: 350k a transfer against
+# 105k in a full one), so only larger batches calibrate; until one exists every confirmed batch counts
+CALIBRATION_MIN_TRANSFERS = 50
 GAS_ADJUSTMENT = Decimal("1.3")
 GAS_PRICE_USTRD = Decimal("0.001")  # stride-1's minimum is 0.0005ustrd
 

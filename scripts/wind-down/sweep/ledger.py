@@ -168,9 +168,13 @@ def unresolved(events: list[Event]) -> list[Event]:
 
 
 def calibration(events: list[Event]) -> int | None:
-    """Gas per transfer for the planner: the worst confirmed ratio with a margin, or None before any confirmation."""
-    ratios = [Decimal(event.gas_used) / len(event.transfers) for event in events
-              if event.kind == Kind.CONFIRMED and event.gas_used is not None and event.transfers]
+    """Gas per transfer for the planner: the worst confirmed ratio with a margin, over the batches of at least
+    `CALIBRATION_MIN_TRANSFERS` transfers (every confirmed batch until one is that large); None before any
+    confirmation."""
+    confirmed = [event for event in events
+                 if event.kind == Kind.CONFIRMED and event.gas_used is not None and event.transfers]
+    large = [event for event in confirmed if len(event.transfers) >= config.CALIBRATION_MIN_TRANSFERS]
+    ratios = [Decimal(event.gas_used) / len(event.transfers) for event in (large or confirmed)]
     if not ratios:
         return None
     return int(max(ratios) * config.CALIBRATION_MARGIN)
