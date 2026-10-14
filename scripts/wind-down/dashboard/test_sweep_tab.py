@@ -14,6 +14,9 @@ from sweep import holders, ledger, planner  # noqa: E402
 STATOM = holders.SweepDenom(denom="stuatom", symbol="stATOM", decimals=6, price_usd=Decimal("6"), destination="osmosis-1", channel="channel-5")
 STRD = holders.SweepDenom(denom="ustrd", symbol="STRD", decimals=6, price_usd=Decimal("0.05"), destination="osmosis-1", channel="channel-5")
 A_SWEPT, A_REFUNDED, A_PENDING, A_EXCLUDED, A_DUST, A_NEW, A_ESCROW, A_DEFERRED = (f"stride1{name}" for name in ("swept", "refund", "pend", "excl", "dust", "new", "escrow", "defer"))
+FETCHED_AT = "2026-11-10T14:00:00+00:00"
+EARLIER = "2026-11-10T13:00:00+00:00"  # a confirmation the snapshot already covers
+LATER = "2026-11-10T14:05:00+00:00"  # a confirmation newer than the snapshot
 DEFERRED_COMPLETES = "2026-10-26T08:55:25.469915628Z"
 
 
@@ -39,9 +42,9 @@ def t(address: str, denom: str, amount: int) -> ledger.Transfer:
 
 EVENTS = [
     ledger.submitted(run_id=2, batch_id="002-001", tx_hash="A", at="t", addresses=1, transfers_estimate=2, gas_wanted=1),
-    ledger.confirmed(batch_id="002-001", tx_hash="A", at="t", height=5, gas_used=1, transfers=[t(A_SWEPT, "stuatom", 10_000_000), t(A_SWEPT, "ustrd", 1_000_000)], skipped=[]),
+    ledger.confirmed(batch_id="002-001", tx_hash="A", at=EARLIER, height=5, gas_used=1, transfers=[t(A_SWEPT, "stuatom", 10_000_000), t(A_SWEPT, "ustrd", 1_000_000)], skipped=[]),
     ledger.submitted(run_id=2, batch_id="002-002", tx_hash="B", at="t", addresses=1, transfers_estimate=2, gas_wanted=1),
-    ledger.confirmed(batch_id="002-002", tx_hash="B", at="t", height=6, gas_used=1, transfers=[t(A_REFUNDED, "stuatom", 5_000_000), t(A_REFUNDED, "ustrd", 1_000_000)],
+    ledger.confirmed(batch_id="002-002", tx_hash="B", at=EARLIER, height=6, gas_used=1, transfers=[t(A_REFUNDED, "stuatom", 5_000_000), t(A_REFUNDED, "ustrd", 1_000_000)],
                      skipped=[ledger.Skip(address="stride1other", reason="interchain account")]),
 ]
 LIVE = {
@@ -64,7 +67,7 @@ LIVE = {
 
 class ComposeTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.data = sweep_tab.compose(plan=make_plan(), events=EVENTS, live=LIVE, exclusions={}, live_fetched_at="2026-11-10T14:00:00+00:00")
+        self.data = sweep_tab.compose(plan=make_plan(), events=EVENTS, live=LIVE, exclusions={}, live_fetched_at=FETCHED_AT)
 
     def test_run_and_batches(self) -> None:
         run = self.data["run"]
@@ -122,7 +125,7 @@ class ComposeTests(unittest.TestCase):
         self.assertEqual(self.data["keyless"], {"addresses": "1", "usd": "12.05", "swept": "0"})
         data = sweep_tab.compose(plan=make_plan(), events=EVENTS, live=LIVE,
                                  exclusions={A_EXCLUDED: holders.Exclusion(address=A_EXCLUDED, section="team", label="F5", reason="by hand")},
-                                 live_fetched_at="x")
+                                 live_fetched_at=FETCHED_AT)
         self.assertEqual(data["exclusions"], [{"section": "team", "address": A_EXCLUDED, "label": "F5", "reason": "by hand", "live_usd": "99.00"}])
 
 
@@ -140,7 +143,7 @@ def live_with(balances: dict[str, dict[str, str]]) -> dict:
 def confirmed_run(run_id: int, address: str, amount: int = 1_000_000) -> list[ledger.Event]:
     batch_id = f"{run_id:03d}-001"
     return [ledger.submitted(run_id=run_id, batch_id=batch_id, tx_hash="V", at="t", addresses=1, transfers_estimate=1, gas_wanted=1),
-            ledger.confirmed(batch_id=batch_id, tx_hash="V", at="t", height=5, gas_used=1, transfers=[t(address, "stuatom", amount)], skipped=[])]
+            ledger.confirmed(batch_id=batch_id, tx_hash="V", at=EARLIER, height=5, gas_used=1, transfers=[t(address, "stuatom", amount)], skipped=[])]
 
 
 class VestingTests(unittest.TestCase):
@@ -149,7 +152,7 @@ class VestingTests(unittest.TestCase):
     def compose(self, live_amount: str) -> dict:
         plan = vesting_plan(run_id=1, addresses=["stride1vest"], locked={"stuatom": 400_000})
         return sweep_tab.compose(plan=plan, events=confirmed_run(run_id=1, address="stride1vest"),
-                                 live=live_with({"stride1vest": {"stuatom": live_amount}}), exclusions={}, live_fetched_at="x")
+                                 live=live_with({"stride1vest": {"stuatom": live_amount}}), exclusions={}, live_fetched_at=FETCHED_AT)
 
     def test_holding_exactly_the_locked_remainder_is_swept(self) -> None:
         data = self.compose("400000")
@@ -173,7 +176,7 @@ class EarlierRunLockedTests(unittest.TestCase):
         plan = vesting_plan(run_id=2, addresses=["stride1pending"], locked={})
         plan = dataclasses.replace(plan, locked={"stride1vest": {"stuatom": 400_000}})
         live = live_with({"stride1vest": {"stuatom": "400000"}, "stride1pending": {"stuatom": "1000000"}})
-        data = sweep_tab.compose(plan=plan, events=confirmed_run(run_id=1, address="stride1vest"), live=live, exclusions={}, live_fetched_at="x")
+        data = sweep_tab.compose(plan=plan, events=confirmed_run(run_id=1, address="stride1vest"), live=live, exclusions={}, live_fetched_at=FETCHED_AT)
 
         self.assertEqual(data["totals"]["swept"], {"addresses": "1", "usd": "6.00"})
         self.assertEqual(data["totals"]["refunded"], {"addresses": "0", "usd": "0.00"})
@@ -185,7 +188,7 @@ class EarlierRunTests(unittest.TestCase):
         events = confirmed_run(run_id=1, address="stride1runone", amount=3_000_000) + confirmed_run(run_id=2, address="stride1runtwo", amount=2_000_000)
         plan = vesting_plan(run_id=2, addresses=["stride1runtwo", "stride1pending"], locked={})  # run 1's holder is not in this plan
         live = live_with({"stride1pending": {"stuatom": "1000000"}})
-        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at="x")
+        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at=FETCHED_AT)
 
         self.assertEqual(data["totals"]["swept"], {"addresses": "2", "usd": "30.00"})  # 3 + 2 stATOM at $6
         self.assertEqual(data["totals"]["remaining"], {"addresses": "1", "usd": "6.00"})  # only the current plan's unswept address
@@ -197,7 +200,7 @@ class EarlierRunTests(unittest.TestCase):
         events = confirmed_run(run_id=1, address="stride1runone", amount=3_000_000)
         plan = vesting_plan(run_id=2, addresses=["stride1pending"], locked={})
         live = live_with({"stride1runone": {"stuatom": "3000000"}, "stride1pending": {"stuatom": "1000000"}})
-        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at="x")
+        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at=FETCHED_AT)
 
         self.assertEqual(data["totals"]["refunded"], {"addresses": "1", "usd": "18.00"})
         self.assertEqual(data["totals"]["unplanned"], {"addresses": "0", "usd": "0.00"})
@@ -223,7 +226,7 @@ class DeferredTests(unittest.TestCase):
 
     def test_no_deferred_holders(self) -> None:
         plan = vesting_plan(run_id=1, addresses=["stride1a"], locked={})
-        data = sweep_tab.compose(plan=plan, events=[], live={**live_with({"stride1a": {"stuatom": "1000000"}}), "staked_ustrd": "0"}, exclusions={}, live_fetched_at="x")
+        data = sweep_tab.compose(plan=plan, events=[], live={**live_with({"stride1a": {"stuatom": "1000000"}}), "staked_ustrd": "0"}, exclusions={}, live_fetched_at=FETCHED_AT)
         self.assertEqual(data["deferred"], {"addresses": "0", "usd": "0.00", "staked_strd": "0.00", "staked_usd": "0.00", "completes_at": None, "top": []})
         self.assertEqual(data["totals"]["deferred"], {"addresses": "0", "usd": "0.00"})
 
@@ -244,6 +247,55 @@ class EdgeTests(unittest.TestCase):
         self.assertEqual(data["deferred"], {"addresses": "1", "usd": "24.05", "staked_strd": None, "staked_usd": None,
                                             "completes_at": DEFERRED_COMPLETES,
                                             "top": [{"address": A_DEFERRED, "usd": "24.05", "staked_strd": "7.50", "completes_at": DEFERRED_COMPLETES}]})
+
+
+class SnapshotRuleTests(unittest.TestCase):
+    def compose(self, at: str) -> dict:
+        plan = vesting_plan(run_id=2, addresses=["stride1a"], locked={})
+        events = confirmed_run(run_id=2, address="stride1a")[:1] + [
+            ledger.confirmed(batch_id="002-001", tx_hash="V", at=at, height=5, gas_used=1, transfers=[t("stride1a", "stuatom", 1_000_000)], skipped=[])]
+        live = live_with({"stride1a": {"stuatom": "1000000"}})  # the snapshot still shows the balance
+        return sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at=FETCHED_AT)
+
+    def test_a_transfer_confirmed_after_the_snapshot_is_swept_not_refunded(self) -> None:
+        data = self.compose(at=LATER)
+        self.assertEqual(data["totals"]["swept"]["addresses"], "1")
+        self.assertEqual(data["totals"]["refunded"]["addresses"], "0")
+        self.assertEqual(data["refunded"], [])
+
+    def test_a_transfer_confirmed_before_the_snapshot_with_the_balance_present_is_refunded(self) -> None:
+        data = self.compose(at=EARLIER)
+        self.assertEqual(data["totals"]["refunded"]["addresses"], "1")
+        self.assertEqual(data["totals"]["swept"]["addresses"], "0")
+        self.assertEqual([r["address"] for r in data["refunded"]], ["stride1a"])
+
+    def test_offsets_are_compared_as_datetimes_not_strings(self) -> None:
+        # 15:00+02:00 is 13:00Z, before the 14:00Z snapshot, though it sorts after it as a string
+        data = self.compose(at="2026-11-10T15:00:00+02:00")
+        self.assertEqual(data["totals"]["refunded"]["addresses"], "1")
+
+
+class ProgressTests(unittest.TestCase):
+    def test_counts_per_tier_and_overall_with_a_mixed_ledger(self) -> None:
+        events = EVENTS[:2] + [ledger.submitted(run_id=2, batch_id="002-002", tx_hash="B", at=EARLIER, addresses=1, transfers_estimate=2, gas_wanted=1)]
+        data = sweep_tab.compose(plan=make_plan(), events=events, live=LIVE, exclusions={}, live_fetched_at=FETCHED_AT)
+        progress = data["progress"]
+        by_tier = {tier["name"]: tier for tier in progress["tiers"]}
+
+        self.assertEqual([tier["name"] for tier in progress["tiers"]], [tier.name.value for tier in make_plan().tiers])
+        self.assertEqual(by_tier["main"]["batches"], "2")  # 002-001 confirmed, 002-002 only submitted
+        self.assertEqual((by_tier["main"]["batches_confirmed"], by_tier["main"]["addresses_confirmed"], by_tier["main"]["usd_confirmed"]), ("1", "1", "60.05"))
+        self.assertEqual((by_tier["keyless"]["batches"], by_tier["keyless"]["batches_confirmed"], by_tier["keyless"]["usd"]), ("1", "0", "12.05"))
+        self.assertEqual((progress["run_id"], progress["floor_usd"], progress["test"]), ("2", "10", False))
+        self.assertEqual((progress["batches"], progress["batches_confirmed"]), ("3", "1"))
+        self.assertEqual((progress["addresses"], progress["addresses_confirmed"]), ("3", "1"))
+        self.assertEqual((progress["usd"], progress["usd_confirmed"]), ("102.15", "60.05"))
+        self.assertEqual(set(progress), {"run_id", "floor_usd", "test", "tiers", "batches", "batches_confirmed", "addresses",
+                                         "addresses_confirmed", "usd", "usd_confirmed"})
+
+    def test_none_without_a_plan(self) -> None:
+        data = sweep_tab.compose(plan=None, events=[], live=None, exclusions={}, live_fetched_at=None)
+        self.assertIsNone(data["progress"])
 
 
 if __name__ == "__main__":

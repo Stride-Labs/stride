@@ -90,6 +90,7 @@ def compose(
     if plan is None:
         return {
             "run": None,
+            "progress": None,
             "totals": None,
             "by_denom": None,
             "batches": [],
@@ -105,11 +106,22 @@ def compose(
     transferred = ledger.confirmed_transfers(events=events)
     balances = _live_balances(live=live)
     by_denom = {denom.denom: denom for denom in plan.denoms}
-    address_state = _address_states(plan=plan, transferred=transferred, balances=balances) if live is not None else None
-    refunds = _refunds(plan=plan, events=events, balances=balances) if live is not None else []
+    address_state = (
+        _address_states(
+            plan=plan, events=events, transferred=transferred, balances=balances, live_fetched_at=live_fetched_at
+        )
+        if live is not None
+        else None
+    )
+    refunds = (
+        _refunds(plan=plan, events=events, balances=balances, live_fetched_at=live_fetched_at)
+        if live is not None
+        else []
+    )
 
     return {
         "run": _run(plan=plan, states=states, live=live),
+        "progress": _progress(plan=plan, states=states),
         "totals": _totals(
             plan=plan, address_state=address_state, transferred=transferred, balances=balances, by_denom=by_denom
         )
@@ -186,16 +198,41 @@ def _known_addresses(plan: planner.Plan, transferred: dict[str, list[ledger.Tran
     )
 
 
+def _judgeable_transfers(
+    events: list[ledger.Event], live_fetched_at: str | None
+) -> list[tuple[ledger.Transfer, str]]:
+    """Confirmed transfers (with their batch id) that the live snapshot can judge: those confirmed no later than the
+    snapshot was taken. A newer one is not in the snapshot yet, so a balance it shows says nothing about a refund."""
+    snapshot_time = holders.parse_chain_time(text=live_fetched_at) if live_fetched_at is not None else None
+    return [
+        (transfer, event.batch_id)
+        for event in events
+        if event.kind == ledger.Kind.CONFIRMED
+        and (snapshot_time is None or holders.parse_chain_time(text=event.at) <= snapshot_time)
+        for transfer in event.transfers
+    ]
+
+
 def _address_states(
-    plan: planner.Plan, transferred: dict[str, list[ledger.Transfer]], balances: dict[str, dict[str, int]]
+    plan: planner.Plan,
+    events: list[ledger.Event],
+    transferred: dict[str, list[ledger.Transfer]],
+    balances: dict[str, dict[str, int]],
+    live_fetched_at: str | None,
 ) -> dict[str, str]:
     """swept: transferred and holding none of it now; refunded: transferred and holding a transferred denom again;
     remaining: in the current plan with no confirmed transfer. Swept and refunded cover every address with a confirmed
-    transfer in any run, so a re-plan at a lower floor does not drop the earlier runs' holders."""
+    transfer in any run, so a re-plan at a lower floor does not drop the earlier runs' holders. A transfer confirmed
+    after `live_fetched_at` is swept whatever the snapshot shows (it predates the transfer, so it cannot show a refund
+    of it); a refund needs a snapshot taken after the transfer."""
     locked = _locked(plan=plan)
+    judged_denoms: dict[str, set[str]] = {}
+    for transfer, _ in _judgeable_transfers(events=events, live_fetched_at=live_fetched_at):
+        judged_denoms.setdefault(transfer.address, set()).add(transfer.denom)
+
     states = {address: STATE_REMAINING for address in _planned(plan=plan) if address not in transferred}
-    for address, transfers in transferred.items():
-        moved = {transfer.denom for transfer in transfers}
+    for address in transferred:
+        moved = judged_denoms.get(address, set())
         states[address] = (
             STATE_REFUNDED
             if any(_back(address=address, denom=denom, balances=balances, locked=locked) > 0 for denom in moved)
@@ -205,17 +242,55 @@ def _address_states(
 
 
 def _refunds(
-    plan: planner.Plan, events: list[ledger.Event], balances: dict[str, dict[str, int]]
+    plan: planner.Plan,
+    events: list[ledger.Event],
+    balances: dict[str, dict[str, int]],
+    live_fetched_at: str | None,
 ) -> list[tuple[ledger.Transfer, str]]:
+    """Confirmed transfers whose denom is back beyond the locked remainder, judged only by a snapshot taken after them."""
     locked = _locked(plan=plan)
-    refunds: list[tuple[ledger.Transfer, str]] = []
-    for event in events:
-        if event.kind != ledger.Kind.CONFIRMED:
-            continue
-        for transfer in event.transfers:
-            if _back(address=transfer.address, denom=transfer.denom, balances=balances, locked=locked) > 0:
-                refunds.append((transfer, event.batch_id))
-    return refunds
+    return [
+        (transfer, batch_id)
+        for transfer, batch_id in _judgeable_transfers(events=events, live_fetched_at=live_fetched_at)
+        if _back(address=transfer.address, denom=transfer.denom, balances=balances, locked=locked) > 0
+    ]
+
+
+def _progress(plan: planner.Plan, states: dict[str, ledger.BatchState]) -> dict[str, Any]:
+    """How far the run is: batches, holders and USD done (a batch whose latest ledger event is `confirmed`) of the
+    plan's total, overall and per tier in plan order."""
+    tiers = [_tier_progress(tier=tier, states=states) for tier in plan.tiers]
+    return {
+        "run_id": str(plan.run_id),
+        "floor_usd": str(plan.floor_usd),
+        "test": plan.test,
+        "tiers": [_progress_row(row=row, name=row["name"]) for row in tiers],
+        **_progress_row(row=_sum_rows(rows=tiers)),
+    }
+
+
+def _tier_progress(tier: planner.Tier, states: dict[str, ledger.BatchState]) -> dict[str, Any]:
+    done = [batch for batch in tier.batches if states.get(batch.id) == ledger.BatchState.CONFIRMED]
+    return {
+        "name": tier.name.value,
+        "batches": len(tier.batches),
+        "batches_confirmed": len(done),
+        "addresses": sum(len(batch.addresses) for batch in tier.batches),
+        "addresses_confirmed": sum(len(batch.addresses) for batch in done),
+        "usd": sum((batch.usd for batch in tier.batches), Decimal(0)),
+        "usd_confirmed": sum((batch.usd for batch in done), Decimal(0)),
+    }
+
+
+def _sum_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    keys = ("batches", "batches_confirmed", "addresses", "addresses_confirmed", "usd", "usd_confirmed")
+    return {key: sum((row[key] for row in rows), Decimal(0) if key.startswith("usd") else 0) for key in keys}
+
+
+def _progress_row(row: dict[str, Any], name: str | None = None) -> dict[str, Any]:
+    """The row as the payload carries it: counts as strings, USD as two-decimal strings."""
+    out = {key: _money(value) if key.startswith("usd") else str(value) for key, value in row.items() if key != "name"}
+    return {"name": name, **out} if name is not None else out
 
 
 def _run(plan: planner.Plan, states: dict[str, ledger.BatchState], live: dict[str, Any] | None) -> dict[str, Any]:

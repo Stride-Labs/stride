@@ -214,6 +214,8 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 
 /* sweep */
 #view-sweep .callout { margin: 0 0 14px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+#view-sweep .plan-progress { margin: 0 0 14px; }
+#view-sweep .plan-progress table { width: auto; margin-top: 6px; }
 #view-sweep .tile { border-top: 3px solid var(--line); }
 #view-sweep .sw-swept { border-top-color: var(--s-pool); } #view-sweep .sw-remaining { border-top-color: var(--s-staked); }
 #view-sweep .sw-deferred { border-top-color: var(--s-ica); } #view-sweep .sw-refund { border-top-color: var(--s-unbond); } #view-sweep .sw-excluded { border-top-color: var(--s-flight); } #view-sweep .sw-floor { border-top-color: var(--idle-bg); }
