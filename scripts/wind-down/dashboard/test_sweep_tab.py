@@ -284,6 +284,33 @@ class EdgeTests(unittest.TestCase):
                                             "top": [{"address": A_DEFERRED, "usd": "24.05", "staked_strd": "7.50", "completes_at": DEFERRED_COMPLETES}]})
 
 
+class TotalSummaryTests(unittest.TestCase):
+    def test_a_swept_refunded_and_resswept_address_is_valued_once(self) -> None:
+        events = confirmed_run(run_id=1, address="stride1again") + confirmed_run(run_id=2, address="stride1again")
+        plan = vesting_plan(run_id=2, addresses=["stride1pending"], locked={})
+        live = live_with({"stride1pending": {"stuatom": "1000000"}})  # the address no longer shows in the snapshot
+        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at=FETCHED_AT)
+
+        self.assertEqual(data["summary"]["total"]["swept"], {"addresses": "1", "usd": "6.00"})
+        self.assertEqual(data["totals"]["swept"], {"addresses": "1", "usd": "6.00"})
+
+    def test_a_deferred_address_that_is_also_swept_is_not_counted_deferred(self) -> None:
+        plan = make_plan()
+        events = EVENTS + confirmed_run(run_id=2, address=A_DEFERRED)
+        live = live_with({address: coins for address, coins in LIVE["balances"].items() if address != A_DEFERRED})
+        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at=FETCHED_AT)
+
+        total = data["summary"]["total"]
+        self.assertEqual(total["swept"]["addresses"], "2")  # A_SWEPT and A_DEFERRED (A_REFUNDED is refunded)
+        self.assertEqual(total["deferred"], {"addresses": "0", "usd": "0.00"})
+
+    def test_no_plan_and_no_live_snapshot_leaves_the_swept_usd_unknown(self) -> None:
+        events = confirmed_run(run_id=1, address="stride1only")
+        data = sweep_tab.compose(plan=None, events=events, live=None, exclusions={}, live_fetched_at=None)
+
+        self.assertEqual(data["summary"]["total"]["swept"], {"addresses": "1", "usd": None})
+
+
 class SnapshotRuleTests(unittest.TestCase):
     def compose(self, at: str) -> dict:
         plan = vesting_plan(run_id=2, addresses=["stride1a"], locked={})

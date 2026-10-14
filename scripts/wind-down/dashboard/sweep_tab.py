@@ -329,6 +329,15 @@ def _run(plan: planner.Plan, states: dict[str, ledger.BatchState], live: dict[st
     }
 
 
+def _swept_usd(
+    addresses: list[str], transferred: dict[str, list[ledger.Transfer]], by_denom: dict[str, holders.SweepDenom]
+) -> Decimal:
+    """What the addresses swept, each (address, denom) valued once at its latest confirmed transfer: an address swept,
+    refunded and swept again moved the same funds twice, so summing every transfer would count them double."""
+    latest = {(address, transfer.denom): transfer for address in addresses for transfer in transferred[address]}
+    return sum((_transfer_usd(transfer=transfer, by_denom=by_denom) for transfer in latest.values()), Decimal(0))
+
+
 def _totals(
     plan: planner.Plan,
     address_state: dict[str, str],
@@ -340,10 +349,7 @@ def _totals(
     refunded = [address for address, state in address_state.items() if state == STATE_REFUNDED]
     remaining = [address for address, state in address_state.items() if state == STATE_REMAINING]
 
-    swept_usd = sum(
-        (_transfer_usd(transfer=transfer, by_denom=by_denom) for address in swept for transfer in transferred[address]),
-        Decimal(0),
-    )
+    swept_usd = _swept_usd(addresses=swept, transferred=transferred, by_denom=by_denom)
     locked = _locked(plan=plan)
     refunded_usd = sum(
         (
@@ -426,10 +432,7 @@ def _total_summary(
     skipped by the chain rules and not deferred (the ladder's $0 rung minus the deferred); None without a live snapshot.
     deferred: the current plan's deferred list (the only source), valued live when a snapshot exists."""
     swept = [address for address, state in address_state.items() if state == STATE_SWEPT]
-    swept_usd = sum(
-        (_transfer_usd(transfer=transfer, by_denom=by_denom) for address in swept for transfer in transferred[address]),
-        Decimal(0),
-    )
+    swept_usd = _swept_usd(addresses=swept, transferred=transferred, by_denom=by_denom)
     deferred_addresses = {deferred.address for deferred in plan.deferred}
     remaining = (
         {
@@ -447,13 +450,15 @@ def _total_summary(
         "remaining": _bucket(count=len(remaining), usd=sum(remaining.values(), Decimal(0)))
         if remaining is not None
         else None,
-        "deferred": _deferred_bucket(plan=plan, live=live, balances=balances, by_denom=by_denom),
+        "deferred": _deferred_bucket(
+            plan=plan, live=live, balances=balances, by_denom=by_denom, already_swept=set(swept)
+        ),
     }
 
 
 def _ledger_only_total(transferred: dict[str, list[ledger.Transfer]], live: dict[str, Any] | None) -> dict[str, Any]:
     """TOTAL without a plan: every address with a confirmed transfer, valued at the live snapshot's prices when there
-    is one (0.00 otherwise); remaining is None because the exclusions and chain skips live in the plan."""
+    is one (None otherwise); remaining is None because the exclusions and chain skips live in the plan."""
     prices = {
         entry["denom"]: holders.SweepDenom(
             denom=entry["denom"],
@@ -465,12 +470,14 @@ def _ledger_only_total(transferred: dict[str, list[ledger.Transfer]], live: dict
         )
         for entry in (live["denoms"] if live is not None else [])
     }
-    swept_usd = sum(
-        (_transfer_usd(transfer=transfer, by_denom=prices) for transfers in transferred.values() for transfer in transfers),
-        Decimal(0),
+    # Without a snapshot there are no prices, so the USD is unknown rather than zero
+    swept = (
+        _bucket(count=len(transferred), usd=_swept_usd(addresses=list(transferred), transferred=transferred, by_denom=prices))
+        if live is not None
+        else {"addresses": str(len(transferred)), "usd": None}
     )
     return {
-        "swept": _bucket(count=len(transferred), usd=swept_usd),
+        "swept": swept,
         "remaining": None,
         "deferred": _bucket(count=0, usd=Decimal(0)),
     }
@@ -547,7 +554,7 @@ def _plan_summary(
     return {
         "swept": _bucket(count=len(swept_addresses), usd=swept_usd),
         "remaining": _bucket(count=len(remaining), usd=remaining_usd),
-        "deferred": _deferred_bucket(plan=plan, live=live, balances=balances, by_denom=by_denom),
+        "deferred": _deferred_bucket(plan=plan, live=live, balances=balances, by_denom=by_denom, already_swept=set()),
         "excluded": _bucket(count=len(plan.excluded), usd=excluded_usd),
         "refunded": _bucket(count=len(refunded_addresses), usd=refunded_usd),
     }
@@ -568,13 +575,20 @@ def _deferred_bucket(
     live: dict[str, Any] | None,
     balances: dict[str, dict[str, int]],
     by_denom: dict[str, holders.SweepDenom],
+    already_swept: set[str],
 ) -> dict[str, str]:
-    usd = (
-        _live_deferred_usd(plan=plan, balances=balances, by_denom=by_denom)
-        if live is not None
-        else sum((deferred.usd for deferred in plan.deferred), Decimal(0))
+    """The deferred addresses not already counted as swept (they would otherwise sit in two tiles at once)."""
+    open_deferred = [deferred for deferred in plan.deferred if deferred.address not in already_swept]
+    usd = sum(
+        (
+            holders.usd_value(balances=balances.get(deferred.address, {}), denoms=by_denom)
+            if live is not None
+            else deferred.usd
+            for deferred in open_deferred
+        ),
+        Decimal(0),
     )
-    return _bucket(count=len(plan.deferred), usd=usd)
+    return _bucket(count=len(open_deferred), usd=usd)
 
 
 def _refunded_usd(

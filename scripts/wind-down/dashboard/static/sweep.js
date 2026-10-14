@@ -96,9 +96,10 @@ function runLine(data) {
 }
 
 // One summary tile: the address count, with the USD (or "n/a" when the figure is null) and an optional note below.
-function summaryTile(cls, label, bucket, note) {
+function summaryTile(cls, label, bucket, note, missing) {
   const value = bucket ? Number(bucket.addresses).toLocaleString() : 'n/a';
-  const sub = bucket ? `addresses · $${money(bucket.usd)}` : 'needs a live holder read';
+  const usd = bucket && bucket.usd !== null ? `$${money(bucket.usd)}` : 'n/a';
+  const sub = bucket ? `addresses · ${usd}` : (missing || 'needs a live holder read');
   return `<div class="tile ${cls}"><div class="k">${label}</div><div class="v">${value}</div><div class="s">${sub}${note ? ' · ' + note : ''}</div></div>`;
 }
 
@@ -112,12 +113,18 @@ function segmentBar(title, parts) {
 }
 
 function addressText(bucket) { return `${Number(bucket.addresses).toLocaleString()} addr`; }
-function usdText(bucket) { return `$${money(bucket.usd)}`; }
+function usdText(bucket) { return bucket.usd === null ? 'n/a' : `$${money(bucket.usd)}`; }
+
+// Why total remaining is null: the exclusions and chain skips live in the plan, and the holders come from the snapshot.
+function remainingMissing(data) {
+  if (!data.run) return 'needs a plan';
+  return 'needs a live holder read';
+}
 
 // TOTAL: every run in the ledger, chain-wide. Remaining is null without a live snapshot.
 function totalSection(data) {
   const total = data.summary.total;
-  const tiles = `<div class="tiles tiles-3">${summaryTile('sw-swept', 'Swept', total.swept)}${summaryTile('sw-remaining', 'Remaining', total.remaining)}
+  const tiles = `<div class="tiles tiles-3">${summaryTile('sw-swept', 'Swept', total.swept)}${summaryTile('sw-remaining', 'Remaining', total.remaining, null, remainingMissing(data))}
     ${summaryTile('sw-deferred', 'Deferred (STRD unbonding)', total.deferred)}</div>`;
   const none = { addresses: '0', usd: '0' };
   const bar = (title, key, text) => segmentBar(title, [
@@ -139,7 +146,8 @@ function planSection(data) {
     ['sw-swept', 'swept', Number(plan.swept.addresses), addressText(plan.swept)],
     ['sw-refund', 'refunded', Number(plan.refunded.addresses), addressText(plan.refunded)],
     ['sw-remaining', 'remaining', Number(plan.remaining.addresses), addressText(plan.remaining)]]);
-  return `<div class="panel"><h2>Current plan <span class="sub">this plan.json only</span></h2>${tiles}${bar}${tierTable(data.progress)}</div>`;
+  return `<div class="panel"><h2>Current plan <span class="sub">this plan.json only</span></h2>${tiles}${bar}
+    <div class="note">bar: swept, refunded and remaining of the planned holders; deferred and excluded are outside the plan</div>${tierTable(data.progress)}</div>`;
 }
 
 function tierTable(p) {
