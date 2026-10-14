@@ -98,6 +98,12 @@ planner), the next-floor ladder (live holders still to sweep at the plan's floor
 list, and the collapsed exclusions, deferred and keyless panels. Without a live snapshot the plan and ledger parts render and the
 live-dependent ones say so.
 
+Under the run line, one progress line and a per-tier table (`progress` in the payload, from the plan and ledger alone) show
+confirmed of total batches, holders and USD, e.g. `Run 2 · floor $1,000 · 3 of 12 batches · 214 of 1,140 holders · $412,000
+of $1,900,000` (`Run 1 · test` for a test plan); a batch counts once its latest ledger event is `confirmed`. A snapshot
+cannot judge a newer transfer: a transfer confirmed after the snapshot's `fetched_at` counts as swept even if the snapshot
+still shows the balance, and is only called refunded by a snapshot taken after it.
+
 Deferred: holders with STRD still unbonding are left out of pass 1 (see the sweep README), so the Deferred tile, sitting
 between Remaining and Refunded, counts the plan's deferred list (above the floor) at live balances and its sub-line
 gives the chain-wide unbonding pool in USD and the latest completion date; the by-token table gains a `Deferred USD`

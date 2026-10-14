@@ -67,7 +67,7 @@ function draw(body) {
     return;
   }
   document.getElementById('sweepBody').innerHTML =
-    runLine(data) + tiles(data) + progress(data) + byDenomTable(data) +
+    runLine(data) + planProgress(data) + tiles(data) + progress(data) + byDenomTable(data) +
     `<div class="two"><div>${batchesPanel(data)}</div><div>${ladderPanel(data)}${refundedPanel(data)}</div></div>` +
     exclusionsPanel(data) + deferredPanel(data) + keylessPanel(data);
 }
@@ -87,6 +87,21 @@ function runLine(data) {
     : `operator holds ${formatAmount(run.operator_strd, 6)} STRD, ${formatAmount(run.fee_estimate_ustrd, 6)} STRD needed for the pending batches`;
   return `<div class="callout">Run ${run.run_id}${run.test ? ' (test)' : ''} · floor $${run.floor_usd} · planned ${formatRelative(run.created_at)} at height ${run.height}
     · ${b.total} batches: ${b.confirmed} confirmed, ${b.submitted} submitted, ${b.failed} failed, ${b.lost} lost, ${b.pending} pending · ${fees}</div>`;
+}
+
+// "Run 2 · floor $1,000 · 3 of 12 batches · 214 of 1,140 holders · $412,000 of $1,900,000" and a per-tier table of
+// confirmed of total; hidden when there is no plan.
+function planProgress(data) {
+  const p = data.progress;
+  if (!p) return '';
+  const count = (done, total) => `${Number(done).toLocaleString()} of ${Number(total).toLocaleString()}`;
+  const usd = (done, total) => `$${money(done)} of $${money(total)}`;
+  const head = `Run ${escapeHtml(p.run_id)} · ${p.test ? 'test' : `floor $${money(p.floor_usd)}`} · ${count(p.batches_confirmed, p.batches)} batches · `
+    + `${count(p.addresses_confirmed, p.addresses)} holders · ${usd(p.usd_confirmed, p.usd)}`;
+  const rows = p.tiers.map((t) => `<tr><td>${escapeHtml(t.name)}</td><td class="num">${count(t.batches_confirmed, t.batches)}</td>
+    <td class="num">${count(t.addresses_confirmed, t.addresses)}</td><td class="num">${usd(t.usd_confirmed, t.usd)}</td></tr>`).join('');
+  return `<div class="plan-progress"><div>${head}</div><table><thead><tr><th>Tier</th><th class="num">Batches</th><th class="num">Holders</th><th class="num">USD</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
 }
 
 function tiles(data) {
