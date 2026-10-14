@@ -25,7 +25,7 @@ RPC = "https://stride-strd-rpc.polkachu.com:443"
 USER_AGENT = "curl/8.0"  # Polkachu rejects the urllib default
 HTTP_TIMEOUT_SECONDS = 30
 PAGE_SIZE = 1000
-READ_WORKERS = 8  # concurrent balance page reads
+READ_WORKERS = 8  # concurrent REST reads for balance pages and per-address prefetch
 REST_BACKOFF_SECONDS = (1, 2, 4, 8)  # sleeps between the five attempts at a throttled or failing REST read
 STRIDED_TIMEOUT_SECONDS = 120
 
@@ -134,6 +134,7 @@ SWEEPABLE_ACCOUNT_TYPES = frozenset({BASE_ACCOUNT}) | VESTING_ACCOUNT_TYPES
 
 # Batches: packed under a gas budget at plan time, simulated at run time, refused over the block limit.
 MAX_ADDRESSES_PER_BATCH = 100
+PREFETCH_SAVE_EVERY = 200  # addresses between cache saves while prefetching
 GAS_BUDGET_PER_BATCH = 40_000_000
 BLOCK_GAS_LIMIT = 100_000_000  # stride-1's consensus max_gas
 GAS_PER_TRANSFER_DEFAULT = 150_000  # until the ledger has a confirmed batch to calibrate from

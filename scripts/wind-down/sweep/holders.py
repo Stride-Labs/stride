@@ -11,6 +11,7 @@ import datetime
 import json
 import pathlib
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -302,74 +303,102 @@ def usd_value(balances: dict[str, int], denoms: dict[str, SweepDenom]) -> Decima
 
 class AccountCache:
     """Auth lookups keyed by address. A type never changes, so a cached entry is final, except a keyless-looking one
-    (no pubkey), which may have signed since and is re-read on every lookup."""
+    (no pubkey), which may have signed since and is re-read on every lookup. `save` merges: it overlays this
+    process's entries on the file's, so a concurrent `warm` and `plan` only ever add to each other's work."""
 
-    def __init__(self, entries: dict[str, AccountInfo]) -> None:
+    def __init__(self, entries: dict[str, AccountInfo], path: pathlib.Path | None = None) -> None:
         self._entries = entries
+        self._path = path  # where `load` read from; `save` without a path writes back here
 
     @classmethod
     def load(cls, path: pathlib.Path = config.ACCOUNTS_CACHE_PATH) -> "AccountCache":
         if not path.exists():
-            return cls(entries={})
+            return cls(entries={}, path=path)
         raw = json.loads(path.read_text())
         return cls(entries={
             address: AccountInfo(type=entry["type"], has_pubkey=entry["has_pubkey"], sequence=int(entry["sequence"]))
             for address, entry in raw.items()
-        })
+        }, path=path)
 
-    def save(self, path: pathlib.Path = config.ACCOUNTS_CACHE_PATH) -> None:
+    def save(self, path: pathlib.Path | None = None) -> None:
+        path = path or self._path or config.ACCOUNTS_CACHE_PATH
         path.parent.mkdir(parents=True, exist_ok=True)
+        merged = {**AccountCache.load(path=path)._entries, **self._entries}
         raw = {address: {"type": info.type, "has_pubkey": info.has_pubkey, "sequence": str(info.sequence)}
-               for address, info in sorted(self._entries.items())}
+               for address, info in sorted(merged.items())}
         tmp = path.with_suffix(".tmp")
         tmp.write_text(json.dumps(raw, indent=1))
         tmp.replace(path)
 
-    def lookup(self, address: str) -> AccountInfo | None:
+    def is_final(self, address: str) -> bool:
         cached = self._entries.get(address)
-        if cached is not None and cached.has_pubkey:
-            return cached
-        try:
-            body = chainio.rest_get(path=f"/cosmos/auth/v1beta1/accounts/{address}")
-        except chainio.NotFound:
-            return None
-        info = account_info(account=body["account"])
-        self._entries[address] = info
+        return cached is not None and cached.has_pubkey
+
+    def lookup(self, address: str) -> AccountInfo | None:
+        if self.is_final(address=address):
+            return self._entries[address]
+        info = read_account(address=address)
+        if info is not None:
+            self._entries[address] = info
         return info
+
+    def store(self, address: str, info: AccountInfo | None) -> None:
+        """Record a read; a missing account (None) stores nothing, as in `lookup`."""
+        if info is not None:
+            self._entries[address] = info
 
 
 class StakingCache:
     """Unbonding lookups keyed by address. A zero answer is final (nothing can create an unbonding entry after v35); a
-    positive one holds until its completion time, after which the STRD is liquid and the address is read again."""
+    positive one holds until its completion time, after which the STRD is liquid and the address is read again. `save`
+    merges: it overlays this process's entries on the file's, so concurrent writers only add to each other."""
 
-    def __init__(self, entries: dict[str, Staked]) -> None:
+    def __init__(self, entries: dict[str, Staked], path: pathlib.Path | None = None) -> None:
         self._entries = entries
+        self._path = path  # where `load` read from; `save` without a path writes back here
 
     @classmethod
     def load(cls, path: pathlib.Path = config.STAKING_CACHE_PATH) -> "StakingCache":
         if not path.exists():
-            return cls(entries={})
+            return cls(entries={}, path=path)
         raw = json.loads(path.read_text())
         return cls(entries={
             address: Staked(ustrd=int(entry["ustrd"]), completes_at=entry["completes_at"])
             for address, entry in raw.items()
-        })
+        }, path=path)
 
-    def save(self, path: pathlib.Path = config.STAKING_CACHE_PATH) -> None:
+    def save(self, path: pathlib.Path | None = None) -> None:
+        path = path or self._path or config.STAKING_CACHE_PATH
         path.parent.mkdir(parents=True, exist_ok=True)
+        merged = {**StakingCache.load(path=path)._entries, **self._entries}
         raw = {address: {"ustrd": str(staked.ustrd), "completes_at": staked.completes_at}
-               for address, staked in sorted(self._entries.items())}
+               for address, staked in sorted(merged.items())}
         tmp = path.with_suffix(".tmp")
         tmp.write_text(json.dumps(raw, indent=1))
         tmp.replace(path)
 
-    def lookup(self, address: str, now: datetime.datetime) -> Staked:
+    def is_final(self, address: str, now: datetime.datetime) -> bool:
         cached = self._entries.get(address)
-        if cached is not None and (cached.ustrd == 0 or parse_chain_time(text=cached.completes_at) > now):
-            return cached
+        return cached is not None and (cached.ustrd == 0 or parse_chain_time(text=cached.completes_at) > now)
+
+    def lookup(self, address: str, now: datetime.datetime) -> Staked:
+        if self.is_final(address=address, now=now):
+            return self._entries[address]
         staked = read_staked(address=address)
         self._entries[address] = staked
         return staked
+
+    def store(self, address: str, staked: Staked) -> None:
+        self._entries[address] = staked
+
+
+def read_account(address: str) -> AccountInfo | None:
+    """The address's auth account, or None when the chain has none."""
+    try:
+        body = chainio.rest_get(path=f"/cosmos/auth/v1beta1/accounts/{address}")
+    except chainio.NotFound:
+        return None
+    return account_info(account=body["account"])
 
 
 def account_info(account: dict) -> AccountInfo:
@@ -377,6 +406,98 @@ def account_info(account: dict) -> AccountInfo:
     base = account.get("base_account") or account.get("base_vesting_account", {}).get("base_account") or account
     return AccountInfo(
         type=account["@type"], has_pubkey=bool(base.get("pub_key")), sequence=int(base.get("sequence", 0)))
+
+
+# ---- prefetch
+
+
+@dataclass(frozen=True)
+class PrefetchResult:
+    read: int  # addresses read from the chain
+    cached: int  # addresses whose entries were already final
+
+
+@dataclass(frozen=True)
+class _AddressRead:
+    address: str
+    read_account: bool
+    account: AccountInfo | None
+    staked: Staked | None  # None when the staking entry was already final
+
+
+def prefetch(
+    addresses: list[str],
+    accounts: AccountCache,
+    staking: StakingCache,
+    now: datetime.datetime,
+    workers: int,
+    on_progress: Callable[[int, int], None] | None = None,
+    read_staking: bool = True,
+) -> PrefetchResult:
+    """Fill both caches for every address whose entries are missing or not final, `workers` reads at a time, saving
+    every PREFETCH_SAVE_EVERY completed addresses and at the end. Workers only read; the caches are written here, on
+    the calling thread. `on_progress(done, total)` is called from the calling thread after each completed address.
+    `read_staking=False` skips the unbonding reads (the test plan never looks at them)."""
+    pending = [
+        address for address in addresses
+        if not (accounts.is_final(address=address) and (not read_staking or staking.is_final(address=address, now=now)))
+    ]
+    result = PrefetchResult(read=len(pending), cached=len(addresses) - len(pending))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [
+            pool.submit(_read_address, address=address, need_account=not accounts.is_final(address=address),
+                        need_staking=read_staking and not staking.is_final(address=address, now=now))
+            for address in pending
+        ]
+        try:
+            for done, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+                _store_read(read=future.result(), accounts=accounts, staking=staking)
+                if on_progress is not None:
+                    on_progress(done, len(pending))
+                if done % config.PREFETCH_SAVE_EVERY == 0:
+                    accounts.save()
+                    staking.save()
+        finally:
+            # Keep what was read before an error: the next run resumes from the caches
+            for future in futures:
+                future.cancel()
+            accounts.save()
+            staking.save()
+    return result
+
+
+def _read_address(address: str, need_account: bool, need_staking: bool) -> _AddressRead:
+    account = read_account(address=address) if need_account else None
+    staked = read_staked(address=address) if need_staking else None
+    return _AddressRead(address=address, read_account=need_account, account=account, staked=staked)
+
+
+def _store_read(read: _AddressRead, accounts: AccountCache, staking: StakingCache) -> None:
+    if read.read_account:
+        accounts.store(address=read.address, info=read.account)
+    if read.staked is not None:
+        staking.store(address=read.address, staked=read.staked)
+
+
+def candidate_addresses(
+    balances: dict[str, dict[str, int]],
+    denoms: list[SweepDenom],
+    floor_usd: Decimal,
+    exclusions: dict[str, Exclusion],
+    inputs: SkipInputs,
+    test_address: str | None,
+) -> list[str]:
+    """The addresses `classify` would look up: at or above the floor (only the test address when given) and past
+    every rule that needs no account."""
+    by_denom = {sweep_denom.denom: sweep_denom for sweep_denom in denoms}
+    return [
+        address for address, coins in balances.items()
+        if (address == test_address if test_address is not None
+            else usd_value(balances=coins, denoms=by_denom) >= floor_usd)
+        and address not in exclusions
+        and skip_reason(address=address, account=None, inputs=inputs, exclusions=exclusions) == ACCOUNT_NOT_FOUND
+    ]
 
 
 # ---- classification
@@ -499,11 +620,20 @@ def read_holder_set(
     accounts: AccountCache,
     staking: StakingCache,
     test_address: str | None,
+    workers: int = config.READ_WORKERS,
 ) -> HolderSet:
     height = chainio.latest_height()
     denoms = resolve_denoms()
     balances = read_balances(denoms=denoms)
     inputs = read_skip_inputs()
+
+    # Answer the per-address questions in parallel so classify's lookups are cache hits
+    now = chainio.now()
+    candidates = candidate_addresses(balances=balances, denoms=denoms, floor_usd=floor_usd, exclusions=exclusions,
+                                     inputs=inputs, test_address=test_address)
+    prefetch(addresses=candidates, accounts=accounts, staking=staking, now=now, workers=workers,
+             read_staking=test_address is None)
+
     return classify(denoms=denoms, balances=balances, floor_usd=floor_usd, exclusions=exclusions, inputs=inputs,
-                    accounts=accounts, staking=staking, now=chainio.now(), test_address=test_address,
+                    accounts=accounts, staking=staking, now=now, test_address=test_address,
                     height=height)
