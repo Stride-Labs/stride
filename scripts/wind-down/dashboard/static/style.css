@@ -214,8 +214,13 @@ svg .tx { fill: var(--accent); font-size: 11px; font-weight: 600; }
 
 /* sweep */
 #view-sweep .callout { margin: 0 0 14px; padding: 8px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-weight: 600; }
-#view-sweep .plan-progress { margin: 0 0 14px; }
-#view-sweep .plan-progress table { width: auto; margin-top: 6px; }
+#view-sweep .tiles { padding: 10px 12px 0; margin-bottom: 0; }
+#view-sweep .tiles-3 { grid-template-columns: repeat(3, 1fr); }
+#view-sweep .tiles-5 { grid-template-columns: repeat(5, 1fr); }
+#view-sweep .seg-title { padding: 8px 12px 0; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+#view-sweep .seg .legend { border-bottom: 0; padding-top: 4px; padding-bottom: 0; }
+#view-sweep .tier-table { width: auto; margin: 0 12px 12px; }
+#view-sweep .bar.mini { height: 6px; min-width: 90px; }
 #view-sweep .tile { border-top: 3px solid var(--line); }
 #view-sweep .sw-swept { border-top-color: var(--s-pool); } #view-sweep .sw-remaining { border-top-color: var(--s-staked); }
 #view-sweep .sw-deferred { border-top-color: var(--s-ica); } #view-sweep .sw-refund { border-top-color: var(--s-unbond); } #view-sweep .sw-excluded { border-top-color: var(--s-flight); } #view-sweep .sw-floor { border-top-color: var(--idle-bg); }

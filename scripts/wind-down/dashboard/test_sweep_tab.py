@@ -130,6 +130,32 @@ class ComposeTests(unittest.TestCase):
         # every live address lands in exactly one bucket: 60.05 + 30 + 12.05 + 18.10 + 99 + 0.60 + 18 (escrow is skipped, not counted)
         self.assertEqual(sum(Decimal(totals[part]["usd"]) for part in parts), Decimal("237.80"))
 
+    def test_summary_total_is_cumulative_and_chain_wide(self) -> None:
+        total = self.data["summary"]["total"]
+        self.assertEqual(total["swept"], {"addresses": "1", "usd": "60.05"})
+        # refunded (30) + pending (12.05) + new (18) + dust (0.60): not swept, excluded, skipped or deferred
+        self.assertEqual(total["remaining"], {"addresses": "4", "usd": "60.65"})
+        self.assertEqual(total["deferred"], {"addresses": "1", "usd": "18.10"})
+
+    def test_summary_plan_covers_this_plan_only(self) -> None:
+        plan = self.data["summary"]["plan"]
+        self.assertEqual(plan["swept"], {"addresses": "1", "usd": "60.05"})
+        self.assertEqual(plan["remaining"], {"addresses": "1", "usd": "12.05"})
+        self.assertEqual(plan["deferred"], {"addresses": "1", "usd": "18.10"})
+        self.assertEqual(plan["excluded"], {"addresses": "1", "usd": "99.00"})
+        self.assertEqual(plan["refunded"], {"addresses": "1", "usd": "30.00"})
+        self.assertGreater(int(self.data["summary"]["total"]["remaining"]["addresses"]), int(plan["remaining"]["addresses"]))
+
+    def test_summary_plan_is_none_without_a_plan(self) -> None:
+        data = sweep_tab.compose(plan=None, events=EVENTS, live=LIVE, exclusions={}, live_fetched_at=FETCHED_AT)
+        self.assertIsNone(data["summary"]["plan"])
+        self.assertEqual(data["summary"]["total"]["swept"]["addresses"], "2")
+
+    def test_summary_total_remaining_is_none_without_a_live_snapshot(self) -> None:
+        data = sweep_tab.compose(plan=make_plan(), events=EVENTS, live=None, exclusions={}, live_fetched_at=None)
+        self.assertIsNone(data["summary"]["total"]["remaining"])
+        self.assertEqual(data["summary"]["total"]["deferred"], {"addresses": "1", "usd": "24.05"})  # at the plan's USD
+
     def test_keyless_and_exclusions_sections(self) -> None:
         self.assertEqual(self.data["keyless"], {"addresses": "1", "usd": "12.05", "swept": "0"})
         data = sweep_tab.compose(plan=make_plan(), events=EVENTS, live=LIVE,

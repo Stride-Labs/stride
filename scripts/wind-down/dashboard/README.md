@@ -90,24 +90,27 @@ Per address: `swept` (a confirmed `sweep_transfer` in any run and none of the tr
 (transferred, and a transferred denom is held again beyond the vesting remainder the plan recorded as `locked`: the 24 h
 timeout refunded it; the next `plan` re-sweeps it), `remaining` (in the current plan, no confirmed transfer yet). Swept and
 refunded cover every address the ledger swept, so a re-plan at a lower floor keeps the earlier runs in the Swept tile; the
-plan's `locked` map covers every vesting holder, including one swept in an earlier run and absent from the current batches. Tiles: swept, remaining, refunded, excluded (the exclusions file, live USD),
-below floor (live holders under the plan's floor; the sub-line counts holders above the floor that are not in the
-plan, which appeared or were refunded since). The by-token table, the runs-and-batches table (every batch of the
+plan's `locked` map covers every vesting holder, including one swept in an earlier run and absent from the current batches. The by-token table (swept vs remaining by USD as a thin bar per token), the runs-and-batches table (every batch of the
 current plan plus earlier runs' batches from the ledger; a red `N skipped` badge means the chain disagreed with the
 planner), the next-floor ladder (live holders still to sweep at the plan's floor and at $10, $5, $1, $0), the refunded
 list, and the collapsed exclusions, deferred and keyless panels. Without a live snapshot the plan and ledger parts render and the
 live-dependent ones say so.
 
-Under the run line, one progress line and a per-tier table (`progress` in the payload, from the plan and ledger alone) show
-confirmed of total batches, holders and USD, e.g. `Run 2 · floor $1,000 · 3 of 12 batches · 214 of 1,140 holders · $412,000
-of $1,900,000` (`Run 1 · test` for a test plan); a batch counts once its latest ledger event is `confirmed`. A snapshot
+The summary area has two sections. TOTAL (`summary.total`) is cumulative over every run in the ledger and chain-wide:
+swept (every address with a confirmed transfer in any run that is not refunded now), remaining (the live snapshot's
+holders at or above $0 that are not swept, excluded, skipped by the chain rules or deferred, so the next-floor ladder's
+$0 rung minus the deferred; `null` and "n/a" without a live snapshot) and deferred (the plan's deferred list, STRD
+unbonding), with two bars (by USD and by addresses, swept / remaining / deferred). CURRENT PLAN (`summary.plan`, `null`
+without a plan) covers this plan.json alone: swept (addresses of its batches whose latest ledger event is `confirmed`,
+minus the refunded), remaining (addresses of its unconfirmed batches), deferred, excluded and refunded, with one address
+bar (swept / refunded / remaining) and a per-tier table of confirmed of total batches and holders (`progress`). A batch
+counts once its latest ledger event is `confirmed`. Without a plan only TOTAL renders, from the ledger.
+A snapshot
 cannot judge a newer transfer: a transfer confirmed after the snapshot's `balances_at` (stamped when the balance read starts; `fetched_at` for older snapshots) counts as swept even if the snapshot
 still shows the balance, and is only called refunded by a snapshot taken after it. An address re-swept after a snapshot still shows Refunded (from its
 earlier, refunded transfer) until the next snapshot.
 
-Deferred: holders with STRD still unbonding are left out of pass 1 (see the sweep README), so the Deferred tile, sitting
-between Remaining and Refunded, counts the plan's deferred list (above the floor) at live balances and its sub-line
-gives the chain-wide unbonding pool in USD and the latest completion date; the by-token table gains a `Deferred USD`
+Deferred: holders with STRD still unbonding are left out of pass 1 (see the sweep README), so the Deferred tiles count the plan's deferred list (above the floor) at live balances (`deferred.staked_usd` in the payload is the chain-wide unbonding pool); the by-token table gains a `Deferred USD`
 column; and a collapsed Deferred panel lists the 25 largest by plan USD with their staked STRD and completion. The
 list is the plan's, while `staked_strd` in the payload is the chain-wide pool figure (`read_staking_pool`), so the two
 do not match. Deferred addresses are never counted as below floor or unplanned.

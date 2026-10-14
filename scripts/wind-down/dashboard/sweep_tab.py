@@ -98,6 +98,7 @@ def compose(
             "run": None,
             "progress": None,
             "totals": None,
+            "summary": _summary(plan=None, events=events, live=live, address_state=None),
             "by_denom": None,
             "batches": [],
             "ladder": None,
@@ -135,6 +136,7 @@ def compose(
         )
         if address_state is not None
         else None,
+        "summary": _summary(plan=plan, events=events, live=live, address_state=address_state, refunds=refunds),
         "by_denom": _by_denom(plan=plan, address_state=address_state, transferred=transferred, balances=balances)
         if address_state is not None
         else None,
@@ -379,6 +381,202 @@ def _totals(
     }
 
 
+def _summary(
+    plan: planner.Plan | None,
+    events: list[ledger.Event],
+    live: dict[str, Any] | None,
+    address_state: dict[str, str] | None,
+    refunds: list[tuple[ledger.Transfer, str]] | None = None,
+) -> dict[str, Any]:
+    """The Sweep tab's summary area: `total` is cumulative and chain-wide, `plan` is the current plan.json alone and
+    None without a plan. Each figure is {addresses, usd}."""
+    transferred = ledger.confirmed_transfers(events=events)
+    if plan is None:
+        # Without a plan only the ledger is known (no exclusions or skips to judge remaining by), priced by the snapshot
+        return {"total": _ledger_only_total(transferred=transferred, live=live), "plan": None}
+    balances = _live_balances(live=live)
+    by_denom = {denom.denom: denom for denom in plan.denoms}
+    # Without a live snapshot nothing can be judged refunded, so every transferred address counts as swept
+    states = (
+        address_state
+        if address_state is not None
+        else _address_states(plan=plan, events=events, transferred=transferred, balances={}, snapshot_at=None)
+    )
+    return {
+        "total": _total_summary(
+            plan=plan, transferred=transferred, address_state=states, live=live, balances=balances, by_denom=by_denom
+        ),
+        "plan": _plan_summary(
+            plan=plan, events=events, refunds=refunds or [], balances=balances, live=live, by_denom=by_denom
+        ),
+    }
+
+
+def _total_summary(
+    plan: planner.Plan,
+    transferred: dict[str, list[ledger.Transfer]],
+    address_state: dict[str, str],
+    live: dict[str, Any] | None,
+    balances: dict[str, dict[str, int]],
+    by_denom: dict[str, holders.SweepDenom],
+) -> dict[str, Any]:
+    """TOTAL, over every run in the ledger and the whole chain.
+    swept: every address with a confirmed transfer in any run that is not refunded now (the tiles' `totals.swept`).
+    remaining: every sweepable holder not yet swept, in the live snapshot at or above $0: not swept, not excluded, not
+    skipped by the chain rules and not deferred (the ladder's $0 rung minus the deferred); None without a live snapshot.
+    deferred: the current plan's deferred list (the only source), valued live when a snapshot exists."""
+    swept = [address for address, state in address_state.items() if state == STATE_SWEPT]
+    swept_usd = sum(
+        (_transfer_usd(transfer=transfer, by_denom=by_denom) for address in swept for transfer in transferred[address]),
+        Decimal(0),
+    )
+    deferred_addresses = {deferred.address for deferred in plan.deferred}
+    remaining = (
+        {
+            address: usd
+            for address, usd in _unswept_values(
+                plan=plan, address_state=address_state, balances=balances, by_denom=by_denom
+            ).items()
+            if address not in deferred_addresses
+        }
+        if live is not None
+        else None
+    )
+    return {
+        "swept": _bucket(count=len(swept), usd=swept_usd),
+        "remaining": _bucket(count=len(remaining), usd=sum(remaining.values(), Decimal(0)))
+        if remaining is not None
+        else None,
+        "deferred": _deferred_bucket(plan=plan, live=live, balances=balances, by_denom=by_denom),
+    }
+
+
+def _ledger_only_total(transferred: dict[str, list[ledger.Transfer]], live: dict[str, Any] | None) -> dict[str, Any]:
+    """TOTAL without a plan: every address with a confirmed transfer, valued at the live snapshot's prices when there
+    is one (0.00 otherwise); remaining is None because the exclusions and chain skips live in the plan."""
+    prices = {
+        entry["denom"]: holders.SweepDenom(
+            denom=entry["denom"],
+            symbol=entry["symbol"],
+            decimals=int(entry["decimals"]),
+            price_usd=Decimal(entry["price_usd"]),
+            destination=entry["destination"],
+            channel=entry["channel"],
+        )
+        for entry in (live["denoms"] if live is not None else [])
+    }
+    swept_usd = sum(
+        (_transfer_usd(transfer=transfer, by_denom=prices) for transfers in transferred.values() for transfer in transfers),
+        Decimal(0),
+    )
+    return {
+        "swept": _bucket(count=len(transferred), usd=swept_usd),
+        "remaining": None,
+        "deferred": _bucket(count=0, usd=Decimal(0)),
+    }
+
+
+def _plan_summary(
+    plan: planner.Plan,
+    events: list[ledger.Event],
+    refunds: list[tuple[ledger.Transfer, str]],
+    balances: dict[str, dict[str, int]],
+    live: dict[str, Any] | None,
+    by_denom: dict[str, holders.SweepDenom],
+) -> dict[str, dict[str, str]]:
+    """CURRENT PLAN, this plan.json alone.
+    swept: addresses in the plan's batches whose latest ledger event is `confirmed`, minus the refunded ones.
+    remaining: addresses of the plan's batches that are not confirmed (the tiles' `totals.remaining`, valued live when
+    a snapshot exists, else at the plan's USD).
+    deferred / excluded: the plan's lists. refunded: addresses of the plan's batches with a refunded transfer."""
+    states = ledger.batch_states(events=events)
+    current = {batch.id for _, batch in plan.pending_batches()}
+    confirmed = {batch.id for _, batch in plan.pending_batches() if states.get(batch.id) == ledger.BatchState.CONFIRMED}
+    confirmed_transfers = [
+        transfer
+        for event in events
+        if event.kind == ledger.Kind.CONFIRMED and event.batch_id in confirmed
+        for transfer in event.transfers
+    ]
+    refunded_pairs = {(transfer.address, transfer.denom) for transfer, batch_id in refunds if batch_id in current}
+    refunded_addresses = {address for address, _ in refunded_pairs}
+    swept_addresses = {
+        planned.address
+        for _, batch in plan.pending_batches()
+        if batch.id in confirmed
+        for planned in batch.addresses
+        if planned.address not in refunded_addresses
+    }
+    remaining = [
+        planned
+        for _, batch in plan.pending_batches()
+        if batch.id not in confirmed
+        for planned in batch.addresses
+    ]
+    locked = _locked(plan=plan)
+
+    swept_usd = sum(
+        (
+            _transfer_usd(transfer=transfer, by_denom=by_denom)
+            for transfer in confirmed_transfers
+            if transfer.address in swept_addresses
+        ),
+        Decimal(0),
+    )
+    remaining_usd = sum(
+        (
+            holders.usd_value(balances=balances.get(planned.address, {}), denoms=by_denom)
+            if live is not None
+            else planned.usd
+            for planned in remaining
+        ),
+        Decimal(0),
+    )
+    refunded_usd = holders.usd_value(
+        balances=_sum_back(pairs=refunded_pairs, balances=balances, locked=locked), denoms=by_denom
+    )
+    excluded_usd = sum(
+        (
+            holders.usd_value(balances=balances.get(excluded.address, {}), denoms=by_denom)
+            if live is not None
+            else excluded.usd
+            for excluded in plan.excluded
+        ),
+        Decimal(0),
+    )
+    return {
+        "swept": _bucket(count=len(swept_addresses), usd=swept_usd),
+        "remaining": _bucket(count=len(remaining), usd=remaining_usd),
+        "deferred": _deferred_bucket(plan=plan, live=live, balances=balances, by_denom=by_denom),
+        "excluded": _bucket(count=len(plan.excluded), usd=excluded_usd),
+        "refunded": _bucket(count=len(refunded_addresses), usd=refunded_usd),
+    }
+
+
+def _sum_back(
+    pairs: set[tuple[str, str]], balances: dict[str, dict[str, int]], locked: dict[str, dict[str, int]]
+) -> dict[str, int]:
+    """Per denom, what came back across the (address, denom) pairs, beyond each address's locked remainder."""
+    back: dict[str, int] = {}
+    for address, denom in pairs:
+        back[denom] = back.get(denom, 0) + _back(address=address, denom=denom, balances=balances, locked=locked)
+    return back
+
+
+def _deferred_bucket(
+    plan: planner.Plan,
+    live: dict[str, Any] | None,
+    balances: dict[str, dict[str, int]],
+    by_denom: dict[str, holders.SweepDenom],
+) -> dict[str, str]:
+    usd = (
+        _live_deferred_usd(plan=plan, balances=balances, by_denom=by_denom)
+        if live is not None
+        else sum((deferred.usd for deferred in plan.deferred), Decimal(0))
+    )
+    return _bucket(count=len(plan.deferred), usd=usd)
+
+
 def _refunded_usd(
     address: str,
     transferred: dict[str, list[ledger.Transfer]],
@@ -528,6 +726,23 @@ def _batches(
     return rows
 
 
+def _unswept_values(
+    plan: planner.Plan,
+    address_state: dict[str, str],
+    balances: dict[str, dict[str, int]],
+    by_denom: dict[str, holders.SweepDenom],
+) -> dict[str, Decimal]:
+    """Live USD of every holder still to sweep: everyone with a balance except the swept, the excluded and the
+    chain-skipped. Deferred holders are included."""
+    out = {address for address, state in address_state.items() if state == STATE_SWEPT}
+    out |= {excluded.address for excluded in plan.excluded} | {skipped.address for skipped in plan.skipped}
+    return {
+        address: holders.usd_value(balances=coins, denoms=by_denom)
+        for address, coins in balances.items()
+        if address not in out
+    }
+
+
 def _ladder(
     plan: planner.Plan,
     address_state: dict[str, str],
@@ -535,11 +750,7 @@ def _ladder(
     by_denom: dict[str, holders.SweepDenom],
 ) -> list[dict[str, str]]:
     """Live holders still to sweep: everyone with a balance except the swept, the excluded and the chain-skipped."""
-    out = {address for address, state in address_state.items() if state == STATE_SWEPT}
-    out |= {excluded.address for excluded in plan.excluded} | {skipped.address for skipped in plan.skipped}
-    values = [
-        holders.usd_value(balances=coins, denoms=by_denom) for address, coins in balances.items() if address not in out
-    ]
+    values = list(_unswept_values(plan=plan, address_state=address_state, balances=balances, by_denom=by_denom).values())
     floors = [plan.floor_usd] + [floor for floor in sweep_config.LADDER_FLOORS if floor < plan.floor_usd]
     return [
         {

@@ -62,12 +62,17 @@ function showMessage(text) {
 function draw(body) {
   const data = body.data;
   document.getElementById('sweepHead').innerHTML = headLine(body);
-  if (!data || !data.run) {
-    document.getElementById('sweepBody').innerHTML = '<div class="placeholder">no plan yet: run `python3 scripts/wind-down/sweep/cli.py plan …`</div>';
+  if (!data) {
+    document.getElementById('sweepBody').innerHTML = '<div class="placeholder">no sweep state to show</div>';
+    return;
+  }
+  if (!data.run) {
+    document.getElementById('sweepBody').innerHTML = totalSection(data) +
+      '<div class="placeholder">no plan yet: run `python3 scripts/wind-down/sweep/cli.py plan …`</div>';
     return;
   }
   document.getElementById('sweepBody').innerHTML =
-    runLine(data) + planProgress(data) + tiles(data) + progress(data) + byDenomTable(data) +
+    totalSection(data) + runLine(data) + planSection(data) + byDenomTable(data) +
     `<div class="two"><div>${batchesPanel(data)}</div><div>${ladderPanel(data)}${refundedPanel(data)}</div></div>` +
     exclusionsPanel(data) + deferredPanel(data) + keylessPanel(data);
 }
@@ -90,62 +95,83 @@ function runLine(data) {
     · ${b.total} batches: ${b.confirmed} confirmed, ${b.submitted} submitted, ${b.failed} failed, ${b.lost} lost, ${b.pending} pending · ${fees}</div>`;
 }
 
-// "Run 2 · floor $1,000 · 3 of 12 batches · 214 of 1,140 holders · $412,000 of $1,900,000" and a per-tier table of
-// confirmed of total; hidden when there is no plan.
-function planProgress(data) {
-  const p = data.progress;
+// One summary tile: the address count, with the USD (or "n/a" when the figure is null) and an optional note below.
+function summaryTile(cls, label, bucket, note) {
+  const value = bucket ? Number(bucket.addresses).toLocaleString() : 'n/a';
+  const sub = bucket ? `addresses · $${money(bucket.usd)}` : 'needs a live holder read';
+  return `<div class="tile ${cls}"><div class="k">${label}</div><div class="v">${value}</div><div class="s">${sub}${note ? ' · ' + note : ''}</div></div>`;
+}
+
+// A stacked bar with a legend; each part is [class, label, value, text]. 
+function segmentBar(title, parts) {
+  const total = parts.reduce((sum, part) => sum + part[2], 0);
+  const share = (value) => (total ? 100 * value / total : 0);
+  const legend = parts.map(([cls, label, value, text]) => `<span><i class="${cls}"></i>${label} ${text} (${share(value).toFixed(1)}%)</span>`).join('');
+  const bar = parts.map(([cls, , value]) => `<span class="${cls}" style="width:${share(value).toFixed(2)}%"></span>`).join('');
+  return `<div class="seg"><div class="seg-title">${title}</div><div class="legend">${legend}</div><div class="progress"><div class="bar">${bar}</div></div></div>`;
+}
+
+function addressText(bucket) { return `${Number(bucket.addresses).toLocaleString()} addr`; }
+function usdText(bucket) { return `$${money(bucket.usd)}`; }
+
+// TOTAL: every run in the ledger, chain-wide. Remaining is null without a live snapshot.
+function totalSection(data) {
+  const total = data.summary.total;
+  const tiles = `<div class="tiles tiles-3">${summaryTile('sw-swept', 'Swept', total.swept)}${summaryTile('sw-remaining', 'Remaining', total.remaining)}
+    ${summaryTile('sw-deferred', 'Deferred (STRD unbonding)', total.deferred)}</div>`;
+  const none = { addresses: '0', usd: '0' };
+  const bar = (title, key, text) => segmentBar(title, [
+    ['sw-swept', 'swept', Number(total.swept[key]), text(total.swept)],
+    ['sw-remaining', 'remaining', Number((total.remaining || none)[key]), total.remaining ? text(total.remaining) : 'n/a'],
+    ['sw-deferred', 'deferred', Number(total.deferred[key]), text(total.deferred)]]);
+  return `<div class="panel"><h2>Total <span class="sub">every run in the ledger, chain-wide; remaining is the live holders not yet swept, excluded, skipped or deferred</span></h2>
+    ${tiles}${bar('By USD', 'usd', usdText)}${bar('By addresses', 'addresses', addressText)}</div>`;
+}
+
+// CURRENT PLAN: this plan.json alone, with the per-tier table folded under the bar.
+function planSection(data) {
+  const plan = data.summary.plan;
+  if (!plan) return '';
+  const tiles = `<div class="tiles tiles-5">${summaryTile('sw-swept', 'Swept', plan.swept)}${summaryTile('sw-remaining', 'Remaining', plan.remaining)}
+    ${summaryTile('sw-deferred', 'Deferred', plan.deferred)}${summaryTile('sw-excluded', 'Excluded', plan.excluded)}
+    ${summaryTile('sw-refund', 'Refunded', plan.refunded, 'the next plan re-sweeps')}</div>`;
+  const bar = segmentBar('By addresses', [
+    ['sw-swept', 'swept', Number(plan.swept.addresses), addressText(plan.swept)],
+    ['sw-refund', 'refunded', Number(plan.refunded.addresses), addressText(plan.refunded)],
+    ['sw-remaining', 'remaining', Number(plan.remaining.addresses), addressText(plan.remaining)]]);
+  return `<div class="panel"><h2>Current plan <span class="sub">this plan.json only</span></h2>${tiles}${bar}${tierTable(data.progress)}</div>`;
+}
+
+function tierTable(p) {
   if (!p) return '';
   const count = (done, total) => `${Number(done).toLocaleString()} of ${Number(total).toLocaleString()}`;
-  const usd = (done, total) => `$${money(done)} of $${money(total)}`;
-  const head = `Run ${escapeHtml(p.run_id)} · ${p.test ? 'test' : `floor $${money(p.floor_usd)}`} · ${count(p.batches_confirmed, p.batches)} batches · `
-    + `${count(p.addresses_confirmed, p.addresses)} holders · ${usd(p.usd_confirmed, p.usd)}`;
   const rows = p.tiers.map((t) => `<tr><td>${escapeHtml(t.name)}</td><td class="num">${count(t.batches_confirmed, t.batches)}</td>
-    <td class="num">${count(t.addresses_confirmed, t.addresses)}</td><td class="num">${usd(t.usd_confirmed, t.usd)}</td></tr>`).join('');
-  return `<div class="plan-progress"><div>${head}</div><table><thead><tr><th>Tier</th><th class="num">Batches</th><th class="num">Holders</th><th class="num">USD</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>`;
+    <td class="num">${count(t.addresses_confirmed, t.addresses)}</td></tr>`).join('');
+  return `<table class="tier-table"><thead><tr><th>Tier</th><th class="num">Batches confirmed</th><th class="num">Holders confirmed</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function tiles(data) {
-  const t = data.totals;
-  if (!t) return '<div class="placeholder">totals need a live holder read</div>';
-  const tile = (cls, label, bucket, sub) =>
-    `<div class="tile ${cls}"><div class="k">${label}</div><div class="v">${Number(bucket.addresses).toLocaleString()}</div><div class="s">addresses · $${money(bucket.usd)}${sub ? ' · ' + sub : ''}</div></div>`;
-  return `<div class="tiles">${tile('sw-swept', 'Swept', t.swept)}${tile('sw-remaining', 'Remaining in plan', t.remaining)}
-    ${deferredTile(data)}${tile('sw-refund', 'Refunded', t.refunded, 'transfer timed out; the next plan re-sweeps')}${tile('sw-excluded', 'Excluded', t.excluded)}
-    ${tile('sw-floor', 'Below floor', t.below_floor, `${Number(t.unplanned.addresses).toLocaleString()} unplanned above floor ($${money(t.unplanned.usd)})`)}</div>`;
-}
-
-function deferredTile(data) {
-  const d = data.deferred;
-  const until = d && d.completes_at ? d.completes_at.slice(0, 10) : 'n/a';
-  const sub = d && d.staked_usd !== null ? `STRD unbonding until ${until}: $${money(d.staked_usd)} chain-wide` : 'STRD unbonding until n/a: n/a chain-wide';
-  return `<div class="tile sw-deferred"><div class="k">Deferred</div><div class="v">${Number(data.totals.deferred.addresses).toLocaleString()}</div><div class="s">addresses · $${money(data.totals.deferred.usd)} · ${sub}</div></div>`;
-}
-
-function progress(data) {
-  const t = data.totals;
-  if (!t) return '';
-  const parts = [['sw-swept', 'swept', t.swept.usd], ['sw-refund', 'refunded', t.refunded.usd], ['sw-remaining', 'remaining in plan', t.remaining.usd],
-                 ['sw-deferred', 'deferred', t.deferred.usd],
-                 ['sw-floor', 'below floor', t.below_floor.usd], ['sw-floor', 'unplanned', t.unplanned.usd]];
-  const total = parts.reduce((sum, [, , usd]) => sum + Number(usd), 0) || 1;
-  const legend = parts.map(([cls, label, usd]) => `<span><i class="${cls}"></i>${label} ${(100 * Number(usd) / total).toFixed(1)}%</span>`).join('');
-  const bar = parts.map(([cls, , usd]) => `<span class="${cls}" style="width:${(100 * Number(usd) / total).toFixed(2)}%"></span>`).join('');
-  return `<div class="panel"><h2>Progress <span class="sub">by USD at the plan's prices; excluded accounts not counted</span></h2>
-    <div class="legend">${legend}</div><div class="progress"><div class="bar">${bar}</div></div></div>`;
+// A thin swept-versus-remaining bar by USD for one token row; nothing when both are zero.
+function miniBar(d) {
+  const swept = Number(d.swept.usd);
+  const remaining = Number(d.remaining.usd);
+  const total = swept + remaining;
+  if (!total) return '';
+  return `<div class="bar mini"><span class="sw-swept" style="width:${(100 * swept / total).toFixed(2)}%"></span><span class="sw-remaining" style="width:${(100 * remaining / total).toFixed(2)}%"></span></div>`;
 }
 
 function byDenomTable(data) {
   if (!data.by_denom) return '';
   const rows = data.by_denom.map((d) => `<tr>
     <td>${escapeHtml(d.symbol)}</td><td class="muted">${escapeHtml(d.destination)} · ${escapeHtml(d.channel)}</td>
-    <td class="num">${d.swept.addresses}</td><td class="num">${formatAmount(d.swept.amount, Number(d.decimals))}</td><td class="num">$${money(d.swept.usd)}</td>
-    <td class="num">${d.remaining.addresses}</td><td class="num">${formatAmount(d.remaining.amount, Number(d.decimals))}</td><td class="num">$${money(d.remaining.usd)}</td>
+    <td class="num">${d.swept.addresses}</td><td class="num">${d.remaining.addresses}</td>
+    <td class="num">${formatAmount(d.swept.amount, Number(d.decimals))}</td><td class="num">${formatAmount(d.remaining.amount, Number(d.decimals))}</td>
+    <td class="num">$${money(d.swept.usd)}</td><td class="num">$${money(d.remaining.usd)}</td>
     <td class="num ${d.refunded_addresses !== '0' ? 't-warn' : 'muted'}">${d.refunded_addresses}</td>
-    <td class="num">$${money(d.excluded_usd)}</td><td class="num">$${money(d.below_floor_usd)}</td><td class="num">$${money(d.deferred_usd)}</td></tr>`).join('');
+    <td class="num">$${money(d.excluded_usd)}</td><td class="num">$${money(d.below_floor_usd)}</td><td class="num">$${money(d.deferred_usd)}</td>
+    <td>${miniBar(d)}</td></tr>`).join('');
   return `<div class="panel"><h2>By token <span class="sub">live balances of planned and excluded holders; swept amounts from the ledger's transfer events</span></h2>
-    <div class="table-scroll"><table><thead><tr><th>Token</th><th>Destination</th><th class="num">Swept addr</th><th class="num">Swept amount</th><th class="num">Swept USD</th>
-    <th class="num">Remaining addr</th><th class="num">Remaining amount</th><th class="num">Remaining USD</th><th class="num">Refunded</th><th class="num">Excluded USD</th><th class="num">Below floor USD</th><th class="num">Deferred USD</th></tr></thead>
+    <div class="table-scroll"><table><thead><tr><th>Token</th><th>Destination</th><th class="num">Swept addr</th><th class="num">Remaining addr</th><th class="num">Swept amount</th><th class="num">Remaining amount</th>
+    <th class="num">Swept USD</th><th class="num">Remaining USD</th><th class="num">Refunded</th><th class="num">Excluded USD</th><th class="num">Below floor USD</th><th class="num">Deferred USD</th><th>Swept / remaining</th></tr></thead>
     <tbody>${rows}</tbody></table></div></div>`;
 }
 
