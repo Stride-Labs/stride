@@ -756,6 +756,38 @@ class ReadBalancesTests(unittest.TestCase):
         printed.assert_called_once_with("balances: ustrd: 6 rows over 3 pages for a total of 6 with a repeated address; "
                                         "re-reading by key")
 
+    def test_a_failed_first_page_of_a_later_denom_rereads_only_that_denom_by_key(self) -> None:
+        owners = {"ustrd": [(f"a{index}", "5") for index in range(4)], ATOM: [("b0", "1"), ("b1", "2"), ("b2", "3")]}
+        calls: list[dict] = []
+        key_reads: list[str] = []
+
+        def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None,
+                     base: str = config.REST) -> dict:
+            calls.append(dict(params))
+            if params["denom"] == ATOM:
+                raise chainio.ChainError("timed out")
+            offset = int(params["pagination.offset"])
+            window = owners["ustrd"][offset:offset + 2]
+            body = {"denom_owners": [{"address": a, "balance": {"denom": "ustrd", "amount": v}} for a, v in window],
+                    "pagination": {"next_key": None, "total": "4"}}
+            return body
+
+        def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None,
+                               base: str = config.REST) -> list:
+            key_reads.append(params["denom"])
+            return [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners[params["denom"]]]
+
+        with mock.patch.object(config, "PAGE_SIZE", 2), mock.patch.object(chainio, "latest_height", return_value=777), \
+                mock.patch.object(chainio, "rest_get", side_effect=rest_get), \
+                mock.patch.object(chainio, "rest_get_all_pages", side_effect=rest_get_all_pages), \
+                mock.patch("builtins.print"):
+            balances = holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM], workers=2)
+
+        self.assertEqual(key_reads, [ATOM])
+        self.assertEqual(len(balances), 7)
+        self.assertEqual(balances["b2"], {ATOM: 3})
+        self.assertEqual([c["pagination.offset"] for c in calls if c["denom"] == "ustrd"], ["0", "2"])
+
     def test_a_refused_height_reads_every_denom_by_key(self) -> None:
         owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: [("a", "1")]}
         balances, calls = self.run_read(owners=owners, page_size=2, refuse_pinned=True)

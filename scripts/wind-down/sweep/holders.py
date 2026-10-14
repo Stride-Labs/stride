@@ -231,9 +231,12 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.BALANCE_WORKER
             other_first_pages = [
                 pool.submit(_owner_page, denom=sweep_denom.denom, offset=0, height=height) for sweep_denom in denoms[1:]
             ]
-            first_pages = [first_page, *(future.result() for future in other_first_pages)]
+            first_pages: list[dict | None] = [
+                first_page, *(_first_page_or_none(sweep_denom=d, future=f) for d, f in zip(denoms[1:], other_first_pages))
+            ]
             # The largest denom's pages are queued first so the longest read is done before the pin can expire
-            by_size = sorted(range(len(denoms)), key=lambda index: -int(first_pages[index]["pagination"]["total"]))
+            sized = [index for index, page in enumerate(first_pages) if page is not None]
+            by_size = sorted(sized, key=lambda index: -int(first_pages[index]["pagination"]["total"]))
             later_pages: list[list[concurrent.futures.Future]] = [[] for _ in denoms]
             for index in by_size:
                 total = int(first_pages[index]["pagination"]["total"])
@@ -242,7 +245,7 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.BALANCE_WORKER
                     for offset in range(config.PAGE_SIZE, total, config.PAGE_SIZE)
                 ]
             pages_by_denom = [
-                _denom_pages(sweep_denom=sweep_denom, first_page=page, futures=futures)
+                None if page is None else _denom_pages(sweep_denom=sweep_denom, first_page=page, futures=futures)
                 for sweep_denom, page, futures in zip(denoms, first_pages, later_pages)
             ]
         except BaseException:
@@ -256,6 +259,15 @@ def read_balances(denoms: list[SweepDenom], workers: int = config.BALANCE_WORKER
         for sweep_denom, pages in zip(denoms, pages_by_denom)
     ]
     return _assemble_balances(denoms=denoms, owners_by_denom=owners_by_denom)
+
+
+def _first_page_or_none(sweep_denom: SweepDenom, future: concurrent.futures.Future) -> dict | None:
+    """A denom's pinned first page, or None when it failed after its retries: that denom is re-read by key."""
+    try:
+        return future.result()
+    except chainio.ChainError as error:
+        print(f"balances: {sweep_denom.denom}: the pinned first page failed ({error}); re-reading by key")
+        return None
 
 
 def _denom_pages(
