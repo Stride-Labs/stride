@@ -1,6 +1,7 @@
 """chainio: the REST wrapper's error mapping and pagination, with urllib patched out."""
 
 import io
+import http.client
 import json
 import subprocess
 import unittest
@@ -71,13 +72,14 @@ class _Body:
 
 class BackoffTests(unittest.TestCase):
     def test_429_then_success_sleeps_with_backoff(self) -> None:
-        outcomes = [_http_error(429, {}), _http_error(503, {}), urllib.error.URLError("reset"), _Body({"ok": 1})]
+        outcomes = [_http_error(429, {}), urllib.error.URLError("reset"), http.client.IncompleteRead(b""),
+                    ConnectionResetError("reset"), _Body({"ok": 1})]
         with mock.patch.object(chainio.urllib.request, "urlopen", side_effect=outcomes), \
                 mock.patch.object(chainio, "sleep") as sleep, \
                 mock.patch.object(chainio.random, "uniform", return_value=1.0):
             body = chainio.rest_get(path="/x")
         self.assertEqual(body, {"ok": 1})
-        self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2, 4])
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [1, 2, 4, 8])
 
     def test_gives_up_after_five_attempts(self) -> None:
         with mock.patch.object(chainio.urllib.request, "urlopen", side_effect=lambda *a, **k: (_ for _ in ()).throw(TimeoutError())) as urlopen, \

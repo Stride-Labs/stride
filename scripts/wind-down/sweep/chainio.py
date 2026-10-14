@@ -1,6 +1,7 @@
 """The package's only I/O: Stride REST reads, the strided subprocess, the clock. Tests patch these functions."""
 
 import datetime
+import http.client
 import json
 import random
 import subprocess
@@ -36,7 +37,8 @@ class CommandResult:
 def rest_get(
     path: str, params: dict[str, str] | None = None, height: int | None = None, base: str = config.REST
 ) -> Any:
-    """GET a Stride REST path and decode the JSON body. HTTP 429, any 5xx, network errors and undecodable bodies are
+    """GET a Stride REST path and decode the JSON body. HTTP 429, any 5xx, network and transport errors and
+    undecodable bodies are
     retried after each of REST_BACKOFF_SECONDS (with jitter), then raise ChainError; a missing thing is NotFound at
     once. With `height` the node answers from that block's state (x-cosmos-block-height). `base` picks the host."""
     query = f"?{urllib.parse.urlencode(params)}" if params else ""
@@ -50,7 +52,8 @@ def rest_get(
             chain_error = _http_error(path=path, error=error)
             if isinstance(chain_error, NotFound) or not _is_retryable_status(code=error.code) or backoff is None:
                 raise chain_error from error
-        except (urllib.error.URLError, TimeoutError) as error:
+        except (urllib.error.URLError, TimeoutError, http.client.HTTPException, ConnectionError) as error:
+            # URLError: no connection; HTTPException: a response cut short (IncompleteRead); ConnectionError: reset
             if backoff is None:
                 raise ChainError(f"{path}: {error}") from error
         except json.JSONDecodeError as error:  # a 200 that is an HTML proxy page, not the node
