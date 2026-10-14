@@ -493,7 +493,7 @@ class RunLoopTests(unittest.TestCase):
         self.assertIn(A1, json.loads((self.state / "accounts.json").read_text()))
         self.assertIn(A1, json.loads((self.state / "staking.json").read_text()))
         self.assertEqual((self.state / "plan.json").read_bytes(), plan_before)
-        self.assertEqual({path.name for path in self.state.iterdir()} - {"accounts.json", "staking.json"}, files_before)
+        self.assertEqual({path.name for path in self.state.iterdir()} - {"accounts.json", "staking.json", "accounts.json.lock", "staking.json.lock"}, files_before)
 
     def test_warm_a_second_time_reads_nothing_new(self) -> None:
         holders.AccountCache(entries={A1: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=1)}).save(path=self.state / "accounts.json")

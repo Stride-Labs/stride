@@ -24,13 +24,17 @@ STATE_REMAINING = "remaining"
 
 
 def collect() -> dict[str, Any]:
+    """The live read. `balances_at` is stamped before the balances are read: the snapshot's `fetched_at` is stamped after
+    `collect` returns, so a batch confirmed during the read would look older than the snapshot though the balances miss it."""
     denoms = holders.resolve_denoms()
+    balances_at = sweep_chainio.now().isoformat()
     balances = holders.read_balances(denoms=denoms)
     operator = sweep_chainio.rest_get(
         path=f"/cosmos/bank/v1beta1/balances/{sweep_config.SWEEP_OPERATOR}/by_denom",
         params={"denom": sweep_config.FEE_DENOM},
     )
     return {
+        "balances_at": balances_at,
         "height": str(sweep_chainio.latest_height()),
         "denoms": [
             {
@@ -105,16 +109,18 @@ def compose(
     states = ledger.batch_states(events=events)
     transferred = ledger.confirmed_transfers(events=events)
     balances = _live_balances(live=live)
+    # The balances were read at `balances_at`, before the snapshot was stamped; older snapshots only have the stamp
+    snapshot_at = (live.get("balances_at") or live_fetched_at) if live is not None else live_fetched_at
     by_denom = {denom.denom: denom for denom in plan.denoms}
     address_state = (
         _address_states(
-            plan=plan, events=events, transferred=transferred, balances=balances, live_fetched_at=live_fetched_at
+            plan=plan, events=events, transferred=transferred, balances=balances, snapshot_at=snapshot_at
         )
         if live is not None
         else None
     )
     refunds = (
-        _refunds(plan=plan, events=events, balances=balances, live_fetched_at=live_fetched_at)
+        _refunds(plan=plan, events=events, balances=balances, snapshot_at=snapshot_at)
         if live is not None
         else []
     )
@@ -199,11 +205,11 @@ def _known_addresses(plan: planner.Plan, transferred: dict[str, list[ledger.Tran
 
 
 def _judgeable_transfers(
-    events: list[ledger.Event], live_fetched_at: str | None
+    events: list[ledger.Event], snapshot_at: str | None
 ) -> list[tuple[ledger.Transfer, str]]:
     """Confirmed transfers (with their batch id) that the live snapshot can judge: those confirmed no later than the
-    snapshot was taken. A newer one is not in the snapshot yet, so a balance it shows says nothing about a refund."""
-    snapshot_time = holders.parse_chain_time(text=live_fetched_at) if live_fetched_at is not None else None
+    snapshot's balances were read (`snapshot_at`). A newer one is not in the snapshot yet, so a balance it shows says nothing about a refund."""
+    snapshot_time = holders.parse_chain_time(text=snapshot_at) if snapshot_at is not None else None
     return [
         (transfer, event.batch_id)
         for event in events
@@ -218,16 +224,16 @@ def _address_states(
     events: list[ledger.Event],
     transferred: dict[str, list[ledger.Transfer]],
     balances: dict[str, dict[str, int]],
-    live_fetched_at: str | None,
+    snapshot_at: str | None,
 ) -> dict[str, str]:
     """swept: transferred and holding none of it now; refunded: transferred and holding a transferred denom again;
     remaining: in the current plan with no confirmed transfer. Swept and refunded cover every address with a confirmed
     transfer in any run, so a re-plan at a lower floor does not drop the earlier runs' holders. A transfer confirmed
-    after `live_fetched_at` is swept whatever the snapshot shows (it predates the transfer, so it cannot show a refund
-    of it); a refund needs a snapshot taken after the transfer."""
+    after `snapshot_at` is swept whatever the snapshot shows (it predates the transfer, so it cannot show a refund
+    of it); a refund needs balances read after the transfer."""
     locked = _locked(plan=plan)
     judged_denoms: dict[str, set[str]] = {}
-    for transfer, _ in _judgeable_transfers(events=events, live_fetched_at=live_fetched_at):
+    for transfer, _ in _judgeable_transfers(events=events, snapshot_at=snapshot_at):
         judged_denoms.setdefault(transfer.address, set()).add(transfer.denom)
 
     states = {address: STATE_REMAINING for address in _planned(plan=plan) if address not in transferred}
@@ -245,13 +251,13 @@ def _refunds(
     plan: planner.Plan,
     events: list[ledger.Event],
     balances: dict[str, dict[str, int]],
-    live_fetched_at: str | None,
+    snapshot_at: str | None,
 ) -> list[tuple[ledger.Transfer, str]]:
     """Confirmed transfers whose denom is back beyond the locked remainder, judged only by a snapshot taken after them."""
     locked = _locked(plan=plan)
     return [
         (transfer, batch_id)
-        for transfer, batch_id in _judgeable_transfers(events=events, live_fetched_at=live_fetched_at)
+        for transfer, batch_id in _judgeable_transfers(events=events, snapshot_at=snapshot_at)
         if _back(address=transfer.address, denom=transfer.denom, balances=balances, locked=locked) > 0
     ]
 

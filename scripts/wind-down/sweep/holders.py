@@ -7,11 +7,15 @@ Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go i
 then adds the two rules the chain cannot make: wasm contracts and the reviewed exclusions file."""
 
 import concurrent.futures
+import contextlib
 import datetime
+import fcntl
 import json
+import os
 import pathlib
 import re
-from collections.abc import Callable
+import tempfile
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -202,37 +206,69 @@ def _voucher_denom(spec: config.VoucherDenom) -> SweepDenom:
 
 
 def read_balances(denoms: list[SweepDenom], workers: int = config.READ_WORKERS) -> dict[str, dict[str, int]]:
-    """Every holder of every sweep denom: address -> denom -> amount, zero amounts dropped. Every page is pinned to one
-    height so offset pages agree, and one pool serves all denoms. If the node refuses the height on the first request,
-    the whole read is redone unpinned."""
+    """Every holder of every sweep denom: address -> denom -> amount, zero amounts dropped. Offset pages are pinned to
+    one height so they agree, and one pool serves all denoms. Each denom's pages are then checked for completeness: the
+    owner rows across all pages (before dedupe) must equal the first page's `pagination.total`, and every page but
+    the last must be full. A denom that fails the check is re-read with key pagination (`next_key`), which cannot skip
+    a holder, and so is every denom when the node refuses the height on the first request (offset pages unpinned can
+    drift). One line names each re-read denom and why. A failed page request cancels the queued ones and raises."""
     if not denoms:
         return {}
     height: int | None = chainio.latest_height()
     try:
         first_page = _owner_page(denom=denoms[0].denom, offset=0, height=height)
     except chainio.ChainError:
-        print(f"balances: node refused height {height}; reading unpinned")
-        height = None
-        first_page = _owner_page(denom=denoms[0].denom, offset=0, height=height)
+        print(f"balances: node refused height {height}; reading every denom by key")
+        return _assemble_balances(denoms=denoms, owners_by_denom=[_owners_by_key(denom=d.denom) for d in denoms])
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        other_first_pages = [
-            pool.submit(_owner_page, denom=sweep_denom.denom, offset=0, height=height) for sweep_denom in denoms[1:]
-        ]
-        first_pages = [first_page, *(future.result() for future in other_first_pages)]
-        later_pages = [
-            [pool.submit(_owner_page, denom=sweep_denom.denom, offset=offset, height=height)
-             for offset in range(config.PAGE_SIZE, int(page["pagination"]["total"]), config.PAGE_SIZE)]
-            for sweep_denom, page in zip(denoms, first_pages)
-        ]
-        pages_by_denom = [
-            [page, *(future.result() for future in futures)] for page, futures in zip(first_pages, later_pages)
-        ]
+        try:
+            other_first_pages = [
+                pool.submit(_owner_page, denom=sweep_denom.denom, offset=0, height=height) for sweep_denom in denoms[1:]
+            ]
+            first_pages = [first_page, *(future.result() for future in other_first_pages)]
+            later_pages = [
+                [pool.submit(_owner_page, denom=sweep_denom.denom, offset=offset, height=height)
+                 for offset in range(config.PAGE_SIZE, int(page["pagination"]["total"]), config.PAGE_SIZE)]
+                for sweep_denom, page in zip(denoms, first_pages)
+            ]
+            pages_by_denom = [
+                [page, *(future.result() for future in futures)] for page, futures in zip(first_pages, later_pages)
+            ]
+        except BaseException:
+            # Leaving the block would wait for every queued page, each running through its own backoff
+            pool.shutdown(wait=True, cancel_futures=True)
+            raise
 
+    owners_by_denom = [
+        _checked_owners(sweep_denom=sweep_denom, pages=pages) for sweep_denom, pages in zip(denoms, pages_by_denom)
+    ]
+    return _assemble_balances(denoms=denoms, owners_by_denom=owners_by_denom)
+
+
+def _checked_owners(sweep_denom: SweepDenom, pages: list[dict]) -> list[dict]:
+    """The denom's owner rows from its offset pages, or from a key-paginated re-read when the pages are incomplete."""
+    rows = [owner for page in pages for owner in page["denom_owners"]]
+    total = int(pages[0]["pagination"]["total"])
+    short_page = any(len(page["denom_owners"]) != config.PAGE_SIZE for page in pages[:-1])
+    if len(rows) == total and not short_page:
+        return rows
+
+    print(f"balances: {sweep_denom.denom}: {len(rows)} rows over {len(pages)} pages for a total of {total}"
+          f"{' with a short page' if short_page else ''}; re-reading by key")
+    return _owners_by_key(denom=sweep_denom.denom)
+
+
+def _owners_by_key(denom: str) -> list[dict]:
+    return chainio.rest_get_all_pages(
+        path="/cosmos/bank/v1beta1/denom_owners_by_query", key="denom_owners", params={"denom": denom})
+
+
+def _assemble_balances(denoms: list[SweepDenom], owners_by_denom: list[list[dict]]) -> dict[str, dict[str, int]]:
     balances: dict[str, dict[str, int]] = {}
-    for sweep_denom, pages in zip(denoms, pages_by_denom):
-        # A holder listed on two pages (the unpinned fallback can drift) counts once
-        owners = {owner["address"]: int(owner["balance"]["amount"]) for page in pages for owner in page["denom_owners"]}
+    for sweep_denom, rows in zip(denoms, owners_by_denom):
+        # A holder listed twice (a re-read can overlap) counts once
+        owners = {owner["address"]: int(owner["balance"]["amount"]) for owner in rows}
         for address, amount in owners.items():
             if amount > 0:
                 balances.setdefault(address, {})[sweep_denom.denom] = amount
@@ -301,13 +337,37 @@ def usd_value(balances: dict[str, int], denoms: dict[str, SweepDenom]) -> Decima
 # ---- account cache
 
 
+@contextlib.contextmanager
+def _exclusive_lock(path: pathlib.Path) -> Iterator[None]:
+    """Hold an exclusive flock on a sibling `<name>.lock` file, so concurrent processes save one at a time."""
+    with open(path.with_name(path.name + ".lock"), "w") as lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
+        yield
+
+
+def _write_atomic(path: pathlib.Path, raw: dict) -> None:
+    """Write the JSON to a temp file of its own beside `path` and rename it over, so a reader never sees a partial file
+    and two writers never share a temp file; a failed write leaves no temp file behind."""
+    descriptor, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".", suffix=".tmp")
+    try:
+        with os.fdopen(descriptor, "w") as tmp_file:
+            tmp_file.write(json.dumps(raw, indent=1))
+        os.replace(tmp_name, path)
+    except BaseException:
+        pathlib.Path(tmp_name).unlink(missing_ok=True)
+        raise
+
+
 class AccountCache:
     """Auth lookups keyed by address. A type never changes, so a cached entry is final, except a keyless-looking one
-    (no pubkey), which may have signed since and is re-read on every lookup. `save` merges: it overlays this
-    process's entries on the file's, so a concurrent `warm` and `plan` only ever add to each other's work."""
+    (no pubkey), which may have signed since: a later process re-reads it, but this one reads it once (`_fresh`, filled
+    by `store` and by `lookup`, not persisted), so `classify` does not repeat what `prefetch` just read. `save`
+    merges under a file lock: it overlays this process's entries on the file's, so a concurrent `warm` and `plan` only
+    ever add to each other's work."""
 
     def __init__(self, entries: dict[str, AccountInfo], path: pathlib.Path | None = None) -> None:
         self._entries = entries
+        self._fresh: set[str] = set()  # addresses read by this process
         self._path = path  # where `load` read from; `save` without a path writes back here
 
     @classmethod
@@ -323,27 +383,27 @@ class AccountCache:
     def save(self, path: pathlib.Path | None = None) -> None:
         path = path or self._path or config.ACCOUNTS_CACHE_PATH
         path.parent.mkdir(parents=True, exist_ok=True)
-        merged = {**AccountCache.load(path=path)._entries, **self._entries}
-        raw = {address: {"type": info.type, "has_pubkey": info.has_pubkey, "sequence": str(info.sequence)}
-               for address, info in sorted(merged.items())}
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(raw, indent=1))
-        tmp.replace(path)
+        # The lock makes load, merge and replace one step, so a concurrent saver's entries are never overwritten
+        with _exclusive_lock(path=path):
+            merged = {**AccountCache.load(path=path)._entries, **self._entries}
+            raw = {address: {"type": info.type, "has_pubkey": info.has_pubkey, "sequence": str(info.sequence)}
+                   for address, info in sorted(merged.items())}
+            _write_atomic(path=path, raw=raw)
 
     def is_final(self, address: str) -> bool:
         cached = self._entries.get(address)
-        return cached is not None and cached.has_pubkey
+        return address in self._fresh or (cached is not None and cached.has_pubkey)
 
     def lookup(self, address: str) -> AccountInfo | None:
         if self.is_final(address=address):
-            return self._entries[address]
+            return self._entries.get(address)
         info = read_account(address=address)
-        if info is not None:
-            self._entries[address] = info
+        self.store(address=address, info=info)
         return info
 
     def store(self, address: str, info: AccountInfo | None) -> None:
-        """Record a read; a missing account (None) stores nothing, as in `lookup`."""
+        """Record a read; a missing account (None) is remembered as read but stores no entry, as in `lookup`."""
+        self._fresh.add(address)
         if info is not None:
             self._entries[address] = info
 
@@ -370,12 +430,11 @@ class StakingCache:
     def save(self, path: pathlib.Path | None = None) -> None:
         path = path or self._path or config.STAKING_CACHE_PATH
         path.parent.mkdir(parents=True, exist_ok=True)
-        merged = {**StakingCache.load(path=path)._entries, **self._entries}
-        raw = {address: {"ustrd": str(staked.ustrd), "completes_at": staked.completes_at}
-               for address, staked in sorted(merged.items())}
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(raw, indent=1))
-        tmp.replace(path)
+        with _exclusive_lock(path=path):
+            merged = {**StakingCache.load(path=path)._entries, **self._entries}
+            raw = {address: {"ustrd": str(staked.ustrd), "completes_at": staked.completes_at}
+                   for address, staked in sorted(merged.items())}
+            _write_atomic(path=path, raw=raw)
 
     def is_final(self, address: str, now: datetime.datetime) -> bool:
         cached = self._entries.get(address)

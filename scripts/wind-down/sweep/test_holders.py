@@ -1,10 +1,14 @@
 """Holder classification over a synthetic chain: every skip reason, the floor, keyless detection, the exclusions file,
 and a denom the chain would refuse. chainio is patched; nothing touches the network."""
 
+import collections
 import datetime
 import json
+import os
+import threading
 import pathlib
 import tempfile
+import time
 import unittest
 from decimal import Decimal
 from unittest import mock
@@ -214,10 +218,17 @@ class HolderTests(unittest.TestCase):
             accounts.lookup(address=KEYLESS)
             accounts.lookup(address=KEYLESS)
             self.assertIsNone(accounts.lookup(address=MISSING))
-        self.assertEqual(rest_get.call_count, 4)  # BASE once, KEYLESS twice, MISSING once (not cached)
-        accounts.save(path=path)
-        reloaded = holders.AccountCache.load(path=path)
-        self.assertEqual(reloaded.lookup(address=BASE), holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=4))
+            self.assertIsNone(accounts.lookup(address=MISSING))
+            self.assertEqual(rest_get.call_count, 3)  # each read once in this process, keyless and missing included
+            accounts.save(path=path)
+
+            # A later process re-reads the keyless one (it may have signed since) but not the final one
+            reloaded = holders.AccountCache.load(path=path)
+            self.assertEqual(reloaded.lookup(address=BASE),
+                             holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=4))
+            self.assertEqual(rest_get.call_count, 3)
+            reloaded.lookup(address=KEYLESS)
+            self.assertEqual(rest_get.call_count, 4)
 
     def test_load_exclusions_rejects_bad_addresses_and_duplicates(self) -> None:
         self.exclusions_path.write_text(json.dumps({"sections": [{"name": "x", "reason": "r", "addresses": [{"address": "osmo1bad", "label": "l"}]}]}))
@@ -266,8 +277,13 @@ class HolderTests(unittest.TestCase):
         accounts = holders.AccountCache(entries={KEYLESS: holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=False, sequence=0)})
         with mock.patch.object(chainio, "rest_get", side_effect=[{"account": keyless}, {"account": signed}]) as rest_get:
             self.assertFalse(accounts.lookup(address=KEYLESS).has_pubkey)
-            self.assertTrue(accounts.lookup(address=KEYLESS).has_pubkey)
-            self.assertTrue(accounts.lookup(address=KEYLESS).has_pubkey)  # final now: no third read
+            self.assertFalse(accounts.lookup(address=KEYLESS).has_pubkey)  # read this process: not read again
+            self.assertEqual(rest_get.call_count, 1)
+
+            # A later process (same entries, nothing fresh) reads it again and finds the pubkey
+            later = holders.AccountCache(entries=dict(accounts._entries))
+            self.assertTrue(later.lookup(address=KEYLESS).has_pubkey)
+            self.assertTrue(later.lookup(address=KEYLESS).has_pubkey)  # final now: no third read
         self.assertEqual(rest_get.call_count, 2)
 
     def test_test_address_absent_from_the_balances_yields_an_empty_set(self) -> None:
@@ -469,7 +485,8 @@ class HolderTests(unittest.TestCase):
         self.assertEqual(result, holders.PrefetchResult(read=3, cached=1))
         self.assertEqual(sorted(STAKING_READS), sorted([KEYLESS, VESTING, MISSING]))  # BASE was final
         self.assertTrue(accounts.is_final(address=VESTING))
-        self.assertFalse(accounts.is_final(address=MISSING))  # 404: no entry, as lookup would leave it
+        self.assertTrue(accounts.is_final(address=MISSING))  # read this process: 404 stores no entry, lookup says None
+        self.assertIsNone(accounts.lookup(address=MISSING))
         self.assertEqual(staking.lookup(address=KEYLESS, now=NOW), holders.Staked(ustrd=5, completes_at=COMPLETES))
         self.assertEqual(staking.lookup(address=MISSING, now=NOW), holders.Staked(ustrd=0, completes_at=None))
         self.assertIn(VESTING, json.loads((self.dir / "default-accounts_cache_path.json").read_text()))
@@ -536,10 +553,62 @@ class HolderTests(unittest.TestCase):
     def test_classify_after_prefetch_makes_no_further_account_or_staking_reads(self) -> None:
         accounts = holders.AccountCache.load(path=self.dir / "accounts.json")
         staking = NO_STAKING()
-        holders.read_holder_set(floor_usd=Decimal("1"), exclusions=holders.load_exclusions(path=self.exclusions_path),
-                                accounts=accounts, staking=staking, test_address=None)
-        # Every non-keyless candidate was read once; KEYLESS is re-read by lookup (its account is not final)
+        with mock.patch.object(holders, "read_account", wraps=holders.read_account) as read_account:
+            holders.read_holder_set(floor_usd=Decimal("1"), exclusions=holders.load_exclusions(path=self.exclusions_path),
+                                    accounts=accounts, staking=staking, test_address=None)
+        account_reads = [call.kwargs["address"] for call in read_account.call_args_list]
+        # Every candidate, KEYLESS included, is read once across prefetch and classify
+        counts = collections.Counter(account_reads)
+        self.assertIn(KEYLESS, counts)
+        self.assertEqual({address: count for address, count in counts.items() if count != 1}, {})
         self.assertEqual(len(STAKING_READS), len(set(STAKING_READS)))
+
+
+class CacheSaveTests(unittest.TestCase):
+    def test_a_save_inside_another_savers_write_to_replace_window_loses_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "accounts.json"
+            info = holders.AccountInfo(type=config.BASE_ACCOUNT, has_pubkey=True, sequence=1)
+            cache_a = holders.AccountCache(entries={"stride1a": info})
+            cache_b = holders.AccountCache(entries={"stride1b": info})
+            first_in_replace = threading.Event()
+            real_replace = os.replace
+
+            def replace(source: str, destination: pathlib.Path) -> None:
+                # The first saver pauses between writing its temp file and renaming it; the second saves meanwhile
+                if not first_in_replace.is_set():
+                    first_in_replace.set()
+                    second.join(timeout=0.5)
+                real_replace(source, destination)
+
+            second = threading.Thread(target=lambda: (first_in_replace.wait(), cache_b.save(path=path)))
+            with mock.patch.object(os, "replace", side_effect=replace):
+                second.start()
+                cache_a.save(path=path)
+                second.join(timeout=5)
+
+            self.assertFalse(second.is_alive())
+            self.assertEqual(sorted(json.loads(path.read_text())), ["stride1a", "stride1b"])
+            self.assertEqual(sorted(entry.name for entry in path.parent.iterdir()), ["accounts.json", "accounts.json.lock"])
+
+    def test_a_failed_write_leaves_no_temp_file_and_the_old_file_intact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "staking.json"
+            path.write_text("{}")
+            cache = holders.StakingCache(entries={"stride1a": holders.Staked(ustrd=0, completes_at=None)})
+
+            with mock.patch.object(os, "replace", side_effect=OSError("disk")), self.assertRaises(OSError):
+                cache.save(path=path)
+
+            self.assertEqual(path.read_text(), "{}")
+            self.assertEqual(sorted(entry.name for entry in path.parent.iterdir()), ["staking.json", "staking.json.lock"])
+
+    def test_staking_save_merges_with_the_files_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "staking.json"
+            holders.StakingCache(entries={"stride1a": holders.Staked(ustrd=0, completes_at=None)}).save(path=path)
+            holders.StakingCache(entries={"stride1b": holders.Staked(ustrd=0, completes_at=None)}).save(path=path)
+            self.assertEqual(sorted(json.loads(path.read_text())), ["stride1a", "stride1b"])
 
 
 class ReadBalancesTests(unittest.TestCase):
@@ -548,14 +617,30 @@ class ReadBalancesTests(unittest.TestCase):
     STRD_DENOM = holders.SweepDenom(denom="ustrd", symbol="STRD", decimals=6, price_usd=Decimal(1),
                                     destination="osmosis-1", channel="channel-5")
 
-    def run_read(self, owners: dict[str, list[tuple[str, str]]], page_size: int, refuse_pinned: bool = False,
-                 duplicate_first_of_page: bool = False) -> tuple[dict, list[dict]]:
+    def run_read(self, owners: dict[str, list[tuple[str, str]]], page_size: int, refuse_pinned: bool = False, workers: int = 3,
+                 duplicate_first_of_page: bool = False, short_page_at: str | None = None,
+                 raise_at: str | None = None) -> tuple[dict, list[dict]]:
         calls: list[dict] = []
+        self.calls = calls
+        self.key_reads: list[str] = []
+
+        def rest_get_all_pages(path: str, key: str, params: dict[str, str] | None = None) -> list:
+            self.assertEqual((path, key), ("/cosmos/bank/v1beta1/denom_owners_by_query", "denom_owners"))
+            self.key_reads.append(params["denom"])
+            return [{"address": a, "balance": {"denom": params["denom"], "amount": v}} for a, v in owners[params["denom"]]]
 
         def rest_get(path: str, params: dict[str, str] | None = None, height: int | None = None) -> dict:
             calls.append({"params": dict(params), "height": height})
+            if raise_at is not None and params["pagination.offset"] == raise_at:
+                raise chainio.ChainError("page failed")
+            if raise_at is not None and params["pagination.offset"] != "0":
+                time.sleep(0.05)  # a page after the failure is still queued or running when the error surfaces
             if refuse_pinned and height is not None:
                 raise chainio.ChainError("height not available")
+            if short_page_at is not None and params["pagination.offset"] == short_page_at:
+                window = owners[params["denom"]][int(short_page_at):int(short_page_at) + page_size - 1]
+                return {"denom_owners": [{"address": a, "balance": {"denom": params["denom"], "amount": v}}
+                                         for a, v in window], "pagination": {"next_key": None}}
             offset = int(params["pagination.offset"])
             window = owners[params["denom"]][offset:offset + page_size]
             if duplicate_first_of_page and offset > 0:
@@ -569,8 +654,10 @@ class ReadBalancesTests(unittest.TestCase):
 
         with mock.patch.object(config, "PAGE_SIZE", page_size), \
                 mock.patch.object(chainio, "latest_height", return_value=777), \
-                mock.patch.object(chainio, "rest_get", side_effect=rest_get):
-            balances = holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM], workers=3)
+                mock.patch.object(chainio, "rest_get", side_effect=rest_get), \
+                mock.patch.object(chainio, "rest_get_all_pages", side_effect=rest_get_all_pages), \
+                mock.patch("builtins.print"):
+            balances = holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM], workers=workers)
         return balances, calls
 
     def test_pages_are_assembled_across_denoms_pinned_to_one_height(self) -> None:
@@ -587,21 +674,55 @@ class ReadBalancesTests(unittest.TestCase):
         self.assertEqual(sorted(call["params"]["pagination.offset"] for call in calls if call["params"]["denom"] == "ustrd"),
                          ["0", "2", "4"])
         self.assertEqual(sum("pagination.count_total" in call["params"] for call in calls), 2)
+        self.assertEqual(self.key_reads, [])  # complete pages: no key-paginated read
 
-    def test_a_holder_repeated_across_pages_counts_once(self) -> None:
+    def test_a_holder_repeated_across_pages_triggers_a_key_read_that_counts_once(self) -> None:
         owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: []}
         balances, _ = self.run_read(owners=owners, page_size=1, duplicate_first_of_page=True)
         self.assertEqual(balances, {"a": {"ustrd": 5}, "b": {"ustrd": 6}, "c": {"ustrd": 7}})
+        self.assertEqual(self.key_reads, ["ustrd"])  # 5 rows for a total of 3
 
-    def test_a_refused_height_falls_back_to_unpinned_reads(self) -> None:
+    def test_a_short_middle_page_rereads_only_that_denom_by_key(self) -> None:
+        owners = {"ustrd": [(f"a{index}", "5") for index in range(6)], ATOM: [("b0", "2"), ("b1", "3")]}
+        balances, _ = self.run_read(owners=owners, page_size=2, short_page_at="2")
+        self.assertEqual(self.key_reads, ["ustrd"])
+        self.assertEqual(len(balances), 8)
+        self.assertEqual(balances["a2"], {"ustrd": 5})
+        self.assertEqual(balances["b1"], {ATOM: 3})
+
+    def test_a_refused_height_reads_every_denom_by_key(self) -> None:
         owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: [("a", "1")]}
-        with mock.patch("builtins.print") as printed:
-            balances, calls = self.run_read(owners=owners, page_size=2, refuse_pinned=True)
+        balances, calls = self.run_read(owners=owners, page_size=2, refuse_pinned=True)
 
-        printed.assert_called_once_with("balances: node refused height 777; reading unpinned")
         self.assertEqual(balances, {"a": {"ustrd": 5, ATOM: 1}, "b": {"ustrd": 6}, "c": {"ustrd": 7}})
-        self.assertEqual(calls[0]["height"], 777)
-        self.assertEqual({call["height"] for call in calls[1:]}, {None})
+        self.assertEqual(len(calls), 1)  # only the refused pinned first page
+        self.assertEqual(sorted(self.key_reads), sorted(["ustrd", ATOM]))
+
+    def test_a_refused_height_prints_one_line(self) -> None:
+        owners = {"ustrd": [("a", "5")], ATOM: []}
+        with mock.patch.object(chainio, "latest_height", return_value=777), \
+                mock.patch.object(chainio, "rest_get", side_effect=chainio.ChainError("no")), \
+                mock.patch.object(chainio, "rest_get_all_pages", return_value=[]), \
+                mock.patch("builtins.print") as printed:
+            holders.read_balances(denoms=[self.STRD_DENOM, self.ATOM_DENOM])
+        printed.assert_called_once_with("balances: node refused height 777; reading every denom by key")
+
+    def test_an_incomplete_denom_names_itself_in_one_line(self) -> None:
+        owners = {"ustrd": [("a", "5"), ("b", "6"), ("c", "7")], ATOM: []}
+        pages = [{"denom_owners": [{"address": "a", "balance": {"amount": "5"}}], "pagination": {"total": "3"}}]
+        with mock.patch("builtins.print") as printed, \
+                mock.patch.object(chainio, "rest_get_all_pages", return_value=[]):
+            holders._checked_owners(sweep_denom=self.STRD_DENOM, pages=pages)
+        printed.assert_called_once()
+        self.assertIn("ustrd", printed.call_args.args[0])
+
+    def test_a_failed_page_cancels_the_queued_pages_and_raises(self) -> None:
+        owners = {"ustrd": [(f"a{index}", "5") for index in range(20)], ATOM: []}
+        with self.assertRaises(chainio.ChainError):
+            self.run_read(owners=owners, page_size=2, workers=1, raise_at="2")
+        offsets = [call["params"]["pagination.offset"] for call in self.calls]
+        self.assertIn("2", offsets)
+        self.assertNotIn("18", offsets)
 
 
 if __name__ == "__main__":

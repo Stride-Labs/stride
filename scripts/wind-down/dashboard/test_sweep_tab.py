@@ -1,9 +1,11 @@
 """compose(): address states from the plan, the ledger and live balances; totals; by-denom; ladder; batches."""
 
 import dataclasses
+import datetime
 import pathlib
 import sys
 import unittest
+from unittest import mock
 from decimal import Decimal
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))  # the sweep package, before any import of it
@@ -269,10 +271,49 @@ class SnapshotRuleTests(unittest.TestCase):
         self.assertEqual(data["totals"]["swept"]["addresses"], "0")
         self.assertEqual([r["address"] for r in data["refunded"]], ["stride1a"])
 
+    def test_a_transfer_between_balances_at_and_fetched_at_is_swept_not_refunded(self) -> None:
+        # Balances were read at 13:00Z, the snapshot was stamped at 14:00Z; a batch confirmed at 13:30Z is not in the balances
+        plan = vesting_plan(run_id=2, addresses=["stride1a"], locked={})
+        events = confirmed_run(run_id=2, address="stride1a")[:1] + [
+            ledger.confirmed(batch_id="002-001", tx_hash="V", at="2026-11-10T13:30:00+00:00", height=5, gas_used=1,
+                             transfers=[t("stride1a", "stuatom", 1_000_000)], skipped=[])]
+        live = {**live_with({"stride1a": {"stuatom": "1000000"}}), "balances_at": "2026-11-10T13:00:00+00:00"}
+
+        data = sweep_tab.compose(plan=plan, events=events, live=live, exclusions={}, live_fetched_at=FETCHED_AT)
+
+        self.assertEqual(data["totals"]["swept"]["addresses"], "1")
+        self.assertEqual(data["totals"]["refunded"]["addresses"], "0")
+        self.assertEqual(data["refunded"], [])
+
     def test_offsets_are_compared_as_datetimes_not_strings(self) -> None:
         # 15:00+02:00 is 13:00Z, before the 14:00Z snapshot, though it sorts after it as a string
         data = self.compose(at="2026-11-10T15:00:00+02:00")
         self.assertEqual(data["totals"]["refunded"]["addresses"], "1")
+
+
+class CollectTests(unittest.TestCase):
+    def test_balances_at_is_stamped_before_the_balances_are_read(self) -> None:
+        order: list[str] = []
+        before = datetime.datetime(2026, 11, 10, 13, 0, tzinfo=datetime.UTC)
+
+        def read_balances(denoms: list) -> dict:
+            order.append("read_balances")
+            return {}
+
+        def now() -> datetime.datetime:
+            order.append("now")
+            return before
+
+        with mock.patch.object(sweep_tab.holders, "resolve_denoms", return_value=[]), \
+                mock.patch.object(sweep_tab.holders, "read_balances", side_effect=read_balances), \
+                mock.patch.object(sweep_tab.holders, "read_staking_pool", return_value=0), \
+                mock.patch.object(sweep_tab.sweep_chainio, "now", side_effect=now), \
+                mock.patch.object(sweep_tab.sweep_chainio, "latest_height", return_value=9), \
+                mock.patch.object(sweep_tab.sweep_chainio, "rest_get", return_value={"balance": {"amount": "1"}}):
+            live = sweep_tab.collect()
+
+        self.assertEqual(order, ["now", "read_balances"])
+        self.assertEqual(live["balances_at"], before.isoformat())
 
 
 class ProgressTests(unittest.TestCase):
