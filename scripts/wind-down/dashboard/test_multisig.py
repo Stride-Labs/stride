@@ -51,23 +51,33 @@ class SlashQueriesTest(unittest.TestCase):
         tx_set = sets_by_id(None)["slash-queries"]
 
         self.assertEqual(
-            [(tx.chain_id, tx.title, tx.ready) for tx in tx_set.txs],
+            [(tx.chain_id, tx.title, tx.ready, tx.done) for tx in tx_set.txs],
             [
-                ("juno-1", "juno-1 · update-delegation: sg1 (junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw)", True),
-                ("phoenix-1", "phoenix-1 · update-delegation: orbitalcommand (terravaloper1lelhxdzwn9ddecv6sv0kcxj5tguurxnzcfs5wf)", True),
+                ("cosmoshub-4", "cosmoshub-4 · update-delegation: posthuman (cosmosvaloper157v7tczs40axfgejp2m43kwuzqe0wsy0rv8puv)", True, False),
+                ("cosmoshub-4", "cosmoshub-4 · update-delegation: lavenderfive (cosmosvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zfd832j)", True, False),
+                ("cosmoshub-4", "cosmoshub-4 · update-delegation: klubstaking (cosmosvaloper1wqy2s6nwnxj57l0l5rdjxxr646p3al6y70435m)", True, False),
+                ("cosmoshub-4", "cosmoshub-4 · update-delegation: meria (cosmosvaloper1wrx0x9m9ykdhw9sg04v7uljme53wuj03aa5d4f)", True, False),
+                ("juno-1", "juno-1 · update-delegation: sg1 (junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw)", False, True),
+                (
+                    "phoenix-1",
+                    "phoenix-1 · update-delegation: orbitalcommand (terravaloper1lelhxdzwn9ddecv6sv0kcxj5tguurxnzcfs5wf)",
+                    False,
+                    True,
+                ),
             ],
         )
+        self.assertEqual([(tx.commands, tx.files) for tx in tx_set.txs if tx.done], [([], []), ([], [])])
         generate = (
             "mkdir -p /tmp/wind-down\n"
-            "strided tx stakeibc update-delegation juno-1 junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw "
+            "strided tx stakeibc update-delegation cosmoshub-4 cosmosvaloper157v7tczs40axfgejp2m43kwuzqe0wsy0rv8puv "
             f"--from {ADDRESS} --generate-only --chain-id stride-1 --node {NODE} --gas 300000 --fees 1500ustrd "
-            "> /tmp/wind-down/update-delegation-juno-1-qcnylw.unsigned.json"
+            "> /tmp/wind-down/update-delegation-cosmoshub-4-rv8puv.unsigned.json"
         )
         self.assertEqual(
             [(command.tag, command.text) for command in tx_set.txs[0].commands],
-            expected_commands(generate, stem="/tmp/wind-down/update-delegation-juno-1-qcnylw"),
+            expected_commands(generate, stem="/tmp/wind-down/update-delegation-cosmoshub-4-rv8puv"),
         )
-        stem = "/tmp/wind-down/update-delegation-juno-1-qcnylw"
+        stem = "/tmp/wind-down/update-delegation-cosmoshub-4-rv8puv"
         self.assertEqual(tx_set.txs[0].files, [f"{stem}.unsigned.json", f"{stem}.FS5.json", f"{stem}.FA5.json", f"{stem}.FR5.json"])
 
     def test_notes_carry_the_template_for_an_unlisted_validator_or_a_calibrate(self) -> None:

@@ -72,11 +72,18 @@ class SlashQuery:
     chain_id: str
     valoper: str
     moniker: str
+    done: bool = False  # the callback has landed: the card stays for the record, not to re-run
 
 
 SLASH_QUERIES = (
-    SlashQuery(chain_id="juno-1", valoper="junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw", moniker="sg1"),
-    SlashQuery(chain_id="phoenix-1", valoper="terravaloper1lelhxdzwn9ddecv6sv0kcxj5tguurxnzcfs5wf", moniker="orbitalcommand"),
+    SlashQuery(chain_id="cosmoshub-4", valoper="cosmosvaloper157v7tczs40axfgejp2m43kwuzqe0wsy0rv8puv", moniker="posthuman"),
+    SlashQuery(chain_id="cosmoshub-4", valoper="cosmosvaloper140l6y2gp3gxvay6qtn70re7z2s0gn57zfd832j", moniker="lavenderfive"),
+    SlashQuery(chain_id="cosmoshub-4", valoper="cosmosvaloper1wqy2s6nwnxj57l0l5rdjxxr646p3al6y70435m", moniker="klubstaking"),
+    SlashQuery(chain_id="cosmoshub-4", valoper="cosmosvaloper1wrx0x9m9ykdhw9sg04v7uljme53wuj03aa5d4f", moniker="meria"),
+    SlashQuery(chain_id="juno-1", valoper="junovaloper196ax4vc0lwpxndu9dyhvca7jhxp70rmcqcnylw", moniker="sg1", done=True),
+    SlashQuery(
+        chain_id="phoenix-1", valoper="terravaloper1lelhxdzwn9ddecv6sv0kcxj5tguurxnzcfs5wf", moniker="orbitalcommand", done=True
+    ),
 )
 
 
@@ -784,6 +791,7 @@ def _slash_query_tx(query: SlashQuery) -> MultisigTx:
         reason=None,
         generate_line=generate_line,
         file_stem=file_stem,
+        done=query.done,
     )
 
 
@@ -820,7 +828,12 @@ def _validator_weight_tx(change: ValidatorWeightChange) -> MultisigTx:
     )
 
 
-def _stride_tx(zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str) -> MultisigTx:
+def _stride_tx(
+    zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str, done: bool = False
+) -> MultisigTx:
+    # A done tx keeps its card for the record but nothing to copy, the same shape as a done pool bundle.
+    if done:
+        return MultisigTx(chain_id=zone.chain_id, title=title, ready=False, reason=None, commands=[], files=[], done=True)
     return MultisigTx(
         chain_id=zone.chain_id,
         title=title,
