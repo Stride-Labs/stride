@@ -1891,6 +1891,10 @@
   "ustrd": "2820273",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
+ "stride10gk4v3lt3643jd7e2msdvjudpfurdeg7v705q0": {
+  "ustrd": "0",
+  "completes_at": "2026-10-26T08:55:25.469915628Z"
+ },
  "stride10gk4wwzf6fm9rqyl4ujh9xqzfvjzsana4lydn8": {
   "ustrd": "0",
   "completes_at": null
@@ -26428,8 +26432,8 @@
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
  "stride17593qqceld6d9c9tdvfvdawkvkdpv2jqftavmq": {
-  "ustrd": "4550441354",
-  "completes_at": "2026-10-15T09:34:05.953617523Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride175a8yshzs05g28fsq7trdq9vs2qawdndvxwe4q": {
   "ustrd": "1827869",
@@ -28154,6 +28158,10 @@
  "stride17hxx87e45fsf2u4yhgclyppkt8l2a9thayhl8r": {
   "ustrd": "0",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
+ },
+ "stride17hy7sn2sj55z6a5vq2q07qxzxswf7hqjr2w68x": {
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride17hya76uc0rks8l7st5lxgz4l9duzznv7fu5m9x": {
   "ustrd": "0",
@@ -43431,6 +43439,10 @@
   "ustrd": "0",
   "completes_at": null
  },
+ "stride1c4gf4m92zxachuywrttymahyr63wdwp6apjjs2": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride1c4jqjpjxm55hhxvssyuahd3zs3h567x04ccrxg": {
   "ustrd": "0",
   "completes_at": null
@@ -44266,6 +44278,10 @@
  "stride1cajthyc433hgymmpfjglcnknwnh0wq2wyk3gwd": {
   "ustrd": "24588898",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
+ },
+ "stride1cajwcluc3pfxwdpvk79236nsyjp5f6q9kdz3um": {
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1cal6hvfperpfhg2cgc7z7dkzznt9nw6alk8hyl": {
   "ustrd": "0",
@@ -47080,8 +47096,8 @@
   "completes_at": null
  },
  "stride1cxful6l52eh0aknkufwtwmre7c4lvhv320g0we": {
-  "ustrd": "627200000",
-  "completes_at": "2026-10-15T08:31:15.401910301Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1cxgyjm839r0lvfmfaud2lk8ry7w4n5kwk246ed": {
   "ustrd": "180959",
@@ -54044,8 +54060,8 @@
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
  "stride1emdlyshrxgwdqajk3s46wr2w69r373x7w2v9y7": {
-  "ustrd": "6705000000",
-  "completes_at": "2026-10-14T21:13:43.070134057Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1emdpggt05ppuy67v9mxyqrd8gy2kkk5ryhz453": {
   "ustrd": "177693204",
@@ -62296,8 +62312,8 @@
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
  "stride1gmre8y5cjg0dj9cagzts6k5zsv4e35kvxfmyml": {
-  "ustrd": "6015000000",
-  "completes_at": "2026-10-14T19:36:13.829840649Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1gmuqmp48f5hvpc2wu8cqyjxqahmu22uu3w70t8": {
   "ustrd": "0",
@@ -75328,8 +75344,8 @@
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
  "stride1kmfkul74uvzzezpgga2h4u00zxnc77x8yj5zs8": {
-  "ustrd": "97807431",
-  "completes_at": "2026-10-15T02:16:32.220944086Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1kmfqkk52sm2vmzu3w9g05earyd5lhzzfyzjaq4": {
   "ustrd": "10380000",
@@ -95279,6 +95295,10 @@
   "ustrd": "0",
   "completes_at": null
  },
+ "stride1qctsnew9jprsk2jdngu6ddemgd3h4f49mcxfre": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride1qcvd9rx33k9skhpfejc48axukqreuvpqpudteg": {
   "ustrd": "23000000",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
@@ -111827,6 +111847,10 @@
   "ustrd": "0",
   "completes_at": null
  },
+ "stride1u7xy9uthrypxrywg9t9ln2cwfkr9ms2y5kdqcl": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride1u837q34zvp7kpf7pepuv6zqqlh4rq4r8rj3vev": {
   "ustrd": "149696192",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
@@ -121871,6 +121895,10 @@
   "ustrd": "106627150",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
+ "stride1wjx50qrhu2amy83wlfahhe38rmk0zk2qsp79w0": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride1wjysfx5gafzhmuvyrllzv0tx2zgtw69t9nw050": {
   "ustrd": "180958",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
@@ -126140,8 +126168,8 @@
   "completes_at": null
  },
  "stride1xj8ykwj2exgjyqg2hf9t6cm2pmtw555rslj4x5": {
-  "ustrd": "311532518",
-  "completes_at": "2026-10-14T19:40:24.228969018Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1xj9lv57xchrz5sygvlql2fvv74fgg5t6mdq59z": {
   "ustrd": "0",
