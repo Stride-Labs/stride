@@ -86804,6 +86804,11 @@
   "has_pubkey": true,
   "sequence": "269"
  },
+ "stride1j8pf05c6vn4pa0xf755ug6p37yfc403xeenxgl": {
+  "type": "/stride.vesting.StridePeriodicVestingAccount",
+  "has_pubkey": true,
+  "sequence": "76"
+ },
  "stride1j8qhwwa93w96gktl6qj3acswngqpp9e03kczqr": {
   "type": "/cosmos.auth.v1beta1.BaseAccount",
   "has_pubkey": true,
@@ -148009,6 +148014,11 @@
   "has_pubkey": true,
   "sequence": "28"
  },
+ "stride1vqrywjhn5k0nvp0jpt3ne83csp2emf8da644c0": {
+  "type": "/cosmos.auth.v1beta1.BaseAccount",
+  "has_pubkey": true,
+  "sequence": "5"
+ },
  "stride1vqs3qrrdy2hppe2kjs9n9v055dgsnygfhdcnnf": {
   "type": "/stride.vesting.StridePeriodicVestingAccount",
   "has_pubkey": true,
@@ -162168,6 +162178,11 @@
   "type": "/cosmos.auth.v1beta1.BaseAccount",
   "has_pubkey": true,
   "sequence": "7"
+ },
+ "stride1yc8qmlmpl0xydzr5yeyuh7xldrp6lgj8vnkw9g": {
+  "type": "/cosmos.auth.v1beta1.BaseAccount",
+  "has_pubkey": true,
+  "sequence": "34"
  },
  "stride1yca78p7ujdtq549s8vjf55gtaey3t8084xgl8x": {
   "type": "/cosmos.auth.v1beta1.BaseAccount",
