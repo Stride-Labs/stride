@@ -1,4 +1,4 @@
-# Wind-down rehearsal findings (2026-10-03)
+# Wind-down rehearsal findings (2026-10-03, run 4 added 2026-10-05)
 
 The v35 wind-down was rehearsed end to end on the k8s integration network from the throwaway
 branch `wind-down-rehearsal`, which is never merged. The command-by-command log, with every tx
@@ -18,7 +18,9 @@ protocol admin and the Osmosis vault were one 2-of-3 multisig signing in amino-j
 
 Three runs were needed. Run 1 ended after the upgrade when the test network stalled. Run 2 ended
 in the transfer phase when the test Hub ran out of memory and was then wiped by an operator
-mistake. Run 3 completed every phase.
+mistake. Run 3 completed every phase. Run 4 (2026-10-05) repeated everything on main after #1544
+and #1548 merged, with the authority hand-off, the STRD mass undelegation and the community pool
+transfer in scope; see "Run 4" below.
 
 ## What passed
 
@@ -100,11 +102,25 @@ Not fixed: after the upgrade-height halt, validators whose daemon cosmovisor res
 came back with no peers and consensus stalled until they were restarted by hand. Validator state
 is an `emptyDir`, so deleting a pod wipes its chain.
 
-## Open question
+## Open question, resolved 2026-10-05
 
 On mainnet the celestia zone's `TotalDelegations` exceeds its validator sum by 156.87B utia, while
-staketia's own `remaining_delegated_balance` is 69.59B. The 87B difference is part of celestia's
-frozen redemption rate and is worth explaining before the upgrade.
+staketia's own `remaining_delegated_balance` is 69.06B. The two measure different things and both
+match the chain:
+
+- The 156.87B is the staketia multisig's whole delegation on Celestia (156.83B staked on
+  2026-10-05 plus rewards). stakeibc's celestia zone counts it in full, which is what the rate
+  needs: that stake backs stTIA that is still in supply.
+- staketia subtracts a redemption from `remaining_delegated_balance` when its unbonding record
+  is queued, before the operator undelegates. The 87.77B gap is exactly the queued records: 1472
+  (0.84B), 1476 (2.36B), 1484 (11.11B), 1488 (73.11B) and the accumulating 1492 (0.33B), all
+  still staked on Celestia. Their stTIA sits escrowed in the redemption address until the
+  undelegation is confirmed, so bank supply still counts it and the coverage check still
+  requires its backing, which the day-0 undelegation of the entire multisig delegation (spec §9
+  step 2) and the day-21 sweep (step 7) deliver. The six UNBONDED records (10.82B) are the
+  multisig's 11.0B liquid balance, waiting for the sweep to the claim address.
+
+No rate or accounting change follows; the ops plan's day-0 and completion steps already cover it.
 
 ## Drain gas on mainnet-sized state
 
@@ -137,13 +153,62 @@ The rehearsal's state was too small to say anything about gas: every drain there
 The measurement excludes the ante handler (signature checks and tx size), which is small next
 to these numbers. The test fails if a full drain or an ack exceeds half the block limit.
 
+## Run 4: authority hand-off, STRD undelegation, community pool (2026-10-05)
+
+Rehearsed from the same branch rebased onto main at `5b7fbe92b`. Seeded on v34: four stakers with 12
+delegations across val1-3 (4,283 STRD), a fifth staking validator jailed below its minimum
+self-delegation and already unbonded at the upgrade with delegations still on it, one pair holding
+the 7-entry cap, a redelegation and a fresh unbonding entry in flight, a proposal in its deposit
+period and one in its voting period, and a community pool holding stATOM, stOSMO, two vouchers and
+STRD. State was read at the block before and the upgrade block through height-pinned REST.
+
+Passed, handler steps 10-19:
+
+- Consensus authority nil before, the multisig after; POA admin moved to the multisig; gov deposits
+  1e18 / 2e18 ustrd with every other gov param unchanged; staking `max_entries` 7 -> 100; the ICA
+  host allow-list lost the four staking and the two stakeibc messages and kept the rest.
+- Both pending proposals rejected with "Governance closed by v35 wind-down", deposits and votes
+  removed, depositors refunded in the upgrade block.
+- "undelegated 12 delegations totaling 4283000000 ustrd, skipped 0": no delegation left, bonded pool
+  0, val1-4 jailed and unbonding at zero tokens, the already-unbonded val5 removed in the upgrade
+  block. The 7-entry pair got its 8th entry with the first 7 untouched; every new entry equals the
+  delegation and completes exactly one unbonding period after the upgrade block; the pre-existing
+  entry and the redelegation untouched. After the unbonding period: every staker's STRD liquid
+  again, the redelegation completed, all staking validators removed with no panic on any node,
+  blocks still produced, community pool refilling from fees with no bonded validators.
+- Community pool: every denom's whole units reached the multisig, STRD at least the pool balance,
+  0.72 ustrd of dust left.
+- Ante: delegate, redelegate, create-validator and cancel-unbond refused with "is disabled: the chain
+  is winding down". Stride has no authz module, so there is no MsgExec path to close.
+- A proposal with the old full deposit never reaches voting. `MsgSoftwareUpgrade` from an ordinary
+  key refused; the multisig scheduled an upgrade directly, cancelled it, and recovered an expired
+  light client with `MsgRecoverClient` as the chain authority (no gov).
+- An interchain account on Stride controlled from the Hub: `MsgLiquidStake` and `MsgDelegate`
+  packets both left it untouched (this route did not open in run 3).
+- Ops step "sweep-community-pool": after the holder sweep (which also swept the stakers' formerly
+  staked STRD), the multisig spent the refilled pool to itself (an ordinary key is refused) and
+  transferred stTokens, STRD and the OSMO voucher to the Osmosis vault and the ATOM voucher back to
+  the Hub, keeping a fee reserve, before the halt checklist.
+- Run-3 gaps closed: the ICA timeout, transfer refund and sweep refund injections all triggered
+  (the relayer is frozen in place instead of scaled down), the dead-window drain was refused with
+  the timeout reason, the pre-transfer ICA channel check ran, and the pool gate passes with
+  `--funded`.
+- Halt-height: proven on a fresh v35 Stride chain, all four validators stopping at the configured
+  height ("halt per configuration height 722"). Runs 3 and 4 had never actually restarted the nodes
+  with the new `app.toml`, so the earlier "halt" was a peer loss, not the mechanism.
+
+Findings:
+
+| Finding | Meaning for mainnet |
+| --- | --- |
+| After the undelegation, the staking `redelegations` query for a delegator whose destination validator has zero shares fails with "division by zero" (the response computes balance = shares x tokens/shares) until the entry matures. The record is intact and completes on time. | Query only. Dashboards or users reading `/cosmos/staking/v1beta1/delegators/{addr}/redelegations` during the 14 days after v35 may get an error instead of the entries. |
+| Undelegating from an already-unbonded validator still books an unbonding entry with the full unbonding time (`Undelegate` does not special-case it); only the validator is removed on the spot. | Delegators to mainnet's 125 unbonded validators wait the 14 days like everyone else. The spec's wording ("returned immediately") was wrong; the handler is right. |
+| Halt-height needs a node restart to take effect, and on this network restarted nodes came back peerless twice (the same cause as the post-upgrade stall). | Runbook: after setting `halt-height`, confirm every validator restarted with peers and is advancing before the height. |
+
 ## Not covered
 
 - The haqq sequence, stakedym claims, the LSM requeue, the trade route and contract admin moves:
   no state for them on the test network. Covered by the mainnet-export unit tests.
 - Celestia-specific host behaviour: the Hub stood in for Celestia.
-- The sweep's timeout refund: the relayer delivered the packet first. The same ICS-20 refund was
-  proven on the Osmosis transfer.
-- A drain submitted in the last fifth of the day epoch: the test tx landed just after the epoch
-  rolled over.
-- Liquid staking through an interchain account: the test channel never opened.
+- (covered in run 4) A drain submitted in the last fifth of the day epoch; liquid staking and
+  delegating through an interchain account; the sweep's timeout refund.

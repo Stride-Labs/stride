@@ -53,3 +53,4 @@ localstride/exports
 localstride/scratch
 app/upgrades/v33/testdata/raw_export.json
 scripts/wind-down/drift/
+scripts/wind-down/sweep/state/*.tmp
