@@ -648,6 +648,10 @@ def classify(
     by_denom = {sweep_denom.denom: sweep_denom for sweep_denom in denoms}
     holder_set = HolderSet(height=height, denoms=denoms, holders=[], excluded=[], skipped=[], below_floor=[])
 
+    # Deferral exists so a holder's STRD moves once, after unbonding. With ustrd off the list (--skip-denom ustrd)
+    # no STRD moves, so stakers are swept now like everyone else and their STRD waits for pass 2
+    sweeps_strd = config.STRD_DENOM in by_denom
+
     for address, coins in balances.items():
         if test_address is not None and address != test_address:
             continue
@@ -680,10 +684,11 @@ def classify(
         holder = Holder(address=address, balances=spendable, usd=spendable_usd,
                         keyless=not account.has_pubkey and account.sequence == 0, locked=locked)
 
-        # A holder with STRD still unbonding is swept once, in pass 2, with that STRD; the test plan must still run
+        # A holder with STRD still unbonding waits for pass 2 so its STRD moves once; the test plan must still run,
+        # and a plan that sends no STRD has nothing to hold back
         staked = (
             Staked(ustrd=0, completes_at=None)
-            if test_address is not None
+            if test_address is not None or not sweeps_strd
             else staking.lookup(address=address, now=now)
         )
         if staked.ustrd > 0:
@@ -746,7 +751,7 @@ def read_holder_set(
     candidates = candidate_addresses(balances=balances, denoms=denoms, floor_usd=floor_usd, exclusions=exclusions,
                                      inputs=inputs, test_address=test_address)
     prefetch(addresses=candidates, accounts=accounts, staking=staking, now=now, workers=workers,
-             read_staking=test_address is None)
+             read_staking=test_address is None and config.STRD_DENOM in {sweep_denom.denom for sweep_denom in denoms})
 
     return classify(denoms=denoms, balances=balances, floor_usd=floor_usd, exclusions=exclusions, inputs=inputs,
                     accounts=accounts, staking=staking, now=now, test_address=test_address,

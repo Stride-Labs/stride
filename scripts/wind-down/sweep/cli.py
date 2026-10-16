@@ -245,6 +245,8 @@ def render_plan(plan: planner.Plan) -> str:
     if plan.skipped_denoms:
         lines.append(f"  skipping denoms (--skip-denom): {', '.join(plan.skipped_denoms)}; not valued, not swept, their "
                      "holders are planned again once the denom is back on the list")
+    if config.STRD_DENOM in plan.skipped_denoms:
+        lines.append("  ustrd skipped: holders with STRD unbonding are not deferred; their STRD waits for pass 2")
     for tier in plan.tiers:
         addresses = sum(len(batch.addresses) for batch in tier.batches)
         usd = sum((batch.usd for batch in tier.batches), Decimal(0))

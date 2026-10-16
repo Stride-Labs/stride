@@ -338,6 +338,31 @@ class HolderTests(unittest.TestCase):
         self.assertEqual(by_address[BASE].holder.usd, Decimal("61.25"))
         self.assertEqual(by_address[BASE].staked, holders.Staked(ustrd=7, completes_at=COMPLETES))
 
+    def test_skipping_ustrd_sweeps_stakers_now_without_their_strd_and_reads_no_staking(self) -> None:
+        UNBONDING[BASE] = [unbonding(BASE, ("7", COMPLETES))]
+
+        holder_set = holders.read_holder_set(
+            floor_usd=Decimal("1"), exclusions=holders.load_exclusions(path=self.exclusions_path),
+            accounts=holders.AccountCache.load(path=self.dir / "accounts.json"), staking=NO_STAKING(),
+            test_address=None, skip_denoms=frozenset({"ustrd"}))
+
+        self.assertEqual(holder_set.deferred, [])
+        by_address = {holder.address: holder for holder in holder_set.holders}
+        self.assertIn(BASE, by_address)
+        self.assertNotIn("ustrd", by_address[BASE].balances)
+        self.assertEqual(STAKING_READS, [])
+
+    def test_skipping_another_denom_still_defers_stakers(self) -> None:
+        UNBONDING[BASE] = [unbonding(BASE, ("7", COMPLETES))]
+
+        holder_set = holders.read_holder_set(
+            floor_usd=Decimal("1"), exclusions=holders.load_exclusions(path=self.exclusions_path),
+            accounts=holders.AccountCache.load(path=self.dir / "accounts.json"), staking=NO_STAKING(),
+            test_address=None, skip_denoms=frozenset({ATOM}))
+
+        self.assertEqual([entry.holder.address for entry in holder_set.deferred], [BASE])
+        self.assertIn(BASE, STAKING_READS)
+
     def test_the_test_plan_never_defers_and_reads_no_staking(self) -> None:
         UNBONDING[BASE] = [unbonding(BASE, ("7", COMPLETES))]
         holder_set = self.read_set(test_address=BASE)

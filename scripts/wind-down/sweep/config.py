@@ -42,7 +42,8 @@ TRANSFER_PORT = "transfer"
 IBC_PREFIX = "ibc/"
 STRIDE_TO_OSMOSIS_CHANNEL = "channel-5"
 OSMOSIS_CHAIN_ID = "osmosis-1"
-FEE_DENOM = "ustrd"
+STRD_DENOM = "ustrd"
+FEE_DENOM = STRD_DENOM
 
 # Rough USD per whole native token (set 2026-10-09). The floor is a packet-count knob, so a factor of two is fine.
 NATIVE_PRICES_USD: dict[str, Decimal] = {
