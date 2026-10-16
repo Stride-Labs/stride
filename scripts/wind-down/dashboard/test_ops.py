@@ -58,7 +58,10 @@ TRANSFER_DAY_CHECKS: dict[str, dict[str, Any]] = {
     "join-pools": {"multisig": "pool-funding", "auto": {"tab": "pools", "path": "pools_funded"}},
 }
 # Celestia's extra steps, keyed by the uniform step they follow.
-CELESTIA_EXTRAS = {"claims": ["tia-staketia-sweep", "tia-staketia-paid"], "channels": ["tia-claim-balance"]}
+CELESTIA_EXTRAS = {
+    "claims": ["tia-staketia-sweep", "tia-staketia-remainder", "tia-staketia-paid"],
+    "channels": ["tia-claim-balance", "tia-rewards-check"],
+}
 AUTO_TABS = {"channels", "validators", "funds", "pools", "multisig"}
 BUNDLE_PATHS = {"seeded", "done"}  # what a live check on a Multisig set's bundles can read
 ALL_ZONES = [zone.chain_id for zone in config.ZONES]  # the eleven zones in the order every eleven-zone step lists them

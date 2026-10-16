@@ -35,6 +35,7 @@ STATUS_CLAIMABLE = "CLAIMABLE"  # an epoch unbonding record status: the native t
 # The statuses the drain refuses a zone for (spec §7): queued for the next unbonding epoch, or retrying after a failure.
 STATUSES_BLOCKING_DRAIN = ("UNBONDING_QUEUE", "UNBONDING_RETRY_QUEUE")
 STAKETIA_STATUS_CLAIMED = "CLAIMED"  # a staketia unbonding record status: fully paid out
+STAKETIA_STATUS_ACCUMULATING = "ACCUMULATING_REDEMPTIONS"  # the one always-open record; empty since v35 removed redeem
 
 ZONE_WORKERS = 16
 POOL_WORKERS = 8
@@ -1121,7 +1122,14 @@ def _staketia_unbonding_not_claimed(stride: chain.Chain) -> int:
     records = chain.rest_get_all_pages(
         chain=stride, path=f"{STAKETIA_PATH}/unbonding_records", key="unbonding_records"
     )
-    return sum(1 for record in records if record["status"] != STAKETIA_STATUS_CLAIMED)
+    return sum(1 for record in records if not _staketia_record_settled(record))
+
+
+def _staketia_record_settled(record: dict) -> bool:
+    """CLAIMED records are paid out; the accumulating record never will be, as long as nothing was redeemed into it."""
+    if record["status"] == STAKETIA_STATUS_CLAIMED:
+        return True
+    return record["status"] == STAKETIA_STATUS_ACCUMULATING and int(record["native_amount"]) == 0
 
 
 def _operator_account(stride: chain.Chain, name: str, address: str) -> Account:

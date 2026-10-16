@@ -970,7 +970,7 @@
           "steps": [
             {
               "id": "tia-tranche1-sweep",
-              "text": "Once the 8 unbonding entries complete (Funds tab → celestia → multisig node: unbonding 0, liquid +87.43B): run the tiabot (launchpad/bots/tiabot); it sweeps the unbonded TIA to the claim address and confirms the sweep for records 1472, 1476, 1484 and 1488, and the hour epoch pays those redeemers. Record 1492 (accumulating) and the 69.4B remainder follow the day-0 undelegation and complete on 2026-10-26."
+              "text": "Once the 8 unbonding entries complete (Funds tab → celestia → multisig node: unbonding 0, liquid +87.43B): run the tiabot (launchpad/bots/tiabot); it sweeps the unbonded TIA to the claim address and confirms the sweep for records 1472, 1476, 1484 and 1488, and the hour epoch pays those redeemers. Records 1492 and 1496 (20.24B) and the 49.16B remainder were undelegated on day 0 (tx 92B3A58B…) and complete 2026-10-26 23:25 UTC on Celestia, 23:34 UTC on the Stride records."
             }
           ]
         }
@@ -1119,7 +1119,14 @@
             },
             {
               "id": "tia-staketia-sweep",
-              "text": "The remaining multisig unbonding (the 69.4B undelegated on day 0, plus record 1492) completes 10-26: run the tiabot (launchpad/bots/tiabot); it sweeps the unbonded TIA to the claim address and confirms the sweep for each open record, and the hour epoch pays the redeemers. Records 1472-1488 were swept on 2026-10-19."
+              "text": "The remaining multisig unbonding (69.4B utia undelegated on day 0: records 1492 and 1496 plus the 49.16B remainder) completes 2026-10-26 23:25 UTC; the Stride records flip UNBONDED at the first hour epoch after 23:34 UTC. Run the tiabot (launchpad/bots/tiabot); it sweeps each record's amount to the claim address and confirms the sweep for 1492 and 1496, and the hour epoch pays the redeemers. Records 1472-1488 were swept on 2026-10-19."
+            },
+            {
+              "id": "tia-staketia-remainder",
+              "text": "By hand, after the tiabot: the bot only moves record amounts, so the rest of the multisig's liquid balance (about 49.3B utia: the 49.16B remainder, the pre-existing 0.18B and dust) needs its own authz IBC transfer from the Celestia multisig over channel-4 to the claim address stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd, no memo (the grant forbids one). Generate the ibc-transfer with --from the multisig and --generate-only, then celestia-appd tx authz exec from OPERATOR. Funds tab → celestia → multisig node: liquid at dust, claim address up by the same amount.",
+              "zones": [
+                "celestia"
+              ]
             },
             {
               "id": "tia-staketia-paid",
@@ -1159,6 +1166,13 @@
               "id": "tia-claim-balance",
               "text": "MsgTransferStaketiaClaimBalance: 1 TIA as the test, then amount 0 for the remainder; the TIA lands on the celestia delegation ICA and leaves with the DELEGATION transfer",
               "multisig": "staketia-claim-balance"
+            },
+            {
+              "id": "tia-rewards-check",
+              "text": "Before the WITHDRAWAL and DELEGATION transfers: the Celestia distribution query still reports about 36.4B utia of rewards for the staketia multisig across 76 validators it no longer delegates to, while the day-0 undelegate's own withdraw_rewards events paid 0. Settle it with one authz exec of MsgWithdrawDelegatorReward from OPERATOR for the largest entry (celestiavaloper15urq2dtp9qce4fyc85m6upwm9xul3049gwdz0x, 3.64B); the multisig's withdraw address is the celestia WITHDRAWAL ICA, so anything real lands there and leaves with the WITHDRAWAL transfer. If it pays out, repeat for the rest of the list; if it errors or pays 0, the query is a display artifact and nothing is owed.",
+              "zones": [
+                "celestia"
+              ]
             },
             {
               "id": "tia-transfers",

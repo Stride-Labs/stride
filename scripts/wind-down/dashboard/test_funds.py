@@ -714,13 +714,16 @@ class ZoneRecordsTest(unittest.TestCase):
 
 
 class RecordQueriesTest(unittest.TestCase):
-    def test_staketia_unbonding_records_not_claimed_counts_every_other_status(self) -> None:
-        records = [{"status": status} for status in ("UNBONDED", "CLAIMED", "UNBONDING_QUEUE", "CLAIMED")]
+    def test_staketia_unbonding_records_not_claimed_skips_claimed_and_the_empty_accumulating_record(self) -> None:
+        statuses = ("UNBONDED", "CLAIMED", "UNBONDING_QUEUE", "CLAIMED")
+        records = [{"status": status, "native_amount": "100"} for status in statuses]
+        records.append({"status": "ACCUMULATING_REDEMPTIONS", "native_amount": "0"})
+        records.append({"status": "ACCUMULATING_REDEMPTIONS", "native_amount": "100"})
 
         with mock.patch.object(chain, "rest_get_all_pages", return_value=records) as pages:
             count = funds._staketia_unbonding_not_claimed(stride=chain.stride_chain())
 
-        self.assertEqual(count, 2)
+        self.assertEqual(count, 3)
         self.assertEqual(pages.call_args.kwargs["path"], "/Stride-Labs/stride/staketia/unbonding_records")
 
     def test_staketia_redemptions_are_counted_across_pages(self) -> None:

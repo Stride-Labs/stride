@@ -253,7 +253,7 @@ function checklistPanel(zone) {
   ];
   if (zone.staketia) {
     lines.push(checklistLine('staketia claim balance', records.staketia_claim_ready,
-      `${records.staketia_redemption_records} redemption records, ${records.staketia_unbonding_records_not_claimed} unbonding records not CLAIMED`));
+      `${records.staketia_redemption_records} redemption records, ${records.staketia_unbonding_records_not_claimed} unbonding records not CLAIMED (the empty accumulating record excluded)`));
   }
   return `<div class="panel"><h2>Transfer checklist <span class="sub">from Stride's record tables · ${escapeHtml(zone.chain_id)}</span></h2>
     <ul class="checklist">${lines.join('')}</ul></div>`;
