@@ -419,6 +419,7 @@ def pool_entry(
     moderator: str | None = MODERATOR,
     admin_candidate: str | None = None,
     admin: str | None = VAULT,
+    alloyed_supply: str | None = None,
 ) -> dict[str, object]:
     return {
         "contract": contract,
@@ -427,6 +428,8 @@ def pool_entry(
         "allocation": allocation,
         "funded_exactly": funded_exactly,
         "vault_shares": vault_shares,
+        # Every share in the pool; the vault's alone unless a case adds the test wallet's.
+        "alloyed_supply": vault_shares if alloyed_supply is None else alloyed_supply,
         "native_marked": native_marked,
         "moderator": moderator,
         "admin": admin,
@@ -448,6 +451,7 @@ def fake_pools(**overrides: object) -> dict[str, object]:
             {
                 "chain_id": COSMOS,
                 "osmosis_denom": OSMOSIS_DENOM,
+                "coverage": "1.000000",
                 "pools": pools,
                 "planned": fake_planned(),
                 "creation_fee": CREATION_FEE,
@@ -1123,10 +1127,31 @@ class PoolFundingTest(unittest.TestCase):
         self.assertFalse(close.ready)
         self.assertEqual(
             close.reason,
-            "canonical pool 1234: overfunded: the vault holds 1000000 shares, above the allocation 800000 (escrow fell "
+            "canonical pool 1234: overfunded: the pool holds 1000000 shares, above the allocation 800000 (escrow fell "
             "after the test join); exit the excess by hand",
         )
         self.assertEqual(close.members, ["canonical pool 1234 · mark only"])
+
+    def test_neither_tx_is_ready_until_the_zone_is_covered(self) -> None:
+        # Live juno 2026-10-20: the vault held none of the zone's tokens, the pool only the test wallet's join, so the
+        # pool alone read as funded exactly and the close would have marked it.
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "24422966", True, alloyed_supply="24422966")]
+        reason = "the zone is 0.0% covered: its ICA transfers have not all reached the vault"
+
+        txs = pool_txs(pools_data=fake_pools(pools=pools, coverage="0.000058"))
+
+        self.assertEqual([(tx.ready, tx.reason) for tx in txs if not tx.done], [(False, reason)] * len([tx for tx in txs if not tx.done]))
+        self.assertEqual(multisig.rest_join_amounts(chain_id=COSMOS, pools_data=fake_pools(coverage="0.5")).reason,
+                         "the zone is 50.0% covered: its ICA transfers have not all reached the vault")
+
+    def test_the_rest_join_counts_the_test_wallets_shares_already_in_the_pool(self) -> None:
+        # The vault's test join (1000000) plus the test wallet's 400000: the vault joins only what is left.
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, vault_shares="1000000", alloyed_supply="1400000")]
+
+        _, close = pool_txs(pools_data=fake_pools(pools=pools))
+
+        self.assertTrue(close.ready)
+        self.assertEqual(close.members, ["canonical pool 1234 · rest ≈ 3600000"])
 
     def test_a_regenerate_deletes_the_previous_merged_tx_and_amounts_before_anything_can_fail(self) -> None:
         _, close = pool_txs()
@@ -1230,6 +1255,7 @@ def closed_pools(**pool_overrides: object) -> dict[str, object]:
         {
             "chain_id": zone.chain_id,
             "osmosis_denom": OSMOSIS_DENOM,
+            "coverage": "1.000000",
             "pools": [
                 {
                     **pool_entry(f"osmo1pool{zone.chain_id}", "canonical", str(100 + index), "5000000", True, native_marked=True),

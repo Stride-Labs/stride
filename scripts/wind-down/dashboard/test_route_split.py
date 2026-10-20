@@ -13,7 +13,7 @@ def reading(key: str, amount: int, source: str = route_split.LIVE_SOURCE, at: st
 
 def zone(route_pool: dict[str, object] | None = None, canonical: dict[str, object] | None = None) -> dict[str, object]:
     pools = [
-        {"kind": "canonical", "pool_id": "3641", "native_marked": False, "rate": "1.0", "vault_shares": "0", **(canonical or {})},
+        {"kind": "canonical", "pool_id": "3641", "native_marked": False, "rate": "1.0", "vault_shares": "0", "alloyed_supply": "0", **(canonical or {})},
         {
             "kind": "route",
             "pool_id": "3655",
@@ -21,6 +21,7 @@ def zone(route_pool: dict[str, object] | None = None, canonical: dict[str, objec
             "native_marked": False,
             "rate": "1.0",
             "vault_shares": "0",
+            "alloyed_supply": "0",
             **(route_pool or {}),
         },
     ]
@@ -73,8 +74,8 @@ class ZoneSplitTest(unittest.TestCase):
 
     def test_after_funding_a_move_against_the_funded_amount_is_red_and_the_canonical_surplus_is_not(self) -> None:
         # The route was funded for 40 stTokens; the canonical pool also holds a surplus beyond its 60.
-        funded_route = {"native_marked": True, "vault_shares": str(int(40 * TOKEN * 1.06)), "rate": "1.06"}
-        surplus_canonical = {"native_marked": True, "vault_shares": str(70 * TOKEN)}
+        funded_route = {"native_marked": True, "alloyed_supply": str(int(40 * TOKEN * 1.06)), "rate": "1.06"}
+        surplus_canonical = {"native_marked": True, "alloyed_supply": str(70 * TOKEN)}
         readings = [reading("supply", 100 * TOKEN), reading(CHANNEL, 40 * TOKEN)]
 
         steady = route_split.zone_split(zone=zone(route_pool=funded_route, canonical=surplus_canonical), readings=readings)

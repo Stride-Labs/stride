@@ -370,6 +370,10 @@ def rest_join_amounts(chain_id: str, pools_data: dict[str, Any] | None) -> RestJ
     if snapshot_reason:
         return RestJoins(amounts={}, reason=snapshot_reason)
 
+    coverage_reason = _coverage_reason(pools_zone=pools_zone)
+    if coverage_reason:
+        return RestJoins(amounts={}, reason=coverage_reason)
+
     unmarked = [pool for pool in _fundable_pools(pools_zone=pools_zone) if not pool["native_marked"]]
     return _rest_joins(pools=unmarked, test_amount=10**config.ZONES_BY_CHAIN_ID[chain_id].decimals)
 
@@ -1106,11 +1110,24 @@ def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_
         reason = snapshot_reason or "no pool to fund in the Pools snapshot"
         return [_empty_pool_tx(zone=zone, label="pool funding", reason=reason)]
 
+    # Neither tx goes before the zone's tokens are all on Osmosis: with only a test wallet's join in a pool, the pool
+    # alone would read as the zone's whole value and the close would mark it.
     osmosis_denom = pools_zone["osmosis_denom"]
+    coverage_reason = _coverage_reason(pools_zone=pools_zone)
     return [
-        _test_joins_tx(zone=zone, pools=pools, osmosis_denom=osmosis_denom),
-        _close_tx(zone=zone, pools=pools, osmosis_denom=osmosis_denom),
+        _test_joins_tx(zone=zone, pools=pools, osmosis_denom=osmosis_denom, coverage_reason=coverage_reason),
+        _close_tx(zone=zone, pools=pools, osmosis_denom=osmosis_denom, coverage_reason=coverage_reason),
     ]
+
+
+def _coverage_reason(pools_zone: dict[str, Any]) -> str | None:
+    """Why the zone's pools cannot be funded yet: what is on Osmosis does not cover what its holders are owed."""
+    coverage = pools_zone.get("coverage")
+    if coverage is None:
+        return "the zone's coverage is not known yet (see the Pools tab)"
+    if Decimal(coverage) < 1:
+        return f"the zone is {Decimal(coverage) * 100:.1f}% covered: its ICA transfers have not all reached the vault"
+    return None
 
 
 MODERATOR_MSG_GAS = 300_000  # assign_moderator is a storage write; the 09-25 pools took well under this
@@ -1119,7 +1136,9 @@ REST_AMOUNTS_SUFFIX = ".rest-amounts.json"  # the close's fresh read, beside its
 MERGE_PARTS = "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []'"
 
 
-def _test_joins_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis_denom: str | None) -> MultisigTx:
+def _test_joins_tx(
+    zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis_denom: str | None, coverage_reason: str | None
+) -> MultisigTx:
     """One tx joining one whole token into every pool the vault has not joined yet (the whole allocation when that
     is smaller); a pool whose allocation is 0 has nothing to join."""
     test_amount = 10**zone.decimals
@@ -1142,7 +1161,7 @@ def _test_joins_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis
         )
         for pool in to_test
     ]
-    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or _test_joins_reason(pools=to_test)
+    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or coverage_reason or _test_joins_reason(pools=to_test)
     return _bundle_pool_tx(
         chain_id=zone.chain_id,
         title=f"{title} ({len(to_test)} pools)",
@@ -1168,7 +1187,9 @@ def _test_joins_reason(pools: list[dict[str, Any]]) -> str | None:
     return None
 
 
-def _close_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis_denom: str | None) -> MultisigTx:
+def _close_tx(
+    zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis_denom: str | None, coverage_reason: str | None
+) -> MultisigTx:
     """One atomic tx closing the zone: the vault takes the moderator role, joins the rest of every unmarked pool and
     marks its native token, then hands the role back to config.POOL_MODERATOR. Nobody can join between a rest join
     and its mark, and a failing message reverts the whole zone. The rest amounts are read when the tx is generated."""
@@ -1204,7 +1225,12 @@ def _close_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis_deno
 
     # The rest amounts come from a fresh read when the tx is generated; the snapshot's are shown for reference.
     rest_joins = _rest_joins(pools=unmarked, test_amount=test_amount)
-    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or _moderator_unknown_reason(pools=pools) or rest_joins.reason
+    reason = (
+        _unknown_denom_reason(osmosis_denom=osmosis_denom)
+        or coverage_reason
+        or _moderator_unknown_reason(pools=pools)
+        or rest_joins.reason
+    )
     contracts = " ".join(pool["contract"] for pool in rest_joined)
     read_line = f"python3 {POOL_AMOUNTS_SCRIPT} {zone.chain_id} {contracts} > {amounts_file}" if rest_joined else None
     return _bundle_pool_tx(
@@ -1266,14 +1292,14 @@ def _moderator_unknown_reason(pools: list[dict[str, Any]]) -> str | None:
 
 
 def _rest_joins(pools: list[dict[str, Any]], test_amount: int) -> RestJoins:
-    """Every unmarked pool's rest join, `allocation - vault_shares`, once the Pools read shows each test join landed."""
+    """Every unmarked pool's rest join, `allocation - alloyed_supply`, once the Pools read shows each test join landed."""
     for pool in pools:
         reason = _rest_join_reason(pool=pool, test_amount=test_amount)
         if reason:
             return RestJoins(amounts={}, reason=f"{_pool_name(pool=pool)}: {reason}")
 
     amounts = {
-        pool["contract"]: int(pool["allocation"]) - int(pool["vault_shares"])
+        pool["contract"]: int(pool["allocation"]) - int(pool["alloyed_supply"])
         for pool in pools
         if _needs_rest_join(pool=pool, test_amount=test_amount)
     }
@@ -1282,7 +1308,8 @@ def _rest_joins(pools: list[dict[str, Any]], test_amount: int) -> RestJoins:
 
 def _rest_join_reason(pool: dict[str, Any], test_amount: int) -> str | None:
     """A pool funded exactly needs no rest join; any other waits for its test join. Once the vault holds shares the
-    rest is `allocation - vault_shares`, so escrow moving after the test join changes the amount, never the gate."""
+    rest is `allocation - alloyed_supply`: every share already in the pool (the test wallet's too) counts, so escrow
+    moving after the test join changes the amount, never the gate."""
     if pool["allocation"] is None:
         return ALLOCATION_UNKNOWN_REASON
     allocation = int(pool["allocation"])
@@ -1290,24 +1317,28 @@ def _rest_join_reason(pool: dict[str, Any], test_amount: int) -> str | None:
         return _negative_allocation_reason(allocation=pool["allocation"])
     if pool["funded_exactly"]:
         return None
+    if pool["alloyed_supply"] is None:
+        return "the pool's total shares are not known yet (see the Pools tab)"
     vault_shares = int(pool["vault_shares"])
     if vault_shares == 0:
         return f"the Pools snapshot does not show the test join yet (expected {min(allocation, test_amount)} vault shares)"
-    if vault_shares > allocation:
+    supply = int(pool["alloyed_supply"])
+    if supply > allocation:
         return (
-            f"overfunded: the vault holds {vault_shares} shares, above the allocation {allocation} (escrow fell after "
+            f"overfunded: the pool holds {supply} shares, above the allocation {allocation} (escrow fell after "
             "the test join); exit the excess by hand"
         )
     return None
 
 
 def _needs_rest_join(pool: dict[str, Any], test_amount: int) -> bool:
-    """Whether the close joins more into the pool: not funded exactly, and the allocation beyond what the vault holds
-    (before the test join, beyond the test join itself). An unknown allocation counts, so a not-ready tx shows the join."""
+    """Whether the close joins more into the pool: not funded exactly, and the allocation beyond every share already
+    in it (before the test join, beyond the test join too). An unknown allocation counts, so a not-ready tx shows it."""
     if pool["funded_exactly"] or pool["allocation"] is None:
         return not pool["funded_exactly"]
-    vault_shares = int(pool["vault_shares"])
-    return int(pool["allocation"]) > (vault_shares if vault_shares > 0 else test_amount)
+    supply = int(pool["alloyed_supply"] or 0)
+    joined = supply if int(pool["vault_shares"]) > 0 else supply + test_amount
+    return int(pool["allocation"]) > joined
 
 
 def _negative_allocation_reason(allocation: str) -> str:

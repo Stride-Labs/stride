@@ -113,9 +113,9 @@ class PoolReport:
     rate_gap_pct: str | None  # (stride_rate - rate) / stride_rate x 100: the surplus that stays in the canonical pool
     escrow: int | None  # route only: Stride's escrow balance of the stToken on the route's channel
     allocation: int | None
-    funded_exactly: (
-        bool | None
-    )  # vault_shares == allocation: shares are minted 1:1 to native joined and stay in the vault
+    # alloyed_supply == allocation: every share in the pool (the vault's, the test wallet's, any stranger's) is the
+    # pool's value, its native plus its stTokens at the rate, and a swap does not change it; a join mints 1:1
+    funded_exactly: bool | None
     corrupted: list[str]
     native_marked: bool  # the native token is in the corrupted set (the one-way mark after funding)
     moderator: str | None  # who can mark and freeze: config.POOL_MODERATOR, or the vault while it funds and marks
@@ -503,7 +503,7 @@ def build_pool_report(
         rate_gap_pct=rate_gap_pct(stride_rate=stride_rate, rate=rate),
         escrow=escrow if kind == PoolKind.ROUTE else None,
         allocation=allocation,
-        funded_exactly=None if allocation is None else vault_shares == allocation,
+        funded_exactly=funded_exactly(alloyed_supply=raw.alloyed_supply, allocation=allocation),
         corrupted=corrupted,
         native_marked=zone.osmosis_denom in corrupted,
         moderator=raw.moderator,
@@ -528,9 +528,7 @@ def allocate(reports: list[PoolReport], vault_native: int, fee_reserve: int = 0)
         dataclasses.replace(
             report,
             allocation=allocation,
-            funded_exactly=None
-            if allocation is None
-            else report.vault_shares == allocation,
+            funded_exactly=funded_exactly(alloyed_supply=report.alloyed_supply, allocation=allocation),
         )
         if report.kind == PoolKind.CANONICAL and CANONICAL_SLOT not in duplicates
         else report
@@ -539,16 +537,22 @@ def allocate(reports: list[PoolReport], vault_native: int, fee_reserve: int = 0)
 
 
 def canonical_allocation(reports: list[PoolReport], vault_native: int, fee_reserve: int = 0) -> int | None:
-    """vault (less the fee reserve, never below zero) + every pool's native - every route's allocation; None while any
-    non-canonical pool's share is unknown."""
+    """vault (less the fee reserve, never below zero) + every pool's value (its alloyed supply: native plus stTokens
+    at the rate, whoever joined) - every route's allocation; None while any route's share or any pool's supply is
+    unknown. Counting value, not the vault's shares, is what makes the rest joins add up to exactly the vault: a test
+    wallet's join is already in its pool."""
     others = [report for report in reports if report.kind != PoolKind.CANONICAL]
-    if any(report.allocation is None for report in others):
+    if any(report.allocation is None for report in others) or any(report.alloyed_supply is None for report in reports):
         return None
     return (
         max(vault_native - fee_reserve, 0)
-        + sum(report.native_balance for report in reports)
+        + sum(report.alloyed_supply for report in reports)
         - sum(report.allocation for report in others)
     )
+
+
+def funded_exactly(alloyed_supply: int | None, allocation: int | None) -> bool | None:
+    return None if alloyed_supply is None or allocation is None else alloyed_supply == allocation
 
 
 def fee_reserve(chain_id: str) -> int:

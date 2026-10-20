@@ -444,26 +444,22 @@ class PoolReportTest(unittest.TestCase):
             check(pool, pools.CheckName.ST_TRACE).detail,
         )
 
-    def test_funded_exactly_compares_the_vault_shares_with_the_allocation(self) -> None:
-        raw = raw_pool(
-            st_denom=HUB_STATOM,
-            st_trace=HUB_TRACE,
-            native=1_500_002,
-            alloyed_supply=1_500_002,
-            corrupted=[ATOM_ON_OSMOSIS],
-        )
+    def test_funded_exactly_compares_every_share_in_the_pool_with_the_allocation(self) -> None:
+        def raw(alloyed_supply: int) -> pools.RawPool:
+            return raw_pool(
+                st_denom=HUB_STATOM, st_trace=HUB_TRACE, native=1_500_002, alloyed_supply=alloyed_supply, corrupted=[ATOM_ON_OSMOSIS]
+            )
 
-        funded = report(
-            raw, vault_shares=1_500_002, route_lookup=HUB_LOOKUP, escrow=1_000_001
-        )
-        short = report(
-            raw, vault_shares=1_500_001, route_lookup=HUB_LOOKUP, escrow=1_000_001
-        )
+        funded = report(raw(alloyed_supply=1_500_002), vault_shares=1_500_002, route_lookup=HUB_LOOKUP, escrow=1_000_001)
+        short = report(raw(alloyed_supply=1_500_001), vault_shares=1_500_001, route_lookup=HUB_LOOKUP, escrow=1_000_001)
+        # The test wallet's 2 shares count: the vault funded only the rest.
+        shared = report(raw(alloyed_supply=1_500_002), vault_shares=1_500_000, route_lookup=HUB_LOOKUP, escrow=1_000_001)
 
         self.assertTrue(funded.funded_exactly)
         self.assertTrue(funded.native_marked)
         self.assertTrue(funded.ready)
         self.assertFalse(short.funded_exactly)
+        self.assertTrue(shared.funded_exactly)
 
     def test_allocation_is_null_when_the_escrow_is_unknown(self) -> None:
         pool = report(
@@ -749,11 +745,10 @@ class ChecksTest(unittest.TestCase):
 
 class AllocationTest(unittest.TestCase):
     def test_the_canonical_pool_gets_everything_the_routes_are_not_owed(self) -> None:
-        canonical = report(raw_pool(native=100), vault_shares=100)
+        # Each pool's value is its alloyed supply: here 100 and 30 shares, whoever joined them.
+        canonical = report(raw_pool(native=100, alloyed_supply=100), vault_shares=100)
         hub = report(
-            raw_pool(
-                contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE, native=30
-            ),
+            raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE, native=30, alloyed_supply=30),
             route_lookup=HUB_LOOKUP,
             escrow=20,
         )
@@ -765,7 +760,7 @@ class AllocationTest(unittest.TestCase):
         self.assertEqual(allocated[0], hub)  # route reports are untouched
 
     def test_the_osmosis_zone_keeps_the_fee_reserve_out_of_the_allocation(self) -> None:
-        canonical = report(raw_pool(native=100))
+        canonical = report(raw_pool(native=100, alloyed_supply=100))
         reserve = pools.fee_reserve(chain_id="osmosis-1")
 
         osmosis = pools.allocate(reports=[canonical], vault_native=40_000_000, fee_reserve=reserve)
@@ -776,6 +771,31 @@ class AllocationTest(unittest.TestCase):
         self.assertEqual(osmosis[0].allocation, 40_000_000 - config.OSMO_FEE_RESERVE + 100)
         self.assertEqual(short[0].allocation, 100)  # the reserve never pushes the vault below zero
         self.assertEqual(hub[0].allocation, 40_000_000 + 100)
+
+    def test_the_rest_joins_add_up_to_the_vault_when_a_test_wallet_already_joined(self) -> None:
+        # Live haqq 2026-10-20: the test wallet's earlier joins and swaps left 78.11 and 30.88 shares beside the
+        # vault's one-token test joins; counting only the vault's shares asked the vault for 92.49 ISLM it never held.
+        token = 10**18
+        canonical = report(raw_pool(native=67 * token, alloyed_supply=78_109_279_995_752_293_620), vault_shares=token)
+        route = report(
+            raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE, native=27 * token, alloyed_supply=30_878_496_585_954_088_111),
+            vault_shares=token,
+            route_lookup=HUB_LOOKUP,
+            escrow=40 * 10**24,
+        )
+        vault_native = 107_212_517_952_462_250_795_072_660
+
+        route_report, canonical_report = pools.allocate(reports=[route, canonical], vault_native=vault_native)
+        rests = [report.allocation - report.alloyed_supply for report in (route_report, canonical_report)]
+
+        self.assertEqual(sum(rests), vault_native)
+
+    def test_an_unknown_supply_leaves_the_canonical_allocation_unknown(self) -> None:
+        canonical = report(raw_pool(native=100, alloyed_supply=None))
+
+        (allocated,) = pools.allocate(reports=[canonical], vault_native=1_000)
+
+        self.assertIsNone(allocated.allocation)
 
     def test_two_canonical_pools_are_duplicates_and_neither_is_allocated(self) -> None:
         first = report(raw_pool(contract="osmo1canonb", native=100), vault_shares=100)

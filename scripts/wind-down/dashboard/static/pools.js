@@ -189,7 +189,7 @@ function poolsTable(zone) {
   if (!zone.pools.length) return `<div class="note">no pool administered by the vault holds st${escapeHtml(zone.symbol)} yet</div>`;
   const header = `<tr><th>Pool</th><th>Id</th><th class="num">Native</th><th class="num">stToken</th>
     <th class="num" title="alloyed shares held by the vault / by the test wallet">Shares vault / test wallet</th>
-    <th class="num" title="what the pool must be funded with: route = escrow × the pool's rate, canonical = the remainder">Allocation</th>
+    <th class="num" title="the value the pool must hold, in shares: route = escrow × the pool's rate, canonical = the remainder; the vault joins it less every share already in the pool">Allocation</th>
     <th title="the native token marked corrupted (one-way pool)">Corrupted</th><th class="num" title="the pool's rate and its gap below Stride's frozen rate">Rate</th></tr>`;
   return `<div class="table-scroll"><table>${header}${zone.pools.map((pool) => poolRows(pool, zone)).join('')}</table></div>`;
 }
@@ -234,14 +234,14 @@ function idCell(pool) {
   return `${id} ${addressCell(pool.contract, 10, 6)}`;
 }
 
-// The cumulative funding audit: vault shares equal the allocation once the pool has been joined with exactly it.
-// Below it is the normal state between the test join and the rest; above it means too much went in.
+// The cumulative funding audit: every share in the pool (the vault's, the test wallet's, any stranger's: the pool's
+// value) equals the allocation once it is funded. Below it is the normal state between the test join and the rest;
+// above it means too much went in.
 function fundedMark(pool) {
   if (pool.funded_exactly === true) return pill('ok', 'funded exactly');
   if (pool.funded_exactly === null) return pill('idle', 'n/a');
-  const shares = BigInt(pool.vault_shares || 0);
-  if (shares === 0n) return pill('idle', 'unfunded');
-  return shares < BigInt(pool.allocation) ? pill('warn', 'partly funded') : pill('bad', 'over-funded');
+  if (BigInt(pool.vault_shares || 0) === 0n) return pill('idle', 'unfunded');
+  return BigInt(pool.alloyed_supply) < BigInt(pool.allocation) ? pill('warn', 'partly funded') : pill('bad', 'over-funded');
 }
 
 function corruptedCell(pool, zone) {

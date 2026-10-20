@@ -364,16 +364,12 @@ def _row(
 
 
 def _funded_escrow(pool: dict[str, Any]) -> int | None:
-    """The stTokens a funded route pool covers: its vault shares (the native joined) over its rate. Only once marked,
+    """The stTokens a funded pool covers: its value (every share, whoever joined) over its rate. Only once marked,
     since a pool still being funded is expected to differ."""
-    if (
-        not pool["native_marked"]
-        or pool["rate"] is None
-        or int(pool["vault_shares"]) == 0
-    ):
+    if not pool["native_marked"] or pool["rate"] is None or not pool["alloyed_supply"]:
         return None
     with decimal.localcontext(pools.DECIMAL_CONTEXT):
-        return int(Decimal(int(pool["vault_shares"])) / Decimal(pool["rate"]))
+        return int(Decimal(int(pool["alloyed_supply"])) / Decimal(pool["rate"]))
 
 
 def _holder_chain(
