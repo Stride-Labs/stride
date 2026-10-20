@@ -853,6 +853,19 @@
       ],
       "windows": [
         {
+          "label": "dYdX delegation channel",
+          "steps": [
+            {
+              "id": "dydx-restore-delegation",
+              "text": "dYdX: the DELEGATION ICA channel (channel-824) is closed; restore it from the Multisig tab, then relay the new channel's handshake to OPEN on both ends.",
+              "multisig": "restore-channels",
+              "zones": [
+                "dydx-mainnet-1"
+              ]
+            }
+          ]
+        },
+        {
           "steps": [
             {
               "id": "haqq-claimable",

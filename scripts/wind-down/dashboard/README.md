@@ -71,7 +71,9 @@ not created, its stToken denom in the test wallet — goes into bundles of up to
 `osmosisd tx cosmwasmpool create-pool 996 '<instantiate_msg>' --generate-only` per message merged by a `jq` line into
 the bundle's unsigned tx, at 1.5M gas per message and 0.1 uosmo/gas; a bundle is not ready while the vault cannot pay
 the poolmanager creation fee times the pools still to create across all zones, and a trailing not-ready tx lists the
-pools no bundle holds yet with their reasons), `live-test-undelegate`, `full-drain`, `ica-transfers`,
+pools no bundle holds yet with their reasons), `slash-queries`, `validator-weights`, `restore-channels` (step
+`dydx-restore-delegation`: `restore-interchain-account` for the closed dYdX DELEGATION channel, permissionless but built
+as a multisig tx; 1M gas, 5000ustrd), `live-test-undelegate`, `full-drain`, `ica-transfers`,
 `staketia-claim-balance`, `pool-funding`. The funding set opens and closes each zone with a bundled `assign_moderator` tx: the vault takes the moderator role to mark the native token, then hands it back to `config.POOL_MODERATOR`; `pools_funded` requires the hand-back.
 
 ## Sweep tab

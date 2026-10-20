@@ -127,6 +127,36 @@ class ValidatorWeightsTest(unittest.TestCase):
         self.assertTrue(any("change-validator-weights <CHAIN_ID> <WEIGHTS_FILE>" in note and "--fees 6000ustrd" in note for note in notes))
 
 
+class RestoreChannelsTest(unittest.TestCase):
+    def test_the_set_sits_right_after_validator_weights(self) -> None:
+        ids = [tx_set.id for tx_set in multisig.tx_sets(validators_data=None, funds_data=None, pools_data=None)]
+
+        self.assertEqual(ids.index("restore-channels"), ids.index("validator-weights") + 1)
+        self.assertNotIn("restore-channels", multisig.COMPLETED_SET_IDS)
+
+    def test_one_ready_restore_for_the_dydx_delegation_channel_with_the_exact_generate_command(self) -> None:
+        tx_set = sets_by_id(None)["restore-channels"]
+
+        self.assertEqual([(tx.chain_id, tx.ready, tx.reason, tx.done) for tx in tx_set.txs], [(DYDX, True, None, False)])
+        stem = "/tmp/wind-down/restore-dydx-mainnet-1-delegation"
+        generate = (
+            "mkdir -p /tmp/wind-down\n"
+            "strided tx stakeibc restore-interchain-account dydx-mainnet-1 connection-123 dydx-mainnet-1.DELEGATION "
+            f"--from {ADDRESS} --generate-only --chain-id stride-1 --node {NODE} --gas 1000000 --fees 5000ustrd "
+            f"> {stem}.unsigned.json"
+        )
+        self.assertEqual(
+            [(command.tag, command.text) for command in tx_set.txs[0].commands],
+            expected_commands(generate, stem=stem),
+        )
+
+    def test_notes_say_it_is_permissionless_and_the_relayer_needs_the_handshake(self) -> None:
+        notes = " ".join(sets_by_id(None)["restore-channels"].notes)
+
+        self.assertIn("permissionless", notes)
+        self.assertIn("chan-open-try", notes)
+
+
 class LiveTestCommandsTest(unittest.TestCase):
     def test_celestia_commands_are_exact(self) -> None:
         tx = tx_for(sets_by_id(fake_snapshot())["live-test-undelegate"], CELESTIA)
@@ -303,6 +333,7 @@ class SetsTest(unittest.TestCase):
                 ("pool-creation", "vote-pools-create"),
                 ("slash-queries", "day0-refresh"),
                 ("validator-weights", "day0-epoch-submits"),
+                ("restore-channels", "dydx-restore-delegation"),
                 ("live-test-undelegate", "drain-live-test"),
                 ("full-drain", "drain-rest"),
                 ("ica-transfers", "transfers"),
@@ -1165,6 +1196,7 @@ class MultisigBodyTest(unittest.TestCase):
                 "pool-creation",
                 "slash-queries",
                 "validator-weights",
+                "restore-channels",
                 "live-test-undelegate",
                 "full-drain",
                 "ica-transfers",

@@ -117,6 +117,27 @@ VALIDATOR_WEIGHTS_FEES = "6000ustrd"
 
 
 @dataclass(frozen=True)
+class ChannelRestore:
+    """A closed ICA channel to reopen with restore-interchain-account. The msg is permissionless (any signer may
+    send it); it goes through the multisig so the operators' own keys are not tied to a handshake."""
+
+    chain_id: str
+    connection_id: str  # the zone's connection on Stride (host zone `connection_id`)
+    account_type: str  # the ICA owner suffix: {chain_id}.{account_type}
+    closed_channel: str  # the newest channel of that port, STATE_CLOSED when the set was written
+
+
+CHANNEL_RESTORES = (
+    ChannelRestore(chain_id="dydx-mainnet-1", connection_id="connection-123", account_type="DELEGATION", closed_channel="channel-824"),
+)
+# Registers the account (a channel OpenInit) and resets the zone's delegation, deposit, unbonding and LSM records
+# across the chain: 1,000,000 is above the 600,000 of a plain ICA msg, and the fee stays at the 0.005 ustrd/gas
+# of the other Stride sets.
+RESTORE_CHANNEL_GAS = 1_000_000
+RESTORE_CHANNEL_FEES = "5000ustrd"
+
+
+@dataclass(frozen=True)
 class DrainRetry:
     """A full-drain batch the host rejected, resubmitted as a validators file without the validators that made it
     fail. On 2026-10-12 Injective rejected batch 1483 (32 validators, 18,703.52 INJ): three validators the 19:00
@@ -308,6 +329,7 @@ def tx_sets(
         _pool_creation_set(pools_data=pools_data),
         _slash_queries_set(),
         _validator_weights_set(),
+        _restore_channels_set(),
         live_test,
         full_drain,
         _ica_transfers_set(funds_data=funds_data),
@@ -581,6 +603,24 @@ def _validator_weights_set() -> TxSet:
     )
 
 
+def _restore_channels_set() -> TxSet:
+    return TxSet(
+        id="restore-channels",
+        step_id="dydx-restore-delegation",
+        title="Restore channels: reopen a closed ICA channel",
+        description="Reopen a zone's closed ICA channel with restore-interchain-account, which also resets the zone's in-flight records.",
+        notes=[
+            "restore-interchain-account is permissionless (anyone may send it); it is built as a multisig tx so the operators' keys carry it.",
+            "After the broadcast the new channel sits in INIT until a relayer lands TRY on the host, ACK on Stride and CONFIRM on the host; check the Channels tab for it.",
+            "Before broadcasting, check the zone's relayer has fees on the host chain: a relayer that fails ChanOpenTry for insufficient funds gives up after 5 retries.",
+            "A Go relayer (rly) only acts on handshakes it sees live: after a restart it never retries an INIT channel, so finish a stale one with hermes (`hermes --config <temp> tx chan-open-try --dst-chain <host> --src-chain stride-1 --dst-connection <host connection> --dst-port icahost --src-port icacontroller-<owner> --src-channel <INIT channel>`); the relayer then does ACK and CONFIRM itself.",
+            "Each extra restore leaves another orphan INIT channel, so do not resubmit while one is still handshaking.",
+            ONE_AT_A_TIME,
+        ],
+        txs=[_channel_restore_tx(restore=restore) for restore in CHANNEL_RESTORES],
+    )
+
+
 def _staketia_claim_balance_set() -> TxSet:
     zone = config.ZONES_BY_CHAIN_ID[STAKETIA_CHAIN_ID]
     return TxSet(
@@ -835,6 +875,24 @@ def _validator_weight_tx(change: ValidatorWeightChange) -> MultisigTx:
     return _stride_tx(
         zone=zone,
         title=f"{zone.chain_id} · change-validator-weights: {change.moniker} -> {change.weight} ({change.why})",
+        reason=None,
+        generate_line=generate_line,
+        file_stem=file_stem,
+    )
+
+
+def _channel_restore_tx(restore: ChannelRestore) -> MultisigTx:
+    zone = config.ZONES_BY_CHAIN_ID[restore.chain_id]
+    file_stem = f"{WORKDIR}/restore-{zone.chain_id}-{restore.account_type.lower()}"
+    generate_line = _stride_generate_line(
+        subcommand=f"restore-interchain-account {zone.chain_id} {restore.connection_id} {zone.chain_id}.{restore.account_type}",
+        file_stem=file_stem,
+        gas=RESTORE_CHANNEL_GAS,
+        fees=RESTORE_CHANNEL_FEES,
+    )
+    return _stride_tx(
+        zone=zone,
+        title=f"{zone.chain_id} · restore-interchain-account: {restore.account_type} ({restore.closed_channel} is closed)",
         reason=None,
         generate_line=generate_line,
         file_stem=file_stem,
