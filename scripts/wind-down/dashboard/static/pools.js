@@ -51,8 +51,8 @@ function zonePanel(zone) {
   const open = userOpen.has(zone.chain_id) ? userOpen.get(zone.chain_id) : needsAttention(zone);
   return `<details class="panel" data-zone="${escapeHtml(zone.chain_id)}" ${open ? 'open' : ''}>
     <summary><h2>${escapeHtml(zone.chain_id)} <span class="muted">· st${escapeHtml(zone.symbol)}</span> ${statePill(zone)}
-      <span class="sub">${headerLine(zone)}</span>${feeLine(zone)}</h2></summary>
-    ${missingRoutesNote(zone)}${plannedTable(zone)}${poolsTable(zone)}</details>`;
+      <span class="sub">${headerLine(zone)}</span>${feeLine(zone)}${splitPill(zone)}</h2></summary>
+    ${missingRoutesNote(zone)}${plannedTable(zone)}${poolsTable(zone)}${splitTable(zone)}</details>`;
 }
 
 // Open by default when the operator has something to fix: a check fails, a route has no pool yet, or a planned pool
@@ -61,7 +61,8 @@ function needsAttention(zone) {
   return (
     zone.missing_routes.length > 0 ||
     zone.pools.some((pool) => pool.checks.some((check) => check.ok === false)) ||
-    plannedPools(zone).some((pool) => !pool.live_contract)
+    plannedPools(zone).some((pool) => !pool.live_contract) ||
+    Boolean(zone.route_split && zone.route_split.drifted)
   );
 }
 
@@ -261,6 +262,52 @@ function checkMark(check) {
   const cssClass = check.ok === true ? 'ok' : check.ok === false ? 'bad' : 'na';
   const mark = check.ok === true ? '✓' : check.ok === false ? '✗' : 'n/a';
   return `<span class="pl-check ${cssClass}" title="${escapeHtml(check.detail || check.name)}">${mark} ${escapeHtml(check.name)}</span>`;
+}
+
+// ---- route split: each route's share of the stToken supply, which must not move once the pools are funded
+
+// Red once a route or the canonical remainder moved by more than one stToken against the first live reading or
+// against what its pool was funded for; the v35 column is for reference (redemptions burned and escrow moved before
+// any pool was funded).
+function splitPill(zone) {
+  if (zone.route_split_error) return ` <span title="${escapeHtml(zone.route_split_error)}">${pill('bad', 'split read failed')}</span>`;
+  if (!zone.route_split) return '';
+  return ` ${zone.route_split.drifted ? pill('bad', 'split moved') : pill('ok', 'split steady')}`;
+}
+
+function splitTable(zone) {
+  const split = zone.route_split;
+  if (!split) return '';
+  const since = formatRelative(split.baseline_at);
+  const header = `<tr><th>Route split</th><th>Pool</th><th class="num">stTokens now</th><th class="num">Share now</th>
+    <th class="num" title="the first live reading, ${escapeHtml(split.baseline_at)}">Share at baseline (${escapeHtml(since)})</th>
+    <th class="num" title="what the pool was funded for: vault shares / rate (routes); the supply less the routes' (canonical)">Share at funding</th>
+    <th class="num" title="reference only: redemptions burned and escrow moved before any pool was funded">Share at v35</th>
+    <th class="num" title="the largest move against the baseline or funding">Moved</th></tr>`;
+  const supply = `<tr class="muted"><td>supply</td><td></td><td class="num">${amount(split.supply_now, zone.decimals)}</td><td></td>
+    <td class="num">${amount(split.supply_baseline, zone.decimals)}</td><td></td>
+    <td class="num">${amount(split.supply_at_upgrade, zone.decimals)}</td><td></td></tr>`;
+  return `<div class="table-scroll"><table>${header}${split.rows.map((row) => splitRow(row, zone)).join('')}${supply}</table></div>`;
+}
+
+function splitRow(row, zone) {
+  const moved = row.drifted ? `<span class="t-bad">${amount(row.moved, zone.decimals)}</span>` : amount(row.moved, zone.decimals);
+  return `<tr class="${row.drifted ? 'pl-fail' : ''}"><td>${row.channel ? escapeHtml(row.label) : '<b>canonical</b>'}</td>
+    <td>${row.pool_id === null ? '<span class="muted">–</span>' : escapeHtml(row.pool_id)}</td>
+    <td class="num">${amount(row.now, zone.decimals)}</td><td class="num">${share(row.share_now)} ${fundingPill(row)}</td>
+    <td class="num">${share(row.share_baseline)}</td><td class="num">${share(row.share_at_funding)}</td>
+    <td class="num muted">${share(row.share_at_upgrade)}</td><td class="num">${moved}</td></tr>`;
+}
+
+// Whether the share now still matches what the pool was funded for (within one stToken); n/a until it is funded.
+function fundingPill(row) {
+  if (row.matches_funding === null || row.matches_funding === undefined) return pill('idle', 'n/a');
+  return row.matches_funding ? pill('ok', 'matches funding') : pill('bad', 'off funding');
+}
+
+function share(value) {
+  if (value === null || value === undefined) return '<span class="muted">–</span>';
+  return `${(Number(value) * 100).toFixed(4)}%`;
 }
 
 // ---- formatting

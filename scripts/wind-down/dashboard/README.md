@@ -62,9 +62,9 @@ default, Riley as the backup), then Sam multisigns and broadcasts with Aidan's s
 multisig key in their keyring as well as their own key. The files the commands share travel between people by Slack.
 A set deep-links as `#multisig/<set-id>`, a zone's heading in it as `#multisig/<set-id>/<zone>`. A tx is `ready` only
 when its inputs are known and settled: an ICA's rest transfer waits while a transfer from that ICA is in flight (the
-snapshot's balance predates the landing); a pool's test join waits for its allocation and joins the whole allocation
-when that is below one token; its rest join is `allocation - vault_shares` and waits until the Pools snapshot shows
-exactly the test join as vault shares (and never goes on a pool funded exactly).
+snapshot's balance predates the landing); a zone's test joins wait for every allocation and join the whole allocation
+when that is below one token; its close waits until the Pools snapshot shows exactly each test join as vault shares, and
+its rest joins (`allocation - vault_shares`, none on a pool funded exactly) are read fresh when the close is generated.
 
 The sets, in order: `pool-creation` (Osmosis, step `vote-pools-create`: every planned pool that is ready — resolved,
 not created, its stToken denom in the test wallet — goes into bundles of up to 18 `MsgCreateCosmWasmPool`, one
@@ -74,7 +74,7 @@ the poolmanager creation fee times the pools still to create across all zones, a
 pools no bundle holds yet with their reasons), `slash-queries`, `validator-weights`, `restore-channels` (step
 `dydx-restore-delegation`: `restore-interchain-account` for the closed dYdX DELEGATION channel, permissionless but built
 as a multisig tx; 1M gas, 5000ustrd), `live-test-undelegate`, `full-drain`, `ica-transfers`,
-`staketia-claim-balance`, `pool-funding`. The funding set opens and closes each zone with a bundled `assign_moderator` tx: the vault takes the moderator role to mark the native token, then hands it back to `config.POOL_MODERATOR`; `pools_funded` requires the hand-back.
+`staketia-claim-balance`, `pool-funding`. The funding set is two bundled txs per zone: every test join, then the close, one atomic tx of `assign_moderator` to the vault, each pool's rest join and its mark, and `assign_moderator` back to `config.POOL_MODERATOR` (`pools_funded` requires the hand-back). The close's generate step runs `pool_amounts.py <chain_id> <contract>...` first, from the repo root: a fresh Pools read that prints each rest join as JSON and exits non-zero, stopping the `&&`-chained writes, when the read disagrees with the pools the tx lists.
 
 ## Sweep tab
 

@@ -935,7 +935,7 @@
             },
             {
               "id": "haqq-join-pools",
-              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
+              "text": "Join the pools (Multisig tab, two txs per zone): first the test joins, one token into every pool of the zone in one tx; check the Pools tab; then the close, one atomic tx that makes the vault the moderator, joins the rest of each pool and marks its native token right after, then hands the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. Generate the close right before signing: it re-reads the escrow and vault balances, so each rest join is the allocation of that moment. Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1061,7 +1061,7 @@
             },
             {
               "id": "osmo-join-pools",
-              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
+              "text": "Join the pools (Multisig tab, two txs per zone): first the test joins, one token into every pool of the zone in one tx; check the Pools tab; then the close, one atomic tx that makes the vault the moderator, joins the rest of each pool and marks its native token right after, then hands the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. Generate the close right before signing: it re-reads the escrow and vault balances, so each rest join is the allocation of that moment. Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1180,7 +1180,7 @@
             },
             {
               "id": "tia-join-pools",
-              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
+              "text": "Join the pools (Multisig tab, two txs per zone): first the test joins, one token into every pool of the zone in one tx; check the Pools tab; then the close, one atomic tx that makes the vault the moderator, joins the rest of each pool and marks its native token right after, then hands the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. Generate the close right before signing: it re-reads the escrow and vault balances, so each rest join is the allocation of that moment. Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1335,7 +1335,7 @@
             },
             {
               "id": "d21-join-pools",
-              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
+              "text": "Join the pools (Multisig tab, two txs per zone): first the test joins, one token into every pool of the zone in one tx; check the Pools tab; then the close, one atomic tx that makes the vault the moderator, joins the rest of each pool and marks its native token right after, then hands the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. Generate the close right before signing: it re-reads the escrow and vault balances, so each rest join is the allocation of that moment. Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1476,7 +1476,7 @@
             },
             {
               "id": "d28-join-pools",
-              "text": "Join the pools (Multisig tab, in the order shown): first make the vault the moderator of every pool of the zone (one tx per zone), then per pool a 1-token test join, check the Pools tab, then the remaining allocation, then mark the native token corrupted; finally hand the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy (one tx per zone). Live below: every pool of the zone funded exactly, marked, and its moderator back.",
+              "text": "Join the pools (Multisig tab, two txs per zone): first the test joins, one token into every pool of the zone in one tx; check the Pools tab; then the close, one atomic tx that makes the vault the moderator, joins the rest of each pool and marks its native token right after, then hands the moderator back to osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. Generate the close right before signing: it re-reads the escrow and vault balances, so each rest join is the allocation of that moment. Live below: every pool of the zone funded exactly, marked, and its moderator back.",
               "detail": "A top-up later means unmark, join, re-mark. When a pool's native balance reaches zero the contract removes the asset; add_new_assets at the same factor plus a join restores it with the rate exact.",
               "multisig": "pool-funding",
               "zones": [
@@ -1490,6 +1490,18 @@
             }
           ],
           "label": "Juno, Sommelier"
+        },
+        {
+          "label": "All pools: admin to Osmosis governance (the plan's last step)",
+          "steps": [
+            {
+              "id": "pools-admin-to-gov",
+              "text": "Once every pool of every zone is funded, marked and its moderator back (the Pools tab all green), the vault offers the admin role of every pool (all code-996 pools it administers, the Injective routes included) to Osmosis governance, which controls the Osmosis community pool: transfer_admin with candidate osmo10d07y265gmmuvt4z0w9aw880jnsr700jjeq4qp (the gov module), one MsgExecuteContract per pool in one vault multisig tx (Multisig tab, last set). The handoff is two-step: the vault stays admin until the candidate sends claim_admin, and a module account cannot sign, so the candidate must be the gov module (an Osmosis proposal executes claim_admin on each pool) and never the distribution module that holds the community pool's funds (osmo1jv65s3grqf6v6jl3dp4t6c9t9rk99cd80yhvld), which could never claim.",
+              "detail": "Until an Osmosis proposal claims, the Pools tab's 'no admin transfer in flight' check reads red on every pool and the vault is still admin; the vault can cancel_admin_transfer while the offer is pending. The moderator stays osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. One Osmosis proposal claims every pool: one MsgExecuteContract per pool, sender the gov module, msg {\"claim_admin\":{}}; its messages run all or nothing, so submit it only once every pool shows the candidate.",
+              "expect": "code 0 on each tx; get_admin_candidate returns osmo10d07y265gmmuvt4z0w9aw880jnsr700jjeq4qp on every pool and get_admin still returns the vault until Osmosis governance claims.",
+              "multisig": "pool-admin-transfer"
+            }
+          ]
         }
       ],
       "note": "All four ICA transfers for each zone, then join_pool once the Pools tab shows the zone covered."

@@ -12,6 +12,7 @@ multisig's account number and sequence up itself. A set may hold several txs per
 import dataclasses
 import hashlib
 import json
+import pathlib
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
@@ -31,11 +32,9 @@ PLACEHOLDER_VALOPER = "<LIVE_TEST_VALOPER>"
 PLACEHOLDER_DENOM = "<HOST_DENOM>"
 PLACEHOLDER_BALANCE = "<BALANCE>"
 PLACEHOLDER_OSMOSIS_DENOM = "<OSMOSIS_DENOM>"
-PLACEHOLDER_REST_AMOUNT = "<ALLOCATION_MINUS_VAULT_SHARES>"
 ANYONE = "anyone"
 NO_SNAPSHOT_REASON = "waiting for the Validators snapshot"
 ALLOCATION_UNKNOWN_REASON = "the pool's allocation is not known yet (see the Pools tab)"
-ALLOCATION_EMPTY_REASON = "the allocation is 0: nothing to join"
 
 # The order the four admin transfers go out (spec §3): fees first, delegations after the withdrawals that feed them.
 ICA_ORDER = (funds.IcaType.FEE, funds.IcaType.WITHDRAWAL, funds.IcaType.DELEGATION, funds.IcaType.REDEMPTION)
@@ -270,6 +269,25 @@ class MultisigTx:
 
 
 @dataclass(frozen=True)
+class BundlePart:
+    """One message of a bundled pool tx: written as its own unsigned tx, then merged into the bundle."""
+
+    name: str  # the part file's suffix: the pool label and the step
+    contract: str
+    message: dict[str, Any]
+    amount: str | None  # the --amount argument (shell text: the close's rest joins read theirs at generate time)
+    gas: int
+
+
+@dataclass(frozen=True)
+class RestJoins:
+    """A zone's rest joins: each unmarked pool's amount still to join, or why they cannot be written yet."""
+
+    amounts: dict[str, int]  # contract -> allocation - vault shares, for every pool that still needs one
+    reason: str | None
+
+
+@dataclass(frozen=True)
 class TxSet:
     id: str
     step_id: str  # the ops step it belongs to
@@ -335,11 +353,23 @@ def tx_sets(
         _ica_transfers_set(funds_data=funds_data),
         _staketia_claim_balance_set(),
         _pool_funding_set(pools_data=pools_data),
+        _pool_admin_transfer_set(pools_data=pools_data),
     ]
     return [_completed(tx_set=tx_set) if tx_set.id in COMPLETED_SET_IDS else tx_set for tx_set in sets]
 
 
 # ---- sets
+
+
+def rest_join_amounts(chain_id: str, pools_data: dict[str, Any] | None) -> RestJoins:
+    """The rest joins of a zone's close tx, from a Pools read (`pool_amounts.py` passes a fresh one at generate time)."""
+    pools_zone = _zones_by_chain_id(data=pools_data).get(chain_id)
+    snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
+    if snapshot_reason:
+        return RestJoins(amounts={}, reason=snapshot_reason)
+
+    unmarked = [pool for pool in _fundable_pools(pools_zone=pools_zone) if not pool["native_marked"]]
+    return _rest_joins(pools=unmarked, test_amount=10**config.ZONES_BY_CHAIN_ID[chain_id].decimals)
 
 
 def _completed(tx_set: TxSet) -> TxSet:
@@ -642,13 +672,13 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
         id="pool-funding",
         step_id="join-pools",
         title="Pool funding: join and close every transmuter pool",
-        description="Fund each pool with a test join, then the rest of its allocation, then mark the native token corrupted.",
+        description="Per zone, two txs: a test join into every pool, then one tx that joins the rest, marks every pool and hands the moderator back.",
         notes=[
-            "Per zone: every pool's test join first, then verify on the Pools tab (native one token, vault shares one token, the test wallet's shares present, rate exact).",
-            "Then per pool: the rest join and the mark back to back; the mark closes the window in which an outsider could join.",
-            "The mark is the moderator's call: the first tx of each zone makes the vault the moderator of its pools, the last hands the role back to osmo1ugrn8…hjdpgy once every pool is marked.",
-            "The rest join is ready once the Pools snapshot shows the test join as vault shares.",
-            "The vault needs about 0.15 OSMO per tx, three txs per pool.",
+            "The test joins: one token into every pool of the zone (the whole allocation when smaller). Then check the Pools tab: native one token, vault shares one token, the test wallet's shares present, rate exact.",
+            "The close, one atomic tx: the vault takes the moderator role, joins the rest of each pool and marks its native token right after, then hands the role back to osmo1ugrn8…hjdpgy. Nobody can join between a rest join and its mark, and one failing message reverts the whole zone.",
+            "The close re-reads the escrow and vault balances when it is generated (pool_amounts.py), so each rest join is the allocation of that moment: generate it right before signing. The amounts on the card are the snapshot's.",
+            "The close is ready once the Pools snapshot shows every test join as vault shares.",
+            "Gas: 1.5M per join or mark and 0.3M per moderator message at 0.1 uosmo, so about 0.15 OSMO per join or mark; a 6-pool close is ~22M of the 60M tx cap.",
             ONE_AT_A_TIME,
         ],
         txs=[
@@ -657,6 +687,93 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
             for tx in _pool_txs(zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data)
         ],
     )
+
+
+def _pool_admin_transfer_set(pools_data: dict[str, Any] | None) -> TxSet:
+    return TxSet(
+        id="pool-admin-transfer",
+        step_id="pools-admin-to-gov",
+        title="Pool admin: offer every pool's admin role to Osmosis governance",
+        description="On the last day, one vault tx sends transfer_admin to every pool with Osmosis governance (the gov module) as the candidate.",
+        notes=[
+            f"The candidate is {config.OSMOSIS_GOV}, the gov module, which controls the Osmosis community pool. Never the distribution module that holds the community pool's funds: a module account cannot sign, so it could never claim.",
+            "Two steps: the vault stays admin until the candidate sends claim_admin. One Osmosis proposal claims every pool: one MsgExecuteContract per pool, sender the gov module, msg {\"claim_admin\":{}}. Its messages run all or nothing, so every pool must show the candidate before the proposal passes.",
+            "Ready once every pool of every zone exists, is marked, and has its moderator back (the Pools tab all green).",
+            "Until the proposal claims, the Pools tab's no-admin-transfer check reads red on every pool; the vault can cancel_admin_transfer while the offer is pending.",
+            ONE_AT_A_TIME,
+        ],
+        txs=[_admin_transfer_tx(pools_data=pools_data)],
+    )
+
+
+ADMIN_TRANSFER_MSG_GAS = 300_000  # a storage write like assign_moderator; 31 pools is ~9.4M, far under the 60M tx cap
+
+
+def _admin_transfer_tx(pools_data: dict[str, Any] | None) -> MultisigTx:
+    """One tx, transfer_admin to config.OSMOSIS_GOV on every pool still without that offer, across every zone."""
+    title_prefix = "every pool · transfer_admin → Osmosis governance"
+    pools_zones = _zones_by_chain_id(data=pools_data)
+    zone_reasons = [
+        reason
+        for zone in config.ZONES
+        if (reason := _snapshot_reason(zone_entry=pools_zones.get(zone.chain_id), data=pools_data, source="Pools"))
+    ]
+    if zone_reasons:
+        return MultisigTx(chain_id=CREATION_GROUP, title=title_prefix, ready=False, reason=zone_reasons[0], commands=[], files=[])
+
+    zone_pools = [(zone, pool) for zone in config.ZONES for pool in _fundable_pools(pools_zone=pools_zones[zone.chain_id])]
+    pools = [pool for _, pool in zone_pools]
+    # Offered (the candidate) or already claimed (the admin): either way governance needs nothing more from the vault.
+    to_offer = [(zone, pool) for zone, pool in zone_pools if config.OSMOSIS_GOV not in (pool["admin_candidate"], pool["admin"])]
+    members = [f"{zone.chain_id} {_pool_label(pool=pool)}" for zone, pool in zone_pools]
+    if pools and not to_offer:
+        return MultisigTx(
+            chain_id=CREATION_GROUP, title=f"{title_prefix} ({len(pools)} pools) · done", ready=False, reason=None,
+            commands=[], files=[], members=members, done=True,
+        )
+
+    stem = f"{WORKDIR}/pool-admin-to-gov"
+    gas = CREATE_POOL_TX_OVERHEAD_GAS + ADMIN_TRANSFER_MSG_GAS * len(to_offer)
+    parts = [
+        BundlePart(
+            name=f"{zone.chain_id}-{_pool_label(pool=pool)}",
+            contract=pool["contract"],
+            message={"transfer_admin": {"candidate": config.OSMOSIS_GOV}},
+            amount=None,
+            gas=gas,
+        )
+        for zone, pool in to_offer
+    ]
+    return _bundle_pool_tx(
+        chain_id=CREATION_GROUP,
+        title=f"{title_prefix} ({len(to_offer)} of {len(pools)} pools)",
+        reason=_admin_transfer_reason(pools_zones=pools_zones, pools=pools),
+        stem=stem,
+        parts=parts,
+        members=members,
+    )
+
+
+def _admin_transfer_reason(pools_zones: dict[str, dict[str, Any]], pools: list[dict[str, Any]]) -> str | None:
+    """Why the offer must wait, in the order the operator resolves it: pools still to create, then to fund and mark,
+    then the moderator to hand back; an unread candidate last."""
+    # Blocked pools count here: the Injective routes must exist before their admin can be offered.
+    to_create = sum(
+        1 for zone in pools_zones.values() for plan in zone.get("planned") or [] if not plan["live_contract"]
+    )
+    if to_create:
+        return f"{to_create} planned pools not created yet (Pool creation set)"
+    if not pools:
+        return "no pool in the Pools snapshot"
+    unmarked = [pool for pool in pools if not pool["native_marked"]]
+    if unmarked:
+        return f"{len(unmarked)} of {len(pools)} pools not funded and marked yet (Pool funding set)"
+    moderated = [pool for pool in pools if pool.get("moderator") != config.POOL_MODERATOR]
+    if moderated:
+        return f"{len(moderated)} of {len(pools)} pools without their moderator back yet (Pool funding set)"
+    if not all(pool.get("admin_candidate_known") for pool in pools):
+        return "a pool's admin candidate is not known yet (see the Pools tab)"
+    return None
 
 
 # ---- txs
@@ -976,7 +1093,7 @@ def _whole_units(amount: int) -> str:
 
 
 def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> list[MultisigTx]:
-    """The zone's test joins, then each pool's rest join and mark back to back; one not-ready tx when there is nothing."""
+    """The zone's two txs, every test join and then the close; one not-ready tx when there is nothing to fund."""
     snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
     pools = [] if snapshot_reason else _fundable_pools(pools_zone=pools_zone)
     if not pools:
@@ -984,76 +1101,260 @@ def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_
         return [_empty_pool_tx(zone=zone, label="pool funding", reason=reason)]
 
     osmosis_denom = pools_zone["osmosis_denom"]
-    test_amount = 10**zone.decimals
     return [
-        _moderator_tx(zone=zone, pools=pools, to_vault=True),
-        *(_join_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom, test_amount=test_amount, is_test=True) for pool in pools),
-        *(
-            tx
-            for pool in pools
-            for tx in (
-                _join_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom, test_amount=test_amount, is_test=False),
-                _mark_tx(zone=zone, pool=pool, osmosis_denom=osmosis_denom),
-            )
-        ),
-        _moderator_tx(zone=zone, pools=pools, to_vault=False),
+        _test_joins_tx(zone=zone, pools=pools, osmosis_denom=osmosis_denom),
+        _close_tx(zone=zone, pools=pools, osmosis_denom=osmosis_denom),
     ]
 
 
 MODERATOR_MSG_GAS = 300_000  # assign_moderator is a storage write; the 09-25 pools took well under this
+POOL_AMOUNTS_SCRIPT = str(pathlib.Path(__file__).resolve().parent / "pool_amounts.py")  # the close's generate step runs it
+REST_AMOUNTS_SUFFIX = ".rest-amounts.json"  # the close's fresh read, beside its unsigned tx
+MERGE_PARTS = "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []'"
 
 
-def _moderator_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], to_vault: bool) -> MultisigTx:
-    """One tx, assign_moderator on every pool of the zone (the admin's call): the vault takes the role before the joins
-    so it can mark the native token, and hands it back to config.POOL_MODERATOR once every pool is marked."""
-    target = config.OSMOSIS_VAULT if to_vault else config.POOL_MODERATOR
-    label = "moderator-to-vault" if to_vault else "moderator-back"
-    stem = f"{WORKDIR}/pool-{zone.chain_id}-{label}"
-    gas = CREATE_POOL_TX_OVERHEAD_GAS + MODERATOR_MSG_GAS * len(pools)
-    message_json = json.dumps({"assign_moderator": {"address": target}}, separators=(",", ":"))
-    generate_lines = [
-        f"osmosisd tx wasm execute {pool['contract']} '{message_json}' --from {OSMOSIS_VAULT_ADDRESS} --generate-only "
-        f"--chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {gas} --gas-prices {OSMOSIS_GAS_PRICE} "
-        f"> {stem}-{position:02d}-{_pool_label(pool=pool)}.unsigned.json"
-        for position, pool in enumerate(pools, start=1)
+def _test_joins_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis_denom: str | None) -> MultisigTx:
+    """One tx joining one whole token into every pool the vault has not joined yet (the whole allocation when that
+    is smaller); a pool whose allocation is 0 has nothing to join."""
+    test_amount = 10**zone.decimals
+    denom = osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM
+    to_test = [pool for pool in pools if pool["vault_shares"] == "0" and pool["allocation"] != "0"]
+    title = f"{zone.chain_id} · test joins"
+    if not to_test:
+        members = [_pool_name(pool=pool) for pool in pools]
+        return _done_pool_tx(zone=zone, title=f"{title} ({len(pools)} pools) · done", members=members)
+
+    amounts = {pool["contract"]: _test_join_amount(pool=pool, test_amount=test_amount) for pool in to_test}
+    gas = CREATE_POOL_TX_OVERHEAD_GAS + POOL_GAS * len(to_test)
+    parts = [
+        BundlePart(
+            name=f"{_pool_label(pool=pool)}-test",
+            contract=pool["contract"],
+            message={"join_pool": {}},
+            amount=f"{amounts[pool['contract']]}{denom}",
+            gas=gas,
+        )
+        for pool in to_test
     ]
-    merge_line = (
-        "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []' "
-        f"{stem}-*.unsigned.json > {stem}.unsigned.json"
-    )
-    title = f"{zone.chain_id} · moderator → {'the vault, before the joins' if to_vault else 'osmo1ugrn8…hjdpgy, after the marks'} ({len(pools)} pools)"
-    reason = _moderator_reason(pools=pools, to_vault=to_vault)
-    return MultisigTx(
+    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or _test_joins_reason(pools=to_test)
+    return _bundle_pool_tx(
         chain_id=zone.chain_id,
+        title=f"{title} ({len(to_test)} pools)",
+        reason=reason,
+        stem=f"{WORKDIR}/pool-{zone.chain_id}-test-joins",
+        parts=parts,
+        members=[f"{_pool_name(pool=pool)} · {amounts[pool['contract']]}" for pool in to_test],
+    )
+
+
+def _test_join_amount(pool: dict[str, Any], test_amount: int) -> int:
+    """One whole token, or the whole allocation when that is smaller (and known: the tx is not ready until it is)."""
+    allocation = None if pool["allocation"] is None else int(pool["allocation"])
+    return min(allocation, test_amount) if allocation is not None and allocation > 0 else test_amount
+
+
+def _test_joins_reason(pools: list[dict[str, Any]]) -> str | None:
+    if any(pool["allocation"] is None for pool in pools):
+        return ALLOCATION_UNKNOWN_REASON
+    negative = next((pool for pool in pools if int(pool["allocation"]) < 0), None)
+    if negative:
+        return f"{_pool_name(pool=negative)}: {_negative_allocation_reason(allocation=negative['allocation'])}"
+    return None
+
+
+def _close_tx(zone: config.ZoneConfig, pools: list[dict[str, Any]], osmosis_denom: str | None) -> MultisigTx:
+    """One atomic tx closing the zone: the vault takes the moderator role, joins the rest of every unmarked pool and
+    marks its native token, then hands the role back to config.POOL_MODERATOR. Nobody can join between a rest join
+    and its mark, and a failing message reverts the whole zone. The rest amounts are read when the tx is generated."""
+    test_amount = 10**zone.decimals
+    denom = osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM
+    unmarked = [pool for pool in pools if not pool["native_marked"]]
+    handed_back = [pool for pool in pools if pool in unmarked or pool.get("moderator") != config.POOL_MODERATOR]
+    title = f"{zone.chain_id} · close: moderator → vault, rest joins, marks, moderator → osmo1ugrn8…hjdpgy"
+    if not handed_back:
+        members = [_pool_name(pool=pool) for pool in pools]
+        return _done_pool_tx(zone=zone, title=f"{title} ({len(pools)} pools) · done", members=members)
+
+    # The parts in the order they execute: the role first, each pool's rest join right before its mark, the role back.
+    stem = f"{WORKDIR}/pool-{zone.chain_id}-close"
+    amounts_file = f"{stem}{REST_AMOUNTS_SUFFIX}"
+    rest_joined = [pool for pool in unmarked if _needs_rest_join(pool=pool, test_amount=test_amount)]
+    gas = (
+        CREATE_POOL_TX_OVERHEAD_GAS
+        + MODERATOR_MSG_GAS * (len(unmarked) + len(handed_back))
+        + POOL_GAS * (len(rest_joined) + len(unmarked))
+    )
+    parts = [
+        *(_moderator_part(pool=pool, target=config.OSMOSIS_VAULT, gas=gas) for pool in unmarked),
+        *(
+            part
+            for pool in unmarked
+            for part in _rest_and_mark_parts(
+                pool=pool, denom=denom, amounts_file=amounts_file, gas=gas, rest_joined=pool in rest_joined
+            )
+        ),
+        *(_moderator_part(pool=pool, target=config.POOL_MODERATOR, gas=gas) for pool in handed_back),
+    ]
+
+    # The rest amounts come from a fresh read when the tx is generated; the snapshot's are shown for reference.
+    rest_joins = _rest_joins(pools=unmarked, test_amount=test_amount)
+    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or _moderator_unknown_reason(pools=pools) or rest_joins.reason
+    contracts = " ".join(pool["contract"] for pool in rest_joined)
+    read_line = f"python3 {POOL_AMOUNTS_SCRIPT} {zone.chain_id} {contracts} > {amounts_file}" if rest_joined else None
+    return _bundle_pool_tx(
+        chain_id=zone.chain_id,
+        title=f"{title} ({len(handed_back)} pools)",
+        reason=reason,
+        stem=stem,
+        parts=parts,
+        members=[
+            _close_member(pool=pool, rest_joins=rest_joins, rest_joined=pool in rest_joined) for pool in handed_back
+        ],
+        read_line=read_line,
+    )
+
+
+def _moderator_part(pool: dict[str, Any], target: str, gas: int) -> BundlePart:
+    step = "moderator-to-vault" if target == config.OSMOSIS_VAULT else "moderator-back"
+    return BundlePart(
+        name=f"{_pool_label(pool=pool)}-{step}",
+        contract=pool["contract"],
+        message={"assign_moderator": {"address": target}},
+        amount=None,
+        gas=gas,
+    )
+
+
+def _rest_and_mark_parts(pool: dict[str, Any], denom: str, amounts_file: str, gas: int, rest_joined: bool) -> list[BundlePart]:
+    """The pool's rest join (its amount read from the fresh-read file in the shell) and the mark right after it."""
+    label = _pool_label(pool=pool)
+    contract = pool["contract"]
+    mark = BundlePart(
+        name=f"{label}-mark",
+        contract=contract,
+        message={"mark_corrupted_assets": {"denoms": [denom]}},
+        amount=None,
+        gas=gas,
+    )
+    if not rest_joined:
+        return [mark]
+    amount = f"\"$(jq -r '.[\"{contract}\"]' {amounts_file}){denom}\""
+    rest = BundlePart(name=f"{label}-rest", contract=contract, message={"join_pool": {}}, amount=amount, gas=gas)
+    return [rest, mark]
+
+
+def _close_member(pool: dict[str, Any], rest_joins: RestJoins, rest_joined: bool) -> str:
+    name = _pool_name(pool=pool)
+    if pool["native_marked"]:
+        return f"{name} · moderator back only"
+    if not rest_joined:
+        return f"{name} · mark only"
+    amount = rest_joins.amounts.get(pool["contract"])
+    return f"{name} · rest ≈ {'?' if amount is None else amount}"
+
+
+def _moderator_unknown_reason(pools: list[dict[str, Any]]) -> str | None:
+    if any(pool.get("moderator") is None for pool in pools):
+        return "a pool's moderator is not known yet (see the Pools tab)"
+    return None
+
+
+def _rest_joins(pools: list[dict[str, Any]], test_amount: int) -> RestJoins:
+    """Every unmarked pool's rest join, `allocation - vault_shares`, once the Pools read shows each test join landed."""
+    for pool in pools:
+        reason = _rest_join_reason(pool=pool, test_amount=test_amount)
+        if reason:
+            return RestJoins(amounts={}, reason=f"{_pool_name(pool=pool)}: {reason}")
+
+    amounts = {
+        pool["contract"]: int(pool["allocation"]) - int(pool["vault_shares"])
+        for pool in pools
+        if _needs_rest_join(pool=pool, test_amount=test_amount)
+    }
+    return RestJoins(amounts=amounts, reason=None)
+
+
+def _rest_join_reason(pool: dict[str, Any], test_amount: int) -> str | None:
+    """A pool funded exactly needs no rest join; any other waits for its test join. Once the vault holds shares the
+    rest is `allocation - vault_shares`, so escrow moving after the test join changes the amount, never the gate."""
+    if pool["allocation"] is None:
+        return ALLOCATION_UNKNOWN_REASON
+    allocation = int(pool["allocation"])
+    if allocation < 0:
+        return _negative_allocation_reason(allocation=pool["allocation"])
+    if pool["funded_exactly"]:
+        return None
+    vault_shares = int(pool["vault_shares"])
+    if vault_shares == 0:
+        return f"the Pools snapshot does not show the test join yet (expected {min(allocation, test_amount)} vault shares)"
+    if vault_shares > allocation:
+        return (
+            f"overfunded: the vault holds {vault_shares} shares, above the allocation {allocation} (escrow fell after "
+            "the test join); exit the excess by hand"
+        )
+    return None
+
+
+def _needs_rest_join(pool: dict[str, Any], test_amount: int) -> bool:
+    """Whether the close joins more into the pool: not funded exactly, and the allocation beyond what the vault holds
+    (before the test join, beyond the test join itself). An unknown allocation counts, so a not-ready tx shows the join."""
+    if pool["funded_exactly"] or pool["allocation"] is None:
+        return not pool["funded_exactly"]
+    vault_shares = int(pool["vault_shares"])
+    return int(pool["allocation"]) > (vault_shares if vault_shares > 0 else test_amount)
+
+
+def _negative_allocation_reason(allocation: str) -> str:
+    return f"the allocation is negative ({allocation}): the vault does not hold the zone's tokens yet"
+
+
+def _bundle_pool_tx(
+    chain_id: str,
+    title: str,
+    reason: str | None,
+    stem: str,
+    parts: list[BundlePart],
+    members: list[str],
+    read_line: str | None = None,
+) -> MultisigTx:
+    """Each part written as its own unsigned tx into a fresh parts folder, then merged into one. A previous generate's
+    outputs are deleted first and every later line is chained with &&, so a failed read or write leaves no merged tx
+    to sign, not even an older one."""
+    parts_dir = f"{stem}.parts"
+    previous = f"{parts_dir} {stem}.unsigned.json {stem}{REST_AMOUNTS_SUFFIX}"
+    part_lines = [
+        f"osmosisd tx wasm execute {part.contract} '{json.dumps(part.message, separators=(',', ':'))}'"
+        f"{f' --amount {part.amount}' if part.amount else ''} --from {OSMOSIS_VAULT_ADDRESS} --generate-only "
+        f"--chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {part.gas} --gas-prices {OSMOSIS_GAS_PRICE} "
+        f"> {parts_dir}/{position:02d}-{part.name}.unsigned.json"
+        for position, part in enumerate(parts, start=1)
+    ]
+    merge_line = f"{MERGE_PARTS} {parts_dir}/*.unsigned.json > {stem}.unsigned.json"
+    chained = " && \\\n".join([*([read_line] if read_line else []), *part_lines, merge_line])
+    read_note = "re-read the escrow and vault balances, " if read_line else ""
+    return MultisigTx(
+        chain_id=chain_id,
         title=title,
         ready=reason is None,
         reason=reason,
         commands=_commands(
-            generate="\n".join([f"mkdir -p {WORKDIR}", *generate_lines, merge_line]),
+            generate="\n".join([f"rm -rf {previous}", f"mkdir -p {parts_dir}", chained]),
             file_stem=stem,
             tools=OSMOSIS_TOOLS,
-            generate_label=f"Write each pool's unsigned tx and merge them into one ({len(pools)} messages, --gas {gas})",
+            generate_label=(
+                f"Generate right before signing: {read_note}write each message and merge them into one "
+                f"({len(parts)} messages, --gas {parts[0].gas})"
+            ),
         ),
         files=_shared_files(file_stem=stem),
+        members=members,
     )
 
 
-def _moderator_reason(pools: list[dict[str, Any]], to_vault: bool) -> str | None:
-    moderators = [pool.get("moderator") for pool in pools]
-    if any(moderator is None for moderator in moderators):
-        return "a pool's moderator is not known yet (see the Pools tab)"
-    if to_vault:
-        if all(pool["native_marked"] for pool in pools):
-            return "every pool is already marked: nothing left for the vault to do as moderator"
-        if all(moderator == config.OSMOSIS_VAULT for moderator in moderators):
-            return "the vault already moderates every pool of the zone"
-        return None
-    unmarked = [pool for pool in pools if not pool["native_marked"]]
-    if unmarked:
-        return f"{len(unmarked)} of {len(pools)} pools not marked yet: the vault still needs the moderator role"
-    if all(moderator == config.POOL_MODERATOR for moderator in moderators):
-        return "the moderator is already back on every pool of the zone"
-    return None
+def _done_pool_tx(zone: config.ZoneConfig, title: str, members: list[str]) -> MultisigTx:
+    return MultisigTx(
+        chain_id=zone.chain_id, title=title, ready=False, reason=None, commands=[], files=[], members=members, done=True
+    )
 
 
 def _fundable_pools(pools_zone: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1067,87 +1368,6 @@ def _empty_pool_tx(zone: config.ZoneConfig, label: str, reason: str) -> Multisig
     )
 
 
-def _join_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str | None, test_amount: int, is_test: bool) -> MultisigTx:
-    amount_text, reason = (
-        _test_join_amount(pool=pool, test_amount=test_amount)
-        if is_test
-        else _rest_join_amount(pool=pool, test_amount=test_amount)
-    )
-    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or reason
-    label = "test" if is_test else "rest"
-    denom = osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM
-    file_stem = _pool_file_stem(zone=zone, pool=pool, label=label)
-    join_title = f"{'test join' if is_test else 'join rest'}, {amount_text}{denom}"
-    return _osmosis_tx(
-        zone=zone,
-        title=f"{zone.chain_id} · {_pool_name(pool=pool)} · {join_title}",
-        reason=reason,
-        generate_line=_osmosis_generate_line(
-            contract=pool["contract"], message={"join_pool": {}}, amount=f"{amount_text}{denom}", file_stem=file_stem
-        ),
-        file_stem=file_stem,
-    )
-
-
-def _test_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str | None]:
-    """One whole token, or the whole allocation when that is smaller; nothing goes until the allocation is known."""
-    if pool["allocation"] is None:
-        return str(test_amount), ALLOCATION_UNKNOWN_REASON
-    allocation = int(pool["allocation"])
-    if allocation <= 0:
-        return "0", ALLOCATION_EMPTY_REASON
-    return str(min(allocation, test_amount)), None
-
-
-def _rest_join_amount(pool: dict[str, Any], test_amount: int) -> tuple[str, str | None]:
-    """What the allocation leaves after the shares the vault already holds, and why it cannot go yet: it waits until
-    the Pools snapshot shows exactly the test join, so the amount is computed from what actually landed."""
-    if pool["allocation"] is None:
-        return PLACEHOLDER_REST_AMOUNT, ALLOCATION_UNKNOWN_REASON
-
-    allocation = int(pool["allocation"])
-    vault_shares = int(pool["vault_shares"])
-    remaining = str(allocation - vault_shares)
-    if allocation <= 0:
-        return remaining, ALLOCATION_EMPTY_REASON
-    if pool["funded_exactly"]:
-        return remaining, "the pool is already funded exactly"
-    if allocation <= test_amount:
-        return remaining, f"the allocation ({allocation}) does not exceed the test join: nothing left to join"
-    if vault_shares != test_amount:
-        return remaining, (
-            f"the Pools snapshot does not show the test join yet (vault shares {vault_shares}, expected {test_amount})"
-        )
-    return remaining, None
-
-
-def _mark_reason(pool: dict[str, Any]) -> str | None:
-    """A mark before the funding join would refuse that join (the mark forbids raising the native balance), so the
-    mark waits for the pool to be funded exactly; a marked pool is done."""
-    if pool.get("native_marked"):
-        return "already marked"
-    if pool.get("funded_exactly") is None:
-        return "the pool's allocation is not known yet (see the Pools tab)"
-    if not pool["funded_exactly"]:
-        return "not funded exactly yet: the mark would refuse the funding join"
-    if pool.get("moderator") not in (None, config.OSMOSIS_VAULT):
-        return "the vault is not the moderator yet: send the zone's moderator → vault tx first"
-    return None
-
-
-def _mark_tx(zone: config.ZoneConfig, pool: dict[str, Any], osmosis_denom: str | None) -> MultisigTx:
-    file_stem = _pool_file_stem(zone=zone, pool=pool, label="mark")
-    reason = _unknown_denom_reason(osmosis_denom=osmosis_denom) or _mark_reason(pool=pool)
-    message = {"mark_corrupted_assets": {"denoms": [osmosis_denom or PLACEHOLDER_OSMOSIS_DENOM]}}
-    return _osmosis_tx(
-        zone=zone,
-        title=f"{zone.chain_id} · {_pool_name(pool=pool)} · mark corrupted",
-        reason=reason,
-        generate_line=_osmosis_generate_line(contract=pool["contract"], message=message, amount=None, file_stem=file_stem),
-        file_stem=file_stem,
-    )
-
-
 def _unknown_denom_reason(osmosis_denom: str | None) -> str | None:
     return None if osmosis_denom else "the zone's native denom on Osmosis is not known yet (see the Pools tab)"
 
@@ -1158,37 +1378,6 @@ def _pool_name(pool: dict[str, Any]) -> str:
 
 def _pool_label(pool: dict[str, Any]) -> str:
     return pool["pool_id"] or pool["contract"][-6:]
-
-
-def _pool_file_stem(zone: config.ZoneConfig, pool: dict[str, Any], label: str) -> str:
-    return f"{WORKDIR}/pool-{zone.chain_id}-{_pool_label(pool=pool)}-{label}"
-
-
-def _osmosis_generate_line(contract: str, message: dict[str, Any], amount: str | None, file_stem: str) -> str:
-    # Compact JSON, single-quoted for the shell: the transmuter's execute variants take no spaces.
-    message_json = json.dumps(message, separators=(",", ":"))
-    amount_flag = f" --amount {amount}" if amount else ""
-    return (
-        f"osmosisd tx wasm execute {contract} '{message_json}'{amount_flag} --from {OSMOSIS_VAULT_ADDRESS} "
-        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {POOL_GAS} --gas-prices {OSMOSIS_GAS_PRICE} "
-        f"> {file_stem}.unsigned.json"
-    )
-
-
-def _osmosis_tx(zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str) -> MultisigTx:
-    return MultisigTx(
-        chain_id=zone.chain_id,
-        title=title,
-        ready=reason is None,
-        reason=reason,
-        commands=_commands(
-            generate=f"mkdir -p {WORKDIR}\n{generate_line}",
-            file_stem=file_stem,
-            tools=OSMOSIS_TOOLS,
-            generate_label="Write the unsigned tx",
-        ),
-        files=_shared_files(file_stem=file_stem),
-    )
 
 
 def _commands(

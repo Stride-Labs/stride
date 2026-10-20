@@ -29,6 +29,7 @@ import funds
 import multisig
 import ops
 import pools
+import route_split
 import sweep_tab
 
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
@@ -38,7 +39,7 @@ COLLECTORS: dict[str, Callable[[], dict[str, Any]]] = {
     "channels": channels.collect,
     "validators": validators.collect,
     "funds": funds.collect,
-    "pools": pools.collect,
+    "pools": route_split.collect,  # pools.collect plus each zone's recorded route split
     "sweep": sweep_tab.collect,
 }
 

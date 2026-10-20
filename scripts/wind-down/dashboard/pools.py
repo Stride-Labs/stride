@@ -119,6 +119,9 @@ class PoolReport:
     corrupted: list[str]
     native_marked: bool  # the native token is in the corrupted set (the one-way mark after funding)
     moderator: str | None  # who can mark and freeze: config.POOL_MODERATOR, or the vault while it funds and marks
+    admin: str | None  # the vault until Osmosis governance claims (config.OSMOSIS_GOV)
+    admin_candidate_known: bool  # get_admin_candidate answered
+    admin_candidate: str | None  # the pending admin offer (config.OSMOSIS_GOV on the last day); None when there is none
     checks: list[Check]
     ready: bool  # every check ok
 
@@ -504,6 +507,9 @@ def build_pool_report(
         corrupted=corrupted,
         native_marked=zone.osmosis_denom in corrupted,
         moderator=raw.moderator,
+        admin=raw.admin,
+        admin_candidate_known=raw.admin_candidate is not None,
+        admin_candidate=raw.admin_candidate.address if raw.admin_candidate else None,
         checks=checks,
         ready=all(check.ok is True for check in checks),
     )

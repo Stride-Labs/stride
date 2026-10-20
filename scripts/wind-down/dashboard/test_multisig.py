@@ -1,4 +1,5 @@
 import json
+import pathlib
 import unittest
 from unittest import mock
 
@@ -339,6 +340,7 @@ class SetsTest(unittest.TestCase):
                 ("ica-transfers", "transfers"),
                 ("staketia-claim-balance", "tia-claim-balance"),
                 ("pool-funding", "join-pools"),
+                ("pool-admin-transfer", "pools-admin-to-gov"),
             ],
         )
 
@@ -402,6 +404,8 @@ def pool_entry(
     vault_shares: str = "0",
     native_marked: bool = False,
     moderator: str | None = MODERATOR,
+    admin_candidate: str | None = None,
+    admin: str | None = VAULT,
 ) -> dict[str, object]:
     return {
         "contract": contract,
@@ -412,6 +416,9 @@ def pool_entry(
         "vault_shares": vault_shares,
         "native_marked": native_marked,
         "moderator": moderator,
+        "admin": admin,
+        "admin_candidate_known": True,
+        "admin_candidate": admin_candidate,
     }
 
 
@@ -602,7 +609,7 @@ class IcaTransfersTest(unittest.TestCase):
         for tx_set in all_sets.values():
             with self.subTest(tx_set=tx_set.id):
                 chain_ids = [tx.chain_id for tx in tx_set.txs]
-                if tx_set.id == "pool-creation":  # its bundles span every zone, under one heading
+                if tx_set.id in ("pool-creation", "pool-admin-transfer"):  # one heading across every zone
                     self.assertEqual(set(chain_ids), {"all zones"})
                     continue
                 runs = [chain_id for index, chain_id in enumerate(chain_ids) if index == 0 or chain_ids[index - 1] != chain_id]
@@ -639,34 +646,45 @@ def pool_set(pools_data: dict[str, object] | None) -> multisig.TxSet:
 
 
 def pool_txs(chain_id: str = COSMOS, pools_data: dict[str, object] | None = None) -> list[multisig.MultisigTx]:
-    """The zone's join and mark txs (the moderator hand-offs around them are `moderator_txs`)."""
-    return [tx for tx in pool_set(fake_pools() if pools_data is None else pools_data).txs if tx.chain_id == chain_id and "moderator" not in tx.title]
+    """The zone's txs: the test joins, then the close."""
+    return [tx for tx in pool_set(fake_pools() if pools_data is None else pools_data).txs if tx.chain_id == chain_id]
 
 
-def moderator_txs(chain_id: str = COSMOS, pools_data: dict[str, object] | None = None) -> tuple[multisig.MultisigTx, multisig.MultisigTx]:
-    txs = [tx for tx in pool_set(fake_pools() if pools_data is None else pools_data).txs if tx.chain_id == chain_id]
-    assert "moderator" in txs[0].title and "moderator" in txs[-1].title, [tx.title for tx in txs]
-    return txs[0], txs[-1]
+def unjoined_pools() -> list[dict[str, object]]:
+    return [
+        pool_entry(ROUTE_CONTRACT, "route", None, "3000000", False),
+        pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False),
+    ]
 
 
-def pool_generate(contract: str, message: str, amount: str | None, label: str) -> str:
-    stem = f"/tmp/wind-down/pool-cosmoshub-4-{label}"
+AMOUNTS_SCRIPT = str(pathlib.Path(multisig.__file__).resolve().parent / "pool_amounts.py")
+JOIN = '{"join_pool":{}}'
+MARK = '{"mark_corrupted_assets":{"denoms":["' + OSMOSIS_DENOM + '"]}}'
+
+
+def assign(address: str) -> str:
+    return '{"assign_moderator":{"address":"' + address + '"}}'
+
+
+def part_line(contract: str, message: str, amount: str | None, gas: int, stem: str, part: str) -> str:
     amount_flag = f" --amount {amount}" if amount else ""
     return (
-        "mkdir -p /tmp/wind-down\n"
         f"osmosisd tx wasm execute {contract} '{message}'{amount_flag} --from {VAULT} --generate-only "
-        f"--chain-id osmosis-1 --node {OSMOSIS_NODE} --gas 1500000 --gas-prices 0.1uosmo > {stem}.unsigned.json"
+        f"--chain-id osmosis-1 --node {OSMOSIS_NODE} --gas {gas} --gas-prices 0.1uosmo > {stem}.parts/{part}.unsigned.json"
     )
+
+
+def bundle_generate(stem: str, lines: list[str]) -> str:
+    merge = (
+        "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []' "
+        f"{stem}.parts/*.unsigned.json > {stem}.unsigned.json"
+    )
+    previous = f"{stem}.parts {stem}.unsigned.json {stem}.rest-amounts.json"
+    return f"rm -rf {previous}\nmkdir -p {stem}.parts\n" + " && \\\n".join([*lines, merge])
 
 
 def pool_commands_for(generate: str, stem: str) -> list[tuple[str, str]]:
     return expected_commands(generate, stem=stem, binary="osmosisd", address=VAULT, chain_id="osmosis-1", node=OSMOSIS_NODE)
-
-
-def pool_commands(generate: str, label: str) -> list[tuple[str, str]]:
-    return expected_commands(
-        generate, stem=f"/tmp/wind-down/pool-cosmoshub-4-{label}", binary="osmosisd", address=VAULT, chain_id="osmosis-1", node=OSMOSIS_NODE
-    )
 
 
 CANONICAL_STATOM = "ibc/C140AFD542AE77BD7DCC83F13FDD8C5E5BB8C4929785E6EC2F4C636F98F17901"
@@ -961,195 +979,193 @@ class PoolCreationTest(unittest.TestCase):
 
 
 class PoolFundingTest(unittest.TestCase):
-    def test_the_vault_takes_the_moderator_role_before_the_joins_and_hands_it_back_after_the_marks(self) -> None:
-        to_vault, back = moderator_txs()
-        stem = "/tmp/wind-down/pool-cosmoshub-4-moderator-to-vault"
-        message = '{"assign_moderator":{"address":"' + VAULT + '"}}'
-        line = lambda contract, part: (  # noqa: E731 - the expected text, per pool
-            f"osmosisd tx wasm execute {contract} '{message}' --from {VAULT} --generate-only --chain-id osmosis-1 "
-            f"--node {OSMOSIS_NODE} --gas 700000 --gas-prices 0.1uosmo > {stem}-{part}.unsigned.json"
-        )
-        generate = "\n".join([
-            "mkdir -p /tmp/wind-down",
-            line(CANONICAL_CONTRACT, "01-1234"),
-            line(ROUTE_CONTRACT, "02-abc123"),
-            "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []' "
-            f"{stem}-*.unsigned.json > {stem}.unsigned.json",
-        ])
-
-        self.assertEqual(to_vault.title, "cosmoshub-4 · moderator → the vault, before the joins (2 pools)")
-        self.assertEqual(command_pairs(to_vault), pool_commands_for(generate, stem))
-        self.assertEqual((to_vault.ready, to_vault.reason), (True, None))
-        self.assertEqual(back.title, "cosmoshub-4 · moderator → osmo1ugrn8…hjdpgy, after the marks (2 pools)")
-        self.assertEqual((back.ready, back.reason), (False, "2 of 2 pools not marked yet: the vault still needs the moderator role"))
-        self.assertIn('{"assign_moderator":{"address":"' + MODERATOR + '"}}', back.commands[0].text)
-
-    def test_moderator_hand_offs_follow_the_pools_state(self) -> None:
-        vault_holds = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, moderator=VAULT), pool_entry(ROUTE_CONTRACT, "route", None, "3000000", False, moderator=VAULT)]
-        to_vault, back = moderator_txs(pools_data=fake_pools(pools=vault_holds))
-        self.assertEqual((to_vault.ready, to_vault.reason), (False, "the vault already moderates every pool of the zone"))
-        self.assertEqual((back.ready, back.reason), (False, "2 of 2 pools not marked yet: the vault still needs the moderator role"))
-
-        marked = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, native_marked=True, moderator=VAULT), pool_entry(ROUTE_CONTRACT, "route", None, "3000000", True, native_marked=True, moderator=VAULT)]
-        to_vault, back = moderator_txs(pools_data=fake_pools(pools=marked))
-        self.assertEqual((to_vault.ready, to_vault.reason), (False, "every pool is already marked: nothing left for the vault to do as moderator"))
-        self.assertEqual((back.ready, back.reason), (True, None))
-
-        returned = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, native_marked=True)]
-        to_vault, back = moderator_txs(pools_data=fake_pools(pools=returned))
-        self.assertEqual(back.reason, "the moderator is already back on every pool of the zone")
-
-        unknown = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, moderator=None)]
-        to_vault, _ = moderator_txs(pools_data=fake_pools(pools=unknown))
-        self.assertEqual(to_vault.reason, "a pool's moderator is not known yet (see the Pools tab)")
-
-    def test_canonical_test_join_rest_join_and_mark_are_exact(self) -> None:
-        txs = pool_txs()
-        by_title = {tx.title: tx for tx in txs}
-        join = '{"join_pool":{}}'
-        mark = '{"mark_corrupted_assets":{"denoms":["' + OSMOSIS_DENOM + '"]}}'
-
-        test_join = by_title[f"cosmoshub-4 · canonical pool 1234 · test join, 1000000{OSMOSIS_DENOM}"]
-        rest_join = by_title[f"cosmoshub-4 · canonical pool 1234 · join rest, 4000000{OSMOSIS_DENOM}"]
-        mark_tx = by_title["cosmoshub-4 · canonical pool 1234 · mark corrupted"]
-
-        self.assertEqual(
-            command_pairs(test_join),
-            pool_commands(pool_generate(CANONICAL_CONTRACT, join, f"1000000{OSMOSIS_DENOM}", "1234-test"), label="1234-test"),
-        )
-        self.assertEqual(
-            command_pairs(rest_join),
-            pool_commands(pool_generate(CANONICAL_CONTRACT, join, f"4000000{OSMOSIS_DENOM}", "1234-rest"), label="1234-rest"),
-        )
-        self.assertEqual(
-            command_pairs(mark_tx), pool_commands(pool_generate(CANONICAL_CONTRACT, mark, None, "1234-mark"), label="1234-mark")
-        )
-        self.assertEqual([(tx.ready, tx.reason) for tx in (test_join, rest_join)], [(True, None)] * 2)
-        self.assertEqual((mark_tx.ready, mark_tx.reason), (False, "not funded exactly yet: the mark would refuse the funding join"))
-        self.assertEqual(test_join.files[0], "/tmp/wind-down/pool-cosmoshub-4-1234-test.unsigned.json")
-
-    def test_the_mark_waits_for_the_funding_join_and_the_vault_as_moderator(self) -> None:
-        def mark_of(pool: dict[str, object]) -> multisig.MultisigTx:
-            return next(tx for tx in pool_txs(pools_data=fake_pools(pools=[pool])) if tx.title.endswith("mark corrupted"))
-
-        funded_vault = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000", moderator=VAULT)
-        funded_other = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000")
-        marked = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000", native_marked=True, moderator=VAULT)
-        unknown = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", None, None, moderator=VAULT)
-
-        self.assertEqual((mark_of(funded_vault).ready, mark_of(funded_vault).reason), (True, None))
-        self.assertEqual(mark_of(funded_other).reason, "the vault is not the moderator yet: send the zone's moderator → vault tx first")
-        self.assertEqual(mark_of(marked).reason, "already marked")
-        self.assertEqual(mark_of(unknown).reason, "the pool's allocation is not known yet (see the Pools tab)")
-
-    def test_order_is_every_test_join_then_each_pools_rest_and_mark_canonical_first(self) -> None:
-        steps = [tx.title.removeprefix("cosmoshub-4 · ").split(" · ")[:2] for tx in pool_txs()]
-
-        self.assertEqual(
-            [f"{pool} {step.split(',')[0]}" for pool, step in steps],
+    def test_the_test_joins_are_one_tx_with_one_token_per_pool_canonical_first(self) -> None:
+        test_joins, close = pool_txs(pools_data=fake_pools(pools=unjoined_pools()))
+        stem = "/tmp/wind-down/pool-cosmoshub-4-test-joins"
+        generate = bundle_generate(
+            stem,
             [
-                "canonical pool 1234 test join",
-                "route pool abc123 test join",
-                "canonical pool 1234 join rest",
-                "canonical pool 1234 mark corrupted",
-                "route pool abc123 join rest",
-                "route pool abc123 mark corrupted",
+                part_line(CANONICAL_CONTRACT, JOIN, f"1000000{OSMOSIS_DENOM}", 3_100_000, stem, "01-1234-test"),
+                part_line(ROUTE_CONTRACT, JOIN, f"1000000{OSMOSIS_DENOM}", 3_100_000, stem, "02-abc123-test"),
             ],
         )
 
-    def test_a_pool_without_an_id_is_named_by_the_last_six_characters_of_its_contract(self) -> None:
-        route_test = next(tx for tx in pool_txs() if "route pool abc123 · test join" in tx.title)
+        self.assertEqual(test_joins.title, "cosmoshub-4 · test joins (2 pools)")
+        self.assertEqual(command_pairs(test_joins), pool_commands_for(generate, stem))
+        self.assertEqual((test_joins.ready, test_joins.reason), (True, None))
+        self.assertEqual(test_joins.members, ["canonical pool 1234 · 1000000", "route pool abc123 · 1000000"])
+        self.assertEqual(test_joins.files[0], f"{stem}.unsigned.json")
+        self.assertEqual(
+            close.reason,
+            "canonical pool 1234: the Pools snapshot does not show the test join yet (expected 1000000 vault shares)",
+        )
 
-        self.assertIn("/tmp/wind-down/pool-cosmoshub-4-abc123-test.unsigned.json", route_test.commands[0].text)
-        self.assertIn(f"wasm execute {ROUTE_CONTRACT} ", route_test.commands[0].text)
+    def test_the_close_takes_the_role_joins_and_marks_each_pool_back_to_back_then_hands_the_role_back(self) -> None:
+        _, close = pool_txs()
+        stem = "/tmp/wind-down/pool-cosmoshub-4-close"
+        amounts = f"{stem}.rest-amounts.json"
+        rest = lambda contract: f"\"$(jq -r '.[\"{contract}\"]' {amounts}){OSMOSIS_DENOM}\""  # noqa: E731
+        gas = 7_300_000  # 0.1M + 4 moderator messages at 0.3M + 2 rest joins and 2 marks at 1.5M
+        generate = bundle_generate(
+            stem,
+            [
+                f"python3 {AMOUNTS_SCRIPT} cosmoshub-4 {CANONICAL_CONTRACT} {ROUTE_CONTRACT} > {amounts}",
+                part_line(CANONICAL_CONTRACT, assign(VAULT), None, gas, stem, "01-1234-moderator-to-vault"),
+                part_line(ROUTE_CONTRACT, assign(VAULT), None, gas, stem, "02-abc123-moderator-to-vault"),
+                part_line(CANONICAL_CONTRACT, JOIN, rest(CANONICAL_CONTRACT), gas, stem, "03-1234-rest"),
+                part_line(CANONICAL_CONTRACT, MARK, None, gas, stem, "04-1234-mark"),
+                part_line(ROUTE_CONTRACT, JOIN, rest(ROUTE_CONTRACT), gas, stem, "05-abc123-rest"),
+                part_line(ROUTE_CONTRACT, MARK, None, gas, stem, "06-abc123-mark"),
+                part_line(CANONICAL_CONTRACT, assign(MODERATOR), None, gas, stem, "07-1234-moderator-back"),
+                part_line(ROUTE_CONTRACT, assign(MODERATOR), None, gas, stem, "08-abc123-moderator-back"),
+            ],
+        )
 
-    def test_unrecognised_pools_are_not_funded(self) -> None:
-        self.assertFalse(any("unrecognised" in tx.title or "osmo1unrecognisedcontract" in tx.commands[0].text for tx in pool_txs()))
+        self.assertEqual(close.title, "cosmoshub-4 · close: moderator → vault, rest joins, marks, moderator → osmo1ugrn8…hjdpgy (2 pools)")
+        self.assertEqual(command_pairs(close), pool_commands_for(generate, stem))
+        self.assertEqual((close.ready, close.reason), (True, None))
+        self.assertEqual(close.members, ["canonical pool 1234 · rest ≈ 4000000", "route pool abc123 · rest ≈ 2000000"])
+        self.assertIn("re-read the escrow and vault balances", close.commands[0].label)
 
-    def test_neither_join_is_ready_until_the_allocation_is_known(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", None, None)]
-        reason = "the pool's allocation is not known yet (see the Pools tab)"
+    def test_a_zone_is_two_txs_and_unrecognised_pools_are_never_funded(self) -> None:
+        txs = pool_txs()
 
-        txs = pool_txs(pools_data=fake_pools(pools=pools))
-        test_join, rest, mark = txs
+        self.assertEqual([tx.title.split(" · ")[1].split(" (")[0] for tx in txs], ["test joins", "close: moderator → vault, rest joins, marks, moderator → osmo1ugrn8…hjdpgy"])
+        self.assertFalse(any("osmo1unrecognisedcontract" in command.text for tx in txs for command in tx.commands))
 
-        self.assertEqual([(tx.ready, tx.reason) for tx in (test_join, rest)], [(False, reason)] * 2)
-        self.assertIn(f"--amount 1000000{OSMOSIS_DENOM} ", test_join.commands[0].text)
-        self.assertIn("--amount <ALLOCATION_MINUS_VAULT_SHARES>" + OSMOSIS_DENOM, rest.commands[0].text)
-        self.assertEqual((mark.ready, mark.reason), (False, "the pool's allocation is not known yet (see the Pools tab)"))
+    def test_test_joins_are_done_once_the_vault_holds_shares_in_every_pool(self) -> None:
+        test_joins, _ = pool_txs()
 
-    def test_rest_join_is_not_ready_when_the_pool_is_funded_exactly(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000", moderator=VAULT)]
+        self.assertEqual(test_joins.title, "cosmoshub-4 · test joins (2 pools) · done")
+        self.assertEqual((test_joins.done, test_joins.ready, test_joins.commands), (True, False, []))
 
-        txs = pool_txs(pools_data=fake_pools(pools=pools))
-        rest = next(tx for tx in txs if "join rest" in tx.title)
+    def test_a_small_allocation_is_test_joined_whole_and_leaves_only_the_mark(self) -> None:
+        # Live: the stuatom channel-11 route held ~20,136 uatom of escrow, far below the one-token test join.
+        test_joins, _ = pool_txs(pools_data=fake_pools(pools=[pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "20136", False)]))
+        self.assertIn(f"--amount 20136{OSMOSIS_DENOM} ", test_joins.commands[0].text)
+        self.assertTrue(test_joins.ready)
 
-        self.assertEqual((rest.ready, rest.reason), (False, "the pool is already funded exactly"))
-        self.assertIn(f"--amount 0{OSMOSIS_DENOM} ", rest.commands[0].text)
-        self.assertTrue(all(tx.ready for tx in txs if "join rest" not in tx.title))
+        _, close = pool_txs(pools_data=fake_pools(pools=[pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "20136", True, vault_shares="20136")]))
+        self.assertTrue(close.ready)
+        self.assertNotIn("pool_amounts.py", close.commands[0].text)
+        self.assertNotIn("join_pool", close.commands[0].text)
+        self.assertEqual(close.members, ["canonical pool 1234 · mark only"])
 
-    def test_an_allocation_below_the_test_amount_is_joined_whole_by_the_test_and_leaves_no_rest(self) -> None:
-        # Live: the stuatom channel-11 route holds ~20,136 uatom of escrow, far below the one-token test join.
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "20136", False)]
+    def test_a_zero_allocation_pool_gets_no_test_join_and_is_only_marked(self) -> None:
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "0", True), pool_entry(ROUTE_CONTRACT, "route", None, "3000000", False)]
 
-        test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
+        test_joins, close = pool_txs(pools_data=fake_pools(pools=pools))
 
-        self.assertEqual((test_join.ready, test_join.reason), (True, None))
-        self.assertEqual(test_join.title, f"cosmoshub-4 · canonical pool 1234 · test join, 20136{OSMOSIS_DENOM}")
-        self.assertIn(f"--amount 20136{OSMOSIS_DENOM} ", test_join.commands[0].text)
-        self.assertEqual((rest.ready, rest.reason), (False, "the allocation (20136) does not exceed the test join: nothing left to join"))
+        self.assertEqual(test_joins.title, "cosmoshub-4 · test joins (1 pools)")
+        self.assertNotIn(CANONICAL_CONTRACT, test_joins.commands[0].text)
+        self.assertIn(f"wasm execute {CANONICAL_CONTRACT} '{MARK}'", close.commands[0].text)
+        self.assertNotIn(f"'.[\"{CANONICAL_CONTRACT}\"]'", close.commands[0].text)
 
-    def test_a_zero_allocation_readies_neither_join(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "0", False)]
+    def test_test_joins_wait_for_known_non_negative_allocations(self) -> None:
+        unknown = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", None, None)]
+        # Live on 10-20: a canonical allocation is negative until the zone's ICA transfers reach the vault.
+        negative = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "-43228606", False)]
 
-        test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
+        test_joins, close = pool_txs(pools_data=fake_pools(pools=unknown))
+        self.assertEqual(test_joins.reason, "the pool's allocation is not known yet (see the Pools tab)")
+        self.assertIn(f"--amount 1000000{OSMOSIS_DENOM} ", test_joins.commands[0].text)
+        self.assertEqual(close.reason, "canonical pool 1234: the pool's allocation is not known yet (see the Pools tab)")
+        self.assertIn("pool_amounts.py", close.commands[0].text)
 
-        self.assertEqual((test_join.ready, test_join.reason), (False, "the allocation is 0: nothing to join"))
-        self.assertEqual((rest.ready, rest.reason), (False, "the allocation is 0: nothing to join"))
-        self.assertIn(f"--amount 0{OSMOSIS_DENOM} ", test_join.commands[0].text)
+        test_joins, close = pool_txs(pools_data=fake_pools(pools=negative))
+        reason = "canonical pool 1234: the allocation is negative (-43228606): the vault does not hold the zone's tokens yet"
+        self.assertEqual((test_joins.ready, test_joins.reason), (False, reason))
+        self.assertEqual((close.ready, close.reason), (False, reason))
 
-    def test_an_allocation_equal_to_the_test_amount_leaves_no_rest(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "1000000", False)]
+    def test_the_close_waits_for_each_test_join_then_joins_whatever_the_allocation_is_beyond_it(self) -> None:
+        unjoined = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False)]
+        _, close = pool_txs(pools_data=fake_pools(pools=unjoined))
+        self.assertEqual(
+            (close.ready, close.reason),
+            (False, "canonical pool 1234: the Pools snapshot does not show the test join yet (expected 1000000 vault shares)"),
+        )
+        self.assertEqual(close.members, ["canonical pool 1234 · rest ≈ ?"])
 
-        test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
-
-        self.assertIn(f"--amount 1000000{OSMOSIS_DENOM} ", test_join.commands[0].text)
-        self.assertTrue(test_join.ready)
-        self.assertEqual(rest.reason, "the allocation (1000000) does not exceed the test join: nothing left to join")
-        self.assertFalse(rest.ready)
-
-    def test_rest_join_waits_until_the_snapshot_shows_exactly_the_test_join(self) -> None:
-        cases = [("0", "5000000"), ("999999", "4000001"), ("2000000", "3000000")]
-        for vault_shares, remaining in cases:
+        # Escrow moved after the test join: the rest follows the allocation now, the gate stays open.
+        for vault_shares, remaining in (("999999", 4_000_001), ("2000000", 3_000_000)):
             with self.subTest(vault_shares=vault_shares):
                 pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, vault_shares=vault_shares)]
+                _, close = pool_txs(pools_data=fake_pools(pools=pools))
+                self.assertEqual((close.ready, close.members), (True, [f"canonical pool 1234 · rest ≈ {remaining}"]))
 
-                test_join, rest, _ = pool_txs(pools_data=fake_pools(pools=pools))
+    def test_a_small_route_whose_escrow_grew_past_one_token_after_its_whole_test_join_gets_a_rest_join(self) -> None:
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "500000", False, vault_shares="20136")]
 
-                self.assertTrue(test_join.ready)
-                self.assertEqual(
-                    (rest.ready, rest.reason),
-                    (False, f"the Pools snapshot does not show the test join yet (vault shares {vault_shares}, expected 1000000)"),
-                )
-                self.assertIn(f"--amount {remaining}{OSMOSIS_DENOM} ", rest.commands[0].text)
-                self.assertEqual(rest.title, f"cosmoshub-4 · canonical pool 1234 · join rest, {remaining}{OSMOSIS_DENOM}")
+        _, close = pool_txs(pools_data=fake_pools(pools=pools))
 
-    def test_allocation_one_above_the_test_is_ready_for_a_single_unit(self) -> None:
-        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "1000001", False, vault_shares="1000000")]
+        self.assertTrue(close.ready)
+        self.assertEqual(close.members, ["canonical pool 1234 · rest ≈ 479864"])
+        self.assertIn(f"pool_amounts.py cosmoshub-4 {CANONICAL_CONTRACT} > ", close.commands[0].text)
 
-        rest = next(tx for tx in pool_txs(pools_data=fake_pools(pools=pools)) if "join rest" in tx.title)
+    def test_an_overfunded_pool_blocks_the_close(self) -> None:
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "800000", False, vault_shares="1000000")]
 
-        self.assertTrue(rest.ready)
-        self.assertIn(f"--amount 1{OSMOSIS_DENOM} ", rest.commands[0].text)
+        _, close = pool_txs(pools_data=fake_pools(pools=pools))
 
-    def test_unknown_osmosis_denom_blocks_every_tx_of_the_pool_but_keeps_the_commands(self) -> None:
-        txs = pool_txs(pools_data=fake_pools(osmosis_denom=None))
+        self.assertFalse(close.ready)
+        self.assertEqual(
+            close.reason,
+            "canonical pool 1234: overfunded: the vault holds 1000000 shares, above the allocation 800000 (escrow fell "
+            "after the test join); exit the excess by hand",
+        )
+        self.assertEqual(close.members, ["canonical pool 1234 · mark only"])
 
-        self.assertEqual(len(txs), 6)
+    def test_a_regenerate_deletes_the_previous_merged_tx_and_amounts_before_anything_can_fail(self) -> None:
+        _, close = pool_txs()
+        stem = "/tmp/wind-down/pool-cosmoshub-4-close"
+
+        first_line = close.commands[0].text.splitlines()[0]
+
+        self.assertEqual(first_line, f"rm -rf {stem}.parts {stem}.unsigned.json {stem}.rest-amounts.json")
+
+    def test_a_pool_funded_exactly_is_only_marked(self) -> None:
+        pools = [
+            pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000"),
+            pool_entry(ROUTE_CONTRACT, "route", None, "3000000", False, vault_shares="1000000"),
+        ]
+
+        _, close = pool_txs(pools_data=fake_pools(pools=pools))
+
+        self.assertTrue(close.ready)
+        self.assertIn(f"pool_amounts.py cosmoshub-4 {ROUTE_CONTRACT} > ", close.commands[0].text)
+        self.assertEqual(close.members, ["canonical pool 1234 · mark only", "route pool abc123 · rest ≈ 2000000"])
+
+    def test_the_close_is_done_once_every_pool_is_marked_with_its_moderator_back(self) -> None:
+        marked = dict(vault_shares="5000000", native_marked=True)
+        back = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, **marked)]
+        stuck = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, **marked, moderator=VAULT)]
+
+        _, close = pool_txs(pools_data=fake_pools(pools=back))
+        self.assertEqual((close.done, close.title.endswith("(1 pools) · done")), (True, True))
+
+        # Marked by hand but the role never came back: the close only hands it back.
+        _, close = pool_txs(pools_data=fake_pools(pools=stuck))
+        self.assertTrue(close.ready)
+        self.assertEqual(close.members, ["canonical pool 1234 · moderator back only"])
+        self.assertEqual(close.commands[0].text.count("wasm execute"), 1)
+        self.assertIn(assign(MODERATOR), close.commands[0].text)
+
+    def test_an_unknown_moderator_blocks_the_close(self) -> None:
+        pools = [pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", False, vault_shares="1000000", moderator=None)]
+
+        _, close = pool_txs(pools_data=fake_pools(pools=pools))
+
+        self.assertEqual(close.reason, "a pool's moderator is not known yet (see the Pools tab)")
+
+    def test_unknown_osmosis_denom_blocks_both_txs_but_keeps_the_commands(self) -> None:
+        pools = fake_pools(osmosis_denom=None, pools=unjoined_pools())
+
+        txs = pool_txs(pools_data=pools)
+
         self.assertEqual({tx.ready for tx in txs}, {False})
         self.assertTrue(all("native denom on Osmosis" in tx.reason for tx in txs))
         self.assertIn("--amount 1000000<OSMOSIS_DENOM>", txs[0].commands[0].text)
-        self.assertIn('"denoms":["<OSMOSIS_DENOM>"]', next(tx for tx in txs if "mark" in tx.title).commands[0].text)
+        self.assertIn('"denoms":["<OSMOSIS_DENOM>"]', txs[1].commands[0].text)
 
     def test_zone_error_missing_zone_empty_zone_and_missing_snapshot_get_one_not_ready_tx(self) -> None:
         cases = [
@@ -1162,20 +1178,116 @@ class PoolFundingTest(unittest.TestCase):
             with self.subTest(reason=reason):
                 self.assertEqual([(tx.ready, tx.reason, tx.commands, tx.files) for tx in txs], [(False, reason, [], [])])
 
-    def test_description_states_the_order_and_the_osmo_fee_note(self) -> None:
+    def test_rest_join_amounts_are_the_closes_amounts_or_why_not(self) -> None:
+        self.assertEqual(
+            multisig.rest_join_amounts(chain_id=COSMOS, pools_data=fake_pools()),
+            multisig.RestJoins(amounts={CANONICAL_CONTRACT: 4_000_000, ROUTE_CONTRACT: 2_000_000}, reason=None),
+        )
+        self.assertEqual(
+            multisig.rest_join_amounts(chain_id=COSMOS, pools_data=None),
+            multisig.RestJoins(amounts={}, reason="waiting for the Pools snapshot"),
+        )
+
+    def test_description_states_the_two_txs_and_the_fresh_read(self) -> None:
         tx_set = pool_set(fake_pools())
         notes = "\n".join(tx_set.notes)
 
-        self.assertEqual(tx_set.description, "Fund each pool with a test join, then the rest of its allocation, then mark the native token corrupted.")
-        self.assertIn("every pool's test join first", notes)
-        self.assertIn("the rest join and the mark back to back", notes)
-        self.assertIn("about 0.15 OSMO per tx, three txs per pool", notes)
-        self.assertIn("once the Pools snapshot shows the test join as vault shares", notes)
+        self.assertEqual(
+            tx_set.description,
+            "Per zone, two txs: a test join into every pool, then one tx that joins the rest, marks every pool and hands the moderator back.",
+        )
+        self.assertIn("one atomic tx", notes)
+        self.assertIn("re-reads the escrow and vault balances when it is generated", notes)
+        self.assertIn("shows every test join as vault shares", notes)
 
+
+class TransfersDescriptionTest(unittest.TestCase):
     def test_transfers_description_states_the_in_flight_gate(self) -> None:
         notes = "\n".join(sets_by_id(None)["ica-transfers"].notes)
 
         self.assertIn("stays not ready while a transfer from that ICA is in flight", notes)
+
+
+GOV = "osmo10d07y265gmmuvt4z0w9aw880jnsr700jjeq4qp"
+
+
+def closed_pools(**pool_overrides: object) -> dict[str, object]:
+    """Every zone readable, its one pool created, funded, marked and handed back to the moderator."""
+    zones = [
+        {
+            "chain_id": zone.chain_id,
+            "osmosis_denom": OSMOSIS_DENOM,
+            "pools": [
+                {
+                    **pool_entry(f"osmo1pool{zone.chain_id}", "canonical", str(100 + index), "5000000", True, native_marked=True),
+                    **pool_overrides,
+                }
+            ],
+            "planned": [],
+        }
+        for index, zone in enumerate(config.ZONES)
+    ]
+    return {"zones": zones}
+
+
+def admin_tx(pools_data: dict[str, object] | None) -> multisig.MultisigTx:
+    (tx,) = sets_by_id(None, pools_data=pools_data)["pool-admin-transfer"].txs
+    return tx
+
+
+class PoolAdminTransferTest(unittest.TestCase):
+    def test_is_the_last_set_and_offers_every_pool_to_the_gov_module_in_one_tx(self) -> None:
+        self.assertEqual(multisig.config.OSMOSIS_GOV, GOV)
+        self.assertEqual(list(sets_by_id(None))[-1], "pool-admin-transfer")
+
+        tx = admin_tx(pools_data=closed_pools())
+
+        self.assertTrue(tx.ready, tx.reason)
+        self.assertEqual(tx.chain_id, "all zones")
+        self.assertEqual(tx.title, f"every pool · transfer_admin → Osmosis governance ({len(config.ZONES)} of {len(config.ZONES)} pools)")
+        generate = tx.commands[0].text
+        stem = "/tmp/wind-down/pool-admin-to-gov"
+        gas = 100_000 + 300_000 * len(config.ZONES)
+        offer = '{"transfer_admin":{"candidate":"' + GOV + '"}}'
+        expected = bundle_generate(
+            stem,
+            [
+                part_line(f"osmo1pool{zone.chain_id}", offer, None, gas, stem, f"{position:02d}-{zone.chain_id}-{100 + position - 1}")
+                for position, zone in enumerate(config.ZONES, start=1)
+            ],
+        )
+        self.assertEqual(command_pairs(tx), pool_commands_for(expected, stem))
+        self.assertNotIn("osmo1jv65s3grqf6v6jl3dp4t6c9t9rk99cd80yhvld", generate)
+
+    def test_waits_for_creation_then_funding_then_the_moderator(self) -> None:
+        planned = closed_pools()
+        planned["zones"][0]["planned"] = [{**planned_entry("canonical", "stATOM", CANONICAL_STATOM), "live_contract": None, "blocked": True}]
+        self.assertEqual(admin_tx(pools_data=planned).reason, "1 planned pools not created yet (Pool creation set)")
+
+        unmarked = admin_tx(pools_data=closed_pools(native_marked=False))
+        self.assertEqual(unmarked.reason, f"{len(config.ZONES)} of {len(config.ZONES)} pools not funded and marked yet (Pool funding set)")
+
+        moderated = admin_tx(pools_data=closed_pools(moderator=VAULT))
+        self.assertEqual(moderated.reason, f"{len(config.ZONES)} of {len(config.ZONES)} pools without their moderator back yet (Pool funding set)")
+
+        unknown = admin_tx(pools_data=closed_pools(admin_candidate_known=False))
+        self.assertEqual(unknown.reason, "a pool's admin candidate is not known yet (see the Pools tab)")
+
+        no_snapshot = admin_tx(pools_data=None)
+        self.assertEqual((no_snapshot.ready, no_snapshot.reason), (False, "waiting for the Pools snapshot"))
+
+    def test_offered_pools_drop_out_and_the_tx_is_done_once_every_pool_shows_the_offer(self) -> None:
+        partly = closed_pools()
+        partly["zones"][0]["pools"][0]["admin_candidate"] = GOV
+        tx = admin_tx(pools_data=partly)
+        self.assertEqual(tx.commands[0].text.count("transfer_admin"), len(config.ZONES) - 1)
+
+        claimed = admin_tx(pools_data=closed_pools(admin=GOV))
+        self.assertEqual((claimed.done, claimed.ready), (True, False))
+
+        done = admin_tx(pools_data=closed_pools(admin_candidate=GOV))
+        self.assertEqual((done.done, done.ready, done.commands), (True, False, []))
+        self.assertEqual(len(done.members), len(config.ZONES))
 
 
 class MultisigBodyTest(unittest.TestCase):
@@ -1202,6 +1314,7 @@ class MultisigBodyTest(unittest.TestCase):
                 "ica-transfers",
                 "staketia-claim-balance",
                 "pool-funding",
+                "pool-admin-transfer",
             },
         )
         self.assertEqual(sets["pool-funding"]["txs"][0]["reason"], "waiting for the Pools snapshot")

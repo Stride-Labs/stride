@@ -102,6 +102,10 @@ SWEEP_OPERATOR = "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9"
 OSMOSIS_VAULT = "osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af"
 # The transmuter moderator (freeze and the corrupted-asset mark) on every pool; the vault stays admin.
 POOL_MODERATOR = "osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy"
+# Osmosis governance (the gov module), which controls the Osmosis community pool: the last day offers it the admin
+# role of every pool, and an Osmosis proposal claims it. Not the distribution module that holds the community pool's
+# funds (osmo1jv65s3grqf6v6jl3dp4t6c9t9rk99cd80yhvld): a module account cannot sign, so it could never claim.
+OSMOSIS_GOV = "osmo10d07y265gmmuvt4z0w9aw880jnsr700jjeq4qp"
 # Holds a little of every planned pool's stToken denom: proves the denom exists on Osmosis and funds the test join.
 POOL_SEED_ADDRESS = "osmo1mrtrz33lxsh7ue3vje6vsq56ln8yk5rthz43fe"
 # Holder chains whose routes cannot be seeded yet: their pools wait in the last creation bundle and the Pools tab marks
