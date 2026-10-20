@@ -177,6 +177,10 @@ DRAIN_RETRIES = (
 )
 
 
+# Sets whose every tx has landed (2026-10-20): each card stays for the record as done, with nothing to copy.
+COMPLETED_SET_IDS = frozenset({"slash-queries", "validator-weights", "live-test-undelegate", "full-drain"})
+
+
 @dataclass(frozen=True)
 class ChainTools:
     """The binary, chain and multisig a set's commands run against."""
@@ -300,7 +304,7 @@ def tx_sets(
             )
         ],
     )
-    return [
+    sets = [
         _pool_creation_set(pools_data=pools_data),
         _slash_queries_set(),
         _validator_weights_set(),
@@ -310,9 +314,18 @@ def tx_sets(
         _staketia_claim_balance_set(),
         _pool_funding_set(pools_data=pools_data),
     ]
+    return [_completed(tx_set=tx_set) if tx_set.id in COMPLETED_SET_IDS else tx_set for tx_set in sets]
 
 
 # ---- sets
+
+
+def _completed(tx_set: TxSet) -> TxSet:
+    """Every tx of the set as a done card: the same shape `_stride_tx` gives a single done tx."""
+    done_txs = [
+        dataclasses.replace(tx, ready=False, reason=None, commands=[], files=[], done=True) for tx in tx_set.txs
+    ]
+    return dataclasses.replace(tx_set, txs=done_txs)
 
 
 @dataclass(frozen=True)

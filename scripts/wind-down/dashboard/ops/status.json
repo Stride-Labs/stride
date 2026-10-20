@@ -1,4 +1,9 @@
 {
+  "day0-epoch-submits": {
+    "at": "2026-10-20T15:06:38.909814+00:00",
+    "by": "sam",
+    "done": true
+  },
   "day0-live-test-pick": {
     "at": "2026-10-12T18:52:30.084902+00:00",
     "by": "sam",
@@ -26,6 +31,71 @@
   },
   "drain-entry-cap": {
     "at": "2026-10-14T14:02:10.099319+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-live-test": {
+    "at": "2026-10-20T15:06:50.289231+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:celestia": {
+    "at": "2026-10-20T15:06:55.974576+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:cosmoshub-4": {
+    "at": "2026-10-20T15:06:56.862602+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:dydx-mainnet-1": {
+    "at": "2026-10-20T15:06:58.086093+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:haqq_11235-1": {
+    "at": "2026-10-20T15:06:59.039153+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:injective-1": {
+    "at": "2026-10-20T15:07:00.108696+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:juno-1": {
+    "at": "2026-10-20T15:07:00.941176+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:laozi-mainnet": {
+    "at": "2026-10-20T15:07:01.891478+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:osmosis-1": {
+    "at": "2026-10-20T15:07:03.199285+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:phoenix-1": {
+    "at": "2026-10-20T15:07:04.017732+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:sommelier-3": {
+    "at": "2026-10-20T15:07:04.861617+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-offset-calibrate:ssc-1": {
+    "at": "2026-10-20T15:07:05.849090+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "drain-rest": {
+    "at": "2026-10-20T15:06:51.891482+00:00",
     "by": "sam",
     "done": true
   },
@@ -111,6 +181,11 @@
   },
   "post-restore": {
     "at": "2026-10-14T14:02:12.402749+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "post-retry-epochs": {
+    "at": "2026-10-20T15:07:12.816900+00:00",
     "by": "sam",
     "done": true
   },
@@ -286,6 +361,11 @@
   },
   "prop-verify-constants": {
     "at": "2026-10-06T12:37:55.040646+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "sweep-test": {
+    "at": "2026-10-20T15:07:16.409555+00:00",
     "by": "sam",
     "done": true
   },

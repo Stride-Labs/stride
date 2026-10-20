@@ -808,38 +808,9 @@
     },
     {
       "date": "2026-10-14",
-      "title": "Injective routes: bundle 4, once Osmosis fixes the rate limiter · sweep pass 1",
-      "note": "The two Injective route pools (stATOM.injective, stINJ.injective) wait for Osmosis to fix the rate limiter that rejects stToken transfers from Injective. If the fix has not shipped by now, push this block out; the pools are funded with every other pool after the halt.",
+      "title": "Sweep pass 1",
+      "note": "Pass 1 of the sweep, Wed 10-14 to Fri 10-16. The Injective route pools moved to their own block (pushed to 2026-10-27 on 2026-10-20: Osmosis has not shipped the rate-limiter fix).",
       "windows": [
-        {
-          "steps": [
-            {
-              "id": "inj-unblock",
-              "text": "Once Osmosis confirms the fix, remove injective-1 from BLOCKED_HOLDER_CHAINS in scripts/wind-down/dashboard/config.py and restart the dashboard: bundle 4 turns from blocked to not ready."
-            },
-            {
-              "id": "inj-seed",
-              "text": "Send a little stATOM and stINJ from Injective to the test wallet (the Pools tab lists the two denoms). Live below: bundle 4's denoms are in the test wallet.",
-              "auto": {
-                "tab": "multisig",
-                "set": "pool-creation",
-                "path": "seeded",
-                "members": ".injective"
-              }
-            },
-            {
-              "id": "inj-create",
-              "text": "Create bundle 4, the two Injective route pools (Multisig tab). Live below: both pools created.",
-              "multisig": "pool-creation",
-              "auto": {
-                "tab": "multisig",
-                "set": "pool-creation",
-                "path": "done",
-                "members": ".injective"
-              }
-            }
-          ]
-        },
         {
           "label": "The sweep, pass 1 · Wed 10-14 to Fri 10-16",
           "steps": [
@@ -1365,6 +1336,42 @@
               "auto": {
                 "tab": "pools",
                 "path": "pools_funded"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2026-11-10",
+      "title": "Injective routes: bundle 4, once Osmosis fixes the rate limiter",
+      "note": "The two Injective route pools (stATOM.injective, stINJ.injective) wait for Osmosis to fix the rate limiter that rejects stToken transfers from Injective. Pushed from 10-14 to 11-10 on 2026-10-20: the fix is not expected on chain until about 11-03, and there is no meeting that week. If the fix has not shipped by now, push this block out again; the pools are funded with every other pool after the halt.",
+      "windows": [
+        {
+          "steps": [
+            {
+              "id": "inj-unblock",
+              "text": "Once Osmosis confirms the fix, remove injective-1 from BLOCKED_HOLDER_CHAINS in scripts/wind-down/dashboard/config.py and restart the dashboard: bundle 4 turns from blocked to not ready."
+            },
+            {
+              "id": "inj-seed",
+              "text": "Send a little stATOM and stINJ from Injective to the test wallet (the Pools tab lists the two denoms). Live below: bundle 4's denoms are in the test wallet.",
+              "auto": {
+                "tab": "multisig",
+                "set": "pool-creation",
+                "path": "seeded",
+                "members": ".injective"
+              }
+            },
+            {
+              "id": "inj-create",
+              "text": "Create bundle 4, the two Injective route pools (Multisig tab). Live below: both pools created.",
+              "multisig": "pool-creation",
+              "auto": {
+                "tab": "multisig",
+                "set": "pool-creation",
+                "path": "done",
+                "members": ".injective"
               }
             }
           ]

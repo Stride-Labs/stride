@@ -15,6 +15,20 @@ NODE = "https://stride-strd-rpc.polkachu.com:443"
 CELESTIA, COSMOS, DYDX, *_ = (zone.chain_id for zone in config.ZONES)
 
 
+# The builder tests below read each set's commands; completed sets drop them, so the module builds every set as open
+# and CompletedSetsTest checks the completion itself against the real list.
+REAL_COMPLETED_SET_IDS = multisig.COMPLETED_SET_IDS  # read at import, before setUpModule empties it
+_open_every_set = mock.patch.object(multisig, "COMPLETED_SET_IDS", frozenset())
+
+
+def setUpModule() -> None:
+    _open_every_set.start()
+
+
+def tearDownModule() -> None:
+    _open_every_set.stop()
+
+
 def zone_entry(chain_id: str, **overrides: object) -> dict[str, object]:
     return {"kind": "zone", "chain_id": chain_id, "live_test_pick": None, "live_test_reason": "no pick today", **overrides}
 
@@ -244,6 +258,28 @@ class DrainRetryTest(unittest.TestCase):
         self.assertTrue(generate.endswith(f"--gas 13000000 --fees 65000ustrd > {stem}.unsigned.json"))
         self.assertIn(f"undelegate-from-validators injective-1 {stem}.json", generate)
         self.assertEqual([(command.tag, command.text) for command in retry.commands][1:], expected_commands(generate, stem=stem)[1:])
+
+
+class CompletedSetsTest(unittest.TestCase):
+    COMPLETED = {"slash-queries", "validator-weights", "live-test-undelegate", "full-drain"}
+
+    def test_every_tx_of_a_completed_set_is_a_done_card_and_the_other_sets_are_untouched(self) -> None:
+        with mock.patch.object(multisig, "COMPLETED_SET_IDS", frozenset(self.COMPLETED)):
+            completed = sets_by_id(validators_data=fake_snapshot())
+        open_sets = sets_by_id(validators_data=fake_snapshot())
+
+        self.assertEqual(REAL_COMPLETED_SET_IDS, self.COMPLETED)
+        for set_id, tx_set in completed.items():
+            if set_id in self.COMPLETED:
+                self.assertTrue(tx_set.txs, set_id)
+                self.assertEqual(
+                    {(tx.done, tx.ready, tx.reason, tuple(tx.commands), tuple(tx.files)) for tx in tx_set.txs},
+                    {(True, False, None, (), ())},
+                    set_id,
+                )
+                self.assertEqual([tx.title for tx in tx_set.txs], [tx.title for tx in open_sets[set_id].txs], set_id)
+            else:
+                self.assertEqual(tx_set, open_sets[set_id], set_id)
 
 
 class SetsTest(unittest.TestCase):

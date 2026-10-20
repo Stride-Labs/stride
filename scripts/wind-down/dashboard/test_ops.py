@@ -199,7 +199,7 @@ class RealPlanTest(unittest.TestCase):
         self.assertEqual(self._step("vote-assetlist")["zones"], ALL_ZONES)
 
     def test_the_injective_block_and_the_single_assetlist_step(self) -> None:
-        injective = next(day for day in self.plan["days"] if day["date"] == "2026-10-14")
+        injective = next(day for day in self.plan["days"] if day["title"].startswith("Injective routes"))
         self.assertEqual([step["id"] for step in injective["windows"][0]["steps"]], ["inj-unblock", "inj-seed", "inj-create"])
         self.assertEqual(self._step("inj-create")["auto"], {"tab": "multisig", "set": "pool-creation", "path": "done", "members": ".injective"})
         self.assertEqual([step["id"] for step in self._steps() if step["id"].endswith("-assetlist")], ["vote-assetlist"])
