@@ -3479,6 +3479,10 @@
   "ustrd": "0",
   "completes_at": null
  },
+ "stride10tmu74dwe6d5j262qjs0fj9pq4d323q3zjjjyf": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride10tp28zyzzace7e9l6tfdsdhdng90sfas5p2dz2": {
   "ustrd": "0",
   "completes_at": null
@@ -5327,6 +5331,10 @@
   "ustrd": "116000",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
+ "stride128g908zusk8tdskul5su664drlqz3k8y7h5xp9": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride128h0estu7k2swf7et264v7upqcgkmgfw5tqpax": {
   "ustrd": "180966",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
@@ -5428,8 +5436,8 @@
   "completes_at": null
  },
  "stride1296d8q7d7wyz8904z6nhgwz9mxela6afp3lrjn": {
-  "ustrd": "3450000",
-  "completes_at": "2026-10-16T16:12:44.296471490Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1297q5wdvkveppsd6ccztc4r3fhyj7wgx6tu5xu": {
   "ustrd": "0",
@@ -13571,6 +13579,10 @@
   "ustrd": "4498335",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
+ "stride146vew5u4d2d8am5w8hqc5a5flyxe0ppvz9wxka": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride146vsav32ts8cdgh32z87530yc2y3swj50m78a2": {
   "ustrd": "0",
   "completes_at": null
@@ -18236,8 +18248,8 @@
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
  "stride1594hfdjc3l7ugpcakwesal3rfj7njlpfx6u6w5": {
-  "ustrd": "43665955",
-  "completes_at": "2026-10-19T20:41:11.500553481Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1594rj67ywa658gnhjmrth37jaujdd9k0nkzwue": {
   "ustrd": "0",
@@ -19944,8 +19956,8 @@
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
  "stride15n9me5yykqtedf80zsnk46lckeu07eegu6g2kz": {
-  "ustrd": "200000000",
-  "completes_at": "2026-10-19T02:50:42.024168993Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride15n9yavjtzufn8kxd6sq858v69u4sjyfrxnqsfe": {
   "ustrd": "0",
@@ -24228,6 +24240,10 @@
   "completes_at": null
  },
  "stride16mtguaqlu7afrf9sqnyw8k8cn8qyx39jz6hx32": {
+  "ustrd": "0",
+  "completes_at": null
+ },
+ "stride16mue32jztkv7rzp50k6r23wx6nlnyyh0eamauq": {
   "ustrd": "0",
   "completes_at": null
  },
@@ -37878,6 +37894,10 @@
  "stride19t4ktf66fzhya5jwuq6d05r682szylru4ug8zp": {
   "ustrd": "0",
   "completes_at": null
+ },
+ "stride19t5vjq8jlp5uy3jp4eu2nwms6u5yv7gn4llsng": {
+  "ustrd": "0",
+  "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
  "stride19t5xc47k3xftyly3g6wkgg7sj5yg9ezdaj66cq": {
   "ustrd": "0",
@@ -76924,8 +76944,8 @@
   "completes_at": null
  },
  "stride1kyp42k6572e8wgv3nqjyyktj3v7ysvy50w428w": {
-  "ustrd": "403449968",
-  "completes_at": "2026-10-20T16:41:57.920738562Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1kyp8s3w4dzrcdhej9ng29es874d9xwjuk6wya3": {
   "ustrd": "0",
@@ -82967,6 +82987,10 @@
   "ustrd": "24138258",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
  },
+ "stride1met0t5pk6t60x479y0s7tdp2749qgnke4ys5u8": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride1metjruvup93dwf0cm8d7ueh8mrgqkcvcsk0n86": {
   "ustrd": "0",
   "completes_at": null
@@ -87428,6 +87452,10 @@
   "completes_at": null
  },
  "stride1nhkqh2emkquqxx7r2fqqrv767n5939ea69m76v": {
+  "ustrd": "0",
+  "completes_at": null
+ },
+ "stride1nhmm3erpkwt6u9qt8jgas24t900ryu9y73ew3j": {
   "ustrd": "0",
   "completes_at": null
  },
@@ -93390,6 +93418,10 @@
  "stride1pvcm3nx4qtuljps2uu6c7teaqmzr9jvlw23cum": {
   "ustrd": "45050000",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
+ },
+ "stride1pvcn0jjv2mugdevlue9vj2ks7ryjgtccjnwrs7": {
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1pvdc6l0sd93lqzdtf2zvf5u8mz9tzk08zqsf08": {
   "ustrd": "0",
@@ -105803,6 +105835,10 @@
   "ustrd": "0",
   "completes_at": null
  },
+ "stride1ssa73tp672apgxtxvvrlthc9pqwz6v4uz7qr9l": {
+  "ustrd": "0",
+  "completes_at": null
+ },
  "stride1ssanfu7czpyw64ypruj6aqmmw666qfku9xyx8h": {
   "ustrd": "16000000",
   "completes_at": "2026-10-26T08:55:25.469915628Z"
@@ -114472,8 +114508,8 @@
   "completes_at": null
  },
  "stride1uu46ywa5zzmlfc94ytn6zu9r5084pcss8pfr7t": {
-  "ustrd": "1138150000",
-  "completes_at": "2026-10-18T01:23:37.185948625Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1uu4e4lt460h6etczv4pfngzqe436veky4pjvzs": {
   "ustrd": "110000",
@@ -119016,8 +119052,8 @@
   "completes_at": null
  },
  "stride1vvf9slh3nlp46aukycsjnd08j95nezxqw77xzz": {
-  "ustrd": "133254873",
-  "completes_at": "2026-10-18T19:12:32.167929355Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1vvfzlzam9fqak066ge6yvgys2cnkfgdwh8l55u": {
   "ustrd": "0",
@@ -128924,8 +128960,8 @@
   "completes_at": null
  },
  "stride1y5hzxwatlhw2l3ye4dvkrtyrrfsxk92wjjqlpk": {
-  "ustrd": "114700000",
-  "completes_at": "2026-10-17T12:05:50.459452858Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1y5ju5syx5f64460z4h7jgtlmmml55rwh7a93sa": {
   "ustrd": "816280407",
@@ -131732,8 +131768,8 @@
   "completes_at": null
  },
  "stride1yu3u7xguyn79xp4h08wc9za6k5zes3dzmtv4cq": {
-  "ustrd": "133403665",
-  "completes_at": "2026-10-19T07:57:49.604908600Z"
+  "ustrd": "0",
+  "completes_at": null
  },
  "stride1yu55nvr9r4eunyrvem0ekqs77ehpfcefffxgtf": {
   "ustrd": "100000",
