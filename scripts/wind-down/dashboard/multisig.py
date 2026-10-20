@@ -199,6 +199,8 @@ DRAIN_RETRIES = (
 
 # Sets whose every tx has landed (2026-10-20): each card stays for the record as done, with nothing to copy.
 COMPLETED_SET_IDS = frozenset({"slash-queries", "validator-weights", "live-test-undelegate", "full-drain"})
+# Zones whose ICA transfers have all landed in the vault (haqq 2026-10-20): their cards stay as done, nothing to copy.
+COMPLETED_TRANSFER_ZONES = frozenset({"haqq_11235-1"})
 
 
 @dataclass(frozen=True)
@@ -374,10 +376,11 @@ def rest_join_amounts(chain_id: str, pools_data: dict[str, Any] | None) -> RestJ
 
 def _completed(tx_set: TxSet) -> TxSet:
     """Every tx of the set as a done card: the same shape `_stride_tx` gives a single done tx."""
-    done_txs = [
-        dataclasses.replace(tx, ready=False, reason=None, commands=[], files=[], done=True) for tx in tx_set.txs
-    ]
-    return dataclasses.replace(tx_set, txs=done_txs)
+    return dataclasses.replace(tx_set, txs=[_done_tx(tx=tx) for tx in tx_set.txs])
+
+
+def _done_tx(tx: MultisigTx) -> MultisigTx:
+    return dataclasses.replace(tx, ready=False, reason=None, commands=[], files=[], done=True)
 
 
 @dataclass(frozen=True)
@@ -580,7 +583,7 @@ def _creation_fee_text(pools_zones: dict[str, dict[str, Any]]) -> str:
 
 def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
     funds_zones = _zones_by_chain_id(data=funds_data)
-    return TxSet(
+    tx_set = TxSet(
         id="ica-transfers",
         step_id="transfers",
         title="ICA transfers: send every ICA's balance to the Osmosis vault",
@@ -597,6 +600,9 @@ def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
             for zone in config.ZONES
             for tx in _ica_transfer_txs(zone=zone, funds_zone=funds_zones.get(zone.chain_id), funds_data=funds_data)
         ],
+    )
+    return dataclasses.replace(
+        tx_set, txs=[_done_tx(tx=tx) if tx.chain_id in COMPLETED_TRANSFER_ZONES else tx for tx in tx_set.txs]
     )
 
 

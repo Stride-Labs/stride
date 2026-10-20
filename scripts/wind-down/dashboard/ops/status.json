@@ -169,6 +169,11 @@
     "by": "claude",
     "done": true
   },
+  "haqq-landed": {
+    "at": "2026-10-20T22:02:56.752974+00:00",
+    "by": "sam",
+    "done": true
+  },
   "haqq-relay-acks": {
     "at": "2026-10-12T15:11:17.759723+00:00",
     "by": "claude",
@@ -177,6 +182,11 @@
   "haqq-relay-packets": {
     "at": "2026-10-12T21:58:45.559653+00:00",
     "by": "claude",
+    "done": true
+  },
+  "haqq-transfers": {
+    "at": "2026-10-20T22:02:56.741665+00:00",
+    "by": "sam",
     "done": true
   },
   "post-restore": {

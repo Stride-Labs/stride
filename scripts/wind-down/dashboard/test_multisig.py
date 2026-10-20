@@ -313,6 +313,19 @@ class CompletedSetsTest(unittest.TestCase):
                 self.assertEqual(tx_set, open_sets[set_id], set_id)
 
 
+class CompletedTransferZonesTest(unittest.TestCase):
+    def test_haqqs_transfer_cards_are_done_and_other_zones_are_untouched(self) -> None:
+        txs = sets_by_id(fake_snapshot(), funds_data=fake_funds())["ica-transfers"].txs
+        haqq = [tx for tx in txs if tx.chain_id == "haqq_11235-1"]
+        others = [tx for tx in txs if tx.chain_id != "haqq_11235-1"]
+
+        self.assertEqual(multisig.COMPLETED_TRANSFER_ZONES, frozenset({"haqq_11235-1"}))
+        self.assertTrue(haqq)
+        self.assertEqual({(tx.done, tx.ready, tx.reason) for tx in haqq}, {(True, False, None)})
+        self.assertTrue(all(tx.commands == [] for tx in haqq))
+        self.assertFalse(any(tx.done for tx in others))
+
+
 class SetsTest(unittest.TestCase):
     def test_no_snapshot_leaves_every_drain_tx_not_ready(self) -> None:
         drain_sets = sets_by_id(None)
