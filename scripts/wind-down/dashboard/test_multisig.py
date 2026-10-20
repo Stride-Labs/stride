@@ -143,7 +143,7 @@ class RestoreChannelsTest(unittest.TestCase):
         generate = (
             "mkdir -p /tmp/wind-down\n"
             "strided tx stakeibc restore-interchain-account dydx-mainnet-1 connection-123 dydx-mainnet-1.DELEGATION "
-            f"--from {ADDRESS} --generate-only --chain-id stride-1 --node {NODE} --gas 1000000 --fees 5000ustrd "
+            f"--from {ADDRESS} --generate-only --chain-id stride-1 --node {NODE} --gas 65000000 --fees 325000ustrd "
             f"> {stem}.unsigned.json"
         )
         self.assertEqual(

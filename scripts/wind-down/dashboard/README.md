@@ -73,7 +73,7 @@ the bundle's unsigned tx, at 1.5M gas per message and 0.1 uosmo/gas; a bundle is
 the poolmanager creation fee times the pools still to create across all zones, and a trailing not-ready tx lists the
 pools no bundle holds yet with their reasons), `slash-queries`, `validator-weights`, `restore-channels` (step
 `dydx-restore-delegation`: `restore-interchain-account` for the closed dYdX DELEGATION channel, permissionless but built
-as a multisig tx; 1M gas, 5000ustrd), `live-test-undelegate`, `full-drain`, `ica-transfers`,
+as a multisig tx; 65M gas (simulated 55.6M: it rewrites every dYdX epoch unbonding record), 325000ustrd), `live-test-undelegate`, `full-drain`, `ica-transfers`,
 `staketia-claim-balance`, `pool-funding`. The funding set is two bundled txs per zone: every test join, then the close, one atomic tx of `assign_moderator` to the vault, each pool's rest join and its mark, and `assign_moderator` back to `config.POOL_MODERATOR` (`pools_funded` requires the hand-back). The close's generate step runs `pool_amounts.py <chain_id> <contract>...` first, from the repo root: a fresh Pools read that prints each rest join as JSON and exits non-zero, stopping the `&&`-chained writes, when the read disagrees with the pools the tx lists.
 
 ## Sweep tab

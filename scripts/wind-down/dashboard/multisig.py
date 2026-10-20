@@ -129,11 +129,11 @@ class ChannelRestore:
 CHANNEL_RESTORES = (
     ChannelRestore(chain_id="dydx-mainnet-1", connection_id="connection-123", account_type="DELEGATION", closed_channel="channel-824"),
 )
-# Registers the account (a channel OpenInit) and resets the zone's delegation, deposit, unbonding and LSM records
-# across the chain: 1,000,000 is above the 600,000 of a plain ICA msg, and the fee stays at the 0.005 ustrd/gas
-# of the other Stride sets.
-RESTORE_CHANNEL_GAS = 1_000_000
-RESTORE_CHANNEL_FEES = "5000ustrd"
+# Registers the account (a channel OpenInit) and resets the zone's records: it rewrites every epoch unbonding record
+# holding the zone (all 805 for dYdX, each with every zone's unbondings), so it is far from a plain ICA msg. Simulated
+# on mainnet 2026-10-20 at 55,590,618 gas (1M ran out); 65M leaves ~17% and fits the 100M block. Fee at 0.005 ustrd/gas.
+RESTORE_CHANNEL_GAS = 65_000_000
+RESTORE_CHANNEL_FEES = "325000ustrd"
 
 
 @dataclass(frozen=True)
