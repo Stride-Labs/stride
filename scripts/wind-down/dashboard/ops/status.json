@@ -99,6 +99,11 @@
     "by": "sam",
     "done": true
   },
+  "dydx-restore-delegation-2:dydx-mainnet-1": {
+    "at": "2026-10-28T13:54:41.043790+00:00",
+    "by": "sam",
+    "done": true
+  },
   "dydx-restore-delegation:dydx-mainnet-1": {
     "at": "2026-10-20T22:24:54.216299+00:00",
     "by": "sam",
@@ -469,6 +474,11 @@
     "by": "sam",
     "done": true
   },
+  "tia-claim-balance": {
+    "at": "2026-10-28T13:58:43.409289+00:00",
+    "by": "sam",
+    "done": true
+  },
   "tia-claimable": {
     "at": "2026-10-27T16:57:43.444606+00:00",
     "by": "sam",
@@ -476,6 +486,11 @@
   },
   "tia-claims": {
     "at": "2026-10-27T16:57:44.019253+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-rewards-check:celestia": {
+    "at": "2026-10-28T14:06:31.792869+00:00",
     "by": "sam",
     "done": true
   },
