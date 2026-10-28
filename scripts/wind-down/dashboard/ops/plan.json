@@ -991,6 +991,19 @@
       ],
       "windows": [
         {
+          "label": "dYdX delegation channel (again)",
+          "steps": [
+            {
+              "id": "dydx-restore-delegation-2",
+              "text": "dYdX: the DELEGATION ICA channel restored on 10-20 (channel-877) closed again on 2026-10-24: the 01:00 UTC stride epoch sent the redemption sweep for records 1486-1489, no relayer delivered it to dYdX (the relayer key was dry), it timed out at 05:48 and a third-party relayer relayed the timeout, closing the ordered channel. Restore it from the Multisig tab (65M gas; it also resets the stuck EXIT_TRANSFER_IN_PROGRESS records to the queue), relay the handshake to OPEN on both ends, then relay every dYdX sweep by hand until the zone's unbonding ends: the re-send at the first stride epoch after the restore, 10-29 01:00 UTC (the 10-28 batch) and 11-03 01:00 UTC (the 11-02 batch). Each has about five hours before it times out.",
+              "multisig": "restore-channels",
+              "zones": [
+                "dydx-mainnet-1"
+              ]
+            }
+          ]
+        },
+        {
           "label": "osmosis-1",
           "steps": [
             {
@@ -1204,9 +1217,9 @@
             },
             {
               "id": "sweep-submit-final",
-              "text": "Run pass 2 with the same loop as pass 1: preflight (the eleven rows), then per batch a gas simulation, the signed broadcast and the poll for the result. Main tier by value descending, lowering the floor to the final one and repeating; the keyless tier (never-signed accounts) is left for the very end so their owners get the most time. Watch the Sweep tab; any sweep_skipped event stops the run. Never run two `run` processes at once. Run the block one line at a time: each `run` prompts, and lines starting with # are notes, not commands.",
-              "command": "# 1. simulate every pending batch without broadcasting (gas estimates, no prompts)\npython3 scripts/wind-down/sweep/cli.py run --dry-run\n# 2. the main tier, largest holders first (answer a at the first prompt to stop being asked)\npython3 scripts/wind-down/sweep/cli.py run\n# 3. lower the floor to the final one and repeat 1-2 while the day allows\npython3 scripts/wind-down/sweep/cli.py plan --floor-usd <FINAL FLOOR>\npython3 scripts/wind-down/sweep/cli.py run\n# 4. the very last run, once everyone else is done: the keyless tier\npython3 scripts/wind-down/sweep/cli.py run --tier keyless\n# if a run stopped: what the ledger says, and finish a submission the poll gave up on\npython3 scripts/wind-down/sweep/cli.py status\npython3 scripts/wind-down/sweep/cli.py resolve\n# after every session\ngit add scripts/wind-down/sweep/state && git commit -m \"sweep: run <RUN>\" && git push",
-              "expect": "Every batch prints `confirmed at <height>: N transfers, 0 skipped`. A skip means the planner and the chain disagree: inspect the ledger line, fix the rule, re-plan. A tx not found within three minutes: `cli.py resolve`. A transfer that times out (24 h) refunds the holder: the Sweep tab lists it under Refunded and the next `plan` includes it again. After `run --tier keyless` the Sweep tab shows every batch confirmed."
+              "text": "Run pass 2 with the same loop as pass 1: preflight (the eleven rows), then per batch a gas simulation, the signed broadcast and the poll for the result. Main tier by value descending, lowering the floor to the final one and repeating. The keyless tier (never-signed accounts) is not run here: it has its own step on 11-10 so their owners get the most time. Watch the Sweep tab; any sweep_skipped event stops the run. Never run two `run` processes at once. Run the block one line at a time: each `run` prompts, and lines starting with # are notes, not commands.",
+              "command": "# 1. simulate every pending batch without broadcasting (gas estimates, no prompts)\npython3 scripts/wind-down/sweep/cli.py run --dry-run\n# 2. the main tier, largest holders first (answer a at the first prompt to stop being asked)\npython3 scripts/wind-down/sweep/cli.py run\n# 3. lower the floor to the final one and repeat 1-2 while the day allows\npython3 scripts/wind-down/sweep/cli.py plan --floor-usd <FINAL FLOOR>\npython3 scripts/wind-down/sweep/cli.py run\n# if a run stopped: what the ledger says, and finish a submission the poll gave up on\npython3 scripts/wind-down/sweep/cli.py status\npython3 scripts/wind-down/sweep/cli.py resolve\n# after every session\ngit add scripts/wind-down/sweep/state && git commit -m \"sweep: run <RUN>\" && git push",
+              "expect": "Every batch prints `confirmed at <height>: N transfers, 0 skipped`. A skip means the planner and the chain disagree: inspect the ledger line, fix the rule, re-plan. A tx not found within three minutes: `cli.py resolve`. A transfer that times out (24 h) refunds the holder: the Sweep tab lists it under Refunded and the next `plan` includes it again. The Sweep tab shows every main batch confirmed; the keyless tier stays pending until 11-10."
             },
             {
               "id": "sweep-rewards",
@@ -1393,7 +1406,7 @@
     },
     {
       "date": "2026-11-10",
-      "title": "Juno, Sommelier: transfer and join the pools (unbonding done 11-09)",
+      "title": "Juno, Sommelier: transfer and join the pools (unbonding done 11-09) · sweep keyless tier",
       "estimated": false,
       "avoid": [
         "When clearing a zone's undelegate packets, relay acknowledgements before timeouts and never relay a timeout while an earlier sequence's ack is outstanding: a timeout that closes the channel first leaves executed batches unacknowledged and Stride still recording their delegations (§9 step 4).",
@@ -1490,6 +1503,17 @@
             }
           ],
           "label": "Juno, Sommelier"
+        },
+        {
+          "label": "The sweep, keyless tier · never-signed accounts",
+          "steps": [
+            {
+              "id": "sweep-keyless",
+              "text": "The last sweep run: the keyless tier (accounts that have never signed a tx), held back from pass 2 so their owners get the most time to move their own funds. Plan fresh at the $1 floor (the 10-27 plan is long expired), run any main-tier batches the new plan lists first (refunds, new holders), then the keyless tier. DYDX stays skipped while no relayer delivers channel-160 to dYdX; drop the --skip-denom if one does. Never run two `run` processes at once. Run the block one line at a time: each `run` prompts, and lines starting with # are notes, not commands.",
+              "command": "# 1. plan at the $1 floor (reads every holder live, about 10 minutes)\npython3 scripts/wind-down/sweep/cli.py plan --floor-usd 1 --skip-denom ibc/561C70B20188A047BFDE6F9946BDDC5D8AC172B9BE04FF868DFABF819E5A9CCE\n# 2. any main-tier stragglers first (answer a at the first prompt to stop being asked)\npython3 scripts/wind-down/sweep/cli.py run\n# 3. the keyless tier\npython3 scripts/wind-down/sweep/cli.py run --tier keyless\n# if a run stopped: what the ledger says, and finish a submission the poll gave up on\npython3 scripts/wind-down/sweep/cli.py status\npython3 scripts/wind-down/sweep/cli.py resolve\n# after every session\ngit add scripts/wind-down/sweep/state && git commit -m \"sweep: run <RUN> (keyless)\" && git push",
+              "expect": "RESULT: PLANNED with `deferred 0 addresses`; on 10-27 the keyless tier was 33 batches, 3,217 addresses, about $555k. Every batch prints `confirmed at <height>: N transfers, 0 skipped`, and Stride channels 5 (Osmosis) and 162 (Celestia) drain to 0 commitments within the hour (clear stragglers by hand with hermes `clear packets --packet-sequences` in chunks of 50). The Sweep tab shows every batch of both tiers confirmed."
+            }
+          ]
         },
         {
           "label": "All pools: admin to Osmosis governance (the plan's last step)",

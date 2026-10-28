@@ -285,7 +285,8 @@ class ChannelSpec:
 
 def collect() -> dict[str, Any]:
     now = datetime.datetime.now(datetime.UTC)
-    feed = chain.get_json(url=config.CHANNELS_FEED_URL)
+    # The feed went empty on 2026-10-26; a zone it does not list is read from Stride instead (see _zone_entry).
+    feed = chain.optional(lambda: chain.get_json(url=config.CHANNELS_FEED_URL)) or []
     feed_by_chain = {entry["chain_id"]: entry for entry in feed}
     # Stride's host zones once for every zone's pre-flight checks; without them those checks are n/a.
     host_zones = chain.optional(_stride_host_zones)
@@ -473,8 +474,8 @@ def _zone_channels(
     host_zones: dict[str, dict[str, Any]] | None,
     now: datetime.datetime,
 ) -> ZoneChannels:
-    entry = feed_by_chain[zone.chain_id]
     stride = chain.stride_chain()
+    entry = _zone_entry(stride=stride, chain_id=zone.chain_id, feed_by_chain=feed_by_chain, host_zones=host_zones)
     host = chain.zone_chain(zone=zone)
 
     # Transfer channel first: its ends come from the chains, the ICA ends from the feed.
@@ -503,8 +504,37 @@ def _zone_channels(
     )
 
 
+def _zone_entry(
+    stride: chain.Chain,
+    chain_id: str,
+    feed_by_chain: dict[str, Any],
+    host_zones: dict[str, dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """The zone's feed entry, or the same fields read from Stride's host zone and connection when the feed lacks it.
+
+    No ICA channels are filled in, so _zone_channels reads them from Stride's channel list."""
+    if chain_id in feed_by_chain:
+        return feed_by_chain[chain_id]
+    if host_zones is None or chain_id not in host_zones:
+        raise LookupError(f"{chain_id} is in neither the channels feed nor Stride's host zones")
+
+    host_zone = host_zones[chain_id]
+    connection = chain.rest_get(
+        chain=stride, path=f"/ibc/core/connection/v1/connections/{host_zone['connection_id']}"
+    )["connection"]
+    return {
+        "chain_id": chain_id,
+        "connection_id": host_zone["connection_id"],
+        "client_id": connection["client_id"],
+        "counterparty_connection_id": connection["counterparty"]["connection_id"],
+        "counterparty_client_id": connection["counterparty"]["client_id"],
+        "transfer_channel_id": host_zone["transfer_channel_id"],
+        "ica_channels": [],
+    }
+
+
 # The feed drops a zone's ICA channels when its own haqq lookups fail (seen 2026-10-06), so the current channel per
-# ICA type is read from Stride's channel list on the zone's connection: the highest channel id per controller port,
+# ICA type is read from Stride's channel list on the zone's connection: the OPEN channel per controller port, else the highest id,
 # with the host's end asked for its state.
 def _ica_channels_from_stride(stride: chain.Chain, host: chain.Chain, entry: dict[str, Any]) -> list[dict[str, Any]]:
     listed = chain.rest_get_all_pages(
@@ -515,9 +545,8 @@ def _ica_channels_from_stride(stride: chain.Chain, host: chain.Chain, entry: dic
     for channel in listed:
         if not channel["port_id"].startswith(controller_prefix):
             continue
-        number = int(channel["channel_id"].rsplit("-", 1)[1])
         current = newest.get(channel["port_id"])
-        if current is None or number > int(current["channel_id"].rsplit("-", 1)[1]):
+        if current is None or _channel_rank(channel) > _channel_rank(current):
             newest[channel["port_id"]] = channel
     return [
         {
@@ -530,6 +559,12 @@ def _ica_channels_from_stride(stride: chain.Chain, host: chain.Chain, entry: dic
         }
         for port_id, channel in sorted(newest.items())
     ]
+
+
+def _channel_rank(channel: dict[str, Any]) -> tuple[bool, int]:
+    """An OPEN channel outranks any other, so an orphan INIT left by a second restore (cosmoshub-4's channel-874 next
+    to the OPEN channel-872) does not hide the live one; otherwise the newest channel id wins."""
+    return channel["state"] == "STATE_OPEN", int(channel["channel_id"].rsplit("-", 1)[1])
 
 
 def _host_channel_state(host: chain.Chain, channel_id: str) -> str:

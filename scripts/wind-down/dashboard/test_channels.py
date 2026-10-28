@@ -3,6 +3,7 @@ import datetime
 import json
 import unittest
 import urllib.error
+from typing import Any
 from unittest import mock
 
 import chain
@@ -387,6 +388,78 @@ ZONE_RECORD = {"delegation_ica_address": DELEGATION_ICA, "withdrawal_ica_address
 WITHDRAW_PATH = f"/cosmos/distribution/v1beta1/delegators/{DELEGATION_ICA}/withdraw_address"
 PARAMS_PATH = "/ibc/apps/interchain_accounts/host/v1/params"
 CLIENT_STATES_PATH = "/ibc/core/client/v1/client_states/07-tendermint-9"
+
+
+class ZoneEntryTest(unittest.TestCase):
+    FEED_ENTRY = {"chain_id": "celestia", "connection_id": "connection-from-feed"}
+    HOST_ZONES = {"celestia": {"chain_id": "celestia", "connection_id": "connection-125", "transfer_channel_id": "channel-162"}}
+    CONNECTION = {
+        "connection": {
+            "client_id": "07-tendermint-137",
+            "counterparty": {"client_id": "07-tendermint-0", "connection_id": "connection-2"},
+        }
+    }
+
+    def test_feed_entry_wins(self) -> None:
+        with mock.patch.object(chain, "rest_get") as rest_get:
+            entry = channels._zone_entry(
+                stride=STRIDE, chain_id="celestia", feed_by_chain={"celestia": self.FEED_ENTRY}, host_zones=self.HOST_ZONES
+            )
+
+        self.assertIs(entry, self.FEED_ENTRY)
+        rest_get.assert_not_called()
+
+    def test_missing_from_feed_reads_stride(self) -> None:
+        with mock.patch.object(chain, "rest_get", return_value=self.CONNECTION) as rest_get:
+            entry = channels._zone_entry(stride=STRIDE, chain_id="celestia", feed_by_chain={}, host_zones=self.HOST_ZONES)
+
+        rest_get.assert_called_once_with(chain=STRIDE, path="/ibc/core/connection/v1/connections/connection-125")
+        self.assertEqual(
+            entry,
+            {
+                "chain_id": "celestia",
+                "connection_id": "connection-125",
+                "client_id": "07-tendermint-137",
+                "counterparty_connection_id": "connection-2",
+                "counterparty_client_id": "07-tendermint-0",
+                "transfer_channel_id": "channel-162",
+                "ica_channels": [],
+            },
+        )
+
+    def test_unknown_everywhere_raises(self) -> None:
+        with self.assertRaises(LookupError):
+            channels._zone_entry(stride=STRIDE, chain_id="celestia", feed_by_chain={}, host_zones=None)
+
+
+class IcaChannelsFromStrideTest(unittest.TestCase):
+    ENTRY = {"chain_id": "cosmoshub-4", "connection_id": "connection-0"}
+
+    def channel(self, channel_id: str, state: str) -> dict[str, Any]:
+        return {
+            "port_id": "icacontroller-cosmoshub-4.DELEGATION",
+            "channel_id": channel_id,
+            "state": state,
+            "counterparty": {"channel_id": "" if state == "STATE_INIT" else f"host-{channel_id}"},
+        }
+
+    def picked(self, listed: list[dict[str, Any]]) -> str:
+        with (
+            mock.patch.object(chain, "rest_get_all_pages", return_value=listed),
+            mock.patch.object(channels, "_host_channel_state", return_value="STATE_OPEN"),
+        ):
+            ica_channels = channels._ica_channels_from_stride(stride=STRIDE, host=HOST, entry=self.ENTRY)
+        return ica_channels[0]["channel_id"]
+
+    def test_an_open_channel_beats_a_newer_orphan_init(self) -> None:
+        listed = [self.channel("channel-863", "STATE_CLOSED"), self.channel("channel-872", "STATE_OPEN"), self.channel("channel-874", "STATE_INIT")]
+
+        self.assertEqual(self.picked(listed), "channel-872")
+
+    def test_without_an_open_channel_the_newest_wins(self) -> None:
+        listed = [self.channel("channel-877", "STATE_CLOSED"), self.channel("channel-824", "STATE_CLOSED")]
+
+        self.assertEqual(self.picked(listed), "channel-877")
 
 
 class AllowMessagesTest(unittest.TestCase):

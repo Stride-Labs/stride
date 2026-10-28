@@ -99,6 +99,11 @@
     "by": "sam",
     "done": true
   },
+  "dydx-restore-delegation:dydx-mainnet-1": {
+    "at": "2026-10-20T22:24:54.216299+00:00",
+    "by": "sam",
+    "done": true
+  },
   "dym-paid": {
     "at": "2026-10-13T02:24:15.782948+00:00",
     "by": "sam",
@@ -159,6 +164,21 @@
     "by": "claude",
     "done": true
   },
+  "haqq-channels": {
+    "at": "2026-10-20T22:25:21.636338+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-claimable": {
+    "at": "2026-10-20T22:25:03.052060+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-claims": {
+    "at": "2026-10-20T22:25:05.653572+00:00",
+    "by": "sam",
+    "done": true
+  },
   "haqq-clients-fresh": {
     "at": "2026-10-12T15:02:03.419886+00:00",
     "by": "sam",
@@ -189,8 +209,38 @@
     "by": "claude",
     "done": true
   },
+  "haqq-settled": {
+    "at": "2026-10-20T22:25:12.390214+00:00",
+    "by": "sam",
+    "done": true
+  },
   "haqq-transfers": {
     "at": "2026-10-20T22:02:56.741665+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "haqq-transfers:haqq_11235-1": {
+    "at": "2026-10-20T22:25:28.548808+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "osmo-channels": {
+    "at": "2026-10-27T16:56:33.961704+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "osmo-claimable": {
+    "at": "2026-10-27T16:56:20.027220+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "osmo-claims": {
+    "at": "2026-10-27T16:56:24.493576+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "osmo-settled": {
+    "at": "2026-10-27T16:56:29.150876+00:00",
     "by": "sam",
     "done": true
   },
@@ -379,8 +429,78 @@
     "by": "sam",
     "done": true
   },
+  "sweep-announce": {
+    "at": "2026-10-21T01:23:26.955451+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "sweep-plan": {
+    "at": "2026-10-21T01:23:22.145954+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "sweep-plan-final": {
+    "at": "2026-10-27T17:01:17.538254+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "sweep-relayers": {
+    "at": "2026-10-21T01:23:25.651807+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "sweep-submit": {
+    "at": "2026-10-21T01:23:24.320195+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "sweep-submit-final": {
+    "at": "2026-10-27T17:01:20.324918+00:00",
+    "by": "sam",
+    "done": true
+  },
   "sweep-test": {
     "at": "2026-10-20T15:07:16.409555+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-channels": {
+    "at": "2026-10-27T17:00:59.704454+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-claimable": {
+    "at": "2026-10-27T16:57:43.444606+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-claims": {
+    "at": "2026-10-27T16:57:44.019253+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-settled": {
+    "at": "2026-10-27T17:00:59.042769+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-staketia-paid": {
+    "at": "2026-10-27T17:00:57.531942+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-staketia-remainder:celestia": {
+    "at": "2026-10-27T17:00:56.659675+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-staketia-sweep": {
+    "at": "2026-10-27T17:00:54.760932+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-tranche1-sweep": {
+    "at": "2026-10-21T01:23:09.207079+00:00",
     "by": "sam",
     "done": true
   },
