@@ -323,7 +323,8 @@ class ZonePools:
     fee_reserve: int  # uosmo the vault keeps for the funding txs (osmosis-1 only, 0 elsewhere): not allocated
     pools_native: int
     native_on_osmosis: int  # vault + pools
-    coverage: str | None  # native_on_osmosis / needed, six places; None when nothing is needed
+    swapped_in_value: int  # the stTokens already swapped into the pools, at Stride's rate: backing they have received
+    coverage: str | None  # (native_on_osmosis + swapped_in_value) / needed, six places; None when nothing is needed
     missing_routes: list[str]  # policy channels with no route pool
     pools: list[PoolReport]  # canonical first, then routes by Stride channel, unrecognised last
     pools_ready: (
@@ -789,6 +790,10 @@ def build_zone_pools(
     needed = host.needed
     pools_native = sum(report.native_balance for report in reports)
     native_on_osmosis = vault_native + pools_native
+    # A stToken swapped into a pool still counts in the supply but has been paid, like the Funds tab's coverage.
+    swapped_in_value = funds.needed_amount(
+        st_supply=sum(report.st_balance for report in reports), redemption_rate=host.stride_rate
+    )
 
     served = {report.route.stride_channel for report in reports if report.route}
     blocked_channels = {plan.stride_channel for plan in planned if plan.blocked and plan.stride_channel}
@@ -820,7 +825,8 @@ def build_zone_pools(
         fee_reserve=fee_reserve,
         pools_native=pools_native,
         native_on_osmosis=native_on_osmosis,
-        coverage=funds.coverage_ratio(covered=native_on_osmosis, needed=needed),
+        swapped_in_value=swapped_in_value,
+        coverage=funds.coverage_ratio(covered=native_on_osmosis + swapped_in_value, needed=needed),
         missing_routes=missing_routes,
         pools=ordered,
         pools_ready=pools_ready,

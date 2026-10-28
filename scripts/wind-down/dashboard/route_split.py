@@ -6,7 +6,8 @@ escrow from the route to the canonical side after the pools are funded: the rout
 can pay out and the canonical pool less. Every Pools refresh reads the stToken supply and every policy route's escrow
 on Stride and appends any amount that changed to `ops/route_split.jsonl`. The Pools tab shows each zone's split now,
 at the baseline (the first live reading) and at funding (from the vault's shares), and turns red once anything moved
-by more than one whole stToken against either. The split at the v35 upgrade is shown beside it for reference only:
+by more than one whole stToken: against the funding once the pools are funded (a move before then was funded for), and
+against the baseline until then. The split at the v35 upgrade is shown beside it for reference only:
 the flushed redemptions burned stTokens and holders moved escrow before any pool was funded, so it is never red.
 
 Backfill the upgrade reading once, from a node that still holds the height (Polkachu prunes it; the local v35
@@ -86,7 +87,7 @@ class SplitRow:
     share_baseline: str | None
     share_at_upgrade: str | None
     share_at_funding: str | None
-    moved: int  # the largest move against the baseline or funding, in stTokens (the upgrade does not count)
+    moved: int  # the move since funding, or since the baseline before then, in stTokens (the upgrade does not count)
     drifted: bool
     matches_funding: bool | None  # now within one stToken of what the pool was funded for; None until funded
 
@@ -234,14 +235,16 @@ def zone_split(zone: dict[str, Any], readings: list[Reading]) -> ZoneSplit | Non
             zone=zone, routes=routes, supplies=supplies, threshold=threshold
         ),
     ]
+    funded = any(row.at_funding is not None for row in rows)
     return ZoneSplit(
         baseline_at=first[SUPPLY_KEY].at,
         supply_now=supplies.now,
         supply_baseline=supplies.baseline,
         supply_at_upgrade=supplies.at_upgrade,
         rows=rows,
-        drifted=abs(supplies.now - supplies.baseline) > threshold
-        or any(row.drifted for row in rows),
+        # A supply change moves the canonical row, which compares against funding once funded.
+        drifted=any(row.drifted for row in rows)
+        or (not funded and abs(supplies.now - supplies.baseline) > threshold),
     )
 
 
@@ -338,9 +341,8 @@ def _row(
     supplies: Supplies,
     threshold: int,
 ) -> SplitRow:
-    moved = max(
-        abs(now - baseline), abs(now - at_funding) if at_funding is not None else 0
-    )
+    # Funding read the live split, so a move before it is already paid for: once funded, only a move since counts.
+    moved = abs(now - baseline) if at_funding is None else abs(now - at_funding)
     return SplitRow(
         label=label,
         channel=channel,

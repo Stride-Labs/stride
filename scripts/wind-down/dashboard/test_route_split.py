@@ -88,6 +88,17 @@ class ZoneSplitTest(unittest.TestCase):
         self.assertEqual([row.matches_funding for row in moved.rows], [False, False])
         self.assertTrue(moved.drifted)
 
+    def test_after_funding_a_move_before_funding_is_not_red(self) -> None:
+        # The route moved from 38 to 40 stTokens before the pools were funded for 40, and nothing since.
+        funded_route = {"native_marked": True, "alloyed_supply": str(int(40 * TOKEN * 1.06)), "rate": "1.06"}
+        funded_canonical = {"native_marked": True, "alloyed_supply": str(60 * TOKEN)}
+        readings = [reading("supply", 100 * TOKEN), reading(CHANNEL, 38 * TOKEN), reading(CHANNEL, 40 * TOKEN)]
+
+        split = route_split.zone_split(zone=zone(route_pool=funded_route, canonical=funded_canonical), readings=readings)
+
+        self.assertEqual([row.moved for row in split.rows], [0, 0])
+        self.assertFalse(split.drifted)
+
     def test_nothing_recorded_is_no_split(self) -> None:
         self.assertIsNone(route_split.zone_split(zone=zone(), readings=[]))
 

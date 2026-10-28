@@ -100,7 +100,8 @@ function statePill(zone) {
 
 function headerLine(zone) {
   const tokens = (value) => tokenAmount(value, zone);
-  const onOsmosis = `${tokens(zone.native_on_osmosis)} on Osmosis (vault ${tokens(zone.vault_native)} + pools ${tokens(zone.pools_native)})`;
+  const onOsmosis = `${tokens(zone.native_on_osmosis)} on Osmosis (vault ${tokens(zone.vault_native)} + pools ${tokens(zone.pools_native)})`
+    + ` + ${tokens(zone.swapped_in_value)} already paid out to swapped-in st${escapeHtml(zone.symbol)}`;
   const rate = `rate ${escapeHtml(shortRate(zone.stride_rate))}`;
   return `needs ${tokens(zone.needed)} · ${onOsmosis} · ${coveragePill(zone.coverage)} · ${rate} · ${zone.pools.length} pool${zone.pools.length === 1 ? '' : 's'}`;
 }
@@ -266,8 +267,8 @@ function checkMark(check) {
 
 // ---- route split: each route's share of the stToken supply, which must not move once the pools are funded
 
-// Red once a route or the canonical remainder moved by more than one stToken against the first live reading or
-// against what its pool was funded for; the v35 column is for reference (redemptions burned and escrow moved before
+// Red once a route or the canonical remainder moved by more than one stToken against what its pool was funded for
+// (before funding, against the first live reading: a move before funding was funded for); the v35 column is for reference (redemptions burned and escrow moved before
 // any pool was funded).
 function splitPill(zone) {
   if (zone.route_split_error) return ` <span title="${escapeHtml(zone.route_split_error)}">${pill('bad', 'split read failed')}</span>`;
@@ -283,7 +284,7 @@ function splitTable(zone) {
     <th class="num" title="the first live reading, ${escapeHtml(split.baseline_at)}">Share at baseline (${escapeHtml(since)})</th>
     <th class="num" title="what the pool was funded for: vault shares / rate (routes); the supply less the routes' (canonical)">Share at funding</th>
     <th class="num" title="reference only: redemptions burned and escrow moved before any pool was funded">Share at v35</th>
-    <th class="num" title="the largest move against the baseline or funding">Moved</th></tr>`;
+    <th class="num" title="the move since funding (before funding, since the baseline)">Moved</th></tr>`;
   const supply = `<tr class="muted"><td>supply</td><td></td><td class="num">${amount(split.supply_now, zone.decimals)}</td><td></td>
     <td class="num">${amount(split.supply_baseline, zone.decimals)}</td><td></td>
     <td class="num">${amount(split.supply_at_upgrade, zone.decimals)}</td><td></td></tr>`;

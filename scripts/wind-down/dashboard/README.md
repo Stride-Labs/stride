@@ -220,7 +220,7 @@ stays only for the published-export audit at the halt.
 - Allocation: a route pool gets `ceil(escrow x rate)` at the **pool's own** rate (what it will actually pay out; the gap
   to Stride's frozen rate stays in the canonical pool); the canonical pool gets `vault_native + every pool's native -
   every route allocation`, null while any non-canonical pool's share is unknown. For osmosis-1 the vault's native
-  token is also its gas token, so `config.OSMO_FEE_RESERVE` (the ~25 OSMO the plan tops the vault up with) comes off
+  token is also its gas token, so `config.OSMO_FEE_RESERVE` (the vault's own 993.02 OSMO from before the ICA transfers, which also pays the funding gas) comes off
   `vault_native` first (never below zero); the zone's `fee_reserve` field carries it (0 elsewhere). A second canonical
   pool, or a second pool on one route channel, fails the uniqueness check on both and neither is allocated (the
   canonical share is null while a duplicate route is unresolved). `funded_exactly` is

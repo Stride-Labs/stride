@@ -123,10 +123,9 @@ CREATE_POOL_BUNDLE_ZONES: tuple[tuple[str, ...], ...] = (
 BLOCKED_HOLDER_CHAINS: dict[str, str] = {
     "injective-1": "Osmosis's rate limiter rejects stToken transfers from Injective: waiting on the Osmosis team",
 }
-# The uosmo the plan tops the vault up with for the creation and funding txs (about 25 OSMO at 0.1 uosmo/gas:
-# two creation bundles plus three txs per pool): gas, not backing, so the osmosis-1
-# canonical pool's allocation leaves it in the vault.
-OSMO_FEE_RESERVE = 25_000_000
+# The uosmo the vault held before the osmosis-1 ICA transfers (993.017766 OSMO on 2026-10-28): the vault's own OSMO,
+# which also pays the funding txs' gas, not backing, so the osmosis-1 canonical pool's allocation leaves it in the vault.
+OSMO_FEE_RESERVE = 993_017_766
 
 
 class RelayedBy(StrEnum):

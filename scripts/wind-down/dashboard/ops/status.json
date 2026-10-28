@@ -244,8 +244,23 @@
     "by": "sam",
     "done": true
   },
+  "osmo-join-pools": {
+    "at": "2026-10-28T14:58:22.015653+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "osmo-landed": {
+    "at": "2026-10-28T14:57:16.282829+00:00",
+    "by": "sam",
+    "done": true
+  },
   "osmo-settled": {
     "at": "2026-10-27T16:56:29.150876+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "osmo-transfers:osmosis-1": {
+    "at": "2026-10-28T14:57:14.466145+00:00",
     "by": "sam",
     "done": true
   },
@@ -486,6 +501,11 @@
   },
   "tia-claims": {
     "at": "2026-10-27T16:57:44.019253+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-join-pools": {
+    "at": "2026-10-28T14:57:26.452430+00:00",
     "by": "sam",
     "done": true
   },
