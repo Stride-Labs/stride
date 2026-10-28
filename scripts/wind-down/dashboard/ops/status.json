@@ -489,6 +489,11 @@
     "by": "sam",
     "done": true
   },
+  "tia-landed": {
+    "at": "2026-10-28T14:14:41.742645+00:00",
+    "by": "sam",
+    "done": true
+  },
   "tia-rewards-check:celestia": {
     "at": "2026-10-28T14:06:31.792869+00:00",
     "by": "sam",
@@ -516,6 +521,11 @@
   },
   "tia-tranche1-sweep": {
     "at": "2026-10-21T01:23:09.207079+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "tia-transfers:celestia": {
+    "at": "2026-10-28T14:14:29.385130+00:00",
     "by": "sam",
     "done": true
   },
