@@ -3,6 +3,7 @@ import datetime
 import json
 import unittest
 import urllib.error
+from typing import Any
 from unittest import mock
 
 import chain
@@ -389,6 +390,78 @@ PARAMS_PATH = "/ibc/apps/interchain_accounts/host/v1/params"
 CLIENT_STATES_PATH = "/ibc/core/client/v1/client_states/07-tendermint-9"
 
 
+class ZoneEntryTest(unittest.TestCase):
+    FEED_ENTRY = {"chain_id": "celestia", "connection_id": "connection-from-feed"}
+    HOST_ZONES = {"celestia": {"chain_id": "celestia", "connection_id": "connection-125", "transfer_channel_id": "channel-162"}}
+    CONNECTION = {
+        "connection": {
+            "client_id": "07-tendermint-137",
+            "counterparty": {"client_id": "07-tendermint-0", "connection_id": "connection-2"},
+        }
+    }
+
+    def test_feed_entry_wins(self) -> None:
+        with mock.patch.object(chain, "rest_get") as rest_get:
+            entry = channels._zone_entry(
+                stride=STRIDE, chain_id="celestia", feed_by_chain={"celestia": self.FEED_ENTRY}, host_zones=self.HOST_ZONES
+            )
+
+        self.assertIs(entry, self.FEED_ENTRY)
+        rest_get.assert_not_called()
+
+    def test_missing_from_feed_reads_stride(self) -> None:
+        with mock.patch.object(chain, "rest_get", return_value=self.CONNECTION) as rest_get:
+            entry = channels._zone_entry(stride=STRIDE, chain_id="celestia", feed_by_chain={}, host_zones=self.HOST_ZONES)
+
+        rest_get.assert_called_once_with(chain=STRIDE, path="/ibc/core/connection/v1/connections/connection-125")
+        self.assertEqual(
+            entry,
+            {
+                "chain_id": "celestia",
+                "connection_id": "connection-125",
+                "client_id": "07-tendermint-137",
+                "counterparty_connection_id": "connection-2",
+                "counterparty_client_id": "07-tendermint-0",
+                "transfer_channel_id": "channel-162",
+                "ica_channels": [],
+            },
+        )
+
+    def test_unknown_everywhere_raises(self) -> None:
+        with self.assertRaises(LookupError):
+            channels._zone_entry(stride=STRIDE, chain_id="celestia", feed_by_chain={}, host_zones=None)
+
+
+class IcaChannelsFromStrideTest(unittest.TestCase):
+    ENTRY = {"chain_id": "cosmoshub-4", "connection_id": "connection-0"}
+
+    def channel(self, channel_id: str, state: str) -> dict[str, Any]:
+        return {
+            "port_id": "icacontroller-cosmoshub-4.DELEGATION",
+            "channel_id": channel_id,
+            "state": state,
+            "counterparty": {"channel_id": "" if state == "STATE_INIT" else f"host-{channel_id}"},
+        }
+
+    def picked(self, listed: list[dict[str, Any]]) -> str:
+        with (
+            mock.patch.object(chain, "rest_get_all_pages", return_value=listed),
+            mock.patch.object(channels, "_host_channel_state", return_value="STATE_OPEN"),
+        ):
+            ica_channels = channels._ica_channels_from_stride(stride=STRIDE, host=HOST, entry=self.ENTRY)
+        return ica_channels[0]["channel_id"]
+
+    def test_an_open_channel_beats_a_newer_orphan_init(self) -> None:
+        listed = [self.channel("channel-863", "STATE_CLOSED"), self.channel("channel-872", "STATE_OPEN"), self.channel("channel-874", "STATE_INIT")]
+
+        self.assertEqual(self.picked(listed), "channel-872")
+
+    def test_without_an_open_channel_the_newest_wins(self) -> None:
+        listed = [self.channel("channel-877", "STATE_CLOSED"), self.channel("channel-824", "STATE_CLOSED")]
+
+        self.assertEqual(self.picked(listed), "channel-877")
+
+
 class AllowMessagesTest(unittest.TestCase):
     def missing(self, allow_messages: list[str], chain_id: str = "cosmoshub-4") -> list[str]:
         return channels.allow_messages_missing(allow_messages=allow_messages, chain_id=chain_id)
@@ -651,6 +724,74 @@ class TilesTest(unittest.TestCase):
 
         self.assertIsNone(tiles.oldest_pending_seconds)
         self.assertEqual(tiles.pending_packets, 0)
+
+
+class UnackedIcaPacketsTest(unittest.TestCase):
+    def test_sums_ica_rows_and_ignores_the_transfer_row(self) -> None:
+        rows = [
+            channel_row(name=channels.TRANSFER_NAME, status=channels.Status.PENDING, outbound=flow(None, pending_packets=900, pending_acks=30)),
+            channel_row(name="DELEGATION", status=channels.Status.PENDING, outbound=flow(None, pending_packets=14, pending_acks=0)),
+            channel_row(name="WITHDRAWAL", status=channels.Status.PENDING, outbound=flow(None, pending_packets=0, pending_acks=2)),
+        ]
+        self.assertEqual(channels.unacked_ica_packets(rows=rows), 16)
+
+    def test_unknown_count_makes_the_total_unknown(self) -> None:
+        rows = [channel_row(name="FEE", status=channels.Status.OK, outbound=flow(None, pending_packets=None, pending_acks=0))]
+        self.assertIsNone(channels.unacked_ica_packets(rows=rows))
+
+
+class IcaChannelsOpenTest(unittest.TestCase):
+    def rows(self, **states: tuple[str | None, str | None]) -> list[channels.ChannelRow]:
+        transfer_row = channel_row(name=channels.TRANSFER_NAME, status=channels.Status.OK, outbound=flow(None), states=("CLOSED", "CLOSED"))
+        return [
+            transfer_row,
+            *(
+                channel_row(name=name, status=channels.Status.OK, outbound=flow(None), states=states.get(name, ("OPEN", "OPEN")))
+                for name in ("DELEGATION", "WITHDRAWAL", "FEE", "REDEMPTION")
+            ),
+        ]
+
+    def test_open_on_both_ends_passes_whatever_the_transfer_channel_does(self) -> None:
+        self.assertTrue(channels.ica_channels_open(rows=self.rows()))
+
+    def test_any_ica_end_not_open_fails(self) -> None:
+        for name in ("DELEGATION", "WITHDRAWAL", "FEE", "REDEMPTION"):
+            for states in (("CLOSED", "OPEN"), ("OPEN", "CLOSED"), ("INIT", "OPEN")):
+                self.assertFalse(channels.ica_channels_open(rows=self.rows(**{name: states})))
+
+    def test_an_unknown_state_is_null(self) -> None:
+        self.assertIsNone(channels.ica_channels_open(rows=self.rows(FEE=("OPEN", None))))
+        self.assertIsNone(channels.ica_channels_open(rows=self.rows(FEE=(None, None))))
+
+    def test_unknown_outranks_a_known_failure(self) -> None:
+        self.assertIsNone(channels.ica_channels_open(rows=self.rows(FEE=("OPEN", None), WITHDRAWAL=("CLOSED", "CLOSED"))))
+
+    def test_no_ica_rows_is_null(self) -> None:
+        self.assertIsNone(channels.ica_channels_open(rows=self.rows()[:1]))
+
+
+class HaqqStateTest(unittest.TestCase):
+    def state(self, **overrides: object) -> channels.HaqqState:
+        fields = {
+            "delegation_channel_id": channels.HAQQ_DELEGATION_CHANNEL,
+            "delegation_state_stride": channels.STATE_CLOSED,
+            "delegation_state_host": channels.STATE_OPEN,
+            "delegation_commitments": list(channels.HAQQ_DELEGATION_SEQUENCES),
+            "quiet_channel_commitments": {ica: 0 for ica in channels.HAQQ_QUIET_ICA_CHANNELS},
+            "ok": False,
+        }
+        return channels.HaqqState(**{**fields, **overrides})
+
+    def test_the_expected_pre_upgrade_state_passes(self) -> None:
+        self.assertTrue(channels.haqq_state_passes(self.state()))
+
+    def test_any_departure_fails(self) -> None:
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_channel_id="channel-900")))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_state_stride=channels.STATE_OPEN)))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_state_host=channels.STATE_CLOSED)))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_state_host=None)))
+        self.assertFalse(channels.haqq_state_passes(self.state(delegation_commitments=list(range(85, 98)))))
+        self.assertFalse(channels.haqq_state_passes(self.state(quiet_channel_commitments={"FEE": 1})))
 
 
 if __name__ == "__main__":
