@@ -47,9 +47,11 @@ Sign/multisign/broadcast commands: the standard `_commands` for the chain (STRID
 ## Placement
 
 A new `TxSet` `combined-funding` ("Combined funding: every remaining zone in six txs"), placed right before
-`ica-transfers`, step_id `transfers`. Notes: the order (1 → settle → 2,3 → settle → 4 → settle → 5,6), the hold rule,
-the gas cap, and that the per-zone sets below stay as the fallback. `chain_id` on each card: "all zones",
-"cosmoshub-4" or "all zones except cosmoshub-4". The per-zone sets are unchanged.
+`ica-transfers`, step_id `transfers`. Notes: the order (1; once it settles, 2 then 3; once they settle, 4; once it settles, 5 then 6, one at a time since each
+pair shares the multisig's sequence), the hold rule, the gas cap, and that the per-zone sets below stay as the fallback.
+`chain_id` on each card is unique and chain-qualified, because the tab groups cards by `chain_id` and a repeat would
+merge two cards under one heading and reorder them: "Stride · all zones", "Stride · cosmoshub-4", "Stride · all zones
+except cosmoshub-4", then "Osmosis · " plus the same three. The per-zone sets are unchanged.
 
 ## Testing
 

@@ -7,8 +7,9 @@ names) with `osmosisd`, as is the pool-creation set (one create-pool per planned
 tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the
 multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous per
 `chain_id` in `txs`, in the order they go out.
-The combined-funding set is the exception: six cards (chain_id "all zones", "cosmoshub-4" or "all zones except
-cosmoshub-4"), each merging the unsigned txs of the per-zone transfer / pool txs it bundles.
+The combined-funding set is the exception: six cards, each with its own chain-qualified chain_id ("Stride · all zones",
+"Stride · cosmoshub-4", "Stride · all zones except cosmoshub-4", then the same three for Osmosis) so the tab shows them
+as six headings in order; each merges the unsigned txs of the per-zone transfer / pool txs it bundles.
 """
 
 import dataclasses
@@ -638,10 +639,9 @@ def _all_ica_transfer_txs(funds_data: dict[str, Any] | None) -> list[MultisigTx]
 def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> TxSet:
     transfers = _all_ica_transfer_txs(funds_data=funds_data)
     pool_txs = _all_pool_txs(pools_data=pools_data)
-    is_hub = lambda tx: tx.chain_id == HUB_CHAIN_ID  # noqa: E731
-    not_hub = lambda tx: tx.chain_id != HUB_CHAIN_ID  # noqa: E731
-    everyone = lambda tx: True  # noqa: E731
-    all_zones, hub_only, others = "all zones", HUB_CHAIN_ID, f"all zones except {HUB_CHAIN_ID}"
+    zone_groups = ("all zones", HUB_CHAIN_ID, f"all zones except {HUB_CHAIN_ID}")
+    stride_all, stride_hub, stride_others = (f"Stride · {group}" for group in zone_groups)
+    osmosis_all, osmosis_hub, osmosis_others = (f"Osmosis · {group}" for group in zone_groups)
 
     return TxSet(
         id="combined-funding",
@@ -649,7 +649,7 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
         title="Combined funding: every remaining zone in six txs",
         description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into six txs: three on Stride, three on Osmosis.",
         notes=[
-            "Order: 1, wait for it to settle; 2 and 3, wait; 4, wait; then 5 and 6.",
+            "Order: 1; once it settles, 2 then 3; once they settle, 4; once it settles, 5 then 6 (one at a time: each pair shares the multisig's sequence).",
             "Each tx is a pure bundle of the per-zone txs below: their messages and amounts are unchanged, and generating one runs each member's own generate step and merges the files.",
             "A combined tx is ready only when every member is. Otherwise it names the first member that is not and why.",
             "Left out: done txs, transfers of an ICA below the test amount, foreign-denom transfers, and a zone with no pool to fund.",
@@ -659,31 +659,43 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
         ],
         txs=[
             _combined_tx(
-                number=1, slug="test-transfer", title="Test transfer, all zones", chain_id=all_zones,
-                members=_members(txs=transfers, stage=TxStage.TEST_TRANSFER, zones=everyone), tools=STRIDE_TOOLS,
+                number=1, slug="test-transfer", title="Test transfer, all zones", chain_id=stride_all,
+                members=_members(txs=transfers, stage=TxStage.TEST_TRANSFER, zones=_any_zone), tools=STRIDE_TOOLS,
             ),
             _combined_tx(
-                number=2, slug="full-transfer-hub", title="Full transfer, Hub", chain_id=hub_only,
-                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=is_hub), tools=STRIDE_TOOLS,
+                number=2, slug="full-transfer-hub", title="Full transfer, Hub", chain_id=stride_hub,
+                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=_is_hub), tools=STRIDE_TOOLS,
             ),
             _combined_tx(
-                number=3, slug="full-transfer-others", title="Full transfer, all other zones", chain_id=others,
-                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=not_hub), tools=STRIDE_TOOLS,
+                number=3, slug="full-transfer-others", title="Full transfer, all other zones", chain_id=stride_others,
+                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=_is_not_hub), tools=STRIDE_TOOLS,
             ),
             _combined_tx(
-                number=4, slug="test-joins", title="Test joins, all zones", chain_id=all_zones,
-                members=_members(txs=pool_txs, stage=TxStage.TEST_JOINS, zones=everyone), tools=OSMOSIS_TOOLS,
+                number=4, slug="test-joins", title="Test joins, all zones", chain_id=osmosis_all,
+                members=_members(txs=pool_txs, stage=TxStage.TEST_JOINS, zones=_any_zone), tools=OSMOSIS_TOOLS,
             ),
             _combined_tx(
-                number=5, slug="close-hub", title="Full join + close, Hub", chain_id=hub_only,
-                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=is_hub), tools=OSMOSIS_TOOLS,
+                number=5, slug="close-hub", title="Full join + close, Hub", chain_id=osmosis_hub,
+                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=_is_hub), tools=OSMOSIS_TOOLS,
             ),
             _combined_tx(
-                number=6, slug="close-others", title="Full join + close, all other zones", chain_id=others,
-                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=not_hub), tools=OSMOSIS_TOOLS,
+                number=6, slug="close-others", title="Full join + close, all other zones", chain_id=osmosis_others,
+                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=_is_not_hub), tools=OSMOSIS_TOOLS,
             ),
         ],
     )
+
+
+def _any_zone(tx: MultisigTx) -> bool:
+    return True
+
+
+def _is_hub(tx: MultisigTx) -> bool:
+    return tx.chain_id == HUB_CHAIN_ID
+
+
+def _is_not_hub(tx: MultisigTx) -> bool:
+    return tx.chain_id != HUB_CHAIN_ID
 
 
 def _members(txs: list[MultisigTx], stage: TxStage, zones: Callable[[MultisigTx], bool]) -> list[MultisigTx]:
@@ -718,7 +730,9 @@ def _combined_tx(number: int, slug: str, title: str, chain_id: str, members: lis
 
 
 def _combined_commands(members: list[MultisigTx], stem: str, tools: ChainTools) -> list[Command]:
-    gas = min(sum(member.gas or 0 for member in members), COMBINED_GAS_CAP)
+    summed_gas = sum(member.gas or 0 for member in members)
+    gas = min(summed_gas, COMBINED_GAS_CAP)
+    capped = f" capped from {summed_gas}" if summed_gas > COMBINED_GAS_CAP else ""
     price, denom = (GAS_PRICE_USTRD, "ustrd") if tools == STRIDE_TOOLS else (OSMOSIS_GAS_PRICE_PER_GAS, "uosmo")
     fee = math.ceil(gas * price)
     unsigned = f"{stem}.unsigned.json"
@@ -734,7 +748,7 @@ def _combined_commands(members: list[MultisigTx], stem: str, tools: ChainTools) 
         generate=generate,
         file_stem=stem,
         tools=tools,
-        generate_label=f"Write each member's unsigned tx and merge the {len(members)} into one (--gas {gas}, fee {fee}{denom})",
+        generate_label=f"Write each member's unsigned tx and merge the {len(members)} into one (--gas {gas}{capped}, fee {fee}{denom})",
     )
 
 
@@ -1076,7 +1090,9 @@ def _ica_transfer_tx(
     generate_line = _stride_generate_line(
         subcommand=f"transfer-from-ica {zone.chain_id} {ica} {amount}{denom}", file_stem=file_stem
     )
-    tx = _stride_tx(zone=zone, title=title, reason=reason, generate_line=generate_line, file_stem=file_stem)
+    tx = _stride_tx(
+        zone=zone, title=title, reason=reason, generate_line=generate_line, file_stem=file_stem, gas=TRANSFER_GAS
+    )
     return dataclasses.replace(tx, stage=stage, chip=chip, skip=skip)
 
 
@@ -1089,6 +1105,7 @@ def _staketia_tx(zone: config.ZoneConfig, label: str, amount: int, title_amount:
         reason=None,
         generate_line=generate_line,
         file_stem=file_stem,
+        gas=TRANSFER_GAS,
     )
 
 
@@ -1117,6 +1134,7 @@ def _slash_query_tx(query: SlashQuery) -> MultisigTx:
         reason=None,
         generate_line=generate_line,
         file_stem=file_stem,
+        gas=SLASH_QUERY_GAS,
         done=query.done,
     )
 
@@ -1151,6 +1169,7 @@ def _validator_weight_tx(change: ValidatorWeightChange) -> MultisigTx:
         reason=None,
         generate_line=generate_line,
         file_stem=file_stem,
+        gas=VALIDATOR_WEIGHTS_GAS,
     )
 
 
@@ -1169,11 +1188,12 @@ def _channel_restore_tx(restore: ChannelRestore) -> MultisigTx:
         reason=None,
         generate_line=generate_line,
         file_stem=file_stem,
+        gas=RESTORE_CHANNEL_GAS,
     )
 
 
 def _stride_tx(
-    zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str, done: bool = False
+    zone: config.ZoneConfig, title: str, reason: str | None, generate_line: str, file_stem: str, gas: int, done: bool = False
 ) -> MultisigTx:
     # A done tx keeps its card for the record but nothing to copy, the same shape as a done pool bundle.
     if done:
@@ -1187,7 +1207,7 @@ def _stride_tx(
             generate=f"mkdir -p {WORKDIR}\n{generate_line}", file_stem=file_stem, generate_label="Write the unsigned tx"
         ),
         files=_shared_files(file_stem=file_stem),
-        gas=TRANSFER_GAS,
+        gas=gas,
         unsigned=f"{file_stem}.unsigned.json",
     )
 

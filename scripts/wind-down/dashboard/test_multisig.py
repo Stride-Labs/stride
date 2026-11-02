@@ -679,8 +679,14 @@ class CombinedFundingTest(unittest.TestCase):
         self.assertEqual([tx.title.removesuffix(" · nothing left to send") for tx in txs], COMBINED_FUND_TITLES)
         self.assertEqual(
             [tx.chain_id for tx in txs],
-            ["all zones", COSMOS, f"all zones except {COSMOS}", "all zones", COSMOS, f"all zones except {COSMOS}"],
+            [
+                f"{chain} · {group}"
+                for chain in ("Stride", "Osmosis")
+                for group in ("all zones", COSMOS, f"all zones except {COSMOS}")
+            ],
         )
+        # The tab groups cards by chain_id, so a repeat would merge two cards under one heading and reorder them.
+        self.assertEqual(len({tx.chain_id for tx in txs}), 6)
         self.assertEqual(
             [tx.files[0] for tx in txs if tx.files],
             [
@@ -734,12 +740,13 @@ class CombinedFundingTest(unittest.TestCase):
         self.assertEqual(len(members), 6)
         self.assertEqual(command_pairs(test_tx), expected_commands(generate, stem=stem))
         self.assertEqual(test_tx.commands[0].label, "Write each member's unsigned tx and merge the 6 into one (--gas 3600000, fee 18000ustrd)")
+        self.assertNotIn("capped", test_tx.commands[0].label)
 
     def test_gas_is_capped_and_the_fee_follows_the_capped_gas(self) -> None:
         with mock.patch.object(multisig, "COMBINED_GAS_CAP", 1_000_000):
             test_tx = combined_txs(settled_funds(), settled_pools())[0]
 
-        self.assertEqual(test_tx.commands[0].label, "Write each member's unsigned tx and merge the 6 into one (--gas 1000000, fee 5000ustrd)")
+        self.assertEqual(test_tx.commands[0].label, "Write each member's unsigned tx and merge the 6 into one (--gas 1000000 capped from 3600000, fee 5000ustrd)")
         self.assertIn('.auth_info.fee.gas_limit = "1000000" | .auth_info.fee.amount[0].amount = "5000"', test_tx.commands[0].text)
 
     def test_osmosis_cards_sum_the_pool_txs_gas_at_the_osmosis_gas_price(self) -> None:
@@ -815,6 +822,37 @@ class CombinedFundingTest(unittest.TestCase):
         self.assertEqual(merged["body"]["messages"], [{"id": index} for index in range(6)])
         self.assertEqual(merged["signatures"], [])
         self.assertEqual(merged["auth_info"]["fee"], {"gas_limit": "3600000", "amount": [{"denom": "ustrd", "amount": "18000"}]})
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_an_empty_member_file_leaves_no_combined_file_even_after_a_stale_one(self) -> None:
+        test_tx = combined_txs(settled_funds(), settled_pools())[0]
+        with tempfile.TemporaryDirectory() as tmp:
+            lines = test_tx.commands[0].text.replace(multisig.WORKDIR, tmp).splitlines()
+            rm_line, merge_line = lines[0], lines[-1]
+            members = [line.split("test -s ")[1].split(" ")[0] for line in merge_line.split(" && ") if line.startswith("test -s ")]
+            for index, member in enumerate(members):
+                pathlib.Path(member).write_text("" if index == 0 else json.dumps({"body": {"messages": []}, "auth_info": {"fee": {"amount": [{}]}}}))
+            combined = pathlib.Path(f"{tmp}/combined-1-test-transfer.unsigned.json")
+            combined.write_text("stale")
+
+            subprocess.run(["bash", "-c", rm_line], check=True)
+            merged = subprocess.run(["bash", "-c", merge_line])
+
+            self.assertNotEqual(merged.returncode, 0)
+            self.assertFalse(combined.exists())
+
+
+class StrideTxGasTest(unittest.TestCase):
+    def test_each_stride_tx_reports_the_gas_its_generate_line_uses(self) -> None:
+        slash = multisig._slash_query_tx(query=next(query for query in multisig.SLASH_QUERIES if not query.done))
+        restore = multisig._channel_restore_tx(restore=multisig.CHANNEL_RESTORES[0])
+        transfer = transfer_txs(COSMOS, settled_funds())[0]
+
+        self.assertEqual(slash.gas, multisig.SLASH_QUERY_GAS)
+        self.assertIn(f"--gas {multisig.SLASH_QUERY_GAS} ", slash.commands[0].text)
+        self.assertEqual(restore.gas, multisig.RESTORE_CHANNEL_GAS)
+        self.assertIn(f"--gas {multisig.RESTORE_CHANNEL_GAS} ", restore.commands[0].text)
+        self.assertEqual(transfer.gas, 600000)
 
 
 class StaketiaClaimBalanceTest(unittest.TestCase):
