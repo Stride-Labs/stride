@@ -7,15 +7,19 @@ names) with `osmosisd`, as is the pool-creation set (one create-pool per planned
 tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the
 multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous per
 `chain_id` in `txs`, in the order they go out.
+The combined-funding set is the exception: six cards (chain_id "all zones", "cosmoshub-4" or "all zones except
+cosmoshub-4"), each merging the unsigned txs of the per-zone transfer / pool txs it bundles.
 """
 
 import dataclasses
 import hashlib
 import json
+import math
 import pathlib
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any
+from enum import StrEnum
+from typing import Any, Callable
 
 import config
 import funds
@@ -48,6 +52,7 @@ POOL_GAS = 1_500_000
 # About 3x Osmosis's EIP-1559 base fee (0.03 uosmo/gas on 2026-10-08, floor 0.01): CheckTx rejects a fee below the
 # base fee at broadcast time, and a multisig tx cannot be re-priced without a new signing round.
 OSMOSIS_GAS_PRICE = "0.1uosmo"
+OSMOSIS_GAS_PRICE_PER_GAS = Decimal(OSMOSIS_GAS_PRICE.removesuffix("uosmo"))
 CREATE_POOL_CODE_ID = "996"  # the transmuter v3.2.0 code on osmosis-1 (funds.TRANSMUTER_CODE_ID)
 # The 2026-09-25 creations used 1.44M gas each (1M of it the tokenfactory denom creation), flat per message.
 CREATE_POOL_MSG_GAS = 1_500_000
@@ -57,6 +62,9 @@ CREATE_POOL_TX_OVERHEAD_GAS = 100_000
 CREATE_POOL_BUNDLE_SIZE = 18
 CREATION_GROUP = "all zones"  # the bundles span zones, so the tab shows them under one heading
 WAITING_SHOWN = 8  # pools listed by name in the waiting tx before "and N more"
+NO_POOL_REASON = "no pool to fund in the Pools snapshot"
+HUB_CHAIN_ID = "cosmoshub-4"  # the combined funding txs give the Hub its own full transfer and close
+COMBINED_GAS_CAP = 25_000_000  # Osmosis nodes reject a tx above 30M gas wanted by default (max-gas-wanted-per-tx)
 ONE_AT_A_TIME = "One tx at a time: generate, two signatures, multisign, broadcast, then confirm it landed before the next."
 
 POOL_KIND_UNRECOGNISED = "unrecognised"  # a pool no Stride channel backs: reported on the Pools tab, never funded
@@ -254,6 +262,14 @@ class Command:
     text: str
 
 
+class TxStage(StrEnum):
+    TEST_TRANSFER = "test-transfer"
+    FULL_TRANSFER = "full-transfer"
+    FOREIGN_TRANSFER = "foreign-transfer"
+    TEST_JOINS = "test-joins"
+    CLOSE = "close"
+
+
 @dataclass(frozen=True)
 class MultisigTx:
     chain_id: str
@@ -266,6 +282,11 @@ class MultisigTx:
     done: bool = False  # the tx has landed (every pool of the bundle exists): shown, not re-run
     blocked: bool = False  # waits on something outside our hands (config.BLOCKED_HOLDER_CHAINS)
     seeded: bool | None = None  # bundles: every pool's stToken denom is in the test wallet (created pools count)
+    gas: int | None = None  # the generated tx's gas limit; None when the card has no generate command
+    unsigned: str | None = None  # the generated unsigned tx file, which a combined tx merges
+    stage: TxStage | None = None  # which part of the funding flow the tx is, for the combined funding set
+    chip: str | None = None  # the space-less name the combined tx shows for it ("FEE-test"), after its chain_id
+    skip: bool = False  # not ready for good, not a hold: nothing to send / no pool to fund, so a combined tx leaves it out
 
     def payload(self) -> dict[str, Any]:
         return dataclasses.asdict(self)
@@ -353,6 +374,7 @@ def tx_sets(
         _restore_channels_set(),
         live_test,
         full_drain,
+        _combined_funding_set(funds_data=funds_data, pools_data=pools_data),
         _ica_transfers_set(funds_data=funds_data),
         _staketia_claim_balance_set(),
         _pool_funding_set(pools_data=pools_data),
@@ -587,8 +609,7 @@ def _creation_fee_text(pools_zones: dict[str, dict[str, Any]]) -> str:
 
 
 def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
-    funds_zones = _zones_by_chain_id(data=funds_data)
-    tx_set = TxSet(
+    return TxSet(
         id="ica-transfers",
         step_id="transfers",
         title="ICA transfers: send every ICA's balance to the Osmosis vault",
@@ -600,14 +621,120 @@ def _ica_transfers_set(funds_data: dict[str, Any] | None) -> TxSet:
             "24h timeout: a refund means resubmit.",
             ONE_AT_A_TIME,
         ],
+        txs=_all_ica_transfer_txs(funds_data=funds_data),
+    )
+
+
+def _all_ica_transfer_txs(funds_data: dict[str, Any] | None) -> list[MultisigTx]:
+    """Every zone's transfer txs in config.ZONES order, a completed zone's as done cards."""
+    funds_zones = _zones_by_chain_id(data=funds_data)
+    return [
+        _done_tx(tx=tx) if tx.chain_id in COMPLETED_TRANSFER_ZONES else tx
+        for zone in config.ZONES
+        for tx in _ica_transfer_txs(zone=zone, funds_zone=funds_zones.get(zone.chain_id), funds_data=funds_data)
+    ]
+
+
+def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> TxSet:
+    transfers = _all_ica_transfer_txs(funds_data=funds_data)
+    pool_txs = _all_pool_txs(pools_data=pools_data)
+    is_hub = lambda tx: tx.chain_id == HUB_CHAIN_ID  # noqa: E731
+    not_hub = lambda tx: tx.chain_id != HUB_CHAIN_ID  # noqa: E731
+    everyone = lambda tx: True  # noqa: E731
+    all_zones, hub_only, others = "all zones", HUB_CHAIN_ID, f"all zones except {HUB_CHAIN_ID}"
+
+    return TxSet(
+        id="combined-funding",
+        step_id="transfers",
+        title="Combined funding: every remaining zone in six txs",
+        description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into six txs: three on Stride, three on Osmosis.",
+        notes=[
+            "Order: 1, wait for it to settle; 2 and 3, wait; 4, wait; then 5 and 6.",
+            "Each tx is a pure bundle of the per-zone txs below: their messages and amounts are unchanged, and generating one runs each member's own generate step and merges the files.",
+            "A combined tx is ready only when every member is. Otherwise it names the first member that is not and why.",
+            "Left out: done txs, transfers of an ICA below the test amount, foreign-denom transfers, and a zone with no pool to fund.",
+            f"Gas is the members' sum, capped at {COMBINED_GAS_CAP:,} (Osmosis nodes reject a tx above 30M gas wanted); the fee is the gas at 0.005 ustrd (Stride) or {OSMOSIS_GAS_PRICE} (Osmosis).",
+            "The per-zone sets below stay as the fallback for a tx the bundle holds back.",
+            ONE_AT_A_TIME,
+        ],
         txs=[
-            tx
-            for zone in config.ZONES
-            for tx in _ica_transfer_txs(zone=zone, funds_zone=funds_zones.get(zone.chain_id), funds_data=funds_data)
+            _combined_tx(
+                number=1, slug="test-transfer", title="Test transfer, all zones", chain_id=all_zones,
+                members=_members(txs=transfers, stage=TxStage.TEST_TRANSFER, zones=everyone), tools=STRIDE_TOOLS,
+            ),
+            _combined_tx(
+                number=2, slug="full-transfer-hub", title="Full transfer, Hub", chain_id=hub_only,
+                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=is_hub), tools=STRIDE_TOOLS,
+            ),
+            _combined_tx(
+                number=3, slug="full-transfer-others", title="Full transfer, all other zones", chain_id=others,
+                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=not_hub), tools=STRIDE_TOOLS,
+            ),
+            _combined_tx(
+                number=4, slug="test-joins", title="Test joins, all zones", chain_id=all_zones,
+                members=_members(txs=pool_txs, stage=TxStage.TEST_JOINS, zones=everyone), tools=OSMOSIS_TOOLS,
+            ),
+            _combined_tx(
+                number=5, slug="close-hub", title="Full join + close, Hub", chain_id=hub_only,
+                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=is_hub), tools=OSMOSIS_TOOLS,
+            ),
+            _combined_tx(
+                number=6, slug="close-others", title="Full join + close, all other zones", chain_id=others,
+                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=not_hub), tools=OSMOSIS_TOOLS,
+            ),
         ],
     )
-    return dataclasses.replace(
-        tx_set, txs=[_done_tx(tx=tx) if tx.chain_id in COMPLETED_TRANSFER_ZONES else tx for tx in tx_set.txs]
+
+
+def _members(txs: list[MultisigTx], stage: TxStage, zones: Callable[[MultisigTx], bool]) -> list[MultisigTx]:
+    """The txs of one stage in the zones chosen, minus done and skipped ones. A zone's empty pool tx has no stage: it
+    is a member of both pool stages, so a missing snapshot holds them (a skipped one, no pool to fund, is left out)."""
+    return [tx for tx in txs if tx.stage in (stage, None) and zones(tx) and not tx.done and not tx.skip]
+
+
+def _combined_tx(number: int, slug: str, title: str, chain_id: str, members: list[MultisigTx], tools: ChainTools) -> MultisigTx:
+    """The members' unsigned txs merged into one, so a single signing round covers them all."""
+    full_title = f"Combined {number} · {title}"
+    if not members:
+        return MultisigTx(
+            chain_id=chain_id, title=f"{full_title} · nothing left to send", ready=False, reason=None, commands=[], files=[], done=True
+        )
+
+    # Not ready while any member is not; without a member's generate text (no snapshot yet) there is nothing to merge.
+    unready = next((member for member in members if not member.ready), None)
+    reason = f"{unready.title}: {unready.reason}" if unready else None
+    stem = f"{WORKDIR}/combined-{number}-{slug}"
+    commands = _combined_commands(members=members, stem=stem, tools=tools) if all(member.commands for member in members) else []
+
+    return MultisigTx(
+        chain_id=chain_id,
+        title=full_title,
+        ready=reason is None,
+        reason=reason,
+        commands=commands,
+        files=_shared_files(file_stem=stem) if commands else [],
+        members=[f"{member.chain_id} {member.chip}" for member in members],
+    )
+
+
+def _combined_commands(members: list[MultisigTx], stem: str, tools: ChainTools) -> list[Command]:
+    gas = min(sum(member.gas or 0 for member in members), COMBINED_GAS_CAP)
+    price, denom = (GAS_PRICE_USTRD, "ustrd") if tools == STRIDE_TOOLS else (OSMOSIS_GAS_PRICE_PER_GAS, "uosmo")
+    fee = math.ceil(gas * price)
+    unsigned = f"{stem}.unsigned.json"
+    files = " ".join(member.unsigned for member in members)
+
+    # Only a complete set of member files is merged: a failed member leaves an empty or missing file, not a half tx.
+    guard = " && ".join(f"test -s {member.unsigned}" for member in members)
+    merge_filter = f'{MERGE_FILTER} | .auth_info.fee.gas_limit = "{gas}" | .auth_info.fee.amount[0].amount = "{fee}"'
+    merge_line = f"{guard} && jq -s '{merge_filter}' {files} > {unsigned}"
+    generate = "\n".join([f"rm -f {unsigned}", *(member.commands[0].text for member in members), merge_line])
+
+    return _commands(
+        generate=generate,
+        file_stem=stem,
+        tools=tools,
+        generate_label=f"Write each member's unsigned tx and merge the {len(members)} into one (--gas {gas}, fee {fee}{denom})",
     )
 
 
@@ -678,7 +805,6 @@ def _staketia_claim_balance_set() -> TxSet:
 
 
 def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
-    pools_zones = _zones_by_chain_id(data=pools_data)
     return TxSet(
         id="pool-funding",
         step_id="join-pools",
@@ -692,12 +818,17 @@ def _pool_funding_set(pools_data: dict[str, Any] | None) -> TxSet:
             "Gas: 1.5M per join or mark and 0.3M per moderator message at 0.1 uosmo, so about 0.15 OSMO per join or mark; a 6-pool close is ~22M of the 60M tx cap.",
             ONE_AT_A_TIME,
         ],
-        txs=[
-            tx
-            for zone in config.ZONES
-            for tx in _pool_txs(zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data)
-        ],
+        txs=_all_pool_txs(pools_data=pools_data),
     )
+
+
+def _all_pool_txs(pools_data: dict[str, Any] | None) -> list[MultisigTx]:
+    pools_zones = _zones_by_chain_id(data=pools_data)
+    return [
+        tx
+        for zone in config.ZONES
+        for tx in _pool_txs(zone=zone, pools_zone=pools_zones.get(zone.chain_id), pools_data=pools_data)
+    ]
 
 
 def _pool_admin_transfer_set(pools_data: dict[str, Any] | None) -> TxSet:
@@ -879,7 +1010,8 @@ def _ica_transfer_txs(
     for ica in ICA_ORDER:
         balances = {} if snapshot_reason else funds_zone["ica_balances"].get(ica, {})
         host_balance = None if snapshot_reason else int(balances.get(host_denom, 0))
-        reason = snapshot_reason or _nothing_to_send_reason(ica=ica, balance=host_balance, test_amount=test_amount, denom=host_denom)
+        nothing_to_send = _nothing_to_send_reason(ica=ica, balance=host_balance, test_amount=test_amount, denom=host_denom)
+        reason = snapshot_reason or nothing_to_send
         rest_reason = reason or _in_flight_reason(ica=ica, transfers=transfers)
         balance_text = PLACEHOLDER_BALANCE if host_balance is None else str(host_balance)
 
@@ -887,18 +1019,21 @@ def _ica_transfer_txs(
             _ica_transfer_tx(
                 zone=zone, ica=ica, label="test", amount=str(test_amount), denom=host_denom, reason=reason,
                 title=f"{zone.chain_id} · {ica} ICA · test: {test_amount}{host_denom}",
+                stage=TxStage.TEST_TRANSFER, chip=f"{ica}-test", skip=nothing_to_send is not None,
             )
         )
         txs.append(
             _ica_transfer_tx(
                 zone=zone, ica=ica, label="rest", amount=balance_text, denom=host_denom, reason=rest_reason,
                 title=f"{zone.chain_id} · {ica} ICA · rest: {balance_text}{host_denom} (live balance, copy after the test has settled)",
+                stage=TxStage.FULL_TRANSFER, chip=f"{ica}-rest", skip=nothing_to_send is not None,
             )
         )
         txs.extend(
             _ica_transfer_tx(
                 zone=zone, ica=ica, label=f"denom-{hashlib.sha256(denom.encode()).hexdigest()[:8]}", amount=amount, denom=denom, reason=snapshot_reason,
                 title=f"{zone.chain_id} · {ica} ICA · foreign denom: {amount}{denom} (full balance)",
+                stage=TxStage.FOREIGN_TRANSFER,
             )
             for denom, amount in _foreign_balances(balances=balances, host_denom=host_denom)
         )
@@ -926,13 +1061,23 @@ def _foreign_balances(balances: dict[str, str], host_denom: str) -> list[tuple[s
 
 
 def _ica_transfer_tx(
-    zone: config.ZoneConfig, ica: str, label: str, amount: str, denom: str, reason: str | None, title: str
+    zone: config.ZoneConfig,
+    ica: str,
+    label: str,
+    amount: str,
+    denom: str,
+    reason: str | None,
+    title: str,
+    stage: TxStage,
+    chip: str | None = None,
+    skip: bool = False,
 ) -> MultisigTx:
     file_stem = f"{WORKDIR}/transfer-{zone.chain_id}-{ica.lower()}-{label}"
     generate_line = _stride_generate_line(
         subcommand=f"transfer-from-ica {zone.chain_id} {ica} {amount}{denom}", file_stem=file_stem
     )
-    return _stride_tx(zone=zone, title=title, reason=reason, generate_line=generate_line, file_stem=file_stem)
+    tx = _stride_tx(zone=zone, title=title, reason=reason, generate_line=generate_line, file_stem=file_stem)
+    return dataclasses.replace(tx, stage=stage, chip=chip, skip=skip)
 
 
 def _staketia_tx(zone: config.ZoneConfig, label: str, amount: int, title_amount: str) -> MultisigTx:
@@ -1042,6 +1187,8 @@ def _stride_tx(
             generate=f"mkdir -p {WORKDIR}\n{generate_line}", file_stem=file_stem, generate_label="Write the unsigned tx"
         ),
         files=_shared_files(file_stem=file_stem),
+        gas=TRANSFER_GAS,
+        unsigned=f"{file_stem}.unsigned.json",
     )
 
 
@@ -1108,8 +1255,8 @@ def _pool_txs(zone: config.ZoneConfig, pools_zone: dict[str, Any] | None, pools_
     snapshot_reason = _snapshot_reason(zone_entry=pools_zone, data=pools_data, source="Pools")
     pools = [] if snapshot_reason else _fundable_pools(pools_zone=pools_zone)
     if not pools:
-        reason = snapshot_reason or "no pool to fund in the Pools snapshot"
-        return [_empty_pool_tx(zone=zone, label="pool funding", reason=reason)]
+        reason = snapshot_reason or NO_POOL_REASON
+        return [_empty_pool_tx(zone=zone, label="pool funding", reason=reason, skip=snapshot_reason is None)]
 
     # Neither tx goes before the zone's tokens are all on Osmosis: with only a test wallet's join in a pool, the pool
     # alone would read as the zone's whole value and the close would mark it.
@@ -1134,7 +1281,8 @@ def _coverage_reason(pools_zone: dict[str, Any]) -> str | None:
 MODERATOR_MSG_GAS = 300_000  # assign_moderator is a storage write; the 09-25 pools took well under this
 POOL_AMOUNTS_SCRIPT = str(pathlib.Path(__file__).resolve().parent / "pool_amounts.py")  # the close's generate step runs it
 REST_AMOUNTS_SUFFIX = ".rest-amounts.json"  # the close's fresh read, beside its unsigned tx
-MERGE_PARTS = "jq -s '(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []'"
+MERGE_FILTER = "(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = []"
+MERGE_PARTS = f"jq -s '{MERGE_FILTER}'"
 
 
 def _test_joins_tx(
@@ -1170,6 +1318,7 @@ def _test_joins_tx(
         stem=f"{WORKDIR}/pool-{zone.chain_id}-test-joins",
         parts=parts,
         members=[f"{_pool_name(pool=pool)} · {amounts[pool['contract']]}" for pool in to_test],
+        stage=TxStage.TEST_JOINS,
     )
 
 
@@ -1243,6 +1392,7 @@ def _close_tx(
         members=[
             _close_member(pool=pool, rest_joins=rest_joins, rest_joined=pool in rest_joined) for pool in handed_back
         ],
+        stage=TxStage.CLOSE,
         read_line=read_line,
     )
 
@@ -1353,6 +1503,7 @@ def _bundle_pool_tx(
     stem: str,
     parts: list[BundlePart],
     members: list[str],
+    stage: TxStage | None = None,
     read_line: str | None = None,
 ) -> MultisigTx:
     """Each part written as its own unsigned tx into a fresh parts folder, then merged into one. A previous generate's
@@ -1386,6 +1537,10 @@ def _bundle_pool_tx(
         ),
         files=_shared_files(file_stem=stem),
         members=members,
+        gas=parts[0].gas,
+        unsigned=f"{stem}.unsigned.json",
+        stage=stage,
+        chip=stage.value if stage else None,
     )
 
 
@@ -1400,9 +1555,16 @@ def _fundable_pools(pools_zone: dict[str, Any]) -> list[dict[str, Any]]:
     return sorted(fundable, key=lambda pool: pool["kind"] != POOL_KIND_CANONICAL)  # stable: canonical first
 
 
-def _empty_pool_tx(zone: config.ZoneConfig, label: str, reason: str) -> MultisigTx:
+def _empty_pool_tx(zone: config.ZoneConfig, label: str, reason: str, skip: bool) -> MultisigTx:
     return MultisigTx(
-        chain_id=zone.chain_id, title=f"{zone.chain_id} · {label}", ready=False, reason=reason, commands=[], files=[]
+        chain_id=zone.chain_id,
+        title=f"{zone.chain_id} · {label}",
+        ready=False,
+        reason=reason,
+        commands=[],
+        files=[],
+        chip="pool-funding",
+        skip=skip,
     )
 
 

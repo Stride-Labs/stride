@@ -1,5 +1,8 @@
 import json
 import pathlib
+import shutil
+import subprocess
+import tempfile
 import unittest
 from unittest import mock
 
@@ -198,7 +201,9 @@ class LiveTestCommandsTest(unittest.TestCase):
         all_sets = sets_by_id(fake_snapshot(), funds_data=fake_funds(), pools_data=fake_pools())
         for tx_set in all_sets.values():
             binary, address = ("osmosisd", VAULT) if tx_set.id in ("pool-funding", "pool-creation") else ("strided", ADDRESS)
-            for tx in tx_set.txs:
+            for position, tx in enumerate(tx_set.txs):
+                if tx_set.id == "combined-funding" and position >= 3:  # txs 4-6 are on Osmosis
+                    binary, address = "osmosisd", VAULT
                 sign_commands = [command for command in tx.commands if "tx sign" in command.text]
 
                 self.assertEqual(len(sign_commands), 0 if not tx.commands else 3)
@@ -350,6 +355,7 @@ class SetsTest(unittest.TestCase):
                 ("restore-channels", "dydx-restore-delegation"),
                 ("live-test-undelegate", "drain-live-test"),
                 ("full-drain", "drain-rest"),
+                ("combined-funding", "transfers"),
                 ("ica-transfers", "transfers"),
                 ("staketia-claim-balance", "tia-claim-balance"),
                 ("pool-funding", "join-pools"),
@@ -362,7 +368,7 @@ class SetsTest(unittest.TestCase):
 
         json.dumps(payload)
         self.assertEqual(set(payload), {"id", "step_id", "title", "description", "notes", "txs"})
-        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members", "done", "blocked", "seeded"})
+        self.assertEqual(set(payload["txs"][0]), {"chain_id", "title", "ready", "reason", "commands", "files", "members", "done", "blocked", "seeded", "gas", "unsigned", "stage", "chip", "skip"})
         self.assertEqual(set(payload["txs"][0]["commands"][0]), {"tag", "label", "text"})
 
     def test_multisig_constants(self) -> None:
@@ -626,12 +632,189 @@ class IcaTransfersTest(unittest.TestCase):
         for tx_set in all_sets.values():
             with self.subTest(tx_set=tx_set.id):
                 chain_ids = [tx.chain_id for tx in tx_set.txs]
+                if tx_set.id == "combined-funding":  # six cards under their own headings, see CombinedFundingTest
+                    continue
                 if tx_set.id in ("pool-creation", "pool-admin-transfer"):  # one heading across every zone
                     self.assertEqual(set(chain_ids), {"all zones"})
                     continue
                 runs = [chain_id for index, chain_id in enumerate(chain_ids) if index == 0 or chain_ids[index - 1] != chain_id]
 
                 self.assertEqual(runs, [zone.chain_id for zone in config.ZONES if zone.chain_id in chain_ids])
+
+
+ICAS = ("FEE", "WITHDRAWAL", "DELEGATION", "REDEMPTION")
+COMBINED_FUND_TITLES = [
+    "Combined 1 · Test transfer, all zones",
+    "Combined 2 · Full transfer, Hub",
+    "Combined 3 · Full transfer, all other zones",
+    "Combined 4 · Test joins, all zones",
+    "Combined 5 · Full join + close, Hub",
+    "Combined 6 · Full join + close, all other zones",
+]
+
+
+def combined_txs(funds_data: dict[str, object] | None, pools_data: dict[str, object] | None) -> list[multisig.MultisigTx]:
+    return sets_by_id(fake_snapshot(), funds_data=funds_data, pools_data=pools_data)["combined-funding"].txs
+
+
+def settled_funds() -> dict[str, object]:
+    """Every zone in the Funds snapshot: empty ICAs (nothing to send) except the Hub and dYdX of fake_funds."""
+    quiet = {zone.chain_id: {"chain_id": zone.chain_id, "host_denom": "uhost", "ica_balances": {}} for zone in config.ZONES}
+    quiet.update({entry["chain_id"]: entry for entry in fake_funds()["zones"] if entry["chain_id"] != CELESTIA})
+    return {"zones": list(quiet.values())}
+
+
+def settled_pools(**overrides: object) -> dict[str, object]:
+    """Every zone in the Pools snapshot: no pool to fund except the Hub's (fake_pools)."""
+    quiet = {zone.chain_id: {"chain_id": zone.chain_id, "osmosis_denom": None, "pools": []} for zone in config.ZONES}
+    quiet[COSMOS] = fake_pools(**overrides)["zones"][0]
+    return {"zones": list(quiet.values())}
+
+
+class CombinedFundingTest(unittest.TestCase):
+    def test_six_cards_in_order_with_chain_ids_and_stems(self) -> None:
+        txs = combined_txs(settled_funds(), settled_pools(pools=unjoined_pools()))
+
+        # Card 6 has no member here (every other zone has no pool to fund): a done card with the title plus a note.
+        self.assertEqual([tx.title.removesuffix(" · nothing left to send") for tx in txs], COMBINED_FUND_TITLES)
+        self.assertEqual(
+            [tx.chain_id for tx in txs],
+            ["all zones", COSMOS, f"all zones except {COSMOS}", "all zones", COSMOS, f"all zones except {COSMOS}"],
+        )
+        self.assertEqual(
+            [tx.files[0] for tx in txs if tx.files],
+            [
+                f"/tmp/wind-down/combined-{number}-{slug}.unsigned.json"
+                for number, slug in (
+                    (1, "test-transfer"), (2, "full-transfer-hub"), (3, "full-transfer-others"), (4, "test-joins"),
+                    (5, "close-hub"),
+                )
+            ],
+        )
+
+    def test_transfer_membership_leaves_out_nothing_to_send_and_foreign_denoms(self) -> None:
+        test_tx, hub_rest, other_rest, *_ = combined_txs(settled_funds(), settled_pools())
+
+        # The Hub's WITHDRAWAL ICA holds 400000uatom (below the test amount) and its REDEMPTION ICA nothing; dYdX's
+        # WITHDRAWAL ICA also holds a foreign denom, which has its own tx and never joins.
+        self.assertEqual(
+            test_tx.members,
+            [f"{COSMOS} FEE-test", f"{COSMOS} DELEGATION-test", *(f"{DYDX} {ica}-test" for ica in ICAS)],
+        )
+        self.assertEqual(hub_rest.members, [f"{COSMOS} FEE-rest", f"{COSMOS} DELEGATION-rest"])
+        self.assertEqual(other_rest.members, [f"{DYDX} {ica}-rest" for ica in ICAS])
+        self.assertEqual([tx.ready for tx in (test_tx, hub_rest, other_rest)], [True] * 3)
+
+    def test_a_completed_transfer_zone_is_not_a_member(self) -> None:
+        funds_data = settled_funds()
+        funds_data["zones"].append({"chain_id": "haqq_11235-1", "host_denom": "ahaqq", "ica_balances": {"FEE": {"ahaqq": "5000000000000000000"}}})
+
+        with mock.patch.object(multisig, "COMPLETED_TRANSFER_ZONES", frozenset()):
+            open_members = combined_txs(funds_data, settled_pools())[0].members
+        done_members = combined_txs(funds_data, settled_pools())[0].members
+
+        self.assertIn("haqq_11235-1 FEE-test", open_members)
+        self.assertNotIn("haqq_11235-1 FEE-test", done_members)
+
+    def test_the_generate_text_runs_each_members_own_text_then_merges_with_summed_gas_and_fee(self) -> None:
+        test_tx = combined_txs(settled_funds(), settled_pools())[0]
+        members = [
+            tx for zone in (COSMOS, DYDX) for tx in transfer_txs(zone, settled_funds()) if "ICA · test:" in tx.title and tx.ready
+        ]
+        stem = "/tmp/wind-down/combined-1-test-transfer"
+        files = [member.files[0] for member in members]
+        # six members at 600000 gas: 3.6M gas, 0.005ustrd per gas
+        merge_filter = (
+            "(map(.body.messages) | add) as $msgs | .[0] | .body.messages = $msgs | .signatures = [] "
+            '| .auth_info.fee.gas_limit = "3600000" | .auth_info.fee.amount[0].amount = "18000"'
+        )
+        merge = " && ".join(f"test -s {file}" for file in files) + f" && jq -s '{merge_filter}' {' '.join(files)} > {stem}.unsigned.json"
+        generate = "\n".join([f"rm -f {stem}.unsigned.json", *(member.commands[0].text for member in members), merge])
+
+        self.assertEqual(len(members), 6)
+        self.assertEqual(command_pairs(test_tx), expected_commands(generate, stem=stem))
+        self.assertEqual(test_tx.commands[0].label, "Write each member's unsigned tx and merge the 6 into one (--gas 3600000, fee 18000ustrd)")
+
+    def test_gas_is_capped_and_the_fee_follows_the_capped_gas(self) -> None:
+        with mock.patch.object(multisig, "COMBINED_GAS_CAP", 1_000_000):
+            test_tx = combined_txs(settled_funds(), settled_pools())[0]
+
+        self.assertEqual(test_tx.commands[0].label, "Write each member's unsigned tx and merge the 6 into one (--gas 1000000, fee 5000ustrd)")
+        self.assertIn('.auth_info.fee.gas_limit = "1000000" | .auth_info.fee.amount[0].amount = "5000"', test_tx.commands[0].text)
+
+    def test_osmosis_cards_sum_the_pool_txs_gas_at_the_osmosis_gas_price(self) -> None:
+        test_joins, close = combined_txs(settled_funds(), settled_pools(pools=unjoined_pools()))[3:5]
+        stem = "/tmp/wind-down/pool-cosmoshub-4-test-joins"
+
+        self.assertEqual(test_joins.members, [f"{COSMOS} test-joins"])
+        self.assertEqual(test_joins.commands[0].label, "Write each member's unsigned tx and merge the 1 into one (--gas 3100000, fee 310000uosmo)")
+        self.assertIn(f"test -s {stem}.unsigned.json && jq -s '", test_joins.commands[0].text)
+        self.assertIn(pool_txs(pools_data=settled_pools(pools=unjoined_pools()))[0].commands[0].text, test_joins.commands[0].text)
+        self.assertEqual(command_pairs(test_joins)[1][1].split()[0:2], ["osmosisd", "tx"])
+        self.assertEqual(close.members, [f"{COSMOS} close"])
+
+    def test_a_held_transfer_member_holds_the_card_with_its_title_and_reason(self) -> None:
+        funds_data = settled_funds()
+        hub_zone = next(entry for entry in funds_data["zones"] if entry["chain_id"] == COSMOS)
+        hub_zone["transfers"] = [{"ica": "FEE", "status": "in flight"}]
+
+        hub_rest = combined_txs(funds_data, settled_pools())[1]
+
+        self.assertFalse(hub_rest.ready)
+        self.assertEqual(
+            hub_rest.reason,
+            "cosmoshub-4 · FEE ICA · rest: 2500000uatom (live balance, copy after the test has settled): "
+            "a transfer from the FEE ICA is in flight: copy once it settles and the Funds snapshot refreshes",
+        )
+
+    def test_a_held_close_holds_card_5_but_not_the_ready_test_joins(self) -> None:
+        pools_data = settled_pools(pools=unjoined_pools())
+        close = pool_txs(pools_data=pools_data)[1]
+
+        test_joins, hub_close = combined_txs(settled_funds(), pools_data)[3:5]
+
+        self.assertEqual((test_joins.ready, test_joins.reason), (True, None))
+        self.assertEqual((hub_close.ready, hub_close.reason), (False, f"{close.title}: {close.reason}"))
+
+    def test_a_zone_missing_from_the_pools_snapshot_holds_but_a_zone_with_no_pool_does_not(self) -> None:
+        pools_data = settled_pools()
+        pools_data["zones"] = [entry for entry in pools_data["zones"] if entry["chain_id"] != DYDX]
+
+        others_close = combined_txs(settled_funds(), pools_data)[5]
+
+        self.assertEqual(others_close.members, [f"{DYDX} pool-funding"])
+        self.assertEqual((others_close.ready, others_close.reason), (False, f"{DYDX} · pool funding: zone missing from the Pools snapshot"))
+
+    def test_no_members_is_a_done_card_with_no_commands(self) -> None:
+        quiet_funds = {"zones": [{"chain_id": zone.chain_id, "host_denom": "uhost", "ica_balances": {}} for zone in config.ZONES]}
+        landed = pool_entry(CANONICAL_CONTRACT, "canonical", "1234", "5000000", True, vault_shares="5000000", native_marked=True)
+
+        txs = combined_txs(quiet_funds, settled_pools(pools=[landed]))
+
+        self.assertEqual([tx.title for tx in txs], [f"{title} · nothing left to send" for title in COMBINED_FUND_TITLES])
+        for tx in txs:
+            self.assertEqual((tx.done, tx.ready, tx.reason, tx.commands, tx.files, tx.members), (True, False, None, [], [], []))
+
+    @unittest.skipUnless(shutil.which("jq"), "jq is not installed")
+    def test_the_generated_merge_line_runs_in_jq_and_sets_messages_gas_and_fee(self) -> None:
+        test_tx = combined_txs(settled_funds(), settled_pools())[0]
+        with tempfile.TemporaryDirectory() as tmp:
+            merge_line = test_tx.commands[0].text.replace(multisig.WORKDIR, tmp).splitlines()[-1]
+            members = [line.split("test -s ")[1].split(" ")[0] for line in merge_line.split(" && ") if line.startswith("test -s ")]
+            for index, member in enumerate(members):
+                unsigned = {
+                    "body": {"messages": [{"id": index}], "memo": "first"},
+                    "auth_info": {"fee": {"gas_limit": "600000", "amount": [{"denom": "ustrd", "amount": "3000"}]}},
+                    "signatures": ["old"],
+                }
+                pathlib.Path(member).write_text(json.dumps(unsigned))
+
+            subprocess.run(["bash", "-c", merge_line], check=True)
+            merged = json.loads(pathlib.Path(f"{tmp}/combined-1-test-transfer.unsigned.json").read_text())
+
+        self.assertEqual(merged["body"]["messages"], [{"id": index} for index in range(6)])
+        self.assertEqual(merged["signatures"], [])
+        self.assertEqual(merged["auth_info"]["fee"], {"gas_limit": "3600000", "amount": [{"denom": "ustrd", "amount": "18000"}]})
 
 
 class StaketiaClaimBalanceTest(unittest.TestCase):
@@ -1350,6 +1533,7 @@ class MultisigBodyTest(unittest.TestCase):
                 "restore-channels",
                 "live-test-undelegate",
                 "full-drain",
+                "combined-funding",
                 "ica-transfers",
                 "staketia-claim-balance",
                 "pool-funding",
