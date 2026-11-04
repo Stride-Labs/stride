@@ -7,6 +7,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	"github.com/Stride-Labs/stride/v35/utils"
 )
 
 const TypeMsgRestoreInterchainAccount = "restore_interchain_account"
@@ -42,6 +44,9 @@ func (msg *MsgRestoreInterchainAccount) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	}
+	if err := utils.ValidateAdminAddress(msg.Creator); err != nil {
+		return err
 	}
 	if msg.ChainId == "" {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "chain ID must be specified")

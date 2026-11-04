@@ -10,6 +10,10 @@ import (
 )
 
 func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
+	validNotAdminAddress, _ := apptesting.GenerateTestAddrs()
+	validAdminAddress, ok := apptesting.GetAdminAddress()
+	require.True(t, ok)
+
 	validChainId := "chain-0"
 	validConnectionId := "connection-0"
 	validHostZoneOwner := "chain-0.DELEGATION"
@@ -23,7 +27,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		{
 			name: "valid host zone message",
 			msg: types.MsgRestoreInterchainAccount{
-				Creator:      apptesting.SampleStrideAddress(),
+				Creator:      validAdminAddress,
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: validHostZoneOwner,
@@ -32,7 +36,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		{
 			name: "valid trade route message",
 			msg: types.MsgRestoreInterchainAccount{
-				Creator:      apptesting.SampleStrideAddress(),
+				Creator:      validAdminAddress,
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: validTradeRouteOwner,
@@ -41,7 +45,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		{
 			name: "missing chain id",
 			msg: types.MsgRestoreInterchainAccount{
-				Creator:      apptesting.SampleStrideAddress(),
+				Creator:      validAdminAddress,
 				ChainId:      "",
 				ConnectionId: validConnectionId,
 				AccountOwner: validHostZoneOwner,
@@ -51,7 +55,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		{
 			name: "missing connection id",
 			msg: types.MsgRestoreInterchainAccount{
-				Creator:      apptesting.SampleStrideAddress(),
+				Creator:      validAdminAddress,
 				ChainId:      validChainId,
 				ConnectionId: "con-0",
 				AccountOwner: validHostZoneOwner,
@@ -61,7 +65,7 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		{
 			name: "missing account owner",
 			msg: types.MsgRestoreInterchainAccount{
-				Creator:      apptesting.SampleStrideAddress(),
+				Creator:      validAdminAddress,
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: "",
@@ -71,12 +75,22 @@ func TestMsgRestoreInterchainAccount_ValidateBasic(t *testing.T) {
 		{
 			name: "chain id does not match owner",
 			msg: types.MsgRestoreInterchainAccount{
-				Creator:      apptesting.SampleStrideAddress(),
+				Creator:      validAdminAddress,
 				ChainId:      validChainId,
 				ConnectionId: validConnectionId,
 				AccountOwner: "chain-1.reward.host.CONVERTER_TRADE",
 			},
 			err: "ICA account owner does not match chain ID",
+		},
+		{
+			name: "non-admin creator",
+			msg: types.MsgRestoreInterchainAccount{
+				Creator:      validNotAdminAddress,
+				ChainId:      validChainId,
+				ConnectionId: validConnectionId,
+				AccountOwner: validHostZoneOwner,
+			},
+			err: "is not an admin",
 		},
 		{
 			name: "invalid address",
