@@ -1,0 +1,758 @@
+"""Live holder state and the sweep's inclusion rules.
+
+Reads, all through chainio: the sweep denoms (checked the way the chain checks them), every holder of each denom in
+bulk, the auth account of each candidate above the floor (cached), the spendable balance of vesting candidates, and the
+module, escrow and contract address sets, and each candidate's unbonding STRD (cached; such holders are deferred).
+Classification mirrors sweepSkipReason in x/stakeibc/keeper/wind_down_sweep.go in the chain's order,
+then adds the two rules the chain cannot make: wasm contracts and the reviewed exclusions file."""
+
+import concurrent.futures
+import contextlib
+import datetime
+import fcntl
+import json
+import os
+import pathlib
+import re
+import tempfile
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass, field
+from decimal import Decimal
+
+from sweep import addresses, chainio, config
+
+STTOKEN_PREFIX = "st"
+ACCOUNT_NOT_FOUND = "account not found"
+FRACTION_PATTERN = re.compile(r"\.(\d+)")
+FRACTION_DIGITS = 6  # datetime.fromisoformat takes at most microseconds; the chain prints nanoseconds
+
+
+class ExclusionsError(Exception):
+    """exclusions.json is malformed."""
+
+
+class DenomError(Exception):
+    """A configured sweep denom has no on-chain destination; the chain would reject every batch naming it."""
+
+
+@dataclass(frozen=True)
+class SweepDenom:
+    denom: str
+    symbol: str
+    decimals: int
+    price_usd: Decimal  # per whole token
+    destination: str  # chain id
+    channel: str  # the Stride transfer channel the sweep sends over
+
+
+@dataclass
+class Holder:
+    address: str
+    balances: dict[str, int]
+    usd: Decimal
+    keyless: bool
+    # A vesting account's total minus spendable, per denom: what stays behind after a full sweep. Empty otherwise.
+    locked: dict[str, int] = field(default_factory=dict)
+
+    @property
+    def transfers(self) -> int:
+        return sum(1 for amount in self.balances.values() if amount > 0)
+
+
+@dataclass(frozen=True)
+class Excluded:
+    address: str
+    reason: str
+    usd: Decimal
+
+
+@dataclass(frozen=True)
+class Staked:
+    """STRD one delegator still has unbonding: the sum of its entries' balances and the latest completion time as the
+    chain prints it. `Staked(ustrd=0, completes_at=None)` means none."""
+
+    ustrd: int
+    completes_at: str | None
+
+
+@dataclass(frozen=True)
+class Deferred:
+    """An otherwise sweepable holder held back from pass 1 because it has STRD unbonding; pass 2 sweeps it."""
+
+    holder: Holder
+    staked: Staked
+
+
+@dataclass
+class HolderSet:
+    height: int
+    denoms: list[SweepDenom]
+    holders: list[Holder]
+    excluded: list[Excluded]  # the exclusions file
+    skipped: list[Excluded]  # the chain's rules and the contract rule
+    # Under the floor in spendable value; includes vesting accounts whose spendable part is empty or small
+    below_floor: list[Holder]
+    # Above the floor and past every skip rule, but with STRD unbonding; sorted by USD descending like `holders`
+    deferred: list[Deferred] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class Exclusion:
+    address: str
+    section: str
+    label: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class AccountInfo:
+    type: str
+    has_pubkey: bool
+    sequence: int
+
+
+@dataclass(frozen=True)
+class SkipInputs:
+    module_addresses: set[str]
+    escrows: set[str]
+    contracts: set[str]
+
+
+# ---- exclusions file
+
+
+def load_exclusions(path: pathlib.Path = config.EXCLUSIONS_PATH) -> dict[str, Exclusion]:
+    try:
+        sections = json.loads(path.read_text())["sections"]
+    except (OSError, json.JSONDecodeError, KeyError) as error:
+        raise ExclusionsError(f"{path}: {error}") from None
+
+    exclusions: dict[str, Exclusion] = {}
+    for section in sections:
+        _require_keys(path=path, item=section, keys=("name", "reason", "addresses"), where="a section")
+        for entry in section["addresses"]:
+            _require_keys(
+                path=path, item=entry, keys=("address", "label"), where=f"an entry in section {section['name']}")
+            address = entry["address"]
+            if not addresses.is_stride_address(address=address):
+                raise ExclusionsError(
+                    f"{path}: {address!r} in section {section['name']} is not a 20-byte stride address")
+            if address in exclusions:
+                raise ExclusionsError(f"{path}: {address} is listed twice")
+            exclusions[address] = Exclusion(
+                address=address, section=section["name"], label=entry["label"], reason=section["reason"])
+    return exclusions
+
+
+def _require_keys(path: pathlib.Path, item: object, keys: tuple[str, ...], where: str) -> None:
+    if not isinstance(item, dict):
+        raise ExclusionsError(f"{path}: {where} is not an object")
+    missing = [key for key in keys if key not in item]
+    if missing:
+        raise ExclusionsError(f"{path}: {where} lacks {', '.join(missing)}")
+
+
+# ---- denoms
+
+
+def resolve_denoms() -> list[SweepDenom]:
+    """The configured denoms, each checked the way resolveSweepDestination checks it, with its price."""
+    host_zones = chainio.rest_get_all_pages(path="/Stride-Labs/stride/stakeibc/host_zone", key="host_zone")
+    zones_by_chain = {zone["chain_id"]: zone for zone in host_zones}
+    allowed_native = set(config.ALWAYS_SWEEPABLE_NATIVE_DENOMS) | {
+        STTOKEN_PREFIX + zone["host_denom"] for zone in host_zones if not zone.get("deprecated")
+    }
+
+    denoms = [_native_denom(spec=spec, allowed=allowed_native, zones_by_chain=zones_by_chain)
+              for spec in config.NATIVE_SWEEP_DENOMS]
+    denoms.extend(_voucher_denom(spec=spec) for spec in config.VOUCHER_SWEEP_DENOMS)
+    return denoms
+
+
+def _native_denom(spec: config.NativeDenom, allowed: set[str], zones_by_chain: dict[str, dict]) -> SweepDenom:
+    if spec.denom not in allowed:
+        raise DenomError(f"native denom {spec.denom} is neither ustrd, stutia nor an active host zone's stToken")
+    rate = Decimal(1)
+    if spec.host_chain_id is not None:
+        zone = zones_by_chain.get(spec.host_chain_id)
+        if zone is None:
+            raise DenomError(f"{spec.denom}: host zone {spec.host_chain_id} not found")
+        rate = Decimal(zone["redemption_rate"])
+    return SweepDenom(denom=spec.denom, symbol=spec.symbol, decimals=spec.decimals,
+                      price_usd=config.NATIVE_PRICES_USD[spec.price_symbol] * rate,
+                      destination=config.OSMOSIS_CHAIN_ID, channel=config.STRIDE_TO_OSMOSIS_CHANNEL)
+
+
+def _voucher_denom(spec: config.VoucherDenom) -> SweepDenom:
+    if spec.channel not in config.UNWIND_CHANNELS:
+        raise DenomError(f"{spec.base} over {spec.channel}: not in UNWIND_CHANNELS")
+    denom = addresses.ibc_denom(path=f"{config.TRANSFER_PORT}/{spec.channel}/{spec.base}")
+    try:
+        trace = chainio.rest_get(path=f"/ibc/apps/transfer/v1/denoms/{denom.removeprefix(config.IBC_PREFIX)}")["denom"]
+    except chainio.NotFound:
+        raise DenomError(f"{spec.base} over {spec.channel}: {denom} has no denom trace on chain") from None
+    if not trace["trace"]:
+        raise DenomError(f"{spec.base} over {spec.channel}: {denom} has an empty denom trace")
+    outer = trace["trace"][0]
+    if outer["port_id"] != config.TRANSFER_PORT or outer["channel_id"] != spec.channel:
+        raise DenomError(
+            f"{denom}: outermost hop is {outer['port_id']}/{outer['channel_id']}, expected transfer/{spec.channel}")
+    return SweepDenom(denom=denom, symbol=spec.symbol, decimals=spec.decimals,
+                      price_usd=config.NATIVE_PRICES_USD[spec.price_symbol], destination=spec.chain_id,
+                      channel=spec.channel)
+
+
+# ---- bulk reads
+
+
+def read_balances(denoms: list[SweepDenom], workers: int = config.BALANCE_WORKERS) -> dict[str, dict[str, int]]:
+    """Every holder of every sweep denom: address -> denom -> amount, zero amounts dropped. Offset pages are pinned to
+    one height so they agree, and one pool serves all denoms, largest denom first; they go to `config.BALANCES_REST`,
+    the rest of the runner to `config.REST`. Each denom's pages are then checked for completeness: the
+    owner rows across all pages (before dedupe) must equal the first page's `pagination.total`, and every page but
+    the last must be full. A denom that fails the check is re-read with key pagination (`next_key`), which cannot skip
+    a holder, and so is every denom when the fast host is down or refuses the height on the first request (offset
+    pages unpinned can drift). A key re-read goes to `config.REST` unpinned, so that denom reflects a slightly later
+    state than the pinned ones. One line
+    names each re-read denom and why. A pinned page that fails after its retries (or a backend that pruned the
+    height) cancels that denom's queued pages and sends it down the same key re-read."""
+    if not denoms:
+        return {}
+    try:
+        height: int | None = chainio.latest_height(base=config.BALANCES_REST)
+        first_page = _owner_page(denom=denoms[0].denom, offset=0, height=height)
+    except chainio.ChainError as error:
+        # The fast host is down or refuses the height: the slow, dependable path on the main host
+        print(f"balances: {config.BALANCES_REST} unusable ({error}); reading every denom by key from {config.REST}")
+        return _assemble_balances(denoms=denoms, owners_by_denom=[_owners_by_key(denom=d.denom) for d in denoms])
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        try:
+            other_first_pages = [
+                pool.submit(_owner_page, denom=sweep_denom.denom, offset=0, height=height) for sweep_denom in denoms[1:]
+            ]
+            first_pages: list[dict | None] = [
+                first_page, *(_first_page_or_none(sweep_denom=d, future=f) for d, f in zip(denoms[1:], other_first_pages))
+            ]
+            # The largest denom's pages are queued first so the longest read is done before the pin can expire
+            sized = [index for index, page in enumerate(first_pages) if page is not None]
+            by_size = sorted(sized, key=lambda index: -int(first_pages[index]["pagination"]["total"]))
+            later_pages: list[list[concurrent.futures.Future]] = [[] for _ in denoms]
+            for index in by_size:
+                total = int(first_pages[index]["pagination"]["total"])
+                later_pages[index] = [
+                    pool.submit(_owner_page, denom=denoms[index].denom, offset=offset, height=height)
+                    for offset in range(config.PAGE_SIZE, total, config.PAGE_SIZE)
+                ]
+            pages_by_denom = [
+                None if page is None else _denom_pages(sweep_denom=sweep_denom, first_page=page, futures=futures)
+                for sweep_denom, page, futures in zip(denoms, first_pages, later_pages)
+            ]
+        except BaseException:
+            # Leaving the block would wait for every queued page, each running through its own backoff
+            pool.shutdown(wait=True, cancel_futures=True)
+            raise
+
+    owners_by_denom = [
+        _checked_owners(sweep_denom=sweep_denom, pages=pages) if pages is not None
+        else _owners_by_key(denom=sweep_denom.denom)
+        for sweep_denom, pages in zip(denoms, pages_by_denom)
+    ]
+    return _assemble_balances(denoms=denoms, owners_by_denom=owners_by_denom)
+
+
+def _first_page_or_none(sweep_denom: SweepDenom, future: concurrent.futures.Future) -> dict | None:
+    """A denom's pinned first page, or None when it failed after its retries: that denom is re-read by key."""
+    try:
+        return future.result()
+    except chainio.ChainError as error:
+        print(f"balances: {sweep_denom.denom}: the pinned first page failed ({error}); re-reading by key")
+        return None
+
+
+def _denom_pages(
+    sweep_denom: SweepDenom, first_page: dict, futures: list[concurrent.futures.Future]
+) -> list[dict] | None:
+    """The denom's pinned pages, or None when one of them failed: a backend that pruned the pinned height partway
+    through a long read (cosmos.directory backends keep about a hundred blocks), or a page dead after its retries.
+    The denom's queued pages are cancelled and it is re-read by key instead."""
+    try:
+        return [first_page, *(future.result() for future in futures)]
+    except chainio.ChainError as error:
+        for future in futures:
+            future.cancel()
+        print(f"balances: {sweep_denom.denom}: a pinned page failed ({error}); re-reading by key")
+        return None
+
+
+def _checked_owners(sweep_denom: SweepDenom, pages: list[dict]) -> list[dict]:
+    """The denom's owner rows from its offset pages, or from a key-paginated re-read when the pages are incomplete."""
+    rows = [owner for page in pages for owner in page["denom_owners"]]
+    total = int(pages[0]["pagination"]["total"])
+    short_page = any(len(page["denom_owners"]) != config.PAGE_SIZE for page in pages[:-1])
+    # A repeated address means the offsets drifted (a holder left and another arrived), even when the count matches
+    repeated = len({owner["address"] for owner in rows}) < len(rows)
+    if len(rows) == total and not short_page and not repeated:
+        return rows
+
+    print(f"balances: {sweep_denom.denom}: {len(rows)} rows over {len(pages)} pages for a total of {total}"
+          f"{' with a short page' if short_page else ''}{' with a repeated address' if repeated else ''}; "
+          "re-reading by key")
+    return _owners_by_key(denom=sweep_denom.denom)
+
+
+def _owners_by_key(denom: str) -> list[dict]:
+    """The dependable read: key pagination cannot skip a holder, and the main host has never dropped a page."""
+    return chainio.rest_get_all_pages(
+        path="/cosmos/bank/v1beta1/denom_owners_by_query", key="denom_owners", params={"denom": denom},
+        base=config.REST)
+
+
+def _assemble_balances(denoms: list[SweepDenom], owners_by_denom: list[list[dict]]) -> dict[str, dict[str, int]]:
+    balances: dict[str, dict[str, int]] = {}
+    for sweep_denom, rows in zip(denoms, owners_by_denom):
+        # A holder listed twice (a re-read can overlap) counts once
+        owners = {owner["address"]: int(owner["balance"]["amount"]) for owner in rows}
+        for address, amount in owners.items():
+            if amount > 0:
+                balances.setdefault(address, {})[sweep_denom.denom] = amount
+    return balances
+
+
+def _owner_page(denom: str, offset: int, height: int | None) -> dict:
+    """One page of a denom's owners; the first also asks for the total, which sizes the remaining pages."""
+    params = {"denom": denom, "pagination.limit": str(config.PAGE_SIZE), "pagination.offset": str(offset)}
+    if offset == 0:
+        params["pagination.count_total"] = "true"
+    return chainio.rest_get(path="/cosmos/bank/v1beta1/denom_owners_by_query", params=params, height=height,
+                            base=config.BALANCES_REST)
+
+
+def read_skip_inputs() -> SkipInputs:
+    module_accounts = chainio.rest_get(path="/cosmos/auth/v1beta1/module_accounts")["accounts"]
+    module_addresses = {account["base_account"]["address"] for account in module_accounts}
+    module_addresses |= {addresses.module_address(name=name) for name in config.BLOCKED_MODULE_NAMES}
+
+    channels = chainio.rest_get_all_pages(path="/ibc/core/channel/v1/channels", key="channels")
+    escrows = {addresses.escrow_address(channel_id=channel["channel_id"])
+               for channel in channels if channel["port_id"] == config.TRANSFER_PORT}
+
+    contracts: set[str] = set()
+    for code in chainio.rest_get_all_pages(path="/cosmwasm/wasm/v1/code", key="code_infos"):
+        listed = chainio.rest_get_all_pages(path=f"/cosmwasm/wasm/v1/code/{code['code_id']}/contracts", key="contracts")
+        # Only a 20-byte contract can collide with a holder; 32-byte ones fail the first rule anyway
+        contracts |= {address for address in listed if addresses.is_stride_address(address=address)}
+    return SkipInputs(module_addresses=module_addresses, escrows=escrows, contracts=contracts)
+
+
+def parse_chain_time(text: str) -> datetime.datetime:
+    """An RFC 3339 UTC time as the chain prints it (up to nine fractional digits), as an aware datetime."""
+    truncated = FRACTION_PATTERN.sub(lambda match: "." + match.group(1)[:FRACTION_DIGITS], text, count=1)
+    return datetime.datetime.fromisoformat(truncated.replace("Z", "+00:00")).astimezone(datetime.UTC)
+
+
+def read_staked(address: str) -> Staked:
+    """One delegator's unbonding entries, all pages. Delegations are not read: after v35 nothing is bonded."""
+    responses = chainio.rest_get_all_pages(
+        path=f"/cosmos/staking/v1beta1/delegators/{address}/unbonding_delegations", key="unbonding_responses")
+    entries = [entry for response in responses for entry in response["entries"]]
+    if not entries:
+        return Staked(ustrd=0, completes_at=None)
+
+    latest = max((entry["completion_time"] for entry in entries), key=lambda text: parse_chain_time(text=text))
+    return Staked(ustrd=sum(int(entry["balance"]) for entry in entries), completes_at=latest)
+
+
+def read_staking_pool() -> int:
+    """STRD in the staking pools (not bonded plus bonded): after v35 this is what is still unbonding chain-wide."""
+    pool = chainio.rest_get(path="/cosmos/staking/v1beta1/pool")["pool"]
+    return int(pool["not_bonded_tokens"]) + int(pool["bonded_tokens"])
+
+
+def spendable_balances(address: str) -> dict[str, int]:
+    coins = chainio.rest_get_all_pages(path=f"/cosmos/bank/v1beta1/spendable_balances/{address}", key="balances")
+    return {coin["denom"]: int(coin["amount"]) for coin in coins}
+
+
+def usd_value(balances: dict[str, int], denoms: dict[str, SweepDenom]) -> Decimal:
+    return sum((Decimal(amount) / Decimal(10) ** denoms[denom].decimals * denoms[denom].price_usd
+                for denom, amount in balances.items() if denom in denoms), Decimal(0))
+
+
+# ---- account cache
+
+
+@contextlib.contextmanager
+def _exclusive_lock(path: pathlib.Path) -> Iterator[None]:
+    """Hold an exclusive flock on a sibling `<name>.lock` file, so concurrent processes save one at a time."""
+    with open(path.with_name(path.name + ".lock"), "w") as lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
+        yield
+
+
+def _write_atomic(path: pathlib.Path, raw: dict) -> None:
+    """Write the JSON to a temp file of its own beside `path` and rename it over, so a reader never sees a partial file
+    and two writers never share a temp file; a failed write leaves no temp file behind."""
+    descriptor, tmp_name = tempfile.mkstemp(dir=path.parent, prefix=path.name + ".", suffix=".tmp")
+    try:
+        with os.fdopen(descriptor, "w") as tmp_file:
+            tmp_file.write(json.dumps(raw, indent=1))
+        os.replace(tmp_name, path)
+    except BaseException:
+        pathlib.Path(tmp_name).unlink(missing_ok=True)
+        raise
+
+
+class AccountCache:
+    """Auth lookups keyed by address. A type never changes, so a cached entry is final, except a keyless-looking one
+    (no pubkey), which may have signed since: a later process re-reads it, but this one reads it once (`_fresh`, filled
+    by `store` and by `lookup`, not persisted), so `classify` does not repeat what `prefetch` just read. `save`
+    merges under a file lock: it overlays this process's entries on the file's, so a concurrent `warm` and `plan` only
+    ever add to each other's work."""
+
+    def __init__(self, entries: dict[str, AccountInfo], path: pathlib.Path | None = None) -> None:
+        self._entries = entries
+        self._fresh: set[str] = set()  # addresses read by this process
+        self._path = path  # where `load` read from; `save` without a path writes back here
+
+    @classmethod
+    def load(cls, path: pathlib.Path = config.ACCOUNTS_CACHE_PATH) -> "AccountCache":
+        if not path.exists():
+            return cls(entries={}, path=path)
+        raw = json.loads(path.read_text())
+        return cls(entries={
+            address: AccountInfo(type=entry["type"], has_pubkey=entry["has_pubkey"], sequence=int(entry["sequence"]))
+            for address, entry in raw.items()
+        }, path=path)
+
+    def save(self, path: pathlib.Path | None = None) -> None:
+        path = path or self._path or config.ACCOUNTS_CACHE_PATH
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # The lock makes load, merge and replace one step, so a concurrent saver's entries are never overwritten
+        with _exclusive_lock(path=path):
+            merged = {**AccountCache.load(path=path)._entries, **self._entries}
+            raw = {address: {"type": info.type, "has_pubkey": info.has_pubkey, "sequence": str(info.sequence)}
+                   for address, info in sorted(merged.items())}
+            _write_atomic(path=path, raw=raw)
+
+    def is_final(self, address: str) -> bool:
+        cached = self._entries.get(address)
+        return address in self._fresh or (cached is not None and cached.has_pubkey)
+
+    def lookup(self, address: str) -> AccountInfo | None:
+        if self.is_final(address=address):
+            return self._entries.get(address)
+        info = read_account(address=address)
+        self.store(address=address, info=info)
+        return info
+
+    def store(self, address: str, info: AccountInfo | None) -> None:
+        """Record a read; a missing account (None) is remembered as read but stores no entry, as in `lookup`."""
+        self._fresh.add(address)
+        if info is not None:
+            self._entries[address] = info
+
+
+class StakingCache:
+    """Unbonding lookups keyed by address. A zero answer is final (nothing can create an unbonding entry after v35); a
+    positive one holds until its completion time, after which the STRD is liquid and the address is read again. `save`
+    merges: it overlays this process's entries on the file's, so concurrent writers only add to each other."""
+
+    def __init__(self, entries: dict[str, Staked], path: pathlib.Path | None = None) -> None:
+        self._entries = entries
+        self._path = path  # where `load` read from; `save` without a path writes back here
+
+    @classmethod
+    def load(cls, path: pathlib.Path = config.STAKING_CACHE_PATH) -> "StakingCache":
+        if not path.exists():
+            return cls(entries={}, path=path)
+        raw = json.loads(path.read_text())
+        return cls(entries={
+            address: Staked(ustrd=int(entry["ustrd"]), completes_at=entry["completes_at"])
+            for address, entry in raw.items()
+        }, path=path)
+
+    def save(self, path: pathlib.Path | None = None) -> None:
+        path = path or self._path or config.STAKING_CACHE_PATH
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with _exclusive_lock(path=path):
+            merged = {**StakingCache.load(path=path)._entries, **self._entries}
+            raw = {address: {"ustrd": str(staked.ustrd), "completes_at": staked.completes_at}
+                   for address, staked in sorted(merged.items())}
+            _write_atomic(path=path, raw=raw)
+
+    def is_final(self, address: str, now: datetime.datetime) -> bool:
+        cached = self._entries.get(address)
+        return cached is not None and (cached.ustrd == 0 or parse_chain_time(text=cached.completes_at) > now)
+
+    def lookup(self, address: str, now: datetime.datetime) -> Staked:
+        if self.is_final(address=address, now=now):
+            return self._entries[address]
+        staked = read_staked(address=address)
+        self._entries[address] = staked
+        return staked
+
+    def store(self, address: str, staked: Staked) -> None:
+        self._entries[address] = staked
+
+
+def read_account(address: str) -> AccountInfo | None:
+    """The address's auth account, or None when the chain has none."""
+    try:
+        body = chainio.rest_get(path=f"/cosmos/auth/v1beta1/accounts/{address}")
+    except chainio.NotFound:
+        return None
+    return account_info(account=body["account"])
+
+
+def account_info(account: dict) -> AccountInfo:
+    """Vesting, module and interchain accounts nest the base account."""
+    base = account.get("base_account") or account.get("base_vesting_account", {}).get("base_account") or account
+    return AccountInfo(
+        type=account["@type"], has_pubkey=bool(base.get("pub_key")), sequence=int(base.get("sequence", 0)))
+
+
+# ---- prefetch
+
+
+@dataclass(frozen=True)
+class PrefetchResult:
+    read: int  # addresses read from the chain
+    cached: int  # addresses whose entries were already final
+
+
+@dataclass(frozen=True)
+class _AddressRead:
+    address: str
+    read_account: bool
+    account: AccountInfo | None
+    staked: Staked | None  # None when the staking entry was already final
+
+
+def prefetch(
+    addresses: list[str],
+    accounts: AccountCache,
+    staking: StakingCache,
+    now: datetime.datetime,
+    workers: int,
+    on_progress: Callable[[int, int], None] | None = None,
+    read_staking: bool = True,
+) -> PrefetchResult:
+    """Fill both caches for every address whose entries are missing or not final, `workers` reads at a time, saving
+    every PREFETCH_SAVE_EVERY completed addresses and at the end. Workers only read; the caches are written here, on
+    the calling thread. `on_progress(done, total)` is called from the calling thread after each completed address.
+    `read_staking=False` skips the unbonding reads (the test plan never looks at them)."""
+    pending = [
+        address for address in addresses
+        if not (accounts.is_final(address=address) and (not read_staking or staking.is_final(address=address, now=now)))
+    ]
+    result = PrefetchResult(read=len(pending), cached=len(addresses) - len(pending))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [
+            pool.submit(_read_address, address=address, need_account=not accounts.is_final(address=address),
+                        need_staking=read_staking and not staking.is_final(address=address, now=now))
+            for address in pending
+        ]
+        try:
+            for done, future in enumerate(concurrent.futures.as_completed(futures), start=1):
+                _store_read(read=future.result(), accounts=accounts, staking=staking)
+                if on_progress is not None:
+                    on_progress(done, len(pending))
+                if done % config.PREFETCH_SAVE_EVERY == 0:
+                    accounts.save()
+                    staking.save()
+        finally:
+            # Keep what was read before an error: the next run resumes from the caches
+            for future in futures:
+                future.cancel()
+            accounts.save()
+            staking.save()
+    return result
+
+
+def _read_address(address: str, need_account: bool, need_staking: bool) -> _AddressRead:
+    account = read_account(address=address) if need_account else None
+    staked = read_staked(address=address) if need_staking else None
+    return _AddressRead(address=address, read_account=need_account, account=account, staked=staked)
+
+
+def _store_read(read: _AddressRead, accounts: AccountCache, staking: StakingCache) -> None:
+    if read.read_account:
+        accounts.store(address=read.address, info=read.account)
+    if read.staked is not None:
+        staking.store(address=read.address, staked=read.staked)
+
+
+def candidate_addresses(
+    balances: dict[str, dict[str, int]],
+    denoms: list[SweepDenom],
+    floor_usd: Decimal,
+    exclusions: dict[str, Exclusion],
+    inputs: SkipInputs,
+    test_address: str | None,
+) -> list[str]:
+    """The addresses `classify` would look up: at or above the floor (only the test address when given) and past
+    every rule that needs no account."""
+    by_denom = {sweep_denom.denom: sweep_denom for sweep_denom in denoms}
+    return [
+        address for address, coins in balances.items()
+        if (address == test_address if test_address is not None
+            else usd_value(balances=coins, denoms=by_denom) >= floor_usd)
+        and address not in exclusions
+        and skip_reason(address=address, account=None, inputs=inputs, exclusions=exclusions) == ACCOUNT_NOT_FOUND
+    ]
+
+
+# ---- classification
+
+
+def skip_reason(
+    address: str, account: AccountInfo | None, inputs: SkipInputs, exclusions: dict[str, Exclusion]
+) -> str | None:
+    """The chain's rules in the chain's order, then the builder's two. None means sweepable."""
+    if not addresses.is_stride_address(address=address):
+        return "address is not 20 bytes"
+    if address in config.PROTOCOL_ADDRESSES or address == config.SWEEP_OPERATOR:
+        return "protocol address"
+    if address in inputs.module_addresses:
+        return "blocked module address"
+    if address in inputs.escrows:
+        return "transfer escrow address"
+    if account is None:
+        return ACCOUNT_NOT_FOUND
+    if account.type == config.INTERCHAIN_ACCOUNT:
+        return "interchain account"
+    if account.type not in config.SWEEPABLE_ACCOUNT_TYPES:
+        return f"account type {account.type} is not sweepable"
+    if address in inputs.contracts:
+        return "wasm contract address"
+    exclusion = exclusions.get(address)
+    if exclusion is not None:
+        return f"excluded: {exclusion.section}: {exclusion.label}"
+    return None
+
+
+def classify(
+    denoms: list[SweepDenom],
+    balances: dict[str, dict[str, int]],
+    floor_usd: Decimal,
+    exclusions: dict[str, Exclusion],
+    inputs: SkipInputs,
+    accounts: AccountCache,
+    staking: StakingCache,
+    now: datetime.datetime,
+    test_address: str | None,
+    height: int,
+) -> HolderSet:
+    by_denom = {sweep_denom.denom: sweep_denom for sweep_denom in denoms}
+    holder_set = HolderSet(height=height, denoms=denoms, holders=[], excluded=[], skipped=[], below_floor=[])
+
+    # Deferral exists so a holder's STRD moves once, after unbonding. With ustrd off the list (--skip-denom ustrd)
+    # no STRD moves, so stakers are swept now like everyone else and their STRD waits for pass 2
+    sweeps_strd = config.STRD_DENOM in by_denom
+
+    for address, coins in balances.items():
+        if test_address is not None and address != test_address:
+            continue
+        usd = usd_value(balances=coins, denoms=by_denom)
+        if test_address is None and usd < floor_usd:
+            holder_set.below_floor.append(Holder(address=address, balances=coins, usd=usd, keyless=False))
+            continue
+
+        # Only a candidate above the floor costs a per-address read; the skip rules need its account
+        outcome = _account_or_skip_reason(address=address, inputs=inputs, exclusions=exclusions, accounts=accounts)
+        if isinstance(outcome, str):
+            target = holder_set.excluded if outcome.startswith("excluded:") else holder_set.skipped
+            target.append(Excluded(address=address, reason=outcome, usd=usd))
+            continue
+        account = outcome
+
+        # The chain moves SpendableCoin: a vesting account's locked part stays behind, and the floor applies to
+        # what moves
+        is_vesting = account.type in config.VESTING_ACCOUNT_TYPES
+        spendable = _spendable_part(address=address, coins=coins) if is_vesting else coins
+        spendable_usd = usd_value(balances=spendable, denoms=by_denom) if is_vesting else usd
+        locked = {
+            denom: coins[denom] - spendable.get(denom, 0) for denom in coins if coins[denom] > spendable.get(denom, 0)
+        } if is_vesting else {}
+        if is_vesting and (not spendable or (test_address is None and spendable_usd < floor_usd)):
+            holder_set.below_floor.append(
+                Holder(address=address, balances=spendable, usd=spendable_usd, keyless=False, locked=locked)
+            )
+            continue
+        holder = Holder(address=address, balances=spendable, usd=spendable_usd,
+                        keyless=not account.has_pubkey and account.sequence == 0, locked=locked)
+
+        # A holder with STRD still unbonding waits for pass 2 so its STRD moves once; the test plan must still run,
+        # and a plan that sends no STRD has nothing to hold back
+        staked = (
+            Staked(ustrd=0, completes_at=None)
+            if test_address is not None or not sweeps_strd
+            else staking.lookup(address=address, now=now)
+        )
+        if staked.ustrd > 0:
+            holder_set.deferred.append(Deferred(holder=holder, staked=staked))
+            continue
+        holder_set.holders.append(holder)
+
+    holder_set.holders.sort(key=lambda holder: holder.usd, reverse=True)
+    holder_set.below_floor.sort(key=lambda holder: holder.usd, reverse=True)
+    holder_set.deferred.sort(key=lambda entry: entry.holder.usd, reverse=True)
+    return holder_set
+
+
+def _account_or_skip_reason(
+    address: str, inputs: SkipInputs, exclusions: dict[str, Exclusion], accounts: AccountCache
+) -> AccountInfo | str:
+    """The skip reason, or the address's account when it is sweepable. The rules before the account lookup decide
+    without it (skip_reason with no account only reaches ACCOUNT_NOT_FOUND once they all pass), so the read is skipped
+    when one of them fires."""
+    reason = skip_reason(address=address, account=None, inputs=inputs, exclusions=exclusions)
+    if reason != ACCOUNT_NOT_FOUND:
+        return reason
+
+    account = accounts.lookup(address=address)
+    if account is None:
+        return ACCOUNT_NOT_FOUND
+    return skip_reason(address=address, account=account, inputs=inputs, exclusions=exclusions) or account
+
+
+def _spendable_part(address: str, coins: dict[str, int]) -> dict[str, int]:
+    spendable = spendable_balances(address=address)
+    return {denom: spendable.get(denom, 0) for denom in coins if spendable.get(denom, 0) > 0}
+
+
+def skipping_denoms(denoms: list[SweepDenom], skip_denoms: frozenset[str]) -> list[SweepDenom]:
+    """The sweep denoms without the operator's `--skip-denom` ones (a denom the destination rate-limits, say). A
+    skipped denom is neither valued nor swept; its holders are planned again once it is back on the list."""
+    unknown = skip_denoms - {sweep_denom.denom for sweep_denom in denoms}
+    if unknown:
+        raise DenomError(f"--skip-denom {', '.join(sorted(unknown))}: not a sweep denom")
+    return [sweep_denom for sweep_denom in denoms if sweep_denom.denom not in skip_denoms]
+
+
+def read_holder_set(
+    floor_usd: Decimal,
+    exclusions: dict[str, Exclusion],
+    accounts: AccountCache,
+    staking: StakingCache,
+    test_address: str | None,
+    workers: int = config.READ_WORKERS,
+    skip_denoms: frozenset[str] = frozenset(),
+) -> HolderSet:
+    height = chainio.latest_height()
+    denoms = skipping_denoms(denoms=resolve_denoms(), skip_denoms=skip_denoms)
+    balances = read_balances(denoms=denoms)
+    inputs = read_skip_inputs()
+
+    # Answer the per-address questions in parallel so classify's lookups are cache hits
+    now = chainio.now()
+    candidates = candidate_addresses(balances=balances, denoms=denoms, floor_usd=floor_usd, exclusions=exclusions,
+                                     inputs=inputs, test_address=test_address)
+    prefetch(addresses=candidates, accounts=accounts, staking=staking, now=now, workers=workers,
+             read_staking=test_address is None and config.STRD_DENOM in {sweep_denom.denom for sweep_denom in denoms})
+
+    return classify(denoms=denoms, balances=balances, floor_usd=floor_usd, exclusions=exclusions, inputs=inputs,
+                    accounts=accounts, staking=staking, now=now, test_address=test_address,
+                    height=height)

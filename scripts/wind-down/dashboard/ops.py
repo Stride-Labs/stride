@@ -5,6 +5,7 @@ with sorted keys so each one is a one-line diff, and the file is committed like 
 """
 
 import datetime
+import zoneinfo
 import json
 import os
 import pathlib
@@ -46,9 +47,12 @@ def load_status(status_path: pathlib.Path | None = None) -> dict[str, Any]:
     return _read_json(path=status_path or STATUS_PATH)
 
 
+PLAN_TIMEZONE = zoneinfo.ZoneInfo("America/New_York")
+
+
 def today() -> str:
-    """The UTC date, which is the clock the plan's blocks are written in."""
-    return datetime.datetime.now(datetime.UTC).date().isoformat()
+    """The US Eastern date, the clock the plan's blocks are written in (the team works in ET)."""
+    return datetime.datetime.now(PLAN_TIMEZONE).date().isoformat()
 
 
 def step_ids(plan: dict[str, Any]) -> list[str]:

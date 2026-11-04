@@ -14,7 +14,7 @@ shares (the pool's LP token) instead of native, and those shares still exit for 
 stTokens in a pool are not all redeemed ones: every pool's alloyed supply not held by the
 vault (the vault holds the shares its own funding joins minted) is a remaining claim and is
 added 1:1 to that pool's native requirement (one share is one native base unit; the pool gate
-check_transmuter_pool.py asserts the alloyed and native normalization factors are equal).
+dashboard's Pools tab checks the alloyed and native normalization factors are equal).
 That term cannot see a join with the NATIVE token into a route pool (possible only while native
 is not marked corrupted, spec §8): the over-funded bound below is unchanged, so the route reads
 as over-funded by the joined amount until the joiner exits or redemptions pay it out, and
@@ -74,17 +74,17 @@ ST_DENOM_PREFIX = "st"
 # Multi-channel rows represent distinct vouchers; preserve every listed in-scope channel.
 REQUIRED_ROUTES: dict[str, frozenset[str]] = {
     "stuatom": frozenset({
-        "channel-0", "channel-6", "channel-11", "channel-40", "channel-47", "channel-69", "channel-123", "channel-148",
+        "channel-0", "channel-6", "channel-40", "channel-52", "channel-123", "channel-148",
     }),
     "staISLM": frozenset({"channel-240"}),
-    "stutia": frozenset({"channel-148", "channel-123", "channel-47", "channel-0", "channel-197", "channel-162"}),
+    "stutia": frozenset({"channel-148", "channel-123", "channel-0", "channel-197", "channel-162"}),
     "stinj": frozenset({"channel-6", "channel-40", "channel-0"}),
     "stuosmo": frozenset({"channel-0", "channel-40"}),
-    "stuband": frozenset({"channel-258"}),
-    "stadydx": frozenset({"channel-0", "channel-160"}),
-    "stuluna": frozenset({"channel-13", "channel-52", "channel-47"}),
-    "stusaga": frozenset({"channel-213"}),
-    "stujuno": frozenset({"channel-24"}),
+    "stuband": frozenset({"channel-0"}),
+    "stadydx": frozenset({"channel-0"}),
+    "stuluna": frozenset({"channel-52"}),
+    "stusaga": frozenset(),
+    "stujuno": frozenset(),
     "stusomm": frozenset(),
 }
 

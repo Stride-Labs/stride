@@ -369,13 +369,166 @@ class LiveTestPickTest(unittest.TestCase):
                 return []
             raise json.JSONDecodeError("bad", "", 0)
 
-        with mock.patch.object(validators.chain, "rest_get_all_pages", fake_get_all_pages):
+        with mock.patch.object(validators.chain, "rest_get_all_pages", fake_get_all_pages), mock.patch.object(
+            validators.chain, "rest_get", side_effect=urllib.error.URLError("params down")
+        ):
             entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
 
         json.dumps(entry)
         self.assertEqual(entry["live_test_pick"], {"address": OPERATOR_B, "moniker": f"name-{OPERATOR_B}", "recorded": str(2 * WHOLE)})
         self.assertEqual(entry["live_test_next"]["address"], OPERATOR_A)
         self.assertIsNone(entry["live_test_reason"])
+
+
+UNBONDING_SECONDS = 1_814_400.0  # 21 days
+# UPGRADE_TIME 2026-10-12T12:00:00Z + 21 days
+CUTOFF = "2026-11-02T12:00:00Z"
+
+
+def unbonding(count: int, latest_completion: str) -> validators.UnbondingSummary:
+    return validators.UnbondingSummary(count=count, latest_completion=latest_completion)
+
+
+class DrainedCountTest(unittest.TestCase):
+    def count(
+        self,
+        recorded: dict[str, int],
+        actual: dict[str, int],
+        entries: dict[str, validators.UnbondingSummary] | None,
+        unbonding_seconds: float | None = UNBONDING_SECONDS,
+        decimals: int = 6,
+    ) -> int | None:
+        rows = validators.build_rows(
+            stride_validators=[stride_validator(address=address, delegation=amount) for address, amount in recorded.items()],
+            delegations=actual,
+            host_validators=None,
+            unbonding_entries=None,
+        )
+        return validators.drained_count(
+            rows=rows, unbonding=entries, unbonding_seconds=unbonding_seconds, decimals=decimals
+        )
+
+    def test_a_buffered_drain_leaves_dust_and_still_counts_but_a_whole_token_does_not(self) -> None:
+        late = unbonding(count=1, latest_completion="2026-11-05T00:00:00Z")
+
+        count = self.count(
+            recorded={OPERATOR_A: 1, OPERATOR_B: 999_999, OPERATOR_C: 1_000_000, OPERATOR_D: 0},
+            actual={OPERATOR_A: 1, OPERATOR_B: 999_999, OPERATOR_C: 0, OPERATOR_D: 1_000_000},
+            entries={OPERATOR_A: late, OPERATOR_B: late, OPERATOR_C: late, OPERATOR_D: late},
+        )
+
+        # C is still recorded at a whole token, D still delegated at a whole token.
+        self.assertEqual(count, 2)
+
+    def test_the_whole_token_threshold_follows_the_zone_decimals(self) -> None:
+        late = unbonding(count=1, latest_completion="2026-11-05T00:00:00Z")
+        entries = {OPERATOR_A: late}
+
+        self.assertEqual(self.count(recorded={OPERATOR_A: 10**17}, actual={}, entries=entries, decimals=18), 1)
+        self.assertEqual(self.count(recorded={OPERATOR_A: 10**18}, actual={}, entries=entries, decimals=18), 0)
+
+    def test_counts_only_validators_below_a_whole_token_with_a_post_upgrade_entry(self) -> None:
+        count = self.count(
+            recorded={OPERATOR_A: 0, OPERATOR_B: 0, OPERATOR_C: 0, OPERATOR_D: 5_000_000},
+            actual={OPERATOR_C: 7_000_000},
+            entries={
+                OPERATOR_A: unbonding(count=1, latest_completion="2026-11-02T12:00:01Z"),  # one second after the cutoff
+                OPERATOR_B: unbonding(count=2, latest_completion="2026-11-02T11:59:59Z"),  # pre-upgrade entries only
+                OPERATOR_C: unbonding(count=1, latest_completion="2026-11-05T00:00:00Z"),  # still delegated on the host (whole tokens)
+                OPERATOR_D: unbonding(count=1, latest_completion="2026-11-05T00:00:00Z"),  # still recorded by Stride (whole tokens)
+            },
+        )
+
+        self.assertEqual(count, 1)
+
+    def test_an_entry_completing_exactly_at_the_cutoff_predates_the_upgrade(self) -> None:
+        count = self.count(
+            recorded={OPERATOR_A: 0}, actual={}, entries={OPERATOR_A: unbonding(count=1, latest_completion=CUTOFF)}
+        )
+
+        self.assertEqual(count, 0)
+
+    def test_the_cutoff_moves_with_the_hosts_unbonding_time(self) -> None:
+        entries = {OPERATOR_A: unbonding(count=1, latest_completion="2026-10-20T00:00:00Z")}
+
+        self.assertEqual(self.count(recorded={OPERATOR_A: 0}, actual={}, entries=entries, unbonding_seconds=7 * 86400), 1)
+        self.assertEqual(self.count(recorded={OPERATOR_A: 0}, actual={}, entries=entries), 0)
+
+    def test_a_validator_without_entries_is_not_drained(self) -> None:
+        self.assertEqual(self.count(recorded={OPERATOR_A: 0}, actual={}, entries={}), 0)
+
+    def test_nullable_when_the_entries_or_the_unbonding_time_lookup_failed(self) -> None:
+        entries = {OPERATOR_A: unbonding(count=1, latest_completion="2027-01-01T00:00:00Z")}
+
+        self.assertIsNone(self.count(recorded={OPERATOR_A: 0}, actual={}, entries=None))
+        self.assertIsNone(self.count(recorded={OPERATOR_A: 0}, actual={}, entries=entries, unbonding_seconds=None))
+
+    def test_collect_zone_reports_the_count_and_keeps_unbonding_entries_as_an_int(self) -> None:
+        zone = config.ZONES[0]
+        stride_zone = {
+            "chain_id": zone.chain_id,
+            "delegation_ica_address": "ica",
+            "validators": [
+                {"address": address, "name": address, "delegation": "0", "weight": "5", "shares_to_tokens_rate": "1.0",
+                 "slash_query_in_progress": False, "delegation_changes_in_progress": "0"}
+                for address in (OPERATOR_A, OPERATOR_B)
+            ],
+        }
+
+        def fake_get_all_pages(chain: object, path: str, key: str, params: object = None, max_items: object = None) -> list[object]:
+            if key == "unbonding_responses":
+                return [
+                    {"validator_address": OPERATOR_A, "entries": [
+                        {"completion_time": "2026-10-30T00:00:00.123456789Z"}, {"completion_time": "2026-11-03T09:00:00.5Z"}]},
+                    {"validator_address": OPERATOR_B, "entries": [{"completion_time": "2026-10-30T00:00:00Z"}]},
+                ]
+            if key == "delegation_responses":
+                return []
+            raise json.JSONDecodeError("bad", "", 0)
+
+        def fake_rest_get(chain: object, path: str, params: object = None) -> dict[str, object]:
+            assert path == validators.STAKING_PARAMS_PATH
+            return {"params": {"unbonding_time": "1814400s"}}
+
+        with mock.patch.object(validators.chain, "rest_get_all_pages", fake_get_all_pages), mock.patch.object(
+            validators.chain, "rest_get", fake_rest_get
+        ):
+            entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
+
+        self.assertEqual(entry["drained_count"], 1)
+        self.assertEqual(entry["funded_count"], 0)
+        self.assertEqual({row["address"]: row["unbonding_entries"] for row in entry["validators"]}, {OPERATOR_A: 2, OPERATOR_B: 1})
+
+    def test_collect_zone_counts_funded_validators_by_the_whole_token_threshold(self) -> None:
+        zone = config.ZONES[0]
+        whole_token = 10**zone.decimals
+        stride_zone = {
+            "chain_id": zone.chain_id,
+            "delegation_ica_address": "ica",
+            "validators": [
+                {"address": address, "name": address, "delegation": str(amount), "weight": "5", "shares_to_tokens_rate": "1.0",
+                 "slash_query_in_progress": False, "delegation_changes_in_progress": "0"}
+                for address, amount in ((OPERATOR_A, whole_token), (OPERATOR_B, whole_token - 1), (OPERATOR_C, 5 * whole_token))
+            ],
+        }
+
+        with mock.patch.object(validators.chain, "rest_get_all_pages", return_value=[]), mock.patch.object(
+            validators.chain, "rest_get", side_effect=urllib.error.URLError("params down")
+        ):
+            entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
+
+        self.assertEqual(entry["funded_count"], 2)
+
+    def test_collect_zone_has_a_null_count_when_the_params_lookup_fails(self) -> None:
+        zone = config.ZONES[0]
+        stride_zone = {"chain_id": zone.chain_id, "delegation_ica_address": "ica", "validators": []}
+
+        with mock.patch.object(validators.chain, "rest_get_all_pages", return_value=[]), mock.patch.object(
+            validators.chain, "rest_get", side_effect=urllib.error.URLError("params down")
+        ):
+            entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
+
+        self.assertIsNone(entry["drained_count"])
 
 
 class SummarizeTest(unittest.TestCase):
@@ -446,7 +599,9 @@ class CollectTest(unittest.TestCase):
                          "jailed": False, "tokens": "3", "delegator_shares": "4.000000000000000000"}]
             raise json.JSONDecodeError("bad", "", 0)  # unbonding lookup fails
 
-        with mock.patch.object(validators.chain, "rest_get_all_pages", fake_get_all_pages):
+        with mock.patch.object(validators.chain, "rest_get_all_pages", fake_get_all_pages), mock.patch.object(
+            validators.chain, "rest_get", side_effect=urllib.error.URLError("params down")
+        ):
             entry = validators._collect_zone(zone=zone, stride_zone=stride_zone)
 
         json.dumps(entry)
@@ -457,6 +612,7 @@ class CollectTest(unittest.TestCase):
         self.assertEqual((row["moniker"], row["diff"], row["severity"]), ("Alpha", "1", "amber"))
         self.assertEqual((row["chain_rate"], row["rate_difference"]), ("0.750000000000000000", "0.250000000000000000"))
         self.assertIsNone(row["unbonding_entries"])
+        self.assertIsNone(entry["drained_count"])
 
 
 class StaketiaTest(unittest.TestCase):
