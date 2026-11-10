@@ -474,8 +474,15 @@ def fake_pools(**overrides: object) -> dict[str, object]:
 
 
 def expected_commands(
-    generate: str, stem: str, binary: str = "strided", address: str = ADDRESS, chain_id: str = "stride-1", node: str = STRIDE_NODE
+    generate: str,
+    stem: str,
+    binary: str = "strided",
+    address: str = ADDRESS,
+    chain_id: str = "stride-1",
+    node: str = STRIDE_NODE,
+    second: tuple[str, str] = ("Aidan", "FA5"),
 ) -> list[tuple[str, str]]:
+    backup = ("Riley", "FR5") if second == ("Aidan", "FA5") else ("Aidan", "FA5")
     return [
         ("anyone", generate),
         *(
@@ -484,11 +491,11 @@ def expected_commands(
                 f"{binary} tx sign {stem}.unsigned.json --multisig {address} --from {key} "
                 f"--chain-id {chain_id} --node {node} \\\n  --output-document {stem}.{key}.json",
             )
-            for tag, key in (("Sam", "FS5"), ("Aidan", "FA5"), ("Riley", "FR5"))
+            for tag, key in (("Sam", "FS5"), second, backup)
         ),
         (
             "Sam",
-            f"{binary} tx multisign {stem}.unsigned.json F5 {stem}.FS5.json ~/Downloads/{stem.rsplit('/', 1)[-1]}.FA5.json "
+            f"{binary} tx multisign {stem}.unsigned.json F5 {stem}.FS5.json ~/Downloads/{stem.rsplit('/', 1)[-1]}.{second[1]}.json "
             f"--chain-id {chain_id} --node {node} --output-document {stem}.signed.json\n"
             f"{binary} tx broadcast {stem}.signed.json --node {node} --broadcast-mode sync",
         ),
@@ -657,7 +664,7 @@ COMBINED_FUND_TITLES = [
     "Combined 9 · Full join + close, ready now",
     "Combined 10 · Full join + close, after the next sweep",
 ]
-GROUP_HEADINGS = (COSMOS, "ready now", "after the next sweep: juno-1, sommelier-3")
+GROUP_HEADINGS = (COSMOS, DYDX, "after the next sweep")  # the zones with a tx to send; a group with none, its title
 SETTLED_RECORDS = {
     "pending_before_claimable": "0",
     "user_redemption_records": "0",
@@ -815,7 +822,9 @@ class CombinedFundingTest(unittest.TestCase):
         generate = "\n".join([f"rm -f {stem}.unsigned.json", *(member.commands[0].text for member in members), merge])
 
         self.assertEqual(len(members), 6)
-        self.assertEqual(command_pairs(test_tx), expected_commands(generate, stem=stem))
+        # Riley is the second signer on the combined txs, Aidan the backup.
+        self.assertEqual(command_pairs(test_tx), expected_commands(generate, stem=stem, second=("Riley", "FR5")))
+        self.assertEqual([command.label.split(" (")[0] for command in test_tx.commands[1:4]], ["Sign", "Sign", "Backup signer"])
         self.assertEqual(test_tx.commands[0].label, "Write each member's unsigned tx and merge the 6 into one (--gas 3600000, fee 18000ustrd)")
         self.assertNotIn("capped", test_tx.commands[0].label)
 

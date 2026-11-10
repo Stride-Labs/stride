@@ -8,8 +8,8 @@ tx is done end to end, one at a time, online (no pre-assigned sequences): every 
 multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous per
 `chain_id` in `txs`, in the order they go out.
 The combined-funding set is the exception: ten cards, each with its own chain-qualified chain_id ("Stride · all zones",
-then per stage one card for each zone group: "Stride · full transfer · cosmoshub-4", "Stride · full transfer · ready
-now", "Stride · full transfer · after the next sweep: ...", then the same for the two Osmosis stages) so the tab
+then per stage one card for each zone group, named by its zones: "Stride · full transfer · cosmoshub-4", "Stride ·
+full transfer · dydx-mainnet-1, injective-1, ...", then the same for the two Osmosis stages) so the tab
 shows them as ten headings in order; each merges the unsigned txs of the per-zone transfer / pool txs it bundles.
 """
 
@@ -256,6 +256,7 @@ AIDAN = Signer(tag="Aidan", key="FA5")
 RILEY = Signer(tag="Riley", key="FR5")
 SIGNERS = (SAM, AIDAN, RILEY)
 DEFAULT_SIGNERS = (SAM, AIDAN)  # any two of the three suffice
+COMBINED_SIGNERS = (SAM, RILEY)  # Riley is the second signer for the combined funding txs
 BROADCASTER = SAM  # collects the other signature (it arrives in ~/Downloads), multisigns and broadcasts
 DOWNLOADS = "~/Downloads"
 
@@ -642,23 +643,20 @@ def _all_ica_transfer_txs(funds_data: dict[str, Any] | None) -> list[MultisigTx]
 
 @dataclass(frozen=True)
 class _ZoneGroup:
-    title: str  # in the card title, after the stage
-    heading: str  # in the card's chain_id, after the chain
+    title: str  # in the card title, after the stage; the heading names the group's zones instead
     slug: str
     includes: Callable[[str], bool]  # by chain_id
 
 
 _ZONE_GROUPS = (
-    _ZoneGroup(title="Hub", heading=HUB_CHAIN_ID, slug="hub", includes=lambda chain_id: chain_id == HUB_CHAIN_ID),
+    _ZoneGroup(title="Hub", slug="hub", includes=lambda chain_id: chain_id == HUB_CHAIN_ID),
     _ZoneGroup(
         title="ready now",
-        heading="ready now",
         slug="ready",
         includes=lambda chain_id: chain_id != HUB_CHAIN_ID and chain_id not in AFTER_SWEEP_CHAIN_IDS,
     ),
     _ZoneGroup(
         title="after the next sweep",
-        heading=f"after the next sweep: {', '.join(AFTER_SWEEP_CHAIN_IDS)}",
         slug="after-sweep",
         includes=lambda chain_id: chain_id in AFTER_SWEEP_CHAIN_IDS,
     ),
@@ -689,12 +687,13 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
         _CombinedStage(stage=TxStage.CLOSE, title="Full join + close", chain="Osmosis", txs=pool_txs, tools=OSMOSIS_TOOLS),
     )
     pairs = [(stage, group) for stage in stages for group in _ZONE_GROUPS]
+    headings = {group.slug: _group_heading(group=group, txs=[*transfers, *pool_txs]) for group in _ZONE_GROUPS}
     later_cards = [
         _combined_tx(
             number=number,
             slug=f"{stage.stage}-{group.slug}",
             title=f"{stage.title}, {group.title}",
-            chain_id=f"{stage.chain} · {stage.title.lower()} · {group.heading}",
+            chain_id=f"{stage.chain} · {stage.title.lower()} · {headings[group.slug]}",
             members=_members(txs=stage.txs, stage=stage.stage, group=group),
             tools=stage.tools,
         )
@@ -711,6 +710,7 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
             f"{' and '.join(AFTER_SWEEP_CHAIN_IDS)} (4, 7, 10) follow the same order after the next sweep has landed and the claims bot has paid their redeemers.",
             "Each tx is a pure bundle of the per-zone txs below: their messages and amounts are unchanged, and generating one runs each member's own generate step and merges the files.",
             "A combined tx is ready only when every member is. Otherwise it names the first member that is not and why.",
+            "Riley signs second on these (the combine step uses Sam's and Riley's signatures); Aidan is the backup.",
             "A DELEGATION, WITHDRAWAL or REDEMPTION full transfer is not ready while its zone has records waiting on the sweep, user redemption records or claims in flight.",
             "Left out: done txs, transfers of an ICA below the test amount, foreign-denom transfers, and a zone with no pool to fund.",
             f"Gas is the members' sum, capped at {COMBINED_GAS_CAP:,} (Osmosis nodes reject a tx above 30M gas wanted); the fee is the gas at 0.005 ustrd (Stride) or {OSMOSIS_GAS_PRICE} (Osmosis).",
@@ -719,6 +719,14 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
         ],
         txs=[test_transfer, *later_cards],
     )
+
+
+def _group_heading(group: _ZoneGroup, txs: list[MultisigTx]) -> str:
+    """The group's zones with a member left to send, in zone order: one heading for all three of its stage cards.
+    Foreign-denom transfers are never members, so a zone holding only those (osmosis-1's spam) is not named."""
+    sending = {tx.chain_id for tx in txs if tx.stage != TxStage.FOREIGN_TRANSFER and not tx.done and not tx.skip}
+    chain_ids = [zone.chain_id for zone in config.ZONES if group.includes(zone.chain_id) and zone.chain_id in sending]
+    return ", ".join(chain_ids) or group.title
 
 
 def _members(txs: list[MultisigTx], stage: TxStage, group: _ZoneGroup | None) -> list[MultisigTx]:
@@ -776,6 +784,7 @@ def _combined_commands(members: list[MultisigTx], stem: str, tools: ChainTools) 
         file_stem=stem,
         tools=tools,
         generate_label=f"Write each member's unsigned tx and merge the {len(members)} into one (--gas {gas}{capped}, fee {fee}{denom})",
+        signers=COMBINED_SIGNERS,
     )
 
 
@@ -1650,20 +1659,22 @@ def _commands(
     file_stem: str,
     tools: ChainTools = STRIDE_TOOLS,
     generate_label: str = "Write the validators file and the unsigned tx",
+    signers: tuple[Signer, ...] = DEFAULT_SIGNERS,
 ) -> list[Command]:
     unsigned = f"{file_stem}.unsigned.json"
+    backups = tuple(signer for signer in SIGNERS if signer not in signers)
     sign_commands = [
         Command(
             tag=signer.tag,
-            label=_sign_label(signer=signer, keyring_note=tools.keyring_note),
+            label=_sign_label(signer=signer, signers=signers, keyring_note=tools.keyring_note),
             text=(
                 f"{tools.binary} tx sign {unsigned} --multisig {tools.multisig_address} --from {signer.key} "
                 f"--chain-id {tools.chain_id} --node {tools.node} \\\n  --output-document {_signature_file(file_stem=file_stem, signer=signer)}"
             ),
         )
-        for signer in SIGNERS
+        for signer in (*signers, *backups)
     ]
-    signature_files = " ".join(_signature_path(file_stem=file_stem, signer=signer) for signer in DEFAULT_SIGNERS)
+    signature_files = " ".join(_signature_path(file_stem=file_stem, signer=signer) for signer in signers)
     combine = Command(
         tag=BROADCASTER.tag,
         label="Combine and broadcast",
@@ -1678,10 +1689,10 @@ def _commands(
     return [Command(tag=ANYONE, label=generate_label, text=generate), *sign_commands, combine]
 
 
-def _sign_label(signer: Signer, keyring_note: str = KEYRING_NOTE) -> str:
+def _sign_label(signer: Signer, signers: tuple[Signer, ...], keyring_note: str = KEYRING_NOTE) -> str:
     if signer == SAM:
         return f"Sign (online: the multisig's account number and sequence are looked up; {keyring_note})"
-    if signer in DEFAULT_SIGNERS:
+    if signer in signers:
         return f"Sign ({keyring_note})"
     return f"Backup signer (any two signatures suffice; {keyring_note})"
 
