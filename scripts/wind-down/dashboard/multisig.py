@@ -69,6 +69,14 @@ HUB_CHAIN_ID = "cosmoshub-4"  # the combined funding txs give the Hub its own fu
 # Their stale light clients held their last records' sweep past 2026-11-10; updated at 16:18 UTC, they sweep at the
 # 19:00 UTC stride epoch, so their combined cards go out after it and after the claims bot.
 AFTER_SWEEP_CHAIN_IDS = ("juno-1", "sommelier-3")
+# The combined funding cards already broadcast, by card number: their tx hash.
+COMBINED_SENT = {
+    1: "228629D094ECE618240E5F8341B3154A874755B967E34C31C561F333314CAE6D",
+    2: "F219C060EC3747978A05531E7B9F3F234F4BCF2E91D5BCFBFA70136F6C593154",
+    3: "51E95E1D6DF4D5C323A2A96BC9327F8FD929A57FE195FBEBB34787F3472E7A3F",
+    5: "43FE5F2483851FEB3139916EB7013C98D84E61FC7A43A949B219BF5379EEC8E9",
+    6: "57CFAF73EB677DB7100C6B3DDDDDF899DD01A7370A4AAD9FA1C28AF2386DB0F2",
+}
 COMBINED_GAS_CAP = 25_000_000  # Osmosis nodes reject a tx above 30M gas wanted by default (max-gas-wanted-per-tx)
 ONE_AT_A_TIME = "One tx at a time: generate, two signatures, multisign, broadcast, then confirm it landed before the next."
 
@@ -212,7 +220,10 @@ DRAIN_RETRIES = (
 
 
 # Sets whose every tx has landed (2026-10-20): each card stays for the record as done, with nothing to copy.
-COMPLETED_SET_IDS = frozenset({"slash-queries", "validator-weights", "live-test-undelegate", "full-drain"})
+# ica-transfers and pool-funding: every remaining zone goes through the combined-funding set instead.
+COMPLETED_SET_IDS = frozenset(
+    {"slash-queries", "validator-weights", "live-test-undelegate", "full-drain", "ica-transfers", "pool-funding"}
+)
 # Zones whose ICA transfers have all landed in the vault (haqq 2026-10-20): their cards stay as done, nothing to copy.
 COMPLETED_TRANSFER_ZONES = frozenset({"haqq_11235-1"})
 
@@ -714,7 +725,6 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
             "A DELEGATION, WITHDRAWAL or REDEMPTION full transfer is not ready while its zone has records waiting on the sweep, user redemption records or claims in flight.",
             "Left out: done txs, transfers of an ICA below the test amount, foreign-denom transfers, and a zone with no pool to fund.",
             f"Gas is the members' sum, capped at {COMBINED_GAS_CAP:,} (Osmosis nodes reject a tx above 30M gas wanted); the fee is the gas at 0.005 ustrd (Stride) or {OSMOSIS_GAS_PRICE} (Osmosis).",
-            "The per-zone sets below stay as the fallback for a tx the bundle holds back for its own reason; the records hold applies to them too.",
             ONE_AT_A_TIME,
         ],
         txs=[test_transfer, *later_cards],
@@ -742,6 +752,10 @@ def _members(txs: list[MultisigTx], stage: TxStage, group: _ZoneGroup | None) ->
 def _combined_tx(number: int, slug: str, title: str, chain_id: str, members: list[MultisigTx], tools: ChainTools) -> MultisigTx:
     """The members' unsigned txs merged into one, so a single signing round covers them all."""
     full_title = f"Combined {number} · {title}"
+    if number in COMBINED_SENT:
+        return MultisigTx(
+            chain_id=chain_id, title=f"{full_title} · sent {COMBINED_SENT[number]}", ready=False, reason=None, commands=[], files=[], done=True
+        )
     if not members:
         return MultisigTx(
             chain_id=chain_id, title=f"{full_title} · nothing left to send", ready=False, reason=None, commands=[], files=[], done=True

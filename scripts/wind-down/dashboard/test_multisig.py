@@ -297,7 +297,7 @@ class DrainRetryTest(unittest.TestCase):
 
 
 class CompletedSetsTest(unittest.TestCase):
-    COMPLETED = {"slash-queries", "validator-weights", "live-test-undelegate", "full-drain"}
+    COMPLETED = {"slash-queries", "validator-weights", "live-test-undelegate", "full-drain", "ica-transfers", "pool-funding"}
 
     def test_every_tx_of_a_completed_set_is_a_done_card_and_the_other_sets_are_untouched(self) -> None:
         with mock.patch.object(multisig, "COMPLETED_SET_IDS", frozenset(self.COMPLETED)):
@@ -675,7 +675,8 @@ SETTLED_RECORDS = {
 
 
 def combined_txs(funds_data: dict[str, object] | None, pools_data: dict[str, object] | None) -> list[multisig.MultisigTx]:
-    return sets_by_id(fake_snapshot(), funds_data=funds_data, pools_data=pools_data)["combined-funding"].txs
+    with mock.patch.object(multisig, "COMBINED_SENT", {}):
+        return sets_by_id(fake_snapshot(), funds_data=funds_data, pools_data=pools_data)["combined-funding"].txs
 
 
 def settled_funds() -> dict[str, object]:
@@ -879,6 +880,13 @@ class CombinedFundingTest(unittest.TestCase):
 
         self.assertEqual(others_close.members, [f"{DYDX} pool-funding"])
         self.assertEqual((others_close.ready, others_close.reason), (False, f"{DYDX} · pool funding: zone missing from the Pools snapshot"))
+
+    def test_a_sent_card_is_done_with_its_hash(self) -> None:
+        with mock.patch.object(multisig, "COMBINED_SENT", {1: "ABC123"}):
+            test_tx = sets_by_id(fake_snapshot(), funds_data=settled_funds(), pools_data=settled_pools())["combined-funding"].txs[0]
+
+        self.assertEqual((test_tx.done, test_tx.commands), (True, []))
+        self.assertEqual(test_tx.title, "Combined 1 · Test transfer, all zones · sent ABC123")
 
     def test_no_members_is_a_done_card_with_no_commands(self) -> None:
         quiet_funds = {"zones": [{"chain_id": zone.chain_id, "host_denom": "uhost", "ica_balances": {}} for zone in config.ZONES]}

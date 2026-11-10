@@ -10,7 +10,7 @@ const WHO_CLASS = { Sam: 'who-sam', Aidan: 'who-aidan', Riley: 'who-riley' }; //
 let lastBody = ''; // the raw /api/multisig answer last drawn, so an unchanged poll does not re-render
 let drawn = false; // the first draw honours the `#multisig/<set-id>[/<zone>]` hash by scrolling to that set or zone
 // Sets whose work is finished start collapsed; the user can still open them, and a `#multisig/<set-id>` link does.
-const DONE_SETS = ['live-test-undelegate', 'full-drain', 'staketia-claim-balance'];
+const DONE_SETS = ['live-test-undelegate', 'full-drain', 'staketia-claim-balance', 'ica-transfers', 'pool-funding'];
 const closedSets = new Set(DONE_SETS); // set ids the user collapsed, so a redraw keeps them collapsed
 const openCards = new Set(); // tx cards the user opened, keyed `<set-id>/<chain_id>/<index>`
 const shownCommands = new Set(); // command rows whose text is shown, keyed `<card key>/<row index>`

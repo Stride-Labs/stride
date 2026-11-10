@@ -449,6 +449,11 @@
     "by": "sam",
     "done": true
   },
+  "strd-unbonding-complete": {
+    "at": "2026-11-10T17:26:04.693475+00:00",
+    "by": "sam",
+    "done": true
+  },
   "sweep-announce": {
     "at": "2026-10-21T01:23:26.955451+00:00",
     "by": "sam",
