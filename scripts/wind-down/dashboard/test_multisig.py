@@ -202,7 +202,7 @@ class LiveTestCommandsTest(unittest.TestCase):
         for tx_set in all_sets.values():
             binary, address = ("osmosisd", VAULT) if tx_set.id in ("pool-funding", "pool-creation") else ("strided", ADDRESS)
             for position, tx in enumerate(tx_set.txs):
-                if tx_set.id == "combined-funding" and position >= 3:  # txs 4-6 are on Osmosis
+                if tx_set.id == "combined-funding" and position >= 4:  # txs 5-10 are on Osmosis
                     binary, address = "osmosisd", VAULT
                 sign_commands = [command for command in tx.commands if "tx sign" in command.text]
 
@@ -399,6 +399,7 @@ def fake_funds() -> dict[str, object]:
                     "DELEGATION": {"uatom": "90000000", "ibc/ZEROED": "0"},
                     "REDEMPTION": {},
                 },
+                "records": SETTLED_RECORDS,
             },
             {
                 "chain_id": DYDX,
@@ -409,6 +410,7 @@ def fake_funds() -> dict[str, object]:
                     "DELEGATION": {"adydx": "1000000000000000000"},
                     "REDEMPTION": {"adydx": "1000000000000000000"},
                 },
+                "records": SETTLED_RECORDS,
             },
         ]
     }
@@ -579,7 +581,7 @@ class IcaTransfersTest(unittest.TestCase):
         )
 
     def test_exactly_the_test_amount_is_ready(self) -> None:
-        data = {"zones": [{"chain_id": COSMOS, "host_denom": "uatom", "ica_balances": {ica: {"uatom": "1000000"} for ica in ("FEE", "WITHDRAWAL", "DELEGATION", "REDEMPTION")}}]}
+        data = {"zones": [{"chain_id": COSMOS, "host_denom": "uatom", "ica_balances": {ica: {"uatom": "1000000"} for ica in ("FEE", "WITHDRAWAL", "DELEGATION", "REDEMPTION")}, "records": SETTLED_RECORDS}]}
 
         self.assertTrue(all(tx.ready for tx in transfer_txs(COSMOS, funds_data=data)))
 
@@ -632,7 +634,7 @@ class IcaTransfersTest(unittest.TestCase):
         for tx_set in all_sets.values():
             with self.subTest(tx_set=tx_set.id):
                 chain_ids = [tx.chain_id for tx in tx_set.txs]
-                if tx_set.id == "combined-funding":  # six cards under their own headings, see CombinedFundingTest
+                if tx_set.id == "combined-funding":  # ten cards under their own headings, see CombinedFundingTest
                     continue
                 if tx_set.id in ("pool-creation", "pool-admin-transfer"):  # one heading across every zone
                     self.assertEqual(set(chain_ids), {"all zones"})
@@ -646,11 +648,23 @@ ICAS = ("FEE", "WITHDRAWAL", "DELEGATION", "REDEMPTION")
 COMBINED_FUND_TITLES = [
     "Combined 1 · Test transfer, all zones",
     "Combined 2 · Full transfer, Hub",
-    "Combined 3 · Full transfer, all other zones",
-    "Combined 4 · Test joins, all zones",
-    "Combined 5 · Full join + close, Hub",
-    "Combined 6 · Full join + close, all other zones",
+    "Combined 3 · Full transfer, ready now",
+    "Combined 4 · Full transfer, after the next sweep",
+    "Combined 5 · Test joins, Hub",
+    "Combined 6 · Test joins, ready now",
+    "Combined 7 · Test joins, after the next sweep",
+    "Combined 8 · Full join + close, Hub",
+    "Combined 9 · Full join + close, ready now",
+    "Combined 10 · Full join + close, after the next sweep",
 ]
+GROUP_HEADINGS = (COSMOS, "ready now", "after the next sweep: juno-1, sommelier-3")
+SETTLED_RECORDS = {
+    "pending_before_claimable": "0",
+    "user_redemption_records": "0",
+    "claims_pending": "0",
+    "delegation_transfer_ready": True,
+    "redemption_transfer_ready": True,
+}
 
 
 def combined_txs(funds_data: dict[str, object] | None, pools_data: dict[str, object] | None) -> list[multisig.MultisigTx]:
@@ -672,30 +686,93 @@ def settled_pools(**overrides: object) -> dict[str, object]:
 
 
 class CombinedFundingTest(unittest.TestCase):
-    def test_six_cards_in_order_with_chain_ids_and_stems(self) -> None:
+    def test_ten_cards_in_order_with_chain_ids_and_stems(self) -> None:
         txs = combined_txs(settled_funds(), settled_pools(pools=unjoined_pools()))
 
-        # Card 6 has no member here (every other zone has no pool to fund): a done card with the title plus a note.
+        # Only the Hub has a pool to fund and only the Hub and dYdX hold funds here: the other cards are done cards
+        # with the title plus a note.
         self.assertEqual([tx.title.removesuffix(" · nothing left to send") for tx in txs], COMBINED_FUND_TITLES)
         self.assertEqual(
             [tx.chain_id for tx in txs],
             [
-                f"{chain} · {group}"
-                for chain in ("Stride", "Osmosis")
-                for group in ("all zones", COSMOS, f"all zones except {COSMOS}")
+                "Stride · all zones",
+                *(
+                    f"{chain} · {stage} · {heading}"
+                    for chain, stage in (("Stride", "full transfer"), ("Osmosis", "test joins"), ("Osmosis", "full join + close"))
+                    for heading in GROUP_HEADINGS
+                ),
             ],
         )
         # The tab groups cards by chain_id, so a repeat would merge two cards under one heading and reorder them.
-        self.assertEqual(len({tx.chain_id for tx in txs}), 6)
+        self.assertEqual(len({tx.chain_id for tx in txs}), 10)
         self.assertEqual(
             [tx.files[0] for tx in txs if tx.files],
             [
                 f"/tmp/wind-down/combined-{number}-{slug}.unsigned.json"
                 for number, slug in (
-                    (1, "test-transfer"), (2, "full-transfer-hub"), (3, "full-transfer-others"), (4, "test-joins"),
-                    (5, "close-hub"),
+                    (1, "test-transfer"), (2, "full-transfer-hub"), (3, "full-transfer-ready"), (5, "test-joins-hub"),
+                    (8, "close-hub"),
                 )
             ],
+        )
+
+    def test_the_after_sweep_zones_get_their_own_cards(self) -> None:
+        funds_data = settled_funds()
+        juno = next(entry for entry in funds_data["zones"] if entry["chain_id"] == "juno-1")
+        juno.update(host_denom="ujuno", ica_balances={"DELEGATION": {"ujuno": "5000000"}}, records=SETTLED_RECORDS)
+
+        txs = combined_txs(funds_data, settled_pools())
+
+        self.assertIn("juno-1 DELEGATION-test", txs[0].members)
+        self.assertEqual(txs[3].members, ["juno-1 DELEGATION-rest"])
+        self.assertNotIn("juno-1 DELEGATION-rest", txs[2].members)
+
+    def test_unsettled_records_hold_the_full_transfers_but_not_the_fee_ica_or_the_test(self) -> None:
+        funds_data = settled_funds()
+        hub_zone = next(entry for entry in funds_data["zones"] if entry["chain_id"] == COSMOS)
+        hub_zone["records"] = {**SETTLED_RECORDS, "user_redemption_records": "5", "redemption_transfer_ready": False}
+
+        test_tx, hub_rest, *_ = combined_txs(funds_data, settled_pools())
+        rest_txs = {tx.title.split(" · ")[1]: tx for tx in transfer_txs(COSMOS, funds_data) if "· rest:" in tx.title}
+
+        self.assertTrue(test_tx.ready)
+        self.assertTrue(rest_txs["FEE ICA"].ready)
+        self.assertFalse(rest_txs["DELEGATION ICA"].ready)
+        self.assertEqual(
+            rest_txs["DELEGATION ICA"].reason,
+            "redemptions not settled: 0 records waiting on the sweep, 5 user redemption records, 0 claims in flight "
+            "(after the sweep lands, run the claims bot)",
+        )
+        self.assertEqual(hub_rest.reason, f"{rest_txs['DELEGATION ICA'].title}: {rest_txs['DELEGATION ICA'].reason}")
+
+    def test_a_zone_without_record_counts_holds_its_full_transfers(self) -> None:
+        funds_data = settled_funds()
+        hub_zone = next(entry for entry in funds_data["zones"] if entry["chain_id"] == COSMOS)
+        del hub_zone["records"]
+
+        delegation_rest = next(tx for tx in transfer_txs(COSMOS, funds_data) if "DELEGATION ICA · rest:" in tx.title)
+
+        self.assertEqual(delegation_rest.reason, "the Funds snapshot has no record counts for the zone: copy once it does")
+
+    def test_unreadable_record_tables_hold_the_full_transfers_with_the_no_counts_reason(self) -> None:
+        funds_data = settled_funds()
+        hub_zone = next(entry for entry in funds_data["zones"] if entry["chain_id"] == COSMOS)
+        hub_zone["records"] = {**SETTLED_RECORDS, "pending_before_claimable": None, "delegation_transfer_ready": None}
+
+        delegation_rest = next(tx for tx in transfer_txs(COSMOS, funds_data) if "DELEGATION ICA · rest:" in tx.title)
+
+        self.assertFalse(delegation_rest.ready)
+        self.assertEqual(delegation_rest.reason, "the Funds snapshot has no record counts for the zone: copy once it does")
+
+    def test_records_waiting_on_the_sweep_hold_the_per_zone_rest_txs(self) -> None:
+        funds_data = settled_funds()
+        dydx_zone = next(entry for entry in funds_data["zones"] if entry["chain_id"] == DYDX)
+        dydx_zone["records"] = {**SETTLED_RECORDS, "pending_before_claimable": "2", "delegation_transfer_ready": False}
+
+        rest_ready = {tx.title.split(" · ")[1]: tx.ready for tx in transfer_txs(DYDX, funds_data) if "· rest:" in tx.title}
+
+        self.assertEqual(
+            rest_ready, {"FEE ICA": True, "WITHDRAWAL ICA": False, "DELEGATION ICA": False, "REDEMPTION ICA": False}
         )
 
     def test_transfer_membership_leaves_out_nothing_to_send_and_foreign_denoms(self) -> None:
@@ -750,7 +827,8 @@ class CombinedFundingTest(unittest.TestCase):
         self.assertIn('.auth_info.fee.gas_limit = "1000000" | .auth_info.fee.amount[0].amount = "5000"', test_tx.commands[0].text)
 
     def test_osmosis_cards_sum_the_pool_txs_gas_at_the_osmosis_gas_price(self) -> None:
-        test_joins, close = combined_txs(settled_funds(), settled_pools(pools=unjoined_pools()))[3:5]
+        txs = combined_txs(settled_funds(), settled_pools(pools=unjoined_pools()))
+        test_joins, close = txs[4], txs[7]
         stem = "/tmp/wind-down/pool-cosmoshub-4-test-joins"
 
         self.assertEqual(test_joins.members, [f"{COSMOS} test-joins"])
@@ -774,11 +852,12 @@ class CombinedFundingTest(unittest.TestCase):
             "a transfer from the FEE ICA is in flight: copy once it settles and the Funds snapshot refreshes",
         )
 
-    def test_a_held_close_holds_card_5_but_not_the_ready_test_joins(self) -> None:
+    def test_a_held_close_holds_card_8_but_not_the_ready_test_joins(self) -> None:
         pools_data = settled_pools(pools=unjoined_pools())
         close = pool_txs(pools_data=pools_data)[1]
 
-        test_joins, hub_close = combined_txs(settled_funds(), pools_data)[3:5]
+        txs = combined_txs(settled_funds(), pools_data)
+        test_joins, hub_close = txs[4], txs[7]
 
         self.assertEqual((test_joins.ready, test_joins.reason), (True, None))
         self.assertEqual((hub_close.ready, hub_close.reason), (False, f"{close.title}: {close.reason}"))
@@ -787,7 +866,7 @@ class CombinedFundingTest(unittest.TestCase):
         pools_data = settled_pools()
         pools_data["zones"] = [entry for entry in pools_data["zones"] if entry["chain_id"] != DYDX]
 
-        others_close = combined_txs(settled_funds(), pools_data)[5]
+        others_close = combined_txs(settled_funds(), pools_data)[8]
 
         self.assertEqual(others_close.members, [f"{DYDX} pool-funding"])
         self.assertEqual((others_close.ready, others_close.reason), (False, f"{DYDX} · pool funding: zone missing from the Pools snapshot"))

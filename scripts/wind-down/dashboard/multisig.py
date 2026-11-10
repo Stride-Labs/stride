@@ -7,9 +7,10 @@ names) with `osmosisd`, as is the pool-creation set (one create-pool per planned
 tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the
 multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous per
 `chain_id` in `txs`, in the order they go out.
-The combined-funding set is the exception: six cards, each with its own chain-qualified chain_id ("Stride · all zones",
-"Stride · cosmoshub-4", "Stride · all zones except cosmoshub-4", then the same three for Osmosis) so the tab shows them
-as six headings in order; each merges the unsigned txs of the per-zone transfer / pool txs it bundles.
+The combined-funding set is the exception: ten cards, each with its own chain-qualified chain_id ("Stride · all zones",
+then per stage one card for each zone group: "Stride · full transfer · cosmoshub-4", "Stride · full transfer · ready
+now", "Stride · full transfer · after the next sweep: ...", then the same for the two Osmosis stages) so the tab
+shows them as ten headings in order; each merges the unsigned txs of the per-zone transfer / pool txs it bundles.
 """
 
 import dataclasses
@@ -65,6 +66,9 @@ CREATION_GROUP = "all zones"  # the bundles span zones, so the tab shows them un
 WAITING_SHOWN = 8  # pools listed by name in the waiting tx before "and N more"
 NO_POOL_REASON = "no pool to fund in the Pools snapshot"
 HUB_CHAIN_ID = "cosmoshub-4"  # the combined funding txs give the Hub its own full transfer and close
+# Their stale light clients held their last records' sweep past 2026-11-10; updated at 16:18 UTC, they sweep at the
+# 19:00 UTC stride epoch, so their combined cards go out after it and after the claims bot.
+AFTER_SWEEP_CHAIN_IDS = ("juno-1", "sommelier-3")
 COMBINED_GAS_CAP = 25_000_000  # Osmosis nodes reject a tx above 30M gas wanted by default (max-gas-wanted-per-tx)
 ONE_AT_A_TIME = "One tx at a time: generate, two signatures, multisign, broadcast, then confirm it landed before the next."
 
@@ -636,72 +640,95 @@ def _all_ica_transfer_txs(funds_data: dict[str, Any] | None) -> list[MultisigTx]
     ]
 
 
+@dataclass(frozen=True)
+class _ZoneGroup:
+    title: str  # in the card title, after the stage
+    heading: str  # in the card's chain_id, after the chain
+    slug: str
+    includes: Callable[[str], bool]  # by chain_id
+
+
+_ZONE_GROUPS = (
+    _ZoneGroup(title="Hub", heading=HUB_CHAIN_ID, slug="hub", includes=lambda chain_id: chain_id == HUB_CHAIN_ID),
+    _ZoneGroup(
+        title="ready now",
+        heading="ready now",
+        slug="ready",
+        includes=lambda chain_id: chain_id != HUB_CHAIN_ID and chain_id not in AFTER_SWEEP_CHAIN_IDS,
+    ),
+    _ZoneGroup(
+        title="after the next sweep",
+        heading=f"after the next sweep: {', '.join(AFTER_SWEEP_CHAIN_IDS)}",
+        slug="after-sweep",
+        includes=lambda chain_id: chain_id in AFTER_SWEEP_CHAIN_IDS,
+    ),
+)
+
+
+@dataclass(frozen=True)
+class _CombinedStage:
+    stage: TxStage  # its value is the card's file slug
+    title: str
+    chain: str
+    txs: list[MultisigTx]
+    tools: ChainTools
+
+
 def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> TxSet:
     transfers = _all_ica_transfer_txs(funds_data=funds_data)
     pool_txs = _all_pool_txs(pools_data=pools_data)
-    zone_groups = ("all zones", HUB_CHAIN_ID, f"all zones except {HUB_CHAIN_ID}")
-    stride_all, stride_hub, stride_others = (f"Stride · {group}" for group in zone_groups)
-    osmosis_all, osmosis_hub, osmosis_others = (f"Osmosis · {group}" for group in zone_groups)
+    test_transfer = _combined_tx(
+        number=1, slug="test-transfer", title="Test transfer, all zones", chain_id="Stride · all zones",
+        members=_members(txs=transfers, stage=TxStage.TEST_TRANSFER, group=None), tools=STRIDE_TOOLS,
+    )
+
+    # Cards 2-10: each later stage once per zone group, so a group's cards wait only on its own zones.
+    stages = (
+        _CombinedStage(stage=TxStage.FULL_TRANSFER, title="Full transfer", chain="Stride", txs=transfers, tools=STRIDE_TOOLS),
+        _CombinedStage(stage=TxStage.TEST_JOINS, title="Test joins", chain="Osmosis", txs=pool_txs, tools=OSMOSIS_TOOLS),
+        _CombinedStage(stage=TxStage.CLOSE, title="Full join + close", chain="Osmosis", txs=pool_txs, tools=OSMOSIS_TOOLS),
+    )
+    pairs = [(stage, group) for stage in stages for group in _ZONE_GROUPS]
+    later_cards = [
+        _combined_tx(
+            number=number,
+            slug=f"{stage.stage}-{group.slug}",
+            title=f"{stage.title}, {group.title}",
+            chain_id=f"{stage.chain} · {stage.title.lower()} · {group.heading}",
+            members=_members(txs=stage.txs, stage=stage.stage, group=group),
+            tools=stage.tools,
+        )
+        for number, (stage, group) in enumerate(pairs, start=2)
+    ]
 
     return TxSet(
         id="combined-funding",
         step_id="transfers",
-        title="Combined funding: every remaining zone in six txs",
-        description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into six txs: three on Stride, three on Osmosis.",
+        title="Combined funding: every remaining zone in ten txs",
+        description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into ten txs: four on Stride, six on Osmosis, with the Hub, the zones ready now and the zones waiting on the next sweep each in their own.",
         notes=[
-            "Order: 1; once it settles, 2 then 3; once they settle, 4; once it settles, 5 then 6 (one at a time: each pair shares the multisig's sequence).",
+            "Order: 1; once it settles, 2 then 3; once they settle, 5 then 6; once they settle, 8 then 9 (one at a time: each shares the multisig's sequence on its chain).",
+            f"{' and '.join(AFTER_SWEEP_CHAIN_IDS)} (4, 7, 10) follow the same order after the next sweep has landed and the claims bot has paid their redeemers.",
             "Each tx is a pure bundle of the per-zone txs below: their messages and amounts are unchanged, and generating one runs each member's own generate step and merges the files.",
             "A combined tx is ready only when every member is. Otherwise it names the first member that is not and why.",
+            "A DELEGATION, WITHDRAWAL or REDEMPTION full transfer is not ready while its zone has records waiting on the sweep, user redemption records or claims in flight.",
             "Left out: done txs, transfers of an ICA below the test amount, foreign-denom transfers, and a zone with no pool to fund.",
             f"Gas is the members' sum, capped at {COMBINED_GAS_CAP:,} (Osmosis nodes reject a tx above 30M gas wanted); the fee is the gas at 0.005 ustrd (Stride) or {OSMOSIS_GAS_PRICE} (Osmosis).",
-            "The per-zone sets below stay as the fallback for a tx the bundle holds back.",
+            "The per-zone sets below stay as the fallback for a tx the bundle holds back for its own reason; the records hold applies to them too.",
             ONE_AT_A_TIME,
         ],
-        txs=[
-            _combined_tx(
-                number=1, slug="test-transfer", title="Test transfer, all zones", chain_id=stride_all,
-                members=_members(txs=transfers, stage=TxStage.TEST_TRANSFER, zones=_any_zone), tools=STRIDE_TOOLS,
-            ),
-            _combined_tx(
-                number=2, slug="full-transfer-hub", title="Full transfer, Hub", chain_id=stride_hub,
-                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=_is_hub), tools=STRIDE_TOOLS,
-            ),
-            _combined_tx(
-                number=3, slug="full-transfer-others", title="Full transfer, all other zones", chain_id=stride_others,
-                members=_members(txs=transfers, stage=TxStage.FULL_TRANSFER, zones=_is_not_hub), tools=STRIDE_TOOLS,
-            ),
-            _combined_tx(
-                number=4, slug="test-joins", title="Test joins, all zones", chain_id=osmosis_all,
-                members=_members(txs=pool_txs, stage=TxStage.TEST_JOINS, zones=_any_zone), tools=OSMOSIS_TOOLS,
-            ),
-            _combined_tx(
-                number=5, slug="close-hub", title="Full join + close, Hub", chain_id=osmosis_hub,
-                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=_is_hub), tools=OSMOSIS_TOOLS,
-            ),
-            _combined_tx(
-                number=6, slug="close-others", title="Full join + close, all other zones", chain_id=osmosis_others,
-                members=_members(txs=pool_txs, stage=TxStage.CLOSE, zones=_is_not_hub), tools=OSMOSIS_TOOLS,
-            ),
-        ],
+        txs=[test_transfer, *later_cards],
     )
 
 
-def _any_zone(tx: MultisigTx) -> bool:
-    return True
-
-
-def _is_hub(tx: MultisigTx) -> bool:
-    return tx.chain_id == HUB_CHAIN_ID
-
-
-def _is_not_hub(tx: MultisigTx) -> bool:
-    return tx.chain_id != HUB_CHAIN_ID
-
-
-def _members(txs: list[MultisigTx], stage: TxStage, zones: Callable[[MultisigTx], bool]) -> list[MultisigTx]:
-    """The txs of one stage in the zones chosen, minus done and skipped ones. A zone's empty pool tx has no stage: it
+def _members(txs: list[MultisigTx], stage: TxStage, group: _ZoneGroup | None) -> list[MultisigTx]:
+    """The txs of one stage in the group's zones (every zone without one), minus done and skipped ones. A zone's empty pool tx has no stage: it
     is a member of both pool stages, so a missing snapshot holds them (a skipped one, no pool to fund, is left out)."""
-    return [tx for tx in txs if tx.stage in (stage, None) and zones(tx) and not tx.done and not tx.skip]
+    return [
+        tx
+        for tx in txs
+        if tx.stage in (stage, None) and (group is None or group.includes(tx.chain_id)) and not tx.done and not tx.skip
+    ]
 
 
 def _combined_tx(number: int, slug: str, title: str, chain_id: str, members: list[MultisigTx], tools: ChainTools) -> MultisigTx:
@@ -1026,7 +1053,7 @@ def _ica_transfer_txs(
         host_balance = None if snapshot_reason else int(balances.get(host_denom, 0))
         nothing_to_send = _nothing_to_send_reason(ica=ica, balance=host_balance, test_amount=test_amount, denom=host_denom)
         reason = snapshot_reason or nothing_to_send
-        rest_reason = reason or _in_flight_reason(ica=ica, transfers=transfers)
+        rest_reason = reason or _in_flight_reason(ica=ica, transfers=transfers) or _records_reason(ica=ica, funds_zone=funds_zone)
         balance_text = PLACEHOLDER_BALANCE if host_balance is None else str(host_balance)
 
         txs.append(
@@ -1058,6 +1085,24 @@ def _nothing_to_send_reason(ica: str, balance: int | None, test_amount: int, den
     if balance is not None and balance < test_amount:
         return f"the {ica} ICA holds {balance}{denom}, below the {test_amount}{denom} test amount: nothing to send"
     return None
+
+
+def _records_reason(ica: str, funds_zone: dict[str, Any] | None) -> str | None:
+    """The DELEGATION, WITHDRAWAL and REDEMPTION rest txs wait until every record is swept and claimed: until then
+    the ICAs still hold redeemers' tokens, which the claims pay out and a full transfer would send to the vault."""
+    if ica == funds.IcaType.FEE:
+        return None
+    records = funds_zone.get("records")
+    unread = records is None or records["delegation_transfer_ready"] is None or records["redemption_transfer_ready"] is None
+    if unread:
+        return "the Funds snapshot has no record counts for the zone: copy once it does"
+    if records["delegation_transfer_ready"] and records["redemption_transfer_ready"]:
+        return None
+    return (
+        f"redemptions not settled: {records['pending_before_claimable']} records waiting on the sweep, "
+        f"{records['user_redemption_records']} user redemption records, {records['claims_pending']} claims in flight "
+        "(after the sweep lands, run the claims bot)"
+    )
 
 
 def _in_flight_reason(ica: str, transfers: list[dict[str, Any]]) -> str | None:
