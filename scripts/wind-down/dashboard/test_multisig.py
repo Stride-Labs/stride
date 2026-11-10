@@ -202,7 +202,7 @@ class LiveTestCommandsTest(unittest.TestCase):
         for tx_set in all_sets.values():
             binary, address = ("osmosisd", VAULT) if tx_set.id in ("pool-funding", "pool-creation") else ("strided", ADDRESS)
             for position, tx in enumerate(tx_set.txs):
-                if tx_set.id == "combined-funding" and position >= 4:  # txs 5-10 are on Osmosis
+                if tx_set.id == "combined-funding" and position >= 4:  # txs 5-11 are on Osmosis
                     binary, address = "osmosisd", VAULT
                 sign_commands = [command for command in tx.commands if "tx sign" in command.text]
 
@@ -641,7 +641,7 @@ class IcaTransfersTest(unittest.TestCase):
         for tx_set in all_sets.values():
             with self.subTest(tx_set=tx_set.id):
                 chain_ids = [tx.chain_id for tx in tx_set.txs]
-                if tx_set.id == "combined-funding":  # ten cards under their own headings, see CombinedFundingTest
+                if tx_set.id == "combined-funding":  # eleven cards under their own headings, see CombinedFundingTest
                     continue
                 if tx_set.id in ("pool-creation", "pool-admin-transfer"):  # one heading across every zone
                     self.assertEqual(set(chain_ids), {"all zones"})
@@ -661,8 +661,9 @@ COMBINED_FUND_TITLES = [
     "Combined 6 · Test joins, ready now",
     "Combined 7 · Test joins, after the next sweep",
     "Combined 8 · Full join + close, Hub",
-    "Combined 9 · Full join + close, ready now",
-    "Combined 10 · Full join + close, after the next sweep",
+    "Combined 9 · Full join + close, ready now (1 of 2)",
+    "Combined 10 · Full join + close, ready now (2 of 2)",
+    "Combined 11 · Full join + close, after the next sweep",
 ]
 GROUP_HEADINGS = (COSMOS, DYDX, "after the next sweep")  # the zones with a tx to send; a group with none, its title
 SETTLED_RECORDS = {
@@ -694,7 +695,7 @@ def settled_pools(**overrides: object) -> dict[str, object]:
 
 
 class CombinedFundingTest(unittest.TestCase):
-    def test_ten_cards_in_order_with_chain_ids_and_stems(self) -> None:
+    def test_eleven_cards_in_order_with_chain_ids_and_stems(self) -> None:
         txs = combined_txs(settled_funds(), settled_pools(pools=unjoined_pools()))
 
         # Only the Hub has a pool to fund and only the Hub and dYdX hold funds here: the other cards are done cards
@@ -706,13 +707,17 @@ class CombinedFundingTest(unittest.TestCase):
                 "Stride · all zones",
                 *(
                     f"{chain} · {stage} · {heading}"
-                    for chain, stage in (("Stride", "full transfer"), ("Osmosis", "test joins"), ("Osmosis", "full join + close"))
+                    for chain, stage in (("Stride", "full transfer"), ("Osmosis", "test joins"))
                     for heading in GROUP_HEADINGS
+                ),
+                *(
+                    f"Osmosis · full join + close · {heading}"
+                    for heading in (COSMOS, DYDX, "ready now (2 of 2)", "after the next sweep")
                 ),
             ],
         )
         # The tab groups cards by chain_id, so a repeat would merge two cards under one heading and reorder them.
-        self.assertEqual(len({tx.chain_id for tx in txs}), 10)
+        self.assertEqual(len({tx.chain_id for tx in txs}), 11)
         self.assertEqual(
             [tx.files[0] for tx in txs if tx.files],
             [

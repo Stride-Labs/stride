@@ -7,10 +7,10 @@ names) with `osmosisd`, as is the pool-creation set (one create-pool per planned
 tx is done end to end, one at a time, online (no pre-assigned sequences): every signer's `tx sign` looks the
 multisig's account number and sequence up itself. A set may hold several txs per zone; they are contiguous per
 `chain_id` in `txs`, in the order they go out.
-The combined-funding set is the exception: ten cards, each with its own chain-qualified chain_id ("Stride · all zones",
+The combined-funding set is the exception: eleven cards, each with its own chain-qualified chain_id ("Stride · all zones",
 then per stage one card for each zone group, named by its zones: "Stride · full transfer · cosmoshub-4", "Stride ·
 full transfer · dydx-mainnet-1, injective-1, ...", then the same for the two Osmosis stages) so the tab
-shows them as ten headings in order; each merges the unsigned txs of the per-zone transfer / pool txs it bundles.
+shows them as eleven headings in order; each merges the unsigned txs of the per-zone transfer / pool txs it bundles.
 """
 
 import dataclasses
@@ -69,6 +69,8 @@ HUB_CHAIN_ID = "cosmoshub-4"  # the combined funding txs give the Hub its own fu
 # Their stale light clients held their last records' sweep past 2026-11-10; updated at 16:18 UTC, they sweep at the
 # 19:00 UTC stride epoch, so their combined cards go out after it and after the claims bot.
 AFTER_SWEEP_CHAIN_IDS = ("juno-1", "sommelier-3")
+# The ready-now close in one tx was too big for a Ledger to sign: it goes out as these two.
+READY_CLOSE_SPLIT = (("dydx-mainnet-1", "injective-1"), ("laozi-mainnet", "phoenix-1", "ssc-1"))
 # The combined funding cards already broadcast, by card number: their tx hash.
 COMBINED_SENT = {
     1: "228629D094ECE618240E5F8341B3154A874755B967E34C31C561F333314CAE6D",
@@ -76,6 +78,7 @@ COMBINED_SENT = {
     3: "51E95E1D6DF4D5C323A2A96BC9327F8FD929A57FE195FBEBB34787F3472E7A3F",
     5: "43FE5F2483851FEB3139916EB7013C98D84E61FC7A43A949B219BF5379EEC8E9",
     6: "57CFAF73EB677DB7100C6B3DDDDDF899DD01A7370A4AAD9FA1C28AF2386DB0F2",
+    8: "5B40DFD595B72521A177641947C761DEC0B23952DC17221499EE9282967801E5",
 }
 COMBINED_GAS_CAP = 25_000_000  # Osmosis nodes reject a tx above 30M gas wanted by default (max-gas-wanted-per-tx)
 ONE_AT_A_TIME = "One tx at a time: generate, two signatures, multisign, broadcast, then confirm it landed before the next."
@@ -659,18 +662,30 @@ class _ZoneGroup:
     includes: Callable[[str], bool]  # by chain_id
 
 
+_HUB_GROUP = _ZoneGroup(title="Hub", slug="hub", includes=lambda chain_id: chain_id == HUB_CHAIN_ID)
+_AFTER_SWEEP_GROUP = _ZoneGroup(
+    title="after the next sweep", slug="after-sweep", includes=lambda chain_id: chain_id in AFTER_SWEEP_CHAIN_IDS
+)
 _ZONE_GROUPS = (
-    _ZoneGroup(title="Hub", slug="hub", includes=lambda chain_id: chain_id == HUB_CHAIN_ID),
+    _HUB_GROUP,
     _ZoneGroup(
         title="ready now",
         slug="ready",
         includes=lambda chain_id: chain_id != HUB_CHAIN_ID and chain_id not in AFTER_SWEEP_CHAIN_IDS,
     ),
-    _ZoneGroup(
-        title="after the next sweep",
-        slug="after-sweep",
-        includes=lambda chain_id: chain_id in AFTER_SWEEP_CHAIN_IDS,
+    _AFTER_SWEEP_GROUP,
+)
+_CLOSE_GROUPS = (
+    _HUB_GROUP,
+    *(
+        _ZoneGroup(
+            title=f"ready now ({part} of {len(READY_CLOSE_SPLIT)})",
+            slug=f"ready-{part}",
+            includes=lambda chain_id, chain_ids=chain_ids: chain_id in chain_ids,
+        )
+        for part, chain_ids in enumerate(READY_CLOSE_SPLIT, start=1)
     ),
+    _AFTER_SWEEP_GROUP,
 )
 
 
@@ -681,6 +696,7 @@ class _CombinedStage:
     chain: str
     txs: list[MultisigTx]
     tools: ChainTools
+    groups: tuple[_ZoneGroup, ...] = _ZONE_GROUPS
 
 
 def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[str, Any] | None) -> TxSet:
@@ -691,14 +707,17 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
         members=_members(txs=transfers, stage=TxStage.TEST_TRANSFER, group=None), tools=STRIDE_TOOLS,
     )
 
-    # Cards 2-10: each later stage once per zone group, so a group's cards wait only on its own zones.
+    # Cards 2-11: each later stage once per zone group, so a group's cards wait only on its own zones.
     stages = (
         _CombinedStage(stage=TxStage.FULL_TRANSFER, title="Full transfer", chain="Stride", txs=transfers, tools=STRIDE_TOOLS),
         _CombinedStage(stage=TxStage.TEST_JOINS, title="Test joins", chain="Osmosis", txs=pool_txs, tools=OSMOSIS_TOOLS),
-        _CombinedStage(stage=TxStage.CLOSE, title="Full join + close", chain="Osmosis", txs=pool_txs, tools=OSMOSIS_TOOLS),
+        _CombinedStage(
+            stage=TxStage.CLOSE, title="Full join + close", chain="Osmosis", txs=pool_txs, tools=OSMOSIS_TOOLS,
+            groups=_CLOSE_GROUPS,
+        ),
     )
-    pairs = [(stage, group) for stage in stages for group in _ZONE_GROUPS]
-    headings = {group.slug: _group_heading(group=group, txs=[*transfers, *pool_txs]) for group in _ZONE_GROUPS}
+    pairs = [(stage, group) for stage in stages for group in stage.groups]
+    headings = {group.slug: _group_heading(group=group, txs=[*transfers, *pool_txs]) for _, group in pairs}
     later_cards = [
         _combined_tx(
             number=number,
@@ -714,11 +733,12 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
     return TxSet(
         id="combined-funding",
         step_id="transfers",
-        title="Combined funding: every remaining zone in ten txs",
-        description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into ten txs: four on Stride, six on Osmosis, with the Hub, the zones ready now and the zones waiting on the next sweep each in their own.",
+        title="Combined funding: every remaining zone in eleven txs",
+        description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into eleven txs: four on Stride, seven on Osmosis, with the Hub, the zones ready now and the zones waiting on the next sweep each in their own.",
         notes=[
-            "Order: 1; once it settles, 2 then 3; once they settle, 5 then 6; once they settle, 8 then 9 (one at a time: each shares the multisig's sequence on its chain).",
-            f"{' and '.join(AFTER_SWEEP_CHAIN_IDS)} (4, 7, 10) follow the same order after the next sweep has landed and the claims bot has paid their redeemers.",
+            "Order: 1; once it settles, 2 then 3; once they settle, 5 then 6; once they settle, 8, 9 then 10 (one at a time: each shares the multisig's sequence on its chain).",
+            "The ready-now close is two txs (9 and 10): as one it was too big for a Ledger to sign.",
+            f"{' and '.join(AFTER_SWEEP_CHAIN_IDS)} (4, 7, 11) follow the same order after the next sweep has landed and the claims bot has paid their redeemers.",
             "Each tx is a pure bundle of the per-zone txs below: their messages and amounts are unchanged, and generating one runs each member's own generate step and merges the files.",
             "A combined tx is ready only when every member is. Otherwise it names the first member that is not and why.",
             "Riley signs second on these (the combine step uses Sam's and Riley's signatures); Aidan is the backup.",
