@@ -121379,6 +121379,11 @@
   "has_pubkey": true,
   "sequence": "2"
  },
+ "stride1ntszem7uv9naey0fyrxrhp927xkh6ev80d8qqk": {
+  "type": "/cosmos.auth.v1beta1.BaseAccount",
+  "has_pubkey": true,
+  "sequence": "17"
+ },
  "stride1nttcw852wga4y4gww3hu70djg9d4fu4c0mv6lx": {
   "type": "/stride.vesting.StridePeriodicVestingAccount",
   "has_pubkey": true,
