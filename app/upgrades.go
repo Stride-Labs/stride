@@ -46,6 +46,7 @@ import (
 	v33 "github.com/Stride-Labs/stride/v35/app/upgrades/v33"
 	v34 "github.com/Stride-Labs/stride/v35/app/upgrades/v34"
 	v35 "github.com/Stride-Labs/stride/v35/app/upgrades/v35"
+	v36 "github.com/Stride-Labs/stride/v35/app/upgrades/v36"
 	v4 "github.com/Stride-Labs/stride/v35/app/upgrades/v4"
 	v5 "github.com/Stride-Labs/stride/v35/app/upgrades/v5"
 	v6 "github.com/Stride-Labs/stride/v35/app/upgrades/v6"
@@ -482,6 +483,16 @@ func (app *StrideApp) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.StakingKeeper,
 			app.POAKeeper,
 			app.DistrKeeper,
+		),
+	)
+
+	// v36 upgrade handler (treasury accounts to the multisig)
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v36.UpgradeName,
+		v36.CreateUpgradeHandler(
+			app.ModuleManager,
+			app.configurator,
+			app.BankKeeper,
 		),
 	)
 
