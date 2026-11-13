@@ -1,8 +1,8 @@
 {
- "run_id": "22",
- "created_at": "2026-11-12T17:32:24.338164+00:00",
- "height": "42842365",
- "floor_usd": "1000.00",
+ "run_id": "23",
+ "created_at": "2026-11-12T17:37:47.060762+00:00",
+ "height": "42842523",
+ "floor_usd": "1.00",
  "test": false,
  "canary": "0",
  "gas_per_transfer": "171554",
@@ -177,35 +177,29 @@
    "name": "main",
    "batches": [
     {
-     "id": "022-001",
-     "file": "batch-022-001.txt",
-     "sha256": "cf76ab08fc78d2febb3e0f0f1df4cb3873f1ae5d70224ab0aa7b6cb30d2badf5",
-     "usd": "32970.62",
-     "transfers": "16",
-     "estimated_gas": "2744864",
+     "id": "023-001",
+     "file": "batch-023-001.txt",
+     "sha256": "8006ea76212876247a8455a79a4ba486c674a6964e1707ffc5a12b555d4b24d0",
+     "usd": "575.30",
+     "transfers": "2",
+     "estimated_gas": "343108",
      "addresses": [
       {
-       "address": "stride1k8c2m5cn322akk5wy8lpt87dd2f4yh9azg7jlh",
+       "address": "stride1s2xa2ymdde5pq35mwfltpgsvg25nx9wwnht7fa",
        "balances": {
-        "stuatom": "3278087898",
-        "stuosmo": "777462202",
-        "stutia": "49662453",
-        "stinj": "840339254919898029",
-        "stadydx": "283673067634929439998",
-        "staISLM": "1175193069513990463182",
-        "stujuno": "124352293",
-        "stuband": "320489593",
-        "stuluna": "289645815",
-        "stusomm": "402773303",
-        "stusaga": "46908825",
-        "ustrd": "110890855554",
-        "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2": "280720",
-        "ibc/BF3B4F53F3694B66E13C23107C84B6485BD2B96296BB7EC680EA77BBA75B4801": "102696260",
-        "ibc/D24B4564BCD51D3D02D9987D92571EAC5915676A9BD6D9B0C1D0254CB8A5EA34": "490076",
-        "ibc/520D9C4509027DE66C737A1D6A6021915A3071E30DBA8F758B46532B060D7AA5": "91909"
+        "ustrd": "10882247223"
        },
-       "usd": "32970.62",
-       "transfers": "16",
+       "usd": "544.11",
+       "transfers": "1",
+       "locked": {}
+      },
+      {
+       "address": "stride1alnn79kh0xka0r5h4h82uuaqfhpdmph6rvpf5f",
+       "balances": {
+        "ustrd": "623729348"
+       },
+       "usd": "31.19",
+       "transfers": "1",
        "locked": {}
       }
      ]
@@ -213,8 +207,94 @@
    ]
   }
  ],
- "excluded": [],
+ "excluded": [
+  {
+   "address": "stride1ge22qnyg4avg0glvz00ruwpulhe9p7qnxe4426",
+   "reason": "excluded: relayers: relayer-injective",
+   "usd": "11.23"
+  },
+  {
+   "address": "stride1fegapd4jc3ejqeg0eu3jk4hvr74hg660a3gcsp",
+   "reason": "excluded: relayers: relayer-polkachu",
+   "usd": "8.92"
+  },
+  {
+   "address": "stride1qa8l9le4fvvxe4ny2m2mcd00cakgx9lz96kash",
+   "reason": "excluded: relayers: relayer-sommelier",
+   "usd": "6.01"
+  },
+  {
+   "address": "stride1x3mtu4540z8q45mmyn9tw34fmy74xqm47lh7k6",
+   "reason": "excluded: relayers: relayer-band",
+   "usd": "8.32"
+  },
+  {
+   "address": "stride18qysgypvp7aky0dntqzkl6uxv7w3zszt55uv0m",
+   "reason": "excluded: relayers: relayer-dydx",
+   "usd": "10.05"
+  },
+  {
+   "address": "stride1ds5klkz9s0v3ky4j2dmn377pd7wxtyxq5c7dk3",
+   "reason": "excluded: relayers: relayer-gaia",
+   "usd": "11.76"
+  },
+  {
+   "address": "stride1d5e6c09mt37qcusfrrrfvz4dwnaxlv3ltwahfn",
+   "reason": "excluded: relayers: relayer-juno",
+   "usd": "5.67"
+  },
+  {
+   "address": "stride1wme78wwkmtkjax588xt7ntl743fq8vdteq2kt3",
+   "reason": "excluded: relayers: relayer-osmosis",
+   "usd": "7.46"
+  },
+  {
+   "address": "stride10cyp5nu07hrymlhazemfh2u8khf3m9xc2xw535",
+   "reason": "excluded: relayers: relayer-ics",
+   "usd": "10.55"
+  },
+  {
+   "address": "stride15fd7g4g26enekm50ve9dhwaseanav09my88559",
+   "reason": "excluded: relayers: relayer-celestia",
+   "usd": "10.30"
+  },
+  {
+   "address": "stride15s0ey2k5sqhkdu0d2770y8cykgm6emx2fyar7v",
+   "reason": "excluded: relayers: relayer-sei",
+   "usd": "11.25"
+  },
+  {
+   "address": "stride1h93r6y9sm2dtq68dqwvqp36faqucge7wzfxhws",
+   "reason": "excluded: relayers: relayer-saga",
+   "usd": "10.94"
+  },
+  {
+   "address": "stride1c89e5smtnem6lvmqpajhakk7hvkm2luq5cqqm3",
+   "reason": "excluded: relayers: relayer-dymension",
+   "usd": "11.46"
+  },
+  {
+   "address": "stride1e6llcr7fkxvqdgyrcgzdlwll9tkvfh2rnfcpyd",
+   "reason": "excluded: relayers: relayer-crypto-crew",
+   "usd": "45.20"
+  },
+  {
+   "address": "stride1m5st93c4elt4ttt2kdzgm9cpj953thkk5l0k9d",
+   "reason": "excluded: relayers: relayer-terra",
+   "usd": "11.21"
+  },
+  {
+   "address": "stride1uvmzazqskmtqapnxlus0ynpm7kyh5f6gslpnrj",
+   "reason": "excluded: relayers: relayer-team",
+   "usd": "69.80"
+  }
+ ],
  "skipped": [
+  {
+   "address": "stride1qyx9s8senm423qvfwh90h9ucymf6mxm6v38ya9",
+   "reason": "transfer escrow address",
+   "usd": "29.39"
+  },
   {
    "address": "stride1qjp5mndargkj0nexrh2jgy6dx4jfdt3rfstxw0",
    "reason": "transfer escrow address",
@@ -224,6 +304,16 @@
    "address": "stride1qc2nsvtrrva5kje05v9lq3a48mlhn9dhl3dkgt",
    "reason": "transfer escrow address",
    "usd": "2616.66"
+  },
+  {
+   "address": "stride1plk6au939l5zk6zu0cz0s2e5v8sw94tseftpgc",
+   "reason": "transfer escrow address",
+   "usd": "1.79"
+  },
+  {
+   "address": "stride19g3j63gysl7ntknvzlrdvfq4fqa9sp07fu4erz",
+   "reason": "transfer escrow address",
+   "usd": "31.15"
   },
   {
    "address": "stride19l8zhnzmkhkapmu7df66zudapv3ytjqusvqxwq",
@@ -236,14 +326,34 @@
    "usd": "49568.70"
   },
   {
+   "address": "stride120mccyqydundpnrawcf6y2zu0c3znqe6gdu7yp",
+   "reason": "transfer escrow address",
+   "usd": "10.32"
+  },
+  {
    "address": "stride1vq5d4gdsdz26c9wd8f89jdnd34ydnlryyd2taa",
    "reason": "transfer escrow address",
    "usd": "1741.02"
   },
   {
+   "address": "stride1v4qzm9h50dyfk5lm0tyjz62qyvs3mrcjgh6a0v",
+   "reason": "transfer escrow address",
+   "usd": "491.85"
+  },
+  {
    "address": "stride1dzxv8v0h488e46jhdc3xy28kq3ag0k2wpem9nh",
    "reason": "transfer escrow address",
    "usd": "1721.91"
+  },
+  {
+   "address": "stride1wztruvatpslu6ngetc65272cshcnzsxgejw62j",
+   "reason": "blocked module address",
+   "usd": "308.09"
+  },
+  {
+   "address": "stride1wxlg7n90qx695pfqyy84g0drhp228569ycamwd",
+   "reason": "transfer escrow address",
+   "usd": "499.47"
   },
   {
    "address": "stride10ck4wejtl67xpuajzwzykn8csjj6ufnwypf38e",
@@ -256,6 +366,21 @@
    "usd": "22454.53"
   },
   {
+   "address": "stride1jv65s3grqf6v6jl3dp4t6c9t9rk99cd8y5yqan",
+   "reason": "blocked module address",
+   "usd": "298.20"
+  },
+  {
+   "address": "stride1jkk2zscerfugj0sjlzgx0xnk2zq6nnqk269gy0",
+   "reason": "transfer escrow address",
+   "usd": "731.75"
+  },
+  {
+   "address": "stride1je5zsemauel5dqjwug9snfvkwr8hks9zw5gszy",
+   "reason": "transfer escrow address",
+   "usd": "706.76"
+  },
+  {
    "address": "stride1nd0rqaxs6qwh860a6xm2e7v68jzgz39swd0m3a",
    "reason": "transfer escrow address",
    "usd": "22356.77"
@@ -266,9 +391,14 @@
    "usd": "129859.17"
   },
   {
+   "address": "stride1kr0zkc0zwdfmz4vnqqvg0h3tfva7yltv5433lq",
+   "reason": "transfer escrow address",
+   "usd": "1.48"
+  },
+  {
    "address": "stride16h2ynrzwhxgjnd0hswkvdvq9nav9kklq08fhf4",
    "reason": "transfer escrow address",
-   "usd": "10779524.10"
+   "usd": "10812339.39"
   },
   {
    "address": "stride1u929fykjps0qny9enq0rgdsavau7amsz5kcxfx",
@@ -291,9 +421,19 @@
    "usd": "337957.23"
   },
   {
+   "address": "stride17emrn3k8zpnrh8duql6y9de8wc6gyhcr8zrht0",
+   "reason": "transfer escrow address",
+   "usd": "1.74"
+  },
+  {
    "address": "stride1lzh48w3wyj23zcjxtjhaw25xlcafceclen3eqa",
    "reason": "transfer escrow address",
    "usd": "47210.18"
+  },
+  {
+   "address": "stride137zrswt69ejeycwc7p05856a200x5wz3nm5uqzu5c52f6u0lrq2s4q7krs",
+   "reason": "address is not 20 bytes",
+   "usd": "247.62"
   },
   {
    "address": "stride14ug0e20ljt62lqz9qw27z2fcxyd8lch26dt7zcnr2qlhwe6azqjsgq6lwm",
@@ -306,9 +446,19 @@
    "usd": "201490.71"
   },
   {
+   "address": "stride1wsxce0ls59rtj70fwcrxmtmmv32vpgmgw8v6hs",
+   "reason": "transfer escrow address",
+   "usd": "4.02"
+  },
+  {
    "address": "stride1k3ckf27ywujsepgzjxjl4upgv49nn0c9skmglj",
    "reason": "transfer escrow address",
    "usd": "1397.13"
+  },
+  {
+   "address": "stride1z3lz9n0549v95q6yllghezugdra6ezm68jtf4ve5hsz8k867k9cq3pc2f8",
+   "reason": "address is not 20 bytes",
+   "usd": "121.31"
   },
   {
    "address": "stride134axwdlam929m3mar3wv95nvkyep7mr87ravkqcpf8dfe3v0pjlqwrw6ee",
@@ -316,9 +466,29 @@
    "usd": "12448.90"
   },
   {
+   "address": "stride1dlpmfja5mes6rwxh7epdm3a0p495dtuccu5ntv",
+   "reason": "transfer escrow address",
+   "usd": "295.56"
+  },
+  {
    "address": "stride1dh7mfstecs6w9vm3uasyea60qn3fzsdpqjtwry",
    "reason": "transfer escrow address",
    "usd": "173259.02"
+  },
+  {
+   "address": "stride1ggfgtzhwaz5f766v08567cwscvxla05vt5rgxv",
+   "reason": "transfer escrow address",
+   "usd": "5.57"
+  },
+  {
+   "address": "stride1nmmg4nyv39ufgjfn029qjeeut8tvvxg50sxqxm",
+   "reason": "transfer escrow address",
+   "usd": "6.19"
+  },
+  {
+   "address": "stride1q8juddwptg5yxyghh3n243pp4w8ctpvpmf6ras",
+   "reason": "protocol address",
+   "usd": "2.51"
   },
   {
    "address": "stride1zvdp4efcjqs230kzuzd7qrexk4e40wutd3r8c9",
@@ -326,9 +496,44 @@
    "usd": "1683.64"
   },
   {
+   "address": "stride13nw9fm4ua8pwzmsx9kdrhefl4puz0tp7ge3gxd",
+   "reason": "protocol address",
+   "usd": "1.23"
+  },
+  {
+   "address": "stride15x5wvcgv5wnlupkfc8t5jm366sn57puj9dfmr3",
+   "reason": "transfer escrow address",
+   "usd": "27.75"
+  },
+  {
+   "address": "stride167sxdxeqjeqwgenr0z0c9wqq3n5axm4y882dj0",
+   "reason": "transfer escrow address",
+   "usd": "23.58"
+  },
+  {
+   "address": "stride1ml3u928ustpmft4gkcnzfpjtkt0azr5cksdgcs",
+   "reason": "transfer escrow address",
+   "usd": "1.04"
+  },
+  {
+   "address": "stride1uytmdxv3uj0n92cdppecrxk3t754td0upyn0xn",
+   "reason": "transfer escrow address",
+   "usd": "2.05"
+  },
+  {
    "address": "stride1pvtesu3ve7qn7ctll2x495mrqf2ysp6fws68grvcu6f7n2ajghgsh2jdj6",
    "reason": "address is not 20 bytes",
    "usd": "22618.66"
+  },
+  {
+   "address": "stride1rx666rttsl6qhu8m6lttxgqc5783f6anv2h98hjwyy09cm8k0zaqyxkkw6",
+   "reason": "address is not 20 bytes",
+   "usd": "6.20"
+  },
+  {
+   "address": "stride1907l3m8649c7dma9a7lpqau06yqykka4xmukxlguu7j9ddlu2k6skpm57w",
+   "reason": "address is not 20 bytes",
+   "usd": "33.75"
   },
   {
    "address": "stride193hqcnz5zq7u2th256dvxemf0l408kfxy7el2artkv9dj5zs60lsuj7php",
@@ -346,43 +551,48 @@
    "usd": "2882.15"
   },
   {
+   "address": "stride138eph4s7ngutu8yvlad9khrcgv7z9425edpywjvuunnkrqskshks8yn2wn",
+   "reason": "address is not 20 bytes",
+   "usd": "10.54"
+  },
+  {
    "address": "stride14p6dyylhlmr445w9shcp36r5qcypc5d7rftpr2v0dt3pcjvy66zq60qfgg",
    "reason": "address is not 20 bytes",
    "usd": "8748.20"
+  },
+  {
+   "address": "stride1h4rhlwcmdwnnd99agxm3gp7uqkr4vcjd73m4586hcuklh3vdtldqgqmjxc",
+   "reason": "address is not 20 bytes",
+   "usd": "1.50"
+  },
+  {
+   "address": "stride1aq3acg4und6z5lv7vja2gqwfhcf99xpzsfcuwpddc6rwa3lm6n4ss4q47p",
+   "reason": "address is not 20 bytes",
+   "usd": "104.14"
+  },
+  {
+   "address": "stride1j4yzhgjm00ch3h0p9kel7g8sp6g045qfcgk6ex",
+   "reason": "blocked module address",
+   "usd": "31.96"
   }
  ],
  "below_floor": {
-  "count": "397526",
-  "usd": "24311.71"
+  "count": "397478",
+  "usd": "19447.73"
  },
  "ladder": [
   {
-   "floor": "1000.00",
-   "holders": "1",
-   "usd": "32970.62"
-  },
-  {
-   "floor": "10.00",
-   "holders": "32",
-   "usd": "37762.86"
-  },
-  {
-   "floor": "5.00",
-   "holders": "40",
-   "usd": "37817.22"
-  },
-  {
    "floor": "1.00",
-   "holders": "49",
-   "usd": "37834.60"
+   "holders": "2",
+   "usd": "575.30"
   },
   {
    "floor": "0.00",
-   "holders": "397527",
-   "usd": "57282.33"
+   "holders": "397480",
+   "usd": "20023.03"
   }
  ],
- "operator_sequence": "1481",
+ "operator_sequence": "1482",
  "locked": {},
  "deferred": [],
  "staked_ustrd": "0",
