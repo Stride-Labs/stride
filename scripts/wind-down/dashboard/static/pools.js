@@ -62,7 +62,7 @@ function needsAttention(zone) {
     zone.missing_routes.length > 0 ||
     zone.pools.some((pool) => pool.checks.some((check) => check.ok === false)) ||
     plannedPools(zone).some((pool) => !pool.live_contract) ||
-    Boolean(zone.route_split && zone.route_split.drifted)
+    Boolean(zone.route_split && zone.route_split.drifted && zone.pools_cover !== true)
   );
 }
 
@@ -90,9 +90,10 @@ function feeSymbol(denom) {
   return denom.split('/').pop();
 }
 
-// funded (every pool funded exactly and marked) > ready (pools in place, checks green) > not ready; n/a when unknown.
+// funded (every pool funded exactly and marked, or marked and still covering what it owes after a route move) > ready
+// (pools in place, checks green) > not ready; n/a when unknown.
 function statePill(zone) {
-  if (zone.pools_funded === true) return pill('ok', 'funded');
+  if (zone.pools_funded === true || zone.pools_cover === true) return pill('ok', 'funded');
   if (zone.pools_ready === true) return pill('ok', 'ready');
   if (zone.pools_ready === null) return pill('idle', 'n/a');
   return pill('bad', 'not ready');
@@ -103,7 +104,15 @@ function headerLine(zone) {
   const onOsmosis = `${tokens(zone.native_on_osmosis)} on Osmosis (vault ${tokens(zone.vault_native)} + pools ${tokens(zone.pools_native)})`
     + ` + ${tokens(zone.swapped_in_value)} already paid out to swapped-in st${escapeHtml(zone.symbol)}`;
   const rate = `rate ${escapeHtml(shortRate(zone.stride_rate))}`;
-  return `needs ${tokens(zone.needed)} · ${onOsmosis} · ${coveragePill(zone.coverage)} · ${rate} · ${zone.pools.length} pool${zone.pools.length === 1 ? '' : 's'}`;
+  return `needs ${tokens(zone.needed)} · ${onOsmosis} · ${coveragePill(zone.coverage)}${poolsCoverPill(zone)} · ${rate} · ${zone.pools.length} pool${zone.pools.length === 1 ? '' : 's'}`;
+}
+
+// Once every pool is marked: whether each still holds what it owes the stTokens on its side of the split. This is
+// the verdict that matters after a route move, which leaves the funding marks over and under.
+function poolsCoverPill(zone) {
+  if (zone.pools_cover === true) return ` ${pill('ok', 'every pool covers its holders')}`;
+  if (zone.pools_cover === false) return ` ${pill('bad', 'a pool is short')}`;
+  return '';
 }
 
 // Covered once the ratio reaches one; idle below (the Funds tab says where the rest still is); n/a when unknown.
@@ -191,6 +200,7 @@ function poolsTable(zone) {
   const header = `<tr><th>Pool</th><th>Id</th><th class="num">Native</th><th class="num">stToken</th>
     <th class="num" title="alloyed shares held by the vault / by the test wallet">Shares vault / test wallet</th>
     <th class="num" title="the value the pool must hold, in shares: route = escrow × the pool's rate, canonical = the remainder; the vault joins it less every share already in the pool">Allocation</th>
+    <th class="num" title="once marked: the pool's native less what it owes the stTokens on its side of the split not yet swapped in (route = its escrow, canonical = the supply less every route), at its rate">Covers</th>
     <th title="the native token marked corrupted (one-way pool)">Corrupted</th><th class="num" title="the pool's rate and its gap below Stride's frozen rate">Rate</th></tr>`;
   return `<div class="table-scroll"><table>${header}${zone.pools.map((pool) => poolRows(pool, zone)).join('')}</table></div>`;
 }
@@ -202,14 +212,15 @@ function poolsTable(zone) {
 function poolRows(pool, zone) {
   const allOk = pool.checks.every((check) => check.ok === true);
   const cssClass = pool.checks.some((check) => check.ok === false) ? 'pl-fail' : '';
-  const checksRow = allOk ? '' : `<tr class="${cssClass}"><td class="pl-checks" colspan="8">${pool.checks.map(checkMark).join('')}</td></tr>`;
+  const checksRow = allOk ? '' : `<tr class="${cssClass}"><td class="pl-checks" colspan="9">${pool.checks.map(checkMark).join('')}</td></tr>`;
   return `<tr class="${cssClass}" id="pool-${escapeHtml(pool.contract)}">
     <td>${allOk ? allChecksMark(pool) : ''}${kindCell(pool)}</td>
     <td>${idCell(pool)}</td>
     <td class="num">${amount(pool.native_balance, zone.decimals)}</td>
     <td class="num">${amount(pool.st_balance, zone.decimals)}</td>
     <td class="num">${amount(pool.vault_shares, zone.decimals)} / ${amount(pool.test_wallet_shares, zone.decimals)}</td>
-    <td class="num">${amount(pool.allocation, zone.decimals)} ${fundedMark(pool)}</td>
+    <td class="num">${amount(pool.allocation, zone.decimals)} ${fundedMark(pool, zone)}</td>
+    <td class="num">${coversCell(pool, zone)}</td>
     <td>${corruptedCell(pool, zone)}</td>
     <td class="num">${rateCell(pool)}</td></tr>${checksRow}`;
 }
@@ -238,11 +249,27 @@ function idCell(pool) {
 // The cumulative funding audit: every share in the pool (the vault's, the test wallet's, any stranger's: the pool's
 // value) equals the allocation once it is funded. Below it is the normal state between the test join and the rest;
 // above it means too much went in.
-function fundedMark(pool) {
+// Once every pool in the zone covers what it owes, a pool off its allocation is only holders having moved stTokens
+// between routes since funding: grey, not a warning.
+function fundedMark(pool, zone) {
   if (pool.funded_exactly === true) return pill('ok', 'funded exactly');
   if (pool.funded_exactly === null) return pill('idle', 'n/a');
   if (BigInt(pool.vault_shares || 0) === 0n) return pill('idle', 'unfunded');
-  return BigInt(pool.alloyed_supply) < BigInt(pool.allocation) ? pill('warn', 'partly funded') : pill('bad', 'over-funded');
+  const under = BigInt(pool.alloyed_supply) < BigInt(pool.allocation);
+  if (zone.pools_cover === true) {
+    const title = 'the route split moved since funding (Route split below); the pool still covers what it owes';
+    return `<span title="${title}">${pill('idle', under ? 'under allocation' : 'over allocation')}</span>`;
+  }
+  return under ? pill('warn', 'partly funded') : pill('bad', 'over-funded');
+}
+
+// The spare (or the shortfall) once the pool is marked; before then it is still being funded.
+function coversCell(pool, zone) {
+  if (!pool.native_marked || pool.owed === null) return '<span class="muted">–</span>';
+  const spare = BigInt(pool.native_balance) - BigInt(pool.owed);
+  const title = `owes ${formatAmount(pool.owed, Number(zone.decimals), 2)} ${zone.symbol}`;
+  const label = spare >= 0n ? `+${amount(String(spare), zone.decimals)}` : `short ${amount(String(-spare), zone.decimals)}`;
+  return `<span title="${escapeHtml(title)}">${pill(spare >= 0n ? 'ok' : 'bad', label)}</span>`;
 }
 
 function corruptedCell(pool, zone) {
@@ -273,7 +300,8 @@ function checkMark(check) {
 function splitPill(zone) {
   if (zone.route_split_error) return ` <span title="${escapeHtml(zone.route_split_error)}">${pill('bad', 'split read failed')}</span>`;
   if (!zone.route_split) return '';
-  return ` ${zone.route_split.drifted ? pill('bad', 'split moved') : pill('ok', 'split steady')}`;
+  if (!zone.route_split.drifted) return ` ${pill('ok', 'split steady')}`;
+  return ` ${zone.pools_cover === true ? pill('warn', 'split moved, still covered') : pill('bad', 'split moved')}`;
 }
 
 function splitTable(zone) {
@@ -295,15 +323,17 @@ function splitRow(row, zone) {
   const moved = row.drifted ? `<span class="t-bad">${amount(row.moved, zone.decimals)}</span>` : amount(row.moved, zone.decimals);
   return `<tr class="${row.drifted ? 'pl-fail' : ''}"><td>${row.channel ? escapeHtml(row.label) : '<b>canonical</b>'}</td>
     <td>${row.pool_id === null ? '<span class="muted">–</span>' : escapeHtml(row.pool_id)}</td>
-    <td class="num">${amount(row.now, zone.decimals)}</td><td class="num">${share(row.share_now)} ${fundingPill(row)}</td>
+    <td class="num">${amount(row.now, zone.decimals)}</td><td class="num">${share(row.share_now)} ${fundingPill(row, zone)}</td>
     <td class="num">${share(row.share_baseline)}</td><td class="num">${share(row.share_at_funding)}</td>
     <td class="num muted">${share(row.share_at_upgrade)}</td><td class="num">${moved}</td></tr>`;
 }
 
 // Whether the share now still matches what the pool was funded for (within one stToken); n/a until it is funded.
-function fundingPill(row) {
+// Off funding is a warning, not a failure, while every pool still covers what it owes.
+function fundingPill(row, zone) {
   if (row.matches_funding === null || row.matches_funding === undefined) return pill('idle', 'n/a');
-  return row.matches_funding ? pill('ok', 'matches funding') : pill('bad', 'off funding');
+  if (row.matches_funding) return pill('ok', 'matches funding');
+  return pill(zone.pools_cover === true ? 'warn' : 'bad', 'off funding');
 }
 
 function share(value) {

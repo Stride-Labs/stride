@@ -124,6 +124,9 @@ class PoolReport:
     admin_candidate: str | None  # the pending admin offer (config.OSMOSIS_GOV on the last day); None when there is none
     checks: list[Check]
     ready: bool  # every check ok
+    # What the pool owes the stTokens on its side of the split that are not in it yet, at its own rate; set by
+    # build_zone_pools, which knows the supply. None while an escrow or the rate is unknown, and for an unrecognised pool.
+    owed: int | None = None
 
 
 # ---- internal structures
@@ -338,6 +341,10 @@ class ZonePools:
     creation_fee: CreationFee | None  # the poolmanager's pool_creation_fee; None when it could not be read
     vault_fee_balance: int | None  # the vault's balance of the fee denom
     creation_fee_short: bool | None  # vault_fee_balance < fee x planned pools without a live contract
+    # Every pool is marked and holds at least what it owes. A route move after funding leaves one pool over its
+    # allocation and the canonical under it, but this is what says every holder can still be paid. None until the
+    # zone is ready, every pool is marked and handed to the moderator, or while an owed amount is unknown.
+    pools_cover: bool | None
 
 
 def collect() -> dict[str, Any]:
@@ -800,7 +807,7 @@ def build_zone_pools(
     missing_routes = sorted(
         config.REQUIRED_ROUTES[denoms.st_denom] - served - blocked_channels, key=_channel_number
     )
-    ordered = sorted(reports, key=_pool_order)
+    ordered = owed_amounts(reports=sorted(reports, key=_pool_order), st_supply=host.st_supply)
     pools_ready = _pools_ready(reports=ordered, missing_routes=missing_routes)
 
     # The voting-week gates: every route denom seeded, the canonical denom seeded, every planned pool created, and
@@ -840,6 +847,44 @@ def build_zone_pools(
         creation_fee=creation_fee,
         vault_fee_balance=vault_fee_balance,
         creation_fee_short=creation_fee_short(fee=creation_fee, vault_balance=vault_fee_balance, to_create=to_create),
+        pools_cover=_pools_cover(reports=ordered, pools_ready=pools_ready),
+    )
+
+
+def owed_amounts(reports: list[PoolReport], st_supply: int) -> list[PoolReport]:
+    """Each pool with what it owes, at its own rate: a route pool its escrow, a canonical pool the supply less every
+    route's escrow, either less the stTokens already swapped into it. Unlike the allocation, this follows the split as
+    holders move stTokens between routes, so it says whether the pool can still pay everyone on its side."""
+    routes = [report for report in reports if report.kind == PoolKind.ROUTE]
+    routes_escrow = (
+        None if any(report.escrow is None for report in routes) else sum(report.escrow for report in routes)
+    )
+    return [
+        dataclasses.replace(report, owed=_owed(report=report, st_supply=st_supply, routes_escrow=routes_escrow))
+        for report in reports
+    ]
+
+
+def _owed(report: PoolReport, st_supply: int, routes_escrow: int | None) -> int | None:
+    if report.kind == PoolKind.ROUTE:
+        side = report.escrow
+    elif report.kind == PoolKind.CANONICAL:
+        side = None if routes_escrow is None else st_supply - routes_escrow
+    else:
+        side = None
+    if side is None or report.rate is None:
+        return None
+    return ceil_times_rate(amount=max(side - report.st_balance, 0), rate=report.rate)
+
+
+def _pools_cover(reports: list[PoolReport], pools_ready: bool | None) -> bool | None:
+    """Only judged on a finished zone: a duplicate slot or missing route (not ready) would skew the canonical side."""
+    recognised = [report for report in reports if report.kind != PoolKind.UNRECOGNISED]
+    finished = all(report.native_marked and report.moderator == config.POOL_MODERATOR for report in recognised)
+    if pools_ready is not True or not finished:
+        return None
+    return tri_state(
+        outcomes=[None if report.owed is None else report.native_balance >= report.owed for report in recognised]
     )
 
 

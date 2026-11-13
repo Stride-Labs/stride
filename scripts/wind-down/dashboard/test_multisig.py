@@ -200,7 +200,7 @@ class LiveTestCommandsTest(unittest.TestCase):
     def test_every_sign_command_says_the_signer_needs_the_multisig_key_in_their_keyring(self) -> None:
         all_sets = sets_by_id(fake_snapshot(), funds_data=fake_funds(), pools_data=fake_pools())
         for tx_set in all_sets.values():
-            binary, address = ("osmosisd", VAULT) if tx_set.id in ("pool-funding", "pool-creation") else ("strided", ADDRESS)
+            binary, address = ("osmosisd", VAULT) if tx_set.id in ("pool-funding", "pool-creation", "community-pool-return") else ("strided", ADDRESS)
             for position, tx in enumerate(tx_set.txs):
                 if tx_set.id == "combined-funding" and position >= 4:  # txs 5-11 are on Osmosis
                     binary, address = "osmosisd", VAULT
@@ -360,6 +360,8 @@ class SetsTest(unittest.TestCase):
                 ("staketia-claim-balance", "tia-claim-balance"),
                 ("pool-funding", "join-pools"),
                 ("pool-admin-transfer", "pools-admin-to-gov"),
+                ("halt-upgrade", "halt-height"),
+                ("community-pool-return", "sweep-community-pool"),
             ],
         )
 
@@ -646,6 +648,9 @@ class IcaTransfersTest(unittest.TestCase):
                 if tx_set.id in ("pool-creation", "pool-admin-transfer"):  # one heading across every zone
                     self.assertEqual(set(chain_ids), {"all zones"})
                     continue
+                if tx_set.id in ("halt-upgrade", "community-pool-return"):  # one tx under its chain's own heading
+                    self.assertEqual(len(chain_ids), 1)
+                    continue
                 runs = [chain_id for index, chain_id in enumerate(chain_ids) if index == 0 or chain_ids[index - 1] != chain_id]
 
                 self.assertEqual(runs, [zone.chain_id for zone in config.ZONES if zone.chain_id in chain_ids])
@@ -655,17 +660,17 @@ ICAS = ("FEE", "WITHDRAWAL", "DELEGATION", "REDEMPTION")
 COMBINED_FUND_TITLES = [
     "Combined 1 · Test transfer, all zones",
     "Combined 2 · Full transfer, Hub",
-    "Combined 3 · Full transfer, ready now",
-    "Combined 4 · Full transfer, after the next sweep",
+    "Combined 3 · Full transfer, dydx-mainnet-1, injective-1, laozi-mainnet, phoenix-1, ssc-1",
+    "Combined 4 · Full transfer, juno-1, sommelier-3",
     "Combined 5 · Test joins, Hub",
-    "Combined 6 · Test joins, ready now",
-    "Combined 7 · Test joins, after the next sweep",
+    "Combined 6 · Test joins, dydx-mainnet-1, injective-1, laozi-mainnet, phoenix-1, ssc-1",
+    "Combined 7 · Test joins, juno-1, sommelier-3",
     "Combined 8 · Full join + close, Hub",
-    "Combined 9 · Full join + close, ready now (1 of 2)",
-    "Combined 10 · Full join + close, ready now (2 of 2)",
-    "Combined 11 · Full join + close, after the next sweep",
+    "Combined 9 · Full join + close, dydx-mainnet-1, injective-1",
+    "Combined 10 · Full join + close, laozi-mainnet, phoenix-1, ssc-1",
+    "Combined 11 · Full join + close, juno-1, sommelier-3",
 ]
-GROUP_HEADINGS = (COSMOS, DYDX, "after the next sweep")  # the zones with a tx to send; a group with none, its title
+GROUP_HEADINGS = (COSMOS, DYDX, "juno-1, sommelier-3")  # the zones with a tx to send; a group with none, its title
 SETTLED_RECORDS = {
     "pending_before_claimable": "0",
     "user_redemption_records": "0",
@@ -712,7 +717,7 @@ class CombinedFundingTest(unittest.TestCase):
                 ),
                 *(
                     f"Osmosis · full join + close · {heading}"
-                    for heading in (COSMOS, DYDX, "ready now (2 of 2)", "after the next sweep")
+                    for heading in (COSMOS, DYDX, "laozi-mainnet, phoenix-1, ssc-1", "juno-1, sommelier-3")
                 ),
             ],
         )
@@ -1597,9 +1602,9 @@ def admin_tx(pools_data: dict[str, object] | None) -> multisig.MultisigTx:
 
 
 class PoolAdminTransferTest(unittest.TestCase):
-    def test_is_the_last_set_and_offers_every_pool_to_the_gov_module_in_one_tx(self) -> None:
+    def test_is_the_last_pool_set_and_offers_every_pool_to_the_gov_module_in_one_tx(self) -> None:
         self.assertEqual(multisig.config.OSMOSIS_GOV, GOV)
-        self.assertEqual(list(sets_by_id(None))[-1], "pool-admin-transfer")
+        self.assertEqual(list(sets_by_id(None))[-3:], ["pool-admin-transfer", "halt-upgrade", "community-pool-return"])
 
         tx = admin_tx(pools_data=closed_pools())
 
@@ -1651,6 +1656,38 @@ class PoolAdminTransferTest(unittest.TestCase):
         self.assertEqual(len(done.members), len(config.ZONES))
 
 
+
+class HaltUpgradeTest(unittest.TestCase):
+    def test_writes_the_halt_plan_from_the_multisig_with_fees_at_the_gas_price(self) -> None:
+        (tx,) = sets_by_id(None)["halt-upgrade"].txs
+        self.assertEqual((tx.ready, tx.reason, tx.gas), (True, None, 200_000))
+
+        # The generate step's heredoc is the unsigned tx
+        generate = tx.commands[0].text
+        unsigned = json.loads(generate.split("<<'EOF'\n", 1)[1].rsplit("\nEOF", 1)[0])
+        (message,) = unsigned["body"]["messages"]
+        self.assertEqual(message["@type"], "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade")
+        self.assertEqual(message["authority"], multisig.MULTISIG_ADDRESS)
+        self.assertEqual((message["plan"]["name"], message["plan"]["height"]), ("halt", "42866824"))
+        self.assertEqual(unsigned["auth_info"]["fee"], {"amount": [{"denom": "ustrd", "amount": "1000"}], "gas_limit": "200000", "payer": "", "granter": ""})
+        self.assertIn("tx multisign /tmp/wind-down/halt-upgrade.unsigned.json", tx.commands[-1].text)
+
+
+
+class CommunityPoolReturnTest(unittest.TestCase):
+    def test_deposits_the_v35_amounts_under_their_osmosis_denoms_from_the_vault(self) -> None:
+        (tx,) = sets_by_id(None)["community-pool-return"].txs
+        self.assertEqual((tx.chain_id, tx.ready, tx.gas), ("osmosis-1", True, 1_000_000))
+
+        generate = tx.commands[0].text
+        self.assertIn(f"fund-community-pool 1175193069513990463182ibc/245C3CA604AA", generate)
+        self.assertIn(",3278087898ibc/C140AFD542AE77BD7DCC83F13FDD8C5E5BB8C4929785E6EC2F4C636F98F17901,", generate)
+        self.assertIn(",69662903687ibc/A8CA5EE328FA10C9519DF6057DA1F69682D28F7D0F5CCC7ECB72E3DCA2D157A4,", generate)
+        self.assertIn(",490076uosmo --from osmo1k8c2m5cn322akk5wy8lpt87dd2f4yh9afcd7af", generate)
+        self.assertIn("--gas 1000000 --gas-prices 0.1uosmo", generate)
+        self.assertIn("osmosisd tx multisign", tx.commands[-1].text)
+
+
 class MultisigBodyTest(unittest.TestCase):
     def test_absent_pools_cache_is_no_data_and_fetched_at_is_the_oldest_that_exists(self) -> None:
         views = {
@@ -1677,6 +1714,8 @@ class MultisigBodyTest(unittest.TestCase):
                 "staketia-claim-balance",
                 "pool-funding",
                 "pool-admin-transfer",
+                "halt-upgrade",
+                "community-pool-return",
             },
         )
         self.assertEqual(sets["pool-funding"]["txs"][0]["reason"], "waiting for the Pools snapshot")

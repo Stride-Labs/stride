@@ -1074,6 +1074,39 @@ class ZoneTest(unittest.TestCase):
         self.assertEqual([pool.allocation for pool in unknown.pools], [None, None])
         self.assertIsNone(unknown.pools_funded)
 
+    def test_pools_cover_follows_a_route_move_after_funding(self) -> None:
+        # Funded for a 100 stATOM route escrow; 10 then left the route for the canonical side, and 40 canonical
+        # stATOM were swapped in (paid 60 native out of the canonical pool).
+        def zone(canonical_native: int, marked: bool = True, twin: bool = False) -> pools.ZonePools:
+            corrupted = [ATOM_ON_OSMOSIS] if marked else []
+            canonical = report(
+                raw_pool(native=canonical_native, st_balance=40, alloyed_supply=1_499_900, corrupted=corrupted),
+                vault_shares=1_499_900,
+            )
+            route = report(
+                raw_pool(contract="osmo1hub", st_denom=HUB_STATOM, st_trace=HUB_TRACE, native=150, alloyed_supply=150, corrupted=corrupted),
+                vault_shares=150,
+                route_lookup=HUB_LOOKUP,
+                escrow=90,
+            )
+            twins = [dataclasses.replace(route, contract="osmo1twin")] if twin else []
+            with mock.patch.dict(config.REQUIRED_ROUTES, {"stuatom": frozenset({"channel-0"})}):
+                return zone_pools(reports=pools.allocate(reports=[canonical, route, *twins], vault_native=0))
+
+        covered = zone(canonical_native=1_499_840)
+        short = zone(canonical_native=1_499_000)
+        unmarked = zone(canonical_native=1_499_840, marked=False)
+        # A second pool on the route would count its escrow twice against the canonical side: not judged.
+        duplicate = zone(canonical_native=1_499_840, twin=True)
+
+        # canonical owes (1_000_000 - 90 - 40) x 1.5; the route owes 90 x 1.5
+        self.assertEqual([pool.owed for pool in covered.pools], [1_499_805, 135])
+        self.assertTrue(covered.pools_cover)
+        self.assertFalse(covered.pools_funded)
+        self.assertFalse(short.pools_cover)
+        self.assertIsNone(unmarked.pools_cover)
+        self.assertIsNone(duplicate.pools_cover)
+
 
 class CollectTest(unittest.TestCase):
     def test_zone_pools_reads_the_supply_route_and_escrow_and_serialises_ints_as_strings(

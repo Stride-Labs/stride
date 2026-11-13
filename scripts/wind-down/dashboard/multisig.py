@@ -69,16 +69,22 @@ HUB_CHAIN_ID = "cosmoshub-4"  # the combined funding txs give the Hub its own fu
 # Their stale light clients held their last records' sweep past 2026-11-10; updated at 16:18 UTC, they sweep at the
 # 19:00 UTC stride epoch, so their combined cards go out after it and after the claims bot.
 AFTER_SWEEP_CHAIN_IDS = ("juno-1", "sommelier-3")
-# The ready-now close in one tx was too big for a Ledger to sign: it goes out as these two.
-READY_CLOSE_SPLIT = (("dydx-mainnet-1", "injective-1"), ("laozi-mainnet", "phoenix-1", "ssc-1"))
+# The zones whose records were all settled on 2026-11-10, so their cards go out first; as one tx their close was too
+# big for a Ledger to sign, so it goes out as these two.
+SETTLED_CLOSE_SPLIT = (("dydx-mainnet-1", "injective-1"), ("laozi-mainnet", "phoenix-1", "ssc-1"))
+SETTLED_CHAIN_IDS = tuple(chain_id for part in SETTLED_CLOSE_SPLIT for chain_id in part)
 # The combined funding cards already broadcast, by card number: their tx hash.
 COMBINED_SENT = {
     1: "228629D094ECE618240E5F8341B3154A874755B967E34C31C561F333314CAE6D",
     2: "F219C060EC3747978A05531E7B9F3F234F4BCF2E91D5BCFBFA70136F6C593154",
     3: "51E95E1D6DF4D5C323A2A96BC9327F8FD929A57FE195FBEBB34787F3472E7A3F",
+    4: "12B2B6F28A59395122BDB88E2AB165653E9534A0E99B098439211794EF546AE5",
     5: "43FE5F2483851FEB3139916EB7013C98D84E61FC7A43A949B219BF5379EEC8E9",
     6: "57CFAF73EB677DB7100C6B3DDDDDF899DD01A7370A4AAD9FA1C28AF2386DB0F2",
     8: "5B40DFD595B72521A177641947C761DEC0B23952DC17221499EE9282967801E5",
+    9: "922B10A08ED3775F4B164C170CF55745BBA387DEF2B3F3B7FEF0D637339F5D3E",
+    10: "681947ABF2212137970379FA93685E7BEA69A833E4041E9D0F03BFA89DEC1A5E",
+    11: "8ABD0E5CC053F3596B71E3F88B01976737E8D58145E5EDC74B388A74A2D524FA",
 }
 COMBINED_GAS_CAP = 25_000_000  # Osmosis nodes reject a tx above 30M gas wanted by default (max-gas-wanted-per-tx)
 ONE_AT_A_TIME = "One tx at a time: generate, two signatures, multisign, broadcast, then confirm it landed before the next."
@@ -257,6 +263,31 @@ LIVE_TEST_GAS = 12_000_000
 FULL_DRAIN_GAS_BY_CHAIN_ID = {"cosmoshub-4": 25_000_000, "osmosis-1": 15_000_000, "ssc-1": 15_000_000}
 FULL_DRAIN_DEFAULT_GAS = 13_000_000
 GAS_PRICE_USTRD = Decimal("0.005")
+# The final stop: an upgrade plan no binary implements, so every node halts at its height ("UPGRADE NEEDED") with no
+# app.toml edit. The multisig submits it directly as the chain authority (v35); gov is closed.
+HALT_UPGRADE_NAME = "halt"
+HALT_UPGRADE_HEIGHT = 42_866_824
+HALT_UPGRADE_GAS = 200_000  # simulated at 54,013 on 2026-11-13
+# The v35 upgrade moved Stride's community pool to the multisig; the sweep (run 22) carried the part on the sweep list to
+# the vault, the multisig's own address on Osmosis. These are the upgrade's amounts (not the vault's current balances),
+# by Stride denom, for every denom that reached Osmosis over channel-5; the OSMO voucher arrived as native uosmo.
+V35_COMMUNITY_POOL_ON_OSMOSIS = {
+    "staISLM": 1_175_193_069_513_990_463_182,
+    "stadydx": 283_673_067_634_929_439_998,
+    "stinj": 840_339_254_919_898_029,
+    "stuatom": 3_278_087_898,
+    "stuband": 320_489_593,
+    "stujuno": 124_352_293,
+    "stuluna": 289_645_815,
+    "stuosmo": 777_462_202,
+    "stusaga": 46_908_825,
+    "stusomm": 402_773_303,
+    "stutia": 49_662_453,
+    "ustrd": 69_662_903_687,
+}
+V35_COMMUNITY_POOL_UOSMO = 490_076
+OSMOSIS_STRIDE_CHANNEL = "channel-326"  # Osmosis's end of Stride's channel-5
+COMMUNITY_POOL_FUND_GAS = 1_000_000  # simulated at 458,893 on 2026-11-13
 
 
 @dataclass(frozen=True)
@@ -399,6 +430,8 @@ def tx_sets(
         _staketia_claim_balance_set(),
         _pool_funding_set(pools_data=pools_data),
         _pool_admin_transfer_set(pools_data=pools_data),
+        _halt_upgrade_set(),
+        _community_pool_return_set(),
     ]
     return [_completed(tx_set=tx_set) if tx_set.id in COMPLETED_SET_IDS else tx_set for tx_set in sets]
 
@@ -657,33 +690,29 @@ def _all_ica_transfer_txs(funds_data: dict[str, Any] | None) -> list[MultisigTx]
 
 @dataclass(frozen=True)
 class _ZoneGroup:
-    title: str  # in the card title, after the stage; the heading names the group's zones instead
+    title: str  # in the card title, after the stage; the heading names the group's zones still sending
     slug: str
     includes: Callable[[str], bool]  # by chain_id
 
 
 _HUB_GROUP = _ZoneGroup(title="Hub", slug="hub", includes=lambda chain_id: chain_id == HUB_CHAIN_ID)
 _AFTER_SWEEP_GROUP = _ZoneGroup(
-    title="after the next sweep", slug="after-sweep", includes=lambda chain_id: chain_id in AFTER_SWEEP_CHAIN_IDS
+    title=", ".join(AFTER_SWEEP_CHAIN_IDS), slug="after-sweep", includes=lambda chain_id: chain_id in AFTER_SWEEP_CHAIN_IDS
 )
 _ZONE_GROUPS = (
     _HUB_GROUP,
-    _ZoneGroup(
-        title="ready now",
-        slug="ready",
-        includes=lambda chain_id: chain_id != HUB_CHAIN_ID and chain_id not in AFTER_SWEEP_CHAIN_IDS,
-    ),
+    _ZoneGroup(title=", ".join(SETTLED_CHAIN_IDS), slug="ready", includes=lambda chain_id: chain_id in SETTLED_CHAIN_IDS),
     _AFTER_SWEEP_GROUP,
 )
 _CLOSE_GROUPS = (
     _HUB_GROUP,
     *(
         _ZoneGroup(
-            title=f"ready now ({part} of {len(READY_CLOSE_SPLIT)})",
+            title=", ".join(chain_ids),
             slug=f"ready-{part}",
             includes=lambda chain_id, chain_ids=chain_ids: chain_id in chain_ids,
         )
-        for part, chain_ids in enumerate(READY_CLOSE_SPLIT, start=1)
+        for part, chain_ids in enumerate(SETTLED_CLOSE_SPLIT, start=1)
     ),
     _AFTER_SWEEP_GROUP,
 )
@@ -734,10 +763,10 @@ def _combined_funding_set(funds_data: dict[str, Any] | None, pools_data: dict[st
         id="combined-funding",
         step_id="transfers",
         title="Combined funding: every remaining zone in eleven txs",
-        description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into eleven txs: four on Stride, seven on Osmosis, with the Hub, the zones ready now and the zones waiting on the next sweep each in their own.",
+        description="The ICA transfers and the pool test joins and closes of every remaining zone, merged into eleven txs: four on Stride, seven on Osmosis, with the Hub, the zones already settled and the zones waiting on the next sweep each in their own.",
         notes=[
             "Order: 1; once it settles, 2 then 3; once they settle, 5 then 6; once they settle, 8, 9 then 10 (one at a time: each shares the multisig's sequence on its chain).",
-            "The ready-now close is two txs (9 and 10): as one it was too big for a Ledger to sign.",
+            "The settled zones' close is two txs (9 and 10): as one it was too big for a Ledger to sign.",
             f"{' and '.join(AFTER_SWEEP_CHAIN_IDS)} (4, 7, 11) follow the same order after the next sweep has landed and the claims bot has paid their redeemers.",
             "Each tx is a pure bundle of the per-zone txs below: their messages and amounts are unchanged, and generating one runs each member's own generate step and merges the files.",
             "A combined tx is ready only when every member is. Otherwise it names the first member that is not and why.",
@@ -870,6 +899,115 @@ def _restore_channels_set() -> TxSet:
             ONE_AT_A_TIME,
         ],
         txs=[_channel_restore_tx(restore=restore) for restore in CHANNEL_RESTORES],
+    )
+
+
+def _halt_upgrade_set() -> TxSet:
+    return TxSet(
+        id="halt-upgrade",
+        step_id="halt-height",
+        title=f"Halt: schedule the '{HALT_UPGRADE_NAME}' upgrade at block {HALT_UPGRADE_HEIGHT:,}",
+        description="Schedule an upgrade plan no binary implements, so every node stops at its height without an app.toml edit.",
+        notes=[
+            "MsgSoftwareUpgrade from the multisig as the chain authority (v35's consensus authority); no vote, effective once it lands.",
+            "It must land before the height; check it with `strided q upgrade plan --node " + NODE + "`.",
+            f"Every node stops at block {HALT_UPGRADE_HEIGHT:,} with UPGRADE \"{HALT_UPGRADE_NAME}\" NEEDED: leave the nodes stopped.",
+            f"Fees: {int(HALT_UPGRADE_GAS * GAS_PRICE_USTRD)}ustrd for {HALT_UPGRADE_GAS:,} gas; the multisig needs that much STRD.",
+        ],
+        txs=[_halt_upgrade_tx()],
+    )
+
+
+def _halt_upgrade_tx() -> MultisigTx:
+    file_stem = f"{WORKDIR}/halt-upgrade"
+    fees = int(HALT_UPGRADE_GAS * GAS_PRICE_USTRD)
+
+    # No CLI builds a bare MsgSoftwareUpgrade (the upgrade subcommand wraps it in a gov proposal), so the generate
+    # step writes the unsigned tx itself
+    unsigned_tx = {
+        "body": {
+            "messages": [
+                {
+                    "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+                    "authority": MULTISIG_ADDRESS,
+                    "plan": {
+                        "name": HALT_UPGRADE_NAME,
+                        "time": "0001-01-01T00:00:00Z",
+                        "height": str(HALT_UPGRADE_HEIGHT),
+                        "info": "",
+                        "upgraded_client_state": None,
+                    },
+                }
+            ],
+            "memo": "",
+            "timeout_height": "0",
+            "extension_options": [],
+            "non_critical_extension_options": [],
+        },
+        "auth_info": {
+            "signer_infos": [],
+            "fee": {"amount": [{"denom": "ustrd", "amount": str(fees)}], "gas_limit": str(HALT_UPGRADE_GAS), "payer": "", "granter": ""},
+            "tip": None,
+        },
+        "signatures": [],
+    }
+    generate_line = f"cat > {file_stem}.unsigned.json <<'EOF'\n{json.dumps(unsigned_tx, indent=2)}\nEOF"
+    return MultisigTx(
+        chain_id=CHAIN_ID,
+        title=f"MsgSoftwareUpgrade: '{HALT_UPGRADE_NAME}' at block {HALT_UPGRADE_HEIGHT:,}",
+        ready=True,
+        reason=None,
+        commands=_commands(
+            generate=f"mkdir -p {WORKDIR}\n{generate_line}", file_stem=file_stem, generate_label="Write the unsigned tx"
+        ),
+        files=_shared_files(file_stem=file_stem),
+        gas=HALT_UPGRADE_GAS,
+        unsigned=f"{file_stem}.unsigned.json",
+    )
+
+
+def _community_pool_return_set() -> TxSet:
+    return TxSet(
+        id="community-pool-return",
+        step_id="sweep-community-pool",
+        title="Community pool: return the v35 community pool to Osmosis's community pool",
+        description="Deposit the community pool v35 moved to the multisig into Osmosis's community pool from the vault, at the upgrade's amounts.",
+        notes=[
+            "MsgFundCommunityPool is permissionless: the vault deposits directly, no gov proposal.",
+            "The amounts are what v35 moved, not the vault's balances: the vault's STRD includes 41,228 STRD that was not the pool's.",
+            "Left out, because they never reached Osmosis: the ATOM, TIA and SAGA vouchers (swept back to the multisig's Hub, Celestia and Saga addresses) and stDYM, stEVMOS, stCMDX, stSTARS, stUMEE and the DYDX, EVMOS, DYM and ibc/A745… vouchers (still on the Stride multisig, no route).",
+            f"Fees: {int(COMMUNITY_POOL_FUND_GAS * OSMOSIS_GAS_PRICE_PER_GAS)}uosmo for {COMMUNITY_POOL_FUND_GAS:,} gas, paid from the vault's OSMO on top of the deposit.",
+        ],
+        txs=[_community_pool_return_tx()],
+    )
+
+
+def _community_pool_return_tx() -> MultisigTx:
+    file_stem = f"{WORKDIR}/community-pool-return"
+    coins = [
+        f"{amount}ibc/{hashlib.sha256(f'transfer/{OSMOSIS_STRIDE_CHANNEL}/{denom}'.encode()).hexdigest().upper()}"
+        for denom, amount in V35_COMMUNITY_POOL_ON_OSMOSIS.items()
+    ]
+    coins.append(f"{V35_COMMUNITY_POOL_UOSMO}uosmo")
+    generate_line = (
+        f"osmosisd tx distribution fund-community-pool {','.join(coins)} --from {OSMOSIS_VAULT_ADDRESS} "
+        f"--generate-only --chain-id {OSMOSIS_TOOLS.chain_id} --node {OSMOSIS_NODE} --gas {COMMUNITY_POOL_FUND_GAS} "
+        f"--gas-prices {OSMOSIS_GAS_PRICE} > {file_stem}.unsigned.json"
+    )
+    return MultisigTx(
+        chain_id=OSMOSIS_TOOLS.chain_id,
+        title=f"MsgFundCommunityPool: {len(coins)} denoms from the vault",
+        ready=True,
+        reason=None,
+        commands=_commands(
+            generate=f"mkdir -p {WORKDIR}\n{generate_line}",
+            file_stem=file_stem,
+            tools=OSMOSIS_TOOLS,
+            generate_label="Write the unsigned tx",
+        ),
+        files=_shared_files(file_stem=file_stem),
+        gas=COMMUNITY_POOL_FUND_GAS,
+        unsigned=f"{file_stem}.unsigned.json",
     )
 
 
