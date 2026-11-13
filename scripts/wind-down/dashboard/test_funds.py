@@ -417,19 +417,52 @@ class TransfersTest(unittest.TestCase):
 
 
 class PoolsTest(unittest.TestCase):
-    def test_discovers_contracts_from_alloyed_receipts_plus_extras(self) -> None:
-        balances = {
-            "factory/osmo1canon/alloyed/stATOMcanon": 10,
-            "factory/osmo1other/nonalloyed": 1,
-            ATOM_ON_OSMOSIS: 5,
-            "factory/osmo1hub/alloyed/stATOMhub": 3,
+    def test_candidates_are_the_code_996_pools_not_already_ruled_out(self) -> None:
+        listed = {
+            "osmo1ours": funds.ListedPool(pool_id="1", code_id="996"),
+            "osmo1other": funds.ListedPool(pool_id="2", code_id="148"),
+            "osmo1known": funds.ListedPool(pool_id="3", code_id="996"),
         }
 
-        contracts = funds.discover_pool_contracts(
-            vault_balances=balances, extra=("osmo1new", "osmo1hub")
+        self.assertEqual(
+            funds.transmuter_candidates(listed=listed, skip={"osmo1known"}),
+            ["osmo1ours"],
         )
 
-        self.assertEqual(contracts, ["osmo1canon", "osmo1hub", "osmo1new"])
+    def test_keeps_vault_admin_pools_and_extras_only(self) -> None:
+        admins = {
+            "osmo1ours": config.OSMOSIS_VAULT,
+            "osmo1theirs": "osmo1stranger",
+            "osmo1unknown": None,
+            "osmo1extra": "osmo1stranger",
+        }
+
+        ours = funds.select_our_pools(admins=admins, extra=("osmo1extra",))
+
+        self.assertEqual(ours, ["osmo1ours", "osmo1extra"])
+
+    def test_snapshot_reads_the_pools_the_vault_administers(self) -> None:
+        # The vault holds no LP receipt before funding, so the pool set must come from the listing + get_admin.
+        discovered = funds.VaultPools(
+            listed={"osmo1canon": funds.ListedPool(pool_id="1", code_id="996")},
+            admins={"osmo1canon": config.OSMOSIS_VAULT},
+            contracts=["osmo1canon"],
+        )
+        osmosis = chain.Chain(chain_id="osmosis-1", rest="https://rest", rpc="")
+        with (
+            mock.patch.object(chain, "zone_chain", return_value=osmosis),
+            mock.patch.object(funds, "_balances", return_value={ATOM_ON_OSMOSIS: 7}),
+            mock.patch.object(funds, "vault_pools", return_value=discovered),
+            mock.patch.object(
+                funds,
+                "_raw_pool",
+                side_effect=lambda osmosis, contract: raw_pool(contract, {ATOM_ON_OSMOSIS: 1}, {}),
+            ),
+        ):
+            snapshot = funds._osmosis_snapshot()
+
+        self.assertEqual([pool.contract for pool in snapshot.pools], ["osmo1canon"])
+        self.assertEqual(snapshot.vault_balances, {ATOM_ON_OSMOSIS: 7})
 
     def test_canonical_and_route_pools_go_to_the_zone_whose_native_denom_they_hold(
         self,
@@ -517,15 +550,51 @@ class PoolsTest(unittest.TestCase):
         self.assertEqual(assigned, {"cosmoshub-4": []})
 
 
-class PayloadTest(unittest.TestCase):
-    def test_every_int_becomes_a_string_but_bools_and_none_survive(self) -> None:
-        payload = funds._stringify_ints(
-            {"a": 10**26, "b": [1, {"c": None}], "d": True, "e": "x"}
-        )
+class PoolRateTest(unittest.TestCase):
+    def test_rate_is_native_factor_over_st_factor(self) -> None:
+        pool = raw_pool(contract="osmo1pool", assets={INJ_ON_OSMOSIS: 0, CANONICAL_STINJ: 0}, base_denoms={INJ_ON_OSMOSIS: "inj", CANONICAL_STINJ: "stinj"})
+        pool = funds.RawPool(**{**pool.__dict__, "factors": {INJ_ON_OSMOSIS: 1545253821149464735, CANONICAL_STINJ: 10**18}})
 
-        self.assertEqual(
-            payload, {"a": str(10**26), "b": ["1", {"c": None}], "d": True, "e": "x"}
-        )
+        self.assertEqual(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[CANONICAL_STINJ]), "1.545253821149464735")
+        self.assertIsNone(funds.pool_rate(pool=pool, native_denom="ibc/OTHER", st_denoms=[CANONICAL_STINJ]))
+        self.assertIsNone(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[]))
+
+    def test_rate_is_the_same_at_the_1e6_scale(self) -> None:
+        # The 18-decimal zones' pools are created with 1e6-scaled factors (1e18-scaled ones overflow the transmuter).
+        pool = raw_pool(contract="osmo1pool", assets={INJ_ON_OSMOSIS: 0, CANONICAL_STINJ: 0}, base_denoms={INJ_ON_OSMOSIS: "inj", CANONICAL_STINJ: "stinj"})
+        pool = funds.RawPool(**{**pool.__dict__, "factors": {INJ_ON_OSMOSIS: 1_545_254, CANONICAL_STINJ: 1_000_000}})
+
+        self.assertEqual(funds.pool_rate(pool=pool, native_denom=INJ_ON_OSMOSIS, st_denoms=[CANONICAL_STINJ]), "1.545254000000000000")
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="1.545254", pool_rate="1.545254000000000000"), "0.0000")
+
+    def test_gap_is_the_frozen_rate_over_the_pool_rate(self) -> None:
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="1.1764", pool_rate="1.1751"), "0.1106")
+        self.assertEqual(funds.rate_gap_pct(redemption_rate="2.0", pool_rate="2.0"), "0.0000")
+        self.assertIsNone(funds.rate_gap_pct(redemption_rate="2.0", pool_rate=None))
+
+    def test_zone_rate_comes_from_the_canonical_pool(self) -> None:
+        canonical = funds.Pool(contract="a", kind=funds.PoolKind.CANONICAL, alloyed_denom="x", native=0, st_denom="s", st_amount=0, rate="1.5")
+        route = funds.Pool(contract="b", kind=funds.PoolKind.ROUTE, alloyed_denom="y", native=0, st_denom="s", st_amount=0, rate="1.5")
+        self.assertEqual(funds.pool_rate_of(pools=[route, canonical]), "1.5")
+        self.assertIsNone(funds.pool_rate_of(pools=[route]))
+        self.assertIsNone(funds.pool_rate_of(pools=None))
+
+
+class PayloadTest(unittest.TestCase):
+    def test_collect_serialises_every_int_through_the_shared_helper(self) -> None:
+        host_zones = {"host_zone": []}
+
+        with (
+            mock.patch.object(chain, "rest_get", return_value=host_zones),
+            mock.patch.object(funds, "_osmosis_snapshot", return_value=funds.OsmosisSnapshot(vault_balances={}, pools=[])),
+            mock.patch.object(chain, "rest_get_all_pages", return_value=[]),
+            mock.patch.object(config, "ZONES", ()),
+            mock.patch.object(funds, "_balances", return_value={"ustrd": 10**26}),
+        ):
+            payload = funds.collect()
+
+        self.assertEqual(payload["zones"], [])
+        self.assertEqual([operator["liquid"] for operator in payload["operators"]], [str(10**26)] * 3)
 
     def test_zone_denoms_follow_the_osmosis_side_channel(self) -> None:
         side = host_side(
@@ -583,6 +652,7 @@ class ZoneRecordsTest(unittest.TestCase):
         )
         self.assertEqual(zone.pending_before_claimable, 5)
         self.assertFalse(zone.delegation_transfer_ready)
+        self.assertEqual(zone.queued_or_retrying, 3)  # 2 queued + 1 retrying; in-progress and exit-transfer do not block the drain
 
     def test_claimable_and_empty_entries_do_not_block_the_delegation_transfer(self) -> None:
         zone = self.records(
@@ -593,6 +663,7 @@ class ZoneRecordsTest(unittest.TestCase):
 
         self.assertEqual(zone.pending_before_claimable, 0)
         self.assertTrue(zone.delegation_transfer_ready)
+        self.assertEqual(zone.queued_or_retrying, 0)
 
     def test_redemption_transfer_needs_no_records_and_no_pending_claims(self) -> None:
         clean = self.records()
@@ -643,13 +714,16 @@ class ZoneRecordsTest(unittest.TestCase):
 
 
 class RecordQueriesTest(unittest.TestCase):
-    def test_staketia_unbonding_records_not_claimed_counts_every_other_status(self) -> None:
-        records = [{"status": status} for status in ("UNBONDED", "CLAIMED", "UNBONDING_QUEUE", "CLAIMED")]
+    def test_staketia_unbonding_records_not_claimed_skips_claimed_and_the_empty_accumulating_record(self) -> None:
+        statuses = ("UNBONDED", "CLAIMED", "UNBONDING_QUEUE", "CLAIMED")
+        records = [{"status": status, "native_amount": "100"} for status in statuses]
+        records.append({"status": "ACCUMULATING_REDEMPTIONS", "native_amount": "0"})
+        records.append({"status": "ACCUMULATING_REDEMPTIONS", "native_amount": "100"})
 
         with mock.patch.object(chain, "rest_get_all_pages", return_value=records) as pages:
             count = funds._staketia_unbonding_not_claimed(stride=chain.stride_chain())
 
-        self.assertEqual(count, 2)
+        self.assertEqual(count, 3)
         self.assertEqual(pages.call_args.kwargs["path"], "/Stride-Labs/stride/staketia/unbonding_records")
 
     def test_staketia_redemptions_are_counted_across_pages(self) -> None:
@@ -732,6 +806,80 @@ class ZoneAssemblyTest(unittest.TestCase):
 
         self.assertEqual(zone.accounts[1].other_balances, [funds.Balance(denom="ibc/USDC", amount=5)])
         self.assertEqual(zone.accounts[0].other_balances, [])
+
+
+class SettledAndLandedTest(unittest.TestCase):
+    def stages(self, staked: int = 0, unbonding: int = 0, in_flight: int | None = 0) -> funds.Stages:
+        return funds.Stages(staked=staked, unbonding=unbonding, liquid=0, in_flight=in_flight, vault=None, pools=None)
+
+    def test_settled_when_staked_is_dust_and_nothing_unbonds_or_flies(self) -> None:
+        self.assertTrue(funds.is_funds_settled(stages=self.stages(staked=999_999), decimals=6))
+
+    def test_settled_dust_is_below_one_whole_token_of_the_zones_decimals(self) -> None:
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(staked=10**6), decimals=6))
+        self.assertTrue(funds.is_funds_settled(stages=self.stages(staked=10**6), decimals=18))
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(staked=10**18), decimals=18))
+
+    def test_not_settled_while_unbonding_or_in_flight(self) -> None:
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(unbonding=1), decimals=6))
+        self.assertFalse(funds.is_funds_settled(stages=self.stages(in_flight=1), decimals=6))
+
+    def test_settled_is_unknown_without_the_in_flight_amount(self) -> None:
+        self.assertIsNone(funds.is_funds_settled(stages=self.stages(in_flight=None), decimals=6))
+
+    def test_landed_when_every_ica_is_dust_and_nothing_flies(self) -> None:
+        balances = ica_balances(delegation=999_999, withdrawal=1, fee=0, redemption=500_000)
+
+        self.assertTrue(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_not_landed_while_any_ica_holds_a_whole_token(self) -> None:
+        for holder in ("delegation", "withdrawal", "fee", "redemption"):
+            balances = ica_balances(**{holder: 10**6})
+
+            self.assertFalse(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_foreign_denoms_do_not_hold_up_landing(self) -> None:
+        # ica_balances() gives the withdrawal ICA 5 of ibc/USDC and, below, a large foreign balance changes nothing.
+        balances = {**ica_balances(), funds.IcaType.FEE: {"uatom": 0, "ibc/USDC": 10**9}}
+
+        self.assertTrue(funds.is_transfers_landed(ica_balances=balances, host_denom="uatom", decimals=6, in_flight=0))
+
+    def test_not_landed_while_a_transfer_is_in_flight(self) -> None:
+        self.assertFalse(funds.is_transfers_landed(ica_balances=ica_balances(), host_denom="uatom", decimals=6, in_flight=3))
+
+    def test_landed_is_unknown_without_the_in_flight_amount(self) -> None:
+        self.assertIsNone(funds.is_transfers_landed(ica_balances=ica_balances(), host_denom="uatom", decimals=6, in_flight=None))
+
+    def quiet_side(self) -> funds.HostSide:
+        return dataclasses.replace(
+            host_side(chain_id="cosmoshub-4", host_denom="uatom", osmosis_channel="channel-141"),
+            host_zone={"host_denom": "uatom", "redemption_rate": "1", "deposit_address": "stride1deposit", **ica_host_zone()},
+        )
+
+    def test_zone_payload_carries_the_balances_and_both_flags(self) -> None:
+        side = dataclasses.replace(
+            self.quiet_side(),
+            ica_balances=ica_balances(delegation=7 * 10**6),
+            transfers=[transfer(amount=3, status=funds.TransferStatus.IN_FLIGHT)],
+        )
+
+        zone = funds._zone_funds(side=side, osmosis=None, pools_by_zone=None, records=stride_records())
+        payload = chain.stringify_ints(dataclasses.asdict(zone))
+
+        self.assertEqual(payload["ica_balances"]["WITHDRAWAL"], {"uatom": "0", "ibc/USDC": "5"})
+        self.assertEqual(payload["ica_balances"]["DELEGATION"], {"uatom": "7000000"})
+        self.assertIs(payload["funds_settled"], False)
+        self.assertIs(payload["transfers_landed"], False)
+
+    def test_zone_payload_flags_are_true_when_quiet_and_null_without_the_transfer_index(self) -> None:
+        quiet = self.quiet_side()
+        blind = dataclasses.replace(quiet, transfers=None)
+
+        quiet_zone = funds._zone_funds(side=quiet, osmosis=None, pools_by_zone=None, records=stride_records())
+        blind_zone = funds._zone_funds(side=blind, osmosis=None, pools_by_zone=None, records=stride_records())
+
+        self.assertEqual((quiet_zone.funds_settled, quiet_zone.transfers_landed), (True, True))
+        self.assertEqual((blind_zone.funds_settled, blind_zone.transfers_landed), (None, None))
 
 
 def stride_records(
