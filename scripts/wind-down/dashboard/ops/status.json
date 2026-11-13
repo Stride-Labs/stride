@@ -1,4 +1,14 @@
 {
+  "after-pools-live": {
+    "at": "2026-11-13T22:52:29.285580+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "after-third-hop": {
+    "at": "2026-11-13T22:52:28.570858+00:00",
+    "by": "sam",
+    "done": true
+  },
   "d21-channels": {
     "at": "2026-11-12T03:39:08.002551+00:00",
     "by": "sam",
@@ -294,6 +304,11 @@
     "by": "sam",
     "done": true
   },
+  "halt-height": {
+    "at": "2026-11-13T17:34:13.694015+00:00",
+    "by": "sam",
+    "done": true
+  },
   "halt-ica-balances:celestia": {
     "at": "2026-11-12T17:13:06.523298+00:00",
     "by": "sam",
@@ -349,8 +364,23 @@
     "by": "sam",
     "done": true
   },
+  "halt-pools": {
+    "at": "2026-11-13T22:52:14.677498+00:00",
+    "by": "sam",
+    "done": true
+  },
   "halt-records": {
     "at": "2026-11-12T17:13:02.866093+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "halt-relayers-off": {
+    "at": "2026-11-13T20:09:55.434533+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "halt-rewards": {
+    "at": "2026-11-13T20:09:55.420769+00:00",
     "by": "sam",
     "done": true
   },
@@ -506,6 +536,11 @@
   },
   "osmo-transfers:osmosis-1": {
     "at": "2026-10-28T14:57:14.466145+00:00",
+    "by": "sam",
+    "done": true
+  },
+  "pools-admin-to-gov": {
+    "at": "2026-11-13T20:07:28.833521+00:00",
     "by": "sam",
     "done": true
   },

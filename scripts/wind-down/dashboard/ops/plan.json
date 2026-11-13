@@ -1228,7 +1228,8 @@
             {
               "id": "sweep-community-pool",
               "text": "After pass 2 of the holder sweep (which also swept the stakers' formerly staked STRD): the multisig, as the chain authority, spends the refilled community pool to itself (an ordinary key is refused), then transfers the stTokens, STRD and the OSMO voucher to the Osmosis vault and the ATOM voucher back to the Hub, keeping a fee reserve for the remaining txs.",
-              "expect": "The community pool holds dust only (strided q distribution community-pool) and the vault's balances rose by the amounts; keep enough STRD on the multisig for the halt-window txs."
+              "expect": "The community pool holds dust only (strided q distribution community-pool) and the vault's balances rose by the amounts; keep enough STRD on the multisig for the halt-window txs.",
+              "detail": "Osmosis side done 2026-11-13: the vault sent the Stride-origin balances to the Osmosis community pool with MsgFundCommunityPool: https://www.mintscan.io/osmosis/tx/A7510920A489D1A4CFA71724695456906A173AAA241C22E9B480BEBCEFFA41BA"
             },
             {
               "id": "sweep-announce-final",
@@ -1521,7 +1522,7 @@
             {
               "id": "pools-admin-to-gov",
               "text": "Once every pool of every zone is funded, marked and its moderator back (the Pools tab all green), the vault offers the admin role of every pool (all code-996 pools it administers, the Injective routes included) to Osmosis governance, which controls the Osmosis community pool: transfer_admin with candidate osmo10d07y265gmmuvt4z0w9aw880jnsr700jjeq4qp (the gov module), one MsgExecuteContract per pool in one vault multisig tx (Multisig tab, last set). The handoff is two-step: the vault stays admin until the candidate sends claim_admin, and a module account cannot sign, so the candidate must be the gov module (an Osmosis proposal executes claim_admin on each pool) and never the distribution module that holds the community pool's funds (osmo1jv65s3grqf6v6jl3dp4t6c9t9rk99cd80yhvld), which could never claim.",
-              "detail": "Until an Osmosis proposal claims, the Pools tab's 'no admin transfer in flight' check reads red on every pool and the vault is still admin; the vault can cancel_admin_transfer while the offer is pending. The moderator stays osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. One Osmosis proposal claims every pool: one MsgExecuteContract per pool, sender the gov module, msg {\"claim_admin\":{}}; its messages run all or nothing, so submit it only once every pool shows the candidate.",
+              "detail": "Until an Osmosis proposal claims, the Pools tab's 'no admin transfer in flight' check reads red on every pool and the vault is still admin; the vault can cancel_admin_transfer while the offer is pending. The moderator stays osmo1ugrn8qgsvyr8zwrv8h2g4r8ascngxk7qeaz7e0htjq3znswkh4cqhjdpgy. One Osmosis proposal claims every pool: one MsgExecuteContract per pool, sender the gov module, msg {\"claim_admin\":{}}; its messages run all or nothing, so submit it only once every pool shows the candidate.\n\nSent in two vault txs. Part 1 (16 pools: 3628-3641, 3654, 3695), candidate the gov module: https://www.mintscan.io/osmosis/tx/B42053C38794242736E3C5D03D5C44E466F157F8BA93FBE06DEAB77C97A929FC . Part 2 (the other 15 pools: 3642-3653, 3655, 3656, 3696): https://www.mintscan.io/osmosis/tx/369387E0A75F670C6827A49B5BCE3B5EEA50008DB9F7F3F08200CBF7024E8E28 . Checked 2026-11-13: all 31 pools show the gov module as admin candidate; the vault stays admin until an Osmosis proposal sends claim_admin.",
               "expect": "code 0 on each tx; get_admin_candidate returns osmo10d07y265gmmuvt4z0w9aw880jnsr700jjeq4qp on every pool and get_admin still returns the vault until Osmosis governance claims.",
               "multisig": "pool-admin-transfer"
             }
@@ -1614,7 +1615,8 @@
             {
               "id": "halt-height",
               "text": "Validators set halt-height in app.toml and restart; confirm every validator came back with peers and is advancing before the height (restarted nodes came back peerless twice on the test network), then the chain stops with 'halt per configuration height N' on every node.",
-              "expect": "Every validator's log shows the halt line at the same height and no node continues past it; a node that did not restart does not halt."
+              "expect": "Every validator's log shows the halt line at the same height and no node continues past it; a node that did not restart does not halt.",
+              "detail": "DONE 2026-11-13: Stride halted at 42,866,824 (last block 16:31:01 UTC) via the upgrade plan 'halt' (no gov prop; MsgSoftwareUpgrade from the F5 multisig): https://www.mintscan.io/stride/tx/23ABB83AE690B4246B945A9B1CF929CEFEEE2B8ADE4117E75CC0447997D18888?height=42866511 . Earlier halt-height stop at 42,844,824 (2026-11-12 18:54 UTC); the chain resumed 2026-11-13 ~00:18 UTC so Hydro could withdraw its ICA's stATOM."
             }
           ]
         }
